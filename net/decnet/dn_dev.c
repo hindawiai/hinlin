@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * DECnet       An implementation of the DECnet protocol suite for the LINUX
- *              operating system.  DECnet is implemented using the  BSD Socket
- *              interface as the means of communication with the user level.
+ * DECnet       An implementation of the DECnet protocol suite क्रम the LINUX
+ *              operating प्रणाली.  DECnet is implemented using the  BSD Socket
+ *              पूर्णांकerface as the means of communication with the user level.
  *
  *              DECnet Device Layer
  *
  * Authors:     Steve Whitehouse <SteveW@ACM.org>
- *              Eduardo Marcelo Serrat <emserrat@geocities.com>
+ *              Eduarकरो Marcelo Serrat <emserrat@geocities.com>
  *
  * Changes:
  *          Steve Whitehouse : Devices now see incoming frames so they
  *                             can mark on who it came from.
  *          Steve Whitehouse : Fixed bug in creating neighbours. Each neighbour
- *                             can now have a device specific setup func.
+ *                             can now have a device specअगरic setup func.
  *          Steve Whitehouse : Added /proc/sys/net/decnet/conf/<dev>/
- *          Steve Whitehouse : Fixed bug which sometimes killed timer
- *          Steve Whitehouse : Multiple ifaddr support
- *          Steve Whitehouse : SIOCGIFCONF is now a compile time option
- *          Steve Whitehouse : /proc/sys/net/decnet/conf/<sys>/forwarding
- *          Steve Whitehouse : Removed timer1 - it's a user space issue now
- *         Patrick Caulfield : Fixed router hello message format
- *          Steve Whitehouse : Got rid of constant sizes for blksize for
+ *          Steve Whitehouse : Fixed bug which someबार समाप्तed समयr
+ *          Steve Whitehouse : Multiple अगरaddr support
+ *          Steve Whitehouse : SIOCGIFCONF is now a compile समय option
+ *          Steve Whitehouse : /proc/sys/net/decnet/conf/<sys>/क्रमwarding
+ *          Steve Whitehouse : Removed समयr1 - it's a user space issue now
+ *         Patrick Caulfield : Fixed router hello message क्रमmat
+ *          Steve Whitehouse : Got rid of स्थिरant sizes क्रम blksize क्रम
  *                             devices. All mtu based now.
  */
 
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/if_addr.h>
-#include <linux/if_arp.h>
-#include <linux/if_ether.h>
-#include <linux/skbuff.h>
-#include <linux/sysctl.h>
-#include <linux/notifier.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/uaccess.h>
-#include <net/net_namespace.h>
-#include <net/neighbour.h>
-#include <net/dst.h>
-#include <net/flow.h>
-#include <net/fib_rules.h>
-#include <net/netlink.h>
-#include <net/dn.h>
-#include <net/dn_dev.h>
-#include <net/dn_route.h>
-#include <net/dn_neigh.h>
-#include <net/dn_fib.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/अगर_addr.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/uaccess.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/dst.h>
+#समावेश <net/flow.h>
+#समावेश <net/fib_rules.h>
+#समावेश <net/netlink.h>
+#समावेश <net/dn.h>
+#समावेश <net/dn_dev.h>
+#समावेश <net/dn_route.h>
+#समावेश <net/dn_neigh.h>
+#समावेश <net/dn_fib.h>
 
-#define DN_IFREQ_SIZE (offsetof(struct ifreq, ifr_ifru) + sizeof(struct sockaddr_dn))
+#घोषणा DN_IFREQ_SIZE (दुरत्व(काष्ठा अगरreq, अगरr_अगरru) + माप(काष्ठा sockaddr_dn))
 
-static char dn_rt_all_end_mcast[ETH_ALEN] = {0xAB,0x00,0x00,0x04,0x00,0x00};
-static char dn_rt_all_rt_mcast[ETH_ALEN]  = {0xAB,0x00,0x00,0x03,0x00,0x00};
-static char dn_hiord[ETH_ALEN]            = {0xAA,0x00,0x04,0x00,0x00,0x00};
-static unsigned char dn_eco_version[3]    = {0x02,0x00,0x00};
+अटल अक्षर dn_rt_all_end_mcast[ETH_ALEN] = अणु0xAB,0x00,0x00,0x04,0x00,0x00पूर्ण;
+अटल अक्षर dn_rt_all_rt_mcast[ETH_ALEN]  = अणु0xAB,0x00,0x00,0x03,0x00,0x00पूर्ण;
+अटल अक्षर dn_hiord[ETH_ALEN]            = अणु0xAA,0x00,0x04,0x00,0x00,0x00पूर्ण;
+अटल अचिन्हित अक्षर dn_eco_version[3]    = अणु0x02,0x00,0x00पूर्ण;
 
-extern struct neigh_table dn_neigh_table;
+बाह्य काष्ठा neigh_table dn_neigh_table;
 
 /*
  * decnet_address is kept in network order.
  */
 __le16 decnet_address = 0;
 
-static DEFINE_SPINLOCK(dndev_lock);
-static struct net_device *decnet_default_device;
-static BLOCKING_NOTIFIER_HEAD(dnaddr_chain);
+अटल DEFINE_SPINLOCK(dndev_lock);
+अटल काष्ठा net_device *decnet_शेष_device;
+अटल BLOCKING_NOTIFIER_HEAD(dnaddr_chain);
 
-static struct dn_dev *dn_dev_create(struct net_device *dev, int *err);
-static void dn_dev_delete(struct net_device *dev);
-static void dn_ifaddr_notify(int event, struct dn_ifaddr *ifa);
+अटल काष्ठा dn_dev *dn_dev_create(काष्ठा net_device *dev, पूर्णांक *err);
+अटल व्योम dn_dev_delete(काष्ठा net_device *dev);
+अटल व्योम dn_अगरaddr_notअगरy(पूर्णांक event, काष्ठा dn_अगरaddr *अगरa);
 
-static int dn_eth_up(struct net_device *);
-static void dn_eth_down(struct net_device *);
-static void dn_send_brd_hello(struct net_device *dev, struct dn_ifaddr *ifa);
-static void dn_send_ptp_hello(struct net_device *dev, struct dn_ifaddr *ifa);
+अटल पूर्णांक dn_eth_up(काष्ठा net_device *);
+अटल व्योम dn_eth_करोwn(काष्ठा net_device *);
+अटल व्योम dn_send_brd_hello(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa);
+अटल व्योम dn_send_ptp_hello(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa);
 
-static struct dn_dev_parms dn_dev_list[] =  {
-{
+अटल काष्ठा dn_dev_parms dn_dev_list[] =  अणु
+अणु
 	.type =		ARPHRD_ETHER, /* Ethernet */
 	.mode =		DN_DEV_BCAST,
 	.state =	DN_DEV_S_RU,
@@ -92,778 +93,778 @@ static struct dn_dev_parms dn_dev_list[] =  {
 	.t3 =		10,
 	.name =		"ethernet",
 	.up =		dn_eth_up,
-	.down = 	dn_eth_down,
-	.timer3 =	dn_send_brd_hello,
-},
-{
+	.करोwn = 	dn_eth_करोwn,
+	.समयr3 =	dn_send_brd_hello,
+पूर्ण,
+अणु
 	.type =		ARPHRD_IPGRE, /* DECnet tunneled over GRE in IP */
 	.mode =		DN_DEV_BCAST,
 	.state =	DN_DEV_S_RU,
 	.t2 =		1,
 	.t3 =		10,
 	.name =		"ipgre",
-	.timer3 =	dn_send_brd_hello,
-},
-#if 0
-{
+	.समयr3 =	dn_send_brd_hello,
+पूर्ण,
+#अगर 0
+अणु
 	.type =		ARPHRD_X25, /* Bog standard X.25 */
 	.mode =		DN_DEV_UCAST,
 	.state =	DN_DEV_S_DS,
 	.t2 =		1,
 	.t3 =		120,
 	.name =		"x25",
-	.timer3 =	dn_send_ptp_hello,
-},
-#endif
-#if 0
-{
+	.समयr3 =	dn_send_ptp_hello,
+पूर्ण,
+#पूर्ण_अगर
+#अगर 0
+अणु
 	.type =		ARPHRD_PPP, /* DECnet over PPP */
 	.mode =		DN_DEV_BCAST,
 	.state =	DN_DEV_S_RU,
 	.t2 =		1,
 	.t3 =		10,
 	.name =		"ppp",
-	.timer3 =	dn_send_brd_hello,
-},
-#endif
-{
+	.समयr3 =	dn_send_brd_hello,
+पूर्ण,
+#पूर्ण_अगर
+अणु
 	.type =		ARPHRD_DDCMP, /* DECnet over DDCMP */
 	.mode =		DN_DEV_UCAST,
 	.state =	DN_DEV_S_DS,
 	.t2 =		1,
 	.t3 =		120,
 	.name =		"ddcmp",
-	.timer3 =	dn_send_ptp_hello,
-},
-{
-	.type =		ARPHRD_LOOPBACK, /* Loopback interface - always last */
+	.समयr3 =	dn_send_ptp_hello,
+पूर्ण,
+अणु
+	.type =		ARPHRD_LOOPBACK, /* Loopback पूर्णांकerface - always last */
 	.mode =		DN_DEV_BCAST,
 	.state =	DN_DEV_S_RU,
 	.t2 =		1,
 	.t3 =		10,
 	.name =		"loopback",
-	.timer3 =	dn_send_brd_hello,
-}
-};
+	.समयr3 =	dn_send_brd_hello,
+पूर्ण
+पूर्ण;
 
-#define DN_DEV_LIST_SIZE ARRAY_SIZE(dn_dev_list)
+#घोषणा DN_DEV_LIST_SIZE ARRAY_SIZE(dn_dev_list)
 
-#define DN_DEV_PARMS_OFFSET(x) offsetof(struct dn_dev_parms, x)
+#घोषणा DN_DEV_PARMS_OFFSET(x) दुरत्व(काष्ठा dn_dev_parms, x)
 
-#ifdef CONFIG_SYSCTL
+#अगर_घोषित CONFIG_SYSCTL
 
-static int min_t2[] = { 1 };
-static int max_t2[] = { 60 }; /* No max specified, but this seems sensible */
-static int min_t3[] = { 1 };
-static int max_t3[] = { 8191 }; /* Must fit in 16 bits when multiplied by BCT3MULT or T3MULT */
+अटल पूर्णांक min_t2[] = अणु 1 पूर्ण;
+अटल पूर्णांक max_t2[] = अणु 60 पूर्ण; /* No max specअगरied, but this seems sensible */
+अटल पूर्णांक min_t3[] = अणु 1 पूर्ण;
+अटल पूर्णांक max_t3[] = अणु 8191 पूर्ण; /* Must fit in 16 bits when multiplied by BCT3MULT or T3MULT */
 
-static int min_priority[1];
-static int max_priority[] = { 127 }; /* From DECnet spec */
+अटल पूर्णांक min_priority[1];
+अटल पूर्णांक max_priority[] = अणु 127 पूर्ण; /* From DECnet spec */
 
-static int dn_forwarding_proc(struct ctl_table *, int, void *, size_t *,
+अटल पूर्णांक dn_क्रमwarding_proc(काष्ठा ctl_table *, पूर्णांक, व्योम *, माप_प्रकार *,
 		loff_t *);
-static struct dn_dev_sysctl_table {
-	struct ctl_table_header *sysctl_header;
-	struct ctl_table dn_dev_vars[5];
-} dn_dev_sysctl = {
-	NULL,
-	{
-	{
+अटल काष्ठा dn_dev_sysctl_table अणु
+	काष्ठा ctl_table_header *sysctl_header;
+	काष्ठा ctl_table dn_dev_vars[5];
+पूर्ण dn_dev_sysctl = अणु
+	शून्य,
+	अणु
+	अणु
 		.procname = "forwarding",
-		.data = (void *)DN_DEV_PARMS_OFFSET(forwarding),
-		.maxlen = sizeof(int),
+		.data = (व्योम *)DN_DEV_PARMS_OFFSET(क्रमwarding),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = dn_forwarding_proc,
-	},
-	{
+		.proc_handler = dn_क्रमwarding_proc,
+	पूर्ण,
+	अणु
 		.procname = "priority",
-		.data = (void *)DN_DEV_PARMS_OFFSET(priority),
-		.maxlen = sizeof(int),
+		.data = (व्योम *)DN_DEV_PARMS_OFFSET(priority),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_priority,
 		.extra2 = &max_priority
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "t2",
-		.data = (void *)DN_DEV_PARMS_OFFSET(t2),
-		.maxlen = sizeof(int),
+		.data = (व्योम *)DN_DEV_PARMS_OFFSET(t2),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_t2,
 		.extra2 = &max_t2
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "t3",
-		.data = (void *)DN_DEV_PARMS_OFFSET(t3),
-		.maxlen = sizeof(int),
+		.data = (व्योम *)DN_DEV_PARMS_OFFSET(t3),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_t3,
 		.extra2 = &max_t3
-	},
-	{ }
-	},
-};
+	पूर्ण,
+	अणु पूर्ण
+	पूर्ण,
+पूर्ण;
 
-static void dn_dev_sysctl_register(struct net_device *dev, struct dn_dev_parms *parms)
-{
-	struct dn_dev_sysctl_table *t;
-	int i;
+अटल व्योम dn_dev_sysctl_रेजिस्टर(काष्ठा net_device *dev, काष्ठा dn_dev_parms *parms)
+अणु
+	काष्ठा dn_dev_sysctl_table *t;
+	पूर्णांक i;
 
-	char path[sizeof("net/decnet/conf/") + IFNAMSIZ];
+	अक्षर path[माप("net/decnet/conf/") + IFNAMSIZ];
 
-	t = kmemdup(&dn_dev_sysctl, sizeof(*t), GFP_KERNEL);
-	if (t == NULL)
-		return;
+	t = kmemdup(&dn_dev_sysctl, माप(*t), GFP_KERNEL);
+	अगर (t == शून्य)
+		वापस;
 
-	for(i = 0; i < ARRAY_SIZE(t->dn_dev_vars) - 1; i++) {
-		long offset = (long)t->dn_dev_vars[i].data;
-		t->dn_dev_vars[i].data = ((char *)parms) + offset;
-	}
+	क्रम(i = 0; i < ARRAY_SIZE(t->dn_dev_vars) - 1; i++) अणु
+		दीर्घ offset = (दीर्घ)t->dn_dev_vars[i].data;
+		t->dn_dev_vars[i].data = ((अक्षर *)parms) + offset;
+	पूर्ण
 
-	snprintf(path, sizeof(path), "net/decnet/conf/%s",
+	snम_लिखो(path, माप(path), "net/decnet/conf/%s",
 		dev? dev->name : parms->name);
 
-	t->dn_dev_vars[0].extra1 = (void *)dev;
+	t->dn_dev_vars[0].extra1 = (व्योम *)dev;
 
-	t->sysctl_header = register_net_sysctl(&init_net, path, t->dn_dev_vars);
-	if (t->sysctl_header == NULL)
-		kfree(t);
-	else
+	t->sysctl_header = रेजिस्टर_net_sysctl(&init_net, path, t->dn_dev_vars);
+	अगर (t->sysctl_header == शून्य)
+		kमुक्त(t);
+	अन्यथा
 		parms->sysctl = t;
-}
+पूर्ण
 
-static void dn_dev_sysctl_unregister(struct dn_dev_parms *parms)
-{
-	if (parms->sysctl) {
-		struct dn_dev_sysctl_table *t = parms->sysctl;
-		parms->sysctl = NULL;
-		unregister_net_sysctl_table(t->sysctl_header);
-		kfree(t);
-	}
-}
+अटल व्योम dn_dev_sysctl_unरेजिस्टर(काष्ठा dn_dev_parms *parms)
+अणु
+	अगर (parms->sysctl) अणु
+		काष्ठा dn_dev_sysctl_table *t = parms->sysctl;
+		parms->sysctl = शून्य;
+		unरेजिस्टर_net_sysctl_table(t->sysctl_header);
+		kमुक्त(t);
+	पूर्ण
+पूर्ण
 
-static int dn_forwarding_proc(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-#ifdef CONFIG_DECNET_ROUTER
-	struct net_device *dev = table->extra1;
-	struct dn_dev *dn_db;
-	int err;
-	int tmp, old;
+अटल पूर्णांक dn_क्रमwarding_proc(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+#अगर_घोषित CONFIG_DECNET_ROUTER
+	काष्ठा net_device *dev = table->extra1;
+	काष्ठा dn_dev *dn_db;
+	पूर्णांक err;
+	पूर्णांक पंचांगp, old;
 
-	if (table->extra1 == NULL)
-		return -EINVAL;
+	अगर (table->extra1 == शून्य)
+		वापस -EINVAL;
 
 	dn_db = rcu_dereference_raw(dev->dn_ptr);
-	old = dn_db->parms.forwarding;
+	old = dn_db->parms.क्रमwarding;
 
-	err = proc_dointvec(table, write, buffer, lenp, ppos);
+	err = proc_करोपूर्णांकvec(table, ग_लिखो, buffer, lenp, ppos);
 
-	if ((err >= 0) && write) {
-		if (dn_db->parms.forwarding < 0)
-			dn_db->parms.forwarding = 0;
-		if (dn_db->parms.forwarding > 2)
-			dn_db->parms.forwarding = 2;
+	अगर ((err >= 0) && ग_लिखो) अणु
+		अगर (dn_db->parms.क्रमwarding < 0)
+			dn_db->parms.क्रमwarding = 0;
+		अगर (dn_db->parms.क्रमwarding > 2)
+			dn_db->parms.क्रमwarding = 2;
 		/*
 		 * What an ugly hack this is... its works, just. It
-		 * would be nice if sysctl/proc were just that little
-		 * bit more flexible so I don't have to write a special
+		 * would be nice अगर sysctl/proc were just that little
+		 * bit more flexible so I करोn't have to ग_लिखो a special
 		 * routine, or suffer hacks like this - SJW
 		 */
-		tmp = dn_db->parms.forwarding;
-		dn_db->parms.forwarding = old;
-		if (dn_db->parms.down)
-			dn_db->parms.down(dev);
-		dn_db->parms.forwarding = tmp;
-		if (dn_db->parms.up)
+		पंचांगp = dn_db->parms.क्रमwarding;
+		dn_db->parms.क्रमwarding = old;
+		अगर (dn_db->parms.करोwn)
+			dn_db->parms.करोwn(dev);
+		dn_db->parms.क्रमwarding = पंचांगp;
+		अगर (dn_db->parms.up)
 			dn_db->parms.up(dev);
-	}
+	पूर्ण
 
-	return err;
-#else
-	return -EINVAL;
-#endif
-}
+	वापस err;
+#अन्यथा
+	वापस -EINVAL;
+#पूर्ण_अगर
+पूर्ण
 
-#else /* CONFIG_SYSCTL */
-static void dn_dev_sysctl_unregister(struct dn_dev_parms *parms)
-{
-}
-static void dn_dev_sysctl_register(struct net_device *dev, struct dn_dev_parms *parms)
-{
-}
+#अन्यथा /* CONFIG_SYSCTL */
+अटल व्योम dn_dev_sysctl_unरेजिस्टर(काष्ठा dn_dev_parms *parms)
+अणु
+पूर्ण
+अटल व्योम dn_dev_sysctl_रेजिस्टर(काष्ठा net_device *dev, काष्ठा dn_dev_parms *parms)
+अणु
+पूर्ण
 
-#endif /* CONFIG_SYSCTL */
+#पूर्ण_अगर /* CONFIG_SYSCTL */
 
-static inline __u16 mtu2blksize(struct net_device *dev)
-{
+अटल अंतरभूत __u16 mtu2blksize(काष्ठा net_device *dev)
+अणु
 	u32 blksize = dev->mtu;
-	if (blksize > 0xffff)
+	अगर (blksize > 0xffff)
 		blksize = 0xffff;
 
-	if (dev->type == ARPHRD_ETHER ||
+	अगर (dev->type == ARPHRD_ETHER ||
 	    dev->type == ARPHRD_PPP ||
 	    dev->type == ARPHRD_IPGRE ||
 	    dev->type == ARPHRD_LOOPBACK)
 		blksize -= 2;
 
-	return (__u16)blksize;
-}
+	वापस (__u16)blksize;
+पूर्ण
 
-static struct dn_ifaddr *dn_dev_alloc_ifa(void)
-{
-	struct dn_ifaddr *ifa;
+अटल काष्ठा dn_अगरaddr *dn_dev_alloc_अगरa(व्योम)
+अणु
+	काष्ठा dn_अगरaddr *अगरa;
 
-	ifa = kzalloc(sizeof(*ifa), GFP_KERNEL);
+	अगरa = kzalloc(माप(*अगरa), GFP_KERNEL);
 
-	return ifa;
-}
+	वापस अगरa;
+पूर्ण
 
-static void dn_dev_free_ifa(struct dn_ifaddr *ifa)
-{
-	kfree_rcu(ifa, rcu);
-}
+अटल व्योम dn_dev_मुक्त_अगरa(काष्ठा dn_अगरaddr *अगरa)
+अणु
+	kमुक्त_rcu(अगरa, rcu);
+पूर्ण
 
-static void dn_dev_del_ifa(struct dn_dev *dn_db, struct dn_ifaddr __rcu **ifap, int destroy)
-{
-	struct dn_ifaddr *ifa1 = rtnl_dereference(*ifap);
-	unsigned char mac_addr[6];
-	struct net_device *dev = dn_db->dev;
+अटल व्योम dn_dev_del_अगरa(काष्ठा dn_dev *dn_db, काष्ठा dn_अगरaddr __rcu **अगरap, पूर्णांक destroy)
+अणु
+	काष्ठा dn_अगरaddr *अगरa1 = rtnl_dereference(*अगरap);
+	अचिन्हित अक्षर mac_addr[6];
+	काष्ठा net_device *dev = dn_db->dev;
 
 	ASSERT_RTNL();
 
-	*ifap = ifa1->ifa_next;
+	*अगरap = अगरa1->अगरa_next;
 
-	if (dn_db->dev->type == ARPHRD_ETHER) {
-		if (ifa1->ifa_local != dn_eth2dn(dev->dev_addr)) {
-			dn_dn2eth(mac_addr, ifa1->ifa_local);
+	अगर (dn_db->dev->type == ARPHRD_ETHER) अणु
+		अगर (अगरa1->अगरa_local != dn_eth2dn(dev->dev_addr)) अणु
+			dn_dn2eth(mac_addr, अगरa1->अगरa_local);
 			dev_mc_del(dev, mac_addr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dn_ifaddr_notify(RTM_DELADDR, ifa1);
-	blocking_notifier_call_chain(&dnaddr_chain, NETDEV_DOWN, ifa1);
-	if (destroy) {
-		dn_dev_free_ifa(ifa1);
+	dn_अगरaddr_notअगरy(RTM_DELADDR, अगरa1);
+	blocking_notअगरier_call_chain(&dnaddr_chain, NETDEV_DOWN, अगरa1);
+	अगर (destroy) अणु
+		dn_dev_मुक्त_अगरa(अगरa1);
 
-		if (dn_db->ifa_list == NULL)
+		अगर (dn_db->अगरa_list == शून्य)
 			dn_dev_delete(dn_db->dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dn_dev_insert_ifa(struct dn_dev *dn_db, struct dn_ifaddr *ifa)
-{
-	struct net_device *dev = dn_db->dev;
-	struct dn_ifaddr *ifa1;
-	unsigned char mac_addr[6];
+अटल पूर्णांक dn_dev_insert_अगरa(काष्ठा dn_dev *dn_db, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	काष्ठा net_device *dev = dn_db->dev;
+	काष्ठा dn_अगरaddr *अगरa1;
+	अचिन्हित अक्षर mac_addr[6];
 
 	ASSERT_RTNL();
 
-	/* Check for duplicates */
-	for (ifa1 = rtnl_dereference(dn_db->ifa_list);
-	     ifa1 != NULL;
-	     ifa1 = rtnl_dereference(ifa1->ifa_next)) {
-		if (ifa1->ifa_local == ifa->ifa_local)
-			return -EEXIST;
-	}
+	/* Check क्रम duplicates */
+	क्रम (अगरa1 = rtnl_dereference(dn_db->अगरa_list);
+	     अगरa1 != शून्य;
+	     अगरa1 = rtnl_dereference(अगरa1->अगरa_next)) अणु
+		अगर (अगरa1->अगरa_local == अगरa->अगरa_local)
+			वापस -EEXIST;
+	पूर्ण
 
-	if (dev->type == ARPHRD_ETHER) {
-		if (ifa->ifa_local != dn_eth2dn(dev->dev_addr)) {
-			dn_dn2eth(mac_addr, ifa->ifa_local);
+	अगर (dev->type == ARPHRD_ETHER) अणु
+		अगर (अगरa->अगरa_local != dn_eth2dn(dev->dev_addr)) अणु
+			dn_dn2eth(mac_addr, अगरa->अगरa_local);
 			dev_mc_add(dev, mac_addr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ifa->ifa_next = dn_db->ifa_list;
-	rcu_assign_pointer(dn_db->ifa_list, ifa);
+	अगरa->अगरa_next = dn_db->अगरa_list;
+	rcu_assign_poपूर्णांकer(dn_db->अगरa_list, अगरa);
 
-	dn_ifaddr_notify(RTM_NEWADDR, ifa);
-	blocking_notifier_call_chain(&dnaddr_chain, NETDEV_UP, ifa);
+	dn_अगरaddr_notअगरy(RTM_NEWADDR, अगरa);
+	blocking_notअगरier_call_chain(&dnaddr_chain, NETDEV_UP, अगरa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dn_dev_set_ifa(struct net_device *dev, struct dn_ifaddr *ifa)
-{
-	struct dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
-	int rv;
+अटल पूर्णांक dn_dev_set_अगरa(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	काष्ठा dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
+	पूर्णांक rv;
 
-	if (dn_db == NULL) {
-		int err;
+	अगर (dn_db == शून्य) अणु
+		पूर्णांक err;
 		dn_db = dn_dev_create(dev, &err);
-		if (dn_db == NULL)
-			return err;
-	}
+		अगर (dn_db == शून्य)
+			वापस err;
+	पूर्ण
 
-	ifa->ifa_dev = dn_db;
+	अगरa->अगरa_dev = dn_db;
 
-	if (dev->flags & IFF_LOOPBACK)
-		ifa->ifa_scope = RT_SCOPE_HOST;
+	अगर (dev->flags & IFF_LOOPBACK)
+		अगरa->अगरa_scope = RT_SCOPE_HOST;
 
-	rv = dn_dev_insert_ifa(dn_db, ifa);
-	if (rv)
-		dn_dev_free_ifa(ifa);
-	return rv;
-}
+	rv = dn_dev_insert_अगरa(dn_db, अगरa);
+	अगर (rv)
+		dn_dev_मुक्त_अगरa(अगरa);
+	वापस rv;
+पूर्ण
 
 
-int dn_dev_ioctl(unsigned int cmd, void __user *arg)
-{
-	char buffer[DN_IFREQ_SIZE];
-	struct ifreq *ifr = (struct ifreq *)buffer;
-	struct sockaddr_dn *sdn = (struct sockaddr_dn *)&ifr->ifr_addr;
-	struct dn_dev *dn_db;
-	struct net_device *dev;
-	struct dn_ifaddr *ifa = NULL;
-	struct dn_ifaddr __rcu **ifap = NULL;
-	int ret = 0;
+पूर्णांक dn_dev_ioctl(अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	अक्षर buffer[DN_IFREQ_SIZE];
+	काष्ठा अगरreq *अगरr = (काष्ठा अगरreq *)buffer;
+	काष्ठा sockaddr_dn *sdn = (काष्ठा sockaddr_dn *)&अगरr->अगरr_addr;
+	काष्ठा dn_dev *dn_db;
+	काष्ठा net_device *dev;
+	काष्ठा dn_अगरaddr *अगरa = शून्य;
+	काष्ठा dn_अगरaddr __rcu **अगरap = शून्य;
+	पूर्णांक ret = 0;
 
-	if (copy_from_user(ifr, arg, DN_IFREQ_SIZE))
-		return -EFAULT;
-	ifr->ifr_name[IFNAMSIZ-1] = 0;
+	अगर (copy_from_user(अगरr, arg, DN_IFREQ_SIZE))
+		वापस -EFAULT;
+	अगरr->अगरr_name[IFNAMSIZ-1] = 0;
 
-	dev_load(&init_net, ifr->ifr_name);
+	dev_load(&init_net, अगरr->अगरr_name);
 
-	switch (cmd) {
-	case SIOCGIFADDR:
-		break;
-	case SIOCSIFADDR:
-		if (!capable(CAP_NET_ADMIN))
-			return -EACCES;
-		if (sdn->sdn_family != AF_DECnet)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (cmd) अणु
+	हाल SIOCGIFADDR:
+		अवरोध;
+	हाल SIOCSIFADDR:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EACCES;
+		अगर (sdn->sdn_family != AF_DECnet)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	rtnl_lock();
 
-	if ((dev = __dev_get_by_name(&init_net, ifr->ifr_name)) == NULL) {
+	अगर ((dev = __dev_get_by_name(&init_net, अगरr->अगरr_name)) == शून्य) अणु
 		ret = -ENODEV;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if ((dn_db = rtnl_dereference(dev->dn_ptr)) != NULL) {
-		for (ifap = &dn_db->ifa_list;
-		     (ifa = rtnl_dereference(*ifap)) != NULL;
-		     ifap = &ifa->ifa_next)
-			if (strcmp(ifr->ifr_name, ifa->ifa_label) == 0)
-				break;
-	}
+	अगर ((dn_db = rtnl_dereference(dev->dn_ptr)) != शून्य) अणु
+		क्रम (अगरap = &dn_db->अगरa_list;
+		     (अगरa = rtnl_dereference(*अगरap)) != शून्य;
+		     अगरap = &अगरa->अगरa_next)
+			अगर (म_भेद(अगरr->अगरr_name, अगरa->अगरa_label) == 0)
+				अवरोध;
+	पूर्ण
 
-	if (ifa == NULL && cmd != SIOCSIFADDR) {
+	अगर (अगरa == शून्य && cmd != SIOCSIFADDR) अणु
 		ret = -EADDRNOTAVAIL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	switch (cmd) {
-	case SIOCGIFADDR:
-		*((__le16 *)sdn->sdn_nodeaddr) = ifa->ifa_local;
-		if (copy_to_user(arg, ifr, DN_IFREQ_SIZE))
+	चयन (cmd) अणु
+	हाल SIOCGIFADDR:
+		*((__le16 *)sdn->sdn_nodeaddr) = अगरa->अगरa_local;
+		अगर (copy_to_user(arg, अगरr, DN_IFREQ_SIZE))
 			ret = -EFAULT;
-		break;
+		अवरोध;
 
-	case SIOCSIFADDR:
-		if (!ifa) {
-			if ((ifa = dn_dev_alloc_ifa()) == NULL) {
+	हाल SIOCSIFADDR:
+		अगर (!अगरa) अणु
+			अगर ((अगरa = dn_dev_alloc_अगरa()) == शून्य) अणु
 				ret = -ENOBUFS;
-				break;
-			}
-			memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
-		} else {
-			if (ifa->ifa_local == dn_saddr2dn(sdn))
-				break;
-			dn_dev_del_ifa(dn_db, ifap, 0);
-		}
+				अवरोध;
+			पूर्ण
+			स_नकल(अगरa->अगरa_label, dev->name, IFNAMSIZ);
+		पूर्ण अन्यथा अणु
+			अगर (अगरa->अगरa_local == dn_saddr2dn(sdn))
+				अवरोध;
+			dn_dev_del_अगरa(dn_db, अगरap, 0);
+		पूर्ण
 
-		ifa->ifa_local = ifa->ifa_address = dn_saddr2dn(sdn);
+		अगरa->अगरa_local = अगरa->अगरa_address = dn_saddr2dn(sdn);
 
-		ret = dn_dev_set_ifa(dev, ifa);
-	}
-done:
+		ret = dn_dev_set_अगरa(dev, अगरa);
+	पूर्ण
+करोne:
 	rtnl_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct net_device *dn_dev_get_default(void)
-{
-	struct net_device *dev;
+काष्ठा net_device *dn_dev_get_शेष(व्योम)
+अणु
+	काष्ठा net_device *dev;
 
 	spin_lock(&dndev_lock);
-	dev = decnet_default_device;
-	if (dev) {
-		if (dev->dn_ptr)
+	dev = decnet_शेष_device;
+	अगर (dev) अणु
+		अगर (dev->dn_ptr)
 			dev_hold(dev);
-		else
-			dev = NULL;
-	}
+		अन्यथा
+			dev = शून्य;
+	पूर्ण
 	spin_unlock(&dndev_lock);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-int dn_dev_set_default(struct net_device *dev, int force)
-{
-	struct net_device *old = NULL;
-	int rv = -EBUSY;
-	if (!dev->dn_ptr)
-		return -ENODEV;
+पूर्णांक dn_dev_set_शेष(काष्ठा net_device *dev, पूर्णांक क्रमce)
+अणु
+	काष्ठा net_device *old = शून्य;
+	पूर्णांक rv = -EBUSY;
+	अगर (!dev->dn_ptr)
+		वापस -ENODEV;
 
 	spin_lock(&dndev_lock);
-	if (force || decnet_default_device == NULL) {
-		old = decnet_default_device;
-		decnet_default_device = dev;
+	अगर (क्रमce || decnet_शेष_device == शून्य) अणु
+		old = decnet_शेष_device;
+		decnet_शेष_device = dev;
 		rv = 0;
-	}
+	पूर्ण
 	spin_unlock(&dndev_lock);
 
-	if (old)
+	अगर (old)
 		dev_put(old);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void dn_dev_check_default(struct net_device *dev)
-{
+अटल व्योम dn_dev_check_शेष(काष्ठा net_device *dev)
+अणु
 	spin_lock(&dndev_lock);
-	if (dev == decnet_default_device) {
-		decnet_default_device = NULL;
-	} else {
-		dev = NULL;
-	}
+	अगर (dev == decnet_शेष_device) अणु
+		decnet_शेष_device = शून्य;
+	पूर्ण अन्यथा अणु
+		dev = शून्य;
+	पूर्ण
 	spin_unlock(&dndev_lock);
 
-	if (dev)
+	अगर (dev)
 		dev_put(dev);
-}
+पूर्ण
 
 /*
  * Called with RTNL
  */
-static struct dn_dev *dn_dev_by_index(int ifindex)
-{
-	struct net_device *dev;
-	struct dn_dev *dn_dev = NULL;
+अटल काष्ठा dn_dev *dn_dev_by_index(पूर्णांक अगरindex)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा dn_dev *dn_dev = शून्य;
 
-	dev = __dev_get_by_index(&init_net, ifindex);
-	if (dev)
+	dev = __dev_get_by_index(&init_net, अगरindex);
+	अगर (dev)
 		dn_dev = rtnl_dereference(dev->dn_ptr);
 
-	return dn_dev;
-}
+	वापस dn_dev;
+पूर्ण
 
-static const struct nla_policy dn_ifa_policy[IFA_MAX+1] = {
-	[IFA_ADDRESS]		= { .type = NLA_U16 },
-	[IFA_LOCAL]		= { .type = NLA_U16 },
-	[IFA_LABEL]		= { .type = NLA_STRING,
-				    .len = IFNAMSIZ - 1 },
-	[IFA_FLAGS]		= { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy dn_अगरa_policy[IFA_MAX+1] = अणु
+	[IFA_ADDRESS]		= अणु .type = NLA_U16 पूर्ण,
+	[IFA_LOCAL]		= अणु .type = NLA_U16 पूर्ण,
+	[IFA_LABEL]		= अणु .type = NLA_STRING,
+				    .len = IFNAMSIZ - 1 पूर्ण,
+	[IFA_FLAGS]		= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int dn_nl_deladdr(struct sk_buff *skb, struct nlmsghdr *nlh,
-			 struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct nlattr *tb[IFA_MAX+1];
-	struct dn_dev *dn_db;
-	struct ifaddrmsg *ifm;
-	struct dn_ifaddr *ifa;
-	struct dn_ifaddr __rcu **ifap;
-	int err = -EINVAL;
+अटल पूर्णांक dn_nl_deladdr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा nlattr *tb[IFA_MAX+1];
+	काष्ठा dn_dev *dn_db;
+	काष्ठा अगरaddrmsg *अगरm;
+	काष्ठा dn_अगरaddr *अगरa;
+	काष्ठा dn_अगरaddr __rcu **अगरap;
+	पूर्णांक err = -EINVAL;
 
-	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!net_eq(net, &init_net))
-		goto errout;
+	अगर (!net_eq(net, &init_net))
+		जाओ errout;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
-				     dn_ifa_policy, extack);
-	if (err < 0)
-		goto errout;
+	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
+				     dn_अगरa_policy, extack);
+	अगर (err < 0)
+		जाओ errout;
 
 	err = -ENODEV;
-	ifm = nlmsg_data(nlh);
-	if ((dn_db = dn_dev_by_index(ifm->ifa_index)) == NULL)
-		goto errout;
+	अगरm = nlmsg_data(nlh);
+	अगर ((dn_db = dn_dev_by_index(अगरm->अगरa_index)) == शून्य)
+		जाओ errout;
 
 	err = -EADDRNOTAVAIL;
-	for (ifap = &dn_db->ifa_list;
-	     (ifa = rtnl_dereference(*ifap)) != NULL;
-	     ifap = &ifa->ifa_next) {
-		if (tb[IFA_LOCAL] &&
-		    nla_memcmp(tb[IFA_LOCAL], &ifa->ifa_local, 2))
-			continue;
+	क्रम (अगरap = &dn_db->अगरa_list;
+	     (अगरa = rtnl_dereference(*अगरap)) != शून्य;
+	     अगरap = &अगरa->अगरa_next) अणु
+		अगर (tb[IFA_LOCAL] &&
+		    nla_स_भेद(tb[IFA_LOCAL], &अगरa->अगरa_local, 2))
+			जारी;
 
-		if (tb[IFA_LABEL] && nla_strcmp(tb[IFA_LABEL], ifa->ifa_label))
-			continue;
+		अगर (tb[IFA_LABEL] && nla_म_भेद(tb[IFA_LABEL], अगरa->अगरa_label))
+			जारी;
 
-		dn_dev_del_ifa(dn_db, ifap, 1);
-		return 0;
-	}
+		dn_dev_del_अगरa(dn_db, अगरap, 1);
+		वापस 0;
+	पूर्ण
 
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dn_nl_newaddr(struct sk_buff *skb, struct nlmsghdr *nlh,
-			 struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct nlattr *tb[IFA_MAX+1];
-	struct net_device *dev;
-	struct dn_dev *dn_db;
-	struct ifaddrmsg *ifm;
-	struct dn_ifaddr *ifa;
-	int err;
+अटल पूर्णांक dn_nl_newaddr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा nlattr *tb[IFA_MAX+1];
+	काष्ठा net_device *dev;
+	काष्ठा dn_dev *dn_db;
+	काष्ठा अगरaddrmsg *अगरm;
+	काष्ठा dn_अगरaddr *अगरa;
+	पूर्णांक err;
 
-	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!net_eq(net, &init_net))
-		return -EINVAL;
+	अगर (!net_eq(net, &init_net))
+		वापस -EINVAL;
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(*ifm), tb, IFA_MAX,
-				     dn_ifa_policy, extack);
-	if (err < 0)
-		return err;
+	err = nlmsg_parse_deprecated(nlh, माप(*अगरm), tb, IFA_MAX,
+				     dn_अगरa_policy, extack);
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[IFA_LOCAL] == NULL)
-		return -EINVAL;
+	अगर (tb[IFA_LOCAL] == शून्य)
+		वापस -EINVAL;
 
-	ifm = nlmsg_data(nlh);
-	if ((dev = __dev_get_by_index(&init_net, ifm->ifa_index)) == NULL)
-		return -ENODEV;
+	अगरm = nlmsg_data(nlh);
+	अगर ((dev = __dev_get_by_index(&init_net, अगरm->अगरa_index)) == शून्य)
+		वापस -ENODEV;
 
-	if ((dn_db = rtnl_dereference(dev->dn_ptr)) == NULL) {
+	अगर ((dn_db = rtnl_dereference(dev->dn_ptr)) == शून्य) अणु
 		dn_db = dn_dev_create(dev, &err);
-		if (!dn_db)
-			return err;
-	}
+		अगर (!dn_db)
+			वापस err;
+	पूर्ण
 
-	if ((ifa = dn_dev_alloc_ifa()) == NULL)
-		return -ENOBUFS;
+	अगर ((अगरa = dn_dev_alloc_अगरa()) == शून्य)
+		वापस -ENOBUFS;
 
-	if (tb[IFA_ADDRESS] == NULL)
+	अगर (tb[IFA_ADDRESS] == शून्य)
 		tb[IFA_ADDRESS] = tb[IFA_LOCAL];
 
-	ifa->ifa_local = nla_get_le16(tb[IFA_LOCAL]);
-	ifa->ifa_address = nla_get_le16(tb[IFA_ADDRESS]);
-	ifa->ifa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) :
-					 ifm->ifa_flags;
-	ifa->ifa_scope = ifm->ifa_scope;
-	ifa->ifa_dev = dn_db;
+	अगरa->अगरa_local = nla_get_le16(tb[IFA_LOCAL]);
+	अगरa->अगरa_address = nla_get_le16(tb[IFA_ADDRESS]);
+	अगरa->अगरa_flags = tb[IFA_FLAGS] ? nla_get_u32(tb[IFA_FLAGS]) :
+					 अगरm->अगरa_flags;
+	अगरa->अगरa_scope = अगरm->अगरa_scope;
+	अगरa->अगरa_dev = dn_db;
 
-	if (tb[IFA_LABEL])
-		nla_strscpy(ifa->ifa_label, tb[IFA_LABEL], IFNAMSIZ);
-	else
-		memcpy(ifa->ifa_label, dev->name, IFNAMSIZ);
+	अगर (tb[IFA_LABEL])
+		nla_strscpy(अगरa->अगरa_label, tb[IFA_LABEL], IFNAMSIZ);
+	अन्यथा
+		स_नकल(अगरa->अगरa_label, dev->name, IFNAMSIZ);
 
-	err = dn_dev_insert_ifa(dn_db, ifa);
-	if (err)
-		dn_dev_free_ifa(ifa);
+	err = dn_dev_insert_अगरa(dn_db, अगरa);
+	अगर (err)
+		dn_dev_मुक्त_अगरa(अगरa);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline size_t dn_ifaddr_nlmsg_size(void)
-{
-	return NLMSG_ALIGN(sizeof(struct ifaddrmsg))
+अटल अंतरभूत माप_प्रकार dn_अगरaddr_nlmsg_size(व्योम)
+अणु
+	वापस NLMSG_ALIGN(माप(काष्ठा अगरaddrmsg))
 	       + nla_total_size(IFNAMSIZ) /* IFA_LABEL */
 	       + nla_total_size(2) /* IFA_ADDRESS */
 	       + nla_total_size(2) /* IFA_LOCAL */
 	       + nla_total_size(4); /* IFA_FLAGS */
-}
+पूर्ण
 
-static int dn_nl_fill_ifaddr(struct sk_buff *skb, struct dn_ifaddr *ifa,
-			     u32 portid, u32 seq, int event, unsigned int flags)
-{
-	struct ifaddrmsg *ifm;
-	struct nlmsghdr *nlh;
-	u32 ifa_flags = ifa->ifa_flags | IFA_F_PERMANENT;
+अटल पूर्णांक dn_nl_fill_अगरaddr(काष्ठा sk_buff *skb, काष्ठा dn_अगरaddr *अगरa,
+			     u32 portid, u32 seq, पूर्णांक event, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा अगरaddrmsg *अगरm;
+	काष्ठा nlmsghdr *nlh;
+	u32 अगरa_flags = अगरa->अगरa_flags | IFA_F_PERMANENT;
 
-	nlh = nlmsg_put(skb, portid, seq, event, sizeof(*ifm), flags);
-	if (nlh == NULL)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, event, माप(*अगरm), flags);
+	अगर (nlh == शून्य)
+		वापस -EMSGSIZE;
 
-	ifm = nlmsg_data(nlh);
-	ifm->ifa_family = AF_DECnet;
-	ifm->ifa_prefixlen = 16;
-	ifm->ifa_flags = ifa_flags;
-	ifm->ifa_scope = ifa->ifa_scope;
-	ifm->ifa_index = ifa->ifa_dev->dev->ifindex;
+	अगरm = nlmsg_data(nlh);
+	अगरm->अगरa_family = AF_DECnet;
+	अगरm->अगरa_prefixlen = 16;
+	अगरm->अगरa_flags = अगरa_flags;
+	अगरm->अगरa_scope = अगरa->अगरa_scope;
+	अगरm->अगरa_index = अगरa->अगरa_dev->dev->अगरindex;
 
-	if ((ifa->ifa_address &&
-	     nla_put_le16(skb, IFA_ADDRESS, ifa->ifa_address)) ||
-	    (ifa->ifa_local &&
-	     nla_put_le16(skb, IFA_LOCAL, ifa->ifa_local)) ||
-	    (ifa->ifa_label[0] &&
-	     nla_put_string(skb, IFA_LABEL, ifa->ifa_label)) ||
-	     nla_put_u32(skb, IFA_FLAGS, ifa_flags))
-		goto nla_put_failure;
+	अगर ((अगरa->अगरa_address &&
+	     nla_put_le16(skb, IFA_ADDRESS, अगरa->अगरa_address)) ||
+	    (अगरa->अगरa_local &&
+	     nla_put_le16(skb, IFA_LOCAL, अगरa->अगरa_local)) ||
+	    (अगरa->अगरa_label[0] &&
+	     nla_put_string(skb, IFA_LABEL, अगरa->अगरa_label)) ||
+	     nla_put_u32(skb, IFA_FLAGS, अगरa_flags))
+		जाओ nla_put_failure;
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static void dn_ifaddr_notify(int event, struct dn_ifaddr *ifa)
-{
-	struct sk_buff *skb;
-	int err = -ENOBUFS;
+अटल व्योम dn_अगरaddr_notअगरy(पूर्णांक event, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOBUFS;
 
-	skb = alloc_skb(dn_ifaddr_nlmsg_size(), GFP_KERNEL);
-	if (skb == NULL)
-		goto errout;
+	skb = alloc_skb(dn_अगरaddr_nlmsg_size(), GFP_KERNEL);
+	अगर (skb == शून्य)
+		जाओ errout;
 
-	err = dn_nl_fill_ifaddr(skb, ifa, 0, 0, event, 0);
-	if (err < 0) {
-		/* -EMSGSIZE implies BUG in dn_ifaddr_nlmsg_size() */
+	err = dn_nl_fill_अगरaddr(skb, अगरa, 0, 0, event, 0);
+	अगर (err < 0) अणु
+		/* -EMSGSIZE implies BUG in dn_अगरaddr_nlmsg_size() */
 		WARN_ON(err == -EMSGSIZE);
-		kfree_skb(skb);
-		goto errout;
-	}
-	rtnl_notify(skb, &init_net, 0, RTNLGRP_DECnet_IFADDR, NULL, GFP_KERNEL);
-	return;
+		kमुक्त_skb(skb);
+		जाओ errout;
+	पूर्ण
+	rtnl_notअगरy(skb, &init_net, 0, RTNLGRP_DECnet_IFADDR, शून्य, GFP_KERNEL);
+	वापस;
 errout:
-	if (err < 0)
+	अगर (err < 0)
 		rtnl_set_sk_err(&init_net, RTNLGRP_DECnet_IFADDR, err);
-}
+पूर्ण
 
-static int dn_nl_dump_ifaddr(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(skb->sk);
-	int idx, dn_idx = 0, skip_ndevs, skip_naddr;
-	struct net_device *dev;
-	struct dn_dev *dn_db;
-	struct dn_ifaddr *ifa;
+अटल पूर्णांक dn_nl_dump_अगरaddr(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	पूर्णांक idx, dn_idx = 0, skip_ndevs, skip_naddr;
+	काष्ठा net_device *dev;
+	काष्ठा dn_dev *dn_db;
+	काष्ठा dn_अगरaddr *अगरa;
 
-	if (!net_eq(net, &init_net))
-		return 0;
+	अगर (!net_eq(net, &init_net))
+		वापस 0;
 
 	skip_ndevs = cb->args[0];
 	skip_naddr = cb->args[1];
 
 	idx = 0;
-	rcu_read_lock();
-	for_each_netdev_rcu(&init_net, dev) {
-		if (idx < skip_ndevs)
-			goto cont;
-		else if (idx > skip_ndevs) {
-			/* Only skip over addresses for first dev dumped
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_rcu(&init_net, dev) अणु
+		अगर (idx < skip_ndevs)
+			जाओ cont;
+		अन्यथा अगर (idx > skip_ndevs) अणु
+			/* Only skip over addresses क्रम first dev dumped
 			 * in this iteration (idx == skip_ndevs) */
 			skip_naddr = 0;
-		}
+		पूर्ण
 
-		if ((dn_db = rcu_dereference(dev->dn_ptr)) == NULL)
-			goto cont;
+		अगर ((dn_db = rcu_dereference(dev->dn_ptr)) == शून्य)
+			जाओ cont;
 
-		for (ifa = rcu_dereference(dn_db->ifa_list), dn_idx = 0; ifa;
-		     ifa = rcu_dereference(ifa->ifa_next), dn_idx++) {
-			if (dn_idx < skip_naddr)
-				continue;
+		क्रम (अगरa = rcu_dereference(dn_db->अगरa_list), dn_idx = 0; अगरa;
+		     अगरa = rcu_dereference(अगरa->अगरa_next), dn_idx++) अणु
+			अगर (dn_idx < skip_naddr)
+				जारी;
 
-			if (dn_nl_fill_ifaddr(skb, ifa, NETLINK_CB(cb->skb).portid,
+			अगर (dn_nl_fill_अगरaddr(skb, अगरa, NETLINK_CB(cb->skb).portid,
 					      cb->nlh->nlmsg_seq, RTM_NEWADDR,
 					      NLM_F_MULTI) < 0)
-				goto done;
-		}
+				जाओ करोne;
+		पूर्ण
 cont:
 		idx++;
-	}
-done:
-	rcu_read_unlock();
+	पूर्ण
+करोne:
+	rcu_पढ़ो_unlock();
 	cb->args[0] = idx;
 	cb->args[1] = dn_idx;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int dn_dev_get_first(struct net_device *dev, __le16 *addr)
-{
-	struct dn_dev *dn_db;
-	struct dn_ifaddr *ifa;
-	int rv = -ENODEV;
+अटल पूर्णांक dn_dev_get_first(काष्ठा net_device *dev, __le16 *addr)
+अणु
+	काष्ठा dn_dev *dn_db;
+	काष्ठा dn_अगरaddr *अगरa;
+	पूर्णांक rv = -ENODEV;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	dn_db = rcu_dereference(dev->dn_ptr);
-	if (dn_db == NULL)
-		goto out;
+	अगर (dn_db == शून्य)
+		जाओ out;
 
-	ifa = rcu_dereference(dn_db->ifa_list);
-	if (ifa != NULL) {
-		*addr = ifa->ifa_local;
+	अगरa = rcu_dereference(dn_db->अगरa_list);
+	अगर (अगरa != शून्य) अणु
+		*addr = अगरa->अगरa_local;
 		rv = 0;
-	}
+	पूर्ण
 out:
-	rcu_read_unlock();
-	return rv;
-}
+	rcu_पढ़ो_unlock();
+	वापस rv;
+पूर्ण
 
 /*
- * Find a default address to bind to.
+ * Find a शेष address to bind to.
  *
- * This is one of those areas where the initial VMS concepts don't really
- * map onto the Linux concepts, and since we introduced multiple addresses
- * per interface we have to cope with slightly odd ways of finding out what
- * "our address" really is. Mostly it's not a problem; for this we just guess
- * a sensible default. Eventually the routing code will take care of all the
- * nasties for us I hope.
+ * This is one of those areas where the initial VMS concepts करोn't really
+ * map onto the Linux concepts, and since we पूर्णांकroduced multiple addresses
+ * per पूर्णांकerface we have to cope with slightly odd ways of finding out what
+ * "our address" really is. Mostly it's not a problem; क्रम this we just guess
+ * a sensible शेष. Eventually the routing code will take care of all the
+ * nasties क्रम us I hope.
  */
-int dn_dev_bind_default(__le16 *addr)
-{
-	struct net_device *dev;
-	int rv;
-	dev = dn_dev_get_default();
+पूर्णांक dn_dev_bind_शेष(__le16 *addr)
+अणु
+	काष्ठा net_device *dev;
+	पूर्णांक rv;
+	dev = dn_dev_get_शेष();
 last_chance:
-	if (dev) {
+	अगर (dev) अणु
 		rv = dn_dev_get_first(dev, addr);
 		dev_put(dev);
-		if (rv == 0 || dev == init_net.loopback_dev)
-			return rv;
-	}
+		अगर (rv == 0 || dev == init_net.loopback_dev)
+			वापस rv;
+	पूर्ण
 	dev = init_net.loopback_dev;
 	dev_hold(dev);
-	goto last_chance;
-}
+	जाओ last_chance;
+पूर्ण
 
-static void dn_send_endnode_hello(struct net_device *dev, struct dn_ifaddr *ifa)
-{
-	struct endnode_hello_message *msg;
-	struct sk_buff *skb = NULL;
+अटल व्योम dn_send_endnode_hello(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	काष्ठा endnode_hello_message *msg;
+	काष्ठा sk_buff *skb = शून्य;
 	__le16 *pktlen;
-	struct dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
+	काष्ठा dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
 
-	if ((skb = dn_alloc_skb(NULL, sizeof(*msg), GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = dn_alloc_skb(शून्य, माप(*msg), GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb->dev = dev;
 
-	msg = skb_put(skb, sizeof(*msg));
+	msg = skb_put(skb, माप(*msg));
 
 	msg->msgflg  = 0x0D;
-	memcpy(msg->tiver, dn_eco_version, 3);
-	dn_dn2eth(msg->id, ifa->ifa_local);
+	स_नकल(msg->tiver, dn_eco_version, 3);
+	dn_dn2eth(msg->id, अगरa->अगरa_local);
 	msg->iinfo   = DN_RT_INFO_ENDN;
 	msg->blksize = cpu_to_le16(mtu2blksize(dev));
 	msg->area    = 0x00;
-	memset(msg->seed, 0, 8);
-	memcpy(msg->neighbor, dn_hiord, ETH_ALEN);
+	स_रखो(msg->seed, 0, 8);
+	स_नकल(msg->neighbor, dn_hiord, ETH_ALEN);
 
-	if (dn_db->router) {
-		struct dn_neigh *dn = (struct dn_neigh *)dn_db->router;
+	अगर (dn_db->router) अणु
+		काष्ठा dn_neigh *dn = (काष्ठा dn_neigh *)dn_db->router;
 		dn_dn2eth(msg->neighbor, dn->addr);
-	}
+	पूर्ण
 
-	msg->timer   = cpu_to_le16((unsigned short)dn_db->parms.t3);
+	msg->समयr   = cpu_to_le16((अचिन्हित लघु)dn_db->parms.t3);
 	msg->mpd     = 0x00;
 	msg->datalen = 0x02;
-	memset(msg->data, 0xAA, 2);
+	स_रखो(msg->data, 0xAA, 2);
 
 	pktlen = skb_push(skb, 2);
 	*pktlen = cpu_to_le16(skb->len - 2);
@@ -871,60 +872,60 @@ static void dn_send_endnode_hello(struct net_device *dev, struct dn_ifaddr *ifa)
 	skb_reset_network_header(skb);
 
 	dn_rt_finish_output(skb, dn_rt_all_rt_mcast, msg->id);
-}
+पूर्ण
 
 
-#define DRDELAY (5 * HZ)
+#घोषणा DRDELAY (5 * HZ)
 
-static int dn_am_i_a_router(struct dn_neigh *dn, struct dn_dev *dn_db, struct dn_ifaddr *ifa)
-{
-	/* First check time since device went up */
-	if (time_before(jiffies, dn_db->uptime + DRDELAY))
-		return 0;
+अटल पूर्णांक dn_am_i_a_router(काष्ठा dn_neigh *dn, काष्ठा dn_dev *dn_db, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	/* First check समय since device went up */
+	अगर (समय_beक्रमe(jअगरfies, dn_db->upसमय + DRDELAY))
+		वापस 0;
 
 	/* If there is no router, then yes... */
-	if (!dn_db->router)
-		return 1;
+	अगर (!dn_db->router)
+		वापस 1;
 
-	/* otherwise only if we have a higher priority or.. */
-	if (dn->priority < dn_db->parms.priority)
-		return 1;
+	/* otherwise only अगर we have a higher priority or.. */
+	अगर (dn->priority < dn_db->parms.priority)
+		वापस 1;
 
-	/* if we have equal priority and a higher node number */
-	if (dn->priority != dn_db->parms.priority)
-		return 0;
+	/* अगर we have equal priority and a higher node number */
+	अगर (dn->priority != dn_db->parms.priority)
+		वापस 0;
 
-	if (le16_to_cpu(dn->addr) < le16_to_cpu(ifa->ifa_local))
-		return 1;
+	अगर (le16_to_cpu(dn->addr) < le16_to_cpu(अगरa->अगरa_local))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dn_send_router_hello(struct net_device *dev, struct dn_ifaddr *ifa)
-{
-	int n;
-	struct dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
-	struct dn_neigh *dn = (struct dn_neigh *)dn_db->router;
-	struct sk_buff *skb;
-	size_t size;
-	unsigned char *ptr;
-	unsigned char *i1, *i2;
+अटल व्योम dn_send_router_hello(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	पूर्णांक n;
+	काष्ठा dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
+	काष्ठा dn_neigh *dn = (काष्ठा dn_neigh *)dn_db->router;
+	काष्ठा sk_buff *skb;
+	माप_प्रकार size;
+	अचिन्हित अक्षर *ptr;
+	अचिन्हित अक्षर *i1, *i2;
 	__le16 *pktlen;
-	char *src;
+	अक्षर *src;
 
-	if (mtu2blksize(dev) < (26 + 7))
-		return;
+	अगर (mtu2blksize(dev) < (26 + 7))
+		वापस;
 
 	n = mtu2blksize(dev) - 26;
 	n /= 7;
 
-	if (n > 32)
+	अगर (n > 32)
 		n = 32;
 
 	size = 2 + 26 + 7 * n;
 
-	if ((skb = dn_alloc_skb(NULL, size, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = dn_alloc_skb(शून्य, size, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb->dev = dev;
 	ptr = skb_put(skb, size);
@@ -933,20 +934,20 @@ static void dn_send_router_hello(struct net_device *dev, struct dn_ifaddr *ifa)
 	*ptr++ = 2; /* ECO */
 	*ptr++ = 0;
 	*ptr++ = 0;
-	dn_dn2eth(ptr, ifa->ifa_local);
+	dn_dn2eth(ptr, अगरa->अगरa_local);
 	src = ptr;
 	ptr += ETH_ALEN;
-	*ptr++ = dn_db->parms.forwarding == 1 ?
+	*ptr++ = dn_db->parms.क्रमwarding == 1 ?
 			DN_RT_INFO_L1RT : DN_RT_INFO_L2RT;
 	*((__le16 *)ptr) = cpu_to_le16(mtu2blksize(dev));
 	ptr += 2;
 	*ptr++ = dn_db->parms.priority; /* Priority */
 	*ptr++ = 0; /* Area: Reserved */
-	*((__le16 *)ptr) = cpu_to_le16((unsigned short)dn_db->parms.t3);
+	*((__le16 *)ptr) = cpu_to_le16((अचिन्हित लघु)dn_db->parms.t3);
 	ptr += 2;
 	*ptr++ = 0; /* MPD: Reserved */
 	i1 = ptr++;
-	memset(ptr, 0, 7); /* Name: Reserved */
+	स_रखो(ptr, 0, 7); /* Name: Reserved */
 	ptr += 7;
 	i2 = ptr++;
 
@@ -962,403 +963,403 @@ static void dn_send_router_hello(struct net_device *dev, struct dn_ifaddr *ifa)
 
 	skb_reset_network_header(skb);
 
-	if (dn_am_i_a_router(dn, dn_db, ifa)) {
-		struct sk_buff *skb2 = skb_copy(skb, GFP_ATOMIC);
-		if (skb2) {
+	अगर (dn_am_i_a_router(dn, dn_db, अगरa)) अणु
+		काष्ठा sk_buff *skb2 = skb_copy(skb, GFP_ATOMIC);
+		अगर (skb2) अणु
 			dn_rt_finish_output(skb2, dn_rt_all_end_mcast, src);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dn_rt_finish_output(skb, dn_rt_all_rt_mcast, src);
-}
+पूर्ण
 
-static void dn_send_brd_hello(struct net_device *dev, struct dn_ifaddr *ifa)
-{
-	struct dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
+अटल व्योम dn_send_brd_hello(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	काष्ठा dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
 
-	if (dn_db->parms.forwarding == 0)
-		dn_send_endnode_hello(dev, ifa);
-	else
-		dn_send_router_hello(dev, ifa);
-}
+	अगर (dn_db->parms.क्रमwarding == 0)
+		dn_send_endnode_hello(dev, अगरa);
+	अन्यथा
+		dn_send_router_hello(dev, अगरa);
+पूर्ण
 
-static void dn_send_ptp_hello(struct net_device *dev, struct dn_ifaddr *ifa)
-{
-	int tdlen = 16;
-	int size = dev->hard_header_len + 2 + 4 + tdlen;
-	struct sk_buff *skb = dn_alloc_skb(NULL, size, GFP_ATOMIC);
-	int i;
-	unsigned char *ptr;
-	char src[ETH_ALEN];
+अटल व्योम dn_send_ptp_hello(काष्ठा net_device *dev, काष्ठा dn_अगरaddr *अगरa)
+अणु
+	पूर्णांक tdlen = 16;
+	पूर्णांक size = dev->hard_header_len + 2 + 4 + tdlen;
+	काष्ठा sk_buff *skb = dn_alloc_skb(शून्य, size, GFP_ATOMIC);
+	पूर्णांक i;
+	अचिन्हित अक्षर *ptr;
+	अक्षर src[ETH_ALEN];
 
-	if (skb == NULL)
-		return ;
+	अगर (skb == शून्य)
+		वापस ;
 
 	skb->dev = dev;
 	skb_push(skb, dev->hard_header_len);
 	ptr = skb_put(skb, 2 + 4 + tdlen);
 
 	*ptr++ = DN_RT_PKT_HELO;
-	*((__le16 *)ptr) = ifa->ifa_local;
+	*((__le16 *)ptr) = अगरa->अगरa_local;
 	ptr += 2;
 	*ptr++ = tdlen;
 
-	for(i = 0; i < tdlen; i++)
+	क्रम(i = 0; i < tdlen; i++)
 		*ptr++ = 0252;
 
-	dn_dn2eth(src, ifa->ifa_local);
+	dn_dn2eth(src, अगरa->अगरa_local);
 	dn_rt_finish_output(skb, dn_rt_all_rt_mcast, src);
-}
+पूर्ण
 
-static int dn_eth_up(struct net_device *dev)
-{
-	struct dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
+अटल पूर्णांक dn_eth_up(काष्ठा net_device *dev)
+अणु
+	काष्ठा dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
 
-	if (dn_db->parms.forwarding == 0)
+	अगर (dn_db->parms.क्रमwarding == 0)
 		dev_mc_add(dev, dn_rt_all_end_mcast);
-	else
+	अन्यथा
 		dev_mc_add(dev, dn_rt_all_rt_mcast);
 
-	dn_db->use_long = 1;
+	dn_db->use_दीर्घ = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dn_eth_down(struct net_device *dev)
-{
-	struct dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
+अटल व्योम dn_eth_करोwn(काष्ठा net_device *dev)
+अणु
+	काष्ठा dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
 
-	if (dn_db->parms.forwarding == 0)
+	अगर (dn_db->parms.क्रमwarding == 0)
 		dev_mc_del(dev, dn_rt_all_end_mcast);
-	else
+	अन्यथा
 		dev_mc_del(dev, dn_rt_all_rt_mcast);
-}
+पूर्ण
 
-static void dn_dev_set_timer(struct net_device *dev);
+अटल व्योम dn_dev_set_समयr(काष्ठा net_device *dev);
 
-static void dn_dev_timer_func(struct timer_list *t)
-{
-	struct dn_dev *dn_db = from_timer(dn_db, t, timer);
-	struct net_device *dev;
-	struct dn_ifaddr *ifa;
+अटल व्योम dn_dev_समयr_func(काष्ठा समयr_list *t)
+अणु
+	काष्ठा dn_dev *dn_db = from_समयr(dn_db, t, समयr);
+	काष्ठा net_device *dev;
+	काष्ठा dn_अगरaddr *अगरa;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	dev = dn_db->dev;
-	if (dn_db->t3 <= dn_db->parms.t2) {
-		if (dn_db->parms.timer3) {
-			for (ifa = rcu_dereference(dn_db->ifa_list);
-			     ifa;
-			     ifa = rcu_dereference(ifa->ifa_next)) {
-				if (!(ifa->ifa_flags & IFA_F_SECONDARY))
-					dn_db->parms.timer3(dev, ifa);
-			}
-		}
+	अगर (dn_db->t3 <= dn_db->parms.t2) अणु
+		अगर (dn_db->parms.समयr3) अणु
+			क्रम (अगरa = rcu_dereference(dn_db->अगरa_list);
+			     अगरa;
+			     अगरa = rcu_dereference(अगरa->अगरa_next)) अणु
+				अगर (!(अगरa->अगरa_flags & IFA_F_SECONDARY))
+					dn_db->parms.समयr3(dev, अगरa);
+			पूर्ण
+		पूर्ण
 		dn_db->t3 = dn_db->parms.t3;
-	} else {
+	पूर्ण अन्यथा अणु
 		dn_db->t3 -= dn_db->parms.t2;
-	}
-	rcu_read_unlock();
-	dn_dev_set_timer(dev);
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	dn_dev_set_समयr(dev);
+पूर्ण
 
-static void dn_dev_set_timer(struct net_device *dev)
-{
-	struct dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
+अटल व्योम dn_dev_set_समयr(काष्ठा net_device *dev)
+अणु
+	काष्ठा dn_dev *dn_db = rcu_dereference_raw(dev->dn_ptr);
 
-	if (dn_db->parms.t2 > dn_db->parms.t3)
+	अगर (dn_db->parms.t2 > dn_db->parms.t3)
 		dn_db->parms.t2 = dn_db->parms.t3;
 
-	dn_db->timer.expires = jiffies + (dn_db->parms.t2 * HZ);
+	dn_db->समयr.expires = jअगरfies + (dn_db->parms.t2 * HZ);
 
-	add_timer(&dn_db->timer);
-}
+	add_समयr(&dn_db->समयr);
+पूर्ण
 
-static struct dn_dev *dn_dev_create(struct net_device *dev, int *err)
-{
-	int i;
-	struct dn_dev_parms *p = dn_dev_list;
-	struct dn_dev *dn_db;
+अटल काष्ठा dn_dev *dn_dev_create(काष्ठा net_device *dev, पूर्णांक *err)
+अणु
+	पूर्णांक i;
+	काष्ठा dn_dev_parms *p = dn_dev_list;
+	काष्ठा dn_dev *dn_db;
 
-	for(i = 0; i < DN_DEV_LIST_SIZE; i++, p++) {
-		if (p->type == dev->type)
-			break;
-	}
+	क्रम(i = 0; i < DN_DEV_LIST_SIZE; i++, p++) अणु
+		अगर (p->type == dev->type)
+			अवरोध;
+	पूर्ण
 
 	*err = -ENODEV;
-	if (i == DN_DEV_LIST_SIZE)
-		return NULL;
+	अगर (i == DN_DEV_LIST_SIZE)
+		वापस शून्य;
 
 	*err = -ENOBUFS;
-	if ((dn_db = kzalloc(sizeof(struct dn_dev), GFP_ATOMIC)) == NULL)
-		return NULL;
+	अगर ((dn_db = kzalloc(माप(काष्ठा dn_dev), GFP_ATOMIC)) == शून्य)
+		वापस शून्य;
 
-	memcpy(&dn_db->parms, p, sizeof(struct dn_dev_parms));
+	स_नकल(&dn_db->parms, p, माप(काष्ठा dn_dev_parms));
 
-	rcu_assign_pointer(dev->dn_ptr, dn_db);
+	rcu_assign_poपूर्णांकer(dev->dn_ptr, dn_db);
 	dn_db->dev = dev;
-	timer_setup(&dn_db->timer, dn_dev_timer_func, 0);
+	समयr_setup(&dn_db->समयr, dn_dev_समयr_func, 0);
 
-	dn_db->uptime = jiffies;
+	dn_db->upसमय = jअगरfies;
 
 	dn_db->neigh_parms = neigh_parms_alloc(dev, &dn_neigh_table);
-	if (!dn_db->neigh_parms) {
-		RCU_INIT_POINTER(dev->dn_ptr, NULL);
-		kfree(dn_db);
-		return NULL;
-	}
+	अगर (!dn_db->neigh_parms) अणु
+		RCU_INIT_POINTER(dev->dn_ptr, शून्य);
+		kमुक्त(dn_db);
+		वापस शून्य;
+	पूर्ण
 
-	if (dn_db->parms.up) {
-		if (dn_db->parms.up(dev) < 0) {
+	अगर (dn_db->parms.up) अणु
+		अगर (dn_db->parms.up(dev) < 0) अणु
 			neigh_parms_release(&dn_neigh_table, dn_db->neigh_parms);
-			dev->dn_ptr = NULL;
-			kfree(dn_db);
-			return NULL;
-		}
-	}
+			dev->dn_ptr = शून्य;
+			kमुक्त(dn_db);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	dn_dev_sysctl_register(dev, &dn_db->parms);
+	dn_dev_sysctl_रेजिस्टर(dev, &dn_db->parms);
 
-	dn_dev_set_timer(dev);
+	dn_dev_set_समयr(dev);
 
 	*err = 0;
-	return dn_db;
-}
+	वापस dn_db;
+पूर्ण
 
 
 /*
  * This processes a device up event. We only start up
  * the loopback device & ethernet devices with correct
- * MAC addresses automatically. Others must be started
- * specifically.
+ * MAC addresses स्वतःmatically. Others must be started
+ * specअगरically.
  *
  * FIXME: How should we configure the loopback address ? If we could dispense
- * with using decnet_address here and for autobind, it will be one less thing
- * for users to worry about setting up.
+ * with using decnet_address here and क्रम स्वतःbind, it will be one less thing
+ * क्रम users to worry about setting up.
  */
 
-void dn_dev_up(struct net_device *dev)
-{
-	struct dn_ifaddr *ifa;
+व्योम dn_dev_up(काष्ठा net_device *dev)
+अणु
+	काष्ठा dn_अगरaddr *अगरa;
 	__le16 addr = decnet_address;
-	int maybe_default = 0;
-	struct dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
+	पूर्णांक maybe_शेष = 0;
+	काष्ठा dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
 
-	if ((dev->type != ARPHRD_ETHER) && (dev->type != ARPHRD_LOOPBACK))
-		return;
+	अगर ((dev->type != ARPHRD_ETHER) && (dev->type != ARPHRD_LOOPBACK))
+		वापस;
 
 	/*
 	 * Need to ensure that loopback device has a dn_db attached to it
 	 * to allow creation of neighbours against it, even though it might
-	 * not have a local address of its own. Might as well do the same for
-	 * all autoconfigured interfaces.
+	 * not have a local address of its own. Might as well करो the same क्रम
+	 * all स्वतःconfigured पूर्णांकerfaces.
 	 */
-	if (dn_db == NULL) {
-		int err;
+	अगर (dn_db == शून्य) अणु
+		पूर्णांक err;
 		dn_db = dn_dev_create(dev, &err);
-		if (dn_db == NULL)
-			return;
-	}
+		अगर (dn_db == शून्य)
+			वापस;
+	पूर्ण
 
-	if (dev->type == ARPHRD_ETHER) {
-		if (memcmp(dev->dev_addr, dn_hiord, 4) != 0)
-			return;
+	अगर (dev->type == ARPHRD_ETHER) अणु
+		अगर (स_भेद(dev->dev_addr, dn_hiord, 4) != 0)
+			वापस;
 		addr = dn_eth2dn(dev->dev_addr);
-		maybe_default = 1;
-	}
+		maybe_शेष = 1;
+	पूर्ण
 
-	if (addr == 0)
-		return;
+	अगर (addr == 0)
+		वापस;
 
-	if ((ifa = dn_dev_alloc_ifa()) == NULL)
-		return;
+	अगर ((अगरa = dn_dev_alloc_अगरa()) == शून्य)
+		वापस;
 
-	ifa->ifa_local = ifa->ifa_address = addr;
-	ifa->ifa_flags = 0;
-	ifa->ifa_scope = RT_SCOPE_UNIVERSE;
-	strcpy(ifa->ifa_label, dev->name);
+	अगरa->अगरa_local = अगरa->अगरa_address = addr;
+	अगरa->अगरa_flags = 0;
+	अगरa->अगरa_scope = RT_SCOPE_UNIVERSE;
+	म_नकल(अगरa->अगरa_label, dev->name);
 
-	dn_dev_set_ifa(dev, ifa);
+	dn_dev_set_अगरa(dev, अगरa);
 
 	/*
-	 * Automagically set the default device to the first automatically
-	 * configured ethernet card in the system.
+	 * Automagically set the शेष device to the first स्वतःmatically
+	 * configured ethernet card in the प्रणाली.
 	 */
-	if (maybe_default) {
+	अगर (maybe_शेष) अणु
 		dev_hold(dev);
-		if (dn_dev_set_default(dev, 0))
+		अगर (dn_dev_set_शेष(dev, 0))
 			dev_put(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dn_dev_delete(struct net_device *dev)
-{
-	struct dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
+अटल व्योम dn_dev_delete(काष्ठा net_device *dev)
+अणु
+	काष्ठा dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
 
-	if (dn_db == NULL)
-		return;
+	अगर (dn_db == शून्य)
+		वापस;
 
-	del_timer_sync(&dn_db->timer);
-	dn_dev_sysctl_unregister(&dn_db->parms);
-	dn_dev_check_default(dev);
-	neigh_ifdown(&dn_neigh_table, dev);
+	del_समयr_sync(&dn_db->समयr);
+	dn_dev_sysctl_unरेजिस्टर(&dn_db->parms);
+	dn_dev_check_शेष(dev);
+	neigh_अगरकरोwn(&dn_neigh_table, dev);
 
-	if (dn_db->parms.down)
-		dn_db->parms.down(dev);
+	अगर (dn_db->parms.करोwn)
+		dn_db->parms.करोwn(dev);
 
-	dev->dn_ptr = NULL;
+	dev->dn_ptr = शून्य;
 
 	neigh_parms_release(&dn_neigh_table, dn_db->neigh_parms);
-	neigh_ifdown(&dn_neigh_table, dev);
+	neigh_अगरकरोwn(&dn_neigh_table, dev);
 
-	if (dn_db->router)
+	अगर (dn_db->router)
 		neigh_release(dn_db->router);
-	if (dn_db->peer)
+	अगर (dn_db->peer)
 		neigh_release(dn_db->peer);
 
-	kfree(dn_db);
-}
+	kमुक्त(dn_db);
+पूर्ण
 
-void dn_dev_down(struct net_device *dev)
-{
-	struct dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
-	struct dn_ifaddr *ifa;
+व्योम dn_dev_करोwn(काष्ठा net_device *dev)
+अणु
+	काष्ठा dn_dev *dn_db = rtnl_dereference(dev->dn_ptr);
+	काष्ठा dn_अगरaddr *अगरa;
 
-	if (dn_db == NULL)
-		return;
+	अगर (dn_db == शून्य)
+		वापस;
 
-	while ((ifa = rtnl_dereference(dn_db->ifa_list)) != NULL) {
-		dn_dev_del_ifa(dn_db, &dn_db->ifa_list, 0);
-		dn_dev_free_ifa(ifa);
-	}
+	जबतक ((अगरa = rtnl_dereference(dn_db->अगरa_list)) != शून्य) अणु
+		dn_dev_del_अगरa(dn_db, &dn_db->अगरa_list, 0);
+		dn_dev_मुक्त_अगरa(अगरa);
+	पूर्ण
 
 	dn_dev_delete(dev);
-}
+पूर्ण
 
-void dn_dev_init_pkt(struct sk_buff *skb)
-{
-}
+व्योम dn_dev_init_pkt(काष्ठा sk_buff *skb)
+अणु
+पूर्ण
 
-void dn_dev_veri_pkt(struct sk_buff *skb)
-{
-}
+व्योम dn_dev_veri_pkt(काष्ठा sk_buff *skb)
+अणु
+पूर्ण
 
-void dn_dev_hello(struct sk_buff *skb)
-{
-}
+व्योम dn_dev_hello(काष्ठा sk_buff *skb)
+अणु
+पूर्ण
 
-void dn_dev_devices_off(void)
-{
-	struct net_device *dev;
+व्योम dn_dev_devices_off(व्योम)
+अणु
+	काष्ठा net_device *dev;
 
 	rtnl_lock();
-	for_each_netdev(&init_net, dev)
-		dn_dev_down(dev);
+	क्रम_each_netdev(&init_net, dev)
+		dn_dev_करोwn(dev);
 	rtnl_unlock();
 
-}
+पूर्ण
 
-void dn_dev_devices_on(void)
-{
-	struct net_device *dev;
+व्योम dn_dev_devices_on(व्योम)
+अणु
+	काष्ठा net_device *dev;
 
 	rtnl_lock();
-	for_each_netdev(&init_net, dev) {
-		if (dev->flags & IFF_UP)
+	क्रम_each_netdev(&init_net, dev) अणु
+		अगर (dev->flags & IFF_UP)
 			dn_dev_up(dev);
-	}
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-int register_dnaddr_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&dnaddr_chain, nb);
-}
+पूर्णांक रेजिस्टर_dnaddr_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&dnaddr_chain, nb);
+पूर्ण
 
-int unregister_dnaddr_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&dnaddr_chain, nb);
-}
+पूर्णांक unरेजिस्टर_dnaddr_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&dnaddr_chain, nb);
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static inline int is_dn_dev(struct net_device *dev)
-{
-	return dev->dn_ptr != NULL;
-}
+#अगर_घोषित CONFIG_PROC_FS
+अटल अंतरभूत पूर्णांक is_dn_dev(काष्ठा net_device *dev)
+अणु
+	वापस dev->dn_ptr != शून्य;
+पूर्ण
 
-static void *dn_dev_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *dn_dev_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(RCU)
-{
-	int i;
-	struct net_device *dev;
+अणु
+	पूर्णांक i;
+	काष्ठा net_device *dev;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	if (*pos == 0)
-		return SEQ_START_TOKEN;
+	अगर (*pos == 0)
+		वापस SEQ_START_TOKEN;
 
 	i = 1;
-	for_each_netdev_rcu(&init_net, dev) {
-		if (!is_dn_dev(dev))
-			continue;
+	क्रम_each_netdev_rcu(&init_net, dev) अणु
+		अगर (!is_dn_dev(dev))
+			जारी;
 
-		if (i++ == *pos)
-			return dev;
-	}
+		अगर (i++ == *pos)
+			वापस dev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *dn_dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct net_device *dev;
+अटल व्योम *dn_dev_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा net_device *dev;
 
 	++*pos;
 
 	dev = v;
-	if (v == SEQ_START_TOKEN)
+	अगर (v == SEQ_START_TOKEN)
 		dev = net_device_entry(&init_net.dev_base_head);
 
-	for_each_netdev_continue_rcu(&init_net, dev) {
-		if (!is_dn_dev(dev))
-			continue;
+	क्रम_each_netdev_जारी_rcu(&init_net, dev) अणु
+		अगर (!is_dn_dev(dev))
+			जारी;
 
-		return dev;
-	}
+		वापस dev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void dn_dev_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम dn_dev_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(RCU)
-{
-	rcu_read_unlock();
-}
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static char *dn_type2asc(char type)
-{
-	switch (type) {
-	case DN_DEV_BCAST:
-		return "B";
-	case DN_DEV_UCAST:
-		return "U";
-	case DN_DEV_MPOINT:
-		return "M";
-	}
+अटल अक्षर *dn_type2asc(अक्षर type)
+अणु
+	चयन (type) अणु
+	हाल DN_DEV_BCAST:
+		वापस "B";
+	हाल DN_DEV_UCAST:
+		वापस "U";
+	हाल DN_DEV_MPOINT:
+		वापस "M";
+	पूर्ण
 
-	return "?";
-}
+	वापस "?";
+पूर्ण
 
-static int dn_dev_seq_show(struct seq_file *seq, void *v)
-{
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq, "Name     Flags T1   Timer1 T3   Timer3 BlkSize Pri State DevType    Router Peer\n");
-	else {
-		struct net_device *dev = v;
-		char peer_buf[DN_ASCBUF_LEN];
-		char router_buf[DN_ASCBUF_LEN];
-		struct dn_dev *dn_db = rcu_dereference(dev->dn_ptr);
+अटल पूर्णांक dn_dev_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq, "Name     Flags T1   Timer1 T3   Timer3 BlkSize Pri State DevType    Router Peer\n");
+	अन्यथा अणु
+		काष्ठा net_device *dev = v;
+		अक्षर peer_buf[DN_ASCBUF_LEN];
+		अक्षर router_buf[DN_ASCBUF_LEN];
+		काष्ठा dn_dev *dn_db = rcu_dereference(dev->dn_ptr);
 
-		seq_printf(seq, "%-8s %1s     %04u %04u   %04lu %04lu"
+		seq_म_लिखो(seq, "%-8s %1s     %04u %04u   %04lu %04lu"
 				"   %04hu    %03d %02x    %-10s %-7s %-7s\n",
 				dev->name,
 				dn_type2asc(dn_db->parms.mode),
@@ -1369,67 +1370,67 @@ static int dn_dev_seq_show(struct seq_file *seq, void *v)
 				dn_db->parms.state, dn_db->parms.name,
 				dn_db->router ? dn_addr2asc(le16_to_cpu(*(__le16 *)dn_db->router->primary_key), router_buf) : "",
 				dn_db->peer ? dn_addr2asc(le16_to_cpu(*(__le16 *)dn_db->peer->primary_key), peer_buf) : "");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations dn_dev_seq_ops = {
+अटल स्थिर काष्ठा seq_operations dn_dev_seq_ops = अणु
 	.start	= dn_dev_seq_start,
 	.next	= dn_dev_seq_next,
 	.stop	= dn_dev_seq_stop,
 	.show	= dn_dev_seq_show,
-};
-#endif /* CONFIG_PROC_FS */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-static int addr[2];
-module_param_array(addr, int, NULL, 0444);
+अटल पूर्णांक addr[2];
+module_param_array(addr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(addr, "The DECnet address of this machine: area,node");
 
-void __init dn_dev_init(void)
-{
-	if (addr[0] > 63 || addr[0] < 0) {
-		printk(KERN_ERR "DECnet: Area must be between 0 and 63");
-		return;
-	}
+व्योम __init dn_dev_init(व्योम)
+अणु
+	अगर (addr[0] > 63 || addr[0] < 0) अणु
+		prपूर्णांकk(KERN_ERR "DECnet: Area must be between 0 and 63");
+		वापस;
+	पूर्ण
 
-	if (addr[1] > 1023 || addr[1] < 0) {
-		printk(KERN_ERR "DECnet: Node must be between 0 and 1023");
-		return;
-	}
+	अगर (addr[1] > 1023 || addr[1] < 0) अणु
+		prपूर्णांकk(KERN_ERR "DECnet: Node must be between 0 and 1023");
+		वापस;
+	पूर्ण
 
 	decnet_address = cpu_to_le16((addr[0] << 10) | addr[1]);
 
 	dn_dev_devices_on();
 
-	rtnl_register_module(THIS_MODULE, PF_DECnet, RTM_NEWADDR,
-			     dn_nl_newaddr, NULL, 0);
-	rtnl_register_module(THIS_MODULE, PF_DECnet, RTM_DELADDR,
-			     dn_nl_deladdr, NULL, 0);
-	rtnl_register_module(THIS_MODULE, PF_DECnet, RTM_GETADDR,
-			     NULL, dn_nl_dump_ifaddr, 0);
+	rtnl_रेजिस्टर_module(THIS_MODULE, PF_DECnet, RTM_NEWADDR,
+			     dn_nl_newaddr, शून्य, 0);
+	rtnl_रेजिस्टर_module(THIS_MODULE, PF_DECnet, RTM_DELADDR,
+			     dn_nl_deladdr, शून्य, 0);
+	rtnl_रेजिस्टर_module(THIS_MODULE, PF_DECnet, RTM_GETADDR,
+			     शून्य, dn_nl_dump_अगरaddr, 0);
 
 	proc_create_seq("decnet_dev", 0444, init_net.proc_net, &dn_dev_seq_ops);
 
-#ifdef CONFIG_SYSCTL
-	{
-		int i;
-		for(i = 0; i < DN_DEV_LIST_SIZE; i++)
-			dn_dev_sysctl_register(NULL, &dn_dev_list[i]);
-	}
-#endif /* CONFIG_SYSCTL */
-}
+#अगर_घोषित CONFIG_SYSCTL
+	अणु
+		पूर्णांक i;
+		क्रम(i = 0; i < DN_DEV_LIST_SIZE; i++)
+			dn_dev_sysctl_रेजिस्टर(शून्य, &dn_dev_list[i]);
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSCTL */
+पूर्ण
 
-void __exit dn_dev_cleanup(void)
-{
-#ifdef CONFIG_SYSCTL
-	{
-		int i;
-		for(i = 0; i < DN_DEV_LIST_SIZE; i++)
-			dn_dev_sysctl_unregister(&dn_dev_list[i]);
-	}
-#endif /* CONFIG_SYSCTL */
+व्योम __निकास dn_dev_cleanup(व्योम)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	अणु
+		पूर्णांक i;
+		क्रम(i = 0; i < DN_DEV_LIST_SIZE; i++)
+			dn_dev_sysctl_unरेजिस्टर(&dn_dev_list[i]);
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSCTL */
 
-	remove_proc_entry("decnet_dev", init_net.proc_net);
+	हटाओ_proc_entry("decnet_dev", init_net.proc_net);
 
 	dn_dev_devices_off();
-}
+पूर्ण

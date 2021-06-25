@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * AMD Platform Security Processor (PSP) interface driver
+ * AMD Platक्रमm Security Processor (PSP) पूर्णांकerface driver
  *
  * Copyright (C) 2017-2019 Advanced Micro Devices, Inc.
  *
  * Author: Brijesh Singh <brijesh.singh@amd.com>
  */
 
-#ifndef __PSP_DEV_H__
-#define __PSP_DEV_H__
+#अगर_अघोषित __PSP_DEV_H__
+#घोषणा __PSP_DEV_H__
 
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/bits.h>
-#include <linux/interrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "sp-dev.h"
+#समावेश "sp-dev.h"
 
-#define PSP_CMDRESP_RESP		BIT(31)
-#define PSP_CMDRESP_ERR_MASK		0xffff
+#घोषणा PSP_CMDRESP_RESP		BIT(31)
+#घोषणा PSP_CMDRESP_ERR_MASK		0xffff
 
-#define MAX_PSP_NAME_LEN		16
+#घोषणा MAX_PSP_NAME_LEN		16
 
-extern struct psp_device *psp_master;
+बाह्य काष्ठा psp_device *psp_master;
 
-typedef void (*psp_irq_handler_t)(int, void *, unsigned int);
+प्रकार व्योम (*psp_irq_handler_t)(पूर्णांक, व्योम *, अचिन्हित पूर्णांक);
 
-struct psp_device {
-	struct list_head entry;
+काष्ठा psp_device अणु
+	काष्ठा list_head entry;
 
-	struct psp_vdata *vdata;
-	char name[MAX_PSP_NAME_LEN];
+	काष्ठा psp_vdata *vdata;
+	अक्षर name[MAX_PSP_NAME_LEN];
 
-	struct device *dev;
-	struct sp_device *sp;
+	काष्ठा device *dev;
+	काष्ठा sp_device *sp;
 
-	void __iomem *io_regs;
+	व्योम __iomem *io_regs;
 
 	psp_irq_handler_t sev_irq_handler;
-	void *sev_irq_data;
+	व्योम *sev_irq_data;
 
 	psp_irq_handler_t tee_irq_handler;
-	void *tee_irq_data;
+	व्योम *tee_irq_data;
 
-	void *sev_data;
-	void *tee_data;
-};
+	व्योम *sev_data;
+	व्योम *tee_data;
+पूर्ण;
 
-void psp_set_sev_irq_handler(struct psp_device *psp, psp_irq_handler_t handler,
-			     void *data);
-void psp_clear_sev_irq_handler(struct psp_device *psp);
+व्योम psp_set_sev_irq_handler(काष्ठा psp_device *psp, psp_irq_handler_t handler,
+			     व्योम *data);
+व्योम psp_clear_sev_irq_handler(काष्ठा psp_device *psp);
 
-void psp_set_tee_irq_handler(struct psp_device *psp, psp_irq_handler_t handler,
-			     void *data);
-void psp_clear_tee_irq_handler(struct psp_device *psp);
+व्योम psp_set_tee_irq_handler(काष्ठा psp_device *psp, psp_irq_handler_t handler,
+			     व्योम *data);
+व्योम psp_clear_tee_irq_handler(काष्ठा psp_device *psp);
 
-struct psp_device *psp_get_master_device(void);
+काष्ठा psp_device *psp_get_master_device(व्योम);
 
-#endif /* __PSP_DEV_H */
+#पूर्ण_अगर /* __PSP_DEV_H */

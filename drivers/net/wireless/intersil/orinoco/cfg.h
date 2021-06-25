@@ -1,15 +1,16 @@
+<शैली गुरु>
 /* cfg80211 support.
  *
- * See copyright notice in main.c
+ * See copyright notice in मुख्य.c
  */
-#ifndef ORINOCO_CFG_H
-#define ORINOCO_CFG_H
+#अगर_अघोषित ORINOCO_CFG_H
+#घोषणा ORINOCO_CFG_H
 
-#include <net/cfg80211.h>
+#समावेश <net/cfg80211.h>
 
-extern const struct cfg80211_ops orinoco_cfg_ops;
+बाह्य स्थिर काष्ठा cfg80211_ops orinoco_cfg_ops;
 
-void orinoco_wiphy_init(struct wiphy *wiphy);
-int orinoco_wiphy_register(struct wiphy *wiphy);
+व्योम orinoco_wiphy_init(काष्ठा wiphy *wiphy);
+पूर्णांक orinoco_wiphy_रेजिस्टर(काष्ठा wiphy *wiphy);
 
-#endif /* ORINOCO_CFG_H */
+#पूर्ण_अगर /* ORINOCO_CFG_H */

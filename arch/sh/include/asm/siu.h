@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
- * platform header for the SIU ASoC driver
+ * platक्रमm header क्रम the SIU ASoC driver
  *
  * Copyright (C) 2009-2010 Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
-#ifndef ASM_SIU_H
-#define ASM_SIU_H
+#अगर_अघोषित ASM_SIU_H
+#घोषणा ASM_SIU_H
 
-struct device;
+काष्ठा device;
 
-struct siu_platform {
-	unsigned int dma_slave_tx_a;
-	unsigned int dma_slave_rx_a;
-	unsigned int dma_slave_tx_b;
-	unsigned int dma_slave_rx_b;
-};
+काष्ठा siu_platक्रमm अणु
+	अचिन्हित पूर्णांक dma_slave_tx_a;
+	अचिन्हित पूर्णांक dma_slave_rx_a;
+	अचिन्हित पूर्णांक dma_slave_tx_b;
+	अचिन्हित पूर्णांक dma_slave_rx_b;
+पूर्ण;
 
-#endif /* ASM_SIU_H */
+#पूर्ण_अगर /* ASM_SIU_H */

@@ -1,246 +1,247 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * camss-vfe-4-1.c
  *
- * Qualcomm MSM Camera Subsystem - VFE (Video Front End) Module v4.1
+ * Qualcomm MSM Camera Subप्रणाली - VFE (Video Front End) Module v4.1
  *
  * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
  * Copyright (C) 2015-2018 Linaro Ltd.
  */
 
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
 
-#include "camss.h"
-#include "camss-vfe.h"
-#include "camss-vfe-gen1.h"
+#समावेश "camss.h"
+#समावेश "camss-vfe.h"
+#समावेश "camss-vfe-gen1.h"
 
-#define VFE_0_HW_VERSION		0x000
+#घोषणा VFE_0_HW_VERSION		0x000
 
-#define VFE_0_GLOBAL_RESET_CMD		0x00c
-#define VFE_0_GLOBAL_RESET_CMD_CORE	BIT(0)
-#define VFE_0_GLOBAL_RESET_CMD_CAMIF	BIT(1)
-#define VFE_0_GLOBAL_RESET_CMD_BUS	BIT(2)
-#define VFE_0_GLOBAL_RESET_CMD_BUS_BDG	BIT(3)
-#define VFE_0_GLOBAL_RESET_CMD_REGISTER	BIT(4)
-#define VFE_0_GLOBAL_RESET_CMD_TIMER	BIT(5)
-#define VFE_0_GLOBAL_RESET_CMD_PM	BIT(6)
-#define VFE_0_GLOBAL_RESET_CMD_BUS_MISR	BIT(7)
-#define VFE_0_GLOBAL_RESET_CMD_TESTGEN	BIT(8)
+#घोषणा VFE_0_GLOBAL_RESET_CMD		0x00c
+#घोषणा VFE_0_GLOBAL_RESET_CMD_CORE	BIT(0)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_CAMIF	BIT(1)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_BUS	BIT(2)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_BUS_BDG	BIT(3)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_REGISTER	BIT(4)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_TIMER	BIT(5)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_PM	BIT(6)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_BUS_MISR	BIT(7)
+#घोषणा VFE_0_GLOBAL_RESET_CMD_TESTGEN	BIT(8)
 
-#define VFE_0_MODULE_CFG		0x018
-#define VFE_0_MODULE_CFG_DEMUX			BIT(2)
-#define VFE_0_MODULE_CFG_CHROMA_UPSAMPLE	BIT(3)
-#define VFE_0_MODULE_CFG_SCALE_ENC		BIT(23)
-#define VFE_0_MODULE_CFG_CROP_ENC		BIT(27)
+#घोषणा VFE_0_MODULE_CFG		0x018
+#घोषणा VFE_0_MODULE_CFG_DEMUX			BIT(2)
+#घोषणा VFE_0_MODULE_CFG_CHROMA_UPSAMPLE	BIT(3)
+#घोषणा VFE_0_MODULE_CFG_SCALE_ENC		BIT(23)
+#घोषणा VFE_0_MODULE_CFG_CROP_ENC		BIT(27)
 
-#define VFE_0_CORE_CFG			0x01c
-#define VFE_0_CORE_CFG_PIXEL_PATTERN_YCBYCR	0x4
-#define VFE_0_CORE_CFG_PIXEL_PATTERN_YCRYCB	0x5
-#define VFE_0_CORE_CFG_PIXEL_PATTERN_CBYCRY	0x6
-#define VFE_0_CORE_CFG_PIXEL_PATTERN_CRYCBY	0x7
+#घोषणा VFE_0_CORE_CFG			0x01c
+#घोषणा VFE_0_CORE_CFG_PIXEL_PATTERN_YCBYCR	0x4
+#घोषणा VFE_0_CORE_CFG_PIXEL_PATTERN_YCRYCB	0x5
+#घोषणा VFE_0_CORE_CFG_PIXEL_PATTERN_CBYCRY	0x6
+#घोषणा VFE_0_CORE_CFG_PIXEL_PATTERN_CRYCBY	0x7
 
-#define VFE_0_IRQ_CMD			0x024
-#define VFE_0_IRQ_CMD_GLOBAL_CLEAR	BIT(0)
+#घोषणा VFE_0_IRQ_CMD			0x024
+#घोषणा VFE_0_IRQ_CMD_GLOBAL_CLEAR	BIT(0)
 
-#define VFE_0_IRQ_MASK_0		0x028
-#define VFE_0_IRQ_MASK_0_CAMIF_SOF			BIT(0)
-#define VFE_0_IRQ_MASK_0_CAMIF_EOF			BIT(1)
-#define VFE_0_IRQ_MASK_0_RDIn_REG_UPDATE(n)		BIT((n) + 5)
-#define VFE_0_IRQ_MASK_0_line_n_REG_UPDATE(n)		\
+#घोषणा VFE_0_IRQ_MASK_0		0x028
+#घोषणा VFE_0_IRQ_MASK_0_CAMIF_SOF			BIT(0)
+#घोषणा VFE_0_IRQ_MASK_0_CAMIF_खातापूर्ण			BIT(1)
+#घोषणा VFE_0_IRQ_MASK_0_RDIn_REG_UPDATE(n)		BIT((n) + 5)
+#घोषणा VFE_0_IRQ_MASK_0_line_n_REG_UPDATE(n)		\
 	((n) == VFE_LINE_PIX ? BIT(4) : VFE_0_IRQ_MASK_0_RDIn_REG_UPDATE(n))
-#define VFE_0_IRQ_MASK_0_IMAGE_MASTER_n_PING_PONG(n)	BIT((n) + 8)
-#define VFE_0_IRQ_MASK_0_IMAGE_COMPOSITE_DONE_n(n)	BIT((n) + 25)
-#define VFE_0_IRQ_MASK_0_RESET_ACK			BIT(31)
-#define VFE_0_IRQ_MASK_1		0x02c
-#define VFE_0_IRQ_MASK_1_CAMIF_ERROR			BIT(0)
-#define VFE_0_IRQ_MASK_1_VIOLATION			BIT(7)
-#define VFE_0_IRQ_MASK_1_BUS_BDG_HALT_ACK		BIT(8)
-#define VFE_0_IRQ_MASK_1_IMAGE_MASTER_n_BUS_OVERFLOW(n)	BIT((n) + 9)
-#define VFE_0_IRQ_MASK_1_RDIn_SOF(n)			BIT((n) + 29)
+#घोषणा VFE_0_IRQ_MASK_0_IMAGE_MASTER_n_PING_PONG(n)	BIT((n) + 8)
+#घोषणा VFE_0_IRQ_MASK_0_IMAGE_COMPOSITE_DONE_n(n)	BIT((n) + 25)
+#घोषणा VFE_0_IRQ_MASK_0_RESET_ACK			BIT(31)
+#घोषणा VFE_0_IRQ_MASK_1		0x02c
+#घोषणा VFE_0_IRQ_MASK_1_CAMIF_ERROR			BIT(0)
+#घोषणा VFE_0_IRQ_MASK_1_VIOLATION			BIT(7)
+#घोषणा VFE_0_IRQ_MASK_1_BUS_BDG_HALT_ACK		BIT(8)
+#घोषणा VFE_0_IRQ_MASK_1_IMAGE_MASTER_n_BUS_OVERFLOW(n)	BIT((n) + 9)
+#घोषणा VFE_0_IRQ_MASK_1_RDIn_SOF(n)			BIT((n) + 29)
 
-#define VFE_0_IRQ_CLEAR_0		0x030
-#define VFE_0_IRQ_CLEAR_1		0x034
+#घोषणा VFE_0_IRQ_CLEAR_0		0x030
+#घोषणा VFE_0_IRQ_CLEAR_1		0x034
 
-#define VFE_0_IRQ_STATUS_0		0x038
-#define VFE_0_IRQ_STATUS_0_CAMIF_SOF			BIT(0)
-#define VFE_0_IRQ_STATUS_0_RDIn_REG_UPDATE(n)		BIT((n) + 5)
-#define VFE_0_IRQ_STATUS_0_line_n_REG_UPDATE(n)		\
+#घोषणा VFE_0_IRQ_STATUS_0		0x038
+#घोषणा VFE_0_IRQ_STATUS_0_CAMIF_SOF			BIT(0)
+#घोषणा VFE_0_IRQ_STATUS_0_RDIn_REG_UPDATE(n)		BIT((n) + 5)
+#घोषणा VFE_0_IRQ_STATUS_0_line_n_REG_UPDATE(n)		\
 	((n) == VFE_LINE_PIX ? BIT(4) : VFE_0_IRQ_STATUS_0_RDIn_REG_UPDATE(n))
-#define VFE_0_IRQ_STATUS_0_IMAGE_MASTER_n_PING_PONG(n)	BIT((n) + 8)
-#define VFE_0_IRQ_STATUS_0_IMAGE_COMPOSITE_DONE_n(n)	BIT((n) + 25)
-#define VFE_0_IRQ_STATUS_0_RESET_ACK			BIT(31)
-#define VFE_0_IRQ_STATUS_1		0x03c
-#define VFE_0_IRQ_STATUS_1_VIOLATION			BIT(7)
-#define VFE_0_IRQ_STATUS_1_BUS_BDG_HALT_ACK		BIT(8)
-#define VFE_0_IRQ_STATUS_1_RDIn_SOF(n)			BIT((n) + 29)
+#घोषणा VFE_0_IRQ_STATUS_0_IMAGE_MASTER_n_PING_PONG(n)	BIT((n) + 8)
+#घोषणा VFE_0_IRQ_STATUS_0_IMAGE_COMPOSITE_DONE_n(n)	BIT((n) + 25)
+#घोषणा VFE_0_IRQ_STATUS_0_RESET_ACK			BIT(31)
+#घोषणा VFE_0_IRQ_STATUS_1		0x03c
+#घोषणा VFE_0_IRQ_STATUS_1_VIOLATION			BIT(7)
+#घोषणा VFE_0_IRQ_STATUS_1_BUS_BDG_HALT_ACK		BIT(8)
+#घोषणा VFE_0_IRQ_STATUS_1_RDIn_SOF(n)			BIT((n) + 29)
 
-#define VFE_0_IRQ_COMPOSITE_MASK_0	0x40
-#define VFE_0_VIOLATION_STATUS		0x48
+#घोषणा VFE_0_IRQ_COMPOSITE_MASK_0	0x40
+#घोषणा VFE_0_VIOLATION_STATUS		0x48
 
-#define VFE_0_BUS_CMD			0x4c
-#define VFE_0_BUS_CMD_Mx_RLD_CMD(x)	BIT(x)
+#घोषणा VFE_0_BUS_CMD			0x4c
+#घोषणा VFE_0_BUS_CMD_Mx_RLD_CMD(x)	BIT(x)
 
-#define VFE_0_BUS_CFG			0x050
+#घोषणा VFE_0_BUS_CFG			0x050
 
-#define VFE_0_BUS_XBAR_CFG_x(x)		(0x58 + 0x4 * ((x) / 2))
-#define VFE_0_BUS_XBAR_CFG_x_M_PAIR_STREAM_EN			BIT(1)
-#define VFE_0_BUS_XBAR_CFG_x_M_PAIR_STREAM_SWAP_INTER_INTRA	(0x3 << 4)
-#define VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT		8
-#define VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_LUMA		0
-#define VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI0	5
-#define VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI1	6
-#define VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI2	7
+#घोषणा VFE_0_BUS_XBAR_CFG_x(x)		(0x58 + 0x4 * ((x) / 2))
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_PAIR_STREAM_EN			BIT(1)
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_PAIR_STREAM_SWAP_INTER_INTRA	(0x3 << 4)
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT		8
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_LUMA		0
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI0	5
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI1	6
+#घोषणा VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI2	7
 
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_CFG(n)		(0x06c + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_WR_PATH_SHIFT	0
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_FRM_BASED_SHIFT	1
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_PING_ADDR(n)	(0x070 + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_PONG_ADDR(n)	(0x074 + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG(n)		(0x078 + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_SHIFT	2
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_MASK	(0x1f << 2)
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_CFG(n)		(0x06c + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_WR_PATH_SHIFT	0
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_FRM_BASED_SHIFT	1
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_PING_ADDR(n)	(0x070 + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_PONG_ADDR(n)	(0x074 + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG(n)		(0x078 + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_SHIFT	2
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_MASK	(0x1f << 2)
 
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG(n)		(0x07c + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG_OFFSET_SHIFT	16
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_IMAGE_SIZE(n)	(0x080 + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_BUFFER_CFG(n)	(0x084 + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_FRAMEDROP_PATTERN(n)	\
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG(n)		(0x07c + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG_OFFSET_SHIFT	16
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_IMAGE_SIZE(n)	(0x080 + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_BUFFER_CFG(n)	(0x084 + 0x24 * (n))
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_FRAMEDROP_PATTERN(n)	\
 							(0x088 + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN(n)	\
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN(n)	\
 							(0x08c + 0x24 * (n))
-#define VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN_DEF	0xffffffff
+#घोषणा VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN_DEF	0xffffffff
 
-#define VFE_0_BUS_PING_PONG_STATUS	0x268
+#घोषणा VFE_0_BUS_PING_PONG_STATUS	0x268
 
-#define VFE_0_BUS_BDG_CMD		0x2c0
-#define VFE_0_BUS_BDG_CMD_HALT_REQ	1
+#घोषणा VFE_0_BUS_BDG_CMD		0x2c0
+#घोषणा VFE_0_BUS_BDG_CMD_HALT_REQ	1
 
-#define VFE_0_BUS_BDG_QOS_CFG_0		0x2c4
-#define VFE_0_BUS_BDG_QOS_CFG_0_CFG	0xaaa5aaa5
-#define VFE_0_BUS_BDG_QOS_CFG_1		0x2c8
-#define VFE_0_BUS_BDG_QOS_CFG_2		0x2cc
-#define VFE_0_BUS_BDG_QOS_CFG_3		0x2d0
-#define VFE_0_BUS_BDG_QOS_CFG_4		0x2d4
-#define VFE_0_BUS_BDG_QOS_CFG_5		0x2d8
-#define VFE_0_BUS_BDG_QOS_CFG_6		0x2dc
-#define VFE_0_BUS_BDG_QOS_CFG_7		0x2e0
-#define VFE_0_BUS_BDG_QOS_CFG_7_CFG	0x0001aaa5
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_0		0x2c4
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_0_CFG	0xaaa5aaa5
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_1		0x2c8
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_2		0x2cc
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_3		0x2d0
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_4		0x2d4
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_5		0x2d8
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_6		0x2dc
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_7		0x2e0
+#घोषणा VFE_0_BUS_BDG_QOS_CFG_7_CFG	0x0001aaa5
 
-#define VFE_0_RDI_CFG_x(x)		(0x2e8 + (0x4 * (x)))
-#define VFE_0_RDI_CFG_x_RDI_STREAM_SEL_SHIFT	28
-#define VFE_0_RDI_CFG_x_RDI_STREAM_SEL_MASK	(0xf << 28)
-#define VFE_0_RDI_CFG_x_RDI_M0_SEL_SHIFT	4
-#define VFE_0_RDI_CFG_x_RDI_M0_SEL_MASK		(0xf << 4)
-#define VFE_0_RDI_CFG_x_RDI_EN_BIT		BIT(2)
-#define VFE_0_RDI_CFG_x_MIPI_EN_BITS		0x3
-#define VFE_0_RDI_CFG_x_RDI_Mr_FRAME_BASED_EN(r)	BIT(16 + (r))
+#घोषणा VFE_0_RDI_CFG_x(x)		(0x2e8 + (0x4 * (x)))
+#घोषणा VFE_0_RDI_CFG_x_RDI_STREAM_SEL_SHIFT	28
+#घोषणा VFE_0_RDI_CFG_x_RDI_STREAM_SEL_MASK	(0xf << 28)
+#घोषणा VFE_0_RDI_CFG_x_RDI_M0_SEL_SHIFT	4
+#घोषणा VFE_0_RDI_CFG_x_RDI_M0_SEL_MASK		(0xf << 4)
+#घोषणा VFE_0_RDI_CFG_x_RDI_EN_BIT		BIT(2)
+#घोषणा VFE_0_RDI_CFG_x_MIPI_EN_BITS		0x3
+#घोषणा VFE_0_RDI_CFG_x_RDI_Mr_FRAME_BASED_EN(r)	BIT(16 + (r))
 
-#define VFE_0_CAMIF_CMD				0x2f4
-#define VFE_0_CAMIF_CMD_DISABLE_FRAME_BOUNDARY	0
-#define VFE_0_CAMIF_CMD_ENABLE_FRAME_BOUNDARY	1
-#define VFE_0_CAMIF_CMD_NO_CHANGE		3
-#define VFE_0_CAMIF_CMD_CLEAR_CAMIF_STATUS	BIT(2)
-#define VFE_0_CAMIF_CFG				0x2f8
-#define VFE_0_CAMIF_CFG_VFE_OUTPUT_EN		BIT(6)
-#define VFE_0_CAMIF_FRAME_CFG			0x300
-#define VFE_0_CAMIF_WINDOW_WIDTH_CFG		0x304
-#define VFE_0_CAMIF_WINDOW_HEIGHT_CFG		0x308
-#define VFE_0_CAMIF_SUBSAMPLE_CFG_0		0x30c
-#define VFE_0_CAMIF_IRQ_SUBSAMPLE_PATTERN	0x314
-#define VFE_0_CAMIF_STATUS			0x31c
-#define VFE_0_CAMIF_STATUS_HALT			BIT(31)
+#घोषणा VFE_0_CAMIF_CMD				0x2f4
+#घोषणा VFE_0_CAMIF_CMD_DISABLE_FRAME_BOUNDARY	0
+#घोषणा VFE_0_CAMIF_CMD_ENABLE_FRAME_BOUNDARY	1
+#घोषणा VFE_0_CAMIF_CMD_NO_CHANGE		3
+#घोषणा VFE_0_CAMIF_CMD_CLEAR_CAMIF_STATUS	BIT(2)
+#घोषणा VFE_0_CAMIF_CFG				0x2f8
+#घोषणा VFE_0_CAMIF_CFG_VFE_OUTPUT_EN		BIT(6)
+#घोषणा VFE_0_CAMIF_FRAME_CFG			0x300
+#घोषणा VFE_0_CAMIF_WINDOW_WIDTH_CFG		0x304
+#घोषणा VFE_0_CAMIF_WINDOW_HEIGHT_CFG		0x308
+#घोषणा VFE_0_CAMIF_SUBSAMPLE_CFG_0		0x30c
+#घोषणा VFE_0_CAMIF_IRQ_SUBSAMPLE_PATTERN	0x314
+#घोषणा VFE_0_CAMIF_STATUS			0x31c
+#घोषणा VFE_0_CAMIF_STATUS_HALT			BIT(31)
 
-#define VFE_0_REG_UPDATE			0x378
-#define VFE_0_REG_UPDATE_RDIn(n)		BIT(1 + (n))
-#define VFE_0_REG_UPDATE_line_n(n)		\
+#घोषणा VFE_0_REG_UPDATE			0x378
+#घोषणा VFE_0_REG_UPDATE_RDIn(n)		BIT(1 + (n))
+#घोषणा VFE_0_REG_UPDATE_line_n(n)		\
 			((n) == VFE_LINE_PIX ? 1 : VFE_0_REG_UPDATE_RDIn(n))
 
-#define VFE_0_DEMUX_CFG				0x424
-#define VFE_0_DEMUX_CFG_PERIOD			0x3
-#define VFE_0_DEMUX_GAIN_0			0x428
-#define VFE_0_DEMUX_GAIN_0_CH0_EVEN		(0x80 << 0)
-#define VFE_0_DEMUX_GAIN_0_CH0_ODD		(0x80 << 16)
-#define VFE_0_DEMUX_GAIN_1			0x42c
-#define VFE_0_DEMUX_GAIN_1_CH1			(0x80 << 0)
-#define VFE_0_DEMUX_GAIN_1_CH2			(0x80 << 16)
-#define VFE_0_DEMUX_EVEN_CFG			0x438
-#define VFE_0_DEMUX_EVEN_CFG_PATTERN_YUYV	0x9cac
-#define VFE_0_DEMUX_EVEN_CFG_PATTERN_YVYU	0xac9c
-#define VFE_0_DEMUX_EVEN_CFG_PATTERN_UYVY	0xc9ca
-#define VFE_0_DEMUX_EVEN_CFG_PATTERN_VYUY	0xcac9
-#define VFE_0_DEMUX_ODD_CFG			0x43c
-#define VFE_0_DEMUX_ODD_CFG_PATTERN_YUYV	0x9cac
-#define VFE_0_DEMUX_ODD_CFG_PATTERN_YVYU	0xac9c
-#define VFE_0_DEMUX_ODD_CFG_PATTERN_UYVY	0xc9ca
-#define VFE_0_DEMUX_ODD_CFG_PATTERN_VYUY	0xcac9
+#घोषणा VFE_0_DEMUX_CFG				0x424
+#घोषणा VFE_0_DEMUX_CFG_PERIOD			0x3
+#घोषणा VFE_0_DEMUX_GAIN_0			0x428
+#घोषणा VFE_0_DEMUX_GAIN_0_CH0_EVEN		(0x80 << 0)
+#घोषणा VFE_0_DEMUX_GAIN_0_CH0_ODD		(0x80 << 16)
+#घोषणा VFE_0_DEMUX_GAIN_1			0x42c
+#घोषणा VFE_0_DEMUX_GAIN_1_CH1			(0x80 << 0)
+#घोषणा VFE_0_DEMUX_GAIN_1_CH2			(0x80 << 16)
+#घोषणा VFE_0_DEMUX_EVEN_CFG			0x438
+#घोषणा VFE_0_DEMUX_EVEN_CFG_PATTERN_YUYV	0x9cac
+#घोषणा VFE_0_DEMUX_EVEN_CFG_PATTERN_YVYU	0xac9c
+#घोषणा VFE_0_DEMUX_EVEN_CFG_PATTERN_UYVY	0xc9ca
+#घोषणा VFE_0_DEMUX_EVEN_CFG_PATTERN_VYUY	0xcac9
+#घोषणा VFE_0_DEMUX_ODD_CFG			0x43c
+#घोषणा VFE_0_DEMUX_ODD_CFG_PATTERN_YUYV	0x9cac
+#घोषणा VFE_0_DEMUX_ODD_CFG_PATTERN_YVYU	0xac9c
+#घोषणा VFE_0_DEMUX_ODD_CFG_PATTERN_UYVY	0xc9ca
+#घोषणा VFE_0_DEMUX_ODD_CFG_PATTERN_VYUY	0xcac9
 
-#define VFE_0_SCALE_ENC_Y_CFG			0x75c
-#define VFE_0_SCALE_ENC_Y_H_IMAGE_SIZE		0x760
-#define VFE_0_SCALE_ENC_Y_H_PHASE		0x764
-#define VFE_0_SCALE_ENC_Y_V_IMAGE_SIZE		0x76c
-#define VFE_0_SCALE_ENC_Y_V_PHASE		0x770
-#define VFE_0_SCALE_ENC_CBCR_CFG		0x778
-#define VFE_0_SCALE_ENC_CBCR_H_IMAGE_SIZE	0x77c
-#define VFE_0_SCALE_ENC_CBCR_H_PHASE		0x780
-#define VFE_0_SCALE_ENC_CBCR_V_IMAGE_SIZE	0x790
-#define VFE_0_SCALE_ENC_CBCR_V_PHASE		0x794
+#घोषणा VFE_0_SCALE_ENC_Y_CFG			0x75c
+#घोषणा VFE_0_SCALE_ENC_Y_H_IMAGE_SIZE		0x760
+#घोषणा VFE_0_SCALE_ENC_Y_H_PHASE		0x764
+#घोषणा VFE_0_SCALE_ENC_Y_V_IMAGE_SIZE		0x76c
+#घोषणा VFE_0_SCALE_ENC_Y_V_PHASE		0x770
+#घोषणा VFE_0_SCALE_ENC_CBCR_CFG		0x778
+#घोषणा VFE_0_SCALE_ENC_CBCR_H_IMAGE_SIZE	0x77c
+#घोषणा VFE_0_SCALE_ENC_CBCR_H_PHASE		0x780
+#घोषणा VFE_0_SCALE_ENC_CBCR_V_IMAGE_SIZE	0x790
+#घोषणा VFE_0_SCALE_ENC_CBCR_V_PHASE		0x794
 
-#define VFE_0_CROP_ENC_Y_WIDTH			0x854
-#define VFE_0_CROP_ENC_Y_HEIGHT			0x858
-#define VFE_0_CROP_ENC_CBCR_WIDTH		0x85c
-#define VFE_0_CROP_ENC_CBCR_HEIGHT		0x860
+#घोषणा VFE_0_CROP_ENC_Y_WIDTH			0x854
+#घोषणा VFE_0_CROP_ENC_Y_HEIGHT			0x858
+#घोषणा VFE_0_CROP_ENC_CBCR_WIDTH		0x85c
+#घोषणा VFE_0_CROP_ENC_CBCR_HEIGHT		0x860
 
-#define VFE_0_CLAMP_ENC_MAX_CFG			0x874
-#define VFE_0_CLAMP_ENC_MAX_CFG_CH0		(0xff << 0)
-#define VFE_0_CLAMP_ENC_MAX_CFG_CH1		(0xff << 8)
-#define VFE_0_CLAMP_ENC_MAX_CFG_CH2		(0xff << 16)
-#define VFE_0_CLAMP_ENC_MIN_CFG			0x878
-#define VFE_0_CLAMP_ENC_MIN_CFG_CH0		(0x0 << 0)
-#define VFE_0_CLAMP_ENC_MIN_CFG_CH1		(0x0 << 8)
-#define VFE_0_CLAMP_ENC_MIN_CFG_CH2		(0x0 << 16)
+#घोषणा VFE_0_CLAMP_ENC_MAX_CFG			0x874
+#घोषणा VFE_0_CLAMP_ENC_MAX_CFG_CH0		(0xff << 0)
+#घोषणा VFE_0_CLAMP_ENC_MAX_CFG_CH1		(0xff << 8)
+#घोषणा VFE_0_CLAMP_ENC_MAX_CFG_CH2		(0xff << 16)
+#घोषणा VFE_0_CLAMP_ENC_MIN_CFG			0x878
+#घोषणा VFE_0_CLAMP_ENC_MIN_CFG_CH0		(0x0 << 0)
+#घोषणा VFE_0_CLAMP_ENC_MIN_CFG_CH1		(0x0 << 8)
+#घोषणा VFE_0_CLAMP_ENC_MIN_CFG_CH2		(0x0 << 16)
 
-#define VFE_0_CGC_OVERRIDE_1			0x974
-#define VFE_0_CGC_OVERRIDE_1_IMAGE_Mx_CGC_OVERRIDE(x)	BIT(x)
+#घोषणा VFE_0_CGC_OVERRIDE_1			0x974
+#घोषणा VFE_0_CGC_OVERRIDE_1_IMAGE_Mx_CGC_OVERRIDE(x)	BIT(x)
 
-#define CAMIF_TIMEOUT_SLEEP_US 1000
-#define CAMIF_TIMEOUT_ALL_US 1000000
+#घोषणा CAMIF_TIMEOUT_SLEEP_US 1000
+#घोषणा CAMIF_TIMEOUT_ALL_US 1000000
 
-#define MSM_VFE_VFE0_UB_SIZE 1023
-#define MSM_VFE_VFE0_UB_SIZE_RDI (MSM_VFE_VFE0_UB_SIZE / 3)
+#घोषणा MSM_VFE_VFE0_UB_SIZE 1023
+#घोषणा MSM_VFE_VFE0_UB_SIZE_RDI (MSM_VFE_VFE0_UB_SIZE / 3)
 
-static void vfe_hw_version_read(struct vfe_device *vfe, struct device *dev)
-{
-	u32 hw_version = readl_relaxed(vfe->base + VFE_0_HW_VERSION);
+अटल व्योम vfe_hw_version_पढ़ो(काष्ठा vfe_device *vfe, काष्ठा device *dev)
+अणु
+	u32 hw_version = पढ़ोl_relaxed(vfe->base + VFE_0_HW_VERSION);
 
 	dev_dbg(dev, "VFE HW Version = 0x%08x\n", hw_version);
-}
+पूर्ण
 
-static u16 vfe_get_ub_size(u8 vfe_id)
-{
-	if (vfe_id == 0)
-		return MSM_VFE_VFE0_UB_SIZE_RDI;
+अटल u16 vfe_get_ub_size(u8 vfe_id)
+अणु
+	अगर (vfe_id == 0)
+		वापस MSM_VFE_VFE0_UB_SIZE_RDI;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void vfe_reg_clr(struct vfe_device *vfe, u32 reg, u32 clr_bits)
-{
-	u32 bits = readl_relaxed(vfe->base + reg);
+अटल अंतरभूत व्योम vfe_reg_clr(काष्ठा vfe_device *vfe, u32 reg, u32 clr_bits)
+अणु
+	u32 bits = पढ़ोl_relaxed(vfe->base + reg);
 
-	writel_relaxed(bits & ~clr_bits, vfe->base + reg);
-}
+	ग_लिखोl_relaxed(bits & ~clr_bits, vfe->base + reg);
+पूर्ण
 
-static inline void vfe_reg_set(struct vfe_device *vfe, u32 reg, u32 set_bits)
-{
-	u32 bits = readl_relaxed(vfe->base + reg);
+अटल अंतरभूत व्योम vfe_reg_set(काष्ठा vfe_device *vfe, u32 reg, u32 set_bits)
+अणु
+	u32 bits = पढ़ोl_relaxed(vfe->base + reg);
 
-	writel_relaxed(bits | set_bits, vfe->base + reg);
-}
+	ग_लिखोl_relaxed(bits | set_bits, vfe->base + reg);
+पूर्ण
 
-static void vfe_global_reset(struct vfe_device *vfe)
-{
+अटल व्योम vfe_global_reset(काष्ठा vfe_device *vfe)
+अणु
 	u32 reset_bits = VFE_0_GLOBAL_RESET_CMD_TESTGEN		|
 			 VFE_0_GLOBAL_RESET_CMD_BUS_MISR	|
 			 VFE_0_GLOBAL_RESET_CMD_PM		|
@@ -251,101 +252,101 @@ static void vfe_global_reset(struct vfe_device *vfe)
 			 VFE_0_GLOBAL_RESET_CMD_CAMIF		|
 			 VFE_0_GLOBAL_RESET_CMD_CORE;
 
-	writel_relaxed(reset_bits, vfe->base + VFE_0_GLOBAL_RESET_CMD);
-}
+	ग_लिखोl_relaxed(reset_bits, vfe->base + VFE_0_GLOBAL_RESET_CMD);
+पूर्ण
 
-static void vfe_halt_request(struct vfe_device *vfe)
-{
-	writel_relaxed(VFE_0_BUS_BDG_CMD_HALT_REQ,
+अटल व्योम vfe_halt_request(काष्ठा vfe_device *vfe)
+अणु
+	ग_लिखोl_relaxed(VFE_0_BUS_BDG_CMD_HALT_REQ,
 		       vfe->base + VFE_0_BUS_BDG_CMD);
-}
+पूर्ण
 
-static void vfe_halt_clear(struct vfe_device *vfe)
-{
-	writel_relaxed(0x0, vfe->base + VFE_0_BUS_BDG_CMD);
-}
+अटल व्योम vfe_halt_clear(काष्ठा vfe_device *vfe)
+अणु
+	ग_लिखोl_relaxed(0x0, vfe->base + VFE_0_BUS_BDG_CMD);
+पूर्ण
 
-static void vfe_wm_enable(struct vfe_device *vfe, u8 wm, u8 enable)
-{
-	if (enable)
+अटल व्योम vfe_wm_enable(काष्ठा vfe_device *vfe, u8 wm, u8 enable)
+अणु
+	अगर (enable)
 		vfe_reg_set(vfe, VFE_0_BUS_IMAGE_MASTER_n_WR_CFG(wm),
 			    1 << VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_WR_PATH_SHIFT);
-	else
+	अन्यथा
 		vfe_reg_clr(vfe, VFE_0_BUS_IMAGE_MASTER_n_WR_CFG(wm),
 			    1 << VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_WR_PATH_SHIFT);
-}
+पूर्ण
 
-static void vfe_wm_frame_based(struct vfe_device *vfe, u8 wm, u8 enable)
-{
-	if (enable)
+अटल व्योम vfe_wm_frame_based(काष्ठा vfe_device *vfe, u8 wm, u8 enable)
+अणु
+	अगर (enable)
 		vfe_reg_set(vfe, VFE_0_BUS_IMAGE_MASTER_n_WR_CFG(wm),
 			1 << VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_FRM_BASED_SHIFT);
-	else
+	अन्यथा
 		vfe_reg_clr(vfe, VFE_0_BUS_IMAGE_MASTER_n_WR_CFG(wm),
 			1 << VFE_0_BUS_IMAGE_MASTER_n_WR_CFG_FRM_BASED_SHIFT);
-}
+पूर्ण
 
-static void vfe_get_wm_sizes(struct v4l2_pix_format_mplane *pix, u8 plane,
+अटल व्योम vfe_get_wm_sizes(काष्ठा v4l2_pix_क्रमmat_mplane *pix, u8 plane,
 			     u16 *width, u16 *height, u16 *bytesperline)
-{
-	switch (pix->pixelformat) {
-	case V4L2_PIX_FMT_NV12:
-	case V4L2_PIX_FMT_NV21:
+अणु
+	चयन (pix->pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_NV12:
+	हाल V4L2_PIX_FMT_NV21:
 		*width = pix->width;
 		*height = pix->height;
 		*bytesperline = pix->plane_fmt[0].bytesperline;
-		if (plane == 1)
+		अगर (plane == 1)
 			*height /= 2;
-		break;
-	case V4L2_PIX_FMT_NV16:
-	case V4L2_PIX_FMT_NV61:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV16:
+	हाल V4L2_PIX_FMT_NV61:
 		*width = pix->width;
 		*height = pix->height;
 		*bytesperline = pix->plane_fmt[0].bytesperline;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void vfe_wm_line_based(struct vfe_device *vfe, u32 wm,
-			      struct v4l2_pix_format_mplane *pix,
+अटल व्योम vfe_wm_line_based(काष्ठा vfe_device *vfe, u32 wm,
+			      काष्ठा v4l2_pix_क्रमmat_mplane *pix,
 			      u8 plane, u32 enable)
-{
+अणु
 	u32 reg;
 
-	if (enable) {
+	अगर (enable) अणु
 		u16 width = 0, height = 0, bytesperline = 0, wpl;
 
 		vfe_get_wm_sizes(pix, plane, &width, &height, &bytesperline);
 
-		wpl = vfe_word_per_line(pix->pixelformat, width);
+		wpl = vfe_word_per_line(pix->pixelक्रमmat, width);
 
 		reg = height - 1;
 		reg |= ((wpl + 1) / 2 - 1) << 16;
 
-		writel_relaxed(reg, vfe->base +
+		ग_लिखोl_relaxed(reg, vfe->base +
 			       VFE_0_BUS_IMAGE_MASTER_n_WR_IMAGE_SIZE(wm));
 
-		wpl = vfe_word_per_line(pix->pixelformat, bytesperline);
+		wpl = vfe_word_per_line(pix->pixelक्रमmat, bytesperline);
 
 		reg = 0x3;
 		reg |= (height - 1) << 4;
 		reg |= wpl << 16;
 
-		writel_relaxed(reg, vfe->base +
+		ग_लिखोl_relaxed(reg, vfe->base +
 			       VFE_0_BUS_IMAGE_MASTER_n_WR_BUFFER_CFG(wm));
-	} else {
-		writel_relaxed(0, vfe->base +
+	पूर्ण अन्यथा अणु
+		ग_लिखोl_relaxed(0, vfe->base +
 			       VFE_0_BUS_IMAGE_MASTER_n_WR_IMAGE_SIZE(wm));
-		writel_relaxed(0, vfe->base +
+		ग_लिखोl_relaxed(0, vfe->base +
 			       VFE_0_BUS_IMAGE_MASTER_n_WR_BUFFER_CFG(wm));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vfe_wm_set_framedrop_period(struct vfe_device *vfe, u8 wm, u8 per)
-{
+अटल व्योम vfe_wm_set_framedrop_period(काष्ठा vfe_device *vfe, u8 wm, u8 per)
+अणु
 	u32 reg;
 
-	reg = readl_relaxed(vfe->base +
+	reg = पढ़ोl_relaxed(vfe->base +
 			    VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG(wm));
 
 	reg &= ~(VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_MASK);
@@ -353,66 +354,66 @@ static void vfe_wm_set_framedrop_period(struct vfe_device *vfe, u8 wm, u8 per)
 	reg |= (per << VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_SHIFT)
 		& VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG_FRM_DROP_PER_MASK;
 
-	writel_relaxed(reg,
+	ग_लिखोl_relaxed(reg,
 		       vfe->base + VFE_0_BUS_IMAGE_MASTER_n_WR_ADDR_CFG(wm));
-}
+पूर्ण
 
-static void vfe_wm_set_framedrop_pattern(struct vfe_device *vfe, u8 wm,
+अटल व्योम vfe_wm_set_framedrop_pattern(काष्ठा vfe_device *vfe, u8 wm,
 					 u32 pattern)
-{
-	writel_relaxed(pattern,
+अणु
+	ग_लिखोl_relaxed(pattern,
 	       vfe->base + VFE_0_BUS_IMAGE_MASTER_n_WR_FRAMEDROP_PATTERN(wm));
-}
+पूर्ण
 
-static void vfe_wm_set_ub_cfg(struct vfe_device *vfe, u8 wm,
+अटल व्योम vfe_wm_set_ub_cfg(काष्ठा vfe_device *vfe, u8 wm,
 			      u16 offset, u16 depth)
-{
+अणु
 	u32 reg;
 
 	reg = (offset << VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG_OFFSET_SHIFT) |
 		depth;
-	writel_relaxed(reg, vfe->base + VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG(wm));
-}
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_BUS_IMAGE_MASTER_n_WR_UB_CFG(wm));
+पूर्ण
 
-static void vfe_bus_reload_wm(struct vfe_device *vfe, u8 wm)
-{
+अटल व्योम vfe_bus_reload_wm(काष्ठा vfe_device *vfe, u8 wm)
+अणु
 	wmb();
-	writel_relaxed(VFE_0_BUS_CMD_Mx_RLD_CMD(wm), vfe->base + VFE_0_BUS_CMD);
+	ग_लिखोl_relaxed(VFE_0_BUS_CMD_Mx_RLD_CMD(wm), vfe->base + VFE_0_BUS_CMD);
 	wmb();
-}
+पूर्ण
 
-static void vfe_wm_set_ping_addr(struct vfe_device *vfe, u8 wm, u32 addr)
-{
-	writel_relaxed(addr,
+अटल व्योम vfe_wm_set_ping_addr(काष्ठा vfe_device *vfe, u8 wm, u32 addr)
+अणु
+	ग_लिखोl_relaxed(addr,
 		       vfe->base + VFE_0_BUS_IMAGE_MASTER_n_WR_PING_ADDR(wm));
-}
+पूर्ण
 
-static void vfe_wm_set_pong_addr(struct vfe_device *vfe, u8 wm, u32 addr)
-{
-	writel_relaxed(addr,
+अटल व्योम vfe_wm_set_pong_addr(काष्ठा vfe_device *vfe, u8 wm, u32 addr)
+अणु
+	ग_लिखोl_relaxed(addr,
 		       vfe->base + VFE_0_BUS_IMAGE_MASTER_n_WR_PONG_ADDR(wm));
-}
+पूर्ण
 
-static int vfe_wm_get_ping_pong_status(struct vfe_device *vfe, u8 wm)
-{
+अटल पूर्णांक vfe_wm_get_ping_pong_status(काष्ठा vfe_device *vfe, u8 wm)
+अणु
 	u32 reg;
 
-	reg = readl_relaxed(vfe->base + VFE_0_BUS_PING_PONG_STATUS);
+	reg = पढ़ोl_relaxed(vfe->base + VFE_0_BUS_PING_PONG_STATUS);
 
-	return (reg >> wm) & 0x1;
-}
+	वापस (reg >> wm) & 0x1;
+पूर्ण
 
-static void vfe_bus_enable_wr_if(struct vfe_device *vfe, u8 enable)
-{
-	if (enable)
-		writel_relaxed(0x10000009, vfe->base + VFE_0_BUS_CFG);
-	else
-		writel_relaxed(0, vfe->base + VFE_0_BUS_CFG);
-}
+अटल व्योम vfe_bus_enable_wr_अगर(काष्ठा vfe_device *vfe, u8 enable)
+अणु
+	अगर (enable)
+		ग_लिखोl_relaxed(0x10000009, vfe->base + VFE_0_BUS_CFG);
+	अन्यथा
+		ग_लिखोl_relaxed(0, vfe->base + VFE_0_BUS_CFG);
+पूर्ण
 
-static void vfe_bus_connect_wm_to_rdi(struct vfe_device *vfe, u8 wm,
-				      enum vfe_line_id id)
-{
+अटल व्योम vfe_bus_connect_wm_to_rdi(काष्ठा vfe_device *vfe, u8 wm,
+				      क्रमागत vfe_line_id id)
+अणु
 	u32 reg;
 
 	reg = VFE_0_RDI_CFG_x_MIPI_EN_BITS;
@@ -424,38 +425,38 @@ static void vfe_bus_connect_wm_to_rdi(struct vfe_device *vfe, u8 wm,
 		VFE_0_RDI_CFG_x_RDI_STREAM_SEL_MASK;
 	vfe_reg_set(vfe, VFE_0_RDI_CFG_x(id), reg);
 
-	switch (id) {
-	case VFE_LINE_RDI0:
-	default:
+	चयन (id) अणु
+	हाल VFE_LINE_RDI0:
+	शेष:
 		reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI0 <<
 		      VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		break;
-	case VFE_LINE_RDI1:
+		अवरोध;
+	हाल VFE_LINE_RDI1:
 		reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI1 <<
 		      VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		break;
-	case VFE_LINE_RDI2:
+		अवरोध;
+	हाल VFE_LINE_RDI2:
 		reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI2 <<
 		      VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (wm % 2 == 1)
+	अगर (wm % 2 == 1)
 		reg <<= 16;
 
 	vfe_reg_set(vfe, VFE_0_BUS_XBAR_CFG_x(wm), reg);
-}
+पूर्ण
 
-static void vfe_wm_set_subsample(struct vfe_device *vfe, u8 wm)
-{
-	writel_relaxed(VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN_DEF,
+अटल व्योम vfe_wm_set_subsample(काष्ठा vfe_device *vfe, u8 wm)
+अणु
+	ग_लिखोl_relaxed(VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN_DEF,
 		       vfe->base +
 		       VFE_0_BUS_IMAGE_MASTER_n_WR_IRQ_SUBSAMPLE_PATTERN(wm));
-}
+पूर्ण
 
-static void vfe_bus_disconnect_wm_from_rdi(struct vfe_device *vfe, u8 wm,
-					   enum vfe_line_id id)
-{
+अटल व्योम vfe_bus_disconnect_wm_from_rdi(काष्ठा vfe_device *vfe, u8 wm,
+					   क्रमागत vfe_line_id id)
+अणु
 	u32 reg;
 
 	reg = VFE_0_RDI_CFG_x_RDI_Mr_FRAME_BASED_EN(id);
@@ -464,512 +465,512 @@ static void vfe_bus_disconnect_wm_from_rdi(struct vfe_device *vfe, u8 wm,
 	reg = VFE_0_RDI_CFG_x_RDI_EN_BIT;
 	vfe_reg_clr(vfe, VFE_0_RDI_CFG_x(id), reg);
 
-	switch (id) {
-	case VFE_LINE_RDI0:
-	default:
+	चयन (id) अणु
+	हाल VFE_LINE_RDI0:
+	शेष:
 		reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI0 <<
 		      VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		break;
-	case VFE_LINE_RDI1:
+		अवरोध;
+	हाल VFE_LINE_RDI1:
 		reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI1 <<
 		      VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		break;
-	case VFE_LINE_RDI2:
+		अवरोध;
+	हाल VFE_LINE_RDI2:
 		reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_VAL_RDI2 <<
 		      VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (wm % 2 == 1)
+	अगर (wm % 2 == 1)
 		reg <<= 16;
 
 	vfe_reg_clr(vfe, VFE_0_BUS_XBAR_CFG_x(wm), reg);
-}
+पूर्ण
 
-static void vfe_set_xbar_cfg(struct vfe_device *vfe, struct vfe_output *output,
+अटल व्योम vfe_set_xbar_cfg(काष्ठा vfe_device *vfe, काष्ठा vfe_output *output,
 			     u8 enable)
-{
-	struct vfe_line *line = container_of(output, struct vfe_line, output);
-	u32 p = line->video_out.active_fmt.fmt.pix_mp.pixelformat;
+अणु
+	काष्ठा vfe_line *line = container_of(output, काष्ठा vfe_line, output);
+	u32 p = line->video_out.active_fmt.fmt.pix_mp.pixelक्रमmat;
 	u32 reg;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < output->wm_num; i++) {
-		if (i == 0) {
+	क्रम (i = 0; i < output->wm_num; i++) अणु
+		अगर (i == 0) अणु
 			reg = VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_LUMA <<
 				VFE_0_BUS_XBAR_CFG_x_M_SINGLE_STREAM_SEL_SHIFT;
-		} else if (i == 1) {
+		पूर्ण अन्यथा अगर (i == 1) अणु
 			reg = VFE_0_BUS_XBAR_CFG_x_M_PAIR_STREAM_EN;
-			if (p == V4L2_PIX_FMT_NV12 || p == V4L2_PIX_FMT_NV16)
+			अगर (p == V4L2_PIX_FMT_NV12 || p == V4L2_PIX_FMT_NV16)
 				reg |= VFE_0_BUS_XBAR_CFG_x_M_PAIR_STREAM_SWAP_INTER_INTRA;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* On current devices output->wm_num is always <= 2 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (output->wm_idx[i] % 2 == 1)
+		अगर (output->wm_idx[i] % 2 == 1)
 			reg <<= 16;
 
-		if (enable)
+		अगर (enable)
 			vfe_reg_set(vfe,
 				    VFE_0_BUS_XBAR_CFG_x(output->wm_idx[i]),
 				    reg);
-		else
+		अन्यथा
 			vfe_reg_clr(vfe,
 				    VFE_0_BUS_XBAR_CFG_x(output->wm_idx[i]),
 				    reg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vfe_set_realign_cfg(struct vfe_device *vfe, struct vfe_line *line,
+अटल व्योम vfe_set_realign_cfg(काष्ठा vfe_device *vfe, काष्ठा vfe_line *line,
 				u8 enable)
-{
+अणु
 	/* empty */
-}
-static void vfe_set_rdi_cid(struct vfe_device *vfe, enum vfe_line_id id, u8 cid)
-{
+पूर्ण
+अटल व्योम vfe_set_rdi_cid(काष्ठा vfe_device *vfe, क्रमागत vfe_line_id id, u8 cid)
+अणु
 	vfe_reg_clr(vfe, VFE_0_RDI_CFG_x(id),
 		    VFE_0_RDI_CFG_x_RDI_M0_SEL_MASK);
 
 	vfe_reg_set(vfe, VFE_0_RDI_CFG_x(id),
 		    cid << VFE_0_RDI_CFG_x_RDI_M0_SEL_SHIFT);
-}
+पूर्ण
 
-static void vfe_reg_update(struct vfe_device *vfe, enum vfe_line_id line_id)
-{
+अटल व्योम vfe_reg_update(काष्ठा vfe_device *vfe, क्रमागत vfe_line_id line_id)
+अणु
 	vfe->reg_update |= VFE_0_REG_UPDATE_line_n(line_id);
 	wmb();
-	writel_relaxed(vfe->reg_update, vfe->base + VFE_0_REG_UPDATE);
+	ग_लिखोl_relaxed(vfe->reg_update, vfe->base + VFE_0_REG_UPDATE);
 	wmb();
-}
+पूर्ण
 
-static inline void vfe_reg_update_clear(struct vfe_device *vfe,
-					enum vfe_line_id line_id)
-{
+अटल अंतरभूत व्योम vfe_reg_update_clear(काष्ठा vfe_device *vfe,
+					क्रमागत vfe_line_id line_id)
+अणु
 	vfe->reg_update &= ~VFE_0_REG_UPDATE_line_n(line_id);
-}
+पूर्ण
 
-static void vfe_enable_irq_wm_line(struct vfe_device *vfe, u8 wm,
-				   enum vfe_line_id line_id, u8 enable)
-{
+अटल व्योम vfe_enable_irq_wm_line(काष्ठा vfe_device *vfe, u8 wm,
+				   क्रमागत vfe_line_id line_id, u8 enable)
+अणु
 	u32 irq_en0 = VFE_0_IRQ_MASK_0_IMAGE_MASTER_n_PING_PONG(wm) |
 		      VFE_0_IRQ_MASK_0_line_n_REG_UPDATE(line_id);
 	u32 irq_en1 = VFE_0_IRQ_MASK_1_IMAGE_MASTER_n_BUS_OVERFLOW(wm) |
 		      VFE_0_IRQ_MASK_1_RDIn_SOF(line_id);
 
-	if (enable) {
+	अगर (enable) अणु
 		vfe_reg_set(vfe, VFE_0_IRQ_MASK_0, irq_en0);
 		vfe_reg_set(vfe, VFE_0_IRQ_MASK_1, irq_en1);
-	} else {
+	पूर्ण अन्यथा अणु
 		vfe_reg_clr(vfe, VFE_0_IRQ_MASK_0, irq_en0);
 		vfe_reg_clr(vfe, VFE_0_IRQ_MASK_1, irq_en1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vfe_enable_irq_pix_line(struct vfe_device *vfe, u8 comp,
-				    enum vfe_line_id line_id, u8 enable)
-{
-	struct vfe_output *output = &vfe->line[line_id].output;
-	unsigned int i;
+अटल व्योम vfe_enable_irq_pix_line(काष्ठा vfe_device *vfe, u8 comp,
+				    क्रमागत vfe_line_id line_id, u8 enable)
+अणु
+	काष्ठा vfe_output *output = &vfe->line[line_id].output;
+	अचिन्हित पूर्णांक i;
 	u32 irq_en0;
 	u32 irq_en1;
 	u32 comp_mask = 0;
 
 	irq_en0 = VFE_0_IRQ_MASK_0_CAMIF_SOF;
-	irq_en0 |= VFE_0_IRQ_MASK_0_CAMIF_EOF;
+	irq_en0 |= VFE_0_IRQ_MASK_0_CAMIF_खातापूर्ण;
 	irq_en0 |= VFE_0_IRQ_MASK_0_IMAGE_COMPOSITE_DONE_n(comp);
 	irq_en0 |= VFE_0_IRQ_MASK_0_line_n_REG_UPDATE(line_id);
 	irq_en1 = VFE_0_IRQ_MASK_1_CAMIF_ERROR;
-	for (i = 0; i < output->wm_num; i++) {
+	क्रम (i = 0; i < output->wm_num; i++) अणु
 		irq_en1 |= VFE_0_IRQ_MASK_1_IMAGE_MASTER_n_BUS_OVERFLOW(
 							output->wm_idx[i]);
 		comp_mask |= (1 << output->wm_idx[i]) << comp * 8;
-	}
+	पूर्ण
 
-	if (enable) {
+	अगर (enable) अणु
 		vfe_reg_set(vfe, VFE_0_IRQ_MASK_0, irq_en0);
 		vfe_reg_set(vfe, VFE_0_IRQ_MASK_1, irq_en1);
 		vfe_reg_set(vfe, VFE_0_IRQ_COMPOSITE_MASK_0, comp_mask);
-	} else {
+	पूर्ण अन्यथा अणु
 		vfe_reg_clr(vfe, VFE_0_IRQ_MASK_0, irq_en0);
 		vfe_reg_clr(vfe, VFE_0_IRQ_MASK_1, irq_en1);
 		vfe_reg_clr(vfe, VFE_0_IRQ_COMPOSITE_MASK_0, comp_mask);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vfe_enable_irq_common(struct vfe_device *vfe)
-{
+अटल व्योम vfe_enable_irq_common(काष्ठा vfe_device *vfe)
+अणु
 	u32 irq_en0 = VFE_0_IRQ_MASK_0_RESET_ACK;
 	u32 irq_en1 = VFE_0_IRQ_MASK_1_VIOLATION |
 		      VFE_0_IRQ_MASK_1_BUS_BDG_HALT_ACK;
 
 	vfe_reg_set(vfe, VFE_0_IRQ_MASK_0, irq_en0);
 	vfe_reg_set(vfe, VFE_0_IRQ_MASK_1, irq_en1);
-}
+पूर्ण
 
-static void vfe_set_demux_cfg(struct vfe_device *vfe, struct vfe_line *line)
-{
+अटल व्योम vfe_set_demux_cfg(काष्ठा vfe_device *vfe, काष्ठा vfe_line *line)
+अणु
 	u32 val, even_cfg, odd_cfg;
 
-	writel_relaxed(VFE_0_DEMUX_CFG_PERIOD, vfe->base + VFE_0_DEMUX_CFG);
+	ग_लिखोl_relaxed(VFE_0_DEMUX_CFG_PERIOD, vfe->base + VFE_0_DEMUX_CFG);
 
 	val = VFE_0_DEMUX_GAIN_0_CH0_EVEN | VFE_0_DEMUX_GAIN_0_CH0_ODD;
-	writel_relaxed(val, vfe->base + VFE_0_DEMUX_GAIN_0);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_DEMUX_GAIN_0);
 
 	val = VFE_0_DEMUX_GAIN_1_CH1 | VFE_0_DEMUX_GAIN_1_CH2;
-	writel_relaxed(val, vfe->base + VFE_0_DEMUX_GAIN_1);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_DEMUX_GAIN_1);
 
-	switch (line->fmt[MSM_VFE_PAD_SINK].code) {
-	case MEDIA_BUS_FMT_YUYV8_2X8:
+	चयन (line->fmt[MSM_VFE_PAD_SINK].code) अणु
+	हाल MEDIA_BUS_FMT_YUYV8_2X8:
 		even_cfg = VFE_0_DEMUX_EVEN_CFG_PATTERN_YUYV;
 		odd_cfg = VFE_0_DEMUX_ODD_CFG_PATTERN_YUYV;
-		break;
-	case MEDIA_BUS_FMT_YVYU8_2X8:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_YVYU8_2X8:
 		even_cfg = VFE_0_DEMUX_EVEN_CFG_PATTERN_YVYU;
 		odd_cfg = VFE_0_DEMUX_ODD_CFG_PATTERN_YVYU;
-		break;
-	case MEDIA_BUS_FMT_UYVY8_2X8:
-	default:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_UYVY8_2X8:
+	शेष:
 		even_cfg = VFE_0_DEMUX_EVEN_CFG_PATTERN_UYVY;
 		odd_cfg = VFE_0_DEMUX_ODD_CFG_PATTERN_UYVY;
-		break;
-	case MEDIA_BUS_FMT_VYUY8_2X8:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_VYUY8_2X8:
 		even_cfg = VFE_0_DEMUX_EVEN_CFG_PATTERN_VYUY;
 		odd_cfg = VFE_0_DEMUX_ODD_CFG_PATTERN_VYUY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	writel_relaxed(even_cfg, vfe->base + VFE_0_DEMUX_EVEN_CFG);
-	writel_relaxed(odd_cfg, vfe->base + VFE_0_DEMUX_ODD_CFG);
-}
+	ग_लिखोl_relaxed(even_cfg, vfe->base + VFE_0_DEMUX_EVEN_CFG);
+	ग_लिखोl_relaxed(odd_cfg, vfe->base + VFE_0_DEMUX_ODD_CFG);
+पूर्ण
 
-static void vfe_set_scale_cfg(struct vfe_device *vfe, struct vfe_line *line)
-{
-	u32 p = line->video_out.active_fmt.fmt.pix_mp.pixelformat;
+अटल व्योम vfe_set_scale_cfg(काष्ठा vfe_device *vfe, काष्ठा vfe_line *line)
+अणु
+	u32 p = line->video_out.active_fmt.fmt.pix_mp.pixelक्रमmat;
 	u32 reg;
 	u16 input, output;
-	u8 interp_reso;
+	u8 पूर्णांकerp_reso;
 	u32 phase_mult;
 
-	writel_relaxed(0x3, vfe->base + VFE_0_SCALE_ENC_Y_CFG);
+	ग_लिखोl_relaxed(0x3, vfe->base + VFE_0_SCALE_ENC_Y_CFG);
 
 	input = line->fmt[MSM_VFE_PAD_SINK].width;
 	output = line->compose.width;
 	reg = (output << 16) | input;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_H_IMAGE_SIZE);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_H_IMAGE_SIZE);
 
-	interp_reso = vfe_calc_interp_reso(input, output);
-	phase_mult = input * (1 << (13 + interp_reso)) / output;
-	reg = (interp_reso << 20) | phase_mult;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_H_PHASE);
+	पूर्णांकerp_reso = vfe_calc_पूर्णांकerp_reso(input, output);
+	phase_mult = input * (1 << (13 + पूर्णांकerp_reso)) / output;
+	reg = (पूर्णांकerp_reso << 20) | phase_mult;
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_H_PHASE);
 
 	input = line->fmt[MSM_VFE_PAD_SINK].height;
 	output = line->compose.height;
 	reg = (output << 16) | input;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_V_IMAGE_SIZE);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_V_IMAGE_SIZE);
 
-	interp_reso = vfe_calc_interp_reso(input, output);
-	phase_mult = input * (1 << (13 + interp_reso)) / output;
-	reg = (interp_reso << 20) | phase_mult;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_V_PHASE);
+	पूर्णांकerp_reso = vfe_calc_पूर्णांकerp_reso(input, output);
+	phase_mult = input * (1 << (13 + पूर्णांकerp_reso)) / output;
+	reg = (पूर्णांकerp_reso << 20) | phase_mult;
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_Y_V_PHASE);
 
-	writel_relaxed(0x3, vfe->base + VFE_0_SCALE_ENC_CBCR_CFG);
+	ग_लिखोl_relaxed(0x3, vfe->base + VFE_0_SCALE_ENC_CBCR_CFG);
 
 	input = line->fmt[MSM_VFE_PAD_SINK].width;
 	output = line->compose.width / 2;
 	reg = (output << 16) | input;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_H_IMAGE_SIZE);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_H_IMAGE_SIZE);
 
-	interp_reso = vfe_calc_interp_reso(input, output);
-	phase_mult = input * (1 << (13 + interp_reso)) / output;
-	reg = (interp_reso << 20) | phase_mult;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_H_PHASE);
+	पूर्णांकerp_reso = vfe_calc_पूर्णांकerp_reso(input, output);
+	phase_mult = input * (1 << (13 + पूर्णांकerp_reso)) / output;
+	reg = (पूर्णांकerp_reso << 20) | phase_mult;
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_H_PHASE);
 
 	input = line->fmt[MSM_VFE_PAD_SINK].height;
 	output = line->compose.height;
-	if (p == V4L2_PIX_FMT_NV12 || p == V4L2_PIX_FMT_NV21)
+	अगर (p == V4L2_PIX_FMT_NV12 || p == V4L2_PIX_FMT_NV21)
 		output = line->compose.height / 2;
 	reg = (output << 16) | input;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_V_IMAGE_SIZE);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_V_IMAGE_SIZE);
 
-	interp_reso = vfe_calc_interp_reso(input, output);
-	phase_mult = input * (1 << (13 + interp_reso)) / output;
-	reg = (interp_reso << 20) | phase_mult;
-	writel_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_V_PHASE);
-}
+	पूर्णांकerp_reso = vfe_calc_पूर्णांकerp_reso(input, output);
+	phase_mult = input * (1 << (13 + पूर्णांकerp_reso)) / output;
+	reg = (पूर्णांकerp_reso << 20) | phase_mult;
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_SCALE_ENC_CBCR_V_PHASE);
+पूर्ण
 
-static void vfe_set_crop_cfg(struct vfe_device *vfe, struct vfe_line *line)
-{
-	u32 p = line->video_out.active_fmt.fmt.pix_mp.pixelformat;
+अटल व्योम vfe_set_crop_cfg(काष्ठा vfe_device *vfe, काष्ठा vfe_line *line)
+अणु
+	u32 p = line->video_out.active_fmt.fmt.pix_mp.pixelक्रमmat;
 	u32 reg;
 	u16 first, last;
 
 	first = line->crop.left;
 	last = line->crop.left + line->crop.width - 1;
 	reg = (first << 16) | last;
-	writel_relaxed(reg, vfe->base + VFE_0_CROP_ENC_Y_WIDTH);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_CROP_ENC_Y_WIDTH);
 
 	first = line->crop.top;
 	last = line->crop.top + line->crop.height - 1;
 	reg = (first << 16) | last;
-	writel_relaxed(reg, vfe->base + VFE_0_CROP_ENC_Y_HEIGHT);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_CROP_ENC_Y_HEIGHT);
 
 	first = line->crop.left / 2;
 	last = line->crop.left / 2 + line->crop.width / 2 - 1;
 	reg = (first << 16) | last;
-	writel_relaxed(reg, vfe->base + VFE_0_CROP_ENC_CBCR_WIDTH);
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_CROP_ENC_CBCR_WIDTH);
 
 	first = line->crop.top;
 	last = line->crop.top + line->crop.height - 1;
-	if (p == V4L2_PIX_FMT_NV12 || p == V4L2_PIX_FMT_NV21) {
+	अगर (p == V4L2_PIX_FMT_NV12 || p == V4L2_PIX_FMT_NV21) अणु
 		first = line->crop.top / 2;
 		last = line->crop.top / 2 + line->crop.height / 2 - 1;
-	}
+	पूर्ण
 	reg = (first << 16) | last;
-	writel_relaxed(reg, vfe->base + VFE_0_CROP_ENC_CBCR_HEIGHT);
-}
+	ग_लिखोl_relaxed(reg, vfe->base + VFE_0_CROP_ENC_CBCR_HEIGHT);
+पूर्ण
 
-static void vfe_set_clamp_cfg(struct vfe_device *vfe)
-{
+अटल व्योम vfe_set_clamp_cfg(काष्ठा vfe_device *vfe)
+अणु
 	u32 val = VFE_0_CLAMP_ENC_MAX_CFG_CH0 |
 		VFE_0_CLAMP_ENC_MAX_CFG_CH1 |
 		VFE_0_CLAMP_ENC_MAX_CFG_CH2;
 
-	writel_relaxed(val, vfe->base + VFE_0_CLAMP_ENC_MAX_CFG);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CLAMP_ENC_MAX_CFG);
 
 	val = VFE_0_CLAMP_ENC_MIN_CFG_CH0 |
 		VFE_0_CLAMP_ENC_MIN_CFG_CH1 |
 		VFE_0_CLAMP_ENC_MIN_CFG_CH2;
 
-	writel_relaxed(val, vfe->base + VFE_0_CLAMP_ENC_MIN_CFG);
-}
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CLAMP_ENC_MIN_CFG);
+पूर्ण
 
-static void vfe_set_qos(struct vfe_device *vfe)
-{
+अटल व्योम vfe_set_qos(काष्ठा vfe_device *vfe)
+अणु
 	u32 val = VFE_0_BUS_BDG_QOS_CFG_0_CFG;
 	u32 val7 = VFE_0_BUS_BDG_QOS_CFG_7_CFG;
 
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_0);
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_1);
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_2);
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_3);
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_4);
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_5);
-	writel_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_6);
-	writel_relaxed(val7, vfe->base + VFE_0_BUS_BDG_QOS_CFG_7);
-}
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_0);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_1);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_2);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_3);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_4);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_5);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_BUS_BDG_QOS_CFG_6);
+	ग_लिखोl_relaxed(val7, vfe->base + VFE_0_BUS_BDG_QOS_CFG_7);
+पूर्ण
 
-static void vfe_set_ds(struct vfe_device *vfe)
-{
+अटल व्योम vfe_set_ds(काष्ठा vfe_device *vfe)
+अणु
 	/* empty */
-}
+पूर्ण
 
-static void vfe_set_cgc_override(struct vfe_device *vfe, u8 wm, u8 enable)
-{
+अटल व्योम vfe_set_cgc_override(काष्ठा vfe_device *vfe, u8 wm, u8 enable)
+अणु
 	u32 val = VFE_0_CGC_OVERRIDE_1_IMAGE_Mx_CGC_OVERRIDE(wm);
 
-	if (enable)
+	अगर (enable)
 		vfe_reg_set(vfe, VFE_0_CGC_OVERRIDE_1, val);
-	else
+	अन्यथा
 		vfe_reg_clr(vfe, VFE_0_CGC_OVERRIDE_1, val);
 
 	wmb();
-}
+पूर्ण
 
-static void vfe_set_camif_cfg(struct vfe_device *vfe, struct vfe_line *line)
-{
+अटल व्योम vfe_set_camअगर_cfg(काष्ठा vfe_device *vfe, काष्ठा vfe_line *line)
+अणु
 	u32 val;
 
-	switch (line->fmt[MSM_VFE_PAD_SINK].code) {
-	case MEDIA_BUS_FMT_YUYV8_2X8:
+	चयन (line->fmt[MSM_VFE_PAD_SINK].code) अणु
+	हाल MEDIA_BUS_FMT_YUYV8_2X8:
 		val = VFE_0_CORE_CFG_PIXEL_PATTERN_YCBYCR;
-		break;
-	case MEDIA_BUS_FMT_YVYU8_2X8:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_YVYU8_2X8:
 		val = VFE_0_CORE_CFG_PIXEL_PATTERN_YCRYCB;
-		break;
-	case MEDIA_BUS_FMT_UYVY8_2X8:
-	default:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_UYVY8_2X8:
+	शेष:
 		val = VFE_0_CORE_CFG_PIXEL_PATTERN_CBYCRY;
-		break;
-	case MEDIA_BUS_FMT_VYUY8_2X8:
+		अवरोध;
+	हाल MEDIA_BUS_FMT_VYUY8_2X8:
 		val = VFE_0_CORE_CFG_PIXEL_PATTERN_CRYCBY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	writel_relaxed(val, vfe->base + VFE_0_CORE_CFG);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CORE_CFG);
 
 	val = line->fmt[MSM_VFE_PAD_SINK].width * 2;
 	val |= line->fmt[MSM_VFE_PAD_SINK].height << 16;
-	writel_relaxed(val, vfe->base + VFE_0_CAMIF_FRAME_CFG);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CAMIF_FRAME_CFG);
 
 	val = line->fmt[MSM_VFE_PAD_SINK].width * 2 - 1;
-	writel_relaxed(val, vfe->base + VFE_0_CAMIF_WINDOW_WIDTH_CFG);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CAMIF_WINDOW_WIDTH_CFG);
 
 	val = line->fmt[MSM_VFE_PAD_SINK].height - 1;
-	writel_relaxed(val, vfe->base + VFE_0_CAMIF_WINDOW_HEIGHT_CFG);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CAMIF_WINDOW_HEIGHT_CFG);
 
 	val = 0xffffffff;
-	writel_relaxed(val, vfe->base + VFE_0_CAMIF_SUBSAMPLE_CFG_0);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CAMIF_SUBSAMPLE_CFG_0);
 
 	val = 0xffffffff;
-	writel_relaxed(val, vfe->base + VFE_0_CAMIF_IRQ_SUBSAMPLE_PATTERN);
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CAMIF_IRQ_SUBSAMPLE_PATTERN);
 
 	val = VFE_0_RDI_CFG_x_MIPI_EN_BITS;
 	vfe_reg_set(vfe, VFE_0_RDI_CFG_x(0), val);
 
 	val = VFE_0_CAMIF_CFG_VFE_OUTPUT_EN;
-	writel_relaxed(val, vfe->base + VFE_0_CAMIF_CFG);
-}
+	ग_लिखोl_relaxed(val, vfe->base + VFE_0_CAMIF_CFG);
+पूर्ण
 
-static void vfe_set_camif_cmd(struct vfe_device *vfe, u8 enable)
-{
+अटल व्योम vfe_set_camअगर_cmd(काष्ठा vfe_device *vfe, u8 enable)
+अणु
 	u32 cmd;
 
 	cmd = VFE_0_CAMIF_CMD_CLEAR_CAMIF_STATUS | VFE_0_CAMIF_CMD_NO_CHANGE;
-	writel_relaxed(cmd, vfe->base + VFE_0_CAMIF_CMD);
+	ग_लिखोl_relaxed(cmd, vfe->base + VFE_0_CAMIF_CMD);
 	wmb();
 
-	if (enable)
+	अगर (enable)
 		cmd = VFE_0_CAMIF_CMD_ENABLE_FRAME_BOUNDARY;
-	else
+	अन्यथा
 		cmd = VFE_0_CAMIF_CMD_DISABLE_FRAME_BOUNDARY;
 
-	writel_relaxed(cmd, vfe->base + VFE_0_CAMIF_CMD);
-}
+	ग_लिखोl_relaxed(cmd, vfe->base + VFE_0_CAMIF_CMD);
+पूर्ण
 
-static void vfe_set_module_cfg(struct vfe_device *vfe, u8 enable)
-{
+अटल व्योम vfe_set_module_cfg(काष्ठा vfe_device *vfe, u8 enable)
+अणु
 	u32 val = VFE_0_MODULE_CFG_DEMUX |
 		  VFE_0_MODULE_CFG_CHROMA_UPSAMPLE |
 		  VFE_0_MODULE_CFG_SCALE_ENC |
 		  VFE_0_MODULE_CFG_CROP_ENC;
 
-	if (enable)
-		writel_relaxed(val, vfe->base + VFE_0_MODULE_CFG);
-	else
-		writel_relaxed(0x0, vfe->base + VFE_0_MODULE_CFG);
-}
+	अगर (enable)
+		ग_लिखोl_relaxed(val, vfe->base + VFE_0_MODULE_CFG);
+	अन्यथा
+		ग_लिखोl_relaxed(0x0, vfe->base + VFE_0_MODULE_CFG);
+पूर्ण
 
-static int vfe_camif_wait_for_stop(struct vfe_device *vfe, struct device *dev)
-{
+अटल पूर्णांक vfe_camअगर_रुको_क्रम_stop(काष्ठा vfe_device *vfe, काष्ठा device *dev)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = readl_poll_timeout(vfe->base + VFE_0_CAMIF_STATUS,
+	ret = पढ़ोl_poll_समयout(vfe->base + VFE_0_CAMIF_STATUS,
 				 val,
 				 (val & VFE_0_CAMIF_STATUS_HALT),
 				 CAMIF_TIMEOUT_SLEEP_US,
 				 CAMIF_TIMEOUT_ALL_US);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dev, "%s: camif stop timeout\n", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vfe_isr_read(struct vfe_device *vfe, u32 *value0, u32 *value1)
-{
-	*value0 = readl_relaxed(vfe->base + VFE_0_IRQ_STATUS_0);
-	*value1 = readl_relaxed(vfe->base + VFE_0_IRQ_STATUS_1);
+अटल व्योम vfe_isr_पढ़ो(काष्ठा vfe_device *vfe, u32 *value0, u32 *value1)
+अणु
+	*value0 = पढ़ोl_relaxed(vfe->base + VFE_0_IRQ_STATUS_0);
+	*value1 = पढ़ोl_relaxed(vfe->base + VFE_0_IRQ_STATUS_1);
 
-	writel_relaxed(*value0, vfe->base + VFE_0_IRQ_CLEAR_0);
-	writel_relaxed(*value1, vfe->base + VFE_0_IRQ_CLEAR_1);
+	ग_लिखोl_relaxed(*value0, vfe->base + VFE_0_IRQ_CLEAR_0);
+	ग_लिखोl_relaxed(*value1, vfe->base + VFE_0_IRQ_CLEAR_1);
 
 	wmb();
-	writel_relaxed(VFE_0_IRQ_CMD_GLOBAL_CLEAR, vfe->base + VFE_0_IRQ_CMD);
-}
+	ग_लिखोl_relaxed(VFE_0_IRQ_CMD_GLOBAL_CLEAR, vfe->base + VFE_0_IRQ_CMD);
+पूर्ण
 
-static void vfe_violation_read(struct vfe_device *vfe)
-{
-	u32 violation = readl_relaxed(vfe->base + VFE_0_VIOLATION_STATUS);
+अटल व्योम vfe_violation_पढ़ो(काष्ठा vfe_device *vfe)
+अणु
+	u32 violation = पढ़ोl_relaxed(vfe->base + VFE_0_VIOLATION_STATUS);
 
 	pr_err_ratelimited("VFE: violation = 0x%08x\n", violation);
-}
+पूर्ण
 
 /*
- * vfe_isr - VFE module interrupt handler
+ * vfe_isr - VFE module पूर्णांकerrupt handler
  * @irq: Interrupt line
  * @dev: VFE device
  *
  * Return IRQ_HANDLED on success
  */
-static irqreturn_t vfe_isr(int irq, void *dev)
-{
-	struct vfe_device *vfe = dev;
+अटल irqवापस_t vfe_isr(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा vfe_device *vfe = dev;
 	u32 value0, value1;
-	int i, j;
+	पूर्णांक i, j;
 
-	vfe->ops->isr_read(vfe, &value0, &value1);
+	vfe->ops->isr_पढ़ो(vfe, &value0, &value1);
 
 	dev_dbg(vfe->camss->dev, "VFE: status0 = 0x%08x, status1 = 0x%08x\n",
 		value0, value1);
 
-	if (value0 & VFE_0_IRQ_STATUS_0_RESET_ACK)
+	अगर (value0 & VFE_0_IRQ_STATUS_0_RESET_ACK)
 		vfe->isr_ops.reset_ack(vfe);
 
-	if (value1 & VFE_0_IRQ_STATUS_1_VIOLATION)
-		vfe->ops->violation_read(vfe);
+	अगर (value1 & VFE_0_IRQ_STATUS_1_VIOLATION)
+		vfe->ops->violation_पढ़ो(vfe);
 
-	if (value1 & VFE_0_IRQ_STATUS_1_BUS_BDG_HALT_ACK)
+	अगर (value1 & VFE_0_IRQ_STATUS_1_BUS_BDG_HALT_ACK)
 		vfe->isr_ops.halt_ack(vfe);
 
-	for (i = VFE_LINE_RDI0; i <= VFE_LINE_PIX; i++)
-		if (value0 & VFE_0_IRQ_STATUS_0_line_n_REG_UPDATE(i))
+	क्रम (i = VFE_LINE_RDI0; i <= VFE_LINE_PIX; i++)
+		अगर (value0 & VFE_0_IRQ_STATUS_0_line_n_REG_UPDATE(i))
 			vfe->isr_ops.reg_update(vfe, i);
 
-	if (value0 & VFE_0_IRQ_STATUS_0_CAMIF_SOF)
+	अगर (value0 & VFE_0_IRQ_STATUS_0_CAMIF_SOF)
 		vfe->isr_ops.sof(vfe, VFE_LINE_PIX);
 
-	for (i = VFE_LINE_RDI0; i <= VFE_LINE_RDI2; i++)
-		if (value1 & VFE_0_IRQ_STATUS_1_RDIn_SOF(i))
+	क्रम (i = VFE_LINE_RDI0; i <= VFE_LINE_RDI2; i++)
+		अगर (value1 & VFE_0_IRQ_STATUS_1_RDIn_SOF(i))
 			vfe->isr_ops.sof(vfe, i);
 
-	for (i = 0; i < MSM_VFE_COMPOSITE_IRQ_NUM; i++)
-		if (value0 & VFE_0_IRQ_STATUS_0_IMAGE_COMPOSITE_DONE_n(i)) {
-			vfe->isr_ops.comp_done(vfe, i);
-			for (j = 0; j < ARRAY_SIZE(vfe->wm_output_map); j++)
-				if (vfe->wm_output_map[j] == VFE_LINE_PIX)
+	क्रम (i = 0; i < MSM_VFE_COMPOSITE_IRQ_NUM; i++)
+		अगर (value0 & VFE_0_IRQ_STATUS_0_IMAGE_COMPOSITE_DONE_n(i)) अणु
+			vfe->isr_ops.comp_करोne(vfe, i);
+			क्रम (j = 0; j < ARRAY_SIZE(vfe->wm_output_map); j++)
+				अगर (vfe->wm_output_map[j] == VFE_LINE_PIX)
 					value0 &= ~VFE_0_IRQ_MASK_0_IMAGE_MASTER_n_PING_PONG(j);
-		}
+		पूर्ण
 
-	for (i = 0; i < MSM_VFE_IMAGE_MASTERS_NUM; i++)
-		if (value0 & VFE_0_IRQ_STATUS_0_IMAGE_MASTER_n_PING_PONG(i))
-			vfe->isr_ops.wm_done(vfe, i);
+	क्रम (i = 0; i < MSM_VFE_IMAGE_MASTERS_NUM; i++)
+		अगर (value0 & VFE_0_IRQ_STATUS_0_IMAGE_MASTER_n_PING_PONG(i))
+			vfe->isr_ops.wm_करोne(vfe, i);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * vfe_pm_domain_off - Disable power domains specific to this VFE.
+ * vfe_pm_करोमुख्य_off - Disable घातer करोमुख्यs specअगरic to this VFE.
  * @vfe: VFE Device
  */
-static void vfe_pm_domain_off(struct vfe_device *vfe)
-{
+अटल व्योम vfe_pm_करोमुख्य_off(काष्ठा vfe_device *vfe)
+अणु
 	/* nop */
-}
+पूर्ण
 
 /*
- * vfe_pm_domain_on - Enable power domains specific to this VFE.
+ * vfe_pm_करोमुख्य_on - Enable घातer करोमुख्यs specअगरic to this VFE.
  * @vfe: VFE Device
  */
-static int vfe_pm_domain_on(struct vfe_device *vfe)
-{
-	return 0;
-}
+अटल पूर्णांक vfe_pm_करोमुख्य_on(काष्ठा vfe_device *vfe)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct vfe_hw_ops_gen1 vfe_ops_gen1_4_1 = {
+अटल स्थिर काष्ठा vfe_hw_ops_gen1 vfe_ops_gen1_4_1 = अणु
 	.bus_connect_wm_to_rdi = vfe_bus_connect_wm_to_rdi,
 	.bus_disconnect_wm_from_rdi = vfe_bus_disconnect_wm_from_rdi,
-	.bus_enable_wr_if = vfe_bus_enable_wr_if,
+	.bus_enable_wr_अगर = vfe_bus_enable_wr_अगर,
 	.bus_reload_wm = vfe_bus_reload_wm,
-	.camif_wait_for_stop = vfe_camif_wait_for_stop,
+	.camअगर_रुको_क्रम_stop = vfe_camअगर_रुको_क्रम_stop,
 	.enable_irq_common = vfe_enable_irq_common,
 	.enable_irq_pix_line = vfe_enable_irq_pix_line,
 	.enable_irq_wm_line = vfe_enable_irq_wm_line,
 	.get_ub_size = vfe_get_ub_size,
 	.halt_clear = vfe_halt_clear,
 	.halt_request = vfe_halt_request,
-	.set_camif_cfg = vfe_set_camif_cfg,
-	.set_camif_cmd = vfe_set_camif_cmd,
+	.set_camअगर_cfg = vfe_set_camअगर_cfg,
+	.set_camअगर_cmd = vfe_set_camअगर_cmd,
 	.set_cgc_override = vfe_set_cgc_override,
 	.set_clamp_cfg = vfe_set_clamp_cfg,
 	.set_crop_cfg = vfe_set_crop_cfg,
@@ -991,29 +992,29 @@ static const struct vfe_hw_ops_gen1 vfe_ops_gen1_4_1 = {
 	.wm_set_pong_addr = vfe_wm_set_pong_addr,
 	.wm_set_subsample = vfe_wm_set_subsample,
 	.wm_set_ub_cfg = vfe_wm_set_ub_cfg,
-};
+पूर्ण;
 
-static void vfe_subdev_init(struct device *dev, struct vfe_device *vfe)
-{
+अटल व्योम vfe_subdev_init(काष्ठा device *dev, काष्ठा vfe_device *vfe)
+अणु
 	vfe->isr_ops = vfe_isr_ops_gen1;
 	vfe->ops_gen1 = &vfe_ops_gen1_4_1;
 	vfe->video_ops = vfe_video_ops_gen1;
 
 	vfe->line_num = VFE_LINE_NUM_GEN1;
-}
+पूर्ण
 
-const struct vfe_hw_ops vfe_ops_4_1 = {
+स्थिर काष्ठा vfe_hw_ops vfe_ops_4_1 = अणु
 	.global_reset = vfe_global_reset,
-	.hw_version_read = vfe_hw_version_read,
-	.isr_read = vfe_isr_read,
+	.hw_version_पढ़ो = vfe_hw_version_पढ़ो,
+	.isr_पढ़ो = vfe_isr_पढ़ो,
 	.isr = vfe_isr,
-	.pm_domain_off = vfe_pm_domain_off,
-	.pm_domain_on = vfe_pm_domain_on,
+	.pm_करोमुख्य_off = vfe_pm_करोमुख्य_off,
+	.pm_करोमुख्य_on = vfe_pm_करोमुख्य_on,
 	.reg_update_clear = vfe_reg_update_clear,
 	.reg_update = vfe_reg_update,
 	.subdev_init = vfe_subdev_init,
 	.vfe_disable = vfe_gen1_disable,
 	.vfe_enable = vfe_gen1_enable,
 	.vfe_halt = vfe_gen1_halt,
-	.violation_read = vfe_violation_read,
-};
+	.violation_पढ़ो = vfe_violation_पढ़ो,
+पूर्ण;

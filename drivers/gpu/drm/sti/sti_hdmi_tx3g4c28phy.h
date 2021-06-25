@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2014
- * Author: Benjamin Gaignard <benjamin.gaignard@st.com> for STMicroelectronics.
+ * Author: Benjamin Gaignard <benjamin.gaignard@st.com> क्रम STMicroelectronics.
  */
 
-#ifndef _STI_HDMI_TX3G4C28PHY_H_
-#define _STI_HDMI_TX3G4C28PHY_H_
+#अगर_अघोषित _STI_HDMI_TX3G4C28PHY_H_
+#घोषणा _STI_HDMI_TX3G4C28PHY_H_
 
-#include "sti_hdmi.h"
+#समावेश "sti_hdmi.h"
 
-extern struct hdmi_phy_ops tx3g4c28phy_ops;
+बाह्य काष्ठा hdmi_phy_ops tx3g4c28phy_ops;
 
-#endif
+#पूर्ण_अगर

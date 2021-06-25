@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "ia_css_types.h"
-#include "sh_css_defs.h"
-#include "ia_css_debug.h"
-#include "sh_css_frac.h"
+#समावेश "ia_css_types.h"
+#समावेश "sh_css_defs.h"
+#समावेश "ia_css_debug.h"
+#समावेश "sh_css_frac.h"
 
-#include "bnr/bnr_1.0/ia_css_bnr.host.h"
-#include "ia_css_ynr.host.h"
+#समावेश "bnr/bnr_1.0/ia_css_bnr.host.h"
+#समावेश "ia_css_ynr.host.h"
 
-const struct ia_css_nr_config default_nr_config = {
+स्थिर काष्ठा ia_css_nr_config शेष_nr_config = अणु
 	16384,
 	8192,
 	1280,
 	0,
 	0
-};
+पूर्ण;
 
-const struct ia_css_ee_config default_ee_config = {
+स्थिर काष्ठा ia_css_ee_config शेष_ee_config = अणु
 	8192,
 	128,
 	2048
-};
+पूर्ण;
 
-void
+व्योम
 ia_css_nr_encode(
-    struct sh_css_isp_ynr_params *to,
-    const struct ia_css_nr_config *from,
-    unsigned int size)
-{
-	(void)size;
+    काष्ठा sh_css_isp_ynr_params *to,
+    स्थिर काष्ठा ia_css_nr_config *from,
+    अचिन्हित पूर्णांक size)
+अणु
+	(व्योम)size;
 	/* YNR (Y Noise Reduction) */
 	to->threshold =
 	    uDIGIT_FITTING(8192U, 16, SH_CSS_BAYER_BITS);
@@ -53,19 +54,19 @@ ia_css_nr_encode(
 	    uDIGIT_FITTING(from->threshold_cb, 16, SH_CSS_BAYER_BITS);
 	to->threshold_cr =
 	    uDIGIT_FITTING(from->threshold_cr, 16, SH_CSS_BAYER_BITS);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_yee_encode(
-    struct sh_css_isp_yee_params *to,
-    const struct ia_css_yee_config *from,
-    unsigned int size)
-{
-	int asiWk1 = (int)from->ee.gain;
-	int asiWk2 = asiWk1 / 8;
-	int asiWk3 = asiWk1 / 4;
+    काष्ठा sh_css_isp_yee_params *to,
+    स्थिर काष्ठा ia_css_yee_config *from,
+    अचिन्हित पूर्णांक size)
+अणु
+	पूर्णांक asiWk1 = (पूर्णांक)from->ee.gain;
+	पूर्णांक asiWk2 = asiWk1 / 8;
+	पूर्णांक asiWk3 = asiWk1 / 4;
 
-	(void)size;
+	(व्योम)size;
 	/* YEE (Y Edge Enhancement) */
 	to->dirthreshold_s =
 	    min((uDIGIT_FITTING(from->nr.direction, 16, SH_CSS_BAYER_BITS)
@@ -108,14 +109,14 @@ ia_css_yee_encode(
 	to->clip_minus_g =
 	    uDIGIT_FITTING(32256U, 16, SH_CSS_BAYER_BITS);
 	to->Yclip = SH_CSS_BAYER_MAXVAL;
-}
+पूर्ण
 
-void
+व्योम
 ia_css_nr_dump(
-    const struct sh_css_isp_ynr_params *ynr,
-    unsigned int level)
-{
-	if (!ynr) return;
+    स्थिर काष्ठा sh_css_isp_ynr_params *ynr,
+    अचिन्हित पूर्णांक level)
+अणु
+	अगर (!ynr) वापस;
 	ia_css_debug_dtrace(level,
 			    "Y Noise Reduction:\n");
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
@@ -128,13 +129,13 @@ ia_css_nr_dump(
 			    "ynr_threshold_cb", ynr->threshold_cb);
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "ynr_threshold_cr", ynr->threshold_cr);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_yee_dump(
-    const struct sh_css_isp_yee_params *yee,
-    unsigned int level)
-{
+    स्थिर काष्ठा sh_css_isp_yee_params *yee,
+    अचिन्हित पूर्णांक level)
+अणु
 	ia_css_debug_dtrace(level,
 			    "Y Edge Enhancement:\n");
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
@@ -185,34 +186,34 @@ ia_css_yee_dump(
 	ia_css_debug_dtrace(level, "\t%-32s = %d\n",
 			    "ynryee_Yclip",
 			    yee->Yclip);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_nr_debug_dtrace(
-    const struct ia_css_nr_config *config,
-    unsigned int level)
-{
+    स्थिर काष्ठा ia_css_nr_config *config,
+    अचिन्हित पूर्णांक level)
+अणु
 	ia_css_debug_dtrace(level,
 			    "config.direction=%d, config.bnr_gain=%d, config.ynr_gain=%d, config.threshold_cb=%d, config.threshold_cr=%d\n",
 			    config->direction,
 			    config->bnr_gain, config->ynr_gain,
 			    config->threshold_cb, config->threshold_cr);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_ee_debug_dtrace(
-    const struct ia_css_ee_config *config,
-    unsigned int level)
-{
+    स्थिर काष्ठा ia_css_ee_config *config,
+    अचिन्हित पूर्णांक level)
+अणु
 	ia_css_debug_dtrace(level,
 			    "config.threshold=%d, config.gain=%d, config.detail_gain=%d\n",
 			    config->threshold, config->gain, config->detail_gain);
-}
+पूर्ण
 
-void
+व्योम
 ia_css_init_ynr_state(
-    void/*struct sh_css_isp_ynr_vmem_state*/ * state,
-    size_t size)
-{
-	memset(state, 0, size);
-}
+    व्योम/*काष्ठा sh_css_isp_ynr_vmem_state*/ * state,
+    माप_प्रकार size)
+अणु
+	स_रखो(state, 0, size);
+पूर्ण

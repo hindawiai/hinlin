@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
@@ -7,35 +8,35 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acinterp.h"
-#include "acparser.h"
-#include "amlcode.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acinterp.h"
+#समावेश "acparser.h"
+#समावेश "amlcode.h"
 
-#define _COMPONENT          ACPI_EXECUTER
+#घोषणा _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exoparg3")
 
 /*!
- * Naming convention for AML interpreter execution routines.
+ * Naming convention क्रम AML पूर्णांकerpreter execution routines.
  *
  * The routines that begin execution of AML opcodes are named with a common
- * convention based upon the number of arguments, the number of target operands,
- * and whether or not a value is returned:
+ * convention based upon the number of arguments, the number of target opeअक्रमs,
+ * and whether or not a value is वापसed:
  *
  *      AcpiExOpcode_xA_yT_zR
  *
  * Where:
  *
- * xA - ARGUMENTS:    The number of arguments (input operands) that are
- *                    required for this opcode type (1 through 6 args).
- * yT - TARGETS:      The number of targets (output operands) that are required
- *                    for this opcode type (0, 1, or 2 targets).
- * zR - RETURN VALUE: Indicates whether this opcode type returns a value
- *                    as the function return (0 or 1).
+ * xA - ARGUMENTS:    The number of arguments (input opeअक्रमs) that are
+ *                    required क्रम this opcode type (1 through 6 args).
+ * yT - TARGETS:      The number of tarमाला_लो (output opeअक्रमs) that are required
+ *                    क्रम this opcode type (0, 1, or 2 tarमाला_लो).
+ * zR - RETURN VALUE: Indicates whether this opcode type वापसs a value
+ *                    as the function वापस (0 or 1).
  *
  * The AcpiExOpcode* functions are called via the Dispatcher component with
- * fully resolved operands.
+ * fully resolved opeअक्रमs.
 !*/
 /*******************************************************************************
  *
@@ -45,70 +46,70 @@ ACPI_MODULE_NAME("exoparg3")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute Triadic operator (3 operands)
+ * DESCRIPTION: Execute Triadic चालक (3 opeअक्रमs)
  *
  ******************************************************************************/
-acpi_status acpi_ex_opcode_3A_0T_0R(struct acpi_walk_state *walk_state)
-{
-	union acpi_operand_object **operand = &walk_state->operands[0];
-	struct acpi_signal_fatal_info *fatal;
+acpi_status acpi_ex_opcode_3A_0T_0R(काष्ठा acpi_walk_state *walk_state)
+अणु
+	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
+	काष्ठा acpi_संकेत_fatal_info *fatal;
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE_STR(ex_opcode_3A_0T_0R,
 				acpi_ps_get_opcode_name(walk_state->opcode));
 
-	switch (walk_state->opcode) {
-	case AML_FATAL_OP:	/* Fatal (fatal_type fatal_code fatal_arg) */
+	चयन (walk_state->opcode) अणु
+	हाल AML_FATAL_OP:	/* Fatal (fatal_type fatal_code fatal_arg) */
 
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 				  "FatalOp: Type %X Code %X Arg %X "
 				  "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n",
-				  (u32)operand[0]->integer.value,
-				  (u32)operand[1]->integer.value,
-				  (u32)operand[2]->integer.value));
+				  (u32)opeअक्रम[0]->पूर्णांकeger.value,
+				  (u32)opeअक्रम[1]->पूर्णांकeger.value,
+				  (u32)opeअक्रम[2]->पूर्णांकeger.value));
 
-		fatal = ACPI_ALLOCATE(sizeof(struct acpi_signal_fatal_info));
-		if (fatal) {
-			fatal->type = (u32) operand[0]->integer.value;
-			fatal->code = (u32) operand[1]->integer.value;
-			fatal->argument = (u32) operand[2]->integer.value;
-		}
+		fatal = ACPI_ALLOCATE(माप(काष्ठा acpi_संकेत_fatal_info));
+		अगर (fatal) अणु
+			fatal->type = (u32) opeअक्रम[0]->पूर्णांकeger.value;
+			fatal->code = (u32) opeअक्रम[1]->पूर्णांकeger.value;
+			fatal->argument = (u32) opeअक्रम[2]->पूर्णांकeger.value;
+		पूर्ण
 
-		/* Always signal the OS! */
+		/* Always संकेत the OS! */
 
-		status = acpi_os_signal(ACPI_SIGNAL_FATAL, fatal);
+		status = acpi_os_संकेत(ACPI_SIGNAL_FATAL, fatal);
 
-		/* Might return while OS is shutting down, just continue */
+		/* Might वापस जबतक OS is shutting करोwn, just जारी */
 
 		ACPI_FREE(fatal);
-		goto cleanup;
+		जाओ cleanup;
 
-	case AML_EXTERNAL_OP:
+	हाल AML_EXTERNAL_OP:
 		/*
-		 * If the interpreter sees this opcode, just ignore it. The External
-		 * op is intended for use by disassemblers in order to properly
+		 * If the पूर्णांकerpreter sees this opcode, just ignore it. The External
+		 * op is पूर्णांकended क्रम use by disassemblers in order to properly
 		 * disassemble control method invocations. The opcode or group of
 		 * opcodes should be surrounded by an "if (0)" clause to ensure that
-		 * AML interpreters never see the opcode. Thus, something is
-		 * wrong if an external opcode ever gets here.
+		 * AML पूर्णांकerpreters never see the opcode. Thus, something is
+		 * wrong अगर an बाह्यal opcode ever माला_लो here.
 		 */
 		ACPI_ERROR((AE_INFO, "Executed External Op"));
 		status = AE_OK;
-		goto cleanup;
+		जाओ cleanup;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 
 		status = AE_AML_BAD_OPCODE;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -118,15 +119,15 @@ cleanup:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Execute Triadic operator (3 operands)
+ * DESCRIPTION: Execute Triadic चालक (3 opeअक्रमs)
  *
  ******************************************************************************/
 
-acpi_status acpi_ex_opcode_3A_1T_1R(struct acpi_walk_state *walk_state)
-{
-	union acpi_operand_object **operand = &walk_state->operands[0];
-	union acpi_operand_object *return_desc = NULL;
-	char *buffer = NULL;
+acpi_status acpi_ex_opcode_3A_1T_1R(काष्ठा acpi_walk_state *walk_state)
+अणु
+	जोड़ acpi_opeअक्रम_object **opeअक्रम = &walk_state->opeअक्रमs[0];
+	जोड़ acpi_opeअक्रम_object *वापस_desc = शून्य;
+	अक्षर *buffer = शून्य;
 	acpi_status status = AE_OK;
 	u64 index;
 	acpi_size length;
@@ -134,119 +135,119 @@ acpi_status acpi_ex_opcode_3A_1T_1R(struct acpi_walk_state *walk_state)
 	ACPI_FUNCTION_TRACE_STR(ex_opcode_3A_1T_1R,
 				acpi_ps_get_opcode_name(walk_state->opcode));
 
-	switch (walk_state->opcode) {
-	case AML_MID_OP:	/* Mid (Source[0], Index[1], Length[2], Result[3]) */
+	चयन (walk_state->opcode) अणु
+	हाल AML_MID_OP:	/* Mid (Source[0], Index[1], Length[2], Result[3]) */
 		/*
-		 * Create the return object. The Source operand is guaranteed to be
+		 * Create the वापस object. The Source opeअक्रम is guaranteed to be
 		 * either a String or a Buffer, so just use its type.
 		 */
-		return_desc = acpi_ut_create_internal_object((operand[0])->
+		वापस_desc = acpi_ut_create_पूर्णांकernal_object((opeअक्रम[0])->
 							     common.type);
-		if (!return_desc) {
+		अगर (!वापस_desc) अणु
 			status = AE_NO_MEMORY;
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		/* Get the Integer values from the objects */
 
-		index = operand[1]->integer.value;
-		length = (acpi_size)operand[2]->integer.value;
+		index = opeअक्रम[1]->पूर्णांकeger.value;
+		length = (acpi_size)opeअक्रम[2]->पूर्णांकeger.value;
 
 		/*
-		 * If the index is beyond the length of the String/Buffer, or if the
-		 * requested length is zero, return a zero-length String/Buffer
+		 * If the index is beyond the length of the String/Buffer, or अगर the
+		 * requested length is zero, वापस a zero-length String/Buffer
 		 */
-		if (index >= operand[0]->string.length) {
+		अगर (index >= opeअक्रम[0]->string.length) अणु
 			length = 0;
-		}
+		पूर्ण
 
-		/* Truncate request if larger than the actual String/Buffer */
+		/* Truncate request अगर larger than the actual String/Buffer */
 
-		else if ((index + length) > operand[0]->string.length) {
+		अन्यथा अगर ((index + length) > opeअक्रम[0]->string.length) अणु
 			length =
-			    (acpi_size)operand[0]->string.length -
+			    (acpi_size)opeअक्रम[0]->string.length -
 			    (acpi_size)index;
-		}
+		पूर्ण
 
-		/* Strings always have a sub-pointer, not so for buffers */
+		/* Strings always have a sub-poपूर्णांकer, not so क्रम buffers */
 
-		switch ((operand[0])->common.type) {
-		case ACPI_TYPE_STRING:
+		चयन ((opeअक्रम[0])->common.type) अणु
+		हाल ACPI_TYPE_STRING:
 
-			/* Always allocate a new buffer for the String */
+			/* Always allocate a new buffer क्रम the String */
 
 			buffer = ACPI_ALLOCATE_ZEROED((acpi_size)length + 1);
-			if (!buffer) {
+			अगर (!buffer) अणु
 				status = AE_NO_MEMORY;
-				goto cleanup;
-			}
-			break;
+				जाओ cleanup;
+			पूर्ण
+			अवरोध;
 
-		case ACPI_TYPE_BUFFER:
+		हाल ACPI_TYPE_BUFFER:
 
-			/* If the requested length is zero, don't allocate a buffer */
+			/* If the requested length is zero, करोn't allocate a buffer */
 
-			if (length > 0) {
+			अगर (length > 0) अणु
 
-				/* Allocate a new buffer for the Buffer */
+				/* Allocate a new buffer क्रम the Buffer */
 
 				buffer = ACPI_ALLOCATE_ZEROED(length);
-				if (!buffer) {
+				अगर (!buffer) अणु
 					status = AE_NO_MEMORY;
-					goto cleanup;
-				}
-			}
-			break;
+					जाओ cleanup;
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
-		default:	/* Should not happen */
+		शेष:	/* Should not happen */
 
 			status = AE_AML_OPERAND_TYPE;
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
-		if (buffer) {
+		अगर (buffer) अणु
 
 			/* We have a buffer, copy the portion requested */
 
-			memcpy(buffer,
-			       operand[0]->string.pointer + index, length);
-		}
+			स_नकल(buffer,
+			       opeअक्रम[0]->string.poपूर्णांकer + index, length);
+		पूर्ण
 
 		/* Set the length of the new String/Buffer */
 
-		return_desc->string.pointer = buffer;
-		return_desc->string.length = (u32) length;
+		वापस_desc->string.poपूर्णांकer = buffer;
+		वापस_desc->string.length = (u32) length;
 
 		/* Mark buffer initialized */
 
-		return_desc->buffer.flags |= AOPOBJ_DATA_VALID;
-		break;
+		वापस_desc->buffer.flags |= AOPOBJ_DATA_VALID;
+		अवरोध;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Unknown AML opcode 0x%X",
 			    walk_state->opcode));
 
 		status = AE_AML_BAD_OPCODE;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/* Store the result in the target */
 
-	status = acpi_ex_store(return_desc, operand[3], walk_state);
+	status = acpi_ex_store(वापस_desc, opeअक्रम[3], walk_state);
 
 cleanup:
 
-	/* Delete return object on error */
+	/* Delete वापस object on error */
 
-	if (ACPI_FAILURE(status) || walk_state->result_obj) {
-		acpi_ut_remove_reference(return_desc);
-		walk_state->result_obj = NULL;
-	} else {
-		/* Set the return object and exit */
+	अगर (ACPI_FAILURE(status) || walk_state->result_obj) अणु
+		acpi_ut_हटाओ_reference(वापस_desc);
+		walk_state->result_obj = शून्य;
+	पूर्ण अन्यथा अणु
+		/* Set the वापस object and निकास */
 
-		walk_state->result_obj = return_desc;
-	}
+		walk_state->result_obj = वापस_desc;
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

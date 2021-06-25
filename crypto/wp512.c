@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
@@ -7,50 +8,50 @@
  * Vincent Rijmen.  It has been selected as one of cryptographic
  * primitives by the NESSIE project http://www.cryptonessie.org/
  *
- * The original authors have disclaimed all copyright interest in this
- * code and thus put it in the public domain. The subsequent authors
+ * The original authors have disclaimed all copyright पूर्णांकerest in this
+ * code and thus put it in the खुला करोमुख्य. The subsequent authors
  * have put this under the GNU General Public License.
  *
  * By Aaron Grothe ajgrothe@yahoo.com, August 23, 2004
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  *
  */
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <asm/byteorder.h>
-#include <linux/types.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/types.h>
 
-#define WP512_DIGEST_SIZE 64
-#define WP384_DIGEST_SIZE 48
-#define WP256_DIGEST_SIZE 32
+#घोषणा WP512_DIGEST_SIZE 64
+#घोषणा WP384_DIGEST_SIZE 48
+#घोषणा WP256_DIGEST_SIZE 32
 
-#define WP512_BLOCK_SIZE  64
-#define WP512_LENGTHBYTES 32
+#घोषणा WP512_BLOCK_SIZE  64
+#घोषणा WP512_LENGTHBYTES 32
 
-#define WHIRLPOOL_ROUNDS 10
+#घोषणा WHIRLPOOL_ROUNDS 10
 
-struct wp512_ctx {
+काष्ठा wp512_ctx अणु
 	u8  bitLength[WP512_LENGTHBYTES];
 	u8  buffer[WP512_BLOCK_SIZE];
-	int bufferBits;
-	int bufferPos;
+	पूर्णांक bufferBits;
+	पूर्णांक bufferPos;
 	u64 hash[WP512_DIGEST_SIZE/8];
-};
+पूर्ण;
 
 /*
  * Though Whirlpool is endianness-neutral, the encryption tables are listed
- * in BIG-ENDIAN format, which is adopted throughout this implementation
- * (but little-endian notation would be equally suitable if consistently
+ * in BIG-ENDIAN क्रमmat, which is aकरोpted throughout this implementation
+ * (but little-endian notation would be equally suitable अगर consistently
  * employed).
  */
 
-static const u64 C0[256] = {
+अटल स्थिर u64 C0[256] = अणु
 	0x18186018c07830d8ULL, 0x23238c2305af4626ULL, 0xc6c63fc67ef991b8ULL,
 	0xe8e887e8136fcdfbULL, 0x878726874ca113cbULL, 0xb8b8dab8a9626d11ULL,
 	0x0101040108050209ULL, 0x4f4f214f426e9e0dULL, 0x3636d836adee6c9bULL,
@@ -137,9 +138,9 @@ static const u64 C0[256] = {
 	0x424215422a578468ULL, 0x98985a98b4c22d2cULL, 0xa4a4aaa4490e55edULL,
 	0x2828a0285d885075ULL, 0x5c5c6d5cda31b886ULL, 0xf8f8c7f8933fed6bULL,
 	0x8686228644a411c2ULL,
-};
+पूर्ण;
 
-static const u64 C1[256] = {
+अटल स्थिर u64 C1[256] = अणु
 	0xd818186018c07830ULL, 0x2623238c2305af46ULL, 0xb8c6c63fc67ef991ULL,
 	0xfbe8e887e8136fcdULL, 0xcb878726874ca113ULL, 0x11b8b8dab8a9626dULL,
 	0x0901010401080502ULL, 0x0d4f4f214f426e9eULL, 0x9b3636d836adee6cULL,
@@ -226,9 +227,9 @@ static const u64 C1[256] = {
 	0x68424215422a5784ULL, 0x2c98985a98b4c22dULL, 0xeda4a4aaa4490e55ULL,
 	0x752828a0285d8850ULL, 0x865c5c6d5cda31b8ULL, 0x6bf8f8c7f8933fedULL,
 	0xc28686228644a411ULL,
-};
+पूर्ण;
 
-static const u64 C2[256] = {
+अटल स्थिर u64 C2[256] = अणु
 	0x30d818186018c078ULL, 0x462623238c2305afULL, 0x91b8c6c63fc67ef9ULL,
 	0xcdfbe8e887e8136fULL, 0x13cb878726874ca1ULL, 0x6d11b8b8dab8a962ULL,
 	0x0209010104010805ULL, 0x9e0d4f4f214f426eULL, 0x6c9b3636d836adeeULL,
@@ -315,9 +316,9 @@ static const u64 C2[256] = {
 	0x8468424215422a57ULL, 0x2d2c98985a98b4c2ULL, 0x55eda4a4aaa4490eULL,
 	0x50752828a0285d88ULL, 0xb8865c5c6d5cda31ULL, 0xed6bf8f8c7f8933fULL,
 	0x11c28686228644a4ULL,
-};
+पूर्ण;
 
-static const u64 C3[256] = {
+अटल स्थिर u64 C3[256] = अणु
 	0x7830d818186018c0ULL, 0xaf462623238c2305ULL, 0xf991b8c6c63fc67eULL,
 	0x6fcdfbe8e887e813ULL, 0xa113cb878726874cULL, 0x626d11b8b8dab8a9ULL,
 	0x0502090101040108ULL, 0x6e9e0d4f4f214f42ULL, 0xee6c9b3636d836adULL,
@@ -404,9 +405,9 @@ static const u64 C3[256] = {
 	0x578468424215422aULL, 0xc22d2c98985a98b4ULL, 0x0e55eda4a4aaa449ULL,
 	0x8850752828a0285dULL, 0x31b8865c5c6d5cdaULL, 0x3fed6bf8f8c7f893ULL,
 	0xa411c28686228644ULL,
-};
+पूर्ण;
 
-static const u64 C4[256] = {
+अटल स्थिर u64 C4[256] = अणु
 	0xc07830d818186018ULL, 0x05af462623238c23ULL, 0x7ef991b8c6c63fc6ULL,
 	0x136fcdfbe8e887e8ULL, 0x4ca113cb87872687ULL, 0xa9626d11b8b8dab8ULL,
 	0x0805020901010401ULL, 0x426e9e0d4f4f214fULL, 0xadee6c9b3636d836ULL,
@@ -493,9 +494,9 @@ static const u64 C4[256] = {
 	0x2a57846842421542ULL, 0xb4c22d2c98985a98ULL, 0x490e55eda4a4aaa4ULL,
 	0x5d8850752828a028ULL, 0xda31b8865c5c6d5cULL, 0x933fed6bf8f8c7f8ULL,
 	0x44a411c286862286ULL,
-};
+पूर्ण;
 
-static const u64 C5[256] = {
+अटल स्थिर u64 C5[256] = अणु
 	0x18c07830d8181860ULL, 0x2305af462623238cULL, 0xc67ef991b8c6c63fULL,
 	0xe8136fcdfbe8e887ULL, 0x874ca113cb878726ULL, 0xb8a9626d11b8b8daULL,
 	0x0108050209010104ULL, 0x4f426e9e0d4f4f21ULL, 0x36adee6c9b3636d8ULL,
@@ -582,9 +583,9 @@ static const u64 C5[256] = {
 	0x422a578468424215ULL, 0x98b4c22d2c98985aULL, 0xa4490e55eda4a4aaULL,
 	0x285d8850752828a0ULL, 0x5cda31b8865c5c6dULL, 0xf8933fed6bf8f8c7ULL,
 	0x8644a411c2868622ULL,
-};
+पूर्ण;
 
-static const u64 C6[256] = {
+अटल स्थिर u64 C6[256] = अणु
 	0x6018c07830d81818ULL, 0x8c2305af46262323ULL, 0x3fc67ef991b8c6c6ULL,
 	0x87e8136fcdfbe8e8ULL, 0x26874ca113cb8787ULL, 0xdab8a9626d11b8b8ULL,
 	0x0401080502090101ULL, 0x214f426e9e0d4f4fULL, 0xd836adee6c9b3636ULL,
@@ -671,9 +672,9 @@ static const u64 C6[256] = {
 	0x15422a5784684242ULL, 0x5a98b4c22d2c9898ULL, 0xaaa4490e55eda4a4ULL,
 	0xa0285d8850752828ULL, 0x6d5cda31b8865c5cULL, 0xc7f8933fed6bf8f8ULL,
 	0x228644a411c28686ULL,
-};
+पूर्ण;
 
-static const u64 C7[256] = {
+अटल स्थिर u64 C7[256] = अणु
 	0x186018c07830d818ULL, 0x238c2305af462623ULL, 0xc63fc67ef991b8c6ULL,
 	0xe887e8136fcdfbe8ULL, 0x8726874ca113cb87ULL, 0xb8dab8a9626d11b8ULL,
 	0x0104010805020901ULL, 0x4f214f426e9e0d4fULL, 0x36d836adee6c9b36ULL,
@@ -760,9 +761,9 @@ static const u64 C7[256] = {
 	0x4215422a57846842ULL, 0x985a98b4c22d2c98ULL, 0xa4aaa4490e55eda4ULL,
 	0x28a0285d88507528ULL, 0x5c6d5cda31b8865cULL, 0xf8c7f8933fed6bf8ULL,
 	0x86228644a411c286ULL,
-};
+पूर्ण;
 
-static const u64 rc[WHIRLPOOL_ROUNDS] = {
+अटल स्थिर u64 rc[WHIRLPOOL_ROUNDS] = अणु
 	0x1823c6e887b8014fULL,
 	0x36a6d2f5796f9152ULL,
 	0x60bc9b8ea30c7b35ULL,
@@ -773,21 +774,21 @@ static const u64 rc[WHIRLPOOL_ROUNDS] = {
 	0xe427418ba77d95d8ULL,
 	0xfbee7c66dd17479eULL,
 	0xca2dbf07ad5a8333ULL,
-};
+पूर्ण;
 
 /**
- * The core Whirlpool transform.
+ * The core Whirlpool transक्रमm.
  */
 
-static void wp512_process_buffer(struct wp512_ctx *wctx) {
-	int i, r;
+अटल व्योम wp512_process_buffer(काष्ठा wp512_ctx *wctx) अणु
+	पूर्णांक i, r;
 	u64 K[8];        /* the round key */
 	u64 block[8];    /* mu(buffer) */
 	u64 state[8];    /* the cipher state */
 	u64 L[8];
-	const __be64 *buffer = (const __be64 *)wctx->buffer;
+	स्थिर __be64 *buffer = (स्थिर __be64 *)wctx->buffer;
 
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		block[i] = be64_to_cpu(buffer[i]);
 
 	state[0] = block[0] ^ (K[0] = wctx->hash[0]);
@@ -799,80 +800,80 @@ static void wp512_process_buffer(struct wp512_ctx *wctx) {
 	state[6] = block[6] ^ (K[6] = wctx->hash[6]);
 	state[7] = block[7] ^ (K[7] = wctx->hash[7]);
 
-	for (r = 0; r < WHIRLPOOL_ROUNDS; r++) {
+	क्रम (r = 0; r < WHIRLPOOL_ROUNDS; r++) अणु
 
-		L[0] = C0[(int)(K[0] >> 56)       ] ^
-			   C1[(int)(K[7] >> 48) & 0xff] ^
-			   C2[(int)(K[6] >> 40) & 0xff] ^
-			   C3[(int)(K[5] >> 32) & 0xff] ^
-			   C4[(int)(K[4] >> 24) & 0xff] ^
-			   C5[(int)(K[3] >> 16) & 0xff] ^
-			   C6[(int)(K[2] >>  8) & 0xff] ^
-			   C7[(int)(K[1]      ) & 0xff] ^
+		L[0] = C0[(पूर्णांक)(K[0] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[7] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[6] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[5] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[4] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[3] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[2] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[1]      ) & 0xff] ^
 			   rc[r];
 
-		L[1] = C0[(int)(K[1] >> 56)       ] ^
-			   C1[(int)(K[0] >> 48) & 0xff] ^
-			   C2[(int)(K[7] >> 40) & 0xff] ^
-			   C3[(int)(K[6] >> 32) & 0xff] ^
-			   C4[(int)(K[5] >> 24) & 0xff] ^
-			   C5[(int)(K[4] >> 16) & 0xff] ^
-			   C6[(int)(K[3] >>  8) & 0xff] ^
-			   C7[(int)(K[2]      ) & 0xff];
+		L[1] = C0[(पूर्णांक)(K[1] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[0] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[7] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[6] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[5] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[4] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[3] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[2]      ) & 0xff];
 
-		L[2] = C0[(int)(K[2] >> 56)       ] ^
-			   C1[(int)(K[1] >> 48) & 0xff] ^
-			   C2[(int)(K[0] >> 40) & 0xff] ^
-			   C3[(int)(K[7] >> 32) & 0xff] ^
-			   C4[(int)(K[6] >> 24) & 0xff] ^
-			   C5[(int)(K[5] >> 16) & 0xff] ^
-			   C6[(int)(K[4] >>  8) & 0xff] ^
-			   C7[(int)(K[3]      ) & 0xff];
+		L[2] = C0[(पूर्णांक)(K[2] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[1] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[0] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[7] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[6] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[5] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[4] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[3]      ) & 0xff];
 
-		L[3] = C0[(int)(K[3] >> 56)       ] ^
-			   C1[(int)(K[2] >> 48) & 0xff] ^
-			   C2[(int)(K[1] >> 40) & 0xff] ^
-			   C3[(int)(K[0] >> 32) & 0xff] ^
-			   C4[(int)(K[7] >> 24) & 0xff] ^
-			   C5[(int)(K[6] >> 16) & 0xff] ^
-			   C6[(int)(K[5] >>  8) & 0xff] ^
-			   C7[(int)(K[4]      ) & 0xff];
+		L[3] = C0[(पूर्णांक)(K[3] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[2] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[1] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[0] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[7] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[6] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[5] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[4]      ) & 0xff];
 
-		L[4] = C0[(int)(K[4] >> 56)       ] ^
-			   C1[(int)(K[3] >> 48) & 0xff] ^
-			   C2[(int)(K[2] >> 40) & 0xff] ^
-			   C3[(int)(K[1] >> 32) & 0xff] ^
-			   C4[(int)(K[0] >> 24) & 0xff] ^
-			   C5[(int)(K[7] >> 16) & 0xff] ^
-			   C6[(int)(K[6] >>  8) & 0xff] ^
-			   C7[(int)(K[5]      ) & 0xff];
+		L[4] = C0[(पूर्णांक)(K[4] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[3] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[2] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[1] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[0] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[7] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[6] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[5]      ) & 0xff];
 
-		L[5] = C0[(int)(K[5] >> 56)       ] ^
-			   C1[(int)(K[4] >> 48) & 0xff] ^
-			   C2[(int)(K[3] >> 40) & 0xff] ^
-			   C3[(int)(K[2] >> 32) & 0xff] ^
-			   C4[(int)(K[1] >> 24) & 0xff] ^
-			   C5[(int)(K[0] >> 16) & 0xff] ^
-			   C6[(int)(K[7] >>  8) & 0xff] ^
-			   C7[(int)(K[6]      ) & 0xff];
+		L[5] = C0[(पूर्णांक)(K[5] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[4] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[3] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[2] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[1] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[0] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[7] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[6]      ) & 0xff];
 
-		L[6] = C0[(int)(K[6] >> 56)       ] ^
-			   C1[(int)(K[5] >> 48) & 0xff] ^
-			   C2[(int)(K[4] >> 40) & 0xff] ^
-			   C3[(int)(K[3] >> 32) & 0xff] ^
-			   C4[(int)(K[2] >> 24) & 0xff] ^
-			   C5[(int)(K[1] >> 16) & 0xff] ^
-			   C6[(int)(K[0] >>  8) & 0xff] ^
-			   C7[(int)(K[7]      ) & 0xff];
+		L[6] = C0[(पूर्णांक)(K[6] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[5] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[4] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[3] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[2] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[1] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[0] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[7]      ) & 0xff];
 
-		L[7] = C0[(int)(K[7] >> 56)       ] ^
-			   C1[(int)(K[6] >> 48) & 0xff] ^
-			   C2[(int)(K[5] >> 40) & 0xff] ^
-			   C3[(int)(K[4] >> 32) & 0xff] ^
-			   C4[(int)(K[3] >> 24) & 0xff] ^
-			   C5[(int)(K[2] >> 16) & 0xff] ^
-			   C6[(int)(K[1] >>  8) & 0xff] ^
-			   C7[(int)(K[0]      ) & 0xff];
+		L[7] = C0[(पूर्णांक)(K[7] >> 56)       ] ^
+			   C1[(पूर्णांक)(K[6] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(K[5] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(K[4] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(K[3] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(K[2] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(K[1] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(K[0]      ) & 0xff];
 
 		K[0] = L[0];
 		K[1] = L[1];
@@ -883,84 +884,84 @@ static void wp512_process_buffer(struct wp512_ctx *wctx) {
 		K[6] = L[6];
 		K[7] = L[7];
 
-		L[0] = C0[(int)(state[0] >> 56)       ] ^
-			   C1[(int)(state[7] >> 48) & 0xff] ^
-			   C2[(int)(state[6] >> 40) & 0xff] ^
-			   C3[(int)(state[5] >> 32) & 0xff] ^
-			   C4[(int)(state[4] >> 24) & 0xff] ^
-			   C5[(int)(state[3] >> 16) & 0xff] ^
-			   C6[(int)(state[2] >>  8) & 0xff] ^
-			   C7[(int)(state[1]      ) & 0xff] ^
+		L[0] = C0[(पूर्णांक)(state[0] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[7] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[6] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[5] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[4] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[3] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[2] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[1]      ) & 0xff] ^
 			   K[0];
 
-		L[1] = C0[(int)(state[1] >> 56)       ] ^
-			   C1[(int)(state[0] >> 48) & 0xff] ^
-			   C2[(int)(state[7] >> 40) & 0xff] ^
-			   C3[(int)(state[6] >> 32) & 0xff] ^
-			   C4[(int)(state[5] >> 24) & 0xff] ^
-			   C5[(int)(state[4] >> 16) & 0xff] ^
-			   C6[(int)(state[3] >>  8) & 0xff] ^
-			   C7[(int)(state[2]      ) & 0xff] ^
+		L[1] = C0[(पूर्णांक)(state[1] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[0] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[7] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[6] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[5] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[4] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[3] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[2]      ) & 0xff] ^
 			   K[1];
 
-		L[2] = C0[(int)(state[2] >> 56)       ] ^
-			   C1[(int)(state[1] >> 48) & 0xff] ^
-			   C2[(int)(state[0] >> 40) & 0xff] ^
-			   C3[(int)(state[7] >> 32) & 0xff] ^
-			   C4[(int)(state[6] >> 24) & 0xff] ^
-			   C5[(int)(state[5] >> 16) & 0xff] ^
-			   C6[(int)(state[4] >>  8) & 0xff] ^
-			   C7[(int)(state[3]      ) & 0xff] ^
+		L[2] = C0[(पूर्णांक)(state[2] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[1] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[0] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[7] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[6] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[5] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[4] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[3]      ) & 0xff] ^
 			   K[2];
 
-		L[3] = C0[(int)(state[3] >> 56)       ] ^
-			   C1[(int)(state[2] >> 48) & 0xff] ^
-			   C2[(int)(state[1] >> 40) & 0xff] ^
-			   C3[(int)(state[0] >> 32) & 0xff] ^
-			   C4[(int)(state[7] >> 24) & 0xff] ^
-			   C5[(int)(state[6] >> 16) & 0xff] ^
-			   C6[(int)(state[5] >>  8) & 0xff] ^
-			   C7[(int)(state[4]      ) & 0xff] ^
+		L[3] = C0[(पूर्णांक)(state[3] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[2] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[1] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[0] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[7] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[6] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[5] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[4]      ) & 0xff] ^
 			   K[3];
 
-		L[4] = C0[(int)(state[4] >> 56)       ] ^
-			   C1[(int)(state[3] >> 48) & 0xff] ^
-			   C2[(int)(state[2] >> 40) & 0xff] ^
-			   C3[(int)(state[1] >> 32) & 0xff] ^
-			   C4[(int)(state[0] >> 24) & 0xff] ^
-			   C5[(int)(state[7] >> 16) & 0xff] ^
-			   C6[(int)(state[6] >>  8) & 0xff] ^
-			   C7[(int)(state[5]      ) & 0xff] ^
+		L[4] = C0[(पूर्णांक)(state[4] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[3] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[2] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[1] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[0] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[7] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[6] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[5]      ) & 0xff] ^
 			   K[4];
 
-		L[5] = C0[(int)(state[5] >> 56)       ] ^
-			   C1[(int)(state[4] >> 48) & 0xff] ^
-			   C2[(int)(state[3] >> 40) & 0xff] ^
-			   C3[(int)(state[2] >> 32) & 0xff] ^
-			   C4[(int)(state[1] >> 24) & 0xff] ^
-			   C5[(int)(state[0] >> 16) & 0xff] ^
-			   C6[(int)(state[7] >>  8) & 0xff] ^
-			   C7[(int)(state[6]      ) & 0xff] ^
+		L[5] = C0[(पूर्णांक)(state[5] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[4] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[3] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[2] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[1] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[0] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[7] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[6]      ) & 0xff] ^
 			   K[5];
 
-		L[6] = C0[(int)(state[6] >> 56)       ] ^
-			   C1[(int)(state[5] >> 48) & 0xff] ^
-			   C2[(int)(state[4] >> 40) & 0xff] ^
-			   C3[(int)(state[3] >> 32) & 0xff] ^
-			   C4[(int)(state[2] >> 24) & 0xff] ^
-			   C5[(int)(state[1] >> 16) & 0xff] ^
-			   C6[(int)(state[0] >>  8) & 0xff] ^
-			   C7[(int)(state[7]      ) & 0xff] ^
+		L[6] = C0[(पूर्णांक)(state[6] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[5] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[4] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[3] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[2] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[1] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[0] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[7]      ) & 0xff] ^
 			   K[6];
 
-		L[7] = C0[(int)(state[7] >> 56)       ] ^
-			   C1[(int)(state[6] >> 48) & 0xff] ^
-			   C2[(int)(state[5] >> 40) & 0xff] ^
-			   C3[(int)(state[4] >> 32) & 0xff] ^
-			   C4[(int)(state[3] >> 24) & 0xff] ^
-			   C5[(int)(state[2] >> 16) & 0xff] ^
-			   C6[(int)(state[1] >>  8) & 0xff] ^
-			   C7[(int)(state[0]      ) & 0xff] ^
+		L[7] = C0[(पूर्णांक)(state[7] >> 56)       ] ^
+			   C1[(पूर्णांक)(state[6] >> 48) & 0xff] ^
+			   C2[(पूर्णांक)(state[5] >> 40) & 0xff] ^
+			   C3[(पूर्णांक)(state[4] >> 32) & 0xff] ^
+			   C4[(पूर्णांक)(state[3] >> 24) & 0xff] ^
+			   C5[(पूर्णांक)(state[2] >> 16) & 0xff] ^
+			   C6[(पूर्णांक)(state[1] >>  8) & 0xff] ^
+			   C7[(पूर्णांक)(state[0]      ) & 0xff] ^
 			   K[7];
 
 		state[0] = L[0];
@@ -971,7 +972,7 @@ static void wp512_process_buffer(struct wp512_ctx *wctx) {
 		state[5] = L[5];
 		state[6] = L[6];
 		state[7] = L[7];
-	}
+	पूर्ण
 	/*
 	* apply the Miyaguchi-Preneel compression function:
 	*/
@@ -984,195 +985,195 @@ static void wp512_process_buffer(struct wp512_ctx *wctx) {
 	wctx->hash[6] ^= state[6] ^ block[6];
 	wctx->hash[7] ^= state[7] ^ block[7];
 
-}
+पूर्ण
 
-static int wp512_init(struct shash_desc *desc) {
-	struct wp512_ctx *wctx = shash_desc_ctx(desc);
-	int i;
+अटल पूर्णांक wp512_init(काष्ठा shash_desc *desc) अणु
+	काष्ठा wp512_ctx *wctx = shash_desc_ctx(desc);
+	पूर्णांक i;
 
-	memset(wctx->bitLength, 0, 32);
+	स_रखो(wctx->bitLength, 0, 32);
 	wctx->bufferBits = wctx->bufferPos = 0;
 	wctx->buffer[0] = 0;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		wctx->hash[i] = 0L;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wp512_update(struct shash_desc *desc, const u8 *source,
-			 unsigned int len)
-{
-	struct wp512_ctx *wctx = shash_desc_ctx(desc);
-	int sourcePos    = 0;
-	unsigned int bits_len = len * 8; // convert to number of bits
-	int sourceGap    = (8 - ((int)bits_len & 7)) & 7;
-	int bufferRem    = wctx->bufferBits & 7;
-	int i;
+अटल पूर्णांक wp512_update(काष्ठा shash_desc *desc, स्थिर u8 *source,
+			 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा wp512_ctx *wctx = shash_desc_ctx(desc);
+	पूर्णांक sourcePos    = 0;
+	अचिन्हित पूर्णांक bits_len = len * 8; // convert to number of bits
+	पूर्णांक sourceGap    = (8 - ((पूर्णांक)bits_len & 7)) & 7;
+	पूर्णांक bufferRem    = wctx->bufferBits & 7;
+	पूर्णांक i;
 	u32 b, carry;
 	u8 *buffer       = wctx->buffer;
 	u8 *bitLength    = wctx->bitLength;
-	int bufferBits   = wctx->bufferBits;
-	int bufferPos    = wctx->bufferPos;
+	पूर्णांक bufferBits   = wctx->bufferBits;
+	पूर्णांक bufferPos    = wctx->bufferPos;
 
 	u64 value = bits_len;
-	for (i = 31, carry = 0; i >= 0 && (carry != 0 || value != 0ULL); i--) {
+	क्रम (i = 31, carry = 0; i >= 0 && (carry != 0 || value != 0ULL); i--) अणु
 		carry += bitLength[i] + ((u32)value & 0xff);
 		bitLength[i] = (u8)carry;
 		carry >>= 8;
 		value >>= 8;
-	}
-	while (bits_len > 8) {
+	पूर्ण
+	जबतक (bits_len > 8) अणु
 		b = ((source[sourcePos] << sourceGap) & 0xff) |
 		((source[sourcePos + 1] & 0xff) >> (8 - sourceGap));
 		buffer[bufferPos++] |= (u8)(b >> bufferRem);
 		bufferBits += 8 - bufferRem;
-		if (bufferBits == WP512_BLOCK_SIZE * 8) {
+		अगर (bufferBits == WP512_BLOCK_SIZE * 8) अणु
 			wp512_process_buffer(wctx);
 			bufferBits = bufferPos = 0;
-		}
+		पूर्ण
 		buffer[bufferPos] = b << (8 - bufferRem);
 		bufferBits += bufferRem;
 		bits_len -= 8;
 		sourcePos++;
-	}
-	if (bits_len > 0) {
+	पूर्ण
+	अगर (bits_len > 0) अणु
 		b = (source[sourcePos] << sourceGap) & 0xff;
 		buffer[bufferPos] |= b >> bufferRem;
-	} else {
+	पूर्ण अन्यथा अणु
 		b = 0;
-	}
-	if (bufferRem + bits_len < 8) {
+	पूर्ण
+	अगर (bufferRem + bits_len < 8) अणु
 		bufferBits += bits_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		bufferPos++;
 		bufferBits += 8 - bufferRem;
 		bits_len -= 8 - bufferRem;
-		if (bufferBits == WP512_BLOCK_SIZE * 8) {
+		अगर (bufferBits == WP512_BLOCK_SIZE * 8) अणु
 			wp512_process_buffer(wctx);
 			bufferBits = bufferPos = 0;
-		}
+		पूर्ण
 		buffer[bufferPos] = b << (8 - bufferRem);
-		bufferBits += (int)bits_len;
-	}
+		bufferBits += (पूर्णांक)bits_len;
+	पूर्ण
 
 	wctx->bufferBits   = bufferBits;
 	wctx->bufferPos    = bufferPos;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wp512_final(struct shash_desc *desc, u8 *out)
-{
-	struct wp512_ctx *wctx = shash_desc_ctx(desc);
-	int i;
+अटल पूर्णांक wp512_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा wp512_ctx *wctx = shash_desc_ctx(desc);
+	पूर्णांक i;
    	u8 *buffer      = wctx->buffer;
    	u8 *bitLength   = wctx->bitLength;
-   	int bufferBits  = wctx->bufferBits;
-   	int bufferPos   = wctx->bufferPos;
+   	पूर्णांक bufferBits  = wctx->bufferBits;
+   	पूर्णांक bufferPos   = wctx->bufferPos;
 	__be64 *digest  = (__be64 *)out;
 
    	buffer[bufferPos] |= 0x80U >> (bufferBits & 7);
    	bufferPos++;
-   	if (bufferPos > WP512_BLOCK_SIZE - WP512_LENGTHBYTES) {
-   		if (bufferPos < WP512_BLOCK_SIZE) {
-	   	memset(&buffer[bufferPos], 0, WP512_BLOCK_SIZE - bufferPos);
-   		}
+   	अगर (bufferPos > WP512_BLOCK_SIZE - WP512_LENGTHBYTES) अणु
+   		अगर (bufferPos < WP512_BLOCK_SIZE) अणु
+	   	स_रखो(&buffer[bufferPos], 0, WP512_BLOCK_SIZE - bufferPos);
+   		पूर्ण
    		wp512_process_buffer(wctx);
    		bufferPos = 0;
-   	}
-   	if (bufferPos < WP512_BLOCK_SIZE - WP512_LENGTHBYTES) {
-   		memset(&buffer[bufferPos], 0,
+   	पूर्ण
+   	अगर (bufferPos < WP512_BLOCK_SIZE - WP512_LENGTHBYTES) अणु
+   		स_रखो(&buffer[bufferPos], 0,
 			  (WP512_BLOCK_SIZE - WP512_LENGTHBYTES) - bufferPos);
-   	}
+   	पूर्ण
    	bufferPos = WP512_BLOCK_SIZE - WP512_LENGTHBYTES;
-   	memcpy(&buffer[WP512_BLOCK_SIZE - WP512_LENGTHBYTES],
+   	स_नकल(&buffer[WP512_BLOCK_SIZE - WP512_LENGTHBYTES],
 		   bitLength, WP512_LENGTHBYTES);
    	wp512_process_buffer(wctx);
-	for (i = 0; i < WP512_DIGEST_SIZE/8; i++)
+	क्रम (i = 0; i < WP512_DIGEST_SIZE/8; i++)
 		digest[i] = cpu_to_be64(wctx->hash[i]);
    	wctx->bufferBits   = bufferBits;
    	wctx->bufferPos    = bufferPos;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wp384_final(struct shash_desc *desc, u8 *out)
-{
+अटल पूर्णांक wp384_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
 	u8 D[64];
 
 	wp512_final(desc, D);
-	memcpy(out, D, WP384_DIGEST_SIZE);
+	स_नकल(out, D, WP384_DIGEST_SIZE);
 	memzero_explicit(D, WP512_DIGEST_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wp256_final(struct shash_desc *desc, u8 *out)
-{
+अटल पूर्णांक wp256_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
 	u8 D[64];
 
 	wp512_final(desc, D);
-	memcpy(out, D, WP256_DIGEST_SIZE);
+	स_नकल(out, D, WP256_DIGEST_SIZE);
 	memzero_explicit(D, WP512_DIGEST_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg wp_algs[3] = { {
+अटल काष्ठा shash_alg wp_algs[3] = अणु अणु
 	.digestsize	=	WP512_DIGEST_SIZE,
 	.init		=	wp512_init,
 	.update		=	wp512_update,
 	.final		=	wp512_final,
-	.descsize	=	sizeof(struct wp512_ctx),
-	.base		=	{
+	.descsize	=	माप(काष्ठा wp512_ctx),
+	.base		=	अणु
 		.cra_name	 =	"wp512",
 		.cra_driver_name =	"wp512-generic",
 		.cra_blocksize	 =	WP512_BLOCK_SIZE,
 		.cra_module	 =	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	WP384_DIGEST_SIZE,
 	.init		=	wp512_init,
 	.update		=	wp512_update,
 	.final		=	wp384_final,
-	.descsize	=	sizeof(struct wp512_ctx),
-	.base		=	{
+	.descsize	=	माप(काष्ठा wp512_ctx),
+	.base		=	अणु
 		.cra_name	 =	"wp384",
 		.cra_driver_name =	"wp384-generic",
 		.cra_blocksize	 =	WP512_BLOCK_SIZE,
 		.cra_module	 =	THIS_MODULE,
-	}
-}, {
+	पूर्ण
+पूर्ण, अणु
 	.digestsize	=	WP256_DIGEST_SIZE,
 	.init		=	wp512_init,
 	.update		=	wp512_update,
 	.final		=	wp256_final,
-	.descsize	=	sizeof(struct wp512_ctx),
-	.base		=	{
+	.descsize	=	माप(काष्ठा wp512_ctx),
+	.base		=	अणु
 		.cra_name	 =	"wp256",
 		.cra_driver_name =	"wp256-generic",
 		.cra_blocksize	 =	WP512_BLOCK_SIZE,
 		.cra_module	 =	THIS_MODULE,
-	}
-} };
+	पूर्ण
+पूर्ण पूर्ण;
 
-static int __init wp512_mod_init(void)
-{
-	return crypto_register_shashes(wp_algs, ARRAY_SIZE(wp_algs));
-}
+अटल पूर्णांक __init wp512_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_shashes(wp_algs, ARRAY_SIZE(wp_algs));
+पूर्ण
 
-static void __exit wp512_mod_fini(void)
-{
-	crypto_unregister_shashes(wp_algs, ARRAY_SIZE(wp_algs));
-}
+अटल व्योम __निकास wp512_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shashes(wp_algs, ARRAY_SIZE(wp_algs));
+पूर्ण
 
 MODULE_ALIAS_CRYPTO("wp512");
 MODULE_ALIAS_CRYPTO("wp384");
 MODULE_ALIAS_CRYPTO("wp256");
 
 subsys_initcall(wp512_mod_init);
-module_exit(wp512_mod_fini);
+module_निकास(wp512_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Whirlpool Message Digest Algorithm");

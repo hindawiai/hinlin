@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * n_gsm.c GSM 0710 tty multiplexor
  * Copyright (c) 2009/10 Intel Corporation
@@ -6,174 +7,174 @@
  *	* THIS IS A DEVELOPMENT SNAPSHOT IT IS NOT A FINAL RELEASE *
  *
  * TO DO:
- *	Mostly done:	ioctls for setting modes/timing
- *	Partly done:	hooks so you can pull off frames to non tty devs
- *	Restart DLCI 0 when it closes ?
+ *	Mostly करोne:	ioctls क्रम setting modes/timing
+ *	Partly करोne:	hooks so you can pull off frames to non tty devs
+ *	Restart DLCI 0 when it बंदs ?
  *	Improve the tx engine
  *	Resolve tx side locking by adding a queue_head and routing
  *		all control traffic via it
- *	General tidy/document
+ *	General tidy/करोcument
  *	Review the locking/move to refcounts more (mux now moved to an
- *		alloc/free model ready)
- *	Use newest tty open/close port helpers and install hooks
- *	What to do about power functions ?
+ *		alloc/मुक्त model पढ़ोy)
+ *	Use newest tty खोलो/बंद port helpers and install hooks
+ *	What to करो about घातer functions ?
  *	Termios setting and negotiation
  *	Do we need a 'which mux are you' ioctl to correlate mux and tty sets
  *
  */
 
-#include <linux/types.h>
-#include <linux/major.h>
-#include <linux/errno.h>
-#include <linux/signal.h>
-#include <linux/fcntl.h>
-#include <linux/sched/signal.h>
-#include <linux/interrupt.h>
-#include <linux/tty.h>
-#include <linux/ctype.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/bitops.h>
-#include <linux/file.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/timer.h>
-#include <linux/tty_flip.h>
-#include <linux/tty_driver.h>
-#include <linux/serial.h>
-#include <linux/kfifo.h>
-#include <linux/skbuff.h>
-#include <net/arp.h>
-#include <linux/ip.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/gsmmux.h>
-#include "tty.h"
+#समावेश <linux/types.h>
+#समावेश <linux/major.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/kfअगरo.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/arp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/gsmmux.h>
+#समावेश "tty.h"
 
-static int debug;
-module_param(debug, int, 0600);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0600);
 
-/* Defaults: these are from the specification */
+/* Defaults: these are from the specअगरication */
 
-#define T1	10		/* 100mS */
-#define T2	34		/* 333mS */
-#define N2	3		/* Retry 3 times */
+#घोषणा T1	10		/* 100mS */
+#घोषणा T2	34		/* 333mS */
+#घोषणा N2	3		/* Retry 3 बार */
 
-/* Use long timers for testing at low speed with debug on */
-#ifdef DEBUG_TIMING
-#define T1	100
-#define T2	200
-#endif
+/* Use दीर्घ समयrs क्रम testing at low speed with debug on */
+#अगर_घोषित DEBUG_TIMING
+#घोषणा T1	100
+#घोषणा T2	200
+#पूर्ण_अगर
 
 /*
  * Semi-arbitrary buffer size limits. 0710 is normally run with 32-64 byte
  * limits so this is plenty
  */
-#define MAX_MRU 1500
-#define MAX_MTU 1500
-#define	GSM_NET_TX_TIMEOUT (HZ*10)
+#घोषणा MAX_MRU 1500
+#घोषणा MAX_MTU 1500
+#घोषणा	GSM_NET_TX_TIMEOUT (HZ*10)
 
 /*
- *	struct gsm_mux_net	-	network interface
+ *	काष्ठा gsm_mux_net	-	network पूर्णांकerface
  *
- *	Created when net interface is initialized.
+ *	Created when net पूर्णांकerface is initialized.
  */
-struct gsm_mux_net {
-	struct kref ref;
-	struct gsm_dlci *dlci;
-};
+काष्ठा gsm_mux_net अणु
+	काष्ठा kref ref;
+	काष्ठा gsm_dlci *dlci;
+पूर्ण;
 
 /*
- *	Each block of data we have queued to go out is in the form of
+ *	Each block of data we have queued to go out is in the क्रमm of
  *	a gsm_msg which holds everything we need in a link layer independent
- *	format
+ *	क्रमmat
  */
 
-struct gsm_msg {
-	struct list_head list;
+काष्ठा gsm_msg अणु
+	काष्ठा list_head list;
 	u8 addr;		/* DLCI address + flags */
 	u8 ctrl;		/* Control byte + flags */
-	unsigned int len;	/* Length of data block (can be zero) */
-	unsigned char *data;	/* Points into buffer but not at the start */
-	unsigned char buffer[];
-};
+	अचिन्हित पूर्णांक len;	/* Length of data block (can be zero) */
+	अचिन्हित अक्षर *data;	/* Poपूर्णांकs पूर्णांकo buffer but not at the start */
+	अचिन्हित अक्षर buffer[];
+पूर्ण;
 
-enum gsm_dlci_state {
+क्रमागत gsm_dlci_state अणु
 	DLCI_CLOSED,
 	DLCI_OPENING,		/* Sending SABM not seen UA */
 	DLCI_OPEN,		/* SABM/UA complete */
 	DLCI_CLOSING,		/* Sending DISC not seen UA/DM */
-};
+पूर्ण;
 
-enum gsm_dlci_mode {
+क्रमागत gsm_dlci_mode अणु
 	DLCI_MODE_ABM,		/* Normal Asynchronous Balanced Mode */
 	DLCI_MODE_ADM,		/* Asynchronous Disconnected Mode */
-};
+पूर्ण;
 
 /*
- *	Each active data link has a gsm_dlci structure associated which ties
- *	the link layer to an optional tty (if the tty side is open). To avoid
- *	complexity right now these are only ever freed up when the mux is
- *	shut down.
+ *	Each active data link has a gsm_dlci काष्ठाure associated which ties
+ *	the link layer to an optional tty (अगर the tty side is खोलो). To aव्योम
+ *	complनिकासy right now these are only ever मुक्तd up when the mux is
+ *	shut करोwn.
  *
- *	At the moment we don't free DLCI objects until the mux is torn down
- *	this avoid object life time issues but might be worth review later.
+ *	At the moment we करोn't मुक्त DLCI objects until the mux is torn करोwn
+ *	this aव्योम object lअगरe समय issues but might be worth review later.
  */
 
-struct gsm_dlci {
-	struct gsm_mux *gsm;
-	int addr;
-	enum gsm_dlci_state state;
-	struct mutex mutex;
+काष्ठा gsm_dlci अणु
+	काष्ठा gsm_mux *gsm;
+	पूर्णांक addr;
+	क्रमागत gsm_dlci_state state;
+	काष्ठा mutex mutex;
 
 	/* Link layer */
-	enum gsm_dlci_mode mode;
-	spinlock_t lock;	/* Protects the internal state */
-	struct timer_list t1;	/* Retransmit timer for SABM and UA */
-	int retries;
-	/* Uplink tty if active */
-	struct tty_port port;	/* The tty bound to this DLCI if there is one */
-	struct kfifo fifo;	/* Queue fifo for the DLCI */
-	int adaption;		/* Adaption layer in use */
-	int prev_adaption;
-	u32 modem_rx;		/* Our incoming virtual modem lines */
+	क्रमागत gsm_dlci_mode mode;
+	spinlock_t lock;	/* Protects the पूर्णांकernal state */
+	काष्ठा समयr_list t1;	/* Retransmit समयr क्रम SABM and UA */
+	पूर्णांक retries;
+	/* Uplink tty अगर active */
+	काष्ठा tty_port port;	/* The tty bound to this DLCI अगर there is one */
+	काष्ठा kfअगरo fअगरo;	/* Queue fअगरo क्रम the DLCI */
+	पूर्णांक adaption;		/* Adaption layer in use */
+	पूर्णांक prev_adaption;
+	u32 modem_rx;		/* Our incoming भव modem lines */
 	u32 modem_tx;		/* Our outgoing modem lines */
-	bool dead;		/* Refuse re-open */
+	bool dead;		/* Refuse re-खोलो */
 	/* Flow control */
 	bool throttled;		/* Private copy of throttle state */
-	bool constipated;	/* Throttle status for outgoing */
+	bool स्थिरipated;	/* Throttle status क्रम outgoing */
 	/* Packetised I/O */
-	struct sk_buff *skb;	/* Frame being sent */
-	struct sk_buff_head skb_list;	/* Queued frames */
+	काष्ठा sk_buff *skb;	/* Frame being sent */
+	काष्ठा sk_buff_head skb_list;	/* Queued frames */
 	/* Data handling callback */
-	void (*data)(struct gsm_dlci *dlci, const u8 *data, int len);
-	void (*prev_data)(struct gsm_dlci *dlci, const u8 *data, int len);
-	struct net_device *net; /* network interface, if created */
-};
+	व्योम (*data)(काष्ठा gsm_dlci *dlci, स्थिर u8 *data, पूर्णांक len);
+	व्योम (*prev_data)(काष्ठा gsm_dlci *dlci, स्थिर u8 *data, पूर्णांक len);
+	काष्ठा net_device *net; /* network पूर्णांकerface, अगर created */
+पूर्ण;
 
-/* DLCI 0, 62/63 are special or reserved see gsmtty_open */
+/* DLCI 0, 62/63 are special or reserved see gsmtty_खोलो */
 
-#define NUM_DLCI		64
+#घोषणा NUM_DLCI		64
 
 /*
  *	DLCI 0 is used to pass control blocks out of band of the data
  *	flow (and with a higher link priority). One command can be outstanding
- *	at a time and we use this structure to manage them. They are created
+ *	at a समय and we use this काष्ठाure to manage them. They are created
  *	and destroyed by the user context, and updated by the receive paths
- *	and timers
+ *	and समयrs
  */
 
-struct gsm_control {
+काष्ठा gsm_control अणु
 	u8 cmd;		/* Command we are issuing */
-	u8 *data;	/* Data for the command in case we retransmit */
-	int len;	/* Length of block for retransmission */
-	int done;	/* Done flag */
-	int error;	/* Error if any */
-};
+	u8 *data;	/* Data क्रम the command in हाल we retransmit */
+	पूर्णांक len;	/* Length of block क्रम retransmission */
+	पूर्णांक करोne;	/* Done flag */
+	पूर्णांक error;	/* Error अगर any */
+पूर्ण;
 
-enum gsm_mux_state {
+क्रमागत gsm_mux_state अणु
 	GSM_SEARCH,
 	GSM_START,
 	GSM_ADDRESS,
@@ -185,91 +186,91 @@ enum gsm_mux_state {
 	GSM_LEN0,
 	GSM_LEN1,
 	GSM_SSOF,
-};
+पूर्ण;
 
 /*
- *	Each GSM mux we have is represented by this structure. If we are
- *	operating as an ldisc then we use this structure as our ldisc
- *	state. We need to sort out lifetimes and locking with respect
- *	to the gsm mux array. For now we don't free DLCI objects that
+ *	Each GSM mux we have is represented by this काष्ठाure. If we are
+ *	operating as an ldisc then we use this काष्ठाure as our ldisc
+ *	state. We need to sort out lअगरeबार and locking with respect
+ *	to the gsm mux array. For now we करोn't मुक्त DLCI objects that
  *	have been instantiated until the mux itself is terminated.
  *
- *	To consider further: tty open versus mux shutdown.
+ *	To consider further: tty खोलो versus mux shutकरोwn.
  */
 
-struct gsm_mux {
-	struct tty_struct *tty;		/* The tty our ldisc is bound to */
+काष्ठा gsm_mux अणु
+	काष्ठा tty_काष्ठा *tty;		/* The tty our ldisc is bound to */
 	spinlock_t lock;
-	struct mutex mutex;
-	unsigned int num;
-	struct kref ref;
+	काष्ठा mutex mutex;
+	अचिन्हित पूर्णांक num;
+	काष्ठा kref ref;
 
 	/* Events on the GSM channel */
-	wait_queue_head_t event;
+	रुको_queue_head_t event;
 
-	/* Bits for GSM mode decoding */
+	/* Bits क्रम GSM mode decoding */
 
 	/* Framing Layer */
-	unsigned char *buf;
-	enum gsm_mux_state state;
-	unsigned int len;
-	unsigned int address;
-	unsigned int count;
+	अचिन्हित अक्षर *buf;
+	क्रमागत gsm_mux_state state;
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक address;
+	अचिन्हित पूर्णांक count;
 	bool escape;
-	int encoding;
+	पूर्णांक encoding;
 	u8 control;
 	u8 fcs;
 	u8 received_fcs;
 	u8 *txframe;			/* TX framing buffer */
 
-	/* Method for the receiver side */
-	void (*receive)(struct gsm_mux *gsm, u8 ch);
+	/* Method क्रम the receiver side */
+	व्योम (*receive)(काष्ठा gsm_mux *gsm, u8 ch);
 
 	/* Link Layer */
-	unsigned int mru;
-	unsigned int mtu;
-	int initiator;			/* Did we initiate connection */
-	bool dead;			/* Has the mux been shut down */
-	struct gsm_dlci *dlci[NUM_DLCI];
-	bool constipated;		/* Asked by remote to shut up */
+	अचिन्हित पूर्णांक mru;
+	अचिन्हित पूर्णांक mtu;
+	पूर्णांक initiator;			/* Did we initiate connection */
+	bool dead;			/* Has the mux been shut करोwn */
+	काष्ठा gsm_dlci *dlci[NUM_DLCI];
+	bool स्थिरipated;		/* Asked by remote to shut up */
 
 	spinlock_t tx_lock;
-	unsigned int tx_bytes;		/* TX data outstanding */
-#define TX_THRESH_HI		8192
-#define TX_THRESH_LO		2048
-	struct list_head tx_list;	/* Pending data packets */
+	अचिन्हित पूर्णांक tx_bytes;		/* TX data outstanding */
+#घोषणा TX_THRESH_HI		8192
+#घोषणा TX_THRESH_LO		2048
+	काष्ठा list_head tx_list;	/* Pending data packets */
 
 	/* Control messages */
-	struct timer_list t2_timer;	/* Retransmit timer for commands */
-	int cretries;			/* Command retry counter */
-	struct gsm_control *pending_cmd;/* Our current pending command */
+	काष्ठा समयr_list t2_समयr;	/* Retransmit समयr क्रम commands */
+	पूर्णांक cretries;			/* Command retry counter */
+	काष्ठा gsm_control *pending_cmd;/* Our current pending command */
 	spinlock_t control_lock;	/* Protects the pending command */
 
 	/* Configuration */
-	int adaption;		/* 1 or 2 supported */
+	पूर्णांक adaption;		/* 1 or 2 supported */
 	u8 ftype;		/* UI or UIH */
-	int t1, t2;		/* Timers in 1/100th of a sec */
-	int n2;			/* Retry count */
+	पूर्णांक t1, t2;		/* Timers in 1/100th of a sec */
+	पूर्णांक n2;			/* Retry count */
 
 	/* Statistics (not currently exposed) */
-	unsigned long bad_fcs;
-	unsigned long malformed;
-	unsigned long io_error;
-	unsigned long bad_size;
-	unsigned long unsupported;
-};
+	अचिन्हित दीर्घ bad_fcs;
+	अचिन्हित दीर्घ malक्रमmed;
+	अचिन्हित दीर्घ io_error;
+	अचिन्हित दीर्घ bad_size;
+	अचिन्हित दीर्घ unsupported;
+पूर्ण;
 
 
 /*
- *	Mux objects - needed so that we can translate a tty index into the
+ *	Mux objects - needed so that we can translate a tty index पूर्णांकo the
  *	relevant mux and DLCI.
  */
 
-#define MAX_MUX		4			/* 256 minors */
-static struct gsm_mux *gsm_mux[MAX_MUX];	/* GSM muxes */
-static DEFINE_SPINLOCK(gsm_mux_lock);
+#घोषणा MAX_MUX		4			/* 256 minors */
+अटल काष्ठा gsm_mux *gsm_mux[MAX_MUX];	/* GSM muxes */
+अटल DEFINE_SPINLOCK(gsm_mux_lock);
 
-static struct tty_driver *gsm_tty_driver;
+अटल काष्ठा tty_driver *gsm_tty_driver;
 
 /*
  *	This section of the driver logic implements the GSM encodings
@@ -277,55 +278,55 @@ static struct tty_driver *gsm_tty_driver;
  *	supported.
  */
 
-#define CR			0x02
-#define EA			0x01
-#define	PF			0x10
+#घोषणा CR			0x02
+#घोषणा EA			0x01
+#घोषणा	PF			0x10
 
 /* I is special: the rest are ..*/
-#define RR			0x01
-#define UI			0x03
-#define RNR			0x05
-#define REJ			0x09
-#define DM			0x0F
-#define SABM			0x2F
-#define DISC			0x43
-#define UA			0x63
-#define	UIH			0xEF
+#घोषणा RR			0x01
+#घोषणा UI			0x03
+#घोषणा RNR			0x05
+#घोषणा REJ			0x09
+#घोषणा DM			0x0F
+#घोषणा SABM			0x2F
+#घोषणा DISC			0x43
+#घोषणा UA			0x63
+#घोषणा	UIH			0xEF
 
 /* Channel commands */
-#define CMD_NSC			0x09
-#define CMD_TEST		0x11
-#define CMD_PSC			0x21
-#define CMD_RLS			0x29
-#define CMD_FCOFF		0x31
-#define CMD_PN			0x41
-#define CMD_RPN			0x49
-#define CMD_FCON		0x51
-#define CMD_CLD			0x61
-#define CMD_SNC			0x69
-#define CMD_MSC			0x71
+#घोषणा CMD_NSC			0x09
+#घोषणा CMD_TEST		0x11
+#घोषणा CMD_PSC			0x21
+#घोषणा CMD_RLS			0x29
+#घोषणा CMD_FCOFF		0x31
+#घोषणा CMD_PN			0x41
+#घोषणा CMD_RPN			0x49
+#घोषणा CMD_FCON		0x51
+#घोषणा CMD_CLD			0x61
+#घोषणा CMD_SNC			0x69
+#घोषणा CMD_MSC			0x71
 
 /* Virtual modem bits */
-#define MDM_FC			0x01
-#define MDM_RTC			0x02
-#define MDM_RTR			0x04
-#define MDM_IC			0x20
-#define MDM_DV			0x40
+#घोषणा MDM_FC			0x01
+#घोषणा MDM_RTC			0x02
+#घोषणा MDM_RTR			0x04
+#घोषणा MDM_IC			0x20
+#घोषणा MDM_DV			0x40
 
-#define GSM0_SOF		0xF9
-#define GSM1_SOF		0x7E
-#define GSM1_ESCAPE		0x7D
-#define GSM1_ESCAPE_BITS	0x20
-#define XON			0x11
-#define XOFF			0x13
+#घोषणा GSM0_SOF		0xF9
+#घोषणा GSM1_SOF		0x7E
+#घोषणा GSM1_ESCAPE		0x7D
+#घोषणा GSM1_ESCAPE_BITS	0x20
+#घोषणा XON			0x11
+#घोषणा XOFF			0x13
 
-static const struct tty_port_operations gsm_port_ops;
+अटल स्थिर काष्ठा tty_port_operations gsm_port_ops;
 
 /*
- *	CRC table for GSM 0710
+ *	CRC table क्रम GSM 0710
  */
 
-static const u8 gsm_fcs8[256] = {
+अटल स्थिर u8 gsm_fcs8[256] = अणु
 	0x00, 0x91, 0xE3, 0x72, 0x07, 0x96, 0xE4, 0x75,
 	0x0E, 0x9F, 0xED, 0x7C, 0x09, 0x98, 0xEA, 0x7B,
 	0x1C, 0x8D, 0xFF, 0x6E, 0x1B, 0x8A, 0xF8, 0x69,
@@ -358,153 +359,153 @@ static const u8 gsm_fcs8[256] = {
 	0xA6, 0x37, 0x45, 0xD4, 0xA1, 0x30, 0x42, 0xD3,
 	0xB4, 0x25, 0x57, 0xC6, 0xB3, 0x22, 0x50, 0xC1,
 	0xBA, 0x2B, 0x59, 0xC8, 0xBD, 0x2C, 0x5E, 0xCF
-};
+पूर्ण;
 
-#define INIT_FCS	0xFF
-#define GOOD_FCS	0xCF
+#घोषणा INIT_FCS	0xFF
+#घोषणा GOOD_FCS	0xCF
 
-static int gsmld_output(struct gsm_mux *gsm, u8 *data, int len);
+अटल पूर्णांक gsmld_output(काष्ठा gsm_mux *gsm, u8 *data, पूर्णांक len);
 
 /**
  *	gsm_fcs_add	-	update FCS
  *	@fcs: Current FCS
  *	@c: Next data
  *
- *	Update the FCS to include c. Uses the algorithm in the specification
+ *	Update the FCS to include c. Uses the algorithm in the specअगरication
  *	notes.
  */
 
-static inline u8 gsm_fcs_add(u8 fcs, u8 c)
-{
-	return gsm_fcs8[fcs ^ c];
-}
+अटल अंतरभूत u8 gsm_fcs_add(u8 fcs, u8 c)
+अणु
+	वापस gsm_fcs8[fcs ^ c];
+पूर्ण
 
 /**
- *	gsm_fcs_add_block	-	update FCS for a block
+ *	gsm_fcs_add_block	-	update FCS क्रम a block
  *	@fcs: Current FCS
  *	@c: buffer of data
  *	@len: length of buffer
  *
- *	Update the FCS to include c. Uses the algorithm in the specification
+ *	Update the FCS to include c. Uses the algorithm in the specअगरication
  *	notes.
  */
 
-static inline u8 gsm_fcs_add_block(u8 fcs, u8 *c, int len)
-{
-	while (len--)
+अटल अंतरभूत u8 gsm_fcs_add_block(u8 fcs, u8 *c, पूर्णांक len)
+अणु
+	जबतक (len--)
 		fcs = gsm_fcs8[fcs ^ *c++];
-	return fcs;
-}
+	वापस fcs;
+पूर्ण
 
 /**
- *	gsm_read_ea		-	read a byte into an EA
+ *	gsm_पढ़ो_ea		-	पढ़ो a byte पूर्णांकo an EA
  *	@val: variable holding value
- *	@c: byte going into the EA
+ *	@c: byte going पूर्णांकo the EA
  *
  *	Processes one byte of an EA. Updates the passed variable
- *	and returns 1 if the EA is now completely read
+ *	and वापसs 1 अगर the EA is now completely पढ़ो
  */
 
-static int gsm_read_ea(unsigned int *val, u8 c)
-{
-	/* Add the next 7 bits into the value */
+अटल पूर्णांक gsm_पढ़ो_ea(अचिन्हित पूर्णांक *val, u8 c)
+अणु
+	/* Add the next 7 bits पूर्णांकo the value */
 	*val <<= 7;
 	*val |= c >> 1;
 	/* Was this the last byte of the EA 1 = yes*/
-	return c & EA;
-}
+	वापस c & EA;
+पूर्ण
 
 /**
  *	gsm_encode_modem	-	encode modem data bits
  *	@dlci: DLCI to encode from
  *
- *	Returns the correct GSM encoded modem status bits (6 bit field) for
+ *	Returns the correct GSM encoded modem status bits (6 bit field) क्रम
  *	the current status of the DLCI and attached tty object
  */
 
-static u8 gsm_encode_modem(const struct gsm_dlci *dlci)
-{
+अटल u8 gsm_encode_modem(स्थिर काष्ठा gsm_dlci *dlci)
+अणु
 	u8 modembits = 0;
 	/* FC is true flow control not modem bits */
-	if (dlci->throttled)
+	अगर (dlci->throttled)
 		modembits |= MDM_FC;
-	if (dlci->modem_tx & TIOCM_DTR)
+	अगर (dlci->modem_tx & TIOCM_DTR)
 		modembits |= MDM_RTC;
-	if (dlci->modem_tx & TIOCM_RTS)
+	अगर (dlci->modem_tx & TIOCM_RTS)
 		modembits |= MDM_RTR;
-	if (dlci->modem_tx & TIOCM_RI)
+	अगर (dlci->modem_tx & TIOCM_RI)
 		modembits |= MDM_IC;
-	if (dlci->modem_tx & TIOCM_CD)
+	अगर (dlci->modem_tx & TIOCM_CD)
 		modembits |= MDM_DV;
-	return modembits;
-}
+	वापस modembits;
+पूर्ण
 
 /**
- *	gsm_print_packet	-	display a frame for debug
- *	@hdr: header to print before decode
+ *	gsm_prपूर्णांक_packet	-	display a frame क्रम debug
+ *	@hdr: header to prपूर्णांक beक्रमe decode
  *	@addr: address EA from the frame
  *	@cr: C/R bit from the frame
  *	@control: control including PF bit
  *	@data: following data bytes
  *	@dlen: length of data
  *
- *	Displays a packet in human readable format for debugging purposes. The
+ *	Displays a packet in human पढ़ोable क्रमmat क्रम debugging purposes. The
  *	style is based on amateur radio LAP-B dump display.
  */
 
-static void gsm_print_packet(const char *hdr, int addr, int cr,
-					u8 control, const u8 *data, int dlen)
-{
-	if (!(debug & 1))
-		return;
+अटल व्योम gsm_prपूर्णांक_packet(स्थिर अक्षर *hdr, पूर्णांक addr, पूर्णांक cr,
+					u8 control, स्थिर u8 *data, पूर्णांक dlen)
+अणु
+	अगर (!(debug & 1))
+		वापस;
 
 	pr_info("%s %d) %c: ", hdr, addr, "RC"[cr]);
 
-	switch (control & ~PF) {
-	case SABM:
+	चयन (control & ~PF) अणु
+	हाल SABM:
 		pr_cont("SABM");
-		break;
-	case UA:
+		अवरोध;
+	हाल UA:
 		pr_cont("UA");
-		break;
-	case DISC:
+		अवरोध;
+	हाल DISC:
 		pr_cont("DISC");
-		break;
-	case DM:
+		अवरोध;
+	हाल DM:
 		pr_cont("DM");
-		break;
-	case UI:
+		अवरोध;
+	हाल UI:
 		pr_cont("UI");
-		break;
-	case UIH:
+		अवरोध;
+	हाल UIH:
 		pr_cont("UIH");
-		break;
-	default:
-		if (!(control & 0x01)) {
+		अवरोध;
+	शेष:
+		अगर (!(control & 0x01)) अणु
 			pr_cont("I N(S)%d N(R)%d",
 				(control & 0x0E) >> 1, (control & 0xE0) >> 5);
-		} else switch (control & 0x0F) {
-			case RR:
+		पूर्ण अन्यथा चयन (control & 0x0F) अणु
+			हाल RR:
 				pr_cont("RR(%d)", (control & 0xE0) >> 5);
-				break;
-			case RNR:
+				अवरोध;
+			हाल RNR:
 				pr_cont("RNR(%d)", (control & 0xE0) >> 5);
-				break;
-			case REJ:
+				अवरोध;
+			हाल REJ:
 				pr_cont("REJ(%d)", (control & 0xE0) >> 5);
-				break;
-			default:
+				अवरोध;
+			शेष:
 				pr_cont("[%02X]", control);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (control & PF)
+	अगर (control & PF)
 		pr_cont("(P)");
-	else
+	अन्यथा
 		pr_cont("(F)");
 
-	print_hex_dump_bytes("", DUMP_PREFIX_NONE, data, dlen);
-}
+	prपूर्णांक_hex_dump_bytes("", DUMP_PREFIX_NONE, data, dlen);
+पूर्ण
 
 
 /*
@@ -517,49 +518,49 @@ static void gsm_print_packet(const char *hdr, int addr, int cr,
  *	@output: output buffer
  *	@len: length of input
  *
- *	Expand a buffer by bytestuffing it. The worst case size change
- *	is doubling and the caller is responsible for handing out
+ *	Expand a buffer by bytestuffing it. The worst हाल size change
+ *	is करोubling and the caller is responsible क्रम handing out
  *	suitable sized buffers.
  */
 
-static int gsm_stuff_frame(const u8 *input, u8 *output, int len)
-{
-	int olen = 0;
-	while (len--) {
-		if (*input == GSM1_SOF || *input == GSM1_ESCAPE
-		    || *input == XON || *input == XOFF) {
+अटल पूर्णांक gsm_stuff_frame(स्थिर u8 *input, u8 *output, पूर्णांक len)
+अणु
+	पूर्णांक olen = 0;
+	जबतक (len--) अणु
+		अगर (*input == GSM1_SOF || *input == GSM1_ESCAPE
+		    || *input == XON || *input == XOFF) अणु
 			*output++ = GSM1_ESCAPE;
 			*output++ = *input++ ^ GSM1_ESCAPE_BITS;
 			olen++;
-		} else
+		पूर्ण अन्यथा
 			*output++ = *input++;
 		olen++;
-	}
-	return olen;
-}
+	पूर्ण
+	वापस olen;
+पूर्ण
 
 /**
  *	gsm_send	-	send a control frame
  *	@gsm: our GSM mux
- *	@addr: address for control frame
+ *	@addr: address क्रम control frame
  *	@cr: command/response bit
  *	@control:  control byte including PF bit
  *
- *	Format up and transmit a control frame. These do not go via the
+ *	Format up and transmit a control frame. These करो not go via the
  *	queueing logic as they should be transmitted ahead of data when
  *	they are needed.
  *
  *	FIXME: Lock versus data TX path
  */
 
-static void gsm_send(struct gsm_mux *gsm, int addr, int cr, int control)
-{
-	int len;
+अटल व्योम gsm_send(काष्ठा gsm_mux *gsm, पूर्णांक addr, पूर्णांक cr, पूर्णांक control)
+अणु
+	पूर्णांक len;
 	u8 cbuf[10];
 	u8 ibuf[3];
 
-	switch (gsm->encoding) {
-	case 0:
+	चयन (gsm->encoding) अणु
+	हाल 0:
 		cbuf[0] = GSM0_SOF;
 		cbuf[1] = (addr << 2) | (cr << 1) | EA;
 		cbuf[2] = control;
@@ -567,60 +568,60 @@ static void gsm_send(struct gsm_mux *gsm, int addr, int cr, int control)
 		cbuf[4] = 0xFF - gsm_fcs_add_block(INIT_FCS, cbuf + 1, 3);
 		cbuf[5] = GSM0_SOF;
 		len = 6;
-		break;
-	case 1:
-	case 2:
+		अवरोध;
+	हाल 1:
+	हाल 2:
 		/* Control frame + packing (but not frame stuffing) in mode 1 */
 		ibuf[0] = (addr << 2) | (cr << 1) | EA;
 		ibuf[1] = control;
 		ibuf[2] = 0xFF - gsm_fcs_add_block(INIT_FCS, ibuf, 2);
-		/* Stuffing may double the size worst case */
+		/* Stuffing may द्विगुन the size worst हाल */
 		len = gsm_stuff_frame(ibuf, cbuf + 1, 3);
 		/* Now add the SOF markers */
 		cbuf[0] = GSM1_SOF;
 		cbuf[len + 1] = GSM1_SOF;
-		/* FIXME: we can omit the lead one in many cases */
+		/* FIXME: we can omit the lead one in many हालs */
 		len += 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 	gsmld_output(gsm, cbuf, len);
-	gsm_print_packet("-->", addr, cr, control, NULL, 0);
-}
+	gsm_prपूर्णांक_packet("-->", addr, cr, control, शून्य, 0);
+पूर्ण
 
 /**
  *	gsm_response	-	send a control response
  *	@gsm: our GSM mux
- *	@addr: address for control frame
+ *	@addr: address क्रम control frame
  *	@control:  control byte including PF bit
  *
  *	Format up and transmit a link level response frame.
  */
 
-static inline void gsm_response(struct gsm_mux *gsm, int addr, int control)
-{
+अटल अंतरभूत व्योम gsm_response(काष्ठा gsm_mux *gsm, पूर्णांक addr, पूर्णांक control)
+अणु
 	gsm_send(gsm, addr, 0, control);
-}
+पूर्ण
 
 /**
  *	gsm_command	-	send a control command
  *	@gsm: our GSM mux
- *	@addr: address for control frame
+ *	@addr: address क्रम control frame
  *	@control:  control byte including PF bit
  *
  *	Format up and transmit a link level command frame.
  */
 
-static inline void gsm_command(struct gsm_mux *gsm, int addr, int control)
-{
+अटल अंतरभूत व्योम gsm_command(काष्ठा gsm_mux *gsm, पूर्णांक addr, पूर्णांक control)
+अणु
 	gsm_send(gsm, addr, 1, control);
-}
+पूर्ण
 
 /* Data transmission */
 
-#define HDR_LEN		6	/* ADDR CTRL [LEN.2] DATA FCS */
+#घोषणा HDR_LEN		6	/* ADDR CTRL [LEN.2] DATA FCS */
 
 /**
  *	gsm_data_alloc		-	allocate data frame
@@ -629,25 +630,25 @@ static inline void gsm_command(struct gsm_mux *gsm, int addr, int control)
  *	@len: length excluding header and FCS
  *	@ctrl: control byte
  *
- *	Allocate a new data buffer for sending frames with data. Space is left
- *	at the front for header bytes but that is treated as an implementation
- *	detail and not for the high level code to use
+ *	Allocate a new data buffer क्रम sending frames with data. Space is left
+ *	at the front क्रम header bytes but that is treated as an implementation
+ *	detail and not क्रम the high level code to use
  */
 
-static struct gsm_msg *gsm_data_alloc(struct gsm_mux *gsm, u8 addr, int len,
+अटल काष्ठा gsm_msg *gsm_data_alloc(काष्ठा gsm_mux *gsm, u8 addr, पूर्णांक len,
 								u8 ctrl)
-{
-	struct gsm_msg *m = kmalloc(sizeof(struct gsm_msg) + len + HDR_LEN,
+अणु
+	काष्ठा gsm_msg *m = kदो_स्मृति(माप(काष्ठा gsm_msg) + len + HDR_LEN,
 								GFP_ATOMIC);
-	if (m == NULL)
-		return NULL;
-	m->data = m->buffer + HDR_LEN - 1;	/* Allow for FCS */
+	अगर (m == शून्य)
+		वापस शून्य;
+	m->data = m->buffer + HDR_LEN - 1;	/* Allow क्रम FCS */
 	m->len = len;
 	m->addr = addr;
 	m->ctrl = ctrl;
 	INIT_LIST_HEAD(&m->list);
-	return m;
-}
+	वापस m;
+पूर्ण
 
 /**
  *	gsm_data_kick		-	poke the queue
@@ -655,57 +656,57 @@ static struct gsm_msg *gsm_data_alloc(struct gsm_mux *gsm, u8 addr, int len,
  *	@dlci: DLCI sending the data
  *
  *	The tty device has called us to indicate that room has appeared in
- *	the transmit queue. Ram more data into the pipe if we have any
+ *	the transmit queue. Ram more data पूर्णांकo the pipe अगर we have any
  *	If we have been flow-stopped by a CMD_FCOFF, then we can only
  *	send messages on DLCI0 until CMD_FCON
  *
  *	FIXME: lock against link layer control transmissions
  */
 
-static void gsm_data_kick(struct gsm_mux *gsm, struct gsm_dlci *dlci)
-{
-	struct gsm_msg *msg, *nmsg;
-	int len;
+अटल व्योम gsm_data_kick(काष्ठा gsm_mux *gsm, काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा gsm_msg *msg, *nmsg;
+	पूर्णांक len;
 
-	list_for_each_entry_safe(msg, nmsg, &gsm->tx_list, list) {
-		if (gsm->constipated && msg->addr)
-			continue;
-		if (gsm->encoding != 0) {
+	list_क्रम_each_entry_safe(msg, nmsg, &gsm->tx_list, list) अणु
+		अगर (gsm->स्थिरipated && msg->addr)
+			जारी;
+		अगर (gsm->encoding != 0) अणु
 			gsm->txframe[0] = GSM1_SOF;
 			len = gsm_stuff_frame(msg->data,
 						gsm->txframe + 1, msg->len);
 			gsm->txframe[len + 1] = GSM1_SOF;
 			len += 2;
-		} else {
+		पूर्ण अन्यथा अणु
 			gsm->txframe[0] = GSM0_SOF;
-			memcpy(gsm->txframe + 1 , msg->data, msg->len);
+			स_नकल(gsm->txframe + 1 , msg->data, msg->len);
 			gsm->txframe[msg->len + 1] = GSM0_SOF;
 			len = msg->len + 2;
-		}
+		पूर्ण
 
-		if (debug & 4)
-			print_hex_dump_bytes("gsm_data_kick: ",
+		अगर (debug & 4)
+			prपूर्णांक_hex_dump_bytes("gsm_data_kick: ",
 					     DUMP_PREFIX_OFFSET,
 					     gsm->txframe, len);
-		if (gsmld_output(gsm, gsm->txframe, len) < 0)
-			break;
-		/* FIXME: Can eliminate one SOF in many more cases */
+		अगर (gsmld_output(gsm, gsm->txframe, len) < 0)
+			अवरोध;
+		/* FIXME: Can eliminate one SOF in many more हालs */
 		gsm->tx_bytes -= msg->len;
 
 		list_del(&msg->list);
-		kfree(msg);
+		kमुक्त(msg);
 
-		if (dlci) {
+		अगर (dlci) अणु
 			tty_port_tty_wakeup(&dlci->port);
-		} else {
-			int i = 0;
+		पूर्ण अन्यथा अणु
+			पूर्णांक i = 0;
 
-			for (i = 0; i < NUM_DLCI; i++)
-				if (gsm->dlci[i])
+			क्रम (i = 0; i < NUM_DLCI; i++)
+				अगर (gsm->dlci[i])
 					tty_port_tty_wakeup(&gsm->dlci[i]->port);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  *	__gsm_data_queue		-	queue a UI or UIH frame
@@ -713,41 +714,41 @@ static void gsm_data_kick(struct gsm_mux *gsm, struct gsm_dlci *dlci)
  *	@msg: message queued
  *
  *	Add data to the transmit queue and try and get stuff moving
- *	out of the mux tty if not already doing so. The Caller must hold
+ *	out of the mux tty अगर not alपढ़ोy करोing so. The Caller must hold
  *	the gsm tx lock.
  */
 
-static void __gsm_data_queue(struct gsm_dlci *dlci, struct gsm_msg *msg)
-{
-	struct gsm_mux *gsm = dlci->gsm;
+अटल व्योम __gsm_data_queue(काष्ठा gsm_dlci *dlci, काष्ठा gsm_msg *msg)
+अणु
+	काष्ठा gsm_mux *gsm = dlci->gsm;
 	u8 *dp = msg->data;
 	u8 *fcs = dp + msg->len;
 
 	/* Fill in the header */
-	if (gsm->encoding == 0) {
-		if (msg->len < 128)
+	अगर (gsm->encoding == 0) अणु
+		अगर (msg->len < 128)
 			*--dp = (msg->len << 1) | EA;
-		else {
+		अन्यथा अणु
 			*--dp = (msg->len >> 7);	/* bits 7 - 15 */
 			*--dp = (msg->len & 127) << 1;	/* bits 0 - 6 */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*--dp = msg->ctrl;
-	if (gsm->initiator)
+	अगर (gsm->initiator)
 		*--dp = (msg->addr << 2) | 2 | EA;
-	else
+	अन्यथा
 		*--dp = (msg->addr << 2) | EA;
 	*fcs = gsm_fcs_add_block(INIT_FCS, dp , msg->data - dp);
 	/* Ugly protocol layering violation */
-	if (msg->ctrl == UI || msg->ctrl == (UI|PF))
+	अगर (msg->ctrl == UI || msg->ctrl == (UI|PF))
 		*fcs = gsm_fcs_add_block(*fcs, msg->data, msg->len);
 	*fcs = 0xFF - *fcs;
 
-	gsm_print_packet("Q> ", msg->addr, gsm->initiator, msg->ctrl,
+	gsm_prपूर्णांक_packet("Q> ", msg->addr, gsm->initiator, msg->ctrl,
 							msg->data, msg->len);
 
-	/* Move the header back and adjust the length, also allow for the FCS
+	/* Move the header back and adjust the length, also allow क्रम the FCS
 	   now tacked on the end */
 	msg->len += (msg->data - dp) + 1;
 	msg->data = dp;
@@ -756,7 +757,7 @@ static void __gsm_data_queue(struct gsm_dlci *dlci, struct gsm_msg *msg)
 	list_add_tail(&msg->list, &gsm->tx_list);
 	gsm->tx_bytes += msg->len;
 	gsm_data_kick(gsm, dlci);
-}
+पूर्ण
 
 /**
  *	gsm_data_queue		-	queue a UI or UIH frame
@@ -764,150 +765,150 @@ static void __gsm_data_queue(struct gsm_dlci *dlci, struct gsm_msg *msg)
  *	@msg: message queued
  *
  *	Add data to the transmit queue and try and get stuff moving
- *	out of the mux tty if not already doing so. Take the
+ *	out of the mux tty अगर not alपढ़ोy करोing so. Take the
  *	the gsm tx lock and dlci lock.
  */
 
-static void gsm_data_queue(struct gsm_dlci *dlci, struct gsm_msg *msg)
-{
-	unsigned long flags;
+अटल व्योम gsm_data_queue(काष्ठा gsm_dlci *dlci, काष्ठा gsm_msg *msg)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&dlci->gsm->tx_lock, flags);
 	__gsm_data_queue(dlci, msg);
 	spin_unlock_irqrestore(&dlci->gsm->tx_lock, flags);
-}
+पूर्ण
 
 /**
  *	gsm_dlci_data_output	-	try and push data out of a DLCI
  *	@gsm: mux
  *	@dlci: the DLCI to pull data from
  *
- *	Pull data from a DLCI and send it into the transmit queue if there
+ *	Pull data from a DLCI and send it पूर्णांकo the transmit queue अगर there
  *	is data. Keep to the MRU of the mux. This path handles the usual tty
- *	interface which is a byte stream with optional modem data.
+ *	पूर्णांकerface which is a byte stream with optional modem data.
  *
  *	Caller must hold the tx_lock of the mux.
  */
 
-static int gsm_dlci_data_output(struct gsm_mux *gsm, struct gsm_dlci *dlci)
-{
-	struct gsm_msg *msg;
+अटल पूर्णांक gsm_dlci_data_output(काष्ठा gsm_mux *gsm, काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा gsm_msg *msg;
 	u8 *dp;
-	int len, total_size, size;
-	int h = dlci->adaption - 1;
+	पूर्णांक len, total_size, size;
+	पूर्णांक h = dlci->adaption - 1;
 
 	total_size = 0;
-	while (1) {
-		len = kfifo_len(&dlci->fifo);
-		if (len == 0)
-			return total_size;
+	जबतक (1) अणु
+		len = kfअगरo_len(&dlci->fअगरo);
+		अगर (len == 0)
+			वापस total_size;
 
 		/* MTU/MRU count only the data bits */
-		if (len > gsm->mtu)
+		अगर (len > gsm->mtu)
 			len = gsm->mtu;
 
 		size = len + h;
 
 		msg = gsm_data_alloc(gsm, dlci->addr, size, gsm->ftype);
-		/* FIXME: need a timer or something to kick this so it can't
-		   get stuck with no work outstanding and no buffer free */
-		if (msg == NULL)
-			return -ENOMEM;
+		/* FIXME: need a समयr or something to kick this so it can't
+		   get stuck with no work outstanding and no buffer मुक्त */
+		अगर (msg == शून्य)
+			वापस -ENOMEM;
 		dp = msg->data;
-		switch (dlci->adaption) {
-		case 1:	/* Unstructured */
-			break;
-		case 2:	/* Unstructed with modem bits.
-		Always one byte as we never send inline break data */
+		चयन (dlci->adaption) अणु
+		हाल 1:	/* Unकाष्ठाured */
+			अवरोध;
+		हाल 2:	/* Unकाष्ठाed with modem bits.
+		Always one byte as we never send अंतरभूत अवरोध data */
 			*dp++ = gsm_encode_modem(dlci);
-			break;
-		}
-		WARN_ON(kfifo_out_locked(&dlci->fifo, dp , len, &dlci->lock) != len);
+			अवरोध;
+		पूर्ण
+		WARN_ON(kfअगरo_out_locked(&dlci->fअगरo, dp , len, &dlci->lock) != len);
 		__gsm_data_queue(dlci, msg);
 		total_size += size;
-	}
+	पूर्ण
 	/* Bytes of data we used up */
-	return total_size;
-}
+	वापस total_size;
+पूर्ण
 
 /**
  *	gsm_dlci_data_output_framed  -	try and push data out of a DLCI
  *	@gsm: mux
  *	@dlci: the DLCI to pull data from
  *
- *	Pull data from a DLCI and send it into the transmit queue if there
+ *	Pull data from a DLCI and send it पूर्णांकo the transmit queue अगर there
  *	is data. Keep to the MRU of the mux. This path handles framed data
  *	queued as skbuffs to the DLCI.
  *
  *	Caller must hold the tx_lock of the mux.
  */
 
-static int gsm_dlci_data_output_framed(struct gsm_mux *gsm,
-						struct gsm_dlci *dlci)
-{
-	struct gsm_msg *msg;
+अटल पूर्णांक gsm_dlci_data_output_framed(काष्ठा gsm_mux *gsm,
+						काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा gsm_msg *msg;
 	u8 *dp;
-	int len, size;
-	int last = 0, first = 0;
-	int overhead = 0;
+	पूर्णांक len, size;
+	पूर्णांक last = 0, first = 0;
+	पूर्णांक overhead = 0;
 
-	/* One byte per frame is used for B/F flags */
-	if (dlci->adaption == 4)
+	/* One byte per frame is used क्रम B/F flags */
+	अगर (dlci->adaption == 4)
 		overhead = 1;
 
 	/* dlci->skb is locked by tx_lock */
-	if (dlci->skb == NULL) {
+	अगर (dlci->skb == शून्य) अणु
 		dlci->skb = skb_dequeue_tail(&dlci->skb_list);
-		if (dlci->skb == NULL)
-			return 0;
+		अगर (dlci->skb == शून्य)
+			वापस 0;
 		first = 1;
-	}
+	पूर्ण
 	len = dlci->skb->len + overhead;
 
 	/* MTU/MRU count only the data bits */
-	if (len > gsm->mtu) {
-		if (dlci->adaption == 3) {
-			/* Over long frame, bin it */
-			dev_kfree_skb_any(dlci->skb);
-			dlci->skb = NULL;
-			return 0;
-		}
+	अगर (len > gsm->mtu) अणु
+		अगर (dlci->adaption == 3) अणु
+			/* Over दीर्घ frame, bin it */
+			dev_kमुक्त_skb_any(dlci->skb);
+			dlci->skb = शून्य;
+			वापस 0;
+		पूर्ण
 		len = gsm->mtu;
-	} else
+	पूर्ण अन्यथा
 		last = 1;
 
 	size = len + overhead;
 	msg = gsm_data_alloc(gsm, dlci->addr, size, gsm->ftype);
 
-	/* FIXME: need a timer or something to kick this so it can't
-	   get stuck with no work outstanding and no buffer free */
-	if (msg == NULL) {
+	/* FIXME: need a समयr or something to kick this so it can't
+	   get stuck with no work outstanding and no buffer मुक्त */
+	अगर (msg == शून्य) अणु
 		skb_queue_tail(&dlci->skb_list, dlci->skb);
-		dlci->skb = NULL;
-		return -ENOMEM;
-	}
+		dlci->skb = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 	dp = msg->data;
 
-	if (dlci->adaption == 4) { /* Interruptible framed (Packetised Data) */
+	अगर (dlci->adaption == 4) अणु /* Interruptible framed (Packetised Data) */
 		/* Flag byte to carry the start/end info */
 		*dp++ = last << 7 | first << 6 | 1;	/* EA */
 		len--;
-	}
-	memcpy(dp, dlci->skb->data, len);
+	पूर्ण
+	स_नकल(dp, dlci->skb->data, len);
 	skb_pull(dlci->skb, len);
 	__gsm_data_queue(dlci, msg);
-	if (last) {
-		dev_kfree_skb_any(dlci->skb);
-		dlci->skb = NULL;
-	}
-	return size;
-}
+	अगर (last) अणु
+		dev_kमुक्त_skb_any(dlci->skb);
+		dlci->skb = शून्य;
+	पूर्ण
+	वापस size;
+पूर्ण
 
 /**
- *	gsm_dlci_data_sweep		-	look for data to send
+ *	gsm_dlci_data_sweep		-	look क्रम data to send
  *	@gsm: the GSM mux
  *
- *	Sweep the GSM mux channels in priority order looking for ones with
- *	data to send. We could do with optimising this scan a bit. We aim
+ *	Sweep the GSM mux channels in priority order looking क्रम ones with
+ *	data to send. We could करो with optimising this scan a bit. We aim
  *	to fill the queue totally or up to TX_THRESH_HI bytes. Once we hit
  *	TX_THRESH_LO we get called again
  *
@@ -915,64 +916,64 @@ static int gsm_dlci_data_output_framed(struct gsm_mux *gsm,
  *	renegotiate DLCI priorities with optional stuff. Needs optimising.
  */
 
-static void gsm_dlci_data_sweep(struct gsm_mux *gsm)
-{
-	int len;
-	/* Priority ordering: We should do priority with RR of the groups */
-	int i = 1;
+अटल व्योम gsm_dlci_data_sweep(काष्ठा gsm_mux *gsm)
+अणु
+	पूर्णांक len;
+	/* Priority ordering: We should करो priority with RR of the groups */
+	पूर्णांक i = 1;
 
-	while (i < NUM_DLCI) {
-		struct gsm_dlci *dlci;
+	जबतक (i < NUM_DLCI) अणु
+		काष्ठा gsm_dlci *dlci;
 
-		if (gsm->tx_bytes > TX_THRESH_HI)
-			break;
+		अगर (gsm->tx_bytes > TX_THRESH_HI)
+			अवरोध;
 		dlci = gsm->dlci[i];
-		if (dlci == NULL || dlci->constipated) {
+		अगर (dlci == शून्य || dlci->स्थिरipated) अणु
 			i++;
-			continue;
-		}
-		if (dlci->adaption < 3 && !dlci->net)
+			जारी;
+		पूर्ण
+		अगर (dlci->adaption < 3 && !dlci->net)
 			len = gsm_dlci_data_output(gsm, dlci);
-		else
+		अन्यथा
 			len = gsm_dlci_data_output_framed(gsm, dlci);
-		if (len < 0)
-			break;
+		अगर (len < 0)
+			अवरोध;
 		/* DLCI empty - try the next */
-		if (len == 0)
+		अगर (len == 0)
 			i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- *	gsm_dlci_data_kick	-	transmit if possible
+ *	gsm_dlci_data_kick	-	transmit अगर possible
  *	@dlci: DLCI to kick
  *
- *	Transmit data from this DLCI if the queue is empty. We can't rely on
+ *	Transmit data from this DLCI अगर the queue is empty. We can't rely on
  *	a tty wakeup except when we filled the pipe so we need to fire off
- *	new data ourselves in other cases.
+ *	new data ourselves in other हालs.
  */
 
-static void gsm_dlci_data_kick(struct gsm_dlci *dlci)
-{
-	unsigned long flags;
-	int sweep;
+अटल व्योम gsm_dlci_data_kick(काष्ठा gsm_dlci *dlci)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक sweep;
 
-	if (dlci->constipated)
-		return;
+	अगर (dlci->स्थिरipated)
+		वापस;
 
 	spin_lock_irqsave(&dlci->gsm->tx_lock, flags);
 	/* If we have nothing running then we need to fire up */
 	sweep = (dlci->gsm->tx_bytes < TX_THRESH_LO);
-	if (dlci->gsm->tx_bytes == 0) {
-		if (dlci->net)
+	अगर (dlci->gsm->tx_bytes == 0) अणु
+		अगर (dlci->net)
 			gsm_dlci_data_output_framed(dlci->gsm, dlci);
-		else
+		अन्यथा
 			gsm_dlci_data_output(dlci->gsm, dlci);
-	}
-	if (sweep)
+	पूर्ण
+	अगर (sweep)
 		gsm_dlci_data_sweep(dlci->gsm);
 	spin_unlock_irqrestore(&dlci->gsm->tx_lock, flags);
-}
+पूर्ण
 
 /*
  *	Control message processing
@@ -989,79 +990,79 @@ static void gsm_dlci_data_kick(struct gsm_dlci *dlci)
  *	Encode up and queue a UI/UIH frame containing our response.
  */
 
-static void gsm_control_reply(struct gsm_mux *gsm, int cmd, const u8 *data,
-					int dlen)
-{
-	struct gsm_msg *msg;
+अटल व्योम gsm_control_reply(काष्ठा gsm_mux *gsm, पूर्णांक cmd, स्थिर u8 *data,
+					पूर्णांक dlen)
+अणु
+	काष्ठा gsm_msg *msg;
 	msg = gsm_data_alloc(gsm, 0, dlen + 2, gsm->ftype);
-	if (msg == NULL)
-		return;
+	अगर (msg == शून्य)
+		वापस;
 	msg->data[0] = (cmd & 0xFE) << 1 | EA;	/* Clear C/R */
 	msg->data[1] = (dlen << 1) | EA;
-	memcpy(msg->data + 2, data, dlen);
+	स_नकल(msg->data + 2, data, dlen);
 	gsm_data_queue(gsm->dlci[0], msg);
-}
+पूर्ण
 
 /**
  *	gsm_process_modem	-	process received modem status
- *	@tty: virtual tty bound to the DLCI
+ *	@tty: भव tty bound to the DLCI
  *	@dlci: DLCI to affect
  *	@modem: modem bits (full EA)
  *	@clen: command length
  *
- *	Used when a modem control message or line state inline in adaption
+ *	Used when a modem control message or line state अंतरभूत in adaption
  *	layer 2 is processed. Sort out the local modem state and throttles
  */
 
-static void gsm_process_modem(struct tty_struct *tty, struct gsm_dlci *dlci,
-							u32 modem, int clen)
-{
-	int  mlines = 0;
+अटल व्योम gsm_process_modem(काष्ठा tty_काष्ठा *tty, काष्ठा gsm_dlci *dlci,
+							u32 modem, पूर्णांक clen)
+अणु
+	पूर्णांक  mlines = 0;
 	u8 brk = 0;
-	int fc;
+	पूर्णांक fc;
 
-	/* The modem status command can either contain one octet (v.24 signals)
-	   or two octets (v.24 signals + break signals). The length field will
-	   either be 2 or 3 respectively. This is specified in section
+	/* The modem status command can either contain one octet (v.24 संकेतs)
+	   or two octets (v.24 संकेतs + अवरोध संकेतs). The length field will
+	   either be 2 or 3 respectively. This is specअगरied in section
 	   5.4.6.3.7 of the  27.010 mux spec. */
 
-	if (clen == 2)
+	अगर (clen == 2)
 		modem = modem & 0x7f;
-	else {
+	अन्यथा अणु
 		brk = modem & 0x7f;
 		modem = (modem >> 7) & 0x7f;
-	}
+	पूर्ण
 
-	/* Flow control/ready to communicate */
+	/* Flow control/पढ़ोy to communicate */
 	fc = (modem & MDM_FC) || !(modem & MDM_RTR);
-	if (fc && !dlci->constipated) {
+	अगर (fc && !dlci->स्थिरipated) अणु
 		/* Need to throttle our output on this device */
-		dlci->constipated = true;
-	} else if (!fc && dlci->constipated) {
-		dlci->constipated = false;
+		dlci->स्थिरipated = true;
+	पूर्ण अन्यथा अगर (!fc && dlci->स्थिरipated) अणु
+		dlci->स्थिरipated = false;
 		gsm_dlci_data_kick(dlci);
-	}
+	पूर्ण
 
 	/* Map modem bits */
-	if (modem & MDM_RTC)
+	अगर (modem & MDM_RTC)
 		mlines |= TIOCM_DSR | TIOCM_DTR;
-	if (modem & MDM_RTR)
+	अगर (modem & MDM_RTR)
 		mlines |= TIOCM_RTS | TIOCM_CTS;
-	if (modem & MDM_IC)
+	अगर (modem & MDM_IC)
 		mlines |= TIOCM_RI;
-	if (modem & MDM_DV)
+	अगर (modem & MDM_DV)
 		mlines |= TIOCM_CD;
 
 	/* Carrier drop -> hangup */
-	if (tty) {
-		if ((mlines & TIOCM_CD) == 0 && (dlci->modem_rx & TIOCM_CD))
-			if (!C_CLOCAL(tty))
+	अगर (tty) अणु
+		अगर ((mlines & TIOCM_CD) == 0 && (dlci->modem_rx & TIOCM_CD))
+			अगर (!C_CLOCAL(tty))
 				tty_hangup(tty);
-	}
-	if (brk & 0x01)
-		tty_insert_flip_char(&dlci->port, 0, TTY_BREAK);
+	पूर्ण
+	अगर (brk & 0x01)
+		tty_insert_flip_अक्षर(&dlci->port, 0, TTY_BREAK);
 	dlci->modem_rx = mlines;
-}
+पूर्ण
 
 /**
  *	gsm_control_modem	-	modem status received
@@ -1070,60 +1071,60 @@ static void gsm_process_modem(struct tty_struct *tty, struct gsm_dlci *dlci,
  *	@clen: command length
  *
  *	We have received a modem status control message. This is used by
- *	the GSM mux protocol to pass virtual modem line status and optionally
- *	to indicate break signals. Unpack it, convert to Linux representation
- *	and if need be stuff a break message down the tty.
+ *	the GSM mux protocol to pass भव modem line status and optionally
+ *	to indicate अवरोध संकेतs. Unpack it, convert to Linux representation
+ *	and अगर need be stuff a अवरोध message करोwn the tty.
  */
 
-static void gsm_control_modem(struct gsm_mux *gsm, const u8 *data, int clen)
-{
-	unsigned int addr = 0;
-	unsigned int modem = 0;
-	unsigned int brk = 0;
-	struct gsm_dlci *dlci;
-	int len = clen;
-	const u8 *dp = data;
-	struct tty_struct *tty;
+अटल व्योम gsm_control_modem(काष्ठा gsm_mux *gsm, स्थिर u8 *data, पूर्णांक clen)
+अणु
+	अचिन्हित पूर्णांक addr = 0;
+	अचिन्हित पूर्णांक modem = 0;
+	अचिन्हित पूर्णांक brk = 0;
+	काष्ठा gsm_dlci *dlci;
+	पूर्णांक len = clen;
+	स्थिर u8 *dp = data;
+	काष्ठा tty_काष्ठा *tty;
 
-	while (gsm_read_ea(&addr, *dp++) == 0) {
+	जबतक (gsm_पढ़ो_ea(&addr, *dp++) == 0) अणु
 		len--;
-		if (len == 0)
-			return;
-	}
+		अगर (len == 0)
+			वापस;
+	पूर्ण
 	/* Must be at least one byte following the EA */
 	len--;
-	if (len <= 0)
-		return;
+	अगर (len <= 0)
+		वापस;
 
 	addr >>= 1;
 	/* Closed port, or invalid ? */
-	if (addr == 0 || addr >= NUM_DLCI || gsm->dlci[addr] == NULL)
-		return;
+	अगर (addr == 0 || addr >= NUM_DLCI || gsm->dlci[addr] == शून्य)
+		वापस;
 	dlci = gsm->dlci[addr];
 
-	while (gsm_read_ea(&modem, *dp++) == 0) {
+	जबतक (gsm_पढ़ो_ea(&modem, *dp++) == 0) अणु
 		len--;
-		if (len == 0)
-			return;
-	}
+		अगर (len == 0)
+			वापस;
+	पूर्ण
 	len--;
-	if (len > 0) {
-		while (gsm_read_ea(&brk, *dp++) == 0) {
+	अगर (len > 0) अणु
+		जबतक (gsm_पढ़ो_ea(&brk, *dp++) == 0) अणु
 			len--;
-			if (len == 0)
-				return;
-		}
+			अगर (len == 0)
+				वापस;
+		पूर्ण
 		modem <<= 7;
 		modem |= (brk & 0x7f);
-	}
+	पूर्ण
 	tty = tty_port_tty_get(&dlci->port);
 	gsm_process_modem(tty, dlci, modem, clen);
-	if (tty) {
+	अगर (tty) अणु
 		tty_wakeup(tty);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 	gsm_control_reply(gsm, CMD_MSC, data, clen);
-}
+पूर्ण
 
 /**
  *	gsm_control_rls		-	remote line status
@@ -1132,51 +1133,51 @@ static void gsm_control_modem(struct gsm_mux *gsm, const u8 *data, int clen)
  *	@clen: data length
  *
  *	The modem sends us a two byte message on the control channel whenever
- *	it wishes to send us an error state from the virtual link. Stuff
- *	this into the uplink tty if present
+ *	it wishes to send us an error state from the भव link. Stuff
+ *	this पूर्णांकo the uplink tty अगर present
  */
 
-static void gsm_control_rls(struct gsm_mux *gsm, const u8 *data, int clen)
-{
-	struct tty_port *port;
-	unsigned int addr = 0;
+अटल व्योम gsm_control_rls(काष्ठा gsm_mux *gsm, स्थिर u8 *data, पूर्णांक clen)
+अणु
+	काष्ठा tty_port *port;
+	अचिन्हित पूर्णांक addr = 0;
 	u8 bits;
-	int len = clen;
-	const u8 *dp = data;
+	पूर्णांक len = clen;
+	स्थिर u8 *dp = data;
 
-	while (gsm_read_ea(&addr, *dp++) == 0) {
+	जबतक (gsm_पढ़ो_ea(&addr, *dp++) == 0) अणु
 		len--;
-		if (len == 0)
-			return;
-	}
+		अगर (len == 0)
+			वापस;
+	पूर्ण
 	/* Must be at least one byte following ea */
 	len--;
-	if (len <= 0)
-		return;
+	अगर (len <= 0)
+		वापस;
 	addr >>= 1;
 	/* Closed port, or invalid ? */
-	if (addr == 0 || addr >= NUM_DLCI || gsm->dlci[addr] == NULL)
-		return;
+	अगर (addr == 0 || addr >= NUM_DLCI || gsm->dlci[addr] == शून्य)
+		वापस;
 	/* No error ? */
 	bits = *dp;
-	if ((bits & 1) == 0)
-		return;
+	अगर ((bits & 1) == 0)
+		वापस;
 
 	port = &gsm->dlci[addr]->port;
 
-	if (bits & 2)
-		tty_insert_flip_char(port, 0, TTY_OVERRUN);
-	if (bits & 4)
-		tty_insert_flip_char(port, 0, TTY_PARITY);
-	if (bits & 8)
-		tty_insert_flip_char(port, 0, TTY_FRAME);
+	अगर (bits & 2)
+		tty_insert_flip_अक्षर(port, 0, TTY_OVERRUN);
+	अगर (bits & 4)
+		tty_insert_flip_अक्षर(port, 0, TTY_PARITY);
+	अगर (bits & 8)
+		tty_insert_flip_अक्षर(port, 0, TTY_FRAME);
 
 	tty_flip_buffer_push(port);
 
 	gsm_control_reply(gsm, CMD_RLS, data, clen);
-}
+पूर्ण
 
-static void gsm_dlci_begin_close(struct gsm_dlci *dlci);
+अटल व्योम gsm_dlci_begin_बंद(काष्ठा gsm_dlci *dlci);
 
 /**
  *	gsm_control_message	-	DLCI 0 control processing
@@ -1185,69 +1186,69 @@ static void gsm_dlci_begin_close(struct gsm_dlci *dlci);
  *	@data: data beyond the command/length EAs
  *	@clen: length
  *
- *	Input processor for control messages from the other end of the link.
+ *	Input processor क्रम control messages from the other end of the link.
  *	Processes the incoming request and queues a response frame or an
- *	NSC response if not supported
+ *	NSC response अगर not supported
  */
 
-static void gsm_control_message(struct gsm_mux *gsm, unsigned int command,
-						const u8 *data, int clen)
-{
+अटल व्योम gsm_control_message(काष्ठा gsm_mux *gsm, अचिन्हित पूर्णांक command,
+						स्थिर u8 *data, पूर्णांक clen)
+अणु
 	u8 buf[1];
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	switch (command) {
-	case CMD_CLD: {
-		struct gsm_dlci *dlci = gsm->dlci[0];
-		/* Modem wishes to close down */
-		if (dlci) {
+	चयन (command) अणु
+	हाल CMD_CLD: अणु
+		काष्ठा gsm_dlci *dlci = gsm->dlci[0];
+		/* Modem wishes to बंद करोwn */
+		अगर (dlci) अणु
 			dlci->dead = true;
 			gsm->dead = true;
-			gsm_dlci_begin_close(dlci);
-		}
-		}
-		break;
-	case CMD_TEST:
+			gsm_dlci_begin_बंद(dlci);
+		पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल CMD_TEST:
 		/* Modem wishes to test, reply with the data */
 		gsm_control_reply(gsm, CMD_TEST, data, clen);
-		break;
-	case CMD_FCON:
+		अवरोध;
+	हाल CMD_FCON:
 		/* Modem can accept data again */
-		gsm->constipated = false;
-		gsm_control_reply(gsm, CMD_FCON, NULL, 0);
-		/* Kick the link in case it is idling */
+		gsm->स्थिरipated = false;
+		gsm_control_reply(gsm, CMD_FCON, शून्य, 0);
+		/* Kick the link in हाल it is idling */
 		spin_lock_irqsave(&gsm->tx_lock, flags);
-		gsm_data_kick(gsm, NULL);
+		gsm_data_kick(gsm, शून्य);
 		spin_unlock_irqrestore(&gsm->tx_lock, flags);
-		break;
-	case CMD_FCOFF:
+		अवरोध;
+	हाल CMD_FCOFF:
 		/* Modem wants us to STFU */
-		gsm->constipated = true;
-		gsm_control_reply(gsm, CMD_FCOFF, NULL, 0);
-		break;
-	case CMD_MSC:
-		/* Out of band modem line change indicator for a DLCI */
+		gsm->स्थिरipated = true;
+		gsm_control_reply(gsm, CMD_FCOFF, शून्य, 0);
+		अवरोध;
+	हाल CMD_MSC:
+		/* Out of band modem line change indicator क्रम a DLCI */
 		gsm_control_modem(gsm, data, clen);
-		break;
-	case CMD_RLS:
-		/* Out of band error reception for a DLCI */
+		अवरोध;
+	हाल CMD_RLS:
+		/* Out of band error reception क्रम a DLCI */
 		gsm_control_rls(gsm, data, clen);
-		break;
-	case CMD_PSC:
-		/* Modem wishes to enter power saving state */
-		gsm_control_reply(gsm, CMD_PSC, NULL, 0);
-		break;
+		अवरोध;
+	हाल CMD_PSC:
+		/* Modem wishes to enter घातer saving state */
+		gsm_control_reply(gsm, CMD_PSC, शून्य, 0);
+		अवरोध;
 		/* Optional unsupported commands */
-	case CMD_PN:	/* Parameter negotiation */
-	case CMD_RPN:	/* Remote port negotiation */
-	case CMD_SNC:	/* Service negotiation command */
-	default:
+	हाल CMD_PN:	/* Parameter negotiation */
+	हाल CMD_RPN:	/* Remote port negotiation */
+	हाल CMD_SNC:	/* Service negotiation command */
+	शेष:
 		/* Reply to bad commands with an NSC */
 		buf[0] = command;
 		gsm_control_reply(gsm, CMD_NSC, buf, 1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  *	gsm_control_response	-	process a response to our control
@@ -1258,33 +1259,33 @@ static void gsm_control_message(struct gsm_mux *gsm, unsigned int command,
  *
  *	Process a response to an outstanding command. We only allow a single
  *	control message in flight so this is fairly easy. All the clean up
- *	is done by the caller, we just update the fields, flag it as done
- *	and return
+ *	is करोne by the caller, we just update the fields, flag it as करोne
+ *	and वापस
  */
 
-static void gsm_control_response(struct gsm_mux *gsm, unsigned int command,
-						const u8 *data, int clen)
-{
-	struct gsm_control *ctrl;
-	unsigned long flags;
+अटल व्योम gsm_control_response(काष्ठा gsm_mux *gsm, अचिन्हित पूर्णांक command,
+						स्थिर u8 *data, पूर्णांक clen)
+अणु
+	काष्ठा gsm_control *ctrl;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gsm->control_lock, flags);
 
 	ctrl = gsm->pending_cmd;
 	/* Does the reply match our command */
 	command |= 1;
-	if (ctrl != NULL && (command == ctrl->cmd || command == CMD_NSC)) {
-		/* Our command was replied to, kill the retry timer */
-		del_timer(&gsm->t2_timer);
-		gsm->pending_cmd = NULL;
+	अगर (ctrl != शून्य && (command == ctrl->cmd || command == CMD_NSC)) अणु
+		/* Our command was replied to, समाप्त the retry समयr */
+		del_समयr(&gsm->t2_समयr);
+		gsm->pending_cmd = शून्य;
 		/* Rejected by the other end */
-		if (command == CMD_NSC)
+		अगर (command == CMD_NSC)
 			ctrl->error = -EOPNOTSUPP;
-		ctrl->done = 1;
+		ctrl->करोne = 1;
 		wake_up(&gsm->event);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&gsm->control_lock, flags);
-}
+पूर्ण
 
 /**
  *	gsm_control_transmit	-	send control packet
@@ -1294,112 +1295,112 @@ static void gsm_control_response(struct gsm_mux *gsm, unsigned int command,
  *	Send out a pending control command (called under control lock)
  */
 
-static void gsm_control_transmit(struct gsm_mux *gsm, struct gsm_control *ctrl)
-{
-	struct gsm_msg *msg = gsm_data_alloc(gsm, 0, ctrl->len + 1, gsm->ftype);
-	if (msg == NULL)
-		return;
+अटल व्योम gsm_control_transmit(काष्ठा gsm_mux *gsm, काष्ठा gsm_control *ctrl)
+अणु
+	काष्ठा gsm_msg *msg = gsm_data_alloc(gsm, 0, ctrl->len + 1, gsm->ftype);
+	अगर (msg == शून्य)
+		वापस;
 	msg->data[0] = (ctrl->cmd << 1) | 2 | EA;	/* command */
-	memcpy(msg->data + 1, ctrl->data, ctrl->len);
+	स_नकल(msg->data + 1, ctrl->data, ctrl->len);
 	gsm_data_queue(gsm->dlci[0], msg);
-}
+पूर्ण
 
 /**
  *	gsm_control_retransmit	-	retransmit a control frame
- *	@t: timer contained in our gsm object
+ *	@t: समयr contained in our gsm object
  *
- *	Called off the T2 timer expiry in order to retransmit control frames
- *	that have been lost in the system somewhere. The control_lock protects
+ *	Called off the T2 समयr expiry in order to retransmit control frames
+ *	that have been lost in the प्रणाली somewhere. The control_lock protects
  *	us from colliding with another sender or a receive completion event.
- *	In that situation the timer may still occur in a small window but
- *	gsm->pending_cmd will be NULL and we just let the timer expire.
+ *	In that situation the समयr may still occur in a small winकरोw but
+ *	gsm->pending_cmd will be शून्य and we just let the समयr expire.
  */
 
-static void gsm_control_retransmit(struct timer_list *t)
-{
-	struct gsm_mux *gsm = from_timer(gsm, t, t2_timer);
-	struct gsm_control *ctrl;
-	unsigned long flags;
+अटल व्योम gsm_control_retransmit(काष्ठा समयr_list *t)
+अणु
+	काष्ठा gsm_mux *gsm = from_समयr(gsm, t, t2_समयr);
+	काष्ठा gsm_control *ctrl;
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&gsm->control_lock, flags);
 	ctrl = gsm->pending_cmd;
-	if (ctrl) {
+	अगर (ctrl) अणु
 		gsm->cretries--;
-		if (gsm->cretries == 0) {
-			gsm->pending_cmd = NULL;
+		अगर (gsm->cretries == 0) अणु
+			gsm->pending_cmd = शून्य;
 			ctrl->error = -ETIMEDOUT;
-			ctrl->done = 1;
+			ctrl->करोne = 1;
 			spin_unlock_irqrestore(&gsm->control_lock, flags);
 			wake_up(&gsm->event);
-			return;
-		}
+			वापस;
+		पूर्ण
 		gsm_control_transmit(gsm, ctrl);
-		mod_timer(&gsm->t2_timer, jiffies + gsm->t2 * HZ / 100);
-	}
+		mod_समयr(&gsm->t2_समयr, jअगरfies + gsm->t2 * HZ / 100);
+	पूर्ण
 	spin_unlock_irqrestore(&gsm->control_lock, flags);
-}
+पूर्ण
 
 /**
  *	gsm_control_send	-	send a control frame on DLCI 0
  *	@gsm: the GSM channel
  *	@command: command  to send including CR bit
- *	@data: bytes of data (must be kmalloced)
+ *	@data: bytes of data (must be kदो_स्मृतिed)
  *	@clen: length of the block to send
  *
  *	Queue and dispatch a control command. Only one command can be
- *	active at a time. In theory more can be outstanding but the matching
- *	gets really complicated so for now stick to one outstanding.
+ *	active at a समय. In theory more can be outstanding but the matching
+ *	माला_लो really complicated so क्रम now stick to one outstanding.
  */
 
-static struct gsm_control *gsm_control_send(struct gsm_mux *gsm,
-		unsigned int command, u8 *data, int clen)
-{
-	struct gsm_control *ctrl = kzalloc(sizeof(struct gsm_control),
+अटल काष्ठा gsm_control *gsm_control_send(काष्ठा gsm_mux *gsm,
+		अचिन्हित पूर्णांक command, u8 *data, पूर्णांक clen)
+अणु
+	काष्ठा gsm_control *ctrl = kzalloc(माप(काष्ठा gsm_control),
 						GFP_KERNEL);
-	unsigned long flags;
-	if (ctrl == NULL)
-		return NULL;
+	अचिन्हित दीर्घ flags;
+	अगर (ctrl == शून्य)
+		वापस शून्य;
 retry:
-	wait_event(gsm->event, gsm->pending_cmd == NULL);
+	रुको_event(gsm->event, gsm->pending_cmd == शून्य);
 	spin_lock_irqsave(&gsm->control_lock, flags);
-	if (gsm->pending_cmd != NULL) {
+	अगर (gsm->pending_cmd != शून्य) अणु
 		spin_unlock_irqrestore(&gsm->control_lock, flags);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 	ctrl->cmd = command;
 	ctrl->data = data;
 	ctrl->len = clen;
 	gsm->pending_cmd = ctrl;
 
 	/* If DLCI0 is in ADM mode skip retries, it won't respond */
-	if (gsm->dlci[0]->mode == DLCI_MODE_ADM)
+	अगर (gsm->dlci[0]->mode == DLCI_MODE_ADM)
 		gsm->cretries = 1;
-	else
+	अन्यथा
 		gsm->cretries = gsm->n2;
 
-	mod_timer(&gsm->t2_timer, jiffies + gsm->t2 * HZ / 100);
+	mod_समयr(&gsm->t2_समयr, jअगरfies + gsm->t2 * HZ / 100);
 	gsm_control_transmit(gsm, ctrl);
 	spin_unlock_irqrestore(&gsm->control_lock, flags);
-	return ctrl;
-}
+	वापस ctrl;
+पूर्ण
 
 /**
- *	gsm_control_wait	-	wait for a control to finish
+ *	gsm_control_रुको	-	रुको क्रम a control to finish
  *	@gsm: GSM mux
- *	@control: control we are waiting on
+ *	@control: control we are रुकोing on
  *
- *	Waits for the control to complete or time out. Frees any used
- *	resources and returns 0 for success, or an error if the remote
+ *	Waits क्रम the control to complete or समय out. Frees any used
+ *	resources and वापसs 0 क्रम success, or an error अगर the remote
  *	rejected or ignored the request.
  */
 
-static int gsm_control_wait(struct gsm_mux *gsm, struct gsm_control *control)
-{
-	int err;
-	wait_event(gsm->event, control->done == 1);
+अटल पूर्णांक gsm_control_रुको(काष्ठा gsm_mux *gsm, काष्ठा gsm_control *control)
+अणु
+	पूर्णांक err;
+	रुको_event(gsm->event, control->करोne == 1);
 	err = control->error;
-	kfree(control);
-	return err;
-}
+	kमुक्त(control);
+	वापस err;
+पूर्ण
 
 
 /*
@@ -1407,145 +1408,145 @@ static int gsm_control_wait(struct gsm_mux *gsm, struct gsm_control *control)
  */
 
 /*
- *	State transitions and timers
+ *	State transitions and समयrs
  */
 
 /**
- *	gsm_dlci_close		-	a DLCI has closed
- *	@dlci: DLCI that closed
+ *	gsm_dlci_बंद		-	a DLCI has बंदd
+ *	@dlci: DLCI that बंदd
  *
- *	Perform processing when moving a DLCI into closed state. If there
+ *	Perक्रमm processing when moving a DLCI पूर्णांकo बंदd state. If there
  *	is an attached tty this is hung up
  */
 
-static void gsm_dlci_close(struct gsm_dlci *dlci)
-{
-	del_timer(&dlci->t1);
-	if (debug & 8)
+अटल व्योम gsm_dlci_बंद(काष्ठा gsm_dlci *dlci)
+अणु
+	del_समयr(&dlci->t1);
+	अगर (debug & 8)
 		pr_debug("DLCI %d goes closed.\n", dlci->addr);
 	dlci->state = DLCI_CLOSED;
-	if (dlci->addr != 0) {
+	अगर (dlci->addr != 0) अणु
 		tty_port_tty_hangup(&dlci->port, false);
-		kfifo_reset(&dlci->fifo);
-	} else
+		kfअगरo_reset(&dlci->fअगरo);
+	पूर्ण अन्यथा
 		dlci->gsm->dead = true;
 	wake_up(&dlci->gsm->event);
-	/* A DLCI 0 close is a MUX termination so we need to kick that
+	/* A DLCI 0 बंद is a MUX termination so we need to kick that
 	   back to userspace somehow */
-}
+पूर्ण
 
 /**
- *	gsm_dlci_open		-	a DLCI has opened
- *	@dlci: DLCI that opened
+ *	gsm_dlci_खोलो		-	a DLCI has खोलोed
+ *	@dlci: DLCI that खोलोed
  *
- *	Perform processing when moving a DLCI into open state.
+ *	Perक्रमm processing when moving a DLCI पूर्णांकo खोलो state.
  */
 
-static void gsm_dlci_open(struct gsm_dlci *dlci)
-{
+अटल व्योम gsm_dlci_खोलो(काष्ठा gsm_dlci *dlci)
+अणु
 	/* Note that SABM UA .. SABM UA first UA lost can mean that we go
-	   open -> open */
-	del_timer(&dlci->t1);
-	/* This will let a tty open continue */
+	   खोलो -> खोलो */
+	del_समयr(&dlci->t1);
+	/* This will let a tty खोलो जारी */
 	dlci->state = DLCI_OPEN;
-	if (debug & 8)
+	अगर (debug & 8)
 		pr_debug("DLCI %d goes open.\n", dlci->addr);
 	wake_up(&dlci->gsm->event);
-}
+पूर्ण
 
 /**
- *	gsm_dlci_t1		-	T1 timer expiry
- *	@t: timer contained in the DLCI that opened
+ *	gsm_dlci_t1		-	T1 समयr expiry
+ *	@t: समयr contained in the DLCI that खोलोed
  *
- *	The T1 timer handles retransmits of control frames (essentially of
+ *	The T1 समयr handles retransmits of control frames (essentially of
  *	SABM and DISC). We resend the command until the retry count runs out
- *	in which case an opening port goes back to closed and a closing port
- *	is simply put into closed state (any further frames from the other
+ *	in which हाल an खोलोing port goes back to बंदd and a closing port
+ *	is simply put पूर्णांकo बंदd state (any further frames from the other
  *	end will get a DM response)
  *
  *	Some control dlci can stay in ADM mode with other dlci working just
- *	fine. In that case we can just keep the control dlci open after the
- *	DLCI_OPENING retries time out.
+ *	fine. In that हाल we can just keep the control dlci खोलो after the
+ *	DLCI_OPENING retries समय out.
  */
 
-static void gsm_dlci_t1(struct timer_list *t)
-{
-	struct gsm_dlci *dlci = from_timer(dlci, t, t1);
-	struct gsm_mux *gsm = dlci->gsm;
+अटल व्योम gsm_dlci_t1(काष्ठा समयr_list *t)
+अणु
+	काष्ठा gsm_dlci *dlci = from_समयr(dlci, t, t1);
+	काष्ठा gsm_mux *gsm = dlci->gsm;
 
-	switch (dlci->state) {
-	case DLCI_OPENING:
+	चयन (dlci->state) अणु
+	हाल DLCI_OPENING:
 		dlci->retries--;
-		if (dlci->retries) {
+		अगर (dlci->retries) अणु
 			gsm_command(dlci->gsm, dlci->addr, SABM|PF);
-			mod_timer(&dlci->t1, jiffies + gsm->t1 * HZ / 100);
-		} else if (!dlci->addr && gsm->control == (DM | PF)) {
-			if (debug & 8)
+			mod_समयr(&dlci->t1, jअगरfies + gsm->t1 * HZ / 100);
+		पूर्ण अन्यथा अगर (!dlci->addr && gsm->control == (DM | PF)) अणु
+			अगर (debug & 8)
 				pr_info("DLCI %d opening in ADM mode.\n",
 					dlci->addr);
 			dlci->mode = DLCI_MODE_ADM;
-			gsm_dlci_open(dlci);
-		} else {
-			gsm_dlci_close(dlci);
-		}
+			gsm_dlci_खोलो(dlci);
+		पूर्ण अन्यथा अणु
+			gsm_dlci_बंद(dlci);
+		पूर्ण
 
-		break;
-	case DLCI_CLOSING:
+		अवरोध;
+	हाल DLCI_CLOSING:
 		dlci->retries--;
-		if (dlci->retries) {
+		अगर (dlci->retries) अणु
 			gsm_command(dlci->gsm, dlci->addr, DISC|PF);
-			mod_timer(&dlci->t1, jiffies + gsm->t1 * HZ / 100);
-		} else
-			gsm_dlci_close(dlci);
-		break;
-	default:
+			mod_समयr(&dlci->t1, jअगरfies + gsm->t1 * HZ / 100);
+		पूर्ण अन्यथा
+			gsm_dlci_बंद(dlci);
+		अवरोध;
+	शेष:
 		pr_debug("%s: unhandled state: %d\n", __func__, dlci->state);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- *	gsm_dlci_begin_open	-	start channel open procedure
- *	@dlci: DLCI to open
+ *	gsm_dlci_begin_खोलो	-	start channel खोलो procedure
+ *	@dlci: DLCI to खोलो
  *
- *	Commence opening a DLCI from the Linux side. We issue SABM messages
- *	to the modem which should then reply with a UA or ADM, at which point
- *	we will move into open state. Opening is done asynchronously with retry
- *	running off timers and the responses.
+ *	Commence खोलोing a DLCI from the Linux side. We issue SABM messages
+ *	to the modem which should then reply with a UA or ADM, at which poपूर्णांक
+ *	we will move पूर्णांकo खोलो state. Opening is करोne asynchronously with retry
+ *	running off समयrs and the responses.
  */
 
-static void gsm_dlci_begin_open(struct gsm_dlci *dlci)
-{
-	struct gsm_mux *gsm = dlci->gsm;
-	if (dlci->state == DLCI_OPEN || dlci->state == DLCI_OPENING)
-		return;
+अटल व्योम gsm_dlci_begin_खोलो(काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा gsm_mux *gsm = dlci->gsm;
+	अगर (dlci->state == DLCI_OPEN || dlci->state == DLCI_OPENING)
+		वापस;
 	dlci->retries = gsm->n2;
 	dlci->state = DLCI_OPENING;
 	gsm_command(dlci->gsm, dlci->addr, SABM|PF);
-	mod_timer(&dlci->t1, jiffies + gsm->t1 * HZ / 100);
-}
+	mod_समयr(&dlci->t1, jअगरfies + gsm->t1 * HZ / 100);
+पूर्ण
 
 /**
- *	gsm_dlci_begin_close	-	start channel open procedure
- *	@dlci: DLCI to open
+ *	gsm_dlci_begin_बंद	-	start channel खोलो procedure
+ *	@dlci: DLCI to खोलो
  *
  *	Commence closing a DLCI from the Linux side. We issue DISC messages
- *	to the modem which should then reply with a UA, at which point we
- *	will move into closed state. Closing is done asynchronously with retry
- *	off timers. We may also receive a DM reply from the other end which
- *	indicates the channel was already closed.
+ *	to the modem which should then reply with a UA, at which poपूर्णांक we
+ *	will move पूर्णांकo बंदd state. Closing is करोne asynchronously with retry
+ *	off समयrs. We may also receive a DM reply from the other end which
+ *	indicates the channel was alपढ़ोy बंदd.
  */
 
-static void gsm_dlci_begin_close(struct gsm_dlci *dlci)
-{
-	struct gsm_mux *gsm = dlci->gsm;
-	if (dlci->state == DLCI_CLOSED || dlci->state == DLCI_CLOSING)
-		return;
+अटल व्योम gsm_dlci_begin_बंद(काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा gsm_mux *gsm = dlci->gsm;
+	अगर (dlci->state == DLCI_CLOSED || dlci->state == DLCI_CLOSING)
+		वापस;
 	dlci->retries = gsm->n2;
 	dlci->state = DLCI_CLOSING;
 	gsm_command(dlci->gsm, dlci->addr, DISC|PF);
-	mod_timer(&dlci->t1, jiffies + gsm->t1 * HZ / 100);
-}
+	mod_समयr(&dlci->t1, jअगरfies + gsm->t1 * HZ / 100);
+पूर्ण
 
 /**
  *	gsm_dlci_data		-	data arrived
@@ -1553,45 +1554,45 @@ static void gsm_dlci_begin_close(struct gsm_dlci *dlci)
  *	@data: block of bytes received
  *	@clen: length of received block
  *
- *	A UI or UIH frame has arrived which contains data for a channel
- *	other than the control channel. If the relevant virtual tty is
- *	open we shovel the bits down it, if not we drop them.
+ *	A UI or UIH frame has arrived which contains data क्रम a channel
+ *	other than the control channel. If the relevant भव tty is
+ *	खोलो we shovel the bits करोwn it, अगर not we drop them.
  */
 
-static void gsm_dlci_data(struct gsm_dlci *dlci, const u8 *data, int clen)
-{
+अटल व्योम gsm_dlci_data(काष्ठा gsm_dlci *dlci, स्थिर u8 *data, पूर्णांक clen)
+अणु
 	/* krefs .. */
-	struct tty_port *port = &dlci->port;
-	struct tty_struct *tty;
-	unsigned int modem = 0;
-	int len = clen;
+	काष्ठा tty_port *port = &dlci->port;
+	काष्ठा tty_काष्ठा *tty;
+	अचिन्हित पूर्णांक modem = 0;
+	पूर्णांक len = clen;
 
-	if (debug & 16)
+	अगर (debug & 16)
 		pr_debug("%d bytes for tty\n", len);
-	switch (dlci->adaption)  {
+	चयन (dlci->adaption)  अणु
 	/* Unsupported types */
-	case 4:		/* Packetised interruptible data */
-		break;
-	case 3:		/* Packetised uininterruptible voice/data */
-		break;
-	case 2:		/* Asynchronous serial with line state in each frame */
-		while (gsm_read_ea(&modem, *data++) == 0) {
+	हाल 4:		/* Packetised पूर्णांकerruptible data */
+		अवरोध;
+	हाल 3:		/* Packetised uinपूर्णांकerruptible voice/data */
+		अवरोध;
+	हाल 2:		/* Asynchronous serial with line state in each frame */
+		जबतक (gsm_पढ़ो_ea(&modem, *data++) == 0) अणु
 			len--;
-			if (len == 0)
-				return;
-		}
+			अगर (len == 0)
+				वापस;
+		पूर्ण
 		tty = tty_port_tty_get(port);
-		if (tty) {
+		अगर (tty) अणु
 			gsm_process_modem(tty, dlci, modem, clen);
 			tty_kref_put(tty);
-		}
+		पूर्ण
 		fallthrough;
-	case 1:		/* Line state will go via DLCI 0 controls only */
-	default:
+	हाल 1:		/* Line state will go via DLCI 0 controls only */
+	शेष:
 		tty_insert_flip_string(port, data, len);
 		tty_flip_buffer_push(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	gsm_dlci_control	-	data arrived on control channel
@@ -1599,35 +1600,35 @@ static void gsm_dlci_data(struct gsm_dlci *dlci, const u8 *data, int clen)
  *	@data: block of bytes received
  *	@len: length of received block
  *
- *	A UI or UIH frame has arrived which contains data for DLCI 0 the
+ *	A UI or UIH frame has arrived which contains data क्रम DLCI 0 the
  *	control channel. This should contain a command EA followed by
  *	control data bytes. The command EA contains a command/response bit
- *	and we divide up the work accordingly.
+ *	and we भागide up the work accordingly.
  */
 
-static void gsm_dlci_command(struct gsm_dlci *dlci, const u8 *data, int len)
-{
+अटल व्योम gsm_dlci_command(काष्ठा gsm_dlci *dlci, स्थिर u8 *data, पूर्णांक len)
+अणु
 	/* See what command is involved */
-	unsigned int command = 0;
-	while (len-- > 0) {
-		if (gsm_read_ea(&command, *data++) == 1) {
-			int clen = *data++;
+	अचिन्हित पूर्णांक command = 0;
+	जबतक (len-- > 0) अणु
+		अगर (gsm_पढ़ो_ea(&command, *data++) == 1) अणु
+			पूर्णांक clen = *data++;
 			len--;
 			/* FIXME: this is properly an EA */
 			clen >>= 1;
-			/* Malformed command ? */
-			if (clen > len)
-				return;
-			if (command & 1)
+			/* Malक्रमmed command ? */
+			अगर (clen > len)
+				वापस;
+			अगर (command & 1)
 				gsm_control_message(dlci->gsm, command,
 								data, clen);
-			else
+			अन्यथा
 				gsm_control_response(dlci->gsm, command,
 								data, clen);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  *	Allocate/Free DLCI channels
@@ -1638,381 +1639,381 @@ static void gsm_dlci_command(struct gsm_dlci *dlci, const u8 *data, int len)
  *	@gsm: GSM mux
  *	@addr: address of the DLCI
  *
- *	Allocate and install a new DLCI object into the GSM mux.
+ *	Allocate and install a new DLCI object पूर्णांकo the GSM mux.
  *
  *	FIXME: review locking races
  */
 
-static struct gsm_dlci *gsm_dlci_alloc(struct gsm_mux *gsm, int addr)
-{
-	struct gsm_dlci *dlci = kzalloc(sizeof(struct gsm_dlci), GFP_ATOMIC);
-	if (dlci == NULL)
-		return NULL;
+अटल काष्ठा gsm_dlci *gsm_dlci_alloc(काष्ठा gsm_mux *gsm, पूर्णांक addr)
+अणु
+	काष्ठा gsm_dlci *dlci = kzalloc(माप(काष्ठा gsm_dlci), GFP_ATOMIC);
+	अगर (dlci == शून्य)
+		वापस शून्य;
 	spin_lock_init(&dlci->lock);
 	mutex_init(&dlci->mutex);
-	if (kfifo_alloc(&dlci->fifo, 4096, GFP_KERNEL) < 0) {
-		kfree(dlci);
-		return NULL;
-	}
+	अगर (kfअगरo_alloc(&dlci->fअगरo, 4096, GFP_KERNEL) < 0) अणु
+		kमुक्त(dlci);
+		वापस शून्य;
+	पूर्ण
 
 	skb_queue_head_init(&dlci->skb_list);
-	timer_setup(&dlci->t1, gsm_dlci_t1, 0);
+	समयr_setup(&dlci->t1, gsm_dlci_t1, 0);
 	tty_port_init(&dlci->port);
 	dlci->port.ops = &gsm_port_ops;
 	dlci->gsm = gsm;
 	dlci->addr = addr;
 	dlci->adaption = gsm->adaption;
 	dlci->state = DLCI_CLOSED;
-	if (addr)
+	अगर (addr)
 		dlci->data = gsm_dlci_data;
-	else
+	अन्यथा
 		dlci->data = gsm_dlci_command;
 	gsm->dlci[addr] = dlci;
-	return dlci;
-}
+	वापस dlci;
+पूर्ण
 
 /**
- *	gsm_dlci_free		-	free DLCI
- *	@port: tty port for DLCI to free
+ *	gsm_dlci_मुक्त		-	मुक्त DLCI
+ *	@port: tty port क्रम DLCI to मुक्त
  *
  *	Free up a DLCI.
  *
  *	Can sleep.
  */
-static void gsm_dlci_free(struct tty_port *port)
-{
-	struct gsm_dlci *dlci = container_of(port, struct gsm_dlci, port);
+अटल व्योम gsm_dlci_मुक्त(काष्ठा tty_port *port)
+अणु
+	काष्ठा gsm_dlci *dlci = container_of(port, काष्ठा gsm_dlci, port);
 
-	del_timer_sync(&dlci->t1);
-	dlci->gsm->dlci[dlci->addr] = NULL;
-	kfifo_free(&dlci->fifo);
-	while ((dlci->skb = skb_dequeue(&dlci->skb_list)))
-		dev_kfree_skb(dlci->skb);
-	kfree(dlci);
-}
+	del_समयr_sync(&dlci->t1);
+	dlci->gsm->dlci[dlci->addr] = शून्य;
+	kfअगरo_मुक्त(&dlci->fअगरo);
+	जबतक ((dlci->skb = skb_dequeue(&dlci->skb_list)))
+		dev_kमुक्त_skb(dlci->skb);
+	kमुक्त(dlci);
+पूर्ण
 
-static inline void dlci_get(struct gsm_dlci *dlci)
-{
+अटल अंतरभूत व्योम dlci_get(काष्ठा gsm_dlci *dlci)
+अणु
 	tty_port_get(&dlci->port);
-}
+पूर्ण
 
-static inline void dlci_put(struct gsm_dlci *dlci)
-{
+अटल अंतरभूत व्योम dlci_put(काष्ठा gsm_dlci *dlci)
+अणु
 	tty_port_put(&dlci->port);
-}
+पूर्ण
 
-static void gsm_destroy_network(struct gsm_dlci *dlci);
+अटल व्योम gsm_destroy_network(काष्ठा gsm_dlci *dlci);
 
 /**
  *	gsm_dlci_release		-	release DLCI
  *	@dlci: DLCI to destroy
  *
- *	Release a DLCI. Actual free is deferred until either
- *	mux is closed or tty is closed - whichever is last.
+ *	Release a DLCI. Actual मुक्त is deferred until either
+ *	mux is बंदd or tty is बंदd - whichever is last.
  *
  *	Can sleep.
  */
-static void gsm_dlci_release(struct gsm_dlci *dlci)
-{
-	struct tty_struct *tty = tty_port_tty_get(&dlci->port);
-	if (tty) {
+अटल व्योम gsm_dlci_release(काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&dlci->port);
+	अगर (tty) अणु
 		mutex_lock(&dlci->mutex);
 		gsm_destroy_network(dlci);
 		mutex_unlock(&dlci->mutex);
 
 		tty_hangup(tty);
 
-		tty_port_tty_set(&dlci->port, NULL);
+		tty_port_tty_set(&dlci->port, शून्य);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 	dlci->state = DLCI_CLOSED;
 	dlci_put(dlci);
-}
+पूर्ण
 
 /*
  *	LAPBish link layer logic
  */
 
 /**
- *	gsm_queue		-	a GSM frame is ready to process
- *	@gsm: pointer to our gsm mux
+ *	gsm_queue		-	a GSM frame is पढ़ोy to process
+ *	@gsm: poपूर्णांकer to our gsm mux
  *
- *	At this point in time a frame has arrived and been demangled from
- *	the line encoding. All the differences between the encodings have
- *	been handled below us and the frame is unpacked into the structures.
+ *	At this poपूर्णांक in समय a frame has arrived and been demangled from
+ *	the line encoding. All the dअगरferences between the encodings have
+ *	been handled below us and the frame is unpacked पूर्णांकo the काष्ठाures.
  *	The fcs holds the header FCS but any data FCS must be added here.
  */
 
-static void gsm_queue(struct gsm_mux *gsm)
-{
-	struct gsm_dlci *dlci;
+अटल व्योम gsm_queue(काष्ठा gsm_mux *gsm)
+अणु
+	काष्ठा gsm_dlci *dlci;
 	u8 cr;
-	int address;
-	/* We have to sneak a look at the packet body to do the FCS.
+	पूर्णांक address;
+	/* We have to sneak a look at the packet body to करो the FCS.
 	   A somewhat layering violation in the spec */
 
-	if ((gsm->control & ~PF) == UI)
+	अगर ((gsm->control & ~PF) == UI)
 		gsm->fcs = gsm_fcs_add_block(gsm->fcs, gsm->buf, gsm->len);
-	if (gsm->encoding == 0) {
-		/* WARNING: gsm->received_fcs is used for
+	अगर (gsm->encoding == 0) अणु
+		/* WARNING: gsm->received_fcs is used क्रम
 		gsm->encoding = 0 only.
-		In this case it contain the last piece of data
+		In this हाल it contain the last piece of data
 		required to generate final CRC */
 		gsm->fcs = gsm_fcs_add(gsm->fcs, gsm->received_fcs);
-	}
-	if (gsm->fcs != GOOD_FCS) {
+	पूर्ण
+	अगर (gsm->fcs != GOOD_FCS) अणु
 		gsm->bad_fcs++;
-		if (debug & 4)
+		अगर (debug & 4)
 			pr_debug("BAD FCS %02x\n", gsm->fcs);
-		return;
-	}
+		वापस;
+	पूर्ण
 	address = gsm->address >> 1;
-	if (address >= NUM_DLCI)
-		goto invalid;
+	अगर (address >= NUM_DLCI)
+		जाओ invalid;
 
 	cr = gsm->address & 1;		/* C/R bit */
 
-	gsm_print_packet("<--", address, cr, gsm->control, gsm->buf, gsm->len);
+	gsm_prपूर्णांक_packet("<--", address, cr, gsm->control, gsm->buf, gsm->len);
 
 	cr ^= 1 - gsm->initiator;	/* Flip so 1 always means command */
 	dlci = gsm->dlci[address];
 
-	switch (gsm->control) {
-	case SABM|PF:
-		if (cr == 0)
-			goto invalid;
-		if (dlci == NULL)
+	चयन (gsm->control) अणु
+	हाल SABM|PF:
+		अगर (cr == 0)
+			जाओ invalid;
+		अगर (dlci == शून्य)
 			dlci = gsm_dlci_alloc(gsm, address);
-		if (dlci == NULL)
-			return;
-		if (dlci->dead)
+		अगर (dlci == शून्य)
+			वापस;
+		अगर (dlci->dead)
 			gsm_response(gsm, address, DM);
-		else {
+		अन्यथा अणु
 			gsm_response(gsm, address, UA);
-			gsm_dlci_open(dlci);
-		}
-		break;
-	case DISC|PF:
-		if (cr == 0)
-			goto invalid;
-		if (dlci == NULL || dlci->state == DLCI_CLOSED) {
+			gsm_dlci_खोलो(dlci);
+		पूर्ण
+		अवरोध;
+	हाल DISC|PF:
+		अगर (cr == 0)
+			जाओ invalid;
+		अगर (dlci == शून्य || dlci->state == DLCI_CLOSED) अणु
 			gsm_response(gsm, address, DM);
-			return;
-		}
-		/* Real close complete */
+			वापस;
+		पूर्ण
+		/* Real बंद complete */
 		gsm_response(gsm, address, UA);
-		gsm_dlci_close(dlci);
-		break;
-	case UA:
-	case UA|PF:
-		if (cr == 0 || dlci == NULL)
-			break;
-		switch (dlci->state) {
-		case DLCI_CLOSING:
-			gsm_dlci_close(dlci);
-			break;
-		case DLCI_OPENING:
-			gsm_dlci_open(dlci);
-			break;
-		default:
+		gsm_dlci_बंद(dlci);
+		अवरोध;
+	हाल UA:
+	हाल UA|PF:
+		अगर (cr == 0 || dlci == शून्य)
+			अवरोध;
+		चयन (dlci->state) अणु
+		हाल DLCI_CLOSING:
+			gsm_dlci_बंद(dlci);
+			अवरोध;
+		हाल DLCI_OPENING:
+			gsm_dlci_खोलो(dlci);
+			अवरोध;
+		शेष:
 			pr_debug("%s: unhandled state: %d\n", __func__,
 					dlci->state);
-			break;
-		}
-		break;
-	case DM:	/* DM can be valid unsolicited */
-	case DM|PF:
-		if (cr)
-			goto invalid;
-		if (dlci == NULL)
-			return;
-		gsm_dlci_close(dlci);
-		break;
-	case UI:
-	case UI|PF:
-	case UIH:
-	case UIH|PF:
-#if 0
-		if (cr)
-			goto invalid;
-#endif
-		if (dlci == NULL || dlci->state != DLCI_OPEN) {
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DM:	/* DM can be valid unsolicited */
+	हाल DM|PF:
+		अगर (cr)
+			जाओ invalid;
+		अगर (dlci == शून्य)
+			वापस;
+		gsm_dlci_बंद(dlci);
+		अवरोध;
+	हाल UI:
+	हाल UI|PF:
+	हाल UIH:
+	हाल UIH|PF:
+#अगर 0
+		अगर (cr)
+			जाओ invalid;
+#पूर्ण_अगर
+		अगर (dlci == शून्य || dlci->state != DLCI_OPEN) अणु
 			gsm_command(gsm, address, DM|PF);
-			return;
-		}
+			वापस;
+		पूर्ण
 		dlci->data(dlci, gsm->buf, gsm->len);
-		break;
-	default:
-		goto invalid;
-	}
-	return;
+		अवरोध;
+	शेष:
+		जाओ invalid;
+	पूर्ण
+	वापस;
 invalid:
-	gsm->malformed++;
-	return;
-}
+	gsm->malक्रमmed++;
+	वापस;
+पूर्ण
 
 
 /**
- *	gsm0_receive	-	perform processing for non-transparency
- *	@gsm: gsm data for this ldisc instance
- *	@c: character
+ *	gsm0_receive	-	perक्रमm processing क्रम non-transparency
+ *	@gsm: gsm data क्रम this ldisc instance
+ *	@c: अक्षरacter
  *
  *	Receive bytes in gsm mode 0
  */
 
-static void gsm0_receive(struct gsm_mux *gsm, unsigned char c)
-{
-	unsigned int len;
+अटल व्योम gsm0_receive(काष्ठा gsm_mux *gsm, अचिन्हित अक्षर c)
+अणु
+	अचिन्हित पूर्णांक len;
 
-	switch (gsm->state) {
-	case GSM_SEARCH:	/* SOF marker */
-		if (c == GSM0_SOF) {
+	चयन (gsm->state) अणु
+	हाल GSM_SEARCH:	/* SOF marker */
+		अगर (c == GSM0_SOF) अणु
 			gsm->state = GSM_ADDRESS;
 			gsm->address = 0;
 			gsm->len = 0;
 			gsm->fcs = INIT_FCS;
-		}
-		break;
-	case GSM_ADDRESS:	/* Address EA */
+		पूर्ण
+		अवरोध;
+	हाल GSM_ADDRESS:	/* Address EA */
 		gsm->fcs = gsm_fcs_add(gsm->fcs, c);
-		if (gsm_read_ea(&gsm->address, c))
+		अगर (gsm_पढ़ो_ea(&gsm->address, c))
 			gsm->state = GSM_CONTROL;
-		break;
-	case GSM_CONTROL:	/* Control Byte */
+		अवरोध;
+	हाल GSM_CONTROL:	/* Control Byte */
 		gsm->fcs = gsm_fcs_add(gsm->fcs, c);
 		gsm->control = c;
 		gsm->state = GSM_LEN0;
-		break;
-	case GSM_LEN0:		/* Length EA */
+		अवरोध;
+	हाल GSM_LEN0:		/* Length EA */
 		gsm->fcs = gsm_fcs_add(gsm->fcs, c);
-		if (gsm_read_ea(&gsm->len, c)) {
-			if (gsm->len > gsm->mru) {
+		अगर (gsm_पढ़ो_ea(&gsm->len, c)) अणु
+			अगर (gsm->len > gsm->mru) अणु
 				gsm->bad_size++;
 				gsm->state = GSM_SEARCH;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			gsm->count = 0;
-			if (!gsm->len)
+			अगर (!gsm->len)
 				gsm->state = GSM_FCS;
-			else
+			अन्यथा
 				gsm->state = GSM_DATA;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		gsm->state = GSM_LEN1;
-		break;
-	case GSM_LEN1:
+		अवरोध;
+	हाल GSM_LEN1:
 		gsm->fcs = gsm_fcs_add(gsm->fcs, c);
 		len = c;
 		gsm->len |= len << 7;
-		if (gsm->len > gsm->mru) {
+		अगर (gsm->len > gsm->mru) अणु
 			gsm->bad_size++;
 			gsm->state = GSM_SEARCH;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		gsm->count = 0;
-		if (!gsm->len)
+		अगर (!gsm->len)
 			gsm->state = GSM_FCS;
-		else
+		अन्यथा
 			gsm->state = GSM_DATA;
-		break;
-	case GSM_DATA:		/* Data */
+		अवरोध;
+	हाल GSM_DATA:		/* Data */
 		gsm->buf[gsm->count++] = c;
-		if (gsm->count == gsm->len)
+		अगर (gsm->count == gsm->len)
 			gsm->state = GSM_FCS;
-		break;
-	case GSM_FCS:		/* FCS follows the packet */
+		अवरोध;
+	हाल GSM_FCS:		/* FCS follows the packet */
 		gsm->received_fcs = c;
 		gsm_queue(gsm);
 		gsm->state = GSM_SSOF;
-		break;
-	case GSM_SSOF:
-		if (c == GSM0_SOF) {
+		अवरोध;
+	हाल GSM_SSOF:
+		अगर (c == GSM0_SOF) अणु
 			gsm->state = GSM_SEARCH;
-			break;
-		}
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
 		pr_debug("%s: unhandled state: %d\n", __func__, gsm->state);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- *	gsm1_receive	-	perform processing for non-transparency
- *	@gsm: gsm data for this ldisc instance
- *	@c: character
+ *	gsm1_receive	-	perक्रमm processing क्रम non-transparency
+ *	@gsm: gsm data क्रम this ldisc instance
+ *	@c: अक्षरacter
  *
  *	Receive bytes in mode 1 (Advanced option)
  */
 
-static void gsm1_receive(struct gsm_mux *gsm, unsigned char c)
-{
-	if (c == GSM1_SOF) {
-		/* EOF is only valid in frame if we have got to the data state
+अटल व्योम gsm1_receive(काष्ठा gsm_mux *gsm, अचिन्हित अक्षर c)
+अणु
+	अगर (c == GSM1_SOF) अणु
+		/* खातापूर्ण is only valid in frame अगर we have got to the data state
 		   and received at least one byte (the FCS) */
-		if (gsm->state == GSM_DATA && gsm->count) {
+		अगर (gsm->state == GSM_DATA && gsm->count) अणु
 			/* Extract the FCS */
 			gsm->count--;
 			gsm->fcs = gsm_fcs_add(gsm->fcs, gsm->buf[gsm->count]);
 			gsm->len = gsm->count;
 			gsm_queue(gsm);
 			gsm->state  = GSM_START;
-			return;
-		}
+			वापस;
+		पूर्ण
 		/* Any partial frame was a runt so go back to start */
-		if (gsm->state != GSM_START) {
-			gsm->malformed++;
+		अगर (gsm->state != GSM_START) अणु
+			gsm->malक्रमmed++;
 			gsm->state = GSM_START;
-		}
-		/* A SOF in GSM_START means we are still reading idling or
+		पूर्ण
+		/* A SOF in GSM_START means we are still पढ़ोing idling or
 		   framing bytes */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (c == GSM1_ESCAPE) {
+	अगर (c == GSM1_ESCAPE) अणु
 		gsm->escape = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Only an unescaped SOF gets us out of GSM search */
-	if (gsm->state == GSM_SEARCH)
-		return;
+	/* Only an unescaped SOF माला_लो us out of GSM search */
+	अगर (gsm->state == GSM_SEARCH)
+		वापस;
 
-	if (gsm->escape) {
+	अगर (gsm->escape) अणु
 		c ^= GSM1_ESCAPE_BITS;
 		gsm->escape = false;
-	}
-	switch (gsm->state) {
-	case GSM_START:		/* First byte after SOF */
+	पूर्ण
+	चयन (gsm->state) अणु
+	हाल GSM_START:		/* First byte after SOF */
 		gsm->address = 0;
 		gsm->state = GSM_ADDRESS;
 		gsm->fcs = INIT_FCS;
 		fallthrough;
-	case GSM_ADDRESS:	/* Address continuation */
+	हाल GSM_ADDRESS:	/* Address continuation */
 		gsm->fcs = gsm_fcs_add(gsm->fcs, c);
-		if (gsm_read_ea(&gsm->address, c))
+		अगर (gsm_पढ़ो_ea(&gsm->address, c))
 			gsm->state = GSM_CONTROL;
-		break;
-	case GSM_CONTROL:	/* Control Byte */
+		अवरोध;
+	हाल GSM_CONTROL:	/* Control Byte */
 		gsm->fcs = gsm_fcs_add(gsm->fcs, c);
 		gsm->control = c;
 		gsm->count = 0;
 		gsm->state = GSM_DATA;
-		break;
-	case GSM_DATA:		/* Data */
-		if (gsm->count > gsm->mru) {	/* Allow one for the FCS */
+		अवरोध;
+	हाल GSM_DATA:		/* Data */
+		अगर (gsm->count > gsm->mru) अणु	/* Allow one क्रम the FCS */
 			gsm->state = GSM_OVERRUN;
 			gsm->bad_size++;
-		} else
+		पूर्ण अन्यथा
 			gsm->buf[gsm->count++] = c;
-		break;
-	case GSM_OVERRUN:	/* Over-long - eg a dropped SOF */
-		break;
-	default:
+		अवरोध;
+	हाल GSM_OVERRUN:	/* Over-दीर्घ - eg a dropped SOF */
+		अवरोध;
+	शेष:
 		pr_debug("%s: unhandled state: %d\n", __func__, gsm->state);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  *	gsm_error		-	handle tty error
@@ -2020,202 +2021,202 @@ static void gsm1_receive(struct gsm_mux *gsm, unsigned char c)
  *	@data: byte received (may be invalid)
  *	@flag: error received
  *
- *	Handle an error in the receipt of data for a frame. Currently we just
- *	go back to hunting for a SOF.
+ *	Handle an error in the receipt of data क्रम a frame. Currently we just
+ *	go back to hunting क्रम a SOF.
  *
  *	FIXME: better diagnostics ?
  */
 
-static void gsm_error(struct gsm_mux *gsm,
-				unsigned char data, unsigned char flag)
-{
+अटल व्योम gsm_error(काष्ठा gsm_mux *gsm,
+				अचिन्हित अक्षर data, अचिन्हित अक्षर flag)
+अणु
 	gsm->state = GSM_SEARCH;
 	gsm->io_error++;
-}
+पूर्ण
 
-static int gsm_disconnect(struct gsm_mux *gsm)
-{
-	struct gsm_dlci *dlci = gsm->dlci[0];
-	struct gsm_control *gc;
+अटल पूर्णांक gsm_disconnect(काष्ठा gsm_mux *gsm)
+अणु
+	काष्ठा gsm_dlci *dlci = gsm->dlci[0];
+	काष्ठा gsm_control *gc;
 
-	if (!dlci)
-		return 0;
+	अगर (!dlci)
+		वापस 0;
 
-	/* In theory disconnecting DLCI 0 is sufficient but for some
-	   modems this is apparently not the case. */
-	gc = gsm_control_send(gsm, CMD_CLD, NULL, 0);
-	if (gc)
-		gsm_control_wait(gsm, gc);
+	/* In theory disconnecting DLCI 0 is sufficient but क्रम some
+	   modems this is apparently not the हाल. */
+	gc = gsm_control_send(gsm, CMD_CLD, शून्य, 0);
+	अगर (gc)
+		gsm_control_रुको(gsm, gc);
 
-	del_timer_sync(&gsm->t2_timer);
+	del_समयr_sync(&gsm->t2_समयr);
 	/* Now we are sure T2 has stopped */
 
-	gsm_dlci_begin_close(dlci);
-	wait_event_interruptible(gsm->event,
+	gsm_dlci_begin_बंद(dlci);
+	रुको_event_पूर्णांकerruptible(gsm->event,
 				dlci->state == DLCI_CLOSED);
 
-	if (signal_pending(current))
-		return -EINTR;
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	gsm_cleanup_mux		-	generic GSM protocol cleanup
  *	@gsm: our mux
  *
- *	Clean up the bits of the mux which are the same for all framing
- *	protocols. Remove the mux from the mux table, stop all the timers
- *	and then shut down each device hanging up the channels as we go.
+ *	Clean up the bits of the mux which are the same क्रम all framing
+ *	protocols. Remove the mux from the mux table, stop all the समयrs
+ *	and then shut करोwn each device hanging up the channels as we go.
  */
 
-static void gsm_cleanup_mux(struct gsm_mux *gsm)
-{
-	int i;
-	struct gsm_dlci *dlci = gsm->dlci[0];
-	struct gsm_msg *txq, *ntxq;
+अटल व्योम gsm_cleanup_mux(काष्ठा gsm_mux *gsm)
+अणु
+	पूर्णांक i;
+	काष्ठा gsm_dlci *dlci = gsm->dlci[0];
+	काष्ठा gsm_msg *txq, *ntxq;
 
 	gsm->dead = true;
 
 	spin_lock(&gsm_mux_lock);
-	for (i = 0; i < MAX_MUX; i++) {
-		if (gsm_mux[i] == gsm) {
-			gsm_mux[i] = NULL;
-			break;
-		}
-	}
+	क्रम (i = 0; i < MAX_MUX; i++) अणु
+		अगर (gsm_mux[i] == gsm) अणु
+			gsm_mux[i] = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&gsm_mux_lock);
-	/* open failed before registering => nothing to do */
-	if (i == MAX_MUX)
-		return;
+	/* खोलो failed beक्रमe रेजिस्टरing => nothing to करो */
+	अगर (i == MAX_MUX)
+		वापस;
 
-	del_timer_sync(&gsm->t2_timer);
+	del_समयr_sync(&gsm->t2_समयr);
 	/* Now we are sure T2 has stopped */
-	if (dlci)
+	अगर (dlci)
 		dlci->dead = true;
 
 	/* Free up any link layer users */
 	mutex_lock(&gsm->mutex);
-	for (i = 0; i < NUM_DLCI; i++)
-		if (gsm->dlci[i])
+	क्रम (i = 0; i < NUM_DLCI; i++)
+		अगर (gsm->dlci[i])
 			gsm_dlci_release(gsm->dlci[i]);
 	mutex_unlock(&gsm->mutex);
 	/* Now wipe the queues */
-	list_for_each_entry_safe(txq, ntxq, &gsm->tx_list, list)
-		kfree(txq);
+	list_क्रम_each_entry_safe(txq, ntxq, &gsm->tx_list, list)
+		kमुक्त(txq);
 	INIT_LIST_HEAD(&gsm->tx_list);
-}
+पूर्ण
 
 /**
  *	gsm_activate_mux	-	generic GSM setup
  *	@gsm: our mux
  *
- *	Set up the bits of the mux which are the same for all framing
- *	protocols. Add the mux to the mux table so it can be opened and
+ *	Set up the bits of the mux which are the same क्रम all framing
+ *	protocols. Add the mux to the mux table so it can be खोलोed and
  *	finally kick off connecting to DLCI 0 on the modem.
  */
 
-static int gsm_activate_mux(struct gsm_mux *gsm)
-{
-	struct gsm_dlci *dlci;
-	int i = 0;
+अटल पूर्णांक gsm_activate_mux(काष्ठा gsm_mux *gsm)
+अणु
+	काष्ठा gsm_dlci *dlci;
+	पूर्णांक i = 0;
 
-	timer_setup(&gsm->t2_timer, gsm_control_retransmit, 0);
-	init_waitqueue_head(&gsm->event);
+	समयr_setup(&gsm->t2_समयr, gsm_control_retransmit, 0);
+	init_रुकोqueue_head(&gsm->event);
 	spin_lock_init(&gsm->control_lock);
 	spin_lock_init(&gsm->tx_lock);
 
-	if (gsm->encoding == 0)
+	अगर (gsm->encoding == 0)
 		gsm->receive = gsm0_receive;
-	else
+	अन्यथा
 		gsm->receive = gsm1_receive;
 
 	spin_lock(&gsm_mux_lock);
-	for (i = 0; i < MAX_MUX; i++) {
-		if (gsm_mux[i] == NULL) {
+	क्रम (i = 0; i < MAX_MUX; i++) अणु
+		अगर (gsm_mux[i] == शून्य) अणु
 			gsm->num = i;
 			gsm_mux[i] = gsm;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&gsm_mux_lock);
-	if (i == MAX_MUX)
-		return -EBUSY;
+	अगर (i == MAX_MUX)
+		वापस -EBUSY;
 
 	dlci = gsm_dlci_alloc(gsm, 0);
-	if (dlci == NULL)
-		return -ENOMEM;
-	gsm->dead = false;		/* Tty opens are now permissible */
-	return 0;
-}
+	अगर (dlci == शून्य)
+		वापस -ENOMEM;
+	gsm->dead = false;		/* Tty खोलोs are now permissible */
+	वापस 0;
+पूर्ण
 
 /**
- *	gsm_free_mux		-	free up a mux
- *	@gsm: mux to free
+ *	gsm_मुक्त_mux		-	मुक्त up a mux
+ *	@gsm: mux to मुक्त
  *
- *	Dispose of allocated resources for a dead mux
+ *	Dispose of allocated resources क्रम a dead mux
  */
-static void gsm_free_mux(struct gsm_mux *gsm)
-{
-	kfree(gsm->txframe);
-	kfree(gsm->buf);
-	kfree(gsm);
-}
+अटल व्योम gsm_मुक्त_mux(काष्ठा gsm_mux *gsm)
+अणु
+	kमुक्त(gsm->txframe);
+	kमुक्त(gsm->buf);
+	kमुक्त(gsm);
+पूर्ण
 
 /**
- *	gsm_free_muxr		-	free up a mux
- *	@ref: kreference to the mux to free
+ *	gsm_मुक्त_muxr		-	मुक्त up a mux
+ *	@ref: kreference to the mux to मुक्त
  *
- *	Dispose of allocated resources for a dead mux
+ *	Dispose of allocated resources क्रम a dead mux
  */
-static void gsm_free_muxr(struct kref *ref)
-{
-	struct gsm_mux *gsm = container_of(ref, struct gsm_mux, ref);
-	gsm_free_mux(gsm);
-}
+अटल व्योम gsm_मुक्त_muxr(काष्ठा kref *ref)
+अणु
+	काष्ठा gsm_mux *gsm = container_of(ref, काष्ठा gsm_mux, ref);
+	gsm_मुक्त_mux(gsm);
+पूर्ण
 
-static inline void mux_get(struct gsm_mux *gsm)
-{
+अटल अंतरभूत व्योम mux_get(काष्ठा gsm_mux *gsm)
+अणु
 	kref_get(&gsm->ref);
-}
+पूर्ण
 
-static inline void mux_put(struct gsm_mux *gsm)
-{
-	kref_put(&gsm->ref, gsm_free_muxr);
-}
+अटल अंतरभूत व्योम mux_put(काष्ठा gsm_mux *gsm)
+अणु
+	kref_put(&gsm->ref, gsm_मुक्त_muxr);
+पूर्ण
 
-static inline unsigned int mux_num_to_base(struct gsm_mux *gsm)
-{
-	return gsm->num * NUM_DLCI;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक mux_num_to_base(काष्ठा gsm_mux *gsm)
+अणु
+	वापस gsm->num * NUM_DLCI;
+पूर्ण
 
-static inline unsigned int mux_line_to_num(unsigned int line)
-{
-	return line / NUM_DLCI;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक mux_line_to_num(अचिन्हित पूर्णांक line)
+अणु
+	वापस line / NUM_DLCI;
+पूर्ण
 
 /**
  *	gsm_alloc_mux		-	allocate a mux
  *
- *	Creates a new mux ready for activation.
+ *	Creates a new mux पढ़ोy क्रम activation.
  */
 
-static struct gsm_mux *gsm_alloc_mux(void)
-{
-	struct gsm_mux *gsm = kzalloc(sizeof(struct gsm_mux), GFP_KERNEL);
-	if (gsm == NULL)
-		return NULL;
-	gsm->buf = kmalloc(MAX_MRU + 1, GFP_KERNEL);
-	if (gsm->buf == NULL) {
-		kfree(gsm);
-		return NULL;
-	}
-	gsm->txframe = kmalloc(2 * MAX_MRU + 2, GFP_KERNEL);
-	if (gsm->txframe == NULL) {
-		kfree(gsm->buf);
-		kfree(gsm);
-		return NULL;
-	}
+अटल काष्ठा gsm_mux *gsm_alloc_mux(व्योम)
+अणु
+	काष्ठा gsm_mux *gsm = kzalloc(माप(काष्ठा gsm_mux), GFP_KERNEL);
+	अगर (gsm == शून्य)
+		वापस शून्य;
+	gsm->buf = kदो_स्मृति(MAX_MRU + 1, GFP_KERNEL);
+	अगर (gsm->buf == शून्य) अणु
+		kमुक्त(gsm);
+		वापस शून्य;
+	पूर्ण
+	gsm->txframe = kदो_स्मृति(2 * MAX_MRU + 2, GFP_KERNEL);
+	अगर (gsm->txframe == शून्य) अणु
+		kमुक्त(gsm->buf);
+		kमुक्त(gsm);
+		वापस शून्य;
+	पूर्ण
 	spin_lock_init(&gsm->lock);
 	mutex_init(&gsm->mutex);
 	kref_init(&gsm->ref);
@@ -2229,15 +2230,15 @@ static struct gsm_mux *gsm_alloc_mux(void)
 	gsm->encoding = 1;
 	gsm->mru = 64;	/* Default to encoding 1 so these should be 64 */
 	gsm->mtu = 64;
-	gsm->dead = true;	/* Avoid early tty opens */
+	gsm->dead = true;	/* Aव्योम early tty खोलोs */
 
-	return gsm;
-}
+	वापस gsm;
+पूर्ण
 
-static void gsm_copy_config_values(struct gsm_mux *gsm,
-				   struct gsm_config *c)
-{
-	memset(c, 0, sizeof(*c));
+अटल व्योम gsm_copy_config_values(काष्ठा gsm_mux *gsm,
+				   काष्ठा gsm_config *c)
+अणु
+	स_रखो(c, 0, माप(*c));
 	c->adaption = gsm->adaption;
 	c->encapsulation = gsm->encoding;
 	c->initiator = gsm->initiator;
@@ -2245,70 +2246,70 @@ static void gsm_copy_config_values(struct gsm_mux *gsm,
 	c->t2 = gsm->t2;
 	c->t3 = 0;	/* Not supported */
 	c->n2 = gsm->n2;
-	if (gsm->ftype == UIH)
+	अगर (gsm->ftype == UIH)
 		c->i = 1;
-	else
+	अन्यथा
 		c->i = 2;
 	pr_debug("Ftype %d i %d\n", gsm->ftype, c->i);
 	c->mru = gsm->mru;
 	c->mtu = gsm->mtu;
 	c->k = 0;
-}
+पूर्ण
 
-static int gsm_config(struct gsm_mux *gsm, struct gsm_config *c)
-{
-	int need_close = 0;
-	int need_restart = 0;
+अटल पूर्णांक gsm_config(काष्ठा gsm_mux *gsm, काष्ठा gsm_config *c)
+अणु
+	पूर्णांक need_बंद = 0;
+	पूर्णांक need_restart = 0;
 
-	/* Stuff we don't support yet - UI or I frame transport, windowing */
-	if ((c->adaption != 1 && c->adaption != 2) || c->k)
-		return -EOPNOTSUPP;
+	/* Stuff we करोn't support yet - UI or I frame transport, winकरोwing */
+	अगर ((c->adaption != 1 && c->adaption != 2) || c->k)
+		वापस -EOPNOTSUPP;
 	/* Check the MRU/MTU range looks sane */
-	if (c->mru > MAX_MRU || c->mtu > MAX_MTU || c->mru < 8 || c->mtu < 8)
-		return -EINVAL;
-	if (c->n2 < 3)
-		return -EINVAL;
-	if (c->encapsulation > 1)	/* Basic, advanced, no I */
-		return -EINVAL;
-	if (c->initiator > 1)
-		return -EINVAL;
-	if (c->i == 0 || c->i > 2)	/* UIH and UI only */
-		return -EINVAL;
+	अगर (c->mru > MAX_MRU || c->mtu > MAX_MTU || c->mru < 8 || c->mtu < 8)
+		वापस -EINVAL;
+	अगर (c->n2 < 3)
+		वापस -EINVAL;
+	अगर (c->encapsulation > 1)	/* Basic, advanced, no I */
+		वापस -EINVAL;
+	अगर (c->initiator > 1)
+		वापस -EINVAL;
+	अगर (c->i == 0 || c->i > 2)	/* UIH and UI only */
+		वापस -EINVAL;
 	/*
-	 * See what is needed for reconfiguration
+	 * See what is needed क्रम reconfiguration
 	 */
 
 	/* Timing fields */
-	if (c->t1 != 0 && c->t1 != gsm->t1)
+	अगर (c->t1 != 0 && c->t1 != gsm->t1)
 		need_restart = 1;
-	if (c->t2 != 0 && c->t2 != gsm->t2)
+	अगर (c->t2 != 0 && c->t2 != gsm->t2)
 		need_restart = 1;
-	if (c->encapsulation != gsm->encoding)
+	अगर (c->encapsulation != gsm->encoding)
 		need_restart = 1;
-	if (c->adaption != gsm->adaption)
+	अगर (c->adaption != gsm->adaption)
 		need_restart = 1;
 	/* Requires care */
-	if (c->initiator != gsm->initiator)
-		need_close = 1;
-	if (c->mru != gsm->mru)
+	अगर (c->initiator != gsm->initiator)
+		need_बंद = 1;
+	अगर (c->mru != gsm->mru)
 		need_restart = 1;
-	if (c->mtu != gsm->mtu)
+	अगर (c->mtu != gsm->mtu)
 		need_restart = 1;
 
 	/*
-	 * Close down what is needed, restart and initiate the new
+	 * Close करोwn what is needed, restart and initiate the new
 	 * configuration
 	 */
 
-	if (need_close || need_restart) {
-		int ret;
+	अगर (need_बंद || need_restart) अणु
+		पूर्णांक ret;
 
 		ret = gsm_disconnect(gsm);
 
-		if (ret)
-			return ret;
-	}
-	if (need_restart)
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (need_restart)
 		gsm_cleanup_mux(gsm);
 
 	gsm->initiator = c->initiator;
@@ -2318,29 +2319,29 @@ static int gsm_config(struct gsm_mux *gsm, struct gsm_config *c)
 	gsm->adaption = c->adaption;
 	gsm->n2 = c->n2;
 
-	if (c->i == 1)
+	अगर (c->i == 1)
 		gsm->ftype = UIH;
-	else if (c->i == 2)
+	अन्यथा अगर (c->i == 2)
 		gsm->ftype = UI;
 
-	if (c->t1)
+	अगर (c->t1)
 		gsm->t1 = c->t1;
-	if (c->t2)
+	अगर (c->t2)
 		gsm->t2 = c->t2;
 
 	/*
 	 * FIXME: We need to separate activation/deactivation from adding
 	 * and removing from the mux array
 	 */
-	if (need_restart)
+	अगर (need_restart)
 		gsm_activate_mux(gsm);
-	if (gsm->initiator && need_close)
-		gsm_dlci_begin_open(gsm->dlci[0]);
-	return 0;
-}
+	अगर (gsm->initiator && need_बंद)
+		gsm_dlci_begin_खोलो(gsm->dlci[0]);
+	वापस 0;
+पूर्ण
 
 /**
- *	gsmld_output		-	write to link
+ *	gsmld_output		-	ग_लिखो to link
  *	@gsm: our mux
  *	@data: bytes to output
  *	@len: size
@@ -2349,169 +2350,169 @@ static int gsm_config(struct gsm_mux *gsm, struct gsm_config *c)
  *	will eventually be serialized from above but at the moment isn't.
  */
 
-static int gsmld_output(struct gsm_mux *gsm, u8 *data, int len)
-{
-	if (tty_write_room(gsm->tty) < len) {
+अटल पूर्णांक gsmld_output(काष्ठा gsm_mux *gsm, u8 *data, पूर्णांक len)
+अणु
+	अगर (tty_ग_लिखो_room(gsm->tty) < len) अणु
 		set_bit(TTY_DO_WRITE_WAKEUP, &gsm->tty->flags);
-		return -ENOSPC;
-	}
-	if (debug & 4)
-		print_hex_dump_bytes("gsmld_output: ", DUMP_PREFIX_OFFSET,
+		वापस -ENOSPC;
+	पूर्ण
+	अगर (debug & 4)
+		prपूर्णांक_hex_dump_bytes("gsmld_output: ", DUMP_PREFIX_OFFSET,
 				     data, len);
-	gsm->tty->ops->write(gsm->tty, data, len);
-	return len;
-}
+	gsm->tty->ops->ग_लिखो(gsm->tty, data, len);
+	वापस len;
+पूर्ण
 
 /**
  *	gsmld_attach_gsm	-	mode set up
- *	@tty: our tty structure
+ *	@tty: our tty काष्ठाure
  *	@gsm: our mux
  *
- *	Set up the MUX for basic mode and commence connecting to the
+ *	Set up the MUX क्रम basic mode and commence connecting to the
  *	modem. Currently called from the line discipline set up but
  *	will need moving to an ioctl path.
  */
 
-static int gsmld_attach_gsm(struct tty_struct *tty, struct gsm_mux *gsm)
-{
-	unsigned int base;
-	int ret, i;
+अटल पूर्णांक gsmld_attach_gsm(काष्ठा tty_काष्ठा *tty, काष्ठा gsm_mux *gsm)
+अणु
+	अचिन्हित पूर्णांक base;
+	पूर्णांक ret, i;
 
 	gsm->tty = tty_kref_get(tty);
 	ret =  gsm_activate_mux(gsm);
-	if (ret != 0)
+	अगर (ret != 0)
 		tty_kref_put(gsm->tty);
-	else {
-		/* Don't register device 0 - this is the control channel and not
-		   a usable tty interface */
-		base = mux_num_to_base(gsm); /* Base for this MUX */
-		for (i = 1; i < NUM_DLCI; i++) {
-			struct device *dev;
+	अन्यथा अणु
+		/* Don't रेजिस्टर device 0 - this is the control channel and not
+		   a usable tty पूर्णांकerface */
+		base = mux_num_to_base(gsm); /* Base क्रम this MUX */
+		क्रम (i = 1; i < NUM_DLCI; i++) अणु
+			काष्ठा device *dev;
 
-			dev = tty_register_device(gsm_tty_driver,
-							base + i, NULL);
-			if (IS_ERR(dev)) {
-				for (i--; i >= 1; i--)
-					tty_unregister_device(gsm_tty_driver,
+			dev = tty_रेजिस्टर_device(gsm_tty_driver,
+							base + i, शून्य);
+			अगर (IS_ERR(dev)) अणु
+				क्रम (i--; i >= 1; i--)
+					tty_unरेजिस्टर_device(gsm_tty_driver,
 								base + i);
-				return PTR_ERR(dev);
-			}
-		}
-	}
-	return ret;
-}
+				वापस PTR_ERR(dev);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
 /**
- *	gsmld_detach_gsm	-	stop doing 0710 mux
+ *	gsmld_detach_gsm	-	stop करोing 0710 mux
  *	@tty: tty attached to the mux
  *	@gsm: mux
  *
- *	Shutdown and then clean up the resources used by the line discipline
+ *	Shutकरोwn and then clean up the resources used by the line discipline
  */
 
-static void gsmld_detach_gsm(struct tty_struct *tty, struct gsm_mux *gsm)
-{
-	unsigned int base = mux_num_to_base(gsm); /* Base for this MUX */
-	int i;
+अटल व्योम gsmld_detach_gsm(काष्ठा tty_काष्ठा *tty, काष्ठा gsm_mux *gsm)
+अणु
+	अचिन्हित पूर्णांक base = mux_num_to_base(gsm); /* Base क्रम this MUX */
+	पूर्णांक i;
 
 	WARN_ON(tty != gsm->tty);
-	for (i = 1; i < NUM_DLCI; i++)
-		tty_unregister_device(gsm_tty_driver, base + i);
+	क्रम (i = 1; i < NUM_DLCI; i++)
+		tty_unरेजिस्टर_device(gsm_tty_driver, base + i);
 	gsm_cleanup_mux(gsm);
 	tty_kref_put(gsm->tty);
-	gsm->tty = NULL;
-}
+	gsm->tty = शून्य;
+पूर्ण
 
-static void gsmld_receive_buf(struct tty_struct *tty, const unsigned char *cp,
-			      char *fp, int count)
-{
-	struct gsm_mux *gsm = tty->disc_data;
-	char flags = TTY_NORMAL;
+अटल व्योम gsmld_receive_buf(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
+			      अक्षर *fp, पूर्णांक count)
+अणु
+	काष्ठा gsm_mux *gsm = tty->disc_data;
+	अक्षर flags = TTY_NORMAL;
 
-	if (debug & 4)
-		print_hex_dump_bytes("gsmld_receive: ", DUMP_PREFIX_OFFSET,
+	अगर (debug & 4)
+		prपूर्णांक_hex_dump_bytes("gsmld_receive: ", DUMP_PREFIX_OFFSET,
 				     cp, count);
 
-	for (; count; count--, cp++) {
-		if (fp)
+	क्रम (; count; count--, cp++) अणु
+		अगर (fp)
 			flags = *fp++;
-		switch (flags) {
-		case TTY_NORMAL:
+		चयन (flags) अणु
+		हाल TTY_NORMAL:
 			gsm->receive(gsm, *cp);
-			break;
-		case TTY_OVERRUN:
-		case TTY_BREAK:
-		case TTY_PARITY:
-		case TTY_FRAME:
+			अवरोध;
+		हाल TTY_OVERRUN:
+		हाल TTY_BREAK:
+		हाल TTY_PARITY:
+		हाल TTY_FRAME:
 			gsm_error(gsm, *cp, flags);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ONCE(1, "%s: unknown flag %d\n",
 			       tty_name(tty), flags);
-			break;
-		}
-	}
-	/* FASYNC if needed ? */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	/* FASYNC अगर needed ? */
 	/* If clogged call tty_throttle(tty); */
-}
+पूर्ण
 
 /**
  *	gsmld_flush_buffer	-	clean input queue
  *	@tty:	terminal device
  *
  *	Flush the input buffer. Called when the line discipline is
- *	being closed, when the tty layer wants the buffer flushed (eg
+ *	being बंदd, when the tty layer wants the buffer flushed (eg
  *	at hangup).
  */
 
-static void gsmld_flush_buffer(struct tty_struct *tty)
-{
-}
+अटल व्योम gsmld_flush_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+पूर्ण
 
 /**
- *	gsmld_close		-	close the ldisc for this tty
+ *	gsmld_बंद		-	बंद the ldisc क्रम this tty
  *	@tty: device
  *
  *	Called from the terminal layer when this line discipline is
- *	being shut down, either because of a close or becsuse of a
- *	discipline change. The function will not be called while other
+ *	being shut करोwn, either because of a बंद or becsuse of a
+ *	discipline change. The function will not be called जबतक other
  *	ldisc methods are in progress.
  */
 
-static void gsmld_close(struct tty_struct *tty)
-{
-	struct gsm_mux *gsm = tty->disc_data;
+अटल व्योम gsmld_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_mux *gsm = tty->disc_data;
 
 	gsmld_detach_gsm(tty, gsm);
 
 	gsmld_flush_buffer(tty);
 	/* Do other clean up here */
 	mux_put(gsm);
-}
+पूर्ण
 
 /**
- *	gsmld_open		-	open an ldisc
- *	@tty: terminal to open
+ *	gsmld_खोलो		-	खोलो an ldisc
+ *	@tty: terminal to खोलो
  *
  *	Called when this line discipline is being attached to the
  *	terminal device. Can sleep. Called serialized so that no
- *	other events will occur in parallel. No further open will occur
- *	until a close.
+ *	other events will occur in parallel. No further खोलो will occur
+ *	until a बंद.
  */
 
-static int gsmld_open(struct tty_struct *tty)
-{
-	struct gsm_mux *gsm;
-	int ret;
+अटल पूर्णांक gsmld_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_mux *gsm;
+	पूर्णांक ret;
 
-	if (tty->ops->write == NULL)
-		return -EINVAL;
+	अगर (tty->ops->ग_लिखो == शून्य)
+		वापस -EINVAL;
 
 	/* Attach our ldisc data */
 	gsm = gsm_alloc_mux();
-	if (gsm == NULL)
-		return -ENOMEM;
+	अगर (gsm == शून्य)
+		वापस -ENOMEM;
 
 	tty->disc_data = gsm;
 	tty->receive_room = 65536;
@@ -2520,197 +2521,197 @@ static int gsmld_open(struct tty_struct *tty)
 	gsm->encoding = 1;
 
 	ret = gsmld_attach_gsm(tty, gsm);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		gsm_cleanup_mux(gsm);
 		mux_put(gsm);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- *	gsmld_write_wakeup	-	asynchronous I/O notifier
+ *	gsmld_ग_लिखो_wakeup	-	asynchronous I/O notअगरier
  *	@tty: tty device
  *
- *	Required for the ptys, serial driver etc. since processes
+ *	Required क्रम the ptys, serial driver etc. since processes
  *	that attach themselves to the master and rely on ASYNC
  *	IO must be woken up
  */
 
-static void gsmld_write_wakeup(struct tty_struct *tty)
-{
-	struct gsm_mux *gsm = tty->disc_data;
-	unsigned long flags;
+अटल व्योम gsmld_ग_लिखो_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_mux *gsm = tty->disc_data;
+	अचिन्हित दीर्घ flags;
 
 	/* Queue poll */
 	clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 	spin_lock_irqsave(&gsm->tx_lock, flags);
-	gsm_data_kick(gsm, NULL);
-	if (gsm->tx_bytes < TX_THRESH_LO) {
+	gsm_data_kick(gsm, शून्य);
+	अगर (gsm->tx_bytes < TX_THRESH_LO) अणु
 		gsm_dlci_data_sweep(gsm);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&gsm->tx_lock, flags);
-}
+पूर्ण
 
 /**
- *	gsmld_read		-	read function for tty
+ *	gsmld_पढ़ो		-	पढ़ो function क्रम tty
  *	@tty: tty device
  *	@file: file object
- *	@buf: userspace buffer pointer
+ *	@buf: userspace buffer poपूर्णांकer
  *	@nr: size of I/O
  *
- *	Perform reads for the line discipline. We are guaranteed that the
- *	line discipline will not be closed under us but we may get multiple
- *	parallel readers and must handle this ourselves. We may also get
+ *	Perक्रमm पढ़ोs क्रम the line discipline. We are guaranteed that the
+ *	line discipline will not be बंदd under us but we may get multiple
+ *	parallel पढ़ोers and must handle this ourselves. We may also get
  *	a hangup. Always called in user context, may sleep.
  *
  *	This code must be sure never to sleep through a hangup.
  */
 
-static ssize_t gsmld_read(struct tty_struct *tty, struct file *file,
-			  unsigned char *buf, size_t nr,
-			  void **cookie, unsigned long offset)
-{
-	return -EOPNOTSUPP;
-}
+अटल sमाप_प्रकार gsmld_पढ़ो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			  अचिन्हित अक्षर *buf, माप_प्रकार nr,
+			  व्योम **cookie, अचिन्हित दीर्घ offset)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /**
- *	gsmld_write		-	write function for tty
+ *	gsmld_ग_लिखो		-	ग_लिखो function क्रम tty
  *	@tty: tty device
  *	@file: file object
- *	@buf: userspace buffer pointer
+ *	@buf: userspace buffer poपूर्णांकer
  *	@nr: size of I/O
  *
  *	Called when the owner of the device wants to send a frame
  *	itself (or some other control data). The data is transferred
  *	as-is and must be properly framed and checksummed as appropriate
  *	by userspace. Frames are either sent whole or not at all as this
- *	avoids pain user side.
+ *	aव्योमs pain user side.
  */
 
-static ssize_t gsmld_write(struct tty_struct *tty, struct file *file,
-			   const unsigned char *buf, size_t nr)
-{
-	int space = tty_write_room(tty);
-	if (space >= nr)
-		return tty->ops->write(tty, buf, nr);
+अटल sमाप_प्रकार gsmld_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			   स्थिर अचिन्हित अक्षर *buf, माप_प्रकार nr)
+अणु
+	पूर्णांक space = tty_ग_लिखो_room(tty);
+	अगर (space >= nr)
+		वापस tty->ops->ग_लिखो(tty, buf, nr);
 	set_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
-	return -ENOBUFS;
-}
+	वापस -ENOBUFS;
+पूर्ण
 
 /**
- *	gsmld_poll		-	poll method for N_GSM0710
+ *	gsmld_poll		-	poll method क्रम N_GSM0710
  *	@tty: terminal device
  *	@file: file accessing it
- *	@wait: poll table
+ *	@रुको: poll table
  *
- *	Called when the line discipline is asked to poll() for data or
- *	for special events. This code is not serialized with respect to
- *	other events save open/close.
+ *	Called when the line discipline is asked to poll() क्रम data or
+ *	क्रम special events. This code is not serialized with respect to
+ *	other events save खोलो/बंद.
  *
  *	This code must be sure never to sleep through a hangup.
  *	Called without the kernel lock held - fine
  */
 
-static __poll_t gsmld_poll(struct tty_struct *tty, struct file *file,
-							poll_table *wait)
-{
+अटल __poll_t gsmld_poll(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+							poll_table *रुको)
+अणु
 	__poll_t mask = 0;
-	struct gsm_mux *gsm = tty->disc_data;
+	काष्ठा gsm_mux *gsm = tty->disc_data;
 
-	poll_wait(file, &tty->read_wait, wait);
-	poll_wait(file, &tty->write_wait, wait);
-	if (tty_hung_up_p(file))
+	poll_रुको(file, &tty->पढ़ो_रुको, रुको);
+	poll_रुको(file, &tty->ग_लिखो_रुको, रुको);
+	अगर (tty_hung_up_p(file))
 		mask |= EPOLLHUP;
-	if (!tty_is_writelocked(tty) && tty_write_room(tty) > 0)
+	अगर (!tty_is_ग_लिखोlocked(tty) && tty_ग_लिखो_room(tty) > 0)
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	if (gsm->dead)
+	अगर (gsm->dead)
 		mask |= EPOLLHUP;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int gsmld_ioctl(struct tty_struct *tty, struct file *file,
-		       unsigned int cmd, unsigned long arg)
-{
-	struct gsm_config c;
-	struct gsm_mux *gsm = tty->disc_data;
-	unsigned int base;
+अटल पूर्णांक gsmld_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+		       अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा gsm_config c;
+	काष्ठा gsm_mux *gsm = tty->disc_data;
+	अचिन्हित पूर्णांक base;
 
-	switch (cmd) {
-	case GSMIOC_GETCONF:
+	चयन (cmd) अणु
+	हाल GSMIOC_GETCONF:
 		gsm_copy_config_values(gsm, &c);
-		if (copy_to_user((void __user *)arg, &c, sizeof(c)))
-			return -EFAULT;
-		return 0;
-	case GSMIOC_SETCONF:
-		if (copy_from_user(&c, (void __user *)arg, sizeof(c)))
-			return -EFAULT;
-		return gsm_config(gsm, &c);
-	case GSMIOC_GETFIRST:
+		अगर (copy_to_user((व्योम __user *)arg, &c, माप(c)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल GSMIOC_SETCONF:
+		अगर (copy_from_user(&c, (व्योम __user *)arg, माप(c)))
+			वापस -EFAULT;
+		वापस gsm_config(gsm, &c);
+	हाल GSMIOC_GETFIRST:
 		base = mux_num_to_base(gsm);
-		return put_user(base + 1, (__u32 __user *)arg);
-	default:
-		return n_tty_ioctl_helper(tty, file, cmd, arg);
-	}
-}
+		वापस put_user(base + 1, (__u32 __user *)arg);
+	शेष:
+		वापस n_tty_ioctl_helper(tty, file, cmd, arg);
+	पूर्ण
+पूर्ण
 
 /*
- *	Network interface
+ *	Network पूर्णांकerface
  *
  */
 
-static int gsm_mux_net_open(struct net_device *net)
-{
+अटल पूर्णांक gsm_mux_net_खोलो(काष्ठा net_device *net)
+अणु
 	pr_debug("%s called\n", __func__);
-	netif_start_queue(net);
-	return 0;
-}
+	netअगर_start_queue(net);
+	वापस 0;
+पूर्ण
 
-static int gsm_mux_net_close(struct net_device *net)
-{
-	netif_stop_queue(net);
-	return 0;
-}
+अटल पूर्णांक gsm_mux_net_बंद(काष्ठा net_device *net)
+अणु
+	netअगर_stop_queue(net);
+	वापस 0;
+पूर्ण
 
-static void dlci_net_free(struct gsm_dlci *dlci)
-{
-	if (!dlci->net) {
+अटल व्योम dlci_net_मुक्त(काष्ठा gsm_dlci *dlci)
+अणु
+	अगर (!dlci->net) अणु
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 	dlci->adaption = dlci->prev_adaption;
 	dlci->data = dlci->prev_data;
-	free_netdev(dlci->net);
-	dlci->net = NULL;
-}
-static void net_free(struct kref *ref)
-{
-	struct gsm_mux_net *mux_net;
-	struct gsm_dlci *dlci;
+	मुक्त_netdev(dlci->net);
+	dlci->net = शून्य;
+पूर्ण
+अटल व्योम net_मुक्त(काष्ठा kref *ref)
+अणु
+	काष्ठा gsm_mux_net *mux_net;
+	काष्ठा gsm_dlci *dlci;
 
-	mux_net = container_of(ref, struct gsm_mux_net, ref);
+	mux_net = container_of(ref, काष्ठा gsm_mux_net, ref);
 	dlci = mux_net->dlci;
 
-	if (dlci->net) {
-		unregister_netdev(dlci->net);
-		dlci_net_free(dlci);
-	}
-}
+	अगर (dlci->net) अणु
+		unरेजिस्टर_netdev(dlci->net);
+		dlci_net_मुक्त(dlci);
+	पूर्ण
+पूर्ण
 
-static inline void muxnet_get(struct gsm_mux_net *mux_net)
-{
+अटल अंतरभूत व्योम muxnet_get(काष्ठा gsm_mux_net *mux_net)
+अणु
 	kref_get(&mux_net->ref);
-}
+पूर्ण
 
-static inline void muxnet_put(struct gsm_mux_net *mux_net)
-{
-	kref_put(&mux_net->ref, net_free);
-}
+अटल अंतरभूत व्योम muxnet_put(काष्ठा gsm_mux_net *mux_net)
+अणु
+	kref_put(&mux_net->ref, net_मुक्त);
+पूर्ण
 
-static netdev_tx_t gsm_mux_net_start_xmit(struct sk_buff *skb,
-				      struct net_device *net)
-{
-	struct gsm_mux_net *mux_net = netdev_priv(net);
-	struct gsm_dlci *dlci = mux_net->dlci;
+अटल netdev_tx_t gsm_mux_net_start_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *net)
+अणु
+	काष्ठा gsm_mux_net *mux_net = netdev_priv(net);
+	काष्ठा gsm_dlci *dlci = mux_net->dlci;
 	muxnet_get(mux_net);
 
 	skb_queue_head(&dlci->skb_list, skb);
@@ -2718,37 +2719,37 @@ static netdev_tx_t gsm_mux_net_start_xmit(struct sk_buff *skb,
 	net->stats.tx_bytes += skb->len;
 	gsm_dlci_data_kick(dlci);
 	/* And tell the kernel when the last transmit started. */
-	netif_trans_update(net);
+	netअगर_trans_update(net);
 	muxnet_put(mux_net);
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-/* called when a packet did not ack after watchdogtimeout */
-static void gsm_mux_net_tx_timeout(struct net_device *net, unsigned int txqueue)
-{
+/* called when a packet did not ack after watchकरोgसमयout */
+अटल व्योम gsm_mux_net_tx_समयout(काष्ठा net_device *net, अचिन्हित पूर्णांक txqueue)
+अणु
 	/* Tell syslog we are hosed. */
 	dev_dbg(&net->dev, "Tx timed out.\n");
 
 	/* Update statistics */
 	net->stats.tx_errors++;
-}
+पूर्ण
 
-static void gsm_mux_rx_netchar(struct gsm_dlci *dlci,
-				const unsigned char *in_buf, int size)
-{
-	struct net_device *net = dlci->net;
-	struct sk_buff *skb;
-	struct gsm_mux_net *mux_net = netdev_priv(net);
+अटल व्योम gsm_mux_rx_netअक्षर(काष्ठा gsm_dlci *dlci,
+				स्थिर अचिन्हित अक्षर *in_buf, पूर्णांक size)
+अणु
+	काष्ठा net_device *net = dlci->net;
+	काष्ठा sk_buff *skb;
+	काष्ठा gsm_mux_net *mux_net = netdev_priv(net);
 	muxnet_get(mux_net);
 
 	/* Allocate an sk_buff */
 	skb = dev_alloc_skb(size + NET_IP_ALIGN);
-	if (!skb) {
+	अगर (!skb) अणु
 		/* We got no receive buffer. */
 		net->stats.rx_dropped++;
 		muxnet_put(mux_net);
-		return;
-	}
+		वापस;
+	पूर्ण
 	skb_reserve(skb, NET_IP_ALIGN);
 	skb_put_data(skb, in_buf, size);
 
@@ -2756,233 +2757,233 @@ static void gsm_mux_rx_netchar(struct gsm_dlci *dlci,
 	skb->protocol = htons(ETH_P_IP);
 
 	/* Ship it off to the kernel */
-	netif_rx(skb);
+	netअगर_rx(skb);
 
 	/* update out statistics */
 	net->stats.rx_packets++;
 	net->stats.rx_bytes += size;
 	muxnet_put(mux_net);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void gsm_mux_net_init(struct net_device *net)
-{
-	static const struct net_device_ops gsm_netdev_ops = {
-		.ndo_open		= gsm_mux_net_open,
-		.ndo_stop		= gsm_mux_net_close,
-		.ndo_start_xmit		= gsm_mux_net_start_xmit,
-		.ndo_tx_timeout		= gsm_mux_net_tx_timeout,
-	};
+अटल व्योम gsm_mux_net_init(काष्ठा net_device *net)
+अणु
+	अटल स्थिर काष्ठा net_device_ops gsm_netdev_ops = अणु
+		.nकरो_खोलो		= gsm_mux_net_खोलो,
+		.nकरो_stop		= gsm_mux_net_बंद,
+		.nकरो_start_xmit		= gsm_mux_net_start_xmit,
+		.nकरो_tx_समयout		= gsm_mux_net_tx_समयout,
+	पूर्ण;
 
 	net->netdev_ops = &gsm_netdev_ops;
 
 	/* fill in the other fields */
-	net->watchdog_timeo = GSM_NET_TX_TIMEOUT;
+	net->watchकरोg_समयo = GSM_NET_TX_TIMEOUT;
 	net->flags = IFF_POINTOPOINT | IFF_NOARP | IFF_MULTICAST;
 	net->type = ARPHRD_NONE;
 	net->tx_queue_len = 10;
-}
+पूर्ण
 
 
 /* caller holds the dlci mutex */
-static void gsm_destroy_network(struct gsm_dlci *dlci)
-{
-	struct gsm_mux_net *mux_net;
+अटल व्योम gsm_destroy_network(काष्ठा gsm_dlci *dlci)
+अणु
+	काष्ठा gsm_mux_net *mux_net;
 
 	pr_debug("destroy network interface\n");
-	if (!dlci->net)
-		return;
+	अगर (!dlci->net)
+		वापस;
 	mux_net = netdev_priv(dlci->net);
 	muxnet_put(mux_net);
-}
+पूर्ण
 
 
 /* caller holds the dlci mutex */
-static int gsm_create_network(struct gsm_dlci *dlci, struct gsm_netconfig *nc)
-{
-	char *netname;
-	int retval = 0;
-	struct net_device *net;
-	struct gsm_mux_net *mux_net;
+अटल पूर्णांक gsm_create_network(काष्ठा gsm_dlci *dlci, काष्ठा gsm_netconfig *nc)
+अणु
+	अक्षर *netname;
+	पूर्णांक retval = 0;
+	काष्ठा net_device *net;
+	काष्ठा gsm_mux_net *mux_net;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	/* Already in a non tty mode */
-	if (dlci->adaption > 2)
-		return -EBUSY;
+	/* Alपढ़ोy in a non tty mode */
+	अगर (dlci->adaption > 2)
+		वापस -EBUSY;
 
-	if (nc->protocol != htons(ETH_P_IP))
-		return -EPROTONOSUPPORT;
+	अगर (nc->protocol != htons(ETH_P_IP))
+		वापस -EPROTONOSUPPORT;
 
-	if (nc->adaption != 3 && nc->adaption != 4)
-		return -EPROTONOSUPPORT;
+	अगर (nc->adaption != 3 && nc->adaption != 4)
+		वापस -EPROTONOSUPPORT;
 
 	pr_debug("create network interface\n");
 
 	netname = "gsm%d";
-	if (nc->if_name[0] != '\0')
-		netname = nc->if_name;
-	net = alloc_netdev(sizeof(struct gsm_mux_net), netname,
+	अगर (nc->अगर_name[0] != '\0')
+		netname = nc->अगर_name;
+	net = alloc_netdev(माप(काष्ठा gsm_mux_net), netname,
 			   NET_NAME_UNKNOWN, gsm_mux_net_init);
-	if (!net) {
+	अगर (!net) अणु
 		pr_err("alloc_netdev failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	net->mtu = dlci->gsm->mtu;
 	net->min_mtu = 8;
 	net->max_mtu = dlci->gsm->mtu;
 	mux_net = netdev_priv(net);
 	mux_net->dlci = dlci;
 	kref_init(&mux_net->ref);
-	strncpy(nc->if_name, net->name, IFNAMSIZ); /* return net name */
+	म_नकलन(nc->अगर_name, net->name, IFNAMSIZ); /* वापस net name */
 
-	/* reconfigure dlci for network */
+	/* reconfigure dlci क्रम network */
 	dlci->prev_adaption = dlci->adaption;
 	dlci->prev_data = dlci->data;
 	dlci->adaption = nc->adaption;
-	dlci->data = gsm_mux_rx_netchar;
+	dlci->data = gsm_mux_rx_netअक्षर;
 	dlci->net = net;
 
 	pr_debug("register netdev\n");
-	retval = register_netdev(net);
-	if (retval) {
+	retval = रेजिस्टर_netdev(net);
+	अगर (retval) अणु
 		pr_err("network register fail %d\n", retval);
-		dlci_net_free(dlci);
-		return retval;
-	}
-	return net->ifindex;	/* return network index */
-}
+		dlci_net_मुक्त(dlci);
+		वापस retval;
+	पूर्ण
+	वापस net->अगरindex;	/* वापस network index */
+पूर्ण
 
-/* Line discipline for real tty */
-static struct tty_ldisc_ops tty_ldisc_packet = {
+/* Line discipline क्रम real tty */
+अटल काष्ठा tty_ldisc_ops tty_ldisc_packet = अणु
 	.owner		 = THIS_MODULE,
 	.name            = "n_gsm",
-	.open            = gsmld_open,
-	.close           = gsmld_close,
+	.खोलो            = gsmld_खोलो,
+	.बंद           = gsmld_बंद,
 	.flush_buffer    = gsmld_flush_buffer,
-	.read            = gsmld_read,
-	.write           = gsmld_write,
+	.पढ़ो            = gsmld_पढ़ो,
+	.ग_लिखो           = gsmld_ग_लिखो,
 	.ioctl           = gsmld_ioctl,
 	.poll            = gsmld_poll,
 	.receive_buf     = gsmld_receive_buf,
-	.write_wakeup    = gsmld_write_wakeup
-};
+	.ग_लिखो_wakeup    = gsmld_ग_लिखो_wakeup
+पूर्ण;
 
 /*
  *	Virtual tty side
  */
 
-#define TX_SIZE		512
+#घोषणा TX_SIZE		512
 
-static int gsmtty_modem_update(struct gsm_dlci *dlci, u8 brk)
-{
+अटल पूर्णांक gsmtty_modem_update(काष्ठा gsm_dlci *dlci, u8 brk)
+अणु
 	u8 modembits[5];
-	struct gsm_control *ctrl;
-	int len = 2;
+	काष्ठा gsm_control *ctrl;
+	पूर्णांक len = 2;
 
-	if (brk)
+	अगर (brk)
 		len++;
 
 	modembits[0] = len << 1 | EA;		/* Data bytes */
 	modembits[1] = dlci->addr << 2 | 3;	/* DLCI, EA, 1 */
 	modembits[2] = gsm_encode_modem(dlci) << 1 | EA;
-	if (brk)
+	अगर (brk)
 		modembits[3] = brk << 4 | 2 | EA;	/* Valid, EA */
 	ctrl = gsm_control_send(dlci->gsm, CMD_MSC, modembits, len + 1);
-	if (ctrl == NULL)
-		return -ENOMEM;
-	return gsm_control_wait(dlci->gsm, ctrl);
-}
+	अगर (ctrl == शून्य)
+		वापस -ENOMEM;
+	वापस gsm_control_रुको(dlci->gsm, ctrl);
+पूर्ण
 
-static int gsm_carrier_raised(struct tty_port *port)
-{
-	struct gsm_dlci *dlci = container_of(port, struct gsm_dlci, port);
-	struct gsm_mux *gsm = dlci->gsm;
+अटल पूर्णांक gsm_carrier_उठाओd(काष्ठा tty_port *port)
+अणु
+	काष्ठा gsm_dlci *dlci = container_of(port, काष्ठा gsm_dlci, port);
+	काष्ठा gsm_mux *gsm = dlci->gsm;
 
-	/* Not yet open so no carrier info */
-	if (dlci->state != DLCI_OPEN)
-		return 0;
-	if (debug & 2)
-		return 1;
+	/* Not yet खोलो so no carrier info */
+	अगर (dlci->state != DLCI_OPEN)
+		वापस 0;
+	अगर (debug & 2)
+		वापस 1;
 
 	/*
 	 * Basic mode with control channel in ADM mode may not respond
 	 * to CMD_MSC at all and modem_rx is empty.
 	 */
-	if (gsm->encoding == 0 && gsm->dlci[0]->mode == DLCI_MODE_ADM &&
+	अगर (gsm->encoding == 0 && gsm->dlci[0]->mode == DLCI_MODE_ADM &&
 	    !dlci->modem_rx)
-		return 1;
+		वापस 1;
 
-	return dlci->modem_rx & TIOCM_CD;
-}
+	वापस dlci->modem_rx & TIOCM_CD;
+पूर्ण
 
-static void gsm_dtr_rts(struct tty_port *port, int onoff)
-{
-	struct gsm_dlci *dlci = container_of(port, struct gsm_dlci, port);
-	unsigned int modem_tx = dlci->modem_tx;
-	if (onoff)
+अटल व्योम gsm_dtr_rts(काष्ठा tty_port *port, पूर्णांक onoff)
+अणु
+	काष्ठा gsm_dlci *dlci = container_of(port, काष्ठा gsm_dlci, port);
+	अचिन्हित पूर्णांक modem_tx = dlci->modem_tx;
+	अगर (onoff)
 		modem_tx |= TIOCM_DTR | TIOCM_RTS;
-	else
+	अन्यथा
 		modem_tx &= ~(TIOCM_DTR | TIOCM_RTS);
-	if (modem_tx != dlci->modem_tx) {
+	अगर (modem_tx != dlci->modem_tx) अणु
 		dlci->modem_tx = modem_tx;
 		gsmtty_modem_update(dlci, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct tty_port_operations gsm_port_ops = {
-	.carrier_raised = gsm_carrier_raised,
+अटल स्थिर काष्ठा tty_port_operations gsm_port_ops = अणु
+	.carrier_उठाओd = gsm_carrier_उठाओd,
 	.dtr_rts = gsm_dtr_rts,
-	.destruct = gsm_dlci_free,
-};
+	.deकाष्ठा = gsm_dlci_मुक्त,
+पूर्ण;
 
-static int gsmtty_install(struct tty_driver *driver, struct tty_struct *tty)
-{
-	struct gsm_mux *gsm;
-	struct gsm_dlci *dlci;
-	unsigned int line = tty->index;
-	unsigned int mux = mux_line_to_num(line);
+अटल पूर्णांक gsmtty_install(काष्ठा tty_driver *driver, काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_mux *gsm;
+	काष्ठा gsm_dlci *dlci;
+	अचिन्हित पूर्णांक line = tty->index;
+	अचिन्हित पूर्णांक mux = mux_line_to_num(line);
 	bool alloc = false;
-	int ret;
+	पूर्णांक ret;
 
 	line = line & 0x3F;
 
-	if (mux >= MAX_MUX)
-		return -ENXIO;
-	/* FIXME: we need to lock gsm_mux for lifetimes of ttys eventually */
-	if (gsm_mux[mux] == NULL)
-		return -EUNATCH;
-	if (line == 0 || line > 61)	/* 62/63 reserved */
-		return -ECHRNG;
+	अगर (mux >= MAX_MUX)
+		वापस -ENXIO;
+	/* FIXME: we need to lock gsm_mux क्रम lअगरeबार of ttys eventually */
+	अगर (gsm_mux[mux] == शून्य)
+		वापस -EUNATCH;
+	अगर (line == 0 || line > 61)	/* 62/63 reserved */
+		वापस -ECHRNG;
 	gsm = gsm_mux[mux];
-	if (gsm->dead)
-		return -EL2HLT;
-	/* If DLCI 0 is not yet fully open return an error.
+	अगर (gsm->dead)
+		वापस -EL2HLT;
+	/* If DLCI 0 is not yet fully खोलो वापस an error.
 	This is ok from a locking
-	perspective as we don't have to worry about this
-	if DLCI0 is lost */
+	perspective as we करोn't have to worry about this
+	अगर DLCI0 is lost */
 	mutex_lock(&gsm->mutex);
-	if (gsm->dlci[0] && gsm->dlci[0]->state != DLCI_OPEN) {
+	अगर (gsm->dlci[0] && gsm->dlci[0]->state != DLCI_OPEN) अणु
 		mutex_unlock(&gsm->mutex);
-		return -EL2NSYNC;
-	}
+		वापस -EL2NSYNC;
+	पूर्ण
 	dlci = gsm->dlci[line];
-	if (dlci == NULL) {
+	अगर (dlci == शून्य) अणु
 		alloc = true;
 		dlci = gsm_dlci_alloc(gsm, line);
-	}
-	if (dlci == NULL) {
+	पूर्ण
+	अगर (dlci == शून्य) अणु
 		mutex_unlock(&gsm->mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	ret = tty_port_install(&dlci->port, driver, tty);
-	if (ret) {
-		if (alloc)
+	अगर (ret) अणु
+		अगर (alloc)
 			dlci_put(dlci);
 		mutex_unlock(&gsm->mutex);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dlci_get(dlci);
 	dlci_get(gsm->dlci[0]);
@@ -2990,271 +2991,271 @@ static int gsmtty_install(struct tty_driver *driver, struct tty_struct *tty)
 	tty->driver_data = dlci;
 	mutex_unlock(&gsm->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gsmtty_open(struct tty_struct *tty, struct file *filp)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	struct tty_port *port = &dlci->port;
+अटल पूर्णांक gsmtty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	काष्ठा tty_port *port = &dlci->port;
 
 	port->count++;
 	tty_port_tty_set(port, tty);
 
 	dlci->modem_rx = 0;
-	/* We could in theory open and close before we wait - eg if we get
+	/* We could in theory खोलो and बंद beक्रमe we रुको - eg अगर we get
 	   a DM straight back. This is ok as that will have caused a hangup */
 	tty_port_set_initialized(port, 1);
 	/* Start sending off SABM messages */
-	gsm_dlci_begin_open(dlci);
-	/* And wait for virtual carrier */
-	return tty_port_block_til_ready(port, tty, filp);
-}
+	gsm_dlci_begin_खोलो(dlci);
+	/* And रुको क्रम भव carrier */
+	वापस tty_port_block_til_पढ़ोy(port, tty, filp);
+पूर्ण
 
-static void gsmtty_close(struct tty_struct *tty, struct file *filp)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
+अटल व्योम gsmtty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
 
-	if (dlci == NULL)
-		return;
-	if (dlci->state == DLCI_CLOSED)
-		return;
+	अगर (dlci == शून्य)
+		वापस;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस;
 	mutex_lock(&dlci->mutex);
 	gsm_destroy_network(dlci);
 	mutex_unlock(&dlci->mutex);
-	if (tty_port_close_start(&dlci->port, tty, filp) == 0)
-		return;
-	gsm_dlci_begin_close(dlci);
-	if (tty_port_initialized(&dlci->port) && C_HUPCL(tty))
+	अगर (tty_port_बंद_start(&dlci->port, tty, filp) == 0)
+		वापस;
+	gsm_dlci_begin_बंद(dlci);
+	अगर (tty_port_initialized(&dlci->port) && C_HUPCL(tty))
 		tty_port_lower_dtr_rts(&dlci->port);
-	tty_port_close_end(&dlci->port, tty);
-	tty_port_tty_set(&dlci->port, NULL);
-	return;
-}
+	tty_port_बंद_end(&dlci->port, tty);
+	tty_port_tty_set(&dlci->port, शून्य);
+	वापस;
+पूर्ण
 
-static void gsmtty_hangup(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return;
+अटल व्योम gsmtty_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस;
 	tty_port_hangup(&dlci->port);
-	gsm_dlci_begin_close(dlci);
-}
+	gsm_dlci_begin_बंद(dlci);
+पूर्ण
 
-static int gsmtty_write(struct tty_struct *tty, const unsigned char *buf,
-								    int len)
-{
-	int sent;
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return -EINVAL;
-	/* Stuff the bytes into the fifo queue */
-	sent = kfifo_in_locked(&dlci->fifo, buf, len, &dlci->lock);
+अटल पूर्णांक gsmtty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf,
+								    पूर्णांक len)
+अणु
+	पूर्णांक sent;
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस -EINVAL;
+	/* Stuff the bytes पूर्णांकo the fअगरo queue */
+	sent = kfअगरo_in_locked(&dlci->fअगरo, buf, len, &dlci->lock);
 	/* Need to kick the channel */
 	gsm_dlci_data_kick(dlci);
-	return sent;
-}
+	वापस sent;
+पूर्ण
 
-static int gsmtty_write_room(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return 0;
-	return TX_SIZE - kfifo_len(&dlci->fifo);
-}
+अटल पूर्णांक gsmtty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस 0;
+	वापस TX_SIZE - kfअगरo_len(&dlci->fअगरo);
+पूर्ण
 
-static int gsmtty_chars_in_buffer(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return 0;
-	return kfifo_len(&dlci->fifo);
-}
+अटल पूर्णांक gsmtty_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस 0;
+	वापस kfअगरo_len(&dlci->fअगरo);
+पूर्ण
 
-static void gsmtty_flush_buffer(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return;
+अटल व्योम gsmtty_flush_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस;
 	/* Caution needed: If we implement reliable transport classes
 	   then the data being transmitted can't simply be junked once
 	   it has first hit the stack. Until then we can just blow it
 	   away */
-	kfifo_reset(&dlci->fifo);
+	kfअगरo_reset(&dlci->fअगरo);
 	/* Need to unhook this DLCI from the transmit queue logic */
-}
+पूर्ण
 
-static void gsmtty_wait_until_sent(struct tty_struct *tty, int timeout)
-{
-	/* The FIFO handles the queue so the kernel will do the right
-	   thing waiting on chars_in_buffer before calling us. No work
-	   to do here */
-}
+अटल व्योम gsmtty_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout)
+अणु
+	/* The FIFO handles the queue so the kernel will करो the right
+	   thing रुकोing on अक्षरs_in_buffer beक्रमe calling us. No work
+	   to करो here */
+पूर्ण
 
-static int gsmtty_tiocmget(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return -EINVAL;
-	return dlci->modem_rx;
-}
+अटल पूर्णांक gsmtty_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस -EINVAL;
+	वापस dlci->modem_rx;
+पूर्ण
 
-static int gsmtty_tiocmset(struct tty_struct *tty,
-	unsigned int set, unsigned int clear)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	unsigned int modem_tx = dlci->modem_tx;
+अटल पूर्णांक gsmtty_tiocmset(काष्ठा tty_काष्ठा *tty,
+	अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अचिन्हित पूर्णांक modem_tx = dlci->modem_tx;
 
-	if (dlci->state == DLCI_CLOSED)
-		return -EINVAL;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस -EINVAL;
 	modem_tx &= ~clear;
 	modem_tx |= set;
 
-	if (modem_tx != dlci->modem_tx) {
+	अगर (modem_tx != dlci->modem_tx) अणु
 		dlci->modem_tx = modem_tx;
-		return gsmtty_modem_update(dlci, 0);
-	}
-	return 0;
-}
+		वापस gsmtty_modem_update(dlci, 0);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-static int gsmtty_ioctl(struct tty_struct *tty,
-			unsigned int cmd, unsigned long arg)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	struct gsm_netconfig nc;
-	int index;
+अटल पूर्णांक gsmtty_ioctl(काष्ठा tty_काष्ठा *tty,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	काष्ठा gsm_netconfig nc;
+	पूर्णांक index;
 
-	if (dlci->state == DLCI_CLOSED)
-		return -EINVAL;
-	switch (cmd) {
-	case GSMIOC_ENABLE_NET:
-		if (copy_from_user(&nc, (void __user *)arg, sizeof(nc)))
-			return -EFAULT;
-		nc.if_name[IFNAMSIZ-1] = '\0';
-		/* return net interface index or error code */
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस -EINVAL;
+	चयन (cmd) अणु
+	हाल GSMIOC_ENABLE_NET:
+		अगर (copy_from_user(&nc, (व्योम __user *)arg, माप(nc)))
+			वापस -EFAULT;
+		nc.अगर_name[IFNAMSIZ-1] = '\0';
+		/* वापस net पूर्णांकerface index or error code */
 		mutex_lock(&dlci->mutex);
 		index = gsm_create_network(dlci, &nc);
 		mutex_unlock(&dlci->mutex);
-		if (copy_to_user((void __user *)arg, &nc, sizeof(nc)))
-			return -EFAULT;
-		return index;
-	case GSMIOC_DISABLE_NET:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+		अगर (copy_to_user((व्योम __user *)arg, &nc, माप(nc)))
+			वापस -EFAULT;
+		वापस index;
+	हाल GSMIOC_DISABLE_NET:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 		mutex_lock(&dlci->mutex);
 		gsm_destroy_network(dlci);
 		mutex_unlock(&dlci->mutex);
-		return 0;
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-static void gsmtty_set_termios(struct tty_struct *tty, struct ktermios *old)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return;
-	/* For the moment its fixed. In actual fact the speed information
-	   for the virtual channel can be propogated in both directions by
-	   the RPN control message. This however rapidly gets nasty as we
-	   then have to remap modem signals each way according to whether
-	   our virtual cable is null modem etc .. */
+अटल व्योम gsmtty_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस;
+	/* For the moment its fixed. In actual fact the speed inक्रमmation
+	   क्रम the भव channel can be propogated in both directions by
+	   the RPN control message. This however rapidly माला_लो nasty as we
+	   then have to remap modem संकेतs each way according to whether
+	   our भव cable is null modem etc .. */
 	tty_termios_copy_hw(&tty->termios, old);
-}
+पूर्ण
 
-static void gsmtty_throttle(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return;
-	if (C_CRTSCTS(tty))
+अटल व्योम gsmtty_throttle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस;
+	अगर (C_CRTSCTS(tty))
 		dlci->modem_tx &= ~TIOCM_DTR;
 	dlci->throttled = true;
 	/* Send an MSC with DTR cleared */
 	gsmtty_modem_update(dlci, 0);
-}
+पूर्ण
 
-static void gsmtty_unthrottle(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	if (dlci->state == DLCI_CLOSED)
-		return;
-	if (C_CRTSCTS(tty))
+अटल व्योम gsmtty_unthrottle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस;
+	अगर (C_CRTSCTS(tty))
 		dlci->modem_tx |= TIOCM_DTR;
 	dlci->throttled = false;
 	/* Send an MSC with DTR set */
 	gsmtty_modem_update(dlci, 0);
-}
+पूर्ण
 
-static int gsmtty_break_ctl(struct tty_struct *tty, int state)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	int encode = 0;	/* Off */
-	if (dlci->state == DLCI_CLOSED)
-		return -EINVAL;
+अटल पूर्णांक gsmtty_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक state)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	पूर्णांक encode = 0;	/* Off */
+	अगर (dlci->state == DLCI_CLOSED)
+		वापस -EINVAL;
 
-	if (state == -1)	/* "On indefinitely" - we can't encode this
+	अगर (state == -1)	/* "On indefinitely" - we can't encode this
 				    properly */
 		encode = 0x0F;
-	else if (state > 0) {
+	अन्यथा अगर (state > 0) अणु
 		encode = state / 200;	/* mS to encoding */
-		if (encode > 0x0F)
-			encode = 0x0F;	/* Best effort */
-	}
-	return gsmtty_modem_update(dlci, encode);
-}
+		अगर (encode > 0x0F)
+			encode = 0x0F;	/* Best efक्रमt */
+	पूर्ण
+	वापस gsmtty_modem_update(dlci, encode);
+पूर्ण
 
-static void gsmtty_cleanup(struct tty_struct *tty)
-{
-	struct gsm_dlci *dlci = tty->driver_data;
-	struct gsm_mux *gsm = dlci->gsm;
+अटल व्योम gsmtty_cleanup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा gsm_dlci *dlci = tty->driver_data;
+	काष्ठा gsm_mux *gsm = dlci->gsm;
 
 	dlci_put(dlci);
 	dlci_put(gsm->dlci[0]);
 	mux_put(gsm);
-}
+पूर्ण
 
-/* Virtual ttys for the demux */
-static const struct tty_operations gsmtty_ops = {
+/* Virtual ttys क्रम the demux */
+अटल स्थिर काष्ठा tty_operations gsmtty_ops = अणु
 	.install		= gsmtty_install,
-	.open			= gsmtty_open,
-	.close			= gsmtty_close,
-	.write			= gsmtty_write,
-	.write_room		= gsmtty_write_room,
-	.chars_in_buffer	= gsmtty_chars_in_buffer,
+	.खोलो			= gsmtty_खोलो,
+	.बंद			= gsmtty_बंद,
+	.ग_लिखो			= gsmtty_ग_लिखो,
+	.ग_लिखो_room		= gsmtty_ग_लिखो_room,
+	.अक्षरs_in_buffer	= gsmtty_अक्षरs_in_buffer,
 	.flush_buffer		= gsmtty_flush_buffer,
 	.ioctl			= gsmtty_ioctl,
 	.throttle		= gsmtty_throttle,
 	.unthrottle		= gsmtty_unthrottle,
 	.set_termios		= gsmtty_set_termios,
 	.hangup			= gsmtty_hangup,
-	.wait_until_sent	= gsmtty_wait_until_sent,
+	.रुको_until_sent	= gsmtty_रुको_until_sent,
 	.tiocmget		= gsmtty_tiocmget,
 	.tiocmset		= gsmtty_tiocmset,
-	.break_ctl		= gsmtty_break_ctl,
+	.अवरोध_ctl		= gsmtty_अवरोध_ctl,
 	.cleanup		= gsmtty_cleanup,
-};
+पूर्ण;
 
 
 
-static int __init gsm_init(void)
-{
-	/* Fill in our line protocol discipline, and register it */
-	int status = tty_register_ldisc(N_GSM0710, &tty_ldisc_packet);
-	if (status != 0) {
+अटल पूर्णांक __init gsm_init(व्योम)
+अणु
+	/* Fill in our line protocol discipline, and रेजिस्टर it */
+	पूर्णांक status = tty_रेजिस्टर_ldisc(N_GSM0710, &tty_ldisc_packet);
+	अगर (status != 0) अणु
 		pr_err("n_gsm: can't register line discipline (err = %d)\n",
 								status);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	gsm_tty_driver = alloc_tty_driver(256);
-	if (!gsm_tty_driver) {
-		tty_unregister_ldisc(N_GSM0710);
+	अगर (!gsm_tty_driver) अणु
+		tty_unरेजिस्टर_ldisc(N_GSM0710);
 		pr_err("gsm_init: tty allocation failed.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	gsm_tty_driver->driver_name	= "gsmtty";
 	gsm_tty_driver->name		= "gsmtty";
 	gsm_tty_driver->major		= 0;	/* Dynamic */
@@ -3268,29 +3269,29 @@ static int __init gsm_init(void)
 	gsm_tty_driver->init_termios.c_lflag &= ~ECHO;
 	tty_set_operations(gsm_tty_driver, &gsmtty_ops);
 
-	if (tty_register_driver(gsm_tty_driver)) {
+	अगर (tty_रेजिस्टर_driver(gsm_tty_driver)) अणु
 		put_tty_driver(gsm_tty_driver);
-		tty_unregister_ldisc(N_GSM0710);
+		tty_unरेजिस्टर_ldisc(N_GSM0710);
 		pr_err("gsm_init: tty registration failed.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	pr_debug("gsm_init: loaded as %d,%d.\n",
 			gsm_tty_driver->major, gsm_tty_driver->minor_start);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit gsm_exit(void)
-{
-	int status = tty_unregister_ldisc(N_GSM0710);
-	if (status != 0)
+अटल व्योम __निकास gsm_निकास(व्योम)
+अणु
+	पूर्णांक status = tty_unरेजिस्टर_ldisc(N_GSM0710);
+	अगर (status != 0)
 		pr_err("n_gsm: can't unregister line discipline (err = %d)\n",
 								status);
-	tty_unregister_driver(gsm_tty_driver);
+	tty_unरेजिस्टर_driver(gsm_tty_driver);
 	put_tty_driver(gsm_tty_driver);
-}
+पूर्ण
 
 module_init(gsm_init);
-module_exit(gsm_exit);
+module_निकास(gsm_निकास);
 
 
 MODULE_LICENSE("GPL");

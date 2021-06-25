@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PS3 Disk Storage Driver
  *
@@ -6,43 +7,43 @@
  * Copyright 2007 Sony Corp.
  */
 
-#include <linux/ata.h>
-#include <linux/blk-mq.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/ata.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include <asm/lv1call.h>
-#include <asm/ps3stor.h>
-#include <asm/firmware.h>
-
-
-#define DEVICE_NAME		"ps3disk"
-
-#define BOUNCE_SIZE		(64*1024)
-
-#define PS3DISK_MAX_DISKS	16
-#define PS3DISK_MINORS		16
+#समावेश <यंत्र/lv1call.h>
+#समावेश <यंत्र/ps3stor.h>
+#समावेश <यंत्र/firmware.h>
 
 
-#define PS3DISK_NAME		"ps3d%c"
+#घोषणा DEVICE_NAME		"ps3disk"
+
+#घोषणा BOUNCE_SIZE		(64*1024)
+
+#घोषणा PS3DISK_MAX_DISKS	16
+#घोषणा PS3DISK_MINORS		16
 
 
-struct ps3disk_private {
+#घोषणा PS3DISK_NAME		"ps3d%c"
+
+
+काष्ठा ps3disk_निजी अणु
 	spinlock_t lock;		/* Request queue spinlock */
-	struct request_queue *queue;
-	struct blk_mq_tag_set tag_set;
-	struct gendisk *gendisk;
-	unsigned int blocking_factor;
-	struct request *req;
+	काष्ठा request_queue *queue;
+	काष्ठा blk_mq_tag_set tag_set;
+	काष्ठा gendisk *gendisk;
+	अचिन्हित पूर्णांक blocking_factor;
+	काष्ठा request *req;
 	u64 raw_capacity;
-	unsigned char model[ATA_ID_PROD_LEN+1];
-};
+	अचिन्हित अक्षर model[ATA_ID_PROD_LEN+1];
+पूर्ण;
 
 
-#define LV1_STORAGE_SEND_ATA_COMMAND	(2)
-#define LV1_STORAGE_ATA_HDDOUT		(0x23)
+#घोषणा LV1_STORAGE_SEND_ATA_COMMAND	(2)
+#घोषणा LV1_STORAGE_ATA_HDDOUT		(0x23)
 
-struct lv1_ata_cmnd_block {
+काष्ठा lv1_ata_cmnd_block अणु
 	u16	features;
 	u16	sector_count;
 	u16	LBA_low;
@@ -56,108 +57,108 @@ struct lv1_ata_cmnd_block {
 	u32	size;
 	u64	buffer;
 	u32	arglen;
-};
+पूर्ण;
 
-enum lv1_ata_proto {
+क्रमागत lv1_ata_proto अणु
 	NON_DATA_PROTO     = 0,
 	PIO_DATA_IN_PROTO  = 1,
 	PIO_DATA_OUT_PROTO = 2,
 	DMA_PROTO = 3
-};
+पूर्ण;
 
-enum lv1_ata_in_out {
-	DIR_WRITE = 0,			/* memory -> device */
-	DIR_READ = 1			/* device -> memory */
-};
+क्रमागत lv1_ata_in_out अणु
+	सूची_WRITE = 0,			/* memory -> device */
+	सूची_READ = 1			/* device -> memory */
+पूर्ण;
 
-static int ps3disk_major;
+अटल पूर्णांक ps3disk_major;
 
 
-static const struct block_device_operations ps3disk_fops = {
+अटल स्थिर काष्ठा block_device_operations ps3disk_fops = अणु
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 
-static void ps3disk_scatter_gather(struct ps3_storage_device *dev,
-				   struct request *req, int gather)
-{
-	unsigned int offset = 0;
-	struct req_iterator iter;
-	struct bio_vec bvec;
-	unsigned int i = 0;
-	size_t size;
-	void *buf;
+अटल व्योम ps3disk_scatter_gather(काष्ठा ps3_storage_device *dev,
+				   काष्ठा request *req, पूर्णांक gather)
+अणु
+	अचिन्हित पूर्णांक offset = 0;
+	काष्ठा req_iterator iter;
+	काष्ठा bio_vec bvec;
+	अचिन्हित पूर्णांक i = 0;
+	माप_प्रकार size;
+	व्योम *buf;
 
-	rq_for_each_segment(bvec, req, iter) {
-		unsigned long flags;
+	rq_क्रम_each_segment(bvec, req, iter) अणु
+		अचिन्हित दीर्घ flags;
 		dev_dbg(&dev->sbd.core, "%s:%u: bio %u: %u sectors from %llu\n",
 			__func__, __LINE__, i, bio_sectors(iter.bio),
 			iter.bio->bi_iter.bi_sector);
 
 		size = bvec.bv_len;
 		buf = bvec_kmap_irq(&bvec, &flags);
-		if (gather)
-			memcpy(dev->bounce_buf+offset, buf, size);
-		else
-			memcpy(buf, dev->bounce_buf+offset, size);
+		अगर (gather)
+			स_नकल(dev->bounce_buf+offset, buf, size);
+		अन्यथा
+			स_नकल(buf, dev->bounce_buf+offset, size);
 		offset += size;
 		flush_kernel_dcache_page(bvec.bv_page);
 		bvec_kunmap_irq(buf, &flags);
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static blk_status_t ps3disk_submit_request_sg(struct ps3_storage_device *dev,
-					      struct request *req)
-{
-	struct ps3disk_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
-	int write = rq_data_dir(req), res;
-	const char *op = write ? "write" : "read";
+अटल blk_status_t ps3disk_submit_request_sg(काष्ठा ps3_storage_device *dev,
+					      काष्ठा request *req)
+अणु
+	काष्ठा ps3disk_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
+	पूर्णांक ग_लिखो = rq_data_dir(req), res;
+	स्थिर अक्षर *op = ग_लिखो ? "write" : "read";
 	u64 start_sector, sectors;
-	unsigned int region_id = dev->regions[dev->region_idx].id;
+	अचिन्हित पूर्णांक region_id = dev->regions[dev->region_idx].id;
 
-#ifdef DEBUG
-	unsigned int n = 0;
-	struct bio_vec bv;
-	struct req_iterator iter;
+#अगर_घोषित DEBUG
+	अचिन्हित पूर्णांक n = 0;
+	काष्ठा bio_vec bv;
+	काष्ठा req_iterator iter;
 
-	rq_for_each_segment(bv, req, iter)
+	rq_क्रम_each_segment(bv, req, iter)
 		n++;
 	dev_dbg(&dev->sbd.core,
 		"%s:%u: %s req has %u bvecs for %u sectors\n",
 		__func__, __LINE__, op, n, blk_rq_sectors(req));
-#endif
+#पूर्ण_अगर
 
 	start_sector = blk_rq_pos(req) * priv->blocking_factor;
 	sectors = blk_rq_sectors(req) * priv->blocking_factor;
 	dev_dbg(&dev->sbd.core, "%s:%u: %s %llu sectors starting at %llu\n",
 		__func__, __LINE__, op, sectors, start_sector);
 
-	if (write) {
+	अगर (ग_लिखो) अणु
 		ps3disk_scatter_gather(dev, req, 1);
 
-		res = lv1_storage_write(dev->sbd.dev_id, region_id,
+		res = lv1_storage_ग_लिखो(dev->sbd.dev_id, region_id,
 					start_sector, sectors, 0,
 					dev->bounce_lpar, &dev->tag);
-	} else {
-		res = lv1_storage_read(dev->sbd.dev_id, region_id,
+	पूर्ण अन्यथा अणु
+		res = lv1_storage_पढ़ो(dev->sbd.dev_id, region_id,
 				       start_sector, sectors, 0,
 				       dev->bounce_lpar, &dev->tag);
-	}
-	if (res) {
+	पूर्ण
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: %s failed %d\n", __func__,
 			__LINE__, op, res);
-		return BLK_STS_IOERR;
-	}
+		वापस BLK_STS_IOERR;
+	पूर्ण
 
 	priv->req = req;
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static blk_status_t ps3disk_submit_flush_request(struct ps3_storage_device *dev,
-						 struct request *req)
-{
-	struct ps3disk_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
+अटल blk_status_t ps3disk_submit_flush_request(काष्ठा ps3_storage_device *dev,
+						 काष्ठा request *req)
+अणु
+	काष्ठा ps3disk_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
 	u64 res;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: flush request\n", __func__, __LINE__);
@@ -165,161 +166,161 @@ static blk_status_t ps3disk_submit_flush_request(struct ps3_storage_device *dev,
 	res = lv1_storage_send_device_command(dev->sbd.dev_id,
 					      LV1_STORAGE_ATA_HDDOUT, 0, 0, 0,
 					      0, &dev->tag);
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: sync cache failed 0x%llx\n",
 			__func__, __LINE__, res);
-		return BLK_STS_IOERR;
-	}
+		वापस BLK_STS_IOERR;
+	पूर्ण
 
 	priv->req = req;
-	return BLK_STS_OK;
-}
+	वापस BLK_STS_OK;
+पूर्ण
 
-static blk_status_t ps3disk_do_request(struct ps3_storage_device *dev,
-				       struct request *req)
-{
+अटल blk_status_t ps3disk_करो_request(काष्ठा ps3_storage_device *dev,
+				       काष्ठा request *req)
+अणु
 	dev_dbg(&dev->sbd.core, "%s:%u\n", __func__, __LINE__);
 
-	switch (req_op(req)) {
-	case REQ_OP_FLUSH:
-		return ps3disk_submit_flush_request(dev, req);
-	case REQ_OP_READ:
-	case REQ_OP_WRITE:
-		return ps3disk_submit_request_sg(dev, req);
-	default:
+	चयन (req_op(req)) अणु
+	हाल REQ_OP_FLUSH:
+		वापस ps3disk_submit_flush_request(dev, req);
+	हाल REQ_OP_READ:
+	हाल REQ_OP_WRITE:
+		वापस ps3disk_submit_request_sg(dev, req);
+	शेष:
 		blk_dump_rq_flags(req, DEVICE_NAME " bad request");
-		return BLK_STS_IOERR;
-	}
-}
+		वापस BLK_STS_IOERR;
+	पूर्ण
+पूर्ण
 
-static blk_status_t ps3disk_queue_rq(struct blk_mq_hw_ctx *hctx,
-				     const struct blk_mq_queue_data *bd)
-{
-	struct request_queue *q = hctx->queue;
-	struct ps3_storage_device *dev = q->queuedata;
-	struct ps3disk_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
+अटल blk_status_t ps3disk_queue_rq(काष्ठा blk_mq_hw_ctx *hctx,
+				     स्थिर काष्ठा blk_mq_queue_data *bd)
+अणु
+	काष्ठा request_queue *q = hctx->queue;
+	काष्ठा ps3_storage_device *dev = q->queuedata;
+	काष्ठा ps3disk_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
 	blk_status_t ret;
 
 	blk_mq_start_request(bd->rq);
 
 	spin_lock_irq(&priv->lock);
-	ret = ps3disk_do_request(dev, bd->rq);
+	ret = ps3disk_करो_request(dev, bd->rq);
 	spin_unlock_irq(&priv->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t ps3disk_interrupt(int irq, void *data)
-{
-	struct ps3_storage_device *dev = data;
-	struct ps3disk_private *priv;
-	struct request *req;
-	int res, read;
+अटल irqवापस_t ps3disk_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ps3_storage_device *dev = data;
+	काष्ठा ps3disk_निजी *priv;
+	काष्ठा request *req;
+	पूर्णांक res, पढ़ो;
 	blk_status_t error;
 	u64 tag, status;
-	const char *op;
+	स्थिर अक्षर *op;
 
 	res = lv1_storage_get_async_status(dev->sbd.dev_id, &tag, &status);
 
-	if (tag != dev->tag)
+	अगर (tag != dev->tag)
 		dev_err(&dev->sbd.core,
 			"%s:%u: tag mismatch, got %llx, expected %llx\n",
 			__func__, __LINE__, tag, dev->tag);
 
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: res=%d status=0x%llx\n",
 			__func__, __LINE__, res, status);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	priv = ps3_system_bus_get_drvdata(&dev->sbd);
+	priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
 	req = priv->req;
-	if (!req) {
+	अगर (!req) अणु
 		dev_dbg(&dev->sbd.core,
 			"%s:%u non-block layer request completed\n", __func__,
 			__LINE__);
 		dev->lv1_status = status;
-		complete(&dev->done);
-		return IRQ_HANDLED;
-	}
+		complete(&dev->करोne);
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (req_op(req) == REQ_OP_FLUSH) {
-		read = 0;
+	अगर (req_op(req) == REQ_OP_FLUSH) अणु
+		पढ़ो = 0;
 		op = "flush";
-	} else {
-		read = !rq_data_dir(req);
-		op = read ? "read" : "write";
-	}
-	if (status) {
+	पूर्ण अन्यथा अणु
+		पढ़ो = !rq_data_dir(req);
+		op = पढ़ो ? "read" : "write";
+	पूर्ण
+	अगर (status) अणु
 		dev_dbg(&dev->sbd.core, "%s:%u: %s failed 0x%llx\n", __func__,
 			__LINE__, op, status);
 		error = BLK_STS_IOERR;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&dev->sbd.core, "%s:%u: %s completed\n", __func__,
 			__LINE__, op);
 		error = 0;
-		if (read)
+		अगर (पढ़ो)
 			ps3disk_scatter_gather(dev, req, 0);
-	}
+	पूर्ण
 
 	spin_lock(&priv->lock);
-	priv->req = NULL;
+	priv->req = शून्य;
 	blk_mq_end_request(req, error);
 	spin_unlock(&priv->lock);
 
 	blk_mq_run_hw_queues(priv->queue, true);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ps3disk_sync_cache(struct ps3_storage_device *dev)
-{
+अटल पूर्णांक ps3disk_sync_cache(काष्ठा ps3_storage_device *dev)
+अणु
 	u64 res;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: sync cache\n", __func__, __LINE__);
 
 	res = ps3stor_send_command(dev, LV1_STORAGE_ATA_HDDOUT, 0, 0, 0, 0);
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: sync cache failed 0x%llx\n",
 			__func__, __LINE__, res);
-		return -EIO;
-	}
-	return 0;
-}
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /* ATA helpers copied from drivers/ata/libata-core.c */
 
-static void swap_buf_le16(u16 *buf, unsigned int buf_words)
-{
-#ifdef __BIG_ENDIAN
-	unsigned int i;
+अटल व्योम swap_buf_le16(u16 *buf, अचिन्हित पूर्णांक buf_words)
+अणु
+#अगर_घोषित __BIG_ENDIAN
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < buf_words; i++)
+	क्रम (i = 0; i < buf_words; i++)
 		buf[i] = le16_to_cpu(buf[i]);
-#endif /* __BIG_ENDIAN */
-}
+#पूर्ण_अगर /* __BIG_ENDIAN */
+पूर्ण
 
-static u64 ata_id_n_sectors(const u16 *id)
-{
-	if (ata_id_has_lba(id)) {
-		if (ata_id_has_lba48(id))
-			return ata_id_u64(id, 100);
-		else
-			return ata_id_u32(id, 60);
-	} else {
-		if (ata_id_current_chs_valid(id))
-			return ata_id_u32(id, 57);
-		else
-			return id[1] * id[3] * id[6];
-	}
-}
+अटल u64 ata_id_n_sectors(स्थिर u16 *id)
+अणु
+	अगर (ata_id_has_lba(id)) अणु
+		अगर (ata_id_has_lba48(id))
+			वापस ata_id_u64(id, 100);
+		अन्यथा
+			वापस ata_id_u32(id, 60);
+	पूर्ण अन्यथा अणु
+		अगर (ata_id_current_chs_valid(id))
+			वापस ata_id_u32(id, 57);
+		अन्यथा
+			वापस id[1] * id[3] * id[6];
+	पूर्ण
+पूर्ण
 
-static void ata_id_string(const u16 *id, unsigned char *s, unsigned int ofs,
-			  unsigned int len)
-{
-	unsigned int c;
+अटल व्योम ata_id_string(स्थिर u16 *id, अचिन्हित अक्षर *s, अचिन्हित पूर्णांक ofs,
+			  अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक c;
 
-	while (len > 0) {
+	जबतक (len > 0) अणु
 		c = id[ofs] >> 8;
 		*s = c;
 		s++;
@@ -330,125 +331,125 @@ static void ata_id_string(const u16 *id, unsigned char *s, unsigned int ofs,
 
 		ofs++;
 		len -= 2;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ata_id_c_string(const u16 *id, unsigned char *s, unsigned int ofs,
-			    unsigned int len)
-{
-	unsigned char *p;
+अटल व्योम ata_id_c_string(स्थिर u16 *id, अचिन्हित अक्षर *s, अचिन्हित पूर्णांक ofs,
+			    अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *p;
 
 	WARN_ON(!(len & 1));
 
 	ata_id_string(id, s, ofs, len - 1);
 
 	p = s + strnlen(s, len - 1);
-	while (p > s && p[-1] == ' ')
+	जबतक (p > s && p[-1] == ' ')
 		p--;
 	*p = '\0';
-}
+पूर्ण
 
-static int ps3disk_identify(struct ps3_storage_device *dev)
-{
-	struct ps3disk_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
-	struct lv1_ata_cmnd_block ata_cmnd;
+अटल पूर्णांक ps3disk_identअगरy(काष्ठा ps3_storage_device *dev)
+अणु
+	काष्ठा ps3disk_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
+	काष्ठा lv1_ata_cmnd_block ata_cmnd;
 	u16 *id = dev->bounce_buf;
 	u64 res;
 
 	dev_dbg(&dev->sbd.core, "%s:%u: identify disk\n", __func__, __LINE__);
 
-	memset(&ata_cmnd, 0, sizeof(struct lv1_ata_cmnd_block));
+	स_रखो(&ata_cmnd, 0, माप(काष्ठा lv1_ata_cmnd_block));
 	ata_cmnd.command = ATA_CMD_ID_ATA;
 	ata_cmnd.sector_count = 1;
 	ata_cmnd.size = ata_cmnd.arglen = ATA_ID_WORDS * 2;
 	ata_cmnd.buffer = dev->bounce_lpar;
 	ata_cmnd.proto = PIO_DATA_IN_PROTO;
-	ata_cmnd.in_out = DIR_READ;
+	ata_cmnd.in_out = सूची_READ;
 
 	res = ps3stor_send_command(dev, LV1_STORAGE_SEND_ATA_COMMAND,
 				   ps3_mm_phys_to_lpar(__pa(&ata_cmnd)),
-				   sizeof(ata_cmnd), ata_cmnd.buffer,
+				   माप(ata_cmnd), ata_cmnd.buffer,
 				   ata_cmnd.arglen);
-	if (res) {
+	अगर (res) अणु
 		dev_err(&dev->sbd.core, "%s:%u: identify disk failed 0x%llx\n",
 			__func__, __LINE__, res);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	swap_buf_le16(id, ATA_ID_WORDS);
 
-	/* All we're interested in are raw capacity and model name */
+	/* All we're पूर्णांकerested in are raw capacity and model name */
 	priv->raw_capacity = ata_id_n_sectors(id);
-	ata_id_c_string(id, priv->model, ATA_ID_PROD, sizeof(priv->model));
-	return 0;
-}
+	ata_id_c_string(id, priv->model, ATA_ID_PROD, माप(priv->model));
+	वापस 0;
+पूर्ण
 
-static unsigned long ps3disk_mask;
+अटल अचिन्हित दीर्घ ps3disk_mask;
 
-static DEFINE_MUTEX(ps3disk_mask_mutex);
+अटल DEFINE_MUTEX(ps3disk_mask_mutex);
 
-static const struct blk_mq_ops ps3disk_mq_ops = {
+अटल स्थिर काष्ठा blk_mq_ops ps3disk_mq_ops = अणु
 	.queue_rq	= ps3disk_queue_rq,
-};
+पूर्ण;
 
-static int ps3disk_probe(struct ps3_system_bus_device *_dev)
-{
-	struct ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
-	struct ps3disk_private *priv;
-	int error;
-	unsigned int devidx;
-	struct request_queue *queue;
-	struct gendisk *gendisk;
+अटल पूर्णांक ps3disk_probe(काष्ठा ps3_प्रणाली_bus_device *_dev)
+अणु
+	काष्ठा ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
+	काष्ठा ps3disk_निजी *priv;
+	पूर्णांक error;
+	अचिन्हित पूर्णांक devidx;
+	काष्ठा request_queue *queue;
+	काष्ठा gendisk *gendisk;
 
-	if (dev->blk_size < 512) {
+	अगर (dev->blk_size < 512) अणु
 		dev_err(&dev->sbd.core,
 			"%s:%u: cannot handle block size %llu\n", __func__,
 			__LINE__, dev->blk_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	BUILD_BUG_ON(PS3DISK_MAX_DISKS > BITS_PER_LONG);
 	mutex_lock(&ps3disk_mask_mutex);
 	devidx = find_first_zero_bit(&ps3disk_mask, PS3DISK_MAX_DISKS);
-	if (devidx >= PS3DISK_MAX_DISKS) {
+	अगर (devidx >= PS3DISK_MAX_DISKS) अणु
 		dev_err(&dev->sbd.core, "%s:%u: Too many disks\n", __func__,
 			__LINE__);
 		mutex_unlock(&ps3disk_mask_mutex);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 	__set_bit(devidx, &ps3disk_mask);
 	mutex_unlock(&ps3disk_mask_mutex);
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		error = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	ps3_system_bus_set_drvdata(_dev, priv);
+	ps3_प्रणाली_bus_set_drvdata(_dev, priv);
 	spin_lock_init(&priv->lock);
 
 	dev->bounce_size = BOUNCE_SIZE;
-	dev->bounce_buf = kmalloc(BOUNCE_SIZE, GFP_DMA);
-	if (!dev->bounce_buf) {
+	dev->bounce_buf = kदो_स्मृति(BOUNCE_SIZE, GFP_DMA);
+	अगर (!dev->bounce_buf) अणु
 		error = -ENOMEM;
-		goto fail_free_priv;
-	}
+		जाओ fail_मुक्त_priv;
+	पूर्ण
 
-	error = ps3stor_setup(dev, ps3disk_interrupt);
-	if (error)
-		goto fail_free_bounce;
+	error = ps3stor_setup(dev, ps3disk_पूर्णांकerrupt);
+	अगर (error)
+		जाओ fail_मुक्त_bounce;
 
-	ps3disk_identify(dev);
+	ps3disk_identअगरy(dev);
 
 	queue = blk_mq_init_sq_queue(&priv->tag_set, &ps3disk_mq_ops, 1,
 					BLK_MQ_F_SHOULD_MERGE);
-	if (IS_ERR(queue)) {
+	अगर (IS_ERR(queue)) अणु
 		dev_err(&dev->sbd.core, "%s:%u: blk_mq_init_queue failed\n",
 			__func__, __LINE__);
 		error = PTR_ERR(queue);
-		goto fail_teardown;
-	}
+		जाओ fail_tearकरोwn;
+	पूर्ण
 
 	priv->queue = queue;
 	queue->queuedata = dev;
@@ -457,26 +458,26 @@ static int ps3disk_probe(struct ps3_system_bus_device *_dev)
 	blk_queue_dma_alignment(queue, dev->blk_size-1);
 	blk_queue_logical_block_size(queue, dev->blk_size);
 
-	blk_queue_write_cache(queue, true, false);
+	blk_queue_ग_लिखो_cache(queue, true, false);
 
 	blk_queue_max_segments(queue, -1);
 	blk_queue_max_segment_size(queue, dev->bounce_size);
 
 	gendisk = alloc_disk(PS3DISK_MINORS);
-	if (!gendisk) {
+	अगर (!gendisk) अणु
 		dev_err(&dev->sbd.core, "%s:%u: alloc_disk failed\n", __func__,
 			__LINE__);
 		error = -ENOMEM;
-		goto fail_cleanup_queue;
-	}
+		जाओ fail_cleanup_queue;
+	पूर्ण
 
 	priv->gendisk = gendisk;
 	gendisk->major = ps3disk_major;
 	gendisk->first_minor = devidx * PS3DISK_MINORS;
 	gendisk->fops = &ps3disk_fops;
 	gendisk->queue = queue;
-	gendisk->private_data = dev;
-	snprintf(gendisk->disk_name, sizeof(gendisk->disk_name), PS3DISK_NAME,
+	gendisk->निजी_data = dev;
+	snम_लिखो(gendisk->disk_name, माप(gendisk->disk_name), PS3DISK_NAME,
 		 devidx+'a');
 	priv->blocking_factor = dev->blk_size >> 9;
 	set_capacity(gendisk,
@@ -487,30 +488,30 @@ static int ps3disk_probe(struct ps3_system_bus_device *_dev)
 		 gendisk->disk_name, priv->model, priv->raw_capacity >> 11,
 		 get_capacity(gendisk) >> 11);
 
-	device_add_disk(&dev->sbd.core, gendisk, NULL);
-	return 0;
+	device_add_disk(&dev->sbd.core, gendisk, शून्य);
+	वापस 0;
 
 fail_cleanup_queue:
 	blk_cleanup_queue(queue);
-	blk_mq_free_tag_set(&priv->tag_set);
-fail_teardown:
-	ps3stor_teardown(dev);
-fail_free_bounce:
-	kfree(dev->bounce_buf);
-fail_free_priv:
-	kfree(priv);
-	ps3_system_bus_set_drvdata(_dev, NULL);
+	blk_mq_मुक्त_tag_set(&priv->tag_set);
+fail_tearकरोwn:
+	ps3stor_tearकरोwn(dev);
+fail_मुक्त_bounce:
+	kमुक्त(dev->bounce_buf);
+fail_मुक्त_priv:
+	kमुक्त(priv);
+	ps3_प्रणाली_bus_set_drvdata(_dev, शून्य);
 fail:
 	mutex_lock(&ps3disk_mask_mutex);
 	__clear_bit(devidx, &ps3disk_mask);
 	mutex_unlock(&ps3disk_mask_mutex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void ps3disk_remove(struct ps3_system_bus_device *_dev)
-{
-	struct ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
-	struct ps3disk_private *priv = ps3_system_bus_get_drvdata(&dev->sbd);
+अटल व्योम ps3disk_हटाओ(काष्ठा ps3_प्रणाली_bus_device *_dev)
+अणु
+	काष्ठा ps3_storage_device *dev = to_ps3_storage_device(&_dev->core);
+	काष्ठा ps3disk_निजी *priv = ps3_प्रणाली_bus_get_drvdata(&dev->sbd);
 
 	mutex_lock(&ps3disk_mask_mutex);
 	__clear_bit(MINOR(disk_devt(priv->gendisk)) / PS3DISK_MINORS,
@@ -518,59 +519,59 @@ static void ps3disk_remove(struct ps3_system_bus_device *_dev)
 	mutex_unlock(&ps3disk_mask_mutex);
 	del_gendisk(priv->gendisk);
 	blk_cleanup_queue(priv->queue);
-	blk_mq_free_tag_set(&priv->tag_set);
+	blk_mq_मुक्त_tag_set(&priv->tag_set);
 	put_disk(priv->gendisk);
 	dev_notice(&dev->sbd.core, "Synchronizing disk cache\n");
 	ps3disk_sync_cache(dev);
-	ps3stor_teardown(dev);
-	kfree(dev->bounce_buf);
-	kfree(priv);
-	ps3_system_bus_set_drvdata(_dev, NULL);
-}
+	ps3stor_tearकरोwn(dev);
+	kमुक्त(dev->bounce_buf);
+	kमुक्त(priv);
+	ps3_प्रणाली_bus_set_drvdata(_dev, शून्य);
+पूर्ण
 
-static struct ps3_system_bus_driver ps3disk = {
+अटल काष्ठा ps3_प्रणाली_bus_driver ps3disk = अणु
 	.match_id	= PS3_MATCH_ID_STOR_DISK,
 	.core.name	= DEVICE_NAME,
 	.core.owner	= THIS_MODULE,
 	.probe		= ps3disk_probe,
-	.remove		= ps3disk_remove,
-	.shutdown	= ps3disk_remove,
-};
+	.हटाओ		= ps3disk_हटाओ,
+	.shutकरोwn	= ps3disk_हटाओ,
+पूर्ण;
 
 
-static int __init ps3disk_init(void)
-{
-	int error;
+अटल पूर्णांक __init ps3disk_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		return -ENODEV;
+	अगर (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		वापस -ENODEV;
 
-	error = register_blkdev(0, DEVICE_NAME);
-	if (error <= 0) {
-		printk(KERN_ERR "%s:%u: register_blkdev failed %d\n", __func__,
+	error = रेजिस्टर_blkdev(0, DEVICE_NAME);
+	अगर (error <= 0) अणु
+		prपूर्णांकk(KERN_ERR "%s:%u: register_blkdev failed %d\n", __func__,
 		       __LINE__, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 	ps3disk_major = error;
 
 	pr_info("%s:%u: registered block device major %d\n", __func__,
 		__LINE__, ps3disk_major);
 
-	error = ps3_system_bus_driver_register(&ps3disk);
-	if (error)
-		unregister_blkdev(ps3disk_major, DEVICE_NAME);
+	error = ps3_प्रणाली_bus_driver_रेजिस्टर(&ps3disk);
+	अगर (error)
+		unरेजिस्टर_blkdev(ps3disk_major, DEVICE_NAME);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void __exit ps3disk_exit(void)
-{
-	ps3_system_bus_driver_unregister(&ps3disk);
-	unregister_blkdev(ps3disk_major, DEVICE_NAME);
-}
+अटल व्योम __निकास ps3disk_निकास(व्योम)
+अणु
+	ps3_प्रणाली_bus_driver_unरेजिस्टर(&ps3disk);
+	unरेजिस्टर_blkdev(ps3disk_major, DEVICE_NAME);
+पूर्ण
 
 module_init(ps3disk_init);
-module_exit(ps3disk_exit);
+module_निकास(ps3disk_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("PS3 Disk Storage Driver");

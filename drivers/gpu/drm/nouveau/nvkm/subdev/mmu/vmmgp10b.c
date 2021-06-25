@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,10 +20,10 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "vmm.h"
+#समावेश "vmm.h"
 
-static const struct nvkm_vmm_func
-gp10b_vmm = {
+अटल स्थिर काष्ठा nvkm_vmm_func
+gp10b_vmm = अणु
 	.join = gp100_vmm_join,
 	.part = gf100_vmm_part,
 	.aper = gk20a_vmm_aper,
@@ -30,22 +31,22 @@ gp10b_vmm = {
 	.flush = gp100_vmm_flush,
 	.mthd = gp100_vmm_mthd,
 	.invalidate_pdb = gp100_vmm_invalidate_pdb,
-	.page = {
-		{ 47, &gp100_vmm_desc_16[4], NVKM_VMM_PAGE_Sxxx },
-		{ 38, &gp100_vmm_desc_16[3], NVKM_VMM_PAGE_Sxxx },
-		{ 29, &gp100_vmm_desc_16[2], NVKM_VMM_PAGE_Sxxx },
-		{ 21, &gp100_vmm_desc_16[1], NVKM_VMM_PAGE_SxHC },
-		{ 16, &gp100_vmm_desc_16[0], NVKM_VMM_PAGE_SxHC },
-		{ 12, &gp100_vmm_desc_12[0], NVKM_VMM_PAGE_SxHx },
-		{}
-	}
-};
+	.page = अणु
+		अणु 47, &gp100_vmm_desc_16[4], NVKM_VMM_PAGE_Sxxx पूर्ण,
+		अणु 38, &gp100_vmm_desc_16[3], NVKM_VMM_PAGE_Sxxx पूर्ण,
+		अणु 29, &gp100_vmm_desc_16[2], NVKM_VMM_PAGE_Sxxx पूर्ण,
+		अणु 21, &gp100_vmm_desc_16[1], NVKM_VMM_PAGE_SxHC पूर्ण,
+		अणु 16, &gp100_vmm_desc_16[0], NVKM_VMM_PAGE_SxHC पूर्ण,
+		अणु 12, &gp100_vmm_desc_12[0], NVKM_VMM_PAGE_SxHx पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gp10b_vmm_new(struct nvkm_mmu *mmu, bool managed, u64 addr, u64 size,
-	      void *argv, u32 argc, struct lock_class_key *key,
-	      const char *name, struct nvkm_vmm **pvmm)
-{
-	return gp100_vmm_new_(&gp10b_vmm, mmu, managed, addr, size,
+पूर्णांक
+gp10b_vmm_new(काष्ठा nvkm_mmu *mmu, bool managed, u64 addr, u64 size,
+	      व्योम *argv, u32 argc, काष्ठा lock_class_key *key,
+	      स्थिर अक्षर *name, काष्ठा nvkm_vmm **pvmm)
+अणु
+	वापस gp100_vmm_new_(&gp10b_vmm, mmu, managed, addr, size,
 			      argv, argc, key, name, pvmm);
-}
+पूर्ण

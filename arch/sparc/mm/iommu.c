@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * iommu.c:  IOMMU specific routines for memory management.
+ * iommu.c:  IOMMU specअगरic routines क्रम memory management.
  *
  * Copyright (C) 1995 David S. Miller  (davem@caip.rutgers.edu)
  * Copyright (C) 1995,2002 Pete Zaitcev     (zaitcev@yahoo.com)
@@ -8,328 +9,328 @@
  * Copyright (C) 1997,1998 Jakub Jelinek    (jj@sunsite.mff.cuni.cz)
  */
  
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/dma-map-ops.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <asm/io.h>
-#include <asm/mxcc.h>
-#include <asm/mbus.h>
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
-#include <asm/bitext.h>
-#include <asm/iommu.h>
-#include <asm/dma.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mxcc.h>
+#समावेश <यंत्र/mbus.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/bitext.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/dma.h>
 
-#include "mm_32.h"
+#समावेश "mm_32.h"
 
 /*
- * This can be sized dynamically, but we will do this
+ * This can be sized dynamically, but we will करो this
  * only when we have a guidance about actual I/O pressures.
  */
-#define IOMMU_RNGE	IOMMU_RNGE_256MB
-#define IOMMU_START	0xF0000000
-#define IOMMU_WINSIZE	(256*1024*1024U)
-#define IOMMU_NPTES	(IOMMU_WINSIZE/PAGE_SIZE)	/* 64K PTEs, 256KB */
-#define IOMMU_ORDER	6				/* 4096 * (1<<6) */
+#घोषणा IOMMU_RNGE	IOMMU_RNGE_256MB
+#घोषणा IOMMU_START	0xF0000000
+#घोषणा IOMMU_WINSIZE	(256*1024*1024U)
+#घोषणा IOMMU_NPTES	(IOMMU_WINSIZE/PAGE_SIZE)	/* 64K PTEs, 256KB */
+#घोषणा IOMMU_ORDER	6				/* 4096 * (1<<6) */
 
-static int viking_flush;
+अटल पूर्णांक viking_flush;
 /* viking.S */
-extern void viking_flush_page(unsigned long page);
-extern void viking_mxcc_flush_page(unsigned long page);
+बाह्य व्योम viking_flush_page(अचिन्हित दीर्घ page);
+बाह्य व्योम viking_mxcc_flush_page(अचिन्हित दीर्घ page);
 
 /*
  * Values precomputed according to CPU type.
  */
-static unsigned int ioperm_noc;		/* Consistent mapping iopte flags */
-static pgprot_t dvma_prot;		/* Consistent mapping pte flags */
+अटल अचिन्हित पूर्णांक ioperm_noc;		/* Consistent mapping iopte flags */
+अटल pgprot_t dvma_prot;		/* Consistent mapping pte flags */
 
-#define IOPERM        (IOPTE_CACHE | IOPTE_WRITE | IOPTE_VALID)
-#define MKIOPTE(pfn, perm) (((((pfn)<<8) & IOPTE_PAGE) | (perm)) & ~IOPTE_WAZ)
+#घोषणा IOPERM        (IOPTE_CACHE | IOPTE_WRITE | IOPTE_VALID)
+#घोषणा MKIOPTE(pfn, perm) (((((pfn)<<8) & IOPTE_PAGE) | (perm)) & ~IOPTE_WAZ)
 
-static const struct dma_map_ops sbus_iommu_dma_gflush_ops;
-static const struct dma_map_ops sbus_iommu_dma_pflush_ops;
+अटल स्थिर काष्ठा dma_map_ops sbus_iommu_dma_gflush_ops;
+अटल स्थिर काष्ठा dma_map_ops sbus_iommu_dma_pflush_ops;
 
-static void __init sbus_iommu_init(struct platform_device *op)
-{
-	struct iommu_struct *iommu;
-	unsigned int impl, vers;
-	unsigned long *bitmap;
-	unsigned long control;
-	unsigned long base;
-	unsigned long tmp;
+अटल व्योम __init sbus_iommu_init(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा iommu_काष्ठा *iommu;
+	अचिन्हित पूर्णांक impl, vers;
+	अचिन्हित दीर्घ *biपंचांगap;
+	अचिन्हित दीर्घ control;
+	अचिन्हित दीर्घ base;
+	अचिन्हित दीर्घ पंचांगp;
 
-	iommu = kmalloc(sizeof(struct iommu_struct), GFP_KERNEL);
-	if (!iommu) {
-		prom_printf("Unable to allocate iommu structure\n");
+	iommu = kदो_स्मृति(माप(काष्ठा iommu_काष्ठा), GFP_KERNEL);
+	अगर (!iommu) अणु
+		prom_म_लिखो("Unable to allocate iommu structure\n");
 		prom_halt();
-	}
+	पूर्ण
 
 	iommu->regs = of_ioremap(&op->resource[0], 0, PAGE_SIZE * 3,
 				 "iommu_regs");
-	if (!iommu->regs) {
-		prom_printf("Cannot map IOMMU registers\n");
+	अगर (!iommu->regs) अणु
+		prom_म_लिखो("Cannot map IOMMU registers\n");
 		prom_halt();
-	}
+	पूर्ण
 
-	control = sbus_readl(&iommu->regs->control);
+	control = sbus_पढ़ोl(&iommu->regs->control);
 	impl = (control & IOMMU_CTRL_IMPL) >> 28;
 	vers = (control & IOMMU_CTRL_VERS) >> 24;
 	control &= ~(IOMMU_CTRL_RNGE);
 	control |= (IOMMU_RNGE_256MB | IOMMU_CTRL_ENAB);
-	sbus_writel(control, &iommu->regs->control);
+	sbus_ग_लिखोl(control, &iommu->regs->control);
 
 	iommu_invalidate(iommu->regs);
 	iommu->start = IOMMU_START;
 	iommu->end = 0xffffffff;
 
 	/* Allocate IOMMU page table */
-	/* Stupid alignment constraints give me a headache. 
+	/* Stupid alignment स्थिरraपूर्णांकs give me a headache. 
 	   We need 256K or 512K or 1M or 2M area aligned to
-           its size and current gfp will fortunately give
+           its size and current gfp will क्रमtunately give
            it to us. */
-        tmp = __get_free_pages(GFP_KERNEL, IOMMU_ORDER);
-	if (!tmp) {
-		prom_printf("Unable to allocate iommu table [0x%lx]\n",
-			    IOMMU_NPTES * sizeof(iopte_t));
+        पंचांगp = __get_मुक्त_pages(GFP_KERNEL, IOMMU_ORDER);
+	अगर (!पंचांगp) अणु
+		prom_म_लिखो("Unable to allocate iommu table [0x%lx]\n",
+			    IOMMU_NPTES * माप(iopte_t));
 		prom_halt();
-	}
-	iommu->page_table = (iopte_t *)tmp;
+	पूर्ण
+	iommu->page_table = (iopte_t *)पंचांगp;
 
 	/* Initialize new table. */
-	memset(iommu->page_table, 0, IOMMU_NPTES*sizeof(iopte_t));
+	स_रखो(iommu->page_table, 0, IOMMU_NPTES*माप(iopte_t));
 	flush_cache_all();
 	flush_tlb_all();
 
-	base = __pa((unsigned long)iommu->page_table) >> 4;
-	sbus_writel(base, &iommu->regs->base);
+	base = __pa((अचिन्हित दीर्घ)iommu->page_table) >> 4;
+	sbus_ग_लिखोl(base, &iommu->regs->base);
 	iommu_invalidate(iommu->regs);
 
-	bitmap = kmalloc(IOMMU_NPTES>>3, GFP_KERNEL);
-	if (!bitmap) {
-		prom_printf("Unable to allocate iommu bitmap [%d]\n",
-			    (int)(IOMMU_NPTES>>3));
+	biपंचांगap = kदो_स्मृति(IOMMU_NPTES>>3, GFP_KERNEL);
+	अगर (!biपंचांगap) अणु
+		prom_म_लिखो("Unable to allocate iommu bitmap [%d]\n",
+			    (पूर्णांक)(IOMMU_NPTES>>3));
 		prom_halt();
-	}
-	bit_map_init(&iommu->usemap, bitmap, IOMMU_NPTES);
+	पूर्ण
+	bit_map_init(&iommu->usemap, biपंचांगap, IOMMU_NPTES);
 	/* To be coherent on HyperSparc, the page color of DVMA
 	 * and physical addresses must match.
 	 */
-	if (srmmu_modtype == HyperSparc)
+	अगर (srmmu_modtype == HyperSparc)
 		iommu->usemap.num_colors = vac_cache_size >> PAGE_SHIFT;
-	else
+	अन्यथा
 		iommu->usemap.num_colors = 1;
 
-	printk(KERN_INFO "IOMMU: impl %d vers %d table 0x%p[%d B] map [%d b]\n",
+	prपूर्णांकk(KERN_INFO "IOMMU: impl %d vers %d table 0x%p[%d B] map [%d b]\n",
 	       impl, vers, iommu->page_table,
-	       (int)(IOMMU_NPTES*sizeof(iopte_t)), (int)IOMMU_NPTES);
+	       (पूर्णांक)(IOMMU_NPTES*माप(iopte_t)), (पूर्णांक)IOMMU_NPTES);
 
 	op->dev.archdata.iommu = iommu;
 
-	if (flush_page_for_dma_global)
+	अगर (flush_page_क्रम_dma_global)
 		op->dev.dma_ops = &sbus_iommu_dma_gflush_ops;
-	 else
+	 अन्यथा
 		op->dev.dma_ops = &sbus_iommu_dma_pflush_ops;
-}
+पूर्ण
 
-static int __init iommu_init(void)
-{
-	struct device_node *dp;
+अटल पूर्णांक __init iommu_init(व्योम)
+अणु
+	काष्ठा device_node *dp;
 
-	for_each_node_by_name(dp, "iommu") {
-		struct platform_device *op = of_find_device_by_node(dp);
+	क्रम_each_node_by_name(dp, "iommu") अणु
+		काष्ठा platक्रमm_device *op = of_find_device_by_node(dp);
 
 		sbus_iommu_init(op);
 		of_propagate_archdata(op);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(iommu_init);
 
 /* Flush the iotlb entries to ram. */
-/* This could be better if we didn't have to flush whole pages. */
-static void iommu_flush_iotlb(iopte_t *iopte, unsigned int niopte)
-{
-	unsigned long start;
-	unsigned long end;
+/* This could be better अगर we didn't have to flush whole pages. */
+अटल व्योम iommu_flush_iotlb(iopte_t *iopte, अचिन्हित पूर्णांक niopte)
+अणु
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
 
-	start = (unsigned long)iopte;
-	end = PAGE_ALIGN(start + niopte*sizeof(iopte_t));
+	start = (अचिन्हित दीर्घ)iopte;
+	end = PAGE_ALIGN(start + niopte*माप(iopte_t));
 	start &= PAGE_MASK;
-	if (viking_mxcc_present) {
-		while(start < end) {
+	अगर (viking_mxcc_present) अणु
+		जबतक(start < end) अणु
 			viking_mxcc_flush_page(start);
 			start += PAGE_SIZE;
-		}
-	} else if (viking_flush) {
-		while(start < end) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (viking_flush) अणु
+		जबतक(start < end) अणु
 			viking_flush_page(start);
 			start += PAGE_SIZE;
-		}
-	} else {
-		while(start < end) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जबतक(start < end) अणु
 			__flush_page_to_ram(start);
 			start += PAGE_SIZE;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static dma_addr_t __sbus_iommu_map_page(struct device *dev, struct page *page,
-		unsigned long offset, size_t len, bool per_page_flush)
-{
-	struct iommu_struct *iommu = dev->archdata.iommu;
+अटल dma_addr_t __sbus_iommu_map_page(काष्ठा device *dev, काष्ठा page *page,
+		अचिन्हित दीर्घ offset, माप_प्रकार len, bool per_page_flush)
+अणु
+	काष्ठा iommu_काष्ठा *iommu = dev->archdata.iommu;
 	phys_addr_t paddr = page_to_phys(page) + offset;
-	unsigned long off = paddr & ~PAGE_MASK;
-	unsigned long npages = (off + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	unsigned long pfn = __phys_to_pfn(paddr);
-	unsigned int busa, busa0;
+	अचिन्हित दीर्घ off = paddr & ~PAGE_MASK;
+	अचिन्हित दीर्घ npages = (off + len + PAGE_SIZE - 1) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ pfn = __phys_to_pfn(paddr);
+	अचिन्हित पूर्णांक busa, busa0;
 	iopte_t *iopte, *iopte0;
-	int ioptex, i;
+	पूर्णांक ioptex, i;
 
-	/* XXX So what is maxphys for us and how do drivers know it? */
-	if (!len || len > 256 * 1024)
-		return DMA_MAPPING_ERROR;
+	/* XXX So what is maxphys क्रम us and how करो drivers know it? */
+	अगर (!len || len > 256 * 1024)
+		वापस DMA_MAPPING_ERROR;
 
 	/*
 	 * We expect unmapped highmem pages to be not in the cache.
 	 * XXX Is this a good assumption?
-	 * XXX What if someone else unmaps it here and races us?
+	 * XXX What अगर someone अन्यथा unmaps it here and races us?
 	 */
-	if (per_page_flush && !PageHighMem(page)) {
-		unsigned long vaddr, p;
+	अगर (per_page_flush && !PageHighMem(page)) अणु
+		अचिन्हित दीर्घ vaddr, p;
 
-		vaddr = (unsigned long)page_address(page) + offset;
-		for (p = vaddr & PAGE_MASK; p < vaddr + len; p += PAGE_SIZE)
-			flush_page_for_dma(p);
-	}
+		vaddr = (अचिन्हित दीर्घ)page_address(page) + offset;
+		क्रम (p = vaddr & PAGE_MASK; p < vaddr + len; p += PAGE_SIZE)
+			flush_page_क्रम_dma(p);
+	पूर्ण
 
 	/* page color = pfn of page */
 	ioptex = bit_map_string_get(&iommu->usemap, npages, pfn);
-	if (ioptex < 0)
+	अगर (ioptex < 0)
 		panic("iommu out");
 	busa0 = iommu->start + (ioptex << PAGE_SHIFT);
 	iopte0 = &iommu->page_table[ioptex];
 
 	busa = busa0;
 	iopte = iopte0;
-	for (i = 0; i < npages; i++) {
+	क्रम (i = 0; i < npages; i++) अणु
 		iopte_val(*iopte) = MKIOPTE(pfn, IOPERM);
 		iommu_invalidate_page(iommu->regs, busa);
 		busa += PAGE_SIZE;
 		iopte++;
 		pfn++;
-	}
+	पूर्ण
 
 	iommu_flush_iotlb(iopte0, npages);
-	return busa0 + off;
-}
+	वापस busa0 + off;
+पूर्ण
 
-static dma_addr_t sbus_iommu_map_page_gflush(struct device *dev,
-		struct page *page, unsigned long offset, size_t len,
-		enum dma_data_direction dir, unsigned long attrs)
-{
-	flush_page_for_dma(0);
-	return __sbus_iommu_map_page(dev, page, offset, len, false);
-}
+अटल dma_addr_t sbus_iommu_map_page_gflush(काष्ठा device *dev,
+		काष्ठा page *page, अचिन्हित दीर्घ offset, माप_प्रकार len,
+		क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
+	flush_page_क्रम_dma(0);
+	वापस __sbus_iommu_map_page(dev, page, offset, len, false);
+पूर्ण
 
-static dma_addr_t sbus_iommu_map_page_pflush(struct device *dev,
-		struct page *page, unsigned long offset, size_t len,
-		enum dma_data_direction dir, unsigned long attrs)
-{
-	return __sbus_iommu_map_page(dev, page, offset, len, true);
-}
+अटल dma_addr_t sbus_iommu_map_page_pflush(काष्ठा device *dev,
+		काष्ठा page *page, अचिन्हित दीर्घ offset, माप_प्रकार len,
+		क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
+	वापस __sbus_iommu_map_page(dev, page, offset, len, true);
+पूर्ण
 
-static int __sbus_iommu_map_sg(struct device *dev, struct scatterlist *sgl,
-		int nents, enum dma_data_direction dir, unsigned long attrs,
+अटल पूर्णांक __sbus_iommu_map_sg(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs,
 		bool per_page_flush)
-{
-	struct scatterlist *sg;
-	int j;
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक j;
 
-	for_each_sg(sgl, sg, nents, j) {
+	क्रम_each_sg(sgl, sg, nents, j) अणु
 		sg->dma_address =__sbus_iommu_map_page(dev, sg_page(sg),
 				sg->offset, sg->length, per_page_flush);
-		if (sg->dma_address == DMA_MAPPING_ERROR)
-			return 0;
+		अगर (sg->dma_address == DMA_MAPPING_ERROR)
+			वापस 0;
 		sg->dma_length = sg->length;
-	}
+	पूर्ण
 
-	return nents;
-}
+	वापस nents;
+पूर्ण
 
-static int sbus_iommu_map_sg_gflush(struct device *dev, struct scatterlist *sgl,
-		int nents, enum dma_data_direction dir, unsigned long attrs)
-{
-	flush_page_for_dma(0);
-	return __sbus_iommu_map_sg(dev, sgl, nents, dir, attrs, false);
-}
+अटल पूर्णांक sbus_iommu_map_sg_gflush(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
+	flush_page_क्रम_dma(0);
+	वापस __sbus_iommu_map_sg(dev, sgl, nents, dir, attrs, false);
+पूर्ण
 
-static int sbus_iommu_map_sg_pflush(struct device *dev, struct scatterlist *sgl,
-		int nents, enum dma_data_direction dir, unsigned long attrs)
-{
-	return __sbus_iommu_map_sg(dev, sgl, nents, dir, attrs, true);
-}
+अटल पूर्णांक sbus_iommu_map_sg_pflush(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
+	वापस __sbus_iommu_map_sg(dev, sgl, nents, dir, attrs, true);
+पूर्ण
 
-static void sbus_iommu_unmap_page(struct device *dev, dma_addr_t dma_addr,
-		size_t len, enum dma_data_direction dir, unsigned long attrs)
-{
-	struct iommu_struct *iommu = dev->archdata.iommu;
-	unsigned int busa = dma_addr & PAGE_MASK;
-	unsigned long off = dma_addr & ~PAGE_MASK;
-	unsigned int npages = (off + len + PAGE_SIZE-1) >> PAGE_SHIFT;
-	unsigned int ioptex = (busa - iommu->start) >> PAGE_SHIFT;
-	unsigned int i;
+अटल व्योम sbus_iommu_unmap_page(काष्ठा device *dev, dma_addr_t dma_addr,
+		माप_प्रकार len, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा iommu_काष्ठा *iommu = dev->archdata.iommu;
+	अचिन्हित पूर्णांक busa = dma_addr & PAGE_MASK;
+	अचिन्हित दीर्घ off = dma_addr & ~PAGE_MASK;
+	अचिन्हित पूर्णांक npages = (off + len + PAGE_SIZE-1) >> PAGE_SHIFT;
+	अचिन्हित पूर्णांक ioptex = (busa - iommu->start) >> PAGE_SHIFT;
+	अचिन्हित पूर्णांक i;
 
 	BUG_ON(busa < iommu->start);
-	for (i = 0; i < npages; i++) {
+	क्रम (i = 0; i < npages; i++) अणु
 		iopte_val(iommu->page_table[ioptex + i]) = 0;
 		iommu_invalidate_page(iommu->regs, busa);
 		busa += PAGE_SIZE;
-	}
+	पूर्ण
 	bit_map_clear(&iommu->usemap, ioptex, npages);
-}
+पूर्ण
 
-static void sbus_iommu_unmap_sg(struct device *dev, struct scatterlist *sgl,
-		int nents, enum dma_data_direction dir, unsigned long attrs)
-{
-	struct scatterlist *sg;
-	int i;
+अटल व्योम sbus_iommu_unmap_sg(काष्ठा device *dev, काष्ठा scatterlist *sgl,
+		पूर्णांक nents, क्रमागत dma_data_direction dir, अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक i;
 
-	for_each_sg(sgl, sg, nents, i) {
+	क्रम_each_sg(sgl, sg, nents, i) अणु
 		sbus_iommu_unmap_page(dev, sg->dma_address, sg->length, dir,
 				attrs);
 		sg->dma_address = 0x21212121;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SBUS
-static void *sbus_iommu_alloc(struct device *dev, size_t len,
-		dma_addr_t *dma_handle, gfp_t gfp, unsigned long attrs)
-{
-	struct iommu_struct *iommu = dev->archdata.iommu;
-	unsigned long va, addr, page, end, ret;
+#अगर_घोषित CONFIG_SBUS
+अटल व्योम *sbus_iommu_alloc(काष्ठा device *dev, माप_प्रकार len,
+		dma_addr_t *dma_handle, gfp_t gfp, अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा iommu_काष्ठा *iommu = dev->archdata.iommu;
+	अचिन्हित दीर्घ va, addr, page, end, ret;
 	iopte_t *iopte = iommu->page_table;
 	iopte_t *first;
-	int ioptex;
+	पूर्णांक ioptex;
 
-	/* XXX So what is maxphys for us and how do drivers know it? */
-	if (!len || len > 256 * 1024)
-		return NULL;
+	/* XXX So what is maxphys क्रम us and how करो drivers know it? */
+	अगर (!len || len > 256 * 1024)
+		वापस शून्य;
 
 	len = PAGE_ALIGN(len);
-	va = __get_free_pages(gfp | __GFP_ZERO, get_order(len));
-	if (va == 0)
-		return NULL;
+	va = __get_मुक्त_pages(gfp | __GFP_ZERO, get_order(len));
+	अगर (va == 0)
+		वापस शून्य;
 
 	addr = ret = sparc_dma_alloc_resource(dev, len);
-	if (!addr)
-		goto out_free_pages;
+	अगर (!addr)
+		जाओ out_मुक्त_pages;
 
 	BUG_ON((va & ~PAGE_MASK) != 0);
 	BUG_ON((addr & ~PAGE_MASK) != 0);
@@ -338,45 +339,45 @@ static void *sbus_iommu_alloc(struct device *dev, size_t len,
 	/* page color = physical address */
 	ioptex = bit_map_string_get(&iommu->usemap, len >> PAGE_SHIFT,
 		addr >> PAGE_SHIFT);
-	if (ioptex < 0)
+	अगर (ioptex < 0)
 		panic("iommu out");
 
 	iopte += ioptex;
 	first = iopte;
 	end = addr + len;
-	while(addr < end) {
+	जबतक(addr < end) अणु
 		page = va;
-		{
+		अणु
 			pmd_t *pmdp;
 			pte_t *ptep;
 
-			if (viking_mxcc_present)
+			अगर (viking_mxcc_present)
 				viking_mxcc_flush_page(page);
-			else if (viking_flush)
+			अन्यथा अगर (viking_flush)
 				viking_flush_page(page);
-			else
+			अन्यथा
 				__flush_page_to_ram(page);
 
 			pmdp = pmd_off_k(addr);
 			ptep = pte_offset_map(pmdp, addr);
 
 			set_pte(ptep, mk_pte(virt_to_page(page), dvma_prot));
-		}
+		पूर्ण
 		iopte_val(*iopte++) =
 		    MKIOPTE(page_to_pfn(virt_to_page(page)), ioperm_noc);
 		addr += PAGE_SIZE;
 		va += PAGE_SIZE;
-	}
-	/* P3: why do we need this?
+	पूर्ण
+	/* P3: why करो we need this?
 	 *
 	 * DAVEM: Because there are several aspects, none of which
-	 *        are handled by a single interface.  Some cpus are
+	 *        are handled by a single पूर्णांकerface.  Some cpus are
 	 *        completely not I/O DMA coherent, and some have
-	 *        virtually indexed caches.  The driver DMA flushing
-	 *        methods handle the former case, but here during
-	 *        IOMMU page table modifications, and usage of non-cacheable
+	 *        भवly indexed caches.  The driver DMA flushing
+	 *        methods handle the क्रमmer हाल, but here during
+	 *        IOMMU page table modअगरications, and usage of non-cacheable
 	 *        cpu mappings of pages potentially in the cpu caches, we have
-	 *        to handle the latter case as well.
+	 *        to handle the latter हाल as well.
 	 */
 	flush_cache_all();
 	iommu_flush_iotlb(first, len >> PAGE_SHIFT);
@@ -384,71 +385,71 @@ static void *sbus_iommu_alloc(struct device *dev, size_t len,
 	iommu_invalidate(iommu->regs);
 
 	*dma_handle = iommu->start + (ioptex << PAGE_SHIFT);
-	return (void *)ret;
+	वापस (व्योम *)ret;
 
-out_free_pages:
-	free_pages(va, get_order(len));
-	return NULL;
-}
+out_मुक्त_pages:
+	मुक्त_pages(va, get_order(len));
+	वापस शून्य;
+पूर्ण
 
-static void sbus_iommu_free(struct device *dev, size_t len, void *cpu_addr,
-			       dma_addr_t busa, unsigned long attrs)
-{
-	struct iommu_struct *iommu = dev->archdata.iommu;
+अटल व्योम sbus_iommu_मुक्त(काष्ठा device *dev, माप_प्रकार len, व्योम *cpu_addr,
+			       dma_addr_t busa, अचिन्हित दीर्घ attrs)
+अणु
+	काष्ठा iommu_काष्ठा *iommu = dev->archdata.iommu;
 	iopte_t *iopte = iommu->page_table;
-	struct page *page = virt_to_page(cpu_addr);
-	int ioptex = (busa - iommu->start) >> PAGE_SHIFT;
-	unsigned long end;
+	काष्ठा page *page = virt_to_page(cpu_addr);
+	पूर्णांक ioptex = (busa - iommu->start) >> PAGE_SHIFT;
+	अचिन्हित दीर्घ end;
 
-	if (!sparc_dma_free_resource(cpu_addr, len))
-		return;
+	अगर (!sparc_dma_मुक्त_resource(cpu_addr, len))
+		वापस;
 
 	BUG_ON((busa & ~PAGE_MASK) != 0);
 	BUG_ON((len & ~PAGE_MASK) != 0);
 
 	iopte += ioptex;
 	end = busa + len;
-	while (busa < end) {
+	जबतक (busa < end) अणु
 		iopte_val(*iopte++) = 0;
 		busa += PAGE_SIZE;
-	}
+	पूर्ण
 	flush_tlb_all();
 	iommu_invalidate(iommu->regs);
 	bit_map_clear(&iommu->usemap, ioptex, len >> PAGE_SHIFT);
 
-	__free_pages(page, get_order(len));
-}
-#endif
+	__मुक्त_pages(page, get_order(len));
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dma_map_ops sbus_iommu_dma_gflush_ops = {
-#ifdef CONFIG_SBUS
+अटल स्थिर काष्ठा dma_map_ops sbus_iommu_dma_gflush_ops = अणु
+#अगर_घोषित CONFIG_SBUS
 	.alloc			= sbus_iommu_alloc,
-	.free			= sbus_iommu_free,
-#endif
+	.मुक्त			= sbus_iommu_मुक्त,
+#पूर्ण_अगर
 	.map_page		= sbus_iommu_map_page_gflush,
 	.unmap_page		= sbus_iommu_unmap_page,
 	.map_sg			= sbus_iommu_map_sg_gflush,
 	.unmap_sg		= sbus_iommu_unmap_sg,
-};
+पूर्ण;
 
-static const struct dma_map_ops sbus_iommu_dma_pflush_ops = {
-#ifdef CONFIG_SBUS
+अटल स्थिर काष्ठा dma_map_ops sbus_iommu_dma_pflush_ops = अणु
+#अगर_घोषित CONFIG_SBUS
 	.alloc			= sbus_iommu_alloc,
-	.free			= sbus_iommu_free,
-#endif
+	.मुक्त			= sbus_iommu_मुक्त,
+#पूर्ण_अगर
 	.map_page		= sbus_iommu_map_page_pflush,
 	.unmap_page		= sbus_iommu_unmap_page,
 	.map_sg			= sbus_iommu_map_sg_pflush,
 	.unmap_sg		= sbus_iommu_unmap_sg,
-};
+पूर्ण;
 
-void __init ld_mmu_iommu(void)
-{
-	if (viking_mxcc_present || srmmu_modtype == HyperSparc) {
+व्योम __init ld_mmu_iommu(व्योम)
+अणु
+	अगर (viking_mxcc_present || srmmu_modtype == HyperSparc) अणु
 		dvma_prot = __pgprot(SRMMU_CACHE | SRMMU_ET_PTE | SRMMU_PRIV);
 		ioperm_noc = IOPTE_CACHE | IOPTE_WRITE | IOPTE_VALID;
-	} else {
+	पूर्ण अन्यथा अणु
 		dvma_prot = __pgprot(SRMMU_ET_PTE | SRMMU_PRIV);
 		ioperm_noc = IOPTE_WRITE | IOPTE_VALID;
-	}
-}
+	पूर्ण
+पूर्ण

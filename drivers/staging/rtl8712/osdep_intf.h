@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#ifndef __OSDEP_INTF_H_
-#define __OSDEP_INTF_H_
+#अगर_अघोषित __OSDEP_INTF_H_
+#घोषणा __OSDEP_INTF_H_
 
-#include "osdep_service.h"
-#include "drv_types.h"
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
 
-#define RND4(x)	(((x >> 2) + ((x & 3) != 0)) << 2)
+#घोषणा RND4(x)	(((x >> 2) + ((x & 3) != 0)) << 2)
 
-struct intf_priv {
-	u8 *intf_dev;
-	/* when in USB, IO is through interrupt in/out endpoints */
-	struct usb_device *udev;
-	struct urb *piorw_urb;
-	struct completion io_retevt_comp;
-};
+काष्ठा पूर्णांकf_priv अणु
+	u8 *पूर्णांकf_dev;
+	/* when in USB, IO is through पूर्णांकerrupt in/out endpoपूर्णांकs */
+	काष्ठा usb_device *udev;
+	काष्ठा urb *piorw_urb;
+	काष्ठा completion io_retevt_comp;
+पूर्ण;
 
-int r871x_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
+पूर्णांक r871x_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
 
-#endif	/*_OSDEP_INTF_H_*/
+#पूर्ण_अगर	/*_OSDEP_INTF_H_*/

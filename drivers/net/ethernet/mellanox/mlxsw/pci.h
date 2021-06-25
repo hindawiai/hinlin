@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2016-2018 Mellanox Technologies. All rights reserved */
 
-#ifndef _MLXSW_PCI_H
-#define _MLXSW_PCI_H
+#अगर_अघोषित _MLXSW_PCI_H
+#घोषणा _MLXSW_PCI_H
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#define PCI_DEVICE_ID_MELLANOX_SWITCHX2		0xc738
-#define PCI_DEVICE_ID_MELLANOX_SPECTRUM		0xcb84
-#define PCI_DEVICE_ID_MELLANOX_SPECTRUM2	0xcf6c
-#define PCI_DEVICE_ID_MELLANOX_SPECTRUM3	0xcf70
-#define PCI_DEVICE_ID_MELLANOX_SWITCHIB		0xcb20
-#define PCI_DEVICE_ID_MELLANOX_SWITCHIB2	0xcf08
+#घोषणा PCI_DEVICE_ID_MELLANOX_SWITCHX2		0xc738
+#घोषणा PCI_DEVICE_ID_MELLANOX_SPECTRUM		0xcb84
+#घोषणा PCI_DEVICE_ID_MELLANOX_SPECTRUM2	0xcf6c
+#घोषणा PCI_DEVICE_ID_MELLANOX_SPECTRUM3	0xcf70
+#घोषणा PCI_DEVICE_ID_MELLANOX_SWITCHIB		0xcb20
+#घोषणा PCI_DEVICE_ID_MELLANOX_SWITCHIB2	0xcf08
 
-#if IS_ENABLED(CONFIG_MLXSW_PCI)
+#अगर IS_ENABLED(CONFIG_MLXSW_PCI)
 
-int mlxsw_pci_driver_register(struct pci_driver *pci_driver);
-void mlxsw_pci_driver_unregister(struct pci_driver *pci_driver);
+पूर्णांक mlxsw_pci_driver_रेजिस्टर(काष्ठा pci_driver *pci_driver);
+व्योम mlxsw_pci_driver_unरेजिस्टर(काष्ठा pci_driver *pci_driver);
 
-#else
+#अन्यथा
 
-static inline int
-mlxsw_pci_driver_register(struct pci_driver *pci_driver)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+mlxsw_pci_driver_रेजिस्टर(काष्ठा pci_driver *pci_driver)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void
-mlxsw_pci_driver_unregister(struct pci_driver *pci_driver)
-{
-}
+अटल अंतरभूत व्योम
+mlxsw_pci_driver_unरेजिस्टर(काष्ठा pci_driver *pci_driver)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

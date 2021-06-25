@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MODULE_H
-#define _ASM_MODULE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MODULE_H
+#घोषणा _ASM_MODULE_H
 
-#include <linux/list.h>
-#include <linux/elf.h>
-#include <asm/extable.h>
+#समावेश <linux/list.h>
+#समावेश <linux/elf.h>
+#समावेश <यंत्र/extable.h>
 
-struct mod_arch_specific {
+काष्ठा mod_arch_specअगरic अणु
 	/* Data Bus Error exception tables */
-	struct list_head dbe_list;
-	const struct exception_table_entry *dbe_start;
-	const struct exception_table_entry *dbe_end;
-	struct mips_hi16 *r_mips_hi16_list;
-};
+	काष्ठा list_head dbe_list;
+	स्थिर काष्ठा exception_table_entry *dbe_start;
+	स्थिर काष्ठा exception_table_entry *dbe_end;
+	काष्ठा mips_hi16 *r_mips_hi16_list;
+पूर्ण;
 
-typedef uint8_t Elf64_Byte;		/* Type for a 8-bit quantity.  */
+प्रकार uपूर्णांक8_t Elf64_Byte;		/* Type क्रम a 8-bit quantity.  */
 
-typedef struct {
+प्रकार काष्ठा अणु
 	Elf64_Addr r_offset;			/* Address of relocation.  */
 	Elf64_Word r_sym;			/* Symbol index.  */
 	Elf64_Byte r_ssym;			/* Special symbol.  */
 	Elf64_Byte r_type3;			/* Third relocation.  */
 	Elf64_Byte r_type2;			/* Second relocation.  */
 	Elf64_Byte r_type;			/* First relocation.  */
-} Elf64_Mips_Rel;
+पूर्ण Elf64_Mips_Rel;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	Elf64_Addr r_offset;			/* Address of relocation.  */
 	Elf64_Word r_sym;			/* Symbol index.  */
 	Elf64_Byte r_ssym;			/* Special symbol.  */
@@ -33,54 +34,54 @@ typedef struct {
 	Elf64_Byte r_type2;			/* Second relocation.  */
 	Elf64_Byte r_type;			/* First relocation.  */
 	Elf64_Sxword r_addend;			/* Addend.  */
-} Elf64_Mips_Rela;
+पूर्ण Elf64_Mips_Rela;
 
-#ifdef CONFIG_32BIT
-#define Elf_Shdr	Elf32_Shdr
-#define Elf_Sym		Elf32_Sym
-#define Elf_Ehdr	Elf32_Ehdr
-#define Elf_Addr	Elf32_Addr
-#define Elf_Rel		Elf32_Rel
-#define Elf_Rela	Elf32_Rela
-#define ELF_R_TYPE(X)	ELF32_R_TYPE(X)
-#define ELF_R_SYM(X)	ELF32_R_SYM(X)
+#अगर_घोषित CONFIG_32BIT
+#घोषणा Elf_Shdr	Elf32_Shdr
+#घोषणा Elf_Sym		Elf32_Sym
+#घोषणा Elf_Ehdr	Elf32_Ehdr
+#घोषणा Elf_Addr	Elf32_Addr
+#घोषणा Elf_Rel		Elf32_Rel
+#घोषणा Elf_Rela	Elf32_Rela
+#घोषणा ELF_R_TYPE(X)	ELF32_R_TYPE(X)
+#घोषणा ELF_R_SYM(X)	ELF32_R_SYM(X)
 
-#define Elf_Mips_Rel	Elf32_Rel
-#define Elf_Mips_Rela	Elf32_Rela
+#घोषणा Elf_Mips_Rel	Elf32_Rel
+#घोषणा Elf_Mips_Rela	Elf32_Rela
 
-#define ELF_MIPS_R_SYM(rel) ELF32_R_SYM((rel).r_info)
-#define ELF_MIPS_R_TYPE(rel) ELF32_R_TYPE((rel).r_info)
+#घोषणा ELF_MIPS_R_SYM(rel) ELF32_R_SYM((rel).r_info)
+#घोषणा ELF_MIPS_R_TYPE(rel) ELF32_R_TYPE((rel).r_info)
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_64BIT
-#define Elf_Shdr	Elf64_Shdr
-#define Elf_Sym		Elf64_Sym
-#define Elf_Ehdr	Elf64_Ehdr
-#define Elf_Addr	Elf64_Addr
-#define Elf_Rel		Elf64_Rel
-#define Elf_Rela	Elf64_Rela
-#define ELF_R_TYPE(X)	ELF64_R_TYPE(X)
-#define ELF_R_SYM(X)	ELF64_R_SYM(X)
+#अगर_घोषित CONFIG_64BIT
+#घोषणा Elf_Shdr	Elf64_Shdr
+#घोषणा Elf_Sym		Elf64_Sym
+#घोषणा Elf_Ehdr	Elf64_Ehdr
+#घोषणा Elf_Addr	Elf64_Addr
+#घोषणा Elf_Rel		Elf64_Rel
+#घोषणा Elf_Rela	Elf64_Rela
+#घोषणा ELF_R_TYPE(X)	ELF64_R_TYPE(X)
+#घोषणा ELF_R_SYM(X)	ELF64_R_SYM(X)
 
-#define Elf_Mips_Rel	Elf64_Mips_Rel
-#define Elf_Mips_Rela	Elf64_Mips_Rela
+#घोषणा Elf_Mips_Rel	Elf64_Mips_Rel
+#घोषणा Elf_Mips_Rela	Elf64_Mips_Rela
 
-#define ELF_MIPS_R_SYM(rel) ((rel).r_sym)
-#define ELF_MIPS_R_TYPE(rel) ((rel).r_type)
+#घोषणा ELF_MIPS_R_SYM(rel) ((rel).r_sym)
+#घोषणा ELF_MIPS_R_TYPE(rel) ((rel).r_type)
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MODULES
-/* Given an address, look for it in the exception tables. */
-const struct exception_table_entry*search_module_dbetables(unsigned long addr);
-#else
-/* Given an address, look for it in the exception tables. */
-static inline const struct exception_table_entry *
-search_module_dbetables(unsigned long addr)
-{
-	return NULL;
-}
-#endif
+#अगर_घोषित CONFIG_MODULES
+/* Given an address, look क्रम it in the exception tables. */
+स्थिर काष्ठा exception_table_entry*search_module_dbetables(अचिन्हित दीर्घ addr);
+#अन्यथा
+/* Given an address, look क्रम it in the exception tables. */
+अटल अंतरभूत स्थिर काष्ठा exception_table_entry *
+search_module_dbetables(अचिन्हित दीर्घ addr)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_MODULE_H */
+#पूर्ण_अगर /* _ASM_MODULE_H */

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Platform Data for LTC4245 hardware monitor chip
+ * Platक्रमm Data क्रम LTC4245 hardware monitor chip
  *
  * Copyright (c) 2010 Ira W. Snyder <iws@ovro.caltech.edu>
  */
 
-#ifndef LINUX_LTC4245_H
-#define LINUX_LTC4245_H
+#अगर_अघोषित LINUX_LTC4245_H
+#घोषणा LINUX_LTC4245_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct ltc4245_platform_data {
+काष्ठा ltc4245_platक्रमm_data अणु
 	bool use_extra_gpios;
-};
+पूर्ण;
 
-#endif /* LINUX_LTC4245_H */
+#पूर्ण_अगर /* LINUX_LTC4245_H */

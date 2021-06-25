@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ISCSI_CHAP_H_
-#define _ISCSI_CHAP_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ISCSI_CHAP_H_
+#घोषणा _ISCSI_CHAP_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define CHAP_DIGEST_UNKNOWN	0
-#define CHAP_DIGEST_MD5		5
-#define CHAP_DIGEST_SHA1	6
-#define CHAP_DIGEST_SHA256	7
-#define CHAP_DIGEST_SHA3_256	8
+#घोषणा CHAP_DIGEST_UNKNOWN	0
+#घोषणा CHAP_DIGEST_MD5		5
+#घोषणा CHAP_DIGEST_SHA1	6
+#घोषणा CHAP_DIGEST_SHA256	7
+#घोषणा CHAP_DIGEST_SHA3_256	8
 
-#define MAX_CHAP_CHALLENGE_LEN	32
-#define CHAP_CHALLENGE_STR_LEN	4096
-#define MAX_RESPONSE_LENGTH	128	/* sufficient for SHA3 256 */
-#define	MAX_CHAP_N_SIZE		512
+#घोषणा MAX_CHAP_CHALLENGE_LEN	32
+#घोषणा CHAP_CHALLENGE_STR_LEN	4096
+#घोषणा MAX_RESPONSE_LENGTH	128	/* sufficient क्रम SHA3 256 */
+#घोषणा	MAX_CHAP_N_SIZE		512
 
-#define MD5_SIGNATURE_SIZE	16	/* 16 bytes in a MD5 message digest */
-#define SHA1_SIGNATURE_SIZE	20	/* 20 bytes in a SHA1 message digest */
-#define SHA256_SIGNATURE_SIZE	32	/* 32 bytes in a SHA256 message digest */
-#define SHA3_256_SIGNATURE_SIZE	32	/* 32 bytes in a SHA3 256 message digest */
+#घोषणा MD5_SIGNATURE_SIZE	16	/* 16 bytes in a MD5 message digest */
+#घोषणा SHA1_SIGNATURE_SIZE	20	/* 20 bytes in a SHA1 message digest */
+#घोषणा SHA256_SIGNATURE_SIZE	32	/* 32 bytes in a SHA256 message digest */
+#घोषणा SHA3_256_SIGNATURE_SIZE	32	/* 32 bytes in a SHA3 256 message digest */
 
-#define CHAP_STAGE_CLIENT_A	1
-#define CHAP_STAGE_SERVER_AIC	2
-#define CHAP_STAGE_CLIENT_NR	3
-#define CHAP_STAGE_CLIENT_NRIC	4
-#define CHAP_STAGE_SERVER_NR	5
+#घोषणा CHAP_STAGE_CLIENT_A	1
+#घोषणा CHAP_STAGE_SERVER_AIC	2
+#घोषणा CHAP_STAGE_CLIENT_NR	3
+#घोषणा CHAP_STAGE_CLIENT_NRIC	4
+#घोषणा CHAP_STAGE_SERVER_NR	5
 
-struct iscsi_node_auth;
-struct iscsi_conn;
+काष्ठा iscsi_node_auth;
+काष्ठा iscsi_conn;
 
-extern u32 chap_main_loop(struct iscsi_conn *, struct iscsi_node_auth *, char *, char *,
-				int *, int *);
+बाह्य u32 chap_मुख्य_loop(काष्ठा iscsi_conn *, काष्ठा iscsi_node_auth *, अक्षर *, अक्षर *,
+				पूर्णांक *, पूर्णांक *);
 
-struct iscsi_chap {
-	unsigned char	id;
-	unsigned char	challenge[MAX_CHAP_CHALLENGE_LEN];
-	unsigned int	challenge_len;
-	unsigned char	*digest_name;
-	unsigned int	digest_size;
-	unsigned int	authenticate_target;
-	unsigned int	chap_state;
-} ____cacheline_aligned;
+काष्ठा iscsi_chap अणु
+	अचिन्हित अक्षर	id;
+	अचिन्हित अक्षर	challenge[MAX_CHAP_CHALLENGE_LEN];
+	अचिन्हित पूर्णांक	challenge_len;
+	अचिन्हित अक्षर	*digest_name;
+	अचिन्हित पूर्णांक	digest_size;
+	अचिन्हित पूर्णांक	authenticate_target;
+	अचिन्हित पूर्णांक	chap_state;
+पूर्ण ____cacheline_aligned;
 
-#endif   /*** _ISCSI_CHAP_H_ ***/
+#पूर्ण_अगर   /*** _ISCSI_CHAP_H_ ***/

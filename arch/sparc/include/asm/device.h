@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Arch specific extensions to struct device
+ * Arch specअगरic extensions to काष्ठा device
  */
-#ifndef _ASM_SPARC_DEVICE_H
-#define _ASM_SPARC_DEVICE_H
+#अगर_अघोषित _ASM_SPARC_DEVICE_H
+#घोषणा _ASM_SPARC_DEVICE_H
 
-#include <asm/openprom.h>
+#समावेश <यंत्र/खोलोprom.h>
 
-struct device_node;
-struct platform_device;
+काष्ठा device_node;
+काष्ठा platक्रमm_device;
 
-struct dev_archdata {
-	void			*iommu;
-	void			*stc;
-	void			*host_controller;
-	struct platform_device	*op;
-	int			numa_node;
-};
+काष्ठा dev_archdata अणु
+	व्योम			*iommu;
+	व्योम			*stc;
+	व्योम			*host_controller;
+	काष्ठा platक्रमm_device	*op;
+	पूर्णांक			numa_node;
+पूर्ण;
 
-void of_propagate_archdata(struct platform_device *bus);
+व्योम of_propagate_archdata(काष्ठा platक्रमm_device *bus);
 
-struct pdev_archdata {
-	struct resource		resource[PROMREG_MAX];
-	unsigned int		irqs[PROMINTR_MAX];
-	int			num_irqs;
-};
+काष्ठा pdev_archdata अणु
+	काष्ठा resource		resource[PROMREG_MAX];
+	अचिन्हित पूर्णांक		irqs[PROMINTR_MAX];
+	पूर्णांक			num_irqs;
+पूर्ण;
 
-#endif /* _ASM_SPARC_DEVICE_H */
+#पूर्ण_अगर /* _ASM_SPARC_DEVICE_H */

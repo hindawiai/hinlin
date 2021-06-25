@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2010 Broadcom Corporation
  */
 
-#ifndef BRCMFMAC_DEBUG_H
-#define BRCMFMAC_DEBUG_H
+#अगर_अघोषित BRCMFMAC_DEBUG_H
+#घोषणा BRCMFMAC_DEBUG_H
 
-#include <linux/net.h>	/* net_ratelimit() */
+#समावेश <linux/net.h>	/* net_ratelimit() */
 
 /* message levels */
-#define BRCMF_TRACE_VAL		0x00000002
-#define BRCMF_INFO_VAL		0x00000004
-#define BRCMF_DATA_VAL		0x00000008
-#define BRCMF_CTL_VAL		0x00000010
-#define BRCMF_TIMER_VAL		0x00000020
-#define BRCMF_HDRS_VAL		0x00000040
-#define BRCMF_BYTES_VAL		0x00000080
-#define BRCMF_INTR_VAL		0x00000100
-#define BRCMF_GLOM_VAL		0x00000200
-#define BRCMF_EVENT_VAL		0x00000400
-#define BRCMF_BTA_VAL		0x00000800
-#define BRCMF_FIL_VAL		0x00001000
-#define BRCMF_USB_VAL		0x00002000
-#define BRCMF_SCAN_VAL		0x00004000
-#define BRCMF_CONN_VAL		0x00008000
-#define BRCMF_BCDC_VAL		0x00010000
-#define BRCMF_SDIO_VAL		0x00020000
-#define BRCMF_MSGBUF_VAL	0x00040000
-#define BRCMF_PCIE_VAL		0x00080000
-#define BRCMF_FWCON_VAL		0x00100000
+#घोषणा BRCMF_TRACE_VAL		0x00000002
+#घोषणा BRCMF_INFO_VAL		0x00000004
+#घोषणा BRCMF_DATA_VAL		0x00000008
+#घोषणा BRCMF_CTL_VAL		0x00000010
+#घोषणा BRCMF_TIMER_VAL		0x00000020
+#घोषणा BRCMF_HDRS_VAL		0x00000040
+#घोषणा BRCMF_BYTES_VAL		0x00000080
+#घोषणा BRCMF_INTR_VAL		0x00000100
+#घोषणा BRCMF_GLOM_VAL		0x00000200
+#घोषणा BRCMF_EVENT_VAL		0x00000400
+#घोषणा BRCMF_BTA_VAL		0x00000800
+#घोषणा BRCMF_FIL_VAL		0x00001000
+#घोषणा BRCMF_USB_VAL		0x00002000
+#घोषणा BRCMF_SCAN_VAL		0x00004000
+#घोषणा BRCMF_CONN_VAL		0x00008000
+#घोषणा BRCMF_BCDC_VAL		0x00010000
+#घोषणा BRCMF_SDIO_VAL		0x00020000
+#घोषणा BRCMF_MSGBUF_VAL	0x00040000
+#घोषणा BRCMF_PCIE_VAL		0x00080000
+#घोषणा BRCMF_FWCON_VAL		0x00100000
 
-/* set default print format */
-#undef pr_fmt
-#define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
+/* set शेष prपूर्णांक क्रमmat */
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 
-struct brcmf_bus;
+काष्ठा brcmf_bus;
 
-__printf(3, 4)
-void __brcmf_err(struct brcmf_bus *bus, const char *func, const char *fmt, ...);
-/* Macro for error messages. When debugging / tracing the driver all error
+__म_लिखो(3, 4)
+व्योम __brcmf_err(काष्ठा brcmf_bus *bus, स्थिर अक्षर *func, स्थिर अक्षर *fmt, ...);
+/* Macro क्रम error messages. When debugging / tracing the driver all error
  * messages are important to us.
  */
-#ifndef brcmf_err
-#define brcmf_err(fmt, ...)						\
-	do {								\
-		if (IS_ENABLED(CONFIG_BRCMDBG) ||			\
+#अगर_अघोषित brcmf_err
+#घोषणा brcmf_err(fmt, ...)						\
+	करो अणु								\
+		अगर (IS_ENABLED(CONFIG_BRCMDBG) ||			\
 		    IS_ENABLED(CONFIG_BRCM_TRACING) ||			\
 		    net_ratelimit())					\
-			__brcmf_err(NULL, __func__, fmt, ##__VA_ARGS__);\
-	} while (0)
-#endif
+			__brcmf_err(शून्य, __func__, fmt, ##__VA_ARGS__);\
+	पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define bphy_err(drvr, fmt, ...)					\
-	do {								\
-		if (IS_ENABLED(CONFIG_BRCMDBG) ||			\
+#घोषणा bphy_err(drvr, fmt, ...)					\
+	करो अणु								\
+		अगर (IS_ENABLED(CONFIG_BRCMDBG) ||			\
 		    IS_ENABLED(CONFIG_BRCM_TRACING) ||			\
 		    net_ratelimit())					\
 			wiphy_err((drvr)->wiphy, "%s: " fmt, __func__,	\
 				  ##__VA_ARGS__);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#if defined(DEBUG) || defined(CONFIG_BRCM_TRACING)
+#अगर defined(DEBUG) || defined(CONFIG_BRCM_TRACING)
 
 /* For debug/tracing purposes treat info messages as errors */
-#define brcmf_info brcmf_err
+#घोषणा brcmf_info brcmf_err
 
-__printf(3, 4)
-void __brcmf_dbg(u32 level, const char *func, const char *fmt, ...);
-#define brcmf_dbg(level, fmt, ...)				\
-do {								\
+__म_लिखो(3, 4)
+व्योम __brcmf_dbg(u32 level, स्थिर अक्षर *func, स्थिर अक्षर *fmt, ...);
+#घोषणा brcmf_dbg(level, fmt, ...)				\
+करो अणु								\
 	__brcmf_dbg(BRCMF_##level##_VAL, __func__,		\
 		    fmt, ##__VA_ARGS__);			\
-} while (0)
-#define BRCMF_DATA_ON()		(brcmf_msg_level & BRCMF_DATA_VAL)
-#define BRCMF_CTL_ON()		(brcmf_msg_level & BRCMF_CTL_VAL)
-#define BRCMF_HDRS_ON()		(brcmf_msg_level & BRCMF_HDRS_VAL)
-#define BRCMF_BYTES_ON()	(brcmf_msg_level & BRCMF_BYTES_VAL)
-#define BRCMF_GLOM_ON()		(brcmf_msg_level & BRCMF_GLOM_VAL)
-#define BRCMF_EVENT_ON()	(brcmf_msg_level & BRCMF_EVENT_VAL)
-#define BRCMF_FIL_ON()		(brcmf_msg_level & BRCMF_FIL_VAL)
-#define BRCMF_FWCON_ON()	(brcmf_msg_level & BRCMF_FWCON_VAL)
-#define BRCMF_SCAN_ON()		(brcmf_msg_level & BRCMF_SCAN_VAL)
+पूर्ण जबतक (0)
+#घोषणा BRCMF_DATA_ON()		(brcmf_msg_level & BRCMF_DATA_VAL)
+#घोषणा BRCMF_CTL_ON()		(brcmf_msg_level & BRCMF_CTL_VAL)
+#घोषणा BRCMF_HDRS_ON()		(brcmf_msg_level & BRCMF_HDRS_VAL)
+#घोषणा BRCMF_BYTES_ON()	(brcmf_msg_level & BRCMF_BYTES_VAL)
+#घोषणा BRCMF_GLOM_ON()		(brcmf_msg_level & BRCMF_GLOM_VAL)
+#घोषणा BRCMF_EVENT_ON()	(brcmf_msg_level & BRCMF_EVENT_VAL)
+#घोषणा BRCMF_FIL_ON()		(brcmf_msg_level & BRCMF_FIL_VAL)
+#घोषणा BRCMF_FWCON_ON()	(brcmf_msg_level & BRCMF_FWCON_VAL)
+#घोषणा BRCMF_SCAN_ON()		(brcmf_msg_level & BRCMF_SCAN_VAL)
 
-#else /* defined(DEBUG) || defined(CONFIG_BRCM_TRACING) */
+#अन्यथा /* defined(DEBUG) || defined(CONFIG_BRCM_TRACING) */
 
-#define brcmf_info(fmt, ...)						\
-	do {								\
+#घोषणा brcmf_info(fmt, ...)						\
+	करो अणु								\
 		pr_info("%s: " fmt, __func__, ##__VA_ARGS__);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define brcmf_dbg(level, fmt, ...) no_printk(fmt, ##__VA_ARGS__)
+#घोषणा brcmf_dbg(level, fmt, ...) no_prपूर्णांकk(fmt, ##__VA_ARGS__)
 
-#define BRCMF_DATA_ON()		0
-#define BRCMF_CTL_ON()		0
-#define BRCMF_HDRS_ON()		0
-#define BRCMF_BYTES_ON()	0
-#define BRCMF_GLOM_ON()		0
-#define BRCMF_EVENT_ON()	0
-#define BRCMF_FIL_ON()		0
-#define BRCMF_FWCON_ON()	0
-#define BRCMF_SCAN_ON()		0
+#घोषणा BRCMF_DATA_ON()		0
+#घोषणा BRCMF_CTL_ON()		0
+#घोषणा BRCMF_HDRS_ON()		0
+#घोषणा BRCMF_BYTES_ON()	0
+#घोषणा BRCMF_GLOM_ON()		0
+#घोषणा BRCMF_EVENT_ON()	0
+#घोषणा BRCMF_FIL_ON()		0
+#घोषणा BRCMF_FWCON_ON()	0
+#घोषणा BRCMF_SCAN_ON()		0
 
-#endif /* defined(DEBUG) || defined(CONFIG_BRCM_TRACING) */
+#पूर्ण_अगर /* defined(DEBUG) || defined(CONFIG_BRCM_TRACING) */
 
-#define brcmf_dbg_hex_dump(test, data, len, fmt, ...)			\
-do {									\
-	trace_brcmf_hexdump((void *)data, len);				\
-	if (test)							\
+#घोषणा brcmf_dbg_hex_dump(test, data, len, fmt, ...)			\
+करो अणु									\
+	trace_brcmf_hexdump((व्योम *)data, len);				\
+	अगर (test)							\
 		brcmu_dbg_hex_dump(data, len, fmt, ##__VA_ARGS__);	\
-} while (0)
+पूर्ण जबतक (0)
 
-extern int brcmf_msg_level;
+बाह्य पूर्णांक brcmf_msg_level;
 
-struct brcmf_pub;
-#ifdef DEBUG
-struct dentry *brcmf_debugfs_get_devdir(struct brcmf_pub *drvr);
-void brcmf_debugfs_add_entry(struct brcmf_pub *drvr, const char *fn,
-			     int (*read_fn)(struct seq_file *seq, void *data));
-int brcmf_debug_create_memdump(struct brcmf_bus *bus, const void *data,
-			       size_t len);
-#else
-static inline struct dentry *brcmf_debugfs_get_devdir(struct brcmf_pub *drvr)
-{
-	return ERR_PTR(-ENOENT);
-}
-static inline
-void brcmf_debugfs_add_entry(struct brcmf_pub *drvr, const char *fn,
-			     int (*read_fn)(struct seq_file *seq, void *data))
-{ }
-static inline
-int brcmf_debug_create_memdump(struct brcmf_bus *bus, const void *data,
-			       size_t len)
-{
-	return 0;
-}
-#endif
+काष्ठा brcmf_pub;
+#अगर_घोषित DEBUG
+काष्ठा dentry *brcmf_debugfs_get_devdir(काष्ठा brcmf_pub *drvr);
+व्योम brcmf_debugfs_add_entry(काष्ठा brcmf_pub *drvr, स्थिर अक्षर *fn,
+			     पूर्णांक (*पढ़ो_fn)(काष्ठा seq_file *seq, व्योम *data));
+पूर्णांक brcmf_debug_create_memdump(काष्ठा brcmf_bus *bus, स्थिर व्योम *data,
+			       माप_प्रकार len);
+#अन्यथा
+अटल अंतरभूत काष्ठा dentry *brcmf_debugfs_get_devdir(काष्ठा brcmf_pub *drvr)
+अणु
+	वापस ERR_PTR(-ENOENT);
+पूर्ण
+अटल अंतरभूत
+व्योम brcmf_debugfs_add_entry(काष्ठा brcmf_pub *drvr, स्थिर अक्षर *fn,
+			     पूर्णांक (*पढ़ो_fn)(काष्ठा seq_file *seq, व्योम *data))
+अणु पूर्ण
+अटल अंतरभूत
+पूर्णांक brcmf_debug_create_memdump(काष्ठा brcmf_bus *bus, स्थिर व्योम *data,
+			       माप_प्रकार len)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* BRCMFMAC_DEBUG_H */
+#पूर्ण_अगर /* BRCMFMAC_DEBUG_H */

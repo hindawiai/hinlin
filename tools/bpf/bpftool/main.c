@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#include <ctype.h>
-#include <errno.h>
-#include <getopt.h>
-#include <linux/bpf.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <प्रकार.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <getopt.h>
+#समावेश <linux/bpf.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
-#include <bpf/btf.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
+#समावेश <bpf/btf.h>
 
-#include "main.h"
+#समावेश "main.h"
 
-#define BATCH_LINE_LEN_MAX 65536
-#define BATCH_ARG_NB_MAX 4096
+#घोषणा BATCH_LINE_LEN_MAX 65536
+#घोषणा BATCH_ARG_NB_MAX 4096
 
-const char *bin_name;
-static int last_argc;
-static char **last_argv;
-static int (*last_do_help)(int argc, char **argv);
-json_writer_t *json_wtr;
+स्थिर अक्षर *bin_name;
+अटल पूर्णांक last_argc;
+अटल अक्षर **last_argv;
+अटल पूर्णांक (*last_करो_help)(पूर्णांक argc, अक्षर **argv);
+json_ग_लिखोr_t *json_wtr;
 bool pretty_output;
 bool json_output;
 bool show_pinned;
 bool block_mount;
-bool verifier_logs;
+bool verअगरier_logs;
 bool relaxed_maps;
-struct btf *base_btf;
-struct pinned_obj_table prog_table;
-struct pinned_obj_table map_table;
-struct pinned_obj_table link_table;
-struct obj_refs_table refs_table;
+काष्ठा btf *base_btf;
+काष्ठा pinned_obj_table prog_table;
+काष्ठा pinned_obj_table map_table;
+काष्ठा pinned_obj_table link_table;
+काष्ठा obj_refs_table refs_table;
 
-static void __noreturn clean_and_exit(int i)
-{
-	if (json_output)
+अटल व्योम __noवापस clean_and_निकास(पूर्णांक i)
+अणु
+	अगर (json_output)
 		jsonw_destroy(&json_wtr);
 
-	exit(i);
-}
+	निकास(i);
+पूर्ण
 
-void usage(void)
-{
-	last_do_help(last_argc - 1, last_argv + 1);
+व्योम usage(व्योम)
+अणु
+	last_करो_help(last_argc - 1, last_argv + 1);
 
-	clean_and_exit(-1);
-}
+	clean_and_निकास(-1);
+पूर्ण
 
-static int do_help(int argc, char **argv)
-{
-	if (json_output) {
+अटल पूर्णांक करो_help(पूर्णांक argc, अक्षर **argv)
+अणु
+	अगर (json_output) अणु
 		jsonw_null(json_wtr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fprintf(stderr,
+	ख_लिखो(मानक_त्रुटि,
 		"Usage: %s [OPTIONS] OBJECT { COMMAND | help }\n"
 		"       %s batch file FILE\n"
 		"       %s version\n"
@@ -67,27 +68,27 @@ static int do_help(int argc, char **argv)
 		"",
 		bin_name, bin_name, bin_name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_version(int argc, char **argv)
-{
-#ifdef HAVE_LIBBFD_SUPPORT
-	const bool has_libbfd = true;
-#else
-	const bool has_libbfd = false;
-#endif
-#ifdef BPFTOOL_WITHOUT_SKELETONS
-	const bool has_skeletons = false;
-#else
-	const bool has_skeletons = true;
-#endif
+अटल पूर्णांक करो_version(पूर्णांक argc, अक्षर **argv)
+अणु
+#अगर_घोषित HAVE_LIBBFD_SUPPORT
+	स्थिर bool has_libbfd = true;
+#अन्यथा
+	स्थिर bool has_libbfd = false;
+#पूर्ण_अगर
+#अगर_घोषित BPFTOOL_WITHOUT_SKELETONS
+	स्थिर bool has_skeletons = false;
+#अन्यथा
+	स्थिर bool has_skeletons = true;
+#पूर्ण_अगर
 
-	if (json_output) {
+	अगर (json_output) अणु
 		jsonw_start_object(json_wtr);	/* root object */
 
 		jsonw_name(json_wtr, "version");
-		jsonw_printf(json_wtr, "\"%s\"", BPFTOOL_VERSION);
+		jsonw_म_लिखो(json_wtr, "\"%s\"", BPFTOOL_VERSION);
 
 		jsonw_name(json_wtr, "features");
 		jsonw_start_object(json_wtr);	/* features */
@@ -96,308 +97,308 @@ static int do_version(int argc, char **argv)
 		jsonw_end_object(json_wtr);	/* features */
 
 		jsonw_end_object(json_wtr);	/* root object */
-	} else {
-		unsigned int nb_features = 0;
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक nb_features = 0;
 
-		printf("%s v%s\n", bin_name, BPFTOOL_VERSION);
-		printf("features:");
-		if (has_libbfd) {
-			printf(" libbfd");
+		म_लिखो("%s v%s\n", bin_name, BPFTOOL_VERSION);
+		म_लिखो("features:");
+		अगर (has_libbfd) अणु
+			म_लिखो(" libbfd");
 			nb_features++;
-		}
-		if (has_skeletons)
-			printf("%s skeletons", nb_features++ ? "," : "");
-		printf("\n");
-	}
-	return 0;
-}
+		पूर्ण
+		अगर (has_skeletons)
+			म_लिखो("%s skeletons", nb_features++ ? "," : "");
+		म_लिखो("\n");
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cmd_select(const struct cmd *cmds, int argc, char **argv,
-	       int (*help)(int argc, char **argv))
-{
-	unsigned int i;
+पूर्णांक cmd_select(स्थिर काष्ठा cmd *cmds, पूर्णांक argc, अक्षर **argv,
+	       पूर्णांक (*help)(पूर्णांक argc, अक्षर **argv))
+अणु
+	अचिन्हित पूर्णांक i;
 
 	last_argc = argc;
 	last_argv = argv;
-	last_do_help = help;
+	last_करो_help = help;
 
-	if (argc < 1 && cmds[0].func)
-		return cmds[0].func(argc, argv);
+	अगर (argc < 1 && cmds[0].func)
+		वापस cmds[0].func(argc, argv);
 
-	for (i = 0; cmds[i].cmd; i++) {
-		if (is_prefix(*argv, cmds[i].cmd)) {
-			if (!cmds[i].func) {
+	क्रम (i = 0; cmds[i].cmd; i++) अणु
+		अगर (is_prefix(*argv, cmds[i].cmd)) अणु
+			अगर (!cmds[i].func) अणु
 				p_err("command '%s' is not supported in bootstrap mode",
 				      cmds[i].cmd);
-				return -1;
-			}
-			return cmds[i].func(argc - 1, argv + 1);
-		}
-	}
+				वापस -1;
+			पूर्ण
+			वापस cmds[i].func(argc - 1, argv + 1);
+		पूर्ण
+	पूर्ण
 
 	help(argc - 1, argv + 1);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-bool is_prefix(const char *pfx, const char *str)
-{
-	if (!pfx)
-		return false;
-	if (strlen(str) < strlen(pfx))
-		return false;
+bool is_prefix(स्थिर अक्षर *pfx, स्थिर अक्षर *str)
+अणु
+	अगर (!pfx)
+		वापस false;
+	अगर (म_माप(str) < म_माप(pfx))
+		वापस false;
 
-	return !memcmp(str, pfx, strlen(pfx));
-}
+	वापस !स_भेद(str, pfx, म_माप(pfx));
+पूर्ण
 
-/* Last argument MUST be NULL pointer */
-int detect_common_prefix(const char *arg, ...)
-{
-	unsigned int count = 0;
-	const char *ref;
-	char msg[256];
-	va_list ap;
+/* Last argument MUST be शून्य poपूर्णांकer */
+पूर्णांक detect_common_prefix(स्थिर अक्षर *arg, ...)
+अणु
+	अचिन्हित पूर्णांक count = 0;
+	स्थिर अक्षर *ref;
+	अक्षर msg[256];
+	बहु_सूची ap;
 
-	snprintf(msg, sizeof(msg), "ambiguous prefix: '%s' could be '", arg);
-	va_start(ap, arg);
-	while ((ref = va_arg(ap, const char *))) {
-		if (!is_prefix(arg, ref))
-			continue;
+	snम_लिखो(msg, माप(msg), "ambiguous prefix: '%s' could be '", arg);
+	बहु_शुरू(ap, arg);
+	जबतक ((ref = बहु_तर्क(ap, स्थिर अक्षर *))) अणु
+		अगर (!is_prefix(arg, ref))
+			जारी;
 		count++;
-		if (count > 1)
-			strncat(msg, "' or '", sizeof(msg) - strlen(msg) - 1);
-		strncat(msg, ref, sizeof(msg) - strlen(msg) - 1);
-	}
-	va_end(ap);
-	strncat(msg, "'", sizeof(msg) - strlen(msg) - 1);
+		अगर (count > 1)
+			म_जोड़न(msg, "' or '", माप(msg) - म_माप(msg) - 1);
+		म_जोड़न(msg, ref, माप(msg) - म_माप(msg) - 1);
+	पूर्ण
+	बहु_पूर्ण(ap);
+	म_जोड़न(msg, "'", माप(msg) - म_माप(msg) - 1);
 
-	if (count >= 2) {
+	अगर (count >= 2) अणु
 		p_err("%s", msg);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fprint_hex(FILE *f, void *arg, unsigned int n, const char *sep)
-{
-	unsigned char *data = arg;
-	unsigned int i;
+व्योम fprपूर्णांक_hex(खाता *f, व्योम *arg, अचिन्हित पूर्णांक n, स्थिर अक्षर *sep)
+अणु
+	अचिन्हित अक्षर *data = arg;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < n; i++) {
-		const char *pfx = "";
+	क्रम (i = 0; i < n; i++) अणु
+		स्थिर अक्षर *pfx = "";
 
-		if (!i)
+		अगर (!i)
 			/* nothing */;
-		else if (!(i % 16))
-			fprintf(f, "\n");
-		else if (!(i % 8))
-			fprintf(f, "  ");
-		else
+		अन्यथा अगर (!(i % 16))
+			ख_लिखो(f, "\n");
+		अन्यथा अगर (!(i % 8))
+			ख_लिखो(f, "  ");
+		अन्यथा
 			pfx = sep;
 
-		fprintf(f, "%s%02hhx", i ? pfx : "", data[i]);
-	}
-}
+		ख_लिखो(f, "%s%02hhx", i ? pfx : "", data[i]);
+	पूर्ण
+पूर्ण
 
-/* Split command line into argument vector. */
-static int make_args(char *line, char *n_argv[], int maxargs, int cmd_nb)
-{
-	static const char ws[] = " \t\r\n";
-	char *cp = line;
-	int n_argc = 0;
+/* Split command line पूर्णांकo argument vector. */
+अटल पूर्णांक make_args(अक्षर *line, अक्षर *n_argv[], पूर्णांक maxargs, पूर्णांक cmd_nb)
+अणु
+	अटल स्थिर अक्षर ws[] = " \t\r\n";
+	अक्षर *cp = line;
+	पूर्णांक n_argc = 0;
 
-	while (*cp) {
+	जबतक (*cp) अणु
 		/* Skip leading whitespace. */
-		cp += strspn(cp, ws);
+		cp += म_अखोज(cp, ws);
 
-		if (*cp == '\0')
-			break;
+		अगर (*cp == '\0')
+			अवरोध;
 
-		if (n_argc >= (maxargs - 1)) {
+		अगर (n_argc >= (maxargs - 1)) अणु
 			p_err("too many arguments to command %d", cmd_nb);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		/* Word begins with quote. */
-		if (*cp == '\'' || *cp == '"') {
-			char quote = *cp++;
+		अगर (*cp == '\'' || *cp == '"') अणु
+			अक्षर quote = *cp++;
 
 			n_argv[n_argc++] = cp;
 			/* Find ending quote. */
-			cp = strchr(cp, quote);
-			if (!cp) {
+			cp = म_अक्षर(cp, quote);
+			अगर (!cp) अणु
 				p_err("unterminated quoted string in command %d",
 				      cmd_nb);
-				return -1;
-			}
-		} else {
+				वापस -1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			n_argv[n_argc++] = cp;
 
 			/* Find end of word. */
-			cp += strcspn(cp, ws);
-			if (*cp == '\0')
-				break;
-		}
+			cp += म_खोज(cp, ws);
+			अगर (*cp == '\0')
+				अवरोध;
+		पूर्ण
 
 		/* Separate words. */
 		*cp++ = 0;
-	}
-	n_argv[n_argc] = NULL;
+	पूर्ण
+	n_argv[n_argc] = शून्य;
 
-	return n_argc;
-}
+	वापस n_argc;
+पूर्ण
 
-static int do_batch(int argc, char **argv);
+अटल पूर्णांक करो_batch(पूर्णांक argc, अक्षर **argv);
 
-static const struct cmd cmds[] = {
-	{ "help",	do_help },
-	{ "batch",	do_batch },
-	{ "prog",	do_prog },
-	{ "map",	do_map },
-	{ "link",	do_link },
-	{ "cgroup",	do_cgroup },
-	{ "perf",	do_perf },
-	{ "net",	do_net },
-	{ "feature",	do_feature },
-	{ "btf",	do_btf },
-	{ "gen",	do_gen },
-	{ "struct_ops",	do_struct_ops },
-	{ "iter",	do_iter },
-	{ "version",	do_version },
-	{ 0 }
-};
+अटल स्थिर काष्ठा cmd cmds[] = अणु
+	अणु "help",	करो_help पूर्ण,
+	अणु "batch",	करो_batch पूर्ण,
+	अणु "prog",	करो_prog पूर्ण,
+	अणु "map",	करो_map पूर्ण,
+	अणु "link",	करो_link पूर्ण,
+	अणु "cgroup",	करो_cgroup पूर्ण,
+	अणु "perf",	करो_perf पूर्ण,
+	अणु "net",	करो_net पूर्ण,
+	अणु "feature",	करो_feature पूर्ण,
+	अणु "btf",	करो_btf पूर्ण,
+	अणु "gen",	करो_gen पूर्ण,
+	अणु "struct_ops",	करो_काष्ठा_ops पूर्ण,
+	अणु "iter",	करो_iter पूर्ण,
+	अणु "version",	करो_version पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-static int do_batch(int argc, char **argv)
-{
-	char buf[BATCH_LINE_LEN_MAX], contline[BATCH_LINE_LEN_MAX];
-	char *n_argv[BATCH_ARG_NB_MAX];
-	unsigned int lines = 0;
-	int n_argc;
-	FILE *fp;
-	char *cp;
-	int err = 0;
-	int i;
+अटल पूर्णांक करो_batch(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर buf[BATCH_LINE_LEN_MAX], contline[BATCH_LINE_LEN_MAX];
+	अक्षर *n_argv[BATCH_ARG_NB_MAX];
+	अचिन्हित पूर्णांक lines = 0;
+	पूर्णांक n_argc;
+	खाता *fp;
+	अक्षर *cp;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	if (argc < 2) {
+	अगर (argc < 2) अणु
 		p_err("too few parameters for batch");
-		return -1;
-	} else if (!is_prefix(*argv, "file")) {
+		वापस -1;
+	पूर्ण अन्यथा अगर (!is_prefix(*argv, "file")) अणु
 		p_err("expected 'file', got: %s", *argv);
-		return -1;
-	} else if (argc > 2) {
+		वापस -1;
+	पूर्ण अन्यथा अगर (argc > 2) अणु
 		p_err("too many parameters for batch");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	NEXT_ARG();
 
-	if (!strcmp(*argv, "-"))
-		fp = stdin;
-	else
-		fp = fopen(*argv, "r");
-	if (!fp) {
-		p_err("Can't open file (%s): %s", *argv, strerror(errno));
-		return -1;
-	}
+	अगर (!म_भेद(*argv, "-"))
+		fp = मानक_निवेश;
+	अन्यथा
+		fp = ख_खोलो(*argv, "r");
+	अगर (!fp) अणु
+		p_err("Can't open file (%s): %s", *argv, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
-	while (fgets(buf, sizeof(buf), fp)) {
-		cp = strchr(buf, '#');
-		if (cp)
+	जबतक (ख_माला_लो(buf, माप(buf), fp)) अणु
+		cp = म_अक्षर(buf, '#');
+		अगर (cp)
 			*cp = '\0';
 
-		if (strlen(buf) == sizeof(buf) - 1) {
-			errno = E2BIG;
-			break;
-		}
+		अगर (म_माप(buf) == माप(buf) - 1) अणु
+			त्रुटि_सं = E2BIG;
+			अवरोध;
+		पूर्ण
 
-		/* Append continuation lines if any (coming after a line ending
+		/* Append continuation lines अगर any (coming after a line ending
 		 * with '\' in the batch file).
 		 */
-		while ((cp = strstr(buf, "\\\n")) != NULL) {
-			if (!fgets(contline, sizeof(contline), fp) ||
-			    strlen(contline) == 0) {
+		जबतक ((cp = म_माला(buf, "\\\n")) != शून्य) अणु
+			अगर (!ख_माला_लो(contline, माप(contline), fp) ||
+			    म_माप(contline) == 0) अणु
 				p_err("missing continuation line on command %d",
 				      lines);
 				err = -1;
-				goto err_close;
-			}
+				जाओ err_बंद;
+			पूर्ण
 
-			cp = strchr(contline, '#');
-			if (cp)
+			cp = म_अक्षर(contline, '#');
+			अगर (cp)
 				*cp = '\0';
 
-			if (strlen(buf) + strlen(contline) + 1 > sizeof(buf)) {
+			अगर (म_माप(buf) + म_माप(contline) + 1 > माप(buf)) अणु
 				p_err("command %d is too long", lines);
 				err = -1;
-				goto err_close;
-			}
-			buf[strlen(buf) - 2] = '\0';
-			strcat(buf, contline);
-		}
+				जाओ err_बंद;
+			पूर्ण
+			buf[म_माप(buf) - 2] = '\0';
+			म_जोड़ो(buf, contline);
+		पूर्ण
 
 		n_argc = make_args(buf, n_argv, BATCH_ARG_NB_MAX, lines);
-		if (!n_argc)
-			continue;
-		if (n_argc < 0)
-			goto err_close;
+		अगर (!n_argc)
+			जारी;
+		अगर (n_argc < 0)
+			जाओ err_बंद;
 
-		if (json_output) {
+		अगर (json_output) अणु
 			jsonw_start_object(json_wtr);
 			jsonw_name(json_wtr, "command");
 			jsonw_start_array(json_wtr);
-			for (i = 0; i < n_argc; i++)
+			क्रम (i = 0; i < n_argc; i++)
 				jsonw_string(json_wtr, n_argv[i]);
 			jsonw_end_array(json_wtr);
 			jsonw_name(json_wtr, "output");
-		}
+		पूर्ण
 
-		err = cmd_select(cmds, n_argc, n_argv, do_help);
+		err = cmd_select(cmds, n_argc, n_argv, करो_help);
 
-		if (json_output)
+		अगर (json_output)
 			jsonw_end_object(json_wtr);
 
-		if (err)
-			goto err_close;
+		अगर (err)
+			जाओ err_बंद;
 
 		lines++;
-	}
+	पूर्ण
 
-	if (errno && errno != ENOENT) {
-		p_err("reading batch file failed: %s", strerror(errno));
+	अगर (त्रुटि_सं && त्रुटि_सं != ENOENT) अणु
+		p_err("reading batch file failed: %s", म_त्रुटि(त्रुटि_सं));
 		err = -1;
-	} else {
-		if (!json_output)
-			printf("processed %d commands\n", lines);
-	}
-err_close:
-	if (fp != stdin)
-		fclose(fp);
+	पूर्ण अन्यथा अणु
+		अगर (!json_output)
+			म_लिखो("processed %d commands\n", lines);
+	पूर्ण
+err_बंद:
+	अगर (fp != मानक_निवेश)
+		ख_बंद(fp);
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_end_array(json_wtr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	static const struct option options[] = {
-		{ "json",	no_argument,	NULL,	'j' },
-		{ "help",	no_argument,	NULL,	'h' },
-		{ "pretty",	no_argument,	NULL,	'p' },
-		{ "version",	no_argument,	NULL,	'V' },
-		{ "bpffs",	no_argument,	NULL,	'f' },
-		{ "mapcompat",	no_argument,	NULL,	'm' },
-		{ "nomount",	no_argument,	NULL,	'n' },
-		{ "debug",	no_argument,	NULL,	'd' },
-		{ "base-btf",	required_argument, NULL, 'B' },
-		{ 0 }
-	};
-	int opt, ret;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अटल स्थिर काष्ठा option options[] = अणु
+		अणु "json",	no_argument,	शून्य,	'j' पूर्ण,
+		अणु "help",	no_argument,	शून्य,	'h' पूर्ण,
+		अणु "pretty",	no_argument,	शून्य,	'p' पूर्ण,
+		अणु "version",	no_argument,	शून्य,	'V' पूर्ण,
+		अणु "bpffs",	no_argument,	शून्य,	'f' पूर्ण,
+		अणु "mapcompat",	no_argument,	शून्य,	'm' पूर्ण,
+		अणु "nomount",	no_argument,	शून्य,	'n' पूर्ण,
+		अणु "debug",	no_argument,	शून्य,	'd' पूर्ण,
+		अणु "base-btf",	required_argument, शून्य, 'B' पूर्ण,
+		अणु 0 पूर्ण
+	पूर्ण;
+	पूर्णांक opt, ret;
 
-	last_do_help = do_help;
+	last_करो_help = करो_help;
 	pretty_output = false;
 	json_output = false;
 	show_pinned = false;
@@ -409,74 +410,74 @@ int main(int argc, char **argv)
 	hash_init(link_table.table);
 
 	opterr = 0;
-	while ((opt = getopt_long(argc, argv, "VhpjfmndB:",
-				  options, NULL)) >= 0) {
-		switch (opt) {
-		case 'V':
-			return do_version(argc, argv);
-		case 'h':
-			return do_help(argc, argv);
-		case 'p':
+	जबतक ((opt = getopt_दीर्घ(argc, argv, "VhpjfmndB:",
+				  options, शून्य)) >= 0) अणु
+		चयन (opt) अणु
+		हाल 'V':
+			वापस करो_version(argc, argv);
+		हाल 'h':
+			वापस करो_help(argc, argv);
+		हाल 'p':
 			pretty_output = true;
 			/* fall through */
-		case 'j':
-			if (!json_output) {
-				json_wtr = jsonw_new(stdout);
-				if (!json_wtr) {
+		हाल 'j':
+			अगर (!json_output) अणु
+				json_wtr = jsonw_new(मानक_निकास);
+				अगर (!json_wtr) अणु
 					p_err("failed to create JSON writer");
-					return -1;
-				}
+					वापस -1;
+				पूर्ण
 				json_output = true;
-			}
+			पूर्ण
 			jsonw_pretty(json_wtr, pretty_output);
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'f':
 			show_pinned = true;
-			break;
-		case 'm':
+			अवरोध;
+		हाल 'm':
 			relaxed_maps = true;
-			break;
-		case 'n':
+			अवरोध;
+		हाल 'n':
 			block_mount = true;
-			break;
-		case 'd':
-			libbpf_set_print(print_all_levels);
-			verifier_logs = true;
-			break;
-		case 'B':
-			base_btf = btf__parse(optarg, NULL);
-			if (libbpf_get_error(base_btf)) {
+			अवरोध;
+		हाल 'd':
+			libbpf_set_prपूर्णांक(prपूर्णांक_all_levels);
+			verअगरier_logs = true;
+			अवरोध;
+		हाल 'B':
+			base_btf = btf__parse(optarg, शून्य);
+			अगर (libbpf_get_error(base_btf)) अणु
 				p_err("failed to parse base BTF at '%s': %ld\n",
 				      optarg, libbpf_get_error(base_btf));
-				base_btf = NULL;
-				return -1;
-			}
-			break;
-		default:
+				base_btf = शून्य;
+				वापस -1;
+			पूर्ण
+			अवरोध;
+		शेष:
 			p_err("unrecognized option '%s'", argv[optind - 1]);
-			if (json_output)
-				clean_and_exit(-1);
-			else
+			अगर (json_output)
+				clean_and_निकास(-1);
+			अन्यथा
 				usage();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	argc -= optind;
 	argv += optind;
-	if (argc < 0)
+	अगर (argc < 0)
 		usage();
 
-	ret = cmd_select(cmds, argc, argv, do_help);
+	ret = cmd_select(cmds, argc, argv, करो_help);
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_destroy(&json_wtr);
 
-	if (show_pinned) {
+	अगर (show_pinned) अणु
 		delete_pinned_obj_table(&prog_table);
 		delete_pinned_obj_table(&map_table);
 		delete_pinned_obj_table(&link_table);
-	}
-	btf__free(base_btf);
+	पूर्ण
+	btf__मुक्त(base_btf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

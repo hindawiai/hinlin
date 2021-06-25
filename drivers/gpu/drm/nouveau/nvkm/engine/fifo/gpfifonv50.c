@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,48 +22,48 @@
  *
  * Authors: Ben Skeggs
  */
-#include "channv50.h"
+#समावेश "channv50.h"
 
-#include <core/client.h>
-#include <core/ramht.h>
+#समावेश <core/client.h>
+#समावेश <core/ramht.h>
 
-#include <nvif/class.h>
-#include <nvif/cl506f.h>
-#include <nvif/unpack.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/cl506f.h>
+#समावेश <nvअगर/unpack.h>
 
-static int
-nv50_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
-		     void *data, u32 size, struct nvkm_object **pobject)
-{
-	struct nvkm_object *parent = oclass->parent;
-	union {
-		struct nv50_channel_gpfifo_v0 v0;
-	} *args = data;
-	struct nv50_fifo *fifo = nv50_fifo(base);
-	struct nv50_fifo_chan *chan;
+अटल पूर्णांक
+nv50_fअगरo_gpfअगरo_new(काष्ठा nvkm_fअगरo *base, स्थिर काष्ठा nvkm_oclass *oclass,
+		     व्योम *data, u32 size, काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_object *parent = oclass->parent;
+	जोड़ अणु
+		काष्ठा nv50_channel_gpfअगरo_v0 v0;
+	पूर्ण *args = data;
+	काष्ठा nv50_fअगरo *fअगरo = nv50_fअगरo(base);
+	काष्ठा nv50_fअगरo_chan *chan;
 	u64 ioffset, ilength;
-	int ret = -ENOSYS;
+	पूर्णांक ret = -ENOSYS;
 
-	nvif_ioctl(parent, "create channel gpfifo size %d\n", size);
-	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
-		nvif_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
+	nvअगर_ioctl(parent, "create channel gpfifo size %d\n", size);
+	अगर (!(ret = nvअगर_unpack(ret, &data, &size, args->v0, 0, 0, false))) अणु
+		nvअगर_ioctl(parent, "create channel gpfifo vers %d vmm %llx "
 				   "pushbuf %llx ioffset %016llx "
 				   "ilength %08x\n",
 			   args->v0.version, args->v0.vmm, args->v0.pushbuf,
 			   args->v0.ioffset, args->v0.ilength);
-		if (!args->v0.pushbuf)
-			return -EINVAL;
-	} else
-		return ret;
+		अगर (!args->v0.pushbuf)
+			वापस -EINVAL;
+	पूर्ण अन्यथा
+		वापस ret;
 
-	if (!(chan = kzalloc(sizeof(*chan), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(chan = kzalloc(माप(*chan), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pobject = &chan->base.object;
 
-	ret = nv50_fifo_chan_ctor(fifo, args->v0.vmm, args->v0.pushbuf,
+	ret = nv50_fअगरo_chan_ctor(fअगरo, args->v0.vmm, args->v0.pushbuf,
 				  oclass, chan);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	args->v0.chid = chan->base.chid;
 	ioffset = args->v0.ioffset;
@@ -80,14 +81,14 @@ nv50_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 	nvkm_wo32(chan->ramfc, 0x80, ((chan->ramht->bits - 9) << 27) |
 				     (4 << 24) /* SEARCH_FULL */ |
 				     (chan->ramht->gpuobj->node->offset >> 4));
-	nvkm_done(chan->ramfc);
-	return 0;
-}
+	nvkm_करोne(chan->ramfc);
+	वापस 0;
+पूर्ण
 
-const struct nvkm_fifo_chan_oclass
-nv50_fifo_gpfifo_oclass = {
+स्थिर काष्ठा nvkm_fअगरo_chan_oclass
+nv50_fअगरo_gpfअगरo_oclass = अणु
 	.base.oclass = NV50_CHANNEL_GPFIFO,
 	.base.minver = 0,
 	.base.maxver = 0,
-	.ctor = nv50_fifo_gpfifo_new,
-};
+	.ctor = nv50_fअगरo_gpfअगरo_new,
+पूर्ण;

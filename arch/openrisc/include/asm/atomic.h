@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>
  *
@@ -6,65 +7,65 @@
  * kind, whether express or implied.
  */
 
-#ifndef __ASM_OPENRISC_ATOMIC_H
-#define __ASM_OPENRISC_ATOMIC_H
+#अगर_अघोषित __ASM_OPENRISC_ATOMIC_H
+#घोषणा __ASM_OPENRISC_ATOMIC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-/* Atomically perform op with v->counter and i */
-#define ATOMIC_OP(op)							\
-static inline void atomic_##op(int i, atomic_t *v)			\
-{									\
-	int tmp;							\
+/* Atomically perक्रमm op with v->counter and i */
+#घोषणा ATOMIC_OP(op)							\
+अटल अंतरभूत व्योम atomic_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	पूर्णांक पंचांगp;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 		"1:	l.lwa	%0,0(%1)	\n"			\
 		"	l." #op " %0,%0,%2	\n"			\
 		"	l.swa	0(%1),%0	\n"			\
 		"	l.bnf	1b		\n"			\
 		"	 l.nop			\n"			\
-		: "=&r"(tmp)						\
+		: "=&r"(पंचांगp)						\
 		: "r"(&v->counter), "r"(i)				\
 		: "cc", "memory");					\
-}
+पूर्ण
 
-/* Atomically perform op with v->counter and i, return the result */
-#define ATOMIC_OP_RETURN(op)						\
-static inline int atomic_##op##_return(int i, atomic_t *v)		\
-{									\
-	int tmp;							\
+/* Atomically perक्रमm op with v->counter and i, वापस the result */
+#घोषणा ATOMIC_OP_RETURN(op)						\
+अटल अंतरभूत पूर्णांक atomic_##op##_वापस(पूर्णांक i, atomic_t *v)		\
+अणु									\
+	पूर्णांक पंचांगp;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 		"1:	l.lwa	%0,0(%1)	\n"			\
 		"	l." #op " %0,%0,%2	\n"			\
 		"	l.swa	0(%1),%0	\n"			\
 		"	l.bnf	1b		\n"			\
 		"	 l.nop			\n"			\
-		: "=&r"(tmp)						\
+		: "=&r"(पंचांगp)						\
 		: "r"(&v->counter), "r"(i)				\
 		: "cc", "memory");					\
 									\
-	return tmp;							\
-}
+	वापस पंचांगp;							\
+पूर्ण
 
-/* Atomically perform op with v->counter and i, return orig v->counter */
-#define ATOMIC_FETCH_OP(op)						\
-static inline int atomic_fetch_##op(int i, atomic_t *v)			\
-{									\
-	int tmp, old;							\
+/* Atomically perक्रमm op with v->counter and i, वापस orig v->counter */
+#घोषणा ATOMIC_FETCH_OP(op)						\
+अटल अंतरभूत पूर्णांक atomic_fetch_##op(पूर्णांक i, atomic_t *v)			\
+अणु									\
+	पूर्णांक पंचांगp, old;							\
 									\
-	__asm__ __volatile__(						\
+	__यंत्र__ __अस्थिर__(						\
 		"1:	l.lwa	%0,0(%2)	\n"			\
 		"	l." #op " %1,%0,%3	\n"			\
 		"	l.swa	0(%2),%1	\n"			\
 		"	l.bnf	1b		\n"			\
 		"	 l.nop			\n"			\
-		: "=&r"(old), "=&r"(tmp)				\
+		: "=&r"(old), "=&r"(पंचांगp)				\
 		: "r"(&v->counter), "r"(i)				\
 		: "cc", "memory");					\
 									\
-	return old;							\
-}
+	वापस old;							\
+पूर्ण
 
 ATOMIC_OP_RETURN(add)
 ATOMIC_OP_RETURN(sub)
@@ -79,32 +80,32 @@ ATOMIC_OP(and)
 ATOMIC_OP(or)
 ATOMIC_OP(xor)
 
-#undef ATOMIC_FETCH_OP
-#undef ATOMIC_OP_RETURN
-#undef ATOMIC_OP
+#अघोषित ATOMIC_FETCH_OP
+#अघोषित ATOMIC_OP_RETURN
+#अघोषित ATOMIC_OP
 
-#define atomic_add_return	atomic_add_return
-#define atomic_sub_return	atomic_sub_return
-#define atomic_fetch_add	atomic_fetch_add
-#define atomic_fetch_sub	atomic_fetch_sub
-#define atomic_fetch_and	atomic_fetch_and
-#define atomic_fetch_or		atomic_fetch_or
-#define atomic_fetch_xor	atomic_fetch_xor
-#define atomic_and	atomic_and
-#define atomic_or	atomic_or
-#define atomic_xor	atomic_xor
+#घोषणा atomic_add_वापस	atomic_add_वापस
+#घोषणा atomic_sub_वापस	atomic_sub_वापस
+#घोषणा atomic_fetch_add	atomic_fetch_add
+#घोषणा atomic_fetch_sub	atomic_fetch_sub
+#घोषणा atomic_fetch_and	atomic_fetch_and
+#घोषणा atomic_fetch_or		atomic_fetch_or
+#घोषणा atomic_fetch_xor	atomic_fetch_xor
+#घोषणा atomic_and	atomic_and
+#घोषणा atomic_or	atomic_or
+#घोषणा atomic_xor	atomic_xor
 
 /*
- * Atomically add a to v->counter as long as v is not already u.
+ * Atomically add a to v->counter as दीर्घ as v is not alपढ़ोy u.
  * Returns the original value at v->counter.
  *
  * This is often used through atomic_inc_not_zero()
  */
-static inline int atomic_fetch_add_unless(atomic_t *v, int a, int u)
-{
-	int old, tmp;
+अटल अंतरभूत पूर्णांक atomic_fetch_add_unless(atomic_t *v, पूर्णांक a, पूर्णांक u)
+अणु
+	पूर्णांक old, पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 		"1:	l.lwa %0, 0(%2)		\n"
 		"	l.sfeq %0, %4		\n"
 		"	l.bf 2f			\n"
@@ -113,14 +114,14 @@ static inline int atomic_fetch_add_unless(atomic_t *v, int a, int u)
 		"	l.bnf 1b		\n"
 		"	 l.nop			\n"
 		"2:				\n"
-		: "=&r"(old), "=&r" (tmp)
+		: "=&r"(old), "=&r" (पंचांगp)
 		: "r"(&v->counter), "r"(a), "r"(u)
 		: "cc", "memory");
 
-	return old;
-}
-#define atomic_fetch_add_unless	atomic_fetch_add_unless
+	वापस old;
+पूर्ण
+#घोषणा atomic_fetch_add_unless	atomic_fetch_add_unless
 
-#include <asm-generic/atomic.h>
+#समावेश <यंत्र-generic/atomic.h>
 
-#endif /* __ASM_OPENRISC_ATOMIC_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_ATOMIC_H */

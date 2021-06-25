@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * JZ4780 EFUSE Memory Support driver
  *
@@ -8,77 +9,77 @@
 
 /*
  * Currently supports JZ4780 efuse which has 8K programmable bit.
- * Efuse is separated into seven segments as below:
+ * Efuse is separated पूर्णांकo seven segments as below:
  *
  * -----------------------------------------------------------------------
  * | 64 bit | 128 bit | 128 bit | 3520 bit | 8 bit | 2296 bit | 2048 bit |
  * -----------------------------------------------------------------------
  *
  * The rom itself is accessed using a 9 bit address line and an 8 word wide bus
- * which reads/writes based on strobes. The strobe is configured in the config
- * register and is based on number of cycles of the bus clock.
+ * which पढ़ोs/ग_लिखोs based on strobes. The strobe is configured in the config
+ * रेजिस्टर and is based on number of cycles of the bus घड़ी.
  *
- * Driver supports read only as the writes are done in the Factory.
+ * Driver supports पढ़ो only as the ग_लिखोs are करोne in the Factory.
  */
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/nvmem-provider.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/timer.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/समयr.h>
 
-#define JZ_EFUCTRL		(0x0)	/* Control Register */
-#define JZ_EFUCFG		(0x4)	/* Configure Register*/
-#define JZ_EFUSTATE		(0x8)	/* Status Register */
-#define JZ_EFUDATA(n)		(0xC + (n) * 4)
+#घोषणा JZ_EFUCTRL		(0x0)	/* Control Register */
+#घोषणा JZ_EFUCFG		(0x4)	/* Configure Register*/
+#घोषणा JZ_EFUSTATE		(0x8)	/* Status Register */
+#घोषणा JZ_EFUDATA(n)		(0xC + (n) * 4)
 
-/* We read 32 byte chunks to avoid complexity in the driver. */
-#define JZ_EFU_READ_SIZE 32
+/* We पढ़ो 32 byte chunks to aव्योम complनिकासy in the driver. */
+#घोषणा JZ_EFU_READ_SIZE 32
 
-#define EFUCTRL_ADDR_MASK	0x3FF
-#define EFUCTRL_ADDR_SHIFT	21
-#define EFUCTRL_LEN_MASK	0x1F
-#define EFUCTRL_LEN_SHIFT	16
-#define EFUCTRL_PG_EN		BIT(15)
-#define EFUCTRL_WR_EN		BIT(1)
-#define EFUCTRL_RD_EN		BIT(0)
+#घोषणा EFUCTRL_ADDR_MASK	0x3FF
+#घोषणा EFUCTRL_ADDR_SHIFT	21
+#घोषणा EFUCTRL_LEN_MASK	0x1F
+#घोषणा EFUCTRL_LEN_SHIFT	16
+#घोषणा EFUCTRL_PG_EN		BIT(15)
+#घोषणा EFUCTRL_WR_EN		BIT(1)
+#घोषणा EFUCTRL_RD_EN		BIT(0)
 
-#define EFUCFG_INT_EN		BIT(31)
-#define EFUCFG_RD_ADJ_MASK	0xF
-#define EFUCFG_RD_ADJ_SHIFT	20
-#define EFUCFG_RD_STR_MASK	0xF
-#define EFUCFG_RD_STR_SHIFT	16
-#define EFUCFG_WR_ADJ_MASK	0xF
-#define EFUCFG_WR_ADJ_SHIFT	12
-#define EFUCFG_WR_STR_MASK	0xFFF
-#define EFUCFG_WR_STR_SHIFT	0
+#घोषणा EFUCFG_INT_EN		BIT(31)
+#घोषणा EFUCFG_RD_ADJ_MASK	0xF
+#घोषणा EFUCFG_RD_ADJ_SHIFT	20
+#घोषणा EFUCFG_RD_STR_MASK	0xF
+#घोषणा EFUCFG_RD_STR_SHIFT	16
+#घोषणा EFUCFG_WR_ADJ_MASK	0xF
+#घोषणा EFUCFG_WR_ADJ_SHIFT	12
+#घोषणा EFUCFG_WR_STR_MASK	0xFFF
+#घोषणा EFUCFG_WR_STR_SHIFT	0
 
-#define EFUSTATE_WR_DONE	BIT(1)
-#define EFUSTATE_RD_DONE	BIT(0)
+#घोषणा EFUSTATE_WR_DONE	BIT(1)
+#घोषणा EFUSTATE_RD_DONE	BIT(0)
 
-struct jz4780_efuse {
-	struct device *dev;
-	struct regmap *map;
-	struct clk *clk;
-};
+काष्ठा jz4780_efuse अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *map;
+	काष्ठा clk *clk;
+पूर्ण;
 
-/* main entry point */
-static int jz4780_efuse_read(void *context, unsigned int offset,
-			     void *val, size_t bytes)
-{
-	struct jz4780_efuse *efuse = context;
+/* मुख्य entry poपूर्णांक */
+अटल पूर्णांक jz4780_efuse_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset,
+			     व्योम *val, माप_प्रकार bytes)
+अणु
+	काष्ठा jz4780_efuse *efuse = context;
 
-	while (bytes > 0) {
-		size_t start = offset & ~(JZ_EFU_READ_SIZE - 1);
-		size_t chunk = min(bytes, (start + JZ_EFU_READ_SIZE)
+	जबतक (bytes > 0) अणु
+		माप_प्रकार start = offset & ~(JZ_EFU_READ_SIZE - 1);
+		माप_प्रकार chunk = min(bytes, (start + JZ_EFU_READ_SIZE)
 				    - offset);
-		char buf[JZ_EFU_READ_SIZE];
-		unsigned int tmp;
+		अक्षर buf[JZ_EFU_READ_SIZE];
+		अचिन्हित पूर्णांक पंचांगp;
 		u32 ctrl;
-		int ret;
+		पूर्णांक ret;
 
 		ctrl = (start << EFUCTRL_ADDR_SHIFT)
 			| ((JZ_EFU_READ_SIZE - 1) << EFUCTRL_LEN_SHIFT)
@@ -91,89 +92,89 @@ static int jz4780_efuse_read(void *context, unsigned int offset,
 				   EFUCTRL_RD_EN,
 				   ctrl);
 
-		ret = regmap_read_poll_timeout(efuse->map, JZ_EFUSTATE,
-					       tmp, tmp & EFUSTATE_RD_DONE,
+		ret = regmap_पढ़ो_poll_समयout(efuse->map, JZ_EFUSTATE,
+					       पंचांगp, पंचांगp & EFUSTATE_RD_DONE,
 					       1 * MSEC_PER_SEC,
 					       50 * MSEC_PER_SEC);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(efuse->dev, "Time out while reading efuse data");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = regmap_bulk_read(efuse->map, JZ_EFUDATA(0),
-				       buf, JZ_EFU_READ_SIZE / sizeof(u32));
-		if (ret < 0)
-			return ret;
+		ret = regmap_bulk_पढ़ो(efuse->map, JZ_EFUDATA(0),
+				       buf, JZ_EFU_READ_SIZE / माप(u32));
+		अगर (ret < 0)
+			वापस ret;
 
-		memcpy(val, &buf[offset - start], chunk);
+		स_नकल(val, &buf[offset - start], chunk);
 
 		val += chunk;
 		offset += chunk;
 		bytes -= chunk;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nvmem_config jz4780_efuse_nvmem_config = {
+अटल काष्ठा nvmem_config jz4780_efuse_nvmem_config = अणु
 	.name = "jz4780-efuse",
 	.size = 1024,
 	.word_size = 1,
 	.stride = 1,
 	.owner = THIS_MODULE,
-	.reg_read = jz4780_efuse_read,
-};
+	.reg_पढ़ो = jz4780_efuse_पढ़ो,
+पूर्ण;
 
-static const struct regmap_config jz4780_efuse_regmap_config = {
+अटल स्थिर काष्ठा regmap_config jz4780_efuse_regmap_config = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = JZ_EFUDATA(7),
-};
+	.max_रेजिस्टर = JZ_EFUDATA(7),
+पूर्ण;
 
-static void clk_disable_unprepare_helper(void *clock)
-{
-	clk_disable_unprepare(clock);
-}
+अटल व्योम clk_disable_unprepare_helper(व्योम *घड़ी)
+अणु
+	clk_disable_unprepare(घड़ी);
+पूर्ण
 
-static int jz4780_efuse_probe(struct platform_device *pdev)
-{
-	struct nvmem_device *nvmem;
-	struct jz4780_efuse *efuse;
-	struct nvmem_config cfg;
-	unsigned long clk_rate;
-	unsigned long rd_adj;
-	unsigned long rd_strobe;
-	struct device *dev = &pdev->dev;
-	void __iomem *regs;
-	int ret;
+अटल पूर्णांक jz4780_efuse_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा jz4780_efuse *efuse;
+	काष्ठा nvmem_config cfg;
+	अचिन्हित दीर्घ clk_rate;
+	अचिन्हित दीर्घ rd_adj;
+	अचिन्हित दीर्घ rd_strobe;
+	काष्ठा device *dev = &pdev->dev;
+	व्योम __iomem *regs;
+	पूर्णांक ret;
 
-	efuse = devm_kzalloc(dev, sizeof(*efuse), GFP_KERNEL);
-	if (!efuse)
-		return -ENOMEM;
+	efuse = devm_kzalloc(dev, माप(*efuse), GFP_KERNEL);
+	अगर (!efuse)
+		वापस -ENOMEM;
 
-	regs = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	efuse->map = devm_regmap_init_mmio(dev, regs,
 					   &jz4780_efuse_regmap_config);
-	if (IS_ERR(efuse->map))
-		return PTR_ERR(efuse->map);
+	अगर (IS_ERR(efuse->map))
+		वापस PTR_ERR(efuse->map);
 
-	efuse->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(efuse->clk))
-		return PTR_ERR(efuse->clk);
+	efuse->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(efuse->clk))
+		वापस PTR_ERR(efuse->clk);
 
 	ret = clk_prepare_enable(efuse->clk);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = devm_add_action_or_reset(&pdev->dev,
 				       clk_disable_unprepare_helper,
 				       efuse->clk);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	clk_rate = clk_get_rate(efuse->clk);
 
@@ -186,7 +187,7 @@ static int jz4780_efuse_probe(struct platform_device *pdev)
 	 *   bus clk_period * (rd_adj + 5 + rd_strobe) > 35ns
 	 *   i.e. rd_adj >= 6.5ns / clk_period
 	 *   i.e. rd_strobe >= 35 ns / clk_period - 5 - rd_adj + 1
-	 * constants:
+	 * स्थिरants:
 	 *   1 / 6.5ns == 153846154 Hz
 	 *   1 / 35ns == 28571429 Hz
 	 */
@@ -194,11 +195,11 @@ static int jz4780_efuse_probe(struct platform_device *pdev)
 	rd_adj = clk_rate / 153846154;
 	rd_strobe = clk_rate / 28571429 - 5 - rd_adj + 1;
 
-	if (rd_adj > EFUCFG_RD_ADJ_MASK ||
-	    rd_strobe > EFUCFG_RD_STR_MASK) {
+	अगर (rd_adj > EFUCFG_RD_ADJ_MASK ||
+	    rd_strobe > EFUCFG_RD_STR_MASK) अणु
 		dev_err(&pdev->dev, "Cannot set clock configuration\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	regmap_update_bits(efuse->map, JZ_EFUCFG,
 			   (EFUCFG_RD_ADJ_MASK << EFUCFG_RD_ADJ_SHIFT) |
@@ -210,25 +211,25 @@ static int jz4780_efuse_probe(struct platform_device *pdev)
 	cfg.dev = &pdev->dev;
 	cfg.priv = efuse;
 
-	nvmem = devm_nvmem_register(dev, &cfg);
+	nvmem = devm_nvmem_रेजिस्टर(dev, &cfg);
 
-	return PTR_ERR_OR_ZERO(nvmem);
-}
+	वापस PTR_ERR_OR_ZERO(nvmem);
+पूर्ण
 
-static const struct of_device_id jz4780_efuse_match[] = {
-	{ .compatible = "ingenic,jz4780-efuse" },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id jz4780_efuse_match[] = अणु
+	अणु .compatible = "ingenic,jz4780-efuse" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, jz4780_efuse_match);
 
-static struct platform_driver jz4780_efuse_driver = {
+अटल काष्ठा platक्रमm_driver jz4780_efuse_driver = अणु
 	.probe  = jz4780_efuse_probe,
-	.driver = {
+	.driver = अणु
 		.name = "jz4780-efuse",
 		.of_match_table = jz4780_efuse_match,
-	},
-};
-module_platform_driver(jz4780_efuse_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(jz4780_efuse_driver);
 
 MODULE_AUTHOR("PrasannaKumar Muralidharan <prasannatsmkumar@gmail.com>");
 MODULE_AUTHOR("H. Nikolaus Schaller <hns@goldelico.com>");

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_IRONGATE__H__
-#define __ALPHA_IRONGATE__H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_IRONGATE__H__
+#घोषणा __ALPHA_IRONGATE__H__
 
-#include <linux/types.h>
-#include <asm/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/compiler.h>
 
 /*
- * IRONGATE is the internal name for the AMD-751 K7 core logic chipset
- * which provides memory controller and PCI access for NAUTILUS-based
- * EV6 (21264) systems.
+ * IRONGATE is the पूर्णांकernal name क्रम the AMD-751 K7 core logic chipset
+ * which provides memory controller and PCI access क्रम NAUTILUS-based
+ * EV6 (21264) प्रणालीs.
  *
  * This file is based on:
  *
@@ -18,8 +19,8 @@
  */
 
 /*
- * The 21264 supports, and internally recognizes, a 44-bit physical
- * address space that is divided equally between memory address space
+ * The 21264 supports, and पूर्णांकernally recognizes, a 44-bit physical
+ * address space that is भागided equally between memory address space
  * and I/O address space. Memory address space resides in the lower
  * half of the physical address space (PA[43]=0) and I/O address space
  * resides in the upper half of the physical address space (PA[43]=1).
@@ -32,10 +33,10 @@
  * The first 0x40 bytes are standard as per the PCI spec.
  */
 
-typedef volatile __u32	igcsr32;
+प्रकार अस्थिर __u32	igcsr32;
 
-typedef struct {
-	igcsr32 dev_vendor;		/* 0x00 - device ID, vendor ID */
+प्रकार काष्ठा अणु
+	igcsr32 dev_venकरोr;		/* 0x00 - device ID, venकरोr ID */
 	igcsr32 stat_cmd;		/* 0x04 - status, command */
 	igcsr32 class;			/* 0x08 - class code, rev ID */
 	igcsr32 latency;		/* 0x0C - header type, PCI latency */
@@ -45,7 +46,7 @@ typedef struct {
 
 	igcsr32 rsrvd0[6];		/* 0x1C-0x33 reserved */
 
-	igcsr32 capptr;			/* 0x34 - Capabilities pointer */
+	igcsr32 capptr;			/* 0x34 - Capabilities poपूर्णांकer */
 
 	igcsr32 rsrvd1[2];		/* 0x38-0x3F reserved */
 
@@ -57,12 +58,12 @@ typedef struct {
 	igcsr32 rsrvd2[1];		/* 0x4C-0x4F reserved */
 
 	igcsr32 drammap;		/* 0x50 - address mapping control */
-	igcsr32 dramtm;			/* 0x54 - timing, driver strength */
+	igcsr32 dramपंचांग;			/* 0x54 - timing, driver strength */
 	igcsr32 dramms;			/* 0x58 - DRAM mode/status */
 
 	igcsr32 rsrvd3[1];		/* 0x5C-0x5F reserved */
 
-	igcsr32 biu0;			/* 0x60 - bus interface unit */
+	igcsr32 biu0;			/* 0x60 - bus पूर्णांकerface unit */
 	igcsr32 biusip;			/* 0x64 - Serial initialisation pkt */
 
 	igcsr32 rsrvd4[2];		/* 0x68-0x6F reserved */
@@ -80,18 +81,18 @@ typedef struct {
 	igcsr32 pci_mem;		/* 0x9C - PCI top of memory,
 						  761 only */
 
-	/* AGP (bus 1) control registers */
-	igcsr32 agpcap;			/* 0xA0 - AGP Capability Identifier */
-	igcsr32 agpstat;		/* 0xA4 - AGP status register */
-	igcsr32 agpcmd;			/* 0xA8 - AGP control register */
+	/* AGP (bus 1) control रेजिस्टरs */
+	igcsr32 agpcap;			/* 0xA0 - AGP Capability Identअगरier */
+	igcsr32 agpstat;		/* 0xA4 - AGP status रेजिस्टर */
+	igcsr32 agpcmd;			/* 0xA8 - AGP control रेजिस्टर */
 	igcsr32 agpva;			/* 0xAC - AGP Virtual Address Space */
 	igcsr32 agpmode;		/* 0xB0 - AGP/GART mode control */
-} Irongate0;
+पूर्ण Irongate0;
 
 
-typedef struct {
+प्रकार काष्ठा अणु
 
-	igcsr32 dev_vendor;		/* 0x00 - Device and Vendor IDs */
+	igcsr32 dev_venकरोr;		/* 0x00 - Device and Venकरोr IDs */
 	igcsr32 stat_cmd;		/* 0x04 - Status and Command regs */
 	igcsr32 class;			/* 0x08 - subclass, baseclass etc */
 	igcsr32 htype;			/* 0x0C - header type (at 0x0E) */
@@ -103,60 +104,60 @@ typedef struct {
 	igcsr32 rsrvd1[2];		/* 0x28-0x2F reserved */
 	igcsr32 io_baselim;		/* 0x30 - IO base, IO limit */
 	igcsr32 rsrvd2[2];		/* 0x34-0x3B - reserved */
-	igcsr32 interrupt;		/* 0x3C - interrupt, PCI bridge ctrl */
+	igcsr32 पूर्णांकerrupt;		/* 0x3C - पूर्णांकerrupt, PCI bridge ctrl */
 
-} Irongate1;
+पूर्ण Irongate1;
 
-extern igcsr32 *IronECC;
+बाह्य igcsr32 *IronECC;
 
 /*
  * Memory spaces:
  */
 
 /* Irongate is consistent with a subset of the Tsunami memory map */
-#ifdef USE_48_BIT_KSEG
-#define IRONGATE_BIAS 0x80000000000UL
-#else
-#define IRONGATE_BIAS 0x10000000000UL
-#endif
+#अगर_घोषित USE_48_BIT_KSEG
+#घोषणा IRONGATE_BIAS 0x80000000000UL
+#अन्यथा
+#घोषणा IRONGATE_BIAS 0x10000000000UL
+#पूर्ण_अगर
 
 
-#define IRONGATE_MEM		(IDENT_ADDR | IRONGATE_BIAS | 0x000000000UL)
-#define IRONGATE_IACK_SC	(IDENT_ADDR | IRONGATE_BIAS | 0x1F8000000UL)
-#define IRONGATE_IO		(IDENT_ADDR | IRONGATE_BIAS | 0x1FC000000UL)
-#define IRONGATE_CONF		(IDENT_ADDR | IRONGATE_BIAS | 0x1FE000000UL)
+#घोषणा IRONGATE_MEM		(IDENT_ADDR | IRONGATE_BIAS | 0x000000000UL)
+#घोषणा IRONGATE_IACK_SC	(IDENT_ADDR | IRONGATE_BIAS | 0x1F8000000UL)
+#घोषणा IRONGATE_IO		(IDENT_ADDR | IRONGATE_BIAS | 0x1FC000000UL)
+#घोषणा IRONGATE_CONF		(IDENT_ADDR | IRONGATE_BIAS | 0x1FE000000UL)
 
 /*
- * PCI Configuration space accesses are formed like so:
+ * PCI Configuration space accesses are क्रमmed like so:
  *
  * 0x1FE << 24 |  : 2 2 2 2 1 1 1 1 : 1 1 1 1 1 1 0 0 : 0 0 0 0 0 0 0 0 :
  *                : 3 2 1 0 9 8 7 6 : 5 4 3 2 1 0 9 8 : 7 6 5 4 3 2 1 0 :
- *                  ---bus numer---   -device-- -fun-   ---register----
+ *                  ---bus numer---   -device-- -fun-   ---रेजिस्टर----
  */
 
-#define IGCSR(dev,fun,reg)	( IRONGATE_CONF | \
+#घोषणा IGCSR(dev,fun,reg)	( IRONGATE_CONF | \
 				((dev)<<11) | \
 				((fun)<<8) | \
 				(reg) )
 
-#define IRONGATE0		((Irongate0 *) IGCSR(0, 0, 0))
-#define IRONGATE1		((Irongate1 *) IGCSR(1, 0, 0))
+#घोषणा IRONGATE0		((Irongate0 *) IGCSR(0, 0, 0))
+#घोषणा IRONGATE1		((Irongate1 *) IGCSR(1, 0, 0))
 
 /*
- * Data structure for handling IRONGATE machine checks:
+ * Data काष्ठाure क्रम handling IRONGATE machine checks:
  * This is the standard OSF logout frame
  */
 
-#define SCB_Q_SYSERR	0x620			/* OSF definitions */
-#define SCB_Q_PROCERR	0x630
-#define SCB_Q_SYSMCHK	0x660
-#define SCB_Q_PROCMCHK	0x670
+#घोषणा SCB_Q_SYSERR	0x620			/* OSF definitions */
+#घोषणा SCB_Q_PROCERR	0x630
+#घोषणा SCB_Q_SYSMCHK	0x660
+#घोषणा SCB_Q_PROCMCHK	0x670
 
-struct el_IRONGATE_sysdata_mcheck {
+काष्ठा el_IRONGATE_sysdata_mcheck अणु
 	__u32 FrameSize;                 /* Bytes, including this field */
 	__u32 FrameFlags;                /* <31> = Retry, <30> = Second Error */
-	__u32 CpuOffset;                 /* Offset to CPU-specific into */
-	__u32 SystemOffset;              /* Offset to system-specific info */
+	__u32 CpuOffset;                 /* Offset to CPU-specअगरic पूर्णांकo */
+	__u32 SystemOffset;              /* Offset to प्रणाली-specअगरic info */
 	__u32 MCHK_Code;
 	__u32 MCHK_Frame_Rev;
 	__u64 I_STAT;
@@ -174,60 +175,60 @@ struct el_IRONGATE_sysdata_mcheck {
 	__u64 PAL_BASE;
 	__u64 I_CTL;
 	__u64 PCTX;
-};
+पूर्ण;
 
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef __EXTERN_INLINE
-#define __EXTERN_INLINE extern inline
-#define __IO_EXTERN_INLINE
-#endif
+#अगर_अघोषित __EXTERN_INLINE
+#घोषणा __EXTERN_INLINE बाह्य अंतरभूत
+#घोषणा __IO_EXTERN_INLINE
+#पूर्ण_अगर
 
 /*
  * I/O functions:
  *
- * IRONGATE (AMD-751) PCI/memory support chip for the EV6 (21264) and
+ * IRONGATE (AMD-751) PCI/memory support chip क्रम the EV6 (21264) and
  * K7 can only use linear accesses to get at PCI memory and I/O spaces.
  */
 
 /*
- * Memory functions.  All accesses are done through linear space.
+ * Memory functions.  All accesses are करोne through linear space.
  */
 
-__EXTERN_INLINE void __iomem *irongate_ioportmap(unsigned long addr)
-{
-	return (void __iomem *)(addr + IRONGATE_IO);
-}
+__EXTERN_INLINE व्योम __iomem *irongate_ioporपंचांगap(अचिन्हित दीर्घ addr)
+अणु
+	वापस (व्योम __iomem *)(addr + IRONGATE_IO);
+पूर्ण
 
-extern void __iomem *irongate_ioremap(unsigned long addr, unsigned long size);
-extern void irongate_iounmap(volatile void __iomem *addr);
+बाह्य व्योम __iomem *irongate_ioremap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ size);
+बाह्य व्योम irongate_iounmap(अस्थिर व्योम __iomem *addr);
 
-__EXTERN_INLINE int irongate_is_ioaddr(unsigned long addr)
-{
-	return addr >= IRONGATE_MEM;
-}
+__EXTERN_INLINE पूर्णांक irongate_is_ioaddr(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr >= IRONGATE_MEM;
+पूर्ण
 
-__EXTERN_INLINE int irongate_is_mmio(const volatile void __iomem *xaddr)
-{
-	unsigned long addr = (unsigned long)xaddr;
-	return addr < IRONGATE_IO || addr >= IRONGATE_CONF;
-}
+__EXTERN_INLINE पूर्णांक irongate_is_mmio(स्थिर अस्थिर व्योम __iomem *xaddr)
+अणु
+	अचिन्हित दीर्घ addr = (अचिन्हित दीर्घ)xaddr;
+	वापस addr < IRONGATE_IO || addr >= IRONGATE_CONF;
+पूर्ण
 
-#undef __IO_PREFIX
-#define __IO_PREFIX			irongate
-#define irongate_trivial_rw_bw		1
-#define irongate_trivial_rw_lq		1
-#define irongate_trivial_io_bw		1
-#define irongate_trivial_io_lq		1
-#define irongate_trivial_iounmap	0
-#include <asm/io_trivial.h>
+#अघोषित __IO_PREFIX
+#घोषणा __IO_PREFIX			irongate
+#घोषणा irongate_trivial_rw_bw		1
+#घोषणा irongate_trivial_rw_lq		1
+#घोषणा irongate_trivial_io_bw		1
+#घोषणा irongate_trivial_io_lq		1
+#घोषणा irongate_trivial_iounmap	0
+#समावेश <यंत्र/io_trivial.h>
 
-#ifdef __IO_EXTERN_INLINE
-#undef __EXTERN_INLINE
-#undef __IO_EXTERN_INLINE
-#endif
+#अगर_घोषित __IO_EXTERN_INLINE
+#अघोषित __EXTERN_INLINE
+#अघोषित __IO_EXTERN_INLINE
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ALPHA_IRONGATE__H__ */
+#पूर्ण_अगर /* __ALPHA_IRONGATE__H__ */

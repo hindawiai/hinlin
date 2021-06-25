@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *    SE/HMC Drive (Read) Cache Functions
  *
@@ -6,20 +7,20 @@
  *    Author(s): Ralf Hoppe (rhoppe@de.ibm.com)
  */
 
-#ifndef __HMCDRV_CACHE_H__
-#define __HMCDRV_CACHE_H__
+#अगर_अघोषित __HMCDRV_CACHE_H__
+#घोषणा __HMCDRV_CACHE_H__
 
-#include <linux/mmzone.h>
-#include "hmcdrv_ftp.h"
+#समावेश <linux/mmzone.h>
+#समावेश "hmcdrv_ftp.h"
 
-#define HMCDRV_CACHE_SIZE_DFLT	(MAX_ORDER_NR_PAGES * PAGE_SIZE / 2UL)
+#घोषणा HMCDRV_CACHE_SIZE_DFLT	(MAX_ORDER_NR_PAGES * PAGE_SIZE / 2UL)
 
-typedef ssize_t (*hmcdrv_cache_ftpfunc)(const struct hmcdrv_ftp_cmdspec *ftp,
-					size_t *fsize);
+प्रकार sमाप_प्रकार (*hmcdrv_cache_ftpfunc)(स्थिर काष्ठा hmcdrv_ftp_cmdspec *ftp,
+					माप_प्रकार *fsize);
 
-ssize_t hmcdrv_cache_cmd(const struct hmcdrv_ftp_cmdspec *ftp,
+sमाप_प्रकार hmcdrv_cache_cmd(स्थिर काष्ठा hmcdrv_ftp_cmdspec *ftp,
 			 hmcdrv_cache_ftpfunc func);
-int hmcdrv_cache_startup(size_t cachesize);
-void hmcdrv_cache_shutdown(void);
+पूर्णांक hmcdrv_cache_startup(माप_प्रकार cachesize);
+व्योम hmcdrv_cache_shutकरोwn(व्योम);
 
-#endif	 /* __HMCDRV_CACHE_H__ */
+#पूर्ण_अगर	 /* __HMCDRV_CACHE_H__ */

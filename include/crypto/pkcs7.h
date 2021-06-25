@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* PKCS#7 crypto data parser
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _CRYPTO_PKCS7_H
-#define _CRYPTO_PKCS7_H
+#अगर_अघोषित _CRYPTO_PKCS7_H
+#घोषणा _CRYPTO_PKCS7_H
 
-#include <linux/verification.h>
-#include <linux/hash_info.h>
-#include <crypto/public_key.h>
+#समावेश <linux/verअगरication.h>
+#समावेश <linux/hash_info.h>
+#समावेश <crypto/खुला_key.h>
 
-struct key;
-struct pkcs7_message;
+काष्ठा key;
+काष्ठा pkcs7_message;
 
 /*
  * pkcs7_parser.c
  */
-extern struct pkcs7_message *pkcs7_parse_message(const void *data,
-						 size_t datalen);
-extern void pkcs7_free_message(struct pkcs7_message *pkcs7);
+बाह्य काष्ठा pkcs7_message *pkcs7_parse_message(स्थिर व्योम *data,
+						 माप_प्रकार datalen);
+बाह्य व्योम pkcs7_मुक्त_message(काष्ठा pkcs7_message *pkcs7);
 
-extern int pkcs7_get_content_data(const struct pkcs7_message *pkcs7,
-				  const void **_data, size_t *_datalen,
-				  size_t *_headerlen);
+बाह्य पूर्णांक pkcs7_get_content_data(स्थिर काष्ठा pkcs7_message *pkcs7,
+				  स्थिर व्योम **_data, माप_प्रकार *_datalen,
+				  माप_प्रकार *_headerlen);
 
 /*
  * pkcs7_trust.c
  */
-extern int pkcs7_validate_trust(struct pkcs7_message *pkcs7,
-				struct key *trust_keyring);
+बाह्य पूर्णांक pkcs7_validate_trust(काष्ठा pkcs7_message *pkcs7,
+				काष्ठा key *trust_keyring);
 
 /*
- * pkcs7_verify.c
+ * pkcs7_verअगरy.c
  */
-extern int pkcs7_verify(struct pkcs7_message *pkcs7,
-			enum key_being_used_for usage);
+बाह्य पूर्णांक pkcs7_verअगरy(काष्ठा pkcs7_message *pkcs7,
+			क्रमागत key_being_used_क्रम usage);
 
-extern int pkcs7_supply_detached_data(struct pkcs7_message *pkcs7,
-				      const void *data, size_t datalen);
+बाह्य पूर्णांक pkcs7_supply_detached_data(काष्ठा pkcs7_message *pkcs7,
+				      स्थिर व्योम *data, माप_प्रकार datalen);
 
-extern int pkcs7_get_digest(struct pkcs7_message *pkcs7, const u8 **buf,
-			    u32 *len, enum hash_algo *hash_algo);
+बाह्य पूर्णांक pkcs7_get_digest(काष्ठा pkcs7_message *pkcs7, स्थिर u8 **buf,
+			    u32 *len, क्रमागत hash_algo *hash_algo);
 
-#endif /* _CRYPTO_PKCS7_H */
+#पूर्ण_अगर /* _CRYPTO_PKCS7_H */

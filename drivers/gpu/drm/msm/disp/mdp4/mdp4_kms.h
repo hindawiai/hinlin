@@ -1,225 +1,226 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#ifndef __MDP4_KMS_H__
-#define __MDP4_KMS_H__
+#अगर_अघोषित __MDP4_KMS_H__
+#घोषणा __MDP4_KMS_H__
 
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_panel.h>
 
-#include "msm_drv.h"
-#include "msm_kms.h"
-#include "disp/mdp_kms.h"
-#include "mdp4.xml.h"
+#समावेश "msm_drv.h"
+#समावेश "msm_kms.h"
+#समावेश "disp/mdp_kms.h"
+#समावेश "mdp4.xml.h"
 
-struct device_node;
+काष्ठा device_node;
 
-struct mdp4_kms {
-	struct mdp_kms base;
+काष्ठा mdp4_kms अणु
+	काष्ठा mdp_kms base;
 
-	struct drm_device *dev;
+	काष्ठा drm_device *dev;
 
-	int rev;
+	पूर्णांक rev;
 
-	void __iomem *mmio;
+	व्योम __iomem *mmio;
 
-	struct regulator *vdd;
+	काष्ठा regulator *vdd;
 
-	struct clk *clk;
-	struct clk *pclk;
-	struct clk *lut_clk;
-	struct clk *axi_clk;
+	काष्ठा clk *clk;
+	काष्ठा clk *pclk;
+	काष्ठा clk *lut_clk;
+	काष्ठा clk *axi_clk;
 
-	struct mdp_irq error_handler;
+	काष्ठा mdp_irq error_handler;
 
 	bool rpm_enabled;
 
 	/* empty/blank cursor bo to use when cursor is "disabled" */
-	struct drm_gem_object *blank_cursor_bo;
-	uint64_t blank_cursor_iova;
-};
-#define to_mdp4_kms(x) container_of(x, struct mdp4_kms, base)
+	काष्ठा drm_gem_object *blank_cursor_bo;
+	uपूर्णांक64_t blank_cursor_iova;
+पूर्ण;
+#घोषणा to_mdp4_kms(x) container_of(x, काष्ठा mdp4_kms, base)
 
-/* platform config data (ie. from DT, or pdata) */
-struct mdp4_platform_config {
-	struct iommu_domain *iommu;
-	uint32_t max_clk;
-};
+/* platक्रमm config data (ie. from DT, or pdata) */
+काष्ठा mdp4_platक्रमm_config अणु
+	काष्ठा iommu_करोमुख्य *iommu;
+	uपूर्णांक32_t max_clk;
+पूर्ण;
 
-static inline void mdp4_write(struct mdp4_kms *mdp4_kms, u32 reg, u32 data)
-{
-	msm_writel(data, mdp4_kms->mmio + reg);
-}
+अटल अंतरभूत व्योम mdp4_ग_लिखो(काष्ठा mdp4_kms *mdp4_kms, u32 reg, u32 data)
+अणु
+	msm_ग_लिखोl(data, mdp4_kms->mmio + reg);
+पूर्ण
 
-static inline u32 mdp4_read(struct mdp4_kms *mdp4_kms, u32 reg)
-{
-	return msm_readl(mdp4_kms->mmio + reg);
-}
+अटल अंतरभूत u32 mdp4_पढ़ो(काष्ठा mdp4_kms *mdp4_kms, u32 reg)
+अणु
+	वापस msm_पढ़ोl(mdp4_kms->mmio + reg);
+पूर्ण
 
-static inline uint32_t pipe2flush(enum mdp4_pipe pipe)
-{
-	switch (pipe) {
-	case VG1:      return MDP4_OVERLAY_FLUSH_VG1;
-	case VG2:      return MDP4_OVERLAY_FLUSH_VG2;
-	case RGB1:     return MDP4_OVERLAY_FLUSH_RGB1;
-	case RGB2:     return MDP4_OVERLAY_FLUSH_RGB2;
-	default:       return 0;
-	}
-}
+अटल अंतरभूत uपूर्णांक32_t pipe2flush(क्रमागत mdp4_pipe pipe)
+अणु
+	चयन (pipe) अणु
+	हाल VG1:      वापस MDP4_OVERLAY_FLUSH_VG1;
+	हाल VG2:      वापस MDP4_OVERLAY_FLUSH_VG2;
+	हाल RGB1:     वापस MDP4_OVERLAY_FLUSH_RGB1;
+	हाल RGB2:     वापस MDP4_OVERLAY_FLUSH_RGB2;
+	शेष:       वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline uint32_t ovlp2flush(int ovlp)
-{
-	switch (ovlp) {
-	case 0:        return MDP4_OVERLAY_FLUSH_OVLP0;
-	case 1:        return MDP4_OVERLAY_FLUSH_OVLP1;
-	default:       return 0;
-	}
-}
+अटल अंतरभूत uपूर्णांक32_t ovlp2flush(पूर्णांक ovlp)
+अणु
+	चयन (ovlp) अणु
+	हाल 0:        वापस MDP4_OVERLAY_FLUSH_OVLP0;
+	हाल 1:        वापस MDP4_OVERLAY_FLUSH_OVLP1;
+	शेष:       वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline uint32_t dma2irq(enum mdp4_dma dma)
-{
-	switch (dma) {
-	case DMA_P:    return MDP4_IRQ_DMA_P_DONE;
-	case DMA_S:    return MDP4_IRQ_DMA_S_DONE;
-	case DMA_E:    return MDP4_IRQ_DMA_E_DONE;
-	default:       return 0;
-	}
-}
+अटल अंतरभूत uपूर्णांक32_t dma2irq(क्रमागत mdp4_dma dma)
+अणु
+	चयन (dma) अणु
+	हाल DMA_P:    वापस MDP4_IRQ_DMA_P_DONE;
+	हाल DMA_S:    वापस MDP4_IRQ_DMA_S_DONE;
+	हाल DMA_E:    वापस MDP4_IRQ_DMA_E_DONE;
+	शेष:       वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline uint32_t dma2err(enum mdp4_dma dma)
-{
-	switch (dma) {
-	case DMA_P:    return MDP4_IRQ_PRIMARY_INTF_UDERRUN;
-	case DMA_S:    return 0;  // ???
-	case DMA_E:    return MDP4_IRQ_EXTERNAL_INTF_UDERRUN;
-	default:       return 0;
-	}
-}
+अटल अंतरभूत uपूर्णांक32_t dma2err(क्रमागत mdp4_dma dma)
+अणु
+	चयन (dma) अणु
+	हाल DMA_P:    वापस MDP4_IRQ_PRIMARY_INTF_UDERRUN;
+	हाल DMA_S:    वापस 0;  // ???
+	हाल DMA_E:    वापस MDP4_IRQ_EXTERNAL_INTF_UDERRUN;
+	शेष:       वापस 0;
+	पूर्ण
+पूर्ण
 
-static inline uint32_t mixercfg(uint32_t mixer_cfg, int mixer,
-		enum mdp4_pipe pipe, enum mdp_mixer_stage_id stage)
-{
-	switch (pipe) {
-	case VG1:
+अटल अंतरभूत uपूर्णांक32_t mixercfg(uपूर्णांक32_t mixer_cfg, पूर्णांक mixer,
+		क्रमागत mdp4_pipe pipe, क्रमागत mdp_mixer_stage_id stage)
+अणु
+	चयन (pipe) अणु
+	हाल VG1:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE0__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE0_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE0(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE0_MIXER1);
-		break;
-	case VG2:
+		अवरोध;
+	हाल VG2:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE1__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE1_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE1(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE1_MIXER1);
-		break;
-	case RGB1:
+		अवरोध;
+	हाल RGB1:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE2__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE2_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE2(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE2_MIXER1);
-		break;
-	case RGB2:
+		अवरोध;
+	हाल RGB2:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE3__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE3_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE3(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE3_MIXER1);
-		break;
-	case RGB3:
+		अवरोध;
+	हाल RGB3:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE4__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE4_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE4(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE4_MIXER1);
-		break;
-	case VG3:
+		अवरोध;
+	हाल VG3:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE5__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE5_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE5(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE5_MIXER1);
-		break;
-	case VG4:
+		अवरोध;
+	हाल VG4:
 		mixer_cfg &= ~(MDP4_LAYERMIXER_IN_CFG_PIPE6__MASK |
 				MDP4_LAYERMIXER_IN_CFG_PIPE6_MIXER1);
 		mixer_cfg |= MDP4_LAYERMIXER_IN_CFG_PIPE6(stage) |
 			COND(mixer == 1, MDP4_LAYERMIXER_IN_CFG_PIPE6_MIXER1);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "invalid pipe");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return mixer_cfg;
-}
+	वापस mixer_cfg;
+पूर्ण
 
-int mdp4_disable(struct mdp4_kms *mdp4_kms);
-int mdp4_enable(struct mdp4_kms *mdp4_kms);
+पूर्णांक mdp4_disable(काष्ठा mdp4_kms *mdp4_kms);
+पूर्णांक mdp4_enable(काष्ठा mdp4_kms *mdp4_kms);
 
-void mdp4_set_irqmask(struct mdp_kms *mdp_kms, uint32_t irqmask,
-		uint32_t old_irqmask);
-void mdp4_irq_preinstall(struct msm_kms *kms);
-int mdp4_irq_postinstall(struct msm_kms *kms);
-void mdp4_irq_uninstall(struct msm_kms *kms);
-irqreturn_t mdp4_irq(struct msm_kms *kms);
-int mdp4_enable_vblank(struct msm_kms *kms, struct drm_crtc *crtc);
-void mdp4_disable_vblank(struct msm_kms *kms, struct drm_crtc *crtc);
+व्योम mdp4_set_irqmask(काष्ठा mdp_kms *mdp_kms, uपूर्णांक32_t irqmask,
+		uपूर्णांक32_t old_irqmask);
+व्योम mdp4_irq_preinstall(काष्ठा msm_kms *kms);
+पूर्णांक mdp4_irq_postinstall(काष्ठा msm_kms *kms);
+व्योम mdp4_irq_uninstall(काष्ठा msm_kms *kms);
+irqवापस_t mdp4_irq(काष्ठा msm_kms *kms);
+पूर्णांक mdp4_enable_vblank(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc);
+व्योम mdp4_disable_vblank(काष्ठा msm_kms *kms, काष्ठा drm_crtc *crtc);
 
-static inline uint32_t mdp4_pipe_caps(enum mdp4_pipe pipe)
-{
-	switch (pipe) {
-	case VG1:
-	case VG2:
-	case VG3:
-	case VG4:
-		return MDP_PIPE_CAP_HFLIP | MDP_PIPE_CAP_VFLIP |
+अटल अंतरभूत uपूर्णांक32_t mdp4_pipe_caps(क्रमागत mdp4_pipe pipe)
+अणु
+	चयन (pipe) अणु
+	हाल VG1:
+	हाल VG2:
+	हाल VG3:
+	हाल VG4:
+		वापस MDP_PIPE_CAP_HFLIP | MDP_PIPE_CAP_VFLIP |
 				MDP_PIPE_CAP_SCALE | MDP_PIPE_CAP_CSC;
-	case RGB1:
-	case RGB2:
-	case RGB3:
-		return MDP_PIPE_CAP_SCALE;
-	default:
-		return 0;
-	}
-}
+	हाल RGB1:
+	हाल RGB2:
+	हाल RGB3:
+		वापस MDP_PIPE_CAP_SCALE;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-enum mdp4_pipe mdp4_plane_pipe(struct drm_plane *plane);
-struct drm_plane *mdp4_plane_init(struct drm_device *dev,
-		enum mdp4_pipe pipe_id, bool private_plane);
+क्रमागत mdp4_pipe mdp4_plane_pipe(काष्ठा drm_plane *plane);
+काष्ठा drm_plane *mdp4_plane_init(काष्ठा drm_device *dev,
+		क्रमागत mdp4_pipe pipe_id, bool निजी_plane);
 
-uint32_t mdp4_crtc_vblank(struct drm_crtc *crtc);
-void mdp4_crtc_set_config(struct drm_crtc *crtc, uint32_t config);
-void mdp4_crtc_set_intf(struct drm_crtc *crtc, enum mdp4_intf intf, int mixer);
-void mdp4_crtc_wait_for_commit_done(struct drm_crtc *crtc);
-struct drm_crtc *mdp4_crtc_init(struct drm_device *dev,
-		struct drm_plane *plane, int id, int ovlp_id,
-		enum mdp4_dma dma_id);
+uपूर्णांक32_t mdp4_crtc_vblank(काष्ठा drm_crtc *crtc);
+व्योम mdp4_crtc_set_config(काष्ठा drm_crtc *crtc, uपूर्णांक32_t config);
+व्योम mdp4_crtc_set_पूर्णांकf(काष्ठा drm_crtc *crtc, क्रमागत mdp4_पूर्णांकf पूर्णांकf, पूर्णांक mixer);
+व्योम mdp4_crtc_रुको_क्रम_commit_करोne(काष्ठा drm_crtc *crtc);
+काष्ठा drm_crtc *mdp4_crtc_init(काष्ठा drm_device *dev,
+		काष्ठा drm_plane *plane, पूर्णांक id, पूर्णांक ovlp_id,
+		क्रमागत mdp4_dma dma_id);
 
-long mdp4_dtv_round_pixclk(struct drm_encoder *encoder, unsigned long rate);
-struct drm_encoder *mdp4_dtv_encoder_init(struct drm_device *dev);
+दीर्घ mdp4_dtv_round_pixclk(काष्ठा drm_encoder *encoder, अचिन्हित दीर्घ rate);
+काष्ठा drm_encoder *mdp4_dtv_encoder_init(काष्ठा drm_device *dev);
 
-long mdp4_lcdc_round_pixclk(struct drm_encoder *encoder, unsigned long rate);
-struct drm_encoder *mdp4_lcdc_encoder_init(struct drm_device *dev,
-		struct device_node *panel_node);
+दीर्घ mdp4_lcdc_round_pixclk(काष्ठा drm_encoder *encoder, अचिन्हित दीर्घ rate);
+काष्ठा drm_encoder *mdp4_lcdc_encoder_init(काष्ठा drm_device *dev,
+		काष्ठा device_node *panel_node);
 
-struct drm_connector *mdp4_lvds_connector_init(struct drm_device *dev,
-		struct device_node *panel_node, struct drm_encoder *encoder);
+काष्ठा drm_connector *mdp4_lvds_connector_init(काष्ठा drm_device *dev,
+		काष्ठा device_node *panel_node, काष्ठा drm_encoder *encoder);
 
-#ifdef CONFIG_DRM_MSM_DSI
-struct drm_encoder *mdp4_dsi_encoder_init(struct drm_device *dev);
-#else
-static inline struct drm_encoder *mdp4_dsi_encoder_init(struct drm_device *dev)
-{
-	return ERR_PTR(-ENODEV);
-}
-#endif
+#अगर_घोषित CONFIG_DRM_MSM_DSI
+काष्ठा drm_encoder *mdp4_dsi_encoder_init(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत काष्ठा drm_encoder *mdp4_dsi_encoder_init(काष्ठा drm_device *dev)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_COMMON_CLK
-struct clk *mpd4_lvds_pll_init(struct drm_device *dev);
-#else
-static inline struct clk *mpd4_lvds_pll_init(struct drm_device *dev)
-{
-	return ERR_PTR(-ENODEV);
-}
-#endif
+#अगर_घोषित CONFIG_COMMON_CLK
+काष्ठा clk *mpd4_lvds_pll_init(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत काष्ठा clk *mpd4_lvds_pll_init(काष्ठा drm_device *dev)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __MDP4_KMS_H__ */
+#पूर्ण_अगर /* __MDP4_KMS_H__ */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Linux ARCnet driver - RFC1051 ("simple" standard) packet encapsulation
  *
@@ -5,7 +6,7 @@
  * Derived from skeleton.c by Donald Becker.
  *
  * Special thanks to Contemporary Controls, Inc. (www.ccontrols.com)
- *  for sponsoring the further development of this driver.
+ *  क्रम sponsoring the further development of this driver.
  *
  * **********************
  *
@@ -15,7 +16,7 @@
  * Copyright 1993 United States Government as represented by the
  * Director, National Security Agency.  This software may only be used
  * and distributed according to the terms of the GNU General Public License as
- * modified by SRC, incorporated herein by reference.
+ * modअगरied by SRC, incorporated herein by reference.
  *
  * **********************
  *
@@ -24,59 +25,59 @@
  * **********************
  */
 
-#define pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/gfp.h>
-#include <linux/init.h>
-#include <linux/if_arp.h>
-#include <net/arp.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/init.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <net/arp.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
 
-#include "arcdevice.h"
+#समावेश "arcdevice.h"
 
-static __be16 type_trans(struct sk_buff *skb, struct net_device *dev);
-static void rx(struct net_device *dev, int bufnum,
-	       struct archdr *pkthdr, int length);
-static int build_header(struct sk_buff *skb, struct net_device *dev,
-			unsigned short type, uint8_t daddr);
-static int prepare_tx(struct net_device *dev, struct archdr *pkt, int length,
-		      int bufnum);
+अटल __be16 type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev);
+अटल व्योम rx(काष्ठा net_device *dev, पूर्णांक bufnum,
+	       काष्ठा archdr *pkthdr, पूर्णांक length);
+अटल पूर्णांक build_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			अचिन्हित लघु type, uपूर्णांक8_t daddr);
+अटल पूर्णांक prepare_tx(काष्ठा net_device *dev, काष्ठा archdr *pkt, पूर्णांक length,
+		      पूर्णांक bufnum);
 
-static struct ArcProto rfc1051_proto = {
+अटल काष्ठा ArcProto rfc1051_proto = अणु
 	.suffix		= 's',
 	.mtu		= XMTU - RFC1051_HDR_SIZE,
 	.is_ip          = 1,
 	.rx		= rx,
 	.build_header	= build_header,
 	.prepare_tx	= prepare_tx,
-	.continue_tx    = NULL,
-	.ack_tx         = NULL
-};
+	.जारी_tx    = शून्य,
+	.ack_tx         = शून्य
+पूर्ण;
 
-static int __init arcnet_rfc1051_init(void)
-{
+अटल पूर्णांक __init arcnet_rfc1051_init(व्योम)
+अणु
 	pr_info("%s\n", "RFC1051 \"simple standard\" (`s') encapsulation support loaded");
 
 	arc_proto_map[ARC_P_IP_RFC1051]
 	    = arc_proto_map[ARC_P_ARP_RFC1051]
 	    = &rfc1051_proto;
 
-	/* if someone else already owns the broadcast, we won't take it */
-	if (arc_bcast_proto == arc_proto_default)
+	/* अगर someone अन्यथा alपढ़ोy owns the broadcast, we won't take it */
+	अगर (arc_bcast_proto == arc_proto_शेष)
 		arc_bcast_proto = &rfc1051_proto;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit arcnet_rfc1051_exit(void)
-{
-	arcnet_unregister_proto(&rfc1051_proto);
-}
+अटल व्योम __निकास arcnet_rfc1051_निकास(व्योम)
+अणु
+	arcnet_unरेजिस्टर_proto(&rfc1051_proto);
+पूर्ण
 
 module_init(arcnet_rfc1051_init);
-module_exit(arcnet_rfc1051_exit);
+module_निकास(arcnet_rfc1051_निकास);
 
 MODULE_LICENSE("GPL");
 
@@ -84,159 +85,159 @@ MODULE_LICENSE("GPL");
  *
  * With ARCnet we have to convert everything to Ethernet-style stuff.
  */
-static __be16 type_trans(struct sk_buff *skb, struct net_device *dev)
-{
-	struct archdr *pkt = (struct archdr *)skb->data;
-	struct arc_rfc1051 *soft = &pkt->soft.rfc1051;
-	int hdr_size = ARC_HDR_SIZE + RFC1051_HDR_SIZE;
+अटल __be16 type_trans(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा archdr *pkt = (काष्ठा archdr *)skb->data;
+	काष्ठा arc_rfc1051 *soft = &pkt->soft.rfc1051;
+	पूर्णांक hdr_size = ARC_HDR_SIZE + RFC1051_HDR_SIZE;
 
 	/* Pull off the arcnet header. */
 	skb_reset_mac_header(skb);
 	skb_pull(skb, hdr_size);
 
-	if (pkt->hard.dest == 0) {
+	अगर (pkt->hard.dest == 0) अणु
 		skb->pkt_type = PACKET_BROADCAST;
-	} else if (dev->flags & IFF_PROMISC) {
-		/* if we're not sending to ourselves :) */
-		if (pkt->hard.dest != dev->dev_addr[0])
+	पूर्ण अन्यथा अगर (dev->flags & IFF_PROMISC) अणु
+		/* अगर we're not sending to ourselves :) */
+		अगर (pkt->hard.dest != dev->dev_addr[0])
 			skb->pkt_type = PACKET_OTHERHOST;
-	}
-	/* now return the protocol number */
-	switch (soft->proto) {
-	case ARC_P_IP_RFC1051:
-		return htons(ETH_P_IP);
-	case ARC_P_ARP_RFC1051:
-		return htons(ETH_P_ARP);
+	पूर्ण
+	/* now वापस the protocol number */
+	चयन (soft->proto) अणु
+	हाल ARC_P_IP_RFC1051:
+		वापस htons(ETH_P_IP);
+	हाल ARC_P_ARP_RFC1051:
+		वापस htons(ETH_P_ARP);
 
-	default:
+	शेष:
 		dev->stats.rx_errors++;
 		dev->stats.rx_crc_errors++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return htons(ETH_P_IP);
-}
+	वापस htons(ETH_P_IP);
+पूर्ण
 
 /* packet receiver */
-static void rx(struct net_device *dev, int bufnum,
-	       struct archdr *pkthdr, int length)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	struct sk_buff *skb;
-	struct archdr *pkt = pkthdr;
-	int ofs;
+अटल व्योम rx(काष्ठा net_device *dev, पूर्णांक bufnum,
+	       काष्ठा archdr *pkthdr, पूर्णांक length)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	काष्ठा sk_buff *skb;
+	काष्ठा archdr *pkt = pkthdr;
+	पूर्णांक ofs;
 
-	arc_printk(D_DURING, dev, "it's a raw packet (length=%d)\n", length);
+	arc_prपूर्णांकk(D_DURING, dev, "it's a raw packet (length=%d)\n", length);
 
-	if (length >= MinTU)
+	अगर (length >= MinTU)
 		ofs = 512 - length;
-	else
+	अन्यथा
 		ofs = 256 - length;
 
 	skb = alloc_skb(length + ARC_HDR_SIZE, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		dev->stats.rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 	skb_put(skb, length + ARC_HDR_SIZE);
 	skb->dev = dev;
 
-	pkt = (struct archdr *)skb->data;
+	pkt = (काष्ठा archdr *)skb->data;
 
-	/* up to sizeof(pkt->soft) has already been copied from the card */
-	memcpy(pkt, pkthdr, sizeof(struct archdr));
-	if (length > sizeof(pkt->soft))
-		lp->hw.copy_from_card(dev, bufnum, ofs + sizeof(pkt->soft),
-				      pkt->soft.raw + sizeof(pkt->soft),
-				      length - sizeof(pkt->soft));
+	/* up to माप(pkt->soft) has alपढ़ोy been copied from the card */
+	स_नकल(pkt, pkthdr, माप(काष्ठा archdr));
+	अगर (length > माप(pkt->soft))
+		lp->hw.copy_from_card(dev, bufnum, ofs + माप(pkt->soft),
+				      pkt->soft.raw + माप(pkt->soft),
+				      length - माप(pkt->soft));
 
-	if (BUGLVL(D_SKB))
+	अगर (BUGLVL(D_SKB))
 		arcnet_dump_skb(dev, skb, "rx");
 
 	skb->protocol = type_trans(skb, dev);
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
-/* Create the ARCnet hard/soft headers for RFC1051 */
-static int build_header(struct sk_buff *skb, struct net_device *dev,
-			unsigned short type, uint8_t daddr)
-{
-	int hdr_size = ARC_HDR_SIZE + RFC1051_HDR_SIZE;
-	struct archdr *pkt = skb_push(skb, hdr_size);
-	struct arc_rfc1051 *soft = &pkt->soft.rfc1051;
+/* Create the ARCnet hard/soft headers क्रम RFC1051 */
+अटल पूर्णांक build_header(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			अचिन्हित लघु type, uपूर्णांक8_t daddr)
+अणु
+	पूर्णांक hdr_size = ARC_HDR_SIZE + RFC1051_HDR_SIZE;
+	काष्ठा archdr *pkt = skb_push(skb, hdr_size);
+	काष्ठा arc_rfc1051 *soft = &pkt->soft.rfc1051;
 
 	/* set the protocol ID according to RFC1051 */
-	switch (type) {
-	case ETH_P_IP:
+	चयन (type) अणु
+	हाल ETH_P_IP:
 		soft->proto = ARC_P_IP_RFC1051;
-		break;
-	case ETH_P_ARP:
+		अवरोध;
+	हाल ETH_P_ARP:
 		soft->proto = ARC_P_ARP_RFC1051;
-		break;
-	default:
-		arc_printk(D_NORMAL, dev, "RFC1051: I don't understand protocol %d (%Xh)\n",
+		अवरोध;
+	शेष:
+		arc_prपूर्णांकk(D_NORMAL, dev, "RFC1051: I don't understand protocol %d (%Xh)\n",
 			   type, type);
 		dev->stats.tx_errors++;
-		dev->stats.tx_aborted_errors++;
-		return 0;
-	}
+		dev->stats.tx_पातed_errors++;
+		वापस 0;
+	पूर्ण
 
 	/* Set the source hardware address.
 	 *
-	 * This is pretty pointless for most purposes, but it can help in
-	 * debugging.  ARCnet does not allow us to change the source address
+	 * This is pretty poपूर्णांकless क्रम most purposes, but it can help in
+	 * debugging.  ARCnet करोes not allow us to change the source address
 	 * in the actual packet sent.
 	 */
 	pkt->hard.source = *dev->dev_addr;
 
 	/* see linux/net/ethernet/eth.c to see where I got the following */
 
-	if (dev->flags & (IFF_LOOPBACK | IFF_NOARP)) {
+	अगर (dev->flags & (IFF_LOOPBACK | IFF_NOARP)) अणु
 		/* FIXME: fill in the last byte of the dest ipaddr here to
 		 * better comply with RFC1051 in "noarp" mode.
 		 */
 		pkt->hard.dest = 0;
-		return hdr_size;
-	}
+		वापस hdr_size;
+	पूर्ण
 	/* otherwise, just fill it in and go! */
 	pkt->hard.dest = daddr;
 
-	return hdr_size;	/* success */
-}
+	वापस hdr_size;	/* success */
+पूर्ण
 
-static int prepare_tx(struct net_device *dev, struct archdr *pkt, int length,
-		      int bufnum)
-{
-	struct arcnet_local *lp = netdev_priv(dev);
-	struct arc_hardware *hard = &pkt->hard;
-	int ofs;
+अटल पूर्णांक prepare_tx(काष्ठा net_device *dev, काष्ठा archdr *pkt, पूर्णांक length,
+		      पूर्णांक bufnum)
+अणु
+	काष्ठा arcnet_local *lp = netdev_priv(dev);
+	काष्ठा arc_hardware *hard = &pkt->hard;
+	पूर्णांक ofs;
 
-	arc_printk(D_DURING, dev, "prepare_tx: txbufs=%d/%d/%d\n",
+	arc_prपूर्णांकk(D_DURING, dev, "prepare_tx: txbufs=%d/%d/%d\n",
 		   lp->next_tx, lp->cur_tx, bufnum);
 
 	/* hard header is not included in packet length */
 	length -= ARC_HDR_SIZE;
 
-	if (length > XMTU) {
-		/* should never happen! other people already check for this. */
-		arc_printk(D_NORMAL, dev, "Bug!  prepare_tx with size %d (> %d)\n",
+	अगर (length > XMTU) अणु
+		/* should never happen! other people alपढ़ोy check क्रम this. */
+		arc_prपूर्णांकk(D_NORMAL, dev, "Bug!  prepare_tx with size %d (> %d)\n",
 			   length, XMTU);
 		length = XMTU;
-	}
-	if (length > MinTU) {
+	पूर्ण
+	अगर (length > MinTU) अणु
 		hard->offset[0] = 0;
 		hard->offset[1] = ofs = 512 - length;
-	} else if (length > MTU) {
+	पूर्ण अन्यथा अगर (length > MTU) अणु
 		hard->offset[0] = 0;
 		hard->offset[1] = ofs = 512 - length - 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		hard->offset[0] = ofs = 256 - length;
-	}
+	पूर्ण
 
 	lp->hw.copy_to_card(dev, bufnum, 0, hard, ARC_HDR_SIZE);
 	lp->hw.copy_to_card(dev, bufnum, ofs, &pkt->soft, length);
 
 	lp->lastload_dest = hard->dest;
 
-	return 1;		/* done */
-}
+	वापस 1;		/* करोne */
+पूर्ण

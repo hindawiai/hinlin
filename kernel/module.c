@@ -1,760 +1,761 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2002 Richard Henderson
+ * Copyright (C) 2002 Riअक्षरd Henderson
  * Copyright (C) 2001 Rusty Russell, 2002, 2010 Rusty Russell IBM.
  */
 
-#define INCLUDE_VERMAGIC
+#घोषणा INCLUDE_VERMAGIC
 
-#include <linux/export.h>
-#include <linux/extable.h>
-#include <linux/moduleloader.h>
-#include <linux/module_signature.h>
-#include <linux/trace_events.h>
-#include <linux/init.h>
-#include <linux/kallsyms.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/sysfs.h>
-#include <linux/kernel.h>
-#include <linux/kernel_read_file.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/elf.h>
-#include <linux/proc_fs.h>
-#include <linux/security.h>
-#include <linux/seq_file.h>
-#include <linux/syscalls.h>
-#include <linux/fcntl.h>
-#include <linux/rcupdate.h>
-#include <linux/capability.h>
-#include <linux/cpu.h>
-#include <linux/moduleparam.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/vermagic.h>
-#include <linux/notifier.h>
-#include <linux/sched.h>
-#include <linux/device.h>
-#include <linux/string.h>
-#include <linux/mutex.h>
-#include <linux/rculist.h>
-#include <linux/uaccess.h>
-#include <asm/cacheflush.h>
-#include <linux/set_memory.h>
-#include <asm/mmu_context.h>
-#include <linux/license.h>
-#include <asm/sections.h>
-#include <linux/tracepoint.h>
-#include <linux/ftrace.h>
-#include <linux/livepatch.h>
-#include <linux/async.h>
-#include <linux/percpu.h>
-#include <linux/kmemleak.h>
-#include <linux/jump_label.h>
-#include <linux/pfn.h>
-#include <linux/bsearch.h>
-#include <linux/dynamic_debug.h>
-#include <linux/audit.h>
-#include <uapi/linux/module.h>
-#include "module-internal.h"
+#समावेश <linux/export.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/moduleloader.h>
+#समावेश <linux/module_signature.h>
+#समावेश <linux/trace_events.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kernel_पढ़ो_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/security.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/vermagic.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/device.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <linux/set_memory.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <linux/license.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/livepatch.h>
+#समावेश <linux/async.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/kmemleak.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/द्वा_खोज.h>
+#समावेश <linux/dynamic_debug.h>
+#समावेश <linux/audit.h>
+#समावेश <uapi/linux/module.h>
+#समावेश "module-internal.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/module.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/module.h>
 
-#ifndef ARCH_SHF_SMALL
-#define ARCH_SHF_SMALL 0
-#endif
+#अगर_अघोषित ARCH_SHF_SMALL
+#घोषणा ARCH_SHF_SMALL 0
+#पूर्ण_अगर
 
 /*
  * Modules' sections will be aligned on page boundaries
  * to ensure complete separation of code and data, but
  * only when CONFIG_ARCH_HAS_STRICT_MODULE_RWX=y
  */
-#ifdef CONFIG_ARCH_HAS_STRICT_MODULE_RWX
+#अगर_घोषित CONFIG_ARCH_HAS_STRICT_MODULE_RWX
 # define debug_align(X) ALIGN(X, PAGE_SIZE)
-#else
+#अन्यथा
 # define debug_align(X) (X)
-#endif
+#पूर्ण_अगर
 
-/* If this is set, the section belongs in the init part of the module */
-#define INIT_OFFSET_MASK (1UL << (BITS_PER_LONG-1))
+/* If this is set, the section beदीर्घs in the init part of the module */
+#घोषणा INIT_OFFSET_MASK (1UL << (BITS_PER_LONG-1))
 
 /*
  * Mutex protects:
- * 1) List of modules (also safely readable with preempt_disable),
+ * 1) List of modules (also safely पढ़ोable with preempt_disable),
  * 2) module_use links,
  * 3) module_addr_min/module_addr_max.
  * (delete and add uses RCU list operations).
  */
-static DEFINE_MUTEX(module_mutex);
-static LIST_HEAD(modules);
+अटल DEFINE_MUTEX(module_mutex);
+अटल LIST_HEAD(modules);
 
-/* Work queue for freeing init sections in success case */
-static void do_free_init(struct work_struct *w);
-static DECLARE_WORK(init_free_wq, do_free_init);
-static LLIST_HEAD(init_free_list);
+/* Work queue क्रम मुक्तing init sections in success हाल */
+अटल व्योम करो_मुक्त_init(काष्ठा work_काष्ठा *w);
+अटल DECLARE_WORK(init_मुक्त_wq, करो_मुक्त_init);
+अटल LLIST_HEAD(init_मुक्त_list);
 
-#ifdef CONFIG_MODULES_TREE_LOOKUP
+#अगर_घोषित CONFIG_MODULES_TREE_LOOKUP
 
 /*
- * Use a latched RB-tree for __module_address(); this allows us to use
+ * Use a latched RB-tree क्रम __module_address(); this allows us to use
  * RCU-sched lookups of the address from any context.
  *
  * This is conditional on PERF_EVENTS || TRACING because those can really hit
- * __module_address() hard by doing a lot of stack unwinding; potentially from
+ * __module_address() hard by करोing a lot of stack unwinding; potentially from
  * NMI context.
  */
 
-static __always_inline unsigned long __mod_tree_val(struct latch_tree_node *n)
-{
-	struct module_layout *layout = container_of(n, struct module_layout, mtn.node);
+अटल __always_अंतरभूत अचिन्हित दीर्घ __mod_tree_val(काष्ठा latch_tree_node *n)
+अणु
+	काष्ठा module_layout *layout = container_of(n, काष्ठा module_layout, mtn.node);
 
-	return (unsigned long)layout->base;
-}
+	वापस (अचिन्हित दीर्घ)layout->base;
+पूर्ण
 
-static __always_inline unsigned long __mod_tree_size(struct latch_tree_node *n)
-{
-	struct module_layout *layout = container_of(n, struct module_layout, mtn.node);
+अटल __always_अंतरभूत अचिन्हित दीर्घ __mod_tree_size(काष्ठा latch_tree_node *n)
+अणु
+	काष्ठा module_layout *layout = container_of(n, काष्ठा module_layout, mtn.node);
 
-	return (unsigned long)layout->size;
-}
+	वापस (अचिन्हित दीर्घ)layout->size;
+पूर्ण
 
-static __always_inline bool
-mod_tree_less(struct latch_tree_node *a, struct latch_tree_node *b)
-{
-	return __mod_tree_val(a) < __mod_tree_val(b);
-}
+अटल __always_अंतरभूत bool
+mod_tree_less(काष्ठा latch_tree_node *a, काष्ठा latch_tree_node *b)
+अणु
+	वापस __mod_tree_val(a) < __mod_tree_val(b);
+पूर्ण
 
-static __always_inline int
-mod_tree_comp(void *key, struct latch_tree_node *n)
-{
-	unsigned long val = (unsigned long)key;
-	unsigned long start, end;
+अटल __always_अंतरभूत पूर्णांक
+mod_tree_comp(व्योम *key, काष्ठा latch_tree_node *n)
+अणु
+	अचिन्हित दीर्घ val = (अचिन्हित दीर्घ)key;
+	अचिन्हित दीर्घ start, end;
 
 	start = __mod_tree_val(n);
-	if (val < start)
-		return -1;
+	अगर (val < start)
+		वापस -1;
 
 	end = start + __mod_tree_size(n);
-	if (val >= end)
-		return 1;
+	अगर (val >= end)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct latch_tree_ops mod_tree_ops = {
+अटल स्थिर काष्ठा latch_tree_ops mod_tree_ops = अणु
 	.less = mod_tree_less,
 	.comp = mod_tree_comp,
-};
+पूर्ण;
 
-static struct mod_tree_root {
-	struct latch_tree_root root;
-	unsigned long addr_min;
-	unsigned long addr_max;
-} mod_tree __cacheline_aligned = {
+अटल काष्ठा mod_tree_root अणु
+	काष्ठा latch_tree_root root;
+	अचिन्हित दीर्घ addr_min;
+	अचिन्हित दीर्घ addr_max;
+पूर्ण mod_tree __cacheline_aligned = अणु
 	.addr_min = -1UL,
-};
+पूर्ण;
 
-#define module_addr_min mod_tree.addr_min
-#define module_addr_max mod_tree.addr_max
+#घोषणा module_addr_min mod_tree.addr_min
+#घोषणा module_addr_max mod_tree.addr_max
 
-static noinline void __mod_tree_insert(struct mod_tree_node *node)
-{
+अटल noअंतरभूत व्योम __mod_tree_insert(काष्ठा mod_tree_node *node)
+अणु
 	latch_tree_insert(&node->node, &mod_tree.root, &mod_tree_ops);
-}
+पूर्ण
 
-static void __mod_tree_remove(struct mod_tree_node *node)
-{
+अटल व्योम __mod_tree_हटाओ(काष्ठा mod_tree_node *node)
+अणु
 	latch_tree_erase(&node->node, &mod_tree.root, &mod_tree_ops);
-}
+पूर्ण
 
 /*
- * These modifications: insert, remove_init and remove; are serialized by the
+ * These modअगरications: insert, हटाओ_init and हटाओ; are serialized by the
  * module_mutex.
  */
-static void mod_tree_insert(struct module *mod)
-{
+अटल व्योम mod_tree_insert(काष्ठा module *mod)
+अणु
 	mod->core_layout.mtn.mod = mod;
 	mod->init_layout.mtn.mod = mod;
 
 	__mod_tree_insert(&mod->core_layout.mtn);
-	if (mod->init_layout.size)
+	अगर (mod->init_layout.size)
 		__mod_tree_insert(&mod->init_layout.mtn);
-}
+पूर्ण
 
-static void mod_tree_remove_init(struct module *mod)
-{
-	if (mod->init_layout.size)
-		__mod_tree_remove(&mod->init_layout.mtn);
-}
+अटल व्योम mod_tree_हटाओ_init(काष्ठा module *mod)
+अणु
+	अगर (mod->init_layout.size)
+		__mod_tree_हटाओ(&mod->init_layout.mtn);
+पूर्ण
 
-static void mod_tree_remove(struct module *mod)
-{
-	__mod_tree_remove(&mod->core_layout.mtn);
-	mod_tree_remove_init(mod);
-}
+अटल व्योम mod_tree_हटाओ(काष्ठा module *mod)
+अणु
+	__mod_tree_हटाओ(&mod->core_layout.mtn);
+	mod_tree_हटाओ_init(mod);
+पूर्ण
 
-static struct module *mod_find(unsigned long addr)
-{
-	struct latch_tree_node *ltn;
+अटल काष्ठा module *mod_find(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा latch_tree_node *ltn;
 
-	ltn = latch_tree_find((void *)addr, &mod_tree.root, &mod_tree_ops);
-	if (!ltn)
-		return NULL;
+	ltn = latch_tree_find((व्योम *)addr, &mod_tree.root, &mod_tree_ops);
+	अगर (!ltn)
+		वापस शून्य;
 
-	return container_of(ltn, struct mod_tree_node, node)->mod;
-}
+	वापस container_of(ltn, काष्ठा mod_tree_node, node)->mod;
+पूर्ण
 
-#else /* MODULES_TREE_LOOKUP */
+#अन्यथा /* MODULES_TREE_LOOKUP */
 
-static unsigned long module_addr_min = -1UL, module_addr_max = 0;
+अटल अचिन्हित दीर्घ module_addr_min = -1UL, module_addr_max = 0;
 
-static void mod_tree_insert(struct module *mod) { }
-static void mod_tree_remove_init(struct module *mod) { }
-static void mod_tree_remove(struct module *mod) { }
+अटल व्योम mod_tree_insert(काष्ठा module *mod) अणु पूर्ण
+अटल व्योम mod_tree_हटाओ_init(काष्ठा module *mod) अणु पूर्ण
+अटल व्योम mod_tree_हटाओ(काष्ठा module *mod) अणु पूर्ण
 
-static struct module *mod_find(unsigned long addr)
-{
-	struct module *mod;
+अटल काष्ठा module *mod_find(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा module *mod;
 
-	list_for_each_entry_rcu(mod, &modules, list,
-				lockdep_is_held(&module_mutex)) {
-		if (within_module(addr, mod))
-			return mod;
-	}
+	list_क्रम_each_entry_rcu(mod, &modules, list,
+				lockdep_is_held(&module_mutex)) अणु
+		अगर (within_module(addr, mod))
+			वापस mod;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#endif /* MODULES_TREE_LOOKUP */
+#पूर्ण_अगर /* MODULES_TREE_LOOKUP */
 
 /*
- * Bounds of module text, for speeding up __module_address.
+ * Bounds of module text, क्रम speeding up __module_address.
  * Protected by module_mutex.
  */
-static void __mod_update_bounds(void *base, unsigned int size)
-{
-	unsigned long min = (unsigned long)base;
-	unsigned long max = min + size;
+अटल व्योम __mod_update_bounds(व्योम *base, अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ min = (अचिन्हित दीर्घ)base;
+	अचिन्हित दीर्घ max = min + size;
 
-	if (min < module_addr_min)
+	अगर (min < module_addr_min)
 		module_addr_min = min;
-	if (max > module_addr_max)
+	अगर (max > module_addr_max)
 		module_addr_max = max;
-}
+पूर्ण
 
-static void mod_update_bounds(struct module *mod)
-{
+अटल व्योम mod_update_bounds(काष्ठा module *mod)
+अणु
 	__mod_update_bounds(mod->core_layout.base, mod->core_layout.size);
-	if (mod->init_layout.size)
+	अगर (mod->init_layout.size)
 		__mod_update_bounds(mod->init_layout.base, mod->init_layout.size);
-}
+पूर्ण
 
-#ifdef CONFIG_KGDB_KDB
-struct list_head *kdb_modules = &modules; /* kdb needs the list of modules */
-#endif /* CONFIG_KGDB_KDB */
+#अगर_घोषित CONFIG_KGDB_KDB
+काष्ठा list_head *kdb_modules = &modules; /* kdb needs the list of modules */
+#पूर्ण_अगर /* CONFIG_KGDB_KDB */
 
-static void module_assert_mutex_or_preempt(void)
-{
-#ifdef CONFIG_LOCKDEP
-	if (unlikely(!debug_locks))
-		return;
+अटल व्योम module_निश्चित_mutex_or_preempt(व्योम)
+अणु
+#अगर_घोषित CONFIG_LOCKDEP
+	अगर (unlikely(!debug_locks))
+		वापस;
 
-	WARN_ON_ONCE(!rcu_read_lock_sched_held() &&
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_sched_held() &&
 		!lockdep_is_held(&module_mutex));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_MODULE_SIG
-static bool sig_enforce = IS_ENABLED(CONFIG_MODULE_SIG_FORCE);
-module_param(sig_enforce, bool_enable_only, 0644);
+#अगर_घोषित CONFIG_MODULE_SIG
+अटल bool sig_enक्रमce = IS_ENABLED(CONFIG_MODULE_SIG_FORCE);
+module_param(sig_enक्रमce, bool_enable_only, 0644);
 
-void set_module_sig_enforced(void)
-{
-	sig_enforce = true;
-}
-#else
-#define sig_enforce false
-#endif
+व्योम set_module_sig_enक्रमced(व्योम)
+अणु
+	sig_enक्रमce = true;
+पूर्ण
+#अन्यथा
+#घोषणा sig_enक्रमce false
+#पूर्ण_अगर
 
 /*
- * Export sig_enforce kernel cmdline parameter to allow other subsystems rely
+ * Export sig_enक्रमce kernel cmdline parameter to allow other subप्रणालीs rely
  * on that instead of directly to CONFIG_MODULE_SIG_FORCE config.
  */
-bool is_module_sig_enforced(void)
-{
-	return sig_enforce;
-}
-EXPORT_SYMBOL(is_module_sig_enforced);
+bool is_module_sig_enक्रमced(व्योम)
+अणु
+	वापस sig_enक्रमce;
+पूर्ण
+EXPORT_SYMBOL(is_module_sig_enक्रमced);
 
 /* Block module loading/unloading? */
-int modules_disabled = 0;
-core_param(nomodule, modules_disabled, bint, 0);
+पूर्णांक modules_disabled = 0;
+core_param(nomodule, modules_disabled, bपूर्णांक, 0);
 
-/* Waiting for a module to finish initializing? */
-static DECLARE_WAIT_QUEUE_HEAD(module_wq);
+/* Waiting क्रम a module to finish initializing? */
+अटल DECLARE_WAIT_QUEUE_HEAD(module_wq);
 
-static BLOCKING_NOTIFIER_HEAD(module_notify_list);
+अटल BLOCKING_NOTIFIER_HEAD(module_notअगरy_list);
 
-int register_module_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&module_notify_list, nb);
-}
-EXPORT_SYMBOL(register_module_notifier);
+पूर्णांक रेजिस्टर_module_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&module_notअगरy_list, nb);
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_module_notअगरier);
 
-int unregister_module_notifier(struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&module_notify_list, nb);
-}
-EXPORT_SYMBOL(unregister_module_notifier);
+पूर्णांक unरेजिस्टर_module_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&module_notअगरy_list, nb);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_module_notअगरier);
 
 /*
  * We require a truly strong try_module_get(): 0 means success.
- * Otherwise an error is returned due to ongoing or failed
+ * Otherwise an error is वापसed due to ongoing or failed
  * initialization etc.
  */
-static inline int strong_try_module_get(struct module *mod)
-{
+अटल अंतरभूत पूर्णांक strong_try_module_get(काष्ठा module *mod)
+अणु
 	BUG_ON(mod && mod->state == MODULE_STATE_UNFORMED);
-	if (mod && mod->state == MODULE_STATE_COMING)
-		return -EBUSY;
-	if (try_module_get(mod))
-		return 0;
-	else
-		return -ENOENT;
-}
+	अगर (mod && mod->state == MODULE_STATE_COMING)
+		वापस -EBUSY;
+	अगर (try_module_get(mod))
+		वापस 0;
+	अन्यथा
+		वापस -ENOENT;
+पूर्ण
 
-static inline void add_taint_module(struct module *mod, unsigned flag,
-				    enum lockdep_ok lockdep_ok)
-{
-	add_taint(flag, lockdep_ok);
-	set_bit(flag, &mod->taints);
-}
+अटल अंतरभूत व्योम add_taपूर्णांक_module(काष्ठा module *mod, अचिन्हित flag,
+				    क्रमागत lockdep_ok lockdep_ok)
+अणु
+	add_taपूर्णांक(flag, lockdep_ok);
+	set_bit(flag, &mod->taपूर्णांकs);
+पूर्ण
 
 /*
- * A thread that wants to hold a reference to a module only while it
- * is running can call this to safely exit.  nfsd and lockd use this.
+ * A thपढ़ो that wants to hold a reference to a module only जबतक it
+ * is running can call this to safely निकास.  nfsd and lockd use this.
  */
-void __noreturn __module_put_and_exit(struct module *mod, long code)
-{
+व्योम __noवापस __module_put_and_निकास(काष्ठा module *mod, दीर्घ code)
+अणु
 	module_put(mod);
-	do_exit(code);
-}
-EXPORT_SYMBOL(__module_put_and_exit);
+	करो_निकास(code);
+पूर्ण
+EXPORT_SYMBOL(__module_put_and_निकास);
 
 /* Find a module section: 0 means not found. */
-static unsigned int find_sec(const struct load_info *info, const char *name)
-{
-	unsigned int i;
+अटल अचिन्हित पूर्णांक find_sec(स्थिर काष्ठा load_info *info, स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 1; i < info->hdr->e_shnum; i++) {
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
 		Elf_Shdr *shdr = &info->sechdrs[i];
 		/* Alloc bit cleared means "ignore it." */
-		if ((shdr->sh_flags & SHF_ALLOC)
-		    && strcmp(info->secstrings + shdr->sh_name, name) == 0)
-			return i;
-	}
-	return 0;
-}
+		अगर ((shdr->sh_flags & SHF_ALLOC)
+		    && म_भेद(info->secstrings + shdr->sh_name, name) == 0)
+			वापस i;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Find a module section, or NULL. */
-static void *section_addr(const struct load_info *info, const char *name)
-{
+/* Find a module section, or शून्य. */
+अटल व्योम *section_addr(स्थिर काष्ठा load_info *info, स्थिर अक्षर *name)
+अणु
 	/* Section 0 has sh_addr 0. */
-	return (void *)info->sechdrs[find_sec(info, name)].sh_addr;
-}
+	वापस (व्योम *)info->sechdrs[find_sec(info, name)].sh_addr;
+पूर्ण
 
-/* Find a module section, or NULL.  Fill in number of "objects" in section. */
-static void *section_objs(const struct load_info *info,
-			  const char *name,
-			  size_t object_size,
-			  unsigned int *num)
-{
-	unsigned int sec = find_sec(info, name);
+/* Find a module section, or शून्य.  Fill in number of "objects" in section. */
+अटल व्योम *section_objs(स्थिर काष्ठा load_info *info,
+			  स्थिर अक्षर *name,
+			  माप_प्रकार object_size,
+			  अचिन्हित पूर्णांक *num)
+अणु
+	अचिन्हित पूर्णांक sec = find_sec(info, name);
 
 	/* Section 0 has sh_addr 0 and sh_size 0. */
 	*num = info->sechdrs[sec].sh_size / object_size;
-	return (void *)info->sechdrs[sec].sh_addr;
-}
+	वापस (व्योम *)info->sechdrs[sec].sh_addr;
+पूर्ण
 
 /* Find a module section: 0 means not found. Ignores SHF_ALLOC flag. */
-static unsigned int find_any_sec(const struct load_info *info, const char *name)
-{
-	unsigned int i;
+अटल अचिन्हित पूर्णांक find_any_sec(स्थिर काष्ठा load_info *info, स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 1; i < info->hdr->e_shnum; i++) {
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
 		Elf_Shdr *shdr = &info->sechdrs[i];
-		if (strcmp(info->secstrings + shdr->sh_name, name) == 0)
-			return i;
-	}
-	return 0;
-}
+		अगर (म_भेद(info->secstrings + shdr->sh_name, name) == 0)
+			वापस i;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Find a module section, or NULL. Fill in number of "objects" in section.
+ * Find a module section, or शून्य. Fill in number of "objects" in section.
  * Ignores SHF_ALLOC flag.
  */
-static __maybe_unused void *any_section_objs(const struct load_info *info,
-					     const char *name,
-					     size_t object_size,
-					     unsigned int *num)
-{
-	unsigned int sec = find_any_sec(info, name);
+अटल __maybe_unused व्योम *any_section_objs(स्थिर काष्ठा load_info *info,
+					     स्थिर अक्षर *name,
+					     माप_प्रकार object_size,
+					     अचिन्हित पूर्णांक *num)
+अणु
+	अचिन्हित पूर्णांक sec = find_any_sec(info, name);
 
 	/* Section 0 has sh_addr 0 and sh_size 0. */
 	*num = info->sechdrs[sec].sh_size / object_size;
-	return (void *)info->sechdrs[sec].sh_addr;
-}
+	वापस (व्योम *)info->sechdrs[sec].sh_addr;
+पूर्ण
 
 /* Provided by the linker */
-extern const struct kernel_symbol __start___ksymtab[];
-extern const struct kernel_symbol __stop___ksymtab[];
-extern const struct kernel_symbol __start___ksymtab_gpl[];
-extern const struct kernel_symbol __stop___ksymtab_gpl[];
-extern const s32 __start___kcrctab[];
-extern const s32 __start___kcrctab_gpl[];
+बाह्य स्थिर काष्ठा kernel_symbol __start___ksymtab[];
+बाह्य स्थिर काष्ठा kernel_symbol __stop___ksymtab[];
+बाह्य स्थिर काष्ठा kernel_symbol __start___ksymtab_gpl[];
+बाह्य स्थिर काष्ठा kernel_symbol __stop___ksymtab_gpl[];
+बाह्य स्थिर s32 __start___kcrctab[];
+बाह्य स्थिर s32 __start___kcrctab_gpl[];
 
-#ifndef CONFIG_MODVERSIONS
-#define symversion(base, idx) NULL
-#else
-#define symversion(base, idx) ((base != NULL) ? ((base) + (idx)) : NULL)
-#endif
+#अगर_अघोषित CONFIG_MODVERSIONS
+#घोषणा symversion(base, idx) शून्य
+#अन्यथा
+#घोषणा symversion(base, idx) ((base != शून्य) ? ((base) + (idx)) : शून्य)
+#पूर्ण_अगर
 
-struct symsearch {
-	const struct kernel_symbol *start, *stop;
-	const s32 *crcs;
-	enum mod_license {
+काष्ठा symsearch अणु
+	स्थिर काष्ठा kernel_symbol *start, *stop;
+	स्थिर s32 *crcs;
+	क्रमागत mod_license अणु
 		NOT_GPL_ONLY,
 		GPL_ONLY,
-	} license;
-};
+	पूर्ण license;
+पूर्ण;
 
-struct find_symbol_arg {
+काष्ठा find_symbol_arg अणु
 	/* Input */
-	const char *name;
+	स्थिर अक्षर *name;
 	bool gplok;
 	bool warn;
 
 	/* Output */
-	struct module *owner;
-	const s32 *crc;
-	const struct kernel_symbol *sym;
-	enum mod_license license;
-};
+	काष्ठा module *owner;
+	स्थिर s32 *crc;
+	स्थिर काष्ठा kernel_symbol *sym;
+	क्रमागत mod_license license;
+पूर्ण;
 
-static bool check_exported_symbol(const struct symsearch *syms,
-				  struct module *owner,
-				  unsigned int symnum, void *data)
-{
-	struct find_symbol_arg *fsa = data;
+अटल bool check_exported_symbol(स्थिर काष्ठा symsearch *syms,
+				  काष्ठा module *owner,
+				  अचिन्हित पूर्णांक symnum, व्योम *data)
+अणु
+	काष्ठा find_symbol_arg *fsa = data;
 
-	if (!fsa->gplok && syms->license == GPL_ONLY)
-		return false;
+	अगर (!fsa->gplok && syms->license == GPL_ONLY)
+		वापस false;
 	fsa->owner = owner;
 	fsa->crc = symversion(syms->crcs, symnum);
 	fsa->sym = &syms->start[symnum];
 	fsa->license = syms->license;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static unsigned long kernel_symbol_value(const struct kernel_symbol *sym)
-{
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-	return (unsigned long)offset_to_ptr(&sym->value_offset);
-#else
-	return sym->value;
-#endif
-}
+अटल अचिन्हित दीर्घ kernel_symbol_value(स्थिर काष्ठा kernel_symbol *sym)
+अणु
+#अगर_घोषित CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+	वापस (अचिन्हित दीर्घ)offset_to_ptr(&sym->value_offset);
+#अन्यथा
+	वापस sym->value;
+#पूर्ण_अगर
+पूर्ण
 
-static const char *kernel_symbol_name(const struct kernel_symbol *sym)
-{
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-	return offset_to_ptr(&sym->name_offset);
-#else
-	return sym->name;
-#endif
-}
+अटल स्थिर अक्षर *kernel_symbol_name(स्थिर काष्ठा kernel_symbol *sym)
+अणु
+#अगर_घोषित CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+	वापस offset_to_ptr(&sym->name_offset);
+#अन्यथा
+	वापस sym->name;
+#पूर्ण_अगर
+पूर्ण
 
-static const char *kernel_symbol_namespace(const struct kernel_symbol *sym)
-{
-#ifdef CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
-	if (!sym->namespace_offset)
-		return NULL;
-	return offset_to_ptr(&sym->namespace_offset);
-#else
-	return sym->namespace;
-#endif
-}
+अटल स्थिर अक्षर *kernel_symbol_namespace(स्थिर काष्ठा kernel_symbol *sym)
+अणु
+#अगर_घोषित CONFIG_HAVE_ARCH_PREL32_RELOCATIONS
+	अगर (!sym->namespace_offset)
+		वापस शून्य;
+	वापस offset_to_ptr(&sym->namespace_offset);
+#अन्यथा
+	वापस sym->namespace;
+#पूर्ण_अगर
+पूर्ण
 
-static int cmp_name(const void *name, const void *sym)
-{
-	return strcmp(name, kernel_symbol_name(sym));
-}
+अटल पूर्णांक cmp_name(स्थिर व्योम *name, स्थिर व्योम *sym)
+अणु
+	वापस म_भेद(name, kernel_symbol_name(sym));
+पूर्ण
 
-static bool find_exported_symbol_in_section(const struct symsearch *syms,
-					    struct module *owner,
-					    void *data)
-{
-	struct find_symbol_arg *fsa = data;
-	struct kernel_symbol *sym;
+अटल bool find_exported_symbol_in_section(स्थिर काष्ठा symsearch *syms,
+					    काष्ठा module *owner,
+					    व्योम *data)
+अणु
+	काष्ठा find_symbol_arg *fsa = data;
+	काष्ठा kernel_symbol *sym;
 
-	sym = bsearch(fsa->name, syms->start, syms->stop - syms->start,
-			sizeof(struct kernel_symbol), cmp_name);
+	sym = द्वा_खोज(fsa->name, syms->start, syms->stop - syms->start,
+			माप(काष्ठा kernel_symbol), cmp_name);
 
-	if (sym != NULL && check_exported_symbol(syms, owner,
+	अगर (sym != शून्य && check_exported_symbol(syms, owner,
 						 sym - syms->start, data))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Find an exported symbol and return it, along with, (optional) crc and
+ * Find an exported symbol and वापस it, aदीर्घ with, (optional) crc and
  * (optional) module which owns it.  Needs preempt disabled or module_mutex.
  */
-static bool find_symbol(struct find_symbol_arg *fsa)
-{
-	static const struct symsearch arr[] = {
-		{ __start___ksymtab, __stop___ksymtab, __start___kcrctab,
-		  NOT_GPL_ONLY },
-		{ __start___ksymtab_gpl, __stop___ksymtab_gpl,
+अटल bool find_symbol(काष्ठा find_symbol_arg *fsa)
+अणु
+	अटल स्थिर काष्ठा symsearch arr[] = अणु
+		अणु __start___ksymtab, __stop___ksymtab, __start___kcrctab,
+		  NOT_GPL_ONLY पूर्ण,
+		अणु __start___ksymtab_gpl, __stop___ksymtab_gpl,
 		  __start___kcrctab_gpl,
-		  GPL_ONLY },
-	};
-	struct module *mod;
-	unsigned int i;
+		  GPL_ONLY पूर्ण,
+	पूर्ण;
+	काष्ठा module *mod;
+	अचिन्हित पूर्णांक i;
 
-	module_assert_mutex_or_preempt();
+	module_निश्चित_mutex_or_preempt();
 
-	for (i = 0; i < ARRAY_SIZE(arr); i++)
-		if (find_exported_symbol_in_section(&arr[i], NULL, fsa))
-			return true;
+	क्रम (i = 0; i < ARRAY_SIZE(arr); i++)
+		अगर (find_exported_symbol_in_section(&arr[i], शून्य, fsa))
+			वापस true;
 
-	list_for_each_entry_rcu(mod, &modules, list,
-				lockdep_is_held(&module_mutex)) {
-		struct symsearch arr[] = {
-			{ mod->syms, mod->syms + mod->num_syms, mod->crcs,
-			  NOT_GPL_ONLY },
-			{ mod->gpl_syms, mod->gpl_syms + mod->num_gpl_syms,
+	list_क्रम_each_entry_rcu(mod, &modules, list,
+				lockdep_is_held(&module_mutex)) अणु
+		काष्ठा symsearch arr[] = अणु
+			अणु mod->syms, mod->syms + mod->num_syms, mod->crcs,
+			  NOT_GPL_ONLY पूर्ण,
+			अणु mod->gpl_syms, mod->gpl_syms + mod->num_gpl_syms,
 			  mod->gpl_crcs,
-			  GPL_ONLY },
-		};
+			  GPL_ONLY पूर्ण,
+		पूर्ण;
 
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
 
-		for (i = 0; i < ARRAY_SIZE(arr); i++)
-			if (find_exported_symbol_in_section(&arr[i], mod, fsa))
-				return true;
-	}
+		क्रम (i = 0; i < ARRAY_SIZE(arr); i++)
+			अगर (find_exported_symbol_in_section(&arr[i], mod, fsa))
+				वापस true;
+	पूर्ण
 
 	pr_debug("Failed to find symbol %s\n", fsa->name);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Search for module by name: must hold module_mutex (or preempt disabled
- * for read-only access).
+ * Search क्रम module by name: must hold module_mutex (or preempt disabled
+ * क्रम पढ़ो-only access).
  */
-static struct module *find_module_all(const char *name, size_t len,
-				      bool even_unformed)
-{
-	struct module *mod;
+अटल काष्ठा module *find_module_all(स्थिर अक्षर *name, माप_प्रकार len,
+				      bool even_unक्रमmed)
+अणु
+	काष्ठा module *mod;
 
-	module_assert_mutex_or_preempt();
+	module_निश्चित_mutex_or_preempt();
 
-	list_for_each_entry_rcu(mod, &modules, list,
-				lockdep_is_held(&module_mutex)) {
-		if (!even_unformed && mod->state == MODULE_STATE_UNFORMED)
-			continue;
-		if (strlen(mod->name) == len && !memcmp(mod->name, name, len))
-			return mod;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(mod, &modules, list,
+				lockdep_is_held(&module_mutex)) अणु
+		अगर (!even_unक्रमmed && mod->state == MODULE_STATE_UNFORMED)
+			जारी;
+		अगर (म_माप(mod->name) == len && !स_भेद(mod->name, name, len))
+			वापस mod;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct module *find_module(const char *name)
-{
-	return find_module_all(name, strlen(name), false);
-}
+काष्ठा module *find_module(स्थिर अक्षर *name)
+अणु
+	वापस find_module_all(name, म_माप(name), false);
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static inline void __percpu *mod_percpu(struct module *mod)
-{
-	return mod->percpu;
-}
+अटल अंतरभूत व्योम __percpu *mod_percpu(काष्ठा module *mod)
+अणु
+	वापस mod->percpu;
+पूर्ण
 
-static int percpu_modalloc(struct module *mod, struct load_info *info)
-{
+अटल पूर्णांक percpu_modalloc(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
 	Elf_Shdr *pcpusec = &info->sechdrs[info->index.pcpu];
-	unsigned long align = pcpusec->sh_addralign;
+	अचिन्हित दीर्घ align = pcpusec->sh_addralign;
 
-	if (!pcpusec->sh_size)
-		return 0;
+	अगर (!pcpusec->sh_size)
+		वापस 0;
 
-	if (align > PAGE_SIZE) {
+	अगर (align > PAGE_SIZE) अणु
 		pr_warn("%s: per-cpu alignment %li > %li\n",
 			mod->name, align, PAGE_SIZE);
 		align = PAGE_SIZE;
-	}
+	पूर्ण
 
 	mod->percpu = __alloc_reserved_percpu(pcpusec->sh_size, align);
-	if (!mod->percpu) {
+	अगर (!mod->percpu) अणु
 		pr_warn("%s: Could not allocate %lu bytes percpu data\n",
-			mod->name, (unsigned long)pcpusec->sh_size);
-		return -ENOMEM;
-	}
+			mod->name, (अचिन्हित दीर्घ)pcpusec->sh_size);
+		वापस -ENOMEM;
+	पूर्ण
 	mod->percpu_size = pcpusec->sh_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void percpu_modfree(struct module *mod)
-{
-	free_percpu(mod->percpu);
-}
+अटल व्योम percpu_modमुक्त(काष्ठा module *mod)
+अणु
+	मुक्त_percpu(mod->percpu);
+पूर्ण
 
-static unsigned int find_pcpusec(struct load_info *info)
-{
-	return find_sec(info, ".data..percpu");
-}
+अटल अचिन्हित पूर्णांक find_pcpusec(काष्ठा load_info *info)
+अणु
+	वापस find_sec(info, ".data..percpu");
+पूर्ण
 
-static void percpu_modcopy(struct module *mod,
-			   const void *from, unsigned long size)
-{
-	int cpu;
+अटल व्योम percpu_modcopy(काष्ठा module *mod,
+			   स्थिर व्योम *from, अचिन्हित दीर्घ size)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
-		memcpy(per_cpu_ptr(mod->percpu, cpu), from, size);
-}
+	क्रम_each_possible_cpu(cpu)
+		स_नकल(per_cpu_ptr(mod->percpu, cpu), from, size);
+पूर्ण
 
-bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
-{
-	struct module *mod;
-	unsigned int cpu;
+bool __is_module_percpu_address(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *can_addr)
+अणु
+	काष्ठा module *mod;
+	अचिन्हित पूर्णांक cpu;
 
 	preempt_disable();
 
-	list_for_each_entry_rcu(mod, &modules, list) {
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
-		if (!mod->percpu_size)
-			continue;
-		for_each_possible_cpu(cpu) {
-			void *start = per_cpu_ptr(mod->percpu, cpu);
-			void *va = (void *)addr;
+	list_क्रम_each_entry_rcu(mod, &modules, list) अणु
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
+		अगर (!mod->percpu_size)
+			जारी;
+		क्रम_each_possible_cpu(cpu) अणु
+			व्योम *start = per_cpu_ptr(mod->percpu, cpu);
+			व्योम *va = (व्योम *)addr;
 
-			if (va >= start && va < start + mod->percpu_size) {
-				if (can_addr) {
-					*can_addr = (unsigned long) (va - start);
-					*can_addr += (unsigned long)
+			अगर (va >= start && va < start + mod->percpu_size) अणु
+				अगर (can_addr) अणु
+					*can_addr = (अचिन्हित दीर्घ) (va - start);
+					*can_addr += (अचिन्हित दीर्घ)
 						per_cpu_ptr(mod->percpu,
 							    get_boot_cpu_id());
-				}
+				पूर्ण
 				preempt_enable();
-				return true;
-			}
-		}
-	}
+				वापस true;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	preempt_enable();
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * is_module_percpu_address() - test whether address is from module static percpu
+ * is_module_percpu_address() - test whether address is from module अटल percpu
  * @addr: address to test
  *
- * Test whether @addr belongs to module static percpu area.
+ * Test whether @addr beदीर्घs to module अटल percpu area.
  *
- * Return: %true if @addr is from module static percpu area
+ * Return: %true अगर @addr is from module अटल percpu area
  */
-bool is_module_percpu_address(unsigned long addr)
-{
-	return __is_module_percpu_address(addr, NULL);
-}
+bool is_module_percpu_address(अचिन्हित दीर्घ addr)
+अणु
+	वापस __is_module_percpu_address(addr, शून्य);
+पूर्ण
 
-#else /* ... !CONFIG_SMP */
+#अन्यथा /* ... !CONFIG_SMP */
 
-static inline void __percpu *mod_percpu(struct module *mod)
-{
-	return NULL;
-}
-static int percpu_modalloc(struct module *mod, struct load_info *info)
-{
+अटल अंतरभूत व्योम __percpu *mod_percpu(काष्ठा module *mod)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल पूर्णांक percpu_modalloc(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
 	/* UP modules shouldn't have this section: ENOMEM isn't quite right */
-	if (info->sechdrs[info->index.pcpu].sh_size != 0)
-		return -ENOMEM;
-	return 0;
-}
-static inline void percpu_modfree(struct module *mod)
-{
-}
-static unsigned int find_pcpusec(struct load_info *info)
-{
-	return 0;
-}
-static inline void percpu_modcopy(struct module *mod,
-				  const void *from, unsigned long size)
-{
+	अगर (info->sechdrs[info->index.pcpu].sh_size != 0)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम percpu_modमुक्त(काष्ठा module *mod)
+अणु
+पूर्ण
+अटल अचिन्हित पूर्णांक find_pcpusec(काष्ठा load_info *info)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम percpu_modcopy(काष्ठा module *mod,
+				  स्थिर व्योम *from, अचिन्हित दीर्घ size)
+अणु
 	/* pcpusec should be 0, and size of that section should be 0. */
 	BUG_ON(size != 0);
-}
-bool is_module_percpu_address(unsigned long addr)
-{
-	return false;
-}
+पूर्ण
+bool is_module_percpu_address(अचिन्हित दीर्घ addr)
+अणु
+	वापस false;
+पूर्ण
 
-bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
-{
-	return false;
-}
+bool __is_module_percpu_address(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *can_addr)
+अणु
+	वापस false;
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#define MODINFO_ATTR(field)	\
-static void setup_modinfo_##field(struct module *mod, const char *s)  \
-{                                                                     \
+#घोषणा MODINFO_ATTR(field)	\
+अटल व्योम setup_modinfo_##field(काष्ठा module *mod, स्थिर अक्षर *s)  \
+अणु                                                                     \
 	mod->field = kstrdup(s, GFP_KERNEL);                          \
-}                                                                     \
-static ssize_t show_modinfo_##field(struct module_attribute *mattr,   \
-			struct module_kobject *mk, char *buffer)      \
-{                                                                     \
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", mk->mod->field);  \
-}                                                                     \
-static int modinfo_##field##_exists(struct module *mod)               \
-{                                                                     \
-	return mod->field != NULL;                                    \
-}                                                                     \
-static void free_modinfo_##field(struct module *mod)                  \
-{                                                                     \
-	kfree(mod->field);                                            \
-	mod->field = NULL;                                            \
-}                                                                     \
-static struct module_attribute modinfo_##field = {                    \
-	.attr = { .name = __stringify(field), .mode = 0444 },         \
+पूर्ण                                                                     \
+अटल sमाप_प्रकार show_modinfo_##field(काष्ठा module_attribute *mattr,   \
+			काष्ठा module_kobject *mk, अक्षर *buffer)      \
+अणु                                                                     \
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", mk->mod->field);  \
+पूर्ण                                                                     \
+अटल पूर्णांक modinfo_##field##_exists(काष्ठा module *mod)               \
+अणु                                                                     \
+	वापस mod->field != शून्य;                                    \
+पूर्ण                                                                     \
+अटल व्योम मुक्त_modinfo_##field(काष्ठा module *mod)                  \
+अणु                                                                     \
+	kमुक्त(mod->field);                                            \
+	mod->field = शून्य;                                            \
+पूर्ण                                                                     \
+अटल काष्ठा module_attribute modinfo_##field = अणु                    \
+	.attr = अणु .name = __stringअगरy(field), .mode = 0444 पूर्ण,         \
 	.show = show_modinfo_##field,                                 \
 	.setup = setup_modinfo_##field,                               \
 	.test = modinfo_##field##_exists,                             \
-	.free = free_modinfo_##field,                                 \
-};
+	.मुक्त = मुक्त_modinfo_##field,                                 \
+पूर्ण;
 
 MODINFO_ATTR(version);
 MODINFO_ATTR(srcversion);
 
-static char last_unloaded_module[MODULE_NAME_LEN+1];
+अटल अक्षर last_unloaded_module[MODULE_NAME_LEN+1];
 
-#ifdef CONFIG_MODULE_UNLOAD
+#अगर_घोषित CONFIG_MODULE_UNLOAD
 
 EXPORT_TRACEPOINT_SYMBOL(module_get);
 
 /* MODULE_REF_BASE is the base reference count by kmodule loader. */
-#define MODULE_REF_BASE	1
+#घोषणा MODULE_REF_BASE	1
 
 /* Init the unload section of the module. */
-static int module_unload_init(struct module *mod)
-{
+अटल पूर्णांक module_unload_init(काष्ठा module *mod)
+अणु
 	/*
 	 * Initialize reference counter to MODULE_REF_BASE.
 	 * refcnt == 0 means module is going.
@@ -767,1179 +768,1179 @@ static int module_unload_init(struct module *mod)
 	/* Hold reference count during initialization. */
 	atomic_inc(&mod->refcnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Does a already use b? */
-static int already_uses(struct module *a, struct module *b)
-{
-	struct module_use *use;
+/* Does a alपढ़ोy use b? */
+अटल पूर्णांक alपढ़ोy_uses(काष्ठा module *a, काष्ठा module *b)
+अणु
+	काष्ठा module_use *use;
 
-	list_for_each_entry(use, &b->source_list, source_list) {
-		if (use->source == a) {
+	list_क्रम_each_entry(use, &b->source_list, source_list) अणु
+		अगर (use->source == a) अणु
 			pr_debug("%s uses %s!\n", a->name, b->name);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 	pr_debug("%s does not use %s!\n", a->name, b->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Module a uses b
  *  - we add 'a' as a "source", 'b' as a "target" of module use
  *  - the module_use is added to the list of 'b' sources (so
  *    'b' can walk the list to see who sourced them), and of 'a'
- *    targets (so 'a' can see what modules it targets).
+ *    tarमाला_लो (so 'a' can see what modules it tarमाला_लो).
  */
-static int add_module_usage(struct module *a, struct module *b)
-{
-	struct module_use *use;
+अटल पूर्णांक add_module_usage(काष्ठा module *a, काष्ठा module *b)
+अणु
+	काष्ठा module_use *use;
 
 	pr_debug("Allocating new usage for %s.\n", a->name);
-	use = kmalloc(sizeof(*use), GFP_ATOMIC);
-	if (!use)
-		return -ENOMEM;
+	use = kदो_स्मृति(माप(*use), GFP_ATOMIC);
+	अगर (!use)
+		वापस -ENOMEM;
 
 	use->source = a;
 	use->target = b;
 	list_add(&use->source_list, &b->source_list);
 	list_add(&use->target_list, &a->target_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Module a uses b: caller needs module_mutex() */
-static int ref_module(struct module *a, struct module *b)
-{
-	int err;
+अटल पूर्णांक ref_module(काष्ठा module *a, काष्ठा module *b)
+अणु
+	पूर्णांक err;
 
-	if (b == NULL || already_uses(a, b))
-		return 0;
+	अगर (b == शून्य || alपढ़ोy_uses(a, b))
+		वापस 0;
 
 	/* If module isn't available, we fail. */
 	err = strong_try_module_get(b);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = add_module_usage(a, b);
-	if (err) {
+	अगर (err) अणु
 		module_put(b);
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Clear the unload stuff of the module. */
-static void module_unload_free(struct module *mod)
-{
-	struct module_use *use, *tmp;
+अटल व्योम module_unload_मुक्त(काष्ठा module *mod)
+अणु
+	काष्ठा module_use *use, *पंचांगp;
 
 	mutex_lock(&module_mutex);
-	list_for_each_entry_safe(use, tmp, &mod->target_list, target_list) {
-		struct module *i = use->target;
+	list_क्रम_each_entry_safe(use, पंचांगp, &mod->target_list, target_list) अणु
+		काष्ठा module *i = use->target;
 		pr_debug("%s unusing %s\n", mod->name, i->name);
 		module_put(i);
 		list_del(&use->source_list);
 		list_del(&use->target_list);
-		kfree(use);
-	}
+		kमुक्त(use);
+	पूर्ण
 	mutex_unlock(&module_mutex);
-}
+पूर्ण
 
-#ifdef CONFIG_MODULE_FORCE_UNLOAD
-static inline int try_force_unload(unsigned int flags)
-{
-	int ret = (flags & O_TRUNC);
-	if (ret)
-		add_taint(TAINT_FORCED_RMMOD, LOCKDEP_NOW_UNRELIABLE);
-	return ret;
-}
-#else
-static inline int try_force_unload(unsigned int flags)
-{
-	return 0;
-}
-#endif /* CONFIG_MODULE_FORCE_UNLOAD */
+#अगर_घोषित CONFIG_MODULE_FORCE_UNLOAD
+अटल अंतरभूत पूर्णांक try_क्रमce_unload(अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक ret = (flags & O_TRUNC);
+	अगर (ret)
+		add_taपूर्णांक(TAINT_FORCED_RMMOD, LOCKDEP_NOW_UNRELIABLE);
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक try_क्रमce_unload(अचिन्हित पूर्णांक flags)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MODULE_FORCE_UNLOAD */
 
 /* Try to release refcount of module, 0 means success. */
-static int try_release_module_ref(struct module *mod)
-{
-	int ret;
+अटल पूर्णांक try_release_module_ref(काष्ठा module *mod)
+अणु
+	पूर्णांक ret;
 
 	/* Try to decrement refcnt which we set at loading */
-	ret = atomic_sub_return(MODULE_REF_BASE, &mod->refcnt);
+	ret = atomic_sub_वापस(MODULE_REF_BASE, &mod->refcnt);
 	BUG_ON(ret < 0);
-	if (ret)
+	अगर (ret)
 		/* Someone can put this right now, recover with checking */
 		ret = atomic_add_unless(&mod->refcnt, MODULE_REF_BASE, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int try_stop_module(struct module *mod, int flags, int *forced)
-{
-	/* If it's not unused, quit unless we're forcing. */
-	if (try_release_module_ref(mod) != 0) {
-		*forced = try_force_unload(flags);
-		if (!(*forced))
-			return -EWOULDBLOCK;
-	}
+अटल पूर्णांक try_stop_module(काष्ठा module *mod, पूर्णांक flags, पूर्णांक *क्रमced)
+अणु
+	/* If it's not unused, quit unless we're क्रमcing. */
+	अगर (try_release_module_ref(mod) != 0) अणु
+		*क्रमced = try_क्रमce_unload(flags);
+		अगर (!(*क्रमced))
+			वापस -EWOULDBLOCK;
+	पूर्ण
 
 	/* Mark it as dying. */
 	mod->state = MODULE_STATE_GOING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * module_refcount() - return the refcount or -1 if unloading
+ * module_refcount() - वापस the refcount or -1 अगर unloading
  * @mod:	the module we're checking
  *
  * Return:
- *	-1 if the module is in the process of unloading
+ *	-1 अगर the module is in the process of unloading
  *	otherwise the number of references in the kernel to the module
  */
-int module_refcount(struct module *mod)
-{
-	return atomic_read(&mod->refcnt) - MODULE_REF_BASE;
-}
+पूर्णांक module_refcount(काष्ठा module *mod)
+अणु
+	वापस atomic_पढ़ो(&mod->refcnt) - MODULE_REF_BASE;
+पूर्ण
 EXPORT_SYMBOL(module_refcount);
 
 /* This exists whether we can unload or not */
-static void free_module(struct module *mod);
+अटल व्योम मुक्त_module(काष्ठा module *mod);
 
-SYSCALL_DEFINE2(delete_module, const char __user *, name_user,
-		unsigned int, flags)
-{
-	struct module *mod;
-	char name[MODULE_NAME_LEN];
-	int ret, forced = 0;
+SYSCALL_DEFINE2(delete_module, स्थिर अक्षर __user *, name_user,
+		अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा module *mod;
+	अक्षर name[MODULE_NAME_LEN];
+	पूर्णांक ret, क्रमced = 0;
 
-	if (!capable(CAP_SYS_MODULE) || modules_disabled)
-		return -EPERM;
+	अगर (!capable(CAP_SYS_MODULE) || modules_disabled)
+		वापस -EPERM;
 
-	if (strncpy_from_user(name, name_user, MODULE_NAME_LEN-1) < 0)
-		return -EFAULT;
+	अगर (म_नकलन_from_user(name, name_user, MODULE_NAME_LEN-1) < 0)
+		वापस -EFAULT;
 	name[MODULE_NAME_LEN-1] = '\0';
 
 	audit_log_kern_module(name);
 
-	if (mutex_lock_interruptible(&module_mutex) != 0)
-		return -EINTR;
+	अगर (mutex_lock_पूर्णांकerruptible(&module_mutex) != 0)
+		वापस -EINTR;
 
 	mod = find_module(name);
-	if (!mod) {
+	अगर (!mod) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!list_empty(&mod->source_list)) {
+	अगर (!list_empty(&mod->source_list)) अणु
 		/* Other modules depend on us: get rid of them first. */
 		ret = -EWOULDBLOCK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Doing init or already dying? */
-	if (mod->state != MODULE_STATE_LIVE) {
-		/* FIXME: if (force), slam module count damn the torpedoes */
+	/* Doing init or alपढ़ोy dying? */
+	अगर (mod->state != MODULE_STATE_LIVE) अणु
+		/* FIXME: अगर (क्रमce), slam module count damn the torpeकरोes */
 		pr_debug("%s already dying\n", mod->name);
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* If it has an init func, it must have an exit func to unload */
-	if (mod->init && !mod->exit) {
-		forced = try_force_unload(flags);
-		if (!forced) {
-			/* This module can't be removed */
+	/* If it has an init func, it must have an निकास func to unload */
+	अगर (mod->init && !mod->निकास) अणु
+		क्रमced = try_क्रमce_unload(flags);
+		अगर (!क्रमced) अणु
+			/* This module can't be हटाओd */
 			ret = -EBUSY;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Stop the machine so refcounts can't move and disable module. */
-	ret = try_stop_module(mod, flags, &forced);
-	if (ret != 0)
-		goto out;
+	ret = try_stop_module(mod, flags, &क्रमced);
+	अगर (ret != 0)
+		जाओ out;
 
 	mutex_unlock(&module_mutex);
-	/* Final destruction now no one is using it. */
-	if (mod->exit != NULL)
-		mod->exit();
-	blocking_notifier_call_chain(&module_notify_list,
+	/* Final deकाष्ठाion now no one is using it. */
+	अगर (mod->निकास != शून्य)
+		mod->निकास();
+	blocking_notअगरier_call_chain(&module_notअगरy_list,
 				     MODULE_STATE_GOING, mod);
 	klp_module_going(mod);
 	ftrace_release_mod(mod);
 
 	async_synchronize_full();
 
-	/* Store the name of the last unloaded module for diagnostic purposes */
-	strlcpy(last_unloaded_module, mod->name, sizeof(last_unloaded_module));
+	/* Store the name of the last unloaded module क्रम diagnostic purposes */
+	strlcpy(last_unloaded_module, mod->name, माप(last_unloaded_module));
 
-	free_module(mod);
-	/* someone could wait for the module in add_unformed_module() */
+	मुक्त_module(mod);
+	/* someone could रुको क्रम the module in add_unक्रमmed_module() */
 	wake_up_all(&module_wq);
-	return 0;
+	वापस 0;
 out:
 	mutex_unlock(&module_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void print_unload_info(struct seq_file *m, struct module *mod)
-{
-	struct module_use *use;
-	int printed_something = 0;
+अटल अंतरभूत व्योम prपूर्णांक_unload_info(काष्ठा seq_file *m, काष्ठा module *mod)
+अणु
+	काष्ठा module_use *use;
+	पूर्णांक prपूर्णांकed_something = 0;
 
-	seq_printf(m, " %i ", module_refcount(mod));
+	seq_म_लिखो(m, " %i ", module_refcount(mod));
 
 	/*
-	 * Always include a trailing , so userspace can differentiate
-	 * between this and the old multi-field proc format.
+	 * Always include a trailing , so userspace can dअगरferentiate
+	 * between this and the old multi-field proc क्रमmat.
 	 */
-	list_for_each_entry(use, &mod->source_list, source_list) {
-		printed_something = 1;
-		seq_printf(m, "%s,", use->source->name);
-	}
+	list_क्रम_each_entry(use, &mod->source_list, source_list) अणु
+		prपूर्णांकed_something = 1;
+		seq_म_लिखो(m, "%s,", use->source->name);
+	पूर्ण
 
-	if (mod->init != NULL && mod->exit == NULL) {
-		printed_something = 1;
-		seq_puts(m, "[permanent],");
-	}
+	अगर (mod->init != शून्य && mod->निकास == शून्य) अणु
+		prपूर्णांकed_something = 1;
+		seq_माला_दो(m, "[permanent],");
+	पूर्ण
 
-	if (!printed_something)
-		seq_puts(m, "-");
-}
+	अगर (!prपूर्णांकed_something)
+		seq_माला_दो(m, "-");
+पूर्ण
 
-void __symbol_put(const char *symbol)
-{
-	struct find_symbol_arg fsa = {
+व्योम __symbol_put(स्थिर अक्षर *symbol)
+अणु
+	काष्ठा find_symbol_arg fsa = अणु
 		.name	= symbol,
 		.gplok	= true,
-	};
+	पूर्ण;
 
 	preempt_disable();
-	if (!find_symbol(&fsa))
+	अगर (!find_symbol(&fsa))
 		BUG();
 	module_put(fsa.owner);
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL(__symbol_put);
 
 /* Note this assumes addr is a function, which it currently always is. */
-void symbol_put_addr(void *addr)
-{
-	struct module *modaddr;
-	unsigned long a = (unsigned long)dereference_function_descriptor(addr);
+व्योम symbol_put_addr(व्योम *addr)
+अणु
+	काष्ठा module *modaddr;
+	अचिन्हित दीर्घ a = (अचिन्हित दीर्घ)dereference_function_descriptor(addr);
 
-	if (core_kernel_text(a))
-		return;
+	अगर (core_kernel_text(a))
+		वापस;
 
 	/*
 	 * Even though we hold a reference on the module; we still need to
-	 * disable preemption in order to safely traverse the data structure.
+	 * disable preemption in order to safely traverse the data काष्ठाure.
 	 */
 	preempt_disable();
 	modaddr = __module_text_address(a);
 	BUG_ON(!modaddr);
 	module_put(modaddr);
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(symbol_put_addr);
 
-static ssize_t show_refcnt(struct module_attribute *mattr,
-			   struct module_kobject *mk, char *buffer)
-{
-	return sprintf(buffer, "%i\n", module_refcount(mk->mod));
-}
+अटल sमाप_प्रकार show_refcnt(काष्ठा module_attribute *mattr,
+			   काष्ठा module_kobject *mk, अक्षर *buffer)
+अणु
+	वापस प्र_लिखो(buffer, "%i\n", module_refcount(mk->mod));
+पूर्ण
 
-static struct module_attribute modinfo_refcnt =
-	__ATTR(refcnt, 0444, show_refcnt, NULL);
+अटल काष्ठा module_attribute modinfo_refcnt =
+	__ATTR(refcnt, 0444, show_refcnt, शून्य);
 
-void __module_get(struct module *module)
-{
-	if (module) {
+व्योम __module_get(काष्ठा module *module)
+अणु
+	अगर (module) अणु
 		preempt_disable();
 		atomic_inc(&module->refcnt);
 		trace_module_get(module, _RET_IP_);
 		preempt_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(__module_get);
 
-bool try_module_get(struct module *module)
-{
+bool try_module_get(काष्ठा module *module)
+अणु
 	bool ret = true;
 
-	if (module) {
+	अगर (module) अणु
 		preempt_disable();
 		/* Note: here, we can fail to get a reference */
-		if (likely(module_is_live(module) &&
+		अगर (likely(module_is_live(module) &&
 			   atomic_inc_not_zero(&module->refcnt) != 0))
 			trace_module_get(module, _RET_IP_);
-		else
+		अन्यथा
 			ret = false;
 
 		preempt_enable();
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(try_module_get);
 
-void module_put(struct module *module)
-{
-	int ret;
+व्योम module_put(काष्ठा module *module)
+अणु
+	पूर्णांक ret;
 
-	if (module) {
+	अगर (module) अणु
 		preempt_disable();
-		ret = atomic_dec_if_positive(&module->refcnt);
+		ret = atomic_dec_अगर_positive(&module->refcnt);
 		WARN_ON(ret < 0);	/* Failed to put refcount */
 		trace_module_put(module, _RET_IP_);
 		preempt_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(module_put);
 
-#else /* !CONFIG_MODULE_UNLOAD */
-static inline void print_unload_info(struct seq_file *m, struct module *mod)
-{
-	/* We don't know the usage count, or what modules are using. */
-	seq_puts(m, " - -");
-}
+#अन्यथा /* !CONFIG_MODULE_UNLOAD */
+अटल अंतरभूत व्योम prपूर्णांक_unload_info(काष्ठा seq_file *m, काष्ठा module *mod)
+अणु
+	/* We करोn't know the usage count, or what modules are using. */
+	seq_माला_दो(m, " - -");
+पूर्ण
 
-static inline void module_unload_free(struct module *mod)
-{
-}
+अटल अंतरभूत व्योम module_unload_मुक्त(काष्ठा module *mod)
+अणु
+पूर्ण
 
-static int ref_module(struct module *a, struct module *b)
-{
-	return strong_try_module_get(b);
-}
+अटल पूर्णांक ref_module(काष्ठा module *a, काष्ठा module *b)
+अणु
+	वापस strong_try_module_get(b);
+पूर्ण
 
-static inline int module_unload_init(struct module *mod)
-{
-	return 0;
-}
-#endif /* CONFIG_MODULE_UNLOAD */
+अटल अंतरभूत पूर्णांक module_unload_init(काष्ठा module *mod)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MODULE_UNLOAD */
 
-static size_t module_flags_taint(struct module *mod, char *buf)
-{
-	size_t l = 0;
-	int i;
+अटल माप_प्रकार module_flags_taपूर्णांक(काष्ठा module *mod, अक्षर *buf)
+अणु
+	माप_प्रकार l = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < TAINT_FLAGS_COUNT; i++) {
-		if (taint_flags[i].module && test_bit(i, &mod->taints))
-			buf[l++] = taint_flags[i].c_true;
-	}
+	क्रम (i = 0; i < TAINT_FLAGS_COUNT; i++) अणु
+		अगर (taपूर्णांक_flags[i].module && test_bit(i, &mod->taपूर्णांकs))
+			buf[l++] = taपूर्णांक_flags[i].c_true;
+	पूर्ण
 
-	return l;
-}
+	वापस l;
+पूर्ण
 
-static ssize_t show_initstate(struct module_attribute *mattr,
-			      struct module_kobject *mk, char *buffer)
-{
-	const char *state = "unknown";
+अटल sमाप_प्रकार show_initstate(काष्ठा module_attribute *mattr,
+			      काष्ठा module_kobject *mk, अक्षर *buffer)
+अणु
+	स्थिर अक्षर *state = "unknown";
 
-	switch (mk->mod->state) {
-	case MODULE_STATE_LIVE:
+	चयन (mk->mod->state) अणु
+	हाल MODULE_STATE_LIVE:
 		state = "live";
-		break;
-	case MODULE_STATE_COMING:
+		अवरोध;
+	हाल MODULE_STATE_COMING:
 		state = "coming";
-		break;
-	case MODULE_STATE_GOING:
+		अवरोध;
+	हाल MODULE_STATE_GOING:
 		state = "going";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	return sprintf(buffer, "%s\n", state);
-}
+	पूर्ण
+	वापस प्र_लिखो(buffer, "%s\n", state);
+पूर्ण
 
-static struct module_attribute modinfo_initstate =
-	__ATTR(initstate, 0444, show_initstate, NULL);
+अटल काष्ठा module_attribute modinfo_initstate =
+	__ATTR(initstate, 0444, show_initstate, शून्य);
 
-static ssize_t store_uevent(struct module_attribute *mattr,
-			    struct module_kobject *mk,
-			    const char *buffer, size_t count)
-{
-	int rc;
+अटल sमाप_प्रकार store_uevent(काष्ठा module_attribute *mattr,
+			    काष्ठा module_kobject *mk,
+			    स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	पूर्णांक rc;
 
 	rc = kobject_synth_uevent(&mk->kobj, buffer, count);
-	return rc ? rc : count;
-}
+	वापस rc ? rc : count;
+पूर्ण
 
-struct module_attribute module_uevent =
-	__ATTR(uevent, 0200, NULL, store_uevent);
+काष्ठा module_attribute module_uevent =
+	__ATTR(uevent, 0200, शून्य, store_uevent);
 
-static ssize_t show_coresize(struct module_attribute *mattr,
-			     struct module_kobject *mk, char *buffer)
-{
-	return sprintf(buffer, "%u\n", mk->mod->core_layout.size);
-}
+अटल sमाप_प्रकार show_coresize(काष्ठा module_attribute *mattr,
+			     काष्ठा module_kobject *mk, अक्षर *buffer)
+अणु
+	वापस प्र_लिखो(buffer, "%u\n", mk->mod->core_layout.size);
+पूर्ण
 
-static struct module_attribute modinfo_coresize =
-	__ATTR(coresize, 0444, show_coresize, NULL);
+अटल काष्ठा module_attribute modinfo_coresize =
+	__ATTR(coresize, 0444, show_coresize, शून्य);
 
-static ssize_t show_initsize(struct module_attribute *mattr,
-			     struct module_kobject *mk, char *buffer)
-{
-	return sprintf(buffer, "%u\n", mk->mod->init_layout.size);
-}
+अटल sमाप_प्रकार show_initsize(काष्ठा module_attribute *mattr,
+			     काष्ठा module_kobject *mk, अक्षर *buffer)
+अणु
+	वापस प्र_लिखो(buffer, "%u\n", mk->mod->init_layout.size);
+पूर्ण
 
-static struct module_attribute modinfo_initsize =
-	__ATTR(initsize, 0444, show_initsize, NULL);
+अटल काष्ठा module_attribute modinfo_initsize =
+	__ATTR(initsize, 0444, show_initsize, शून्य);
 
-static ssize_t show_taint(struct module_attribute *mattr,
-			  struct module_kobject *mk, char *buffer)
-{
-	size_t l;
+अटल sमाप_प्रकार show_taपूर्णांक(काष्ठा module_attribute *mattr,
+			  काष्ठा module_kobject *mk, अक्षर *buffer)
+अणु
+	माप_प्रकार l;
 
-	l = module_flags_taint(mk->mod, buffer);
+	l = module_flags_taपूर्णांक(mk->mod, buffer);
 	buffer[l++] = '\n';
-	return l;
-}
+	वापस l;
+पूर्ण
 
-static struct module_attribute modinfo_taint =
-	__ATTR(taint, 0444, show_taint, NULL);
+अटल काष्ठा module_attribute modinfo_taपूर्णांक =
+	__ATTR(taपूर्णांक, 0444, show_taपूर्णांक, शून्य);
 
-static struct module_attribute *modinfo_attrs[] = {
+अटल काष्ठा module_attribute *modinfo_attrs[] = अणु
 	&module_uevent,
 	&modinfo_version,
 	&modinfo_srcversion,
 	&modinfo_initstate,
 	&modinfo_coresize,
 	&modinfo_initsize,
-	&modinfo_taint,
-#ifdef CONFIG_MODULE_UNLOAD
+	&modinfo_taपूर्णांक,
+#अगर_घोषित CONFIG_MODULE_UNLOAD
 	&modinfo_refcnt,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
-static const char vermagic[] = VERMAGIC_STRING;
+अटल स्थिर अक्षर vermagic[] = VERMAGIC_STRING;
 
-static int try_to_force_load(struct module *mod, const char *reason)
-{
-#ifdef CONFIG_MODULE_FORCE_LOAD
-	if (!test_taint(TAINT_FORCED_MODULE))
+अटल पूर्णांक try_to_क्रमce_load(काष्ठा module *mod, स्थिर अक्षर *reason)
+अणु
+#अगर_घोषित CONFIG_MODULE_FORCE_LOAD
+	अगर (!test_taपूर्णांक(TAINT_FORCED_MODULE))
 		pr_warn("%s: %s: kernel tainted.\n", mod->name, reason);
-	add_taint_module(mod, TAINT_FORCED_MODULE, LOCKDEP_NOW_UNRELIABLE);
-	return 0;
-#else
-	return -ENOEXEC;
-#endif
-}
+	add_taपूर्णांक_module(mod, TAINT_FORCED_MODULE, LOCKDEP_NOW_UNRELIABLE);
+	वापस 0;
+#अन्यथा
+	वापस -ENOEXEC;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_MODVERSIONS
+#अगर_घोषित CONFIG_MODVERSIONS
 
-static u32 resolve_rel_crc(const s32 *crc)
-{
-	return *(u32 *)((void *)crc + *crc);
-}
+अटल u32 resolve_rel_crc(स्थिर s32 *crc)
+अणु
+	वापस *(u32 *)((व्योम *)crc + *crc);
+पूर्ण
 
-static int check_version(const struct load_info *info,
-			 const char *symname,
-			 struct module *mod,
-			 const s32 *crc)
-{
+अटल पूर्णांक check_version(स्थिर काष्ठा load_info *info,
+			 स्थिर अक्षर *symname,
+			 काष्ठा module *mod,
+			 स्थिर s32 *crc)
+अणु
 	Elf_Shdr *sechdrs = info->sechdrs;
-	unsigned int versindex = info->index.vers;
-	unsigned int i, num_versions;
-	struct modversion_info *versions;
+	अचिन्हित पूर्णांक versindex = info->index.vers;
+	अचिन्हित पूर्णांक i, num_versions;
+	काष्ठा modversion_info *versions;
 
-	/* Exporting module didn't supply crcs?  OK, we're already tainted. */
-	if (!crc)
-		return 1;
+	/* Exporting module didn't supply crcs?  OK, we're alपढ़ोy taपूर्णांकed. */
+	अगर (!crc)
+		वापस 1;
 
-	/* No versions at all?  modprobe --force does this. */
-	if (versindex == 0)
-		return try_to_force_load(mod, symname) == 0;
+	/* No versions at all?  modprobe --क्रमce करोes this. */
+	अगर (versindex == 0)
+		वापस try_to_क्रमce_load(mod, symname) == 0;
 
-	versions = (void *) sechdrs[versindex].sh_addr;
+	versions = (व्योम *) sechdrs[versindex].sh_addr;
 	num_versions = sechdrs[versindex].sh_size
-		/ sizeof(struct modversion_info);
+		/ माप(काष्ठा modversion_info);
 
-	for (i = 0; i < num_versions; i++) {
+	क्रम (i = 0; i < num_versions; i++) अणु
 		u32 crcval;
 
-		if (strcmp(versions[i].name, symname) != 0)
-			continue;
+		अगर (म_भेद(versions[i].name, symname) != 0)
+			जारी;
 
-		if (IS_ENABLED(CONFIG_MODULE_REL_CRCS))
+		अगर (IS_ENABLED(CONFIG_MODULE_REL_CRCS))
 			crcval = resolve_rel_crc(crc);
-		else
+		अन्यथा
 			crcval = *crc;
-		if (versions[i].crc == crcval)
-			return 1;
+		अगर (versions[i].crc == crcval)
+			वापस 1;
 		pr_debug("Found checksum %X vs module %lX\n",
 			 crcval, versions[i].crc);
-		goto bad_version;
-	}
+		जाओ bad_version;
+	पूर्ण
 
 	/* Broken toolchain. Warn once, then let it go.. */
 	pr_warn_once("%s: no symbol version for %s\n", info->name, symname);
-	return 1;
+	वापस 1;
 
 bad_version:
 	pr_warn("%s: disagrees about version of symbol %s\n",
 	       info->name, symname);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int check_modstruct_version(const struct load_info *info,
-					  struct module *mod)
-{
-	struct find_symbol_arg fsa = {
+अटल अंतरभूत पूर्णांक check_modकाष्ठा_version(स्थिर काष्ठा load_info *info,
+					  काष्ठा module *mod)
+अणु
+	काष्ठा find_symbol_arg fsa = अणु
 		.name	= "module_layout",
 		.gplok	= true,
-	};
+	पूर्ण;
 
 	/*
-	 * Since this should be found in kernel (which can't be removed), no
+	 * Since this should be found in kernel (which can't be हटाओd), no
 	 * locking is necessary -- use preempt_disable() to placate lockdep.
 	 */
 	preempt_disable();
-	if (!find_symbol(&fsa)) {
+	अगर (!find_symbol(&fsa)) अणु
 		preempt_enable();
 		BUG();
-	}
+	पूर्ण
 	preempt_enable();
-	return check_version(info, "module_layout", mod, fsa.crc);
-}
+	वापस check_version(info, "module_layout", mod, fsa.crc);
+पूर्ण
 
-/* First part is kernel version, which we ignore if module has crcs. */
-static inline int same_magic(const char *amagic, const char *bmagic,
+/* First part is kernel version, which we ignore अगर module has crcs. */
+अटल अंतरभूत पूर्णांक same_magic(स्थिर अक्षर *amagic, स्थिर अक्षर *bmagic,
 			     bool has_crcs)
-{
-	if (has_crcs) {
-		amagic += strcspn(amagic, " ");
-		bmagic += strcspn(bmagic, " ");
-	}
-	return strcmp(amagic, bmagic) == 0;
-}
-#else
-static inline int check_version(const struct load_info *info,
-				const char *symname,
-				struct module *mod,
-				const s32 *crc)
-{
-	return 1;
-}
+अणु
+	अगर (has_crcs) अणु
+		amagic += म_खोज(amagic, " ");
+		bmagic += म_खोज(bmagic, " ");
+	पूर्ण
+	वापस म_भेद(amagic, bmagic) == 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक check_version(स्थिर काष्ठा load_info *info,
+				स्थिर अक्षर *symname,
+				काष्ठा module *mod,
+				स्थिर s32 *crc)
+अणु
+	वापस 1;
+पूर्ण
 
-static inline int check_modstruct_version(const struct load_info *info,
-					  struct module *mod)
-{
-	return 1;
-}
+अटल अंतरभूत पूर्णांक check_modकाष्ठा_version(स्थिर काष्ठा load_info *info,
+					  काष्ठा module *mod)
+अणु
+	वापस 1;
+पूर्ण
 
-static inline int same_magic(const char *amagic, const char *bmagic,
+अटल अंतरभूत पूर्णांक same_magic(स्थिर अक्षर *amagic, स्थिर अक्षर *bmagic,
 			     bool has_crcs)
-{
-	return strcmp(amagic, bmagic) == 0;
-}
-#endif /* CONFIG_MODVERSIONS */
+अणु
+	वापस म_भेद(amagic, bmagic) == 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MODVERSIONS */
 
-static char *get_modinfo(const struct load_info *info, const char *tag);
-static char *get_next_modinfo(const struct load_info *info, const char *tag,
-			      char *prev);
+अटल अक्षर *get_modinfo(स्थिर काष्ठा load_info *info, स्थिर अक्षर *tag);
+अटल अक्षर *get_next_modinfo(स्थिर काष्ठा load_info *info, स्थिर अक्षर *tag,
+			      अक्षर *prev);
 
-static int verify_namespace_is_imported(const struct load_info *info,
-					const struct kernel_symbol *sym,
-					struct module *mod)
-{
-	const char *namespace;
-	char *imported_namespace;
+अटल पूर्णांक verअगरy_namespace_is_imported(स्थिर काष्ठा load_info *info,
+					स्थिर काष्ठा kernel_symbol *sym,
+					काष्ठा module *mod)
+अणु
+	स्थिर अक्षर *namespace;
+	अक्षर *imported_namespace;
 
 	namespace = kernel_symbol_namespace(sym);
-	if (namespace && namespace[0]) {
+	अगर (namespace && namespace[0]) अणु
 		imported_namespace = get_modinfo(info, "import_ns");
-		while (imported_namespace) {
-			if (strcmp(namespace, imported_namespace) == 0)
-				return 0;
+		जबतक (imported_namespace) अणु
+			अगर (म_भेद(namespace, imported_namespace) == 0)
+				वापस 0;
 			imported_namespace = get_next_modinfo(
 				info, "import_ns", imported_namespace);
-		}
-#ifdef CONFIG_MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS
+		पूर्ण
+#अगर_घोषित CONFIG_MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS
 		pr_warn(
-#else
+#अन्यथा
 		pr_err(
-#endif
+#पूर्ण_अगर
 			"%s: module uses symbol (%s) from namespace %s, but does not import it.\n",
 			mod->name, kernel_symbol_name(sym), namespace);
-#ifndef CONFIG_MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS
-		return -EINVAL;
-#endif
-	}
-	return 0;
-}
+#अगर_अघोषित CONFIG_MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS
+		वापस -EINVAL;
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool inherit_taint(struct module *mod, struct module *owner)
-{
-	if (!owner || !test_bit(TAINT_PROPRIETARY_MODULE, &owner->taints))
-		return true;
+अटल bool inherit_taपूर्णांक(काष्ठा module *mod, काष्ठा module *owner)
+अणु
+	अगर (!owner || !test_bit(TAINT_PROPRIETARY_MODULE, &owner->taपूर्णांकs))
+		वापस true;
 
-	if (mod->using_gplonly_symbols) {
+	अगर (mod->using_gplonly_symbols) अणु
 		pr_err("%s: module using GPL-only symbols uses symbols from proprietary module %s.\n",
 			mod->name, owner->name);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!test_bit(TAINT_PROPRIETARY_MODULE, &mod->taints)) {
+	अगर (!test_bit(TAINT_PROPRIETARY_MODULE, &mod->taपूर्णांकs)) अणु
 		pr_warn("%s: module uses symbols from proprietary module %s, inheriting taint.\n",
 			mod->name, owner->name);
-		set_bit(TAINT_PROPRIETARY_MODULE, &mod->taints);
-	}
-	return true;
-}
+		set_bit(TAINT_PROPRIETARY_MODULE, &mod->taपूर्णांकs);
+	पूर्ण
+	वापस true;
+पूर्ण
 
-/* Resolve a symbol for this module.  I.e. if we find one, record usage. */
-static const struct kernel_symbol *resolve_symbol(struct module *mod,
-						  const struct load_info *info,
-						  const char *name,
-						  char ownername[])
-{
-	struct find_symbol_arg fsa = {
+/* Resolve a symbol क्रम this module.  I.e. अगर we find one, record usage. */
+अटल स्थिर काष्ठा kernel_symbol *resolve_symbol(काष्ठा module *mod,
+						  स्थिर काष्ठा load_info *info,
+						  स्थिर अक्षर *name,
+						  अक्षर ownername[])
+अणु
+	काष्ठा find_symbol_arg fsa = अणु
 		.name	= name,
-		.gplok	= !(mod->taints & (1 << TAINT_PROPRIETARY_MODULE)),
+		.gplok	= !(mod->taपूर्णांकs & (1 << TAINT_PROPRIETARY_MODULE)),
 		.warn	= true,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	/*
 	 * The module_mutex should not be a heavily contended lock;
-	 * if we get the occasional sleep here, we'll go an extra iteration
-	 * in the wait_event_interruptible(), which is harmless.
+	 * अगर we get the occasional sleep here, we'll go an extra iteration
+	 * in the रुको_event_पूर्णांकerruptible(), which is harmless.
 	 */
 	sched_annotate_sleep();
 	mutex_lock(&module_mutex);
-	if (!find_symbol(&fsa))
-		goto unlock;
+	अगर (!find_symbol(&fsa))
+		जाओ unlock;
 
-	if (fsa.license == GPL_ONLY)
+	अगर (fsa.license == GPL_ONLY)
 		mod->using_gplonly_symbols = true;
 
-	if (!inherit_taint(mod, fsa.owner)) {
-		fsa.sym = NULL;
-		goto getname;
-	}
+	अगर (!inherit_taपूर्णांक(mod, fsa.owner)) अणु
+		fsa.sym = शून्य;
+		जाओ getname;
+	पूर्ण
 
-	if (!check_version(info, name, mod, fsa.crc)) {
+	अगर (!check_version(info, name, mod, fsa.crc)) अणु
 		fsa.sym = ERR_PTR(-EINVAL);
-		goto getname;
-	}
+		जाओ getname;
+	पूर्ण
 
-	err = verify_namespace_is_imported(info, fsa.sym, mod);
-	if (err) {
+	err = verअगरy_namespace_is_imported(info, fsa.sym, mod);
+	अगर (err) अणु
 		fsa.sym = ERR_PTR(err);
-		goto getname;
-	}
+		जाओ getname;
+	पूर्ण
 
 	err = ref_module(mod, fsa.owner);
-	if (err) {
+	अगर (err) अणु
 		fsa.sym = ERR_PTR(err);
-		goto getname;
-	}
+		जाओ getname;
+	पूर्ण
 
 getname:
-	/* We must make copy under the lock if we failed to get ref. */
-	strncpy(ownername, module_name(fsa.owner), MODULE_NAME_LEN);
+	/* We must make copy under the lock अगर we failed to get ref. */
+	म_नकलन(ownername, module_name(fsa.owner), MODULE_NAME_LEN);
 unlock:
 	mutex_unlock(&module_mutex);
-	return fsa.sym;
-}
+	वापस fsa.sym;
+पूर्ण
 
-static const struct kernel_symbol *
-resolve_symbol_wait(struct module *mod,
-		    const struct load_info *info,
-		    const char *name)
-{
-	const struct kernel_symbol *ksym;
-	char owner[MODULE_NAME_LEN];
+अटल स्थिर काष्ठा kernel_symbol *
+resolve_symbol_रुको(काष्ठा module *mod,
+		    स्थिर काष्ठा load_info *info,
+		    स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा kernel_symbol *ksym;
+	अक्षर owner[MODULE_NAME_LEN];
 
-	if (wait_event_interruptible_timeout(module_wq,
+	अगर (रुको_event_पूर्णांकerruptible_समयout(module_wq,
 			!IS_ERR(ksym = resolve_symbol(mod, info, name, owner))
 			|| PTR_ERR(ksym) != -EBUSY,
-					     30 * HZ) <= 0) {
+					     30 * HZ) <= 0) अणु
 		pr_warn("%s: gave up waiting for init of module %s.\n",
 			mod->name, owner);
-	}
-	return ksym;
-}
+	पूर्ण
+	वापस ksym;
+पूर्ण
 
 /*
  * /sys/module/foo/sections stuff
  * J. Corbet <corbet@lwn.net>
  */
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 
-#ifdef CONFIG_KALLSYMS
-static inline bool sect_empty(const Elf_Shdr *sect)
-{
-	return !(sect->sh_flags & SHF_ALLOC) || sect->sh_size == 0;
-}
+#अगर_घोषित CONFIG_KALLSYMS
+अटल अंतरभूत bool sect_empty(स्थिर Elf_Shdr *sect)
+अणु
+	वापस !(sect->sh_flags & SHF_ALLOC) || sect->sh_size == 0;
+पूर्ण
 
-struct module_sect_attr {
-	struct bin_attribute battr;
-	unsigned long address;
-};
+काष्ठा module_sect_attr अणु
+	काष्ठा bin_attribute battr;
+	अचिन्हित दीर्घ address;
+पूर्ण;
 
-struct module_sect_attrs {
-	struct attribute_group grp;
-	unsigned int nsections;
-	struct module_sect_attr attrs[];
-};
+काष्ठा module_sect_attrs अणु
+	काष्ठा attribute_group grp;
+	अचिन्हित पूर्णांक nsections;
+	काष्ठा module_sect_attr attrs[];
+पूर्ण;
 
-#define MODULE_SECT_READ_SIZE (3 /* "0x", "\n" */ + (BITS_PER_LONG / 4))
-static ssize_t module_sect_read(struct file *file, struct kobject *kobj,
-				struct bin_attribute *battr,
-				char *buf, loff_t pos, size_t count)
-{
-	struct module_sect_attr *sattr =
-		container_of(battr, struct module_sect_attr, battr);
-	char bounce[MODULE_SECT_READ_SIZE + 1];
-	size_t wrote;
+#घोषणा MODULE_SECT_READ_SIZE (3 /* "0x", "\n" */ + (BITS_PER_LONG / 4))
+अटल sमाप_प्रकार module_sect_पढ़ो(काष्ठा file *file, काष्ठा kobject *kobj,
+				काष्ठा bin_attribute *battr,
+				अक्षर *buf, loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा module_sect_attr *sattr =
+		container_of(battr, काष्ठा module_sect_attr, battr);
+	अक्षर bounce[MODULE_SECT_READ_SIZE + 1];
+	माप_प्रकार wrote;
 
-	if (pos != 0)
-		return -EINVAL;
+	अगर (pos != 0)
+		वापस -EINVAL;
 
 	/*
-	 * Since we're a binary read handler, we must account for the
-	 * trailing NUL byte that sprintf will write: if "buf" is
+	 * Since we're a binary पढ़ो handler, we must account क्रम the
+	 * trailing NUL byte that प्र_लिखो will ग_लिखो: अगर "buf" is
 	 * too small to hold the NUL, or the NUL is exactly the last
-	 * byte, the read will look like it got truncated by one byte.
-	 * Since there is no way to ask sprintf nicely to not write
+	 * byte, the पढ़ो will look like it got truncated by one byte.
+	 * Since there is no way to ask प्र_लिखो nicely to not ग_लिखो
 	 * the NUL, we have to use a bounce buffer.
 	 */
-	wrote = scnprintf(bounce, sizeof(bounce), "0x%px\n",
+	wrote = scnम_लिखो(bounce, माप(bounce), "0x%px\n",
 			 kallsyms_show_value(file->f_cred)
-				? (void *)sattr->address : NULL);
+				? (व्योम *)sattr->address : शून्य);
 	count = min(count, wrote);
-	memcpy(buf, bounce, count);
+	स_नकल(buf, bounce, count);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void free_sect_attrs(struct module_sect_attrs *sect_attrs)
-{
-	unsigned int section;
+अटल व्योम मुक्त_sect_attrs(काष्ठा module_sect_attrs *sect_attrs)
+अणु
+	अचिन्हित पूर्णांक section;
 
-	for (section = 0; section < sect_attrs->nsections; section++)
-		kfree(sect_attrs->attrs[section].battr.attr.name);
-	kfree(sect_attrs);
-}
+	क्रम (section = 0; section < sect_attrs->nsections; section++)
+		kमुक्त(sect_attrs->attrs[section].battr.attr.name);
+	kमुक्त(sect_attrs);
+पूर्ण
 
-static void add_sect_attrs(struct module *mod, const struct load_info *info)
-{
-	unsigned int nloaded = 0, i, size[2];
-	struct module_sect_attrs *sect_attrs;
-	struct module_sect_attr *sattr;
-	struct bin_attribute **gattr;
+अटल व्योम add_sect_attrs(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक nloaded = 0, i, size[2];
+	काष्ठा module_sect_attrs *sect_attrs;
+	काष्ठा module_sect_attr *sattr;
+	काष्ठा bin_attribute **gattr;
 
-	/* Count loaded sections and allocate structures */
-	for (i = 0; i < info->hdr->e_shnum; i++)
-		if (!sect_empty(&info->sechdrs[i]))
+	/* Count loaded sections and allocate काष्ठाures */
+	क्रम (i = 0; i < info->hdr->e_shnum; i++)
+		अगर (!sect_empty(&info->sechdrs[i]))
 			nloaded++;
-	size[0] = ALIGN(struct_size(sect_attrs, attrs, nloaded),
-			sizeof(sect_attrs->grp.bin_attrs[0]));
-	size[1] = (nloaded + 1) * sizeof(sect_attrs->grp.bin_attrs[0]);
+	size[0] = ALIGN(काष्ठा_size(sect_attrs, attrs, nloaded),
+			माप(sect_attrs->grp.bin_attrs[0]));
+	size[1] = (nloaded + 1) * माप(sect_attrs->grp.bin_attrs[0]);
 	sect_attrs = kzalloc(size[0] + size[1], GFP_KERNEL);
-	if (sect_attrs == NULL)
-		return;
+	अगर (sect_attrs == शून्य)
+		वापस;
 
 	/* Setup section attributes. */
 	sect_attrs->grp.name = "sections";
-	sect_attrs->grp.bin_attrs = (void *)sect_attrs + size[0];
+	sect_attrs->grp.bin_attrs = (व्योम *)sect_attrs + size[0];
 
 	sect_attrs->nsections = 0;
 	sattr = &sect_attrs->attrs[0];
 	gattr = &sect_attrs->grp.bin_attrs[0];
-	for (i = 0; i < info->hdr->e_shnum; i++) {
+	क्रम (i = 0; i < info->hdr->e_shnum; i++) अणु
 		Elf_Shdr *sec = &info->sechdrs[i];
-		if (sect_empty(sec))
-			continue;
+		अगर (sect_empty(sec))
+			जारी;
 		sysfs_bin_attr_init(&sattr->battr);
 		sattr->address = sec->sh_addr;
 		sattr->battr.attr.name =
 			kstrdup(info->secstrings + sec->sh_name, GFP_KERNEL);
-		if (sattr->battr.attr.name == NULL)
-			goto out;
+		अगर (sattr->battr.attr.name == शून्य)
+			जाओ out;
 		sect_attrs->nsections++;
-		sattr->battr.read = module_sect_read;
+		sattr->battr.पढ़ो = module_sect_पढ़ो;
 		sattr->battr.size = MODULE_SECT_READ_SIZE;
 		sattr->battr.attr.mode = 0400;
 		*(gattr++) = &(sattr++)->battr;
-	}
-	*gattr = NULL;
+	पूर्ण
+	*gattr = शून्य;
 
-	if (sysfs_create_group(&mod->mkobj.kobj, &sect_attrs->grp))
-		goto out;
+	अगर (sysfs_create_group(&mod->mkobj.kobj, &sect_attrs->grp))
+		जाओ out;
 
 	mod->sect_attrs = sect_attrs;
-	return;
+	वापस;
   out:
-	free_sect_attrs(sect_attrs);
-}
+	मुक्त_sect_attrs(sect_attrs);
+पूर्ण
 
-static void remove_sect_attrs(struct module *mod)
-{
-	if (mod->sect_attrs) {
-		sysfs_remove_group(&mod->mkobj.kobj,
+अटल व्योम हटाओ_sect_attrs(काष्ठा module *mod)
+अणु
+	अगर (mod->sect_attrs) अणु
+		sysfs_हटाओ_group(&mod->mkobj.kobj,
 				   &mod->sect_attrs->grp);
 		/*
 		 * We are positive that no one is using any sect attrs
-		 * at this point.  Deallocate immediately.
+		 * at this poपूर्णांक.  Deallocate immediately.
 		 */
-		free_sect_attrs(mod->sect_attrs);
-		mod->sect_attrs = NULL;
-	}
-}
+		मुक्त_sect_attrs(mod->sect_attrs);
+		mod->sect_attrs = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * /sys/module/foo/notes/.section.name gives contents of SHT_NOTE sections.
  */
 
-struct module_notes_attrs {
-	struct kobject *dir;
-	unsigned int notes;
-	struct bin_attribute attrs[];
-};
+काष्ठा module_notes_attrs अणु
+	काष्ठा kobject *dir;
+	अचिन्हित पूर्णांक notes;
+	काष्ठा bin_attribute attrs[];
+पूर्ण;
 
-static ssize_t module_notes_read(struct file *filp, struct kobject *kobj,
-				 struct bin_attribute *bin_attr,
-				 char *buf, loff_t pos, size_t count)
-{
+अटल sमाप_प्रकार module_notes_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				 काष्ठा bin_attribute *bin_attr,
+				 अक्षर *buf, loff_t pos, माप_प्रकार count)
+अणु
 	/*
 	 * The caller checked the pos and count against our size.
 	 */
-	memcpy(buf, bin_attr->private + pos, count);
-	return count;
-}
+	स_नकल(buf, bin_attr->निजी + pos, count);
+	वापस count;
+पूर्ण
 
-static void free_notes_attrs(struct module_notes_attrs *notes_attrs,
-			     unsigned int i)
-{
-	if (notes_attrs->dir) {
-		while (i-- > 0)
-			sysfs_remove_bin_file(notes_attrs->dir,
+अटल व्योम मुक्त_notes_attrs(काष्ठा module_notes_attrs *notes_attrs,
+			     अचिन्हित पूर्णांक i)
+अणु
+	अगर (notes_attrs->dir) अणु
+		जबतक (i-- > 0)
+			sysfs_हटाओ_bin_file(notes_attrs->dir,
 					      &notes_attrs->attrs[i]);
 		kobject_put(notes_attrs->dir);
-	}
-	kfree(notes_attrs);
-}
+	पूर्ण
+	kमुक्त(notes_attrs);
+पूर्ण
 
-static void add_notes_attrs(struct module *mod, const struct load_info *info)
-{
-	unsigned int notes, loaded, i;
-	struct module_notes_attrs *notes_attrs;
-	struct bin_attribute *nattr;
+अटल व्योम add_notes_attrs(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक notes, loaded, i;
+	काष्ठा module_notes_attrs *notes_attrs;
+	काष्ठा bin_attribute *nattr;
 
 	/* failed to create section attributes, so can't create notes */
-	if (!mod->sect_attrs)
-		return;
+	अगर (!mod->sect_attrs)
+		वापस;
 
-	/* Count notes sections and allocate structures.  */
+	/* Count notes sections and allocate काष्ठाures.  */
 	notes = 0;
-	for (i = 0; i < info->hdr->e_shnum; i++)
-		if (!sect_empty(&info->sechdrs[i]) &&
+	क्रम (i = 0; i < info->hdr->e_shnum; i++)
+		अगर (!sect_empty(&info->sechdrs[i]) &&
 		    (info->sechdrs[i].sh_type == SHT_NOTE))
 			++notes;
 
-	if (notes == 0)
-		return;
+	अगर (notes == 0)
+		वापस;
 
-	notes_attrs = kzalloc(struct_size(notes_attrs, attrs, notes),
+	notes_attrs = kzalloc(काष्ठा_size(notes_attrs, attrs, notes),
 			      GFP_KERNEL);
-	if (notes_attrs == NULL)
-		return;
+	अगर (notes_attrs == शून्य)
+		वापस;
 
 	notes_attrs->notes = notes;
 	nattr = &notes_attrs->attrs[0];
-	for (loaded = i = 0; i < info->hdr->e_shnum; ++i) {
-		if (sect_empty(&info->sechdrs[i]))
-			continue;
-		if (info->sechdrs[i].sh_type == SHT_NOTE) {
+	क्रम (loaded = i = 0; i < info->hdr->e_shnum; ++i) अणु
+		अगर (sect_empty(&info->sechdrs[i]))
+			जारी;
+		अगर (info->sechdrs[i].sh_type == SHT_NOTE) अणु
 			sysfs_bin_attr_init(nattr);
 			nattr->attr.name = mod->sect_attrs->attrs[loaded].battr.attr.name;
 			nattr->attr.mode = S_IRUGO;
 			nattr->size = info->sechdrs[i].sh_size;
-			nattr->private = (void *) info->sechdrs[i].sh_addr;
-			nattr->read = module_notes_read;
+			nattr->निजी = (व्योम *) info->sechdrs[i].sh_addr;
+			nattr->पढ़ो = module_notes_पढ़ो;
 			++nattr;
-		}
+		पूर्ण
 		++loaded;
-	}
+	पूर्ण
 
 	notes_attrs->dir = kobject_create_and_add("notes", &mod->mkobj.kobj);
-	if (!notes_attrs->dir)
-		goto out;
+	अगर (!notes_attrs->dir)
+		जाओ out;
 
-	for (i = 0; i < notes; ++i)
-		if (sysfs_create_bin_file(notes_attrs->dir,
+	क्रम (i = 0; i < notes; ++i)
+		अगर (sysfs_create_bin_file(notes_attrs->dir,
 					  &notes_attrs->attrs[i]))
-			goto out;
+			जाओ out;
 
 	mod->notes_attrs = notes_attrs;
-	return;
+	वापस;
 
   out:
-	free_notes_attrs(notes_attrs, i);
-}
+	मुक्त_notes_attrs(notes_attrs, i);
+पूर्ण
 
-static void remove_notes_attrs(struct module *mod)
-{
-	if (mod->notes_attrs)
-		free_notes_attrs(mod->notes_attrs, mod->notes_attrs->notes);
-}
+अटल व्योम हटाओ_notes_attrs(काष्ठा module *mod)
+अणु
+	अगर (mod->notes_attrs)
+		मुक्त_notes_attrs(mod->notes_attrs, mod->notes_attrs->notes);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void add_sect_attrs(struct module *mod,
-				  const struct load_info *info)
-{
-}
+अटल अंतरभूत व्योम add_sect_attrs(काष्ठा module *mod,
+				  स्थिर काष्ठा load_info *info)
+अणु
+पूर्ण
 
-static inline void remove_sect_attrs(struct module *mod)
-{
-}
+अटल अंतरभूत व्योम हटाओ_sect_attrs(काष्ठा module *mod)
+अणु
+पूर्ण
 
-static inline void add_notes_attrs(struct module *mod,
-				   const struct load_info *info)
-{
-}
+अटल अंतरभूत व्योम add_notes_attrs(काष्ठा module *mod,
+				   स्थिर काष्ठा load_info *info)
+अणु
+पूर्ण
 
-static inline void remove_notes_attrs(struct module *mod)
-{
-}
-#endif /* CONFIG_KALLSYMS */
+अटल अंतरभूत व्योम हटाओ_notes_attrs(काष्ठा module *mod)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KALLSYMS */
 
-static void del_usage_links(struct module *mod)
-{
-#ifdef CONFIG_MODULE_UNLOAD
-	struct module_use *use;
+अटल व्योम del_usage_links(काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_MODULE_UNLOAD
+	काष्ठा module_use *use;
 
 	mutex_lock(&module_mutex);
-	list_for_each_entry(use, &mod->target_list, target_list)
-		sysfs_remove_link(use->target->holders_dir, mod->name);
+	list_क्रम_each_entry(use, &mod->target_list, target_list)
+		sysfs_हटाओ_link(use->target->holders_dir, mod->name);
 	mutex_unlock(&module_mutex);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int add_usage_links(struct module *mod)
-{
-	int ret = 0;
-#ifdef CONFIG_MODULE_UNLOAD
-	struct module_use *use;
+अटल पूर्णांक add_usage_links(काष्ठा module *mod)
+अणु
+	पूर्णांक ret = 0;
+#अगर_घोषित CONFIG_MODULE_UNLOAD
+	काष्ठा module_use *use;
 
 	mutex_lock(&module_mutex);
-	list_for_each_entry(use, &mod->target_list, target_list) {
+	list_क्रम_each_entry(use, &mod->target_list, target_list) अणु
 		ret = sysfs_create_link(use->target->holders_dir,
 					&mod->mkobj.kobj, mod->name);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&module_mutex);
-	if (ret)
+	अगर (ret)
 		del_usage_links(mod);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static void module_remove_modinfo_attrs(struct module *mod, int end);
+अटल व्योम module_हटाओ_modinfo_attrs(काष्ठा module *mod, पूर्णांक end);
 
-static int module_add_modinfo_attrs(struct module *mod)
-{
-	struct module_attribute *attr;
-	struct module_attribute *temp_attr;
-	int error = 0;
-	int i;
+अटल पूर्णांक module_add_modinfo_attrs(काष्ठा module *mod)
+अणु
+	काष्ठा module_attribute *attr;
+	काष्ठा module_attribute *temp_attr;
+	पूर्णांक error = 0;
+	पूर्णांक i;
 
-	mod->modinfo_attrs = kzalloc((sizeof(struct module_attribute) *
+	mod->modinfo_attrs = kzalloc((माप(काष्ठा module_attribute) *
 					(ARRAY_SIZE(modinfo_attrs) + 1)),
 					GFP_KERNEL);
-	if (!mod->modinfo_attrs)
-		return -ENOMEM;
+	अगर (!mod->modinfo_attrs)
+		वापस -ENOMEM;
 
 	temp_attr = mod->modinfo_attrs;
-	for (i = 0; (attr = modinfo_attrs[i]); i++) {
-		if (!attr->test || attr->test(mod)) {
-			memcpy(temp_attr, attr, sizeof(*temp_attr));
+	क्रम (i = 0; (attr = modinfo_attrs[i]); i++) अणु
+		अगर (!attr->test || attr->test(mod)) अणु
+			स_नकल(temp_attr, attr, माप(*temp_attr));
 			sysfs_attr_init(&temp_attr->attr);
 			error = sysfs_create_file(&mod->mkobj.kobj,
 					&temp_attr->attr);
-			if (error)
-				goto error_out;
+			अगर (error)
+				जाओ error_out;
 			++temp_attr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_out:
-	if (i > 0)
-		module_remove_modinfo_attrs(mod, --i);
-	else
-		kfree(mod->modinfo_attrs);
-	return error;
-}
+	अगर (i > 0)
+		module_हटाओ_modinfo_attrs(mod, --i);
+	अन्यथा
+		kमुक्त(mod->modinfo_attrs);
+	वापस error;
+पूर्ण
 
-static void module_remove_modinfo_attrs(struct module *mod, int end)
-{
-	struct module_attribute *attr;
-	int i;
+अटल व्योम module_हटाओ_modinfo_attrs(काष्ठा module *mod, पूर्णांक end)
+अणु
+	काष्ठा module_attribute *attr;
+	पूर्णांक i;
 
-	for (i = 0; (attr = &mod->modinfo_attrs[i]); i++) {
-		if (end >= 0 && i > end)
-			break;
-		/* pick a field to test for end of list */
-		if (!attr->attr.name)
-			break;
-		sysfs_remove_file(&mod->mkobj.kobj, &attr->attr);
-		if (attr->free)
-			attr->free(mod);
-	}
-	kfree(mod->modinfo_attrs);
-}
+	क्रम (i = 0; (attr = &mod->modinfo_attrs[i]); i++) अणु
+		अगर (end >= 0 && i > end)
+			अवरोध;
+		/* pick a field to test क्रम end of list */
+		अगर (!attr->attr.name)
+			अवरोध;
+		sysfs_हटाओ_file(&mod->mkobj.kobj, &attr->attr);
+		अगर (attr->मुक्त)
+			attr->मुक्त(mod);
+	पूर्ण
+	kमुक्त(mod->modinfo_attrs);
+पूर्ण
 
-static void mod_kobject_put(struct module *mod)
-{
+अटल व्योम mod_kobject_put(काष्ठा module *mod)
+अणु
 	DECLARE_COMPLETION_ONSTACK(c);
 	mod->mkobj.kobj_completion = &c;
 	kobject_put(&mod->mkobj.kobj);
-	wait_for_completion(&c);
-}
+	रुको_क्रम_completion(&c);
+पूर्ण
 
-static int mod_sysfs_init(struct module *mod)
-{
-	int err;
-	struct kobject *kobj;
+अटल पूर्णांक mod_sysfs_init(काष्ठा module *mod)
+अणु
+	पूर्णांक err;
+	काष्ठा kobject *kobj;
 
-	if (!module_sysfs_initialized) {
+	अगर (!module_sysfs_initialized) अणु
 		pr_err("%s: module sysfs not initialized\n", mod->name);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	kobj = kset_find_obj(module_kset, mod->name);
-	if (kobj) {
+	अगर (kobj) अणु
 		pr_err("%s: module is already loaded\n", mod->name);
 		kobject_put(kobj);
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mod->mkobj.mod = mod;
 
-	memset(&mod->mkobj.kobj, 0, sizeof(mod->mkobj.kobj));
+	स_रखो(&mod->mkobj.kobj, 0, माप(mod->mkobj.kobj));
 	mod->mkobj.kobj.kset = module_kset;
-	err = kobject_init_and_add(&mod->mkobj.kobj, &module_ktype, NULL,
+	err = kobject_init_and_add(&mod->mkobj.kobj, &module_ktype, शून्य,
 				   "%s", mod->name);
-	if (err)
+	अगर (err)
 		mod_kobject_put(mod);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mod_sysfs_setup(struct module *mod,
-			   const struct load_info *info,
-			   struct kernel_param *kparam,
-			   unsigned int num_params)
-{
-	int err;
+अटल पूर्णांक mod_sysfs_setup(काष्ठा module *mod,
+			   स्थिर काष्ठा load_info *info,
+			   काष्ठा kernel_param *kparam,
+			   अचिन्हित पूर्णांक num_params)
+अणु
+	पूर्णांक err;
 
 	err = mod_sysfs_init(mod);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	mod->holders_dir = kobject_create_and_add("holders", &mod->mkobj.kobj);
-	if (!mod->holders_dir) {
+	अगर (!mod->holders_dir) अणु
 		err = -ENOMEM;
-		goto out_unreg;
-	}
+		जाओ out_unreg;
+	पूर्ण
 
 	err = module_param_sysfs_setup(mod, kparam, num_params);
-	if (err)
-		goto out_unreg_holders;
+	अगर (err)
+		जाओ out_unreg_holders;
 
 	err = module_add_modinfo_attrs(mod);
-	if (err)
-		goto out_unreg_param;
+	अगर (err)
+		जाओ out_unreg_param;
 
 	err = add_usage_links(mod);
-	if (err)
-		goto out_unreg_modinfo_attrs;
+	अगर (err)
+		जाओ out_unreg_modinfo_attrs;
 
 	add_sect_attrs(mod, info);
 	add_notes_attrs(mod, info);
 
-	return 0;
+	वापस 0;
 
 out_unreg_modinfo_attrs:
-	module_remove_modinfo_attrs(mod, -1);
+	module_हटाओ_modinfo_attrs(mod, -1);
 out_unreg_param:
-	module_param_sysfs_remove(mod);
+	module_param_sysfs_हटाओ(mod);
 out_unreg_holders:
 	kobject_put(mod->holders_dir);
 out_unreg:
 	mod_kobject_put(mod);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mod_sysfs_fini(struct module *mod)
-{
-	remove_notes_attrs(mod);
-	remove_sect_attrs(mod);
+अटल व्योम mod_sysfs_fini(काष्ठा module *mod)
+अणु
+	हटाओ_notes_attrs(mod);
+	हटाओ_sect_attrs(mod);
 	mod_kobject_put(mod);
-}
+पूर्ण
 
-static void init_param_lock(struct module *mod)
-{
+अटल व्योम init_param_lock(काष्ठा module *mod)
+अणु
 	mutex_init(&mod->param_lock);
-}
-#else /* !CONFIG_SYSFS */
+पूर्ण
+#अन्यथा /* !CONFIG_SYSFS */
 
-static int mod_sysfs_setup(struct module *mod,
-			   const struct load_info *info,
-			   struct kernel_param *kparam,
-			   unsigned int num_params)
-{
-	return 0;
-}
+अटल पूर्णांक mod_sysfs_setup(काष्ठा module *mod,
+			   स्थिर काष्ठा load_info *info,
+			   काष्ठा kernel_param *kparam,
+			   अचिन्हित पूर्णांक num_params)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mod_sysfs_fini(struct module *mod)
-{
-}
+अटल व्योम mod_sysfs_fini(काष्ठा module *mod)
+अणु
+पूर्ण
 
-static void module_remove_modinfo_attrs(struct module *mod, int end)
-{
-}
+अटल व्योम module_हटाओ_modinfo_attrs(काष्ठा module *mod, पूर्णांक end)
+अणु
+पूर्ण
 
-static void del_usage_links(struct module *mod)
-{
-}
+अटल व्योम del_usage_links(काष्ठा module *mod)
+अणु
+पूर्ण
 
-static void init_param_lock(struct module *mod)
-{
-}
-#endif /* CONFIG_SYSFS */
+अटल व्योम init_param_lock(काष्ठा module *mod)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
-static void mod_sysfs_teardown(struct module *mod)
-{
+अटल व्योम mod_sysfs_tearकरोwn(काष्ठा module *mod)
+अणु
 	del_usage_links(mod);
-	module_remove_modinfo_attrs(mod, -1);
-	module_param_sysfs_remove(mod);
+	module_हटाओ_modinfo_attrs(mod, -1);
+	module_param_sysfs_हटाओ(mod);
 	kobject_put(mod->mkobj.drivers_dir);
 	kobject_put(mod->holders_dir);
 	mod_sysfs_fini(mod);
-}
+पूर्ण
 
 /*
  * LKM RO/NX protection: protect module's text/ro-data
- * from modification and any data from execution.
+ * from modअगरication and any data from execution.
  *
  * General layout of module is:
- *          [text] [read-only-data] [ro-after-init] [writable data]
+ *          [text] [पढ़ो-only-data] [ro-after-init] [writable data]
  * text_size -----^                ^               ^               ^
  * ro_size ------------------------|               |               |
  * ro_after_init_size -----------------------------|               |
@@ -1954,60 +1955,60 @@ static void mod_sysfs_teardown(struct module *mod)
  * CONFIG_STRICT_MODULE_RWX block below because they are needed regardless of
  * whether we are strict.
  */
-#ifdef CONFIG_ARCH_HAS_STRICT_MODULE_RWX
-static void frob_text(const struct module_layout *layout,
-		      int (*set_memory)(unsigned long start, int num_pages))
-{
-	BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->text_size & (PAGE_SIZE-1));
-	set_memory((unsigned long)layout->base,
+#अगर_घोषित CONFIG_ARCH_HAS_STRICT_MODULE_RWX
+अटल व्योम frob_text(स्थिर काष्ठा module_layout *layout,
+		      पूर्णांक (*set_memory)(अचिन्हित दीर्घ start, पूर्णांक num_pages))
+अणु
+	BUG_ON((अचिन्हित दीर्घ)layout->base & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->text_size & (PAGE_SIZE-1));
+	set_memory((अचिन्हित दीर्घ)layout->base,
 		   layout->text_size >> PAGE_SHIFT);
-}
+पूर्ण
 
-static void module_enable_x(const struct module *mod)
-{
+अटल व्योम module_enable_x(स्थिर काष्ठा module *mod)
+अणु
 	frob_text(&mod->core_layout, set_memory_x);
 	frob_text(&mod->init_layout, set_memory_x);
-}
-#else /* !CONFIG_ARCH_HAS_STRICT_MODULE_RWX */
-static void module_enable_x(const struct module *mod) { }
-#endif /* CONFIG_ARCH_HAS_STRICT_MODULE_RWX */
+पूर्ण
+#अन्यथा /* !CONFIG_ARCH_HAS_STRICT_MODULE_RWX */
+अटल व्योम module_enable_x(स्थिर काष्ठा module *mod) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_ARCH_HAS_STRICT_MODULE_RWX */
 
-#ifdef CONFIG_STRICT_MODULE_RWX
-static void frob_rodata(const struct module_layout *layout,
-			int (*set_memory)(unsigned long start, int num_pages))
-{
-	BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->text_size & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
-	set_memory((unsigned long)layout->base + layout->text_size,
+#अगर_घोषित CONFIG_STRICT_MODULE_RWX
+अटल व्योम frob_rodata(स्थिर काष्ठा module_layout *layout,
+			पूर्णांक (*set_memory)(अचिन्हित दीर्घ start, पूर्णांक num_pages))
+अणु
+	BUG_ON((अचिन्हित दीर्घ)layout->base & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->text_size & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->ro_size & (PAGE_SIZE-1));
+	set_memory((अचिन्हित दीर्घ)layout->base + layout->text_size,
 		   (layout->ro_size - layout->text_size) >> PAGE_SHIFT);
-}
+पूर्ण
 
-static void frob_ro_after_init(const struct module_layout *layout,
-				int (*set_memory)(unsigned long start, int num_pages))
-{
-	BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->ro_size & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
-	set_memory((unsigned long)layout->base + layout->ro_size,
+अटल व्योम frob_ro_after_init(स्थिर काष्ठा module_layout *layout,
+				पूर्णांक (*set_memory)(अचिन्हित दीर्घ start, पूर्णांक num_pages))
+अणु
+	BUG_ON((अचिन्हित दीर्घ)layout->base & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->ro_size & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->ro_after_init_size & (PAGE_SIZE-1));
+	set_memory((अचिन्हित दीर्घ)layout->base + layout->ro_size,
 		   (layout->ro_after_init_size - layout->ro_size) >> PAGE_SHIFT);
-}
+पूर्ण
 
-static void frob_writable_data(const struct module_layout *layout,
-			       int (*set_memory)(unsigned long start, int num_pages))
-{
-	BUG_ON((unsigned long)layout->base & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->ro_after_init_size & (PAGE_SIZE-1));
-	BUG_ON((unsigned long)layout->size & (PAGE_SIZE-1));
-	set_memory((unsigned long)layout->base + layout->ro_after_init_size,
+अटल व्योम frob_writable_data(स्थिर काष्ठा module_layout *layout,
+			       पूर्णांक (*set_memory)(अचिन्हित दीर्घ start, पूर्णांक num_pages))
+अणु
+	BUG_ON((अचिन्हित दीर्घ)layout->base & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->ro_after_init_size & (PAGE_SIZE-1));
+	BUG_ON((अचिन्हित दीर्घ)layout->size & (PAGE_SIZE-1));
+	set_memory((अचिन्हित दीर्घ)layout->base + layout->ro_after_init_size,
 		   (layout->size - layout->ro_after_init_size) >> PAGE_SHIFT);
-}
+पूर्ण
 
-static void module_enable_ro(const struct module *mod, bool after_init)
-{
-	if (!rodata_enabled)
-		return;
+अटल व्योम module_enable_ro(स्थिर काष्ठा module *mod, bool after_init)
+अणु
+	अगर (!rodata_enabled)
+		वापस;
 
 	set_vm_flush_reset_perms(mod->core_layout.base);
 	set_vm_flush_reset_perms(mod->init_layout.base);
@@ -2017,81 +2018,81 @@ static void module_enable_ro(const struct module *mod, bool after_init)
 	frob_text(&mod->init_layout, set_memory_ro);
 	frob_rodata(&mod->init_layout, set_memory_ro);
 
-	if (after_init)
+	अगर (after_init)
 		frob_ro_after_init(&mod->core_layout, set_memory_ro);
-}
+पूर्ण
 
-static void module_enable_nx(const struct module *mod)
-{
+अटल व्योम module_enable_nx(स्थिर काष्ठा module *mod)
+अणु
 	frob_rodata(&mod->core_layout, set_memory_nx);
 	frob_ro_after_init(&mod->core_layout, set_memory_nx);
 	frob_writable_data(&mod->core_layout, set_memory_nx);
 	frob_rodata(&mod->init_layout, set_memory_nx);
 	frob_writable_data(&mod->init_layout, set_memory_nx);
-}
+पूर्ण
 
-static int module_enforce_rwx_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
-				       char *secstrings, struct module *mod)
-{
-	const unsigned long shf_wx = SHF_WRITE|SHF_EXECINSTR;
-	int i;
+अटल पूर्णांक module_enक्रमce_rwx_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
+				       अक्षर *secstrings, काष्ठा module *mod)
+अणु
+	स्थिर अचिन्हित दीर्घ shf_wx = SHF_WRITE|SHF_EXECINSTR;
+	पूर्णांक i;
 
-	for (i = 0; i < hdr->e_shnum; i++) {
-		if ((sechdrs[i].sh_flags & shf_wx) == shf_wx) {
+	क्रम (i = 0; i < hdr->e_shnum; i++) अणु
+		अगर ((sechdrs[i].sh_flags & shf_wx) == shf_wx) अणु
 			pr_err("%s: section %s (index %d) has invalid WRITE|EXEC flags\n",
 				mod->name, secstrings + sechdrs[i].sh_name, i);
-			return -ENOEXEC;
-		}
-	}
+			वापस -ENOEXEC;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* !CONFIG_STRICT_MODULE_RWX */
-static void module_enable_nx(const struct module *mod) { }
-static void module_enable_ro(const struct module *mod, bool after_init) {}
-static int module_enforce_rwx_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
-				       char *secstrings, struct module *mod)
-{
-	return 0;
-}
-#endif /*  CONFIG_STRICT_MODULE_RWX */
+#अन्यथा /* !CONFIG_STRICT_MODULE_RWX */
+अटल व्योम module_enable_nx(स्थिर काष्ठा module *mod) अणु पूर्ण
+अटल व्योम module_enable_ro(स्थिर काष्ठा module *mod, bool after_init) अणुपूर्ण
+अटल पूर्णांक module_enक्रमce_rwx_sections(Elf_Ehdr *hdr, Elf_Shdr *sechdrs,
+				       अक्षर *secstrings, काष्ठा module *mod)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /*  CONFIG_STRICT_MODULE_RWX */
 
-#ifdef CONFIG_LIVEPATCH
+#अगर_घोषित CONFIG_LIVEPATCH
 /*
- * Persist Elf information about a module. Copy the Elf header,
+ * Persist Elf inक्रमmation about a module. Copy the Elf header,
  * section header table, section string table, and symtab section
  * index from info to mod->klp_info.
  */
-static int copy_module_elf(struct module *mod, struct load_info *info)
-{
-	unsigned int size, symndx;
-	int ret;
+अटल पूर्णांक copy_module_elf(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक size, symndx;
+	पूर्णांक ret;
 
-	size = sizeof(*mod->klp_info);
-	mod->klp_info = kmalloc(size, GFP_KERNEL);
-	if (mod->klp_info == NULL)
-		return -ENOMEM;
+	size = माप(*mod->klp_info);
+	mod->klp_info = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (mod->klp_info == शून्य)
+		वापस -ENOMEM;
 
 	/* Elf header */
-	size = sizeof(mod->klp_info->hdr);
-	memcpy(&mod->klp_info->hdr, info->hdr, size);
+	size = माप(mod->klp_info->hdr);
+	स_नकल(&mod->klp_info->hdr, info->hdr, size);
 
 	/* Elf section header table */
-	size = sizeof(*info->sechdrs) * info->hdr->e_shnum;
+	size = माप(*info->sechdrs) * info->hdr->e_shnum;
 	mod->klp_info->sechdrs = kmemdup(info->sechdrs, size, GFP_KERNEL);
-	if (mod->klp_info->sechdrs == NULL) {
+	अगर (mod->klp_info->sechdrs == शून्य) अणु
 		ret = -ENOMEM;
-		goto free_info;
-	}
+		जाओ मुक्त_info;
+	पूर्ण
 
 	/* Elf section name string table */
 	size = info->sechdrs[info->hdr->e_shstrndx].sh_size;
 	mod->klp_info->secstrings = kmemdup(info->secstrings, size, GFP_KERNEL);
-	if (mod->klp_info->secstrings == NULL) {
+	अगर (mod->klp_info->secstrings == शून्य) अणु
 		ret = -ENOMEM;
-		goto free_sechdrs;
-	}
+		जाओ मुक्त_sechdrs;
+	पूर्ण
 
 	/* Elf symbol section index */
 	symndx = info->index.sym;
@@ -2099,203 +2100,203 @@ static int copy_module_elf(struct module *mod, struct load_info *info)
 
 	/*
 	 * For livepatch modules, core_kallsyms.symtab is a complete
-	 * copy of the original symbol table. Adjust sh_addr to point
+	 * copy of the original symbol table. Adjust sh_addr to poपूर्णांक
 	 * to core_kallsyms.symtab since the copy of the symtab in module
-	 * init memory is freed at the end of do_init_module().
+	 * init memory is मुक्तd at the end of करो_init_module().
 	 */
 	mod->klp_info->sechdrs[symndx].sh_addr = \
-		(unsigned long) mod->core_kallsyms.symtab;
+		(अचिन्हित दीर्घ) mod->core_kallsyms.symtab;
 
-	return 0;
+	वापस 0;
 
-free_sechdrs:
-	kfree(mod->klp_info->sechdrs);
-free_info:
-	kfree(mod->klp_info);
-	return ret;
-}
+मुक्त_sechdrs:
+	kमुक्त(mod->klp_info->sechdrs);
+मुक्त_info:
+	kमुक्त(mod->klp_info);
+	वापस ret;
+पूर्ण
 
-static void free_module_elf(struct module *mod)
-{
-	kfree(mod->klp_info->sechdrs);
-	kfree(mod->klp_info->secstrings);
-	kfree(mod->klp_info);
-}
-#else /* !CONFIG_LIVEPATCH */
-static int copy_module_elf(struct module *mod, struct load_info *info)
-{
-	return 0;
-}
+अटल व्योम मुक्त_module_elf(काष्ठा module *mod)
+अणु
+	kमुक्त(mod->klp_info->sechdrs);
+	kमुक्त(mod->klp_info->secstrings);
+	kमुक्त(mod->klp_info);
+पूर्ण
+#अन्यथा /* !CONFIG_LIVEPATCH */
+अटल पूर्णांक copy_module_elf(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	वापस 0;
+पूर्ण
 
-static void free_module_elf(struct module *mod)
-{
-}
-#endif /* CONFIG_LIVEPATCH */
+अटल व्योम मुक्त_module_elf(काष्ठा module *mod)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_LIVEPATCH */
 
-void __weak module_memfree(void *module_region)
-{
+व्योम __weak module_memमुक्त(व्योम *module_region)
+अणु
 	/*
-	 * This memory may be RO, and freeing RO memory in an interrupt is not
-	 * supported by vmalloc.
+	 * This memory may be RO, and मुक्तing RO memory in an पूर्णांकerrupt is not
+	 * supported by vदो_स्मृति.
 	 */
-	WARN_ON(in_interrupt());
-	vfree(module_region);
-}
+	WARN_ON(in_पूर्णांकerrupt());
+	vमुक्त(module_region);
+पूर्ण
 
-void __weak module_arch_cleanup(struct module *mod)
-{
-}
+व्योम __weak module_arch_cleanup(काष्ठा module *mod)
+अणु
+पूर्ण
 
-void __weak module_arch_freeing_init(struct module *mod)
-{
-}
+व्योम __weak module_arch_मुक्तing_init(काष्ठा module *mod)
+अणु
+पूर्ण
 
-static void cfi_cleanup(struct module *mod);
+अटल व्योम cfi_cleanup(काष्ठा module *mod);
 
-/* Free a module, remove from lists, etc. */
-static void free_module(struct module *mod)
-{
-	trace_module_free(mod);
+/* Free a module, हटाओ from lists, etc. */
+अटल व्योम मुक्त_module(काष्ठा module *mod)
+अणु
+	trace_module_मुक्त(mod);
 
-	mod_sysfs_teardown(mod);
+	mod_sysfs_tearकरोwn(mod);
 
 	/*
 	 * We leave it in list to prevent duplicate loads, but make sure
-	 * that noone uses it while it's being deconstructed.
+	 * that noone uses it जबतक it's being deस्थिरructed.
 	 */
 	mutex_lock(&module_mutex);
 	mod->state = MODULE_STATE_UNFORMED;
 	mutex_unlock(&module_mutex);
 
 	/* Remove dynamic debug info */
-	ddebug_remove_module(mod->name);
+	ddebug_हटाओ_module(mod->name);
 
-	/* Arch-specific cleanup. */
+	/* Arch-specअगरic cleanup. */
 	module_arch_cleanup(mod);
 
 	/* Module unload stuff */
-	module_unload_free(mod);
+	module_unload_मुक्त(mod);
 
 	/* Free any allocated parameters. */
 	destroy_params(mod->kp, mod->num_kp);
 
-	if (is_livepatch_module(mod))
-		free_module_elf(mod);
+	अगर (is_livepatch_module(mod))
+		मुक्त_module_elf(mod);
 
 	/* Now we can delete it from the lists */
 	mutex_lock(&module_mutex);
 	/* Unlink carefully: kallsyms could be walking list. */
 	list_del_rcu(&mod->list);
-	mod_tree_remove(mod);
+	mod_tree_हटाओ(mod);
 	/* Remove this module from bug list, this uses list_del_rcu */
 	module_bug_cleanup(mod);
-	/* Wait for RCU-sched synchronizing before releasing mod->list and buglist. */
+	/* Wait क्रम RCU-sched synchronizing beक्रमe releasing mod->list and buglist. */
 	synchronize_rcu();
 	mutex_unlock(&module_mutex);
 
-	/* Clean up CFI for the module. */
+	/* Clean up CFI क्रम the module. */
 	cfi_cleanup(mod);
 
 	/* This may be empty, but that's OK */
-	module_arch_freeing_init(mod);
-	module_memfree(mod->init_layout.base);
-	kfree(mod->args);
-	percpu_modfree(mod);
+	module_arch_मुक्तing_init(mod);
+	module_memमुक्त(mod->init_layout.base);
+	kमुक्त(mod->args);
+	percpu_modमुक्त(mod);
 
 	/* Free lock-classes; relies on the preceding sync_rcu(). */
-	lockdep_free_key_range(mod->core_layout.base, mod->core_layout.size);
+	lockdep_मुक्त_key_range(mod->core_layout.base, mod->core_layout.size);
 
-	/* Finally, free the core (containing the module structure) */
-	module_memfree(mod->core_layout.base);
-}
+	/* Finally, मुक्त the core (containing the module काष्ठाure) */
+	module_memमुक्त(mod->core_layout.base);
+पूर्ण
 
-void *__symbol_get(const char *symbol)
-{
-	struct find_symbol_arg fsa = {
+व्योम *__symbol_get(स्थिर अक्षर *symbol)
+अणु
+	काष्ठा find_symbol_arg fsa = अणु
 		.name	= symbol,
 		.gplok	= true,
 		.warn	= true,
-	};
+	पूर्ण;
 
 	preempt_disable();
-	if (!find_symbol(&fsa) || strong_try_module_get(fsa.owner)) {
+	अगर (!find_symbol(&fsa) || strong_try_module_get(fsa.owner)) अणु
 		preempt_enable();
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	preempt_enable();
-	return (void *)kernel_symbol_value(fsa.sym);
-}
+	वापस (व्योम *)kernel_symbol_value(fsa.sym);
+पूर्ण
 EXPORT_SYMBOL_GPL(__symbol_get);
 
 /*
- * Ensure that an exported symbol [global namespace] does not already exist
+ * Ensure that an exported symbol [global namespace] करोes not alपढ़ोy exist
  * in the kernel or in some other module's exported symbol table.
  *
  * You must hold the module_mutex.
  */
-static int verify_exported_symbols(struct module *mod)
-{
-	unsigned int i;
-	const struct kernel_symbol *s;
-	struct {
-		const struct kernel_symbol *sym;
-		unsigned int num;
-	} arr[] = {
-		{ mod->syms, mod->num_syms },
-		{ mod->gpl_syms, mod->num_gpl_syms },
-	};
+अटल पूर्णांक verअगरy_exported_symbols(काष्ठा module *mod)
+अणु
+	अचिन्हित पूर्णांक i;
+	स्थिर काष्ठा kernel_symbol *s;
+	काष्ठा अणु
+		स्थिर काष्ठा kernel_symbol *sym;
+		अचिन्हित पूर्णांक num;
+	पूर्ण arr[] = अणु
+		अणु mod->syms, mod->num_syms पूर्ण,
+		अणु mod->gpl_syms, mod->num_gpl_syms पूर्ण,
+	पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(arr); i++) {
-		for (s = arr[i].sym; s < arr[i].sym + arr[i].num; s++) {
-			struct find_symbol_arg fsa = {
+	क्रम (i = 0; i < ARRAY_SIZE(arr); i++) अणु
+		क्रम (s = arr[i].sym; s < arr[i].sym + arr[i].num; s++) अणु
+			काष्ठा find_symbol_arg fsa = अणु
 				.name	= kernel_symbol_name(s),
 				.gplok	= true,
-			};
-			if (find_symbol(&fsa)) {
+			पूर्ण;
+			अगर (find_symbol(&fsa)) अणु
 				pr_err("%s: exports duplicate symbol %s"
 				       " (owned by %s)\n",
 				       mod->name, kernel_symbol_name(s),
 				       module_name(fsa.owner));
-				return -ENOEXEC;
-			}
-		}
-	}
-	return 0;
-}
+				वापस -ENOEXEC;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool ignore_undef_symbol(Elf_Half emachine, const char *name)
-{
+अटल bool ignore_undef_symbol(Elf_Half emachine, स्थिर अक्षर *name)
+अणु
 	/*
 	 * On x86, PIC code and Clang non-PIC code may have call foo@PLT. GNU as
-	 * before 2.37 produces an unreferenced _GLOBAL_OFFSET_TABLE_ on x86-64.
+	 * beक्रमe 2.37 produces an unreferenced _GLOBAL_OFFSET_TABLE_ on x86-64.
 	 * i386 has a similar problem but may not deserve a fix.
 	 *
 	 * If we ever have to ignore many symbols, consider refactoring the code to
-	 * only warn if referenced by a relocation.
+	 * only warn अगर referenced by a relocation.
 	 */
-	if (emachine == EM_386 || emachine == EM_X86_64)
-		return !strcmp(name, "_GLOBAL_OFFSET_TABLE_");
-	return false;
-}
+	अगर (emachine == EM_386 || emachine == EM_X86_64)
+		वापस !म_भेद(name, "_GLOBAL_OFFSET_TABLE_");
+	वापस false;
+पूर्ण
 
-/* Change all symbols so that st_value encodes the pointer directly. */
-static int simplify_symbols(struct module *mod, const struct load_info *info)
-{
+/* Change all symbols so that st_value encodes the poपूर्णांकer directly. */
+अटल पूर्णांक simplअगरy_symbols(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
-	Elf_Sym *sym = (void *)symsec->sh_addr;
-	unsigned long secbase;
-	unsigned int i;
-	int ret = 0;
-	const struct kernel_symbol *ksym;
+	Elf_Sym *sym = (व्योम *)symsec->sh_addr;
+	अचिन्हित दीर्घ secbase;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
+	स्थिर काष्ठा kernel_symbol *ksym;
 
-	for (i = 1; i < symsec->sh_size / sizeof(Elf_Sym); i++) {
-		const char *name = info->strtab + sym[i].st_name;
+	क्रम (i = 1; i < symsec->sh_size / माप(Elf_Sym); i++) अणु
+		स्थिर अक्षर *name = info->strtab + sym[i].st_name;
 
-		switch (sym[i].st_shndx) {
-		case SHN_COMMON:
+		चयन (sym[i].st_shndx) अणु
+		हाल SHN_COMMON:
 			/* Ignore common symbols */
-			if (!strncmp(name, "__gnu_lto", 9))
-				break;
+			अगर (!म_भेदन(name, "__gnu_lto", 9))
+				अवरोध;
 
 			/*
 			 * We compiled with -fno-common.  These are not
@@ -2305,400 +2306,400 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
 			pr_warn("%s: please compile with -fno-common\n",
 			       mod->name);
 			ret = -ENOEXEC;
-			break;
+			अवरोध;
 
-		case SHN_ABS:
-			/* Don't need to do anything */
+		हाल SHN_ABS:
+			/* Don't need to करो anything */
 			pr_debug("Absolute symbol: 0x%08lx\n",
-			       (long)sym[i].st_value);
-			break;
+			       (दीर्घ)sym[i].st_value);
+			अवरोध;
 
-		case SHN_LIVEPATCH:
+		हाल SHN_LIVEPATCH:
 			/* Livepatch symbols are resolved by livepatch */
-			break;
+			अवरोध;
 
-		case SHN_UNDEF:
-			ksym = resolve_symbol_wait(mod, info, name);
-			/* Ok if resolved.  */
-			if (ksym && !IS_ERR(ksym)) {
+		हाल SHN_UNDEF:
+			ksym = resolve_symbol_रुको(mod, info, name);
+			/* Ok अगर resolved.  */
+			अगर (ksym && !IS_ERR(ksym)) अणु
 				sym[i].st_value = kernel_symbol_value(ksym);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			/* Ok if weak or ignored.  */
-			if (!ksym &&
+			/* Ok अगर weak or ignored.  */
+			अगर (!ksym &&
 			    (ELF_ST_BIND(sym[i].st_info) == STB_WEAK ||
 			     ignore_undef_symbol(info->hdr->e_machine, name)))
-				break;
+				अवरोध;
 
 			ret = PTR_ERR(ksym) ?: -ENOENT;
 			pr_warn("%s: Unknown symbol %s (err %d)\n",
 				mod->name, name, ret);
-			break;
+			अवरोध;
 
-		default:
-			/* Divert to percpu allocation if a percpu var. */
-			if (sym[i].st_shndx == info->index.pcpu)
-				secbase = (unsigned long)mod_percpu(mod);
-			else
+		शेष:
+			/* Divert to percpu allocation अगर a percpu var. */
+			अगर (sym[i].st_shndx == info->index.pcpu)
+				secbase = (अचिन्हित दीर्घ)mod_percpu(mod);
+			अन्यथा
 				secbase = info->sechdrs[sym[i].st_shndx].sh_addr;
 			sym[i].st_value += secbase;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int apply_relocations(struct module *mod, const struct load_info *info)
-{
-	unsigned int i;
-	int err = 0;
+अटल पूर्णांक apply_relocations(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err = 0;
 
-	/* Now do relocations. */
-	for (i = 1; i < info->hdr->e_shnum; i++) {
-		unsigned int infosec = info->sechdrs[i].sh_info;
+	/* Now करो relocations. */
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
+		अचिन्हित पूर्णांक infosec = info->sechdrs[i].sh_info;
 
 		/* Not a valid relocation section? */
-		if (infosec >= info->hdr->e_shnum)
-			continue;
+		अगर (infosec >= info->hdr->e_shnum)
+			जारी;
 
 		/* Don't bother with non-allocated sections */
-		if (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
-			continue;
+		अगर (!(info->sechdrs[infosec].sh_flags & SHF_ALLOC))
+			जारी;
 
-		if (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
+		अगर (info->sechdrs[i].sh_flags & SHF_RELA_LIVEPATCH)
 			err = klp_apply_section_relocs(mod, info->sechdrs,
 						       info->secstrings,
 						       info->strtab,
 						       info->index.sym, i,
-						       NULL);
-		else if (info->sechdrs[i].sh_type == SHT_REL)
+						       शून्य);
+		अन्यथा अगर (info->sechdrs[i].sh_type == SHT_REL)
 			err = apply_relocate(info->sechdrs, info->strtab,
 					     info->index.sym, i, mod);
-		else if (info->sechdrs[i].sh_type == SHT_RELA)
+		अन्यथा अगर (info->sechdrs[i].sh_type == SHT_RELA)
 			err = apply_relocate_add(info->sechdrs, info->strtab,
 						 info->index.sym, i, mod);
-		if (err < 0)
-			break;
-	}
-	return err;
-}
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-/* Additional bytes needed by arch in front of individual sections */
-unsigned int __weak arch_mod_section_prepend(struct module *mod,
-					     unsigned int section)
-{
-	/* default implementation just returns zero */
-	return 0;
-}
+/* Additional bytes needed by arch in front of inभागidual sections */
+अचिन्हित पूर्णांक __weak arch_mod_section_prepend(काष्ठा module *mod,
+					     अचिन्हित पूर्णांक section)
+अणु
+	/* शेष implementation just वापसs zero */
+	वापस 0;
+पूर्ण
 
-/* Update size with this section: return offset. */
-static long get_offset(struct module *mod, unsigned int *size,
-		       Elf_Shdr *sechdr, unsigned int section)
-{
-	long ret;
+/* Update size with this section: वापस offset. */
+अटल दीर्घ get_offset(काष्ठा module *mod, अचिन्हित पूर्णांक *size,
+		       Elf_Shdr *sechdr, अचिन्हित पूर्णांक section)
+अणु
+	दीर्घ ret;
 
 	*size += arch_mod_section_prepend(mod, section);
 	ret = ALIGN(*size, sechdr->sh_addralign ?: 1);
 	*size = ret + sechdr->sh_size;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool module_init_layout_section(const char *sname)
-{
-#ifndef CONFIG_MODULE_UNLOAD
-	if (module_exit_section(sname))
-		return true;
-#endif
-	return module_init_section(sname);
-}
+अटल bool module_init_layout_section(स्थिर अक्षर *sname)
+अणु
+#अगर_अघोषित CONFIG_MODULE_UNLOAD
+	अगर (module_निकास_section(sname))
+		वापस true;
+#पूर्ण_अगर
+	वापस module_init_section(sname);
+पूर्ण
 
 /*
  * Lay out the SHF_ALLOC sections in a way not dissimilar to how ld
- * might -- code, read-only data, read-write data, small data.  Tally
- * sizes, and place the offsets into sh_entsize fields: high bit means it
- * belongs in init.
+ * might -- code, पढ़ो-only data, पढ़ो-ग_लिखो data, small data.  Tally
+ * sizes, and place the offsets पूर्णांकo sh_entsize fields: high bit means it
+ * beदीर्घs in init.
  */
-static void layout_sections(struct module *mod, struct load_info *info)
-{
-	static unsigned long const masks[][2] = {
+अटल व्योम layout_sections(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	अटल अचिन्हित दीर्घ स्थिर masks[][2] = अणु
 		/*
 		 * NOTE: all executable code must be the first section
-		 * in this array; otherwise modify the text_size
+		 * in this array; otherwise modअगरy the text_size
 		 * finder in the two loops below
 		 */
-		{ SHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALL },
-		{ SHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALL },
-		{ SHF_RO_AFTER_INIT | SHF_ALLOC, ARCH_SHF_SMALL },
-		{ SHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALL },
-		{ ARCH_SHF_SMALL | SHF_ALLOC, 0 }
-	};
-	unsigned int m, i;
+		अणु SHF_EXECINSTR | SHF_ALLOC, ARCH_SHF_SMALL पूर्ण,
+		अणु SHF_ALLOC, SHF_WRITE | ARCH_SHF_SMALL पूर्ण,
+		अणु SHF_RO_AFTER_INIT | SHF_ALLOC, ARCH_SHF_SMALL पूर्ण,
+		अणु SHF_WRITE | SHF_ALLOC, ARCH_SHF_SMALL पूर्ण,
+		अणु ARCH_SHF_SMALL | SHF_ALLOC, 0 पूर्ण
+	पूर्ण;
+	अचिन्हित पूर्णांक m, i;
 
-	for (i = 0; i < info->hdr->e_shnum; i++)
+	क्रम (i = 0; i < info->hdr->e_shnum; i++)
 		info->sechdrs[i].sh_entsize = ~0UL;
 
 	pr_debug("Core section allocation order:\n");
-	for (m = 0; m < ARRAY_SIZE(masks); ++m) {
-		for (i = 0; i < info->hdr->e_shnum; ++i) {
+	क्रम (m = 0; m < ARRAY_SIZE(masks); ++m) अणु
+		क्रम (i = 0; i < info->hdr->e_shnum; ++i) अणु
 			Elf_Shdr *s = &info->sechdrs[i];
-			const char *sname = info->secstrings + s->sh_name;
+			स्थिर अक्षर *sname = info->secstrings + s->sh_name;
 
-			if ((s->sh_flags & masks[m][0]) != masks[m][0]
+			अगर ((s->sh_flags & masks[m][0]) != masks[m][0]
 			    || (s->sh_flags & masks[m][1])
 			    || s->sh_entsize != ~0UL
 			    || module_init_layout_section(sname))
-				continue;
+				जारी;
 			s->sh_entsize = get_offset(mod, &mod->core_layout.size, s, i);
 			pr_debug("\t%s\n", sname);
-		}
-		switch (m) {
-		case 0: /* executable */
+		पूर्ण
+		चयन (m) अणु
+		हाल 0: /* executable */
 			mod->core_layout.size = debug_align(mod->core_layout.size);
 			mod->core_layout.text_size = mod->core_layout.size;
-			break;
-		case 1: /* RO: text and ro-data */
+			अवरोध;
+		हाल 1: /* RO: text and ro-data */
 			mod->core_layout.size = debug_align(mod->core_layout.size);
 			mod->core_layout.ro_size = mod->core_layout.size;
-			break;
-		case 2: /* RO after init */
+			अवरोध;
+		हाल 2: /* RO after init */
 			mod->core_layout.size = debug_align(mod->core_layout.size);
 			mod->core_layout.ro_after_init_size = mod->core_layout.size;
-			break;
-		case 4: /* whole core */
+			अवरोध;
+		हाल 4: /* whole core */
 			mod->core_layout.size = debug_align(mod->core_layout.size);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	pr_debug("Init section allocation order:\n");
-	for (m = 0; m < ARRAY_SIZE(masks); ++m) {
-		for (i = 0; i < info->hdr->e_shnum; ++i) {
+	क्रम (m = 0; m < ARRAY_SIZE(masks); ++m) अणु
+		क्रम (i = 0; i < info->hdr->e_shnum; ++i) अणु
 			Elf_Shdr *s = &info->sechdrs[i];
-			const char *sname = info->secstrings + s->sh_name;
+			स्थिर अक्षर *sname = info->secstrings + s->sh_name;
 
-			if ((s->sh_flags & masks[m][0]) != masks[m][0]
+			अगर ((s->sh_flags & masks[m][0]) != masks[m][0]
 			    || (s->sh_flags & masks[m][1])
 			    || s->sh_entsize != ~0UL
 			    || !module_init_layout_section(sname))
-				continue;
+				जारी;
 			s->sh_entsize = (get_offset(mod, &mod->init_layout.size, s, i)
 					 | INIT_OFFSET_MASK);
 			pr_debug("\t%s\n", sname);
-		}
-		switch (m) {
-		case 0: /* executable */
+		पूर्ण
+		चयन (m) अणु
+		हाल 0: /* executable */
 			mod->init_layout.size = debug_align(mod->init_layout.size);
 			mod->init_layout.text_size = mod->init_layout.size;
-			break;
-		case 1: /* RO: text and ro-data */
+			अवरोध;
+		हाल 1: /* RO: text and ro-data */
 			mod->init_layout.size = debug_align(mod->init_layout.size);
 			mod->init_layout.ro_size = mod->init_layout.size;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			/*
-			 * RO after init doesn't apply to init_layout (only
+			 * RO after init करोesn't apply to init_layout (only
 			 * core_layout), so it just takes the value of ro_size.
 			 */
 			mod->init_layout.ro_after_init_size = mod->init_layout.ro_size;
-			break;
-		case 4: /* whole init */
+			अवरोध;
+		हाल 4: /* whole init */
 			mod->init_layout.size = debug_align(mod->init_layout.size);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void set_license(struct module *mod, const char *license)
-{
-	if (!license)
+अटल व्योम set_license(काष्ठा module *mod, स्थिर अक्षर *license)
+अणु
+	अगर (!license)
 		license = "unspecified";
 
-	if (!license_is_gpl_compatible(license)) {
-		if (!test_taint(TAINT_PROPRIETARY_MODULE))
+	अगर (!license_is_gpl_compatible(license)) अणु
+		अगर (!test_taपूर्णांक(TAINT_PROPRIETARY_MODULE))
 			pr_warn("%s: module license '%s' taints kernel.\n",
 				mod->name, license);
-		add_taint_module(mod, TAINT_PROPRIETARY_MODULE,
+		add_taपूर्णांक_module(mod, TAINT_PROPRIETARY_MODULE,
 				 LOCKDEP_NOW_UNRELIABLE);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Parse tag=value strings from .modinfo section */
-static char *next_string(char *string, unsigned long *secsize)
-{
-	/* Skip non-zero chars */
-	while (string[0]) {
+अटल अक्षर *next_string(अक्षर *string, अचिन्हित दीर्घ *secsize)
+अणु
+	/* Skip non-zero अक्षरs */
+	जबतक (string[0]) अणु
 		string++;
-		if ((*secsize)-- <= 1)
-			return NULL;
-	}
+		अगर ((*secsize)-- <= 1)
+			वापस शून्य;
+	पूर्ण
 
 	/* Skip any zero padding. */
-	while (!string[0]) {
+	जबतक (!string[0]) अणु
 		string++;
-		if ((*secsize)-- <= 1)
-			return NULL;
-	}
-	return string;
-}
+		अगर ((*secsize)-- <= 1)
+			वापस शून्य;
+	पूर्ण
+	वापस string;
+पूर्ण
 
-static char *get_next_modinfo(const struct load_info *info, const char *tag,
-			      char *prev)
-{
-	char *p;
-	unsigned int taglen = strlen(tag);
+अटल अक्षर *get_next_modinfo(स्थिर काष्ठा load_info *info, स्थिर अक्षर *tag,
+			      अक्षर *prev)
+अणु
+	अक्षर *p;
+	अचिन्हित पूर्णांक taglen = म_माप(tag);
 	Elf_Shdr *infosec = &info->sechdrs[info->index.info];
-	unsigned long size = infosec->sh_size;
+	अचिन्हित दीर्घ size = infosec->sh_size;
 
 	/*
-	 * get_modinfo() calls made before rewrite_section_headers()
+	 * get_modinfo() calls made beक्रमe reग_लिखो_section_headers()
 	 * must use sh_offset, as sh_addr isn't set!
 	 */
-	char *modinfo = (char *)info->hdr + infosec->sh_offset;
+	अक्षर *modinfo = (अक्षर *)info->hdr + infosec->sh_offset;
 
-	if (prev) {
+	अगर (prev) अणु
 		size -= prev - modinfo;
 		modinfo = next_string(prev, &size);
-	}
+	पूर्ण
 
-	for (p = modinfo; p; p = next_string(p, &size)) {
-		if (strncmp(p, tag, taglen) == 0 && p[taglen] == '=')
-			return p + taglen + 1;
-	}
-	return NULL;
-}
+	क्रम (p = modinfo; p; p = next_string(p, &size)) अणु
+		अगर (म_भेदन(p, tag, taglen) == 0 && p[taglen] == '=')
+			वापस p + taglen + 1;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static char *get_modinfo(const struct load_info *info, const char *tag)
-{
-	return get_next_modinfo(info, tag, NULL);
-}
+अटल अक्षर *get_modinfo(स्थिर काष्ठा load_info *info, स्थिर अक्षर *tag)
+अणु
+	वापस get_next_modinfo(info, tag, शून्य);
+पूर्ण
 
-static void setup_modinfo(struct module *mod, struct load_info *info)
-{
-	struct module_attribute *attr;
-	int i;
+अटल व्योम setup_modinfo(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	काष्ठा module_attribute *attr;
+	पूर्णांक i;
 
-	for (i = 0; (attr = modinfo_attrs[i]); i++) {
-		if (attr->setup)
+	क्रम (i = 0; (attr = modinfo_attrs[i]); i++) अणु
+		अगर (attr->setup)
 			attr->setup(mod, get_modinfo(info, attr->attr.name));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void free_modinfo(struct module *mod)
-{
-	struct module_attribute *attr;
-	int i;
+अटल व्योम मुक्त_modinfo(काष्ठा module *mod)
+अणु
+	काष्ठा module_attribute *attr;
+	पूर्णांक i;
 
-	for (i = 0; (attr = modinfo_attrs[i]); i++) {
-		if (attr->free)
-			attr->free(mod);
-	}
-}
+	क्रम (i = 0; (attr = modinfo_attrs[i]); i++) अणु
+		अगर (attr->मुक्त)
+			attr->मुक्त(mod);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_KALLSYMS
+#अगर_घोषित CONFIG_KALLSYMS
 
 /* Lookup exported symbol in given range of kernel_symbols */
-static const struct kernel_symbol *lookup_exported_symbol(const char *name,
-							  const struct kernel_symbol *start,
-							  const struct kernel_symbol *stop)
-{
-	return bsearch(name, start, stop - start,
-			sizeof(struct kernel_symbol), cmp_name);
-}
+अटल स्थिर काष्ठा kernel_symbol *lookup_exported_symbol(स्थिर अक्षर *name,
+							  स्थिर काष्ठा kernel_symbol *start,
+							  स्थिर काष्ठा kernel_symbol *stop)
+अणु
+	वापस द्वा_खोज(name, start, stop - start,
+			माप(काष्ठा kernel_symbol), cmp_name);
+पूर्ण
 
-static int is_exported(const char *name, unsigned long value,
-		       const struct module *mod)
-{
-	const struct kernel_symbol *ks;
-	if (!mod)
+अटल पूर्णांक is_exported(स्थिर अक्षर *name, अचिन्हित दीर्घ value,
+		       स्थिर काष्ठा module *mod)
+अणु
+	स्थिर काष्ठा kernel_symbol *ks;
+	अगर (!mod)
 		ks = lookup_exported_symbol(name, __start___ksymtab, __stop___ksymtab);
-	else
+	अन्यथा
 		ks = lookup_exported_symbol(name, mod->syms, mod->syms + mod->num_syms);
 
-	return ks != NULL && kernel_symbol_value(ks) == value;
-}
+	वापस ks != शून्य && kernel_symbol_value(ks) == value;
+पूर्ण
 
 /* As per nm */
-static char elf_type(const Elf_Sym *sym, const struct load_info *info)
-{
-	const Elf_Shdr *sechdrs = info->sechdrs;
+अटल अक्षर elf_type(स्थिर Elf_Sym *sym, स्थिर काष्ठा load_info *info)
+अणु
+	स्थिर Elf_Shdr *sechdrs = info->sechdrs;
 
-	if (ELF_ST_BIND(sym->st_info) == STB_WEAK) {
-		if (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
-			return 'v';
-		else
-			return 'w';
-	}
-	if (sym->st_shndx == SHN_UNDEF)
-		return 'U';
-	if (sym->st_shndx == SHN_ABS || sym->st_shndx == info->index.pcpu)
-		return 'a';
-	if (sym->st_shndx >= SHN_LORESERVE)
-		return '?';
-	if (sechdrs[sym->st_shndx].sh_flags & SHF_EXECINSTR)
-		return 't';
-	if (sechdrs[sym->st_shndx].sh_flags & SHF_ALLOC
-	    && sechdrs[sym->st_shndx].sh_type != SHT_NOBITS) {
-		if (!(sechdrs[sym->st_shndx].sh_flags & SHF_WRITE))
-			return 'r';
-		else if (sechdrs[sym->st_shndx].sh_flags & ARCH_SHF_SMALL)
-			return 'g';
-		else
-			return 'd';
-	}
-	if (sechdrs[sym->st_shndx].sh_type == SHT_NOBITS) {
-		if (sechdrs[sym->st_shndx].sh_flags & ARCH_SHF_SMALL)
-			return 's';
-		else
-			return 'b';
-	}
-	if (strstarts(info->secstrings + sechdrs[sym->st_shndx].sh_name,
-		      ".debug")) {
-		return 'n';
-	}
-	return '?';
-}
+	अगर (ELF_ST_BIND(sym->st_info) == STB_WEAK) अणु
+		अगर (ELF_ST_TYPE(sym->st_info) == STT_OBJECT)
+			वापस 'v';
+		अन्यथा
+			वापस 'w';
+	पूर्ण
+	अगर (sym->st_shndx == SHN_UNDEF)
+		वापस 'U';
+	अगर (sym->st_shndx == SHN_ABS || sym->st_shndx == info->index.pcpu)
+		वापस 'a';
+	अगर (sym->st_shndx >= SHN_LORESERVE)
+		वापस '?';
+	अगर (sechdrs[sym->st_shndx].sh_flags & SHF_EXECINSTR)
+		वापस 't';
+	अगर (sechdrs[sym->st_shndx].sh_flags & SHF_ALLOC
+	    && sechdrs[sym->st_shndx].sh_type != SHT_NOBITS) अणु
+		अगर (!(sechdrs[sym->st_shndx].sh_flags & SHF_WRITE))
+			वापस 'r';
+		अन्यथा अगर (sechdrs[sym->st_shndx].sh_flags & ARCH_SHF_SMALL)
+			वापस 'g';
+		अन्यथा
+			वापस 'd';
+	पूर्ण
+	अगर (sechdrs[sym->st_shndx].sh_type == SHT_NOBITS) अणु
+		अगर (sechdrs[sym->st_shndx].sh_flags & ARCH_SHF_SMALL)
+			वापस 's';
+		अन्यथा
+			वापस 'b';
+	पूर्ण
+	अगर (strstarts(info->secstrings + sechdrs[sym->st_shndx].sh_name,
+		      ".debug")) अणु
+		वापस 'n';
+	पूर्ण
+	वापस '?';
+पूर्ण
 
-static bool is_core_symbol(const Elf_Sym *src, const Elf_Shdr *sechdrs,
-			unsigned int shnum, unsigned int pcpundx)
-{
-	const Elf_Shdr *sec;
+अटल bool is_core_symbol(स्थिर Elf_Sym *src, स्थिर Elf_Shdr *sechdrs,
+			अचिन्हित पूर्णांक shnum, अचिन्हित पूर्णांक pcpundx)
+अणु
+	स्थिर Elf_Shdr *sec;
 
-	if (src->st_shndx == SHN_UNDEF
+	अगर (src->st_shndx == SHN_UNDEF
 	    || src->st_shndx >= shnum
 	    || !src->st_name)
-		return false;
+		वापस false;
 
-#ifdef CONFIG_KALLSYMS_ALL
-	if (src->st_shndx == pcpundx)
-		return true;
-#endif
+#अगर_घोषित CONFIG_KALLSYMS_ALL
+	अगर (src->st_shndx == pcpundx)
+		वापस true;
+#पूर्ण_अगर
 
 	sec = sechdrs + src->st_shndx;
-	if (!(sec->sh_flags & SHF_ALLOC)
-#ifndef CONFIG_KALLSYMS_ALL
+	अगर (!(sec->sh_flags & SHF_ALLOC)
+#अगर_अघोषित CONFIG_KALLSYMS_ALL
 	    || !(sec->sh_flags & SHF_EXECINSTR)
-#endif
+#पूर्ण_अगर
 	    || (sec->sh_entsize & INIT_OFFSET_MASK))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * We only allocate and copy the strings needed by the parts of symtab
  * we keep.  This is simple, but has the effect of making multiple
  * copies of duplicates.  We could be more sophisticated, see
- * linux-kernel thread starting with
+ * linux-kernel thपढ़ो starting with
  * <73defb5e4bca04a6431392cc341112b1@localhost>.
  */
-static void layout_symtab(struct module *mod, struct load_info *info)
-{
+अटल व्योम layout_symtab(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
 	Elf_Shdr *symsect = info->sechdrs + info->index.sym;
 	Elf_Shdr *strsect = info->sechdrs + info->index.str;
-	const Elf_Sym *src;
-	unsigned int i, nsrc, ndst, strtab_size = 0;
+	स्थिर Elf_Sym *src;
+	अचिन्हित पूर्णांक i, nsrc, ndst, strtab_size = 0;
 
 	/* Put symbol section at end of init part of module. */
 	symsect->sh_flags |= SHF_ALLOC;
@@ -2706,25 +2707,25 @@ static void layout_symtab(struct module *mod, struct load_info *info)
 					 info->index.sym) | INIT_OFFSET_MASK;
 	pr_debug("\t%s\n", info->secstrings + symsect->sh_name);
 
-	src = (void *)info->hdr + symsect->sh_offset;
-	nsrc = symsect->sh_size / sizeof(*src);
+	src = (व्योम *)info->hdr + symsect->sh_offset;
+	nsrc = symsect->sh_size / माप(*src);
 
-	/* Compute total space required for the core symbols' strtab. */
-	for (ndst = i = 0; i < nsrc; i++) {
-		if (i == 0 || is_livepatch_module(mod) ||
+	/* Compute total space required क्रम the core symbols' strtab. */
+	क्रम (ndst = i = 0; i < nsrc; i++) अणु
+		अगर (i == 0 || is_livepatch_module(mod) ||
 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
-				   info->index.pcpu)) {
-			strtab_size += strlen(&info->strtab[src[i].st_name])+1;
+				   info->index.pcpu)) अणु
+			strtab_size += म_माप(&info->strtab[src[i].st_name])+1;
 			ndst++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Append room for core symbols at end of core part. */
+	/* Append room क्रम core symbols at end of core part. */
 	info->symoffs = ALIGN(mod->core_layout.size, symsect->sh_addralign ?: 1);
-	info->stroffs = mod->core_layout.size = info->symoffs + ndst * sizeof(Elf_Sym);
+	info->stroffs = mod->core_layout.size = info->symoffs + ndst * माप(Elf_Sym);
 	mod->core_layout.size += strtab_size;
 	info->core_typeoffs = mod->core_layout.size;
-	mod->core_layout.size += ndst * sizeof(char);
+	mod->core_layout.size += ndst * माप(अक्षर);
 	mod->core_layout.size = debug_align(mod->core_layout.size);
 
 	/* Put string table section at end of init part of module. */
@@ -2735,926 +2736,926 @@ static void layout_symtab(struct module *mod, struct load_info *info)
 
 	/* We'll tack temporary mod_kallsyms on the end. */
 	mod->init_layout.size = ALIGN(mod->init_layout.size,
-				      __alignof__(struct mod_kallsyms));
+				      __alignof__(काष्ठा mod_kallsyms));
 	info->mod_kallsyms_init_off = mod->init_layout.size;
-	mod->init_layout.size += sizeof(struct mod_kallsyms);
+	mod->init_layout.size += माप(काष्ठा mod_kallsyms);
 	info->init_typeoffs = mod->init_layout.size;
-	mod->init_layout.size += nsrc * sizeof(char);
+	mod->init_layout.size += nsrc * माप(अक्षर);
 	mod->init_layout.size = debug_align(mod->init_layout.size);
-}
+पूर्ण
 
 /*
  * We use the full symtab and strtab which layout_symtab arranged to
- * be appended to the init section.  Later we switch to the cut-down
+ * be appended to the init section.  Later we चयन to the cut-करोwn
  * core-only ones.
  */
-static void add_kallsyms(struct module *mod, const struct load_info *info)
-{
-	unsigned int i, ndst;
-	const Elf_Sym *src;
+अटल व्योम add_kallsyms(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक i, ndst;
+	स्थिर Elf_Sym *src;
 	Elf_Sym *dst;
-	char *s;
+	अक्षर *s;
 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
 
-	/* Set up to point into init section. */
+	/* Set up to poपूर्णांक पूर्णांकo init section. */
 	mod->kallsyms = mod->init_layout.base + info->mod_kallsyms_init_off;
 
-	mod->kallsyms->symtab = (void *)symsec->sh_addr;
-	mod->kallsyms->num_symtab = symsec->sh_size / sizeof(Elf_Sym);
-	/* Make sure we get permanent strtab: don't use info->strtab. */
-	mod->kallsyms->strtab = (void *)info->sechdrs[info->index.str].sh_addr;
+	mod->kallsyms->symtab = (व्योम *)symsec->sh_addr;
+	mod->kallsyms->num_symtab = symsec->sh_size / माप(Elf_Sym);
+	/* Make sure we get permanent strtab: करोn't use info->strtab. */
+	mod->kallsyms->strtab = (व्योम *)info->sechdrs[info->index.str].sh_addr;
 	mod->kallsyms->typetab = mod->init_layout.base + info->init_typeoffs;
 
 	/*
-	 * Now populate the cut down core kallsyms for after init
-	 * and set types up while we still have access to sections.
+	 * Now populate the cut करोwn core kallsyms क्रम after init
+	 * and set types up जबतक we still have access to sections.
 	 */
 	mod->core_kallsyms.symtab = dst = mod->core_layout.base + info->symoffs;
 	mod->core_kallsyms.strtab = s = mod->core_layout.base + info->stroffs;
 	mod->core_kallsyms.typetab = mod->core_layout.base + info->core_typeoffs;
 	src = mod->kallsyms->symtab;
-	for (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) {
+	क्रम (ndst = i = 0; i < mod->kallsyms->num_symtab; i++) अणु
 		mod->kallsyms->typetab[i] = elf_type(src + i, info);
-		if (i == 0 || is_livepatch_module(mod) ||
+		अगर (i == 0 || is_livepatch_module(mod) ||
 		    is_core_symbol(src+i, info->sechdrs, info->hdr->e_shnum,
-				   info->index.pcpu)) {
+				   info->index.pcpu)) अणु
 			mod->core_kallsyms.typetab[ndst] =
 			    mod->kallsyms->typetab[i];
 			dst[ndst] = src[i];
 			dst[ndst++].st_name = s - mod->core_kallsyms.strtab;
 			s += strlcpy(s, &mod->kallsyms->strtab[src[i].st_name],
 				     KSYM_NAME_LEN) + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mod->core_kallsyms.num_symtab = ndst;
-}
-#else
-static inline void layout_symtab(struct module *mod, struct load_info *info)
-{
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम layout_symtab(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+पूर्ण
 
-static void add_kallsyms(struct module *mod, const struct load_info *info)
-{
-}
-#endif /* CONFIG_KALLSYMS */
+अटल व्योम add_kallsyms(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_KALLSYMS */
 
-static void dynamic_debug_setup(struct module *mod, struct _ddebug *debug, unsigned int num)
-{
-	if (!debug)
-		return;
+अटल व्योम dynamic_debug_setup(काष्ठा module *mod, काष्ठा _ddebug *debug, अचिन्हित पूर्णांक num)
+अणु
+	अगर (!debug)
+		वापस;
 	ddebug_add_module(debug, num, mod->name);
-}
+पूर्ण
 
-static void dynamic_debug_remove(struct module *mod, struct _ddebug *debug)
-{
-	if (debug)
-		ddebug_remove_module(mod->name);
-}
+अटल व्योम dynamic_debug_हटाओ(काष्ठा module *mod, काष्ठा _ddebug *debug)
+अणु
+	अगर (debug)
+		ddebug_हटाओ_module(mod->name);
+पूर्ण
 
-void * __weak module_alloc(unsigned long size)
-{
-	return __vmalloc_node_range(size, 1, VMALLOC_START, VMALLOC_END,
+व्योम * __weak module_alloc(अचिन्हित दीर्घ size)
+अणु
+	वापस __vदो_स्मृति_node_range(size, 1, VMALLOC_START, VMALLOC_END,
 			GFP_KERNEL, PAGE_KERNEL_EXEC, VM_FLUSH_RESET_PERMS,
-			NUMA_NO_NODE, __builtin_return_address(0));
-}
+			NUMA_NO_NODE, __builtin_वापस_address(0));
+पूर्ण
 
-bool __weak module_init_section(const char *name)
-{
-	return strstarts(name, ".init");
-}
+bool __weak module_init_section(स्थिर अक्षर *name)
+अणु
+	वापस strstarts(name, ".init");
+पूर्ण
 
-bool __weak module_exit_section(const char *name)
-{
-	return strstarts(name, ".exit");
-}
+bool __weak module_निकास_section(स्थिर अक्षर *name)
+अणु
+	वापस strstarts(name, ".exit");
+पूर्ण
 
-#ifdef CONFIG_DEBUG_KMEMLEAK
-static void kmemleak_load_module(const struct module *mod,
-				 const struct load_info *info)
-{
-	unsigned int i;
+#अगर_घोषित CONFIG_DEBUG_KMEMLEAK
+अटल व्योम kmemleak_load_module(स्थिर काष्ठा module *mod,
+				 स्थिर काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* only scan the sections containing data */
-	kmemleak_scan_area(mod, sizeof(struct module), GFP_KERNEL);
+	kmemleak_scan_area(mod, माप(काष्ठा module), GFP_KERNEL);
 
-	for (i = 1; i < info->hdr->e_shnum; i++) {
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
 		/* Scan all writable sections that's not executable */
-		if (!(info->sechdrs[i].sh_flags & SHF_ALLOC) ||
+		अगर (!(info->sechdrs[i].sh_flags & SHF_ALLOC) ||
 		    !(info->sechdrs[i].sh_flags & SHF_WRITE) ||
 		    (info->sechdrs[i].sh_flags & SHF_EXECINSTR))
-			continue;
+			जारी;
 
-		kmemleak_scan_area((void *)info->sechdrs[i].sh_addr,
+		kmemleak_scan_area((व्योम *)info->sechdrs[i].sh_addr,
 				   info->sechdrs[i].sh_size, GFP_KERNEL);
-	}
-}
-#else
-static inline void kmemleak_load_module(const struct module *mod,
-					const struct load_info *info)
-{
-}
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम kmemleak_load_module(स्थिर काष्ठा module *mod,
+					स्थिर काष्ठा load_info *info)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_MODULE_SIG
-static int module_sig_check(struct load_info *info, int flags)
-{
-	int err = -ENODATA;
-	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
-	const char *reason;
-	const void *mod = info->hdr;
+#अगर_घोषित CONFIG_MODULE_SIG
+अटल पूर्णांक module_sig_check(काष्ठा load_info *info, पूर्णांक flags)
+अणु
+	पूर्णांक err = -ENODATA;
+	स्थिर अचिन्हित दीर्घ markerlen = माप(MODULE_SIG_STRING) - 1;
+	स्थिर अक्षर *reason;
+	स्थिर व्योम *mod = info->hdr;
 
 	/*
-	 * Require flags == 0, as a module with version information
-	 * removed is no longer the module that was signed
+	 * Require flags == 0, as a module with version inक्रमmation
+	 * हटाओd is no दीर्घer the module that was चिन्हित
 	 */
-	if (flags == 0 &&
+	अगर (flags == 0 &&
 	    info->len > markerlen &&
-	    memcmp(mod + info->len - markerlen, MODULE_SIG_STRING, markerlen) == 0) {
+	    स_भेद(mod + info->len - markerlen, MODULE_SIG_STRING, markerlen) == 0) अणु
 		/* We truncate the module to discard the signature */
 		info->len -= markerlen;
-		err = mod_verify_sig(mod, info);
-		if (!err) {
+		err = mod_verअगरy_sig(mod, info);
+		अगर (!err) अणु
 			info->sig_ok = true;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * We don't permit modules to be loaded into the trusted kernels
-	 * without a valid signature on them, but if we're not enforcing,
+	 * We करोn't permit modules to be loaded पूर्णांकo the trusted kernels
+	 * without a valid signature on them, but अगर we're not enक्रमcing,
 	 * certain errors are non-fatal.
 	 */
-	switch (err) {
-	case -ENODATA:
+	चयन (err) अणु
+	हाल -ENODATA:
 		reason = "unsigned module";
-		break;
-	case -ENOPKG:
+		अवरोध;
+	हाल -ENOPKG:
 		reason = "module with unsupported crypto";
-		break;
-	case -ENOKEY:
+		अवरोध;
+	हाल -ENOKEY:
 		reason = "module with unavailable key";
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/*
 		 * All other errors are fatal, including lack of memory,
 		 * unparseable signatures, and signature check failures --
-		 * even if signatures aren't required.
+		 * even अगर signatures aren't required.
 		 */
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (is_module_sig_enforced()) {
+	अगर (is_module_sig_enक्रमced()) अणु
 		pr_notice("Loading of %s is rejected\n", reason);
-		return -EKEYREJECTED;
-	}
+		वापस -EKEYREJECTED;
+	पूर्ण
 
-	return security_locked_down(LOCKDOWN_MODULE_SIGNATURE);
-}
-#else /* !CONFIG_MODULE_SIG */
-static int module_sig_check(struct load_info *info, int flags)
-{
-	return 0;
-}
-#endif /* !CONFIG_MODULE_SIG */
+	वापस security_locked_करोwn(LOCKDOWN_MODULE_SIGNATURE);
+पूर्ण
+#अन्यथा /* !CONFIG_MODULE_SIG */
+अटल पूर्णांक module_sig_check(काष्ठा load_info *info, पूर्णांक flags)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_MODULE_SIG */
 
-static int validate_section_offset(struct load_info *info, Elf_Shdr *shdr)
-{
-	unsigned long secend;
+अटल पूर्णांक validate_section_offset(काष्ठा load_info *info, Elf_Shdr *shdr)
+अणु
+	अचिन्हित दीर्घ secend;
 
 	/*
-	 * Check for both overflow and offset/size being
+	 * Check क्रम both overflow and offset/size being
 	 * too large.
 	 */
 	secend = shdr->sh_offset + shdr->sh_size;
-	if (secend < shdr->sh_offset || secend > info->len)
-		return -ENOEXEC;
+	अगर (secend < shdr->sh_offset || secend > info->len)
+		वापस -ENOEXEC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Sanity checks against invalid binaries, wrong arch, weird elf version.
  *
- * Also do basic validity checks against section offsets and sizes, the
- * section name string table, and the indices used for it (sh_name).
+ * Also करो basic validity checks against section offsets and sizes, the
+ * section name string table, and the indices used क्रम it (sh_name).
  */
-static int elf_validity_check(struct load_info *info)
-{
-	unsigned int i;
+अटल पूर्णांक elf_validity_check(काष्ठा load_info *info)
+अणु
+	अचिन्हित पूर्णांक i;
 	Elf_Shdr *shdr, *strhdr;
-	int err;
+	पूर्णांक err;
 
-	if (info->len < sizeof(*(info->hdr)))
-		return -ENOEXEC;
+	अगर (info->len < माप(*(info->hdr)))
+		वापस -ENOEXEC;
 
-	if (memcmp(info->hdr->e_ident, ELFMAG, SELFMAG) != 0
+	अगर (स_भेद(info->hdr->e_ident, ELFMAG, SELFMAG) != 0
 	    || info->hdr->e_type != ET_REL
 	    || !elf_check_arch(info->hdr)
-	    || info->hdr->e_shentsize != sizeof(Elf_Shdr))
-		return -ENOEXEC;
+	    || info->hdr->e_shentsize != माप(Elf_Shdr))
+		वापस -ENOEXEC;
 
 	/*
-	 * e_shnum is 16 bits, and sizeof(Elf_Shdr) is
-	 * known and small. So e_shnum * sizeof(Elf_Shdr)
-	 * will not overflow unsigned long on any platform.
+	 * e_shnum is 16 bits, and माप(Elf_Shdr) is
+	 * known and small. So e_shnum * माप(Elf_Shdr)
+	 * will not overflow अचिन्हित दीर्घ on any platक्रमm.
 	 */
-	if (info->hdr->e_shoff >= info->len
-	    || (info->hdr->e_shnum * sizeof(Elf_Shdr) >
+	अगर (info->hdr->e_shoff >= info->len
+	    || (info->hdr->e_shnum * माप(Elf_Shdr) >
 		info->len - info->hdr->e_shoff))
-		return -ENOEXEC;
+		वापस -ENOEXEC;
 
-	info->sechdrs = (void *)info->hdr + info->hdr->e_shoff;
+	info->sechdrs = (व्योम *)info->hdr + info->hdr->e_shoff;
 
 	/*
-	 * Verify if the section name table index is valid.
+	 * Verअगरy अगर the section name table index is valid.
 	 */
-	if (info->hdr->e_shstrndx == SHN_UNDEF
+	अगर (info->hdr->e_shstrndx == SHN_UNDEF
 	    || info->hdr->e_shstrndx >= info->hdr->e_shnum)
-		return -ENOEXEC;
+		वापस -ENOEXEC;
 
 	strhdr = &info->sechdrs[info->hdr->e_shstrndx];
 	err = validate_section_offset(info, strhdr);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/*
 	 * The section name table must be NUL-terminated, as required
-	 * by the spec. This makes strcmp and pr_* calls that access
+	 * by the spec. This makes म_भेद and pr_* calls that access
 	 * strings in the section safe.
 	 */
-	info->secstrings = (void *)info->hdr + strhdr->sh_offset;
-	if (info->secstrings[strhdr->sh_size - 1] != '\0')
-		return -ENOEXEC;
+	info->secstrings = (व्योम *)info->hdr + strhdr->sh_offset;
+	अगर (info->secstrings[strhdr->sh_size - 1] != '\0')
+		वापस -ENOEXEC;
 
 	/*
 	 * The code assumes that section 0 has a length of zero and
-	 * an addr of zero, so check for it.
+	 * an addr of zero, so check क्रम it.
 	 */
-	if (info->sechdrs[0].sh_type != SHT_NULL
+	अगर (info->sechdrs[0].sh_type != SHT_शून्य
 	    || info->sechdrs[0].sh_size != 0
 	    || info->sechdrs[0].sh_addr != 0)
-		return -ENOEXEC;
+		वापस -ENOEXEC;
 
-	for (i = 1; i < info->hdr->e_shnum; i++) {
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
 		shdr = &info->sechdrs[i];
-		switch (shdr->sh_type) {
-		case SHT_NULL:
-		case SHT_NOBITS:
-			continue;
-		case SHT_SYMTAB:
-			if (shdr->sh_link == SHN_UNDEF
+		चयन (shdr->sh_type) अणु
+		हाल SHT_शून्य:
+		हाल SHT_NOBITS:
+			जारी;
+		हाल SHT_SYMTAB:
+			अगर (shdr->sh_link == SHN_UNDEF
 			    || shdr->sh_link >= info->hdr->e_shnum)
-				return -ENOEXEC;
+				वापस -ENOEXEC;
 			fallthrough;
-		default:
+		शेष:
 			err = validate_section_offset(info, shdr);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				pr_err("Invalid ELF section in module (section %u type %u)\n",
 					i, shdr->sh_type);
-				return err;
-			}
+				वापस err;
+			पूर्ण
 
-			if (shdr->sh_flags & SHF_ALLOC) {
-				if (shdr->sh_name >= strhdr->sh_size) {
+			अगर (shdr->sh_flags & SHF_ALLOC) अणु
+				अगर (shdr->sh_name >= strhdr->sh_size) अणु
 					pr_err("Invalid ELF section name in module (section %u type %u)\n",
 					       i, shdr->sh_type);
-					return -ENOEXEC;
-				}
-			}
-			break;
-		}
-	}
+					वापस -ENOEXEC;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define COPY_CHUNK_SIZE (16*PAGE_SIZE)
+#घोषणा COPY_CHUNK_SIZE (16*PAGE_SIZE)
 
-static int copy_chunked_from_user(void *dst, const void __user *usrc, unsigned long len)
-{
-	do {
-		unsigned long n = min(len, COPY_CHUNK_SIZE);
+अटल पूर्णांक copy_chunked_from_user(व्योम *dst, स्थिर व्योम __user *usrc, अचिन्हित दीर्घ len)
+अणु
+	करो अणु
+		अचिन्हित दीर्घ n = min(len, COPY_CHUNK_SIZE);
 
-		if (copy_from_user(dst, usrc, n) != 0)
-			return -EFAULT;
+		अगर (copy_from_user(dst, usrc, n) != 0)
+			वापस -EFAULT;
 		cond_resched();
 		dst += n;
 		usrc += n;
 		len -= n;
-	} while (len);
-	return 0;
-}
+	पूर्ण जबतक (len);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_LIVEPATCH
-static int check_modinfo_livepatch(struct module *mod, struct load_info *info)
-{
-	if (get_modinfo(info, "livepatch")) {
+#अगर_घोषित CONFIG_LIVEPATCH
+अटल पूर्णांक check_modinfo_livepatch(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	अगर (get_modinfo(info, "livepatch")) अणु
 		mod->klp = true;
-		add_taint_module(mod, TAINT_LIVEPATCH, LOCKDEP_STILL_OK);
+		add_taपूर्णांक_module(mod, TAINT_LIVEPATCH, LOCKDEP_STILL_OK);
 		pr_notice_once("%s: tainting kernel with TAINT_LIVEPATCH\n",
 			       mod->name);
-	}
+	पूर्ण
 
-	return 0;
-}
-#else /* !CONFIG_LIVEPATCH */
-static int check_modinfo_livepatch(struct module *mod, struct load_info *info)
-{
-	if (get_modinfo(info, "livepatch")) {
+	वापस 0;
+पूर्ण
+#अन्यथा /* !CONFIG_LIVEPATCH */
+अटल पूर्णांक check_modinfo_livepatch(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	अगर (get_modinfo(info, "livepatch")) अणु
 		pr_err("%s: module is marked as livepatch module, but livepatch support is disabled",
 		       mod->name);
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_LIVEPATCH */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_LIVEPATCH */
 
-static void check_modinfo_retpoline(struct module *mod, struct load_info *info)
-{
-	if (retpoline_module_ok(get_modinfo(info, "retpoline")))
-		return;
+अटल व्योम check_modinfo_retpoline(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	अगर (retpoline_module_ok(get_modinfo(info, "retpoline")))
+		वापस;
 
 	pr_warn("%s: loading module not compiled with retpoline compiler.\n",
 		mod->name);
-}
+पूर्ण
 
 /* Sets info->hdr and info->len. */
-static int copy_module_from_user(const void __user *umod, unsigned long len,
-				  struct load_info *info)
-{
-	int err;
+अटल पूर्णांक copy_module_from_user(स्थिर व्योम __user *umod, अचिन्हित दीर्घ len,
+				  काष्ठा load_info *info)
+अणु
+	पूर्णांक err;
 
 	info->len = len;
-	if (info->len < sizeof(*(info->hdr)))
-		return -ENOEXEC;
+	अगर (info->len < माप(*(info->hdr)))
+		वापस -ENOEXEC;
 
 	err = security_kernel_load_data(LOADING_MODULE, true);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Suck in entire file: we'll want most of it. */
-	info->hdr = __vmalloc(info->len, GFP_KERNEL | __GFP_NOWARN);
-	if (!info->hdr)
-		return -ENOMEM;
+	info->hdr = __vदो_स्मृति(info->len, GFP_KERNEL | __GFP_NOWARN);
+	अगर (!info->hdr)
+		वापस -ENOMEM;
 
-	if (copy_chunked_from_user(info->hdr, umod, info->len) != 0) {
+	अगर (copy_chunked_from_user(info->hdr, umod, info->len) != 0) अणु
 		err = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = security_kernel_post_load_data((char *)info->hdr, info->len,
+	err = security_kernel_post_load_data((अक्षर *)info->hdr, info->len,
 					     LOADING_MODULE, "init_module");
 out:
-	if (err)
-		vfree(info->hdr);
+	अगर (err)
+		vमुक्त(info->hdr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void free_copy(struct load_info *info)
-{
-	vfree(info->hdr);
-}
+अटल व्योम मुक्त_copy(काष्ठा load_info *info)
+अणु
+	vमुक्त(info->hdr);
+पूर्ण
 
-static int rewrite_section_headers(struct load_info *info, int flags)
-{
-	unsigned int i;
+अटल पूर्णांक reग_लिखो_section_headers(काष्ठा load_info *info, पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* This should always be true, but let's be sure. */
 	info->sechdrs[0].sh_addr = 0;
 
-	for (i = 1; i < info->hdr->e_shnum; i++) {
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
 		Elf_Shdr *shdr = &info->sechdrs[i];
 
 		/*
 		 * Mark all sections sh_addr with their address in the
 		 * temporary image.
 		 */
-		shdr->sh_addr = (size_t)info->hdr + shdr->sh_offset;
+		shdr->sh_addr = (माप_प्रकार)info->hdr + shdr->sh_offset;
 
-	}
+	पूर्ण
 
-	/* Track but don't keep modinfo and version sections. */
-	info->sechdrs[info->index.vers].sh_flags &= ~(unsigned long)SHF_ALLOC;
-	info->sechdrs[info->index.info].sh_flags &= ~(unsigned long)SHF_ALLOC;
+	/* Track but करोn't keep modinfo and version sections. */
+	info->sechdrs[info->index.vers].sh_flags &= ~(अचिन्हित दीर्घ)SHF_ALLOC;
+	info->sechdrs[info->index.info].sh_flags &= ~(अचिन्हित दीर्घ)SHF_ALLOC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set up our basic convenience variables (pointers to section headers,
- * search for module section index etc), and do some basic section
- * verification.
+ * Set up our basic convenience variables (poपूर्णांकers to section headers,
+ * search क्रम module section index etc), and करो some basic section
+ * verअगरication.
  *
  * Set info->mod to the temporary copy of the module in info->hdr. The final one
  * will be allocated in move_module().
  */
-static int setup_load_info(struct load_info *info, int flags)
-{
-	unsigned int i;
+अटल पूर्णांक setup_load_info(काष्ठा load_info *info, पूर्णांक flags)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Try to find a name early so we can log errors with a module name */
 	info->index.info = find_sec(info, ".modinfo");
-	if (info->index.info)
+	अगर (info->index.info)
 		info->name = get_modinfo(info, "name");
 
-	/* Find internal symbols and strings. */
-	for (i = 1; i < info->hdr->e_shnum; i++) {
-		if (info->sechdrs[i].sh_type == SHT_SYMTAB) {
+	/* Find पूर्णांकernal symbols and strings. */
+	क्रम (i = 1; i < info->hdr->e_shnum; i++) अणु
+		अगर (info->sechdrs[i].sh_type == SHT_SYMTAB) अणु
 			info->index.sym = i;
 			info->index.str = info->sechdrs[i].sh_link;
-			info->strtab = (char *)info->hdr
+			info->strtab = (अक्षर *)info->hdr
 				+ info->sechdrs[info->index.str].sh_offset;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (info->index.sym == 0) {
+	अगर (info->index.sym == 0) अणु
 		pr_warn("%s: module has no symbols (stripped?)\n",
 			info->name ?: "(missing .modinfo section or name field)");
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
 	info->index.mod = find_sec(info, ".gnu.linkonce.this_module");
-	if (!info->index.mod) {
+	अगर (!info->index.mod) अणु
 		pr_warn("%s: No module found in object\n",
 			info->name ?: "(missing .modinfo section or name field)");
-		return -ENOEXEC;
-	}
-	/* This is temporary: point mod into copy of data. */
-	info->mod = (void *)info->hdr + info->sechdrs[info->index.mod].sh_offset;
+		वापस -ENOEXEC;
+	पूर्ण
+	/* This is temporary: poपूर्णांक mod पूर्णांकo copy of data. */
+	info->mod = (व्योम *)info->hdr + info->sechdrs[info->index.mod].sh_offset;
 
 	/*
 	 * If we didn't load the .modinfo 'name' field earlier, fall back to
-	 * on-disk struct mod 'name' field.
+	 * on-disk काष्ठा mod 'name' field.
 	 */
-	if (!info->name)
+	अगर (!info->name)
 		info->name = info->mod->name;
 
-	if (flags & MODULE_INIT_IGNORE_MODVERSIONS)
+	अगर (flags & MODULE_INIT_IGNORE_MODVERSIONS)
 		info->index.vers = 0; /* Pretend no __versions section! */
-	else
+	अन्यथा
 		info->index.vers = find_sec(info, "__versions");
 
 	info->index.pcpu = find_pcpusec(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_modinfo(struct module *mod, struct load_info *info, int flags)
-{
-	const char *modmagic = get_modinfo(info, "vermagic");
-	int err;
+अटल पूर्णांक check_modinfo(काष्ठा module *mod, काष्ठा load_info *info, पूर्णांक flags)
+अणु
+	स्थिर अक्षर *modmagic = get_modinfo(info, "vermagic");
+	पूर्णांक err;
 
-	if (flags & MODULE_INIT_IGNORE_VERMAGIC)
-		modmagic = NULL;
+	अगर (flags & MODULE_INIT_IGNORE_VERMAGIC)
+		modmagic = शून्य;
 
-	/* This is allowed: modprobe --force will invalidate it. */
-	if (!modmagic) {
-		err = try_to_force_load(mod, "bad vermagic");
-		if (err)
-			return err;
-	} else if (!same_magic(modmagic, vermagic, info->index.vers)) {
+	/* This is allowed: modprobe --क्रमce will invalidate it. */
+	अगर (!modmagic) अणु
+		err = try_to_क्रमce_load(mod, "bad vermagic");
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अगर (!same_magic(modmagic, vermagic, info->index.vers)) अणु
 		pr_err("%s: version magic '%s' should be '%s'\n",
 		       info->name, modmagic, vermagic);
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
-	if (!get_modinfo(info, "intree")) {
-		if (!test_taint(TAINT_OOT_MODULE))
+	अगर (!get_modinfo(info, "intree")) अणु
+		अगर (!test_taपूर्णांक(TAINT_OOT_MODULE))
 			pr_warn("%s: loading out-of-tree module taints kernel.\n",
 				mod->name);
-		add_taint_module(mod, TAINT_OOT_MODULE, LOCKDEP_STILL_OK);
-	}
+		add_taपूर्णांक_module(mod, TAINT_OOT_MODULE, LOCKDEP_STILL_OK);
+	पूर्ण
 
 	check_modinfo_retpoline(mod, info);
 
-	if (get_modinfo(info, "staging")) {
-		add_taint_module(mod, TAINT_CRAP, LOCKDEP_STILL_OK);
+	अगर (get_modinfo(info, "staging")) अणु
+		add_taपूर्णांक_module(mod, TAINT_CRAP, LOCKDEP_STILL_OK);
 		pr_warn("%s: module is from the staging directory, the quality "
 			"is unknown, you have been warned.\n", mod->name);
-	}
+	पूर्ण
 
 	err = check_modinfo_livepatch(mod, info);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Set up license info based on the info section */
 	set_license(mod, get_modinfo(info, "license"));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_module_sections(struct module *mod, struct load_info *info)
-{
+अटल पूर्णांक find_module_sections(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
 	mod->kp = section_objs(info, "__param",
-			       sizeof(*mod->kp), &mod->num_kp);
+			       माप(*mod->kp), &mod->num_kp);
 	mod->syms = section_objs(info, "__ksymtab",
-				 sizeof(*mod->syms), &mod->num_syms);
+				 माप(*mod->syms), &mod->num_syms);
 	mod->crcs = section_addr(info, "__kcrctab");
 	mod->gpl_syms = section_objs(info, "__ksymtab_gpl",
-				     sizeof(*mod->gpl_syms),
+				     माप(*mod->gpl_syms),
 				     &mod->num_gpl_syms);
 	mod->gpl_crcs = section_addr(info, "__kcrctab_gpl");
 
-#ifdef CONFIG_CONSTRUCTORS
+#अगर_घोषित CONFIG_CONSTRUCTORS
 	mod->ctors = section_objs(info, ".ctors",
-				  sizeof(*mod->ctors), &mod->num_ctors);
-	if (!mod->ctors)
+				  माप(*mod->ctors), &mod->num_ctors);
+	अगर (!mod->ctors)
 		mod->ctors = section_objs(info, ".init_array",
-				sizeof(*mod->ctors), &mod->num_ctors);
-	else if (find_sec(info, ".init_array")) {
+				माप(*mod->ctors), &mod->num_ctors);
+	अन्यथा अगर (find_sec(info, ".init_array")) अणु
 		/*
 		 * This shouldn't happen with same compiler and binutils
 		 * building all parts of the module.
 		 */
 		pr_warn("%s: has both .ctors and .init_array.\n",
 		       mod->name);
-		return -EINVAL;
-	}
-#endif
+		वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर
 
 	mod->noinstr_text_start = section_objs(info, ".noinstr.text", 1,
 						&mod->noinstr_text_size);
 
-#ifdef CONFIG_TRACEPOINTS
-	mod->tracepoints_ptrs = section_objs(info, "__tracepoints_ptrs",
-					     sizeof(*mod->tracepoints_ptrs),
-					     &mod->num_tracepoints);
-#endif
-#ifdef CONFIG_TREE_SRCU
-	mod->srcu_struct_ptrs = section_objs(info, "___srcu_struct_ptrs",
-					     sizeof(*mod->srcu_struct_ptrs),
-					     &mod->num_srcu_structs);
-#endif
-#ifdef CONFIG_BPF_EVENTS
+#अगर_घोषित CONFIG_TRACEPOINTS
+	mod->tracepoपूर्णांकs_ptrs = section_objs(info, "__tracepoints_ptrs",
+					     माप(*mod->tracepoपूर्णांकs_ptrs),
+					     &mod->num_tracepoपूर्णांकs);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TREE_SRCU
+	mod->srcu_काष्ठा_ptrs = section_objs(info, "___srcu_struct_ptrs",
+					     माप(*mod->srcu_काष्ठा_ptrs),
+					     &mod->num_srcu_काष्ठाs);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_BPF_EVENTS
 	mod->bpf_raw_events = section_objs(info, "__bpf_raw_tp_map",
-					   sizeof(*mod->bpf_raw_events),
+					   माप(*mod->bpf_raw_events),
 					   &mod->num_bpf_raw_events);
-#endif
-#ifdef CONFIG_DEBUG_INFO_BTF_MODULES
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_DEBUG_INFO_BTF_MODULES
 	mod->btf_data = any_section_objs(info, ".BTF", 1, &mod->btf_data_size);
-#endif
-#ifdef CONFIG_JUMP_LABEL
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_JUMP_LABEL
 	mod->jump_entries = section_objs(info, "__jump_table",
-					sizeof(*mod->jump_entries),
+					माप(*mod->jump_entries),
 					&mod->num_jump_entries);
-#endif
-#ifdef CONFIG_EVENT_TRACING
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EVENT_TRACING
 	mod->trace_events = section_objs(info, "_ftrace_events",
-					 sizeof(*mod->trace_events),
+					 माप(*mod->trace_events),
 					 &mod->num_trace_events);
 	mod->trace_evals = section_objs(info, "_ftrace_eval_map",
-					sizeof(*mod->trace_evals),
+					माप(*mod->trace_evals),
 					&mod->num_trace_evals);
-#endif
-#ifdef CONFIG_TRACING
-	mod->trace_bprintk_fmt_start = section_objs(info, "__trace_printk_fmt",
-					 sizeof(*mod->trace_bprintk_fmt_start),
-					 &mod->num_trace_bprintk_fmt);
-#endif
-#ifdef CONFIG_FTRACE_MCOUNT_RECORD
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TRACING
+	mod->trace_bprपूर्णांकk_fmt_start = section_objs(info, "__trace_printk_fmt",
+					 माप(*mod->trace_bprपूर्णांकk_fmt_start),
+					 &mod->num_trace_bprपूर्णांकk_fmt);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FTRACE_MCOUNT_RECORD
 	/* sechdrs[0].sh_size is always zero */
 	mod->ftrace_callsites = section_objs(info, FTRACE_CALLSITE_SECTION,
-					     sizeof(*mod->ftrace_callsites),
+					     माप(*mod->ftrace_callsites),
 					     &mod->num_ftrace_callsites);
-#endif
-#ifdef CONFIG_FUNCTION_ERROR_INJECTION
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FUNCTION_ERROR_INJECTION
 	mod->ei_funcs = section_objs(info, "_error_injection_whitelist",
-					    sizeof(*mod->ei_funcs),
+					    माप(*mod->ei_funcs),
 					    &mod->num_ei_funcs);
-#endif
-#ifdef CONFIG_KPROBES
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KPROBES
 	mod->kprobes_text_start = section_objs(info, ".kprobes.text", 1,
 						&mod->kprobes_text_size);
 	mod->kprobe_blacklist = section_objs(info, "_kprobe_blacklist",
-						sizeof(unsigned long),
+						माप(अचिन्हित दीर्घ),
 						&mod->num_kprobe_blacklist);
-#endif
-#ifdef CONFIG_HAVE_STATIC_CALL_INLINE
-	mod->static_call_sites = section_objs(info, ".static_call_sites",
-					      sizeof(*mod->static_call_sites),
-					      &mod->num_static_call_sites);
-#endif
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HAVE_STATIC_CALL_INLINE
+	mod->अटल_call_sites = section_objs(info, ".static_call_sites",
+					      माप(*mod->अटल_call_sites),
+					      &mod->num_अटल_call_sites);
+#पूर्ण_अगर
 	mod->extable = section_objs(info, "__ex_table",
-				    sizeof(*mod->extable), &mod->num_exentries);
+				    माप(*mod->extable), &mod->num_exentries);
 
-	if (section_addr(info, "__obsparm"))
+	अगर (section_addr(info, "__obsparm"))
 		pr_warn("%s: Ignoring obsolete parameters\n", mod->name);
 
 	info->debug = section_objs(info, "__dyndbg",
-				   sizeof(*info->debug), &info->num_debug);
+				   माप(*info->debug), &info->num_debug);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int move_module(struct module *mod, struct load_info *info)
-{
-	int i;
-	void *ptr;
+अटल पूर्णांक move_module(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	पूर्णांक i;
+	व्योम *ptr;
 
 	/* Do the allocs. */
 	ptr = module_alloc(mod->core_layout.size);
 	/*
-	 * The pointer to this block is stored in the module structure
+	 * The poपूर्णांकer to this block is stored in the module काष्ठाure
 	 * which is inside the block. Just mark it as not being a
 	 * leak.
 	 */
 	kmemleak_not_leak(ptr);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	memset(ptr, 0, mod->core_layout.size);
+	स_रखो(ptr, 0, mod->core_layout.size);
 	mod->core_layout.base = ptr;
 
-	if (mod->init_layout.size) {
+	अगर (mod->init_layout.size) अणु
 		ptr = module_alloc(mod->init_layout.size);
 		/*
-		 * The pointer to this block is stored in the module structure
-		 * which is inside the block. This block doesn't need to be
-		 * scanned as it contains data and code that will be freed
+		 * The poपूर्णांकer to this block is stored in the module काष्ठाure
+		 * which is inside the block. This block करोesn't need to be
+		 * scanned as it contains data and code that will be मुक्तd
 		 * after the module is initialized.
 		 */
 		kmemleak_ignore(ptr);
-		if (!ptr) {
-			module_memfree(mod->core_layout.base);
-			return -ENOMEM;
-		}
-		memset(ptr, 0, mod->init_layout.size);
+		अगर (!ptr) अणु
+			module_memमुक्त(mod->core_layout.base);
+			वापस -ENOMEM;
+		पूर्ण
+		स_रखो(ptr, 0, mod->init_layout.size);
 		mod->init_layout.base = ptr;
-	} else
-		mod->init_layout.base = NULL;
+	पूर्ण अन्यथा
+		mod->init_layout.base = शून्य;
 
-	/* Transfer each section which specifies SHF_ALLOC */
+	/* Transfer each section which specअगरies SHF_ALLOC */
 	pr_debug("final section addresses:\n");
-	for (i = 0; i < info->hdr->e_shnum; i++) {
-		void *dest;
+	क्रम (i = 0; i < info->hdr->e_shnum; i++) अणु
+		व्योम *dest;
 		Elf_Shdr *shdr = &info->sechdrs[i];
 
-		if (!(shdr->sh_flags & SHF_ALLOC))
-			continue;
+		अगर (!(shdr->sh_flags & SHF_ALLOC))
+			जारी;
 
-		if (shdr->sh_entsize & INIT_OFFSET_MASK)
+		अगर (shdr->sh_entsize & INIT_OFFSET_MASK)
 			dest = mod->init_layout.base
 				+ (shdr->sh_entsize & ~INIT_OFFSET_MASK);
-		else
+		अन्यथा
 			dest = mod->core_layout.base + shdr->sh_entsize;
 
-		if (shdr->sh_type != SHT_NOBITS)
-			memcpy(dest, (void *)shdr->sh_addr, shdr->sh_size);
-		/* Update sh_addr to point to copy in image. */
-		shdr->sh_addr = (unsigned long)dest;
+		अगर (shdr->sh_type != SHT_NOBITS)
+			स_नकल(dest, (व्योम *)shdr->sh_addr, shdr->sh_size);
+		/* Update sh_addr to poपूर्णांक to copy in image. */
+		shdr->sh_addr = (अचिन्हित दीर्घ)dest;
 		pr_debug("\t0x%lx %s\n",
-			 (long)shdr->sh_addr, info->secstrings + shdr->sh_name);
-	}
+			 (दीर्घ)shdr->sh_addr, info->secstrings + shdr->sh_name);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_module_license_and_versions(struct module *mod)
-{
-	int prev_taint = test_taint(TAINT_PROPRIETARY_MODULE);
+अटल पूर्णांक check_module_license_and_versions(काष्ठा module *mod)
+अणु
+	पूर्णांक prev_taपूर्णांक = test_taपूर्णांक(TAINT_PROPRIETARY_MODULE);
 
 	/*
 	 * ndiswrapper is under GPL by itself, but loads proprietary modules.
-	 * Don't use add_taint_module(), as it would prevent ndiswrapper from
+	 * Don't use add_taपूर्णांक_module(), as it would prevent ndiswrapper from
 	 * using GPL-only symbols it needs.
 	 */
-	if (strcmp(mod->name, "ndiswrapper") == 0)
-		add_taint(TAINT_PROPRIETARY_MODULE, LOCKDEP_NOW_UNRELIABLE);
+	अगर (म_भेद(mod->name, "ndiswrapper") == 0)
+		add_taपूर्णांक(TAINT_PROPRIETARY_MODULE, LOCKDEP_NOW_UNRELIABLE);
 
 	/* driverloader was caught wrongly pretending to be under GPL */
-	if (strcmp(mod->name, "driverloader") == 0)
-		add_taint_module(mod, TAINT_PROPRIETARY_MODULE,
+	अगर (म_भेद(mod->name, "driverloader") == 0)
+		add_taपूर्णांक_module(mod, TAINT_PROPRIETARY_MODULE,
 				 LOCKDEP_NOW_UNRELIABLE);
 
 	/* lve claims to be GPL but upstream won't provide source */
-	if (strcmp(mod->name, "lve") == 0)
-		add_taint_module(mod, TAINT_PROPRIETARY_MODULE,
+	अगर (म_भेद(mod->name, "lve") == 0)
+		add_taपूर्णांक_module(mod, TAINT_PROPRIETARY_MODULE,
 				 LOCKDEP_NOW_UNRELIABLE);
 
-	if (!prev_taint && test_taint(TAINT_PROPRIETARY_MODULE))
+	अगर (!prev_taपूर्णांक && test_taपूर्णांक(TAINT_PROPRIETARY_MODULE))
 		pr_warn("%s: module license taints kernel.\n", mod->name);
 
-#ifdef CONFIG_MODVERSIONS
-	if ((mod->num_syms && !mod->crcs) ||
-	    (mod->num_gpl_syms && !mod->gpl_crcs)) {
-		return try_to_force_load(mod,
+#अगर_घोषित CONFIG_MODVERSIONS
+	अगर ((mod->num_syms && !mod->crcs) ||
+	    (mod->num_gpl_syms && !mod->gpl_crcs)) अणु
+		वापस try_to_क्रमce_load(mod,
 					 "no versions for exported symbols");
-	}
-#endif
-	return 0;
-}
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void flush_module_icache(const struct module *mod)
-{
+अटल व्योम flush_module_icache(स्थिर काष्ठा module *mod)
+अणु
 	/*
-	 * Flush the instruction cache, since we've played with text.
-	 * Do it before processing of module parameters, so the module
+	 * Flush the inकाष्ठाion cache, since we've played with text.
+	 * Do it beक्रमe processing of module parameters, so the module
 	 * can provide parameter accessor functions of its own.
 	 */
-	if (mod->init_layout.base)
-		flush_icache_range((unsigned long)mod->init_layout.base,
-				   (unsigned long)mod->init_layout.base
+	अगर (mod->init_layout.base)
+		flush_icache_range((अचिन्हित दीर्घ)mod->init_layout.base,
+				   (अचिन्हित दीर्घ)mod->init_layout.base
 				   + mod->init_layout.size);
-	flush_icache_range((unsigned long)mod->core_layout.base,
-			   (unsigned long)mod->core_layout.base + mod->core_layout.size);
-}
+	flush_icache_range((अचिन्हित दीर्घ)mod->core_layout.base,
+			   (अचिन्हित दीर्घ)mod->core_layout.base + mod->core_layout.size);
+पूर्ण
 
-int __weak module_frob_arch_sections(Elf_Ehdr *hdr,
+पूर्णांक __weak module_frob_arch_sections(Elf_Ehdr *hdr,
 				     Elf_Shdr *sechdrs,
-				     char *secstrings,
-				     struct module *mod)
-{
-	return 0;
-}
+				     अक्षर *secstrings,
+				     काष्ठा module *mod)
+अणु
+	वापस 0;
+पूर्ण
 
 /* module_blacklist is a comma-separated list of module names */
-static char *module_blacklist;
-static bool blacklisted(const char *module_name)
-{
-	const char *p;
-	size_t len;
+अटल अक्षर *module_blacklist;
+अटल bool blacklisted(स्थिर अक्षर *module_name)
+अणु
+	स्थिर अक्षर *p;
+	माप_प्रकार len;
 
-	if (!module_blacklist)
-		return false;
+	अगर (!module_blacklist)
+		वापस false;
 
-	for (p = module_blacklist; *p; p += len) {
-		len = strcspn(p, ",");
-		if (strlen(module_name) == len && !memcmp(module_name, p, len))
-			return true;
-		if (p[len] == ',')
+	क्रम (p = module_blacklist; *p; p += len) अणु
+		len = म_खोज(p, ",");
+		अगर (म_माप(module_name) == len && !स_भेद(module_name, p, len))
+			वापस true;
+		अगर (p[len] == ',')
 			len++;
-	}
-	return false;
-}
-core_param(module_blacklist, module_blacklist, charp, 0400);
+	पूर्ण
+	वापस false;
+पूर्ण
+core_param(module_blacklist, module_blacklist, अक्षरp, 0400);
 
-static struct module *layout_and_allocate(struct load_info *info, int flags)
-{
-	struct module *mod;
-	unsigned int ndx;
-	int err;
+अटल काष्ठा module *layout_and_allocate(काष्ठा load_info *info, पूर्णांक flags)
+अणु
+	काष्ठा module *mod;
+	अचिन्हित पूर्णांक ndx;
+	पूर्णांक err;
 
 	err = check_modinfo(info->mod, info, flags);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
 	/* Allow arches to frob section contents and sizes.  */
 	err = module_frob_arch_sections(info->hdr, info->sechdrs,
 					info->secstrings, info->mod);
-	if (err < 0)
-		return ERR_PTR(err);
+	अगर (err < 0)
+		वापस ERR_PTR(err);
 
-	err = module_enforce_rwx_sections(info->hdr, info->sechdrs,
+	err = module_enक्रमce_rwx_sections(info->hdr, info->sechdrs,
 					  info->secstrings, info->mod);
-	if (err < 0)
-		return ERR_PTR(err);
+	अगर (err < 0)
+		वापस ERR_PTR(err);
 
-	/* We will do a special allocation for per-cpu sections later. */
-	info->sechdrs[info->index.pcpu].sh_flags &= ~(unsigned long)SHF_ALLOC;
+	/* We will करो a special allocation क्रम per-cpu sections later. */
+	info->sechdrs[info->index.pcpu].sh_flags &= ~(अचिन्हित दीर्घ)SHF_ALLOC;
 
 	/*
 	 * Mark ro_after_init section with SHF_RO_AFTER_INIT so that
 	 * layout_sections() can put it in the right place.
-	 * Note: ro_after_init sections also have SHF_{WRITE,ALLOC} set.
+	 * Note: ro_after_init sections also have SHF_अणुWRITE,ALLOCपूर्ण set.
 	 */
 	ndx = find_sec(info, ".data..ro_after_init");
-	if (ndx)
+	अगर (ndx)
 		info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
 	/*
 	 * Mark the __jump_table section as ro_after_init as well: these data
-	 * structures are never modified, with the exception of entries that
+	 * काष्ठाures are never modअगरied, with the exception of entries that
 	 * refer to code in the __init section, which are annotated as such
-	 * at module load time.
+	 * at module load समय.
 	 */
 	ndx = find_sec(info, "__jump_table");
-	if (ndx)
+	अगर (ndx)
 		info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
 
 	/*
 	 * Determine total sizes, and put offsets in sh_entsize.  For now
-	 * this is done generically; there doesn't appear to be any
-	 * special cases for the architectures.
+	 * this is करोne generically; there करोesn't appear to be any
+	 * special हालs क्रम the architectures.
 	 */
 	layout_sections(info->mod, info);
 	layout_symtab(info->mod, info);
 
 	/* Allocate and move to the final place */
 	err = move_module(info->mod, info);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	/* Module has been copied to its final place now: return it. */
-	mod = (void *)info->sechdrs[info->index.mod].sh_addr;
+	/* Module has been copied to its final place now: वापस it. */
+	mod = (व्योम *)info->sechdrs[info->index.mod].sh_addr;
 	kmemleak_load_module(mod, info);
-	return mod;
-}
+	वापस mod;
+पूर्ण
 
-/* mod is no longer valid after this! */
-static void module_deallocate(struct module *mod, struct load_info *info)
-{
-	percpu_modfree(mod);
-	module_arch_freeing_init(mod);
-	module_memfree(mod->init_layout.base);
-	module_memfree(mod->core_layout.base);
-}
+/* mod is no दीर्घer valid after this! */
+अटल व्योम module_deallocate(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	percpu_modमुक्त(mod);
+	module_arch_मुक्तing_init(mod);
+	module_memमुक्त(mod->init_layout.base);
+	module_memमुक्त(mod->core_layout.base);
+पूर्ण
 
-int __weak module_finalize(const Elf_Ehdr *hdr,
-			   const Elf_Shdr *sechdrs,
-			   struct module *me)
-{
-	return 0;
-}
+पूर्णांक __weak module_finalize(स्थिर Elf_Ehdr *hdr,
+			   स्थिर Elf_Shdr *sechdrs,
+			   काष्ठा module *me)
+अणु
+	वापस 0;
+पूर्ण
 
-static int post_relocation(struct module *mod, const struct load_info *info)
-{
-	/* Sort exception table now relocations are done. */
+अटल पूर्णांक post_relocation(काष्ठा module *mod, स्थिर काष्ठा load_info *info)
+अणु
+	/* Sort exception table now relocations are करोne. */
 	sort_extable(mod->extable, mod->extable + mod->num_exentries);
 
 	/* Copy relocated percpu area over. */
-	percpu_modcopy(mod, (void *)info->sechdrs[info->index.pcpu].sh_addr,
+	percpu_modcopy(mod, (व्योम *)info->sechdrs[info->index.pcpu].sh_addr,
 		       info->sechdrs[info->index.pcpu].sh_size);
 
-	/* Setup kallsyms-specific fields. */
+	/* Setup kallsyms-specअगरic fields. */
 	add_kallsyms(mod, info);
 
-	/* Arch-specific module finalizing. */
-	return module_finalize(info->hdr, info->sechdrs, mod);
-}
+	/* Arch-specअगरic module finalizing. */
+	वापस module_finalize(info->hdr, info->sechdrs, mod);
+पूर्ण
 
-/* Is this module of this name done loading?  No locks held. */
-static bool finished_loading(const char *name)
-{
-	struct module *mod;
+/* Is this module of this name करोne loading?  No locks held. */
+अटल bool finished_loading(स्थिर अक्षर *name)
+अणु
+	काष्ठा module *mod;
 	bool ret;
 
 	/*
 	 * The module_mutex should not be a heavily contended lock;
-	 * if we get the occasional sleep here, we'll go an extra iteration
-	 * in the wait_event_interruptible(), which is harmless.
+	 * अगर we get the occasional sleep here, we'll go an extra iteration
+	 * in the रुको_event_पूर्णांकerruptible(), which is harmless.
 	 */
 	sched_annotate_sleep();
 	mutex_lock(&module_mutex);
-	mod = find_module_all(name, strlen(name), true);
+	mod = find_module_all(name, म_माप(name), true);
 	ret = !mod || mod->state == MODULE_STATE_LIVE;
 	mutex_unlock(&module_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Call module constructors. */
-static void do_mod_ctors(struct module *mod)
-{
-#ifdef CONFIG_CONSTRUCTORS
-	unsigned long i;
+/* Call module स्थिरructors. */
+अटल व्योम करो_mod_ctors(काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_CONSTRUCTORS
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < mod->num_ctors; i++)
+	क्रम (i = 0; i < mod->num_ctors; i++)
 		mod->ctors[i]();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-/* For freeing module_init on success, in case kallsyms traversing */
-struct mod_initfree {
-	struct llist_node node;
-	void *module_init;
-};
+/* For मुक्तing module_init on success, in हाल kallsyms traversing */
+काष्ठा mod_initमुक्त अणु
+	काष्ठा llist_node node;
+	व्योम *module_init;
+पूर्ण;
 
-static void do_free_init(struct work_struct *w)
-{
-	struct llist_node *pos, *n, *list;
-	struct mod_initfree *initfree;
+अटल व्योम करो_मुक्त_init(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा llist_node *pos, *n, *list;
+	काष्ठा mod_initमुक्त *initमुक्त;
 
-	list = llist_del_all(&init_free_list);
+	list = llist_del_all(&init_मुक्त_list);
 
 	synchronize_rcu();
 
-	llist_for_each_safe(pos, n, list) {
-		initfree = container_of(pos, struct mod_initfree, node);
-		module_memfree(initfree->module_init);
-		kfree(initfree);
-	}
-}
+	llist_क्रम_each_safe(pos, n, list) अणु
+		initमुक्त = container_of(pos, काष्ठा mod_initमुक्त, node);
+		module_memमुक्त(initमुक्त->module_init);
+		kमुक्त(initमुक्त);
+	पूर्ण
+पूर्ण
 
 /*
  * This is where the real work happens.
  *
- * Keep it uninlined to provide a reliable breakpoint target, e.g. for the gdb
+ * Keep it unअंतरभूतd to provide a reliable अवरोधpoपूर्णांक target, e.g. क्रम the gdb
  * helper command 'lx-symbols'.
  */
-static noinline int do_init_module(struct module *mod)
-{
-	int ret = 0;
-	struct mod_initfree *freeinit;
+अटल noअंतरभूत पूर्णांक करो_init_module(काष्ठा module *mod)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा mod_initमुक्त *मुक्तinit;
 
-	freeinit = kmalloc(sizeof(*freeinit), GFP_KERNEL);
-	if (!freeinit) {
+	मुक्तinit = kदो_स्मृति(माप(*मुक्तinit), GFP_KERNEL);
+	अगर (!मुक्तinit) अणु
 		ret = -ENOMEM;
-		goto fail;
-	}
-	freeinit->module_init = mod->init_layout.base;
+		जाओ fail;
+	पूर्ण
+	मुक्तinit->module_init = mod->init_layout.base;
 
 	/*
 	 * We want to find out whether @mod uses async during init.  Clear
@@ -3662,144 +3663,144 @@ static noinline int do_init_module(struct module *mod)
 	 */
 	current->flags &= ~PF_USED_ASYNC;
 
-	do_mod_ctors(mod);
+	करो_mod_ctors(mod);
 	/* Start the module */
-	if (mod->init != NULL)
-		ret = do_one_initcall(mod->init);
-	if (ret < 0) {
-		goto fail_free_freeinit;
-	}
-	if (ret > 0) {
+	अगर (mod->init != शून्य)
+		ret = करो_one_initcall(mod->init);
+	अगर (ret < 0) अणु
+		जाओ fail_मुक्त_मुक्तinit;
+	पूर्ण
+	अगर (ret > 0) अणु
 		pr_warn("%s: '%s'->init suspiciously returned %d, it should "
 			"follow 0/-E convention\n"
 			"%s: loading module anyway...\n",
 			__func__, mod->name, ret, __func__);
 		dump_stack();
-	}
+	पूर्ण
 
 	/* Now it's a first class citizen! */
 	mod->state = MODULE_STATE_LIVE;
-	blocking_notifier_call_chain(&module_notify_list,
+	blocking_notअगरier_call_chain(&module_notअगरy_list,
 				     MODULE_STATE_LIVE, mod);
 
 	/* Delay uevent until module has finished its init routine */
 	kobject_uevent(&mod->mkobj.kobj, KOBJ_ADD);
 
 	/*
-	 * We need to finish all async code before the module init sequence
-	 * is done.  This has potential to deadlock.  For example, a newly
+	 * We need to finish all async code beक्रमe the module init sequence
+	 * is करोne.  This has potential to deadlock.  For example, a newly
 	 * detected block device can trigger request_module() of the
-	 * default iosched from async probing task.  Once userland helper
-	 * reaches here, async_synchronize_full() will wait on the async
-	 * task waiting on request_module() and deadlock.
+	 * शेष iosched from async probing task.  Once userland helper
+	 * reaches here, async_synchronize_full() will रुको on the async
+	 * task रुकोing on request_module() and deadlock.
 	 *
-	 * This deadlock is avoided by perfomring async_synchronize_full()
-	 * iff module init queued any async jobs.  This isn't a full
-	 * solution as it will deadlock the same if module loading from
+	 * This deadlock is aव्योमed by perfomring async_synchronize_full()
+	 * अगरf module init queued any async jobs.  This isn't a full
+	 * solution as it will deadlock the same अगर module loading from
 	 * async jobs nests more than once; however, due to the various
-	 * constraints, this hack seems to be the best option for now.
-	 * Please refer to the following thread for details.
+	 * स्थिरraपूर्णांकs, this hack seems to be the best option क्रम now.
+	 * Please refer to the following thपढ़ो क्रम details.
 	 *
-	 * http://thread.gmane.org/gmane.linux.kernel/1420814
+	 * http://thपढ़ो.gmane.org/gmane.linux.kernel/1420814
 	 */
-	if (!mod->async_probe_requested && (current->flags & PF_USED_ASYNC))
+	अगर (!mod->async_probe_requested && (current->flags & PF_USED_ASYNC))
 		async_synchronize_full();
 
-	ftrace_free_mem(mod, mod->init_layout.base, mod->init_layout.base +
+	ftrace_मुक्त_mem(mod, mod->init_layout.base, mod->init_layout.base +
 			mod->init_layout.size);
 	mutex_lock(&module_mutex);
 	/* Drop initial reference. */
 	module_put(mod);
 	trim_init_extable(mod);
-#ifdef CONFIG_KALLSYMS
-	/* Switch to core kallsyms now init is done: kallsyms may be walking! */
-	rcu_assign_pointer(mod->kallsyms, &mod->core_kallsyms);
-#endif
+#अगर_घोषित CONFIG_KALLSYMS
+	/* Switch to core kallsyms now init is करोne: kallsyms may be walking! */
+	rcu_assign_poपूर्णांकer(mod->kallsyms, &mod->core_kallsyms);
+#पूर्ण_अगर
 	module_enable_ro(mod, true);
-	mod_tree_remove_init(mod);
-	module_arch_freeing_init(mod);
-	mod->init_layout.base = NULL;
+	mod_tree_हटाओ_init(mod);
+	module_arch_मुक्तing_init(mod);
+	mod->init_layout.base = शून्य;
 	mod->init_layout.size = 0;
 	mod->init_layout.ro_size = 0;
 	mod->init_layout.ro_after_init_size = 0;
 	mod->init_layout.text_size = 0;
-#ifdef CONFIG_DEBUG_INFO_BTF_MODULES
-	/* .BTF is not SHF_ALLOC and will get removed, so sanitize pointer */
-	mod->btf_data = NULL;
-#endif
+#अगर_घोषित CONFIG_DEBUG_INFO_BTF_MODULES
+	/* .BTF is not SHF_ALLOC and will get हटाओd, so sanitize poपूर्णांकer */
+	mod->btf_data = शून्य;
+#पूर्ण_अगर
 	/*
-	 * We want to free module_init, but be aware that kallsyms may be
+	 * We want to मुक्त module_init, but be aware that kallsyms may be
 	 * walking this with preempt disabled.  In all the failure paths, we
-	 * call synchronize_rcu(), but we don't want to slow down the success
-	 * path. module_memfree() cannot be called in an interrupt, so do the
+	 * call synchronize_rcu(), but we करोn't want to slow करोwn the success
+	 * path. module_memमुक्त() cannot be called in an पूर्णांकerrupt, so करो the
 	 * work and call synchronize_rcu() in a work queue.
 	 *
 	 * Note that module_alloc() on most architectures creates W+X page
-	 * mappings which won't be cleaned up until do_free_init() runs.  Any
+	 * mappings which won't be cleaned up until करो_मुक्त_init() runs.  Any
 	 * code such as mark_rodata_ro() which depends on those mappings to
 	 * be cleaned up needs to sync with the queued work - ie
 	 * rcu_barrier()
 	 */
-	if (llist_add(&freeinit->node, &init_free_list))
-		schedule_work(&init_free_wq);
+	अगर (llist_add(&मुक्तinit->node, &init_मुक्त_list))
+		schedule_work(&init_मुक्त_wq);
 
 	mutex_unlock(&module_mutex);
 	wake_up_all(&module_wq);
 
-	return 0;
+	वापस 0;
 
-fail_free_freeinit:
-	kfree(freeinit);
+fail_मुक्त_मुक्तinit:
+	kमुक्त(मुक्तinit);
 fail:
 	/* Try to protect us from buggy refcounters. */
 	mod->state = MODULE_STATE_GOING;
 	synchronize_rcu();
 	module_put(mod);
-	blocking_notifier_call_chain(&module_notify_list,
+	blocking_notअगरier_call_chain(&module_notअगरy_list,
 				     MODULE_STATE_GOING, mod);
 	klp_module_going(mod);
 	ftrace_release_mod(mod);
-	free_module(mod);
+	मुक्त_module(mod);
 	wake_up_all(&module_wq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int may_init_module(void)
-{
-	if (!capable(CAP_SYS_MODULE) || modules_disabled)
-		return -EPERM;
+अटल पूर्णांक may_init_module(व्योम)
+अणु
+	अगर (!capable(CAP_SYS_MODULE) || modules_disabled)
+		वापस -EPERM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * We try to place it in the list now to make sure it's unique before
+ * We try to place it in the list now to make sure it's unique beक्रमe
  * we dedicate too many resources.  In particular, temporary percpu
  * memory exhaustion.
  */
-static int add_unformed_module(struct module *mod)
-{
-	int err;
-	struct module *old;
+अटल पूर्णांक add_unक्रमmed_module(काष्ठा module *mod)
+अणु
+	पूर्णांक err;
+	काष्ठा module *old;
 
 	mod->state = MODULE_STATE_UNFORMED;
 
 again:
 	mutex_lock(&module_mutex);
-	old = find_module_all(mod->name, strlen(mod->name), true);
-	if (old != NULL) {
-		if (old->state != MODULE_STATE_LIVE) {
-			/* Wait in case it fails to load. */
+	old = find_module_all(mod->name, म_माप(mod->name), true);
+	अगर (old != शून्य) अणु
+		अगर (old->state != MODULE_STATE_LIVE) अणु
+			/* Wait in हाल it fails to load. */
 			mutex_unlock(&module_mutex);
-			err = wait_event_interruptible(module_wq,
+			err = रुको_event_पूर्णांकerruptible(module_wq,
 					       finished_loading(mod->name));
-			if (err)
-				goto out_unlocked;
-			goto again;
-		}
+			अगर (err)
+				जाओ out_unlocked;
+			जाओ again;
+		पूर्ण
 		err = -EEXIST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mod_update_bounds(mod);
 	list_add_rcu(&mod->list, &modules);
 	mod_tree_insert(mod);
@@ -3808,21 +3809,21 @@ again:
 out:
 	mutex_unlock(&module_mutex);
 out_unlocked:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int complete_formation(struct module *mod, struct load_info *info)
-{
-	int err;
+अटल पूर्णांक complete_क्रमmation(काष्ठा module *mod, काष्ठा load_info *info)
+अणु
+	पूर्णांक err;
 
 	mutex_lock(&module_mutex);
 
 	/* Find duplicate symbols (must be called under lock). */
-	err = verify_exported_symbols(mod);
-	if (err < 0)
-		goto out;
+	err = verअगरy_exported_symbols(mod);
+	अगर (err < 0)
+		जाओ out;
 
-	/* This relies on module_mutex for list integrity. */
+	/* This relies on module_mutex क्रम list पूर्णांकegrity. */
 	module_bug_finalize(info->hdr, info->sechdrs, mod);
 
 	module_enable_ro(mod, false);
@@ -3836,68 +3837,68 @@ static int complete_formation(struct module *mod, struct load_info *info)
 	mod->state = MODULE_STATE_COMING;
 	mutex_unlock(&module_mutex);
 
-	return 0;
+	वापस 0;
 
 out:
 	mutex_unlock(&module_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int prepare_coming_module(struct module *mod)
-{
-	int err;
+अटल पूर्णांक prepare_coming_module(काष्ठा module *mod)
+अणु
+	पूर्णांक err;
 
 	ftrace_module_enable(mod);
 	err = klp_module_coming(mod);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = blocking_notifier_call_chain_robust(&module_notify_list,
+	err = blocking_notअगरier_call_chain_robust(&module_notअगरy_list,
 			MODULE_STATE_COMING, MODULE_STATE_GOING, mod);
-	err = notifier_to_errno(err);
-	if (err)
+	err = notअगरier_to_त्रुटि_सं(err);
+	अगर (err)
 		klp_module_going(mod);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int unknown_module_param_cb(char *param, char *val, const char *modname,
-				   void *arg)
-{
-	struct module *mod = arg;
-	int ret;
+अटल पूर्णांक unknown_module_param_cb(अक्षर *param, अक्षर *val, स्थिर अक्षर *modname,
+				   व्योम *arg)
+अणु
+	काष्ठा module *mod = arg;
+	पूर्णांक ret;
 
-	if (strcmp(param, "async_probe") == 0) {
+	अगर (म_भेद(param, "async_probe") == 0) अणु
 		mod->async_probe_requested = true;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Check for magic 'dyndbg' arg */
+	/* Check क्रम magic 'dyndbg' arg */
 	ret = ddebug_dyndbg_module_param_cb(param, val, modname);
-	if (ret != 0)
+	अगर (ret != 0)
 		pr_warn("%s: unknown parameter '%s' ignored\n", modname, param);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cfi_init(struct module *mod);
+अटल व्योम cfi_init(काष्ठा module *mod);
 
 /*
  * Allocate and load the module: note that size of section 0 is always
- * zero, and we rely on this for optional sections.
+ * zero, and we rely on this क्रम optional sections.
  */
-static int load_module(struct load_info *info, const char __user *uargs,
-		       int flags)
-{
-	struct module *mod;
-	long err = 0;
-	char *after_dashes;
+अटल पूर्णांक load_module(काष्ठा load_info *info, स्थिर अक्षर __user *uargs,
+		       पूर्णांक flags)
+अणु
+	काष्ठा module *mod;
+	दीर्घ err = 0;
+	अक्षर *after_dashes;
 
 	/*
-	 * Do the signature check (if any) first. All that
-	 * the signature check needs is info->len, it does
+	 * Do the signature check (अगर any) first. All that
+	 * the signature check needs is info->len, it करोes
 	 * not need any of the section info. That can be
 	 * set up later. This will minimize the chances
-	 * of a corrupt module causing problems before
+	 * of a corrupt module causing problems beक्रमe
 	 * we even get to the signature check.
 	 *
 	 * The check will also adjust info->len by stripping
@@ -3905,80 +3906,80 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	 * checks against info->len more correct.
 	 */
 	err = module_sig_check(info, flags);
-	if (err)
-		goto free_copy;
+	अगर (err)
+		जाओ मुक्त_copy;
 
 	/*
 	 * Do basic sanity checks against the ELF header and
 	 * sections.
 	 */
 	err = elf_validity_check(info);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Module has invalid ELF structures\n");
-		goto free_copy;
-	}
+		जाओ मुक्त_copy;
+	पूर्ण
 
 	/*
 	 * Everything checks out, so set up the section info
-	 * in the info structure.
+	 * in the info काष्ठाure.
 	 */
 	err = setup_load_info(info, flags);
-	if (err)
-		goto free_copy;
+	अगर (err)
+		जाओ मुक्त_copy;
 
 	/*
 	 * Now that we know we have the correct module name, check
-	 * if it's blacklisted.
+	 * अगर it's blacklisted.
 	 */
-	if (blacklisted(info->name)) {
+	अगर (blacklisted(info->name)) अणु
 		err = -EPERM;
 		pr_err("Module %s is blacklisted\n", info->name);
-		goto free_copy;
-	}
+		जाओ मुक्त_copy;
+	पूर्ण
 
-	err = rewrite_section_headers(info, flags);
-	if (err)
-		goto free_copy;
+	err = reग_लिखो_section_headers(info, flags);
+	अगर (err)
+		जाओ मुक्त_copy;
 
-	/* Check module struct version now, before we try to use module. */
-	if (!check_modstruct_version(info, info->mod)) {
+	/* Check module काष्ठा version now, beक्रमe we try to use module. */
+	अगर (!check_modकाष्ठा_version(info, info->mod)) अणु
 		err = -ENOEXEC;
-		goto free_copy;
-	}
+		जाओ मुक्त_copy;
+	पूर्ण
 
 	/* Figure out module layout, and allocate all the memory. */
 	mod = layout_and_allocate(info, flags);
-	if (IS_ERR(mod)) {
+	अगर (IS_ERR(mod)) अणु
 		err = PTR_ERR(mod);
-		goto free_copy;
-	}
+		जाओ मुक्त_copy;
+	पूर्ण
 
 	audit_log_kern_module(mod->name);
 
 	/* Reserve our place in the list. */
-	err = add_unformed_module(mod);
-	if (err)
-		goto free_module;
+	err = add_unक्रमmed_module(mod);
+	अगर (err)
+		जाओ मुक्त_module;
 
-#ifdef CONFIG_MODULE_SIG
+#अगर_घोषित CONFIG_MODULE_SIG
 	mod->sig_ok = info->sig_ok;
-	if (!mod->sig_ok) {
+	अगर (!mod->sig_ok) अणु
 		pr_notice_once("%s: module verification failed: signature "
 			       "and/or required key missing - tainting "
 			       "kernel\n", mod->name);
-		add_taint_module(mod, TAINT_UNSIGNED_MODULE, LOCKDEP_STILL_OK);
-	}
-#endif
+		add_taपूर्णांक_module(mod, TAINT_UNSIGNED_MODULE, LOCKDEP_STILL_OK);
+	पूर्ण
+#पूर्ण_अगर
 
-	/* To avoid stressing percpu allocator, do this once we're unique. */
+	/* To aव्योम stressing percpu allocator, करो this once we're unique. */
 	err = percpu_modalloc(mod, info);
-	if (err)
-		goto unlink_mod;
+	अगर (err)
+		जाओ unlink_mod;
 
 	/* Now module is in final location, initialize linked lists, etc. */
 	err = module_unload_init(mod);
-	if (err)
-		goto unlink_mod;
+	अगर (err)
+		जाओ unlink_mod;
 
 	init_param_lock(mod);
 
@@ -3987,92 +3988,92 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	 * find optional sections.
 	 */
 	err = find_module_sections(mod, info);
-	if (err)
-		goto free_unload;
+	अगर (err)
+		जाओ मुक्त_unload;
 
 	err = check_module_license_and_versions(mod);
-	if (err)
-		goto free_unload;
+	अगर (err)
+		जाओ मुक्त_unload;
 
 	/* Set up MODINFO_ATTR fields */
 	setup_modinfo(mod, info);
 
-	/* Fix up syms, so that st_value is a pointer to location. */
-	err = simplify_symbols(mod, info);
-	if (err < 0)
-		goto free_modinfo;
+	/* Fix up syms, so that st_value is a poपूर्णांकer to location. */
+	err = simplअगरy_symbols(mod, info);
+	अगर (err < 0)
+		जाओ मुक्त_modinfo;
 
 	err = apply_relocations(mod, info);
-	if (err < 0)
-		goto free_modinfo;
+	अगर (err < 0)
+		जाओ मुक्त_modinfo;
 
 	err = post_relocation(mod, info);
-	if (err < 0)
-		goto free_modinfo;
+	अगर (err < 0)
+		जाओ मुक्त_modinfo;
 
 	flush_module_icache(mod);
 
-	/* Setup CFI for the module. */
+	/* Setup CFI क्रम the module. */
 	cfi_init(mod);
 
 	/* Now copy in args */
 	mod->args = strndup_user(uargs, ~0UL >> 1);
-	if (IS_ERR(mod->args)) {
+	अगर (IS_ERR(mod->args)) अणु
 		err = PTR_ERR(mod->args);
-		goto free_arch_cleanup;
-	}
+		जाओ मुक्त_arch_cleanup;
+	पूर्ण
 
 	dynamic_debug_setup(mod, info->debug, info->num_debug);
 
 	/* Ftrace init must be called in the MODULE_STATE_UNFORMED state */
 	ftrace_module_init(mod);
 
-	/* Finally it's fully formed, ready to start executing. */
-	err = complete_formation(mod, info);
-	if (err)
-		goto ddebug_cleanup;
+	/* Finally it's fully क्रमmed, पढ़ोy to start executing. */
+	err = complete_क्रमmation(mod, info);
+	अगर (err)
+		जाओ ddebug_cleanup;
 
 	err = prepare_coming_module(mod);
-	if (err)
-		goto bug_cleanup;
+	अगर (err)
+		जाओ bug_cleanup;
 
-	/* Module is ready to execute: parsing args may do that. */
+	/* Module is पढ़ोy to execute: parsing args may करो that. */
 	after_dashes = parse_args(mod->name, mod->args, mod->kp, mod->num_kp,
 				  -32768, 32767, mod,
 				  unknown_module_param_cb);
-	if (IS_ERR(after_dashes)) {
+	अगर (IS_ERR(after_dashes)) अणु
 		err = PTR_ERR(after_dashes);
-		goto coming_cleanup;
-	} else if (after_dashes) {
+		जाओ coming_cleanup;
+	पूर्ण अन्यथा अगर (after_dashes) अणु
 		pr_warn("%s: parameters '%s' after `--' ignored\n",
 		       mod->name, after_dashes);
-	}
+	पूर्ण
 
 	/* Link in to sysfs. */
 	err = mod_sysfs_setup(mod, info, mod->kp, mod->num_kp);
-	if (err < 0)
-		goto coming_cleanup;
+	अगर (err < 0)
+		जाओ coming_cleanup;
 
-	if (is_livepatch_module(mod)) {
+	अगर (is_livepatch_module(mod)) अणु
 		err = copy_module_elf(mod, info);
-		if (err < 0)
-			goto sysfs_cleanup;
-	}
+		अगर (err < 0)
+			जाओ sysfs_cleanup;
+	पूर्ण
 
 	/* Get rid of temporary copy. */
-	free_copy(info);
+	मुक्त_copy(info);
 
 	/* Done! */
 	trace_module_load(mod);
 
-	return do_init_module(mod);
+	वापस करो_init_module(mod);
 
  sysfs_cleanup:
-	mod_sysfs_teardown(mod);
+	mod_sysfs_tearकरोwn(mod);
  coming_cleanup:
 	mod->state = MODULE_STATE_GOING;
 	destroy_params(mod->kp, mod->num_kp);
-	blocking_notifier_call_chain(&module_notify_list,
+	blocking_notअगरier_call_chain(&module_notअगरy_list,
 				     MODULE_STATE_GOING, mod);
 	klp_module_going(mod);
  bug_cleanup:
@@ -4084,267 +4085,267 @@ static int load_module(struct load_info *info, const char __user *uargs,
 
  ddebug_cleanup:
 	ftrace_release_mod(mod);
-	dynamic_debug_remove(mod, info->debug);
+	dynamic_debug_हटाओ(mod, info->debug);
 	synchronize_rcu();
-	kfree(mod->args);
- free_arch_cleanup:
+	kमुक्त(mod->args);
+ मुक्त_arch_cleanup:
 	cfi_cleanup(mod);
 	module_arch_cleanup(mod);
- free_modinfo:
-	free_modinfo(mod);
- free_unload:
-	module_unload_free(mod);
+ मुक्त_modinfo:
+	मुक्त_modinfo(mod);
+ मुक्त_unload:
+	module_unload_मुक्त(mod);
  unlink_mod:
 	mutex_lock(&module_mutex);
 	/* Unlink carefully: kallsyms could be walking list. */
 	list_del_rcu(&mod->list);
-	mod_tree_remove(mod);
+	mod_tree_हटाओ(mod);
 	wake_up_all(&module_wq);
-	/* Wait for RCU-sched synchronizing before releasing mod->list. */
+	/* Wait क्रम RCU-sched synchronizing beक्रमe releasing mod->list. */
 	synchronize_rcu();
 	mutex_unlock(&module_mutex);
- free_module:
+ मुक्त_module:
 	/* Free lock-classes; relies on the preceding sync_rcu() */
-	lockdep_free_key_range(mod->core_layout.base, mod->core_layout.size);
+	lockdep_मुक्त_key_range(mod->core_layout.base, mod->core_layout.size);
 
 	module_deallocate(mod, info);
- free_copy:
-	free_copy(info);
-	return err;
-}
+ मुक्त_copy:
+	मुक्त_copy(info);
+	वापस err;
+पूर्ण
 
-SYSCALL_DEFINE3(init_module, void __user *, umod,
-		unsigned long, len, const char __user *, uargs)
-{
-	int err;
-	struct load_info info = { };
+SYSCALL_DEFINE3(init_module, व्योम __user *, umod,
+		अचिन्हित दीर्घ, len, स्थिर अक्षर __user *, uargs)
+अणु
+	पूर्णांक err;
+	काष्ठा load_info info = अणु पूर्ण;
 
 	err = may_init_module();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_debug("init_module: umod=%p, len=%lu, uargs=%p\n",
 	       umod, len, uargs);
 
 	err = copy_module_from_user(umod, len, &info);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return load_module(&info, uargs, 0);
-}
+	वापस load_module(&info, uargs, 0);
+पूर्ण
 
-SYSCALL_DEFINE3(finit_module, int, fd, const char __user *, uargs, int, flags)
-{
-	struct load_info info = { };
-	void *hdr = NULL;
-	int err;
+SYSCALL_DEFINE3(finit_module, पूर्णांक, fd, स्थिर अक्षर __user *, uargs, पूर्णांक, flags)
+अणु
+	काष्ठा load_info info = अणु पूर्ण;
+	व्योम *hdr = शून्य;
+	पूर्णांक err;
 
 	err = may_init_module();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_debug("finit_module: fd=%d, uargs=%p, flags=%i\n", fd, uargs, flags);
 
-	if (flags & ~(MODULE_INIT_IGNORE_MODVERSIONS
+	अगर (flags & ~(MODULE_INIT_IGNORE_MODVERSIONS
 		      |MODULE_INIT_IGNORE_VERMAGIC))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	err = kernel_read_file_from_fd(fd, 0, &hdr, INT_MAX, NULL,
+	err = kernel_पढ़ो_file_from_fd(fd, 0, &hdr, पूर्णांक_उच्च, शून्य,
 				       READING_MODULE);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	info.hdr = hdr;
 	info.len = err;
 
-	return load_module(&info, uargs, flags);
-}
+	वापस load_module(&info, uargs, flags);
+पूर्ण
 
-static inline int within(unsigned long addr, void *start, unsigned long size)
-{
-	return ((void *)addr >= start && (void *)addr < start + size);
-}
+अटल अंतरभूत पूर्णांक within(अचिन्हित दीर्घ addr, व्योम *start, अचिन्हित दीर्घ size)
+अणु
+	वापस ((व्योम *)addr >= start && (व्योम *)addr < start + size);
+पूर्ण
 
-#ifdef CONFIG_KALLSYMS
+#अगर_घोषित CONFIG_KALLSYMS
 /*
- * This ignores the intensely annoying "mapping symbols" found
+ * This ignores the पूर्णांकensely annoying "mapping symbols" found
  * in ARM ELF files: $a, $t and $d.
  */
-static inline int is_arm_mapping_symbol(const char *str)
-{
-	if (str[0] == '.' && str[1] == 'L')
-		return true;
-	return str[0] == '$' && strchr("axtd", str[1])
+अटल अंतरभूत पूर्णांक is_arm_mapping_symbol(स्थिर अक्षर *str)
+अणु
+	अगर (str[0] == '.' && str[1] == 'L')
+		वापस true;
+	वापस str[0] == '$' && म_अक्षर("axtd", str[1])
 	       && (str[2] == '\0' || str[2] == '.');
-}
+पूर्ण
 
-static const char *kallsyms_symbol_name(struct mod_kallsyms *kallsyms, unsigned int symnum)
-{
-	return kallsyms->strtab + kallsyms->symtab[symnum].st_name;
-}
+अटल स्थिर अक्षर *kallsyms_symbol_name(काष्ठा mod_kallsyms *kallsyms, अचिन्हित पूर्णांक symnum)
+अणु
+	वापस kallsyms->strtab + kallsyms->symtab[symnum].st_name;
+पूर्ण
 
 /*
- * Given a module and address, find the corresponding symbol and return its name
- * while providing its size and offset if needed.
+ * Given a module and address, find the corresponding symbol and वापस its name
+ * जबतक providing its size and offset अगर needed.
  */
-static const char *find_kallsyms_symbol(struct module *mod,
-					unsigned long addr,
-					unsigned long *size,
-					unsigned long *offset)
-{
-	unsigned int i, best = 0;
-	unsigned long nextval, bestval;
-	struct mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
+अटल स्थिर अक्षर *find_kallsyms_symbol(काष्ठा module *mod,
+					अचिन्हित दीर्घ addr,
+					अचिन्हित दीर्घ *size,
+					अचिन्हित दीर्घ *offset)
+अणु
+	अचिन्हित पूर्णांक i, best = 0;
+	अचिन्हित दीर्घ nextval, bestval;
+	काष्ठा mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
 
 	/* At worse, next value is at end of module */
-	if (within_module_init(addr, mod))
-		nextval = (unsigned long)mod->init_layout.base+mod->init_layout.text_size;
-	else
-		nextval = (unsigned long)mod->core_layout.base+mod->core_layout.text_size;
+	अगर (within_module_init(addr, mod))
+		nextval = (अचिन्हित दीर्घ)mod->init_layout.base+mod->init_layout.text_size;
+	अन्यथा
+		nextval = (अचिन्हित दीर्घ)mod->core_layout.base+mod->core_layout.text_size;
 
 	bestval = kallsyms_symbol_value(&kallsyms->symtab[best]);
 
 	/*
-	 * Scan for closest preceding symbol, and next symbol. (ELF
+	 * Scan क्रम बंदst preceding symbol, and next symbol. (ELF
 	 * starts real symbols at 1).
 	 */
-	for (i = 1; i < kallsyms->num_symtab; i++) {
-		const Elf_Sym *sym = &kallsyms->symtab[i];
-		unsigned long thisval = kallsyms_symbol_value(sym);
+	क्रम (i = 1; i < kallsyms->num_symtab; i++) अणु
+		स्थिर Elf_Sym *sym = &kallsyms->symtab[i];
+		अचिन्हित दीर्घ thisval = kallsyms_symbol_value(sym);
 
-		if (sym->st_shndx == SHN_UNDEF)
-			continue;
+		अगर (sym->st_shndx == SHN_UNDEF)
+			जारी;
 
 		/*
-		 * We ignore unnamed symbols: they're uninformative
+		 * We ignore unnamed symbols: they're uninक्रमmative
 		 * and inserted at a whim.
 		 */
-		if (*kallsyms_symbol_name(kallsyms, i) == '\0'
+		अगर (*kallsyms_symbol_name(kallsyms, i) == '\0'
 		    || is_arm_mapping_symbol(kallsyms_symbol_name(kallsyms, i)))
-			continue;
+			जारी;
 
-		if (thisval <= addr && thisval > bestval) {
+		अगर (thisval <= addr && thisval > bestval) अणु
 			best = i;
 			bestval = thisval;
-		}
-		if (thisval > addr && thisval < nextval)
+		पूर्ण
+		अगर (thisval > addr && thisval < nextval)
 			nextval = thisval;
-	}
+	पूर्ण
 
-	if (!best)
-		return NULL;
+	अगर (!best)
+		वापस शून्य;
 
-	if (size)
+	अगर (size)
 		*size = nextval - bestval;
-	if (offset)
+	अगर (offset)
 		*offset = addr - bestval;
 
-	return kallsyms_symbol_name(kallsyms, best);
-}
+	वापस kallsyms_symbol_name(kallsyms, best);
+पूर्ण
 
-void * __weak dereference_module_function_descriptor(struct module *mod,
-						     void *ptr)
-{
-	return ptr;
-}
+व्योम * __weak dereference_module_function_descriptor(काष्ठा module *mod,
+						     व्योम *ptr)
+अणु
+	वापस ptr;
+पूर्ण
 
 /*
- * For kallsyms to ask for address resolution.  NULL means not found.  Careful
- * not to lock to avoid deadlock on oopses, simply disable preemption.
+ * For kallsyms to ask क्रम address resolution.  शून्य means not found.  Careful
+ * not to lock to aव्योम deadlock on oopses, simply disable preemption.
  */
-const char *module_address_lookup(unsigned long addr,
-			    unsigned long *size,
-			    unsigned long *offset,
-			    char **modname,
-			    char *namebuf)
-{
-	const char *ret = NULL;
-	struct module *mod;
+स्थिर अक्षर *module_address_lookup(अचिन्हित दीर्घ addr,
+			    अचिन्हित दीर्घ *size,
+			    अचिन्हित दीर्घ *offset,
+			    अक्षर **modname,
+			    अक्षर *namebuf)
+अणु
+	स्थिर अक्षर *ret = शून्य;
+	काष्ठा module *mod;
 
 	preempt_disable();
 	mod = __module_address(addr);
-	if (mod) {
-		if (modname)
+	अगर (mod) अणु
+		अगर (modname)
 			*modname = mod->name;
 
 		ret = find_kallsyms_symbol(mod, addr, size, offset);
-	}
+	पूर्ण
 	/* Make a copy in here where it's safe */
-	if (ret) {
-		strncpy(namebuf, ret, KSYM_NAME_LEN - 1);
+	अगर (ret) अणु
+		म_नकलन(namebuf, ret, KSYM_NAME_LEN - 1);
 		ret = namebuf;
-	}
+	पूर्ण
 	preempt_enable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int lookup_module_symbol_name(unsigned long addr, char *symname)
-{
-	struct module *mod;
+पूर्णांक lookup_module_symbol_name(अचिन्हित दीर्घ addr, अक्षर *symname)
+अणु
+	काष्ठा module *mod;
 
 	preempt_disable();
-	list_for_each_entry_rcu(mod, &modules, list) {
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
-		if (within_module(addr, mod)) {
-			const char *sym;
+	list_क्रम_each_entry_rcu(mod, &modules, list) अणु
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
+		अगर (within_module(addr, mod)) अणु
+			स्थिर अक्षर *sym;
 
-			sym = find_kallsyms_symbol(mod, addr, NULL, NULL);
-			if (!sym)
-				goto out;
+			sym = find_kallsyms_symbol(mod, addr, शून्य, शून्य);
+			अगर (!sym)
+				जाओ out;
 
 			strlcpy(symname, sym, KSYM_NAME_LEN);
 			preempt_enable();
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 out:
 	preempt_enable();
-	return -ERANGE;
-}
+	वापस -दुस्फल;
+पूर्ण
 
-int lookup_module_symbol_attrs(unsigned long addr, unsigned long *size,
-			unsigned long *offset, char *modname, char *name)
-{
-	struct module *mod;
+पूर्णांक lookup_module_symbol_attrs(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *size,
+			अचिन्हित दीर्घ *offset, अक्षर *modname, अक्षर *name)
+अणु
+	काष्ठा module *mod;
 
 	preempt_disable();
-	list_for_each_entry_rcu(mod, &modules, list) {
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
-		if (within_module(addr, mod)) {
-			const char *sym;
+	list_क्रम_each_entry_rcu(mod, &modules, list) अणु
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
+		अगर (within_module(addr, mod)) अणु
+			स्थिर अक्षर *sym;
 
 			sym = find_kallsyms_symbol(mod, addr, size, offset);
-			if (!sym)
-				goto out;
-			if (modname)
+			अगर (!sym)
+				जाओ out;
+			अगर (modname)
 				strlcpy(modname, mod->name, MODULE_NAME_LEN);
-			if (name)
+			अगर (name)
 				strlcpy(name, sym, KSYM_NAME_LEN);
 			preempt_enable();
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 out:
 	preempt_enable();
-	return -ERANGE;
-}
+	वापस -दुस्फल;
+पूर्ण
 
-int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
-			char *name, char *module_name, int *exported)
-{
-	struct module *mod;
+पूर्णांक module_get_kallsym(अचिन्हित पूर्णांक symnum, अचिन्हित दीर्घ *value, अक्षर *type,
+			अक्षर *name, अक्षर *module_name, पूर्णांक *exported)
+अणु
+	काष्ठा module *mod;
 
 	preempt_disable();
-	list_for_each_entry_rcu(mod, &modules, list) {
-		struct mod_kallsyms *kallsyms;
+	list_क्रम_each_entry_rcu(mod, &modules, list) अणु
+		काष्ठा mod_kallsyms *kallsyms;
 
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
 		kallsyms = rcu_dereference_sched(mod->kallsyms);
-		if (symnum < kallsyms->num_symtab) {
-			const Elf_Sym *sym = &kallsyms->symtab[symnum];
+		अगर (symnum < kallsyms->num_symtab) अणु
+			स्थिर Elf_Sym *sym = &kallsyms->symtab[symnum];
 
 			*value = kallsyms_symbol_value(sym);
 			*type = kallsyms->typetab[symnum];
@@ -4352,195 +4353,195 @@ int module_get_kallsym(unsigned int symnum, unsigned long *value, char *type,
 			strlcpy(module_name, mod->name, MODULE_NAME_LEN);
 			*exported = is_exported(name, *value, mod);
 			preempt_enable();
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		symnum -= kallsyms->num_symtab;
-	}
+	पूर्ण
 	preempt_enable();
-	return -ERANGE;
-}
+	वापस -दुस्फल;
+पूर्ण
 
-/* Given a module and name of symbol, find and return the symbol's value */
-static unsigned long find_kallsyms_symbol_value(struct module *mod, const char *name)
-{
-	unsigned int i;
-	struct mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
+/* Given a module and name of symbol, find and वापस the symbol's value */
+अटल अचिन्हित दीर्घ find_kallsyms_symbol_value(काष्ठा module *mod, स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा mod_kallsyms *kallsyms = rcu_dereference_sched(mod->kallsyms);
 
-	for (i = 0; i < kallsyms->num_symtab; i++) {
-		const Elf_Sym *sym = &kallsyms->symtab[i];
+	क्रम (i = 0; i < kallsyms->num_symtab; i++) अणु
+		स्थिर Elf_Sym *sym = &kallsyms->symtab[i];
 
-		if (strcmp(name, kallsyms_symbol_name(kallsyms, i)) == 0 &&
+		अगर (म_भेद(name, kallsyms_symbol_name(kallsyms, i)) == 0 &&
 		    sym->st_shndx != SHN_UNDEF)
-			return kallsyms_symbol_value(sym);
-	}
-	return 0;
-}
+			वापस kallsyms_symbol_value(sym);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Look for this name: can be of form module:name. */
-unsigned long module_kallsyms_lookup_name(const char *name)
-{
-	struct module *mod;
-	char *colon;
-	unsigned long ret = 0;
+/* Look क्रम this name: can be of क्रमm module:name. */
+अचिन्हित दीर्घ module_kallsyms_lookup_name(स्थिर अक्षर *name)
+अणु
+	काष्ठा module *mod;
+	अक्षर *colon;
+	अचिन्हित दीर्घ ret = 0;
 
-	/* Don't lock: we're in enough trouble already. */
+	/* Don't lock: we're in enough trouble alपढ़ोy. */
 	preempt_disable();
-	if ((colon = strnchr(name, MODULE_NAME_LEN, ':')) != NULL) {
-		if ((mod = find_module_all(name, colon - name, false)) != NULL)
+	अगर ((colon = strnchr(name, MODULE_NAME_LEN, ':')) != शून्य) अणु
+		अगर ((mod = find_module_all(name, colon - name, false)) != शून्य)
 			ret = find_kallsyms_symbol_value(mod, colon+1);
-	} else {
-		list_for_each_entry_rcu(mod, &modules, list) {
-			if (mod->state == MODULE_STATE_UNFORMED)
-				continue;
-			if ((ret = find_kallsyms_symbol_value(mod, name)) != 0)
-				break;
-		}
-	}
+	पूर्ण अन्यथा अणु
+		list_क्रम_each_entry_rcu(mod, &modules, list) अणु
+			अगर (mod->state == MODULE_STATE_UNFORMED)
+				जारी;
+			अगर ((ret = find_kallsyms_symbol_value(mod, name)) != 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	preempt_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_LIVEPATCH
-int module_kallsyms_on_each_symbol(int (*fn)(void *, const char *,
-					     struct module *, unsigned long),
-				   void *data)
-{
-	struct module *mod;
-	unsigned int i;
-	int ret = 0;
+#अगर_घोषित CONFIG_LIVEPATCH
+पूर्णांक module_kallsyms_on_each_symbol(पूर्णांक (*fn)(व्योम *, स्थिर अक्षर *,
+					     काष्ठा module *, अचिन्हित दीर्घ),
+				   व्योम *data)
+अणु
+	काष्ठा module *mod;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&module_mutex);
-	list_for_each_entry(mod, &modules, list) {
-		/* We hold module_mutex: no need for rcu_dereference_sched */
-		struct mod_kallsyms *kallsyms = mod->kallsyms;
+	list_क्रम_each_entry(mod, &modules, list) अणु
+		/* We hold module_mutex: no need क्रम rcu_dereference_sched */
+		काष्ठा mod_kallsyms *kallsyms = mod->kallsyms;
 
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
-		for (i = 0; i < kallsyms->num_symtab; i++) {
-			const Elf_Sym *sym = &kallsyms->symtab[i];
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
+		क्रम (i = 0; i < kallsyms->num_symtab; i++) अणु
+			स्थिर Elf_Sym *sym = &kallsyms->symtab[i];
 
-			if (sym->st_shndx == SHN_UNDEF)
-				continue;
+			अगर (sym->st_shndx == SHN_UNDEF)
+				जारी;
 
 			ret = fn(data, kallsyms_symbol_name(kallsyms, i),
 				 mod, kallsyms_symbol_value(sym));
-			if (ret != 0)
-				break;
-		}
-	}
+			अगर (ret != 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&module_mutex);
-	return ret;
-}
-#endif /* CONFIG_LIVEPATCH */
-#endif /* CONFIG_KALLSYMS */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_LIVEPATCH */
+#पूर्ण_अगर /* CONFIG_KALLSYMS */
 
-static void cfi_init(struct module *mod)
-{
-#ifdef CONFIG_CFI_CLANG
+अटल व्योम cfi_init(काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_CFI_CLANG
 	initcall_t *init;
-	exitcall_t *exit;
+	निकासcall_t *निकास;
 
-	rcu_read_lock_sched();
+	rcu_पढ़ो_lock_sched();
 	mod->cfi_check = (cfi_check_fn)
 		find_kallsyms_symbol_value(mod, "__cfi_check");
 	init = (initcall_t *)
 		find_kallsyms_symbol_value(mod, "__cfi_jt_init_module");
-	exit = (exitcall_t *)
+	निकास = (निकासcall_t *)
 		find_kallsyms_symbol_value(mod, "__cfi_jt_cleanup_module");
-	rcu_read_unlock_sched();
+	rcu_पढ़ो_unlock_sched();
 
-	/* Fix init/exit functions to point to the CFI jump table */
-	if (init)
+	/* Fix init/निकास functions to poपूर्णांक to the CFI jump table */
+	अगर (init)
 		mod->init = *init;
-	if (exit)
-		mod->exit = *exit;
+	अगर (निकास)
+		mod->निकास = *निकास;
 
 	cfi_module_add(mod, module_addr_min);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void cfi_cleanup(struct module *mod)
-{
-#ifdef CONFIG_CFI_CLANG
-	cfi_module_remove(mod, module_addr_min);
-#endif
-}
+अटल व्योम cfi_cleanup(काष्ठा module *mod)
+अणु
+#अगर_घोषित CONFIG_CFI_CLANG
+	cfi_module_हटाओ(mod, module_addr_min);
+#पूर्ण_अगर
+पूर्ण
 
-/* Maximum number of characters written by module_flags() */
-#define MODULE_FLAGS_BUF_SIZE (TAINT_FLAGS_COUNT + 4)
+/* Maximum number of अक्षरacters written by module_flags() */
+#घोषणा MODULE_FLAGS_BUF_SIZE (TAINT_FLAGS_COUNT + 4)
 
 /* Keep in sync with MODULE_FLAGS_BUF_SIZE !!! */
-static char *module_flags(struct module *mod, char *buf)
-{
-	int bx = 0;
+अटल अक्षर *module_flags(काष्ठा module *mod, अक्षर *buf)
+अणु
+	पूर्णांक bx = 0;
 
 	BUG_ON(mod->state == MODULE_STATE_UNFORMED);
-	if (mod->taints ||
+	अगर (mod->taपूर्णांकs ||
 	    mod->state == MODULE_STATE_GOING ||
-	    mod->state == MODULE_STATE_COMING) {
+	    mod->state == MODULE_STATE_COMING) अणु
 		buf[bx++] = '(';
-		bx += module_flags_taint(mod, buf + bx);
-		/* Show a - for module-is-being-unloaded */
-		if (mod->state == MODULE_STATE_GOING)
+		bx += module_flags_taपूर्णांक(mod, buf + bx);
+		/* Show a - क्रम module-is-being-unloaded */
+		अगर (mod->state == MODULE_STATE_GOING)
 			buf[bx++] = '-';
-		/* Show a + for module-is-being-loaded */
-		if (mod->state == MODULE_STATE_COMING)
+		/* Show a + क्रम module-is-being-loaded */
+		अगर (mod->state == MODULE_STATE_COMING)
 			buf[bx++] = '+';
 		buf[bx++] = ')';
-	}
+	पूर्ण
 	buf[bx] = '\0';
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-/* Called by the /proc file system to return a list of modules. */
-static void *m_start(struct seq_file *m, loff_t *pos)
-{
+#अगर_घोषित CONFIG_PROC_FS
+/* Called by the /proc file प्रणाली to वापस a list of modules. */
+अटल व्योम *m_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
 	mutex_lock(&module_mutex);
-	return seq_list_start(&modules, *pos);
-}
+	वापस seq_list_start(&modules, *pos);
+पूर्ण
 
-static void *m_next(struct seq_file *m, void *p, loff_t *pos)
-{
-	return seq_list_next(p, &modules, pos);
-}
+अटल व्योम *m_next(काष्ठा seq_file *m, व्योम *p, loff_t *pos)
+अणु
+	वापस seq_list_next(p, &modules, pos);
+पूर्ण
 
-static void m_stop(struct seq_file *m, void *p)
-{
+अटल व्योम m_stop(काष्ठा seq_file *m, व्योम *p)
+अणु
 	mutex_unlock(&module_mutex);
-}
+पूर्ण
 
-static int m_show(struct seq_file *m, void *p)
-{
-	struct module *mod = list_entry(p, struct module, list);
-	char buf[MODULE_FLAGS_BUF_SIZE];
-	void *value;
+अटल पूर्णांक m_show(काष्ठा seq_file *m, व्योम *p)
+अणु
+	काष्ठा module *mod = list_entry(p, काष्ठा module, list);
+	अक्षर buf[MODULE_FLAGS_BUF_SIZE];
+	व्योम *value;
 
-	/* We always ignore unformed modules. */
-	if (mod->state == MODULE_STATE_UNFORMED)
-		return 0;
+	/* We always ignore unक्रमmed modules. */
+	अगर (mod->state == MODULE_STATE_UNFORMED)
+		वापस 0;
 
-	seq_printf(m, "%s %u",
+	seq_म_लिखो(m, "%s %u",
 		   mod->name, mod->init_layout.size + mod->core_layout.size);
-	print_unload_info(m, mod);
+	prपूर्णांक_unload_info(m, mod);
 
-	/* Informative for users. */
-	seq_printf(m, " %s",
+	/* Inक्रमmative क्रम users. */
+	seq_म_लिखो(m, " %s",
 		   mod->state == MODULE_STATE_GOING ? "Unloading" :
 		   mod->state == MODULE_STATE_COMING ? "Loading" :
 		   "Live");
 	/* Used by oprofile and other similar tools. */
-	value = m->private ? NULL : mod->core_layout.base;
-	seq_printf(m, " 0x%px", value);
+	value = m->निजी ? शून्य : mod->core_layout.base;
+	seq_म_लिखो(m, " 0x%px", value);
 
-	/* Taints info */
-	if (mod->taints)
-		seq_printf(m, " %s", module_flags(mod, buf));
+	/* Taपूर्णांकs info */
+	अगर (mod->taपूर्णांकs)
+		seq_म_लिखो(m, " %s", module_flags(mod, buf));
 
-	seq_puts(m, "\n");
-	return 0;
-}
+	seq_माला_दो(m, "\n");
+	वापस 0;
+पूर्ण
 
 /*
  * Format: modulename size refcount deps address
@@ -4548,61 +4549,61 @@ static int m_show(struct seq_file *m, void *p)
  * Where refcount is a number or -, and deps is a comma-separated list
  * of depends or -.
  */
-static const struct seq_operations modules_op = {
+अटल स्थिर काष्ठा seq_operations modules_op = अणु
 	.start	= m_start,
 	.next	= m_next,
 	.stop	= m_stop,
 	.show	= m_show
-};
+पूर्ण;
 
 /*
- * This also sets the "private" pointer to non-NULL if the
- * kernel pointers should be hidden (so you can just test
- * "m->private" to see if you should keep the values private).
+ * This also sets the "private" poपूर्णांकer to non-शून्य अगर the
+ * kernel poपूर्णांकers should be hidden (so you can just test
+ * "m->private" to see अगर you should keep the values निजी).
  *
- * We use the same logic as for /proc/kallsyms.
+ * We use the same logic as क्रम /proc/kallsyms.
  */
-static int modules_open(struct inode *inode, struct file *file)
-{
-	int err = seq_open(file, &modules_op);
+अटल पूर्णांक modules_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक err = seq_खोलो(file, &modules_op);
 
-	if (!err) {
-		struct seq_file *m = file->private_data;
-		m->private = kallsyms_show_value(file->f_cred) ? NULL : (void *)8ul;
-	}
+	अगर (!err) अणु
+		काष्ठा seq_file *m = file->निजी_data;
+		m->निजी = kallsyms_show_value(file->f_cred) ? शून्य : (व्योम *)8ul;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct proc_ops modules_proc_ops = {
+अटल स्थिर काष्ठा proc_ops modules_proc_ops = अणु
 	.proc_flags	= PROC_ENTRY_PERMANENT,
-	.proc_open	= modules_open,
-	.proc_read	= seq_read,
+	.proc_खोलो	= modules_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= seq_release,
-};
+पूर्ण;
 
-static int __init proc_modules_init(void)
-{
-	proc_create("modules", 0, NULL, &modules_proc_ops);
-	return 0;
-}
+अटल पूर्णांक __init proc_modules_init(व्योम)
+अणु
+	proc_create("modules", 0, शून्य, &modules_proc_ops);
+	वापस 0;
+पूर्ण
 module_init(proc_modules_init);
-#endif
+#पूर्ण_अगर
 
-/* Given an address, look for it in the module exception tables. */
-const struct exception_table_entry *search_module_extables(unsigned long addr)
-{
-	const struct exception_table_entry *e = NULL;
-	struct module *mod;
+/* Given an address, look क्रम it in the module exception tables. */
+स्थिर काष्ठा exception_table_entry *search_module_extables(अचिन्हित दीर्घ addr)
+अणु
+	स्थिर काष्ठा exception_table_entry *e = शून्य;
+	काष्ठा module *mod;
 
 	preempt_disable();
 	mod = __module_address(addr);
-	if (!mod)
-		goto out;
+	अगर (!mod)
+		जाओ out;
 
-	if (!mod->num_exentries)
-		goto out;
+	अगर (!mod->num_exentries)
+		जाओ out;
 
 	e = search_extable(mod->extable,
 			   mod->num_exentries,
@@ -4611,124 +4612,124 @@ out:
 	preempt_enable();
 
 	/*
-	 * Now, if we found one, we are running inside it now, hence
+	 * Now, अगर we found one, we are running inside it now, hence
 	 * we cannot unload the module, hence no refcnt needed.
 	 */
-	return e;
-}
+	वापस e;
+पूर्ण
 
 /**
  * is_module_address() - is this address inside a module?
  * @addr: the address to check.
  *
- * See is_module_text_address() if you simply want to see if the address
+ * See is_module_text_address() अगर you simply want to see अगर the address
  * is code (not data).
  */
-bool is_module_address(unsigned long addr)
-{
+bool is_module_address(अचिन्हित दीर्घ addr)
+अणु
 	bool ret;
 
 	preempt_disable();
-	ret = __module_address(addr) != NULL;
+	ret = __module_address(addr) != शून्य;
 	preempt_enable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * __module_address() - get the module which contains an address.
  * @addr: the address.
  *
  * Must be called with preempt disabled or module mutex held so that
- * module doesn't get freed during this.
+ * module करोesn't get मुक्तd during this.
  */
-struct module *__module_address(unsigned long addr)
-{
-	struct module *mod;
+काष्ठा module *__module_address(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा module *mod;
 
-	if (addr < module_addr_min || addr > module_addr_max)
-		return NULL;
+	अगर (addr < module_addr_min || addr > module_addr_max)
+		वापस शून्य;
 
-	module_assert_mutex_or_preempt();
+	module_निश्चित_mutex_or_preempt();
 
 	mod = mod_find(addr);
-	if (mod) {
+	अगर (mod) अणु
 		BUG_ON(!within_module(addr, mod));
-		if (mod->state == MODULE_STATE_UNFORMED)
-			mod = NULL;
-	}
-	return mod;
-}
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			mod = शून्य;
+	पूर्ण
+	वापस mod;
+पूर्ण
 
 /**
  * is_module_text_address() - is this address inside module code?
  * @addr: the address to check.
  *
- * See is_module_address() if you simply want to see if the address is
- * anywhere in a module.  See kernel_text_address() for testing if an
+ * See is_module_address() अगर you simply want to see अगर the address is
+ * anywhere in a module.  See kernel_text_address() क्रम testing अगर an
  * address corresponds to kernel or module code.
  */
-bool is_module_text_address(unsigned long addr)
-{
+bool is_module_text_address(अचिन्हित दीर्घ addr)
+अणु
 	bool ret;
 
 	preempt_disable();
-	ret = __module_text_address(addr) != NULL;
+	ret = __module_text_address(addr) != शून्य;
 	preempt_enable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * __module_text_address() - get the module whose code contains an address.
  * @addr: the address.
  *
  * Must be called with preempt disabled or module mutex held so that
- * module doesn't get freed during this.
+ * module करोesn't get मुक्तd during this.
  */
-struct module *__module_text_address(unsigned long addr)
-{
-	struct module *mod = __module_address(addr);
-	if (mod) {
+काष्ठा module *__module_text_address(अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा module *mod = __module_address(addr);
+	अगर (mod) अणु
 		/* Make sure it's within the text section. */
-		if (!within(addr, mod->init_layout.base, mod->init_layout.text_size)
+		अगर (!within(addr, mod->init_layout.base, mod->init_layout.text_size)
 		    && !within(addr, mod->core_layout.base, mod->core_layout.text_size))
-			mod = NULL;
-	}
-	return mod;
-}
+			mod = शून्य;
+	पूर्ण
+	वापस mod;
+पूर्ण
 
 /* Don't grab lock, we're oopsing. */
-void print_modules(void)
-{
-	struct module *mod;
-	char buf[MODULE_FLAGS_BUF_SIZE];
+व्योम prपूर्णांक_modules(व्योम)
+अणु
+	काष्ठा module *mod;
+	अक्षर buf[MODULE_FLAGS_BUF_SIZE];
 
-	printk(KERN_DEFAULT "Modules linked in:");
-	/* Most callers should already have preempt disabled, but make sure */
+	prपूर्णांकk(KERN_DEFAULT "Modules linked in:");
+	/* Most callers should alपढ़ोy have preempt disabled, but make sure */
 	preempt_disable();
-	list_for_each_entry_rcu(mod, &modules, list) {
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
+	list_क्रम_each_entry_rcu(mod, &modules, list) अणु
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
 		pr_cont(" %s%s", mod->name, module_flags(mod, buf));
-	}
+	पूर्ण
 	preempt_enable();
-	if (last_unloaded_module[0])
+	अगर (last_unloaded_module[0])
 		pr_cont(" [last unloaded: %s]", last_unloaded_module);
 	pr_cont("\n");
-}
+पूर्ण
 
-#ifdef CONFIG_MODVERSIONS
+#अगर_घोषित CONFIG_MODVERSIONS
 /*
- * Generate the signature for all relevant module structures here.
- * If these change, we don't want to try to parse the module.
+ * Generate the signature क्रम all relevant module काष्ठाures here.
+ * If these change, we करोn't want to try to parse the module.
  */
-void module_layout(struct module *mod,
-		   struct modversion_info *ver,
-		   struct kernel_param *kp,
-		   struct kernel_symbol *ks,
-		   struct tracepoint * const *tp)
-{
-}
+व्योम module_layout(काष्ठा module *mod,
+		   काष्ठा modversion_info *ver,
+		   काष्ठा kernel_param *kp,
+		   काष्ठा kernel_symbol *ks,
+		   काष्ठा tracepoपूर्णांक * स्थिर *tp)
+अणु
+पूर्ण
 EXPORT_SYMBOL(module_layout);
-#endif
+#पूर्ण_अगर

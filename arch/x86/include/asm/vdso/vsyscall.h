@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_VDSO_VSYSCALL_H
-#define __ASM_VDSO_VSYSCALL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_VDSO_VSYSCALL_H
+#घोषणा __ASM_VDSO_VSYSCALL_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/hrtimer.h>
-#include <linux/timekeeper_internal.h>
-#include <vdso/datapage.h>
-#include <asm/vgtod.h>
-#include <asm/vvar.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/समयkeeper_पूर्णांकernal.h>
+#समावेश <vdso/datapage.h>
+#समावेश <यंत्र/vgtod.h>
+#समावेश <यंत्र/vvar.h>
 
-DEFINE_VVAR(struct vdso_data, _vdso_data);
+DEFINE_VVAR(काष्ठा vdso_data, _vdso_data);
 /*
- * Update the vDSO data page to keep in sync with kernel timekeeping.
+ * Update the vDSO data page to keep in sync with kernel समयkeeping.
  */
-static __always_inline
-struct vdso_data *__x86_get_k_vdso_data(void)
-{
-	return _vdso_data;
-}
-#define __arch_get_k_vdso_data __x86_get_k_vdso_data
+अटल __always_अंतरभूत
+काष्ठा vdso_data *__x86_get_k_vdso_data(व्योम)
+अणु
+	वापस _vdso_data;
+पूर्ण
+#घोषणा __arch_get_k_vdso_data __x86_get_k_vdso_data
 
-/* The asm-generic header needs to be included after the definitions above */
-#include <asm-generic/vdso/vsyscall.h>
+/* The यंत्र-generic header needs to be included after the definitions above */
+#समावेश <यंत्र-generic/vdso/vsyscall.h>
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __ASM_VDSO_VSYSCALL_H */
+#पूर्ण_अगर /* __ASM_VDSO_VSYSCALL_H */

@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2019, Mellanox Technologies inc.  All rights reserved.
  */
 
-#include <rdma/uverbs_std_types.h>
-#include <rdma/uverbs_ioctl.h>
-#include "rdma_core.h"
-#include "uverbs.h"
+#समावेश <rdma/uverbs_std_types.h>
+#समावेश <rdma/uverbs_ioctl.h>
+#समावेश "rdma_core.h"
+#समावेश "uverbs.h"
 
-static int UVERBS_HANDLER(UVERBS_METHOD_ASYNC_EVENT_ALLOC)(
-	struct uverbs_attr_bundle *attrs)
-{
-	struct ib_uobject *uobj =
+अटल पूर्णांक UVERBS_HANDLER(UVERBS_METHOD_ASYNC_EVENT_ALLOC)(
+	काष्ठा uverbs_attr_bundle *attrs)
+अणु
+	काष्ठा ib_uobject *uobj =
 		uverbs_attr_get_uobject(attrs, UVERBS_METHOD_ASYNC_EVENT_ALLOC);
 
 	ib_uverbs_init_async_event_file(
-		container_of(uobj, struct ib_uverbs_async_event_file, uobj));
-	return 0;
-}
+		container_of(uobj, काष्ठा ib_uverbs_async_event_file, uobj));
+	वापस 0;
+पूर्ण
 
-static void uverbs_async_event_destroy_uobj(struct ib_uobject *uobj,
-					    enum rdma_remove_reason why)
-{
-	struct ib_uverbs_async_event_file *event_file =
-		container_of(uobj, struct ib_uverbs_async_event_file, uobj);
+अटल व्योम uverbs_async_event_destroy_uobj(काष्ठा ib_uobject *uobj,
+					    क्रमागत rdma_हटाओ_reason why)
+अणु
+	काष्ठा ib_uverbs_async_event_file *event_file =
+		container_of(uobj, काष्ठा ib_uverbs_async_event_file, uobj);
 
-	ib_unregister_event_handler(&event_file->event_handler);
+	ib_unरेजिस्टर_event_handler(&event_file->event_handler);
 
-	if (why == RDMA_REMOVE_DRIVER_REMOVE)
+	अगर (why == RDMA_REMOVE_DRIVER_REMOVE)
 		ib_uverbs_async_handler(event_file, 0, IB_EVENT_DEVICE_FATAL,
-					NULL, NULL);
-}
+					शून्य, शून्य);
+पूर्ण
 
-int uverbs_async_event_release(struct inode *inode, struct file *filp)
-{
-	struct ib_uverbs_async_event_file *event_file;
-	struct ib_uobject *uobj = filp->private_data;
-	int ret;
+पूर्णांक uverbs_async_event_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा ib_uverbs_async_event_file *event_file;
+	काष्ठा ib_uobject *uobj = filp->निजी_data;
+	पूर्णांक ret;
 
-	if (!uobj)
-		return uverbs_uobject_fd_release(inode, filp);
+	अगर (!uobj)
+		वापस uverbs_uobject_fd_release(inode, filp);
 
 	event_file =
-		container_of(uobj, struct ib_uverbs_async_event_file, uobj);
+		container_of(uobj, काष्ठा ib_uverbs_async_event_file, uobj);
 
 	/*
 	 * The async event FD has to deliver IB_EVENT_DEVICE_FATAL even after
@@ -52,10 +53,10 @@ int uverbs_async_event_release(struct inode *inode, struct file *filp)
 	 */
 	uverbs_uobject_get(uobj);
 	ret = uverbs_uobject_fd_release(inode, filp);
-	ib_uverbs_free_event_queue(&event_file->ev_queue);
+	ib_uverbs_मुक्त_event_queue(&event_file->ev_queue);
 	uverbs_uobject_put(uobj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 DECLARE_UVERBS_NAMED_METHOD(
 	UVERBS_METHOD_ASYNC_EVENT_ALLOC,
@@ -66,14 +67,14 @@ DECLARE_UVERBS_NAMED_METHOD(
 
 DECLARE_UVERBS_NAMED_OBJECT(
 	UVERBS_OBJECT_ASYNC_EVENT,
-	UVERBS_TYPE_ALLOC_FD(sizeof(struct ib_uverbs_async_event_file),
+	UVERBS_TYPE_ALLOC_FD(माप(काष्ठा ib_uverbs_async_event_file),
 			     uverbs_async_event_destroy_uobj,
 			     &uverbs_async_event_fops,
 			     "[infinibandevent]",
 			     O_RDONLY),
 	&UVERBS_METHOD(UVERBS_METHOD_ASYNC_EVENT_ALLOC));
 
-const struct uapi_definition uverbs_def_obj_async_fd[] = {
+स्थिर काष्ठा uapi_definition uverbs_def_obj_async_fd[] = अणु
 	UAPI_DEF_CHAIN_OBJ_TREE_NAMED(UVERBS_OBJECT_ASYNC_EVENT),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;

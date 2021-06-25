@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2020 Texas Instruments Incorporated - http://www.ti.com/
  */
 
-#ifndef AM65_CPSW_QOS_H_
-#define AM65_CPSW_QOS_H_
+#अगर_अघोषित AM65_CPSW_QOS_H_
+#घोषणा AM65_CPSW_QOS_H_
 
-#include <linux/netdevice.h>
-#include <net/pkt_sched.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/pkt_sched.h>
 
-struct am65_cpsw_est {
-	int buf;
+काष्ठा am65_cpsw_est अणु
+	पूर्णांक buf;
 	/* has to be the last one */
-	struct tc_taprio_qopt_offload taprio;
-};
+	काष्ठा tc_taprio_qopt_offload taprio;
+पूर्ण;
 
-struct am65_cpsw_qos {
-	struct am65_cpsw_est *est_admin;
-	struct am65_cpsw_est *est_oper;
-	ktime_t link_down_time;
-	int link_speed;
-};
+काष्ठा am65_cpsw_qos अणु
+	काष्ठा am65_cpsw_est *est_admin;
+	काष्ठा am65_cpsw_est *est_oper;
+	kसमय_प्रकार link_करोwn_समय;
+	पूर्णांक link_speed;
+पूर्ण;
 
-int am65_cpsw_qos_ndo_setup_tc(struct net_device *ndev, enum tc_setup_type type,
-			       void *type_data);
-void am65_cpsw_qos_link_up(struct net_device *ndev, int link_speed);
-void am65_cpsw_qos_link_down(struct net_device *ndev);
+पूर्णांक am65_cpsw_qos_nकरो_setup_tc(काष्ठा net_device *ndev, क्रमागत tc_setup_type type,
+			       व्योम *type_data);
+व्योम am65_cpsw_qos_link_up(काष्ठा net_device *ndev, पूर्णांक link_speed);
+व्योम am65_cpsw_qos_link_करोwn(काष्ठा net_device *ndev);
 
-#endif /* AM65_CPSW_QOS_H_ */
+#पूर्ण_अगर /* AM65_CPSW_QOS_H_ */

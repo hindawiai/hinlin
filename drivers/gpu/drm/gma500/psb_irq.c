@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**************************************************************************
  * Copyright (c) 2007, Intel Corporation.
  * All Rights Reserved.
@@ -8,113 +9,113 @@
  *
  **************************************************************************/
 
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "power.h"
-#include "psb_drv.h"
-#include "psb_intel_reg.h"
-#include "psb_irq.h"
-#include "psb_reg.h"
+#समावेश "power.h"
+#समावेश "psb_drv.h"
+#समावेश "psb_intel_reg.h"
+#समावेश "psb_irq.h"
+#समावेश "psb_reg.h"
 
 /*
- * inline functions
+ * अंतरभूत functions
  */
 
-static inline u32
-psb_pipestat(int pipe)
-{
-	if (pipe == 0)
-		return PIPEASTAT;
-	if (pipe == 1)
-		return PIPEBSTAT;
-	if (pipe == 2)
-		return PIPECSTAT;
+अटल अंतरभूत u32
+psb_pipestat(पूर्णांक pipe)
+अणु
+	अगर (pipe == 0)
+		वापस PIPEASTAT;
+	अगर (pipe == 1)
+		वापस PIPEBSTAT;
+	अगर (pipe == 2)
+		वापस PIPECSTAT;
 	BUG();
-}
+पूर्ण
 
-static inline u32
-mid_pipe_event(int pipe)
-{
-	if (pipe == 0)
-		return _PSB_PIPEA_EVENT_FLAG;
-	if (pipe == 1)
-		return _MDFLD_PIPEB_EVENT_FLAG;
-	if (pipe == 2)
-		return _MDFLD_PIPEC_EVENT_FLAG;
+अटल अंतरभूत u32
+mid_pipe_event(पूर्णांक pipe)
+अणु
+	अगर (pipe == 0)
+		वापस _PSB_PIPEA_EVENT_FLAG;
+	अगर (pipe == 1)
+		वापस _MDFLD_PIPEB_EVENT_FLAG;
+	अगर (pipe == 2)
+		वापस _MDFLD_PIPEC_EVENT_FLAG;
 	BUG();
-}
+पूर्ण
 
-static inline u32
-mid_pipe_vsync(int pipe)
-{
-	if (pipe == 0)
-		return _PSB_VSYNC_PIPEA_FLAG;
-	if (pipe == 1)
-		return _PSB_VSYNC_PIPEB_FLAG;
-	if (pipe == 2)
-		return _MDFLD_PIPEC_VBLANK_FLAG;
+अटल अंतरभूत u32
+mid_pipe_vsync(पूर्णांक pipe)
+अणु
+	अगर (pipe == 0)
+		वापस _PSB_VSYNC_PIPEA_FLAG;
+	अगर (pipe == 1)
+		वापस _PSB_VSYNC_PIPEB_FLAG;
+	अगर (pipe == 2)
+		वापस _MDFLD_PIPEC_VBLANK_FLAG;
 	BUG();
-}
+पूर्ण
 
-static inline u32
-mid_pipeconf(int pipe)
-{
-	if (pipe == 0)
-		return PIPEACONF;
-	if (pipe == 1)
-		return PIPEBCONF;
-	if (pipe == 2)
-		return PIPECCONF;
+अटल अंतरभूत u32
+mid_pipeconf(पूर्णांक pipe)
+अणु
+	अगर (pipe == 0)
+		वापस PIPEACONF;
+	अगर (pipe == 1)
+		वापस PIPEBCONF;
+	अगर (pipe == 2)
+		वापस PIPECCONF;
 	BUG();
-}
+पूर्ण
 
-void
-psb_enable_pipestat(struct drm_psb_private *dev_priv, int pipe, u32 mask)
-{
-	if ((dev_priv->pipestat[pipe] & mask) != mask) {
+व्योम
+psb_enable_pipestat(काष्ठा drm_psb_निजी *dev_priv, पूर्णांक pipe, u32 mask)
+अणु
+	अगर ((dev_priv->pipestat[pipe] & mask) != mask) अणु
 		u32 reg = psb_pipestat(pipe);
 		dev_priv->pipestat[pipe] |= mask;
-		/* Enable the interrupt, clear any pending status */
-		if (gma_power_begin(dev_priv->dev, false)) {
-			u32 writeVal = PSB_RVDC32(reg);
-			writeVal |= (mask | (mask >> 16));
-			PSB_WVDC32(writeVal, reg);
-			(void) PSB_RVDC32(reg);
-			gma_power_end(dev_priv->dev);
-		}
-	}
-}
+		/* Enable the पूर्णांकerrupt, clear any pending status */
+		अगर (gma_घातer_begin(dev_priv->dev, false)) अणु
+			u32 ग_लिखोVal = PSB_RVDC32(reg);
+			ग_लिखोVal |= (mask | (mask >> 16));
+			PSB_WVDC32(ग_लिखोVal, reg);
+			(व्योम) PSB_RVDC32(reg);
+			gma_घातer_end(dev_priv->dev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
-psb_disable_pipestat(struct drm_psb_private *dev_priv, int pipe, u32 mask)
-{
-	if ((dev_priv->pipestat[pipe] & mask) != 0) {
+व्योम
+psb_disable_pipestat(काष्ठा drm_psb_निजी *dev_priv, पूर्णांक pipe, u32 mask)
+अणु
+	अगर ((dev_priv->pipestat[pipe] & mask) != 0) अणु
 		u32 reg = psb_pipestat(pipe);
 		dev_priv->pipestat[pipe] &= ~mask;
-		if (gma_power_begin(dev_priv->dev, false)) {
-			u32 writeVal = PSB_RVDC32(reg);
-			writeVal &= ~mask;
-			PSB_WVDC32(writeVal, reg);
-			(void) PSB_RVDC32(reg);
-			gma_power_end(dev_priv->dev);
-		}
-	}
-}
+		अगर (gma_घातer_begin(dev_priv->dev, false)) अणु
+			u32 ग_लिखोVal = PSB_RVDC32(reg);
+			ग_लिखोVal &= ~mask;
+			PSB_WVDC32(ग_लिखोVal, reg);
+			(व्योम) PSB_RVDC32(reg);
+			gma_घातer_end(dev_priv->dev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Display controller interrupt handler for pipe event.
+ * Display controller पूर्णांकerrupt handler क्रम pipe event.
  */
-static void mid_pipe_event_handler(struct drm_device *dev, int pipe)
-{
-	struct drm_psb_private *dev_priv =
-	    (struct drm_psb_private *) dev->dev_private;
+अटल व्योम mid_pipe_event_handler(काष्ठा drm_device *dev, पूर्णांक pipe)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv =
+	    (काष्ठा drm_psb_निजी *) dev->dev_निजी;
 
-	uint32_t pipe_stat_val = 0;
-	uint32_t pipe_stat_reg = psb_pipestat(pipe);
-	uint32_t pipe_enable = dev_priv->pipestat[pipe];
-	uint32_t pipe_status = dev_priv->pipestat[pipe] >> 16;
-	uint32_t pipe_clear;
-	uint32_t i = 0;
+	uपूर्णांक32_t pipe_stat_val = 0;
+	uपूर्णांक32_t pipe_stat_reg = psb_pipestat(pipe);
+	uपूर्णांक32_t pipe_enable = dev_priv->pipestat[pipe];
+	uपूर्णांक32_t pipe_status = dev_priv->pipestat[pipe] >> 16;
+	uपूर्णांक32_t pipe_clear;
+	uपूर्णांक32_t i = 0;
 
 	spin_lock(&dev_priv->irqmask_lock);
 
@@ -124,275 +125,275 @@ static void mid_pipe_event_handler(struct drm_device *dev, int pipe)
 
 	spin_unlock(&dev_priv->irqmask_lock);
 
-	/* Clear the 2nd level interrupt status bits
-	 * Sometimes the bits are very sticky so we repeat until they unstick */
-	for (i = 0; i < 0xffff; i++) {
+	/* Clear the 2nd level पूर्णांकerrupt status bits
+	 * Someबार the bits are very sticky so we repeat until they unstick */
+	क्रम (i = 0; i < 0xffff; i++) अणु
 		PSB_WVDC32(PSB_RVDC32(pipe_stat_reg), pipe_stat_reg);
 		pipe_clear = PSB_RVDC32(pipe_stat_reg) & pipe_status;
 
-		if (pipe_clear == 0)
-			break;
-	}
+		अगर (pipe_clear == 0)
+			अवरोध;
+	पूर्ण
 
-	if (pipe_clear)
+	अगर (pipe_clear)
 		dev_err(dev->dev,
 		"%s, can't clear status bits for pipe %d, its value = 0x%x.\n",
 		__func__, pipe, PSB_RVDC32(pipe_stat_reg));
 
-	if (pipe_stat_val & PIPE_VBLANK_STATUS) {
-		struct drm_crtc *crtc = drm_crtc_from_index(dev, pipe);
-		struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
-		unsigned long flags;
+	अगर (pipe_stat_val & PIPE_VBLANK_STATUS) अणु
+		काष्ठा drm_crtc *crtc = drm_crtc_from_index(dev, pipe);
+		काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
+		अचिन्हित दीर्घ flags;
 
 		drm_handle_vblank(dev, pipe);
 
 		spin_lock_irqsave(&dev->event_lock, flags);
-		if (gma_crtc->page_flip_event) {
+		अगर (gma_crtc->page_flip_event) अणु
 			drm_crtc_send_vblank_event(crtc,
 						   gma_crtc->page_flip_event);
-			gma_crtc->page_flip_event = NULL;
+			gma_crtc->page_flip_event = शून्य;
 			drm_crtc_vblank_put(crtc);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&dev->event_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Display controller interrupt handler.
+ * Display controller पूर्णांकerrupt handler.
  */
-static void psb_vdc_interrupt(struct drm_device *dev, uint32_t vdc_stat)
-{
-	if (vdc_stat & _PSB_IRQ_ASLE)
-		psb_intel_opregion_asle_intr(dev);
+अटल व्योम psb_vdc_पूर्णांकerrupt(काष्ठा drm_device *dev, uपूर्णांक32_t vdc_stat)
+अणु
+	अगर (vdc_stat & _PSB_IRQ_ASLE)
+		psb_पूर्णांकel_opregion_asle_पूर्णांकr(dev);
 
-	if (vdc_stat & _PSB_VSYNC_PIPEA_FLAG)
+	अगर (vdc_stat & _PSB_VSYNC_PIPEA_FLAG)
 		mid_pipe_event_handler(dev, 0);
 
-	if (vdc_stat & _PSB_VSYNC_PIPEB_FLAG)
+	अगर (vdc_stat & _PSB_VSYNC_PIPEB_FLAG)
 		mid_pipe_event_handler(dev, 1);
-}
+पूर्ण
 
 /*
- * SGX interrupt handler
+ * SGX पूर्णांकerrupt handler
  */
-static void psb_sgx_interrupt(struct drm_device *dev, u32 stat_1, u32 stat_2)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अटल व्योम psb_sgx_पूर्णांकerrupt(काष्ठा drm_device *dev, u32 stat_1, u32 stat_2)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 	u32 val, addr;
 
-	if (stat_1 & _PSB_CE_TWOD_COMPLETE)
+	अगर (stat_1 & _PSB_CE_TWOD_COMPLETE)
 		val = PSB_RSGX32(PSB_CR_2D_BLIT_STATUS);
 
-	if (stat_2 & _PSB_CE2_BIF_REQUESTER_FAULT) {
+	अगर (stat_2 & _PSB_CE2_BIF_REQUESTER_FAULT) अणु
 		val = PSB_RSGX32(PSB_CR_BIF_INT_STAT);
 		addr = PSB_RSGX32(PSB_CR_BIF_FAULT);
-		if (val) {
-			if (val & _PSB_CBI_STAT_PF_N_RW)
+		अगर (val) अणु
+			अगर (val & _PSB_CBI_STAT_PF_N_RW)
 				DRM_ERROR("SGX MMU page fault:");
-			else
+			अन्यथा
 				DRM_ERROR("SGX MMU read / write protection fault:");
 
-			if (val & _PSB_CBI_STAT_FAULT_CACHE)
+			अगर (val & _PSB_CBI_STAT_FAULT_CACHE)
 				DRM_ERROR("\tCache requestor");
-			if (val & _PSB_CBI_STAT_FAULT_TA)
+			अगर (val & _PSB_CBI_STAT_FAULT_TA)
 				DRM_ERROR("\tTA requestor");
-			if (val & _PSB_CBI_STAT_FAULT_VDM)
+			अगर (val & _PSB_CBI_STAT_FAULT_VDM)
 				DRM_ERROR("\tVDM requestor");
-			if (val & _PSB_CBI_STAT_FAULT_2D)
+			अगर (val & _PSB_CBI_STAT_FAULT_2D)
 				DRM_ERROR("\t2D requestor");
-			if (val & _PSB_CBI_STAT_FAULT_PBE)
+			अगर (val & _PSB_CBI_STAT_FAULT_PBE)
 				DRM_ERROR("\tPBE requestor");
-			if (val & _PSB_CBI_STAT_FAULT_TSP)
+			अगर (val & _PSB_CBI_STAT_FAULT_TSP)
 				DRM_ERROR("\tTSP requestor");
-			if (val & _PSB_CBI_STAT_FAULT_ISP)
+			अगर (val & _PSB_CBI_STAT_FAULT_ISP)
 				DRM_ERROR("\tISP requestor");
-			if (val & _PSB_CBI_STAT_FAULT_USSEPDS)
+			अगर (val & _PSB_CBI_STAT_FAULT_USSEPDS)
 				DRM_ERROR("\tUSSEPDS requestor");
-			if (val & _PSB_CBI_STAT_FAULT_HOST)
+			अगर (val & _PSB_CBI_STAT_FAULT_HOST)
 				DRM_ERROR("\tHost requestor");
 
 			DRM_ERROR("\tMMU failing address is 0x%08x.\n",
-				  (unsigned int)addr);
-		}
-	}
+				  (अचिन्हित पूर्णांक)addr);
+		पूर्ण
+	पूर्ण
 
 	/* Clear bits */
 	PSB_WSGX32(stat_1, PSB_CR_EVENT_HOST_CLEAR);
 	PSB_WSGX32(stat_2, PSB_CR_EVENT_HOST_CLEAR2);
 	PSB_RSGX32(PSB_CR_EVENT_HOST_CLEAR2);
-}
+पूर्ण
 
-irqreturn_t psb_irq_handler(int irq, void *arg)
-{
-	struct drm_device *dev = arg;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	uint32_t vdc_stat, dsp_int = 0, sgx_int = 0, hotplug_int = 0;
+irqवापस_t psb_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा drm_device *dev = arg;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	uपूर्णांक32_t vdc_stat, dsp_पूर्णांक = 0, sgx_पूर्णांक = 0, hotplug_पूर्णांक = 0;
 	u32 sgx_stat_1, sgx_stat_2;
-	int handled = 0;
+	पूर्णांक handled = 0;
 
 	spin_lock(&dev_priv->irqmask_lock);
 
 	vdc_stat = PSB_RVDC32(PSB_INT_IDENTITY_R);
 
-	if (vdc_stat & (_PSB_PIPE_EVENT_FLAG|_PSB_IRQ_ASLE))
-		dsp_int = 1;
+	अगर (vdc_stat & (_PSB_PIPE_EVENT_FLAG|_PSB_IRQ_ASLE))
+		dsp_पूर्णांक = 1;
 
-	if (vdc_stat & _PSB_IRQ_SGX_FLAG)
-		sgx_int = 1;
-	if (vdc_stat & _PSB_IRQ_DISP_HOTSYNC)
-		hotplug_int = 1;
+	अगर (vdc_stat & _PSB_IRQ_SGX_FLAG)
+		sgx_पूर्णांक = 1;
+	अगर (vdc_stat & _PSB_IRQ_DISP_HOTSYNC)
+		hotplug_पूर्णांक = 1;
 
 	vdc_stat &= dev_priv->vdc_irq_mask;
 	spin_unlock(&dev_priv->irqmask_lock);
 
-	if (dsp_int && gma_power_is_on(dev)) {
-		psb_vdc_interrupt(dev, vdc_stat);
+	अगर (dsp_पूर्णांक && gma_घातer_is_on(dev)) अणु
+		psb_vdc_पूर्णांकerrupt(dev, vdc_stat);
 		handled = 1;
-	}
+	पूर्ण
 
-	if (sgx_int) {
+	अगर (sgx_पूर्णांक) अणु
 		sgx_stat_1 = PSB_RSGX32(PSB_CR_EVENT_STATUS);
 		sgx_stat_2 = PSB_RSGX32(PSB_CR_EVENT_STATUS2);
-		psb_sgx_interrupt(dev, sgx_stat_1, sgx_stat_2);
+		psb_sgx_पूर्णांकerrupt(dev, sgx_stat_1, sgx_stat_2);
 		handled = 1;
-	}
+	पूर्ण
 
 	/* Note: this bit has other meanings on some devices, so we will
-	   need to address that later if it ever matters */
-	if (hotplug_int && dev_priv->ops->hotplug) {
+	   need to address that later अगर it ever matters */
+	अगर (hotplug_पूर्णांक && dev_priv->ops->hotplug) अणु
 		handled = dev_priv->ops->hotplug(dev);
 		REG_WRITE(PORT_HOTPLUG_STAT, REG_READ(PORT_HOTPLUG_STAT));
-	}
+	पूर्ण
 
 	PSB_WVDC32(vdc_stat, PSB_INT_IDENTITY_R);
-	(void) PSB_RVDC32(PSB_INT_IDENTITY_R);
+	(व्योम) PSB_RVDC32(PSB_INT_IDENTITY_R);
 	rmb();
 
-	if (!handled)
-		return IRQ_NONE;
+	अगर (!handled)
+		वापस IRQ_NONE;
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void psb_irq_preinstall(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv =
-	    (struct drm_psb_private *) dev->dev_private;
-	unsigned long irqflags;
+व्योम psb_irq_preinstall(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv =
+	    (काष्ठा drm_psb_निजी *) dev->dev_निजी;
+	अचिन्हित दीर्घ irqflags;
 
 	spin_lock_irqsave(&dev_priv->irqmask_lock, irqflags);
 
-	if (gma_power_is_on(dev)) {
+	अगर (gma_घातer_is_on(dev)) अणु
 		PSB_WVDC32(0xFFFFFFFF, PSB_HWSTAM);
 		PSB_WVDC32(0x00000000, PSB_INT_MASK_R);
 		PSB_WVDC32(0x00000000, PSB_INT_ENABLE_R);
 		PSB_WSGX32(0x00000000, PSB_CR_EVENT_HOST_ENABLE);
 		PSB_RSGX32(PSB_CR_EVENT_HOST_ENABLE);
-	}
-	if (dev->vblank[0].enabled)
+	पूर्ण
+	अगर (dev->vblank[0].enabled)
 		dev_priv->vdc_irq_mask |= _PSB_VSYNC_PIPEA_FLAG;
-	if (dev->vblank[1].enabled)
+	अगर (dev->vblank[1].enabled)
 		dev_priv->vdc_irq_mask |= _PSB_VSYNC_PIPEB_FLAG;
 
 	/* Revisit this area - want per device masks ? */
-	if (dev_priv->ops->hotplug)
+	अगर (dev_priv->ops->hotplug)
 		dev_priv->vdc_irq_mask |= _PSB_IRQ_DISP_HOTSYNC;
 	dev_priv->vdc_irq_mask |= _PSB_IRQ_ASLE | _PSB_IRQ_SGX_FLAG;
 
-	/* This register is safe even if display island is off */
+	/* This रेजिस्टर is safe even अगर display island is off */
 	PSB_WVDC32(~dev_priv->vdc_irq_mask, PSB_INT_MASK_R);
 	spin_unlock_irqrestore(&dev_priv->irqmask_lock, irqflags);
-}
+पूर्ण
 
-int psb_irq_postinstall(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	unsigned long irqflags;
-	unsigned int i;
+पूर्णांक psb_irq_postinstall(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	अचिन्हित दीर्घ irqflags;
+	अचिन्हित पूर्णांक i;
 
 	spin_lock_irqsave(&dev_priv->irqmask_lock, irqflags);
 
-	/* Enable 2D and MMU fault interrupts */
+	/* Enable 2D and MMU fault पूर्णांकerrupts */
 	PSB_WSGX32(_PSB_CE2_BIF_REQUESTER_FAULT, PSB_CR_EVENT_HOST_ENABLE2);
 	PSB_WSGX32(_PSB_CE_TWOD_COMPLETE, PSB_CR_EVENT_HOST_ENABLE);
 	PSB_RSGX32(PSB_CR_EVENT_HOST_ENABLE); /* Post */
 
-	/* This register is safe even if display island is off */
+	/* This रेजिस्टर is safe even अगर display island is off */
 	PSB_WVDC32(dev_priv->vdc_irq_mask, PSB_INT_ENABLE_R);
 	PSB_WVDC32(0xFFFFFFFF, PSB_HWSTAM);
 
-	for (i = 0; i < dev->num_crtcs; ++i) {
-		if (dev->vblank[i].enabled)
+	क्रम (i = 0; i < dev->num_crtcs; ++i) अणु
+		अगर (dev->vblank[i].enabled)
 			psb_enable_pipestat(dev_priv, i, PIPE_VBLANK_INTERRUPT_ENABLE);
-		else
+		अन्यथा
 			psb_disable_pipestat(dev_priv, i, PIPE_VBLANK_INTERRUPT_ENABLE);
-	}
+	पूर्ण
 
-	if (dev_priv->ops->hotplug_enable)
+	अगर (dev_priv->ops->hotplug_enable)
 		dev_priv->ops->hotplug_enable(dev, true);
 
 	spin_unlock_irqrestore(&dev_priv->irqmask_lock, irqflags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void psb_irq_uninstall(struct drm_device *dev)
-{
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	unsigned long irqflags;
-	unsigned int i;
+व्योम psb_irq_uninstall(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	अचिन्हित दीर्घ irqflags;
+	अचिन्हित पूर्णांक i;
 
 	spin_lock_irqsave(&dev_priv->irqmask_lock, irqflags);
 
-	if (dev_priv->ops->hotplug_enable)
+	अगर (dev_priv->ops->hotplug_enable)
 		dev_priv->ops->hotplug_enable(dev, false);
 
 	PSB_WVDC32(0xFFFFFFFF, PSB_HWSTAM);
 
-	for (i = 0; i < dev->num_crtcs; ++i) {
-		if (dev->vblank[i].enabled)
+	क्रम (i = 0; i < dev->num_crtcs; ++i) अणु
+		अगर (dev->vblank[i].enabled)
 			psb_disable_pipestat(dev_priv, i, PIPE_VBLANK_INTERRUPT_ENABLE);
-	}
+	पूर्ण
 
 	dev_priv->vdc_irq_mask &= _PSB_IRQ_SGX_FLAG |
 				  _PSB_IRQ_MSVDX_FLAG |
 				  _LNC_IRQ_TOPAZ_FLAG;
 
-	/* These two registers are safe even if display island is off */
+	/* These two रेजिस्टरs are safe even अगर display island is off */
 	PSB_WVDC32(~dev_priv->vdc_irq_mask, PSB_INT_MASK_R);
 	PSB_WVDC32(dev_priv->vdc_irq_mask, PSB_INT_ENABLE_R);
 
 	wmb();
 
-	/* This register is safe even if display island is off */
+	/* This रेजिस्टर is safe even अगर display island is off */
 	PSB_WVDC32(PSB_RVDC32(PSB_INT_IDENTITY_R), PSB_INT_IDENTITY_R);
 	spin_unlock_irqrestore(&dev_priv->irqmask_lock, irqflags);
-}
+पूर्ण
 
 /*
- * It is used to enable VBLANK interrupt
+ * It is used to enable VBLANK पूर्णांकerrupt
  */
-int psb_enable_vblank(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
-	unsigned int pipe = crtc->index;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	unsigned long irqflags;
-	uint32_t reg_val = 0;
-	uint32_t pipeconf_reg = mid_pipeconf(pipe);
+पूर्णांक psb_enable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	अचिन्हित पूर्णांक pipe = crtc->index;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	अचिन्हित दीर्घ irqflags;
+	uपूर्णांक32_t reg_val = 0;
+	uपूर्णांक32_t pipeconf_reg = mid_pipeconf(pipe);
 
-	if (gma_power_begin(dev, false)) {
+	अगर (gma_घातer_begin(dev, false)) अणु
 		reg_val = REG_READ(pipeconf_reg);
-		gma_power_end(dev);
-	}
+		gma_घातer_end(dev);
+	पूर्ण
 
-	if (!(reg_val & PIPEACONF_ENABLE))
-		return -EINVAL;
+	अगर (!(reg_val & PIPEACONF_ENABLE))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&dev_priv->irqmask_lock, irqflags);
 
-	if (pipe == 0)
+	अगर (pipe == 0)
 		dev_priv->vdc_irq_mask |= _PSB_VSYNC_PIPEA_FLAG;
-	else if (pipe == 1)
+	अन्यथा अगर (pipe == 1)
 		dev_priv->vdc_irq_mask |= _PSB_VSYNC_PIPEB_FLAG;
 
 	PSB_WVDC32(~dev_priv->vdc_irq_mask, PSB_INT_MASK_R);
@@ -401,24 +402,24 @@ int psb_enable_vblank(struct drm_crtc *crtc)
 
 	spin_unlock_irqrestore(&dev_priv->irqmask_lock, irqflags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * It is used to disable VBLANK interrupt
+ * It is used to disable VBLANK पूर्णांकerrupt
  */
-void psb_disable_vblank(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
-	unsigned int pipe = crtc->index;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	unsigned long irqflags;
+व्योम psb_disable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	अचिन्हित पूर्णांक pipe = crtc->index;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	अचिन्हित दीर्घ irqflags;
 
 	spin_lock_irqsave(&dev_priv->irqmask_lock, irqflags);
 
-	if (pipe == 0)
+	अगर (pipe == 0)
 		dev_priv->vdc_irq_mask &= ~_PSB_VSYNC_PIPEA_FLAG;
-	else if (pipe == 1)
+	अन्यथा अगर (pipe == 1)
 		dev_priv->vdc_irq_mask &= ~_PSB_VSYNC_PIPEB_FLAG;
 
 	PSB_WVDC32(~dev_priv->vdc_irq_mask, PSB_INT_MASK_R);
@@ -426,70 +427,70 @@ void psb_disable_vblank(struct drm_crtc *crtc)
 	psb_disable_pipestat(dev_priv, pipe, PIPE_VBLANK_INTERRUPT_ENABLE);
 
 	spin_unlock_irqrestore(&dev_priv->irqmask_lock, irqflags);
-}
+पूर्ण
 
 /* Called from drm generic code, passed a 'crtc', which
  * we use as a pipe index
  */
-u32 psb_get_vblank_counter(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
-	unsigned int pipe = crtc->index;
-	uint32_t high_frame = PIPEAFRAMEHIGH;
-	uint32_t low_frame = PIPEAFRAMEPIXEL;
-	uint32_t pipeconf_reg = PIPEACONF;
-	uint32_t reg_val = 0;
-	uint32_t high1 = 0, high2 = 0, low = 0, count = 0;
+u32 psb_get_vblank_counter(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
+	अचिन्हित पूर्णांक pipe = crtc->index;
+	uपूर्णांक32_t high_frame = PIPEAFRAMEHIGH;
+	uपूर्णांक32_t low_frame = PIPEAFRAMEPIXEL;
+	uपूर्णांक32_t pipeconf_reg = PIPEACONF;
+	uपूर्णांक32_t reg_val = 0;
+	uपूर्णांक32_t high1 = 0, high2 = 0, low = 0, count = 0;
 
-	switch (pipe) {
-	case 0:
-		break;
-	case 1:
+	चयन (pipe) अणु
+	हाल 0:
+		अवरोध;
+	हाल 1:
 		high_frame = PIPEBFRAMEHIGH;
 		low_frame = PIPEBFRAMEPIXEL;
 		pipeconf_reg = PIPEBCONF;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		high_frame = PIPECFRAMEHIGH;
 		low_frame = PIPECFRAMEPIXEL;
 		pipeconf_reg = PIPECCONF;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev->dev, "%s, invalid pipe.\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!gma_power_begin(dev, false))
-		return 0;
+	अगर (!gma_घातer_begin(dev, false))
+		वापस 0;
 
 	reg_val = REG_READ(pipeconf_reg);
 
-	if (!(reg_val & PIPEACONF_ENABLE)) {
+	अगर (!(reg_val & PIPEACONF_ENABLE)) अणु
 		dev_err(dev->dev, "trying to get vblank count for disabled pipe %u\n",
 								pipe);
-		goto psb_get_vblank_counter_exit;
-	}
+		जाओ psb_get_vblank_counter_निकास;
+	पूर्ण
 
 	/*
-	 * High & low register fields aren't synchronized, so make sure
-	 * we get a low value that's stable across two reads of the high
-	 * register.
+	 * High & low रेजिस्टर fields aren't synchronized, so make sure
+	 * we get a low value that's stable across two पढ़ोs of the high
+	 * रेजिस्टर.
 	 */
-	do {
+	करो अणु
 		high1 = ((REG_READ(high_frame) & PIPE_FRAME_HIGH_MASK) >>
 			 PIPE_FRAME_HIGH_SHIFT);
 		low =  ((REG_READ(low_frame) & PIPE_FRAME_LOW_MASK) >>
 			PIPE_FRAME_LOW_SHIFT);
 		high2 = ((REG_READ(high_frame) & PIPE_FRAME_HIGH_MASK) >>
 			 PIPE_FRAME_HIGH_SHIFT);
-	} while (high1 != high2);
+	पूर्ण जबतक (high1 != high2);
 
 	count = (high1 << 8) | low;
 
-psb_get_vblank_counter_exit:
+psb_get_vblank_counter_निकास:
 
-	gma_power_end(dev);
+	gma_घातer_end(dev);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 

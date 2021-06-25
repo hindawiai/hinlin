@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2017 IBM Corp.
  */
 
-#ifndef _ASM_POWERNV_H
-#define _ASM_POWERNV_H
+#अगर_अघोषित _ASM_POWERNV_H
+#घोषणा _ASM_POWERNV_H
 
-#ifdef CONFIG_PPC_POWERNV
-extern void powernv_set_nmmu_ptcr(unsigned long ptcr);
+#अगर_घोषित CONFIG_PPC_POWERNV
+बाह्य व्योम घातernv_set_nmmu_ptcr(अचिन्हित दीर्घ ptcr);
 
-void pnv_program_cpu_hotplug_lpcr(unsigned int cpu, u64 lpcr_val);
+व्योम pnv_program_cpu_hotplug_lpcr(अचिन्हित पूर्णांक cpu, u64 lpcr_val);
 
-void pnv_tm_init(void);
-#else
-static inline void powernv_set_nmmu_ptcr(unsigned long ptcr) { }
+व्योम pnv_पंचांग_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम घातernv_set_nmmu_ptcr(अचिन्हित दीर्घ ptcr) अणु पूर्ण
 
-static inline void pnv_tm_init(void) { }
-#endif
+अटल अंतरभूत व्योम pnv_पंचांग_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_POWERNV_H */
+#पूर्ण_अगर /* _ASM_POWERNV_H */

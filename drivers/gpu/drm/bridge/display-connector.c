@@ -1,273 +1,274 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2019 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Copyright (C) 2019 Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <drm/drm_bridge.h>
-#include <drm/drm_edid.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_edid.h>
 
-struct display_connector {
-	struct drm_bridge	bridge;
+काष्ठा display_connector अणु
+	काष्ठा drm_bridge	bridge;
 
-	struct gpio_desc	*hpd_gpio;
-	int			hpd_irq;
+	काष्ठा gpio_desc	*hpd_gpio;
+	पूर्णांक			hpd_irq;
 
-	struct regulator	*dp_pwr;
-};
+	काष्ठा regulator	*dp_pwr;
+पूर्ण;
 
-static inline struct display_connector *
-to_display_connector(struct drm_bridge *bridge)
-{
-	return container_of(bridge, struct display_connector, bridge);
-}
+अटल अंतरभूत काष्ठा display_connector *
+to_display_connector(काष्ठा drm_bridge *bridge)
+अणु
+	वापस container_of(bridge, काष्ठा display_connector, bridge);
+पूर्ण
 
-static int display_connector_attach(struct drm_bridge *bridge,
-				    enum drm_bridge_attach_flags flags)
-{
-	return flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR ? 0 : -EINVAL;
-}
+अटल पूर्णांक display_connector_attach(काष्ठा drm_bridge *bridge,
+				    क्रमागत drm_bridge_attach_flags flags)
+अणु
+	वापस flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR ? 0 : -EINVAL;
+पूर्ण
 
-static enum drm_connector_status
-display_connector_detect(struct drm_bridge *bridge)
-{
-	struct display_connector *conn = to_display_connector(bridge);
+अटल क्रमागत drm_connector_status
+display_connector_detect(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा display_connector *conn = to_display_connector(bridge);
 
-	if (conn->hpd_gpio) {
-		if (gpiod_get_value_cansleep(conn->hpd_gpio))
-			return connector_status_connected;
-		else
-			return connector_status_disconnected;
-	}
+	अगर (conn->hpd_gpio) अणु
+		अगर (gpiod_get_value_cansleep(conn->hpd_gpio))
+			वापस connector_status_connected;
+		अन्यथा
+			वापस connector_status_disconnected;
+	पूर्ण
 
-	if (conn->bridge.ddc && drm_probe_ddc(conn->bridge.ddc))
-		return connector_status_connected;
+	अगर (conn->bridge.ddc && drm_probe_ddc(conn->bridge.ddc))
+		वापस connector_status_connected;
 
-	switch (conn->bridge.type) {
-	case DRM_MODE_CONNECTOR_DVIA:
-	case DRM_MODE_CONNECTOR_DVID:
-	case DRM_MODE_CONNECTOR_DVII:
-	case DRM_MODE_CONNECTOR_HDMIA:
-	case DRM_MODE_CONNECTOR_HDMIB:
+	चयन (conn->bridge.type) अणु
+	हाल DRM_MODE_CONNECTOR_DVIA:
+	हाल DRM_MODE_CONNECTOR_DVID:
+	हाल DRM_MODE_CONNECTOR_DVII:
+	हाल DRM_MODE_CONNECTOR_HDMIA:
+	हाल DRM_MODE_CONNECTOR_HDMIB:
 		/*
 		 * For DVI and HDMI connectors a DDC probe failure indicates
 		 * that no cable is connected.
 		 */
-		return connector_status_disconnected;
+		वापस connector_status_disconnected;
 
-	case DRM_MODE_CONNECTOR_Composite:
-	case DRM_MODE_CONNECTOR_SVIDEO:
-	case DRM_MODE_CONNECTOR_VGA:
-	default:
+	हाल DRM_MODE_CONNECTOR_Composite:
+	हाल DRM_MODE_CONNECTOR_SVIDEO:
+	हाल DRM_MODE_CONNECTOR_VGA:
+	शेष:
 		/*
 		 * Composite and S-Video connectors have no other detection
-		 * mean than the HPD GPIO. For VGA connectors, even if we have
+		 * mean than the HPD GPIO. For VGA connectors, even अगर we have
 		 * an I2C bus, we can't assume that the cable is disconnected
-		 * if drm_probe_ddc fails, as some cables don't wire the DDC
+		 * अगर drm_probe_ddc fails, as some cables करोn't wire the DDC
 		 * pins.
 		 */
-		return connector_status_unknown;
-	}
-}
+		वापस connector_status_unknown;
+	पूर्ण
+पूर्ण
 
-static struct edid *display_connector_get_edid(struct drm_bridge *bridge,
-					       struct drm_connector *connector)
-{
-	struct display_connector *conn = to_display_connector(bridge);
+अटल काष्ठा edid *display_connector_get_edid(काष्ठा drm_bridge *bridge,
+					       काष्ठा drm_connector *connector)
+अणु
+	काष्ठा display_connector *conn = to_display_connector(bridge);
 
-	return drm_get_edid(connector, conn->bridge.ddc);
-}
+	वापस drm_get_edid(connector, conn->bridge.ddc);
+पूर्ण
 
-static const struct drm_bridge_funcs display_connector_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs display_connector_bridge_funcs = अणु
 	.attach = display_connector_attach,
 	.detect = display_connector_detect,
 	.get_edid = display_connector_get_edid,
-};
+पूर्ण;
 
-static irqreturn_t display_connector_hpd_irq(int irq, void *arg)
-{
-	struct display_connector *conn = arg;
-	struct drm_bridge *bridge = &conn->bridge;
+अटल irqवापस_t display_connector_hpd_irq(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा display_connector *conn = arg;
+	काष्ठा drm_bridge *bridge = &conn->bridge;
 
-	drm_bridge_hpd_notify(bridge, display_connector_detect(bridge));
+	drm_bridge_hpd_notअगरy(bridge, display_connector_detect(bridge));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int display_connector_probe(struct platform_device *pdev)
-{
-	struct display_connector *conn;
-	unsigned int type;
-	const char *label;
-	int ret;
+अटल पूर्णांक display_connector_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा display_connector *conn;
+	अचिन्हित पूर्णांक type;
+	स्थिर अक्षर *label;
+	पूर्णांक ret;
 
-	conn = devm_kzalloc(&pdev->dev, sizeof(*conn), GFP_KERNEL);
-	if (!conn)
-		return -ENOMEM;
+	conn = devm_kzalloc(&pdev->dev, माप(*conn), GFP_KERNEL);
+	अगर (!conn)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, conn);
+	platक्रमm_set_drvdata(pdev, conn);
 
-	type = (uintptr_t)of_device_get_match_data(&pdev->dev);
+	type = (uपूर्णांकptr_t)of_device_get_match_data(&pdev->dev);
 
 	/* Get the exact connector type. */
-	switch (type) {
-	case DRM_MODE_CONNECTOR_DVII: {
+	चयन (type) अणु
+	हाल DRM_MODE_CONNECTOR_DVII: अणु
 		bool analog, digital;
 
-		analog = of_property_read_bool(pdev->dev.of_node, "analog");
-		digital = of_property_read_bool(pdev->dev.of_node, "digital");
-		if (analog && !digital) {
+		analog = of_property_पढ़ो_bool(pdev->dev.of_node, "analog");
+		digital = of_property_पढ़ो_bool(pdev->dev.of_node, "digital");
+		अगर (analog && !digital) अणु
 			conn->bridge.type = DRM_MODE_CONNECTOR_DVIA;
-		} else if (!analog && digital) {
+		पूर्ण अन्यथा अगर (!analog && digital) अणु
 			conn->bridge.type = DRM_MODE_CONNECTOR_DVID;
-		} else if (analog && digital) {
+		पूर्ण अन्यथा अगर (analog && digital) अणु
 			conn->bridge.type = DRM_MODE_CONNECTOR_DVII;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&pdev->dev, "DVI connector with no type\n");
-			return -EINVAL;
-		}
-		break;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	case DRM_MODE_CONNECTOR_HDMIA: {
-		const char *hdmi_type;
+	हाल DRM_MODE_CONNECTOR_HDMIA: अणु
+		स्थिर अक्षर *hdmi_type;
 
-		ret = of_property_read_string(pdev->dev.of_node, "type",
+		ret = of_property_पढ़ो_string(pdev->dev.of_node, "type",
 					      &hdmi_type);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&pdev->dev, "HDMI connector with no type\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!strcmp(hdmi_type, "a") || !strcmp(hdmi_type, "c") ||
-		    !strcmp(hdmi_type, "d") || !strcmp(hdmi_type, "e")) {
+		अगर (!म_भेद(hdmi_type, "a") || !म_भेद(hdmi_type, "c") ||
+		    !म_भेद(hdmi_type, "d") || !म_भेद(hdmi_type, "e")) अणु
 			conn->bridge.type = DRM_MODE_CONNECTOR_HDMIA;
-		} else if (!strcmp(hdmi_type, "b")) {
+		पूर्ण अन्यथा अगर (!म_भेद(hdmi_type, "b")) अणु
 			conn->bridge.type = DRM_MODE_CONNECTOR_HDMIB;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&pdev->dev,
 				"Unsupported HDMI connector type '%s'\n",
 				hdmi_type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		conn->bridge.type = type;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* All the supported connector types support interlaced modes. */
-	conn->bridge.interlace_allowed = true;
+	/* All the supported connector types support पूर्णांकerlaced modes. */
+	conn->bridge.पूर्णांकerlace_allowed = true;
 
 	/* Get the optional connector label. */
-	of_property_read_string(pdev->dev.of_node, "label", &label);
+	of_property_पढ़ो_string(pdev->dev.of_node, "label", &label);
 
 	/*
-	 * Get the HPD GPIO for DVI, HDMI and DP connectors. If the GPIO can provide
-	 * edge interrupts, register an interrupt handler.
+	 * Get the HPD GPIO क्रम DVI, HDMI and DP connectors. If the GPIO can provide
+	 * edge पूर्णांकerrupts, रेजिस्टर an पूर्णांकerrupt handler.
 	 */
-	if (type == DRM_MODE_CONNECTOR_DVII ||
+	अगर (type == DRM_MODE_CONNECTOR_DVII ||
 	    type == DRM_MODE_CONNECTOR_HDMIA ||
-	    type == DRM_MODE_CONNECTOR_DisplayPort) {
+	    type == DRM_MODE_CONNECTOR_DisplayPort) अणु
 		conn->hpd_gpio = devm_gpiod_get_optional(&pdev->dev, "hpd",
 							 GPIOD_IN);
-		if (IS_ERR(conn->hpd_gpio)) {
-			if (PTR_ERR(conn->hpd_gpio) != -EPROBE_DEFER)
+		अगर (IS_ERR(conn->hpd_gpio)) अणु
+			अगर (PTR_ERR(conn->hpd_gpio) != -EPROBE_DEFER)
 				dev_err(&pdev->dev,
 					"Unable to retrieve HPD GPIO\n");
-			return PTR_ERR(conn->hpd_gpio);
-		}
+			वापस PTR_ERR(conn->hpd_gpio);
+		पूर्ण
 
 		conn->hpd_irq = gpiod_to_irq(conn->hpd_gpio);
-	} else {
+	पूर्ण अन्यथा अणु
 		conn->hpd_irq = -EINVAL;
-	}
+	पूर्ण
 
-	if (conn->hpd_irq >= 0) {
-		ret = devm_request_threaded_irq(&pdev->dev, conn->hpd_irq,
-						NULL, display_connector_hpd_irq,
+	अगर (conn->hpd_irq >= 0) अणु
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, conn->hpd_irq,
+						शून्य, display_connector_hpd_irq,
 						IRQF_TRIGGER_RISING |
 						IRQF_TRIGGER_FALLING |
 						IRQF_ONESHOT,
 						"HPD", conn);
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(&pdev->dev,
 				 "Failed to request HPD edge interrupt, falling back to polling\n");
 			conn->hpd_irq = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Retrieve the DDC I2C adapter for DVI, HDMI and VGA connectors. */
-	if (type == DRM_MODE_CONNECTOR_DVII ||
+	/* Retrieve the DDC I2C adapter क्रम DVI, HDMI and VGA connectors. */
+	अगर (type == DRM_MODE_CONNECTOR_DVII ||
 	    type == DRM_MODE_CONNECTOR_HDMIA ||
-	    type == DRM_MODE_CONNECTOR_VGA) {
-		struct device_node *phandle;
+	    type == DRM_MODE_CONNECTOR_VGA) अणु
+		काष्ठा device_node *phandle;
 
 		phandle = of_parse_phandle(pdev->dev.of_node, "ddc-i2c-bus", 0);
-		if (phandle) {
+		अगर (phandle) अणु
 			conn->bridge.ddc = of_get_i2c_adapter_by_node(phandle);
 			of_node_put(phandle);
-			if (!conn->bridge.ddc)
-				return -EPROBE_DEFER;
-		} else {
+			अगर (!conn->bridge.ddc)
+				वापस -EPROBE_DEFER;
+		पूर्ण अन्यथा अणु
 			dev_dbg(&pdev->dev,
 				"No I2C bus specified, disabling EDID readout\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Get the DP PWR for DP connector. */
-	if (type == DRM_MODE_CONNECTOR_DisplayPort) {
-		int ret;
+	/* Get the DP PWR क्रम DP connector. */
+	अगर (type == DRM_MODE_CONNECTOR_DisplayPort) अणु
+		पूर्णांक ret;
 
 		conn->dp_pwr = devm_regulator_get_optional(&pdev->dev, "dp-pwr");
 
-		if (IS_ERR(conn->dp_pwr)) {
+		अगर (IS_ERR(conn->dp_pwr)) अणु
 			ret = PTR_ERR(conn->dp_pwr);
 
-			switch (ret) {
-			case -ENODEV:
-				conn->dp_pwr = NULL;
-				break;
+			चयन (ret) अणु
+			हाल -ENODEV:
+				conn->dp_pwr = शून्य;
+				अवरोध;
 
-			case -EPROBE_DEFER:
-				return -EPROBE_DEFER;
+			हाल -EPROBE_DEFER:
+				वापस -EPROBE_DEFER;
 
-			default:
+			शेष:
 				dev_err(&pdev->dev, "failed to get DP PWR regulator: %d\n", ret);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
-		if (conn->dp_pwr) {
+		अगर (conn->dp_pwr) अणु
 			ret = regulator_enable(conn->dp_pwr);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(&pdev->dev, "failed to enable DP PWR regulator: %d\n", ret);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	conn->bridge.funcs = &display_connector_bridge_funcs;
 	conn->bridge.of_node = pdev->dev.of_node;
 
-	if (conn->bridge.ddc)
+	अगर (conn->bridge.ddc)
 		conn->bridge.ops |= DRM_BRIDGE_OP_EDID
 				 |  DRM_BRIDGE_OP_DETECT;
-	if (conn->hpd_gpio)
+	अगर (conn->hpd_gpio)
 		conn->bridge.ops |= DRM_BRIDGE_OP_DETECT;
-	if (conn->hpd_irq >= 0)
+	अगर (conn->hpd_irq >= 0)
 		conn->bridge.ops |= DRM_BRIDGE_OP_HPD;
 
 	dev_dbg(&pdev->dev,
@@ -280,57 +281,57 @@ static int display_connector_probe(struct platform_device *pdev)
 
 	drm_bridge_add(&conn->bridge);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int display_connector_remove(struct platform_device *pdev)
-{
-	struct display_connector *conn = platform_get_drvdata(pdev);
+अटल पूर्णांक display_connector_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा display_connector *conn = platक्रमm_get_drvdata(pdev);
 
-	if (conn->dp_pwr)
+	अगर (conn->dp_pwr)
 		regulator_disable(conn->dp_pwr);
 
-	drm_bridge_remove(&conn->bridge);
+	drm_bridge_हटाओ(&conn->bridge);
 
-	if (!IS_ERR(conn->bridge.ddc))
+	अगर (!IS_ERR(conn->bridge.ddc))
 		i2c_put_adapter(conn->bridge.ddc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id display_connector_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id display_connector_match[] = अणु
+	अणु
 		.compatible = "composite-video-connector",
-		.data = (void *)DRM_MODE_CONNECTOR_Composite,
-	}, {
+		.data = (व्योम *)DRM_MODE_CONNECTOR_Composite,
+	पूर्ण, अणु
 		.compatible = "dvi-connector",
-		.data = (void *)DRM_MODE_CONNECTOR_DVII,
-	}, {
+		.data = (व्योम *)DRM_MODE_CONNECTOR_DVII,
+	पूर्ण, अणु
 		.compatible = "hdmi-connector",
-		.data = (void *)DRM_MODE_CONNECTOR_HDMIA,
-	}, {
+		.data = (व्योम *)DRM_MODE_CONNECTOR_HDMIA,
+	पूर्ण, अणु
 		.compatible = "svideo-connector",
-		.data = (void *)DRM_MODE_CONNECTOR_SVIDEO,
-	}, {
+		.data = (व्योम *)DRM_MODE_CONNECTOR_SVIDEO,
+	पूर्ण, अणु
 		.compatible = "vga-connector",
-		.data = (void *)DRM_MODE_CONNECTOR_VGA,
-	}, {
+		.data = (व्योम *)DRM_MODE_CONNECTOR_VGA,
+	पूर्ण, अणु
 		.compatible = "dp-connector",
-		.data = (void *)DRM_MODE_CONNECTOR_DisplayPort,
-	},
-	{},
-};
+		.data = (व्योम *)DRM_MODE_CONNECTOR_DisplayPort,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, display_connector_match);
 
-static struct platform_driver display_connector_driver = {
+अटल काष्ठा platक्रमm_driver display_connector_driver = अणु
 	.probe	= display_connector_probe,
-	.remove	= display_connector_remove,
-	.driver		= {
+	.हटाओ	= display_connector_हटाओ,
+	.driver		= अणु
 		.name		= "display-connector",
 		.of_match_table	= display_connector_match,
-	},
-};
-module_platform_driver(display_connector_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(display_connector_driver);
 
 MODULE_AUTHOR("Laurent Pinchart <laurent.pinchart@ideasonboard.com>");
 MODULE_DESCRIPTION("Display connector driver");

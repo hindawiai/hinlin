@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#ifndef _ASMNDS32_TLBFLUSH_H
-#define _ASMNDS32_TLBFLUSH_H
+#अगर_अघोषित _ASMNDS32_TLBFLUSH_H
+#घोषणा _ASMNDS32_TLBFLUSH_H
 
-#include <linux/spinlock.h>
-#include <linux/mm.h>
-#include <nds32_intrinsic.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mm.h>
+#समावेश <nds32_पूर्णांकrinsic.h>
 
-static inline void local_flush_tlb_all(void)
-{
+अटल अंतरभूत व्योम local_flush_tlb_all(व्योम)
+अणु
 	__nds32__tlbop_flua();
 	__nds32__isb();
-}
+पूर्ण
 
-static inline void local_flush_tlb_mm(struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	__nds32__tlbop_flua();
 	__nds32__isb();
-}
+पूर्ण
 
-static inline void local_flush_tlb_kernel_range(unsigned long start,
-						unsigned long end)
-{
-	while (start < end) {
+अटल अंतरभूत व्योम local_flush_tlb_kernel_range(अचिन्हित दीर्घ start,
+						अचिन्हित दीर्घ end)
+अणु
+	जबतक (start < end) अणु
 		__nds32__tlbop_inv(start);
 		__nds32__isb();
 		start += PAGE_SIZE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void local_flush_tlb_range(struct vm_area_struct *vma,
-			   unsigned long start, unsigned long end);
-void local_flush_tlb_page(struct vm_area_struct *vma, unsigned long addr);
+व्योम local_flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+			   अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr);
 
-#define flush_tlb_all		local_flush_tlb_all
-#define flush_tlb_mm		local_flush_tlb_mm
-#define flush_tlb_range		local_flush_tlb_range
-#define flush_tlb_page		local_flush_tlb_page
-#define flush_tlb_kernel_range	local_flush_tlb_kernel_range
+#घोषणा flush_tlb_all		local_flush_tlb_all
+#घोषणा flush_tlb_mm		local_flush_tlb_mm
+#घोषणा flush_tlb_range		local_flush_tlb_range
+#घोषणा flush_tlb_page		local_flush_tlb_page
+#घोषणा flush_tlb_kernel_range	local_flush_tlb_kernel_range
 
-void update_mmu_cache(struct vm_area_struct *vma,
-		      unsigned long address, pte_t * pte);
+व्योम update_mmu_cache(काष्ठा vm_area_काष्ठा *vma,
+		      अचिन्हित दीर्घ address, pte_t * pte);
 
-#endif
+#पूर्ण_अगर

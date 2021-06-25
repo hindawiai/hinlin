@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,44 +21,44 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __COMMON_BOCO_H__
-#define __COMMON_BOCO_H__
-#include "hwmgr.h"
+#अगर_अघोषित __COMMON_BOCO_H__
+#घोषणा __COMMON_BOCO_H__
+#समावेश "hwmgr.h"
 
 
-enum baco_cmd_type {
+क्रमागत baco_cmd_type अणु
 	CMD_WRITE = 0,
 	CMD_READMODIFYWRITE,
 	CMD_WAITFOR,
 	CMD_DELAY_MS,
 	CMD_DELAY_US,
-};
+पूर्ण;
 
-struct baco_cmd_entry {
-	enum baco_cmd_type cmd;
-	uint32_t 	reg_offset;
-	uint32_t     	mask;
-	uint32_t     	shift;
-	uint32_t     	timeout;
-	uint32_t     	val;
-};
+काष्ठा baco_cmd_entry अणु
+	क्रमागत baco_cmd_type cmd;
+	uपूर्णांक32_t 	reg_offset;
+	uपूर्णांक32_t     	mask;
+	uपूर्णांक32_t     	shअगरt;
+	uपूर्णांक32_t     	समयout;
+	uपूर्णांक32_t     	val;
+पूर्ण;
 
-struct soc15_baco_cmd_entry {
-	enum baco_cmd_type cmd;
-	uint32_t 	hwip;
-	uint32_t 	inst;
-	uint32_t 	seg;
-	uint32_t 	reg_offset;
-	uint32_t     	mask;
-	uint32_t     	shift;
-	uint32_t     	timeout;
-	uint32_t     	val;
-};
+काष्ठा soc15_baco_cmd_entry अणु
+	क्रमागत baco_cmd_type cmd;
+	uपूर्णांक32_t 	hwip;
+	uपूर्णांक32_t 	inst;
+	uपूर्णांक32_t 	seg;
+	uपूर्णांक32_t 	reg_offset;
+	uपूर्णांक32_t     	mask;
+	uपूर्णांक32_t     	shअगरt;
+	uपूर्णांक32_t     	समयout;
+	uपूर्णांक32_t     	val;
+पूर्ण;
 
-extern bool baco_program_registers(struct pp_hwmgr *hwmgr,
-				   const struct baco_cmd_entry *entry,
-				   const u32 array_size);
-extern bool soc15_baco_program_registers(struct pp_hwmgr *hwmgr,
-					const struct soc15_baco_cmd_entry *entry,
-					const u32 array_size);
-#endif
+बाह्य bool baco_program_रेजिस्टरs(काष्ठा pp_hwmgr *hwmgr,
+				   स्थिर काष्ठा baco_cmd_entry *entry,
+				   स्थिर u32 array_size);
+बाह्य bool soc15_baco_program_रेजिस्टरs(काष्ठा pp_hwmgr *hwmgr,
+					स्थिर काष्ठा soc15_baco_cmd_entry *entry,
+					स्थिर u32 array_size);
+#पूर्ण_अगर

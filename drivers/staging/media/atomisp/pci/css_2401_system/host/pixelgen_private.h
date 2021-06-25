@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __PIXELGEN_PRIVATE_H_INCLUDED__
-#define __PIXELGEN_PRIVATE_H_INCLUDED__
-#include "pixelgen_public.h"
-#include "PixelGen_SysBlock_defs.h"
-#include "device_access.h"	/* ia_css_device_load_uint32 */
-#include "assert_support.h" /* assert */
+#अगर_अघोषित __PIXELGEN_PRIVATE_H_INCLUDED__
+#घोषणा __PIXELGEN_PRIVATE_H_INCLUDED__
+#समावेश "pixelgen_public.h"
+#समावेश "PixelGen_SysBlock_defs.h"
+#समावेश "device_access.h"	/* ia_css_device_load_uपूर्णांक32 */
+#समावेश "assert_support.h" /* निश्चित */
 
 /*****************************************************
  *
- * Device level interface (DLI).
+ * Device level पूर्णांकerface (DLI).
  *
  *****************************************************/
 /**
- * @brief Load the register value.
- * Refer to "pixelgen_public.h" for details.
+ * @brief Load the रेजिस्टर value.
+ * Refer to "pixelgen_public.h" क्रम details.
  */
 STORAGE_CLASS_PIXELGEN_C hrt_data pixelgen_ctrl_reg_load(
-    const pixelgen_ID_t ID,
-    const hrt_address reg)
-{
-	assert(ID < N_PIXELGEN_ID);
-	assert(PIXELGEN_CTRL_BASE[ID] != (hrt_address) - 1);
-	return ia_css_device_load_uint32(PIXELGEN_CTRL_BASE[ID] + reg * sizeof(
+    स्थिर pixelgen_ID_t ID,
+    स्थिर hrt_address reg)
+अणु
+	निश्चित(ID < N_PIXELGEN_ID);
+	निश्चित(PIXELGEN_CTRL_BASE[ID] != (hrt_address) - 1);
+	वापस ia_css_device_load_uपूर्णांक32(PIXELGEN_CTRL_BASE[ID] + reg * माप(
 					     hrt_data));
-}
+पूर्ण
 
 /**
- * @brief Store a value to the register.
- * Refer to "pixelgen_ctrl_public.h" for details.
+ * @brief Store a value to the रेजिस्टर.
+ * Refer to "pixelgen_ctrl_public.h" क्रम details.
  */
-STORAGE_CLASS_PIXELGEN_C void pixelgen_ctrl_reg_store(
-    const pixelgen_ID_t ID,
-    const hrt_address reg,
-    const hrt_data value)
-{
-	assert(ID < N_PIXELGEN_ID);
-	assert(PIXELGEN_CTRL_BASE[ID] != (hrt_address)-1);
+STORAGE_CLASS_PIXELGEN_C व्योम pixelgen_ctrl_reg_store(
+    स्थिर pixelgen_ID_t ID,
+    स्थिर hrt_address reg,
+    स्थिर hrt_data value)
+अणु
+	निश्चित(ID < N_PIXELGEN_ID);
+	निश्चित(PIXELGEN_CTRL_BASE[ID] != (hrt_address)-1);
 
-	ia_css_device_store_uint32(PIXELGEN_CTRL_BASE[ID] + reg * sizeof(hrt_data),
+	ia_css_device_store_uपूर्णांक32(PIXELGEN_CTRL_BASE[ID] + reg * माप(hrt_data),
 				   value);
-}
+पूर्ण
 
 /* end of DLI */
 
 /*****************************************************
  *
- * Native command interface (NCI).
+ * Native command पूर्णांकerface (NCI).
  *
  *****************************************************/
 /**
  * @brief Get the pixelgen state.
- * Refer to "pixelgen_public.h" for details.
+ * Refer to "pixelgen_public.h" क्रम details.
  */
-STORAGE_CLASS_PIXELGEN_C void pixelgen_ctrl_get_state(
-    const pixelgen_ID_t ID,
+STORAGE_CLASS_PIXELGEN_C व्योम pixelgen_ctrl_get_state(
+    स्थिर pixelgen_ID_t ID,
     pixelgen_ctrl_state_t *state)
-{
+अणु
 	state->com_enable =
 	    pixelgen_ctrl_reg_load(ID, _PXG_COM_ENABLE_REG_IDX);
 	state->prbs_rstval0 =
@@ -78,9 +79,9 @@ STORAGE_CLASS_PIXELGEN_C void pixelgen_ctrl_get_state(
 	    pixelgen_ctrl_reg_load(ID, _PXG_PRBS_RSTVAL_REG1_IDX);
 	state->syng_sid =
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_SID_REG_IDX);
-	state->syng_free_run =
+	state->syng_मुक्त_run =
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_FREE_RUN_REG_IDX);
-	state->syng_pause =
+	state->syng_छोड़ो =
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_PAUSE_REG_IDX);
 	state->syng_nof_frames =
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_NOF_FRAME_REG_IDX);
@@ -98,7 +99,7 @@ STORAGE_CLASS_PIXELGEN_C void pixelgen_ctrl_get_state(
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_STAT_VCNT_REG_IDX);
 	state->syng_stat_fcnt =
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_STAT_FCNT_REG_IDX);
-	state->syng_stat_done =
+	state->syng_stat_करोne =
 	    pixelgen_ctrl_reg_load(ID, _PXG_SYNG_STAT_DONE_REG_IDX);
 	state->tpg_mode =
 	    pixelgen_ctrl_reg_load(ID, _PXG_TPG_MODE_REG_IDX);
@@ -124,61 +125,61 @@ STORAGE_CLASS_PIXELGEN_C void pixelgen_ctrl_get_state(
 	    pixelgen_ctrl_reg_load(ID, _PXG_TPG_G2_REG_IDX);
 	state->tpg_b2 =
 	    pixelgen_ctrl_reg_load(ID, _PXG_TPG_B2_REG_IDX);
-}
+पूर्ण
 
 /**
  * @brief Dump the pixelgen state.
- * Refer to "pixelgen_public.h" for details.
+ * Refer to "pixelgen_public.h" क्रम details.
  */
-STORAGE_CLASS_PIXELGEN_C void pixelgen_ctrl_dump_state(
-    const pixelgen_ID_t ID,
+STORAGE_CLASS_PIXELGEN_C व्योम pixelgen_ctrl_dump_state(
+    स्थिर pixelgen_ID_t ID,
     pixelgen_ctrl_state_t *state)
-{
-	ia_css_print("Pixel Generator ID %d Enable  0x%x\n", ID, state->com_enable);
-	ia_css_print("Pixel Generator ID %d PRBS reset value 0 0x%x\n", ID,
+अणु
+	ia_css_prपूर्णांक("Pixel Generator ID %d Enable  0x%x\n", ID, state->com_enable);
+	ia_css_prपूर्णांक("Pixel Generator ID %d PRBS reset value 0 0x%x\n", ID,
 		     state->prbs_rstval0);
-	ia_css_print("Pixel Generator ID %d PRBS reset value 1 0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d PRBS reset value 1 0x%x\n", ID,
 		     state->prbs_rstval1);
-	ia_css_print("Pixel Generator ID %d SYNC SID 0x%x\n", ID, state->syng_sid);
-	ia_css_print("Pixel Generator ID %d syng free run 0x%x\n", ID,
-		     state->syng_free_run);
-	ia_css_print("Pixel Generator ID %d syng pause 0x%x\n", ID, state->syng_pause);
-	ia_css_print("Pixel Generator ID %d syng no of frames 0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d SYNC SID 0x%x\n", ID, state->syng_sid);
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng free run 0x%x\n", ID,
+		     state->syng_मुक्त_run);
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng pause 0x%x\n", ID, state->syng_छोड़ो);
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng no of frames 0x%x\n", ID,
 		     state->syng_nof_frames);
-	ia_css_print("Pixel Generator ID %d syng no of pixels 0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng no of pixels 0x%x\n", ID,
 		     state->syng_nof_pixels);
-	ia_css_print("Pixel Generator ID %d syng no of line 0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng no of line 0x%x\n", ID,
 		     state->syng_nof_line);
-	ia_css_print("Pixel Generator ID %d syng hblank cyc  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng hblank cyc  0x%x\n", ID,
 		     state->syng_hblank_cyc);
-	ia_css_print("Pixel Generator ID %d syng vblank cyc  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng vblank cyc  0x%x\n", ID,
 		     state->syng_vblank_cyc);
-	ia_css_print("Pixel Generator ID %d syng stat hcnt  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng stat hcnt  0x%x\n", ID,
 		     state->syng_stat_hcnt);
-	ia_css_print("Pixel Generator ID %d syng stat vcnt  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng stat vcnt  0x%x\n", ID,
 		     state->syng_stat_vcnt);
-	ia_css_print("Pixel Generator ID %d syng stat fcnt  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng stat fcnt  0x%x\n", ID,
 		     state->syng_stat_fcnt);
-	ia_css_print("Pixel Generator ID %d syng stat done  0x%x\n", ID,
-		     state->syng_stat_done);
-	ia_css_print("Pixel Generator ID %d tpg modee  0x%x\n", ID, state->tpg_mode);
-	ia_css_print("Pixel Generator ID %d tpg hcnt mask  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d syng stat done  0x%x\n", ID,
+		     state->syng_stat_करोne);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg modee  0x%x\n", ID, state->tpg_mode);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg hcnt mask  0x%x\n", ID,
 		     state->tpg_hcnt_mask);
-	ia_css_print("Pixel Generator ID %d tpg hcnt mask  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg hcnt mask  0x%x\n", ID,
 		     state->tpg_hcnt_mask);
-	ia_css_print("Pixel Generator ID %d tpg xycnt mask  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg xycnt mask  0x%x\n", ID,
 		     state->tpg_xycnt_mask);
-	ia_css_print("Pixel Generator ID %d tpg hcnt delta  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg hcnt delta  0x%x\n", ID,
 		     state->tpg_hcnt_delta);
-	ia_css_print("Pixel Generator ID %d tpg vcnt delta  0x%x\n", ID,
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg vcnt delta  0x%x\n", ID,
 		     state->tpg_vcnt_delta);
-	ia_css_print("Pixel Generator ID %d tpg r1 0x%x\n", ID, state->tpg_r1);
-	ia_css_print("Pixel Generator ID %d tpg g1 0x%x\n", ID, state->tpg_g1);
-	ia_css_print("Pixel Generator ID %d tpg b1 0x%x\n", ID, state->tpg_b1);
-	ia_css_print("Pixel Generator ID %d tpg r2 0x%x\n", ID, state->tpg_r2);
-	ia_css_print("Pixel Generator ID %d tpg g2 0x%x\n", ID, state->tpg_g2);
-	ia_css_print("Pixel Generator ID %d tpg b2 0x%x\n", ID, state->tpg_b2);
-}
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg r1 0x%x\n", ID, state->tpg_r1);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg g1 0x%x\n", ID, state->tpg_g1);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg b1 0x%x\n", ID, state->tpg_b1);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg r2 0x%x\n", ID, state->tpg_r2);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg g2 0x%x\n", ID, state->tpg_g2);
+	ia_css_prपूर्णांक("Pixel Generator ID %d tpg b2 0x%x\n", ID, state->tpg_b2);
+पूर्ण
 
 /* end of NCI */
-#endif /* __PIXELGEN_PRIVATE_H_INCLUDED__ */
+#पूर्ण_अगर /* __PIXELGEN_PRIVATE_H_INCLUDED__ */

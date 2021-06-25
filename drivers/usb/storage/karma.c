@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Rio Karma
+ * Driver क्रम Rio Karma
  *
  *   (c) 2006 Bob Copeland <me@bobcopeland.com>
  *   (c) 2006 Keith Bennett <keith@mcs.st-and.ac.uk>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
 
-#include "usb.h"
-#include "transport.h"
-#include "debug.h"
-#include "scsiglue.h"
+#समावेश "usb.h"
+#समावेश "transport.h"
+#समावेश "debug.h"
+#समावेश "scsiglue.h"
 
-#define DRV_NAME "ums-karma"
+#घोषणा DRV_NAME "ums-karma"
 
 MODULE_DESCRIPTION("Driver for Rio Karma");
 MODULE_AUTHOR("Bob Copeland <me@bobcopeland.com>, Keith Bennett <keith@mcs.st-and.ac.uk>");
 MODULE_LICENSE("GPL");
 MODULE_IMPORT_NS(USB_STORAGE);
 
-#define RIO_PREFIX "RIOP\x00"
-#define RIO_PREFIX_LEN 5
-#define RIO_SEND_LEN 40
-#define RIO_RECV_LEN 0x200
+#घोषणा RIO_PREFIX "RIOP\x00"
+#घोषणा RIO_PREFIX_LEN 5
+#घोषणा RIO_SEND_LEN 40
+#घोषणा RIO_RECV_LEN 0x200
 
-#define RIO_ENTER_STORAGE 0x1
-#define RIO_LEAVE_STORAGE 0x2
-#define RIO_RESET 0xC
+#घोषणा RIO_ENTER_STORAGE 0x1
+#घोषणा RIO_LEAVE_STORAGE 0x2
+#घोषणा RIO_RESET 0xC
 
-struct karma_data {
-	int in_storage;
-	char *recv;
-};
+काष्ठा karma_data अणु
+	पूर्णांक in_storage;
+	अक्षर *recv;
+पूर्ण;
 
-static int rio_karma_init(struct us_data *us);
+अटल पूर्णांक rio_karma_init(काष्ठा us_data *us);
 
 
 /*
  * The table of devices
  */
-#define UNUSUAL_DEV(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax, \
-		    vendorName, productName, useProtocol, useTransport, \
+#घोषणा UNUSUAL_DEV(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax, \
+		    venकरोrName, productName, useProtocol, useTransport, \
 		    initFunction, flags) \
-{ USB_DEVICE_VER(id_vendor, id_product, bcdDeviceMin, bcdDeviceMax), \
-  .driver_info = (flags) }
+अणु USB_DEVICE_VER(id_venकरोr, id_product, bcdDeviceMin, bcdDeviceMax), \
+  .driver_info = (flags) पूर्ण
 
-static struct usb_device_id karma_usb_ids[] = {
+अटल काष्ठा usb_device_id karma_usb_ids[] = अणु
 #	include "unusual_karma.h"
-	{ }		/* Terminating entry */
-};
+	अणु पूर्ण		/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, karma_usb_ids);
 
-#undef UNUSUAL_DEV
+#अघोषित UNUSUAL_DEV
 
 /*
  * The flags table
  */
-#define UNUSUAL_DEV(idVendor, idProduct, bcdDeviceMin, bcdDeviceMax, \
-		    vendor_name, product_name, use_protocol, use_transport, \
+#घोषणा UNUSUAL_DEV(idVenकरोr, idProduct, bcdDeviceMin, bcdDeviceMax, \
+		    venकरोr_name, product_name, use_protocol, use_transport, \
 		    init_function, Flags) \
-{ \
-	.vendorName = vendor_name,	\
+अणु \
+	.venकरोrName = venकरोr_name,	\
 	.productName = product_name,	\
 	.useProtocol = use_protocol,	\
 	.useTransport = use_transport,	\
 	.initFunction = init_function,	\
-}
+पूर्ण
 
-static struct us_unusual_dev karma_unusual_dev_list[] = {
+अटल काष्ठा us_unusual_dev karma_unusual_dev_list[] = अणु
 #	include "unusual_karma.h"
-	{ }		/* Terminating entry */
-};
+	अणु पूर्ण		/* Terminating entry */
+पूर्ण;
 
-#undef UNUSUAL_DEV
+#अघोषित UNUSUAL_DEV
 
 
 /*
@@ -87,136 +88,136 @@ static struct us_unusual_dev karma_unusual_dev_list[] = {
  * For each command we send 40 bytes starting 'RIOP\0' followed by
  * the command number and a sequence number, which the device will ack
  * with a 512-byte packet with the high four bits set and everything
- * else null.  Then we send 'RIOP\x80' followed by a zero and the
+ * अन्यथा null.  Then we send 'RIOP\x80' followed by a zero and the
  * sequence number, until byte 5 in the response repeats the sequence
  * number.
  */
-static int rio_karma_send_command(char cmd, struct us_data *us)
-{
-	int result;
-	unsigned long timeout;
-	static unsigned char seq = 1;
-	struct karma_data *data = (struct karma_data *) us->extra;
+अटल पूर्णांक rio_karma_send_command(अक्षर cmd, काष्ठा us_data *us)
+अणु
+	पूर्णांक result;
+	अचिन्हित दीर्घ समयout;
+	अटल अचिन्हित अक्षर seq = 1;
+	काष्ठा karma_data *data = (काष्ठा karma_data *) us->extra;
 
 	usb_stor_dbg(us, "sending command %04x\n", cmd);
-	memset(us->iobuf, 0, RIO_SEND_LEN);
-	memcpy(us->iobuf, RIO_PREFIX, RIO_PREFIX_LEN);
+	स_रखो(us->iobuf, 0, RIO_SEND_LEN);
+	स_नकल(us->iobuf, RIO_PREFIX, RIO_PREFIX_LEN);
 	us->iobuf[5] = cmd;
 	us->iobuf[6] = seq;
 
-	timeout = jiffies + msecs_to_jiffies(6000);
-	for (;;) {
+	समयout = jअगरfies + msecs_to_jअगरfies(6000);
+	क्रम (;;) अणु
 		result = usb_stor_bulk_transfer_buf(us, us->send_bulk_pipe,
-			us->iobuf, RIO_SEND_LEN, NULL);
-		if (result != USB_STOR_XFER_GOOD)
-			goto err;
+			us->iobuf, RIO_SEND_LEN, शून्य);
+		अगर (result != USB_STOR_XFER_GOOD)
+			जाओ err;
 
 		result = usb_stor_bulk_transfer_buf(us, us->recv_bulk_pipe,
-			data->recv, RIO_RECV_LEN, NULL);
-		if (result != USB_STOR_XFER_GOOD)
-			goto err;
+			data->recv, RIO_RECV_LEN, शून्य);
+		अगर (result != USB_STOR_XFER_GOOD)
+			जाओ err;
 
-		if (data->recv[5] == seq)
-			break;
+		अगर (data->recv[5] == seq)
+			अवरोध;
 
-		if (time_after(jiffies, timeout))
-			goto err;
+		अगर (समय_after(jअगरfies, समयout))
+			जाओ err;
 
 		us->iobuf[4] = 0x80;
 		us->iobuf[5] = 0;
 		msleep(50);
-	}
+	पूर्ण
 
 	seq++;
-	if (seq == 0)
+	अगर (seq == 0)
 		seq = 1;
 
 	usb_stor_dbg(us, "sent command %04x\n", cmd);
-	return 0;
+	वापस 0;
 err:
 	usb_stor_dbg(us, "command %04x failed\n", cmd);
-	return USB_STOR_TRANSPORT_FAILED;
-}
+	वापस USB_STOR_TRANSPORT_FAILED;
+पूर्ण
 
 /*
  * Trap START_STOP and READ_10 to leave/re-enter storage mode.
- * Everything else is propagated to the normal bulk layer.
+ * Everything अन्यथा is propagated to the normal bulk layer.
  */
-static int rio_karma_transport(struct scsi_cmnd *srb, struct us_data *us)
-{
-	int ret;
-	struct karma_data *data = (struct karma_data *) us->extra;
+अटल पूर्णांक rio_karma_transport(काष्ठा scsi_cmnd *srb, काष्ठा us_data *us)
+अणु
+	पूर्णांक ret;
+	काष्ठा karma_data *data = (काष्ठा karma_data *) us->extra;
 
-	if (srb->cmnd[0] == READ_10 && !data->in_storage) {
+	अगर (srb->cmnd[0] == READ_10 && !data->in_storage) अणु
 		ret = rio_karma_send_command(RIO_ENTER_STORAGE, us);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		data->in_storage = 1;
-		return usb_stor_Bulk_transport(srb, us);
-	} else if (srb->cmnd[0] == START_STOP) {
+		वापस usb_stor_Bulk_transport(srb, us);
+	पूर्ण अन्यथा अगर (srb->cmnd[0] == START_STOP) अणु
 		ret = rio_karma_send_command(RIO_LEAVE_STORAGE, us);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		data->in_storage = 0;
-		return rio_karma_send_command(RIO_RESET, us);
-	}
-	return usb_stor_Bulk_transport(srb, us);
-}
+		वापस rio_karma_send_command(RIO_RESET, us);
+	पूर्ण
+	वापस usb_stor_Bulk_transport(srb, us);
+पूर्ण
 
-static void rio_karma_destructor(void *extra)
-{
-	struct karma_data *data = (struct karma_data *) extra;
+अटल व्योम rio_karma_deकाष्ठाor(व्योम *extra)
+अणु
+	काष्ठा karma_data *data = (काष्ठा karma_data *) extra;
 
-	kfree(data->recv);
-}
+	kमुक्त(data->recv);
+पूर्ण
 
-static int rio_karma_init(struct us_data *us)
-{
-	int ret = 0;
-	struct karma_data *data = kzalloc(sizeof(struct karma_data), GFP_NOIO);
+अटल पूर्णांक rio_karma_init(काष्ठा us_data *us)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा karma_data *data = kzalloc(माप(काष्ठा karma_data), GFP_NOIO);
 
-	if (!data)
-		goto out;
+	अगर (!data)
+		जाओ out;
 
-	data->recv = kmalloc(RIO_RECV_LEN, GFP_NOIO);
-	if (!data->recv) {
-		kfree(data);
-		goto out;
-	}
+	data->recv = kदो_स्मृति(RIO_RECV_LEN, GFP_NOIO);
+	अगर (!data->recv) अणु
+		kमुक्त(data);
+		जाओ out;
+	पूर्ण
 
 	us->extra = data;
-	us->extra_destructor = rio_karma_destructor;
+	us->extra_deकाष्ठाor = rio_karma_deकाष्ठाor;
 	ret = rio_karma_send_command(RIO_ENTER_STORAGE, us);
 	data->in_storage = (ret == 0);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct scsi_host_template karma_host_template;
+अटल काष्ठा scsi_host_ढाँचा karma_host_ढाँचा;
 
-static int karma_probe(struct usb_interface *intf,
-			 const struct usb_device_id *id)
-{
-	struct us_data *us;
-	int result;
+अटल पूर्णांक karma_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			 स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा us_data *us;
+	पूर्णांक result;
 
-	result = usb_stor_probe1(&us, intf, id,
+	result = usb_stor_probe1(&us, पूर्णांकf, id,
 			(id - karma_usb_ids) + karma_unusual_dev_list,
-			&karma_host_template);
-	if (result)
-		return result;
+			&karma_host_ढाँचा);
+	अगर (result)
+		वापस result;
 
 	us->transport_name = "Rio Karma/Bulk";
 	us->transport = rio_karma_transport;
 	us->transport_reset = usb_stor_Bulk_reset;
 
 	result = usb_stor_probe2(us);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct usb_driver karma_driver = {
+अटल काष्ठा usb_driver karma_driver = अणु
 	.name =		DRV_NAME,
 	.probe =	karma_probe,
 	.disconnect =	usb_stor_disconnect,
@@ -228,6 +229,6 @@ static struct usb_driver karma_driver = {
 	.id_table =	karma_usb_ids,
 	.soft_unbind =	1,
 	.no_dynamic_id = 1,
-};
+पूर्ण;
 
-module_usb_stor_driver(karma_driver, karma_host_template, DRV_NAME);
+module_usb_stor_driver(karma_driver, karma_host_ढाँचा, DRV_NAME);

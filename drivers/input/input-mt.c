@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Input Multitouch Library
  *
  * Copyright (c) 2008-2010 Henrik Rydberg
  */
 
-#include <linux/input/mt.h>
-#include <linux/export.h>
-#include <linux/slab.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
 
-#define TRKID_SGN	((TRKID_MAX + 1) >> 1)
+#घोषणा TRKID_SGN	((TRKID_MAX + 1) >> 1)
 
-static void copy_abs(struct input_dev *dev, unsigned int dst, unsigned int src)
-{
-	if (dev->absinfo && test_bit(src, dev->absbit)) {
-		dev->absinfo[dst] = dev->absinfo[src];
-		dev->absinfo[dst].fuzz = 0;
-		__set_bit(dst, dev->absbit);
-	}
-}
+अटल व्योम copy_असल(काष्ठा input_dev *dev, अचिन्हित पूर्णांक dst, अचिन्हित पूर्णांक src)
+अणु
+	अगर (dev->असलinfo && test_bit(src, dev->असलbit)) अणु
+		dev->असलinfo[dst] = dev->असलinfo[src];
+		dev->असलinfo[dst].fuzz = 0;
+		__set_bit(dst, dev->असलbit);
+	पूर्ण
+पूर्ण
 
 /**
  * input_mt_init_slots() - initialize MT input slots
@@ -26,138 +27,138 @@ static void copy_abs(struct input_dev *dev, unsigned int dst, unsigned int src)
  * @num_slots: number of slots used by the device
  * @flags: mt tasks to handle in core
  *
- * This function allocates all necessary memory for MT slot handling
+ * This function allocates all necessary memory क्रम MT slot handling
  * in the input device, prepares the ABS_MT_SLOT and
- * ABS_MT_TRACKING_ID events for use and sets up appropriate buffers.
- * Depending on the flags set, it also performs pointer emulation and
+ * ABS_MT_TRACKING_ID events क्रम use and sets up appropriate buffers.
+ * Depending on the flags set, it also perक्रमms poपूर्णांकer emulation and
  * frame synchronization.
  *
- * May be called repeatedly. Returns -EINVAL if attempting to
- * reinitialize with a different number of slots.
+ * May be called repeatedly. Returns -EINVAL अगर attempting to
+ * reinitialize with a dअगरferent number of slots.
  */
-int input_mt_init_slots(struct input_dev *dev, unsigned int num_slots,
-			unsigned int flags)
-{
-	struct input_mt *mt = dev->mt;
-	int i;
+पूर्णांक input_mt_init_slots(काष्ठा input_dev *dev, अचिन्हित पूर्णांक num_slots,
+			अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
+	पूर्णांक i;
 
-	if (!num_slots)
-		return 0;
-	if (mt)
-		return mt->num_slots != num_slots ? -EINVAL : 0;
+	अगर (!num_slots)
+		वापस 0;
+	अगर (mt)
+		वापस mt->num_slots != num_slots ? -EINVAL : 0;
 
-	mt = kzalloc(struct_size(mt, slots, num_slots), GFP_KERNEL);
-	if (!mt)
-		goto err_mem;
+	mt = kzalloc(काष्ठा_size(mt, slots, num_slots), GFP_KERNEL);
+	अगर (!mt)
+		जाओ err_mem;
 
 	mt->num_slots = num_slots;
 	mt->flags = flags;
-	input_set_abs_params(dev, ABS_MT_SLOT, 0, num_slots - 1, 0, 0);
-	input_set_abs_params(dev, ABS_MT_TRACKING_ID, 0, TRKID_MAX, 0, 0);
+	input_set_असल_params(dev, ABS_MT_SLOT, 0, num_slots - 1, 0, 0);
+	input_set_असल_params(dev, ABS_MT_TRACKING_ID, 0, TRKID_MAX, 0, 0);
 
-	if (flags & (INPUT_MT_POINTER | INPUT_MT_DIRECT)) {
+	अगर (flags & (INPUT_MT_POINTER | INPUT_MT_सूचीECT)) अणु
 		__set_bit(EV_KEY, dev->evbit);
 		__set_bit(BTN_TOUCH, dev->keybit);
 
-		copy_abs(dev, ABS_X, ABS_MT_POSITION_X);
-		copy_abs(dev, ABS_Y, ABS_MT_POSITION_Y);
-		copy_abs(dev, ABS_PRESSURE, ABS_MT_PRESSURE);
-	}
-	if (flags & INPUT_MT_POINTER) {
+		copy_असल(dev, ABS_X, ABS_MT_POSITION_X);
+		copy_असल(dev, ABS_Y, ABS_MT_POSITION_Y);
+		copy_असल(dev, ABS_PRESSURE, ABS_MT_PRESSURE);
+	पूर्ण
+	अगर (flags & INPUT_MT_POINTER) अणु
 		__set_bit(BTN_TOOL_FINGER, dev->keybit);
 		__set_bit(BTN_TOOL_DOUBLETAP, dev->keybit);
-		if (num_slots >= 3)
+		अगर (num_slots >= 3)
 			__set_bit(BTN_TOOL_TRIPLETAP, dev->keybit);
-		if (num_slots >= 4)
+		अगर (num_slots >= 4)
 			__set_bit(BTN_TOOL_QUADTAP, dev->keybit);
-		if (num_slots >= 5)
+		अगर (num_slots >= 5)
 			__set_bit(BTN_TOOL_QUINTTAP, dev->keybit);
 		__set_bit(INPUT_PROP_POINTER, dev->propbit);
-	}
-	if (flags & INPUT_MT_DIRECT)
-		__set_bit(INPUT_PROP_DIRECT, dev->propbit);
-	if (flags & INPUT_MT_SEMI_MT)
+	पूर्ण
+	अगर (flags & INPUT_MT_सूचीECT)
+		__set_bit(INPUT_PROP_सूचीECT, dev->propbit);
+	अगर (flags & INPUT_MT_SEMI_MT)
 		__set_bit(INPUT_PROP_SEMI_MT, dev->propbit);
-	if (flags & INPUT_MT_TRACK) {
-		unsigned int n2 = num_slots * num_slots;
-		mt->red = kcalloc(n2, sizeof(*mt->red), GFP_KERNEL);
-		if (!mt->red)
-			goto err_mem;
-	}
+	अगर (flags & INPUT_MT_TRACK) अणु
+		अचिन्हित पूर्णांक n2 = num_slots * num_slots;
+		mt->red = kसुस्मृति(n2, माप(*mt->red), GFP_KERNEL);
+		अगर (!mt->red)
+			जाओ err_mem;
+	पूर्ण
 
 	/* Mark slots as 'inactive' */
-	for (i = 0; i < num_slots; i++)
+	क्रम (i = 0; i < num_slots; i++)
 		input_mt_set_value(&mt->slots[i], ABS_MT_TRACKING_ID, -1);
 
 	/* Mark slots as 'unused' */
 	mt->frame = 1;
 
 	dev->mt = mt;
-	return 0;
+	वापस 0;
 err_mem:
-	kfree(mt);
-	return -ENOMEM;
-}
+	kमुक्त(mt);
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL(input_mt_init_slots);
 
 /**
- * input_mt_destroy_slots() - frees the MT slots of the input device
+ * input_mt_destroy_slots() - मुक्तs the MT slots of the input device
  * @dev: input device with allocated MT slots
  *
  * This function is only needed in error path as the input core will
- * automatically free the MT slots when the device is destroyed.
+ * स्वतःmatically मुक्त the MT slots when the device is destroyed.
  */
-void input_mt_destroy_slots(struct input_dev *dev)
-{
-	if (dev->mt) {
-		kfree(dev->mt->red);
-		kfree(dev->mt);
-	}
-	dev->mt = NULL;
-}
+व्योम input_mt_destroy_slots(काष्ठा input_dev *dev)
+अणु
+	अगर (dev->mt) अणु
+		kमुक्त(dev->mt->red);
+		kमुक्त(dev->mt);
+	पूर्ण
+	dev->mt = शून्य;
+पूर्ण
 EXPORT_SYMBOL(input_mt_destroy_slots);
 
 /**
  * input_mt_report_slot_state() - report contact state
  * @dev: input device with allocated MT slots
  * @tool_type: the tool type to use in this slot
- * @active: true if contact is active, false otherwise
+ * @active: true अगर contact is active, false otherwise
  *
  * Reports a contact via ABS_MT_TRACKING_ID, and optionally
  * ABS_MT_TOOL_TYPE. If active is true and the slot is currently
- * inactive, or if the tool type is changed, a new tracking id is
- * assigned to the slot. The tool type is only reported if the
- * corresponding absbit field is set.
+ * inactive, or अगर the tool type is changed, a new tracking id is
+ * asचिन्हित to the slot. The tool type is only reported अगर the
+ * corresponding असलbit field is set.
  *
- * Returns true if contact is active.
+ * Returns true अगर contact is active.
  */
-bool input_mt_report_slot_state(struct input_dev *dev,
-				unsigned int tool_type, bool active)
-{
-	struct input_mt *mt = dev->mt;
-	struct input_mt_slot *slot;
-	int id;
+bool input_mt_report_slot_state(काष्ठा input_dev *dev,
+				अचिन्हित पूर्णांक tool_type, bool active)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
+	काष्ठा input_mt_slot *slot;
+	पूर्णांक id;
 
-	if (!mt)
-		return false;
+	अगर (!mt)
+		वापस false;
 
 	slot = &mt->slots[mt->slot];
 	slot->frame = mt->frame;
 
-	if (!active) {
+	अगर (!active) अणु
 		input_event(dev, EV_ABS, ABS_MT_TRACKING_ID, -1);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	id = input_mt_get_value(slot, ABS_MT_TRACKING_ID);
-	if (id < 0)
+	अगर (id < 0)
 		id = input_mt_new_trkid(mt);
 
 	input_event(dev, EV_ABS, ABS_MT_TRACKING_ID, id);
 	input_event(dev, EV_ABS, ABS_MT_TOOL_TYPE, tool_type);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(input_mt_report_slot_state);
 
 /**
@@ -168,328 +169,328 @@ EXPORT_SYMBOL(input_mt_report_slot_state);
  * Reports the contact count via BTN_TOOL_FINGER, BTN_TOOL_DOUBLETAP,
  * BTN_TOOL_TRIPLETAP and BTN_TOOL_QUADTAP.
  *
- * The input core ensures only the KEY events already setup for
+ * The input core ensures only the KEY events alपढ़ोy setup क्रम
  * this device will produce output.
  */
-void input_mt_report_finger_count(struct input_dev *dev, int count)
-{
+व्योम input_mt_report_finger_count(काष्ठा input_dev *dev, पूर्णांक count)
+अणु
 	input_event(dev, EV_KEY, BTN_TOOL_FINGER, count == 1);
 	input_event(dev, EV_KEY, BTN_TOOL_DOUBLETAP, count == 2);
 	input_event(dev, EV_KEY, BTN_TOOL_TRIPLETAP, count == 3);
 	input_event(dev, EV_KEY, BTN_TOOL_QUADTAP, count == 4);
 	input_event(dev, EV_KEY, BTN_TOOL_QUINTTAP, count == 5);
-}
+पूर्ण
 EXPORT_SYMBOL(input_mt_report_finger_count);
 
 /**
- * input_mt_report_pointer_emulation() - common pointer emulation
+ * input_mt_report_poपूर्णांकer_emulation() - common poपूर्णांकer emulation
  * @dev: input device with allocated MT slots
  * @use_count: report number of active contacts as finger count
  *
- * Performs legacy pointer emulation via BTN_TOUCH, ABS_X, ABS_Y and
- * ABS_PRESSURE. Touchpad finger count is emulated if use_count is true.
+ * Perक्रमms legacy poपूर्णांकer emulation via BTN_TOUCH, ABS_X, ABS_Y and
+ * ABS_PRESSURE. Touchpad finger count is emulated अगर use_count is true.
  *
- * The input core ensures only the KEY and ABS axes already setup for
+ * The input core ensures only the KEY and ABS axes alपढ़ोy setup क्रम
  * this device will produce output.
  */
-void input_mt_report_pointer_emulation(struct input_dev *dev, bool use_count)
-{
-	struct input_mt *mt = dev->mt;
-	struct input_mt_slot *oldest;
-	int oldid, count, i;
+व्योम input_mt_report_poपूर्णांकer_emulation(काष्ठा input_dev *dev, bool use_count)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
+	काष्ठा input_mt_slot *oldest;
+	पूर्णांक oldid, count, i;
 
-	if (!mt)
-		return;
+	अगर (!mt)
+		वापस;
 
-	oldest = NULL;
+	oldest = शून्य;
 	oldid = mt->trkid;
 	count = 0;
 
-	for (i = 0; i < mt->num_slots; ++i) {
-		struct input_mt_slot *ps = &mt->slots[i];
-		int id = input_mt_get_value(ps, ABS_MT_TRACKING_ID);
+	क्रम (i = 0; i < mt->num_slots; ++i) अणु
+		काष्ठा input_mt_slot *ps = &mt->slots[i];
+		पूर्णांक id = input_mt_get_value(ps, ABS_MT_TRACKING_ID);
 
-		if (id < 0)
-			continue;
-		if ((id - oldid) & TRKID_SGN) {
+		अगर (id < 0)
+			जारी;
+		अगर ((id - oldid) & TRKID_SGN) अणु
 			oldest = ps;
 			oldid = id;
-		}
+		पूर्ण
 		count++;
-	}
+	पूर्ण
 
 	input_event(dev, EV_KEY, BTN_TOUCH, count > 0);
 
-	if (use_count) {
-		if (count == 0 &&
-		    !test_bit(ABS_MT_DISTANCE, dev->absbit) &&
-		    test_bit(ABS_DISTANCE, dev->absbit) &&
-		    input_abs_get_val(dev, ABS_DISTANCE) != 0) {
+	अगर (use_count) अणु
+		अगर (count == 0 &&
+		    !test_bit(ABS_MT_DISTANCE, dev->असलbit) &&
+		    test_bit(ABS_DISTANCE, dev->असलbit) &&
+		    input_असल_get_val(dev, ABS_DISTANCE) != 0) अणु
 			/*
-			 * Force reporting BTN_TOOL_FINGER for devices that
+			 * Force reporting BTN_TOOL_FINGER क्रम devices that
 			 * only report general hover (and not per-contact
 			 * distance) when contact is in proximity but not
 			 * on the surface.
 			 */
 			count = 1;
-		}
+		पूर्ण
 
 		input_mt_report_finger_count(dev, count);
-	}
+	पूर्ण
 
-	if (oldest) {
-		int x = input_mt_get_value(oldest, ABS_MT_POSITION_X);
-		int y = input_mt_get_value(oldest, ABS_MT_POSITION_Y);
+	अगर (oldest) अणु
+		पूर्णांक x = input_mt_get_value(oldest, ABS_MT_POSITION_X);
+		पूर्णांक y = input_mt_get_value(oldest, ABS_MT_POSITION_Y);
 
 		input_event(dev, EV_ABS, ABS_X, x);
 		input_event(dev, EV_ABS, ABS_Y, y);
 
-		if (test_bit(ABS_MT_PRESSURE, dev->absbit)) {
-			int p = input_mt_get_value(oldest, ABS_MT_PRESSURE);
+		अगर (test_bit(ABS_MT_PRESSURE, dev->असलbit)) अणु
+			पूर्णांक p = input_mt_get_value(oldest, ABS_MT_PRESSURE);
 			input_event(dev, EV_ABS, ABS_PRESSURE, p);
-		}
-	} else {
-		if (test_bit(ABS_MT_PRESSURE, dev->absbit))
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (test_bit(ABS_MT_PRESSURE, dev->असलbit))
 			input_event(dev, EV_ABS, ABS_PRESSURE, 0);
-	}
-}
-EXPORT_SYMBOL(input_mt_report_pointer_emulation);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(input_mt_report_poपूर्णांकer_emulation);
 
-static void __input_mt_drop_unused(struct input_dev *dev, struct input_mt *mt)
-{
-	int i;
+अटल व्योम __input_mt_drop_unused(काष्ठा input_dev *dev, काष्ठा input_mt *mt)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mt->num_slots; i++) {
-		if (!input_mt_is_used(mt, &mt->slots[i])) {
+	क्रम (i = 0; i < mt->num_slots; i++) अणु
+		अगर (!input_mt_is_used(mt, &mt->slots[i])) अणु
 			input_mt_slot(dev, i);
 			input_event(dev, EV_ABS, ABS_MT_TRACKING_ID, -1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * input_mt_drop_unused() - Inactivate slots not seen in this frame
  * @dev: input device with allocated MT slots
  *
- * Lift all slots not seen since the last call to this function.
+ * Lअगरt all slots not seen since the last call to this function.
  */
-void input_mt_drop_unused(struct input_dev *dev)
-{
-	struct input_mt *mt = dev->mt;
+व्योम input_mt_drop_unused(काष्ठा input_dev *dev)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
 
-	if (mt) {
+	अगर (mt) अणु
 		__input_mt_drop_unused(dev, mt);
 		mt->frame++;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(input_mt_drop_unused);
 
 /**
  * input_mt_sync_frame() - synchronize mt frame
  * @dev: input device with allocated MT slots
  *
- * Close the frame and prepare the internal state for a new one.
- * Depending on the flags, marks unused slots as inactive and performs
- * pointer emulation.
+ * Close the frame and prepare the पूर्णांकernal state क्रम a new one.
+ * Depending on the flags, marks unused slots as inactive and perक्रमms
+ * poपूर्णांकer emulation.
  */
-void input_mt_sync_frame(struct input_dev *dev)
-{
-	struct input_mt *mt = dev->mt;
+व्योम input_mt_sync_frame(काष्ठा input_dev *dev)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
 	bool use_count = false;
 
-	if (!mt)
-		return;
+	अगर (!mt)
+		वापस;
 
-	if (mt->flags & INPUT_MT_DROP_UNUSED)
+	अगर (mt->flags & INPUT_MT_DROP_UNUSED)
 		__input_mt_drop_unused(dev, mt);
 
-	if ((mt->flags & INPUT_MT_POINTER) && !(mt->flags & INPUT_MT_SEMI_MT))
+	अगर ((mt->flags & INPUT_MT_POINTER) && !(mt->flags & INPUT_MT_SEMI_MT))
 		use_count = true;
 
-	input_mt_report_pointer_emulation(dev, use_count);
+	input_mt_report_poपूर्णांकer_emulation(dev, use_count);
 
 	mt->frame++;
-}
+पूर्ण
 EXPORT_SYMBOL(input_mt_sync_frame);
 
-static int adjust_dual(int *begin, int step, int *end, int eq, int mu)
-{
-	int f, *p, s, c;
+अटल पूर्णांक adjust_dual(पूर्णांक *begin, पूर्णांक step, पूर्णांक *end, पूर्णांक eq, पूर्णांक mu)
+अणु
+	पूर्णांक f, *p, s, c;
 
-	if (begin == end)
-		return 0;
+	अगर (begin == end)
+		वापस 0;
 
 	f = *begin;
 	p = begin + step;
 	s = p == end ? f + 1 : *p;
 
-	for (; p != end; p += step) {
-		if (*p < f) {
+	क्रम (; p != end; p += step) अणु
+		अगर (*p < f) अणु
 			s = f;
 			f = *p;
-		} else if (*p < s) {
+		पूर्ण अन्यथा अगर (*p < s) अणु
 			s = *p;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	c = (f + s + 1) / 2;
-	if (c == 0 || (c > mu && (!eq || mu > 0)))
-		return 0;
-	/* Improve convergence for positive matrices by penalizing overcovers */
-	if (s < 0 && mu <= 0)
+	अगर (c == 0 || (c > mu && (!eq || mu > 0)))
+		वापस 0;
+	/* Improve convergence क्रम positive matrices by penalizing overcovers */
+	अगर (s < 0 && mu <= 0)
 		c *= 2;
 
-	for (p = begin; p != end; p += step)
+	क्रम (p = begin; p != end; p += step)
 		*p -= c;
 
-	return (c < s && s <= 0) || (f >= 0 && f < c);
-}
+	वापस (c < s && s <= 0) || (f >= 0 && f < c);
+पूर्ण
 
-static void find_reduced_matrix(int *w, int nr, int nc, int nrc, int mu)
-{
-	int i, k, sum;
+अटल व्योम find_reduced_matrix(पूर्णांक *w, पूर्णांक nr, पूर्णांक nc, पूर्णांक nrc, पूर्णांक mu)
+अणु
+	पूर्णांक i, k, sum;
 
-	for (k = 0; k < nrc; k++) {
-		for (i = 0; i < nr; i++)
+	क्रम (k = 0; k < nrc; k++) अणु
+		क्रम (i = 0; i < nr; i++)
 			adjust_dual(w + i, nr, w + i + nrc, nr <= nc, mu);
 		sum = 0;
-		for (i = 0; i < nrc; i += nr)
+		क्रम (i = 0; i < nrc; i += nr)
 			sum += adjust_dual(w + i, 1, w + i + nr, nc <= nr, mu);
-		if (!sum)
-			break;
-	}
-}
+		अगर (!sum)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static int input_mt_set_matrix(struct input_mt *mt,
-			       const struct input_mt_pos *pos, int num_pos,
-			       int mu)
-{
-	const struct input_mt_pos *p;
-	struct input_mt_slot *s;
-	int *w = mt->red;
-	int x, y;
+अटल पूर्णांक input_mt_set_matrix(काष्ठा input_mt *mt,
+			       स्थिर काष्ठा input_mt_pos *pos, पूर्णांक num_pos,
+			       पूर्णांक mu)
+अणु
+	स्थिर काष्ठा input_mt_pos *p;
+	काष्ठा input_mt_slot *s;
+	पूर्णांक *w = mt->red;
+	पूर्णांक x, y;
 
-	for (s = mt->slots; s != mt->slots + mt->num_slots; s++) {
-		if (!input_mt_is_active(s))
-			continue;
+	क्रम (s = mt->slots; s != mt->slots + mt->num_slots; s++) अणु
+		अगर (!input_mt_is_active(s))
+			जारी;
 		x = input_mt_get_value(s, ABS_MT_POSITION_X);
 		y = input_mt_get_value(s, ABS_MT_POSITION_Y);
-		for (p = pos; p != pos + num_pos; p++) {
-			int dx = x - p->x, dy = y - p->y;
+		क्रम (p = pos; p != pos + num_pos; p++) अणु
+			पूर्णांक dx = x - p->x, dy = y - p->y;
 			*w++ = dx * dx + dy * dy - mu;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return w - mt->red;
-}
+	वापस w - mt->red;
+पूर्ण
 
-static void input_mt_set_slots(struct input_mt *mt,
-			       int *slots, int num_pos)
-{
-	struct input_mt_slot *s;
-	int *w = mt->red, j;
+अटल व्योम input_mt_set_slots(काष्ठा input_mt *mt,
+			       पूर्णांक *slots, पूर्णांक num_pos)
+अणु
+	काष्ठा input_mt_slot *s;
+	पूर्णांक *w = mt->red, j;
 
-	for (j = 0; j != num_pos; j++)
+	क्रम (j = 0; j != num_pos; j++)
 		slots[j] = -1;
 
-	for (s = mt->slots; s != mt->slots + mt->num_slots; s++) {
-		if (!input_mt_is_active(s))
-			continue;
+	क्रम (s = mt->slots; s != mt->slots + mt->num_slots; s++) अणु
+		अगर (!input_mt_is_active(s))
+			जारी;
 
-		for (j = 0; j != num_pos; j++) {
-			if (w[j] < 0) {
+		क्रम (j = 0; j != num_pos; j++) अणु
+			अगर (w[j] < 0) अणु
 				slots[j] = s - mt->slots;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		w += num_pos;
-	}
+	पूर्ण
 
-	for (s = mt->slots; s != mt->slots + mt->num_slots; s++) {
-		if (input_mt_is_active(s))
-			continue;
+	क्रम (s = mt->slots; s != mt->slots + mt->num_slots; s++) अणु
+		अगर (input_mt_is_active(s))
+			जारी;
 
-		for (j = 0; j != num_pos; j++) {
-			if (slots[j] < 0) {
+		क्रम (j = 0; j != num_pos; j++) अणु
+			अगर (slots[j] < 0) अणु
 				slots[j] = s - mt->slots;
-				break;
-			}
-		}
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * input_mt_assign_slots() - perform a best-match assignment
+ * input_mt_assign_slots() - perक्रमm a best-match assignment
  * @dev: input device with allocated MT slots
  * @slots: the slot assignment to be filled
  * @pos: the position array to match
  * @num_pos: number of positions
- * @dmax: maximum ABS_MT_POSITION displacement (zero for infinite)
+ * @dmax: maximum ABS_MT_POSITION displacement (zero क्रम infinite)
  *
- * Performs a best match against the current contacts and returns
- * the slot assignment list. New contacts are assigned to unused
+ * Perक्रमms a best match against the current contacts and वापसs
+ * the slot assignment list. New contacts are asचिन्हित to unused
  * slots.
  *
  * The assignments are balanced so that all coordinate displacements are
  * below the euclidian distance dmax. If no such assignment can be found,
- * some contacts are assigned to unused slots.
+ * some contacts are asचिन्हित to unused slots.
  *
- * Returns zero on success, or negative error in case of failure.
+ * Returns zero on success, or negative error in हाल of failure.
  */
-int input_mt_assign_slots(struct input_dev *dev, int *slots,
-			  const struct input_mt_pos *pos, int num_pos,
-			  int dmax)
-{
-	struct input_mt *mt = dev->mt;
-	int mu = 2 * dmax * dmax;
-	int nrc;
+पूर्णांक input_mt_assign_slots(काष्ठा input_dev *dev, पूर्णांक *slots,
+			  स्थिर काष्ठा input_mt_pos *pos, पूर्णांक num_pos,
+			  पूर्णांक dmax)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
+	पूर्णांक mu = 2 * dmax * dmax;
+	पूर्णांक nrc;
 
-	if (!mt || !mt->red)
-		return -ENXIO;
-	if (num_pos > mt->num_slots)
-		return -EINVAL;
-	if (num_pos < 1)
-		return 0;
+	अगर (!mt || !mt->red)
+		वापस -ENXIO;
+	अगर (num_pos > mt->num_slots)
+		वापस -EINVAL;
+	अगर (num_pos < 1)
+		वापस 0;
 
 	nrc = input_mt_set_matrix(mt, pos, num_pos, mu);
 	find_reduced_matrix(mt->red, num_pos, nrc / num_pos, nrc, mu);
 	input_mt_set_slots(mt, slots, num_pos);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(input_mt_assign_slots);
 
 /**
- * input_mt_get_slot_by_key() - return slot matching key
+ * input_mt_get_slot_by_key() - वापस slot matching key
  * @dev: input device with allocated MT slots
  * @key: the key of the sought slot
  *
- * Returns the slot of the given key, if it exists, otherwise
- * set the key on the first unused slot and return.
+ * Returns the slot of the given key, अगर it exists, otherwise
+ * set the key on the first unused slot and वापस.
  *
- * If no available slot can be found, -1 is returned.
- * Note that for this function to work properly, input_mt_sync_frame() has
+ * If no available slot can be found, -1 is वापसed.
+ * Note that क्रम this function to work properly, input_mt_sync_frame() has
  * to be called at each frame.
  */
-int input_mt_get_slot_by_key(struct input_dev *dev, int key)
-{
-	struct input_mt *mt = dev->mt;
-	struct input_mt_slot *s;
+पूर्णांक input_mt_get_slot_by_key(काष्ठा input_dev *dev, पूर्णांक key)
+अणु
+	काष्ठा input_mt *mt = dev->mt;
+	काष्ठा input_mt_slot *s;
 
-	if (!mt)
-		return -1;
+	अगर (!mt)
+		वापस -1;
 
-	for (s = mt->slots; s != mt->slots + mt->num_slots; s++)
-		if (input_mt_is_active(s) && s->key == key)
-			return s - mt->slots;
+	क्रम (s = mt->slots; s != mt->slots + mt->num_slots; s++)
+		अगर (input_mt_is_active(s) && s->key == key)
+			वापस s - mt->slots;
 
-	for (s = mt->slots; s != mt->slots + mt->num_slots; s++)
-		if (!input_mt_is_active(s) && !input_mt_is_used(mt, s)) {
+	क्रम (s = mt->slots; s != mt->slots + mt->num_slots; s++)
+		अगर (!input_mt_is_active(s) && !input_mt_is_used(mt, s)) अणु
 			s->key = key;
-			return s - mt->slots;
-		}
+			वापस s - mt->slots;
+		पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(input_mt_get_slot_by_key);

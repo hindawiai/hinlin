@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * System Control and Management Interface (SCMI) System Power Protocol
  *
  * Copyright (C) 2020-2021 ARM Ltd.
  */
 
-#define pr_fmt(fmt) "SCMI Notifications SYSTEM - " fmt
+#घोषणा pr_fmt(fmt) "SCMI Notifications SYSTEM - " fmt
 
-#include <linux/module.h>
-#include <linux/scmi_protocol.h>
+#समावेश <linux/module.h>
+#समावेश <linux/scmi_protocol.h>
 
-#include "common.h"
-#include "notify.h"
+#समावेश "common.h"
+#समावेश "notify.h"
 
-#define SCMI_SYSTEM_NUM_SOURCES		1
+#घोषणा SCMI_SYSTEM_NUM_SOURCES		1
 
-enum scmi_system_protocol_cmd {
+क्रमागत scmi_प्रणाली_protocol_cmd अणु
 	SYSTEM_POWER_STATE_NOTIFY = 0x5,
-};
+पूर्ण;
 
-struct scmi_system_power_state_notify {
-	__le32 notify_enable;
-};
+काष्ठा scmi_प्रणाली_घातer_state_notअगरy अणु
+	__le32 notअगरy_enable;
+पूर्ण;
 
-struct scmi_system_power_state_notifier_payld {
+काष्ठा scmi_प्रणाली_घातer_state_notअगरier_payld अणु
 	__le32 agent_id;
 	__le32 flags;
-	__le32 system_state;
-};
+	__le32 प्रणाली_state;
+पूर्ण;
 
-struct scmi_system_info {
+काष्ठा scmi_प्रणाली_info अणु
 	u32 version;
-};
+पूर्ण;
 
-static int scmi_system_request_notify(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_प्रणाली_request_notअगरy(स्थिर काष्ठा scmi_protocol_handle *ph,
 				      bool enable)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct scmi_system_power_state_notify *notify;
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा scmi_प्रणाली_घातer_state_notअगरy *notअगरy;
 
 	ret = ph->xops->xfer_get_init(ph, SYSTEM_POWER_STATE_NOTIFY,
-				      sizeof(*notify), 0, &t);
-	if (ret)
-		return ret;
+				      माप(*notअगरy), 0, &t);
+	अगर (ret)
+		वापस ret;
 
-	notify = t->tx.buf;
-	notify->notify_enable = enable ? cpu_to_le32(BIT(0)) : 0;
+	notअगरy = t->tx.buf;
+	notअगरy->notअगरy_enable = enable ? cpu_to_le32(BIT(0)) : 0;
 
-	ret = ph->xops->do_xfer(ph, t);
+	ret = ph->xops->करो_xfer(ph, t);
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_system_set_notify_enabled(const struct scmi_protocol_handle *ph,
+अटल पूर्णांक scmi_प्रणाली_set_notअगरy_enabled(स्थिर काष्ठा scmi_protocol_handle *ph,
 					  u8 evt_id, u32 src_id, bool enable)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = scmi_system_request_notify(ph, enable);
-	if (ret)
+	ret = scmi_प्रणाली_request_notअगरy(ph, enable);
+	अगर (ret)
 		pr_debug("FAIL_ENABLE - evt[%X] - ret:%d\n", evt_id, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *
-scmi_system_fill_custom_report(const struct scmi_protocol_handle *ph,
-			       u8 evt_id, ktime_t timestamp,
-			       const void *payld, size_t payld_sz,
-			       void *report, u32 *src_id)
-{
-	const struct scmi_system_power_state_notifier_payld *p = payld;
-	struct scmi_system_power_state_notifier_report *r = report;
+अटल व्योम *
+scmi_प्रणाली_fill_custom_report(स्थिर काष्ठा scmi_protocol_handle *ph,
+			       u8 evt_id, kसमय_प्रकार बारtamp,
+			       स्थिर व्योम *payld, माप_प्रकार payld_sz,
+			       व्योम *report, u32 *src_id)
+अणु
+	स्थिर काष्ठा scmi_प्रणाली_घातer_state_notअगरier_payld *p = payld;
+	काष्ठा scmi_प्रणाली_घातer_state_notअगरier_report *r = report;
 
-	if (evt_id != SCMI_EVENT_SYSTEM_POWER_STATE_NOTIFIER ||
-	    sizeof(*p) != payld_sz)
-		return NULL;
+	अगर (evt_id != SCMI_EVENT_SYSTEM_POWER_STATE_NOTIFIER ||
+	    माप(*p) != payld_sz)
+		वापस शून्य;
 
-	r->timestamp = timestamp;
+	r->बारtamp = बारtamp;
 	r->agent_id = le32_to_cpu(p->agent_id);
 	r->flags = le32_to_cpu(p->flags);
-	r->system_state = le32_to_cpu(p->system_state);
+	r->प्रणाली_state = le32_to_cpu(p->प्रणाली_state);
 	*src_id = 0;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static const struct scmi_event system_events[] = {
-	{
+अटल स्थिर काष्ठा scmi_event प्रणाली_events[] = अणु
+	अणु
 		.id = SCMI_EVENT_SYSTEM_POWER_STATE_NOTIFIER,
 		.max_payld_sz =
-			sizeof(struct scmi_system_power_state_notifier_payld),
+			माप(काष्ठा scmi_प्रणाली_घातer_state_notअगरier_payld),
 		.max_report_sz =
-			sizeof(struct scmi_system_power_state_notifier_report),
-	},
-};
+			माप(काष्ठा scmi_प्रणाली_घातer_state_notअगरier_report),
+	पूर्ण,
+पूर्ण;
 
-static const struct scmi_event_ops system_event_ops = {
-	.set_notify_enabled = scmi_system_set_notify_enabled,
-	.fill_custom_report = scmi_system_fill_custom_report,
-};
+अटल स्थिर काष्ठा scmi_event_ops प्रणाली_event_ops = अणु
+	.set_notअगरy_enabled = scmi_प्रणाली_set_notअगरy_enabled,
+	.fill_custom_report = scmi_प्रणाली_fill_custom_report,
+पूर्ण;
 
-static const struct scmi_protocol_events system_protocol_events = {
+अटल स्थिर काष्ठा scmi_protocol_events प्रणाली_protocol_events = अणु
 	.queue_sz = SCMI_PROTO_QUEUE_SZ,
-	.ops = &system_event_ops,
-	.evts = system_events,
-	.num_events = ARRAY_SIZE(system_events),
+	.ops = &प्रणाली_event_ops,
+	.evts = प्रणाली_events,
+	.num_events = ARRAY_SIZE(प्रणाली_events),
 	.num_sources = SCMI_SYSTEM_NUM_SOURCES,
-};
+पूर्ण;
 
-static int scmi_system_protocol_init(const struct scmi_protocol_handle *ph)
-{
+अटल पूर्णांक scmi_प्रणाली_protocol_init(स्थिर काष्ठा scmi_protocol_handle *ph)
+अणु
 	u32 version;
-	struct scmi_system_info *pinfo;
+	काष्ठा scmi_प्रणाली_info *pinfo;
 
 	ph->xops->version_get(ph, &version);
 
 	dev_dbg(ph->dev, "System Power Version %d.%d\n",
 		PROTOCOL_REV_MAJOR(version), PROTOCOL_REV_MINOR(version));
 
-	pinfo = devm_kzalloc(ph->dev, sizeof(*pinfo), GFP_KERNEL);
-	if (!pinfo)
-		return -ENOMEM;
+	pinfo = devm_kzalloc(ph->dev, माप(*pinfo), GFP_KERNEL);
+	अगर (!pinfo)
+		वापस -ENOMEM;
 
 	pinfo->version = version;
-	return ph->set_priv(ph, pinfo);
-}
+	वापस ph->set_priv(ph, pinfo);
+पूर्ण
 
-static const struct scmi_protocol scmi_system = {
+अटल स्थिर काष्ठा scmi_protocol scmi_प्रणाली = अणु
 	.id = SCMI_PROTOCOL_SYSTEM,
 	.owner = THIS_MODULE,
-	.instance_init = &scmi_system_protocol_init,
-	.ops = NULL,
-	.events = &system_protocol_events,
-};
+	.instance_init = &scmi_प्रणाली_protocol_init,
+	.ops = शून्य,
+	.events = &प्रणाली_protocol_events,
+पूर्ण;
 
-DEFINE_SCMI_PROTOCOL_REGISTER_UNREGISTER(system, scmi_system)
+DEFINE_SCMI_PROTOCOL_REGISTER_UNREGISTER(प्रणाली, scmi_प्रणाली)

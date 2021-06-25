@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2019 Lubomir Rintel <lkundrak@v3.sk>
+ * Copyright (C) 2019 Lubomir Rपूर्णांकel <lkundrak@v3.sk>
  */
-#include <linux/io.h>
-#include <asm/smp_scu.h>
-#include <asm/smp.h>
-#include "addr-map.h"
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/smp_scu.h>
+#समावेश <यंत्र/smp.h>
+#समावेश "addr-map.h"
 
-#define SW_BRANCH_VIRT_ADDR	CIU_REG(0x24)
+#घोषणा SW_BRANCH_VIRT_ADDR	CIU_REG(0x24)
 
-static int mmp3_boot_secondary(unsigned int cpu, struct task_struct *idle)
-{
+अटल पूर्णांक mmp3_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
 	/*
 	 * Apparently, the boot ROM on the second core spins on this
-	 * register becoming non-zero and then jumps to the address written
+	 * रेजिस्टर becoming non-zero and then jumps to the address written
 	 * there. No IPIs involved.
 	 */
-	__raw_writel(__pa_symbol(secondary_startup), SW_BRANCH_VIRT_ADDR);
-	return 0;
-}
+	__raw_ग_लिखोl(__pa_symbol(secondary_startup), SW_BRANCH_VIRT_ADDR);
+	वापस 0;
+पूर्ण
 
-static void mmp3_smp_prepare_cpus(unsigned int max_cpus)
-{
+अटल व्योम mmp3_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
 	scu_enable(SCU_VIRT_BASE);
-}
+पूर्ण
 
-static const struct smp_operations mmp3_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations mmp3_smp_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= mmp3_smp_prepare_cpus,
 	.smp_boot_secondary	= mmp3_boot_secondary,
-};
+पूर्ण;
 CPU_METHOD_OF_DECLARE(mmp3_smp, "marvell,mmp3-smp", &mmp3_smp_ops);

@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * PowerNV Platform dependent EEH operations
+ * PowerNV Platक्रमm dependent EEH operations
  *
  * Copyright Benjamin Herrenschmidt & Gavin Shan, IBM Corporation 2013.
  */
 
-#include <linux/atomic.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/msi.h>
-#include <linux/of.h>
-#include <linux/pci.h>
-#include <linux/proc_fs.h>
-#include <linux/rbtree.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/spinlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/eeh.h>
-#include <asm/eeh_event.h>
-#include <asm/firmware.h>
-#include <asm/io.h>
-#include <asm/iommu.h>
-#include <asm/machdep.h>
-#include <asm/msi_bitmap.h>
-#include <asm/opal.h>
-#include <asm/ppc-pci.h>
-#include <asm/pnv-pci.h>
+#समावेश <यंत्र/eeh.h>
+#समावेश <यंत्र/eeh_event.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/msi_biपंचांगap.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/pnv-pci.h>
 
-#include "powernv.h"
-#include "pci.h"
-#include "../../../../drivers/pci/pci.h"
+#समावेश "powernv.h"
+#समावेश "pci.h"
+#समावेश "../../../../drivers/pci/pci.h"
 
-static int eeh_event_irq = -EINVAL;
+अटल पूर्णांक eeh_event_irq = -EINVAL;
 
-static void pnv_pcibios_bus_add_device(struct pci_dev *pdev)
-{
+अटल व्योम pnv_pcibios_bus_add_device(काष्ठा pci_dev *pdev)
+अणु
 	dev_dbg(&pdev->dev, "EEH: Setting up device\n");
 	eeh_probe_device(pdev);
-}
+पूर्ण
 
-static irqreturn_t pnv_eeh_event(int irq, void *data)
-{
+अटल irqवापस_t pnv_eeh_event(पूर्णांक irq, व्योम *data)
+अणु
 	/*
-	 * We simply send a special EEH event if EEH has been
-	 * enabled. We don't care about EEH events until we've
+	 * We simply send a special EEH event अगर EEH has been
+	 * enabled. We करोn't care about EEH events until we've
 	 * finished processing the outstanding ones. Event processing
-	 * gets unmasked in next_error() if EEH is enabled.
+	 * माला_लो unmasked in next_error() अगर EEH is enabled.
 	 */
 	disable_irq_nosync(irq);
 
-	if (eeh_enabled())
-		eeh_send_failure_event(NULL);
+	अगर (eeh_enabled())
+		eeh_send_failure_event(शून्य);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
-static ssize_t pnv_eeh_ei_write(struct file *filp,
-				const char __user *user_buf,
-				size_t count, loff_t *ppos)
-{
-	struct pci_controller *hose = filp->private_data;
-	struct eeh_pe *pe;
-	int pe_no, type, func;
-	unsigned long addr, mask;
-	char buf[50];
-	int ret;
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल sमाप_प्रकार pnv_eeh_ei_ग_लिखो(काष्ठा file *filp,
+				स्थिर अक्षर __user *user_buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा pci_controller *hose = filp->निजी_data;
+	काष्ठा eeh_pe *pe;
+	पूर्णांक pe_no, type, func;
+	अचिन्हित दीर्घ addr, mask;
+	अक्षर buf[50];
+	पूर्णांक ret;
 
-	if (!eeh_ops || !eeh_ops->err_inject)
-		return -ENXIO;
+	अगर (!eeh_ops || !eeh_ops->err_inject)
+		वापस -ENXIO;
 
 	/* Copy over argument buffer */
-	ret = simple_write_to_buffer(buf, sizeof(buf), ppos, user_buf, count);
-	if (!ret)
-		return -EFAULT;
+	ret = simple_ग_लिखो_to_buffer(buf, माप(buf), ppos, user_buf, count);
+	अगर (!ret)
+		वापस -EFAULT;
 
 	/* Retrieve parameters */
-	ret = sscanf(buf, "%x:%x:%x:%lx:%lx",
+	ret = माला_पूछो(buf, "%x:%x:%x:%lx:%lx",
 		     &pe_no, &type, &func, &addr, &mask);
-	if (ret != 5)
-		return -EINVAL;
+	अगर (ret != 5)
+		वापस -EINVAL;
 
 	/* Retrieve PE */
 	pe = eeh_pe_get(hose, pe_no);
-	if (!pe)
-		return -ENODEV;
+	अगर (!pe)
+		वापस -ENODEV;
 
 	/* Do error injection */
 	ret = eeh_ops->err_inject(pe, type, func, addr, mask);
-	return ret < 0 ? ret : count;
-}
+	वापस ret < 0 ? ret : count;
+पूर्ण
 
-static const struct file_operations pnv_eeh_ei_fops = {
-	.open	= simple_open,
+अटल स्थिर काष्ठा file_operations pnv_eeh_ei_fops = अणु
+	.खोलो	= simple_खोलो,
 	.llseek	= no_llseek,
-	.write	= pnv_eeh_ei_write,
-};
+	.ग_लिखो	= pnv_eeh_ei_ग_लिखो,
+पूर्ण;
 
-static int pnv_eeh_dbgfs_set(void *data, int offset, u64 val)
-{
-	struct pci_controller *hose = data;
-	struct pnv_phb *phb = hose->private_data;
+अटल पूर्णांक pnv_eeh_dbgfs_set(व्योम *data, पूर्णांक offset, u64 val)
+अणु
+	काष्ठा pci_controller *hose = data;
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 
 	out_be64(phb->regs + offset, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pnv_eeh_dbgfs_get(void *data, int offset, u64 *val)
-{
-	struct pci_controller *hose = data;
-	struct pnv_phb *phb = hose->private_data;
+अटल पूर्णांक pnv_eeh_dbgfs_get(व्योम *data, पूर्णांक offset, u64 *val)
+अणु
+	काष्ठा pci_controller *hose = data;
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 
 	*val = in_be64(phb->regs + offset);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PNV_EEH_DBGFS_ENTRY(name, reg)				\
-static int pnv_eeh_dbgfs_set_##name(void *data, u64 val)	\
-{								\
-	return pnv_eeh_dbgfs_set(data, reg, val);		\
-}								\
+#घोषणा PNV_EEH_DBGFS_ENTRY(name, reg)				\
+अटल पूर्णांक pnv_eeh_dbgfs_set_##name(व्योम *data, u64 val)	\
+अणु								\
+	वापस pnv_eeh_dbgfs_set(data, reg, val);		\
+पूर्ण								\
 								\
-static int pnv_eeh_dbgfs_get_##name(void *data, u64 *val)	\
-{								\
-	return pnv_eeh_dbgfs_get(data, reg, val);		\
-}								\
+अटल पूर्णांक pnv_eeh_dbgfs_get_##name(व्योम *data, u64 *val)	\
+अणु								\
+	वापस pnv_eeh_dbgfs_get(data, reg, val);		\
+पूर्ण								\
 								\
 DEFINE_SIMPLE_ATTRIBUTE(pnv_eeh_dbgfs_ops_##name,		\
 			pnv_eeh_dbgfs_get_##name,		\
@@ -140,72 +141,72 @@ PNV_EEH_DBGFS_ENTRY(outb, 0xD10);
 PNV_EEH_DBGFS_ENTRY(inbA, 0xD90);
 PNV_EEH_DBGFS_ENTRY(inbB, 0xE10);
 
-#endif /* CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static void pnv_eeh_enable_phbs(void)
-{
-	struct pci_controller *hose;
-	struct pnv_phb *phb;
+अटल व्योम pnv_eeh_enable_phbs(व्योम)
+अणु
+	काष्ठा pci_controller *hose;
+	काष्ठा pnv_phb *phb;
 
-	list_for_each_entry(hose, &hose_list, list_node) {
-		phb = hose->private_data;
+	list_क्रम_each_entry(hose, &hose_list, list_node) अणु
+		phb = hose->निजी_data;
 		/*
 		 * If EEH is enabled, we're going to rely on that.
 		 * Otherwise, we restore to conventional mechanism
 		 * to clear frozen PE during PCI config access.
 		 */
-		if (eeh_enabled())
+		अगर (eeh_enabled())
 			phb->flags |= PNV_PHB_FLAG_EEH;
-		else
+		अन्यथा
 			phb->flags &= ~PNV_PHB_FLAG_EEH;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * pnv_eeh_post_init - EEH platform dependent post initialization
+ * pnv_eeh_post_init - EEH platक्रमm dependent post initialization
  *
- * EEH platform dependent post initialization on powernv. When
+ * EEH platक्रमm dependent post initialization on घातernv. When
  * the function is called, the EEH PEs and devices should have
  * been built. If the I/O cache staff has been built, EEH is
- * ready to supply service.
+ * पढ़ोy to supply service.
  */
-int pnv_eeh_post_init(void)
-{
-	struct pci_controller *hose;
-	struct pnv_phb *phb;
-	int ret = 0;
+पूर्णांक pnv_eeh_post_init(व्योम)
+अणु
+	काष्ठा pci_controller *hose;
+	काष्ठा pnv_phb *phb;
+	पूर्णांक ret = 0;
 
 	eeh_show_enabled();
 
-	/* Register OPAL event notifier */
+	/* Register OPAL event notअगरier */
 	eeh_event_irq = opal_event_request(ilog2(OPAL_EVENT_PCI_ERROR));
-	if (eeh_event_irq < 0) {
+	अगर (eeh_event_irq < 0) अणु
 		pr_err("%s: Can't register OPAL event interrupt (%d)\n",
 		       __func__, eeh_event_irq);
-		return eeh_event_irq;
-	}
+		वापस eeh_event_irq;
+	पूर्ण
 
 	ret = request_irq(eeh_event_irq, pnv_eeh_event,
-			  IRQ_TYPE_LEVEL_HIGH, "opal-eeh", NULL);
-	if (ret < 0) {
+			  IRQ_TYPE_LEVEL_HIGH, "opal-eeh", शून्य);
+	अगर (ret < 0) अणु
 		irq_dispose_mapping(eeh_event_irq);
 		pr_err("%s: Can't request OPAL event interrupt (%d)\n",
 		       __func__, eeh_event_irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!eeh_enabled())
+	अगर (!eeh_enabled())
 		disable_irq(eeh_event_irq);
 
 	pnv_eeh_enable_phbs();
 
-	list_for_each_entry(hose, &hose_list, list_node) {
-		phb = hose->private_data;
+	list_क्रम_each_entry(hose, &hose_list, list_node) अणु
+		phb = hose->निजी_data;
 
 		/* Create debugfs entries */
-#ifdef CONFIG_DEBUG_FS
-		if (phb->has_dbgfs || !phb->dbgfs)
-			continue;
+#अगर_घोषित CONFIG_DEBUG_FS
+		अगर (phb->has_dbgfs || !phb->dbgfs)
+			जारी;
 
 		phb->has_dbgfs = 1;
 		debugfs_create_file("err_injct", 0200,
@@ -221,134 +222,134 @@ int pnv_eeh_post_init(void)
 		debugfs_create_file("err_injct_inboundB", 0600,
 				    phb->dbgfs, hose,
 				    &pnv_eeh_dbgfs_ops_inbB);
-#endif /* CONFIG_DEBUG_FS */
-	}
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pnv_eeh_find_cap(struct pci_dn *pdn, int cap)
-{
-	int pos = PCI_CAPABILITY_LIST;
-	int cnt = 48;   /* Maximal number of capabilities */
+अटल पूर्णांक pnv_eeh_find_cap(काष्ठा pci_dn *pdn, पूर्णांक cap)
+अणु
+	पूर्णांक pos = PCI_CAPABILITY_LIST;
+	पूर्णांक cnt = 48;   /* Maximal number of capabilities */
 	u32 status, id;
 
-	if (!pdn)
-		return 0;
+	अगर (!pdn)
+		वापस 0;
 
-	/* Check if the device supports capabilities */
-	pnv_pci_cfg_read(pdn, PCI_STATUS, 2, &status);
-	if (!(status & PCI_STATUS_CAP_LIST))
-		return 0;
+	/* Check अगर the device supports capabilities */
+	pnv_pci_cfg_पढ़ो(pdn, PCI_STATUS, 2, &status);
+	अगर (!(status & PCI_STATUS_CAP_LIST))
+		वापस 0;
 
-	while (cnt--) {
-		pnv_pci_cfg_read(pdn, pos, 1, &pos);
-		if (pos < 0x40)
-			break;
+	जबतक (cnt--) अणु
+		pnv_pci_cfg_पढ़ो(pdn, pos, 1, &pos);
+		अगर (pos < 0x40)
+			अवरोध;
 
 		pos &= ~3;
-		pnv_pci_cfg_read(pdn, pos + PCI_CAP_LIST_ID, 1, &id);
-		if (id == 0xff)
-			break;
+		pnv_pci_cfg_पढ़ो(pdn, pos + PCI_CAP_LIST_ID, 1, &id);
+		अगर (id == 0xff)
+			अवरोध;
 
 		/* Found */
-		if (id == cap)
-			return pos;
+		अगर (id == cap)
+			वापस pos;
 
 		/* Next one */
 		pos += PCI_CAP_LIST_NEXT;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pnv_eeh_find_ecap(struct pci_dn *pdn, int cap)
-{
-	struct eeh_dev *edev = pdn_to_eeh_dev(pdn);
+अटल पूर्णांक pnv_eeh_find_ecap(काष्ठा pci_dn *pdn, पूर्णांक cap)
+अणु
+	काष्ठा eeh_dev *edev = pdn_to_eeh_dev(pdn);
 	u32 header;
-	int pos = 256, ttl = (4096 - 256) / 8;
+	पूर्णांक pos = 256, ttl = (4096 - 256) / 8;
 
-	if (!edev || !edev->pcie_cap)
-		return 0;
-	if (pnv_pci_cfg_read(pdn, pos, 4, &header) != PCIBIOS_SUCCESSFUL)
-		return 0;
-	else if (!header)
-		return 0;
+	अगर (!edev || !edev->pcie_cap)
+		वापस 0;
+	अगर (pnv_pci_cfg_पढ़ो(pdn, pos, 4, &header) != PCIBIOS_SUCCESSFUL)
+		वापस 0;
+	अन्यथा अगर (!header)
+		वापस 0;
 
-	while (ttl-- > 0) {
-		if (PCI_EXT_CAP_ID(header) == cap && pos)
-			return pos;
+	जबतक (ttl-- > 0) अणु
+		अगर (PCI_EXT_CAP_ID(header) == cap && pos)
+			वापस pos;
 
 		pos = PCI_EXT_CAP_NEXT(header);
-		if (pos < 256)
-			break;
+		अगर (pos < 256)
+			अवरोध;
 
-		if (pnv_pci_cfg_read(pdn, pos, 4, &header) != PCIBIOS_SUCCESSFUL)
-			break;
-	}
+		अगर (pnv_pci_cfg_पढ़ो(pdn, pos, 4, &header) != PCIBIOS_SUCCESSFUL)
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct eeh_pe *pnv_eeh_get_upstream_pe(struct pci_dev *pdev)
-{
-	struct pci_controller *hose = pdev->bus->sysdata;
-	struct pnv_phb *phb = hose->private_data;
-	struct pci_dev *parent = pdev->bus->self;
+अटल काष्ठा eeh_pe *pnv_eeh_get_upstream_pe(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_controller *hose = pdev->bus->sysdata;
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	काष्ठा pci_dev *parent = pdev->bus->self;
 
-#ifdef CONFIG_PCI_IOV
-	/* for VFs we use the PF's PE as the upstream PE */
-	if (pdev->is_virtfn)
+#अगर_घोषित CONFIG_PCI_IOV
+	/* क्रम VFs we use the PF's PE as the upstream PE */
+	अगर (pdev->is_virtfn)
 		parent = pdev->physfn;
-#endif
+#पूर्ण_अगर
 
 	/* otherwise use the PE of our parent bridge */
-	if (parent) {
-		struct pnv_ioda_pe *ioda_pe = pnv_ioda_get_pe(parent);
+	अगर (parent) अणु
+		काष्ठा pnv_ioda_pe *ioda_pe = pnv_ioda_get_pe(parent);
 
-		return eeh_pe_get(phb->hose, ioda_pe->pe_number);
-	}
+		वापस eeh_pe_get(phb->hose, ioda_pe->pe_number);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * pnv_eeh_probe - Do probe on PCI device
  * @pdev: pci_dev to probe
  *
- * Create, or find the existing, eeh_dev for this pci_dev.
+ * Create, or find the existing, eeh_dev क्रम this pci_dev.
  */
-static struct eeh_dev *pnv_eeh_probe(struct pci_dev *pdev)
-{
-	struct pci_dn *pdn = pci_get_pdn(pdev);
-	struct pci_controller *hose = pdn->phb;
-	struct pnv_phb *phb = hose->private_data;
-	struct eeh_dev *edev = pdn_to_eeh_dev(pdn);
-	struct eeh_pe *upstream_pe;
-	uint32_t pcie_flags;
-	int ret;
-	int config_addr = (pdn->busno << 8) | (pdn->devfn);
+अटल काष्ठा eeh_dev *pnv_eeh_probe(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dn *pdn = pci_get_pdn(pdev);
+	काष्ठा pci_controller *hose = pdn->phb;
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	काष्ठा eeh_dev *edev = pdn_to_eeh_dev(pdn);
+	काष्ठा eeh_pe *upstream_pe;
+	uपूर्णांक32_t pcie_flags;
+	पूर्णांक ret;
+	पूर्णांक config_addr = (pdn->busno << 8) | (pdn->devfn);
 
 	/*
-	 * When probing the root bridge, which doesn't have any
-	 * subordinate PCI devices. We don't have OF node for
-	 * the root bridge. So it's not reasonable to continue
+	 * When probing the root bridge, which करोesn't have any
+	 * subordinate PCI devices. We करोn't have OF node क्रम
+	 * the root bridge. So it's not reasonable to जारी
 	 * the probing.
 	 */
-	if (!edev || edev->pe)
-		return NULL;
+	अगर (!edev || edev->pe)
+		वापस शून्य;
 
-	/* already configured? */
-	if (edev->pdev) {
+	/* alपढ़ोy configured? */
+	अगर (edev->pdev) अणु
 		pr_debug("%s: found existing edev for %04x:%02x:%02x.%01x\n",
 			__func__, hose->global_number, config_addr >> 8,
 			PCI_SLOT(config_addr), PCI_FUNC(config_addr));
-		return edev;
-	}
+		वापस edev;
+	पूर्ण
 
-	/* Skip for PCI-ISA bridge */
-	if ((pdev->class >> 8) == PCI_CLASS_BRIDGE_ISA)
-		return NULL;
+	/* Skip क्रम PCI-ISA bridge */
+	अगर ((pdev->class >> 8) == PCI_CLASS_BRIDGE_ISA)
+		वापस शून्य;
 
 	eeh_edev_dbg(edev, "Probing device\n");
 
@@ -358,18 +359,18 @@ static struct eeh_dev *pnv_eeh_probe(struct pci_dev *pdev)
 	edev->pcie_cap = pnv_eeh_find_cap(pdn, PCI_CAP_ID_EXP);
 	edev->af_cap   = pnv_eeh_find_cap(pdn, PCI_CAP_ID_AF);
 	edev->aer_cap  = pnv_eeh_find_ecap(pdn, PCI_EXT_CAP_ID_ERR);
-	if ((pdev->class >> 8) == PCI_CLASS_BRIDGE_PCI) {
+	अगर ((pdev->class >> 8) == PCI_CLASS_BRIDGE_PCI) अणु
 		edev->mode |= EEH_DEV_BRIDGE;
-		if (edev->pcie_cap) {
-			pnv_pci_cfg_read(pdn, edev->pcie_cap + PCI_EXP_FLAGS,
+		अगर (edev->pcie_cap) अणु
+			pnv_pci_cfg_पढ़ो(pdn, edev->pcie_cap + PCI_EXP_FLAGS,
 					 2, &pcie_flags);
 			pcie_flags = (pcie_flags & PCI_EXP_FLAGS_TYPE) >> 4;
-			if (pcie_flags == PCI_EXP_TYPE_ROOT_PORT)
+			अगर (pcie_flags == PCI_EXP_TYPE_ROOT_PORT)
 				edev->mode |= EEH_DEV_ROOT_PORT;
-			else if (pcie_flags == PCI_EXP_TYPE_DOWNSTREAM)
+			अन्यथा अगर (pcie_flags == PCI_EXP_TYPE_DOWNSTREAM)
 				edev->mode |= EEH_DEV_DS_PORT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	edev->pe_config_addr = phb->ioda.pe_rmap[config_addr];
 
@@ -377,22 +378,22 @@ static struct eeh_dev *pnv_eeh_probe(struct pci_dev *pdev)
 
 	/* Create PE */
 	ret = eeh_pe_tree_insert(edev, upstream_pe);
-	if (ret) {
+	अगर (ret) अणु
 		eeh_edev_warn(edev, "Failed to add device to PE (code %d)\n", ret);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * If the PE contains any one of following adapters, the
 	 * PCI config space can't be accessed when dumping EEH log.
-	 * Otherwise, we will run into fenced PHB caused by shortage
+	 * Otherwise, we will run पूर्णांकo fenced PHB caused by लघुage
 	 * of outbound credits in the adapter. The PCI config access
 	 * should be blocked until PE reset. MMIO access is dropped
 	 * by hardware certainly. In order to drop PCI config requests,
-	 * one more flag (EEH_PE_CFG_RESTRICTED) is introduced, which
-	 * will be checked in the backend for PE state retrival. If
-	 * the PE becomes frozen for the first time and the flag has
-	 * been set for the PE, we will set EEH_PE_CFG_BLOCKED for
+	 * one more flag (EEH_PE_CFG_RESTRICTED) is पूर्णांकroduced, which
+	 * will be checked in the backend क्रम PE state retrival. If
+	 * the PE becomes frozen क्रम the first समय and the flag has
+	 * been set क्रम the PE, we will set EEH_PE_CFG_BLOCKED क्रम
 	 * that PE to block its config space.
 	 *
 	 * Broadcom BCM5718 2-ports NICs (14e4:1656)
@@ -400,46 +401,46 @@ static struct eeh_dev *pnv_eeh_probe(struct pci_dev *pdev)
 	 * Broadcom Shiner 4-ports 1G NICs (14e4:168a)
 	 * Broadcom Shiner 2-ports 10G NICs (14e4:168e)
 	 */
-	if ((pdn->vendor_id == PCI_VENDOR_ID_BROADCOM &&
+	अगर ((pdn->venकरोr_id == PCI_VENDOR_ID_BROADCOM &&
 	     pdn->device_id == 0x1656) ||
-	    (pdn->vendor_id == PCI_VENDOR_ID_BROADCOM &&
+	    (pdn->venकरोr_id == PCI_VENDOR_ID_BROADCOM &&
 	     pdn->device_id == 0x1657) ||
-	    (pdn->vendor_id == PCI_VENDOR_ID_BROADCOM &&
+	    (pdn->venकरोr_id == PCI_VENDOR_ID_BROADCOM &&
 	     pdn->device_id == 0x168a) ||
-	    (pdn->vendor_id == PCI_VENDOR_ID_BROADCOM &&
+	    (pdn->venकरोr_id == PCI_VENDOR_ID_BROADCOM &&
 	     pdn->device_id == 0x168e))
 		edev->pe->state |= EEH_PE_CFG_RESTRICTED;
 
 	/*
 	 * Cache the PE primary bus, which can't be fetched when
-	 * full hotplug is in progress. In that case, all child
-	 * PCI devices of the PE are expected to be removed prior
+	 * full hotplug is in progress. In that हाल, all child
+	 * PCI devices of the PE are expected to be हटाओd prior
 	 * to PE reset.
 	 */
-	if (!(edev->pe->state & EEH_PE_PRI_BUS)) {
+	अगर (!(edev->pe->state & EEH_PE_PRI_BUS)) अणु
 		edev->pe->bus = pci_find_bus(hose->global_number,
 					     pdn->busno);
-		if (edev->pe->bus)
+		अगर (edev->pe->bus)
 			edev->pe->state |= EEH_PE_PRI_BUS;
-	}
+	पूर्ण
 
 	/*
-	 * Enable EEH explicitly so that we will do EEH check
-	 * while accessing I/O stuff
+	 * Enable EEH explicitly so that we will करो EEH check
+	 * जबतक accessing I/O stuff
 	 */
-	if (!eeh_has_flag(EEH_ENABLED)) {
+	अगर (!eeh_has_flag(EEH_ENABLED)) अणु
 		enable_irq(eeh_event_irq);
 		pnv_eeh_enable_phbs();
 		eeh_add_flag(EEH_ENABLED);
-	}
+	पूर्ण
 
 	/* Save memory bars */
 	eeh_save_bars(edev);
 
 	eeh_edev_dbg(edev, "EEH enabled on device\n");
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 
 /**
  * pnv_eeh_set_option - Initialize EEH or MMIO/DMA reenable
@@ -450,593 +451,593 @@ static struct eeh_dev *pnv_eeh_probe(struct pci_dev *pdev)
  * Currently, following options are support according to PAPR:
  * Enable EEH, Disable EEH, Enable MMIO and Enable DMA
  */
-static int pnv_eeh_set_option(struct eeh_pe *pe, int option)
-{
-	struct pci_controller *hose = pe->phb;
-	struct pnv_phb *phb = hose->private_data;
-	bool freeze_pe = false;
-	int opt;
+अटल पूर्णांक pnv_eeh_set_option(काष्ठा eeh_pe *pe, पूर्णांक option)
+अणु
+	काष्ठा pci_controller *hose = pe->phb;
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	bool मुक्तze_pe = false;
+	पूर्णांक opt;
 	s64 rc;
 
-	switch (option) {
-	case EEH_OPT_DISABLE:
-		return -EPERM;
-	case EEH_OPT_ENABLE:
-		return 0;
-	case EEH_OPT_THAW_MMIO:
+	चयन (option) अणु
+	हाल EEH_OPT_DISABLE:
+		वापस -EPERM;
+	हाल EEH_OPT_ENABLE:
+		वापस 0;
+	हाल EEH_OPT_THAW_MMIO:
 		opt = OPAL_EEH_ACTION_CLEAR_FREEZE_MMIO;
-		break;
-	case EEH_OPT_THAW_DMA:
+		अवरोध;
+	हाल EEH_OPT_THAW_DMA:
 		opt = OPAL_EEH_ACTION_CLEAR_FREEZE_DMA;
-		break;
-	case EEH_OPT_FREEZE_PE:
-		freeze_pe = true;
+		अवरोध;
+	हाल EEH_OPT_FREEZE_PE:
+		मुक्तze_pe = true;
 		opt = OPAL_EEH_ACTION_SET_FREEZE_ALL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("%s: Invalid option %d\n", __func__, option);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Freeze master and slave PEs if PHB supports compound PEs */
-	if (freeze_pe) {
-		if (phb->freeze_pe) {
-			phb->freeze_pe(phb, pe->addr);
-			return 0;
-		}
+	/* Freeze master and slave PEs अगर PHB supports compound PEs */
+	अगर (मुक्तze_pe) अणु
+		अगर (phb->मुक्तze_pe) अणु
+			phb->मुक्तze_pe(phb, pe->addr);
+			वापस 0;
+		पूर्ण
 
-		rc = opal_pci_eeh_freeze_set(phb->opal_id, pe->addr, opt);
-		if (rc != OPAL_SUCCESS) {
+		rc = opal_pci_eeh_मुक्तze_set(phb->opal_id, pe->addr, opt);
+		अगर (rc != OPAL_SUCCESS) अणु
 			pr_warn("%s: Failure %lld freezing PHB#%x-PE#%x\n",
 				__func__, rc, phb->hose->global_number,
 				pe->addr);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Unfreeze master and slave PEs if PHB supports */
-	if (phb->unfreeze_pe)
-		return phb->unfreeze_pe(phb, pe->addr, opt);
+	/* Unमुक्तze master and slave PEs अगर PHB supports */
+	अगर (phb->unमुक्तze_pe)
+		वापस phb->unमुक्तze_pe(phb, pe->addr, opt);
 
-	rc = opal_pci_eeh_freeze_clear(phb->opal_id, pe->addr, opt);
-	if (rc != OPAL_SUCCESS) {
+	rc = opal_pci_eeh_मुक्तze_clear(phb->opal_id, pe->addr, opt);
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_warn("%s: Failure %lld enable %d for PHB#%x-PE#%x\n",
 			__func__, rc, option, phb->hose->global_number,
 			pe->addr);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pnv_eeh_get_phb_diag(struct eeh_pe *pe)
-{
-	struct pnv_phb *phb = pe->phb->private_data;
+अटल व्योम pnv_eeh_get_phb_diag(काष्ठा eeh_pe *pe)
+अणु
+	काष्ठा pnv_phb *phb = pe->phb->निजी_data;
 	s64 rc;
 
 	rc = opal_pci_get_phb_diag_data2(phb->opal_id, pe->data,
 					 phb->diag_data_size);
-	if (rc != OPAL_SUCCESS)
+	अगर (rc != OPAL_SUCCESS)
 		pr_warn("%s: Failure %lld getting PHB#%x diag-data\n",
 			__func__, rc, pe->phb->global_number);
-}
+पूर्ण
 
-static int pnv_eeh_get_phb_state(struct eeh_pe *pe)
-{
-	struct pnv_phb *phb = pe->phb->private_data;
-	u8 fstate = 0;
+अटल पूर्णांक pnv_eeh_get_phb_state(काष्ठा eeh_pe *pe)
+अणु
+	काष्ठा pnv_phb *phb = pe->phb->निजी_data;
+	u8 ख_स्थितिe = 0;
 	__be16 pcierr = 0;
 	s64 rc;
-	int result = 0;
+	पूर्णांक result = 0;
 
-	rc = opal_pci_eeh_freeze_status(phb->opal_id,
+	rc = opal_pci_eeh_मुक्तze_status(phb->opal_id,
 					pe->addr,
-					&fstate,
+					&ख_स्थितिe,
 					&pcierr,
-					NULL);
-	if (rc != OPAL_SUCCESS) {
+					शून्य);
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_warn("%s: Failure %lld getting PHB#%x state\n",
 			__func__, rc, phb->hose->global_number);
-		return EEH_STATE_NOT_SUPPORT;
-	}
+		वापस EEH_STATE_NOT_SUPPORT;
+	पूर्ण
 
 	/*
-	 * Check PHB state. If the PHB is frozen for the
-	 * first time, to dump the PHB diag-data.
+	 * Check PHB state. If the PHB is frozen क्रम the
+	 * first समय, to dump the PHB diag-data.
 	 */
-	if (be16_to_cpu(pcierr) != OPAL_EEH_PHB_ERROR) {
+	अगर (be16_to_cpu(pcierr) != OPAL_EEH_PHB_ERROR) अणु
 		result = (EEH_STATE_MMIO_ACTIVE  |
 			  EEH_STATE_DMA_ACTIVE   |
 			  EEH_STATE_MMIO_ENABLED |
 			  EEH_STATE_DMA_ENABLED);
-	} else if (!(pe->state & EEH_PE_ISOLATED)) {
+	पूर्ण अन्यथा अगर (!(pe->state & EEH_PE_ISOLATED)) अणु
 		eeh_pe_mark_isolated(pe);
 		pnv_eeh_get_phb_diag(pe);
 
-		if (eeh_has_flag(EEH_EARLY_DUMP_LOG))
+		अगर (eeh_has_flag(EEH_EARLY_DUMP_LOG))
 			pnv_pci_dump_phb_diag_data(pe->phb, pe->data);
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int pnv_eeh_get_pe_state(struct eeh_pe *pe)
-{
-	struct pnv_phb *phb = pe->phb->private_data;
-	u8 fstate = 0;
+अटल पूर्णांक pnv_eeh_get_pe_state(काष्ठा eeh_pe *pe)
+अणु
+	काष्ठा pnv_phb *phb = pe->phb->निजी_data;
+	u8 ख_स्थितिe = 0;
 	__be16 pcierr = 0;
 	s64 rc;
-	int result;
+	पूर्णांक result;
 
 	/*
-	 * We don't clobber hardware frozen state until PE
+	 * We करोn't clobber hardware frozen state until PE
 	 * reset is completed. In order to keep EEH core
-	 * moving forward, we have to return operational
+	 * moving क्रमward, we have to वापस operational
 	 * state during PE reset.
 	 */
-	if (pe->state & EEH_PE_RESET) {
+	अगर (pe->state & EEH_PE_RESET) अणु
 		result = (EEH_STATE_MMIO_ACTIVE  |
 			  EEH_STATE_DMA_ACTIVE   |
 			  EEH_STATE_MMIO_ENABLED |
 			  EEH_STATE_DMA_ENABLED);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/*
 	 * Fetch PE state from hardware. If the PHB
 	 * supports compound PE, let it handle that.
 	 */
-	if (phb->get_pe_state) {
-		fstate = phb->get_pe_state(phb, pe->addr);
-	} else {
-		rc = opal_pci_eeh_freeze_status(phb->opal_id,
+	अगर (phb->get_pe_state) अणु
+		ख_स्थितिe = phb->get_pe_state(phb, pe->addr);
+	पूर्ण अन्यथा अणु
+		rc = opal_pci_eeh_मुक्तze_status(phb->opal_id,
 						pe->addr,
-						&fstate,
+						&ख_स्थितिe,
 						&pcierr,
-						NULL);
-		if (rc != OPAL_SUCCESS) {
+						शून्य);
+		अगर (rc != OPAL_SUCCESS) अणु
 			pr_warn("%s: Failure %lld getting PHB#%x-PE%x state\n",
 				__func__, rc, phb->hose->global_number,
 				pe->addr);
-			return EEH_STATE_NOT_SUPPORT;
-		}
-	}
+			वापस EEH_STATE_NOT_SUPPORT;
+		पूर्ण
+	पूर्ण
 
 	/* Figure out state */
-	switch (fstate) {
-	case OPAL_EEH_STOPPED_NOT_FROZEN:
+	चयन (ख_स्थितिe) अणु
+	हाल OPAL_EEH_STOPPED_NOT_FROZEN:
 		result = (EEH_STATE_MMIO_ACTIVE  |
 			  EEH_STATE_DMA_ACTIVE   |
 			  EEH_STATE_MMIO_ENABLED |
 			  EEH_STATE_DMA_ENABLED);
-		break;
-	case OPAL_EEH_STOPPED_MMIO_FREEZE:
+		अवरोध;
+	हाल OPAL_EEH_STOPPED_MMIO_FREEZE:
 		result = (EEH_STATE_DMA_ACTIVE |
 			  EEH_STATE_DMA_ENABLED);
-		break;
-	case OPAL_EEH_STOPPED_DMA_FREEZE:
+		अवरोध;
+	हाल OPAL_EEH_STOPPED_DMA_FREEZE:
 		result = (EEH_STATE_MMIO_ACTIVE |
 			  EEH_STATE_MMIO_ENABLED);
-		break;
-	case OPAL_EEH_STOPPED_MMIO_DMA_FREEZE:
+		अवरोध;
+	हाल OPAL_EEH_STOPPED_MMIO_DMA_FREEZE:
 		result = 0;
-		break;
-	case OPAL_EEH_STOPPED_RESET:
+		अवरोध;
+	हाल OPAL_EEH_STOPPED_RESET:
 		result = EEH_STATE_RESET_ACTIVE;
-		break;
-	case OPAL_EEH_STOPPED_TEMP_UNAVAIL:
+		अवरोध;
+	हाल OPAL_EEH_STOPPED_TEMP_UNAVAIL:
 		result = EEH_STATE_UNAVAILABLE;
-		break;
-	case OPAL_EEH_STOPPED_PERM_UNAVAIL:
+		अवरोध;
+	हाल OPAL_EEH_STOPPED_PERM_UNAVAIL:
 		result = EEH_STATE_NOT_SUPPORT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		result = EEH_STATE_NOT_SUPPORT;
 		pr_warn("%s: Invalid PHB#%x-PE#%x state %x\n",
 			__func__, phb->hose->global_number,
-			pe->addr, fstate);
-	}
+			pe->addr, ख_स्थितिe);
+	पूर्ण
 
 	/*
-	 * If PHB supports compound PE, to freeze all
-	 * slave PEs for consistency.
+	 * If PHB supports compound PE, to मुक्तze all
+	 * slave PEs क्रम consistency.
 	 *
-	 * If the PE is switching to frozen state for the
-	 * first time, to dump the PHB diag-data.
+	 * If the PE is चयनing to frozen state क्रम the
+	 * first समय, to dump the PHB diag-data.
 	 */
-	if (!(result & EEH_STATE_NOT_SUPPORT) &&
+	अगर (!(result & EEH_STATE_NOT_SUPPORT) &&
 	    !(result & EEH_STATE_UNAVAILABLE) &&
 	    !(result & EEH_STATE_MMIO_ACTIVE) &&
 	    !(result & EEH_STATE_DMA_ACTIVE)  &&
-	    !(pe->state & EEH_PE_ISOLATED)) {
-		if (phb->freeze_pe)
-			phb->freeze_pe(phb, pe->addr);
+	    !(pe->state & EEH_PE_ISOLATED)) अणु
+		अगर (phb->मुक्तze_pe)
+			phb->मुक्तze_pe(phb, pe->addr);
 
 		eeh_pe_mark_isolated(pe);
 		pnv_eeh_get_phb_diag(pe);
 
-		if (eeh_has_flag(EEH_EARLY_DUMP_LOG))
+		अगर (eeh_has_flag(EEH_EARLY_DUMP_LOG))
 			pnv_pci_dump_phb_diag_data(pe->phb, pe->data);
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * pnv_eeh_get_state - Retrieve PE state
  * @pe: EEH PE
- * @delay: delay while PE state is temporarily unavailable
+ * @delay: delay जबतक PE state is temporarily unavailable
  *
- * Retrieve the state of the specified PE. For IODA-compitable
- * platform, it should be retrieved from IODA table. Therefore,
- * we prefer passing down to hardware implementation to handle
+ * Retrieve the state of the specअगरied PE. For IODA-compitable
+ * platक्रमm, it should be retrieved from IODA table. Thereक्रमe,
+ * we prefer passing करोwn to hardware implementation to handle
  * it.
  */
-static int pnv_eeh_get_state(struct eeh_pe *pe, int *delay)
-{
-	int ret;
+अटल पूर्णांक pnv_eeh_get_state(काष्ठा eeh_pe *pe, पूर्णांक *delay)
+अणु
+	पूर्णांक ret;
 
-	if (pe->type & EEH_PE_PHB)
+	अगर (pe->type & EEH_PE_PHB)
 		ret = pnv_eeh_get_phb_state(pe);
-	else
+	अन्यथा
 		ret = pnv_eeh_get_pe_state(pe);
 
-	if (!delay)
-		return ret;
+	अगर (!delay)
+		वापस ret;
 
 	/*
 	 * If the PE state is temporarily unavailable,
-	 * to inform the EEH core delay for default
+	 * to inक्रमm the EEH core delay क्रम शेष
 	 * period (1 second)
 	 */
 	*delay = 0;
-	if (ret & EEH_STATE_UNAVAILABLE)
+	अगर (ret & EEH_STATE_UNAVAILABLE)
 		*delay = 1000;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static s64 pnv_eeh_poll(unsigned long id)
-{
+अटल s64 pnv_eeh_poll(अचिन्हित दीर्घ id)
+अणु
 	s64 rc = OPAL_HARDWARE;
 
-	while (1) {
+	जबतक (1) अणु
 		rc = opal_pci_poll(id);
-		if (rc <= 0)
-			break;
+		अगर (rc <= 0)
+			अवरोध;
 
-		if (system_state < SYSTEM_RUNNING)
+		अगर (प्रणाली_state < SYSTEM_RUNNING)
 			udelay(1000 * rc);
-		else
+		अन्यथा
 			msleep(rc);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int pnv_eeh_phb_reset(struct pci_controller *hose, int option)
-{
-	struct pnv_phb *phb = hose->private_data;
+पूर्णांक pnv_eeh_phb_reset(काष्ठा pci_controller *hose, पूर्णांक option)
+अणु
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 	s64 rc = OPAL_HARDWARE;
 
 	pr_debug("%s: Reset PHB#%x, option=%d\n",
 		 __func__, hose->global_number, option);
 
 	/* Issue PHB complete reset request */
-	if (option == EEH_RESET_FUNDAMENTAL ||
+	अगर (option == EEH_RESET_FUNDAMENTAL ||
 	    option == EEH_RESET_HOT)
 		rc = opal_pci_reset(phb->opal_id,
 				    OPAL_RESET_PHB_COMPLETE,
 				    OPAL_ASSERT_RESET);
-	else if (option == EEH_RESET_DEACTIVATE)
+	अन्यथा अगर (option == EEH_RESET_DEACTIVATE)
 		rc = opal_pci_reset(phb->opal_id,
 				    OPAL_RESET_PHB_COMPLETE,
 				    OPAL_DEASSERT_RESET);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
 	/*
-	 * Poll state of the PHB until the request is done
+	 * Poll state of the PHB until the request is करोne
 	 * successfully. The PHB reset is usually PHB complete
 	 * reset followed by hot reset on root bus. So we also
 	 * need the PCI bus settlement delay.
 	 */
-	if (rc > 0)
+	अगर (rc > 0)
 		rc = pnv_eeh_poll(phb->opal_id);
-	if (option == EEH_RESET_DEACTIVATE) {
-		if (system_state < SYSTEM_RUNNING)
+	अगर (option == EEH_RESET_DEACTIVATE) अणु
+		अगर (प्रणाली_state < SYSTEM_RUNNING)
 			udelay(1000 * EEH_PE_RST_SETTLE_TIME);
-		else
+		अन्यथा
 			msleep(EEH_PE_RST_SETTLE_TIME);
-	}
+	पूर्ण
 out:
-	if (rc != OPAL_SUCCESS)
-		return -EIO;
+	अगर (rc != OPAL_SUCCESS)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pnv_eeh_root_reset(struct pci_controller *hose, int option)
-{
-	struct pnv_phb *phb = hose->private_data;
+अटल पूर्णांक pnv_eeh_root_reset(काष्ठा pci_controller *hose, पूर्णांक option)
+अणु
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 	s64 rc = OPAL_HARDWARE;
 
 	pr_debug("%s: Reset PHB#%x, option=%d\n",
 		 __func__, hose->global_number, option);
 
 	/*
-	 * During the reset deassert time, we needn't care
-	 * the reset scope because the firmware does nothing
-	 * for fundamental or hot reset during deassert phase.
+	 * During the reset deनिश्चित समय, we needn't care
+	 * the reset scope because the firmware करोes nothing
+	 * क्रम fundamental or hot reset during deनिश्चित phase.
 	 */
-	if (option == EEH_RESET_FUNDAMENTAL)
+	अगर (option == EEH_RESET_FUNDAMENTAL)
 		rc = opal_pci_reset(phb->opal_id,
 				    OPAL_RESET_PCI_FUNDAMENTAL,
 				    OPAL_ASSERT_RESET);
-	else if (option == EEH_RESET_HOT)
+	अन्यथा अगर (option == EEH_RESET_HOT)
 		rc = opal_pci_reset(phb->opal_id,
 				    OPAL_RESET_PCI_HOT,
 				    OPAL_ASSERT_RESET);
-	else if (option == EEH_RESET_DEACTIVATE)
+	अन्यथा अगर (option == EEH_RESET_DEACTIVATE)
 		rc = opal_pci_reset(phb->opal_id,
 				    OPAL_RESET_PCI_HOT,
 				    OPAL_DEASSERT_RESET);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
-	/* Poll state of the PHB until the request is done */
-	if (rc > 0)
+	/* Poll state of the PHB until the request is करोne */
+	अगर (rc > 0)
 		rc = pnv_eeh_poll(phb->opal_id);
-	if (option == EEH_RESET_DEACTIVATE)
+	अगर (option == EEH_RESET_DEACTIVATE)
 		msleep(EEH_PE_RST_SETTLE_TIME);
 out:
-	if (rc != OPAL_SUCCESS)
-		return -EIO;
+	अगर (rc != OPAL_SUCCESS)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __pnv_eeh_bridge_reset(struct pci_dev *dev, int option)
-{
-	struct pci_dn *pdn = pci_get_pdn_by_devfn(dev->bus, dev->devfn);
-	struct eeh_dev *edev = pdn_to_eeh_dev(pdn);
-	int aer = edev ? edev->aer_cap : 0;
+अटल पूर्णांक __pnv_eeh_bridge_reset(काष्ठा pci_dev *dev, पूर्णांक option)
+अणु
+	काष्ठा pci_dn *pdn = pci_get_pdn_by_devfn(dev->bus, dev->devfn);
+	काष्ठा eeh_dev *edev = pdn_to_eeh_dev(pdn);
+	पूर्णांक aer = edev ? edev->aer_cap : 0;
 	u32 ctrl;
 
 	pr_debug("%s: Secondary Reset PCI bus %04x:%02x with option %d\n",
-		 __func__, pci_domain_nr(dev->bus),
+		 __func__, pci_करोमुख्य_nr(dev->bus),
 		 dev->bus->number, option);
 
-	switch (option) {
-	case EEH_RESET_FUNDAMENTAL:
-	case EEH_RESET_HOT:
+	चयन (option) अणु
+	हाल EEH_RESET_FUNDAMENTAL:
+	हाल EEH_RESET_HOT:
 		/* Don't report linkDown event */
-		if (aer) {
-			eeh_ops->read_config(edev, aer + PCI_ERR_UNCOR_MASK,
+		अगर (aer) अणु
+			eeh_ops->पढ़ो_config(edev, aer + PCI_ERR_UNCOR_MASK,
 					     4, &ctrl);
 			ctrl |= PCI_ERR_UNC_SURPDN;
-			eeh_ops->write_config(edev, aer + PCI_ERR_UNCOR_MASK,
+			eeh_ops->ग_लिखो_config(edev, aer + PCI_ERR_UNCOR_MASK,
 					      4, ctrl);
-		}
+		पूर्ण
 
-		eeh_ops->read_config(edev, PCI_BRIDGE_CONTROL, 2, &ctrl);
+		eeh_ops->पढ़ो_config(edev, PCI_BRIDGE_CONTROL, 2, &ctrl);
 		ctrl |= PCI_BRIDGE_CTL_BUS_RESET;
-		eeh_ops->write_config(edev, PCI_BRIDGE_CONTROL, 2, ctrl);
+		eeh_ops->ग_लिखो_config(edev, PCI_BRIDGE_CONTROL, 2, ctrl);
 
 		msleep(EEH_PE_RST_HOLD_TIME);
-		break;
-	case EEH_RESET_DEACTIVATE:
-		eeh_ops->read_config(edev, PCI_BRIDGE_CONTROL, 2, &ctrl);
+		अवरोध;
+	हाल EEH_RESET_DEACTIVATE:
+		eeh_ops->पढ़ो_config(edev, PCI_BRIDGE_CONTROL, 2, &ctrl);
 		ctrl &= ~PCI_BRIDGE_CTL_BUS_RESET;
-		eeh_ops->write_config(edev, PCI_BRIDGE_CONTROL, 2, ctrl);
+		eeh_ops->ग_लिखो_config(edev, PCI_BRIDGE_CONTROL, 2, ctrl);
 
 		msleep(EEH_PE_RST_SETTLE_TIME);
 
 		/* Continue reporting linkDown event */
-		if (aer) {
-			eeh_ops->read_config(edev, aer + PCI_ERR_UNCOR_MASK,
+		अगर (aer) अणु
+			eeh_ops->पढ़ो_config(edev, aer + PCI_ERR_UNCOR_MASK,
 					     4, &ctrl);
 			ctrl &= ~PCI_ERR_UNC_SURPDN;
-			eeh_ops->write_config(edev, aer + PCI_ERR_UNCOR_MASK,
+			eeh_ops->ग_लिखो_config(edev, aer + PCI_ERR_UNCOR_MASK,
 					      4, ctrl);
-		}
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pnv_eeh_bridge_reset(struct pci_dev *pdev, int option)
-{
-	struct pci_controller *hose = pci_bus_to_host(pdev->bus);
-	struct pnv_phb *phb = hose->private_data;
-	struct device_node *dn = pci_device_to_OF_node(pdev);
-	uint64_t id = PCI_SLOT_ID(phb->opal_id,
+अटल पूर्णांक pnv_eeh_bridge_reset(काष्ठा pci_dev *pdev, पूर्णांक option)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(pdev->bus);
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	काष्ठा device_node *dn = pci_device_to_OF_node(pdev);
+	uपूर्णांक64_t id = PCI_SLOT_ID(phb->opal_id,
 				  (pdev->bus->number << 8) | pdev->devfn);
-	uint8_t scope;
-	int64_t rc;
+	uपूर्णांक8_t scope;
+	पूर्णांक64_t rc;
 
-	/* Hot reset to the bus if firmware cannot handle */
-	if (!dn || !of_get_property(dn, "ibm,reset-by-firmware", NULL))
-		return __pnv_eeh_bridge_reset(pdev, option);
+	/* Hot reset to the bus अगर firmware cannot handle */
+	अगर (!dn || !of_get_property(dn, "ibm,reset-by-firmware", शून्य))
+		वापस __pnv_eeh_bridge_reset(pdev, option);
 
 	pr_debug("%s: FW reset PCI bus %04x:%02x with option %d\n",
-		 __func__, pci_domain_nr(pdev->bus),
+		 __func__, pci_करोमुख्य_nr(pdev->bus),
 		 pdev->bus->number, option);
 
-	switch (option) {
-	case EEH_RESET_FUNDAMENTAL:
+	चयन (option) अणु
+	हाल EEH_RESET_FUNDAMENTAL:
 		scope = OPAL_RESET_PCI_FUNDAMENTAL;
-		break;
-	case EEH_RESET_HOT:
+		अवरोध;
+	हाल EEH_RESET_HOT:
 		scope = OPAL_RESET_PCI_HOT;
-		break;
-	case EEH_RESET_DEACTIVATE:
-		return 0;
-	default:
+		अवरोध;
+	हाल EEH_RESET_DEACTIVATE:
+		वापस 0;
+	शेष:
 		dev_dbg(&pdev->dev, "%s: Unsupported reset %d\n",
 			__func__, option);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = opal_pci_reset(id, scope, OPAL_ASSERT_RESET);
-	if (rc <= OPAL_SUCCESS)
-		goto out;
+	अगर (rc <= OPAL_SUCCESS)
+		जाओ out;
 
 	rc = pnv_eeh_poll(id);
 out:
-	return (rc == OPAL_SUCCESS) ? 0 : -EIO;
-}
+	वापस (rc == OPAL_SUCCESS) ? 0 : -EIO;
+पूर्ण
 
-void pnv_pci_reset_secondary_bus(struct pci_dev *dev)
-{
-	struct pci_controller *hose;
+व्योम pnv_pci_reset_secondary_bus(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_controller *hose;
 
-	if (pci_is_root_bus(dev->bus)) {
+	अगर (pci_is_root_bus(dev->bus)) अणु
 		hose = pci_bus_to_host(dev->bus);
 		pnv_eeh_root_reset(hose, EEH_RESET_HOT);
 		pnv_eeh_root_reset(hose, EEH_RESET_DEACTIVATE);
-	} else {
+	पूर्ण अन्यथा अणु
 		pnv_eeh_bridge_reset(dev, EEH_RESET_HOT);
 		pnv_eeh_bridge_reset(dev, EEH_RESET_DEACTIVATE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pnv_eeh_wait_for_pending(struct pci_dn *pdn, const char *type,
-				     int pos, u16 mask)
-{
-	struct eeh_dev *edev = pdn->edev;
-	int i, status = 0;
+अटल व्योम pnv_eeh_रुको_क्रम_pending(काष्ठा pci_dn *pdn, स्थिर अक्षर *type,
+				     पूर्णांक pos, u16 mask)
+अणु
+	काष्ठा eeh_dev *edev = pdn->edev;
+	पूर्णांक i, status = 0;
 
-	/* Wait for Transaction Pending bit to be cleared */
-	for (i = 0; i < 4; i++) {
-		eeh_ops->read_config(edev, pos, 2, &status);
-		if (!(status & mask))
-			return;
+	/* Wait क्रम Transaction Pending bit to be cleared */
+	क्रम (i = 0; i < 4; i++) अणु
+		eeh_ops->पढ़ो_config(edev, pos, 2, &status);
+		अगर (!(status & mask))
+			वापस;
 
 		msleep((1 << i) * 100);
-	}
+	पूर्ण
 
 	pr_warn("%s: Pending transaction while issuing %sFLR to %04x:%02x:%02x.%01x\n",
 		__func__, type,
 		pdn->phb->global_number, pdn->busno,
 		PCI_SLOT(pdn->devfn), PCI_FUNC(pdn->devfn));
-}
+पूर्ण
 
-static int pnv_eeh_do_flr(struct pci_dn *pdn, int option)
-{
-	struct eeh_dev *edev = pdn_to_eeh_dev(pdn);
+अटल पूर्णांक pnv_eeh_करो_flr(काष्ठा pci_dn *pdn, पूर्णांक option)
+अणु
+	काष्ठा eeh_dev *edev = pdn_to_eeh_dev(pdn);
 	u32 reg = 0;
 
-	if (WARN_ON(!edev->pcie_cap))
-		return -ENOTTY;
+	अगर (WARN_ON(!edev->pcie_cap))
+		वापस -ENOTTY;
 
-	eeh_ops->read_config(edev, edev->pcie_cap + PCI_EXP_DEVCAP, 4, &reg);
-	if (!(reg & PCI_EXP_DEVCAP_FLR))
-		return -ENOTTY;
+	eeh_ops->पढ़ो_config(edev, edev->pcie_cap + PCI_EXP_DEVCAP, 4, &reg);
+	अगर (!(reg & PCI_EXP_DEVCAP_FLR))
+		वापस -ENOTTY;
 
-	switch (option) {
-	case EEH_RESET_HOT:
-	case EEH_RESET_FUNDAMENTAL:
-		pnv_eeh_wait_for_pending(pdn, "",
+	चयन (option) अणु
+	हाल EEH_RESET_HOT:
+	हाल EEH_RESET_FUNDAMENTAL:
+		pnv_eeh_रुको_क्रम_pending(pdn, "",
 					 edev->pcie_cap + PCI_EXP_DEVSTA,
 					 PCI_EXP_DEVSTA_TRPND);
-		eeh_ops->read_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
+		eeh_ops->पढ़ो_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
 				     4, &reg);
 		reg |= PCI_EXP_DEVCTL_BCR_FLR;
-		eeh_ops->write_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
+		eeh_ops->ग_लिखो_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
 				      4, reg);
 		msleep(EEH_PE_RST_HOLD_TIME);
-		break;
-	case EEH_RESET_DEACTIVATE:
-		eeh_ops->read_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
+		अवरोध;
+	हाल EEH_RESET_DEACTIVATE:
+		eeh_ops->पढ़ो_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
 				     4, &reg);
 		reg &= ~PCI_EXP_DEVCTL_BCR_FLR;
-		eeh_ops->write_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
+		eeh_ops->ग_लिखो_config(edev, edev->pcie_cap + PCI_EXP_DEVCTL,
 				      4, reg);
 		msleep(EEH_PE_RST_SETTLE_TIME);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pnv_eeh_do_af_flr(struct pci_dn *pdn, int option)
-{
-	struct eeh_dev *edev = pdn_to_eeh_dev(pdn);
+अटल पूर्णांक pnv_eeh_करो_af_flr(काष्ठा pci_dn *pdn, पूर्णांक option)
+अणु
+	काष्ठा eeh_dev *edev = pdn_to_eeh_dev(pdn);
 	u32 cap = 0;
 
-	if (WARN_ON(!edev->af_cap))
-		return -ENOTTY;
+	अगर (WARN_ON(!edev->af_cap))
+		वापस -ENOTTY;
 
-	eeh_ops->read_config(edev, edev->af_cap + PCI_AF_CAP, 1, &cap);
-	if (!(cap & PCI_AF_CAP_TP) || !(cap & PCI_AF_CAP_FLR))
-		return -ENOTTY;
+	eeh_ops->पढ़ो_config(edev, edev->af_cap + PCI_AF_CAP, 1, &cap);
+	अगर (!(cap & PCI_AF_CAP_TP) || !(cap & PCI_AF_CAP_FLR))
+		वापस -ENOTTY;
 
-	switch (option) {
-	case EEH_RESET_HOT:
-	case EEH_RESET_FUNDAMENTAL:
+	चयन (option) अणु
+	हाल EEH_RESET_HOT:
+	हाल EEH_RESET_FUNDAMENTAL:
 		/*
-		 * Wait for Transaction Pending bit to clear. A word-aligned
+		 * Wait क्रम Transaction Pending bit to clear. A word-aligned
 		 * test is used, so we use the conrol offset rather than status
-		 * and shift the test bit to match.
+		 * and shअगरt the test bit to match.
 		 */
-		pnv_eeh_wait_for_pending(pdn, "AF",
+		pnv_eeh_रुको_क्रम_pending(pdn, "AF",
 					 edev->af_cap + PCI_AF_CTRL,
 					 PCI_AF_STATUS_TP << 8);
-		eeh_ops->write_config(edev, edev->af_cap + PCI_AF_CTRL,
+		eeh_ops->ग_लिखो_config(edev, edev->af_cap + PCI_AF_CTRL,
 				      1, PCI_AF_CTRL_FLR);
 		msleep(EEH_PE_RST_HOLD_TIME);
-		break;
-	case EEH_RESET_DEACTIVATE:
-		eeh_ops->write_config(edev, edev->af_cap + PCI_AF_CTRL, 1, 0);
+		अवरोध;
+	हाल EEH_RESET_DEACTIVATE:
+		eeh_ops->ग_लिखो_config(edev, edev->af_cap + PCI_AF_CTRL, 1, 0);
 		msleep(EEH_PE_RST_SETTLE_TIME);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pnv_eeh_reset_vf_pe(struct eeh_pe *pe, int option)
-{
-	struct eeh_dev *edev;
-	struct pci_dn *pdn;
-	int ret;
+अटल पूर्णांक pnv_eeh_reset_vf_pe(काष्ठा eeh_pe *pe, पूर्णांक option)
+अणु
+	काष्ठा eeh_dev *edev;
+	काष्ठा pci_dn *pdn;
+	पूर्णांक ret;
 
 	/* The VF PE should have only one child device */
-	edev = list_first_entry_or_null(&pe->edevs, struct eeh_dev, entry);
+	edev = list_first_entry_or_null(&pe->edevs, काष्ठा eeh_dev, entry);
 	pdn = eeh_dev_to_pdn(edev);
-	if (!pdn)
-		return -ENXIO;
+	अगर (!pdn)
+		वापस -ENXIO;
 
-	ret = pnv_eeh_do_flr(pdn, option);
-	if (!ret)
-		return ret;
+	ret = pnv_eeh_करो_flr(pdn, option);
+	अगर (!ret)
+		वापस ret;
 
-	return pnv_eeh_do_af_flr(pdn, option);
-}
+	वापस pnv_eeh_करो_af_flr(pdn, option);
+पूर्ण
 
 /**
- * pnv_eeh_reset - Reset the specified PE
+ * pnv_eeh_reset - Reset the specअगरied PE
  * @pe: EEH PE
  * @option: reset option
  *
  * Do reset on the indicated PE. For PCI bus sensitive PE,
  * we need to reset the parent p2p bridge. The PHB has to
- * be reinitialized if the p2p bridge is root bridge. For
+ * be reinitialized अगर the p2p bridge is root bridge. For
  * PCI device sensitive PE, we will try to reset the device
- * through FLR. For now, we don't have OPAL APIs to do HARD
+ * through FLR. For now, we करोn't have OPAL APIs to करो HARD
  * reset yet, so all reset would be SOFT (HOT) reset.
  */
-static int pnv_eeh_reset(struct eeh_pe *pe, int option)
-{
-	struct pci_controller *hose = pe->phb;
-	struct pnv_phb *phb;
-	struct pci_bus *bus;
-	int64_t rc;
+अटल पूर्णांक pnv_eeh_reset(काष्ठा eeh_pe *pe, पूर्णांक option)
+अणु
+	काष्ठा pci_controller *hose = pe->phb;
+	काष्ठा pnv_phb *phb;
+	काष्ठा pci_bus *bus;
+	पूर्णांक64_t rc;
 
 	/*
 	 * For PHB reset, we always have complete reset. For those PEs whose
@@ -1044,81 +1045,81 @@ static int pnv_eeh_reset(struct eeh_pe *pe, int option)
 	 * (usually bus#1), we apply hot or fundamental reset on the root port.
 	 * For other PEs, we always have hot reset on the PE primary bus.
 	 *
-	 * Here, we have different design to pHyp, which always clear the
+	 * Here, we have dअगरferent design to pHyp, which always clear the
 	 * frozen state during PE reset. However, the good idea here from
-	 * benh is to keep frozen state before we get PE reset done completely
+	 * benh is to keep frozen state beक्रमe we get PE reset करोne completely
 	 * (until BAR restore). With the frozen state, HW drops illegal IO
 	 * or MMIO access, which can incur recrusive frozen PE during PE
 	 * reset. The side effect is that EEH core has to clear the frozen
 	 * state explicitly after BAR restore.
 	 */
-	if (pe->type & EEH_PE_PHB)
-		return pnv_eeh_phb_reset(hose, option);
+	अगर (pe->type & EEH_PE_PHB)
+		वापस pnv_eeh_phb_reset(hose, option);
 
 	/*
 	 * The frozen PE might be caused by PAPR error injection
-	 * registers, which are expected to be cleared after hitting
-	 * frozen PE as stated in the hardware spec. Unfortunately,
+	 * रेजिस्टरs, which are expected to be cleared after hitting
+	 * frozen PE as stated in the hardware spec. Unक्रमtunately,
 	 * that's not true on P7IOC. So we have to clear it manually
-	 * to avoid recursive EEH errors during recovery.
+	 * to aव्योम recursive EEH errors during recovery.
 	 */
-	phb = hose->private_data;
-	if (phb->model == PNV_PHB_MODEL_P7IOC &&
+	phb = hose->निजी_data;
+	अगर (phb->model == PNV_PHB_MODEL_P7IOC &&
 	    (option == EEH_RESET_HOT ||
-	     option == EEH_RESET_FUNDAMENTAL)) {
+	     option == EEH_RESET_FUNDAMENTAL)) अणु
 		rc = opal_pci_reset(phb->opal_id,
 				    OPAL_RESET_PHB_ERROR,
 				    OPAL_ASSERT_RESET);
-		if (rc != OPAL_SUCCESS) {
+		अगर (rc != OPAL_SUCCESS) अणु
 			pr_warn("%s: Failure %lld clearing error injection registers\n",
 				__func__, rc);
-			return -EIO;
-		}
-	}
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	if (pe->type & EEH_PE_VF)
-		return pnv_eeh_reset_vf_pe(pe, option);
+	अगर (pe->type & EEH_PE_VF)
+		वापस pnv_eeh_reset_vf_pe(pe, option);
 
 	bus = eeh_pe_bus_get(pe);
-	if (!bus) {
+	अगर (!bus) अणु
 		pr_err("%s: Cannot find PCI bus for PHB#%x-PE#%x\n",
 			__func__, pe->phb->global_number, pe->addr);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (pci_is_root_bus(bus))
-		return pnv_eeh_root_reset(hose, option);
+	अगर (pci_is_root_bus(bus))
+		वापस pnv_eeh_root_reset(hose, option);
 
 	/*
 	 * For hot resets try use the generic PCI error recovery reset
-	 * functions. These correctly handles the case where the secondary
+	 * functions. These correctly handles the हाल where the secondary
 	 * bus is behind a hotplug slot and it will use the slot provided
 	 * reset methods to prevent spurious hotplug events during the reset.
 	 *
-	 * Fundemental resets need to be handled internally to EEH since the
-	 * PCI core doesn't really have a concept of a fundemental reset,
-	 * mainly because there's no standard way to generate one. Only a
+	 * Fundemental resets need to be handled पूर्णांकernally to EEH since the
+	 * PCI core करोesn't really have a concept of a fundemental reset,
+	 * मुख्यly because there's no standard way to generate one. Only a
 	 * few devices require an FRESET so it should be fine.
 	 */
-	if (option != EEH_RESET_FUNDAMENTAL) {
+	अगर (option != EEH_RESET_FUNDAMENTAL) अणु
 		/*
 		 * NB: Skiboot and pnv_eeh_bridge_reset() also no-op the
-		 *     de-assert step. It's like the OPAL reset API was
-		 *     poorly designed or something...
+		 *     de-निश्चित step. It's like the OPAL reset API was
+		 *     poorly deचिन्हित or something...
 		 */
-		if (option == EEH_RESET_DEACTIVATE)
-			return 0;
+		अगर (option == EEH_RESET_DEACTIVATE)
+			वापस 0;
 
 		rc = pci_bus_error_reset(bus->self);
-		if (!rc)
-			return 0;
-	}
+		अगर (!rc)
+			वापस 0;
+	पूर्ण
 
-	/* otherwise, use the generic bridge reset. this might call into FW */
-	if (pci_is_root_bus(bus->parent))
-		return pnv_eeh_root_reset(hose, option);
-	return pnv_eeh_bridge_reset(bus->self, option);
-}
+	/* otherwise, use the generic bridge reset. this might call पूर्णांकo FW */
+	अगर (pci_is_root_bus(bus->parent))
+		वापस pnv_eeh_root_reset(hose, option);
+	वापस pnv_eeh_bridge_reset(bus->self, option);
+पूर्ण
 
 /**
  * pnv_eeh_get_log - Retrieve error log
@@ -1129,137 +1130,137 @@ static int pnv_eeh_reset(struct eeh_pe *pe, int option)
  *
  * Retrieve the temporary or permanent error from the PE.
  */
-static int pnv_eeh_get_log(struct eeh_pe *pe, int severity,
-			   char *drv_log, unsigned long len)
-{
-	if (!eeh_has_flag(EEH_EARLY_DUMP_LOG))
+अटल पूर्णांक pnv_eeh_get_log(काष्ठा eeh_pe *pe, पूर्णांक severity,
+			   अक्षर *drv_log, अचिन्हित दीर्घ len)
+अणु
+	अगर (!eeh_has_flag(EEH_EARLY_DUMP_LOG))
 		pnv_pci_dump_phb_diag_data(pe->phb, pe->data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pnv_eeh_configure_bridge - Configure PCI bridges in the indicated PE
  * @pe: EEH PE
  *
  * The function will be called to reconfigure the bridges included
- * in the specified PE so that the mulfunctional PE would be recovered
+ * in the specअगरied PE so that the mulfunctional PE would be recovered
  * again.
  */
-static int pnv_eeh_configure_bridge(struct eeh_pe *pe)
-{
-	return 0;
-}
+अटल पूर्णांक pnv_eeh_configure_bridge(काष्ठा eeh_pe *pe)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
- * pnv_pe_err_inject - Inject specified error to the indicated PE
+ * pnv_pe_err_inject - Inject specअगरied error to the indicated PE
  * @pe: the indicated PE
  * @type: error type
- * @func: specific error type
+ * @func: specअगरic error type
  * @addr: address
  * @mask: address mask
  *
- * The routine is called to inject specified error, which is
- * determined by @type and @func, to the indicated PE for
+ * The routine is called to inject specअगरied error, which is
+ * determined by @type and @func, to the indicated PE क्रम
  * testing purpose.
  */
-static int pnv_eeh_err_inject(struct eeh_pe *pe, int type, int func,
-			      unsigned long addr, unsigned long mask)
-{
-	struct pci_controller *hose = pe->phb;
-	struct pnv_phb *phb = hose->private_data;
+अटल पूर्णांक pnv_eeh_err_inject(काष्ठा eeh_pe *pe, पूर्णांक type, पूर्णांक func,
+			      अचिन्हित दीर्घ addr, अचिन्हित दीर्घ mask)
+अणु
+	काष्ठा pci_controller *hose = pe->phb;
+	काष्ठा pnv_phb *phb = hose->निजी_data;
 	s64 rc;
 
-	if (type != OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR &&
-	    type != OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64) {
+	अगर (type != OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR &&
+	    type != OPAL_ERR_INJECT_TYPE_IOA_BUS_ERR64) अणु
 		pr_warn("%s: Invalid error type %d\n",
 			__func__, type);
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	if (func < OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_ADDR ||
-	    func > OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_TARGET) {
+	अगर (func < OPAL_ERR_INJECT_FUNC_IOA_LD_MEM_ADDR ||
+	    func > OPAL_ERR_INJECT_FUNC_IOA_DMA_WR_TARGET) अणु
 		pr_warn("%s: Invalid error function %d\n",
 			__func__, func);
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
 	/* Firmware supports error injection ? */
-	if (!opal_check_token(OPAL_PCI_ERR_INJECT)) {
+	अगर (!opal_check_token(OPAL_PCI_ERR_INJECT)) अणु
 		pr_warn("%s: Firmware doesn't support error injection\n",
 			__func__);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* Do error injection */
 	rc = opal_pci_err_inject(phb->opal_id, pe->addr,
 				 type, func, addr, mask);
-	if (rc != OPAL_SUCCESS) {
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_warn("%s: Failure %lld injecting error "
 			"%d-%d to PHB#%x-PE#%x\n",
 			__func__, rc, type, func,
 			hose->global_number, pe->addr);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool pnv_eeh_cfg_blocked(struct pci_dn *pdn)
-{
-	struct eeh_dev *edev = pdn_to_eeh_dev(pdn);
+अटल अंतरभूत bool pnv_eeh_cfg_blocked(काष्ठा pci_dn *pdn)
+अणु
+	काष्ठा eeh_dev *edev = pdn_to_eeh_dev(pdn);
 
-	if (!edev || !edev->pe)
-		return false;
+	अगर (!edev || !edev->pe)
+		वापस false;
 
 	/*
 	 * We will issue FLR or AF FLR to all VFs, which are contained
 	 * in VF PE. It relies on the EEH PCI config accessors. So we
-	 * can't block them during the window.
+	 * can't block them during the winकरोw.
 	 */
-	if (edev->physfn && (edev->pe->state & EEH_PE_RESET))
-		return false;
+	अगर (edev->physfn && (edev->pe->state & EEH_PE_RESET))
+		वापस false;
 
-	if (edev->pe->state & EEH_PE_CFG_BLOCKED)
-		return true;
+	अगर (edev->pe->state & EEH_PE_CFG_BLOCKED)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int pnv_eeh_read_config(struct eeh_dev *edev,
-			       int where, int size, u32 *val)
-{
-	struct pci_dn *pdn = eeh_dev_to_pdn(edev);
+अटल पूर्णांक pnv_eeh_पढ़ो_config(काष्ठा eeh_dev *edev,
+			       पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	काष्ठा pci_dn *pdn = eeh_dev_to_pdn(edev);
 
-	if (!pdn)
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (!pdn)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	if (pnv_eeh_cfg_blocked(pdn)) {
+	अगर (pnv_eeh_cfg_blocked(pdn)) अणु
 		*val = 0xFFFFFFFF;
-		return PCIBIOS_SET_FAILED;
-	}
+		वापस PCIBIOS_SET_FAILED;
+	पूर्ण
 
-	return pnv_pci_cfg_read(pdn, where, size, val);
-}
+	वापस pnv_pci_cfg_पढ़ो(pdn, where, size, val);
+पूर्ण
 
-static int pnv_eeh_write_config(struct eeh_dev *edev,
-				int where, int size, u32 val)
-{
-	struct pci_dn *pdn = eeh_dev_to_pdn(edev);
+अटल पूर्णांक pnv_eeh_ग_लिखो_config(काष्ठा eeh_dev *edev,
+				पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा pci_dn *pdn = eeh_dev_to_pdn(edev);
 
-	if (!pdn)
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (!pdn)
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	if (pnv_eeh_cfg_blocked(pdn))
-		return PCIBIOS_SET_FAILED;
+	अगर (pnv_eeh_cfg_blocked(pdn))
+		वापस PCIBIOS_SET_FAILED;
 
-	return pnv_pci_cfg_write(pdn, where, size, val);
-}
+	वापस pnv_pci_cfg_ग_लिखो(pdn, where, size, val);
+पूर्ण
 
-static void pnv_eeh_dump_hub_diag_common(struct OpalIoP7IOCErrorData *data)
-{
+अटल व्योम pnv_eeh_dump_hub_diag_common(काष्ठा OpalIoP7IOCErrorData *data)
+अणु
 	/* GEM */
-	if (data->gemXfir || data->gemRfir ||
+	अगर (data->gemXfir || data->gemRfir ||
 	    data->gemRirqfir || data->gemMask || data->gemRwof)
 		pr_info("  GEM: %016llx %016llx %016llx %016llx %016llx\n",
 			be64_to_cpu(data->gemXfir),
@@ -1269,7 +1270,7 @@ static void pnv_eeh_dump_hub_diag_common(struct OpalIoP7IOCErrorData *data)
 			be64_to_cpu(data->gemRwof));
 
 	/* LEM */
-	if (data->lemFir || data->lemErrMask ||
+	अगर (data->lemFir || data->lemErrMask ||
 	    data->lemAction0 || data->lemAction1 || data->lemWof)
 		pr_info("  LEM: %016llx %016llx %016llx %016llx %016llx\n",
 			be64_to_cpu(data->lemFir),
@@ -1277,72 +1278,72 @@ static void pnv_eeh_dump_hub_diag_common(struct OpalIoP7IOCErrorData *data)
 			be64_to_cpu(data->lemAction0),
 			be64_to_cpu(data->lemAction1),
 			be64_to_cpu(data->lemWof));
-}
+पूर्ण
 
-static void pnv_eeh_get_and_dump_hub_diag(struct pci_controller *hose)
-{
-	struct pnv_phb *phb = hose->private_data;
-	struct OpalIoP7IOCErrorData *data =
-		(struct OpalIoP7IOCErrorData*)phb->diag_data;
-	long rc;
+अटल व्योम pnv_eeh_get_and_dump_hub_diag(काष्ठा pci_controller *hose)
+अणु
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	काष्ठा OpalIoP7IOCErrorData *data =
+		(काष्ठा OpalIoP7IOCErrorData*)phb->diag_data;
+	दीर्घ rc;
 
-	rc = opal_pci_get_hub_diag_data(phb->hub_id, data, sizeof(*data));
-	if (rc != OPAL_SUCCESS) {
+	rc = opal_pci_get_hub_diag_data(phb->hub_id, data, माप(*data));
+	अगर (rc != OPAL_SUCCESS) अणु
 		pr_warn("%s: Failed to get HUB#%llx diag-data (%ld)\n",
 			__func__, phb->hub_id, rc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (be16_to_cpu(data->type)) {
-	case OPAL_P7IOC_DIAG_TYPE_RGC:
+	चयन (be16_to_cpu(data->type)) अणु
+	हाल OPAL_P7IOC_DIAG_TYPE_RGC:
 		pr_info("P7IOC diag-data for RGC\n\n");
 		pnv_eeh_dump_hub_diag_common(data);
-		if (data->rgc.rgcStatus || data->rgc.rgcLdcp)
+		अगर (data->rgc.rgcStatus || data->rgc.rgcLdcp)
 			pr_info("  RGC: %016llx %016llx\n",
 				be64_to_cpu(data->rgc.rgcStatus),
 				be64_to_cpu(data->rgc.rgcLdcp));
-		break;
-	case OPAL_P7IOC_DIAG_TYPE_BI:
+		अवरोध;
+	हाल OPAL_P7IOC_DIAG_TYPE_BI:
 		pr_info("P7IOC diag-data for BI %s\n\n",
 			data->bi.biDownbound ? "Downbound" : "Upbound");
 		pnv_eeh_dump_hub_diag_common(data);
-		if (data->bi.biLdcp0 || data->bi.biLdcp1 ||
+		अगर (data->bi.biLdcp0 || data->bi.biLdcp1 ||
 		    data->bi.biLdcp2 || data->bi.biFenceStatus)
 			pr_info("  BI:  %016llx %016llx %016llx %016llx\n",
 				be64_to_cpu(data->bi.biLdcp0),
 				be64_to_cpu(data->bi.biLdcp1),
 				be64_to_cpu(data->bi.biLdcp2),
 				be64_to_cpu(data->bi.biFenceStatus));
-		break;
-	case OPAL_P7IOC_DIAG_TYPE_CI:
+		अवरोध;
+	हाल OPAL_P7IOC_DIAG_TYPE_CI:
 		pr_info("P7IOC diag-data for CI Port %d\n\n",
 			data->ci.ciPort);
 		pnv_eeh_dump_hub_diag_common(data);
-		if (data->ci.ciPortStatus || data->ci.ciPortLdcp)
+		अगर (data->ci.ciPortStatus || data->ci.ciPortLdcp)
 			pr_info("  CI:  %016llx %016llx\n",
 				be64_to_cpu(data->ci.ciPortStatus),
 				be64_to_cpu(data->ci.ciPortLdcp));
-		break;
-	case OPAL_P7IOC_DIAG_TYPE_MISC:
+		अवरोध;
+	हाल OPAL_P7IOC_DIAG_TYPE_MISC:
 		pr_info("P7IOC diag-data for MISC\n\n");
 		pnv_eeh_dump_hub_diag_common(data);
-		break;
-	case OPAL_P7IOC_DIAG_TYPE_I2C:
+		अवरोध;
+	हाल OPAL_P7IOC_DIAG_TYPE_I2C:
 		pr_info("P7IOC diag-data for I2C\n\n");
 		pnv_eeh_dump_hub_diag_common(data);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("%s: Invalid type of HUB#%llx diag-data (%d)\n",
 			__func__, phb->hub_id, data->type);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pnv_eeh_get_pe(struct pci_controller *hose,
-			  u16 pe_no, struct eeh_pe **pe)
-{
-	struct pnv_phb *phb = hose->private_data;
-	struct pnv_ioda_pe *pnv_pe;
-	struct eeh_pe *dev_pe;
+अटल पूर्णांक pnv_eeh_get_pe(काष्ठा pci_controller *hose,
+			  u16 pe_no, काष्ठा eeh_pe **pe)
+अणु
+	काष्ठा pnv_phb *phb = hose->निजी_data;
+	काष्ठा pnv_ioda_pe *pnv_pe;
+	काष्ठा eeh_pe *dev_pe;
 
 	/*
 	 * If PHB supports compound PE, to fetch
@@ -1350,142 +1351,142 @@ static int pnv_eeh_get_pe(struct pci_controller *hose,
 	 * to EEH core.
 	 */
 	pnv_pe = &phb->ioda.pe_array[pe_no];
-	if (pnv_pe->flags & PNV_IODA_PE_SLAVE) {
+	अगर (pnv_pe->flags & PNV_IODA_PE_SLAVE) अणु
 		pnv_pe = pnv_pe->master;
 		WARN_ON(!pnv_pe ||
 			!(pnv_pe->flags & PNV_IODA_PE_MASTER));
 		pe_no = pnv_pe->pe_number;
-	}
+	पूर्ण
 
 	/* Find the PE according to PE# */
 	dev_pe = eeh_pe_get(hose, pe_no);
-	if (!dev_pe)
-		return -EEXIST;
+	अगर (!dev_pe)
+		वापस -EEXIST;
 
 	/* Freeze the (compound) PE */
 	*pe = dev_pe;
-	if (!(dev_pe->state & EEH_PE_ISOLATED))
-		phb->freeze_pe(phb, pe_no);
+	अगर (!(dev_pe->state & EEH_PE_ISOLATED))
+		phb->मुक्तze_pe(phb, pe_no);
 
 	/*
-	 * At this point, we're sure the (compound) PE should
+	 * At this poपूर्णांक, we're sure the (compound) PE should
 	 * have been frozen. However, we still need poke until
 	 * hitting the frozen PE on top level.
 	 */
 	dev_pe = dev_pe->parent;
-	while (dev_pe && !(dev_pe->type & EEH_PE_PHB)) {
-		int ret;
-		ret = eeh_ops->get_state(dev_pe, NULL);
-		if (ret <= 0 || eeh_state_active(ret)) {
+	जबतक (dev_pe && !(dev_pe->type & EEH_PE_PHB)) अणु
+		पूर्णांक ret;
+		ret = eeh_ops->get_state(dev_pe, शून्य);
+		अगर (ret <= 0 || eeh_state_active(ret)) अणु
 			dev_pe = dev_pe->parent;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Frozen parent PE */
 		*pe = dev_pe;
-		if (!(dev_pe->state & EEH_PE_ISOLATED))
-			phb->freeze_pe(phb, dev_pe->addr);
+		अगर (!(dev_pe->state & EEH_PE_ISOLATED))
+			phb->मुक्तze_pe(phb, dev_pe->addr);
 
 		/* Next one */
 		dev_pe = dev_pe->parent;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pnv_eeh_next_error - Retrieve next EEH error to handle
  * @pe: Affected PE
  *
- * The function is expected to be called by EEH core while it gets
+ * The function is expected to be called by EEH core जबतक it माला_लो
  * special EEH event (without binding PE). The function calls to
- * OPAL APIs for next error to handle. The informational error is
- * handled internally by platform. However, the dead IOC, dead PHB,
+ * OPAL APIs क्रम next error to handle. The inक्रमmational error is
+ * handled पूर्णांकernally by platक्रमm. However, the dead IOC, dead PHB,
  * fenced PHB and frozen PE should be handled by EEH core eventually.
  */
-static int pnv_eeh_next_error(struct eeh_pe **pe)
-{
-	struct pci_controller *hose;
-	struct pnv_phb *phb;
-	struct eeh_pe *phb_pe, *parent_pe;
+अटल पूर्णांक pnv_eeh_next_error(काष्ठा eeh_pe **pe)
+अणु
+	काष्ठा pci_controller *hose;
+	काष्ठा pnv_phb *phb;
+	काष्ठा eeh_pe *phb_pe, *parent_pe;
 	__be64 frozen_pe_no;
 	__be16 err_type, severity;
-	long rc;
-	int state, ret = EEH_NEXT_ERR_NONE;
+	दीर्घ rc;
+	पूर्णांक state, ret = EEH_NEXT_ERR_NONE;
 
 	/*
 	 * While running here, it's safe to purge the event queue. The
 	 * event should still be masked.
 	 */
-	eeh_remove_event(NULL, false);
+	eeh_हटाओ_event(शून्य, false);
 
-	list_for_each_entry(hose, &hose_list, list_node) {
+	list_क्रम_each_entry(hose, &hose_list, list_node) अणु
 		/*
 		 * If the subordinate PCI buses of the PHB has been
-		 * removed or is exactly under error recovery, we
+		 * हटाओd or is exactly under error recovery, we
 		 * needn't take care of it any more.
 		 */
-		phb = hose->private_data;
+		phb = hose->निजी_data;
 		phb_pe = eeh_phb_pe_get(hose);
-		if (!phb_pe || (phb_pe->state & EEH_PE_ISOLATED))
-			continue;
+		अगर (!phb_pe || (phb_pe->state & EEH_PE_ISOLATED))
+			जारी;
 
 		rc = opal_pci_next_error(phb->opal_id,
 					 &frozen_pe_no, &err_type, &severity);
-		if (rc != OPAL_SUCCESS) {
+		अगर (rc != OPAL_SUCCESS) अणु
 			pr_devel("%s: Invalid return value on "
 				 "PHB#%x (0x%lx) from opal_pci_next_error",
 				 __func__, hose->global_number, rc);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* If the PHB doesn't have error, stop processing */
-		if (be16_to_cpu(err_type) == OPAL_EEH_NO_ERROR ||
-		    be16_to_cpu(severity) == OPAL_EEH_SEV_NO_ERROR) {
+		/* If the PHB करोesn't have error, stop processing */
+		अगर (be16_to_cpu(err_type) == OPAL_EEH_NO_ERROR ||
+		    be16_to_cpu(severity) == OPAL_EEH_SEV_NO_ERROR) अणु
 			pr_devel("%s: No error found on PHB#%x\n",
 				 __func__, hose->global_number);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * Processing the error. We're expecting the error with
 		 * highest priority reported upon multiple errors on the
-		 * specific PHB.
+		 * specअगरic PHB.
 		 */
 		pr_devel("%s: Error (%d, %d, %llu) on PHB#%x\n",
 			__func__, be16_to_cpu(err_type),
 			be16_to_cpu(severity), be64_to_cpu(frozen_pe_no),
 			hose->global_number);
-		switch (be16_to_cpu(err_type)) {
-		case OPAL_EEH_IOC_ERROR:
-			if (be16_to_cpu(severity) == OPAL_EEH_SEV_IOC_DEAD) {
+		चयन (be16_to_cpu(err_type)) अणु
+		हाल OPAL_EEH_IOC_ERROR:
+			अगर (be16_to_cpu(severity) == OPAL_EEH_SEV_IOC_DEAD) अणु
 				pr_err("EEH: dead IOC detected\n");
 				ret = EEH_NEXT_ERR_DEAD_IOC;
-			} else if (be16_to_cpu(severity) == OPAL_EEH_SEV_INF) {
+			पूर्ण अन्यथा अगर (be16_to_cpu(severity) == OPAL_EEH_SEV_INF) अणु
 				pr_info("EEH: IOC informative error "
 					"detected\n");
 				pnv_eeh_get_and_dump_hub_diag(hose);
 				ret = EEH_NEXT_ERR_NONE;
-			}
+			पूर्ण
 
-			break;
-		case OPAL_EEH_PHB_ERROR:
-			if (be16_to_cpu(severity) == OPAL_EEH_SEV_PHB_DEAD) {
+			अवरोध;
+		हाल OPAL_EEH_PHB_ERROR:
+			अगर (be16_to_cpu(severity) == OPAL_EEH_SEV_PHB_DEAD) अणु
 				*pe = phb_pe;
 				pr_err("EEH: dead PHB#%x detected, "
 				       "location: %s\n",
 					hose->global_number,
 					eeh_pe_loc_get(phb_pe));
 				ret = EEH_NEXT_ERR_DEAD_PHB;
-			} else if (be16_to_cpu(severity) ==
-				   OPAL_EEH_SEV_PHB_FENCED) {
+			पूर्ण अन्यथा अगर (be16_to_cpu(severity) ==
+				   OPAL_EEH_SEV_PHB_FENCED) अणु
 				*pe = phb_pe;
 				pr_err("EEH: Fenced PHB#%x detected, "
 				       "location: %s\n",
 					hose->global_number,
 					eeh_pe_loc_get(phb_pe));
 				ret = EEH_NEXT_ERR_FENCED_PHB;
-			} else if (be16_to_cpu(severity) == OPAL_EEH_SEV_INF) {
+			पूर्ण अन्यथा अगर (be16_to_cpu(severity) == OPAL_EEH_SEV_INF) अणु
 				pr_info("EEH: PHB#%x informative error "
 					"detected, location: %s\n",
 					hose->global_number,
@@ -1493,16 +1494,16 @@ static int pnv_eeh_next_error(struct eeh_pe **pe)
 				pnv_eeh_get_phb_diag(phb_pe);
 				pnv_pci_dump_phb_diag_data(hose, phb_pe->data);
 				ret = EEH_NEXT_ERR_NONE;
-			}
+			पूर्ण
 
-			break;
-		case OPAL_EEH_PE_ERROR:
+			अवरोध;
+		हाल OPAL_EEH_PE_ERROR:
 			/*
 			 * If we can't find the corresponding PE, we
-			 * just try to unfreeze.
+			 * just try to unमुक्तze.
 			 */
-			if (pnv_eeh_get_pe(hose,
-				be64_to_cpu(frozen_pe_no), pe)) {
+			अगर (pnv_eeh_get_pe(hose,
+				be64_to_cpu(frozen_pe_no), pe)) अणु
 				pr_info("EEH: Clear non-existing PHB#%x-PE#%llx\n",
 					hose->global_number, be64_to_cpu(frozen_pe_no));
 				pr_info("EEH: PHB location: %s\n",
@@ -1511,19 +1512,19 @@ static int pnv_eeh_next_error(struct eeh_pe **pe)
 				/* Dump PHB diag-data */
 				rc = opal_pci_get_phb_diag_data2(phb->opal_id,
 					phb->diag_data, phb->diag_data_size);
-				if (rc == OPAL_SUCCESS)
+				अगर (rc == OPAL_SUCCESS)
 					pnv_pci_dump_phb_diag_data(hose,
 							phb->diag_data);
 
 				/* Try best to clear it */
-				opal_pci_eeh_freeze_clear(phb->opal_id,
+				opal_pci_eeh_मुक्तze_clear(phb->opal_id,
 					be64_to_cpu(frozen_pe_no),
 					OPAL_EEH_ACTION_CLEAR_FREEZE_ALL);
 				ret = EEH_NEXT_ERR_NONE;
-			} else if ((*pe)->state & EEH_PE_ISOLATED ||
-				   eeh_pe_passed(*pe)) {
+			पूर्ण अन्यथा अगर ((*pe)->state & EEH_PE_ISOLATED ||
+				   eeh_pe_passed(*pe)) अणु
 				ret = EEH_NEXT_ERR_NONE;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("EEH: Frozen PE#%x "
 				       "on PHB#%x detected\n",
 				       (*pe)->addr,
@@ -1533,98 +1534,98 @@ static int pnv_eeh_next_error(struct eeh_pe **pe)
 				       eeh_pe_loc_get(*pe),
 				       eeh_pe_loc_get(phb_pe));
 				ret = EEH_NEXT_ERR_FROZEN_PE;
-			}
+			पूर्ण
 
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_warn("%s: Unexpected error type %d\n",
 				__func__, be16_to_cpu(err_type));
-		}
+		पूर्ण
 
 		/*
 		 * EEH core will try recover from fenced PHB or
-		 * frozen PE. In the time for frozen PE, EEH core
-		 * enable IO path for that before collecting logs,
+		 * frozen PE. In the समय क्रम frozen PE, EEH core
+		 * enable IO path क्रम that beक्रमe collecting logs,
 		 * but it ruins the site. So we have to dump the
 		 * log in advance here.
 		 */
-		if ((ret == EEH_NEXT_ERR_FROZEN_PE  ||
+		अगर ((ret == EEH_NEXT_ERR_FROZEN_PE  ||
 		    ret == EEH_NEXT_ERR_FENCED_PHB) &&
-		    !((*pe)->state & EEH_PE_ISOLATED)) {
+		    !((*pe)->state & EEH_PE_ISOLATED)) अणु
 			eeh_pe_mark_isolated(*pe);
 			pnv_eeh_get_phb_diag(*pe);
 
-			if (eeh_has_flag(EEH_EARLY_DUMP_LOG))
+			अगर (eeh_has_flag(EEH_EARLY_DUMP_LOG))
 				pnv_pci_dump_phb_diag_data((*pe)->phb,
 							   (*pe)->data);
-		}
+		पूर्ण
 
 		/*
 		 * We probably have the frozen parent PE out there and
 		 * we need have to handle frozen parent PE firstly.
 		 */
-		if (ret == EEH_NEXT_ERR_FROZEN_PE) {
+		अगर (ret == EEH_NEXT_ERR_FROZEN_PE) अणु
 			parent_pe = (*pe)->parent;
-			while (parent_pe) {
-				/* Hit the ceiling ? */
-				if (parent_pe->type & EEH_PE_PHB)
-					break;
+			जबतक (parent_pe) अणु
+				/* Hit the उच्चमानing ? */
+				अगर (parent_pe->type & EEH_PE_PHB)
+					अवरोध;
 
 				/* Frozen parent PE ? */
-				state = eeh_ops->get_state(parent_pe, NULL);
-				if (state > 0 && !eeh_state_active(state))
+				state = eeh_ops->get_state(parent_pe, शून्य);
+				अगर (state > 0 && !eeh_state_active(state))
 					*pe = parent_pe;
 
 				/* Next parent level */
 				parent_pe = parent_pe->parent;
-			}
+			पूर्ण
 
 			/* We possibly migrate to another PE */
 			eeh_pe_mark_isolated(*pe);
-		}
+		पूर्ण
 
 		/*
-		 * If we have no errors on the specific PHB or only
-		 * informative error there, we continue poking it.
+		 * If we have no errors on the specअगरic PHB or only
+		 * inक्रमmative error there, we जारी poking it.
 		 * Otherwise, we need actions to be taken by upper
 		 * layer.
 		 */
-		if (ret > EEH_NEXT_ERR_INF)
-			break;
-	}
+		अगर (ret > EEH_NEXT_ERR_INF)
+			अवरोध;
+	पूर्ण
 
 	/* Unmask the event */
-	if (ret == EEH_NEXT_ERR_NONE && eeh_enabled())
+	अगर (ret == EEH_NEXT_ERR_NONE && eeh_enabled())
 		enable_irq(eeh_event_irq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pnv_eeh_restore_config(struct eeh_dev *edev)
-{
-	struct pnv_phb *phb;
+अटल पूर्णांक pnv_eeh_restore_config(काष्ठा eeh_dev *edev)
+अणु
+	काष्ठा pnv_phb *phb;
 	s64 ret = 0;
 
-	if (!edev)
-		return -EEXIST;
+	अगर (!edev)
+		वापस -EEXIST;
 
-	if (edev->physfn)
-		return 0;
+	अगर (edev->physfn)
+		वापस 0;
 
-	phb = edev->controller->private_data;
+	phb = edev->controller->निजी_data;
 	ret = opal_pci_reinit(phb->opal_id,
 			      OPAL_REINIT_PCI_DEV, edev->bdfn);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn("%s: Can't reinit PCI dev 0x%x (%lld)\n",
 			__func__, edev->bdfn, ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct eeh_ops pnv_eeh_ops = {
+अटल काष्ठा eeh_ops pnv_eeh_ops = अणु
 	.name                   = "powernv",
 	.probe			= pnv_eeh_probe,
 	.set_option             = pnv_eeh_set_option,
@@ -1633,82 +1634,82 @@ static struct eeh_ops pnv_eeh_ops = {
 	.get_log                = pnv_eeh_get_log,
 	.configure_bridge       = pnv_eeh_configure_bridge,
 	.err_inject		= pnv_eeh_err_inject,
-	.read_config            = pnv_eeh_read_config,
-	.write_config           = pnv_eeh_write_config,
+	.पढ़ो_config            = pnv_eeh_पढ़ो_config,
+	.ग_लिखो_config           = pnv_eeh_ग_लिखो_config,
 	.next_error		= pnv_eeh_next_error,
 	.restore_config		= pnv_eeh_restore_config,
-	.notify_resume		= NULL
-};
+	.notअगरy_resume		= शून्य
+पूर्ण;
 
-#ifdef CONFIG_PCI_IOV
-static void pnv_pci_fixup_vf_mps(struct pci_dev *pdev)
-{
-	struct pci_dn *pdn = pci_get_pdn(pdev);
-	int parent_mps;
+#अगर_घोषित CONFIG_PCI_IOV
+अटल व्योम pnv_pci_fixup_vf_mps(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा pci_dn *pdn = pci_get_pdn(pdev);
+	पूर्णांक parent_mps;
 
-	if (!pdev->is_virtfn)
-		return;
+	अगर (!pdev->is_virtfn)
+		वापस;
 
-	/* Synchronize MPS for VF and PF */
+	/* Synchronize MPS क्रम VF and PF */
 	parent_mps = pcie_get_mps(pdev->physfn);
-	if ((128 << pdev->pcie_mpss) >= parent_mps)
+	अगर ((128 << pdev->pcie_mpss) >= parent_mps)
 		pcie_set_mps(pdev, parent_mps);
 	pdn->mps = pcie_get_mps(pdev);
-}
+पूर्ण
 DECLARE_PCI_FIXUP_HEADER(PCI_ANY_ID, PCI_ANY_ID, pnv_pci_fixup_vf_mps);
-#endif /* CONFIG_PCI_IOV */
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
 
 /**
- * eeh_powernv_init - Register platform dependent EEH operations
+ * eeh_घातernv_init - Register platक्रमm dependent EEH operations
  *
- * EEH initialization on powernv platform. This function should be
- * called before any EEH related functions.
+ * EEH initialization on घातernv platक्रमm. This function should be
+ * called beक्रमe any EEH related functions.
  */
-static int __init eeh_powernv_init(void)
-{
-	int max_diag_size = PNV_PCI_DIAG_BUF_SIZE;
-	struct pci_controller *hose;
-	struct pnv_phb *phb;
-	int ret = -EINVAL;
+अटल पूर्णांक __init eeh_घातernv_init(व्योम)
+अणु
+	पूर्णांक max_diag_size = PNV_PCI_DIAG_BUF_SIZE;
+	काष्ठा pci_controller *hose;
+	काष्ठा pnv_phb *phb;
+	पूर्णांक ret = -EINVAL;
 
-	if (!firmware_has_feature(FW_FEATURE_OPAL)) {
+	अगर (!firmware_has_feature(FW_FEATURE_OPAL)) अणु
 		pr_warn("%s: OPAL is required !\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Set probe mode */
 	eeh_add_flag(EEH_PROBE_MODE_DEV);
 
 	/*
 	 * P7IOC blocks PCI config access to frozen PE, but PHB3
-	 * doesn't do that. So we have to selectively enable I/O
+	 * करोesn't करो that. So we have to selectively enable I/O
 	 * prior to collecting error log.
 	 */
-	list_for_each_entry(hose, &hose_list, list_node) {
-		phb = hose->private_data;
+	list_क्रम_each_entry(hose, &hose_list, list_node) अणु
+		phb = hose->निजी_data;
 
-		if (phb->model == PNV_PHB_MODEL_P7IOC)
+		अगर (phb->model == PNV_PHB_MODEL_P7IOC)
 			eeh_add_flag(EEH_ENABLE_IO_FOR_LOG);
 
-		if (phb->diag_data_size > max_diag_size)
+		अगर (phb->diag_data_size > max_diag_size)
 			max_diag_size = phb->diag_data_size;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * eeh_init() allocates the eeh_pe and its aux data buf so the
-	 * size needs to be set before calling eeh_init().
+	 * size needs to be set beक्रमe calling eeh_init().
 	 */
 	eeh_set_pe_aux_size(max_diag_size);
 	ppc_md.pcibios_bus_add_device = pnv_pcibios_bus_add_device;
 
 	ret = eeh_init(&pnv_eeh_ops);
-	if (!ret)
+	अगर (!ret)
 		pr_info("EEH: PowerNV platform initialized\n");
-	else
+	अन्यथा
 		pr_info("EEH: Failed to initialize PowerNV platform (%d)\n", ret);
 
-	return ret;
-}
-machine_arch_initcall(powernv, eeh_powernv_init);
+	वापस ret;
+पूर्ण
+machine_arch_initcall(घातernv, eeh_घातernv_init);

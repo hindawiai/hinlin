@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Nuvoton Technology corporation.
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/init.h>
-#include <linux/random.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/hw_random.h>
-#include <linux/delay.h>
-#include <linux/of_irq.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pm_runसमय.स>
 
-#define NPCM_RNGCS_REG		0x00	/* Control and status register */
-#define NPCM_RNGD_REG		0x04	/* Data register */
-#define NPCM_RNGMODE_REG	0x08	/* Mode register */
+#घोषणा NPCM_RNGCS_REG		0x00	/* Control and status रेजिस्टर */
+#घोषणा NPCM_RNGD_REG		0x04	/* Data रेजिस्टर */
+#घोषणा NPCM_RNGMODE_REG	0x08	/* Mode रेजिस्टर */
 
-#define NPCM_RNG_CLK_SET_25MHZ	GENMASK(4, 3) /* 20-25 MHz */
-#define NPCM_RNG_DATA_VALID	BIT(1)
-#define NPCM_RNG_ENABLE		BIT(0)
-#define NPCM_RNG_M1ROSEL	BIT(1)
+#घोषणा NPCM_RNG_CLK_SET_25MHZ	GENMASK(4, 3) /* 20-25 MHz */
+#घोषणा NPCM_RNG_DATA_VALID	BIT(1)
+#घोषणा NPCM_RNG_ENABLE		BIT(0)
+#घोषणा NPCM_RNG_M1ROSEL	BIT(1)
 
-#define NPCM_RNG_TIMEOUT_USEC	20000
-#define NPCM_RNG_POLL_USEC	1000
+#घोषणा NPCM_RNG_TIMEOUT_USEC	20000
+#घोषणा NPCM_RNG_POLL_USEC	1000
 
-#define to_npcm_rng(p)	container_of(p, struct npcm_rng, rng)
+#घोषणा to_npcm_rng(p)	container_of(p, काष्ठा npcm_rng, rng)
 
-struct npcm_rng {
-	void __iomem *base;
-	struct hwrng rng;
-};
+काष्ठा npcm_rng अणु
+	व्योम __iomem *base;
+	काष्ठा hwrng rng;
+पूर्ण;
 
-static int npcm_rng_init(struct hwrng *rng)
-{
-	struct npcm_rng *priv = to_npcm_rng(rng);
+अटल पूर्णांक npcm_rng_init(काष्ठा hwrng *rng)
+अणु
+	काष्ठा npcm_rng *priv = to_npcm_rng(rng);
 
-	writel(NPCM_RNG_CLK_SET_25MHZ | NPCM_RNG_ENABLE,
+	ग_लिखोl(NPCM_RNG_CLK_SET_25MHZ | NPCM_RNG_ENABLE,
 	       priv->base + NPCM_RNGCS_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void npcm_rng_cleanup(struct hwrng *rng)
-{
-	struct npcm_rng *priv = to_npcm_rng(rng);
+अटल व्योम npcm_rng_cleanup(काष्ठा hwrng *rng)
+अणु
+	काष्ठा npcm_rng *priv = to_npcm_rng(rng);
 
-	writel(NPCM_RNG_CLK_SET_25MHZ, priv->base + NPCM_RNGCS_REG);
-}
+	ग_लिखोl(NPCM_RNG_CLK_SET_25MHZ, priv->base + NPCM_RNGCS_REG);
+पूर्ण
 
-static int npcm_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
-{
-	struct npcm_rng *priv = to_npcm_rng(rng);
-	int retval = 0;
-	int ready;
+अटल पूर्णांक npcm_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool रुको)
+अणु
+	काष्ठा npcm_rng *priv = to_npcm_rng(rng);
+	पूर्णांक retval = 0;
+	पूर्णांक पढ़ोy;
 
-	pm_runtime_get_sync((struct device *)priv->rng.priv);
+	pm_runसमय_get_sync((काष्ठा device *)priv->rng.priv);
 
-	while (max) {
-		if (wait) {
-			if (readb_poll_timeout(priv->base + NPCM_RNGCS_REG,
-					       ready,
-					       ready & NPCM_RNG_DATA_VALID,
+	जबतक (max) अणु
+		अगर (रुको) अणु
+			अगर (पढ़ोb_poll_समयout(priv->base + NPCM_RNGCS_REG,
+					       पढ़ोy,
+					       पढ़ोy & NPCM_RNG_DATA_VALID,
 					       NPCM_RNG_POLL_USEC,
 					       NPCM_RNG_TIMEOUT_USEC))
-				break;
-		} else {
-			if ((readb(priv->base + NPCM_RNGCS_REG) &
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर ((पढ़ोb(priv->base + NPCM_RNGCS_REG) &
 			    NPCM_RNG_DATA_VALID) == 0)
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
-		*(u8 *)buf = readb(priv->base + NPCM_RNGD_REG);
+		*(u8 *)buf = पढ़ोb(priv->base + NPCM_RNGD_REG);
 		retval++;
 		buf++;
 		max--;
-	}
+	पूर्ण
 
-	pm_runtime_mark_last_busy((struct device *)priv->rng.priv);
-	pm_runtime_put_sync_autosuspend((struct device *)priv->rng.priv);
+	pm_runसमय_mark_last_busy((काष्ठा device *)priv->rng.priv);
+	pm_runसमय_put_sync_स्वतःsuspend((काष्ठा device *)priv->rng.priv);
 
-	return retval || !wait ? retval : -EIO;
-}
+	वापस retval || !रुको ? retval : -EIO;
+पूर्ण
 
-static int npcm_rng_probe(struct platform_device *pdev)
-{
-	struct npcm_rng *priv;
-	int ret;
+अटल पूर्णांक npcm_rng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा npcm_rng *priv;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
 	dev_set_drvdata(&pdev->dev, priv);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, 100);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, 100);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-#ifndef CONFIG_PM
+#अगर_अघोषित CONFIG_PM
 	priv->rng.init = npcm_rng_init;
 	priv->rng.cleanup = npcm_rng_cleanup;
-#endif
+#पूर्ण_अगर
 	priv->rng.name = pdev->name;
-	priv->rng.read = npcm_rng_read;
-	priv->rng.priv = (unsigned long)&pdev->dev;
+	priv->rng.पढ़ो = npcm_rng_पढ़ो;
+	priv->rng.priv = (अचिन्हित दीर्घ)&pdev->dev;
 	priv->rng.quality = 1000;
 
-	writel(NPCM_RNG_M1ROSEL, priv->base + NPCM_RNGMODE_REG);
+	ग_लिखोl(NPCM_RNG_M1ROSEL, priv->base + NPCM_RNGMODE_REG);
 
-	ret = devm_hwrng_register(&pdev->dev, &priv->rng);
-	if (ret) {
+	ret = devm_hwrng_रेजिस्टर(&pdev->dev, &priv->rng);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to register rng device: %d\n",
 			ret);
-		pm_runtime_disable(&pdev->dev);
-		pm_runtime_set_suspended(&pdev->dev);
-		return ret;
-	}
+		pm_runसमय_disable(&pdev->dev);
+		pm_runसमय_set_suspended(&pdev->dev);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm_rng_remove(struct platform_device *pdev)
-{
-	struct npcm_rng *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक npcm_rng_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा npcm_rng *priv = platक्रमm_get_drvdata(pdev);
 
-	devm_hwrng_unregister(&pdev->dev, &priv->rng);
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_set_suspended(&pdev->dev);
+	devm_hwrng_unरेजिस्टर(&pdev->dev, &priv->rng);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_set_suspended(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int npcm_rng_runtime_suspend(struct device *dev)
-{
-	struct npcm_rng *priv = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक npcm_rng_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा npcm_rng *priv = dev_get_drvdata(dev);
 
 	npcm_rng_cleanup(&priv->rng);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm_rng_runtime_resume(struct device *dev)
-{
-	struct npcm_rng *priv = dev_get_drvdata(dev);
+अटल पूर्णांक npcm_rng_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा npcm_rng *priv = dev_get_drvdata(dev);
 
-	return npcm_rng_init(&priv->rng);
-}
-#endif
+	वापस npcm_rng_init(&priv->rng);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops npcm_rng_pm_ops = {
-	SET_RUNTIME_PM_OPS(npcm_rng_runtime_suspend,
-			   npcm_rng_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops npcm_rng_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(npcm_rng_runसमय_suspend,
+			   npcm_rng_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static const struct of_device_id rng_dt_id[] __maybe_unused = {
-	{ .compatible = "nuvoton,npcm750-rng",  },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id rng_dt_id[] __maybe_unused = अणु
+	अणु .compatible = "nuvoton,npcm750-rng",  पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rng_dt_id);
 
-static struct platform_driver npcm_rng_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver npcm_rng_driver = अणु
+	.driver = अणु
 		.name		= "npcm-rng",
 		.pm		= &npcm_rng_pm_ops,
 		.of_match_table = of_match_ptr(rng_dt_id),
-	},
+	पूर्ण,
 	.probe		= npcm_rng_probe,
-	.remove		= npcm_rng_remove,
-};
+	.हटाओ		= npcm_rng_हटाओ,
+पूर्ण;
 
-module_platform_driver(npcm_rng_driver);
+module_platक्रमm_driver(npcm_rng_driver);
 
 MODULE_DESCRIPTION("Nuvoton NPCM Random Number Generator Driver");
 MODULE_AUTHOR("Tomer Maimon <tomer.maimon@nuvoton.com>");

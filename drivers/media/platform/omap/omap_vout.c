@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * omap_vout.c
  *
@@ -8,7 +9,7 @@
  * kind, whether express or implied.
  *
  * Leveraged code from the OMAP2 camera driver
- * Video-for-Linux (Version 2) camera capture driver for
+ * Video-क्रम-Linux (Version 2) camera capture driver क्रम
  * the OMAP24xx camera controller.
  *
  * Author: Andy Lowe (source@mvista.com)
@@ -17,296 +18,296 @@
  * Copyright (C) 2010 Texas Instruments.
  *
  * History:
- * 20-APR-2006 Khasim		Modified VRFB based Rotation,
- *				The image data is always read from 0 degree
+ * 20-APR-2006 Khasim		Modअगरied VRFB based Rotation,
+ *				The image data is always पढ़ो from 0 degree
  *				view and written
- *				to the virtual space of desired rotation angle
+ *				to the भव space of desired rotation angle
  * 4-DEC-2006  Jian		Changed to support better memory management
  *
  * 17-Nov-2008 Hardik		Changed driver to use video_ioctl2
  *
- * 23-Feb-2010 Vaibhav H	Modified to use new DSS2 interface
+ * 23-Feb-2010 Vaibhav H	Modअगरied to use new DSS2 पूर्णांकerface
  *
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/platform_device.h>
-#include <linux/irq.h>
-#include <linux/videodev2.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
 
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-event.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-event.h>
 
-#include <video/omapvrfb.h>
-#include <video/omapfb_dss.h>
+#समावेश <video/omapvrfb.h>
+#समावेश <video/omapfb_dss.h>
 
-#include "omap_voutlib.h"
-#include "omap_voutdef.h"
-#include "omap_vout_vrfb.h"
+#समावेश "omap_voutlib.h"
+#समावेश "omap_voutdef.h"
+#समावेश "omap_vout_vrfb.h"
 
 MODULE_AUTHOR("Texas Instruments");
 MODULE_DESCRIPTION("OMAP Video for Linux Video out driver");
 MODULE_LICENSE("GPL");
 
 /* Driver Configuration macros */
-#define VOUT_NAME		"omap_vout"
+#घोषणा VOUT_NAME		"omap_vout"
 
-enum omap_vout_channels {
+क्रमागत omap_vout_channels अणु
 	OMAP_VIDEO1,
 	OMAP_VIDEO2,
-};
+पूर्ण;
 
 /* Variables configurable through module params*/
-static bool vid1_static_vrfb_alloc;
-static bool vid2_static_vrfb_alloc;
-static bool debug;
+अटल bool vid1_अटल_vrfb_alloc;
+अटल bool vid2_अटल_vrfb_alloc;
+अटल bool debug;
 
 /* Module parameters */
-module_param(vid1_static_vrfb_alloc, bool, S_IRUGO);
-MODULE_PARM_DESC(vid1_static_vrfb_alloc,
+module_param(vid1_अटल_vrfb_alloc, bool, S_IRUGO);
+MODULE_PARM_DESC(vid1_अटल_vrfb_alloc,
 	"Static allocation of the VRFB buffer for video1 device");
 
-module_param(vid2_static_vrfb_alloc, bool, S_IRUGO);
-MODULE_PARM_DESC(vid2_static_vrfb_alloc,
+module_param(vid2_अटल_vrfb_alloc, bool, S_IRUGO);
+MODULE_PARM_DESC(vid2_अटल_vrfb_alloc,
 	"Static allocation of the VRFB buffer for video2 device");
 
 module_param(debug, bool, S_IRUGO);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
-/* list of image formats supported by OMAP2 video pipelines */
-static const struct v4l2_fmtdesc omap_formats[] = {
-	{
+/* list of image क्रमmats supported by OMAP2 video pipelines */
+अटल स्थिर काष्ठा v4l2_fmtdesc omap_क्रमmats[] = अणु
+	अणु
 		/* Note:  V4L2 defines RGB565 as:
 		 *
 		 *      Byte 0                    Byte 1
 		 *      g2 g1 g0 r4 r3 r2 r1 r0   b4 b3 b2 b1 b0 g5 g4 g3
 		 *
-		 * We interpret RGB565 as:
+		 * We पूर्णांकerpret RGB565 as:
 		 *
 		 *      Byte 0                    Byte 1
 		 *      g2 g1 g0 b4 b3 b2 b1 b0   r4 r3 r2 r1 r0 g5 g4 g3
 		 */
-		.pixelformat = V4L2_PIX_FMT_RGB565,
-	},
-	{
+		.pixelक्रमmat = V4L2_PIX_FMT_RGB565,
+	पूर्ण,
+	अणु
 		/* Note:  V4L2 defines RGB32 as: RGB-8-8-8-8  we use
-		 *  this for RGB24 unpack mode, the last 8 bits are ignored
+		 *  this क्रम RGB24 unpack mode, the last 8 bits are ignored
 		 * */
-		.pixelformat = V4L2_PIX_FMT_RGB32,
-	},
-	{
+		.pixelक्रमmat = V4L2_PIX_FMT_RGB32,
+	पूर्ण,
+	अणु
 		/* Note:  V4L2 defines RGB24 as: RGB-8-8-8  we use
-		 *        this for RGB24 packed mode
+		 *        this क्रम RGB24 packed mode
 		 *
 		 */
-		.pixelformat = V4L2_PIX_FMT_RGB24,
-	},
-	{
-		.pixelformat = V4L2_PIX_FMT_YUYV,
-	},
-	{
-		.pixelformat = V4L2_PIX_FMT_UYVY,
-	},
-};
+		.pixelक्रमmat = V4L2_PIX_FMT_RGB24,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat = V4L2_PIX_FMT_YUYV,
+	पूर्ण,
+	अणु
+		.pixelक्रमmat = V4L2_PIX_FMT_UYVY,
+	पूर्ण,
+पूर्ण;
 
-#define NUM_OUTPUT_FORMATS (ARRAY_SIZE(omap_formats))
+#घोषणा NUM_OUTPUT_FORMATS (ARRAY_SIZE(omap_क्रमmats))
 
 /*
- * Try format
+ * Try क्रमmat
  */
-static int omap_vout_try_format(struct v4l2_pix_format *pix)
-{
-	int ifmt, bpp = 0;
+अटल पूर्णांक omap_vout_try_क्रमmat(काष्ठा v4l2_pix_क्रमmat *pix)
+अणु
+	पूर्णांक अगरmt, bpp = 0;
 
 	pix->height = clamp(pix->height, (u32)VID_MIN_HEIGHT,
 						(u32)VID_MAX_HEIGHT);
 	pix->width = clamp(pix->width, (u32)VID_MIN_WIDTH, (u32)VID_MAX_WIDTH);
 
-	for (ifmt = 0; ifmt < NUM_OUTPUT_FORMATS; ifmt++) {
-		if (pix->pixelformat == omap_formats[ifmt].pixelformat)
-			break;
-	}
+	क्रम (अगरmt = 0; अगरmt < NUM_OUTPUT_FORMATS; अगरmt++) अणु
+		अगर (pix->pixelक्रमmat == omap_क्रमmats[अगरmt].pixelक्रमmat)
+			अवरोध;
+	पूर्ण
 
-	if (ifmt == NUM_OUTPUT_FORMATS)
-		ifmt = 0;
+	अगर (अगरmt == NUM_OUTPUT_FORMATS)
+		अगरmt = 0;
 
-	pix->pixelformat = omap_formats[ifmt].pixelformat;
+	pix->pixelक्रमmat = omap_क्रमmats[अगरmt].pixelक्रमmat;
 	pix->field = V4L2_FIELD_NONE;
 
-	switch (pix->pixelformat) {
-	case V4L2_PIX_FMT_YUYV:
-	case V4L2_PIX_FMT_UYVY:
-	default:
+	चयन (pix->pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_YUYV:
+	हाल V4L2_PIX_FMT_UYVY:
+	शेष:
 		pix->colorspace = V4L2_COLORSPACE_SRGB;
 		bpp = YUYV_BPP;
-		break;
-	case V4L2_PIX_FMT_RGB565:
-	case V4L2_PIX_FMT_RGB565X:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565:
+	हाल V4L2_PIX_FMT_RGB565X:
 		pix->colorspace = V4L2_COLORSPACE_SRGB;
 		bpp = RGB565_BPP;
-		break;
-	case V4L2_PIX_FMT_RGB24:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB24:
 		pix->colorspace = V4L2_COLORSPACE_SRGB;
 		bpp = RGB24_BPP;
-		break;
-	case V4L2_PIX_FMT_RGB32:
-	case V4L2_PIX_FMT_BGR32:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB32:
+	हाल V4L2_PIX_FMT_BGR32:
 		pix->colorspace = V4L2_COLORSPACE_SRGB;
 		bpp = RGB32_BPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	pix->bytesperline = pix->width * bpp;
 	pix->sizeimage = pix->bytesperline * pix->height;
 
-	return bpp;
-}
+	वापस bpp;
+पूर्ण
 
 /*
  * Convert V4L2 rotation to DSS rotation
  *	V4L2 understand 0, 90, 180, 270.
- *	Convert to 0, 1, 2 and 3 respectively for DSS
+ *	Convert to 0, 1, 2 and 3 respectively क्रम DSS
  */
-static int v4l2_rot_to_dss_rot(int v4l2_rotation,
-			enum dss_rotation *rotation, bool mirror)
-{
-	int ret = 0;
+अटल पूर्णांक v4l2_rot_to_dss_rot(पूर्णांक v4l2_rotation,
+			क्रमागत dss_rotation *rotation, bool mirror)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (v4l2_rotation) {
-	case 90:
+	चयन (v4l2_rotation) अणु
+	हाल 90:
 		*rotation = dss_rotation_90_degree;
-		break;
-	case 180:
+		अवरोध;
+	हाल 180:
 		*rotation = dss_rotation_180_degree;
-		break;
-	case 270:
+		अवरोध;
+	हाल 270:
 		*rotation = dss_rotation_270_degree;
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		*rotation = dss_rotation_0_degree;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int omap_vout_calculate_offset(struct omap_vout_device *vout)
-{
-	struct omapvideo_info *ovid;
-	struct v4l2_rect *crop = &vout->crop;
-	struct v4l2_pix_format *pix = &vout->pix;
-	int *cropped_offset = &vout->cropped_offset;
-	int ps = 2, line_length = 0;
+अटल पूर्णांक omap_vout_calculate_offset(काष्ठा omap_vout_device *vout)
+अणु
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा v4l2_rect *crop = &vout->crop;
+	काष्ठा v4l2_pix_क्रमmat *pix = &vout->pix;
+	पूर्णांक *cropped_offset = &vout->cropped_offset;
+	पूर्णांक ps = 2, line_length = 0;
 
 	ovid = &vout->vid_info;
 
-	if (ovid->rotation_type == VOUT_ROT_VRFB) {
+	अगर (ovid->rotation_type == VOUT_ROT_VRFB) अणु
 		omap_vout_calculate_vrfb_offset(vout);
-	} else {
+	पूर्ण अन्यथा अणु
 		vout->line_length = line_length = pix->width;
 
-		if (V4L2_PIX_FMT_YUYV == pix->pixelformat ||
-			V4L2_PIX_FMT_UYVY == pix->pixelformat)
+		अगर (V4L2_PIX_FMT_YUYV == pix->pixelक्रमmat ||
+			V4L2_PIX_FMT_UYVY == pix->pixelक्रमmat)
 			ps = 2;
-		else if (V4L2_PIX_FMT_RGB32 == pix->pixelformat)
+		अन्यथा अगर (V4L2_PIX_FMT_RGB32 == pix->pixelक्रमmat)
 			ps = 4;
-		else if (V4L2_PIX_FMT_RGB24 == pix->pixelformat)
+		अन्यथा अगर (V4L2_PIX_FMT_RGB24 == pix->pixelक्रमmat)
 			ps = 3;
 
 		vout->ps = ps;
 
 		*cropped_offset = (line_length * ps) *
 			crop->top + crop->left * ps;
-	}
+	पूर्ण
 
 	v4l2_dbg(1, debug, &vout->vid_dev->v4l2_dev, "%s Offset:%x\n",
 			__func__, vout->cropped_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Convert V4L2 pixel format to DSS pixel format
+ * Convert V4L2 pixel क्रमmat to DSS pixel क्रमmat
  */
-static int video_mode_to_dss_mode(struct omap_vout_device *vout)
-{
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct v4l2_pix_format *pix = &vout->pix;
-	enum omap_color_mode mode;
+अटल पूर्णांक video_mode_to_dss_mode(काष्ठा omap_vout_device *vout)
+अणु
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा v4l2_pix_क्रमmat *pix = &vout->pix;
+	क्रमागत omap_color_mode mode;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 
-	switch (pix->pixelformat) {
-	case V4L2_PIX_FMT_YUYV:
+	चयन (pix->pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_YUYV:
 		mode = OMAP_DSS_COLOR_YUV2;
-		break;
-	case V4L2_PIX_FMT_UYVY:
+		अवरोध;
+	हाल V4L2_PIX_FMT_UYVY:
 		mode = OMAP_DSS_COLOR_UYVY;
-		break;
-	case V4L2_PIX_FMT_RGB565:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565:
 		mode = OMAP_DSS_COLOR_RGB16;
-		break;
-	case V4L2_PIX_FMT_RGB24:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB24:
 		mode = OMAP_DSS_COLOR_RGB24P;
-		break;
-	case V4L2_PIX_FMT_RGB32:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB32:
 		mode = (ovl->id == OMAP_DSS_VIDEO1) ?
 			OMAP_DSS_COLOR_RGB24U : OMAP_DSS_COLOR_ARGB32;
-		break;
-	case V4L2_PIX_FMT_BGR32:
+		अवरोध;
+	हाल V4L2_PIX_FMT_BGR32:
 		mode = OMAP_DSS_COLOR_RGBX32;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mode = -EINVAL;
-		break;
-	}
-	return mode;
-}
+		अवरोध;
+	पूर्ण
+	वापस mode;
+पूर्ण
 
 /*
  * Setup the overlay
  */
-static int omapvid_setup_overlay(struct omap_vout_device *vout,
-		struct omap_overlay *ovl, int posx, int posy, int outw,
-		int outh, u32 addr)
-{
-	int ret = 0;
-	struct omap_overlay_info info;
-	int cropheight, cropwidth, pixwidth;
+अटल पूर्णांक omapvid_setup_overlay(काष्ठा omap_vout_device *vout,
+		काष्ठा omap_overlay *ovl, पूर्णांक posx, पूर्णांक posy, पूर्णांक outw,
+		पूर्णांक outh, u32 addr)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा omap_overlay_info info;
+	पूर्णांक cropheight, cropwidth, pixwidth;
 
-	if ((ovl->caps & OMAP_DSS_OVL_CAP_SCALE) == 0 &&
-			(outw != vout->pix.width || outh != vout->pix.height)) {
+	अगर ((ovl->caps & OMAP_DSS_OVL_CAP_SCALE) == 0 &&
+			(outw != vout->pix.width || outh != vout->pix.height)) अणु
 		ret = -EINVAL;
-		goto setup_ovl_err;
-	}
+		जाओ setup_ovl_err;
+	पूर्ण
 
 	vout->dss_mode = video_mode_to_dss_mode(vout);
-	if (vout->dss_mode == -EINVAL) {
+	अगर (vout->dss_mode == -EINVAL) अणु
 		ret = -EINVAL;
-		goto setup_ovl_err;
-	}
+		जाओ setup_ovl_err;
+	पूर्ण
 
 	/* Setup the input plane parameters according to
 	 * rotation value selected.
 	 */
-	if (is_rotation_90_or_270(vout)) {
+	अगर (is_rotation_90_or_270(vout)) अणु
 		cropheight = vout->crop.width;
 		cropwidth = vout->crop.height;
 		pixwidth = vout->pix.height;
-	} else {
+	पूर्ण अन्यथा अणु
 		cropheight = vout->crop.height;
 		cropwidth = vout->crop.width;
 		pixwidth = vout->pix.width;
-	}
+	पूर्ण
 
 	ovl->get_overlay_info(ovl, &info);
 	info.paddr = addr;
@@ -319,15 +320,15 @@ static int omapvid_setup_overlay(struct omap_vout_device *vout,
 	info.out_width = outw;
 	info.out_height = outh;
 	info.global_alpha = vout->win.global_alpha;
-	if (!is_rotation_enabled(vout)) {
+	अगर (!is_rotation_enabled(vout)) अणु
 		info.rotation = 0;
 		info.rotation_type = OMAP_DSS_ROT_DMA;
 		info.screen_width = pixwidth;
-	} else {
+	पूर्ण अन्यथा अणु
 		info.rotation = vout->rotation;
 		info.rotation_type = OMAP_DSS_ROT_VRFB;
 		info.screen_width = 2048;
-	}
+	पूर्ण
 
 	v4l2_dbg(1, debug, &vout->vid_dev->v4l2_dev,
 		"%s enable=%d addr=%pad width=%d\n height=%d color_mode=%d\n"
@@ -339,152 +340,152 @@ static int omapvid_setup_overlay(struct omap_vout_device *vout,
 		info.screen_width);
 
 	ret = ovl->set_overlay_info(ovl, &info);
-	if (ret)
-		goto setup_ovl_err;
+	अगर (ret)
+		जाओ setup_ovl_err;
 
-	return 0;
+	वापस 0;
 
 setup_ovl_err:
 	v4l2_warn(&vout->vid_dev->v4l2_dev, "setup_overlay failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Initialize the overlay structure
+ * Initialize the overlay काष्ठाure
  */
-static int omapvid_init(struct omap_vout_device *vout, u32 addr)
-{
-	int ret = 0, i;
-	struct v4l2_window *win;
-	struct omap_overlay *ovl;
-	int posx, posy, outw, outh;
-	struct omap_video_timings *timing;
-	struct omapvideo_info *ovid = &vout->vid_info;
+अटल पूर्णांक omapvid_init(काष्ठा omap_vout_device *vout, u32 addr)
+अणु
+	पूर्णांक ret = 0, i;
+	काष्ठा v4l2_winकरोw *win;
+	काष्ठा omap_overlay *ovl;
+	पूर्णांक posx, posy, outw, outh;
+	काष्ठा omap_video_timings *timing;
+	काष्ठा omapvideo_info *ovid = &vout->vid_info;
 
 	win = &vout->win;
-	for (i = 0; i < ovid->num_overlays; i++) {
-		struct omap_dss_device *dssdev;
+	क्रम (i = 0; i < ovid->num_overlays; i++) अणु
+		काष्ठा omap_dss_device *dssdev;
 
 		ovl = ovid->overlays[i];
 		dssdev = ovl->get_device(ovl);
 
-		if (!dssdev)
-			return -EINVAL;
+		अगर (!dssdev)
+			वापस -EINVAL;
 
 		timing = &dssdev->panel.timings;
 
 		outw = win->w.width;
 		outh = win->w.height;
-		switch (vout->rotation) {
-		case dss_rotation_90_degree:
-			/* Invert the height and width for 90
+		चयन (vout->rotation) अणु
+		हाल dss_rotation_90_degree:
+			/* Invert the height and width क्रम 90
 			 * and 270 degree rotation
 			 */
 			swap(outw, outh);
 			posy = (timing->y_res - win->w.width) - win->w.left;
 			posx = win->w.top;
-			break;
+			अवरोध;
 
-		case dss_rotation_180_degree:
+		हाल dss_rotation_180_degree:
 			posx = (timing->x_res - win->w.width) - win->w.left;
 			posy = (timing->y_res - win->w.height) - win->w.top;
-			break;
+			अवरोध;
 
-		case dss_rotation_270_degree:
+		हाल dss_rotation_270_degree:
 			swap(outw, outh);
 			posy = win->w.left;
 			posx = (timing->x_res - win->w.height) - win->w.top;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			posx = win->w.left;
 			posy = win->w.top;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = omapvid_setup_overlay(vout, ovl, posx, posy,
 				outw, outh, addr);
-		if (ret)
-			goto omapvid_init_err;
-	}
-	return 0;
+		अगर (ret)
+			जाओ omapvid_init_err;
+	पूर्ण
+	वापस 0;
 
 omapvid_init_err:
 	v4l2_warn(&vout->vid_dev->v4l2_dev, "apply_changes failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Apply the changes set the go bit of DSS
  */
-static int omapvid_apply_changes(struct omap_vout_device *vout)
-{
-	int i;
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid = &vout->vid_info;
+अटल पूर्णांक omapvid_apply_changes(काष्ठा omap_vout_device *vout)
+अणु
+	पूर्णांक i;
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid = &vout->vid_info;
 
-	for (i = 0; i < ovid->num_overlays; i++) {
-		struct omap_dss_device *dssdev;
+	क्रम (i = 0; i < ovid->num_overlays; i++) अणु
+		काष्ठा omap_dss_device *dssdev;
 
 		ovl = ovid->overlays[i];
 		dssdev = ovl->get_device(ovl);
-		if (!dssdev)
-			return -EINVAL;
+		अगर (!dssdev)
+			वापस -EINVAL;
 		ovl->manager->apply(ovl->manager);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omapvid_handle_interlace_display(struct omap_vout_device *vout,
-		unsigned int irqstatus, u64 ts)
-{
+अटल पूर्णांक omapvid_handle_पूर्णांकerlace_display(काष्ठा omap_vout_device *vout,
+		अचिन्हित पूर्णांक irqstatus, u64 ts)
+अणु
 	u32 fid;
 
-	if (vout->first_int) {
-		vout->first_int = 0;
-		goto err;
-	}
+	अगर (vout->first_पूर्णांक) अणु
+		vout->first_पूर्णांक = 0;
+		जाओ err;
+	पूर्ण
 
-	if (irqstatus & DISPC_IRQ_EVSYNC_ODD)
+	अगर (irqstatus & DISPC_IRQ_EVSYNC_ODD)
 		fid = 1;
-	else if (irqstatus & DISPC_IRQ_EVSYNC_EVEN)
+	अन्यथा अगर (irqstatus & DISPC_IRQ_EVSYNC_EVEN)
 		fid = 0;
-	else
-		goto err;
+	अन्यथा
+		जाओ err;
 
 	vout->field_id ^= 1;
-	if (fid != vout->field_id) {
-		if (fid == 0)
+	अगर (fid != vout->field_id) अणु
+		अगर (fid == 0)
 			vout->field_id = fid;
-	} else if (0 == fid) {
-		if (vout->cur_frm == vout->next_frm)
-			goto err;
+	पूर्ण अन्यथा अगर (0 == fid) अणु
+		अगर (vout->cur_frm == vout->next_frm)
+			जाओ err;
 
-		vout->cur_frm->vbuf.vb2_buf.timestamp = ts;
+		vout->cur_frm->vbuf.vb2_buf.बारtamp = ts;
 		vout->cur_frm->vbuf.sequence = vout->sequence++;
-		vb2_buffer_done(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_DONE);
+		vb2_buffer_करोne(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_DONE);
 		vout->cur_frm = vout->next_frm;
-	} else {
-		if (list_empty(&vout->dma_queue) ||
+	पूर्ण अन्यथा अणु
+		अगर (list_empty(&vout->dma_queue) ||
 				(vout->cur_frm != vout->next_frm))
-			goto err;
-	}
+			जाओ err;
+	पूर्ण
 
-	return vout->field_id;
+	वापस vout->field_id;
 err:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_vout_isr(void *arg, unsigned int irqstatus)
-{
-	int ret, fid, mgr_id;
+अटल व्योम omap_vout_isr(व्योम *arg, अचिन्हित पूर्णांक irqstatus)
+अणु
+	पूर्णांक ret, fid, mgr_id;
 	u32 addr, irq;
-	struct omap_overlay *ovl;
+	काष्ठा omap_overlay *ovl;
 	u64 ts;
-	struct omapvideo_info *ovid;
-	struct omap_dss_device *cur_display;
-	struct omap_vout_device *vout = (struct omap_vout_device *)arg;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_dss_device *cur_display;
+	काष्ठा omap_vout_device *vout = (काष्ठा omap_vout_device *)arg;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
@@ -494,281 +495,281 @@ static void omap_vout_isr(void *arg, unsigned int irqstatus)
 	/* get the display device attached to the overlay */
 	cur_display = ovl->get_device(ovl);
 
-	if (!cur_display)
-		return;
+	अगर (!cur_display)
+		वापस;
 
 	spin_lock(&vout->vbq_lock);
-	ts = ktime_get_ns();
+	ts = kसमय_get_ns();
 
-	switch (cur_display->type) {
-	case OMAP_DISPLAY_TYPE_DSI:
-	case OMAP_DISPLAY_TYPE_DPI:
-	case OMAP_DISPLAY_TYPE_DVI:
-		if (mgr_id == OMAP_DSS_CHANNEL_LCD)
+	चयन (cur_display->type) अणु
+	हाल OMAP_DISPLAY_TYPE_DSI:
+	हाल OMAP_DISPLAY_TYPE_DPI:
+	हाल OMAP_DISPLAY_TYPE_DVI:
+		अगर (mgr_id == OMAP_DSS_CHANNEL_LCD)
 			irq = DISPC_IRQ_VSYNC;
-		else if (mgr_id == OMAP_DSS_CHANNEL_LCD2)
+		अन्यथा अगर (mgr_id == OMAP_DSS_CHANNEL_LCD2)
 			irq = DISPC_IRQ_VSYNC2;
-		else
-			goto vout_isr_err;
+		अन्यथा
+			जाओ vout_isr_err;
 
-		if (!(irqstatus & irq))
-			goto vout_isr_err;
-		break;
-	case OMAP_DISPLAY_TYPE_VENC:
-		fid = omapvid_handle_interlace_display(vout, irqstatus,
+		अगर (!(irqstatus & irq))
+			जाओ vout_isr_err;
+		अवरोध;
+	हाल OMAP_DISPLAY_TYPE_VENC:
+		fid = omapvid_handle_पूर्णांकerlace_display(vout, irqstatus,
 				ts);
-		if (!fid)
-			goto vout_isr_err;
-		break;
-	case OMAP_DISPLAY_TYPE_HDMI:
-		if (!(irqstatus & DISPC_IRQ_EVSYNC_EVEN))
-			goto vout_isr_err;
-		break;
-	default:
-		goto vout_isr_err;
-	}
+		अगर (!fid)
+			जाओ vout_isr_err;
+		अवरोध;
+	हाल OMAP_DISPLAY_TYPE_HDMI:
+		अगर (!(irqstatus & DISPC_IRQ_EVSYNC_EVEN))
+			जाओ vout_isr_err;
+		अवरोध;
+	शेष:
+		जाओ vout_isr_err;
+	पूर्ण
 
-	if (!vout->first_int && (vout->cur_frm != vout->next_frm)) {
-		vout->cur_frm->vbuf.vb2_buf.timestamp = ts;
+	अगर (!vout->first_पूर्णांक && (vout->cur_frm != vout->next_frm)) अणु
+		vout->cur_frm->vbuf.vb2_buf.बारtamp = ts;
 		vout->cur_frm->vbuf.sequence = vout->sequence++;
-		vb2_buffer_done(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_DONE);
+		vb2_buffer_करोne(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_DONE);
 		vout->cur_frm = vout->next_frm;
-	}
+	पूर्ण
 
-	vout->first_int = 0;
-	if (list_empty(&vout->dma_queue))
-		goto vout_isr_err;
+	vout->first_पूर्णांक = 0;
+	अगर (list_empty(&vout->dma_queue))
+		जाओ vout_isr_err;
 
 	vout->next_frm = list_entry(vout->dma_queue.next,
-			struct omap_vout_buffer, queue);
+			काष्ठा omap_vout_buffer, queue);
 	list_del(&vout->next_frm->queue);
 
-	addr = (unsigned long)vout->queued_buf_addr[vout->next_frm->vbuf.vb2_buf.index]
+	addr = (अचिन्हित दीर्घ)vout->queued_buf_addr[vout->next_frm->vbuf.vb2_buf.index]
 		+ vout->cropped_offset;
 
-	/* First save the configuration in ovelray structure */
+	/* First save the configuration in ovelray काष्ठाure */
 	ret = omapvid_init(vout, addr);
-	if (ret) {
-		printk(KERN_ERR VOUT_NAME
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR VOUT_NAME
 			"failed to set overlay info\n");
-		goto vout_isr_err;
-	}
+		जाओ vout_isr_err;
+	पूर्ण
 
 	/* Enable the pipeline and set the Go bit */
 	ret = omapvid_apply_changes(vout);
-	if (ret)
-		printk(KERN_ERR VOUT_NAME "failed to change mode\n");
+	अगर (ret)
+		prपूर्णांकk(KERN_ERR VOUT_NAME "failed to change mode\n");
 
 vout_isr_err:
 	spin_unlock(&vout->vbq_lock);
-}
+पूर्ण
 
 
 /*
  * V4L2 ioctls
  */
-static int vidioc_querycap(struct file *file, void *fh,
-		struct v4l2_capability *cap)
-{
-	struct omap_vout_device *vout = video_drvdata(file);
+अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *fh,
+		काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
 
-	strscpy(cap->driver, VOUT_NAME, sizeof(cap->driver));
-	strscpy(cap->card, vout->vfd->name, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+	strscpy(cap->driver, VOUT_NAME, माप(cap->driver));
+	strscpy(cap->card, vout->vfd->name, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "platform:%s.%d", VOUT_NAME, vout->vid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_enum_fmt_vid_out(struct file *file, void *fh,
-			struct v4l2_fmtdesc *fmt)
-{
-	int index = fmt->index;
+अटल पूर्णांक vidioc_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_fmtdesc *fmt)
+अणु
+	पूर्णांक index = fmt->index;
 
-	if (index >= NUM_OUTPUT_FORMATS)
-		return -EINVAL;
+	अगर (index >= NUM_OUTPUT_FORMATS)
+		वापस -EINVAL;
 
-	fmt->flags = omap_formats[index].flags;
-	fmt->pixelformat = omap_formats[index].pixelformat;
+	fmt->flags = omap_क्रमmats[index].flags;
+	fmt->pixelक्रमmat = omap_क्रमmats[index].pixelक्रमmat;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_fmt_vid_out(struct file *file, void *fh,
-			struct v4l2_format *f)
-{
-	struct omap_vout_device *vout = video_drvdata(file);
+अटल पूर्णांक vidioc_g_fmt_vid_out(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
 
 	f->fmt.pix = vout->pix;
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int vidioc_try_fmt_vid_out(struct file *file, void *fh,
-			struct v4l2_format *f)
-{
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct omap_video_timings *timing;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct omap_dss_device *dssdev;
+अटल पूर्णांक vidioc_try_fmt_vid_out(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_video_timings *timing;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा omap_dss_device *dssdev;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 	/* get the display device attached to the overlay */
 	dssdev = ovl->get_device(ovl);
 
-	if (!dssdev)
-		return -EINVAL;
+	अगर (!dssdev)
+		वापस -EINVAL;
 
 	timing = &dssdev->panel.timings;
 
 	vout->fbuf.fmt.height = timing->y_res;
 	vout->fbuf.fmt.width = timing->x_res;
 
-	omap_vout_try_format(&f->fmt.pix);
-	return 0;
-}
+	omap_vout_try_क्रमmat(&f->fmt.pix);
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_fmt_vid_out(struct file *file, void *fh,
-			struct v4l2_format *f)
-{
-	int ret, bpp;
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct omap_video_timings *timing;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct omap_dss_device *dssdev;
+अटल पूर्णांक vidioc_s_fmt_vid_out(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret, bpp;
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_video_timings *timing;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा omap_dss_device *dssdev;
 
-	if (vb2_is_busy(&vout->vq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vout->vq))
+		वापस -EBUSY;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 	dssdev = ovl->get_device(ovl);
 
 	/* get the display device attached to the overlay */
-	if (!dssdev) {
+	अगर (!dssdev) अणु
 		ret = -EINVAL;
-		goto s_fmt_vid_out_exit;
-	}
+		जाओ s_fmt_vid_out_निकास;
+	पूर्ण
 	timing = &dssdev->panel.timings;
 
-	/* We don't support RGB24-packed mode if vrfb rotation
+	/* We करोn't support RGB24-packed mode अगर vrfb rotation
 	 * is enabled*/
-	if ((is_rotation_enabled(vout)) &&
-			f->fmt.pix.pixelformat == V4L2_PIX_FMT_RGB24) {
+	अगर ((is_rotation_enabled(vout)) &&
+			f->fmt.pix.pixelक्रमmat == V4L2_PIX_FMT_RGB24) अणु
 		ret = -EINVAL;
-		goto s_fmt_vid_out_exit;
-	}
+		जाओ s_fmt_vid_out_निकास;
+	पूर्ण
 
 	/* get the framebuffer parameters */
 
-	if (is_rotation_90_or_270(vout)) {
+	अगर (is_rotation_90_or_270(vout)) अणु
 		vout->fbuf.fmt.height = timing->x_res;
 		vout->fbuf.fmt.width = timing->y_res;
-	} else {
+	पूर्ण अन्यथा अणु
 		vout->fbuf.fmt.height = timing->y_res;
 		vout->fbuf.fmt.width = timing->x_res;
-	}
+	पूर्ण
 
 	/* change to smaller size is OK */
 
-	bpp = omap_vout_try_format(&f->fmt.pix);
+	bpp = omap_vout_try_क्रमmat(&f->fmt.pix);
 	f->fmt.pix.sizeimage = f->fmt.pix.width * f->fmt.pix.height * bpp;
 
-	/* try & set the new output format */
+	/* try & set the new output क्रमmat */
 	vout->bpp = bpp;
 	vout->pix = f->fmt.pix;
 	vout->vrfb_bpp = 1;
 
-	/* If YUYV then vrfb bpp is 2, for  others its 1 */
-	if (V4L2_PIX_FMT_YUYV == vout->pix.pixelformat ||
-			V4L2_PIX_FMT_UYVY == vout->pix.pixelformat)
+	/* If YUYV then vrfb bpp is 2, क्रम  others its 1 */
+	अगर (V4L2_PIX_FMT_YUYV == vout->pix.pixelक्रमmat ||
+			V4L2_PIX_FMT_UYVY == vout->pix.pixelक्रमmat)
 		vout->vrfb_bpp = 2;
 
-	/* set default crop and win */
-	omap_vout_new_format(&vout->pix, &vout->fbuf, &vout->crop, &vout->win);
+	/* set शेष crop and win */
+	omap_vout_new_क्रमmat(&vout->pix, &vout->fbuf, &vout->crop, &vout->win);
 
 	ret = 0;
 
-s_fmt_vid_out_exit:
-	return ret;
-}
+s_fmt_vid_out_निकास:
+	वापस ret;
+पूर्ण
 
-static int vidioc_try_fmt_vid_overlay(struct file *file, void *fh,
-			struct v4l2_format *f)
-{
-	int ret = 0;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct v4l2_window *win = &f->fmt.win;
+अटल पूर्णांक vidioc_try_fmt_vid_overlay(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा v4l2_winकरोw *win = &f->fmt.win;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 
-	ret = omap_vout_try_window(&vout->fbuf, win);
+	ret = omap_vout_try_winकरोw(&vout->fbuf, win);
 
-	if (!ret && !(ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA))
+	अगर (!ret && !(ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA))
 		win->global_alpha = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vidioc_s_fmt_vid_overlay(struct file *file, void *fh,
-			struct v4l2_format *f)
-{
-	int ret = 0;
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct v4l2_window *win = &f->fmt.win;
+अटल पूर्णांक vidioc_s_fmt_vid_overlay(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा v4l2_winकरोw *win = &f->fmt.win;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 
-	ret = omap_vout_new_window(&vout->crop, &vout->win, &vout->fbuf, win);
-	if (!ret) {
-		enum omap_dss_trans_key_type key_type =
+	ret = omap_vout_new_winकरोw(&vout->crop, &vout->win, &vout->fbuf, win);
+	अगर (!ret) अणु
+		क्रमागत omap_dss_trans_key_type key_type =
 			OMAP_DSS_COLOR_KEY_GFX_DST;
-		int enable;
+		पूर्णांक enable;
 
-		/* Video1 plane does not support global alpha on OMAP3 */
-		if (ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA)
+		/* Video1 plane करोes not support global alpha on OMAP3 */
+		अगर (ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA)
 			vout->win.global_alpha = win->global_alpha;
-		else
+		अन्यथा
 			win->global_alpha = 0;
-		if (vout->fbuf.flags & (V4L2_FBUF_FLAG_CHROMAKEY |
+		अगर (vout->fbuf.flags & (V4L2_FBUF_FLAG_CHROMAKEY |
 					V4L2_FBUF_FLAG_SRC_CHROMAKEY))
 			enable = 1;
-		else
+		अन्यथा
 			enable = 0;
-		if (vout->fbuf.flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY)
+		अगर (vout->fbuf.flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY)
 			key_type = OMAP_DSS_COLOR_KEY_VID_SRC;
 
-		if (ovl->manager && ovl->manager->get_manager_info &&
-		    ovl->manager->set_manager_info) {
-			struct omap_overlay_manager_info info;
+		अगर (ovl->manager && ovl->manager->get_manager_info &&
+		    ovl->manager->set_manager_info) अणु
+			काष्ठा omap_overlay_manager_info info;
 
 			ovl->manager->get_manager_info(ovl->manager, &info);
 			info.trans_enabled = enable;
 			info.trans_key_type = key_type;
 			info.trans_key = vout->win.chromakey;
 
-			if (ovl->manager->set_manager_info(ovl->manager, &info))
-				return -EINVAL;
-		}
-	}
-	return ret;
-}
+			अगर (ovl->manager->set_manager_info(ovl->manager, &info))
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int vidioc_g_fmt_vid_overlay(struct file *file, void *fh,
-			struct v4l2_format *f)
-{
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct v4l2_window *win = &f->fmt.win;
+अटल पूर्णांक vidioc_g_fmt_vid_overlay(काष्ठा file *file, व्योम *fh,
+			काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा v4l2_winकरोw *win = &f->fmt.win;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
@@ -776,431 +777,431 @@ static int vidioc_g_fmt_vid_overlay(struct file *file, void *fh,
 	win->w = vout->win.w;
 	win->field = vout->win.field;
 	win->chromakey = vout->win.chromakey;
-	if (ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA)
+	अगर (ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA)
 		win->global_alpha = vout->win.global_alpha;
-	else
+	अन्यथा
 		win->global_alpha = 0;
-	win->clips = NULL;
+	win->clips = शून्य;
 	win->clipcount = 0;
-	win->bitmap = NULL;
-	return 0;
-}
+	win->biपंचांगap = शून्य;
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_selection(struct file *file, void *fh, struct v4l2_selection *sel)
-{
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct v4l2_pix_format *pix = &vout->pix;
+अटल पूर्णांक vidioc_g_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा v4l2_pix_क्रमmat *pix = &vout->pix;
 
-	if (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		return -EINVAL;
+	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		वापस -EINVAL;
 
-	switch (sel->target) {
-	case V4L2_SEL_TGT_CROP:
+	चयन (sel->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
 		sel->r = vout->crop;
-		break;
-	case V4L2_SEL_TGT_CROP_DEFAULT:
-		omap_vout_default_crop(&vout->pix, &vout->fbuf, &sel->r);
-		break;
-	case V4L2_SEL_TGT_CROP_BOUNDS:
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP_DEFAULT:
+		omap_vout_शेष_crop(&vout->pix, &vout->fbuf, &sel->r);
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
 		/* Width and height are always even */
 		sel->r.width = pix->width & ~1;
 		sel->r.height = pix->height & ~1;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_selection(struct file *file, void *fh, struct v4l2_selection *sel)
-{
-	int ret = -EINVAL;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct omapvideo_info *ovid;
-	struct omap_overlay *ovl;
-	struct omap_video_timings *timing;
-	struct omap_dss_device *dssdev;
+अटल पूर्णांक vidioc_s_selection(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_selection *sel)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omap_video_timings *timing;
+	काष्ठा omap_dss_device *dssdev;
 
-	if (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		return -EINVAL;
+	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		वापस -EINVAL;
 
-	if (sel->target != V4L2_SEL_TGT_CROP)
-		return -EINVAL;
+	अगर (sel->target != V4L2_SEL_TGT_CROP)
+		वापस -EINVAL;
 
-	if (vb2_is_busy(&vout->vq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vout->vq))
+		वापस -EBUSY;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 	/* get the display device attached to the overlay */
 	dssdev = ovl->get_device(ovl);
 
-	if (!dssdev) {
+	अगर (!dssdev) अणु
 		ret = -EINVAL;
-		goto s_crop_err;
-	}
+		जाओ s_crop_err;
+	पूर्ण
 
 	timing = &dssdev->panel.timings;
 
-	if (is_rotation_90_or_270(vout)) {
+	अगर (is_rotation_90_or_270(vout)) अणु
 		vout->fbuf.fmt.height = timing->x_res;
 		vout->fbuf.fmt.width = timing->y_res;
-	} else {
+	पूर्ण अन्यथा अणु
 		vout->fbuf.fmt.height = timing->y_res;
 		vout->fbuf.fmt.width = timing->x_res;
-	}
+	पूर्ण
 
 	ret = omap_vout_new_crop(&vout->pix, &vout->crop, &vout->win,
 				 &vout->fbuf, &sel->r);
 
 s_crop_err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_vout_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct omap_vout_device *vout =
-		container_of(ctrl->handler, struct omap_vout_device, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक omap_vout_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा omap_vout_device *vout =
+		container_of(ctrl->handler, काष्ठा omap_vout_device, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_ROTATE: {
-		struct omapvideo_info *ovid;
-		int rotation = ctrl->val;
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_ROTATE: अणु
+		काष्ठा omapvideo_info *ovid;
+		पूर्णांक rotation = ctrl->val;
 
 		ovid = &vout->vid_info;
 
-		if (rotation && ovid->rotation_type == VOUT_ROT_NONE) {
-			ret = -ERANGE;
-			break;
-		}
+		अगर (rotation && ovid->rotation_type == VOUT_ROT_NONE) अणु
+			ret = -दुस्फल;
+			अवरोध;
+		पूर्ण
 
-		if (rotation && vout->pix.pixelformat == V4L2_PIX_FMT_RGB24) {
+		अगर (rotation && vout->pix.pixelक्रमmat == V4L2_PIX_FMT_RGB24) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (v4l2_rot_to_dss_rot(rotation, &vout->rotation,
-							vout->mirror)) {
+		अगर (v4l2_rot_to_dss_rot(rotation, &vout->rotation,
+							vout->mirror)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		break;
-	}
-	case V4L2_CID_BG_COLOR:
-	{
-		struct omap_overlay *ovl;
-		unsigned int color = ctrl->val;
-		struct omap_overlay_manager_info info;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल V4L2_CID_BG_COLOR:
+	अणु
+		काष्ठा omap_overlay *ovl;
+		अचिन्हित पूर्णांक color = ctrl->val;
+		काष्ठा omap_overlay_manager_info info;
 
 		ovl = vout->vid_info.overlays[0];
 
-		if (!ovl->manager || !ovl->manager->get_manager_info) {
+		अगर (!ovl->manager || !ovl->manager->get_manager_info) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ovl->manager->get_manager_info(ovl->manager, &info);
-		info.default_color = color;
-		if (ovl->manager->set_manager_info(ovl->manager, &info)) {
+		info.शेष_color = color;
+		अगर (ovl->manager->set_manager_info(ovl->manager, &info)) अणु
 			ret = -EINVAL;
-			break;
-		}
-		break;
-	}
-	case V4L2_CID_VFLIP:
-	{
-		struct omapvideo_info *ovid;
-		unsigned int mirror = ctrl->val;
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	हाल V4L2_CID_VFLIP:
+	अणु
+		काष्ठा omapvideo_info *ovid;
+		अचिन्हित पूर्णांक mirror = ctrl->val;
 
 		ovid = &vout->vid_info;
 
-		if (mirror && ovid->rotation_type == VOUT_ROT_NONE) {
-			ret = -ERANGE;
-			break;
-		}
+		अगर (mirror && ovid->rotation_type == VOUT_ROT_NONE) अणु
+			ret = -दुस्फल;
+			अवरोध;
+		पूर्ण
 
-		if (mirror  && vout->pix.pixelformat == V4L2_PIX_FMT_RGB24) {
+		अगर (mirror  && vout->pix.pixelक्रमmat == V4L2_PIX_FMT_RGB24) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		vout->mirror = mirror;
-		break;
-	}
-	default:
-		return -EINVAL;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ctrl_ops omap_vout_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops omap_vout_ctrl_ops = अणु
 	.s_ctrl = omap_vout_s_ctrl,
-};
+पूर्ण;
 
-static int omap_vout_vb2_queue_setup(struct vb2_queue *vq,
-				     unsigned int *nbufs,
-				     unsigned int *num_planes, unsigned int sizes[],
-				     struct device *alloc_devs[])
-{
-	struct omap_vout_device *vout = vb2_get_drv_priv(vq);
-	int size = vout->pix.sizeimage;
+अटल पूर्णांक omap_vout_vb2_queue_setup(काष्ठा vb2_queue *vq,
+				     अचिन्हित पूर्णांक *nbufs,
+				     अचिन्हित पूर्णांक *num_planes, अचिन्हित पूर्णांक sizes[],
+				     काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा omap_vout_device *vout = vb2_get_drv_priv(vq);
+	पूर्णांक size = vout->pix.sizeimage;
 
-	if (is_rotation_enabled(vout) && vq->num_buffers + *nbufs > VRFB_NUM_BUFS) {
+	अगर (is_rotation_enabled(vout) && vq->num_buffers + *nbufs > VRFB_NUM_BUFS) अणु
 		*nbufs = VRFB_NUM_BUFS - vq->num_buffers;
-		if (*nbufs == 0)
-			return -EINVAL;
-	}
+		अगर (*nbufs == 0)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (*num_planes)
-		return sizes[0] < size ? -EINVAL : 0;
+	अगर (*num_planes)
+		वापस sizes[0] < size ? -EINVAL : 0;
 
 	*num_planes = 1;
 	sizes[0] = size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_vout_vb2_prepare(struct vb2_buffer *vb)
-{
-	struct omap_vout_device *vout = vb2_get_drv_priv(vb->vb2_queue);
-	struct omapvideo_info *ovid = &vout->vid_info;
-	struct omap_vout_buffer *voutbuf = vb2_to_omap_vout_buffer(vb);
+अटल पूर्णांक omap_vout_vb2_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा omap_vout_device *vout = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा omapvideo_info *ovid = &vout->vid_info;
+	काष्ठा omap_vout_buffer *voutbuf = vb2_to_omap_vout_buffer(vb);
 	dma_addr_t buf_phy_addr = vb2_dma_contig_plane_dma_addr(vb, 0);
 
-	if (vb2_plane_size(vb, 0) < vout->pix.sizeimage) {
+	अगर (vb2_plane_size(vb, 0) < vout->pix.sizeimage) अणु
 		v4l2_dbg(1, debug, &vout->vid_dev->v4l2_dev,
 			 "%s data will not fit into plane (%lu < %u)\n",
 			__func__, vb2_plane_size(vb, 0), vout->pix.sizeimage);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, vout->pix.sizeimage);
 	voutbuf->vbuf.field = V4L2_FIELD_NONE;
 
 	vout->queued_buf_addr[vb->index] = (u8 *)buf_phy_addr;
-	if (ovid->rotation_type == VOUT_ROT_VRFB)
-		return omap_vout_prepare_vrfb(vout, vb);
-	return 0;
-}
+	अगर (ovid->rotation_type == VOUT_ROT_VRFB)
+		वापस omap_vout_prepare_vrfb(vout, vb);
+	वापस 0;
+पूर्ण
 
-static void omap_vout_vb2_queue(struct vb2_buffer *vb)
-{
-	struct omap_vout_device *vout = vb2_get_drv_priv(vb->vb2_queue);
-	struct omap_vout_buffer *voutbuf = vb2_to_omap_vout_buffer(vb);
+अटल व्योम omap_vout_vb2_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा omap_vout_device *vout = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा omap_vout_buffer *voutbuf = vb2_to_omap_vout_buffer(vb);
 
 	list_add_tail(&voutbuf->queue, &vout->dma_queue);
-}
+पूर्ण
 
-static int omap_vout_vb2_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct omap_vout_device *vout = vb2_get_drv_priv(vq);
-	struct omapvideo_info *ovid = &vout->vid_info;
-	struct omap_vout_buffer *buf, *tmp;
+अटल पूर्णांक omap_vout_vb2_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा omap_vout_device *vout = vb2_get_drv_priv(vq);
+	काष्ठा omapvideo_info *ovid = &vout->vid_info;
+	काष्ठा omap_vout_buffer *buf, *पंचांगp;
 	u32 addr = 0, mask = 0;
-	int ret, j;
+	पूर्णांक ret, j;
 
 	/* Get the next frame from the buffer queue */
 	vout->next_frm = vout->cur_frm = list_entry(vout->dma_queue.next,
-			struct omap_vout_buffer, queue);
+			काष्ठा omap_vout_buffer, queue);
 	/* Remove buffer from the buffer queue */
 	list_del(&vout->cur_frm->queue);
 	/* Initialize field_id and started member */
 	vout->field_id = 0;
-	vout->first_int = 1;
+	vout->first_पूर्णांक = 1;
 	vout->sequence = 0;
 
-	if (omap_vout_calculate_offset(vout)) {
+	अगर (omap_vout_calculate_offset(vout)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
-	if (ovid->rotation_type == VOUT_ROT_VRFB)
-		if (omap_vout_vrfb_buffer_setup(vout, &count, 0)) {
+		जाओ out;
+	पूर्ण
+	अगर (ovid->rotation_type == VOUT_ROT_VRFB)
+		अगर (omap_vout_vrfb_buffer_setup(vout, &count, 0)) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	addr = (unsigned long)vout->queued_buf_addr[vout->cur_frm->vbuf.vb2_buf.index]
+	addr = (अचिन्हित दीर्घ)vout->queued_buf_addr[vout->cur_frm->vbuf.vb2_buf.index]
 		+ vout->cropped_offset;
 
 	mask = DISPC_IRQ_VSYNC | DISPC_IRQ_EVSYNC_EVEN | DISPC_IRQ_EVSYNC_ODD
 		| DISPC_IRQ_VSYNC2;
 
-	/* First save the configuration in overlay structure */
+	/* First save the configuration in overlay काष्ठाure */
 	ret = omapvid_init(vout, addr);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&vout->vid_dev->v4l2_dev,
 				"failed to set overlay info\n");
-		goto streamon_err1;
-	}
+		जाओ streamon_err1;
+	पूर्ण
 
-	omap_dispc_register_isr(omap_vout_isr, vout, mask);
+	omap_dispc_रेजिस्टर_isr(omap_vout_isr, vout, mask);
 
 	/* Enable the pipeline and set the Go bit */
 	ret = omapvid_apply_changes(vout);
-	if (ret)
+	अगर (ret)
 		v4l2_err(&vout->vid_dev->v4l2_dev, "failed to change mode\n");
 
-	for (j = 0; j < ovid->num_overlays; j++) {
-		struct omap_overlay *ovl = ovid->overlays[j];
-		struct omap_dss_device *dssdev = ovl->get_device(ovl);
+	क्रम (j = 0; j < ovid->num_overlays; j++) अणु
+		काष्ठा omap_overlay *ovl = ovid->overlays[j];
+		काष्ठा omap_dss_device *dssdev = ovl->get_device(ovl);
 
-		if (dssdev) {
+		अगर (dssdev) अणु
 			ret = ovl->enable(ovl);
-			if (ret)
-				goto streamon_err1;
-		}
-	}
-	return 0;
+			अगर (ret)
+				जाओ streamon_err1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
 
 streamon_err1:
 	mask = DISPC_IRQ_VSYNC | DISPC_IRQ_EVSYNC_EVEN | DISPC_IRQ_EVSYNC_ODD
 		| DISPC_IRQ_VSYNC2;
 
-	omap_dispc_unregister_isr(omap_vout_isr, vout, mask);
+	omap_dispc_unरेजिस्टर_isr(omap_vout_isr, vout, mask);
 
-	for (j = 0; j < ovid->num_overlays; j++) {
-		struct omap_overlay *ovl = ovid->overlays[j];
-		struct omap_dss_device *dssdev = ovl->get_device(ovl);
+	क्रम (j = 0; j < ovid->num_overlays; j++) अणु
+		काष्ठा omap_overlay *ovl = ovid->overlays[j];
+		काष्ठा omap_dss_device *dssdev = ovl->get_device(ovl);
 
-		if (dssdev)
+		अगर (dssdev)
 			ovl->disable(ovl);
-	}
+	पूर्ण
 	/* Turn of the pipeline */
-	if (omapvid_apply_changes(vout))
+	अगर (omapvid_apply_changes(vout))
 		v4l2_err(&vout->vid_dev->v4l2_dev,
 			 "failed to change mode in streamoff\n");
 
 out:
-	vb2_buffer_done(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
-	list_for_each_entry_safe(buf, tmp, &vout->dma_queue, queue) {
+	vb2_buffer_करोne(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
+	list_क्रम_each_entry_safe(buf, पंचांगp, &vout->dma_queue, queue) अणु
 		list_del(&buf->queue);
-		vb2_buffer_done(&buf->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
-	}
-	return ret;
-}
+		vb2_buffer_करोne(&buf->vbuf.vb2_buf, VB2_BUF_STATE_QUEUED);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void omap_vout_vb2_stop_streaming(struct vb2_queue *vq)
-{
-	struct omap_vout_device *vout = vb2_get_drv_priv(vq);
-	struct omapvideo_info *ovid = &vout->vid_info;
-	struct omap_vout_buffer *buf, *tmp;
+अटल व्योम omap_vout_vb2_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा omap_vout_device *vout = vb2_get_drv_priv(vq);
+	काष्ठा omapvideo_info *ovid = &vout->vid_info;
+	काष्ठा omap_vout_buffer *buf, *पंचांगp;
 	u32 mask = 0;
-	int j;
+	पूर्णांक j;
 
 	mask = DISPC_IRQ_VSYNC | DISPC_IRQ_EVSYNC_EVEN | DISPC_IRQ_EVSYNC_ODD
 		| DISPC_IRQ_VSYNC2;
 
-	omap_dispc_unregister_isr(omap_vout_isr, vout, mask);
+	omap_dispc_unरेजिस्टर_isr(omap_vout_isr, vout, mask);
 
-	for (j = 0; j < ovid->num_overlays; j++) {
-		struct omap_overlay *ovl = ovid->overlays[j];
-		struct omap_dss_device *dssdev = ovl->get_device(ovl);
+	क्रम (j = 0; j < ovid->num_overlays; j++) अणु
+		काष्ठा omap_overlay *ovl = ovid->overlays[j];
+		काष्ठा omap_dss_device *dssdev = ovl->get_device(ovl);
 
-		if (dssdev)
+		अगर (dssdev)
 			ovl->disable(ovl);
-	}
+	पूर्ण
 	/* Turn of the pipeline */
-	if (omapvid_apply_changes(vout))
+	अगर (omapvid_apply_changes(vout))
 		v4l2_err(&vout->vid_dev->v4l2_dev,
 			 "failed to change mode in streamoff\n");
 
-	if (vout->next_frm != vout->cur_frm)
-		vb2_buffer_done(&vout->next_frm->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
-	vb2_buffer_done(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
-	list_for_each_entry_safe(buf, tmp, &vout->dma_queue, queue) {
+	अगर (vout->next_frm != vout->cur_frm)
+		vb2_buffer_करोne(&vout->next_frm->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
+	vb2_buffer_करोne(&vout->cur_frm->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
+	list_क्रम_each_entry_safe(buf, पंचांगp, &vout->dma_queue, queue) अणु
 		list_del(&buf->queue);
-		vb2_buffer_done(&buf->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
-	}
-}
+		vb2_buffer_करोne(&buf->vbuf.vb2_buf, VB2_BUF_STATE_ERROR);
+	पूर्ण
+पूर्ण
 
-static int vidioc_s_fbuf(struct file *file, void *fh,
-				const struct v4l2_framebuffer *a)
-{
-	int enable = 0;
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct omap_overlay_manager_info info;
-	enum omap_dss_trans_key_type key_type = OMAP_DSS_COLOR_KEY_GFX_DST;
+अटल पूर्णांक vidioc_s_fbuf(काष्ठा file *file, व्योम *fh,
+				स्थिर काष्ठा v4l2_framebuffer *a)
+अणु
+	पूर्णांक enable = 0;
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा omap_overlay_manager_info info;
+	क्रमागत omap_dss_trans_key_type key_type = OMAP_DSS_COLOR_KEY_GFX_DST;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 
-	/* OMAP DSS doesn't support Source and Destination color
+	/* OMAP DSS करोesn't support Source and Destination color
 	   key together */
-	if ((a->flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY) &&
+	अगर ((a->flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY) &&
 			(a->flags & V4L2_FBUF_FLAG_CHROMAKEY))
-		return -EINVAL;
+		वापस -EINVAL;
 	/* OMAP DSS Doesn't support the Destination color key
 	   and alpha blending together */
-	if ((a->flags & V4L2_FBUF_FLAG_CHROMAKEY) &&
+	अगर ((a->flags & V4L2_FBUF_FLAG_CHROMAKEY) &&
 			(a->flags & V4L2_FBUF_FLAG_LOCAL_ALPHA))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((a->flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY)) {
+	अगर ((a->flags & V4L2_FBUF_FLAG_SRC_CHROMAKEY)) अणु
 		vout->fbuf.flags |= V4L2_FBUF_FLAG_SRC_CHROMAKEY;
 		key_type =  OMAP_DSS_COLOR_KEY_VID_SRC;
-	} else
+	पूर्ण अन्यथा
 		vout->fbuf.flags &= ~V4L2_FBUF_FLAG_SRC_CHROMAKEY;
 
-	if ((a->flags & V4L2_FBUF_FLAG_CHROMAKEY)) {
+	अगर ((a->flags & V4L2_FBUF_FLAG_CHROMAKEY)) अणु
 		vout->fbuf.flags |= V4L2_FBUF_FLAG_CHROMAKEY;
 		key_type =  OMAP_DSS_COLOR_KEY_GFX_DST;
-	} else
+	पूर्ण अन्यथा
 		vout->fbuf.flags &=  ~V4L2_FBUF_FLAG_CHROMAKEY;
 
-	if (a->flags & (V4L2_FBUF_FLAG_CHROMAKEY |
+	अगर (a->flags & (V4L2_FBUF_FLAG_CHROMAKEY |
 				V4L2_FBUF_FLAG_SRC_CHROMAKEY))
 		enable = 1;
-	else
+	अन्यथा
 		enable = 0;
-	if (ovl->manager && ovl->manager->get_manager_info &&
-			ovl->manager->set_manager_info) {
+	अगर (ovl->manager && ovl->manager->get_manager_info &&
+			ovl->manager->set_manager_info) अणु
 
 		ovl->manager->get_manager_info(ovl->manager, &info);
 		info.trans_enabled = enable;
 		info.trans_key_type = key_type;
 		info.trans_key = vout->win.chromakey;
 
-		if (ovl->manager->set_manager_info(ovl->manager, &info))
-			return -EINVAL;
-	}
-	if (a->flags & V4L2_FBUF_FLAG_LOCAL_ALPHA) {
+		अगर (ovl->manager->set_manager_info(ovl->manager, &info))
+			वापस -EINVAL;
+	पूर्ण
+	अगर (a->flags & V4L2_FBUF_FLAG_LOCAL_ALPHA) अणु
 		vout->fbuf.flags |= V4L2_FBUF_FLAG_LOCAL_ALPHA;
 		enable = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		vout->fbuf.flags &= ~V4L2_FBUF_FLAG_LOCAL_ALPHA;
 		enable = 0;
-	}
-	if (ovl->manager && ovl->manager->get_manager_info &&
-			ovl->manager->set_manager_info) {
+	पूर्ण
+	अगर (ovl->manager && ovl->manager->get_manager_info &&
+			ovl->manager->set_manager_info) अणु
 		ovl->manager->get_manager_info(ovl->manager, &info);
-		/* enable this only if there is no zorder cap */
-		if ((ovl->caps & OMAP_DSS_OVL_CAP_ZORDER) == 0)
+		/* enable this only अगर there is no zorder cap */
+		अगर ((ovl->caps & OMAP_DSS_OVL_CAP_ZORDER) == 0)
 			info.partial_alpha_enabled = enable;
-		if (ovl->manager->set_manager_info(ovl->manager, &info))
-			return -EINVAL;
-	}
+		अगर (ovl->manager->set_manager_info(ovl->manager, &info))
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_fbuf(struct file *file, void *fh,
-		struct v4l2_framebuffer *a)
-{
-	struct omap_overlay *ovl;
-	struct omapvideo_info *ovid;
-	struct omap_vout_device *vout = video_drvdata(file);
-	struct omap_overlay_manager_info info;
-	struct omap_video_timings *timing;
-	struct omap_dss_device *dssdev;
+अटल पूर्णांक vidioc_g_fbuf(काष्ठा file *file, व्योम *fh,
+		काष्ठा v4l2_framebuffer *a)
+अणु
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_vout_device *vout = video_drvdata(file);
+	काष्ठा omap_overlay_manager_info info;
+	काष्ठा omap_video_timings *timing;
+	काष्ठा omap_dss_device *dssdev;
 
 	ovid = &vout->vid_info;
 	ovl = ovid->overlays[0];
 	/* get the display device attached to the overlay */
 	dssdev = ovl->get_device(ovl);
 
-	if (!dssdev)
-		return -EINVAL;
+	अगर (!dssdev)
+		वापस -EINVAL;
 
 	timing = &dssdev->panel.timings;
 
@@ -1208,7 +1209,7 @@ static int vidioc_g_fbuf(struct file *file, void *fh,
 	vout->fbuf.fmt.width = timing->x_res;
 	a->fmt.field = V4L2_FIELD_NONE;
 	a->fmt.colorspace = V4L2_COLORSPACE_SRGB;
-	a->fmt.pixelformat = V4L2_PIX_FMT_RGBA32;
+	a->fmt.pixelक्रमmat = V4L2_PIX_FMT_RGBA32;
 	a->fmt.height = vout->fbuf.fmt.height;
 	a->fmt.width = vout->fbuf.fmt.width;
 	a->fmt.bytesperline = vout->fbuf.fmt.width * 4;
@@ -1220,43 +1221,43 @@ static int vidioc_g_fbuf(struct file *file, void *fh,
 	a->flags &= ~(V4L2_FBUF_FLAG_SRC_CHROMAKEY | V4L2_FBUF_FLAG_CHROMAKEY |
 		      V4L2_FBUF_FLAG_LOCAL_ALPHA);
 
-	if (ovl->manager && ovl->manager->get_manager_info) {
+	अगर (ovl->manager && ovl->manager->get_manager_info) अणु
 		ovl->manager->get_manager_info(ovl->manager, &info);
-		if (info.trans_key_type == OMAP_DSS_COLOR_KEY_VID_SRC)
+		अगर (info.trans_key_type == OMAP_DSS_COLOR_KEY_VID_SRC)
 			a->flags |= V4L2_FBUF_FLAG_SRC_CHROMAKEY;
-		if (info.trans_key_type == OMAP_DSS_COLOR_KEY_GFX_DST)
+		अगर (info.trans_key_type == OMAP_DSS_COLOR_KEY_GFX_DST)
 			a->flags |= V4L2_FBUF_FLAG_CHROMAKEY;
-		if (info.partial_alpha_enabled)
+		अगर (info.partial_alpha_enabled)
 			a->flags |= V4L2_FBUF_FLAG_LOCAL_ALPHA;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_enum_output(struct file *file, void *priv_fh,
-			      struct v4l2_output *out)
-{
-	if (out->index)
-		return -EINVAL;
-	snprintf(out->name, sizeof(out->name), "Overlay");
+अटल पूर्णांक vidioc_क्रमागत_output(काष्ठा file *file, व्योम *priv_fh,
+			      काष्ठा v4l2_output *out)
+अणु
+	अगर (out->index)
+		वापस -EINVAL;
+	snम_लिखो(out->name, माप(out->name), "Overlay");
 	out->type = V4L2_OUTPUT_TYPE_ANALOGVGAOVERLAY;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_output(struct file *file, void *priv_fh, unsigned int *i)
-{
+अटल पूर्णांक vidioc_g_output(काष्ठा file *file, व्योम *priv_fh, अचिन्हित पूर्णांक *i)
+अणु
 	*i = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_output(struct file *file, void *priv_fh, unsigned int i)
-{
-	return i ? -EINVAL : 0;
-}
+अटल पूर्णांक vidioc_s_output(काष्ठा file *file, व्योम *priv_fh, अचिन्हित पूर्णांक i)
+अणु
+	वापस i ? -EINVAL : 0;
+पूर्ण
 
-static const struct v4l2_ioctl_ops vout_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops vout_ioctl_ops = अणु
 	.vidioc_querycap			= vidioc_querycap,
-	.vidioc_enum_fmt_vid_out		= vidioc_enum_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_out		= vidioc_क्रमागत_fmt_vid_out,
 	.vidioc_g_fmt_vid_out			= vidioc_g_fmt_vid_out,
 	.vidioc_try_fmt_vid_out			= vidioc_try_fmt_vid_out,
 	.vidioc_s_fmt_vid_out			= vidioc_s_fmt_vid_out,
@@ -1267,7 +1268,7 @@ static const struct v4l2_ioctl_ops vout_ioctl_ops = {
 	.vidioc_g_fmt_vid_out_overlay		= vidioc_g_fmt_vid_overlay,
 	.vidioc_g_selection			= vidioc_g_selection,
 	.vidioc_s_selection			= vidioc_s_selection,
-	.vidioc_enum_output			= vidioc_enum_output,
+	.vidioc_क्रमागत_output			= vidioc_क्रमागत_output,
 	.vidioc_g_output			= vidioc_g_output,
 	.vidioc_s_output			= vidioc_s_output,
 	.vidioc_reqbufs				= vb2_ioctl_reqbufs,
@@ -1280,48 +1281,48 @@ static const struct v4l2_ioctl_ops vout_ioctl_ops = {
 	.vidioc_streamoff			= vb2_ioctl_streamoff,
 	.vidioc_subscribe_event			= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event		= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-static const struct v4l2_file_operations omap_vout_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations omap_vout_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= video_ioctl2,
 	.poll		= vb2_fop_poll,
 	.mmap		= vb2_fop_mmap,
-	.open		= v4l2_fh_open,
+	.खोलो		= v4l2_fh_खोलो,
 	.release	= vb2_fop_release,
-};
+पूर्ण;
 
-static const struct vb2_ops omap_vout_vb2_ops = {
+अटल स्थिर काष्ठा vb2_ops omap_vout_vb2_ops = अणु
 	.queue_setup		= omap_vout_vb2_queue_setup,
 	.buf_queue		= omap_vout_vb2_queue,
 	.buf_prepare		= omap_vout_vb2_prepare,
 	.start_streaming	= omap_vout_vb2_start_streaming,
 	.stop_streaming		= omap_vout_vb2_stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
 /* Init functions used during driver initialization */
 /* Initial setup of video_data */
-static int __init omap_vout_setup_video_data(struct omap_vout_device *vout)
-{
-	struct video_device *vfd;
-	struct v4l2_pix_format *pix;
-	struct omap_overlay *ovl = vout->vid_info.overlays[0];
-	struct omap_dss_device *display = ovl->get_device(ovl);
-	struct v4l2_ctrl_handler *hdl;
-	struct vb2_queue *vq;
-	int ret;
+अटल पूर्णांक __init omap_vout_setup_video_data(काष्ठा omap_vout_device *vout)
+अणु
+	काष्ठा video_device *vfd;
+	काष्ठा v4l2_pix_क्रमmat *pix;
+	काष्ठा omap_overlay *ovl = vout->vid_info.overlays[0];
+	काष्ठा omap_dss_device *display = ovl->get_device(ovl);
+	काष्ठा v4l2_ctrl_handler *hdl;
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
-	/* set the default pix */
+	/* set the शेष pix */
 	pix = &vout->pix;
 
-	/* Set the default picture of QVGA  */
+	/* Set the शेष picture of QVGA  */
 	pix->width = QQVGA_WIDTH;
 	pix->height = QQVGA_HEIGHT;
 
-	/* Default pixel format is RGB 5-6-5 */
-	pix->pixelformat = V4L2_PIX_FMT_RGB565;
+	/* Default pixel क्रमmat is RGB 5-6-5 */
+	pix->pixelक्रमmat = V4L2_PIX_FMT_RGB565;
 	pix->field = V4L2_FIELD_NONE;
 	pix->bytesperline = pix->width * 2;
 	pix->sizeimage = pix->bytesperline * pix->height;
@@ -1332,59 +1333,59 @@ static int __init omap_vout_setup_video_data(struct omap_vout_device *vout)
 	vout->fbuf.fmt.height =  display->panel.timings.y_res;
 	vout->cropped_offset = 0;
 
-	/* Set the data structures for the overlay parameters*/
+	/* Set the data काष्ठाures क्रम the overlay parameters*/
 	vout->fbuf.flags = V4L2_FBUF_FLAG_OVERLAY;
 	vout->fbuf.capability = V4L2_FBUF_CAP_LOCAL_ALPHA |
 		V4L2_FBUF_CAP_SRC_CHROMAKEY | V4L2_FBUF_CAP_CHROMAKEY |
 		V4L2_FBUF_CAP_EXTERNOVERLAY;
-	if (ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA) {
+	अगर (ovl->caps & OMAP_DSS_OVL_CAP_GLOBAL_ALPHA) अणु
 		vout->win.global_alpha = 255;
 		vout->fbuf.capability |= V4L2_FBUF_CAP_GLOBAL_ALPHA;
 		vout->fbuf.flags |= V4L2_FBUF_FLAG_GLOBAL_ALPHA;
-	} else {
+	पूर्ण अन्यथा अणु
 		vout->win.global_alpha = 0;
-	}
+	पूर्ण
 	vout->win.field = V4L2_FIELD_NONE;
 
-	omap_vout_new_format(pix, &vout->fbuf, &vout->crop, &vout->win);
+	omap_vout_new_क्रमmat(pix, &vout->fbuf, &vout->crop, &vout->win);
 
 	hdl = &vout->ctrl_handler;
 	v4l2_ctrl_handler_init(hdl, 3);
-	if (vout->vid_info.rotation_type == VOUT_ROT_VRFB) {
+	अगर (vout->vid_info.rotation_type == VOUT_ROT_VRFB) अणु
 		v4l2_ctrl_new_std(hdl, &omap_vout_ctrl_ops,
 				  V4L2_CID_ROTATE, 0, 270, 90, 0);
 		v4l2_ctrl_new_std(hdl, &omap_vout_ctrl_ops,
 				  V4L2_CID_VFLIP, 0, 1, 1, 0);
-	}
+	पूर्ण
 	v4l2_ctrl_new_std(hdl, &omap_vout_ctrl_ops,
 			  V4L2_CID_BG_COLOR, 0, 0xffffff, 1, 0);
-	if (hdl->error)
-		return hdl->error;
+	अगर (hdl->error)
+		वापस hdl->error;
 
 	vout->rotation = 0;
 	vout->mirror = false;
 	INIT_LIST_HEAD(&vout->dma_queue);
-	if (vout->vid_info.rotation_type == VOUT_ROT_VRFB)
+	अगर (vout->vid_info.rotation_type == VOUT_ROT_VRFB)
 		vout->vrfb_bpp = 2;
 
-	/* initialize the video_device struct */
+	/* initialize the video_device काष्ठा */
 	vfd = vout->vfd = video_device_alloc();
 
-	if (!vfd) {
-		printk(KERN_ERR VOUT_NAME
+	अगर (!vfd) अणु
+		prपूर्णांकk(KERN_ERR VOUT_NAME
 		       ": could not allocate video device struct\n");
-		v4l2_ctrl_handler_free(hdl);
-		return -ENOMEM;
-	}
+		v4l2_ctrl_handler_मुक्त(hdl);
+		वापस -ENOMEM;
+	पूर्ण
 	vfd->ctrl_handler = hdl;
 	vfd->release = video_device_release;
 	vfd->ioctl_ops = &vout_ioctl_ops;
 
-	strscpy(vfd->name, VOUT_NAME, sizeof(vfd->name));
+	strscpy(vfd->name, VOUT_NAME, माप(vfd->name));
 
 	vfd->fops = &omap_vout_fops;
 	vfd->v4l2_dev = &vout->vid_dev->v4l2_dev;
-	vfd->vfl_dir = VFL_DIR_TX;
+	vfd->vfl_dir = VFL_सूची_TX;
 	vfd->minor = -1;
 	vfd->device_caps = V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_OUTPUT |
 			   V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
@@ -1394,8 +1395,8 @@ static int __init omap_vout_setup_video_data(struct omap_vout_device *vout)
 	vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	vq->drv_priv = vout;
-	vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
-	vq->buf_struct_size = sizeof(struct omap_vout_buffer);
+	vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	vq->buf_काष्ठा_size = माप(काष्ठा omap_vout_buffer);
 	vq->dev = vfd->v4l2_dev->dev;
 
 	vq->ops = &omap_vout_vb2_ops;
@@ -1405,65 +1406,65 @@ static int __init omap_vout_setup_video_data(struct omap_vout_device *vout)
 	vfd->queue = vq;
 
 	ret = vb2_queue_init(vq);
-	if (ret) {
-		v4l2_ctrl_handler_free(hdl);
+	अगर (ret) अणु
+		v4l2_ctrl_handler_मुक्त(hdl);
 		video_device_release(vfd);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Setup video buffers */
-static int __init omap_vout_setup_video_bufs(struct platform_device *pdev,
-		int vid_num)
-{
-	struct omapvideo_info *ovid;
-	struct omap_vout_device *vout;
-	struct v4l2_device *v4l2_dev = platform_get_drvdata(pdev);
-	struct omap2video_device *vid_dev =
-		container_of(v4l2_dev, struct omap2video_device, v4l2_dev);
-	int ret = 0;
+अटल पूर्णांक __init omap_vout_setup_video_bufs(काष्ठा platक्रमm_device *pdev,
+		पूर्णांक vid_num)
+अणु
+	काष्ठा omapvideo_info *ovid;
+	काष्ठा omap_vout_device *vout;
+	काष्ठा v4l2_device *v4l2_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap2video_device *vid_dev =
+		container_of(v4l2_dev, काष्ठा omap2video_device, v4l2_dev);
+	पूर्णांक ret = 0;
 
 	vout = vid_dev->vouts[vid_num];
 	ovid = &vout->vid_info;
 
-	if (ovid->rotation_type == VOUT_ROT_VRFB) {
-		bool static_vrfb_allocation = (vid_num == 0) ?
-			vid1_static_vrfb_alloc : vid2_static_vrfb_alloc;
+	अगर (ovid->rotation_type == VOUT_ROT_VRFB) अणु
+		bool अटल_vrfb_allocation = (vid_num == 0) ?
+			vid1_अटल_vrfb_alloc : vid2_अटल_vrfb_alloc;
 		ret = omap_vout_setup_vrfb_bufs(pdev, vid_num,
-				static_vrfb_allocation);
-	}
-	return ret;
-}
+				अटल_vrfb_allocation);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Create video out devices */
-static int __init omap_vout_create_video_devices(struct platform_device *pdev)
-{
-	int ret = 0, k;
-	struct omap_vout_device *vout;
-	struct video_device *vfd = NULL;
-	struct v4l2_device *v4l2_dev = platform_get_drvdata(pdev);
-	struct omap2video_device *vid_dev = container_of(v4l2_dev,
-			struct omap2video_device, v4l2_dev);
-	struct omap_overlay *ovl = vid_dev->overlays[0];
-	struct omap_overlay_info info;
+अटल पूर्णांक __init omap_vout_create_video_devices(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0, k;
+	काष्ठा omap_vout_device *vout;
+	काष्ठा video_device *vfd = शून्य;
+	काष्ठा v4l2_device *v4l2_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap2video_device *vid_dev = container_of(v4l2_dev,
+			काष्ठा omap2video_device, v4l2_dev);
+	काष्ठा omap_overlay *ovl = vid_dev->overlays[0];
+	काष्ठा omap_overlay_info info;
 
 	ovl->get_overlay_info(ovl, &info);
 
-	for (k = 0; k < pdev->num_resources; k++) {
+	क्रम (k = 0; k < pdev->num_resources; k++) अणु
 
-		vout = kzalloc(sizeof(struct omap_vout_device), GFP_KERNEL);
-		if (!vout) {
+		vout = kzalloc(माप(काष्ठा omap_vout_device), GFP_KERNEL);
+		अगर (!vout) अणु
 			dev_err(&pdev->dev, ": could not allocate memory\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		vout->vid = k;
 		vid_dev->vouts[k] = vout;
 		vout->vid_dev = vid_dev;
-		/* Select video2 if only 1 overlay is controlled by V4L2 */
-		if (pdev->num_resources == 1)
+		/* Select video2 अगर only 1 overlay is controlled by V4L2 */
+		अगर (pdev->num_resources == 1)
 			vout->vid_info.overlays[0] = vid_dev->overlays[k + 2];
-		else
+		अन्यथा
 			/* Else select video1 and video2 one by one. */
 			vout->vid_info.overlays[0] = vid_dev->overlays[k + 1];
 		vout->vid_info.num_overlays = 1;
@@ -1474,195 +1475,195 @@ static int __init omap_vout_create_video_devices(struct platform_device *pdev)
 		 * the fb corresponding to this overlay.
 		 *
 		 * To be precise: fbuf.base should match smem_start of
-		 * struct fb_fix_screeninfo.
+		 * काष्ठा fb_fix_screeninfo.
 		 */
-		vout->fbuf.base = (void *)info.paddr;
+		vout->fbuf.base = (व्योम *)info.paddr;
 
-		/* Set VRFB as rotation_type for omap2 and omap3 */
-		if (omap_vout_dss_omap24xx() || omap_vout_dss_omap34xx())
+		/* Set VRFB as rotation_type क्रम omap2 and omap3 */
+		अगर (omap_vout_dss_omap24xx() || omap_vout_dss_omap34xx())
 			vout->vid_info.rotation_type = VOUT_ROT_VRFB;
 
-		/* Setup the default configuration for the video devices
+		/* Setup the शेष configuration क्रम the video devices
 		 */
-		if (omap_vout_setup_video_data(vout) != 0) {
+		अगर (omap_vout_setup_video_data(vout) != 0) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		/* Allocate default number of buffers for the video streaming
-		 * and reserve the VRFB space for rotation
+		/* Allocate शेष number of buffers क्रम the video streaming
+		 * and reserve the VRFB space क्रम rotation
 		 */
-		if (omap_vout_setup_video_bufs(pdev, k) != 0) {
+		अगर (omap_vout_setup_video_bufs(pdev, k) != 0) अणु
 			ret = -ENOMEM;
-			goto error1;
-		}
+			जाओ error1;
+		पूर्ण
 
 		/* Register the Video device with V4L2
 		 */
 		vfd = vout->vfd;
-		if (video_register_device(vfd, VFL_TYPE_VIDEO, -1) < 0) {
+		अगर (video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, -1) < 0) अणु
 			dev_err(&pdev->dev,
 				": Could not register Video for Linux device\n");
 			vfd->minor = -1;
 			ret = -ENODEV;
-			goto error2;
-		}
+			जाओ error2;
+		पूर्ण
 		video_set_drvdata(vfd, vout);
 
 		dev_info(&pdev->dev,
 			 ": registered and initialized video device %d\n",
 			 vfd->minor);
-		if (k == (pdev->num_resources - 1))
-			return 0;
+		अगर (k == (pdev->num_resources - 1))
+			वापस 0;
 
-		continue;
+		जारी;
 error2:
-		if (vout->vid_info.rotation_type == VOUT_ROT_VRFB)
+		अगर (vout->vid_info.rotation_type == VOUT_ROT_VRFB)
 			omap_vout_release_vrfb(vout);
 error1:
 		video_device_release(vfd);
 error:
-		kfree(vout);
-		return ret;
-	}
+		kमुक्त(vout);
+		वापस ret;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 /* Driver functions */
-static void omap_vout_cleanup_device(struct omap_vout_device *vout)
-{
-	struct video_device *vfd;
-	struct omapvideo_info *ovid;
+अटल व्योम omap_vout_cleanup_device(काष्ठा omap_vout_device *vout)
+अणु
+	काष्ठा video_device *vfd;
+	काष्ठा omapvideo_info *ovid;
 
-	if (!vout)
-		return;
+	अगर (!vout)
+		वापस;
 
 	vfd = vout->vfd;
 	ovid = &vout->vid_info;
-	if (vfd) {
-		if (!video_is_registered(vfd)) {
+	अगर (vfd) अणु
+		अगर (!video_is_रेजिस्टरed(vfd)) अणु
 			/*
-			 * The device was never registered, so release the
-			 * video_device struct directly.
+			 * The device was never रेजिस्टरed, so release the
+			 * video_device काष्ठा directly.
 			 */
 			video_device_release(vfd);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * The unregister function will release the video_device
-			 * struct as well as unregistering it.
+			 * The unरेजिस्टर function will release the video_device
+			 * काष्ठा as well as unरेजिस्टरing it.
 			 */
-			video_unregister_device(vfd);
-		}
-	}
-	v4l2_ctrl_handler_free(&vout->ctrl_handler);
-	if (ovid->rotation_type == VOUT_ROT_VRFB) {
+			video_unरेजिस्टर_device(vfd);
+		पूर्ण
+	पूर्ण
+	v4l2_ctrl_handler_मुक्त(&vout->ctrl_handler);
+	अगर (ovid->rotation_type == VOUT_ROT_VRFB) अणु
 		omap_vout_release_vrfb(vout);
-		/* Free the VRFB buffer if allocated
-		 * init time
+		/* Free the VRFB buffer अगर allocated
+		 * init समय
 		 */
-		if (vout->vrfb_static_allocation)
-			omap_vout_free_vrfb_buffers(vout);
-	}
+		अगर (vout->vrfb_अटल_allocation)
+			omap_vout_मुक्त_vrfb_buffers(vout);
+	पूर्ण
 
-	kfree(vout);
-}
+	kमुक्त(vout);
+पूर्ण
 
-static int omap_vout_remove(struct platform_device *pdev)
-{
-	int k;
-	struct v4l2_device *v4l2_dev = platform_get_drvdata(pdev);
-	struct omap2video_device *vid_dev = container_of(v4l2_dev, struct
+अटल पूर्णांक omap_vout_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक k;
+	काष्ठा v4l2_device *v4l2_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap2video_device *vid_dev = container_of(v4l2_dev, काष्ठा
 			omap2video_device, v4l2_dev);
 
-	v4l2_device_unregister(v4l2_dev);
-	for (k = 0; k < pdev->num_resources; k++)
+	v4l2_device_unरेजिस्टर(v4l2_dev);
+	क्रम (k = 0; k < pdev->num_resources; k++)
 		omap_vout_cleanup_device(vid_dev->vouts[k]);
 
-	for (k = 0; k < vid_dev->num_displays; k++) {
-		if (vid_dev->displays[k]->state != OMAP_DSS_DISPLAY_DISABLED)
+	क्रम (k = 0; k < vid_dev->num_displays; k++) अणु
+		अगर (vid_dev->displays[k]->state != OMAP_DSS_DISPLAY_DISABLED)
 			vid_dev->displays[k]->driver->disable(vid_dev->displays[k]);
 
 		omap_dss_put_device(vid_dev->displays[k]);
-	}
-	kfree(vid_dev);
-	return 0;
-}
+	पूर्ण
+	kमुक्त(vid_dev);
+	वापस 0;
+पूर्ण
 
-static int __init omap_vout_probe(struct platform_device *pdev)
-{
-	int ret = 0, i;
-	struct omap_overlay *ovl;
-	struct omap_dss_device *dssdev = NULL;
-	struct omap_dss_device *def_display;
-	struct omap2video_device *vid_dev = NULL;
+अटल पूर्णांक __init omap_vout_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0, i;
+	काष्ठा omap_overlay *ovl;
+	काष्ठा omap_dss_device *dssdev = शून्य;
+	काष्ठा omap_dss_device *def_display;
+	काष्ठा omap2video_device *vid_dev = शून्य;
 
-	if (omapdss_is_initialized() == false)
-		return -EPROBE_DEFER;
+	अगर (omapdss_is_initialized() == false)
+		वापस -EPROBE_DEFER;
 
 	ret = omapdss_compat_init();
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to init dss\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pdev->num_resources == 0) {
+	अगर (pdev->num_resources == 0) अणु
 		dev_err(&pdev->dev, "probed for an unknown device\n");
 		ret = -ENODEV;
-		goto err_dss_init;
-	}
+		जाओ err_dss_init;
+	पूर्ण
 
-	vid_dev = kzalloc(sizeof(struct omap2video_device), GFP_KERNEL);
-	if (vid_dev == NULL) {
+	vid_dev = kzalloc(माप(काष्ठा omap2video_device), GFP_KERNEL);
+	अगर (vid_dev == शून्य) अणु
 		ret = -ENOMEM;
-		goto err_dss_init;
-	}
+		जाओ err_dss_init;
+	पूर्ण
 
 	vid_dev->num_displays = 0;
-	for_each_dss_dev(dssdev) {
+	क्रम_each_dss_dev(dssdev) अणु
 		omap_dss_get_device(dssdev);
 
-		if (!dssdev->driver) {
+		अगर (!dssdev->driver) अणु
 			dev_warn(&pdev->dev, "no driver for display: %s\n",
 					dssdev->name);
 			omap_dss_put_device(dssdev);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		vid_dev->displays[vid_dev->num_displays++] = dssdev;
-	}
+	पूर्ण
 
-	if (vid_dev->num_displays == 0) {
+	अगर (vid_dev->num_displays == 0) अणु
 		dev_err(&pdev->dev, "no displays\n");
 		ret = -EINVAL;
-		goto probe_err0;
-	}
+		जाओ probe_err0;
+	पूर्ण
 
 	vid_dev->num_overlays = omap_dss_get_num_overlays();
-	for (i = 0; i < vid_dev->num_overlays; i++)
+	क्रम (i = 0; i < vid_dev->num_overlays; i++)
 		vid_dev->overlays[i] = omap_dss_get_overlay(i);
 
 	vid_dev->num_managers = omap_dss_get_num_overlay_managers();
-	for (i = 0; i < vid_dev->num_managers; i++)
+	क्रम (i = 0; i < vid_dev->num_managers; i++)
 		vid_dev->managers[i] = omap_dss_get_overlay_manager(i);
 
 	/* Get the Video1 overlay and video2 overlay.
 	 * Setup the Display attached to that overlays
 	 */
-	for (i = 1; i < vid_dev->num_overlays; i++) {
+	क्रम (i = 1; i < vid_dev->num_overlays; i++) अणु
 		ovl = omap_dss_get_overlay(i);
 		dssdev = ovl->get_device(ovl);
 
-		if (dssdev) {
+		अगर (dssdev) अणु
 			def_display = dssdev;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_warn(&pdev->dev, "cannot find display\n");
-			def_display = NULL;
-		}
-		if (def_display) {
-			struct omap_dss_driver *dssdrv = def_display->driver;
+			def_display = शून्य;
+		पूर्ण
+		अगर (def_display) अणु
+			काष्ठा omap_dss_driver *dssdrv = def_display->driver;
 
 			ret = dssdrv->enable(def_display);
-			if (ret) {
+			अगर (ret) अणु
 				/* Here we are not considering a error
 				 *  as display may be enabled by frame
 				 *  buffer driver
@@ -1670,71 +1671,71 @@ static int __init omap_vout_probe(struct platform_device *pdev)
 				dev_warn(&pdev->dev,
 					"'%s' Display already enabled\n",
 					def_display->name);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (v4l2_device_register(&pdev->dev, &vid_dev->v4l2_dev) < 0) {
+	अगर (v4l2_device_रेजिस्टर(&pdev->dev, &vid_dev->v4l2_dev) < 0) अणु
 		dev_err(&pdev->dev, "v4l2_device_register failed\n");
 		ret = -ENODEV;
-		goto probe_err1;
-	}
+		जाओ probe_err1;
+	पूर्ण
 
 	ret = omap_vout_create_video_devices(pdev);
-	if (ret)
-		goto probe_err2;
+	अगर (ret)
+		जाओ probe_err2;
 
-	for (i = 0; i < vid_dev->num_displays; i++) {
-		struct omap_dss_device *display = vid_dev->displays[i];
+	क्रम (i = 0; i < vid_dev->num_displays; i++) अणु
+		काष्ठा omap_dss_device *display = vid_dev->displays[i];
 
-		if (display->driver->update)
+		अगर (display->driver->update)
 			display->driver->update(display, 0, 0,
 					display->panel.timings.x_res,
 					display->panel.timings.y_res);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 probe_err2:
-	v4l2_device_unregister(&vid_dev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&vid_dev->v4l2_dev);
 probe_err1:
-	for (i = 1; i < vid_dev->num_overlays; i++) {
-		def_display = NULL;
+	क्रम (i = 1; i < vid_dev->num_overlays; i++) अणु
+		def_display = शून्य;
 		ovl = omap_dss_get_overlay(i);
 		dssdev = ovl->get_device(ovl);
 
-		if (dssdev)
+		अगर (dssdev)
 			def_display = dssdev;
 
-		if (def_display && def_display->driver)
+		अगर (def_display && def_display->driver)
 			def_display->driver->disable(def_display);
-	}
+	पूर्ण
 probe_err0:
-	kfree(vid_dev);
+	kमुक्त(vid_dev);
 err_dss_init:
 	omapdss_compat_uninit();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver omap_vout_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver omap_vout_driver = अणु
+	.driver = अणु
 		.name = VOUT_NAME,
-	},
-	.remove = omap_vout_remove,
-};
+	पूर्ण,
+	.हटाओ = omap_vout_हटाओ,
+पूर्ण;
 
-static int __init omap_vout_init(void)
-{
-	if (platform_driver_probe(&omap_vout_driver, omap_vout_probe) != 0) {
-		printk(KERN_ERR VOUT_NAME ":Could not register Video driver\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+अटल पूर्णांक __init omap_vout_init(व्योम)
+अणु
+	अगर (platक्रमm_driver_probe(&omap_vout_driver, omap_vout_probe) != 0) अणु
+		prपूर्णांकk(KERN_ERR VOUT_NAME ":Could not register Video driver\n");
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void omap_vout_cleanup(void)
-{
-	platform_driver_unregister(&omap_vout_driver);
-}
+अटल व्योम omap_vout_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&omap_vout_driver);
+पूर्ण
 
 late_initcall(omap_vout_init);
-module_exit(omap_vout_cleanup);
+module_निकास(omap_vout_cleanup);

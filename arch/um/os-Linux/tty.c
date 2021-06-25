@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <kern_util.h>
-#include <os.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <kern_util.h>
+#समावेश <os.h>
 
-struct grantpt_info {
-	int fd;
-	int res;
-	int err;
-};
+काष्ठा grantpt_info अणु
+	पूर्णांक fd;
+	पूर्णांक res;
+	पूर्णांक err;
+पूर्ण;
 
-static void grantpt_cb(void *arg)
-{
-	struct grantpt_info *info = arg;
+अटल व्योम grantpt_cb(व्योम *arg)
+अणु
+	काष्ठा grantpt_info *info = arg;
 
 	info->res = grantpt(info->fd);
-	info->err = errno;
-}
+	info->err = त्रुटि_सं;
+पूर्ण
 
-int get_pty(void)
-{
-	struct grantpt_info info;
-	int fd, err;
+पूर्णांक get_pty(व्योम)
+अणु
+	काष्ठा grantpt_info info;
+	पूर्णांक fd, err;
 
-	fd = open("/dev/ptmx", O_RDWR);
-	if (fd < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "get_pty : Couldn't open /dev/ptmx - "
-		       "err = %d\n", errno);
-		return err;
-	}
+	fd = खोलो("/dev/ptmx", O_RDWR);
+	अगर (fd < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "get_pty : Couldn't open /dev/ptmx - "
+		       "err = %d\n", त्रुटि_सं);
+		वापस err;
+	पूर्ण
 
 	info.fd = fd;
-	initial_thread_cb(grantpt_cb, &info);
+	initial_thपढ़ो_cb(grantpt_cb, &info);
 
-	if (info.res < 0) {
+	अगर (info.res < 0) अणु
 		err = -info.err;
-		printk(UM_KERN_ERR "get_pty : Couldn't grant pty - "
+		prपूर्णांकk(UM_KERN_ERR "get_pty : Couldn't grant pty - "
 		       "errno = %d\n", -info.err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (unlockpt(fd) < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "get_pty : Couldn't unlock pty - "
-		       "errno = %d\n", errno);
-		goto out;
-	}
-	return fd;
+	अगर (unlockpt(fd) < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "get_pty : Couldn't unlock pty - "
+		       "errno = %d\n", त्रुटि_सं);
+		जाओ out;
+	पूर्ण
+	वापस fd;
 out:
-	close(fd);
-	return err;
-}
+	बंद(fd);
+	वापस err;
+पूर्ण

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*******************************************************************************
  * Filename:  target_core_fabric_lib.c
  *
- * This file contains generic high level protocol identifier and PR
- * handlers for TCM fabric modules
+ * This file contains generic high level protocol identअगरier and PR
+ * handlers क्रम TCM fabric modules
  *
  * (c) Copyright 2010-2013 Datera, Inc.
  *
@@ -12,151 +13,151 @@
  ******************************************************************************/
 
 /*
- * See SPC4, section 7.5 "Protocol specific parameters" for details
- * on the formats implemented in this file.
+ * See SPC4, section 7.5 "Protocol specific parameters" क्रम details
+ * on the क्रमmats implemented in this file.
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/spinlock.h>
-#include <linux/export.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <scsi/scsi_proto.h>
+#समावेश <scsi/scsi_proto.h>
 
-#include <target/target_core_base.h>
-#include <target/target_core_fabric.h>
+#समावेश <target/target_core_base.h>
+#समावेश <target/target_core_fabric.h>
 
-#include "target_core_internal.h"
-#include "target_core_pr.h"
+#समावेश "target_core_internal.h"
+#समावेश "target_core_pr.h"
 
 
-static int sas_get_pr_transport_id(
-	struct se_node_acl *nacl,
-	int *format_code,
-	unsigned char *buf)
-{
-	int ret;
+अटल पूर्णांक sas_get_pr_transport_id(
+	काष्ठा se_node_acl *nacl,
+	पूर्णांक *क्रमmat_code,
+	अचिन्हित अक्षर *buf)
+अणु
+	पूर्णांक ret;
 
 	/* Skip over 'naa. prefix */
 	ret = hex2bin(&buf[4], &nacl->initiatorname[4], 8);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("%s: invalid hex string\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 24;
-}
+	वापस 24;
+पूर्ण
 
-static int fc_get_pr_transport_id(
-	struct se_node_acl *se_nacl,
-	int *format_code,
-	unsigned char *buf)
-{
-	unsigned char *ptr;
-	int i, ret;
+अटल पूर्णांक fc_get_pr_transport_id(
+	काष्ठा se_node_acl *se_nacl,
+	पूर्णांक *क्रमmat_code,
+	अचिन्हित अक्षर *buf)
+अणु
+	अचिन्हित अक्षर *ptr;
+	पूर्णांक i, ret;
 	u32 off = 8;
 
 	/*
-	 * We convert the ASCII formatted N Port name into a binary
+	 * We convert the ASCII क्रमmatted N Port name पूर्णांकo a binary
 	 * encoded TransportID.
 	 */
 	ptr = &se_nacl->initiatorname[0];
-	for (i = 0; i < 23; ) {
-		if (!strncmp(&ptr[i], ":", 1)) {
+	क्रम (i = 0; i < 23; ) अणु
+		अगर (!म_भेदन(&ptr[i], ":", 1)) अणु
 			i++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		ret = hex2bin(&buf[off++], &ptr[i], 1);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_debug("%s: invalid hex string\n", __func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		i += 2;
-	}
+	पूर्ण
 	/*
 	 * The FC Transport ID is a hardcoded 24-byte length
 	 */
-	return 24;
-}
+	वापस 24;
+पूर्ण
 
-static int sbp_get_pr_transport_id(
-	struct se_node_acl *nacl,
-	int *format_code,
-	unsigned char *buf)
-{
-	int ret;
+अटल पूर्णांक sbp_get_pr_transport_id(
+	काष्ठा se_node_acl *nacl,
+	पूर्णांक *क्रमmat_code,
+	अचिन्हित अक्षर *buf)
+अणु
+	पूर्णांक ret;
 
 	ret = hex2bin(&buf[8], nacl->initiatorname, 8);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("%s: invalid hex string\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 24;
-}
+	वापस 24;
+पूर्ण
 
-static int srp_get_pr_transport_id(
-	struct se_node_acl *nacl,
-	int *format_code,
-	unsigned char *buf)
-{
-	const char *p;
-	unsigned len, count, leading_zero_bytes;
-	int rc;
+अटल पूर्णांक srp_get_pr_transport_id(
+	काष्ठा se_node_acl *nacl,
+	पूर्णांक *क्रमmat_code,
+	अचिन्हित अक्षर *buf)
+अणु
+	स्थिर अक्षर *p;
+	अचिन्हित len, count, leading_zero_bytes;
+	पूर्णांक rc;
 
 	p = nacl->initiatorname;
-	if (strncasecmp(p, "0x", 2) == 0)
+	अगर (strnहालcmp(p, "0x", 2) == 0)
 		p += 2;
-	len = strlen(p);
-	if (len % 2)
-		return -EINVAL;
+	len = म_माप(p);
+	अगर (len % 2)
+		वापस -EINVAL;
 
 	count = min(len / 2, 16U);
 	leading_zero_bytes = 16 - count;
-	memset(buf + 8, 0, leading_zero_bytes);
+	स_रखो(buf + 8, 0, leading_zero_bytes);
 	rc = hex2bin(buf + 8 + leading_zero_bytes, p, count);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		pr_debug("hex2bin failed for %s: %d\n", p, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 24;
-}
+	वापस 24;
+पूर्ण
 
-static int iscsi_get_pr_transport_id(
-	struct se_node_acl *se_nacl,
-	struct t10_pr_registration *pr_reg,
-	int *format_code,
-	unsigned char *buf)
-{
+अटल पूर्णांक iscsi_get_pr_transport_id(
+	काष्ठा se_node_acl *se_nacl,
+	काष्ठा t10_pr_registration *pr_reg,
+	पूर्णांक *क्रमmat_code,
+	अचिन्हित अक्षर *buf)
+अणु
 	u32 off = 4, padding = 0;
-	int isid_len;
+	पूर्णांक isid_len;
 	u16 len = 0;
 
 	spin_lock_irq(&se_nacl->nacl_sess_lock);
 	/*
 	 * Only null terminate the last field.
 	 *
-	 * From spc4r37 section 7.6.4.6: TransportID for initiator ports using
+	 * From spc4r37 section 7.6.4.6: TransportID क्रम initiator ports using
 	 * SCSI over iSCSI.
 	 *
 	 * Table 507 TPID=0 Initiator device TransportID
 	 *
 	 * The null-terminated, null-padded (see 4.3.2) ISCSI NAME field shall
 	 * contain the iSCSI name of an iSCSI initiator node (see RFC 7143).
-	 * The first ISCSI NAME field byte containing an ASCII null character
-	 * terminates the ISCSI NAME field without regard for the specified
+	 * The first ISCSI NAME field byte containing an ASCII null अक्षरacter
+	 * terminates the ISCSI NAME field without regard क्रम the specअगरied
 	 * length of the iSCSI TransportID or the contents of the ADDITIONAL
 	 * LENGTH field.
 	 */
-	len = sprintf(&buf[off], "%s", se_nacl->initiatorname);
+	len = प्र_लिखो(&buf[off], "%s", se_nacl->initiatorname);
 	off += len;
-	if ((*format_code == 1) && (pr_reg->isid_present_at_reg)) {
+	अगर ((*क्रमmat_code == 1) && (pr_reg->isid_present_at_reg)) अणु
 		/*
-		 * Set FORMAT CODE 01b for iSCSI Initiator port TransportID
-		 * format.
+		 * Set FORMAT CODE 01b क्रम iSCSI Initiator port TransportID
+		 * क्रमmat.
 		 */
 		buf[0] |= 0x40;
 		/*
@@ -168,16 +169,16 @@ static int iscsi_get_pr_transport_id(
 		 * (see 4.3.2) and shall not be padded.
 		 *
 		 * The SEPARATOR field shall contain the five ASCII
-		 * characters ",i,0x".
+		 * अक्षरacters ",i,0x".
 		 *
 		 * The null-terminated, null-padded ISCSI INITIATOR SESSION ID
-		 * field shall contain the iSCSI initiator session identifier
-		 * (see RFC 3720) in the form of ASCII characters that are the
+		 * field shall contain the iSCSI initiator session identअगरier
+		 * (see RFC 3720) in the क्रमm of ASCII अक्षरacters that are the
 		 * hexadecimal digits converted from the binary iSCSI initiator
-		 * session identifier value. The first ISCSI INITIATOR SESSION
-		 * ID field byte containing an ASCII null character terminates
-		 * the ISCSI INITIATOR SESSION ID field without regard for the
-		 * specified length of the iSCSI TransportID or the contents
+		 * session identअगरier value. The first ISCSI INITIATOR SESSION
+		 * ID field byte containing an ASCII null अक्षरacter terminates
+		 * the ISCSI INITIATOR SESSION ID field without regard क्रम the
+		 * specअगरied length of the iSCSI TransportID or the contents
 		 * of the ADDITIONAL LENGTH field.
 		 */
 		buf[off++] = 0x2c; /* ASCII Character: "," */
@@ -187,233 +188,233 @@ static int iscsi_get_pr_transport_id(
 		buf[off++] = 0x78; /* ASCII Character: "x" */
 		len += 5;
 
-		isid_len = sprintf(buf + off, "%s", pr_reg->pr_reg_isid);
+		isid_len = प्र_लिखो(buf + off, "%s", pr_reg->pr_reg_isid);
 		off += isid_len;
 		len += isid_len;
-	}
+	पूर्ण
 	buf[off] = '\0';
 	len += 1;
 	spin_unlock_irq(&se_nacl->nacl_sess_lock);
 	/*
-	 * The ADDITIONAL LENGTH field specifies the number of bytes that follow
+	 * The ADDITIONAL LENGTH field specअगरies the number of bytes that follow
 	 * in the TransportID. The additional length shall be at least 20 and
 	 * shall be a multiple of four.
 	*/
 	padding = ((-len) & 3);
-	if (padding != 0)
+	अगर (padding != 0)
 		len += padding;
 
 	put_unaligned_be16(len, &buf[2]);
 	/*
-	 * Increment value for total payload + header length for
+	 * Increment value क्रम total payload + header length क्रम
 	 * full status descriptor
 	 */
 	len += 4;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int iscsi_get_pr_transport_id_len(
-	struct se_node_acl *se_nacl,
-	struct t10_pr_registration *pr_reg,
-	int *format_code)
-{
+अटल पूर्णांक iscsi_get_pr_transport_id_len(
+	काष्ठा se_node_acl *se_nacl,
+	काष्ठा t10_pr_registration *pr_reg,
+	पूर्णांक *क्रमmat_code)
+अणु
 	u32 len = 0, padding = 0;
 
 	spin_lock_irq(&se_nacl->nacl_sess_lock);
-	len = strlen(se_nacl->initiatorname);
+	len = म_माप(se_nacl->initiatorname);
 	/*
-	 * Add extra byte for NULL terminator
+	 * Add extra byte क्रम शून्य terminator
 	 */
 	len++;
 	/*
-	 * If there is ISID present with the registration, use format code:
-	 * 01b: iSCSI Initiator port TransportID format
+	 * If there is ISID present with the registration, use क्रमmat code:
+	 * 01b: iSCSI Initiator port TransportID क्रमmat
 	 *
-	 * If there is not an active iSCSI session, use format code:
-	 * 00b: iSCSI Initiator device TransportID format
+	 * If there is not an active iSCSI session, use क्रमmat code:
+	 * 00b: iSCSI Initiator device TransportID क्रमmat
 	 */
-	if (pr_reg->isid_present_at_reg) {
+	अगर (pr_reg->isid_present_at_reg) अणु
 		len += 5; /* For ",i,0x" ASCII separator */
-		len += strlen(pr_reg->pr_reg_isid);
-		*format_code = 1;
-	} else
-		*format_code = 0;
+		len += म_माप(pr_reg->pr_reg_isid);
+		*क्रमmat_code = 1;
+	पूर्ण अन्यथा
+		*क्रमmat_code = 0;
 	spin_unlock_irq(&se_nacl->nacl_sess_lock);
 	/*
-	 * The ADDITIONAL LENGTH field specifies the number of bytes that follow
+	 * The ADDITIONAL LENGTH field specअगरies the number of bytes that follow
 	 * in the TransportID. The additional length shall be at least 20 and
 	 * shall be a multiple of four.
 	 */
 	padding = ((-len) & 3);
-	if (padding != 0)
+	अगर (padding != 0)
 		len += padding;
 	/*
-	 * Increment value for total payload + header length for
+	 * Increment value क्रम total payload + header length क्रम
 	 * full status descriptor
 	 */
 	len += 4;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static char *iscsi_parse_pr_out_transport_id(
-	struct se_portal_group *se_tpg,
-	char *buf,
+अटल अक्षर *iscsi_parse_pr_out_transport_id(
+	काष्ठा se_portal_group *se_tpg,
+	अक्षर *buf,
 	u32 *out_tid_len,
-	char **port_nexus_ptr)
-{
-	char *p;
-	int i;
-	u8 format_code = (buf[0] & 0xc0);
+	अक्षर **port_nexus_ptr)
+अणु
+	अक्षर *p;
+	पूर्णांक i;
+	u8 क्रमmat_code = (buf[0] & 0xc0);
 	/*
-	 * Check for FORMAT CODE 00b or 01b from spc4r17, section 7.5.4.6:
+	 * Check क्रम FORMAT CODE 00b or 01b from spc4r17, section 7.5.4.6:
 	 *
-	 *       TransportID for initiator ports using SCSI over iSCSI,
-	 *       from Table 388 -- iSCSI TransportID formats.
+	 *       TransportID क्रम initiator ports using SCSI over iSCSI,
+	 *       from Table 388 -- iSCSI TransportID क्रमmats.
 	 *
-	 *    00b     Initiator port is identified using the world wide unique
+	 *    00b     Initiator port is identअगरied using the world wide unique
 	 *            SCSI device name of the iSCSI initiator
 	 *            device containing the initiator port (see table 389).
-	 *    01b     Initiator port is identified using the world wide unique
-	 *            initiator port identifier (see table 390).10b to 11b
+	 *    01b     Initiator port is identअगरied using the world wide unique
+	 *            initiator port identअगरier (see table 390).10b to 11b
 	 *            Reserved
 	 */
-	if ((format_code != 0x00) && (format_code != 0x40)) {
+	अगर ((क्रमmat_code != 0x00) && (क्रमmat_code != 0x40)) अणु
 		pr_err("Illegal format code: 0x%02x for iSCSI"
-			" Initiator Transport ID\n", format_code);
-		return NULL;
-	}
+			" Initiator Transport ID\n", क्रमmat_code);
+		वापस शून्य;
+	पूर्ण
 	/*
-	 * If the caller wants the TransportID Length, we set that value for the
+	 * If the caller wants the TransportID Length, we set that value क्रम the
 	 * entire iSCSI Tarnsport ID now.
 	 */
-	if (out_tid_len) {
-		/* The shift works thanks to integer promotion rules */
+	अगर (out_tid_len) अणु
+		/* The shअगरt works thanks to पूर्णांकeger promotion rules */
 		*out_tid_len = get_unaligned_be16(&buf[2]);
-		/* Add four bytes for iSCSI Transport ID header */
+		/* Add four bytes क्रम iSCSI Transport ID header */
 		*out_tid_len += 4;
-	}
+	पूर्ण
 
 	/*
-	 * Check for ',i,0x' separator between iSCSI Name and iSCSI Initiator
+	 * Check क्रम ',i,0x' separator between iSCSI Name and iSCSI Initiator
 	 * Session ID as defined in Table 390 - iSCSI initiator port TransportID
-	 * format.
+	 * क्रमmat.
 	 */
-	if (format_code == 0x40) {
-		p = strstr(&buf[4], ",i,0x");
-		if (!p) {
+	अगर (क्रमmat_code == 0x40) अणु
+		p = म_माला(&buf[4], ",i,0x");
+		अगर (!p) अणु
 			pr_err("Unable to locate \",i,0x\" separator"
 				" for Initiator port identifier: %s\n",
 				&buf[4]);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		*p = '\0'; /* Terminate iSCSI Name */
 		p += 5; /* Skip over ",i,0x" separator */
 
 		*port_nexus_ptr = p;
 		/*
-		 * Go ahead and do the lower case conversion of the received
-		 * 12 ASCII characters representing the ISID in the TransportID
-		 * for comparison against the running iSCSI session's ISID from
+		 * Go ahead and करो the lower हाल conversion of the received
+		 * 12 ASCII अक्षरacters representing the ISID in the TransportID
+		 * क्रम comparison against the running iSCSI session's ISID from
 		 * iscsi_target.c:lio_sess_get_initiator_sid()
 		 */
-		for (i = 0; i < 12; i++) {
+		क्रम (i = 0; i < 12; i++) अणु
 			/*
 			 * The first ISCSI INITIATOR SESSION ID field byte
-			 * containing an ASCII null character terminates the
-			 * ISCSI INITIATOR SESSION ID field without regard for
-			 * the specified length of the iSCSI TransportID or the
+			 * containing an ASCII null अक्षरacter terminates the
+			 * ISCSI INITIATOR SESSION ID field without regard क्रम
+			 * the specअगरied length of the iSCSI TransportID or the
 			 * contents of the ADDITIONAL LENGTH field.
 			 */
-			if (*p == '\0')
-				break;
+			अगर (*p == '\0')
+				अवरोध;
 
-			if (isdigit(*p)) {
+			अगर (है_अंक(*p)) अणु
 				p++;
-				continue;
-			}
-			*p = tolower(*p);
+				जारी;
+			पूर्ण
+			*p = छोटे(*p);
 			p++;
-		}
-	} else
-		*port_nexus_ptr = NULL;
+		पूर्ण
+	पूर्ण अन्यथा
+		*port_nexus_ptr = शून्य;
 
-	return &buf[4];
-}
+	वापस &buf[4];
+पूर्ण
 
-int target_get_pr_transport_id_len(struct se_node_acl *nacl,
-		struct t10_pr_registration *pr_reg, int *format_code)
-{
-	switch (nacl->se_tpg->proto_id) {
-	case SCSI_PROTOCOL_FCP:
-	case SCSI_PROTOCOL_SBP:
-	case SCSI_PROTOCOL_SRP:
-	case SCSI_PROTOCOL_SAS:
-		break;
-	case SCSI_PROTOCOL_ISCSI:
-		return iscsi_get_pr_transport_id_len(nacl, pr_reg, format_code);
-	default:
+पूर्णांक target_get_pr_transport_id_len(काष्ठा se_node_acl *nacl,
+		काष्ठा t10_pr_registration *pr_reg, पूर्णांक *क्रमmat_code)
+अणु
+	चयन (nacl->se_tpg->proto_id) अणु
+	हाल SCSI_PROTOCOL_FCP:
+	हाल SCSI_PROTOCOL_SBP:
+	हाल SCSI_PROTOCOL_SRP:
+	हाल SCSI_PROTOCOL_SAS:
+		अवरोध;
+	हाल SCSI_PROTOCOL_ISCSI:
+		वापस iscsi_get_pr_transport_id_len(nacl, pr_reg, क्रमmat_code);
+	शेष:
 		pr_err("Unknown proto_id: 0x%02x\n", nacl->se_tpg->proto_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Most transports use a fixed length 24 byte identifier.
+	 * Most transports use a fixed length 24 byte identअगरier.
 	 */
-	*format_code = 0;
-	return 24;
-}
+	*क्रमmat_code = 0;
+	वापस 24;
+पूर्ण
 
-int target_get_pr_transport_id(struct se_node_acl *nacl,
-		struct t10_pr_registration *pr_reg, int *format_code,
-		unsigned char *buf)
-{
-	switch (nacl->se_tpg->proto_id) {
-	case SCSI_PROTOCOL_SAS:
-		return sas_get_pr_transport_id(nacl, format_code, buf);
-	case SCSI_PROTOCOL_SBP:
-		return sbp_get_pr_transport_id(nacl, format_code, buf);
-	case SCSI_PROTOCOL_SRP:
-		return srp_get_pr_transport_id(nacl, format_code, buf);
-	case SCSI_PROTOCOL_FCP:
-		return fc_get_pr_transport_id(nacl, format_code, buf);
-	case SCSI_PROTOCOL_ISCSI:
-		return iscsi_get_pr_transport_id(nacl, pr_reg, format_code,
+पूर्णांक target_get_pr_transport_id(काष्ठा se_node_acl *nacl,
+		काष्ठा t10_pr_registration *pr_reg, पूर्णांक *क्रमmat_code,
+		अचिन्हित अक्षर *buf)
+अणु
+	चयन (nacl->se_tpg->proto_id) अणु
+	हाल SCSI_PROTOCOL_SAS:
+		वापस sas_get_pr_transport_id(nacl, क्रमmat_code, buf);
+	हाल SCSI_PROTOCOL_SBP:
+		वापस sbp_get_pr_transport_id(nacl, क्रमmat_code, buf);
+	हाल SCSI_PROTOCOL_SRP:
+		वापस srp_get_pr_transport_id(nacl, क्रमmat_code, buf);
+	हाल SCSI_PROTOCOL_FCP:
+		वापस fc_get_pr_transport_id(nacl, क्रमmat_code, buf);
+	हाल SCSI_PROTOCOL_ISCSI:
+		वापस iscsi_get_pr_transport_id(nacl, pr_reg, क्रमmat_code,
 				buf);
-	default:
+	शेष:
 		pr_err("Unknown proto_id: 0x%02x\n", nacl->se_tpg->proto_id);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-const char *target_parse_pr_out_transport_id(struct se_portal_group *tpg,
-		char *buf, u32 *out_tid_len, char **port_nexus_ptr)
-{
+स्थिर अक्षर *target_parse_pr_out_transport_id(काष्ठा se_portal_group *tpg,
+		अक्षर *buf, u32 *out_tid_len, अक्षर **port_nexus_ptr)
+अणु
 	u32 offset;
 
-	switch (tpg->proto_id) {
-	case SCSI_PROTOCOL_SAS:
+	चयन (tpg->proto_id) अणु
+	हाल SCSI_PROTOCOL_SAS:
 		/*
 		 * Assume the FORMAT CODE 00b from spc4r17, 7.5.4.7 TransportID
-		 * for initiator ports using SCSI over SAS Serial SCSI Protocol.
+		 * क्रम initiator ports using SCSI over SAS Serial SCSI Protocol.
 		 */
 		offset = 4;
-		break;
-	case SCSI_PROTOCOL_SBP:
-	case SCSI_PROTOCOL_SRP:
-	case SCSI_PROTOCOL_FCP:
+		अवरोध;
+	हाल SCSI_PROTOCOL_SBP:
+	हाल SCSI_PROTOCOL_SRP:
+	हाल SCSI_PROTOCOL_FCP:
 		offset = 8;
-		break;
-	case SCSI_PROTOCOL_ISCSI:
-		return iscsi_parse_pr_out_transport_id(tpg, buf, out_tid_len,
+		अवरोध;
+	हाल SCSI_PROTOCOL_ISCSI:
+		वापस iscsi_parse_pr_out_transport_id(tpg, buf, out_tid_len,
 					port_nexus_ptr);
-	default:
+	शेष:
 		pr_err("Unknown proto_id: 0x%02x\n", tpg->proto_id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	*port_nexus_ptr = NULL;
+	*port_nexus_ptr = शून्य;
 	*out_tid_len = 24;
-	return buf + offset;
-}
+	वापस buf + offset;
+पूर्ण

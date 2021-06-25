@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* dvb-usb-urb.c is part of the DVB USB library.
  *
  * Copyright (C) 2004-6 Patrick Boettcher (patrick.boettcher@posteo.de)
- * see dvb-usb-init.c for copyright information.
+ * see dvb-usb-init.c क्रम copyright inक्रमmation.
  *
- * This file keeps functions for initializing and handling the
+ * This file keeps functions क्रम initializing and handling the
  * USB and URB stuff.
  */
-#include "dvb-usb-common.h"
+#समावेश "dvb-usb-common.h"
 
-int dvb_usb_generic_rw(struct dvb_usb_device *d, u8 *wbuf, u16 wlen, u8 *rbuf,
-	u16 rlen, int delay_ms)
-{
-	int actlen = 0, ret = -ENOMEM;
+पूर्णांक dvb_usb_generic_rw(काष्ठा dvb_usb_device *d, u8 *wbuf, u16 wlen, u8 *rbuf,
+	u16 rlen, पूर्णांक delay_ms)
+अणु
+	पूर्णांक actlen = 0, ret = -ENOMEM;
 
-	if (!d || wbuf == NULL || wlen == 0)
-		return -EINVAL;
+	अगर (!d || wbuf == शून्य || wlen == 0)
+		वापस -EINVAL;
 
-	if (d->props.generic_bulk_ctrl_endpoint == 0) {
+	अगर (d->props.generic_bulk_ctrl_endpoपूर्णांक == 0) अणु
 		err("endpoint for generic control not specified.");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((ret = mutex_lock_interruptible(&d->usb_mutex)))
-		return ret;
+	अगर ((ret = mutex_lock_पूर्णांकerruptible(&d->usb_mutex)))
+		वापस ret;
 
 	deb_xfer(">>> ");
 	debug_dump(wbuf,wlen,deb_xfer);
 
 	ret = usb_bulk_msg(d->udev,usb_sndbulkpipe(d->udev,
-			d->props.generic_bulk_ctrl_endpoint), wbuf,wlen,&actlen,
+			d->props.generic_bulk_ctrl_endpoपूर्णांक), wbuf,wlen,&actlen,
 			2000);
 
-	if (ret)
+	अगर (ret)
 		err("bulk message failed: %d (%d/%d)",ret,wlen,actlen);
-	else
+	अन्यथा
 		ret = actlen != wlen ? -1 : 0;
 
-	/* an answer is expected, and no error before */
-	if (!ret && rbuf && rlen) {
-		if (delay_ms)
+	/* an answer is expected, and no error beक्रमe */
+	अगर (!ret && rbuf && rlen) अणु
+		अगर (delay_ms)
 			msleep(delay_ms);
 
 		ret = usb_bulk_msg(d->udev,usb_rcvbulkpipe(d->udev,
-				d->props.generic_bulk_ctrl_endpoint_response ?
-				d->props.generic_bulk_ctrl_endpoint_response :
-				d->props.generic_bulk_ctrl_endpoint),rbuf,rlen,&actlen,
+				d->props.generic_bulk_ctrl_endpoपूर्णांक_response ?
+				d->props.generic_bulk_ctrl_endpoपूर्णांक_response :
+				d->props.generic_bulk_ctrl_endpoपूर्णांक),rbuf,rlen,&actlen,
 				2000);
 
-		if (ret)
+		अगर (ret)
 			err("recv bulk message failed: %d",ret);
-		else {
+		अन्यथा अणु
 			deb_xfer("<<< ");
 			debug_dump(rbuf,actlen,deb_xfer);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&d->usb_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dvb_usb_generic_rw);
 
-int dvb_usb_generic_write(struct dvb_usb_device *d, u8 *buf, u16 len)
-{
-	return dvb_usb_generic_rw(d,buf,len,NULL,0,0);
-}
-EXPORT_SYMBOL(dvb_usb_generic_write);
+पूर्णांक dvb_usb_generic_ग_लिखो(काष्ठा dvb_usb_device *d, u8 *buf, u16 len)
+अणु
+	वापस dvb_usb_generic_rw(d,buf,len,शून्य,0,0);
+पूर्ण
+EXPORT_SYMBOL(dvb_usb_generic_ग_लिखो);
 
-static void dvb_usb_data_complete(struct usb_data_stream *stream, u8 *buffer, size_t length)
-{
-	struct dvb_usb_adapter *adap = stream->user_priv;
-	if (adap->feedcount > 0 && adap->state & DVB_USB_ADAP_STATE_DVB)
+अटल व्योम dvb_usb_data_complete(काष्ठा usb_data_stream *stream, u8 *buffer, माप_प्रकार length)
+अणु
+	काष्ठा dvb_usb_adapter *adap = stream->user_priv;
+	अगर (adap->feedcount > 0 && adap->state & DVB_USB_ADAP_STATE_DVB)
 		dvb_dmx_swfilter(&adap->demux, buffer, length);
-}
+पूर्ण
 
-static void dvb_usb_data_complete_204(struct usb_data_stream *stream, u8 *buffer, size_t length)
-{
-	struct dvb_usb_adapter *adap = stream->user_priv;
-	if (adap->feedcount > 0 && adap->state & DVB_USB_ADAP_STATE_DVB)
+अटल व्योम dvb_usb_data_complete_204(काष्ठा usb_data_stream *stream, u8 *buffer, माप_प्रकार length)
+अणु
+	काष्ठा dvb_usb_adapter *adap = stream->user_priv;
+	अगर (adap->feedcount > 0 && adap->state & DVB_USB_ADAP_STATE_DVB)
 		dvb_dmx_swfilter_204(&adap->demux, buffer, length);
-}
+पूर्ण
 
-static void dvb_usb_data_complete_raw(struct usb_data_stream *stream,
-				      u8 *buffer, size_t length)
-{
-	struct dvb_usb_adapter *adap = stream->user_priv;
-	if (adap->feedcount > 0 && adap->state & DVB_USB_ADAP_STATE_DVB)
+अटल व्योम dvb_usb_data_complete_raw(काष्ठा usb_data_stream *stream,
+				      u8 *buffer, माप_प्रकार length)
+अणु
+	काष्ठा dvb_usb_adapter *adap = stream->user_priv;
+	अगर (adap->feedcount > 0 && adap->state & DVB_USB_ADAP_STATE_DVB)
 		dvb_dmx_swfilter_raw(&adap->demux, buffer, length);
-}
+पूर्ण
 
-int dvb_usb_adapter_stream_init(struct dvb_usb_adapter *adap)
-{
-	int i, ret = 0;
-	for (i = 0; i < adap->props.num_frontends; i++) {
+पूर्णांक dvb_usb_adapter_stream_init(काष्ठा dvb_usb_adapter *adap)
+अणु
+	पूर्णांक i, ret = 0;
+	क्रम (i = 0; i < adap->props.num_frontends; i++) अणु
 
 		adap->fe_adap[i].stream.udev      = adap->dev->udev;
-		if (adap->props.fe[i].caps & DVB_USB_ADAP_RECEIVES_204_BYTE_TS)
+		अगर (adap->props.fe[i].caps & DVB_USB_ADAP_RECEIVES_204_BYTE_TS)
 			adap->fe_adap[i].stream.complete =
 				dvb_usb_data_complete_204;
-		else
-		if (adap->props.fe[i].caps & DVB_USB_ADAP_RECEIVES_RAW_PAYLOAD)
+		अन्यथा
+		अगर (adap->props.fe[i].caps & DVB_USB_ADAP_RECEIVES_RAW_PAYLOAD)
 			adap->fe_adap[i].stream.complete =
 				dvb_usb_data_complete_raw;
-		else
+		अन्यथा
 		adap->fe_adap[i].stream.complete  = dvb_usb_data_complete;
 		adap->fe_adap[i].stream.user_priv = adap;
 		ret = usb_urb_init(&adap->fe_adap[i].stream,
 				   &adap->props.fe[i].stream);
-		if (ret < 0)
-			break;
-	}
-	return ret;
-}
+		अगर (ret < 0)
+			अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int dvb_usb_adapter_stream_exit(struct dvb_usb_adapter *adap)
-{
-	int i;
-	for (i = 0; i < adap->props.num_frontends; i++)
-		usb_urb_exit(&adap->fe_adap[i].stream);
-	return 0;
-}
+पूर्णांक dvb_usb_adapter_stream_निकास(काष्ठा dvb_usb_adapter *adap)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < adap->props.num_frontends; i++)
+		usb_urb_निकास(&adap->fe_adap[i].stream);
+	वापस 0;
+पूर्ण

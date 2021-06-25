@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
 /*
- * Quirks for I2C-HID devices that do not supply proper descriptors
+ * Quirks क्रम I2C-HID devices that करो not supply proper descriptors
  *
  * Copyright (c) 2018 Julian Sax <jsbc@gmx.de>
  *
  */
 
-#include <linux/types.h>
-#include <linux/dmi.h>
-#include <linux/mod_devicetable.h>
+#समावेश <linux/types.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/mod_devicetable.h>
 
-#include "i2c-hid.h"
+#समावेश "i2c-hid.h"
 
 
-struct i2c_hid_desc_override {
-	union {
-		struct i2c_hid_desc *i2c_hid_desc;
-		uint8_t             *i2c_hid_desc_buffer;
-	};
-	uint8_t              *hid_report_desc;
-	unsigned int          hid_report_desc_size;
-	uint8_t              *i2c_name;
-};
+काष्ठा i2c_hid_desc_override अणु
+	जोड़ अणु
+		काष्ठा i2c_hid_desc *i2c_hid_desc;
+		uपूर्णांक8_t             *i2c_hid_desc_buffer;
+	पूर्ण;
+	uपूर्णांक8_t              *hid_report_desc;
+	अचिन्हित पूर्णांक          hid_report_desc_size;
+	uपूर्णांक8_t              *i2c_name;
+पूर्ण;
 
 
 /*
- * descriptors for the SIPODEV SP1064 touchpad
+ * descriptors क्रम the SIPODEV SP1064 touchpad
  *
- * This device does not supply any descriptors and on windows a filter
+ * This device करोes not supply any descriptors and on winकरोws a filter
  * driver operates between the i2c-hid layer and the device and injects
  * these descriptors when the device is prompted. The descriptors were
  * extracted by listening to the i2c-hid traffic that occurs between the
- * windows filter driver and the windows i2c-hid driver.
+ * winकरोws filter driver and the winकरोws i2c-hid driver.
  */
 
-static const struct i2c_hid_desc_override sipodev_desc = {
-	.i2c_hid_desc_buffer = (uint8_t [])
-	{0x1e, 0x00,                  /* Length of descriptor                 */
+अटल स्थिर काष्ठा i2c_hid_desc_override sipodev_desc = अणु
+	.i2c_hid_desc_buffer = (uपूर्णांक8_t [])
+	अणु0x1e, 0x00,                  /* Length of descriptor                 */
 	 0x00, 0x01,                  /* Version of descriptor                */
 	 0xdb, 0x01,                  /* Length of report descriptor          */
 	 0x21, 0x00,                  /* Location of report descriptor        */
@@ -45,20 +46,20 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0x1b, 0x00,                  /* Max input report length              */
 	 0x25, 0x00,                  /* Location of output report            */
 	 0x11, 0x00,                  /* Max output report length             */
-	 0x22, 0x00,                  /* Location of command register         */
-	 0x23, 0x00,                  /* Location of data register            */
-	 0x11, 0x09,                  /* Vendor ID                            */
+	 0x22, 0x00,                  /* Location of command रेजिस्टर         */
+	 0x23, 0x00,                  /* Location of data रेजिस्टर            */
+	 0x11, 0x09,                  /* Venकरोr ID                            */
 	 0x88, 0x52,                  /* Product ID                           */
 	 0x06, 0x00,                  /* Version ID                           */
 	 0x00, 0x00, 0x00, 0x00       /* Reserved                             */
-	},
+	पूर्ण,
 
-	.hid_report_desc = (uint8_t [])
-	{0x05, 0x01,                  /* Usage Page (Desktop),                */
+	.hid_report_desc = (uपूर्णांक8_t [])
+	अणु0x05, 0x01,                  /* Usage Page (Desktop),                */
 	 0x09, 0x02,                  /* Usage (Mouse),                       */
 	 0xA1, 0x01,                  /* Collection (Application),            */
 	 0x85, 0x01,                  /*     Report ID (1),                   */
-	 0x09, 0x01,                  /*     Usage (Pointer),                 */
+	 0x09, 0x01,                  /*     Usage (Poपूर्णांकer),                 */
 	 0xA1, 0x00,                  /*     Collection (Physical),           */
 	 0x05, 0x09,                  /*         Usage Page (Button),         */
 	 0x19, 0x01,                  /*         Usage Minimum (01h),         */
@@ -96,7 +97,7 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0x95, 0x01,                  /*         Report Count (1),            */
 	 0x75, 0x03,                  /*         Report Size (3),             */
 	 0x25, 0x05,                  /*         Logical Maximum (5),         */
-	 0x09, 0x51,                  /*         Usage (Contact Identifier),  */
+	 0x09, 0x51,                  /*         Usage (Contact Identअगरier),  */
 	 0x81, 0x02,                  /*         Input (Variable),            */
 	 0x75, 0x01,                  /*         Report Size (1),             */
 	 0x95, 0x03,                  /*         Report Count (3),            */
@@ -105,7 +106,7 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0x26, 0x44, 0x0A,            /*         Logical Maximum (2628),      */
 	 0x75, 0x10,                  /*         Report Size (16),            */
 	 0x55, 0x0E,                  /*         Unit Exponent (14),          */
-	 0x65, 0x11,                  /*         Unit (Centimeter),           */
+	 0x65, 0x11,                  /*         Unit (Cenसमयter),           */
 	 0x09, 0x30,                  /*         Usage (X),                   */
 	 0x46, 0x1A, 0x04,            /*         Physical Maximum (1050),     */
 	 0x95, 0x01,                  /*         Report Count (1),            */
@@ -127,7 +128,7 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0x95, 0x01,                  /*         Report Count (1),            */
 	 0x75, 0x03,                  /*         Report Size (3),             */
 	 0x25, 0x05,                  /*         Logical Maximum (5),         */
-	 0x09, 0x51,                  /*         Usage (Contact Identifier),  */
+	 0x09, 0x51,                  /*         Usage (Contact Identअगरier),  */
 	 0x81, 0x02,                  /*         Input (Variable),            */
 	 0x75, 0x01,                  /*         Report Size (1),             */
 	 0x95, 0x03,                  /*         Report Count (3),            */
@@ -156,7 +157,7 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0x95, 0x01,                  /*         Report Count (1),            */
 	 0x75, 0x03,                  /*         Report Size (3),             */
 	 0x25, 0x05,                  /*         Logical Maximum (5),         */
-	 0x09, 0x51,                  /*         Usage (Contact Identifier),  */
+	 0x09, 0x51,                  /*         Usage (Contact Identअगरier),  */
 	 0x81, 0x02,                  /*         Input (Variable),            */
 	 0x75, 0x01,                  /*         Report Size (1),             */
 	 0x95, 0x03,                  /*         Report Count (3),            */
@@ -185,7 +186,7 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0x95, 0x01,                  /*         Report Count (1),            */
 	 0x75, 0x03,                  /*         Report Size (3),             */
 	 0x25, 0x05,                  /*         Logical Maximum (5),         */
-	 0x09, 0x51,                  /*         Usage (Contact Identifier),  */
+	 0x09, 0x51,                  /*         Usage (Contact Identअगरier),  */
 	 0x81, 0x02,                  /*         Input (Variable),            */
 	 0x75, 0x01,                  /*         Report Size (1),             */
 	 0x95, 0x03,                  /*         Report Count (3),            */
@@ -283,46 +284,46 @@ static const struct i2c_hid_desc_override sipodev_desc = {
 	 0xB1, 0x03,                  /*         Feature (Constant, Variable),*/
 	 0xC0,                        /*     End Collection,                  */
 	 0xC0                         /* End Collection                       */
-	},
+	पूर्ण,
 	.hid_report_desc_size = 475,
 	.i2c_name = "SYNA3602:00"
-};
+पूर्ण;
 
 
-static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id i2c_hid_dmi_desc_override_table[] = अणु
+	अणु
 		.ident = "Teclast F6 Pro",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TECLAST"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "F6 Pro"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Teclast F7",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TECLAST"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "F7"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Trekstor Primebook C13",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TREKSTOR"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "Primebook C13"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Trekstor Primebook C11",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TREKSTOR"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "Primebook C11"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		/*
 		 * There are at least 2 Primebook C11B versions, the older
 		 * version has a product-name of "Primebook C11B", and a
@@ -332,121 +333,121 @@ static const struct dmi_system_id i2c_hid_dmi_desc_override_table[] = {
 		 * bios version / release / firmware revision of:
 		 * CFALKSW05_BIOS_V1.1.2 / 11/19/2018 / 19.2
 		 * Only the older version needs this quirk, note the newer
-		 * version will not match as it has a different product-name.
+		 * version will not match as it has a dअगरferent product-name.
 		 */
 		.ident = "Trekstor Primebook C11B",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TREKSTOR"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "Primebook C11B"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Trekstor SURFBOOK E11B",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "TREKSTOR"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "SURFBOOK E11B"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Direkt-Tek DTLAPY116-2",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Direkt-Tek"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "DTLAPY116-2"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Direkt-Tek DTLAPY133-1",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "Direkt-Tek"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "DTLAPY133-1"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Mediacom Flexbook Edge 11",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "MEDIACOM"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "FlexBook edge11 - M-FBE11"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Mediacom FlexBook edge 13",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "MEDIACOM"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "FlexBook_edge13-M-FBE13"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Odys Winbook 13",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "AXDIA International GmbH"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "WINBOOK 13"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "iBall Aer3",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "iBall"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "Aer3"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Schneider SCL142ALM",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "SCHNEIDER"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "SCL142ALM"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु
 		.ident = "Vero K147",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_SYS_VENDOR, "VERO"),
 			DMI_EXACT_MATCH(DMI_PRODUCT_NAME, "K147"),
-		},
-		.driver_data = (void *)&sipodev_desc
-	},
-	{ }	/* Terminate list */
-};
+		पूर्ण,
+		.driver_data = (व्योम *)&sipodev_desc
+	पूर्ण,
+	अणु पूर्ण	/* Terminate list */
+पूर्ण;
 
 
-struct i2c_hid_desc *i2c_hid_get_dmi_i2c_hid_desc_override(uint8_t *i2c_name)
-{
-	struct i2c_hid_desc_override *override;
-	const struct dmi_system_id *system_id;
+काष्ठा i2c_hid_desc *i2c_hid_get_dmi_i2c_hid_desc_override(uपूर्णांक8_t *i2c_name)
+अणु
+	काष्ठा i2c_hid_desc_override *override;
+	स्थिर काष्ठा dmi_प्रणाली_id *प्रणाली_id;
 
-	system_id = dmi_first_match(i2c_hid_dmi_desc_override_table);
-	if (!system_id)
-		return NULL;
+	प्रणाली_id = dmi_first_match(i2c_hid_dmi_desc_override_table);
+	अगर (!प्रणाली_id)
+		वापस शून्य;
 
-	override = system_id->driver_data;
-	if (strcmp(override->i2c_name, i2c_name))
-		return NULL;
+	override = प्रणाली_id->driver_data;
+	अगर (म_भेद(override->i2c_name, i2c_name))
+		वापस शून्य;
 
-	return override->i2c_hid_desc;
-}
+	वापस override->i2c_hid_desc;
+पूर्ण
 
-char *i2c_hid_get_dmi_hid_report_desc_override(uint8_t *i2c_name,
-					       unsigned int *size)
-{
-	struct i2c_hid_desc_override *override;
-	const struct dmi_system_id *system_id;
+अक्षर *i2c_hid_get_dmi_hid_report_desc_override(uपूर्णांक8_t *i2c_name,
+					       अचिन्हित पूर्णांक *size)
+अणु
+	काष्ठा i2c_hid_desc_override *override;
+	स्थिर काष्ठा dmi_प्रणाली_id *प्रणाली_id;
 
-	system_id = dmi_first_match(i2c_hid_dmi_desc_override_table);
-	if (!system_id)
-		return NULL;
+	प्रणाली_id = dmi_first_match(i2c_hid_dmi_desc_override_table);
+	अगर (!प्रणाली_id)
+		वापस शून्य;
 
-	override = system_id->driver_data;
-	if (strcmp(override->i2c_name, i2c_name))
-		return NULL;
+	override = प्रणाली_id->driver_data;
+	अगर (म_भेद(override->i2c_name, i2c_name))
+		वापस शून्य;
 
 	*size = override->hid_report_desc_size;
-	return override->hid_report_desc;
-}
+	वापस override->hid_report_desc;
+पूर्ण

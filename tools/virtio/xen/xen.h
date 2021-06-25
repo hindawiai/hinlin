@@ -1,6 +1,7 @@
-#ifndef XEN_XEN_STUB_H
-#define XEN_XEN_STUB_H
+<शैली गुरु>
+#अगर_अघोषित XEN_XEN_STUB_H
+#घोषणा XEN_XEN_STUB_H
 
-#define xen_domain() 0
+#घोषणा xen_करोमुख्य() 0
 
-#endif
+#पूर्ण_अगर

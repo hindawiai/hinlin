@@ -1,187 +1,188 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * -- <linux/cdrom.h>
- * General header file for linux CD-ROM drivers 
- * Copyright (C) 1992         David Giller, rafetmad@oxy.edu
- *               1994, 1995   Eberhard Mönkeberg, emoenke@gwdg.de
- *               1996         David van Leeuwen, david@tm.tno.nl
+ * General header file क्रम linux CD-ROM drivers 
+ * Copyright (C) 1992         David Giller, rafeपंचांगad@oxy.edu
+ *               1994, 1995   Eberhard Mथघnkeberg, emoenke@gwdg.de
+ *               1996         David van Leeuwen, david@पंचांग.tno.nl
  *               1997, 1998   Erik Andersen, andersee@debian.org
  *               1998-2002    Jens Axboe, axboe@suse.de
  */
-#ifndef	_LINUX_CDROM_H
-#define	_LINUX_CDROM_H
+#अगर_अघोषित	_LINUX_CDROM_H
+#घोषणा	_LINUX_CDROM_H
 
-#include <linux/fs.h>		/* not really needed, later.. */
-#include <linux/list.h>
-#include <scsi/scsi_common.h>
-#include <uapi/linux/cdrom.h>
+#समावेश <linux/fs.h>		/* not really needed, later.. */
+#समावेश <linux/list.h>
+#समावेश <scsi/scsi_common.h>
+#समावेश <uapi/linux/cdrom.h>
 
-struct packet_command
-{
-	unsigned char 		cmd[CDROM_PACKET_SIZE];
-	unsigned char 		*buffer;
-	unsigned int 		buflen;
-	int			stat;
-	struct scsi_sense_hdr	*sshdr;
-	unsigned char		data_direction;
-	int			quiet;
-	int			timeout;
-	void			*reserved[1];
-};
+काष्ठा packet_command
+अणु
+	अचिन्हित अक्षर 		cmd[CDROM_PACKET_SIZE];
+	अचिन्हित अक्षर 		*buffer;
+	अचिन्हित पूर्णांक 		buflen;
+	पूर्णांक			stat;
+	काष्ठा scsi_sense_hdr	*sshdr;
+	अचिन्हित अक्षर		data_direction;
+	पूर्णांक			quiet;
+	पूर्णांक			समयout;
+	व्योम			*reserved[1];
+पूर्ण;
 
 /*
  * _OLD will use PIO transfer on atapi devices, _BPC_* will use DMA
  */
-#define CDDA_OLD		0	/* old style */
-#define CDDA_BPC_SINGLE		1	/* single frame block pc */
-#define CDDA_BPC_FULL		2	/* multi frame block pc */
+#घोषणा CDDA_OLD		0	/* old style */
+#घोषणा CDDA_BPC_SINGLE		1	/* single frame block pc */
+#घोषणा CDDA_BPC_FULL		2	/* multi frame block pc */
 
-/* Uniform cdrom data structures for cdrom.c */
-struct cdrom_device_info {
-	const struct cdrom_device_ops *ops; /* link to device_ops */
-	struct list_head list;		/* linked list of all device_info */
-	struct gendisk *disk;		/* matching block layer disk */
-	void *handle;		        /* driver-dependent data */
-/* specifications */
-	int mask;                       /* mask of capability: disables them */
-	int speed;			/* maximum speed for reading data */
-	int capacity;			/* number of discs in jukebox */
+/* Unअगरorm cdrom data काष्ठाures क्रम cdrom.c */
+काष्ठा cdrom_device_info अणु
+	स्थिर काष्ठा cdrom_device_ops *ops; /* link to device_ops */
+	काष्ठा list_head list;		/* linked list of all device_info */
+	काष्ठा gendisk *disk;		/* matching block layer disk */
+	व्योम *handle;		        /* driver-dependent data */
+/* specअगरications */
+	पूर्णांक mask;                       /* mask of capability: disables them */
+	पूर्णांक speed;			/* maximum speed क्रम पढ़ोing data */
+	पूर्णांक capacity;			/* number of discs in jukebox */
 /* device-related storage */
-	unsigned int options	: 30;	/* options flags */
-	unsigned mc_flags	: 2;	/* media change buffer flags */
-	unsigned int vfs_events;	/* cached events for vfs path */
-	unsigned int ioctl_events;	/* cached events for ioctl path */
-    	int use_count;                  /* number of times device opened */
-    	char name[20];                  /* name of the device type */
+	अचिन्हित पूर्णांक options	: 30;	/* options flags */
+	अचिन्हित mc_flags	: 2;	/* media change buffer flags */
+	अचिन्हित पूर्णांक vfs_events;	/* cached events क्रम vfs path */
+	अचिन्हित पूर्णांक ioctl_events;	/* cached events क्रम ioctl path */
+    	पूर्णांक use_count;                  /* number of बार device खोलोed */
+    	अक्षर name[20];                  /* name of the device type */
 /* per-device flags */
         __u8 sanyo_slot		: 2;	/* Sanyo 3 CD changer support */
         __u8 keeplocked		: 1;	/* CDROM_LOCKDOOR status */
         __u8 reserved		: 5;	/* not used yet */
-	int cdda_method;		/* see flags */
+	पूर्णांक cdda_method;		/* see flags */
 	__u8 last_sense;
 	__u8 media_written;		/* dirty flag, DVD+RW bookkeeping */
-	unsigned short mmc3_profile;	/* current MMC3 profile */
-	int for_data;
-	int (*exit)(struct cdrom_device_info *);
-	int mrw_mode_page;
-};
+	अचिन्हित लघु mmc3_profile;	/* current MMC3 profile */
+	पूर्णांक क्रम_data;
+	पूर्णांक (*निकास)(काष्ठा cdrom_device_info *);
+	पूर्णांक mrw_mode_page;
+पूर्ण;
 
-struct cdrom_device_ops {
+काष्ठा cdrom_device_ops अणु
 /* routines */
-	int (*open) (struct cdrom_device_info *, int);
-	void (*release) (struct cdrom_device_info *);
-	int (*drive_status) (struct cdrom_device_info *, int);
-	unsigned int (*check_events) (struct cdrom_device_info *cdi,
-				      unsigned int clearing, int slot);
-	int (*tray_move) (struct cdrom_device_info *, int);
-	int (*lock_door) (struct cdrom_device_info *, int);
-	int (*select_speed) (struct cdrom_device_info *, int);
-	int (*select_disc) (struct cdrom_device_info *, int);
-	int (*get_last_session) (struct cdrom_device_info *,
-				 struct cdrom_multisession *);
-	int (*get_mcn) (struct cdrom_device_info *,
-			struct cdrom_mcn *);
+	पूर्णांक (*खोलो) (काष्ठा cdrom_device_info *, पूर्णांक);
+	व्योम (*release) (काष्ठा cdrom_device_info *);
+	पूर्णांक (*drive_status) (काष्ठा cdrom_device_info *, पूर्णांक);
+	अचिन्हित पूर्णांक (*check_events) (काष्ठा cdrom_device_info *cdi,
+				      अचिन्हित पूर्णांक clearing, पूर्णांक slot);
+	पूर्णांक (*tray_move) (काष्ठा cdrom_device_info *, पूर्णांक);
+	पूर्णांक (*lock_करोor) (काष्ठा cdrom_device_info *, पूर्णांक);
+	पूर्णांक (*select_speed) (काष्ठा cdrom_device_info *, पूर्णांक);
+	पूर्णांक (*select_disc) (काष्ठा cdrom_device_info *, पूर्णांक);
+	पूर्णांक (*get_last_session) (काष्ठा cdrom_device_info *,
+				 काष्ठा cdrom_multisession *);
+	पूर्णांक (*get_mcn) (काष्ठा cdrom_device_info *,
+			काष्ठा cdrom_mcn *);
 	/* hard reset device */
-	int (*reset) (struct cdrom_device_info *);
+	पूर्णांक (*reset) (काष्ठा cdrom_device_info *);
 	/* play stuff */
-	int (*audio_ioctl) (struct cdrom_device_info *,unsigned int, void *);
+	पूर्णांक (*audio_ioctl) (काष्ठा cdrom_device_info *,अचिन्हित पूर्णांक, व्योम *);
 
-/* driver specifications */
-	const int capability;   /* capability flags */
-	/* handle uniform packets for scsi type devices (scsi,atapi) */
-	int (*generic_packet) (struct cdrom_device_info *,
-			       struct packet_command *);
-};
+/* driver specअगरications */
+	स्थिर पूर्णांक capability;   /* capability flags */
+	/* handle unअगरorm packets क्रम scsi type devices (scsi,atapi) */
+	पूर्णांक (*generic_packet) (काष्ठा cdrom_device_info *,
+			       काष्ठा packet_command *);
+पूर्ण;
 
-int cdrom_multisession(struct cdrom_device_info *cdi,
-		struct cdrom_multisession *info);
-int cdrom_read_tocentry(struct cdrom_device_info *cdi,
-		struct cdrom_tocentry *entry);
+पूर्णांक cdrom_multisession(काष्ठा cdrom_device_info *cdi,
+		काष्ठा cdrom_multisession *info);
+पूर्णांक cdrom_पढ़ो_tocentry(काष्ठा cdrom_device_info *cdi,
+		काष्ठा cdrom_tocentry *entry);
 
-/* the general block_device operations structure: */
-extern int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
-			fmode_t mode);
-extern void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode);
-extern int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
-		       fmode_t mode, unsigned int cmd, unsigned long arg);
-extern unsigned int cdrom_check_events(struct cdrom_device_info *cdi,
-				       unsigned int clearing);
+/* the general block_device operations काष्ठाure: */
+बाह्य पूर्णांक cdrom_खोलो(काष्ठा cdrom_device_info *cdi, काष्ठा block_device *bdev,
+			भ_शेषe_t mode);
+बाह्य व्योम cdrom_release(काष्ठा cdrom_device_info *cdi, भ_शेषe_t mode);
+बाह्य पूर्णांक cdrom_ioctl(काष्ठा cdrom_device_info *cdi, काष्ठा block_device *bdev,
+		       भ_शेषe_t mode, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+बाह्य अचिन्हित पूर्णांक cdrom_check_events(काष्ठा cdrom_device_info *cdi,
+				       अचिन्हित पूर्णांक clearing);
 
-extern int register_cdrom(struct gendisk *disk, struct cdrom_device_info *cdi);
-extern void unregister_cdrom(struct cdrom_device_info *cdi);
+बाह्य पूर्णांक रेजिस्टर_cdrom(काष्ठा gendisk *disk, काष्ठा cdrom_device_info *cdi);
+बाह्य व्योम unरेजिस्टर_cdrom(काष्ठा cdrom_device_info *cdi);
 
-typedef struct {
-    int data;
-    int audio;
-    int cdi;
-    int xa;
-    long error;
-} tracktype;
+प्रकार काष्ठा अणु
+    पूर्णांक data;
+    पूर्णांक audio;
+    पूर्णांक cdi;
+    पूर्णांक xa;
+    दीर्घ error;
+पूर्ण tracktype;
 
-extern int cdrom_get_last_written(struct cdrom_device_info *cdi, long *last_written);
-extern int cdrom_number_of_slots(struct cdrom_device_info *cdi);
-extern int cdrom_mode_select(struct cdrom_device_info *cdi,
-			     struct packet_command *cgc);
-extern int cdrom_mode_sense(struct cdrom_device_info *cdi,
-			    struct packet_command *cgc,
-			    int page_code, int page_control);
-extern void init_cdrom_command(struct packet_command *cgc,
-			       void *buffer, int len, int type);
-extern int cdrom_dummy_generic_packet(struct cdrom_device_info *cdi,
-				      struct packet_command *cgc);
+बाह्य पूर्णांक cdrom_get_last_written(काष्ठा cdrom_device_info *cdi, दीर्घ *last_written);
+बाह्य पूर्णांक cdrom_number_of_slots(काष्ठा cdrom_device_info *cdi);
+बाह्य पूर्णांक cdrom_mode_select(काष्ठा cdrom_device_info *cdi,
+			     काष्ठा packet_command *cgc);
+बाह्य पूर्णांक cdrom_mode_sense(काष्ठा cdrom_device_info *cdi,
+			    काष्ठा packet_command *cgc,
+			    पूर्णांक page_code, पूर्णांक page_control);
+बाह्य व्योम init_cdrom_command(काष्ठा packet_command *cgc,
+			       व्योम *buffer, पूर्णांक len, पूर्णांक type);
+बाह्य पूर्णांक cdrom_dummy_generic_packet(काष्ठा cdrom_device_info *cdi,
+				      काष्ठा packet_command *cgc);
 
 /* The SCSI spec says there could be 256 slots. */
-#define CDROM_MAX_SLOTS	256
+#घोषणा CDROM_MAX_SLOTS	256
 
-struct cdrom_mechstat_header {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cdrom_mechstat_header अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 fault         : 1;
 	__u8 changer_state : 2;
 	__u8 curslot       : 5;
 	__u8 mech_state    : 3;
-	__u8 door_open     : 1;
+	__u8 करोor_खोलो     : 1;
 	__u8 reserved1     : 4;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8 curslot       : 5;
 	__u8 changer_state : 2;
 	__u8 fault         : 1;
 	__u8 reserved1     : 4;
-	__u8 door_open     : 1;
+	__u8 करोor_खोलो     : 1;
 	__u8 mech_state    : 3;
-#endif
+#पूर्ण_अगर
 	__u8     curlba[3];
 	__u8     nslots;
 	__u16 slot_tablelen;
-};
+पूर्ण;
 
-struct cdrom_slot {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा cdrom_slot अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 disc_present : 1;
 	__u8 reserved1    : 6;
 	__u8 change       : 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8 change       : 1;
 	__u8 reserved1    : 6;
 	__u8 disc_present : 1;
-#endif
+#पूर्ण_अगर
 	__u8 reserved2[3];
-};
+पूर्ण;
 
-struct cdrom_changer_info {
-	struct cdrom_mechstat_header hdr;
-	struct cdrom_slot slots[CDROM_MAX_SLOTS];
-};
+काष्ठा cdrom_changer_info अणु
+	काष्ठा cdrom_mechstat_header hdr;
+	काष्ठा cdrom_slot slots[CDROM_MAX_SLOTS];
+पूर्ण;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	mechtype_caddy = 0,
 	mechtype_tray  = 1,
 	mechtype_popup = 2,
-	mechtype_individual_changer = 4,
+	mechtype_inभागidual_changer = 4,
 	mechtype_cartridge_changer  = 5
-} mechtype_t;
+पूर्ण mechtype_t;
 
-typedef struct {
-#if defined(__BIG_ENDIAN_BITFIELD)
+प्रकार काष्ठा अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 ps			: 1;
 	__u8 reserved1		: 1;
 	__u8 page_code		: 6;
@@ -189,21 +190,21 @@ typedef struct {
 	__u8 reserved2		: 1;
 	__u8 bufe		: 1;
 	__u8 ls_v		: 1;
-	__u8 test_write		: 1;
-        __u8 write_type		: 4;
+	__u8 test_ग_लिखो		: 1;
+        __u8 ग_लिखो_type		: 4;
 	__u8 multi_session	: 2; /* or border, DVD */
 	__u8 fp			: 1;
 	__u8 copy		: 1;
 	__u8 track_mode		: 4;
 	__u8 reserved3		: 4;
 	__u8 data_block_type	: 4;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8 page_code		: 6;
 	__u8 reserved1		: 1;
 	__u8 ps			: 1;
         __u8 page_length;
-        __u8 write_type		: 4;
-	__u8 test_write		: 1;
+        __u8 ग_लिखो_type		: 4;
+	__u8 test_ग_लिखो		: 1;
 	__u8 ls_v		: 1;
 	__u8 bufe		: 1;
 	__u8 reserved2		: 1;
@@ -213,30 +214,30 @@ typedef struct {
 	__u8 multi_session	: 2; /* or border, DVD */
 	__u8 data_block_type	: 4;
 	__u8 reserved3		: 4;
-#endif
+#पूर्ण_अगर
 	__u8 link_size;
 	__u8 reserved4;
-#if defined(__BIG_ENDIAN_BITFIELD)
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 reserved5		: 2;
 	__u8 app_code		: 6;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8 app_code		: 6;
 	__u8 reserved5		: 2;
-#endif
-	__u8 session_format;
+#पूर्ण_अगर
+	__u8 session_क्रमmat;
 	__u8 reserved6;
 	__be32 packet_size;
-	__u16 audio_pause;
+	__u16 audio_छोड़ो;
 	__u8 mcn[16];
 	__u8 isrc[16];
 	__u8 subhdr0;
 	__u8 subhdr1;
 	__u8 subhdr2;
 	__u8 subhdr3;
-} __attribute__((packed)) write_param_page;
+पूर्ण __attribute__((packed)) ग_लिखो_param_page;
 
-struct modesel_head
-{
+काष्ठा modesel_head
+अणु
 	__u8	reserved1;
 	__u8	medium;
 	__u8	reserved2;
@@ -249,72 +250,72 @@ struct modesel_head
 	__u8	block_length_hi;
 	__u8	block_length_med;
 	__u8	block_length_lo;
-};
+पूर्ण;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	__u16 report_key_length;
 	__u8 reserved1;
 	__u8 reserved2;
-#if defined(__BIG_ENDIAN_BITFIELD)
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 type_code			: 2;
 	__u8 vra			: 3;
 	__u8 ucca			: 3;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8 ucca			: 3;
 	__u8 vra			: 3;
 	__u8 type_code			: 2;
-#endif
+#पूर्ण_अगर
 	__u8 region_mask;
 	__u8 rpc_scheme;
 	__u8 reserved3;
-} rpc_state_t;
+पूर्ण rpc_state_t;
 
-struct event_header {
+काष्ठा event_header अणु
 	__be16 data_len;
-#if defined(__BIG_ENDIAN_BITFIELD)
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 nea		: 1;
 	__u8 reserved1		: 4;
-	__u8 notification_class	: 3;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
-	__u8 notification_class	: 3;
+	__u8 notअगरication_class	: 3;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
+	__u8 notअगरication_class	: 3;
 	__u8 reserved1		: 4;
 	__u8 nea		: 1;
-#endif
+#पूर्ण_अगर
 	__u8 supp_event_class;
-};
+पूर्ण;
 
-struct media_event_desc {
-#if defined(__BIG_ENDIAN_BITFIELD)
+काष्ठा media_event_desc अणु
+#अगर defined(__BIG_ENDIAN_BITFIELD)
 	__u8 reserved1		: 4;
 	__u8 media_event_code	: 4;
 	__u8 reserved2		: 6;
 	__u8 media_present	: 1;
-	__u8 door_open		: 1;
-#elif defined(__LITTLE_ENDIAN_BITFIELD)
+	__u8 करोor_खोलो		: 1;
+#या_अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	__u8 media_event_code	: 4;
 	__u8 reserved1		: 4;
-	__u8 door_open		: 1;
+	__u8 करोor_खोलो		: 1;
 	__u8 media_present	: 1;
 	__u8 reserved2		: 6;
-#endif
+#पूर्ण_अगर
 	__u8 start_slot;
 	__u8 end_slot;
-};
+पूर्ण;
 
-extern int cdrom_get_media_event(struct cdrom_device_info *cdi, struct media_event_desc *med);
+बाह्य पूर्णांक cdrom_get_media_event(काष्ठा cdrom_device_info *cdi, काष्ठा media_event_desc *med);
 
-static inline void lba_to_msf(int lba, u8 *m, u8 *s, u8 *f)
-{
+अटल अंतरभूत व्योम lba_to_msf(पूर्णांक lba, u8 *m, u8 *s, u8 *f)
+अणु
 	lba += CD_MSF_OFFSET;
 	lba &= 0xffffff;  /* negative lbas use only 24 bits */
 	*m = lba / (CD_SECS * CD_FRAMES);
 	lba %= (CD_SECS * CD_FRAMES);
 	*s = lba / CD_FRAMES;
 	*f = lba % CD_FRAMES;
-}
+पूर्ण
 
-static inline int msf_to_lba(u8 m, u8 s, u8 f)
-{
-	return (((m * CD_SECS) + s) * CD_FRAMES + f) - CD_MSF_OFFSET;
-}
-#endif  /* _LINUX_CDROM_H */
+अटल अंतरभूत पूर्णांक msf_to_lba(u8 m, u8 s, u8 f)
+अणु
+	वापस (((m * CD_SECS) + s) * CD_FRAMES + f) - CD_MSF_OFFSET;
+पूर्ण
+#पूर्ण_अगर  /* _LINUX_CDROM_H */

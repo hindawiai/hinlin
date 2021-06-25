@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2007-2012 Siemens AG
  *
@@ -9,29 +10,29 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#include <linux/netdevice.h>
-#include <linux/module.h>
-#include <linux/if_arp.h>
-#include <linux/ieee802154.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/ieee802154.h>
 
-#include <net/nl802154.h>
-#include <net/mac802154.h>
-#include <net/ieee802154_netdev.h>
-#include <net/cfg802154.h>
+#समावेश <net/nl802154.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/ieee802154_netdev.h>
+#समावेश <net/cfg802154.h>
 
-#include "ieee802154_i.h"
-#include "driver-ops.h"
+#समावेश "ieee802154_i.h"
+#समावेश "driver-ops.h"
 
-int mac802154_wpan_update_llsec(struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct ieee802154_mlme_ops *ops = ieee802154_mlme_ops(dev);
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	int rc = 0;
+पूर्णांक mac802154_wpan_update_llsec(काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा ieee802154_mlme_ops *ops = ieee802154_mlme_ops(dev);
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	पूर्णांक rc = 0;
 
-	if (ops->llsec) {
-		struct ieee802154_llsec_params params;
-		int changed = 0;
+	अगर (ops->llsec) अणु
+		काष्ठा ieee802154_llsec_params params;
+		पूर्णांक changed = 0;
 
 		params.pan_id = wpan_dev->pan_id;
 		changed |= IEEE802154_LLSEC_PARAM_PAN_ID;
@@ -40,416 +41,416 @@ int mac802154_wpan_update_llsec(struct net_device *dev)
 		changed |= IEEE802154_LLSEC_PARAM_HWADDR;
 
 		rc = ops->llsec->set_params(dev, &params, changed);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-mac802154_wpan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	struct sockaddr_ieee802154 *sa =
-		(struct sockaddr_ieee802154 *)&ifr->ifr_addr;
-	int err = -ENOIOCTLCMD;
+अटल पूर्णांक
+mac802154_wpan_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	काष्ठा sockaddr_ieee802154 *sa =
+		(काष्ठा sockaddr_ieee802154 *)&अगरr->अगरr_addr;
+	पूर्णांक err = -ENOIOCTLCMD;
 
-	if (cmd != SIOCGIFADDR && cmd != SIOCSIFADDR)
-		return err;
+	अगर (cmd != SIOCGIFADDR && cmd != SIOCSIFADDR)
+		वापस err;
 
 	rtnl_lock();
 
-	switch (cmd) {
-	case SIOCGIFADDR:
-	{
-		u16 pan_id, short_addr;
+	चयन (cmd) अणु
+	हाल SIOCGIFADDR:
+	अणु
+		u16 pan_id, लघु_addr;
 
 		pan_id = le16_to_cpu(wpan_dev->pan_id);
-		short_addr = le16_to_cpu(wpan_dev->short_addr);
-		if (pan_id == IEEE802154_PANID_BROADCAST ||
-		    short_addr == IEEE802154_ADDR_BROADCAST) {
+		लघु_addr = le16_to_cpu(wpan_dev->लघु_addr);
+		अगर (pan_id == IEEE802154_PANID_BROADCAST ||
+		    लघु_addr == IEEE802154_ADDR_BROADCAST) अणु
 			err = -EADDRNOTAVAIL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		sa->family = AF_IEEE802154;
 		sa->addr.addr_type = IEEE802154_ADDR_SHORT;
 		sa->addr.pan_id = pan_id;
-		sa->addr.short_addr = short_addr;
+		sa->addr.लघु_addr = लघु_addr;
 
 		err = 0;
-		break;
-	}
-	case SIOCSIFADDR:
-		if (netif_running(dev)) {
+		अवरोध;
+	पूर्ण
+	हाल SIOCSIFADDR:
+		अगर (netअगर_running(dev)) अणु
 			rtnl_unlock();
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 
 		dev_warn(&dev->dev,
 			 "Using DEBUGing ioctl SIOCSIFADDR isn't recommended!\n");
-		if (sa->family != AF_IEEE802154 ||
+		अगर (sa->family != AF_IEEE802154 ||
 		    sa->addr.addr_type != IEEE802154_ADDR_SHORT ||
 		    sa->addr.pan_id == IEEE802154_PANID_BROADCAST ||
-		    sa->addr.short_addr == IEEE802154_ADDR_BROADCAST ||
-		    sa->addr.short_addr == IEEE802154_ADDR_UNDEF) {
+		    sa->addr.लघु_addr == IEEE802154_ADDR_BROADCAST ||
+		    sa->addr.लघु_addr == IEEE802154_ADDR_UNDEF) अणु
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		wpan_dev->pan_id = cpu_to_le16(sa->addr.pan_id);
-		wpan_dev->short_addr = cpu_to_le16(sa->addr.short_addr);
+		wpan_dev->लघु_addr = cpu_to_le16(sa->addr.लघु_addr);
 
 		err = mac802154_wpan_update_llsec(dev);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	rtnl_unlock();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mac802154_wpan_mac_addr(struct net_device *dev, void *p)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct sockaddr *addr = p;
+अटल पूर्णांक mac802154_wpan_mac_addr(काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा sockaddr *addr = p;
 	__le64 extended_addr;
 
-	if (netif_running(dev))
-		return -EBUSY;
+	अगर (netअगर_running(dev))
+		वापस -EBUSY;
 
-	/* lowpan need to be down for update
-	 * SLAAC address after ifup
+	/* lowpan need to be करोwn क्रम update
+	 * SLAAC address after अगरup
 	 */
-	if (sdata->wpan_dev.lowpan_dev) {
-		if (netif_running(sdata->wpan_dev.lowpan_dev))
-			return -EBUSY;
-	}
+	अगर (sdata->wpan_dev.lowpan_dev) अणु
+		अगर (netअगर_running(sdata->wpan_dev.lowpan_dev))
+			वापस -EBUSY;
+	पूर्ण
 
 	ieee802154_be64_to_le64(&extended_addr, addr->sa_data);
-	if (!ieee802154_is_valid_extended_unicast_addr(extended_addr))
-		return -EINVAL;
+	अगर (!ieee802154_is_valid_extended_unicast_addr(extended_addr))
+		वापस -EINVAL;
 
-	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
+	स_नकल(dev->dev_addr, addr->sa_data, dev->addr_len);
 	sdata->wpan_dev.extended_addr = extended_addr;
 
-	/* update lowpan interface mac address when
+	/* update lowpan पूर्णांकerface mac address when
 	 * wpan mac has been changed
 	 */
-	if (sdata->wpan_dev.lowpan_dev)
-		memcpy(sdata->wpan_dev.lowpan_dev->dev_addr, dev->dev_addr,
+	अगर (sdata->wpan_dev.lowpan_dev)
+		स_नकल(sdata->wpan_dev.lowpan_dev->dev_addr, dev->dev_addr,
 		       dev->addr_len);
 
-	return mac802154_wpan_update_llsec(dev);
-}
+	वापस mac802154_wpan_update_llsec(dev);
+पूर्ण
 
-static int ieee802154_setup_hw(struct ieee802154_sub_if_data *sdata)
-{
-	struct ieee802154_local *local = sdata->local;
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	int ret;
+अटल पूर्णांक ieee802154_setup_hw(काष्ठा ieee802154_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee802154_local *local = sdata->local;
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	पूर्णांक ret;
 
-	if (local->hw.flags & IEEE802154_HW_PROMISCUOUS) {
+	अगर (local->hw.flags & IEEE802154_HW_PROMISCUOUS) अणु
 		ret = drv_set_promiscuous_mode(local,
 					       wpan_dev->promiscuous_mode);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_AFILT) {
+	अगर (local->hw.flags & IEEE802154_HW_AFILT) अणु
 		ret = drv_set_pan_id(local, wpan_dev->pan_id);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		ret = drv_set_extended_addr(local, wpan_dev->extended_addr);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		ret = drv_set_short_addr(local, wpan_dev->short_addr);
-		if (ret < 0)
-			return ret;
-	}
+		ret = drv_set_लघु_addr(local, wpan_dev->लघु_addr);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_LBT) {
+	अगर (local->hw.flags & IEEE802154_HW_LBT) अणु
 		ret = drv_set_lbt_mode(local, wpan_dev->lbt);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_CSMA_PARAMS) {
+	अगर (local->hw.flags & IEEE802154_HW_CSMA_PARAMS) अणु
 		ret = drv_set_csma_params(local, wpan_dev->min_be,
 					  wpan_dev->max_be,
 					  wpan_dev->csma_retries);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_FRAME_RETRIES) {
+	अगर (local->hw.flags & IEEE802154_HW_FRAME_RETRIES) अणु
 		ret = drv_set_max_frame_retries(local, wpan_dev->frame_retries);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mac802154_slave_open(struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct ieee802154_local *local = sdata->local;
-	int res;
+अटल पूर्णांक mac802154_slave_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा ieee802154_local *local = sdata->local;
+	पूर्णांक res;
 
 	ASSERT_RTNL();
 
 	set_bit(SDATA_STATE_RUNNING, &sdata->state);
 
-	if (!local->open_count) {
+	अगर (!local->खोलो_count) अणु
 		res = ieee802154_setup_hw(sdata);
-		if (res)
-			goto err;
+		अगर (res)
+			जाओ err;
 
 		res = drv_start(local);
-		if (res)
-			goto err;
-	}
+		अगर (res)
+			जाओ err;
+	पूर्ण
 
-	local->open_count++;
-	netif_start_queue(dev);
-	return 0;
+	local->खोलो_count++;
+	netअगर_start_queue(dev);
+	वापस 0;
 err:
-	/* might already be clear but that doesn't matter */
+	/* might alपढ़ोy be clear but that करोesn't matter */
 	clear_bit(SDATA_STATE_RUNNING, &sdata->state);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-ieee802154_check_mac_settings(struct ieee802154_local *local,
-			      struct wpan_dev *wpan_dev,
-			      struct wpan_dev *nwpan_dev)
-{
+अटल पूर्णांक
+ieee802154_check_mac_settings(काष्ठा ieee802154_local *local,
+			      काष्ठा wpan_dev *wpan_dev,
+			      काष्ठा wpan_dev *nwpan_dev)
+अणु
 	ASSERT_RTNL();
 
-	if (local->hw.flags & IEEE802154_HW_PROMISCUOUS) {
-		if (wpan_dev->promiscuous_mode != nwpan_dev->promiscuous_mode)
-			return -EBUSY;
-	}
+	अगर (local->hw.flags & IEEE802154_HW_PROMISCUOUS) अणु
+		अगर (wpan_dev->promiscuous_mode != nwpan_dev->promiscuous_mode)
+			वापस -EBUSY;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_AFILT) {
-		if (wpan_dev->pan_id != nwpan_dev->pan_id ||
-		    wpan_dev->short_addr != nwpan_dev->short_addr ||
+	अगर (local->hw.flags & IEEE802154_HW_AFILT) अणु
+		अगर (wpan_dev->pan_id != nwpan_dev->pan_id ||
+		    wpan_dev->लघु_addr != nwpan_dev->लघु_addr ||
 		    wpan_dev->extended_addr != nwpan_dev->extended_addr)
-			return -EBUSY;
-	}
+			वापस -EBUSY;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_CSMA_PARAMS) {
-		if (wpan_dev->min_be != nwpan_dev->min_be ||
+	अगर (local->hw.flags & IEEE802154_HW_CSMA_PARAMS) अणु
+		अगर (wpan_dev->min_be != nwpan_dev->min_be ||
 		    wpan_dev->max_be != nwpan_dev->max_be ||
 		    wpan_dev->csma_retries != nwpan_dev->csma_retries)
-			return -EBUSY;
-	}
+			वापस -EBUSY;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_FRAME_RETRIES) {
-		if (wpan_dev->frame_retries != nwpan_dev->frame_retries)
-			return -EBUSY;
-	}
+	अगर (local->hw.flags & IEEE802154_HW_FRAME_RETRIES) अणु
+		अगर (wpan_dev->frame_retries != nwpan_dev->frame_retries)
+			वापस -EBUSY;
+	पूर्ण
 
-	if (local->hw.flags & IEEE802154_HW_LBT) {
-		if (wpan_dev->lbt != nwpan_dev->lbt)
-			return -EBUSY;
-	}
+	अगर (local->hw.flags & IEEE802154_HW_LBT) अणु
+		अगर (wpan_dev->lbt != nwpan_dev->lbt)
+			वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ieee802154_check_concurrent_iface(struct ieee802154_sub_if_data *sdata,
-				  enum nl802154_iftype iftype)
-{
-	struct ieee802154_local *local = sdata->local;
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	struct ieee802154_sub_if_data *nsdata;
+अटल पूर्णांक
+ieee802154_check_concurrent_अगरace(काष्ठा ieee802154_sub_अगर_data *sdata,
+				  क्रमागत nl802154_अगरtype अगरtype)
+अणु
+	काष्ठा ieee802154_local *local = sdata->local;
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	काष्ठा ieee802154_sub_अगर_data *nsdata;
 
 	/* we hold the RTNL here so can safely walk the list */
-	list_for_each_entry(nsdata, &local->interfaces, list) {
-		if (nsdata != sdata && ieee802154_sdata_running(nsdata)) {
-			int ret;
+	list_क्रम_each_entry(nsdata, &local->पूर्णांकerfaces, list) अणु
+		अगर (nsdata != sdata && ieee802154_sdata_running(nsdata)) अणु
+			पूर्णांक ret;
 
-			/* TODO currently we don't support multiple node types
-			 * we need to run skb_clone at rx path. Check if there
-			 * exist really an use case if we need to support
-			 * multiple node types at the same time.
+			/* TODO currently we करोn't support multiple node types
+			 * we need to run skb_clone at rx path. Check अगर there
+			 * exist really an use हाल अगर we need to support
+			 * multiple node types at the same समय.
 			 */
-			if (wpan_dev->iftype == NL802154_IFTYPE_NODE &&
-			    nsdata->wpan_dev.iftype == NL802154_IFTYPE_NODE)
-				return -EBUSY;
+			अगर (wpan_dev->अगरtype == NL802154_IFTYPE_NODE &&
+			    nsdata->wpan_dev.अगरtype == NL802154_IFTYPE_NODE)
+				वापस -EBUSY;
 
 			/* check all phy mac sublayer settings are the same.
-			 * We have only one phy, different values makes trouble.
+			 * We have only one phy, dअगरferent values makes trouble.
 			 */
 			ret = ieee802154_check_mac_settings(local, wpan_dev,
 							    &nsdata->wpan_dev);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mac802154_wpan_open(struct net_device *dev)
-{
-	int rc;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
+अटल पूर्णांक mac802154_wpan_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
 
-	rc = ieee802154_check_concurrent_iface(sdata, wpan_dev->iftype);
-	if (rc < 0)
-		return rc;
+	rc = ieee802154_check_concurrent_अगरace(sdata, wpan_dev->अगरtype);
+	अगर (rc < 0)
+		वापस rc;
 
-	return mac802154_slave_open(dev);
-}
+	वापस mac802154_slave_खोलो(dev);
+पूर्ण
 
-static int mac802154_slave_close(struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct ieee802154_local *local = sdata->local;
+अटल पूर्णांक mac802154_slave_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा ieee802154_local *local = sdata->local;
 
 	ASSERT_RTNL();
 
-	netif_stop_queue(dev);
-	local->open_count--;
+	netअगर_stop_queue(dev);
+	local->खोलो_count--;
 
 	clear_bit(SDATA_STATE_RUNNING, &sdata->state);
 
-	if (!local->open_count)
+	अगर (!local->खोलो_count)
 		ieee802154_stop_device(local);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mac802154_set_header_security(struct ieee802154_sub_if_data *sdata,
-					 struct ieee802154_hdr *hdr,
-					 const struct ieee802154_mac_cb *cb)
-{
-	struct ieee802154_llsec_params params;
+अटल पूर्णांक mac802154_set_header_security(काष्ठा ieee802154_sub_अगर_data *sdata,
+					 काष्ठा ieee802154_hdr *hdr,
+					 स्थिर काष्ठा ieee802154_mac_cb *cb)
+अणु
+	काष्ठा ieee802154_llsec_params params;
 	u8 level;
 
 	mac802154_llsec_get_params(&sdata->sec, &params);
 
-	if (!params.enabled && cb->secen_override && cb->secen)
-		return -EINVAL;
-	if (!params.enabled ||
+	अगर (!params.enabled && cb->secen_override && cb->secen)
+		वापस -EINVAL;
+	अगर (!params.enabled ||
 	    (cb->secen_override && !cb->secen) ||
 	    !params.out_level)
-		return 0;
-	if (cb->seclevel_override && !cb->seclevel)
-		return -EINVAL;
+		वापस 0;
+	अगर (cb->seclevel_override && !cb->seclevel)
+		वापस -EINVAL;
 
 	level = cb->seclevel_override ? cb->seclevel : params.out_level;
 
 	hdr->fc.security_enabled = 1;
 	hdr->sec.level = level;
 	hdr->sec.key_id_mode = params.out_key.mode;
-	if (params.out_key.mode == IEEE802154_SCF_KEY_SHORT_INDEX)
-		hdr->sec.short_src = params.out_key.short_source;
-	else if (params.out_key.mode == IEEE802154_SCF_KEY_HW_INDEX)
+	अगर (params.out_key.mode == IEEE802154_SCF_KEY_SHORT_INDEX)
+		hdr->sec.लघु_src = params.out_key.लघु_source;
+	अन्यथा अगर (params.out_key.mode == IEEE802154_SCF_KEY_HW_INDEX)
 		hdr->sec.extended_src = params.out_key.extended_source;
 	hdr->sec.key_id = params.out_key.id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ieee802154_header_create(struct sk_buff *skb,
-				    struct net_device *dev,
-				    const struct ieee802154_addr *daddr,
-				    const struct ieee802154_addr *saddr,
-				    unsigned len)
-{
-	struct ieee802154_hdr hdr;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	struct ieee802154_mac_cb *cb = mac_cb(skb);
-	int hlen;
+अटल पूर्णांक ieee802154_header_create(काष्ठा sk_buff *skb,
+				    काष्ठा net_device *dev,
+				    स्थिर काष्ठा ieee802154_addr *daddr,
+				    स्थिर काष्ठा ieee802154_addr *saddr,
+				    अचिन्हित len)
+अणु
+	काष्ठा ieee802154_hdr hdr;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	काष्ठा ieee802154_mac_cb *cb = mac_cb(skb);
+	पूर्णांक hlen;
 
-	if (!daddr)
-		return -EINVAL;
+	अगर (!daddr)
+		वापस -EINVAL;
 
-	memset(&hdr.fc, 0, sizeof(hdr.fc));
+	स_रखो(&hdr.fc, 0, माप(hdr.fc));
 	hdr.fc.type = cb->type;
 	hdr.fc.security_enabled = cb->secen;
 	hdr.fc.ack_request = cb->ackreq;
-	hdr.seq = atomic_inc_return(&dev->ieee802154_ptr->dsn) & 0xFF;
+	hdr.seq = atomic_inc_वापस(&dev->ieee802154_ptr->dsn) & 0xFF;
 
-	if (mac802154_set_header_security(sdata, &hdr, cb) < 0)
-		return -EINVAL;
+	अगर (mac802154_set_header_security(sdata, &hdr, cb) < 0)
+		वापस -EINVAL;
 
-	if (!saddr) {
-		if (wpan_dev->short_addr == cpu_to_le16(IEEE802154_ADDR_BROADCAST) ||
-		    wpan_dev->short_addr == cpu_to_le16(IEEE802154_ADDR_UNDEF) ||
-		    wpan_dev->pan_id == cpu_to_le16(IEEE802154_PANID_BROADCAST)) {
+	अगर (!saddr) अणु
+		अगर (wpan_dev->लघु_addr == cpu_to_le16(IEEE802154_ADDR_BROADCAST) ||
+		    wpan_dev->लघु_addr == cpu_to_le16(IEEE802154_ADDR_UNDEF) ||
+		    wpan_dev->pan_id == cpu_to_le16(IEEE802154_PANID_BROADCAST)) अणु
 			hdr.source.mode = IEEE802154_ADDR_LONG;
 			hdr.source.extended_addr = wpan_dev->extended_addr;
-		} else {
+		पूर्ण अन्यथा अणु
 			hdr.source.mode = IEEE802154_ADDR_SHORT;
-			hdr.source.short_addr = wpan_dev->short_addr;
-		}
+			hdr.source.लघु_addr = wpan_dev->लघु_addr;
+		पूर्ण
 
 		hdr.source.pan_id = wpan_dev->pan_id;
-	} else {
-		hdr.source = *(const struct ieee802154_addr *)saddr;
-	}
+	पूर्ण अन्यथा अणु
+		hdr.source = *(स्थिर काष्ठा ieee802154_addr *)saddr;
+	पूर्ण
 
-	hdr.dest = *(const struct ieee802154_addr *)daddr;
+	hdr.dest = *(स्थिर काष्ठा ieee802154_addr *)daddr;
 
 	hlen = ieee802154_hdr_push(skb, &hdr);
-	if (hlen < 0)
-		return -EINVAL;
+	अगर (hlen < 0)
+		वापस -EINVAL;
 
 	skb_reset_mac_header(skb);
 	skb->mac_len = hlen;
 
-	if (len > ieee802154_max_payload(&hdr))
-		return -EMSGSIZE;
+	अगर (len > ieee802154_max_payload(&hdr))
+		वापस -EMSGSIZE;
 
-	return hlen;
-}
+	वापस hlen;
+पूर्ण
 
-static const struct wpan_dev_header_ops ieee802154_header_ops = {
+अटल स्थिर काष्ठा wpan_dev_header_ops ieee802154_header_ops = अणु
 	.create		= ieee802154_header_create,
-};
+पूर्ण;
 
-/* This header create functionality assumes a 8 byte array for
- * source and destination pointer at maximum. To adapt this for
+/* This header create functionality assumes a 8 byte array क्रम
+ * source and destination poपूर्णांकer at maximum. To adapt this क्रम
  * the 802.15.4 dataframe header we use extended address handling
- * here only and intra pan connection. fc fields are mostly fallback
- * handling. For provide dev_hard_header for dgram sockets.
+ * here only and पूर्णांकra pan connection. fc fields are mostly fallback
+ * handling. For provide dev_hard_header क्रम dgram sockets.
  */
-static int mac802154_header_create(struct sk_buff *skb,
-				   struct net_device *dev,
-				   unsigned short type,
-				   const void *daddr,
-				   const void *saddr,
-				   unsigned len)
-{
-	struct ieee802154_hdr hdr;
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	struct ieee802154_mac_cb cb = { };
-	int hlen;
+अटल पूर्णांक mac802154_header_create(काष्ठा sk_buff *skb,
+				   काष्ठा net_device *dev,
+				   अचिन्हित लघु type,
+				   स्थिर व्योम *daddr,
+				   स्थिर व्योम *saddr,
+				   अचिन्हित len)
+अणु
+	काष्ठा ieee802154_hdr hdr;
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	काष्ठा ieee802154_mac_cb cb = अणु पूर्ण;
+	पूर्णांक hlen;
 
-	if (!daddr)
-		return -EINVAL;
+	अगर (!daddr)
+		वापस -EINVAL;
 
-	memset(&hdr.fc, 0, sizeof(hdr.fc));
+	स_रखो(&hdr.fc, 0, माप(hdr.fc));
 	hdr.fc.type = IEEE802154_FC_TYPE_DATA;
 	hdr.fc.ack_request = wpan_dev->ackreq;
-	hdr.seq = atomic_inc_return(&dev->ieee802154_ptr->dsn) & 0xFF;
+	hdr.seq = atomic_inc_वापस(&dev->ieee802154_ptr->dsn) & 0xFF;
 
 	/* TODO currently a workaround to give zero cb block to set
-	 * security parameters defaults according MIB.
+	 * security parameters शेषs according MIB.
 	 */
-	if (mac802154_set_header_security(sdata, &hdr, &cb) < 0)
-		return -EINVAL;
+	अगर (mac802154_set_header_security(sdata, &hdr, &cb) < 0)
+		वापस -EINVAL;
 
 	hdr.dest.pan_id = wpan_dev->pan_id;
 	hdr.dest.mode = IEEE802154_ADDR_LONG;
@@ -458,72 +459,72 @@ static int mac802154_header_create(struct sk_buff *skb,
 	hdr.source.pan_id = hdr.dest.pan_id;
 	hdr.source.mode = IEEE802154_ADDR_LONG;
 
-	if (!saddr)
+	अगर (!saddr)
 		hdr.source.extended_addr = wpan_dev->extended_addr;
-	else
+	अन्यथा
 		ieee802154_be64_to_le64(&hdr.source.extended_addr, saddr);
 
 	hlen = ieee802154_hdr_push(skb, &hdr);
-	if (hlen < 0)
-		return -EINVAL;
+	अगर (hlen < 0)
+		वापस -EINVAL;
 
 	skb_reset_mac_header(skb);
 	skb->mac_len = hlen;
 
-	if (len > ieee802154_max_payload(&hdr))
-		return -EMSGSIZE;
+	अगर (len > ieee802154_max_payload(&hdr))
+		वापस -EMSGSIZE;
 
-	return hlen;
-}
+	वापस hlen;
+पूर्ण
 
-static int
-mac802154_header_parse(const struct sk_buff *skb, unsigned char *haddr)
-{
-	struct ieee802154_hdr hdr;
+अटल पूर्णांक
+mac802154_header_parse(स्थिर काष्ठा sk_buff *skb, अचिन्हित अक्षर *haddr)
+अणु
+	काष्ठा ieee802154_hdr hdr;
 
-	if (ieee802154_hdr_peek_addrs(skb, &hdr) < 0) {
+	अगर (ieee802154_hdr_peek_addrs(skb, &hdr) < 0) अणु
 		pr_debug("malformed packet\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (hdr.source.mode == IEEE802154_ADDR_LONG) {
+	अगर (hdr.source.mode == IEEE802154_ADDR_LONG) अणु
 		ieee802154_le64_to_be64(haddr, &hdr.source.extended_addr);
-		return IEEE802154_EXTENDED_ADDR_LEN;
-	}
+		वापस IEEE802154_EXTENDED_ADDR_LEN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct header_ops mac802154_header_ops = {
+अटल स्थिर काष्ठा header_ops mac802154_header_ops = अणु
 	.create         = mac802154_header_create,
 	.parse          = mac802154_header_parse,
-};
+पूर्ण;
 
-static const struct net_device_ops mac802154_wpan_ops = {
-	.ndo_open		= mac802154_wpan_open,
-	.ndo_stop		= mac802154_slave_close,
-	.ndo_start_xmit		= ieee802154_subif_start_xmit,
-	.ndo_do_ioctl		= mac802154_wpan_ioctl,
-	.ndo_set_mac_address	= mac802154_wpan_mac_addr,
-};
+अटल स्थिर काष्ठा net_device_ops mac802154_wpan_ops = अणु
+	.nकरो_खोलो		= mac802154_wpan_खोलो,
+	.nकरो_stop		= mac802154_slave_बंद,
+	.nकरो_start_xmit		= ieee802154_subअगर_start_xmit,
+	.nकरो_करो_ioctl		= mac802154_wpan_ioctl,
+	.nकरो_set_mac_address	= mac802154_wpan_mac_addr,
+पूर्ण;
 
-static const struct net_device_ops mac802154_monitor_ops = {
-	.ndo_open		= mac802154_wpan_open,
-	.ndo_stop		= mac802154_slave_close,
-	.ndo_start_xmit		= ieee802154_monitor_start_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops mac802154_monitor_ops = अणु
+	.nकरो_खोलो		= mac802154_wpan_खोलो,
+	.nकरो_stop		= mac802154_slave_बंद,
+	.nकरो_start_xmit		= ieee802154_monitor_start_xmit,
+पूर्ण;
 
-static void mac802154_wpan_free(struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+अटल व्योम mac802154_wpan_मुक्त(काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
 	mac802154_llsec_destroy(&sdata->sec);
-}
+पूर्ण
 
-static void ieee802154_if_setup(struct net_device *dev)
-{
+अटल व्योम ieee802154_अगर_setup(काष्ठा net_device *dev)
+अणु
 	dev->addr_len		= IEEE802154_EXTENDED_ADDR_LEN;
-	memset(dev->broadcast, 0xff, IEEE802154_EXTENDED_ADDR_LEN);
+	स_रखो(dev->broadcast, 0xff, IEEE802154_EXTENDED_ADDR_LEN);
 
 	/* Let hard_header_len set to IEEE802154_MIN_HEADER_LEN. AF_PACKET
 	 * will not send frames without any payload, but ack frames
@@ -532,59 +533,59 @@ static void ieee802154_if_setup(struct net_device *dev)
 	 * bytes fc and sequence field are set.
 	 */
 	dev->hard_header_len	= IEEE802154_MIN_HEADER_LEN - 1;
-	/* The auth_tag header is for security and places in private payload
+	/* The auth_tag header is क्रम security and places in निजी payload
 	 * room of mac frame which stucks between payload and FCS field.
 	 */
 	dev->needed_tailroom	= IEEE802154_MAX_AUTH_TAG_LEN +
 				  IEEE802154_FCS_LEN;
-	/* The mtu size is the payload without mac header in this case.
+	/* The mtu size is the payload without mac header in this हाल.
 	 * We have a dynamic length header with a minimum header length
-	 * which is hard_header_len. In this case we let mtu to the size
+	 * which is hard_header_len. In this हाल we let mtu to the size
 	 * of maximum payload which is IEEE802154_MTU - IEEE802154_FCS_LEN -
-	 * hard_header_len. The FCS which is set by hardware or ndo_start_xmit
+	 * hard_header_len. The FCS which is set by hardware or nकरो_start_xmit
 	 * and the minimum mac header which can be evaluated inside driver
-	 * layer. The rest of mac header will be part of payload if greater
+	 * layer. The rest of mac header will be part of payload अगर greater
 	 * than hard_header_len.
 	 */
 	dev->mtu		= IEEE802154_MTU - IEEE802154_FCS_LEN -
 				  dev->hard_header_len;
 	dev->tx_queue_len	= 300;
 	dev->flags		= IFF_NOARP | IFF_BROADCAST;
-}
+पूर्ण
 
-static int
-ieee802154_setup_sdata(struct ieee802154_sub_if_data *sdata,
-		       enum nl802154_iftype type)
-{
-	struct wpan_dev *wpan_dev = &sdata->wpan_dev;
-	int ret;
-	u8 tmp;
+अटल पूर्णांक
+ieee802154_setup_sdata(काष्ठा ieee802154_sub_अगर_data *sdata,
+		       क्रमागत nl802154_अगरtype type)
+अणु
+	काष्ठा wpan_dev *wpan_dev = &sdata->wpan_dev;
+	पूर्णांक ret;
+	u8 पंचांगp;
 
 	/* set some type-dependent values */
-	sdata->wpan_dev.iftype = type;
+	sdata->wpan_dev.अगरtype = type;
 
-	get_random_bytes(&tmp, sizeof(tmp));
-	atomic_set(&wpan_dev->bsn, tmp);
-	get_random_bytes(&tmp, sizeof(tmp));
-	atomic_set(&wpan_dev->dsn, tmp);
+	get_अक्रमom_bytes(&पंचांगp, माप(पंचांगp));
+	atomic_set(&wpan_dev->bsn, पंचांगp);
+	get_अक्रमom_bytes(&पंचांगp, माप(पंचांगp));
+	atomic_set(&wpan_dev->dsn, पंचांगp);
 
-	/* defaults per 802.15.4-2011 */
+	/* शेषs per 802.15.4-2011 */
 	wpan_dev->min_be = 3;
 	wpan_dev->max_be = 5;
 	wpan_dev->csma_retries = 4;
 	wpan_dev->frame_retries = 3;
 
 	wpan_dev->pan_id = cpu_to_le16(IEEE802154_PANID_BROADCAST);
-	wpan_dev->short_addr = cpu_to_le16(IEEE802154_ADDR_BROADCAST);
+	wpan_dev->लघु_addr = cpu_to_le16(IEEE802154_ADDR_BROADCAST);
 
-	switch (type) {
-	case NL802154_IFTYPE_NODE:
+	चयन (type) अणु
+	हाल NL802154_IFTYPE_NODE:
 		ieee802154_be64_to_le64(&wpan_dev->extended_addr,
 					sdata->dev->dev_addr);
 
 		sdata->dev->header_ops = &mac802154_header_ops;
-		sdata->dev->needs_free_netdev = true;
-		sdata->dev->priv_destructor = mac802154_wpan_free;
+		sdata->dev->needs_मुक्त_netdev = true;
+		sdata->dev->priv_deकाष्ठाor = mac802154_wpan_मुक्त;
 		sdata->dev->netdev_ops = &mac802154_wpan_ops;
 		sdata->dev->ml_priv = &mac802154_mlme_wpan;
 		wpan_dev->promiscuous_mode = false;
@@ -594,150 +595,150 @@ ieee802154_setup_sdata(struct ieee802154_sub_if_data *sdata,
 
 		mac802154_llsec_init(&sdata->sec);
 		ret = mac802154_wpan_update_llsec(sdata->dev);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		break;
-	case NL802154_IFTYPE_MONITOR:
-		sdata->dev->needs_free_netdev = true;
+		अवरोध;
+	हाल NL802154_IFTYPE_MONITOR:
+		sdata->dev->needs_मुक्त_netdev = true;
 		sdata->dev->netdev_ops = &mac802154_monitor_ops;
 		wpan_dev->promiscuous_mode = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct net_device *
-ieee802154_if_add(struct ieee802154_local *local, const char *name,
-		  unsigned char name_assign_type, enum nl802154_iftype type,
+काष्ठा net_device *
+ieee802154_अगर_add(काष्ठा ieee802154_local *local, स्थिर अक्षर *name,
+		  अचिन्हित अक्षर name_assign_type, क्रमागत nl802154_अगरtype type,
 		  __le64 extended_addr)
-{
-	struct net_device *ndev = NULL;
-	struct ieee802154_sub_if_data *sdata = NULL;
-	int ret = -ENOMEM;
+अणु
+	काष्ठा net_device *ndev = शून्य;
+	काष्ठा ieee802154_sub_अगर_data *sdata = शून्य;
+	पूर्णांक ret = -ENOMEM;
 
 	ASSERT_RTNL();
 
-	ndev = alloc_netdev(sizeof(*sdata), name,
-			    name_assign_type, ieee802154_if_setup);
-	if (!ndev)
-		return ERR_PTR(-ENOMEM);
+	ndev = alloc_netdev(माप(*sdata), name,
+			    name_assign_type, ieee802154_अगर_setup);
+	अगर (!ndev)
+		वापस ERR_PTR(-ENOMEM);
 
 	ndev->needed_headroom = local->hw.extra_tx_headroom +
 				IEEE802154_MAX_HEADER_LEN;
 
 	ret = dev_alloc_name(ndev, ndev->name);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
 	ieee802154_le64_to_be64(ndev->perm_addr,
 				&local->hw.phy->perm_extended_addr);
-	switch (type) {
-	case NL802154_IFTYPE_NODE:
+	चयन (type) अणु
+	हाल NL802154_IFTYPE_NODE:
 		ndev->type = ARPHRD_IEEE802154;
-		if (ieee802154_is_valid_extended_unicast_addr(extended_addr))
+		अगर (ieee802154_is_valid_extended_unicast_addr(extended_addr))
 			ieee802154_le64_to_be64(ndev->dev_addr, &extended_addr);
-		else
-			memcpy(ndev->dev_addr, ndev->perm_addr,
+		अन्यथा
+			स_नकल(ndev->dev_addr, ndev->perm_addr,
 			       IEEE802154_EXTENDED_ADDR_LEN);
-		break;
-	case NL802154_IFTYPE_MONITOR:
+		अवरोध;
+	हाल NL802154_IFTYPE_MONITOR:
 		ndev->type = ARPHRD_IEEE802154_MONITOR;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* TODO check this */
 	SET_NETDEV_DEV(ndev, &local->phy->dev);
 	dev_net_set(ndev, wpan_phy_net(local->hw.phy));
 	sdata = netdev_priv(ndev);
 	ndev->ieee802154_ptr = &sdata->wpan_dev;
-	memcpy(sdata->name, ndev->name, IFNAMSIZ);
+	स_नकल(sdata->name, ndev->name, IFNAMSIZ);
 	sdata->dev = ndev;
 	sdata->wpan_dev.wpan_phy = local->hw.phy;
 	sdata->local = local;
 
 	/* setup type-dependent data */
 	ret = ieee802154_setup_sdata(sdata, type);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	ret = register_netdevice(ndev);
-	if (ret < 0)
-		goto err;
+	ret = रेजिस्टर_netdevice(ndev);
+	अगर (ret < 0)
+		जाओ err;
 
-	mutex_lock(&local->iflist_mtx);
-	list_add_tail_rcu(&sdata->list, &local->interfaces);
-	mutex_unlock(&local->iflist_mtx);
+	mutex_lock(&local->अगरlist_mtx);
+	list_add_tail_rcu(&sdata->list, &local->पूर्णांकerfaces);
+	mutex_unlock(&local->अगरlist_mtx);
 
-	return ndev;
+	वापस ndev;
 
 err:
-	free_netdev(ndev);
-	return ERR_PTR(ret);
-}
+	मुक्त_netdev(ndev);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void ieee802154_if_remove(struct ieee802154_sub_if_data *sdata)
-{
+व्योम ieee802154_अगर_हटाओ(काष्ठा ieee802154_sub_अगर_data *sdata)
+अणु
 	ASSERT_RTNL();
 
-	mutex_lock(&sdata->local->iflist_mtx);
+	mutex_lock(&sdata->local->अगरlist_mtx);
 	list_del_rcu(&sdata->list);
-	mutex_unlock(&sdata->local->iflist_mtx);
+	mutex_unlock(&sdata->local->अगरlist_mtx);
 
 	synchronize_rcu();
-	unregister_netdevice(sdata->dev);
-}
+	unरेजिस्टर_netdevice(sdata->dev);
+पूर्ण
 
-void ieee802154_remove_interfaces(struct ieee802154_local *local)
-{
-	struct ieee802154_sub_if_data *sdata, *tmp;
+व्योम ieee802154_हटाओ_पूर्णांकerfaces(काष्ठा ieee802154_local *local)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata, *पंचांगp;
 
-	mutex_lock(&local->iflist_mtx);
-	list_for_each_entry_safe(sdata, tmp, &local->interfaces, list) {
+	mutex_lock(&local->अगरlist_mtx);
+	list_क्रम_each_entry_safe(sdata, पंचांगp, &local->पूर्णांकerfaces, list) अणु
 		list_del(&sdata->list);
 
-		unregister_netdevice(sdata->dev);
-	}
-	mutex_unlock(&local->iflist_mtx);
-}
+		unरेजिस्टर_netdevice(sdata->dev);
+	पूर्ण
+	mutex_unlock(&local->अगरlist_mtx);
+पूर्ण
 
-static int netdev_notify(struct notifier_block *nb,
-			 unsigned long state, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct ieee802154_sub_if_data *sdata;
+अटल पूर्णांक netdev_notअगरy(काष्ठा notअगरier_block *nb,
+			 अचिन्हित दीर्घ state, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा ieee802154_sub_अगर_data *sdata;
 
-	if (state != NETDEV_CHANGENAME)
-		return NOTIFY_DONE;
+	अगर (state != NETDEV_CHANGENAME)
+		वापस NOTIFY_DONE;
 
-	if (!dev->ieee802154_ptr || !dev->ieee802154_ptr->wpan_phy)
-		return NOTIFY_DONE;
+	अगर (!dev->ieee802154_ptr || !dev->ieee802154_ptr->wpan_phy)
+		वापस NOTIFY_DONE;
 
-	if (dev->ieee802154_ptr->wpan_phy->privid != mac802154_wpan_phy_privid)
-		return NOTIFY_DONE;
+	अगर (dev->ieee802154_ptr->wpan_phy->privid != mac802154_wpan_phy_privid)
+		वापस NOTIFY_DONE;
 
 	sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	memcpy(sdata->name, dev->name, IFNAMSIZ);
+	स_नकल(sdata->name, dev->name, IFNAMSIZ);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block mac802154_netdev_notifier = {
-	.notifier_call = netdev_notify,
-};
+अटल काष्ठा notअगरier_block mac802154_netdev_notअगरier = अणु
+	.notअगरier_call = netdev_notअगरy,
+पूर्ण;
 
-int ieee802154_iface_init(void)
-{
-	return register_netdevice_notifier(&mac802154_netdev_notifier);
-}
+पूर्णांक ieee802154_अगरace_init(व्योम)
+अणु
+	वापस रेजिस्टर_netdevice_notअगरier(&mac802154_netdev_notअगरier);
+पूर्ण
 
-void ieee802154_iface_exit(void)
-{
-	unregister_netdevice_notifier(&mac802154_netdev_notifier);
-}
+व्योम ieee802154_अगरace_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&mac802154_netdev_notअगरier);
+पूर्ण

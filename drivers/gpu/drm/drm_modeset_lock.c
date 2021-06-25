@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,20 +22,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_modeset_lock.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_modeset_lock.h>
 
 /**
  * DOC: kms locking
  *
  * As KMS moves toward more fine grained locking, and atomic ioctl where
  * userspace can indirectly control locking order, it becomes necessary
- * to use &ww_mutex and acquire-contexts to avoid deadlocks.  But because
+ * to use &ww_mutex and acquire-contexts to aव्योम deadlocks.  But because
  * the locking is more distributed around the driver code, we want a bit
  * of extra utility/tracking out of our acquire-ctx.  This is provided
- * by &struct drm_modeset_lock and &struct drm_modeset_acquire_ctx.
+ * by &काष्ठा drm_modeset_lock and &काष्ठा drm_modeset_acquire_ctx.
  *
  * For basic principles of &ww_mutex, see: Documentation/locking/ww-mutex-design.rst
  *
@@ -42,40 +43,40 @@
  *
  *     drm_modeset_acquire_init(ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE)
  *     retry:
- *     foreach (lock in random_ordered_set_of_locks) {
+ *     क्रमeach (lock in अक्रमom_ordered_set_of_locks) अणु
  *         ret = drm_modeset_lock(lock, ctx)
- *         if (ret == -EDEADLK) {
+ *         अगर (ret == -EDEADLK) अणु
  *             ret = drm_modeset_backoff(ctx);
- *             if (!ret)
- *                 goto retry;
- *         }
- *         if (ret)
- *             goto out;
- *     }
- *     ... do stuff ...
+ *             अगर (!ret)
+ *                 जाओ retry;
+ *         पूर्ण
+ *         अगर (ret)
+ *             जाओ out;
+ *     पूर्ण
+ *     ... करो stuff ...
  *     out:
  *     drm_modeset_drop_locks(ctx);
  *     drm_modeset_acquire_fini(ctx);
  *
  * For convenience this control flow is implemented in
- * DRM_MODESET_LOCK_ALL_BEGIN() and DRM_MODESET_LOCK_ALL_END() for the case
+ * DRM_MODESET_LOCK_ALL_BEGIN() and DRM_MODESET_LOCK_ALL_END() क्रम the हाल
  * where all modeset locks need to be taken through drm_modeset_lock_all_ctx().
  *
- * If all that is needed is a single modeset lock, then the &struct
- * drm_modeset_acquire_ctx is not needed and the locking can be simplified
- * by passing a NULL instead of ctx in the drm_modeset_lock() call or
- * calling  drm_modeset_lock_single_interruptible(). To unlock afterwards
+ * If all that is needed is a single modeset lock, then the &काष्ठा
+ * drm_modeset_acquire_ctx is not needed and the locking can be simplअगरied
+ * by passing a शून्य instead of ctx in the drm_modeset_lock() call or
+ * calling  drm_modeset_lock_single_पूर्णांकerruptible(). To unlock afterwards
  * call drm_modeset_unlock().
  *
  * On top of these per-object locks using &ww_mutex there's also an overall
- * &drm_mode_config.mutex, for protecting everything else. Mostly this means
+ * &drm_mode_config.mutex, क्रम protecting everything अन्यथा. Mostly this means
  * probe state of connectors, and preventing hotplug add/removal of connectors.
  *
- * Finally there's a bunch of dedicated locks to protect drm core internal
- * lists and lookup data structures.
+ * Finally there's a bunch of dedicated locks to protect drm core पूर्णांकernal
+ * lists and lookup data काष्ठाures.
  */
 
-static DEFINE_WW_CLASS(crtc_ww_class);
+अटल DEFINE_WW_CLASS(crtc_ww_class);
 
 /**
  * drm_modeset_lock_all - take all modeset locks
@@ -87,20 +88,20 @@ static DEFINE_WW_CLASS(crtc_ww_class);
  *
  * This function is deprecated. It allocates a lock acquisition context and
  * stores it in &drm_device.mode_config. This facilitate conversion of
- * existing code because it removes the need to manually deal with the
+ * existing code because it हटाओs the need to manually deal with the
  * acquisition context, but it is also brittle because the context is global
  * and care must be taken not to nest calls. New code should use the
  * drm_modeset_lock_all_ctx() function and pass in the context explicitly.
  */
-void drm_modeset_lock_all(struct drm_device *dev)
-{
-	struct drm_mode_config *config = &dev->mode_config;
-	struct drm_modeset_acquire_ctx *ctx;
-	int ret;
+व्योम drm_modeset_lock_all(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_mode_config *config = &dev->mode_config;
+	काष्ठा drm_modeset_acquire_ctx *ctx;
+	पूर्णांक ret;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL | __GFP_NOFAIL);
-	if (WARN_ON(!ctx))
-		return;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL | __GFP_NOFAIL);
+	अगर (WARN_ON(!ctx))
+		वापस;
 
 	mutex_lock(&config->mutex);
 
@@ -108,28 +109,28 @@ void drm_modeset_lock_all(struct drm_device *dev)
 
 retry:
 	ret = drm_modeset_lock_all_ctx(dev, ctx);
-	if (ret < 0) {
-		if (ret == -EDEADLK) {
+	अगर (ret < 0) अणु
+		अगर (ret == -EDEADLK) अणु
 			drm_modeset_backoff(ctx);
-			goto retry;
-		}
+			जाओ retry;
+		पूर्ण
 
 		drm_modeset_acquire_fini(ctx);
-		kfree(ctx);
-		return;
-	}
-	ww_acquire_done(&ctx->ww_ctx);
+		kमुक्त(ctx);
+		वापस;
+	पूर्ण
+	ww_acquire_करोne(&ctx->ww_ctx);
 
 	WARN_ON(config->acquire_ctx);
 
 	/*
 	 * We hold the locks now, so it is safe to stash the acquisition
-	 * context for drm_modeset_unlock_all().
+	 * context क्रम drm_modeset_unlock_all().
 	 */
 	config->acquire_ctx = ctx;
 
 	drm_warn_on_modeset_not_all_locked(dev);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_lock_all);
 
 /**
@@ -141,49 +142,49 @@ EXPORT_SYMBOL(drm_modeset_lock_all);
  *
  * This function is deprecated. It uses the lock acquisition context stored
  * in &drm_device.mode_config. This facilitates conversion of existing
- * code because it removes the need to manually deal with the acquisition
+ * code because it हटाओs the need to manually deal with the acquisition
  * context, but it is also brittle because the context is global and care must
  * be taken not to nest calls. New code should pass the acquisition context
  * directly to the drm_modeset_drop_locks() function.
  */
-void drm_modeset_unlock_all(struct drm_device *dev)
-{
-	struct drm_mode_config *config = &dev->mode_config;
-	struct drm_modeset_acquire_ctx *ctx = config->acquire_ctx;
+व्योम drm_modeset_unlock_all(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_mode_config *config = &dev->mode_config;
+	काष्ठा drm_modeset_acquire_ctx *ctx = config->acquire_ctx;
 
-	if (WARN_ON(!ctx))
-		return;
+	अगर (WARN_ON(!ctx))
+		वापस;
 
-	config->acquire_ctx = NULL;
+	config->acquire_ctx = शून्य;
 	drm_modeset_drop_locks(ctx);
 	drm_modeset_acquire_fini(ctx);
 
-	kfree(ctx);
+	kमुक्त(ctx);
 
 	mutex_unlock(&dev->mode_config.mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_unlock_all);
 
 /**
  * drm_warn_on_modeset_not_all_locked - check that all modeset locks are locked
  * @dev: device
  *
- * Useful as a debug assert.
+ * Useful as a debug निश्चित.
  */
-void drm_warn_on_modeset_not_all_locked(struct drm_device *dev)
-{
-	struct drm_crtc *crtc;
+व्योम drm_warn_on_modeset_not_all_locked(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_crtc *crtc;
 
 	/* Locking is currently fubar in the panic handler. */
-	if (oops_in_progress)
-		return;
+	अगर (oops_in_progress)
+		वापस;
 
-	drm_for_each_crtc(crtc, dev)
+	drm_क्रम_each_crtc(crtc, dev)
 		WARN_ON(!drm_modeset_is_locked(&crtc->mutex));
 
 	WARN_ON(!drm_modeset_is_locked(&dev->mode_config.connection_mutex));
 	WARN_ON(!mutex_is_locked(&dev->mode_config.mutex));
-}
+पूर्ण
 EXPORT_SYMBOL(drm_warn_on_modeset_not_all_locked);
 
 /**
@@ -192,29 +193,29 @@ EXPORT_SYMBOL(drm_warn_on_modeset_not_all_locked);
  * @flags: 0 or %DRM_MODESET_ACQUIRE_INTERRUPTIBLE
  *
  * When passing %DRM_MODESET_ACQUIRE_INTERRUPTIBLE to @flags,
- * all calls to drm_modeset_lock() will perform an interruptible
- * wait.
+ * all calls to drm_modeset_lock() will perक्रमm an पूर्णांकerruptible
+ * रुको.
  */
-void drm_modeset_acquire_init(struct drm_modeset_acquire_ctx *ctx,
-		uint32_t flags)
-{
-	memset(ctx, 0, sizeof(*ctx));
+व्योम drm_modeset_acquire_init(काष्ठा drm_modeset_acquire_ctx *ctx,
+		uपूर्णांक32_t flags)
+अणु
+	स_रखो(ctx, 0, माप(*ctx));
 	ww_acquire_init(&ctx->ww_ctx, &crtc_ww_class);
 	INIT_LIST_HEAD(&ctx->locked);
 
-	if (flags & DRM_MODESET_ACQUIRE_INTERRUPTIBLE)
-		ctx->interruptible = true;
-}
+	अगर (flags & DRM_MODESET_ACQUIRE_INTERRUPTIBLE)
+		ctx->पूर्णांकerruptible = true;
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_acquire_init);
 
 /**
  * drm_modeset_acquire_fini - cleanup acquire context
  * @ctx: the acquire context
  */
-void drm_modeset_acquire_fini(struct drm_modeset_acquire_ctx *ctx)
-{
+व्योम drm_modeset_acquire_fini(काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
 	ww_acquire_fini(&ctx->ww_ctx);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_acquire_fini);
 
 /**
@@ -223,98 +224,98 @@ EXPORT_SYMBOL(drm_modeset_acquire_fini);
  *
  * Drop all locks currently held against this acquire context.
  */
-void drm_modeset_drop_locks(struct drm_modeset_acquire_ctx *ctx)
-{
+व्योम drm_modeset_drop_locks(काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
 	WARN_ON(ctx->contended);
-	while (!list_empty(&ctx->locked)) {
-		struct drm_modeset_lock *lock;
+	जबतक (!list_empty(&ctx->locked)) अणु
+		काष्ठा drm_modeset_lock *lock;
 
 		lock = list_first_entry(&ctx->locked,
-				struct drm_modeset_lock, head);
+				काष्ठा drm_modeset_lock, head);
 
 		drm_modeset_unlock(lock);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_drop_locks);
 
-static inline int modeset_lock(struct drm_modeset_lock *lock,
-		struct drm_modeset_acquire_ctx *ctx,
-		bool interruptible, bool slow)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक modeset_lock(काष्ठा drm_modeset_lock *lock,
+		काष्ठा drm_modeset_acquire_ctx *ctx,
+		bool पूर्णांकerruptible, bool slow)
+अणु
+	पूर्णांक ret;
 
 	WARN_ON(ctx->contended);
 
-	if (ctx->trylock_only) {
-		lockdep_assert_held(&ctx->ww_ctx);
+	अगर (ctx->trylock_only) अणु
+		lockdep_निश्चित_held(&ctx->ww_ctx);
 
-		if (!ww_mutex_trylock(&lock->mutex))
-			return -EBUSY;
-		else
-			return 0;
-	} else if (interruptible && slow) {
-		ret = ww_mutex_lock_slow_interruptible(&lock->mutex, &ctx->ww_ctx);
-	} else if (interruptible) {
-		ret = ww_mutex_lock_interruptible(&lock->mutex, &ctx->ww_ctx);
-	} else if (slow) {
+		अगर (!ww_mutex_trylock(&lock->mutex))
+			वापस -EBUSY;
+		अन्यथा
+			वापस 0;
+	पूर्ण अन्यथा अगर (पूर्णांकerruptible && slow) अणु
+		ret = ww_mutex_lock_slow_पूर्णांकerruptible(&lock->mutex, &ctx->ww_ctx);
+	पूर्ण अन्यथा अगर (पूर्णांकerruptible) अणु
+		ret = ww_mutex_lock_पूर्णांकerruptible(&lock->mutex, &ctx->ww_ctx);
+	पूर्ण अन्यथा अगर (slow) अणु
 		ww_mutex_lock_slow(&lock->mutex, &ctx->ww_ctx);
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ww_mutex_lock(&lock->mutex, &ctx->ww_ctx);
-	}
-	if (!ret) {
+	पूर्ण
+	अगर (!ret) अणु
 		WARN_ON(!list_empty(&lock->head));
 		list_add(&lock->head, &ctx->locked);
-	} else if (ret == -EALREADY) {
-		/* we already hold the lock.. this is fine.  For atomic
+	पूर्ण अन्यथा अगर (ret == -EALREADY) अणु
+		/* we alपढ़ोy hold the lock.. this is fine.  For atomic
 		 * we will need to be able to drm_modeset_lock() things
-		 * without having to keep track of what is already locked
+		 * without having to keep track of what is alपढ़ोy locked
 		 * or not.
 		 */
 		ret = 0;
-	} else if (ret == -EDEADLK) {
+	पूर्ण अन्यथा अगर (ret == -EDEADLK) अणु
 		ctx->contended = lock;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * drm_modeset_backoff - deadlock avoidance backoff
+ * drm_modeset_backoff - deadlock aव्योमance backoff
  * @ctx: the acquire context
  *
- * If deadlock is detected (ie. drm_modeset_lock() returns -EDEADLK),
+ * If deadlock is detected (ie. drm_modeset_lock() वापसs -EDEADLK),
  * you must call this function to drop all currently held locks and
  * block until the contended lock becomes available.
  *
- * This function returns 0 on success, or -ERESTARTSYS if this context
+ * This function वापसs 0 on success, or -ERESTARTSYS अगर this context
  * is initialized with %DRM_MODESET_ACQUIRE_INTERRUPTIBLE and the
- * wait has been interrupted.
+ * रुको has been पूर्णांकerrupted.
  */
-int drm_modeset_backoff(struct drm_modeset_acquire_ctx *ctx)
-{
-	struct drm_modeset_lock *contended = ctx->contended;
+पूर्णांक drm_modeset_backoff(काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	काष्ठा drm_modeset_lock *contended = ctx->contended;
 
-	ctx->contended = NULL;
+	ctx->contended = शून्य;
 
-	if (WARN_ON(!contended))
-		return 0;
+	अगर (WARN_ON(!contended))
+		वापस 0;
 
 	drm_modeset_drop_locks(ctx);
 
-	return modeset_lock(contended, ctx, ctx->interruptible, true);
-}
+	वापस modeset_lock(contended, ctx, ctx->पूर्णांकerruptible, true);
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_backoff);
 
 /**
  * drm_modeset_lock_init - initialize lock
  * @lock: lock to init
  */
-void drm_modeset_lock_init(struct drm_modeset_lock *lock)
-{
+व्योम drm_modeset_lock_init(काष्ठा drm_modeset_lock *lock)
+अणु
 	ww_mutex_init(&lock->mutex, &crtc_ww_class);
 	INIT_LIST_HEAD(&lock->head);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_lock_init);
 
 /**
@@ -322,54 +323,54 @@ EXPORT_SYMBOL(drm_modeset_lock_init);
  * @lock: lock to take
  * @ctx: acquire ctx
  *
- * If @ctx is not NULL, then its ww acquire context is used and the
+ * If @ctx is not शून्य, then its ww acquire context is used and the
  * lock will be tracked by the context and can be released by calling
- * drm_modeset_drop_locks().  If -EDEADLK is returned, this means a
+ * drm_modeset_drop_locks().  If -EDEADLK is वापसed, this means a
  * deadlock scenario has been detected and it is an error to attempt
  * to take any more locks without first calling drm_modeset_backoff().
  *
- * If the @ctx is not NULL and initialized with
+ * If the @ctx is not शून्य and initialized with
  * %DRM_MODESET_ACQUIRE_INTERRUPTIBLE, this function will fail with
- * -ERESTARTSYS when interrupted.
+ * -ERESTARTSYS when पूर्णांकerrupted.
  *
- * If @ctx is NULL then the function call behaves like a normal,
- * uninterruptible non-nesting mutex_lock() call.
+ * If @ctx is शून्य then the function call behaves like a normal,
+ * unपूर्णांकerruptible non-nesting mutex_lock() call.
  */
-int drm_modeset_lock(struct drm_modeset_lock *lock,
-		struct drm_modeset_acquire_ctx *ctx)
-{
-	if (ctx)
-		return modeset_lock(lock, ctx, ctx->interruptible, false);
+पूर्णांक drm_modeset_lock(काष्ठा drm_modeset_lock *lock,
+		काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	अगर (ctx)
+		वापस modeset_lock(lock, ctx, ctx->पूर्णांकerruptible, false);
 
-	ww_mutex_lock(&lock->mutex, NULL);
-	return 0;
-}
+	ww_mutex_lock(&lock->mutex, शून्य);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_lock);
 
 /**
- * drm_modeset_lock_single_interruptible - take a single modeset lock
+ * drm_modeset_lock_single_पूर्णांकerruptible - take a single modeset lock
  * @lock: lock to take
  *
- * This function behaves as drm_modeset_lock() with a NULL context,
- * but performs interruptible waits.
+ * This function behaves as drm_modeset_lock() with a शून्य context,
+ * but perक्रमms पूर्णांकerruptible रुकोs.
  *
- * This function returns 0 on success, or -ERESTARTSYS when interrupted.
+ * This function वापसs 0 on success, or -ERESTARTSYS when पूर्णांकerrupted.
  */
-int drm_modeset_lock_single_interruptible(struct drm_modeset_lock *lock)
-{
-	return ww_mutex_lock_interruptible(&lock->mutex, NULL);
-}
-EXPORT_SYMBOL(drm_modeset_lock_single_interruptible);
+पूर्णांक drm_modeset_lock_single_पूर्णांकerruptible(काष्ठा drm_modeset_lock *lock)
+अणु
+	वापस ww_mutex_lock_पूर्णांकerruptible(&lock->mutex, शून्य);
+पूर्ण
+EXPORT_SYMBOL(drm_modeset_lock_single_पूर्णांकerruptible);
 
 /**
  * drm_modeset_unlock - drop modeset lock
  * @lock: lock to release
  */
-void drm_modeset_unlock(struct drm_modeset_lock *lock)
-{
+व्योम drm_modeset_unlock(काष्ठा drm_modeset_lock *lock)
+अणु
 	list_del_init(&lock->head);
 	ww_mutex_unlock(&lock->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_unlock);
 
 /**
@@ -380,9 +381,9 @@ EXPORT_SYMBOL(drm_modeset_unlock);
  * This function takes all modeset locks, suitable where a more fine-grained
  * scheme isn't (yet) implemented.
  *
- * Unlike drm_modeset_lock_all(), it doesn't take the &drm_mode_config.mutex
- * since that lock isn't required for modeset state changes. Callers which
- * need to grab that lock too need to do so outside of the acquire context
+ * Unlike drm_modeset_lock_all(), it करोesn't take the &drm_mode_config.mutex
+ * since that lock isn't required क्रम modeset state changes. Callers which
+ * need to grab that lock too need to करो so outside of the acquire context
  * @ctx.
  *
  * Locks acquired with this function should be released by calling the
@@ -392,36 +393,36 @@ EXPORT_SYMBOL(drm_modeset_unlock);
  *
  * Returns: 0 on success or a negative error-code on failure.
  */
-int drm_modeset_lock_all_ctx(struct drm_device *dev,
-			     struct drm_modeset_acquire_ctx *ctx)
-{
-	struct drm_private_obj *privobj;
-	struct drm_crtc *crtc;
-	struct drm_plane *plane;
-	int ret;
+पूर्णांक drm_modeset_lock_all_ctx(काष्ठा drm_device *dev,
+			     काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	काष्ठा drm_निजी_obj *privobj;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_plane *plane;
+	पूर्णांक ret;
 
 	ret = drm_modeset_lock(&dev->mode_config.connection_mutex, ctx);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	drm_for_each_crtc(crtc, dev) {
+	drm_क्रम_each_crtc(crtc, dev) अणु
 		ret = drm_modeset_lock(&crtc->mutex, ctx);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	drm_for_each_plane(plane, dev) {
+	drm_क्रम_each_plane(plane, dev) अणु
 		ret = drm_modeset_lock(&plane->mutex, ctx);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	drm_for_each_privobj(privobj, dev) {
+	drm_क्रम_each_privobj(privobj, dev) अणु
 		ret = drm_modeset_lock(&privobj->lock, ctx);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_modeset_lock_all_ctx);

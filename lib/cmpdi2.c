@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
-#include <linux/export.h>
+#समावेश <linux/export.h>
 
-#include <linux/libgcc.h>
+#समावेश <linux/libgcc.h>
 
-word_type notrace __cmpdi2(long long a, long long b)
-{
-	const DWunion au = {
+word_type notrace __cmpdi2(दीर्घ दीर्घ a, दीर्घ दीर्घ b)
+अणु
+	स्थिर DWजोड़ au = अणु
 		.ll = a
-	};
-	const DWunion bu = {
+	पूर्ण;
+	स्थिर DWजोड़ bu = अणु
 		.ll = b
-	};
+	पूर्ण;
 
-	if (au.s.high < bu.s.high)
-		return 0;
-	else if (au.s.high > bu.s.high)
-		return 2;
+	अगर (au.s.high < bu.s.high)
+		वापस 0;
+	अन्यथा अगर (au.s.high > bu.s.high)
+		वापस 2;
 
-	if ((unsigned int) au.s.low < (unsigned int) bu.s.low)
-		return 0;
-	else if ((unsigned int) au.s.low > (unsigned int) bu.s.low)
-		return 2;
+	अगर ((अचिन्हित पूर्णांक) au.s.low < (अचिन्हित पूर्णांक) bu.s.low)
+		वापस 0;
+	अन्यथा अगर ((अचिन्हित पूर्णांक) au.s.low > (अचिन्हित पूर्णांक) bu.s.low)
+		वापस 2;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(__cmpdi2);

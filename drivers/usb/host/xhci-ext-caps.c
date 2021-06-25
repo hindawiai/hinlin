@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * XHCI extended capability handling
  *
  * Copyright (c) 2017 Hans de Goede <hdegoede@redhat.com>
  */
 
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/pci.h>
-#include "xhci.h"
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/pci.h>
+#समावेश "xhci.h"
 
-#define USB_SW_DRV_NAME		"intel_xhci_usb_sw"
-#define USB_SW_RESOURCE_SIZE	0x400
+#घोषणा USB_SW_DRV_NAME		"intel_xhci_usb_sw"
+#घोषणा USB_SW_RESOURCE_SIZE	0x400
 
-#define PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI	0x22b5
+#घोषणा PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI	0x22b5
 
-static const struct property_entry role_switch_props[] = {
+अटल स्थिर काष्ठा property_entry role_चयन_props[] = अणु
 	PROPERTY_ENTRY_BOOL("sw_switch_disable"),
-	{},
-};
+	अणुपूर्ण,
+पूर्ण;
 
-static void xhci_intel_unregister_pdev(void *arg)
-{
-	platform_device_unregister(arg);
-}
+अटल व्योम xhci_पूर्णांकel_unरेजिस्टर_pdev(व्योम *arg)
+अणु
+	platक्रमm_device_unरेजिस्टर(arg);
+पूर्ण
 
-static int xhci_create_intel_xhci_sw_pdev(struct xhci_hcd *xhci, u32 cap_offset)
-{
-	struct usb_hcd *hcd = xhci_to_hcd(xhci);
-	struct device *dev = hcd->self.controller;
-	struct platform_device *pdev;
-	struct pci_dev *pci = to_pci_dev(dev);
-	struct resource	res = { 0, };
-	int ret;
+अटल पूर्णांक xhci_create_पूर्णांकel_xhci_sw_pdev(काष्ठा xhci_hcd *xhci, u32 cap_offset)
+अणु
+	काष्ठा usb_hcd *hcd = xhci_to_hcd(xhci);
+	काष्ठा device *dev = hcd->self.controller;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा pci_dev *pci = to_pci_dev(dev);
+	काष्ठा resource	res = अणु 0, पूर्ण;
+	पूर्णांक ret;
 
-	pdev = platform_device_alloc(USB_SW_DRV_NAME, PLATFORM_DEVID_NONE);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc(USB_SW_DRV_NAME, PLATFORM_DEVID_NONE);
+	अगर (!pdev) अणु
 		xhci_err(xhci, "couldn't allocate %s platform device\n",
 			 USB_SW_DRV_NAME);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	res.start = hcd->rsrc_start + cap_offset;
 	res.end	  = res.start + USB_SW_RESOURCE_SIZE - 1;
 	res.name  = USB_SW_DRV_NAME;
 	res.flags = IORESOURCE_MEM;
 
-	ret = platform_device_add_resources(pdev, &res, 1);
-	if (ret) {
+	ret = platक्रमm_device_add_resources(pdev, &res, 1);
+	अगर (ret) अणु
 		dev_err(dev, "couldn't add resources to intel_xhci_usb_sw pdev\n");
-		platform_device_put(pdev);
-		return ret;
-	}
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 
-	if (pci->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI) {
-		ret = device_create_managed_software_node(&pdev->dev, role_switch_props,
-							  NULL);
-		if (ret) {
+	अगर (pci->device == PCI_DEVICE_ID_INTEL_CHERRYVIEW_XHCI) अणु
+		ret = device_create_managed_software_node(&pdev->dev, role_चयन_props,
+							  शून्य);
+		अगर (ret) अणु
 			dev_err(dev, "failed to register device properties\n");
-			platform_device_put(pdev);
-			return ret;
-		}
-	}
+			platक्रमm_device_put(pdev);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	pdev->dev.parent = dev;
 
-	ret = platform_device_add(pdev);
-	if (ret) {
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret) अणु
 		dev_err(dev, "couldn't register intel_xhci_usb_sw pdev\n");
-		platform_device_put(pdev);
-		return ret;
-	}
+		platक्रमm_device_put(pdev);
+		वापस ret;
+	पूर्ण
 
-	ret = devm_add_action_or_reset(dev, xhci_intel_unregister_pdev, pdev);
-	if (ret) {
+	ret = devm_add_action_or_reset(dev, xhci_पूर्णांकel_unरेजिस्टर_pdev, pdev);
+	अगर (ret) अणु
 		dev_err(dev, "couldn't add unregister action for intel_xhci_usb_sw pdev\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int xhci_ext_cap_init(struct xhci_hcd *xhci)
-{
-	void __iomem *base = &xhci->cap_regs->hc_capbase;
+पूर्णांक xhci_ext_cap_init(काष्ठा xhci_hcd *xhci)
+अणु
+	व्योम __iomem *base = &xhci->cap_regs->hc_capbase;
 	u32 offset, val;
-	int ret;
+	पूर्णांक ret;
 
 	offset = xhci_find_next_ext_cap(base, 0, 0);
 
-	while (offset) {
-		val = readl(base + offset);
+	जबतक (offset) अणु
+		val = पढ़ोl(base + offset);
 
-		switch (XHCI_EXT_CAPS_ID(val)) {
-		case XHCI_EXT_CAPS_VENDOR_INTEL:
-			if (xhci->quirks & XHCI_INTEL_USB_ROLE_SW) {
-				ret = xhci_create_intel_xhci_sw_pdev(xhci,
+		चयन (XHCI_EXT_CAPS_ID(val)) अणु
+		हाल XHCI_EXT_CAPS_VENDOR_INTEL:
+			अगर (xhci->quirks & XHCI_INTEL_USB_ROLE_SW) अणु
+				ret = xhci_create_पूर्णांकel_xhci_sw_pdev(xhci,
 								     offset);
-				if (ret)
-					return ret;
-			}
-			break;
-		}
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		offset = xhci_find_next_ext_cap(base, offset, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(xhci_ext_cap_init);

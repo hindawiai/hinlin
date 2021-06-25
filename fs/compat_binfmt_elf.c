@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * 32-bit compatibility support for ELF format executables and core dumps.
+ * 32-bit compatibility support क्रम ELF क्रमmat executables and core dumps.
  *
  * Copyright (C) 2007 Red Hat, Inc.  All rights reserved.
  *
  * Red Hat Author: Roland McGrath.
  *
  * This file is used in a 64-bit kernel that wants to support 32-bit ELF.
- * asm/elf.h is responsible for defining the compat_* and COMPAT_* macros
- * used below, with definitions appropriate for 32-bit ABI compatibility.
+ * यंत्र/elf.h is responsible क्रम defining the compat_* and COMPAT_* macros
+ * used below, with definitions appropriate क्रम 32-bit ABI compatibility.
  *
- * We use macros to rename the ABI types and machine-dependent
+ * We use macros to नाम the ABI types and machine-dependent
  * functions used in binfmt_elf.c to compat versions.
  */
 
-#include <linux/elfcore-compat.h>
-#include <linux/time.h>
+#समावेश <linux/elfcore-compat.h>
+#समावेश <linux/समय.स>
 
-#define ELF_COMPAT	1
+#घोषणा ELF_COMPAT	1
 
 /*
  * Rename the basic ELF layout types to refer to the 32-bit class of files.
  */
-#undef	ELF_CLASS
-#define ELF_CLASS	ELFCLASS32
+#अघोषित	ELF_CLASS
+#घोषणा ELF_CLASS	ELFCLASS32
 
-#undef	elfhdr
-#undef	elf_phdr
-#undef	elf_shdr
-#undef	elf_note
-#undef	elf_addr_t
-#undef	ELF_GNU_PROPERTY_ALIGN
-#define elfhdr		elf32_hdr
-#define elf_phdr	elf32_phdr
-#define elf_shdr	elf32_shdr
-#define elf_note	elf32_note
-#define elf_addr_t	Elf32_Addr
-#define ELF_GNU_PROPERTY_ALIGN	ELF32_GNU_PROPERTY_ALIGN
+#अघोषित	elfhdr
+#अघोषित	elf_phdr
+#अघोषित	elf_shdr
+#अघोषित	elf_note
+#अघोषित	elf_addr_t
+#अघोषित	ELF_GNU_PROPERTY_ALIGN
+#घोषणा elfhdr		elf32_hdr
+#घोषणा elf_phdr	elf32_phdr
+#घोषणा elf_shdr	elf32_shdr
+#घोषणा elf_note	elf32_note
+#घोषणा elf_addr_t	Elf32_Addr
+#घोषणा ELF_GNU_PROPERTY_ALIGN	ELF32_GNU_PROPERTY_ALIGN
 
 /*
  * Some data types as stored in coredump.
  */
-#define user_long_t		compat_long_t
-#define user_siginfo_t		compat_siginfo_t
-#define copy_siginfo_to_external	copy_siginfo_to_external32
+#घोषणा user_दीर्घ_t		compat_दीर्घ_t
+#घोषणा user_siginfo_t		compat_siginfo_t
+#घोषणा copy_siginfo_to_बाह्यal	copy_siginfo_to_बाह्यal32
 
 /*
- * The machine-dependent core note format types are defined in elfcore-compat.h,
- * which requires asm/elf.h to define compat_elf_gregset_t et al.
+ * The machine-dependent core note क्रमmat types are defined in elfcore-compat.h,
+ * which requires यंत्र/elf.h to define compat_elf_gregset_t et al.
  */
-#define elf_prstatus	compat_elf_prstatus
-#define elf_prstatus_common	compat_elf_prstatus_common
-#define elf_prpsinfo	compat_elf_prpsinfo
+#घोषणा elf_prstatus	compat_elf_prstatus
+#घोषणा elf_prstatus_common	compat_elf_prstatus_common
+#घोषणा elf_prpsinfo	compat_elf_prpsinfo
 
-#undef ns_to_kernel_old_timeval
-#define ns_to_kernel_old_timeval ns_to_old_timeval32
+#अघोषित ns_to_kernel_old_समयval
+#घोषणा ns_to_kernel_old_समयval ns_to_old_समयval32
 
 /*
- * To use this file, asm/elf.h must define compat_elf_check_arch.
- * The other following macros can be defined if the compat versions
- * differ from the native ones, or omitted when they match.
+ * To use this file, यंत्र/elf.h must define compat_elf_check_arch.
+ * The other following macros can be defined अगर the compat versions
+ * dअगरfer from the native ones, or omitted when they match.
  */
 
-#undef	elf_check_arch
-#define	elf_check_arch	compat_elf_check_arch
+#अघोषित	elf_check_arch
+#घोषणा	elf_check_arch	compat_elf_check_arch
 
-#ifdef	COMPAT_ELF_PLATFORM
-#undef	ELF_PLATFORM
-#define	ELF_PLATFORM		COMPAT_ELF_PLATFORM
-#endif
+#अगर_घोषित	COMPAT_ELF_PLATFORM
+#अघोषित	ELF_PLATFORM
+#घोषणा	ELF_PLATFORM		COMPAT_ELF_PLATFORM
+#पूर्ण_अगर
 
-#ifdef	COMPAT_ELF_HWCAP
-#undef	ELF_HWCAP
-#define	ELF_HWCAP		COMPAT_ELF_HWCAP
-#endif
+#अगर_घोषित	COMPAT_ELF_HWCAP
+#अघोषित	ELF_HWCAP
+#घोषणा	ELF_HWCAP		COMPAT_ELF_HWCAP
+#पूर्ण_अगर
 
-#ifdef	COMPAT_ELF_HWCAP2
-#undef	ELF_HWCAP2
-#define	ELF_HWCAP2		COMPAT_ELF_HWCAP2
-#endif
+#अगर_घोषित	COMPAT_ELF_HWCAP2
+#अघोषित	ELF_HWCAP2
+#घोषणा	ELF_HWCAP2		COMPAT_ELF_HWCAP2
+#पूर्ण_अगर
 
-#ifdef	COMPAT_ARCH_DLINFO
-#undef	ARCH_DLINFO
-#define	ARCH_DLINFO		COMPAT_ARCH_DLINFO
-#endif
+#अगर_घोषित	COMPAT_ARCH_DLINFO
+#अघोषित	ARCH_DLINFO
+#घोषणा	ARCH_DLINFO		COMPAT_ARCH_DLINFO
+#पूर्ण_अगर
 
-#ifdef	COMPAT_ELF_ET_DYN_BASE
-#undef	ELF_ET_DYN_BASE
-#define	ELF_ET_DYN_BASE		COMPAT_ELF_ET_DYN_BASE
-#endif
+#अगर_घोषित	COMPAT_ELF_ET_DYN_BASE
+#अघोषित	ELF_ET_DYN_BASE
+#घोषणा	ELF_ET_DYN_BASE		COMPAT_ELF_ET_DYN_BASE
+#पूर्ण_अगर
 
-#ifdef	COMPAT_ELF_PLAT_INIT
-#undef	ELF_PLAT_INIT
-#define	ELF_PLAT_INIT		COMPAT_ELF_PLAT_INIT
-#endif
+#अगर_घोषित	COMPAT_ELF_PLAT_INIT
+#अघोषित	ELF_PLAT_INIT
+#घोषणा	ELF_PLAT_INIT		COMPAT_ELF_PLAT_INIT
+#पूर्ण_अगर
 
-#ifdef	COMPAT_SET_PERSONALITY
-#undef	SET_PERSONALITY
-#define	SET_PERSONALITY		COMPAT_SET_PERSONALITY
-#endif
+#अगर_घोषित	COMPAT_SET_PERSONALITY
+#अघोषित	SET_PERSONALITY
+#घोषणा	SET_PERSONALITY		COMPAT_SET_PERSONALITY
+#पूर्ण_अगर
 
-#ifdef	compat_start_thread
-#define COMPAT_START_THREAD(ex, regs, new_ip, new_sp)	\
-	compat_start_thread(regs, new_ip, new_sp)
-#endif
+#अगर_घोषित	compat_start_thपढ़ो
+#घोषणा COMPAT_START_THREAD(ex, regs, new_ip, new_sp)	\
+	compat_start_thपढ़ो(regs, new_ip, new_sp)
+#पूर्ण_अगर
 
-#ifdef	COMPAT_START_THREAD
-#undef	START_THREAD
-#define START_THREAD		COMPAT_START_THREAD
-#endif
+#अगर_घोषित	COMPAT_START_THREAD
+#अघोषित	START_THREAD
+#घोषणा START_THREAD		COMPAT_START_THREAD
+#पूर्ण_अगर
 
-#ifdef compat_arch_setup_additional_pages
-#define COMPAT_ARCH_SETUP_ADDITIONAL_PAGES(bprm, ex, interpreter) \
-	compat_arch_setup_additional_pages(bprm, interpreter)
-#endif
+#अगर_घोषित compat_arch_setup_additional_pages
+#घोषणा COMPAT_ARCH_SETUP_ADDITIONAL_PAGES(bprm, ex, पूर्णांकerpreter) \
+	compat_arch_setup_additional_pages(bprm, पूर्णांकerpreter)
+#पूर्ण_अगर
 
-#ifdef	COMPAT_ARCH_SETUP_ADDITIONAL_PAGES
-#undef	ARCH_HAS_SETUP_ADDITIONAL_PAGES
-#define ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
-#undef	ARCH_SETUP_ADDITIONAL_PAGES
-#define	ARCH_SETUP_ADDITIONAL_PAGES COMPAT_ARCH_SETUP_ADDITIONAL_PAGES
-#endif
+#अगर_घोषित	COMPAT_ARCH_SETUP_ADDITIONAL_PAGES
+#अघोषित	ARCH_HAS_SETUP_ADDITIONAL_PAGES
+#घोषणा ARCH_HAS_SETUP_ADDITIONAL_PAGES 1
+#अघोषित	ARCH_SETUP_ADDITIONAL_PAGES
+#घोषणा	ARCH_SETUP_ADDITIONAL_PAGES COMPAT_ARCH_SETUP_ADDITIONAL_PAGES
+#पूर्ण_अगर
 
-#ifdef	compat_elf_read_implies_exec
-#undef	elf_read_implies_exec
-#define	elf_read_implies_exec compat_elf_read_implies_exec
-#endif
+#अगर_घोषित	compat_elf_पढ़ो_implies_exec
+#अघोषित	elf_पढ़ो_implies_exec
+#घोषणा	elf_पढ़ो_implies_exec compat_elf_पढ़ो_implies_exec
+#पूर्ण_अगर
 
 /*
  * Rename a few of the symbols that binfmt_elf.c will define.
- * These are all local so the names don't really matter, but it
+ * These are all local so the names करोn't really matter, but it
  * might make some debugging less confusing not to duplicate them.
  */
-#define elf_format		compat_elf_format
-#define init_elf_binfmt		init_compat_elf_binfmt
-#define exit_elf_binfmt		exit_compat_elf_binfmt
+#घोषणा elf_क्रमmat		compat_elf_क्रमmat
+#घोषणा init_elf_binfmt		init_compat_elf_binfmt
+#घोषणा निकास_elf_binfmt		निकास_compat_elf_binfmt
 
 /*
  * We share all the actual code with the native (64-bit) version.
  */
-#include "binfmt_elf.c"
+#समावेश "binfmt_elf.c"

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -6,129 +7,129 @@
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  *
- * General Purpose Timer Synthesizer clock implementation
+ * General Purpose Timer Synthesizer घड़ी implementation
  */
 
-#define pr_fmt(fmt) "clk-gpt-synth: " fmt
+#घोषणा pr_fmt(fmt) "clk-gpt-synth: " fmt
 
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश "clk.h"
 
-#define GPT_MSCALE_MASK		0xFFF
-#define GPT_NSCALE_SHIFT	12
-#define GPT_NSCALE_MASK		0xF
+#घोषणा GPT_MSCALE_MASK		0xFFF
+#घोषणा GPT_NSCALE_SHIFT	12
+#घोषणा GPT_NSCALE_MASK		0xF
 
 /*
- * DOC: General Purpose Timer Synthesizer clock
+ * DOC: General Purpose Timer Synthesizer घड़ी
  *
- * Calculates gpt synth clk rate for different values of mscale and nscale
+ * Calculates gpt synth clk rate क्रम dअगरferent values of mscale and nscale
  *
  * Fout= Fin/((2 ^ (N+1)) * (M+1))
  */
 
-#define to_clk_gpt(_hw) container_of(_hw, struct clk_gpt, hw)
+#घोषणा to_clk_gpt(_hw) container_of(_hw, काष्ठा clk_gpt, hw)
 
-static unsigned long gpt_calc_rate(struct clk_hw *hw, unsigned long prate,
-		int index)
-{
-	struct clk_gpt *gpt = to_clk_gpt(hw);
-	struct gpt_rate_tbl *rtbl = gpt->rtbl;
+अटल अचिन्हित दीर्घ gpt_calc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ prate,
+		पूर्णांक index)
+अणु
+	काष्ठा clk_gpt *gpt = to_clk_gpt(hw);
+	काष्ठा gpt_rate_tbl *rtbl = gpt->rtbl;
 
 	prate /= ((1 << (rtbl[index].nscale + 1)) * (rtbl[index].mscale + 1));
 
-	return prate;
-}
+	वापस prate;
+पूर्ण
 
-static long clk_gpt_round_rate(struct clk_hw *hw, unsigned long drate,
-		unsigned long *prate)
-{
-	struct clk_gpt *gpt = to_clk_gpt(hw);
-	int unused;
+अटल दीर्घ clk_gpt_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+		अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_gpt *gpt = to_clk_gpt(hw);
+	पूर्णांक unused;
 
-	return clk_round_rate_index(hw, drate, *prate, gpt_calc_rate,
+	वापस clk_round_rate_index(hw, drate, *prate, gpt_calc_rate,
 			gpt->rtbl_cnt, &unused);
-}
+पूर्ण
 
-static unsigned long clk_gpt_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct clk_gpt *gpt = to_clk_gpt(hw);
-	unsigned long flags = 0;
-	unsigned int div = 1, val;
+अटल अचिन्हित दीर्घ clk_gpt_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_gpt *gpt = to_clk_gpt(hw);
+	अचिन्हित दीर्घ flags = 0;
+	अचिन्हित पूर्णांक भाग = 1, val;
 
-	if (gpt->lock)
+	अगर (gpt->lock)
 		spin_lock_irqsave(gpt->lock, flags);
 
-	val = readl_relaxed(gpt->reg);
+	val = पढ़ोl_relaxed(gpt->reg);
 
-	if (gpt->lock)
+	अगर (gpt->lock)
 		spin_unlock_irqrestore(gpt->lock, flags);
 
-	div += val & GPT_MSCALE_MASK;
-	div *= 1 << (((val >> GPT_NSCALE_SHIFT) & GPT_NSCALE_MASK) + 1);
+	भाग += val & GPT_MSCALE_MASK;
+	भाग *= 1 << (((val >> GPT_NSCALE_SHIFT) & GPT_NSCALE_MASK) + 1);
 
-	if (!div)
-		return 0;
+	अगर (!भाग)
+		वापस 0;
 
-	return parent_rate / div;
-}
+	वापस parent_rate / भाग;
+पूर्ण
 
-/* Configures new clock rate of gpt */
-static int clk_gpt_set_rate(struct clk_hw *hw, unsigned long drate,
-				unsigned long prate)
-{
-	struct clk_gpt *gpt = to_clk_gpt(hw);
-	struct gpt_rate_tbl *rtbl = gpt->rtbl;
-	unsigned long flags = 0, val;
-	int i;
+/* Configures new घड़ी rate of gpt */
+अटल पूर्णांक clk_gpt_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+				अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा clk_gpt *gpt = to_clk_gpt(hw);
+	काष्ठा gpt_rate_tbl *rtbl = gpt->rtbl;
+	अचिन्हित दीर्घ flags = 0, val;
+	पूर्णांक i;
 
 	clk_round_rate_index(hw, drate, prate, gpt_calc_rate, gpt->rtbl_cnt,
 			&i);
 
-	if (gpt->lock)
+	अगर (gpt->lock)
 		spin_lock_irqsave(gpt->lock, flags);
 
-	val = readl(gpt->reg) & ~GPT_MSCALE_MASK;
+	val = पढ़ोl(gpt->reg) & ~GPT_MSCALE_MASK;
 	val &= ~(GPT_NSCALE_MASK << GPT_NSCALE_SHIFT);
 
 	val |= rtbl[i].mscale & GPT_MSCALE_MASK;
 	val |= (rtbl[i].nscale & GPT_NSCALE_MASK) << GPT_NSCALE_SHIFT;
 
-	writel_relaxed(val, gpt->reg);
+	ग_लिखोl_relaxed(val, gpt->reg);
 
-	if (gpt->lock)
+	अगर (gpt->lock)
 		spin_unlock_irqrestore(gpt->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_gpt_ops = {
+अटल स्थिर काष्ठा clk_ops clk_gpt_ops = अणु
 	.recalc_rate = clk_gpt_recalc_rate,
 	.round_rate = clk_gpt_round_rate,
 	.set_rate = clk_gpt_set_rate,
-};
+पूर्ण;
 
-struct clk *clk_register_gpt(const char *name, const char *parent_name, unsigned
-		long flags, void __iomem *reg, struct gpt_rate_tbl *rtbl, u8
+काष्ठा clk *clk_रेजिस्टर_gpt(स्थिर अक्षर *name, स्थिर अक्षर *parent_name, अचिन्हित
+		दीर्घ flags, व्योम __iomem *reg, काष्ठा gpt_rate_tbl *rtbl, u8
 		rtbl_cnt, spinlock_t *lock)
-{
-	struct clk_init_data init;
-	struct clk_gpt *gpt;
-	struct clk *clk;
+अणु
+	काष्ठा clk_init_data init;
+	काष्ठा clk_gpt *gpt;
+	काष्ठा clk *clk;
 
-	if (!name || !parent_name || !reg || !rtbl || !rtbl_cnt) {
+	अगर (!name || !parent_name || !reg || !rtbl || !rtbl_cnt) अणु
 		pr_err("Invalid arguments passed\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	gpt = kzalloc(sizeof(*gpt), GFP_KERNEL);
-	if (!gpt)
-		return ERR_PTR(-ENOMEM);
+	gpt = kzalloc(माप(*gpt), GFP_KERNEL);
+	अगर (!gpt)
+		वापस ERR_PTR(-ENOMEM);
 
-	/* struct clk_gpt assignments */
+	/* काष्ठा clk_gpt assignments */
 	gpt->reg = reg;
 	gpt->rtbl = rtbl;
 	gpt->rtbl_cnt = rtbl_cnt;
@@ -141,12 +142,12 @@ struct clk *clk_register_gpt(const char *name, const char *parent_name, unsigned
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	clk = clk_register(NULL, &gpt->hw);
-	if (!IS_ERR_OR_NULL(clk))
-		return clk;
+	clk = clk_रेजिस्टर(शून्य, &gpt->hw);
+	अगर (!IS_ERR_OR_शून्य(clk))
+		वापस clk;
 
 	pr_err("clk register failed\n");
-	kfree(gpt);
+	kमुक्त(gpt);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_ENGINE_PM_H
-#define INTEL_ENGINE_PM_H
+#अगर_अघोषित INTEL_ENGINE_PM_H
+#घोषणा INTEL_ENGINE_PM_H
 
-#include "i915_request.h"
-#include "intel_engine_types.h"
-#include "intel_wakeref.h"
+#समावेश "i915_request.h"
+#समावेश "intel_engine_types.h"
+#समावेश "intel_wakeref.h"
 
-static inline bool
-intel_engine_pm_is_awake(const struct intel_engine_cs *engine)
-{
-	return intel_wakeref_is_active(&engine->wakeref);
-}
+अटल अंतरभूत bool
+पूर्णांकel_engine_pm_is_awake(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	वापस पूर्णांकel_wakeref_is_active(&engine->wakeref);
+पूर्ण
 
-static inline void intel_engine_pm_get(struct intel_engine_cs *engine)
-{
-	intel_wakeref_get(&engine->wakeref);
-}
+अटल अंतरभूत व्योम पूर्णांकel_engine_pm_get(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांकel_wakeref_get(&engine->wakeref);
+पूर्ण
 
-static inline bool intel_engine_pm_get_if_awake(struct intel_engine_cs *engine)
-{
-	return intel_wakeref_get_if_active(&engine->wakeref);
-}
+अटल अंतरभूत bool पूर्णांकel_engine_pm_get_अगर_awake(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	वापस पूर्णांकel_wakeref_get_अगर_active(&engine->wakeref);
+पूर्ण
 
-static inline void intel_engine_pm_put(struct intel_engine_cs *engine)
-{
-	intel_wakeref_put(&engine->wakeref);
-}
+अटल अंतरभूत व्योम पूर्णांकel_engine_pm_put(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांकel_wakeref_put(&engine->wakeref);
+पूर्ण
 
-static inline void intel_engine_pm_put_async(struct intel_engine_cs *engine)
-{
-	intel_wakeref_put_async(&engine->wakeref);
-}
+अटल अंतरभूत व्योम पूर्णांकel_engine_pm_put_async(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांकel_wakeref_put_async(&engine->wakeref);
+पूर्ण
 
-static inline void intel_engine_pm_put_delay(struct intel_engine_cs *engine,
-					     unsigned long delay)
-{
-	intel_wakeref_put_delay(&engine->wakeref, delay);
-}
+अटल अंतरभूत व्योम पूर्णांकel_engine_pm_put_delay(काष्ठा पूर्णांकel_engine_cs *engine,
+					     अचिन्हित दीर्घ delay)
+अणु
+	पूर्णांकel_wakeref_put_delay(&engine->wakeref, delay);
+पूर्ण
 
-static inline void intel_engine_pm_flush(struct intel_engine_cs *engine)
-{
-	intel_wakeref_unlock_wait(&engine->wakeref);
-}
+अटल अंतरभूत व्योम पूर्णांकel_engine_pm_flush(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांकel_wakeref_unlock_रुको(&engine->wakeref);
+पूर्ण
 
-static inline struct i915_request *
-intel_engine_create_kernel_request(struct intel_engine_cs *engine)
-{
-	struct i915_request *rq;
+अटल अंतरभूत काष्ठा i915_request *
+पूर्णांकel_engine_create_kernel_request(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_request *rq;
 
 	/*
 	 * The engine->kernel_context is special as it is used inside
@@ -60,13 +61,13 @@ intel_engine_create_kernel_request(struct intel_engine_cs *engine)
 	 * outside of the barrier, we must manually handle the
 	 * engine wakeref to serialise with the use inside.
 	 */
-	intel_engine_pm_get(engine);
+	पूर्णांकel_engine_pm_get(engine);
 	rq = i915_request_create(engine->kernel_context);
-	intel_engine_pm_put(engine);
+	पूर्णांकel_engine_pm_put(engine);
 
-	return rq;
-}
+	वापस rq;
+पूर्ण
 
-void intel_engine_init__pm(struct intel_engine_cs *engine);
+व्योम पूर्णांकel_engine_init__pm(काष्ठा पूर्णांकel_engine_cs *engine);
 
-#endif /* INTEL_ENGINE_PM_H */
+#पूर्ण_अगर /* INTEL_ENGINE_PM_H */

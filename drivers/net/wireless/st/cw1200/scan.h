@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Scan interface for ST-Ericsson CW1200 mac80211 drivers
+ * Scan पूर्णांकerface क्रम ST-Ericsson CW1200 mac80211 drivers
  *
  * Copyright (c) 2010, ST-Ericsson
  * Author: Dmitry Tarnyagin <dmitry.tarnyagin@lockless.no>
  */
 
-#ifndef SCAN_H_INCLUDED
-#define SCAN_H_INCLUDED
+#अगर_अघोषित SCAN_H_INCLUDED
+#घोषणा SCAN_H_INCLUDED
 
-#include <linux/semaphore.h>
-#include "wsm.h"
+#समावेश <linux/semaphore.h>
+#समावेश "wsm.h"
 
-/* external */ struct sk_buff;
-/* external */ struct cfg80211_scan_request;
-/* external */ struct ieee80211_channel;
-/* external */ struct ieee80211_hw;
-/* external */ struct work_struct;
+/* बाह्यal */ काष्ठा sk_buff;
+/* बाह्यal */ काष्ठा cfg80211_scan_request;
+/* बाह्यal */ काष्ठा ieee80211_channel;
+/* बाह्यal */ काष्ठा ieee80211_hw;
+/* बाह्यal */ काष्ठा work_काष्ठा;
 
-struct cw1200_scan {
-	struct semaphore lock;
-	struct work_struct work;
-	struct delayed_work timeout;
-	struct cfg80211_scan_request *req;
-	struct ieee80211_channel **begin;
-	struct ieee80211_channel **curr;
-	struct ieee80211_channel **end;
-	struct wsm_ssid ssids[WSM_SCAN_MAX_NUM_OF_SSIDS];
-	int output_power;
-	int n_ssids;
-	int status;
+काष्ठा cw1200_scan अणु
+	काष्ठा semaphore lock;
+	काष्ठा work_काष्ठा work;
+	काष्ठा delayed_work समयout;
+	काष्ठा cfg80211_scan_request *req;
+	काष्ठा ieee80211_channel **begin;
+	काष्ठा ieee80211_channel **curr;
+	काष्ठा ieee80211_channel **end;
+	काष्ठा wsm_ssid ssids[WSM_SCAN_MAX_NUM_OF_SSIDS];
+	पूर्णांक output_घातer;
+	पूर्णांक n_ssids;
+	पूर्णांक status;
 	atomic_t in_progress;
 	/* Direct probe requests workaround */
-	struct delayed_work probe_work;
-	int direct_probe;
-};
+	काष्ठा delayed_work probe_work;
+	पूर्णांक direct_probe;
+पूर्ण;
 
-int cw1200_hw_scan(struct ieee80211_hw *hw,
-		   struct ieee80211_vif *vif,
-		   struct ieee80211_scan_request *hw_req);
-void cw1200_scan_work(struct work_struct *work);
-void cw1200_scan_timeout(struct work_struct *work);
-void cw1200_clear_recent_scan_work(struct work_struct *work);
-void cw1200_scan_complete_cb(struct cw1200_common *priv,
-			     struct wsm_scan_complete *arg);
-void cw1200_scan_failed_cb(struct cw1200_common *priv);
+पूर्णांक cw1200_hw_scan(काष्ठा ieee80211_hw *hw,
+		   काष्ठा ieee80211_vअगर *vअगर,
+		   काष्ठा ieee80211_scan_request *hw_req);
+व्योम cw1200_scan_work(काष्ठा work_काष्ठा *work);
+व्योम cw1200_scan_समयout(काष्ठा work_काष्ठा *work);
+व्योम cw1200_clear_recent_scan_work(काष्ठा work_काष्ठा *work);
+व्योम cw1200_scan_complete_cb(काष्ठा cw1200_common *priv,
+			     काष्ठा wsm_scan_complete *arg);
+व्योम cw1200_scan_failed_cb(काष्ठा cw1200_common *priv);
 
 /* ******************************************************************** */
 /* Raw probe requests TX workaround					*/
-void cw1200_probe_work(struct work_struct *work);
+व्योम cw1200_probe_work(काष्ठा work_काष्ठा *work);
 
-#endif
+#पूर्ण_अगर

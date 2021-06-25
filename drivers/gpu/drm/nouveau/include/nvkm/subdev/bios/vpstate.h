@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVBIOS_VPSTATE_H__
-#define __NVBIOS_VPSTATE_H__
-struct nvbios_vpstate_header {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVBIOS_VPSTATE_H__
+#घोषणा __NVBIOS_VPSTATE_H__
+काष्ठा nvbios_vpstate_header अणु
 	u32 offset;
 
 	u8 version;
@@ -14,12 +15,12 @@ struct nvbios_vpstate_header {
 	u8 base_id;
 	u8 boost_id;
 	u8 tdp_id;
-};
-struct nvbios_vpstate_entry {
+पूर्ण;
+काष्ठा nvbios_vpstate_entry अणु
 	u8  pstate;
-	u16 clock_mhz;
-};
-int nvbios_vpstate_parse(struct nvkm_bios *, struct nvbios_vpstate_header *);
-int nvbios_vpstate_entry(struct nvkm_bios *, struct nvbios_vpstate_header *,
-			 u8 idx, struct nvbios_vpstate_entry *);
-#endif
+	u16 घड़ी_mhz;
+पूर्ण;
+पूर्णांक nvbios_vpstate_parse(काष्ठा nvkm_bios *, काष्ठा nvbios_vpstate_header *);
+पूर्णांक nvbios_vpstate_entry(काष्ठा nvkm_bios *, काष्ठा nvbios_vpstate_header *,
+			 u8 idx, काष्ठा nvbios_vpstate_entry *);
+#पूर्ण_अगर

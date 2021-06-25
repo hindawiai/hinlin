@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* linux/drivers/media/platform/s5p-jpeg/jpeg-core.c
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* linux/drivers/media/platक्रमm/s5p-jpeg/jpeg-core.c
  *
  * Copyright (c) 2011-2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -8,42 +9,42 @@
  * Author: Jacek Anaszewski <j.anaszewski@samsung.com>
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/gfp.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-rect.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-rect.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "jpeg-core.h"
-#include "jpeg-hw-s5p.h"
-#include "jpeg-hw-exynos4.h"
-#include "jpeg-hw-exynos3250.h"
-#include "jpeg-regs.h"
+#समावेश "jpeg-core.h"
+#समावेश "jpeg-hw-s5p.h"
+#समावेश "jpeg-hw-exynos4.h"
+#समावेश "jpeg-hw-exynos3250.h"
+#समावेश "jpeg-regs.h"
 
-static struct s5p_jpeg_fmt sjpeg_formats[] = {
-	{
+अटल काष्ठा s5p_jpeg_fmt sjpeg_क्रमmats[] = अणु
+	अणु
 		.fourcc		= V4L2_PIX_FMT_JPEG,
 		.flags		= SJPEG_FMT_FLAG_ENC_CAPTURE |
 				  SJPEG_FMT_FLAG_DEC_OUTPUT |
 				  SJPEG_FMT_FLAG_S5P |
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_FLAG_EXYNOS4,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YUYV,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -54,8 +55,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_S5P |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YUYV,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -66,8 +67,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YUYV,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -78,8 +79,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YVYU,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -90,8 +91,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YVYU,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -102,8 +103,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_UYVY,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -114,8 +115,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_VYUY,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -126,8 +127,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_RGB565,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -138,8 +139,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_RGB565,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -150,8 +151,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_RGB565X,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -162,8 +163,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_RGB565,
 		.depth		= 16,
 		.colplanes	= 1,
@@ -173,8 +174,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_S5P |
 				  SJPEG_FMT_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_RGB32,
 		.depth		= 32,
 		.colplanes	= 1,
@@ -185,8 +186,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_RGB32,
 		.depth		= 32,
 		.colplanes	= 1,
@@ -197,8 +198,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV24,
 		.depth		= 24,
 		.colplanes	= 2,
@@ -209,8 +210,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV42,
 		.depth		= 24,
 		.colplanes	= 2,
@@ -221,8 +222,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_444,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV61,
 		.depth		= 16,
 		.colplanes	= 2,
@@ -233,8 +234,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV16,
 		.depth		= 16,
 		.colplanes	= 2,
@@ -245,8 +246,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_422,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV12,
 		.depth		= 12,
 		.colplanes	= 2,
@@ -257,8 +258,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV12,
 		.depth		= 12,
 		.colplanes	= 2,
@@ -269,8 +270,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV12,
 		.depth		= 12,
 		.colplanes	= 2,
@@ -281,8 +282,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_S5P |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV21,
 		.depth		= 12,
 		.colplanes	= 2,
@@ -293,8 +294,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_NV21,
 		.depth		= 12,
 		.colplanes	= 2,
@@ -306,8 +307,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YUV420,
 		.depth		= 12,
 		.colplanes	= 3,
@@ -318,8 +319,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_YUV420,
 		.depth		= 12,
 		.colplanes	= 3,
@@ -330,8 +331,8 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS3250 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc		= V4L2_PIX_FMT_GREY,
 		.depth		= 8,
 		.colplanes	= 1,
@@ -340,12 +341,12 @@ static struct s5p_jpeg_fmt sjpeg_formats[] = {
 				  SJPEG_FMT_FLAG_EXYNOS4 |
 				  SJPEG_FMT_NON_RGB,
 		.subsampling	= V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY,
-	},
-};
-#define SJPEG_NUM_FORMATS ARRAY_SIZE(sjpeg_formats)
+	पूर्ण,
+पूर्ण;
+#घोषणा SJPEG_NUM_FORMATS ARRAY_SIZE(sjpeg_क्रमmats)
 
-static const unsigned char qtbl_luminance[4][64] = {
-	{/*level 0 - high compression quality */
+अटल स्थिर अचिन्हित अक्षर qtbl_luminance[4][64] = अणु
+	अणु/*level 0 - high compression quality */
 		20, 16, 25, 39, 50, 46, 62, 68,
 		16, 18, 23, 38, 38, 53, 65, 68,
 		25, 23, 31, 38, 53, 65, 68, 68,
@@ -354,8 +355,8 @@ static const unsigned char qtbl_luminance[4][64] = {
 		46, 53, 65, 68, 68, 68, 68, 68,
 		62, 65, 68, 68, 68, 68, 68, 68,
 		68, 68, 68, 68, 68, 68, 68, 68
-	},
-	{/* level 1 */
+	पूर्ण,
+	अणु/* level 1 */
 		16, 11, 11, 16, 23, 27, 31, 30,
 		11, 12, 12, 15, 20, 23, 23, 30,
 		11, 12, 13, 16, 23, 26, 35, 47,
@@ -364,8 +365,8 @@ static const unsigned char qtbl_luminance[4][64] = {
 		27, 23, 26, 37, 51, 64, 64, 64,
 		31, 23, 35, 47, 64, 64, 64, 64,
 		30, 30, 47, 64, 64, 64, 64, 64
-	},
-	{/* level 2 */
+	पूर्ण,
+	अणु/* level 2 */
 		12,  8,  8, 12, 17, 21, 24, 23,
 		 8,  9,  9, 11, 15, 19, 18, 23,
 		 8,  9, 10, 12, 19, 20, 27, 36,
@@ -374,8 +375,8 @@ static const unsigned char qtbl_luminance[4][64] = {
 		21, 19, 20, 28, 39, 51, 59, 59,
 		24, 18, 27, 36, 51, 59, 59, 59,
 		23, 23, 36, 53, 59, 59, 59, 59
-	},
-	{/* level 3 - low compression quality */
+	पूर्ण,
+	अणु/* level 3 - low compression quality */
 		 8,  6,  6,  8, 12, 14, 16, 17,
 		 6,  6,  6,  8, 10, 13, 12, 15,
 		 6,  6,  7,  8, 13, 14, 18, 24,
@@ -384,11 +385,11 @@ static const unsigned char qtbl_luminance[4][64] = {
 		14, 13, 14, 19, 26, 34, 39, 39,
 		16, 12, 18, 24, 34, 39, 39, 39,
 		17, 15, 24, 35, 39, 39, 39, 39
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const unsigned char qtbl_chrominance[4][64] = {
-	{/*level 0 - high compression quality */
+अटल स्थिर अचिन्हित अक्षर qtbl_chrominance[4][64] = अणु
+	अणु/*level 0 - high compression quality */
 		21, 25, 32, 38, 54, 68, 68, 68,
 		25, 28, 24, 38, 54, 68, 68, 68,
 		32, 24, 32, 43, 66, 68, 68, 68,
@@ -397,8 +398,8 @@ static const unsigned char qtbl_chrominance[4][64] = {
 		68, 68, 68, 68, 68, 68, 68, 68,
 		68, 68, 68, 68, 68, 68, 68, 68,
 		68, 68, 68, 68, 68, 68, 68, 68
-	},
-	{/* level 1 */
+	पूर्ण,
+	अणु/* level 1 */
 		17, 15, 17, 21, 20, 26, 38, 48,
 		15, 19, 18, 17, 20, 26, 35, 43,
 		17, 18, 20, 22, 26, 30, 46, 53,
@@ -407,8 +408,8 @@ static const unsigned char qtbl_chrominance[4][64] = {
 		26, 26, 30, 39, 48, 63, 64, 64,
 		38, 35, 46, 53, 64, 64, 64, 64,
 		48, 43, 53, 64, 64, 64, 64, 64
-	},
-	{/* level 2 */
+	पूर्ण,
+	अणु/* level 2 */
 		13, 11, 13, 16, 20, 20, 29, 37,
 		11, 14, 14, 14, 16, 20, 26, 32,
 		13, 14, 15, 17, 20, 23, 35, 40,
@@ -417,8 +418,8 @@ static const unsigned char qtbl_chrominance[4][64] = {
 		20, 20, 23, 30, 37, 48, 59, 59,
 		29, 26, 35, 40, 50, 59, 59, 59,
 		37, 32, 40, 50, 59, 59, 59, 59
-	},
-	{/* level 3 - low compression quality */
+	पूर्ण,
+	अणु/* level 3 - low compression quality */
 		 9,  8,  9, 11, 14, 17, 19, 24,
 		 8, 10,  9, 11, 14, 13, 17, 22,
 		 9,  9, 13, 14, 13, 15, 23, 26,
@@ -427,20 +428,20 @@ static const unsigned char qtbl_chrominance[4][64] = {
 		17, 13, 15, 20, 24, 32, 39, 39,
 		19, 17, 23, 26, 33, 39, 39, 39,
 		24, 22, 26, 33, 39, 39, 39, 39
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const unsigned char hdctbl0[16] = {
+अटल स्थिर अचिन्हित अक्षर hdctbl0[16] = अणु
 	0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0
-};
+पूर्ण;
 
-static const unsigned char hdctblg0[12] = {
+अटल स्थिर अचिन्हित अक्षर hdctblg0[12] = अणु
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0xa, 0xb
-};
-static const unsigned char hactbl0[16] = {
+पूर्ण;
+अटल स्थिर अचिन्हित अक्षर hactbl0[16] = अणु
 	0, 2, 1, 3, 3, 2, 4, 3, 5, 5, 4, 4, 0, 0, 1, 0x7d
-};
-static const unsigned char hactblg0[162] = {
+पूर्ण;
+अटल स्थिर अचिन्हित अक्षर hactblg0[162] = अणु
 	0x01, 0x02, 0x03, 0x00, 0x04, 0x11, 0x05, 0x12,
 	0x21, 0x31, 0x41, 0x06, 0x13, 0x51, 0x61, 0x07,
 	0x22, 0x71, 0x14, 0x32, 0x81, 0x91, 0xa1, 0x08,
@@ -462,21 +463,21 @@ static const unsigned char hactblg0[162] = {
 	0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
 	0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
 	0xf9, 0xfa
-};
+पूर्ण;
 
 /*
- * Fourcc downgrade schema lookup tables for 422 and 420
+ * Fourcc करोwngrade schema lookup tables क्रम 422 and 420
  * chroma subsampling - fourcc on each position maps on the
  * fourcc from the table fourcc_to_dwngrd_schema_id which allows
- * to get the most suitable fourcc counterpart for the given
- * downgraded subsampling property.
+ * to get the most suitable fourcc counterpart क्रम the given
+ * करोwngraded subsampling property.
  */
-static const u32 subs422_fourcc_dwngrd_schema[] = {
+अटल स्थिर u32 subs422_fourcc_dwngrd_schema[] = अणु
 	V4L2_PIX_FMT_NV16,
 	V4L2_PIX_FMT_NV61,
-};
+पूर्ण;
 
-static const u32 subs420_fourcc_dwngrd_schema[] = {
+अटल स्थिर u32 subs420_fourcc_dwngrd_schema[] = अणु
 	V4L2_PIX_FMT_NV12,
 	V4L2_PIX_FMT_NV21,
 	V4L2_PIX_FMT_NV12,
@@ -487,14 +488,14 @@ static const u32 subs420_fourcc_dwngrd_schema[] = {
 	V4L2_PIX_FMT_GREY,
 	V4L2_PIX_FMT_GREY,
 	V4L2_PIX_FMT_GREY,
-};
+पूर्ण;
 
 /*
- * Lookup table for translation of a fourcc to the position
- * of its downgraded counterpart in the *fourcc_dwngrd_schema
+ * Lookup table क्रम translation of a fourcc to the position
+ * of its करोwngraded counterpart in the *fourcc_dwngrd_schema
  * tables.
  */
-static const u32 fourcc_to_dwngrd_schema_id[] = {
+अटल स्थिर u32 fourcc_to_dwngrd_schema_id[] = अणु
 	V4L2_PIX_FMT_NV24,
 	V4L2_PIX_FMT_NV42,
 	V4L2_PIX_FMT_NV16,
@@ -505,67 +506,67 @@ static const u32 fourcc_to_dwngrd_schema_id[] = {
 	V4L2_PIX_FMT_NV21,
 	V4L2_PIX_FMT_YUV420,
 	V4L2_PIX_FMT_GREY,
-};
+पूर्ण;
 
-static int s5p_jpeg_get_dwngrd_sch_id_by_fourcc(u32 fourcc)
-{
-	int i;
+अटल पूर्णांक s5p_jpeg_get_dwngrd_sch_id_by_fourcc(u32 fourcc)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(fourcc_to_dwngrd_schema_id); ++i) {
-		if (fourcc_to_dwngrd_schema_id[i] == fourcc)
-			return i;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(fourcc_to_dwngrd_schema_id); ++i) अणु
+		अगर (fourcc_to_dwngrd_schema_id[i] == fourcc)
+			वापस i;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int s5p_jpeg_adjust_fourcc_to_subsampling(
-					enum v4l2_jpeg_chroma_subsampling subs,
+अटल पूर्णांक s5p_jpeg_adjust_fourcc_to_subsampling(
+					क्रमागत v4l2_jpeg_chroma_subsampling subs,
 					u32 in_fourcc,
 					u32 *out_fourcc,
-					struct s5p_jpeg_ctx *ctx)
-{
-	int dwngrd_sch_id;
+					काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	पूर्णांक dwngrd_sch_id;
 
-	if (ctx->subsampling != V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY) {
+	अगर (ctx->subsampling != V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY) अणु
 		dwngrd_sch_id =
 			s5p_jpeg_get_dwngrd_sch_id_by_fourcc(in_fourcc);
-		if (dwngrd_sch_id < 0)
-			return -EINVAL;
-	}
+		अगर (dwngrd_sch_id < 0)
+			वापस -EINVAL;
+	पूर्ण
 
-	switch (ctx->subsampling) {
-	case V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY:
+	चयन (ctx->subsampling) अणु
+	हाल V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY:
 		*out_fourcc = V4L2_PIX_FMT_GREY;
-		break;
-	case V4L2_JPEG_CHROMA_SUBSAMPLING_420:
-		if (dwngrd_sch_id >
+		अवरोध;
+	हाल V4L2_JPEG_CHROMA_SUBSAMPLING_420:
+		अगर (dwngrd_sch_id >
 				ARRAY_SIZE(subs420_fourcc_dwngrd_schema) - 1)
-			return -EINVAL;
+			वापस -EINVAL;
 		*out_fourcc = subs420_fourcc_dwngrd_schema[dwngrd_sch_id];
-		break;
-	case V4L2_JPEG_CHROMA_SUBSAMPLING_422:
-		if (dwngrd_sch_id >
+		अवरोध;
+	हाल V4L2_JPEG_CHROMA_SUBSAMPLING_422:
+		अगर (dwngrd_sch_id >
 				ARRAY_SIZE(subs422_fourcc_dwngrd_schema) - 1)
-			return -EINVAL;
+			वापस -EINVAL;
 		*out_fourcc = subs422_fourcc_dwngrd_schema[dwngrd_sch_id];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*out_fourcc = V4L2_PIX_FMT_GREY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos4x12_decoded_subsampling[] = {
+अटल पूर्णांक exynos4x12_decoded_subsampling[] = अणु
 	V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY,
 	V4L2_JPEG_CHROMA_SUBSAMPLING_444,
 	V4L2_JPEG_CHROMA_SUBSAMPLING_422,
 	V4L2_JPEG_CHROMA_SUBSAMPLING_420,
-};
+पूर्ण;
 
-static int exynos3250_decoded_subsampling[] = {
+अटल पूर्णांक exynos3250_decoded_subsampling[] = अणु
 	V4L2_JPEG_CHROMA_SUBSAMPLING_444,
 	V4L2_JPEG_CHROMA_SUBSAMPLING_422,
 	V4L2_JPEG_CHROMA_SUBSAMPLING_420,
@@ -573,143 +574,143 @@ static int exynos3250_decoded_subsampling[] = {
 	-1,
 	-1,
 	V4L2_JPEG_CHROMA_SUBSAMPLING_411,
-};
+पूर्ण;
 
-static inline struct s5p_jpeg_ctx *ctrl_to_ctx(struct v4l2_ctrl *c)
-{
-	return container_of(c->handler, struct s5p_jpeg_ctx, ctrl_handler);
-}
+अटल अंतरभूत काष्ठा s5p_jpeg_ctx *ctrl_to_ctx(काष्ठा v4l2_ctrl *c)
+अणु
+	वापस container_of(c->handler, काष्ठा s5p_jpeg_ctx, ctrl_handler);
+पूर्ण
 
-static inline struct s5p_jpeg_ctx *fh_to_ctx(struct v4l2_fh *fh)
-{
-	return container_of(fh, struct s5p_jpeg_ctx, fh);
-}
+अटल अंतरभूत काष्ठा s5p_jpeg_ctx *fh_to_ctx(काष्ठा v4l2_fh *fh)
+अणु
+	वापस container_of(fh, काष्ठा s5p_jpeg_ctx, fh);
+पूर्ण
 
-static int s5p_jpeg_to_user_subsampling(struct s5p_jpeg_ctx *ctx)
-{
-	switch (ctx->jpeg->variant->version) {
-	case SJPEG_S5P:
+अटल पूर्णांक s5p_jpeg_to_user_subsampling(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	चयन (ctx->jpeg->variant->version) अणु
+	हाल SJPEG_S5P:
 		WARN_ON(ctx->subsampling > 3);
-		if (ctx->subsampling > 2)
-			return V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY;
-		return ctx->subsampling;
-	case SJPEG_EXYNOS3250:
-	case SJPEG_EXYNOS5420:
+		अगर (ctx->subsampling > 2)
+			वापस V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY;
+		वापस ctx->subsampling;
+	हाल SJPEG_EXYNOS3250:
+	हाल SJPEG_EXYNOS5420:
 		WARN_ON(ctx->subsampling > 6);
-		if (ctx->subsampling > 3)
-			return V4L2_JPEG_CHROMA_SUBSAMPLING_411;
-		return exynos3250_decoded_subsampling[ctx->subsampling];
-	case SJPEG_EXYNOS4:
+		अगर (ctx->subsampling > 3)
+			वापस V4L2_JPEG_CHROMA_SUBSAMPLING_411;
+		वापस exynos3250_decoded_subsampling[ctx->subsampling];
+	हाल SJPEG_EXYNOS4:
 		WARN_ON(ctx->subsampling > 3);
-		if (ctx->subsampling > 2)
-			return V4L2_JPEG_CHROMA_SUBSAMPLING_420;
-		return exynos4x12_decoded_subsampling[ctx->subsampling];
-	case SJPEG_EXYNOS5433:
-		return ctx->subsampling; /* parsed from header */
-	default:
+		अगर (ctx->subsampling > 2)
+			वापस V4L2_JPEG_CHROMA_SUBSAMPLING_420;
+		वापस exynos4x12_decoded_subsampling[ctx->subsampling];
+	हाल SJPEG_EXYNOS5433:
+		वापस ctx->subsampling; /* parsed from header */
+	शेष:
 		WARN_ON(ctx->subsampling > 3);
-		return V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY;
-	}
-}
+		वापस V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY;
+	पूर्ण
+पूर्ण
 
-static inline void s5p_jpeg_set_qtbl(void __iomem *regs,
-				     const unsigned char *qtbl,
-				     unsigned long tab, int len)
-{
-	int i;
+अटल अंतरभूत व्योम s5p_jpeg_set_qtbl(व्योम __iomem *regs,
+				     स्थिर अचिन्हित अक्षर *qtbl,
+				     अचिन्हित दीर्घ tab, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++)
-		writel((unsigned int)qtbl[i], regs + tab + (i * 0x04));
-}
+	क्रम (i = 0; i < len; i++)
+		ग_लिखोl((अचिन्हित पूर्णांक)qtbl[i], regs + tab + (i * 0x04));
+पूर्ण
 
-static inline void s5p_jpeg_set_qtbl_lum(void __iomem *regs, int quality)
-{
-	/* this driver fills quantisation table 0 with data for luma */
+अटल अंतरभूत व्योम s5p_jpeg_set_qtbl_lum(व्योम __iomem *regs, पूर्णांक quality)
+अणु
+	/* this driver fills quantisation table 0 with data क्रम luma */
 	s5p_jpeg_set_qtbl(regs, qtbl_luminance[quality],
 			  S5P_JPG_QTBL_CONTENT(0),
 			  ARRAY_SIZE(qtbl_luminance[quality]));
-}
+पूर्ण
 
-static inline void s5p_jpeg_set_qtbl_chr(void __iomem *regs, int quality)
-{
-	/* this driver fills quantisation table 1 with data for chroma */
+अटल अंतरभूत व्योम s5p_jpeg_set_qtbl_chr(व्योम __iomem *regs, पूर्णांक quality)
+अणु
+	/* this driver fills quantisation table 1 with data क्रम chroma */
 	s5p_jpeg_set_qtbl(regs, qtbl_chrominance[quality],
 			  S5P_JPG_QTBL_CONTENT(1),
 			  ARRAY_SIZE(qtbl_chrominance[quality]));
-}
+पूर्ण
 
-static inline void s5p_jpeg_set_htbl(void __iomem *regs,
-				     const unsigned char *htbl,
-				     unsigned long tab, int len)
-{
-	int i;
+अटल अंतरभूत व्योम s5p_jpeg_set_htbl(व्योम __iomem *regs,
+				     स्थिर अचिन्हित अक्षर *htbl,
+				     अचिन्हित दीर्घ tab, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++)
-		writel((unsigned int)htbl[i], regs + tab + (i * 0x04));
-}
+	क्रम (i = 0; i < len; i++)
+		ग_लिखोl((अचिन्हित पूर्णांक)htbl[i], regs + tab + (i * 0x04));
+पूर्ण
 
-static inline void s5p_jpeg_set_hdctbl(void __iomem *regs)
-{
-	/* this driver fills table 0 for this component */
+अटल अंतरभूत व्योम s5p_jpeg_set_hdctbl(व्योम __iomem *regs)
+अणु
+	/* this driver fills table 0 क्रम this component */
 	s5p_jpeg_set_htbl(regs, hdctbl0, S5P_JPG_HDCTBL(0),
 						ARRAY_SIZE(hdctbl0));
-}
+पूर्ण
 
-static inline void s5p_jpeg_set_hdctblg(void __iomem *regs)
-{
-	/* this driver fills table 0 for this component */
+अटल अंतरभूत व्योम s5p_jpeg_set_hdctblg(व्योम __iomem *regs)
+अणु
+	/* this driver fills table 0 क्रम this component */
 	s5p_jpeg_set_htbl(regs, hdctblg0, S5P_JPG_HDCTBLG(0),
 						ARRAY_SIZE(hdctblg0));
-}
+पूर्ण
 
-static inline void s5p_jpeg_set_hactbl(void __iomem *regs)
-{
-	/* this driver fills table 0 for this component */
+अटल अंतरभूत व्योम s5p_jpeg_set_hactbl(व्योम __iomem *regs)
+अणु
+	/* this driver fills table 0 क्रम this component */
 	s5p_jpeg_set_htbl(regs, hactbl0, S5P_JPG_HACTBL(0),
 						ARRAY_SIZE(hactbl0));
-}
+पूर्ण
 
-static inline void s5p_jpeg_set_hactblg(void __iomem *regs)
-{
-	/* this driver fills table 0 for this component */
+अटल अंतरभूत व्योम s5p_jpeg_set_hactblg(व्योम __iomem *regs)
+अणु
+	/* this driver fills table 0 क्रम this component */
 	s5p_jpeg_set_htbl(regs, hactblg0, S5P_JPG_HACTBLG(0),
 						ARRAY_SIZE(hactblg0));
-}
+पूर्ण
 
-static inline void exynos4_jpeg_set_tbl(void __iomem *regs,
-					const unsigned char *tbl,
-					unsigned long tab, int len)
-{
-	int i;
-	unsigned int dword;
+अटल अंतरभूत व्योम exynos4_jpeg_set_tbl(व्योम __iomem *regs,
+					स्थिर अचिन्हित अक्षर *tbl,
+					अचिन्हित दीर्घ tab, पूर्णांक len)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक dword;
 
-	for (i = 0; i < len; i += 4) {
+	क्रम (i = 0; i < len; i += 4) अणु
 		dword = tbl[i] |
 			(tbl[i + 1] << 8) |
 			(tbl[i + 2] << 16) |
 			(tbl[i + 3] << 24);
-		writel(dword, regs + tab + i);
-	}
-}
+		ग_लिखोl(dword, regs + tab + i);
+	पूर्ण
+पूर्ण
 
-static inline void exynos4_jpeg_set_qtbl_lum(void __iomem *regs, int quality)
-{
-	/* this driver fills quantisation table 0 with data for luma */
+अटल अंतरभूत व्योम exynos4_jpeg_set_qtbl_lum(व्योम __iomem *regs, पूर्णांक quality)
+अणु
+	/* this driver fills quantisation table 0 with data क्रम luma */
 	exynos4_jpeg_set_tbl(regs, qtbl_luminance[quality],
 			     EXYNOS4_QTBL_CONTENT(0),
 			     ARRAY_SIZE(qtbl_luminance[quality]));
-}
+पूर्ण
 
-static inline void exynos4_jpeg_set_qtbl_chr(void __iomem *regs, int quality)
-{
-	/* this driver fills quantisation table 1 with data for chroma */
+अटल अंतरभूत व्योम exynos4_jpeg_set_qtbl_chr(व्योम __iomem *regs, पूर्णांक quality)
+अणु
+	/* this driver fills quantisation table 1 with data क्रम chroma */
 	exynos4_jpeg_set_tbl(regs, qtbl_chrominance[quality],
 			     EXYNOS4_QTBL_CONTENT(1),
 			     ARRAY_SIZE(qtbl_chrominance[quality]));
-}
+पूर्ण
 
-static void exynos4_jpeg_set_huff_tbl(void __iomem *base)
-{
+अटल व्योम exynos4_jpeg_set_huff_tbl(व्योम __iomem *base)
+अणु
 	exynos4_jpeg_set_tbl(base, hdctbl0, EXYNOS4_HUFF_TBL_HDCLL,
 							ARRAY_SIZE(hdctbl0));
 	exynos4_jpeg_set_tbl(base, hdctbl0, EXYNOS4_HUFF_TBL_HDCCL,
@@ -726,209 +727,209 @@ static void exynos4_jpeg_set_huff_tbl(void __iomem *base)
 							ARRAY_SIZE(hactblg0));
 	exynos4_jpeg_set_tbl(base, hactblg0, EXYNOS4_HUFF_TBL_HACCV,
 							ARRAY_SIZE(hactblg0));
-}
+पूर्ण
 
-static inline int __exynos4_huff_tbl(int class, int id, bool lenval)
-{
+अटल अंतरभूत पूर्णांक __exynos4_huff_tbl(पूर्णांक class, पूर्णांक id, bool lenval)
+अणु
 	/*
 	 * class: 0 - DC, 1 - AC
 	 * id: 0 - Y, 1 - Cb/Cr
 	 */
-	if (class) {
-		if (id)
-			return lenval ? EXYNOS4_HUFF_TBL_HACCL :
+	अगर (class) अणु
+		अगर (id)
+			वापस lenval ? EXYNOS4_HUFF_TBL_HACCL :
 				EXYNOS4_HUFF_TBL_HACCV;
-		return lenval ? EXYNOS4_HUFF_TBL_HACLL : EXYNOS4_HUFF_TBL_HACLV;
+		वापस lenval ? EXYNOS4_HUFF_TBL_HACLL : EXYNOS4_HUFF_TBL_HACLV;
 
-	}
+	पूर्ण
 	/* class == 0 */
-	if (id)
-		return lenval ? EXYNOS4_HUFF_TBL_HDCCL : EXYNOS4_HUFF_TBL_HDCCV;
+	अगर (id)
+		वापस lenval ? EXYNOS4_HUFF_TBL_HDCCL : EXYNOS4_HUFF_TBL_HDCCV;
 
-	return lenval ? EXYNOS4_HUFF_TBL_HDCLL : EXYNOS4_HUFF_TBL_HDCLV;
-}
+	वापस lenval ? EXYNOS4_HUFF_TBL_HDCLL : EXYNOS4_HUFF_TBL_HDCLV;
+पूर्ण
 
-static inline int exynos4_huff_tbl_len(int class, int id)
-{
-	return __exynos4_huff_tbl(class, id, true);
-}
+अटल अंतरभूत पूर्णांक exynos4_huff_tbl_len(पूर्णांक class, पूर्णांक id)
+अणु
+	वापस __exynos4_huff_tbl(class, id, true);
+पूर्ण
 
-static inline int exynos4_huff_tbl_val(int class, int id)
-{
-	return __exynos4_huff_tbl(class, id, false);
-}
+अटल अंतरभूत पूर्णांक exynos4_huff_tbl_val(पूर्णांक class, पूर्णांक id)
+अणु
+	वापस __exynos4_huff_tbl(class, id, false);
+पूर्ण
 
-static int get_byte(struct s5p_jpeg_buffer *buf);
-static int get_word_be(struct s5p_jpeg_buffer *buf, unsigned int *word);
-static void skip(struct s5p_jpeg_buffer *buf, long len);
+अटल पूर्णांक get_byte(काष्ठा s5p_jpeg_buffer *buf);
+अटल पूर्णांक get_word_be(काष्ठा s5p_jpeg_buffer *buf, अचिन्हित पूर्णांक *word);
+अटल व्योम skip(काष्ठा s5p_jpeg_buffer *buf, दीर्घ len);
 
-static void exynos4_jpeg_parse_decode_h_tbl(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
-	struct s5p_jpeg_buffer jpeg_buffer;
-	unsigned int word;
-	int c, x, components;
+अटल व्योम exynos4_jpeg_parse_decode_h_tbl(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
+	काष्ठा s5p_jpeg_buffer jpeg_buffer;
+	अचिन्हित पूर्णांक word;
+	पूर्णांक c, x, components;
 
 	jpeg_buffer.size = 2; /* Ls */
 	jpeg_buffer.data =
-		(unsigned long)vb2_plane_vaddr(&vb->vb2_buf, 0) + ctx->out_q.sos + 2;
+		(अचिन्हित दीर्घ)vb2_plane_vaddr(&vb->vb2_buf, 0) + ctx->out_q.sos + 2;
 	jpeg_buffer.curr = 0;
 
 	word = 0;
 
-	if (get_word_be(&jpeg_buffer, &word))
-		return;
-	jpeg_buffer.size = (long)word - 2;
+	अगर (get_word_be(&jpeg_buffer, &word))
+		वापस;
+	jpeg_buffer.size = (दीर्घ)word - 2;
 	jpeg_buffer.data += 2;
 	jpeg_buffer.curr = 0;
 
 	components = get_byte(&jpeg_buffer);
-	if (components == -1)
-		return;
-	while (components--) {
+	अगर (components == -1)
+		वापस;
+	जबतक (components--) अणु
 		c = get_byte(&jpeg_buffer);
-		if (c == -1)
-			return;
+		अगर (c == -1)
+			वापस;
 		x = get_byte(&jpeg_buffer);
-		if (x == -1)
-			return;
+		अगर (x == -1)
+			वापस;
 		exynos4_jpeg_select_dec_h_tbl(jpeg->regs, c,
 					(((x >> 4) & 0x1) << 1) | (x & 0x1));
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static void exynos4_jpeg_parse_huff_tbl(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
-	struct s5p_jpeg_buffer jpeg_buffer;
-	unsigned int word;
-	int c, i, n, j;
+अटल व्योम exynos4_jpeg_parse_huff_tbl(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
+	काष्ठा s5p_jpeg_buffer jpeg_buffer;
+	अचिन्हित पूर्णांक word;
+	पूर्णांक c, i, n, j;
 
-	for (j = 0; j < ctx->out_q.dht.n; ++j) {
+	क्रम (j = 0; j < ctx->out_q.dht.n; ++j) अणु
 		jpeg_buffer.size = ctx->out_q.dht.len[j];
-		jpeg_buffer.data = (unsigned long)vb2_plane_vaddr(&vb->vb2_buf, 0) +
+		jpeg_buffer.data = (अचिन्हित दीर्घ)vb2_plane_vaddr(&vb->vb2_buf, 0) +
 				   ctx->out_q.dht.marker[j];
 		jpeg_buffer.curr = 0;
 
 		word = 0;
-		while (jpeg_buffer.curr < jpeg_buffer.size) {
-			char id, class;
+		जबतक (jpeg_buffer.curr < jpeg_buffer.size) अणु
+			अक्षर id, class;
 
 			c = get_byte(&jpeg_buffer);
-			if (c == -1)
-				return;
+			अगर (c == -1)
+				वापस;
 			id = c & 0xf;
 			class = (c >> 4) & 0xf;
 			n = 0;
-			for (i = 0; i < 16; ++i) {
+			क्रम (i = 0; i < 16; ++i) अणु
 				c = get_byte(&jpeg_buffer);
-				if (c == -1)
-					return;
+				अगर (c == -1)
+					वापस;
 				word |= c << ((i % 4) * 8);
-				if ((i + 1) % 4 == 0) {
-					writel(word, jpeg->regs +
+				अगर ((i + 1) % 4 == 0) अणु
+					ग_लिखोl(word, jpeg->regs +
 					exynos4_huff_tbl_len(class, id) +
 					(i / 4) * 4);
 					word = 0;
-				}
+				पूर्ण
 				n += c;
-			}
+			पूर्ण
 			word = 0;
-			for (i = 0; i < n; ++i) {
+			क्रम (i = 0; i < n; ++i) अणु
 				c = get_byte(&jpeg_buffer);
-				if (c == -1)
-					return;
+				अगर (c == -1)
+					वापस;
 				word |= c << ((i % 4) * 8);
-				if ((i + 1) % 4 == 0) {
-					writel(word, jpeg->regs +
+				अगर ((i + 1) % 4 == 0) अणु
+					ग_लिखोl(word, jpeg->regs +
 					exynos4_huff_tbl_val(class, id) +
 					(i / 4) * 4);
 					word = 0;
-				}
-			}
-			if (i % 4) {
-				writel(word, jpeg->regs +
+				पूर्ण
+			पूर्ण
+			अगर (i % 4) अणु
+				ग_लिखोl(word, jpeg->regs +
 				exynos4_huff_tbl_val(class, id) + (i / 4) * 4);
-			}
+			पूर्ण
 			word = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void exynos4_jpeg_parse_decode_q_tbl(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
-	struct s5p_jpeg_buffer jpeg_buffer;
-	int c, x, components;
+अटल व्योम exynos4_jpeg_parse_decode_q_tbl(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
+	काष्ठा s5p_jpeg_buffer jpeg_buffer;
+	पूर्णांक c, x, components;
 
 	jpeg_buffer.size = ctx->out_q.sof_len;
 	jpeg_buffer.data =
-		(unsigned long)vb2_plane_vaddr(&vb->vb2_buf, 0) + ctx->out_q.sof;
+		(अचिन्हित दीर्घ)vb2_plane_vaddr(&vb->vb2_buf, 0) + ctx->out_q.sof;
 	jpeg_buffer.curr = 0;
 
 	skip(&jpeg_buffer, 5); /* P, Y, X */
 	components = get_byte(&jpeg_buffer);
-	if (components == -1)
-		return;
+	अगर (components == -1)
+		वापस;
 
 	exynos4_jpeg_set_dec_components(jpeg->regs, components);
 
-	while (components--) {
+	जबतक (components--) अणु
 		c = get_byte(&jpeg_buffer);
-		if (c == -1)
-			return;
+		अगर (c == -1)
+			वापस;
 		skip(&jpeg_buffer, 1);
 		x = get_byte(&jpeg_buffer);
-		if (x == -1)
-			return;
+		अगर (x == -1)
+			वापस;
 		exynos4_jpeg_select_dec_q_tbl(jpeg->regs, c, x);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void exynos4_jpeg_parse_q_tbl(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
-	struct s5p_jpeg_buffer jpeg_buffer;
-	unsigned int word;
-	int c, i, j;
+अटल व्योम exynos4_jpeg_parse_q_tbl(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
+	काष्ठा s5p_jpeg_buffer jpeg_buffer;
+	अचिन्हित पूर्णांक word;
+	पूर्णांक c, i, j;
 
-	for (j = 0; j < ctx->out_q.dqt.n; ++j) {
+	क्रम (j = 0; j < ctx->out_q.dqt.n; ++j) अणु
 		jpeg_buffer.size = ctx->out_q.dqt.len[j];
-		jpeg_buffer.data = (unsigned long)vb2_plane_vaddr(&vb->vb2_buf, 0) +
+		jpeg_buffer.data = (अचिन्हित दीर्घ)vb2_plane_vaddr(&vb->vb2_buf, 0) +
 				   ctx->out_q.dqt.marker[j];
 		jpeg_buffer.curr = 0;
 
 		word = 0;
-		while (jpeg_buffer.size - jpeg_buffer.curr >= 65) {
-			char id;
+		जबतक (jpeg_buffer.size - jpeg_buffer.curr >= 65) अणु
+			अक्षर id;
 
 			c = get_byte(&jpeg_buffer);
-			if (c == -1)
-				return;
+			अगर (c == -1)
+				वापस;
 			id = c & 0xf;
 			/* nonzero means extended mode - not supported */
-			if ((c >> 4) & 0xf)
-				return;
-			for (i = 0; i < 64; ++i) {
+			अगर ((c >> 4) & 0xf)
+				वापस;
+			क्रम (i = 0; i < 64; ++i) अणु
 				c = get_byte(&jpeg_buffer);
-				if (c == -1)
-					return;
+				अगर (c == -1)
+					वापस;
 				word |= c << ((i % 4) * 8);
-				if ((i + 1) % 4 == 0) {
-					writel(word, jpeg->regs +
+				अगर ((i + 1) % 4 == 0) अणु
+					ग_लिखोl(word, jpeg->regs +
 					EXYNOS4_QTBL_CONTENT(id) + (i / 4) * 4);
 					word = 0;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			word = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * ============================================================================
@@ -936,100 +937,100 @@ static void exynos4_jpeg_parse_q_tbl(struct s5p_jpeg_ctx *ctx)
  * ============================================================================
  */
 
-static int queue_init(void *priv, struct vb2_queue *src_vq,
-		      struct vb2_queue *dst_vq);
-static struct s5p_jpeg_fmt *s5p_jpeg_find_format(struct s5p_jpeg_ctx *ctx,
-				__u32 pixelformat, unsigned int fmt_type);
-static int s5p_jpeg_controls_create(struct s5p_jpeg_ctx *ctx);
+अटल पूर्णांक queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+		      काष्ठा vb2_queue *dst_vq);
+अटल काष्ठा s5p_jpeg_fmt *s5p_jpeg_find_क्रमmat(काष्ठा s5p_jpeg_ctx *ctx,
+				__u32 pixelक्रमmat, अचिन्हित पूर्णांक fmt_type);
+अटल पूर्णांक s5p_jpeg_controls_create(काष्ठा s5p_jpeg_ctx *ctx);
 
-static int s5p_jpeg_open(struct file *file)
-{
-	struct s5p_jpeg *jpeg = video_drvdata(file);
-	struct video_device *vfd = video_devdata(file);
-	struct s5p_jpeg_ctx *ctx;
-	struct s5p_jpeg_fmt *out_fmt, *cap_fmt;
-	int ret = 0;
+अटल पूर्णांक s5p_jpeg_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा s5p_jpeg *jpeg = video_drvdata(file);
+	काष्ठा video_device *vfd = video_devdata(file);
+	काष्ठा s5p_jpeg_ctx *ctx;
+	काष्ठा s5p_jpeg_fmt *out_fmt, *cap_fmt;
+	पूर्णांक ret = 0;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
-	if (mutex_lock_interruptible(&jpeg->lock)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&jpeg->lock)) अणु
 		ret = -ERESTARTSYS;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
 	v4l2_fh_init(&ctx->fh, vfd);
 	/* Use separate control handler per file handle */
 	ctx->fh.ctrl_handler = &ctx->ctrl_handler;
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	v4l2_fh_add(&ctx->fh);
 
 	ctx->jpeg = jpeg;
-	if (vfd == jpeg->vfd_encoder) {
+	अगर (vfd == jpeg->vfd_encoder) अणु
 		ctx->mode = S5P_JPEG_ENCODE;
-		out_fmt = s5p_jpeg_find_format(ctx, V4L2_PIX_FMT_RGB565,
+		out_fmt = s5p_jpeg_find_क्रमmat(ctx, V4L2_PIX_FMT_RGB565,
 							FMT_TYPE_OUTPUT);
-		cap_fmt = s5p_jpeg_find_format(ctx, V4L2_PIX_FMT_JPEG,
+		cap_fmt = s5p_jpeg_find_क्रमmat(ctx, V4L2_PIX_FMT_JPEG,
 							FMT_TYPE_CAPTURE);
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx->mode = S5P_JPEG_DECODE;
-		out_fmt = s5p_jpeg_find_format(ctx, V4L2_PIX_FMT_JPEG,
+		out_fmt = s5p_jpeg_find_क्रमmat(ctx, V4L2_PIX_FMT_JPEG,
 							FMT_TYPE_OUTPUT);
-		cap_fmt = s5p_jpeg_find_format(ctx, V4L2_PIX_FMT_YUYV,
+		cap_fmt = s5p_jpeg_find_क्रमmat(ctx, V4L2_PIX_FMT_YUYV,
 							FMT_TYPE_CAPTURE);
 		ctx->scale_factor = EXYNOS3250_DEC_SCALE_FACTOR_8_8;
-	}
+	पूर्ण
 
 	ctx->fh.m2m_ctx = v4l2_m2m_ctx_init(jpeg->m2m_dev, ctx, queue_init);
-	if (IS_ERR(ctx->fh.m2m_ctx)) {
+	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
 		ret = PTR_ERR(ctx->fh.m2m_ctx);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ctx->out_q.fmt = out_fmt;
 	ctx->cap_q.fmt = cap_fmt;
 
 	ret = s5p_jpeg_controls_create(ctx);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	mutex_unlock(&jpeg->lock);
-	return 0;
+	वापस 0;
 
 error:
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
+	v4l2_fh_निकास(&ctx->fh);
 	mutex_unlock(&jpeg->lock);
-free:
-	kfree(ctx);
-	return ret;
-}
+मुक्त:
+	kमुक्त(ctx);
+	वापस ret;
+पूर्ण
 
-static int s5p_jpeg_release(struct file *file)
-{
-	struct s5p_jpeg *jpeg = video_drvdata(file);
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(file->private_data);
+अटल पूर्णांक s5p_jpeg_release(काष्ठा file *file)
+अणु
+	काष्ठा s5p_jpeg *jpeg = video_drvdata(file);
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(file->निजी_data);
 
 	mutex_lock(&jpeg->lock);
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
-	v4l2_ctrl_handler_free(&ctx->ctrl_handler);
+	v4l2_ctrl_handler_मुक्त(&ctx->ctrl_handler);
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
-	kfree(ctx);
+	v4l2_fh_निकास(&ctx->fh);
+	kमुक्त(ctx);
 	mutex_unlock(&jpeg->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations s5p_jpeg_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations s5p_jpeg_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= s5p_jpeg_open,
+	.खोलो		= s5p_jpeg_खोलो,
 	.release	= s5p_jpeg_release,
 	.poll		= v4l2_m2m_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= v4l2_m2m_fop_mmap,
-};
+पूर्ण;
 
 /*
  * ============================================================================
@@ -1037,365 +1038,365 @@ static const struct v4l2_file_operations s5p_jpeg_fops = {
  * ============================================================================
  */
 
-static int get_byte(struct s5p_jpeg_buffer *buf)
-{
-	if (buf->curr >= buf->size)
-		return -1;
+अटल पूर्णांक get_byte(काष्ठा s5p_jpeg_buffer *buf)
+अणु
+	अगर (buf->curr >= buf->size)
+		वापस -1;
 
-	return ((unsigned char *)buf->data)[buf->curr++];
-}
+	वापस ((अचिन्हित अक्षर *)buf->data)[buf->curr++];
+पूर्ण
 
-static int get_word_be(struct s5p_jpeg_buffer *buf, unsigned int *word)
-{
-	unsigned int temp;
-	int byte;
+अटल पूर्णांक get_word_be(काष्ठा s5p_jpeg_buffer *buf, अचिन्हित पूर्णांक *word)
+अणु
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक byte;
 
 	byte = get_byte(buf);
-	if (byte == -1)
-		return -1;
+	अगर (byte == -1)
+		वापस -1;
 	temp = byte << 8;
 	byte = get_byte(buf);
-	if (byte == -1)
-		return -1;
-	*word = (unsigned int)byte | temp;
-	return 0;
-}
+	अगर (byte == -1)
+		वापस -1;
+	*word = (अचिन्हित पूर्णांक)byte | temp;
+	वापस 0;
+पूर्ण
 
-static void skip(struct s5p_jpeg_buffer *buf, long len)
-{
-	if (len <= 0)
-		return;
+अटल व्योम skip(काष्ठा s5p_jpeg_buffer *buf, दीर्घ len)
+अणु
+	अगर (len <= 0)
+		वापस;
 
-	while (len--)
+	जबतक (len--)
 		get_byte(buf);
-}
+पूर्ण
 
-static bool s5p_jpeg_subsampling_decode(struct s5p_jpeg_ctx *ctx,
-					unsigned int subsampling)
-{
-	unsigned int version;
+अटल bool s5p_jpeg_subsampling_decode(काष्ठा s5p_jpeg_ctx *ctx,
+					अचिन्हित पूर्णांक subsampling)
+अणु
+	अचिन्हित पूर्णांक version;
 
-	switch (subsampling) {
-	case 0x11:
+	चयन (subsampling) अणु
+	हाल 0x11:
 		ctx->subsampling = V4L2_JPEG_CHROMA_SUBSAMPLING_444;
-		break;
-	case 0x21:
+		अवरोध;
+	हाल 0x21:
 		ctx->subsampling = V4L2_JPEG_CHROMA_SUBSAMPLING_422;
-		break;
-	case 0x22:
+		अवरोध;
+	हाल 0x22:
 		ctx->subsampling = V4L2_JPEG_CHROMA_SUBSAMPLING_420;
-		break;
-	case 0x33:
+		अवरोध;
+	हाल 0x33:
 		ctx->subsampling = V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY;
-		break;
-	case 0x41:
+		अवरोध;
+	हाल 0x41:
 		/*
 		 * 4:1:1 subsampling only supported by 3250, 5420, and 5433
 		 * variants
 		 */
 		version = ctx->jpeg->variant->version;
-		if (version != SJPEG_EXYNOS3250 &&
+		अगर (version != SJPEG_EXYNOS3250 &&
 		    version != SJPEG_EXYNOS5420 &&
 		    version != SJPEG_EXYNOS5433)
-			return false;
+			वापस false;
 
 		ctx->subsampling = V4L2_JPEG_CHROMA_SUBSAMPLING_411;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool s5p_jpeg_parse_hdr(struct s5p_jpeg_q_data *result,
-			       unsigned long buffer, unsigned long size,
-			       struct s5p_jpeg_ctx *ctx)
-{
-	int c, components = 0, notfound, n_dht = 0, n_dqt = 0;
-	unsigned int height = 0, width = 0, word, subsampling = 0;
-	unsigned int sos = 0, sof = 0, sof_len = 0;
-	unsigned int dht[S5P_JPEG_MAX_MARKER], dht_len[S5P_JPEG_MAX_MARKER];
-	unsigned int dqt[S5P_JPEG_MAX_MARKER], dqt_len[S5P_JPEG_MAX_MARKER];
-	long length;
-	struct s5p_jpeg_buffer jpeg_buffer;
+अटल bool s5p_jpeg_parse_hdr(काष्ठा s5p_jpeg_q_data *result,
+			       अचिन्हित दीर्घ buffer, अचिन्हित दीर्घ size,
+			       काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	पूर्णांक c, components = 0, notfound, n_dht = 0, n_dqt = 0;
+	अचिन्हित पूर्णांक height = 0, width = 0, word, subsampling = 0;
+	अचिन्हित पूर्णांक sos = 0, sof = 0, sof_len = 0;
+	अचिन्हित पूर्णांक dht[S5P_JPEG_MAX_MARKER], dht_len[S5P_JPEG_MAX_MARKER];
+	अचिन्हित पूर्णांक dqt[S5P_JPEG_MAX_MARKER], dqt_len[S5P_JPEG_MAX_MARKER];
+	दीर्घ length;
+	काष्ठा s5p_jpeg_buffer jpeg_buffer;
 
 	jpeg_buffer.size = size;
 	jpeg_buffer.data = buffer;
 	jpeg_buffer.curr = 0;
 
 	notfound = 1;
-	while (notfound || !sos) {
+	जबतक (notfound || !sos) अणु
 		c = get_byte(&jpeg_buffer);
-		if (c == -1)
-			return false;
-		if (c != 0xff)
-			continue;
-		do
+		अगर (c == -1)
+			वापस false;
+		अगर (c != 0xff)
+			जारी;
+		करो
 			c = get_byte(&jpeg_buffer);
-		while (c == 0xff);
-		if (c == -1)
-			return false;
-		if (c == 0)
-			continue;
+		जबतक (c == 0xff);
+		अगर (c == -1)
+			वापस false;
+		अगर (c == 0)
+			जारी;
 		length = 0;
-		switch (c) {
+		चयन (c) अणु
 		/* SOF0: baseline JPEG */
-		case SOF0:
-			if (get_word_be(&jpeg_buffer, &word))
-				break;
-			length = (long)word - 2;
-			if (!length)
-				return false;
+		हाल SOF0:
+			अगर (get_word_be(&jpeg_buffer, &word))
+				अवरोध;
+			length = (दीर्घ)word - 2;
+			अगर (!length)
+				वापस false;
 			sof = jpeg_buffer.curr; /* after 0xffc0 */
 			sof_len = length;
-			if (get_byte(&jpeg_buffer) == -1)
-				break;
-			if (get_word_be(&jpeg_buffer, &height))
-				break;
-			if (get_word_be(&jpeg_buffer, &width))
-				break;
+			अगर (get_byte(&jpeg_buffer) == -1)
+				अवरोध;
+			अगर (get_word_be(&jpeg_buffer, &height))
+				अवरोध;
+			अगर (get_word_be(&jpeg_buffer, &width))
+				अवरोध;
 			components = get_byte(&jpeg_buffer);
-			if (components == -1)
-				break;
+			अगर (components == -1)
+				अवरोध;
 
-			if (components == 1) {
+			अगर (components == 1) अणु
 				subsampling = 0x33;
-			} else {
+			पूर्ण अन्यथा अणु
 				skip(&jpeg_buffer, 1);
 				subsampling = get_byte(&jpeg_buffer);
 				skip(&jpeg_buffer, 1);
-			}
-			if (components > 3)
-				return false;
+			पूर्ण
+			अगर (components > 3)
+				वापस false;
 			skip(&jpeg_buffer, components * 2);
 			notfound = 0;
-			break;
+			अवरोध;
 
-		case DQT:
-			if (get_word_be(&jpeg_buffer, &word))
-				break;
-			length = (long)word - 2;
-			if (!length)
-				return false;
-			if (n_dqt >= S5P_JPEG_MAX_MARKER)
-				return false;
+		हाल DQT:
+			अगर (get_word_be(&jpeg_buffer, &word))
+				अवरोध;
+			length = (दीर्घ)word - 2;
+			अगर (!length)
+				वापस false;
+			अगर (n_dqt >= S5P_JPEG_MAX_MARKER)
+				वापस false;
 			dqt[n_dqt] = jpeg_buffer.curr; /* after 0xffdb */
 			dqt_len[n_dqt++] = length;
 			skip(&jpeg_buffer, length);
-			break;
+			अवरोध;
 
-		case DHT:
-			if (get_word_be(&jpeg_buffer, &word))
-				break;
-			length = (long)word - 2;
-			if (!length)
-				return false;
-			if (n_dht >= S5P_JPEG_MAX_MARKER)
-				return false;
+		हाल DHT:
+			अगर (get_word_be(&jpeg_buffer, &word))
+				अवरोध;
+			length = (दीर्घ)word - 2;
+			अगर (!length)
+				वापस false;
+			अगर (n_dht >= S5P_JPEG_MAX_MARKER)
+				वापस false;
 			dht[n_dht] = jpeg_buffer.curr; /* after 0xffc4 */
 			dht_len[n_dht++] = length;
 			skip(&jpeg_buffer, length);
-			break;
+			अवरोध;
 
-		case SOS:
+		हाल SOS:
 			sos = jpeg_buffer.curr - 2; /* 0xffda */
-			break;
+			अवरोध;
 
 		/* skip payload-less markers */
-		case RST ... RST + 7:
-		case SOI:
-		case EOI:
-		case TEM:
-			break;
+		हाल RST ... RST + 7:
+		हाल SOI:
+		हाल EOI:
+		हाल TEM:
+			अवरोध;
 
-		/* skip uninteresting payload markers */
-		default:
-			if (get_word_be(&jpeg_buffer, &word))
-				break;
-			length = (long)word - 2;
+		/* skip unपूर्णांकeresting payload markers */
+		शेष:
+			अगर (get_word_be(&jpeg_buffer, &word))
+				अवरोध;
+			length = (दीर्घ)word - 2;
 			skip(&jpeg_buffer, length);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (notfound || !sos || !s5p_jpeg_subsampling_decode(ctx, subsampling))
-		return false;
+	अगर (notfound || !sos || !s5p_jpeg_subsampling_decode(ctx, subsampling))
+		वापस false;
 
 	result->w = width;
 	result->h = height;
 	result->sos = sos;
 	result->dht.n = n_dht;
-	while (n_dht--) {
+	जबतक (n_dht--) अणु
 		result->dht.marker[n_dht] = dht[n_dht];
 		result->dht.len[n_dht] = dht_len[n_dht];
-	}
+	पूर्ण
 	result->dqt.n = n_dqt;
-	while (n_dqt--) {
+	जबतक (n_dqt--) अणु
 		result->dqt.marker[n_dqt] = dqt[n_dqt];
 		result->dqt.len[n_dqt] = dqt_len[n_dqt];
-	}
+	पूर्ण
 	result->sof = sof;
 	result->sof_len = sof_len;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int s5p_jpeg_querycap(struct file *file, void *priv,
-			   struct v4l2_capability *cap)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
+अटल पूर्णांक s5p_jpeg_querycap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
 
-	if (ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
 		strscpy(cap->driver, S5P_JPEG_M2M_NAME,
-			sizeof(cap->driver));
+			माप(cap->driver));
 		strscpy(cap->card, S5P_JPEG_M2M_NAME " encoder",
-			sizeof(cap->card));
-	} else {
+			माप(cap->card));
+	पूर्ण अन्यथा अणु
 		strscpy(cap->driver, S5P_JPEG_M2M_NAME,
-			sizeof(cap->driver));
+			माप(cap->driver));
 		strscpy(cap->card, S5P_JPEG_M2M_NAME " decoder",
-			sizeof(cap->card));
-	}
-	snprintf(cap->bus_info, sizeof(cap->bus_info), "platform:%s",
+			माप(cap->card));
+	पूर्ण
+	snम_लिखो(cap->bus_info, माप(cap->bus_info), "platform:%s",
 		 dev_name(ctx->jpeg->dev));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enum_fmt(struct s5p_jpeg_ctx *ctx,
-		    struct s5p_jpeg_fmt *sjpeg_formats, int n,
-		    struct v4l2_fmtdesc *f, u32 type)
-{
-	int i, num = 0;
-	unsigned int fmt_ver_flag = ctx->jpeg->variant->fmt_ver_flag;
+अटल पूर्णांक क्रमागत_fmt(काष्ठा s5p_jpeg_ctx *ctx,
+		    काष्ठा s5p_jpeg_fmt *sjpeg_क्रमmats, पूर्णांक n,
+		    काष्ठा v4l2_fmtdesc *f, u32 type)
+अणु
+	पूर्णांक i, num = 0;
+	अचिन्हित पूर्णांक fmt_ver_flag = ctx->jpeg->variant->fmt_ver_flag;
 
-	for (i = 0; i < n; ++i) {
-		if (sjpeg_formats[i].flags & type &&
-		    sjpeg_formats[i].flags & fmt_ver_flag) {
-			/* index-th format of type type found ? */
-			if (num == f->index)
-				break;
+	क्रम (i = 0; i < n; ++i) अणु
+		अगर (sjpeg_क्रमmats[i].flags & type &&
+		    sjpeg_क्रमmats[i].flags & fmt_ver_flag) अणु
+			/* index-th क्रमmat of type type found ? */
+			अगर (num == f->index)
+				अवरोध;
 			/* Correct type but haven't reached our index yet,
 			 * just increment per-type index
 			 */
 			++num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Format not found */
-	if (i >= n)
-		return -EINVAL;
+	अगर (i >= n)
+		वापस -EINVAL;
 
-	f->pixelformat = sjpeg_formats[i].fourcc;
+	f->pixelक्रमmat = sjpeg_क्रमmats[i].fourcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_enum_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
+अटल पूर्णांक s5p_jpeg_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
 
-	if (ctx->mode == S5P_JPEG_ENCODE)
-		return enum_fmt(ctx, sjpeg_formats, SJPEG_NUM_FORMATS, f,
+	अगर (ctx->mode == S5P_JPEG_ENCODE)
+		वापस क्रमागत_fmt(ctx, sjpeg_क्रमmats, SJPEG_NUM_FORMATS, f,
 				SJPEG_FMT_FLAG_ENC_CAPTURE);
 
-	return enum_fmt(ctx, sjpeg_formats, SJPEG_NUM_FORMATS, f,
+	वापस क्रमागत_fmt(ctx, sjpeg_क्रमmats, SJPEG_NUM_FORMATS, f,
 			SJPEG_FMT_FLAG_DEC_CAPTURE);
-}
+पूर्ण
 
-static int s5p_jpeg_enum_fmt_vid_out(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
+अटल पूर्णांक s5p_jpeg_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
 
-	if (ctx->mode == S5P_JPEG_ENCODE)
-		return enum_fmt(ctx, sjpeg_formats, SJPEG_NUM_FORMATS, f,
+	अगर (ctx->mode == S5P_JPEG_ENCODE)
+		वापस क्रमागत_fmt(ctx, sjpeg_क्रमmats, SJPEG_NUM_FORMATS, f,
 				SJPEG_FMT_FLAG_ENC_OUTPUT);
 
-	return enum_fmt(ctx, sjpeg_formats, SJPEG_NUM_FORMATS, f,
+	वापस क्रमागत_fmt(ctx, sjpeg_क्रमmats, SJPEG_NUM_FORMATS, f,
 			SJPEG_FMT_FLAG_DEC_OUTPUT);
-}
+पूर्ण
 
-static struct s5p_jpeg_q_data *get_q_data(struct s5p_jpeg_ctx *ctx,
-					  enum v4l2_buf_type type)
-{
-	if (type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		return &ctx->out_q;
-	if (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return &ctx->cap_q;
+अटल काष्ठा s5p_jpeg_q_data *get_q_data(काष्ठा s5p_jpeg_ctx *ctx,
+					  क्रमागत v4l2_buf_type type)
+अणु
+	अगर (type == V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		वापस &ctx->out_q;
+	अगर (type == V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस &ctx->cap_q;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int s5p_jpeg_g_fmt(struct file *file, void *priv, struct v4l2_format *f)
-{
-	struct vb2_queue *vq;
-	struct s5p_jpeg_q_data *q_data = NULL;
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	struct s5p_jpeg_ctx *ct = fh_to_ctx(priv);
+अटल पूर्णांक s5p_jpeg_g_fmt(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vb2_queue *vq;
+	काष्ठा s5p_jpeg_q_data *q_data = शून्य;
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	काष्ठा s5p_jpeg_ctx *ct = fh_to_ctx(priv);
 
 	vq = v4l2_m2m_get_vq(ct->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
-	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 	    ct->mode == S5P_JPEG_DECODE && !ct->hdr_parsed)
-		return -EINVAL;
+		वापस -EINVAL;
 	q_data = get_q_data(ct, f->type);
-	BUG_ON(q_data == NULL);
+	BUG_ON(q_data == शून्य);
 
 	pix->width = q_data->w;
 	pix->height = q_data->h;
 	pix->field = V4L2_FIELD_NONE;
-	pix->pixelformat = q_data->fmt->fourcc;
+	pix->pixelक्रमmat = q_data->fmt->fourcc;
 	pix->bytesperline = 0;
-	if (q_data->fmt->fourcc != V4L2_PIX_FMT_JPEG) {
+	अगर (q_data->fmt->fourcc != V4L2_PIX_FMT_JPEG) अणु
 		u32 bpl = q_data->w;
 
-		if (q_data->fmt->colplanes == 1)
+		अगर (q_data->fmt->colplanes == 1)
 			bpl = (bpl * q_data->fmt->depth) >> 3;
 		pix->bytesperline = bpl;
-	}
+	पूर्ण
 	pix->sizeimage = q_data->size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct s5p_jpeg_fmt *s5p_jpeg_find_format(struct s5p_jpeg_ctx *ctx,
-				u32 pixelformat, unsigned int fmt_type)
-{
-	unsigned int k, fmt_flag;
+अटल काष्ठा s5p_jpeg_fmt *s5p_jpeg_find_क्रमmat(काष्ठा s5p_jpeg_ctx *ctx,
+				u32 pixelक्रमmat, अचिन्हित पूर्णांक fmt_type)
+अणु
+	अचिन्हित पूर्णांक k, fmt_flag;
 
-	if (ctx->mode == S5P_JPEG_ENCODE)
+	अगर (ctx->mode == S5P_JPEG_ENCODE)
 		fmt_flag = (fmt_type == FMT_TYPE_OUTPUT) ?
 				SJPEG_FMT_FLAG_ENC_OUTPUT :
 				SJPEG_FMT_FLAG_ENC_CAPTURE;
-	else
+	अन्यथा
 		fmt_flag = (fmt_type == FMT_TYPE_OUTPUT) ?
 				SJPEG_FMT_FLAG_DEC_OUTPUT :
 				SJPEG_FMT_FLAG_DEC_CAPTURE;
 
-	for (k = 0; k < ARRAY_SIZE(sjpeg_formats); k++) {
-		struct s5p_jpeg_fmt *fmt = &sjpeg_formats[k];
+	क्रम (k = 0; k < ARRAY_SIZE(sjpeg_क्रमmats); k++) अणु
+		काष्ठा s5p_jpeg_fmt *fmt = &sjpeg_क्रमmats[k];
 
-		if (fmt->fourcc == pixelformat &&
+		अगर (fmt->fourcc == pixelक्रमmat &&
 		    fmt->flags & fmt_flag &&
-		    fmt->flags & ctx->jpeg->variant->fmt_ver_flag) {
-			return fmt;
-		}
-	}
+		    fmt->flags & ctx->jpeg->variant->fmt_ver_flag) अणु
+			वापस fmt;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void jpeg_bound_align_image(struct s5p_jpeg_ctx *ctx,
-				   u32 *w, unsigned int wmin, unsigned int wmax,
-				   unsigned int walign,
-				   u32 *h, unsigned int hmin, unsigned int hmax,
-				   unsigned int halign)
-{
-	int width, height, w_step, h_step;
+अटल व्योम jpeg_bound_align_image(काष्ठा s5p_jpeg_ctx *ctx,
+				   u32 *w, अचिन्हित पूर्णांक wmin, अचिन्हित पूर्णांक wmax,
+				   अचिन्हित पूर्णांक walign,
+				   u32 *h, अचिन्हित पूर्णांक hmin, अचिन्हित पूर्णांक hmax,
+				   अचिन्हित पूर्णांक halign)
+अणु
+	पूर्णांक width, height, w_step, h_step;
 
 	width = *w;
 	height = *h;
@@ -1403,160 +1404,160 @@ static void jpeg_bound_align_image(struct s5p_jpeg_ctx *ctx,
 	w_step = 1 << walign;
 	h_step = 1 << halign;
 
-	if (ctx->jpeg->variant->hw3250_compat) {
+	अगर (ctx->jpeg->variant->hw3250_compat) अणु
 		/*
-		 * Rightmost and bottommost pixels are cropped by the
-		 * Exynos3250/compatible JPEG IP for RGB formats, for the
-		 * specific width and height values respectively. This
-		 * assignment will result in v4l_bound_align_image returning
-		 * dimensions reduced by 1 for the aforementioned cases.
+		 * Righपंचांगost and bottommost pixels are cropped by the
+		 * Exynos3250/compatible JPEG IP क्रम RGB क्रमmats, क्रम the
+		 * specअगरic width and height values respectively. This
+		 * assignment will result in v4l_bound_align_image वापसing
+		 * dimensions reduced by 1 क्रम the aक्रमementioned हालs.
 		 */
-		if (w_step == 4 && ((width & 3) == 1)) {
+		अगर (w_step == 4 && ((width & 3) == 1)) अणु
 			wmax = width;
 			hmax = height;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	v4l_bound_align_image(w, wmin, wmax, walign, h, hmin, hmax, halign, 0);
 
-	if (*w < width && (*w + w_step) < wmax)
+	अगर (*w < width && (*w + w_step) < wmax)
 		*w += w_step;
-	if (*h < height && (*h + h_step) < hmax)
+	अगर (*h < height && (*h + h_step) < hmax)
 		*h += h_step;
-}
+पूर्ण
 
-static int vidioc_try_fmt(struct v4l2_format *f, struct s5p_jpeg_fmt *fmt,
-			  struct s5p_jpeg_ctx *ctx, int q_type)
-{
-	struct v4l2_pix_format *pix = &f->fmt.pix;
+अटल पूर्णांक vidioc_try_fmt(काष्ठा v4l2_क्रमmat *f, काष्ठा s5p_jpeg_fmt *fmt,
+			  काष्ठा s5p_jpeg_ctx *ctx, पूर्णांक q_type)
+अणु
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
 
-	if (pix->field == V4L2_FIELD_ANY)
+	अगर (pix->field == V4L2_FIELD_ANY)
 		pix->field = V4L2_FIELD_NONE;
-	else if (pix->field != V4L2_FIELD_NONE)
-		return -EINVAL;
+	अन्यथा अगर (pix->field != V4L2_FIELD_NONE)
+		वापस -EINVAL;
 
-	/* V4L2 specification suggests the driver corrects the format struct
-	 * if any of the dimensions is unsupported
+	/* V4L2 specअगरication suggests the driver corrects the क्रमmat काष्ठा
+	 * अगर any of the dimensions is unsupported
 	 */
-	if (q_type == FMT_TYPE_OUTPUT)
+	अगर (q_type == FMT_TYPE_OUTPUT)
 		jpeg_bound_align_image(ctx, &pix->width, S5P_JPEG_MIN_WIDTH,
 				       S5P_JPEG_MAX_WIDTH, 0,
 				       &pix->height, S5P_JPEG_MIN_HEIGHT,
 				       S5P_JPEG_MAX_HEIGHT, 0);
-	else
+	अन्यथा
 		jpeg_bound_align_image(ctx, &pix->width, S5P_JPEG_MIN_WIDTH,
 				       S5P_JPEG_MAX_WIDTH, fmt->h_align,
 				       &pix->height, S5P_JPEG_MIN_HEIGHT,
 				       S5P_JPEG_MAX_HEIGHT, fmt->v_align);
 
-	if (fmt->fourcc == V4L2_PIX_FMT_JPEG) {
-		if (pix->sizeimage <= 0)
+	अगर (fmt->fourcc == V4L2_PIX_FMT_JPEG) अणु
+		अगर (pix->sizeimage <= 0)
 			pix->sizeimage = PAGE_SIZE;
 		pix->bytesperline = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		u32 bpl = pix->bytesperline;
 
-		if (fmt->colplanes > 1 && bpl < pix->width)
+		अगर (fmt->colplanes > 1 && bpl < pix->width)
 			bpl = pix->width; /* planar */
 
-		if (fmt->colplanes == 1 && /* packed */
+		अगर (fmt->colplanes == 1 && /* packed */
 		    (bpl << 3) / fmt->depth < pix->width)
 			bpl = (pix->width * fmt->depth) >> 3;
 
 		pix->bytesperline = bpl;
 		pix->sizeimage = (pix->width * pix->height * fmt->depth) >> 3;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_try_fmt_vid_cap(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	struct s5p_jpeg_fmt *fmt;
-	int ret;
+अटल पूर्णांक s5p_jpeg_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	काष्ठा s5p_jpeg_fmt *fmt;
+	पूर्णांक ret;
 
-	fmt = s5p_jpeg_find_format(ctx, f->fmt.pix.pixelformat,
+	fmt = s5p_jpeg_find_क्रमmat(ctx, f->fmt.pix.pixelक्रमmat,
 						FMT_TYPE_CAPTURE);
-	if (!fmt) {
+	अगर (!fmt) अणु
 		v4l2_err(&ctx->jpeg->v4l2_dev,
 			 "Fourcc format (0x%08x) invalid.\n",
-			 f->fmt.pix.pixelformat);
-		return -EINVAL;
-	}
+			 f->fmt.pix.pixelक्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!ctx->jpeg->variant->hw_ex4_compat || ctx->mode != S5P_JPEG_DECODE)
-		goto exit;
+	अगर (!ctx->jpeg->variant->hw_ex4_compat || ctx->mode != S5P_JPEG_DECODE)
+		जाओ निकास;
 
 	/*
 	 * The exynos4x12 device requires resulting YUV image
 	 * subsampling not to be lower than the input jpeg subsampling.
-	 * If this requirement is not met then downgrade the requested
-	 * capture format to the one with subsampling equal to the input jpeg.
+	 * If this requirement is not met then करोwngrade the requested
+	 * capture क्रमmat to the one with subsampling equal to the input jpeg.
 	 */
-	if ((fmt->flags & SJPEG_FMT_NON_RGB) &&
-	    (fmt->subsampling < ctx->subsampling)) {
+	अगर ((fmt->flags & SJPEG_FMT_NON_RGB) &&
+	    (fmt->subsampling < ctx->subsampling)) अणु
 		ret = s5p_jpeg_adjust_fourcc_to_subsampling(ctx->subsampling,
 							    fmt->fourcc,
-							    &pix->pixelformat,
+							    &pix->pixelक्रमmat,
 							    ctx);
-		if (ret < 0)
-			pix->pixelformat = V4L2_PIX_FMT_GREY;
+		अगर (ret < 0)
+			pix->pixelक्रमmat = V4L2_PIX_FMT_GREY;
 
-		fmt = s5p_jpeg_find_format(ctx, pix->pixelformat,
+		fmt = s5p_jpeg_find_क्रमmat(ctx, pix->pixelक्रमmat,
 							FMT_TYPE_CAPTURE);
-	}
+	पूर्ण
 
 	/*
 	 * Decompression of a JPEG file with 4:2:0 subsampling and odd
-	 * width to the YUV 4:2:0 compliant formats produces a raw image
-	 * with broken luma component. Adjust capture format to RGB565
-	 * in such a case.
+	 * width to the YUV 4:2:0 compliant क्रमmats produces a raw image
+	 * with broken luma component. Adjust capture क्रमmat to RGB565
+	 * in such a हाल.
 	 */
-	if (ctx->subsampling == V4L2_JPEG_CHROMA_SUBSAMPLING_420 &&
+	अगर (ctx->subsampling == V4L2_JPEG_CHROMA_SUBSAMPLING_420 &&
 	    (ctx->out_q.w & 1) &&
-	    (pix->pixelformat == V4L2_PIX_FMT_NV12 ||
-	     pix->pixelformat == V4L2_PIX_FMT_NV21 ||
-	     pix->pixelformat == V4L2_PIX_FMT_YUV420)) {
-		pix->pixelformat = V4L2_PIX_FMT_RGB565;
-		fmt = s5p_jpeg_find_format(ctx, pix->pixelformat,
+	    (pix->pixelक्रमmat == V4L2_PIX_FMT_NV12 ||
+	     pix->pixelक्रमmat == V4L2_PIX_FMT_NV21 ||
+	     pix->pixelक्रमmat == V4L2_PIX_FMT_YUV420)) अणु
+		pix->pixelक्रमmat = V4L2_PIX_FMT_RGB565;
+		fmt = s5p_jpeg_find_क्रमmat(ctx, pix->pixelक्रमmat,
 							FMT_TYPE_CAPTURE);
-	}
+	पूर्ण
 
-exit:
-	return vidioc_try_fmt(f, fmt, ctx, FMT_TYPE_CAPTURE);
-}
+निकास:
+	वापस vidioc_try_fmt(f, fmt, ctx, FMT_TYPE_CAPTURE);
+पूर्ण
 
-static int s5p_jpeg_try_fmt_vid_out(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
-	struct s5p_jpeg_fmt *fmt;
+अटल पूर्णांक s5p_jpeg_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा s5p_jpeg_fmt *fmt;
 
-	fmt = s5p_jpeg_find_format(ctx, f->fmt.pix.pixelformat,
+	fmt = s5p_jpeg_find_क्रमmat(ctx, f->fmt.pix.pixelक्रमmat,
 						FMT_TYPE_OUTPUT);
-	if (!fmt) {
+	अगर (!fmt) अणु
 		v4l2_err(&ctx->jpeg->v4l2_dev,
 			 "Fourcc format (0x%08x) invalid.\n",
-			 f->fmt.pix.pixelformat);
-		return -EINVAL;
-	}
+			 f->fmt.pix.pixelक्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 
-	return vidioc_try_fmt(f, fmt, ctx, FMT_TYPE_OUTPUT);
-}
+	वापस vidioc_try_fmt(f, fmt, ctx, FMT_TYPE_OUTPUT);
+पूर्ण
 
-static int exynos4_jpeg_get_output_buffer_size(struct s5p_jpeg_ctx *ctx,
-						struct v4l2_format *f,
-						int fmt_depth)
-{
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	u32 pix_fmt = f->fmt.pix.pixelformat;
-	int w = pix->width, h = pix->height, wh_align;
-	int padding = 0;
+अटल पूर्णांक exynos4_jpeg_get_output_buffer_size(काष्ठा s5p_jpeg_ctx *ctx,
+						काष्ठा v4l2_क्रमmat *f,
+						पूर्णांक fmt_depth)
+अणु
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	u32 pix_fmt = f->fmt.pix.pixelक्रमmat;
+	पूर्णांक w = pix->width, h = pix->height, wh_align;
+	पूर्णांक padding = 0;
 
-	if (pix_fmt == V4L2_PIX_FMT_RGB32 ||
+	अगर (pix_fmt == V4L2_PIX_FMT_RGB32 ||
 	    pix_fmt == V4L2_PIX_FMT_RGB565 ||
 	    pix_fmt == V4L2_PIX_FMT_NV24 ||
 	    pix_fmt == V4L2_PIX_FMT_NV42 ||
@@ -1564,7 +1565,7 @@ static int exynos4_jpeg_get_output_buffer_size(struct s5p_jpeg_ctx *ctx,
 	    pix_fmt == V4L2_PIX_FMT_NV21 ||
 	    pix_fmt == V4L2_PIX_FMT_YUV420)
 		wh_align = 4;
-	else
+	अन्यथा
 		wh_align = 1;
 
 	jpeg_bound_align_image(ctx, &w, S5P_JPEG_MIN_WIDTH,
@@ -1572,141 +1573,141 @@ static int exynos4_jpeg_get_output_buffer_size(struct s5p_jpeg_ctx *ctx,
 			       &h, S5P_JPEG_MIN_HEIGHT,
 			       S5P_JPEG_MAX_HEIGHT, wh_align);
 
-	if (ctx->jpeg->variant->version == SJPEG_EXYNOS4)
+	अगर (ctx->jpeg->variant->version == SJPEG_EXYNOS4)
 		padding = PAGE_SIZE;
 
-	return (w * h * fmt_depth >> 3) + padding;
-}
+	वापस (w * h * fmt_depth >> 3) + padding;
+पूर्ण
 
-static int exynos3250_jpeg_try_downscale(struct s5p_jpeg_ctx *ctx,
-				   struct v4l2_rect *r);
+अटल पूर्णांक exynos3250_jpeg_try_करोwnscale(काष्ठा s5p_jpeg_ctx *ctx,
+				   काष्ठा v4l2_rect *r);
 
-static int s5p_jpeg_s_fmt(struct s5p_jpeg_ctx *ct, struct v4l2_format *f)
-{
-	struct vb2_queue *vq;
-	struct s5p_jpeg_q_data *q_data = NULL;
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	struct v4l2_ctrl *ctrl_subs;
-	struct v4l2_rect scale_rect;
-	unsigned int f_type;
+अटल पूर्णांक s5p_jpeg_s_fmt(काष्ठा s5p_jpeg_ctx *ct, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vb2_queue *vq;
+	काष्ठा s5p_jpeg_q_data *q_data = शून्य;
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	काष्ठा v4l2_ctrl *ctrl_subs;
+	काष्ठा v4l2_rect scale_rect;
+	अचिन्हित पूर्णांक f_type;
 
 	vq = v4l2_m2m_get_vq(ct->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
 	q_data = get_q_data(ct, f->type);
-	BUG_ON(q_data == NULL);
+	BUG_ON(q_data == शून्य);
 
-	if (vb2_is_busy(vq)) {
+	अगर (vb2_is_busy(vq)) अणु
 		v4l2_err(&ct->jpeg->v4l2_dev, "%s queue busy\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	f_type = V4L2_TYPE_IS_OUTPUT(f->type) ?
 			FMT_TYPE_OUTPUT : FMT_TYPE_CAPTURE;
 
-	q_data->fmt = s5p_jpeg_find_format(ct, pix->pixelformat, f_type);
-	if (ct->mode == S5P_JPEG_ENCODE ||
+	q_data->fmt = s5p_jpeg_find_क्रमmat(ct, pix->pixelक्रमmat, f_type);
+	अगर (ct->mode == S5P_JPEG_ENCODE ||
 		(ct->mode == S5P_JPEG_DECODE &&
-		q_data->fmt->fourcc != V4L2_PIX_FMT_JPEG)) {
+		q_data->fmt->fourcc != V4L2_PIX_FMT_JPEG)) अणु
 		q_data->w = pix->width;
 		q_data->h = pix->height;
-	}
-	if (q_data->fmt->fourcc != V4L2_PIX_FMT_JPEG) {
+	पूर्ण
+	अगर (q_data->fmt->fourcc != V4L2_PIX_FMT_JPEG) अणु
 		/*
 		 * During encoding Exynos4x12 SoCs access wider memory area
 		 * than it results from Image_x and Image_y values written to
-		 * the JPEG_IMAGE_SIZE register. In order to avoid sysmmu
-		 * page fault calculate proper buffer size in such a case.
+		 * the JPEG_IMAGE_SIZE रेजिस्टर. In order to aव्योम sysmmu
+		 * page fault calculate proper buffer size in such a हाल.
 		 */
-		if (ct->jpeg->variant->hw_ex4_compat &&
+		अगर (ct->jpeg->variant->hw_ex4_compat &&
 		    f_type == FMT_TYPE_OUTPUT && ct->mode == S5P_JPEG_ENCODE)
 			q_data->size = exynos4_jpeg_get_output_buffer_size(ct,
 							f,
 							q_data->fmt->depth);
-		else
+		अन्यथा
 			q_data->size = q_data->w * q_data->h *
 						q_data->fmt->depth >> 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		q_data->size = pix->sizeimage;
-	}
+	पूर्ण
 
-	if (f_type == FMT_TYPE_OUTPUT) {
+	अगर (f_type == FMT_TYPE_OUTPUT) अणु
 		ctrl_subs = v4l2_ctrl_find(&ct->ctrl_handler,
 					V4L2_CID_JPEG_CHROMA_SUBSAMPLING);
-		if (ctrl_subs)
+		अगर (ctrl_subs)
 			v4l2_ctrl_s_ctrl(ctrl_subs, q_data->fmt->subsampling);
 		ct->crop_altered = false;
-	}
+	पूर्ण
 
 	/*
 	 * For decoding init crop_rect with capture buffer dimmensions which
-	 * contain aligned dimensions of the input JPEG image and do it only
-	 * if crop rectangle hasn't been altered by the user space e.g. with
+	 * contain aligned dimensions of the input JPEG image and करो it only
+	 * अगर crop rectangle hasn't been altered by the user space e.g. with
 	 * S_SELECTION ioctl. For encoding assign output buffer dimensions.
 	 */
-	if (!ct->crop_altered &&
+	अगर (!ct->crop_altered &&
 	    ((ct->mode == S5P_JPEG_DECODE && f_type == FMT_TYPE_CAPTURE) ||
-	     (ct->mode == S5P_JPEG_ENCODE && f_type == FMT_TYPE_OUTPUT))) {
+	     (ct->mode == S5P_JPEG_ENCODE && f_type == FMT_TYPE_OUTPUT))) अणु
 		ct->crop_rect.width = pix->width;
 		ct->crop_rect.height = pix->height;
-	}
+	पूर्ण
 
 	/*
-	 * Prevent downscaling to YUV420 format by more than 2
-	 * for Exynos3250/compatible SoC as it produces broken raw image
-	 * in such cases.
+	 * Prevent करोwnscaling to YUV420 क्रमmat by more than 2
+	 * क्रम Exynos3250/compatible SoC as it produces broken raw image
+	 * in such हालs.
 	 */
-	if (ct->mode == S5P_JPEG_DECODE &&
+	अगर (ct->mode == S5P_JPEG_DECODE &&
 	    f_type == FMT_TYPE_CAPTURE &&
 	    ct->jpeg->variant->hw3250_compat &&
-	    pix->pixelformat == V4L2_PIX_FMT_YUV420 &&
-	    ct->scale_factor > 2) {
+	    pix->pixelक्रमmat == V4L2_PIX_FMT_YUV420 &&
+	    ct->scale_factor > 2) अणु
 		scale_rect.width = ct->out_q.w / 2;
 		scale_rect.height = ct->out_q.h / 2;
-		exynos3250_jpeg_try_downscale(ct, &scale_rect);
-	}
+		exynos3250_jpeg_try_करोwnscale(ct, &scale_rect);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_s_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	int ret;
+अटल पूर्णांक s5p_jpeg_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret;
 
 	ret = s5p_jpeg_try_fmt_vid_cap(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return s5p_jpeg_s_fmt(fh_to_ctx(priv), f);
-}
+	वापस s5p_jpeg_s_fmt(fh_to_ctx(priv), f);
+पूर्ण
 
-static int s5p_jpeg_s_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	int ret;
+अटल पूर्णांक s5p_jpeg_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret;
 
 	ret = s5p_jpeg_try_fmt_vid_out(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return s5p_jpeg_s_fmt(fh_to_ctx(priv), f);
-}
+	वापस s5p_jpeg_s_fmt(fh_to_ctx(priv), f);
+पूर्ण
 
-static int s5p_jpeg_subscribe_event(struct v4l2_fh *fh,
-				    const struct v4l2_event_subscription *sub)
-{
-	if (sub->type == V4L2_EVENT_SOURCE_CHANGE)
-		return v4l2_src_change_event_subscribe(fh, sub);
+अटल पूर्णांक s5p_jpeg_subscribe_event(काष्ठा v4l2_fh *fh,
+				    स्थिर काष्ठा v4l2_event_subscription *sub)
+अणु
+	अगर (sub->type == V4L2_EVENT_SOURCE_CHANGE)
+		वापस v4l2_src_change_event_subscribe(fh, sub);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int exynos3250_jpeg_try_downscale(struct s5p_jpeg_ctx *ctx,
-				   struct v4l2_rect *r)
-{
-	int w_ratio, h_ratio, scale_factor, cur_ratio, i;
+अटल पूर्णांक exynos3250_jpeg_try_करोwnscale(काष्ठा s5p_jpeg_ctx *ctx,
+				   काष्ठा v4l2_rect *r)
+अणु
+	पूर्णांक w_ratio, h_ratio, scale_factor, cur_ratio, i;
 
 	w_ratio = ctx->out_q.w / r->width;
 	h_ratio = ctx->out_q.h / r->height;
@@ -1714,17 +1715,17 @@ static int exynos3250_jpeg_try_downscale(struct s5p_jpeg_ctx *ctx,
 	scale_factor = w_ratio > h_ratio ? w_ratio : h_ratio;
 	scale_factor = clamp_val(scale_factor, 1, 8);
 
-	/* Align scale ratio to the nearest power of 2 */
-	for (i = 0; i <= 3; ++i) {
+	/* Align scale ratio to the nearest घातer of 2 */
+	क्रम (i = 0; i <= 3; ++i) अणु
 		cur_ratio = 1 << i;
-		if (scale_factor <= cur_ratio) {
+		अगर (scale_factor <= cur_ratio) अणु
 			ctx->scale_factor = cur_ratio;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	r->width = round_down(ctx->out_q.w / ctx->scale_factor, 2);
-	r->height = round_down(ctx->out_q.h / ctx->scale_factor, 2);
+	r->width = round_करोwn(ctx->out_q.w / ctx->scale_factor, 2);
+	r->height = round_करोwn(ctx->out_q.h / ctx->scale_factor, 2);
 
 	ctx->crop_rect.width = r->width;
 	ctx->crop_rect.height = r->height;
@@ -1733,43 +1734,43 @@ static int exynos3250_jpeg_try_downscale(struct s5p_jpeg_ctx *ctx,
 
 	ctx->crop_altered = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos3250_jpeg_try_crop(struct s5p_jpeg_ctx *ctx,
-				   struct v4l2_rect *r)
-{
-	struct v4l2_rect base_rect;
-	int w_step, h_step;
+अटल पूर्णांक exynos3250_jpeg_try_crop(काष्ठा s5p_jpeg_ctx *ctx,
+				   काष्ठा v4l2_rect *r)
+अणु
+	काष्ठा v4l2_rect base_rect;
+	पूर्णांक w_step, h_step;
 
-	switch (ctx->cap_q.fmt->fourcc) {
-	case V4L2_PIX_FMT_NV12:
-	case V4L2_PIX_FMT_NV21:
+	चयन (ctx->cap_q.fmt->fourcc) अणु
+	हाल V4L2_PIX_FMT_NV12:
+	हाल V4L2_PIX_FMT_NV21:
 		w_step = 1;
 		h_step = 2;
-		break;
-	case V4L2_PIX_FMT_YUV420:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV420:
 		w_step = 2;
 		h_step = 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		w_step = 1;
 		h_step = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	base_rect.top = 0;
 	base_rect.left = 0;
 	base_rect.width = ctx->out_q.w;
 	base_rect.height = ctx->out_q.h;
 
-	r->width = round_down(r->width, w_step);
-	r->height = round_down(r->height, h_step);
-	r->left = round_down(r->left, 2);
-	r->top = round_down(r->top, 2);
+	r->width = round_करोwn(r->width, w_step);
+	r->height = round_करोwn(r->height, h_step);
+	r->left = round_करोwn(r->left, 2);
+	r->top = round_करोwn(r->top, 2);
 
-	if (!v4l2_rect_enclosed(r, &base_rect))
-		return -EINVAL;
+	अगर (!v4l2_rect_enबंदd(r, &base_rect))
+		वापस -EINVAL;
 
 	ctx->crop_rect.left = r->left;
 	ctx->crop_rect.top = r->top;
@@ -1778,182 +1779,182 @@ static int exynos3250_jpeg_try_crop(struct s5p_jpeg_ctx *ctx,
 
 	ctx->crop_altered = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * V4L2 controls
  */
 
-static int s5p_jpeg_g_selection(struct file *file, void *priv,
-			 struct v4l2_selection *s)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
+अटल पूर्णांक s5p_jpeg_g_selection(काष्ठा file *file, व्योम *priv,
+			 काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(priv);
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT &&
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT &&
 	    s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* For JPEG blob active == default == bounds */
-	switch (s->target) {
-	case V4L2_SEL_TGT_CROP:
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-	case V4L2_SEL_TGT_CROP_DEFAULT:
-	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	/* For JPEG blob active == शेष == bounds */
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+	हाल V4L2_SEL_TGT_CROP_DEFAULT:
+	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
 		s->r.width = ctx->out_q.w;
 		s->r.height = ctx->out_q.h;
 		s->r.left = 0;
 		s->r.top = 0;
-		break;
-	case V4L2_SEL_TGT_COMPOSE:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-	case V4L2_SEL_TGT_COMPOSE_PADDED:
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+	हाल V4L2_SEL_TGT_COMPOSE_PADDED:
 		s->r.width = ctx->crop_rect.width;
 		s->r.height =  ctx->crop_rect.height;
 		s->r.left = ctx->crop_rect.left;
 		s->r.top = ctx->crop_rect.top;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * V4L2 controls
  */
-static int s5p_jpeg_s_selection(struct file *file, void *fh,
-				  struct v4l2_selection *s)
-{
-	struct s5p_jpeg_ctx *ctx = fh_to_ctx(file->private_data);
-	struct v4l2_rect *rect = &s->r;
-	int ret = -EINVAL;
+अटल पूर्णांक s5p_jpeg_s_selection(काष्ठा file *file, व्योम *fh,
+				  काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = fh_to_ctx(file->निजी_data);
+	काष्ठा v4l2_rect *rect = &s->r;
+	पूर्णांक ret = -EINVAL;
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	if (s->target == V4L2_SEL_TGT_COMPOSE) {
-		if (ctx->mode != S5P_JPEG_DECODE)
-			return -EINVAL;
-		if (ctx->jpeg->variant->hw3250_compat)
-			ret = exynos3250_jpeg_try_downscale(ctx, rect);
-	} else if (s->target == V4L2_SEL_TGT_CROP) {
-		if (ctx->mode != S5P_JPEG_ENCODE)
-			return -EINVAL;
-		if (ctx->jpeg->variant->hw3250_compat)
+	अगर (s->target == V4L2_SEL_TGT_COMPOSE) अणु
+		अगर (ctx->mode != S5P_JPEG_DECODE)
+			वापस -EINVAL;
+		अगर (ctx->jpeg->variant->hw3250_compat)
+			ret = exynos3250_jpeg_try_करोwnscale(ctx, rect);
+	पूर्ण अन्यथा अगर (s->target == V4L2_SEL_TGT_CROP) अणु
+		अगर (ctx->mode != S5P_JPEG_ENCODE)
+			वापस -EINVAL;
+		अगर (ctx->jpeg->variant->hw3250_compat)
 			ret = exynos3250_jpeg_try_crop(ctx, rect);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s5p_jpeg_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct s5p_jpeg_ctx *ctx = ctrl_to_ctx(ctrl);
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	unsigned long flags;
+अटल पूर्णांक s5p_jpeg_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = ctrl_to_ctx(ctrl);
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	अचिन्हित दीर्घ flags;
 
-	switch (ctrl->id) {
-	case V4L2_CID_JPEG_CHROMA_SUBSAMPLING:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_JPEG_CHROMA_SUBSAMPLING:
 		spin_lock_irqsave(&jpeg->slock, flags);
 		ctrl->val = s5p_jpeg_to_user_subsampling(ctx);
 		spin_unlock_irqrestore(&jpeg->slock, flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_adjust_subs_ctrl(struct s5p_jpeg_ctx *ctx, int *ctrl_val)
-{
-	switch (ctx->jpeg->variant->version) {
-	case SJPEG_S5P:
-		return 0;
-	case SJPEG_EXYNOS3250:
-	case SJPEG_EXYNOS5420:
+अटल पूर्णांक s5p_jpeg_adjust_subs_ctrl(काष्ठा s5p_jpeg_ctx *ctx, पूर्णांक *ctrl_val)
+अणु
+	चयन (ctx->jpeg->variant->version) अणु
+	हाल SJPEG_S5P:
+		वापस 0;
+	हाल SJPEG_EXYNOS3250:
+	हाल SJPEG_EXYNOS5420:
 		/*
 		 * The exynos3250/compatible device can produce JPEG image only
 		 * of 4:4:4 subsampling when given RGB32 source image.
 		 */
-		if (ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB32)
+		अगर (ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB32)
 			*ctrl_val = 0;
-		break;
-	case SJPEG_EXYNOS4:
+		अवरोध;
+	हाल SJPEG_EXYNOS4:
 		/*
 		 * The exynos4x12 device requires input raw image fourcc
-		 * to be V4L2_PIX_FMT_GREY if gray jpeg format
+		 * to be V4L2_PIX_FMT_GREY अगर gray jpeg क्रमmat
 		 * is to be set.
 		 */
-		if (ctx->out_q.fmt->fourcc != V4L2_PIX_FMT_GREY &&
+		अगर (ctx->out_q.fmt->fourcc != V4L2_PIX_FMT_GREY &&
 		    *ctrl_val == V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY)
-			return -EINVAL;
-		break;
-	}
+			वापस -EINVAL;
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * The exynos4x12 and exynos3250/compatible devices require resulting
 	 * jpeg subsampling not to be lower than the input raw image
 	 * subsampling.
 	 */
-	if (ctx->out_q.fmt->subsampling > *ctrl_val)
+	अगर (ctx->out_q.fmt->subsampling > *ctrl_val)
 		*ctrl_val = ctx->out_q.fmt->subsampling;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_try_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct s5p_jpeg_ctx *ctx = ctrl_to_ctx(ctrl);
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक s5p_jpeg_try_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = ctrl_to_ctx(ctrl);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&ctx->jpeg->slock, flags);
 
-	if (ctrl->id == V4L2_CID_JPEG_CHROMA_SUBSAMPLING)
+	अगर (ctrl->id == V4L2_CID_JPEG_CHROMA_SUBSAMPLING)
 		ret = s5p_jpeg_adjust_subs_ctrl(ctx, &ctrl->val);
 
 	spin_unlock_irqrestore(&ctx->jpeg->slock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s5p_jpeg_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct s5p_jpeg_ctx *ctx = ctrl_to_ctx(ctrl);
-	unsigned long flags;
+अटल पूर्णांक s5p_jpeg_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = ctrl_to_ctx(ctrl);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ctx->jpeg->slock, flags);
 
-	switch (ctrl->id) {
-	case V4L2_CID_JPEG_COMPRESSION_QUALITY:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_JPEG_COMPRESSION_QUALITY:
 		ctx->compr_quality = ctrl->val;
-		break;
-	case V4L2_CID_JPEG_RESTART_INTERVAL:
-		ctx->restart_interval = ctrl->val;
-		break;
-	case V4L2_CID_JPEG_CHROMA_SUBSAMPLING:
+		अवरोध;
+	हाल V4L2_CID_JPEG_RESTART_INTERVAL:
+		ctx->restart_पूर्णांकerval = ctrl->val;
+		अवरोध;
+	हाल V4L2_CID_JPEG_CHROMA_SUBSAMPLING:
 		ctx->subsampling = ctrl->val;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&ctx->jpeg->slock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops s5p_jpeg_ctrl_ops = {
-	.g_volatile_ctrl	= s5p_jpeg_g_volatile_ctrl,
+अटल स्थिर काष्ठा v4l2_ctrl_ops s5p_jpeg_ctrl_ops = अणु
+	.g_अस्थिर_ctrl	= s5p_jpeg_g_अस्थिर_ctrl,
 	.try_ctrl		= s5p_jpeg_try_ctrl,
 	.s_ctrl			= s5p_jpeg_s_ctrl,
-};
+पूर्ण;
 
-static int s5p_jpeg_controls_create(struct s5p_jpeg_ctx *ctx)
-{
-	unsigned int mask = ~0x27; /* 444, 422, 420, GRAY */
-	struct v4l2_ctrl *ctrl;
-	int ret;
+अटल पूर्णांक s5p_jpeg_controls_create(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	अचिन्हित पूर्णांक mask = ~0x27; /* 444, 422, 420, GRAY */
+	काष्ठा v4l2_ctrl *ctrl;
+	पूर्णांक ret;
 
 	v4l2_ctrl_handler_init(&ctx->ctrl_handler, 3);
 
-	if (ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
 		v4l2_ctrl_new_std(&ctx->ctrl_handler, &s5p_jpeg_ctrl_ops,
 				  V4L2_CID_JPEG_COMPRESSION_QUALITY,
 				  0, 3, 1, S5P_JPEG_COMPR_QUAL_WORST);
@@ -1961,40 +1962,40 @@ static int s5p_jpeg_controls_create(struct s5p_jpeg_ctx *ctx)
 		v4l2_ctrl_new_std(&ctx->ctrl_handler, &s5p_jpeg_ctrl_ops,
 				  V4L2_CID_JPEG_RESTART_INTERVAL,
 				  0, 0xffff, 1, 0);
-		if (ctx->jpeg->variant->version == SJPEG_S5P)
+		अगर (ctx->jpeg->variant->version == SJPEG_S5P)
 			mask = ~0x06; /* 422, 420 */
-	}
+	पूर्ण
 
 	ctrl = v4l2_ctrl_new_std_menu(&ctx->ctrl_handler, &s5p_jpeg_ctrl_ops,
 				      V4L2_CID_JPEG_CHROMA_SUBSAMPLING,
 				      V4L2_JPEG_CHROMA_SUBSAMPLING_GRAY, mask,
 				      V4L2_JPEG_CHROMA_SUBSAMPLING_422);
 
-	if (ctx->ctrl_handler.error) {
+	अगर (ctx->ctrl_handler.error) अणु
 		ret = ctx->ctrl_handler.error;
-		goto error_free;
-	}
+		जाओ error_मुक्त;
+	पूर्ण
 
-	if (ctx->mode == S5P_JPEG_DECODE)
+	अगर (ctx->mode == S5P_JPEG_DECODE)
 		ctrl->flags |= V4L2_CTRL_FLAG_VOLATILE |
 			V4L2_CTRL_FLAG_READ_ONLY;
 
 	ret = v4l2_ctrl_handler_setup(&ctx->ctrl_handler);
-	if (ret < 0)
-		goto error_free;
+	अगर (ret < 0)
+		जाओ error_मुक्त;
 
-	return ret;
+	वापस ret;
 
-error_free:
-	v4l2_ctrl_handler_free(&ctx->ctrl_handler);
-	return ret;
-}
+error_मुक्त:
+	v4l2_ctrl_handler_मुक्त(&ctx->ctrl_handler);
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ioctl_ops s5p_jpeg_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops s5p_jpeg_ioctl_ops = अणु
 	.vidioc_querycap		= s5p_jpeg_querycap,
 
-	.vidioc_enum_fmt_vid_cap	= s5p_jpeg_enum_fmt_vid_cap,
-	.vidioc_enum_fmt_vid_out	= s5p_jpeg_enum_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_cap	= s5p_jpeg_क्रमागत_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_out	= s5p_jpeg_क्रमागत_fmt_vid_out,
 
 	.vidioc_g_fmt_vid_cap		= s5p_jpeg_g_fmt,
 	.vidioc_g_fmt_vid_out		= s5p_jpeg_g_fmt,
@@ -2018,7 +2019,7 @@ static const struct v4l2_ioctl_ops s5p_jpeg_ioctl_ops = {
 
 	.vidioc_subscribe_event		= s5p_jpeg_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
 /*
  * ============================================================================
@@ -2026,12 +2027,12 @@ static const struct v4l2_ioctl_ops s5p_jpeg_ioctl_ops = {
  * ============================================================================
  */
 
-static void s5p_jpeg_device_run(void *priv)
-{
-	struct s5p_jpeg_ctx *ctx = priv;
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
-	unsigned long src_addr, dst_addr, flags;
+अटल व्योम s5p_jpeg_device_run(व्योम *priv)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = priv;
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
+	अचिन्हित दीर्घ src_addr, dst_addr, flags;
 
 	spin_lock_irqsave(&ctx->jpeg->slock, flags);
 
@@ -2041,24 +2042,24 @@ static void s5p_jpeg_device_run(void *priv)
 	dst_addr = vb2_dma_contig_plane_dma_addr(&dst_buf->vb2_buf, 0);
 
 	s5p_jpeg_reset(jpeg->regs);
-	s5p_jpeg_poweron(jpeg->regs);
+	s5p_jpeg_घातeron(jpeg->regs);
 	s5p_jpeg_proc_mode(jpeg->regs, ctx->mode);
-	if (ctx->mode == S5P_JPEG_ENCODE) {
-		if (ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB565)
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
+		अगर (ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB565)
 			s5p_jpeg_input_raw_mode(jpeg->regs,
 							S5P_JPEG_RAW_IN_565);
-		else
+		अन्यथा
 			s5p_jpeg_input_raw_mode(jpeg->regs,
 							S5P_JPEG_RAW_IN_422);
 		s5p_jpeg_subsampling_mode(jpeg->regs, ctx->subsampling);
-		s5p_jpeg_dri(jpeg->regs, ctx->restart_interval);
+		s5p_jpeg_dri(jpeg->regs, ctx->restart_पूर्णांकerval);
 		s5p_jpeg_x(jpeg->regs, ctx->out_q.w);
 		s5p_jpeg_y(jpeg->regs, ctx->out_q.h);
 		s5p_jpeg_imgadr(jpeg->regs, src_addr);
 		s5p_jpeg_jpgadr(jpeg->regs, dst_addr);
 
 		/* ultimately comes from sizeimage from userspace */
-		s5p_jpeg_enc_stream_int(jpeg->regs, ctx->cap_q.size);
+		s5p_jpeg_enc_stream_पूर्णांक(jpeg->regs, ctx->cap_q.size);
 
 		/* JPEG RGB to YCbCr conversion matrix */
 		s5p_jpeg_coef(jpeg->regs, 1, 1, S5P_JPEG_COEF11);
@@ -2073,13 +2074,13 @@ static void s5p_jpeg_device_run(void *priv)
 
 		/*
 		 * JPEG IP allows storing 4 quantization tables
-		 * We fill table 0 for luma and table 1 for chroma
+		 * We fill table 0 क्रम luma and table 1 क्रम chroma
 		 */
 		s5p_jpeg_set_qtbl_lum(jpeg->regs, ctx->compr_quality);
 		s5p_jpeg_set_qtbl_chr(jpeg->regs, ctx->compr_quality);
-		/* use table 0 for Y */
+		/* use table 0 क्रम Y */
 		s5p_jpeg_qtbl(jpeg->regs, 1, 0);
-		/* use table 1 for Cb and Cr*/
+		/* use table 1 क्रम Cb and Cr*/
 		s5p_jpeg_qtbl(jpeg->regs, 2, 1);
 		s5p_jpeg_qtbl(jpeg->regs, 3, 1);
 
@@ -2090,29 +2091,29 @@ static void s5p_jpeg_device_run(void *priv)
 		s5p_jpeg_htbl_dc(jpeg->regs, 2);
 		s5p_jpeg_htbl_ac(jpeg->regs, 3);
 		s5p_jpeg_htbl_dc(jpeg->regs, 3);
-	} else { /* S5P_JPEG_DECODE */
-		s5p_jpeg_rst_int_enable(jpeg->regs, true);
-		s5p_jpeg_data_num_int_enable(jpeg->regs, true);
-		s5p_jpeg_final_mcu_num_int_enable(jpeg->regs, true);
-		if (ctx->cap_q.fmt->fourcc == V4L2_PIX_FMT_YUYV)
-			s5p_jpeg_outform_raw(jpeg->regs, S5P_JPEG_RAW_OUT_422);
-		else
-			s5p_jpeg_outform_raw(jpeg->regs, S5P_JPEG_RAW_OUT_420);
+	पूर्ण अन्यथा अणु /* S5P_JPEG_DECODE */
+		s5p_jpeg_rst_पूर्णांक_enable(jpeg->regs, true);
+		s5p_jpeg_data_num_पूर्णांक_enable(jpeg->regs, true);
+		s5p_jpeg_final_mcu_num_पूर्णांक_enable(jpeg->regs, true);
+		अगर (ctx->cap_q.fmt->fourcc == V4L2_PIX_FMT_YUYV)
+			s5p_jpeg_outक्रमm_raw(jpeg->regs, S5P_JPEG_RAW_OUT_422);
+		अन्यथा
+			s5p_jpeg_outक्रमm_raw(jpeg->regs, S5P_JPEG_RAW_OUT_420);
 		s5p_jpeg_jpgadr(jpeg->regs, src_addr);
 		s5p_jpeg_imgadr(jpeg->regs, dst_addr);
-	}
+	पूर्ण
 
 	s5p_jpeg_start(jpeg->regs);
 
 	spin_unlock_irqrestore(&ctx->jpeg->slock, flags);
-}
+पूर्ण
 
-static void exynos4_jpeg_set_img_addr(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct s5p_jpeg_fmt *fmt;
-	struct vb2_v4l2_buffer *vb;
-	struct s5p_jpeg_addr jpeg_addr = {};
+अटल व्योम exynos4_jpeg_set_img_addr(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा s5p_jpeg_fmt *fmt;
+	काष्ठा vb2_v4l2_buffer *vb;
+	काष्ठा s5p_jpeg_addr jpeg_addr = अणुपूर्ण;
 	u32 pix_size, padding_bytes = 0;
 
 	jpeg_addr.cb = 0;
@@ -2120,92 +2121,92 @@ static void exynos4_jpeg_set_img_addr(struct s5p_jpeg_ctx *ctx)
 
 	pix_size = ctx->cap_q.w * ctx->cap_q.h;
 
-	if (ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
 		vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 		fmt = ctx->out_q.fmt;
-		if (ctx->out_q.w % 2 && fmt->h_align > 0)
+		अगर (ctx->out_q.w % 2 && fmt->h_align > 0)
 			padding_bytes = ctx->out_q.h;
-	} else {
+	पूर्ण अन्यथा अणु
 		fmt = ctx->cap_q.fmt;
 		vb = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
-	}
+	पूर्ण
 
 	jpeg_addr.y = vb2_dma_contig_plane_dma_addr(&vb->vb2_buf, 0);
 
-	if (fmt->colplanes == 2) {
+	अगर (fmt->colplanes == 2) अणु
 		jpeg_addr.cb = jpeg_addr.y + pix_size - padding_bytes;
-	} else if (fmt->colplanes == 3) {
+	पूर्ण अन्यथा अगर (fmt->colplanes == 3) अणु
 		jpeg_addr.cb = jpeg_addr.y + pix_size;
-		if (fmt->fourcc == V4L2_PIX_FMT_YUV420)
+		अगर (fmt->fourcc == V4L2_PIX_FMT_YUV420)
 			jpeg_addr.cr = jpeg_addr.cb + pix_size / 4;
-		else
+		अन्यथा
 			jpeg_addr.cr = jpeg_addr.cb + pix_size / 2;
-	}
+	पूर्ण
 
 	exynos4_jpeg_set_frame_buf_address(jpeg->regs, &jpeg_addr);
-}
+पूर्ण
 
-static void exynos4_jpeg_set_jpeg_addr(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *vb;
-	unsigned int jpeg_addr = 0;
+अटल व्योम exynos4_jpeg_set_jpeg_addr(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *vb;
+	अचिन्हित पूर्णांक jpeg_addr = 0;
 
-	if (ctx->mode == S5P_JPEG_ENCODE)
+	अगर (ctx->mode == S5P_JPEG_ENCODE)
 		vb = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
-	else
+	अन्यथा
 		vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 
 	jpeg_addr = vb2_dma_contig_plane_dma_addr(&vb->vb2_buf, 0);
-	if (jpeg->variant->version == SJPEG_EXYNOS5433 &&
+	अगर (jpeg->variant->version == SJPEG_EXYNOS5433 &&
 	    ctx->mode == S5P_JPEG_DECODE)
 		jpeg_addr += ctx->out_q.sos;
 	exynos4_jpeg_set_stream_buf_address(jpeg->regs, jpeg_addr);
-}
+पूर्ण
 
-static inline void exynos4_jpeg_set_img_fmt(void __iomem *base,
-					    unsigned int img_fmt)
-{
+अटल अंतरभूत व्योम exynos4_jpeg_set_img_fmt(व्योम __iomem *base,
+					    अचिन्हित पूर्णांक img_fmt)
+अणु
 	__exynos4_jpeg_set_img_fmt(base, img_fmt, SJPEG_EXYNOS4);
-}
+पूर्ण
 
-static inline void exynos5433_jpeg_set_img_fmt(void __iomem *base,
-					       unsigned int img_fmt)
-{
+अटल अंतरभूत व्योम exynos5433_jpeg_set_img_fmt(व्योम __iomem *base,
+					       अचिन्हित पूर्णांक img_fmt)
+अणु
 	__exynos4_jpeg_set_img_fmt(base, img_fmt, SJPEG_EXYNOS5433);
-}
+पूर्ण
 
-static inline void exynos4_jpeg_set_enc_out_fmt(void __iomem *base,
-						unsigned int out_fmt)
-{
+अटल अंतरभूत व्योम exynos4_jpeg_set_enc_out_fmt(व्योम __iomem *base,
+						अचिन्हित पूर्णांक out_fmt)
+अणु
 	__exynos4_jpeg_set_enc_out_fmt(base, out_fmt, SJPEG_EXYNOS4);
-}
+पूर्ण
 
-static inline void exynos5433_jpeg_set_enc_out_fmt(void __iomem *base,
-						   unsigned int out_fmt)
-{
+अटल अंतरभूत व्योम exynos5433_jpeg_set_enc_out_fmt(व्योम __iomem *base,
+						   अचिन्हित पूर्णांक out_fmt)
+अणु
 	__exynos4_jpeg_set_enc_out_fmt(base, out_fmt, SJPEG_EXYNOS5433);
-}
+पूर्ण
 
-static void exynos4_jpeg_device_run(void *priv)
-{
-	struct s5p_jpeg_ctx *ctx = priv;
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	unsigned int bitstream_size;
-	unsigned long flags;
+अटल व्योम exynos4_jpeg_device_run(व्योम *priv)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = priv;
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	अचिन्हित पूर्णांक bitstream_size;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&jpeg->slock, flags);
 
-	if (ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
 		exynos4_jpeg_sw_reset(jpeg->regs);
-		exynos4_jpeg_set_interrupt(jpeg->regs, jpeg->variant->version);
+		exynos4_jpeg_set_पूर्णांकerrupt(jpeg->regs, jpeg->variant->version);
 		exynos4_jpeg_set_huf_table_enable(jpeg->regs, 1);
 
 		exynos4_jpeg_set_huff_tbl(jpeg->regs);
 
 		/*
 		 * JPEG IP allows storing 4 quantization tables
-		 * We fill table 0 for luma and table 1 for chroma
+		 * We fill table 0 क्रम luma and table 1 क्रम chroma
 		 */
 		exynos4_jpeg_set_qtbl_lum(jpeg->regs, ctx->compr_quality);
 		exynos4_jpeg_set_qtbl_chr(jpeg->regs, ctx->compr_quality);
@@ -2215,29 +2216,29 @@ static void exynos4_jpeg_device_run(void *priv)
 		exynos4_jpeg_set_stream_size(jpeg->regs, ctx->cap_q.w,
 							ctx->cap_q.h);
 
-		if (ctx->jpeg->variant->version == SJPEG_EXYNOS4) {
+		अगर (ctx->jpeg->variant->version == SJPEG_EXYNOS4) अणु
 			exynos4_jpeg_set_enc_out_fmt(jpeg->regs,
 						     ctx->subsampling);
 			exynos4_jpeg_set_img_fmt(jpeg->regs,
 						 ctx->out_q.fmt->fourcc);
-		} else {
+		पूर्ण अन्यथा अणु
 			exynos5433_jpeg_set_enc_out_fmt(jpeg->regs,
 							ctx->subsampling);
 			exynos5433_jpeg_set_img_fmt(jpeg->regs,
 						    ctx->out_q.fmt->fourcc);
-		}
+		पूर्ण
 		exynos4_jpeg_set_img_addr(ctx);
 		exynos4_jpeg_set_jpeg_addr(ctx);
 		exynos4_jpeg_set_encode_hoff_cnt(jpeg->regs,
 							ctx->out_q.fmt->fourcc);
-	} else {
+	पूर्ण अन्यथा अणु
 		exynos4_jpeg_sw_reset(jpeg->regs);
-		exynos4_jpeg_set_interrupt(jpeg->regs,
+		exynos4_jpeg_set_पूर्णांकerrupt(jpeg->regs,
 					   jpeg->variant->version);
 		exynos4_jpeg_set_img_addr(ctx);
 		exynos4_jpeg_set_jpeg_addr(ctx);
 
-		if (jpeg->variant->version == SJPEG_EXYNOS5433) {
+		अगर (jpeg->variant->version == SJPEG_EXYNOS5433) अणु
 			exynos4_jpeg_parse_huff_tbl(ctx);
 			exynos4_jpeg_parse_decode_h_tbl(ctx);
 
@@ -2253,109 +2254,109 @@ static void exynos4_jpeg_device_run(void *priv)
 			exynos5433_jpeg_set_img_fmt(jpeg->regs,
 						    ctx->cap_q.fmt->fourcc);
 			bitstream_size = DIV_ROUND_UP(ctx->out_q.size, 16);
-		} else {
+		पूर्ण अन्यथा अणु
 			exynos4_jpeg_set_img_fmt(jpeg->regs,
 						 ctx->cap_q.fmt->fourcc);
 			bitstream_size = DIV_ROUND_UP(ctx->out_q.size, 32);
-		}
+		पूर्ण
 
 		exynos4_jpeg_set_dec_bitstream_size(jpeg->regs, bitstream_size);
-	}
+	पूर्ण
 
-	exynos4_jpeg_set_sys_int_enable(jpeg->regs, 1);
+	exynos4_jpeg_set_sys_पूर्णांक_enable(jpeg->regs, 1);
 	exynos4_jpeg_set_enc_dec_mode(jpeg->regs, ctx->mode);
 
 	spin_unlock_irqrestore(&jpeg->slock, flags);
-}
+पूर्ण
 
-static void exynos3250_jpeg_set_img_addr(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct s5p_jpeg_fmt *fmt;
-	struct vb2_v4l2_buffer *vb;
-	struct s5p_jpeg_addr jpeg_addr = {};
+अटल व्योम exynos3250_jpeg_set_img_addr(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा s5p_jpeg_fmt *fmt;
+	काष्ठा vb2_v4l2_buffer *vb;
+	काष्ठा s5p_jpeg_addr jpeg_addr = अणुपूर्ण;
 	u32 pix_size;
 
 	pix_size = ctx->cap_q.w * ctx->cap_q.h;
 
-	if (ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
 		vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 		fmt = ctx->out_q.fmt;
-	} else {
+	पूर्ण अन्यथा अणु
 		vb = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
 		fmt = ctx->cap_q.fmt;
-	}
+	पूर्ण
 
 	jpeg_addr.y = vb2_dma_contig_plane_dma_addr(&vb->vb2_buf, 0);
 
-	if (fmt->colplanes == 2) {
+	अगर (fmt->colplanes == 2) अणु
 		jpeg_addr.cb = jpeg_addr.y + pix_size;
-	} else if (fmt->colplanes == 3) {
+	पूर्ण अन्यथा अगर (fmt->colplanes == 3) अणु
 		jpeg_addr.cb = jpeg_addr.y + pix_size;
-		if (fmt->fourcc == V4L2_PIX_FMT_YUV420)
+		अगर (fmt->fourcc == V4L2_PIX_FMT_YUV420)
 			jpeg_addr.cr = jpeg_addr.cb + pix_size / 4;
-		else
+		अन्यथा
 			jpeg_addr.cr = jpeg_addr.cb + pix_size / 2;
-	}
+	पूर्ण
 
 	exynos3250_jpeg_imgadr(jpeg->regs, &jpeg_addr);
-}
+पूर्ण
 
-static void exynos3250_jpeg_set_jpeg_addr(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	struct vb2_v4l2_buffer *vb;
-	unsigned int jpeg_addr = 0;
+अटल व्योम exynos3250_jpeg_set_jpeg_addr(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	काष्ठा vb2_v4l2_buffer *vb;
+	अचिन्हित पूर्णांक jpeg_addr = 0;
 
-	if (ctx->mode == S5P_JPEG_ENCODE)
+	अगर (ctx->mode == S5P_JPEG_ENCODE)
 		vb = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
-	else
+	अन्यथा
 		vb = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 
 	jpeg_addr = vb2_dma_contig_plane_dma_addr(&vb->vb2_buf, 0);
 	exynos3250_jpeg_jpgadr(jpeg->regs, jpeg_addr);
-}
+पूर्ण
 
-static void exynos3250_jpeg_device_run(void *priv)
-{
-	struct s5p_jpeg_ctx *ctx = priv;
-	struct s5p_jpeg *jpeg = ctx->jpeg;
-	unsigned long flags;
+अटल व्योम exynos3250_jpeg_device_run(व्योम *priv)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = priv;
+	काष्ठा s5p_jpeg *jpeg = ctx->jpeg;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ctx->jpeg->slock, flags);
 
 	exynos3250_jpeg_reset(jpeg->regs);
 	exynos3250_jpeg_set_dma_num(jpeg->regs);
-	exynos3250_jpeg_poweron(jpeg->regs);
+	exynos3250_jpeg_घातeron(jpeg->regs);
 	exynos3250_jpeg_clk_set(jpeg->regs);
 	exynos3250_jpeg_proc_mode(jpeg->regs, ctx->mode);
 
-	if (ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (ctx->mode == S5P_JPEG_ENCODE) अणु
 		exynos3250_jpeg_input_raw_fmt(jpeg->regs,
 					      ctx->out_q.fmt->fourcc);
-		exynos3250_jpeg_dri(jpeg->regs, ctx->restart_interval);
+		exynos3250_jpeg_dri(jpeg->regs, ctx->restart_पूर्णांकerval);
 
 		/*
 		 * JPEG IP allows storing 4 quantization tables
-		 * We fill table 0 for luma and table 1 for chroma
+		 * We fill table 0 क्रम luma and table 1 क्रम chroma
 		 */
 		s5p_jpeg_set_qtbl_lum(jpeg->regs, ctx->compr_quality);
 		s5p_jpeg_set_qtbl_chr(jpeg->regs, ctx->compr_quality);
-		/* use table 0 for Y */
+		/* use table 0 क्रम Y */
 		exynos3250_jpeg_qtbl(jpeg->regs, 1, 0);
-		/* use table 1 for Cb and Cr*/
+		/* use table 1 क्रम Cb and Cr*/
 		exynos3250_jpeg_qtbl(jpeg->regs, 2, 1);
 		exynos3250_jpeg_qtbl(jpeg->regs, 3, 1);
 
 		/*
-		 * Some SoCs require setting Huffman tables before each run
+		 * Some SoCs require setting Huffman tables beक्रमe each run
 		 */
-		if (jpeg->variant->htbl_reinit) {
+		अगर (jpeg->variant->htbl_reinit) अणु
 			s5p_jpeg_set_hdctbl(jpeg->regs);
 			s5p_jpeg_set_hdctblg(jpeg->regs);
 			s5p_jpeg_set_hactbl(jpeg->regs);
 			s5p_jpeg_set_hactblg(jpeg->regs);
-		}
+		पूर्ण
 
 		/* Y, Cb, Cr use Huffman table 0 */
 		exynos3250_jpeg_htbl_ac(jpeg->regs, 1);
@@ -2378,11 +2379,11 @@ static void exynos3250_jpeg_device_run(void *priv)
 		/* ultimately comes from sizeimage from userspace */
 		exynos3250_jpeg_enc_stream_bound(jpeg->regs, ctx->cap_q.size);
 
-		if (ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB565 ||
+		अगर (ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB565 ||
 		    ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB565X ||
 		    ctx->out_q.fmt->fourcc == V4L2_PIX_FMT_RGB32)
 			exynos3250_jpeg_set_y16(jpeg->regs, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		exynos3250_jpeg_set_img_addr(ctx);
 		exynos3250_jpeg_set_jpeg_addr(ctx);
 		exynos3250_jpeg_stride(jpeg->regs, ctx->cap_q.fmt->fourcc,
@@ -2393,52 +2394,52 @@ static void exynos3250_jpeg_device_run(void *priv)
 		exynos3250_jpeg_dec_stream_size(jpeg->regs, ctx->out_q.size);
 		exynos3250_jpeg_output_raw_fmt(jpeg->regs,
 						ctx->cap_q.fmt->fourcc);
-	}
+	पूर्ण
 
-	exynos3250_jpeg_interrupts_enable(jpeg->regs);
+	exynos3250_jpeg_पूर्णांकerrupts_enable(jpeg->regs);
 
 	/* JPEG RGB to YCbCr conversion matrix */
 	exynos3250_jpeg_coef(jpeg->regs, ctx->mode);
 
-	exynos3250_jpeg_set_timer(jpeg->regs, EXYNOS3250_IRQ_TIMEOUT);
+	exynos3250_jpeg_set_समयr(jpeg->regs, EXYNOS3250_IRQ_TIMEOUT);
 	jpeg->irq_status = 0;
 	exynos3250_jpeg_start(jpeg->regs);
 
 	spin_unlock_irqrestore(&ctx->jpeg->slock, flags);
-}
+पूर्ण
 
-static int s5p_jpeg_job_ready(void *priv)
-{
-	struct s5p_jpeg_ctx *ctx = priv;
+अटल पूर्णांक s5p_jpeg_job_पढ़ोy(व्योम *priv)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = priv;
 
-	if (ctx->mode == S5P_JPEG_DECODE) {
+	अगर (ctx->mode == S5P_JPEG_DECODE) अणु
 		/*
 		 * We have only one input buffer and one output buffer. If there
-		 * is a resolution change event, no need to continue decoding.
+		 * is a resolution change event, no need to जारी decoding.
 		 */
-		if (ctx->state == JPEGCTX_RESOLUTION_CHANGE)
-			return 0;
+		अगर (ctx->state == JPEGCTX_RESOLUTION_CHANGE)
+			वापस 0;
 
-		return ctx->hdr_parsed;
-	}
+		वापस ctx->hdr_parsed;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct v4l2_m2m_ops s5p_jpeg_m2m_ops = {
+अटल काष्ठा v4l2_m2m_ops s5p_jpeg_m2m_ops = अणु
 	.device_run	= s5p_jpeg_device_run,
-	.job_ready	= s5p_jpeg_job_ready,
-};
+	.job_पढ़ोy	= s5p_jpeg_job_पढ़ोy,
+पूर्ण;
 
-static struct v4l2_m2m_ops exynos3250_jpeg_m2m_ops = {
+अटल काष्ठा v4l2_m2m_ops exynos3250_jpeg_m2m_ops = अणु
 	.device_run	= exynos3250_jpeg_device_run,
-	.job_ready	= s5p_jpeg_job_ready,
-};
+	.job_पढ़ोy	= s5p_jpeg_job_पढ़ोy,
+पूर्ण;
 
-static struct v4l2_m2m_ops exynos4_jpeg_m2m_ops = {
+अटल काष्ठा v4l2_m2m_ops exynos4_jpeg_m2m_ops = अणु
 	.device_run	= exynos4_jpeg_device_run,
-	.job_ready	= s5p_jpeg_job_ready,
-};
+	.job_पढ़ोy	= s5p_jpeg_job_पढ़ोy,
+पूर्ण;
 
 /*
  * ============================================================================
@@ -2446,56 +2447,56 @@ static struct v4l2_m2m_ops exynos4_jpeg_m2m_ops = {
  * ============================================================================
  */
 
-static int s5p_jpeg_queue_setup(struct vb2_queue *vq,
-			   unsigned int *nbuffers, unsigned int *nplanes,
-			   unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct s5p_jpeg_ctx *ctx = vb2_get_drv_priv(vq);
-	struct s5p_jpeg_q_data *q_data = NULL;
-	unsigned int size, count = *nbuffers;
+अटल पूर्णांक s5p_jpeg_queue_setup(काष्ठा vb2_queue *vq,
+			   अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+			   अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा s5p_jpeg_q_data *q_data = शून्य;
+	अचिन्हित पूर्णांक size, count = *nbuffers;
 
 	q_data = get_q_data(ctx, vq->type);
-	BUG_ON(q_data == NULL);
+	BUG_ON(q_data == शून्य);
 
 	size = q_data->size;
 
 	/*
-	 * header is parsed during decoding and parsed information stored
-	 * in the context so we do not allow another buffer to overwrite it
+	 * header is parsed during decoding and parsed inक्रमmation stored
+	 * in the context so we करो not allow another buffer to overग_लिखो it
 	 */
-	if (ctx->mode == S5P_JPEG_DECODE)
+	अगर (ctx->mode == S5P_JPEG_DECODE)
 		count = 1;
 
 	*nbuffers = count;
 	*nplanes = 1;
 	sizes[0] = size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_buf_prepare(struct vb2_buffer *vb)
-{
-	struct s5p_jpeg_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	struct s5p_jpeg_q_data *q_data = NULL;
+अटल पूर्णांक s5p_jpeg_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा s5p_jpeg_q_data *q_data = शून्य;
 
 	q_data = get_q_data(ctx, vb->vb2_queue->type);
-	BUG_ON(q_data == NULL);
+	BUG_ON(q_data == शून्य);
 
-	if (vb2_plane_size(vb, 0) < q_data->size) {
+	अगर (vb2_plane_size(vb, 0) < q_data->size) अणु
 		pr_err("%s data will not fit into plane (%lu < %lu)\n",
 				__func__, vb2_plane_size(vb, 0),
-				(long)q_data->size);
-		return -EINVAL;
-	}
+				(दीर्घ)q_data->size);
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, q_data->size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void s5p_jpeg_set_capture_queue_data(struct s5p_jpeg_ctx *ctx)
-{
-	struct s5p_jpeg_q_data *q_data = &ctx->cap_q;
+अटल व्योम s5p_jpeg_set_capture_queue_data(काष्ठा s5p_jpeg_ctx *ctx)
+अणु
+	काष्ठा s5p_jpeg_q_data *q_data = &ctx->cap_q;
 
 	q_data->w = ctx->out_q.w;
 	q_data->h = ctx->out_q.h;
@@ -2505,8 +2506,8 @@ static void s5p_jpeg_set_capture_queue_data(struct s5p_jpeg_ctx *ctx)
 	 * height values alignment when user space calls the QBUF of
 	 * OUTPUT buffer after the S_FMT of CAPTURE buffer.
 	 * Please note that on Exynos4x12 SoCs, resigning from executing
-	 * S_FMT on capture buffer for each JPEG image can result in a
-	 * hardware hangup if subsampling is lower than the one of input
+	 * S_FMT on capture buffer क्रम each JPEG image can result in a
+	 * hardware hangup अगर subsampling is lower than the one of input
 	 * JPEG.
 	 */
 	jpeg_bound_align_image(ctx, &q_data->w, S5P_JPEG_MIN_WIDTH,
@@ -2515,20 +2516,20 @@ static void s5p_jpeg_set_capture_queue_data(struct s5p_jpeg_ctx *ctx)
 			       S5P_JPEG_MAX_HEIGHT, q_data->fmt->v_align);
 
 	q_data->size = q_data->w * q_data->h * q_data->fmt->depth >> 3;
-}
+पूर्ण
 
-static void s5p_jpeg_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct s5p_jpeg_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम s5p_jpeg_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा s5p_jpeg_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
-	if (ctx->mode == S5P_JPEG_DECODE &&
-	    vb->vb2_queue->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
-		static const struct v4l2_event ev_src_ch = {
+	अगर (ctx->mode == S5P_JPEG_DECODE &&
+	    vb->vb2_queue->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) अणु
+		अटल स्थिर काष्ठा v4l2_event ev_src_ch = अणु
 			.type = V4L2_EVENT_SOURCE_CHANGE,
 			.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION,
-		};
-		struct vb2_queue *dst_vq;
+		पूर्ण;
+		काष्ठा vb2_queue *dst_vq;
 		u32 ori_w;
 		u32 ori_h;
 
@@ -2538,101 +2539,101 @@ static void s5p_jpeg_buf_queue(struct vb2_buffer *vb)
 		ori_h = ctx->out_q.h;
 
 		ctx->hdr_parsed = s5p_jpeg_parse_hdr(&ctx->out_q,
-		     (unsigned long)vb2_plane_vaddr(vb, 0),
-		     min((unsigned long)ctx->out_q.size,
+		     (अचिन्हित दीर्घ)vb2_plane_vaddr(vb, 0),
+		     min((अचिन्हित दीर्घ)ctx->out_q.size,
 			 vb2_get_plane_payload(vb, 0)), ctx);
-		if (!ctx->hdr_parsed) {
-			vb2_buffer_done(vb, VB2_BUF_STATE_ERROR);
-			return;
-		}
+		अगर (!ctx->hdr_parsed) अणु
+			vb2_buffer_करोne(vb, VB2_BUF_STATE_ERROR);
+			वापस;
+		पूर्ण
 
 		/*
 		 * If there is a resolution change event, only update capture
 		 * queue when it is not streaming. Otherwise, update it in
-		 * STREAMOFF. See s5p_jpeg_stop_streaming for detail.
+		 * STREAMOFF. See s5p_jpeg_stop_streaming क्रम detail.
 		 */
-		if (ctx->out_q.w != ori_w || ctx->out_q.h != ori_h) {
+		अगर (ctx->out_q.w != ori_w || ctx->out_q.h != ori_h) अणु
 			v4l2_event_queue_fh(&ctx->fh, &ev_src_ch);
-			if (vb2_is_streaming(dst_vq))
+			अगर (vb2_is_streaming(dst_vq))
 				ctx->state = JPEGCTX_RESOLUTION_CHANGE;
-			else
+			अन्यथा
 				s5p_jpeg_set_capture_queue_data(ctx);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-}
+पूर्ण
 
-static int s5p_jpeg_start_streaming(struct vb2_queue *q, unsigned int count)
-{
-	struct s5p_jpeg_ctx *ctx = vb2_get_drv_priv(q);
-	int ret;
+अटल पूर्णांक s5p_jpeg_start_streaming(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = vb2_get_drv_priv(q);
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(ctx->jpeg->dev);
+	ret = pm_runसमय_get_sync(ctx->jpeg->dev);
 
-	return ret > 0 ? 0 : ret;
-}
+	वापस ret > 0 ? 0 : ret;
+पूर्ण
 
-static void s5p_jpeg_stop_streaming(struct vb2_queue *q)
-{
-	struct s5p_jpeg_ctx *ctx = vb2_get_drv_priv(q);
+अटल व्योम s5p_jpeg_stop_streaming(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = vb2_get_drv_priv(q);
 
 	/*
-	 * STREAMOFF is an acknowledgment for resolution change event.
-	 * Before STREAMOFF, we still have to return the old resolution and
+	 * STREAMOFF is an acknowledgment क्रम resolution change event.
+	 * Beक्रमe STREAMOFF, we still have to वापस the old resolution and
 	 * subsampling. Update capture queue when the stream is off.
 	 */
-	if (ctx->state == JPEGCTX_RESOLUTION_CHANGE &&
-	    q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	अगर (ctx->state == JPEGCTX_RESOLUTION_CHANGE &&
+	    q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) अणु
 		s5p_jpeg_set_capture_queue_data(ctx);
 		ctx->state = JPEGCTX_RUNNING;
-	}
+	पूर्ण
 
-	pm_runtime_put(ctx->jpeg->dev);
-}
+	pm_runसमय_put(ctx->jpeg->dev);
+पूर्ण
 
-static const struct vb2_ops s5p_jpeg_qops = {
+अटल स्थिर काष्ठा vb2_ops s5p_jpeg_qops = अणु
 	.queue_setup		= s5p_jpeg_queue_setup,
 	.buf_prepare		= s5p_jpeg_buf_prepare,
 	.buf_queue		= s5p_jpeg_buf_queue,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
 	.start_streaming	= s5p_jpeg_start_streaming,
 	.stop_streaming		= s5p_jpeg_stop_streaming,
-};
+पूर्ण;
 
-static int queue_init(void *priv, struct vb2_queue *src_vq,
-		      struct vb2_queue *dst_vq)
-{
-	struct s5p_jpeg_ctx *ctx = priv;
-	int ret;
+अटल पूर्णांक queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+		      काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा s5p_jpeg_ctx *ctx = priv;
+	पूर्णांक ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_USERPTR;
 	src_vq->drv_priv = ctx;
-	src_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	src_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	src_vq->ops = &s5p_jpeg_qops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->lock = &ctx->jpeg->lock;
 	src_vq->dev = ctx->jpeg->dev;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_USERPTR;
 	dst_vq->drv_priv = ctx;
-	dst_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	dst_vq->ops = &s5p_jpeg_qops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->lock = &ctx->jpeg->lock;
 	dst_vq->dev = ctx->jpeg->dev;
 
-	return vb2_queue_init(dst_vq);
-}
+	वापस vb2_queue_init(dst_vq);
+पूर्ण
 
 /*
  * ============================================================================
@@ -2640,122 +2641,122 @@ static int queue_init(void *priv, struct vb2_queue *src_vq,
  * ============================================================================
  */
 
-static irqreturn_t s5p_jpeg_irq(int irq, void *dev_id)
-{
-	struct s5p_jpeg *jpeg = dev_id;
-	struct s5p_jpeg_ctx *curr_ctx;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
-	unsigned long payload_size = 0;
-	enum vb2_buffer_state state = VB2_BUF_STATE_DONE;
+अटल irqवापस_t s5p_jpeg_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा s5p_jpeg *jpeg = dev_id;
+	काष्ठा s5p_jpeg_ctx *curr_ctx;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
+	अचिन्हित दीर्घ payload_size = 0;
+	क्रमागत vb2_buffer_state state = VB2_BUF_STATE_DONE;
 	bool enc_jpeg_too_large = false;
-	bool timer_elapsed = false;
+	bool समयr_elapsed = false;
 	bool op_completed = false;
 
 	spin_lock(&jpeg->slock);
 
 	curr_ctx = v4l2_m2m_get_curr_priv(jpeg->m2m_dev);
 
-	src_buf = v4l2_m2m_src_buf_remove(curr_ctx->fh.m2m_ctx);
-	dst_buf = v4l2_m2m_dst_buf_remove(curr_ctx->fh.m2m_ctx);
+	src_buf = v4l2_m2m_src_buf_हटाओ(curr_ctx->fh.m2m_ctx);
+	dst_buf = v4l2_m2m_dst_buf_हटाओ(curr_ctx->fh.m2m_ctx);
 
-	if (curr_ctx->mode == S5P_JPEG_ENCODE)
+	अगर (curr_ctx->mode == S5P_JPEG_ENCODE)
 		enc_jpeg_too_large = s5p_jpeg_enc_stream_stat(jpeg->regs);
-	timer_elapsed = s5p_jpeg_timer_stat(jpeg->regs);
+	समयr_elapsed = s5p_jpeg_समयr_stat(jpeg->regs);
 	op_completed = s5p_jpeg_result_stat_ok(jpeg->regs);
-	if (curr_ctx->mode == S5P_JPEG_DECODE)
+	अगर (curr_ctx->mode == S5P_JPEG_DECODE)
 		op_completed = op_completed &&
 					s5p_jpeg_stream_stat_ok(jpeg->regs);
 
-	if (enc_jpeg_too_large) {
+	अगर (enc_jpeg_too_large) अणु
 		state = VB2_BUF_STATE_ERROR;
 		s5p_jpeg_clear_enc_stream_stat(jpeg->regs);
-	} else if (timer_elapsed) {
+	पूर्ण अन्यथा अगर (समयr_elapsed) अणु
 		state = VB2_BUF_STATE_ERROR;
-		s5p_jpeg_clear_timer_stat(jpeg->regs);
-	} else if (!op_completed) {
+		s5p_jpeg_clear_समयr_stat(jpeg->regs);
+	पूर्ण अन्यथा अगर (!op_completed) अणु
 		state = VB2_BUF_STATE_ERROR;
-	} else {
+	पूर्ण अन्यथा अणु
 		payload_size = s5p_jpeg_compressed_size(jpeg->regs);
-	}
+	पूर्ण
 
-	dst_buf->timecode = src_buf->timecode;
-	dst_buf->vb2_buf.timestamp = src_buf->vb2_buf.timestamp;
+	dst_buf->समयcode = src_buf->समयcode;
+	dst_buf->vb2_buf.बारtamp = src_buf->vb2_buf.बारtamp;
 	dst_buf->flags &= ~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 	dst_buf->flags |=
 		src_buf->flags & V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 
-	v4l2_m2m_buf_done(src_buf, state);
-	if (curr_ctx->mode == S5P_JPEG_ENCODE)
+	v4l2_m2m_buf_करोne(src_buf, state);
+	अगर (curr_ctx->mode == S5P_JPEG_ENCODE)
 		vb2_set_plane_payload(&dst_buf->vb2_buf, 0, payload_size);
-	v4l2_m2m_buf_done(dst_buf, state);
+	v4l2_m2m_buf_करोne(dst_buf, state);
 
 	curr_ctx->subsampling = s5p_jpeg_get_subsampling_mode(jpeg->regs);
 	spin_unlock(&jpeg->slock);
 
-	s5p_jpeg_clear_int(jpeg->regs);
+	s5p_jpeg_clear_पूर्णांक(jpeg->regs);
 
 	v4l2_m2m_job_finish(jpeg->m2m_dev, curr_ctx->fh.m2m_ctx);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t exynos4_jpeg_irq(int irq, void *priv)
-{
-	unsigned int int_status;
-	struct vb2_v4l2_buffer *src_vb, *dst_vb;
-	struct s5p_jpeg *jpeg = priv;
-	struct s5p_jpeg_ctx *curr_ctx;
-	unsigned long payload_size = 0;
+अटल irqवापस_t exynos4_jpeg_irq(पूर्णांक irq, व्योम *priv)
+अणु
+	अचिन्हित पूर्णांक पूर्णांक_status;
+	काष्ठा vb2_v4l2_buffer *src_vb, *dst_vb;
+	काष्ठा s5p_jpeg *jpeg = priv;
+	काष्ठा s5p_jpeg_ctx *curr_ctx;
+	अचिन्हित दीर्घ payload_size = 0;
 
 	spin_lock(&jpeg->slock);
 
-	exynos4_jpeg_set_sys_int_enable(jpeg->regs, 0);
+	exynos4_jpeg_set_sys_पूर्णांक_enable(jpeg->regs, 0);
 
 	curr_ctx = v4l2_m2m_get_curr_priv(jpeg->m2m_dev);
 
-	src_vb = v4l2_m2m_src_buf_remove(curr_ctx->fh.m2m_ctx);
-	dst_vb = v4l2_m2m_dst_buf_remove(curr_ctx->fh.m2m_ctx);
+	src_vb = v4l2_m2m_src_buf_हटाओ(curr_ctx->fh.m2m_ctx);
+	dst_vb = v4l2_m2m_dst_buf_हटाओ(curr_ctx->fh.m2m_ctx);
 
-	int_status = exynos4_jpeg_get_int_status(jpeg->regs);
+	पूर्णांक_status = exynos4_jpeg_get_पूर्णांक_status(jpeg->regs);
 
-	if (int_status) {
-		switch (int_status & 0x1f) {
-		case 0x1:
+	अगर (पूर्णांक_status) अणु
+		चयन (पूर्णांक_status & 0x1f) अणु
+		हाल 0x1:
 			jpeg->irq_ret = ERR_PROT;
-			break;
-		case 0x2:
+			अवरोध;
+		हाल 0x2:
 			jpeg->irq_ret = OK_ENC_OR_DEC;
-			break;
-		case 0x4:
+			अवरोध;
+		हाल 0x4:
 			jpeg->irq_ret = ERR_DEC_INVALID_FORMAT;
-			break;
-		case 0x8:
+			अवरोध;
+		हाल 0x8:
 			jpeg->irq_ret = ERR_MULTI_SCAN;
-			break;
-		case 0x10:
+			अवरोध;
+		हाल 0x10:
 			jpeg->irq_ret = ERR_FRAME;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			jpeg->irq_ret = ERR_UNKNOWN;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		jpeg->irq_ret = ERR_UNKNOWN;
-	}
+	पूर्ण
 
-	if (jpeg->irq_ret == OK_ENC_OR_DEC) {
-		if (curr_ctx->mode == S5P_JPEG_ENCODE) {
+	अगर (jpeg->irq_ret == OK_ENC_OR_DEC) अणु
+		अगर (curr_ctx->mode == S5P_JPEG_ENCODE) अणु
 			payload_size = exynos4_jpeg_get_stream_size(jpeg->regs);
 			vb2_set_plane_payload(&dst_vb->vb2_buf,
 					0, payload_size);
-		}
-		v4l2_m2m_buf_done(src_vb, VB2_BUF_STATE_DONE);
-		v4l2_m2m_buf_done(dst_vb, VB2_BUF_STATE_DONE);
-	} else {
-		v4l2_m2m_buf_done(src_vb, VB2_BUF_STATE_ERROR);
-		v4l2_m2m_buf_done(dst_vb, VB2_BUF_STATE_ERROR);
-	}
+		पूर्ण
+		v4l2_m2m_buf_करोne(src_vb, VB2_BUF_STATE_DONE);
+		v4l2_m2m_buf_करोne(dst_vb, VB2_BUF_STATE_DONE);
+	पूर्ण अन्यथा अणु
+		v4l2_m2m_buf_करोne(src_vb, VB2_BUF_STATE_ERROR);
+		v4l2_m2m_buf_करोne(dst_vb, VB2_BUF_STATE_ERROR);
+	पूर्ण
 
-	if (jpeg->variant->version == SJPEG_EXYNOS4)
+	अगर (jpeg->variant->version == SJPEG_EXYNOS4)
 		curr_ctx->subsampling = exynos4_jpeg_get_frame_fmt(jpeg->regs);
 
 	exynos4_jpeg_set_enc_dec_mode(jpeg->regs, S5P_JPEG_DISABLE);
@@ -2763,71 +2764,71 @@ static irqreturn_t exynos4_jpeg_irq(int irq, void *priv)
 	spin_unlock(&jpeg->slock);
 
 	v4l2_m2m_job_finish(jpeg->m2m_dev, curr_ctx->fh.m2m_ctx);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t exynos3250_jpeg_irq(int irq, void *dev_id)
-{
-	struct s5p_jpeg *jpeg = dev_id;
-	struct s5p_jpeg_ctx *curr_ctx;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
-	unsigned long payload_size = 0;
-	enum vb2_buffer_state state = VB2_BUF_STATE_DONE;
-	bool interrupt_timeout = false;
+अटल irqवापस_t exynos3250_jpeg_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा s5p_jpeg *jpeg = dev_id;
+	काष्ठा s5p_jpeg_ctx *curr_ctx;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
+	अचिन्हित दीर्घ payload_size = 0;
+	क्रमागत vb2_buffer_state state = VB2_BUF_STATE_DONE;
+	bool पूर्णांकerrupt_समयout = false;
 	bool stream_error = false;
 	u32 irq_status;
 
 	spin_lock(&jpeg->slock);
 
-	irq_status = exynos3250_jpeg_get_timer_status(jpeg->regs);
-	if (irq_status & EXYNOS3250_TIMER_INT_STAT) {
-		exynos3250_jpeg_clear_timer_status(jpeg->regs);
-		interrupt_timeout = true;
+	irq_status = exynos3250_jpeg_get_समयr_status(jpeg->regs);
+	अगर (irq_status & EXYNOS3250_TIMER_INT_STAT) अणु
+		exynos3250_jpeg_clear_समयr_status(jpeg->regs);
+		पूर्णांकerrupt_समयout = true;
 		dev_err(jpeg->dev, "Interrupt timeout occurred.\n");
-	}
+	पूर्ण
 
-	irq_status = exynos3250_jpeg_get_int_status(jpeg->regs);
-	exynos3250_jpeg_clear_int_status(jpeg->regs, irq_status);
+	irq_status = exynos3250_jpeg_get_पूर्णांक_status(jpeg->regs);
+	exynos3250_jpeg_clear_पूर्णांक_status(jpeg->regs, irq_status);
 
 	jpeg->irq_status |= irq_status;
 
-	if (jpeg->variant->version == SJPEG_EXYNOS5420 &&
-	    irq_status & EXYNOS3250_STREAM_STAT) {
+	अगर (jpeg->variant->version == SJPEG_EXYNOS5420 &&
+	    irq_status & EXYNOS3250_STREAM_STAT) अणु
 		stream_error = true;
 		dev_err(jpeg->dev, "Syntax error or unrecoverable error occurred.\n");
-	}
+	पूर्ण
 
 	curr_ctx = v4l2_m2m_get_curr_priv(jpeg->m2m_dev);
 
-	if (!curr_ctx)
-		goto exit_unlock;
+	अगर (!curr_ctx)
+		जाओ निकास_unlock;
 
-	if ((irq_status & EXYNOS3250_HEADER_STAT) &&
-	    (curr_ctx->mode == S5P_JPEG_DECODE)) {
+	अगर ((irq_status & EXYNOS3250_HEADER_STAT) &&
+	    (curr_ctx->mode == S5P_JPEG_DECODE)) अणु
 		exynos3250_jpeg_rstart(jpeg->regs);
-		goto exit_unlock;
-	}
+		जाओ निकास_unlock;
+	पूर्ण
 
-	if (jpeg->irq_status & (EXYNOS3250_JPEG_DONE |
+	अगर (jpeg->irq_status & (EXYNOS3250_JPEG_DONE |
 				EXYNOS3250_WDMA_DONE |
 				EXYNOS3250_RDMA_DONE |
 				EXYNOS3250_RESULT_STAT))
 		payload_size = exynos3250_jpeg_compressed_size(jpeg->regs);
-	else if (interrupt_timeout || stream_error)
+	अन्यथा अगर (पूर्णांकerrupt_समयout || stream_error)
 		state = VB2_BUF_STATE_ERROR;
-	else
-		goto exit_unlock;
+	अन्यथा
+		जाओ निकास_unlock;
 
-	src_buf = v4l2_m2m_src_buf_remove(curr_ctx->fh.m2m_ctx);
-	dst_buf = v4l2_m2m_dst_buf_remove(curr_ctx->fh.m2m_ctx);
+	src_buf = v4l2_m2m_src_buf_हटाओ(curr_ctx->fh.m2m_ctx);
+	dst_buf = v4l2_m2m_dst_buf_हटाओ(curr_ctx->fh.m2m_ctx);
 
-	dst_buf->timecode = src_buf->timecode;
-	dst_buf->vb2_buf.timestamp = src_buf->vb2_buf.timestamp;
+	dst_buf->समयcode = src_buf->समयcode;
+	dst_buf->vb2_buf.बारtamp = src_buf->vb2_buf.बारtamp;
 
-	v4l2_m2m_buf_done(src_buf, state);
-	if (curr_ctx->mode == S5P_JPEG_ENCODE)
+	v4l2_m2m_buf_करोne(src_buf, state);
+	अगर (curr_ctx->mode == S5P_JPEG_ENCODE)
 		vb2_set_plane_payload(&dst_buf->vb2_buf, 0, payload_size);
-	v4l2_m2m_buf_done(dst_buf, state);
+	v4l2_m2m_buf_करोne(dst_buf, state);
 
 	curr_ctx->subsampling =
 			exynos3250_jpeg_get_subsampling_mode(jpeg->regs);
@@ -2835,97 +2836,97 @@ static irqreturn_t exynos3250_jpeg_irq(int irq, void *dev_id)
 	spin_unlock(&jpeg->slock);
 
 	v4l2_m2m_job_finish(jpeg->m2m_dev, curr_ctx->fh.m2m_ctx);
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
-exit_unlock:
+निकास_unlock:
 	spin_unlock(&jpeg->slock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void *jpeg_get_drv_data(struct device *dev);
+अटल व्योम *jpeg_get_drv_data(काष्ठा device *dev);
 
 /*
  * ============================================================================
- * Driver basic infrastructure
+ * Driver basic infraकाष्ठाure
  * ============================================================================
  */
 
-static int s5p_jpeg_probe(struct platform_device *pdev)
-{
-	struct s5p_jpeg *jpeg;
-	struct resource *res;
-	int i, ret;
+अटल पूर्णांक s5p_jpeg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s5p_jpeg *jpeg;
+	काष्ठा resource *res;
+	पूर्णांक i, ret;
 
-	/* JPEG IP abstraction struct */
-	jpeg = devm_kzalloc(&pdev->dev, sizeof(struct s5p_jpeg), GFP_KERNEL);
-	if (!jpeg)
-		return -ENOMEM;
+	/* JPEG IP असलtraction काष्ठा */
+	jpeg = devm_kzalloc(&pdev->dev, माप(काष्ठा s5p_jpeg), GFP_KERNEL);
+	अगर (!jpeg)
+		वापस -ENOMEM;
 
 	jpeg->variant = jpeg_get_drv_data(&pdev->dev);
-	if (!jpeg->variant)
-		return -ENODEV;
+	अगर (!jpeg->variant)
+		वापस -ENODEV;
 
 	mutex_init(&jpeg->lock);
 	spin_lock_init(&jpeg->slock);
 	jpeg->dev = &pdev->dev;
 
-	/* memory-mapped registers */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* memory-mapped रेजिस्टरs */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
 	jpeg->regs = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(jpeg->regs))
-		return PTR_ERR(jpeg->regs);
+	अगर (IS_ERR(jpeg->regs))
+		वापस PTR_ERR(jpeg->regs);
 
-	/* interrupt service routine registration */
-	jpeg->irq = ret = platform_get_irq(pdev, 0);
-	if (ret < 0) {
+	/* पूर्णांकerrupt service routine registration */
+	jpeg->irq = ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "cannot find IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, jpeg->irq, jpeg->variant->jpeg_irq,
 				0, dev_name(&pdev->dev), jpeg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "cannot claim IRQ %d\n", jpeg->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* clocks */
-	for (i = 0; i < jpeg->variant->num_clocks; i++) {
-		jpeg->clocks[i] = devm_clk_get(&pdev->dev,
+	/* घड़ीs */
+	क्रम (i = 0; i < jpeg->variant->num_घड़ीs; i++) अणु
+		jpeg->घड़ीs[i] = devm_clk_get(&pdev->dev,
 					      jpeg->variant->clk_names[i]);
-		if (IS_ERR(jpeg->clocks[i])) {
+		अगर (IS_ERR(jpeg->घड़ीs[i])) अणु
 			dev_err(&pdev->dev, "failed to get clock: %s\n",
 				jpeg->variant->clk_names[i]);
-			return PTR_ERR(jpeg->clocks[i]);
-		}
-	}
+			वापस PTR_ERR(jpeg->घड़ीs[i]);
+		पूर्ण
+	पूर्ण
 
 	/* v4l2 device */
-	ret = v4l2_device_register(&pdev->dev, &jpeg->v4l2_dev);
-	if (ret) {
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &jpeg->v4l2_dev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to register v4l2 device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* mem2mem device */
 	jpeg->m2m_dev = v4l2_m2m_init(jpeg->variant->m2m_ops);
-	if (IS_ERR(jpeg->m2m_dev)) {
+	अगर (IS_ERR(jpeg->m2m_dev)) अणु
 		v4l2_err(&jpeg->v4l2_dev, "Failed to init mem2mem device\n");
 		ret = PTR_ERR(jpeg->m2m_dev);
-		goto device_register_rollback;
-	}
+		जाओ device_रेजिस्टर_rollback;
+	पूर्ण
 
 	vb2_dma_contig_set_max_seg_size(&pdev->dev, DMA_BIT_MASK(32));
 
 	/* JPEG encoder /dev/videoX node */
 	jpeg->vfd_encoder = video_device_alloc();
-	if (!jpeg->vfd_encoder) {
+	अगर (!jpeg->vfd_encoder) अणु
 		v4l2_err(&jpeg->v4l2_dev, "Failed to allocate video device\n");
 		ret = -ENOMEM;
-		goto m2m_init_rollback;
-	}
-	snprintf(jpeg->vfd_encoder->name, sizeof(jpeg->vfd_encoder->name),
+		जाओ m2m_init_rollback;
+	पूर्ण
+	snम_लिखो(jpeg->vfd_encoder->name, माप(jpeg->vfd_encoder->name),
 				"%s-enc", S5P_JPEG_M2M_NAME);
 	jpeg->vfd_encoder->fops		= &s5p_jpeg_fops;
 	jpeg->vfd_encoder->ioctl_ops	= &s5p_jpeg_ioctl_ops;
@@ -2933,15 +2934,15 @@ static int s5p_jpeg_probe(struct platform_device *pdev)
 	jpeg->vfd_encoder->release	= video_device_release;
 	jpeg->vfd_encoder->lock		= &jpeg->lock;
 	jpeg->vfd_encoder->v4l2_dev	= &jpeg->v4l2_dev;
-	jpeg->vfd_encoder->vfl_dir	= VFL_DIR_M2M;
+	jpeg->vfd_encoder->vfl_dir	= VFL_सूची_M2M;
 	jpeg->vfd_encoder->device_caps	= V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_M2M;
 
-	ret = video_register_device(jpeg->vfd_encoder, VFL_TYPE_VIDEO, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(jpeg->vfd_encoder, VFL_TYPE_VIDEO, -1);
+	अगर (ret) अणु
 		v4l2_err(&jpeg->v4l2_dev, "Failed to register video device\n");
 		video_device_release(jpeg->vfd_encoder);
-		goto m2m_init_rollback;
-	}
+		जाओ m2m_init_rollback;
+	पूर्ण
 
 	video_set_drvdata(jpeg->vfd_encoder, jpeg);
 	v4l2_info(&jpeg->v4l2_dev,
@@ -2950,12 +2951,12 @@ static int s5p_jpeg_probe(struct platform_device *pdev)
 
 	/* JPEG decoder /dev/videoX node */
 	jpeg->vfd_decoder = video_device_alloc();
-	if (!jpeg->vfd_decoder) {
+	अगर (!jpeg->vfd_decoder) अणु
 		v4l2_err(&jpeg->v4l2_dev, "Failed to allocate video device\n");
 		ret = -ENOMEM;
-		goto enc_vdev_register_rollback;
-	}
-	snprintf(jpeg->vfd_decoder->name, sizeof(jpeg->vfd_decoder->name),
+		जाओ enc_vdev_रेजिस्टर_rollback;
+	पूर्ण
+	snम_लिखो(jpeg->vfd_decoder->name, माप(jpeg->vfd_decoder->name),
 				"%s-dec", S5P_JPEG_M2M_NAME);
 	jpeg->vfd_decoder->fops		= &s5p_jpeg_fops;
 	jpeg->vfd_decoder->ioctl_ops	= &s5p_jpeg_ioctl_ops;
@@ -2963,224 +2964,224 @@ static int s5p_jpeg_probe(struct platform_device *pdev)
 	jpeg->vfd_decoder->release	= video_device_release;
 	jpeg->vfd_decoder->lock		= &jpeg->lock;
 	jpeg->vfd_decoder->v4l2_dev	= &jpeg->v4l2_dev;
-	jpeg->vfd_decoder->vfl_dir	= VFL_DIR_M2M;
+	jpeg->vfd_decoder->vfl_dir	= VFL_सूची_M2M;
 	jpeg->vfd_decoder->device_caps	= V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_M2M;
 
-	ret = video_register_device(jpeg->vfd_decoder, VFL_TYPE_VIDEO, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(jpeg->vfd_decoder, VFL_TYPE_VIDEO, -1);
+	अगर (ret) अणु
 		v4l2_err(&jpeg->v4l2_dev, "Failed to register video device\n");
 		video_device_release(jpeg->vfd_decoder);
-		goto enc_vdev_register_rollback;
-	}
+		जाओ enc_vdev_रेजिस्टर_rollback;
+	पूर्ण
 
 	video_set_drvdata(jpeg->vfd_decoder, jpeg);
 	v4l2_info(&jpeg->v4l2_dev,
 		  "decoder device registered as /dev/video%d\n",
 		  jpeg->vfd_decoder->num);
 
-	/* final statements & power management */
-	platform_set_drvdata(pdev, jpeg);
+	/* final statements & घातer management */
+	platक्रमm_set_drvdata(pdev, jpeg);
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	v4l2_info(&jpeg->v4l2_dev, "Samsung S5P JPEG codec\n");
 
-	return 0;
+	वापस 0;
 
-enc_vdev_register_rollback:
-	video_unregister_device(jpeg->vfd_encoder);
+enc_vdev_रेजिस्टर_rollback:
+	video_unरेजिस्टर_device(jpeg->vfd_encoder);
 
 m2m_init_rollback:
 	v4l2_m2m_release(jpeg->m2m_dev);
 
-device_register_rollback:
-	v4l2_device_unregister(&jpeg->v4l2_dev);
+device_रेजिस्टर_rollback:
+	v4l2_device_unरेजिस्टर(&jpeg->v4l2_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s5p_jpeg_remove(struct platform_device *pdev)
-{
-	struct s5p_jpeg *jpeg = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक s5p_jpeg_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s5p_jpeg *jpeg = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
-	pm_runtime_disable(jpeg->dev);
+	pm_runसमय_disable(jpeg->dev);
 
-	video_unregister_device(jpeg->vfd_decoder);
-	video_unregister_device(jpeg->vfd_encoder);
+	video_unरेजिस्टर_device(jpeg->vfd_decoder);
+	video_unरेजिस्टर_device(jpeg->vfd_encoder);
 	vb2_dma_contig_clear_max_seg_size(&pdev->dev);
 	v4l2_m2m_release(jpeg->m2m_dev);
-	v4l2_device_unregister(&jpeg->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&jpeg->v4l2_dev);
 
-	if (!pm_runtime_status_suspended(&pdev->dev)) {
-		for (i = jpeg->variant->num_clocks - 1; i >= 0; i--)
-			clk_disable_unprepare(jpeg->clocks[i]);
-	}
+	अगर (!pm_runसमय_status_suspended(&pdev->dev)) अणु
+		क्रम (i = jpeg->variant->num_घड़ीs - 1; i >= 0; i--)
+			clk_disable_unprepare(jpeg->घड़ीs[i]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int s5p_jpeg_runtime_suspend(struct device *dev)
-{
-	struct s5p_jpeg *jpeg = dev_get_drvdata(dev);
-	int i;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक s5p_jpeg_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा s5p_jpeg *jpeg = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = jpeg->variant->num_clocks - 1; i >= 0; i--)
-		clk_disable_unprepare(jpeg->clocks[i]);
+	क्रम (i = jpeg->variant->num_घड़ीs - 1; i >= 0; i--)
+		clk_disable_unprepare(jpeg->घड़ीs[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s5p_jpeg_runtime_resume(struct device *dev)
-{
-	struct s5p_jpeg *jpeg = dev_get_drvdata(dev);
-	unsigned long flags;
-	int i, ret;
+अटल पूर्णांक s5p_jpeg_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा s5p_jpeg *jpeg = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < jpeg->variant->num_clocks; i++) {
-		ret = clk_prepare_enable(jpeg->clocks[i]);
-		if (ret) {
-			while (--i >= 0)
-				clk_disable_unprepare(jpeg->clocks[i]);
-			return ret;
-		}
-	}
+	क्रम (i = 0; i < jpeg->variant->num_घड़ीs; i++) अणु
+		ret = clk_prepare_enable(jpeg->घड़ीs[i]);
+		अगर (ret) अणु
+			जबतक (--i >= 0)
+				clk_disable_unprepare(jpeg->घड़ीs[i]);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&jpeg->slock, flags);
 
 	/*
-	 * JPEG IP allows storing two Huffman tables for each component.
-	 * We fill table 0 for each component and do this here only
-	 * for S5PC210 and Exynos3250 SoCs. Exynos4x12 and Exynos542x SoC
-	 * require programming their Huffman tables each time the encoding
+	 * JPEG IP allows storing two Huffman tables क्रम each component.
+	 * We fill table 0 क्रम each component and करो this here only
+	 * क्रम S5PC210 and Exynos3250 SoCs. Exynos4x12 and Exynos542x SoC
+	 * require programming their Huffman tables each समय the encoding
 	 * process is initialized, and thus it is accomplished in the
 	 * device_run callback of m2m_ops.
 	 */
-	if (!jpeg->variant->htbl_reinit) {
+	अगर (!jpeg->variant->htbl_reinit) अणु
 		s5p_jpeg_set_hdctbl(jpeg->regs);
 		s5p_jpeg_set_hdctblg(jpeg->regs);
 		s5p_jpeg_set_hactbl(jpeg->regs);
 		s5p_jpeg_set_hactblg(jpeg->regs);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&jpeg->slock, flags);
 
-	return 0;
-}
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct dev_pm_ops s5p_jpeg_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(s5p_jpeg_runtime_suspend, s5p_jpeg_runtime_resume,
-			   NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops s5p_jpeg_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(s5p_jpeg_runसमय_suspend, s5p_jpeg_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static struct s5p_jpeg_variant s5p_jpeg_drvdata = {
+अटल काष्ठा s5p_jpeg_variant s5p_jpeg_drvdata = अणु
 	.version	= SJPEG_S5P,
 	.jpeg_irq	= s5p_jpeg_irq,
 	.m2m_ops	= &s5p_jpeg_m2m_ops,
 	.fmt_ver_flag	= SJPEG_FMT_FLAG_S5P,
-	.clk_names	= {"jpeg"},
-	.num_clocks	= 1,
-};
+	.clk_names	= अणु"jpeg"पूर्ण,
+	.num_घड़ीs	= 1,
+पूर्ण;
 
-static struct s5p_jpeg_variant exynos3250_jpeg_drvdata = {
+अटल काष्ठा s5p_jpeg_variant exynos3250_jpeg_drvdata = अणु
 	.version	= SJPEG_EXYNOS3250,
 	.jpeg_irq	= exynos3250_jpeg_irq,
 	.m2m_ops	= &exynos3250_jpeg_m2m_ops,
 	.fmt_ver_flag	= SJPEG_FMT_FLAG_EXYNOS3250,
 	.hw3250_compat	= 1,
-	.clk_names	= {"jpeg", "sclk"},
-	.num_clocks	= 2,
-};
+	.clk_names	= अणु"jpeg", "sclk"पूर्ण,
+	.num_घड़ीs	= 2,
+पूर्ण;
 
-static struct s5p_jpeg_variant exynos4_jpeg_drvdata = {
+अटल काष्ठा s5p_jpeg_variant exynos4_jpeg_drvdata = अणु
 	.version	= SJPEG_EXYNOS4,
 	.jpeg_irq	= exynos4_jpeg_irq,
 	.m2m_ops	= &exynos4_jpeg_m2m_ops,
 	.fmt_ver_flag	= SJPEG_FMT_FLAG_EXYNOS4,
 	.htbl_reinit	= 1,
-	.clk_names	= {"jpeg"},
-	.num_clocks	= 1,
+	.clk_names	= अणु"jpeg"पूर्ण,
+	.num_घड़ीs	= 1,
 	.hw_ex4_compat	= 1,
-};
+पूर्ण;
 
-static struct s5p_jpeg_variant exynos5420_jpeg_drvdata = {
+अटल काष्ठा s5p_jpeg_variant exynos5420_jpeg_drvdata = अणु
 	.version	= SJPEG_EXYNOS5420,
-	.jpeg_irq	= exynos3250_jpeg_irq,		/* intentionally 3250 */
-	.m2m_ops	= &exynos3250_jpeg_m2m_ops,	/* intentionally 3250 */
-	.fmt_ver_flag	= SJPEG_FMT_FLAG_EXYNOS3250,	/* intentionally 3250 */
+	.jpeg_irq	= exynos3250_jpeg_irq,		/* पूर्णांकentionally 3250 */
+	.m2m_ops	= &exynos3250_jpeg_m2m_ops,	/* पूर्णांकentionally 3250 */
+	.fmt_ver_flag	= SJPEG_FMT_FLAG_EXYNOS3250,	/* पूर्णांकentionally 3250 */
 	.hw3250_compat	= 1,
 	.htbl_reinit	= 1,
-	.clk_names	= {"jpeg"},
-	.num_clocks	= 1,
-};
+	.clk_names	= अणु"jpeg"पूर्ण,
+	.num_घड़ीs	= 1,
+पूर्ण;
 
-static struct s5p_jpeg_variant exynos5433_jpeg_drvdata = {
+अटल काष्ठा s5p_jpeg_variant exynos5433_jpeg_drvdata = अणु
 	.version	= SJPEG_EXYNOS5433,
 	.jpeg_irq	= exynos4_jpeg_irq,
 	.m2m_ops	= &exynos4_jpeg_m2m_ops,
 	.fmt_ver_flag	= SJPEG_FMT_FLAG_EXYNOS4,
 	.htbl_reinit	= 1,
-	.clk_names	= {"pclk", "aclk", "aclk_xiu", "sclk"},
-	.num_clocks	= 4,
+	.clk_names	= अणु"pclk", "aclk", "aclk_xiu", "sclk"पूर्ण,
+	.num_घड़ीs	= 4,
 	.hw_ex4_compat	= 1,
-};
+पूर्ण;
 
-static const struct of_device_id samsung_jpeg_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id samsung_jpeg_match[] = अणु
+	अणु
 		.compatible = "samsung,s5pv210-jpeg",
 		.data = &s5p_jpeg_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos3250-jpeg",
 		.data = &exynos3250_jpeg_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos4210-jpeg",
 		.data = &exynos4_jpeg_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos4212-jpeg",
 		.data = &exynos4_jpeg_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5420-jpeg",
 		.data = &exynos5420_jpeg_drvdata,
-	}, {
+	पूर्ण, अणु
 		.compatible = "samsung,exynos5433-jpeg",
 		.data = &exynos5433_jpeg_drvdata,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, samsung_jpeg_match);
 
-static void *jpeg_get_drv_data(struct device *dev)
-{
-	struct s5p_jpeg_variant *driver_data = NULL;
-	const struct of_device_id *match;
+अटल व्योम *jpeg_get_drv_data(काष्ठा device *dev)
+अणु
+	काष्ठा s5p_jpeg_variant *driver_data = शून्य;
+	स्थिर काष्ठा of_device_id *match;
 
-	if (!IS_ENABLED(CONFIG_OF) || !dev->of_node)
-		return &s5p_jpeg_drvdata;
+	अगर (!IS_ENABLED(CONFIG_OF) || !dev->of_node)
+		वापस &s5p_jpeg_drvdata;
 
 	match = of_match_node(samsung_jpeg_match, dev->of_node);
 
-	if (match)
-		driver_data = (struct s5p_jpeg_variant *)match->data;
+	अगर (match)
+		driver_data = (काष्ठा s5p_jpeg_variant *)match->data;
 
-	return driver_data;
-}
+	वापस driver_data;
+पूर्ण
 
-static struct platform_driver s5p_jpeg_driver = {
+अटल काष्ठा platक्रमm_driver s5p_jpeg_driver = अणु
 	.probe = s5p_jpeg_probe,
-	.remove = s5p_jpeg_remove,
-	.driver = {
+	.हटाओ = s5p_jpeg_हटाओ,
+	.driver = अणु
 		.of_match_table	= of_match_ptr(samsung_jpeg_match),
 		.name		= S5P_JPEG_M2M_NAME,
 		.pm		= &s5p_jpeg_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(s5p_jpeg_driver);
+module_platक्रमm_driver(s5p_jpeg_driver);
 
 MODULE_AUTHOR("Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>");
 MODULE_AUTHOR("Jacek Anaszewski <j.anaszewski@samsung.com>");

@@ -1,982 +1,983 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
 * Copyright (C) 2012 Invensense, Inc.
 */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/sysfs.h>
-#include <linux/jiffies.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/iio/iio.h>
-#include <linux/acpi.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include "inv_mpu_iio.h"
-#include "inv_mpu_magn.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/acpi.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "inv_mpu_iio.h"
+#समावेश "inv_mpu_magn.h"
 
 /*
  * this is the gyro scale translated from dynamic range plus/minus
- * {250, 500, 1000, 2000} to rad/s
+ * अणु250, 500, 1000, 2000पूर्ण to rad/s
  */
-static const int gyro_scale_6050[] = {133090, 266181, 532362, 1064724};
+अटल स्थिर पूर्णांक gyro_scale_6050[] = अणु133090, 266181, 532362, 1064724पूर्ण;
 
 /*
  * this is the accel scale translated from dynamic range plus/minus
- * {2, 4, 8, 16} to m/s^2
+ * अणु2, 4, 8, 16पूर्ण to m/s^2
  */
-static const int accel_scale[] = {598, 1196, 2392, 4785};
+अटल स्थिर पूर्णांक accel_scale[] = अणु598, 1196, 2392, 4785पूर्ण;
 
-static const struct inv_mpu6050_reg_map reg_set_icm20602 = {
-	.sample_rate_div	= INV_MPU6050_REG_SAMPLE_RATE_DIV,
+अटल स्थिर काष्ठा inv_mpu6050_reg_map reg_set_icm20602 = अणु
+	.sample_rate_भाग	= INV_MPU6050_REG_SAMPLE_RATE_DIV,
 	.lpf                    = INV_MPU6050_REG_CONFIG,
 	.accel_lpf              = INV_MPU6500_REG_ACCEL_CONFIG_2,
 	.user_ctrl              = INV_MPU6050_REG_USER_CTRL,
-	.fifo_en                = INV_MPU6050_REG_FIFO_EN,
+	.fअगरo_en                = INV_MPU6050_REG_FIFO_EN,
 	.gyro_config            = INV_MPU6050_REG_GYRO_CONFIG,
 	.accl_config            = INV_MPU6050_REG_ACCEL_CONFIG,
-	.fifo_count_h           = INV_MPU6050_REG_FIFO_COUNT_H,
-	.fifo_r_w               = INV_MPU6050_REG_FIFO_R_W,
+	.fअगरo_count_h           = INV_MPU6050_REG_FIFO_COUNT_H,
+	.fअगरo_r_w               = INV_MPU6050_REG_FIFO_R_W,
 	.raw_gyro               = INV_MPU6050_REG_RAW_GYRO,
 	.raw_accl               = INV_MPU6050_REG_RAW_ACCEL,
 	.temperature            = INV_MPU6050_REG_TEMPERATURE,
-	.int_enable             = INV_MPU6050_REG_INT_ENABLE,
-	.int_status             = INV_MPU6050_REG_INT_STATUS,
+	.पूर्णांक_enable             = INV_MPU6050_REG_INT_ENABLE,
+	.पूर्णांक_status             = INV_MPU6050_REG_INT_STATUS,
 	.pwr_mgmt_1             = INV_MPU6050_REG_PWR_MGMT_1,
 	.pwr_mgmt_2             = INV_MPU6050_REG_PWR_MGMT_2,
-	.int_pin_cfg            = INV_MPU6050_REG_INT_PIN_CFG,
+	.पूर्णांक_pin_cfg            = INV_MPU6050_REG_INT_PIN_CFG,
 	.accl_offset            = INV_MPU6500_REG_ACCEL_OFFSET,
 	.gyro_offset            = INV_MPU6050_REG_GYRO_OFFSET,
-	.i2c_if                 = INV_ICM20602_REG_I2C_IF,
-};
+	.i2c_अगर                 = INV_ICM20602_REG_I2C_IF,
+पूर्ण;
 
-static const struct inv_mpu6050_reg_map reg_set_6500 = {
-	.sample_rate_div	= INV_MPU6050_REG_SAMPLE_RATE_DIV,
+अटल स्थिर काष्ठा inv_mpu6050_reg_map reg_set_6500 = अणु
+	.sample_rate_भाग	= INV_MPU6050_REG_SAMPLE_RATE_DIV,
 	.lpf                    = INV_MPU6050_REG_CONFIG,
 	.accel_lpf              = INV_MPU6500_REG_ACCEL_CONFIG_2,
 	.user_ctrl              = INV_MPU6050_REG_USER_CTRL,
-	.fifo_en                = INV_MPU6050_REG_FIFO_EN,
+	.fअगरo_en                = INV_MPU6050_REG_FIFO_EN,
 	.gyro_config            = INV_MPU6050_REG_GYRO_CONFIG,
 	.accl_config            = INV_MPU6050_REG_ACCEL_CONFIG,
-	.fifo_count_h           = INV_MPU6050_REG_FIFO_COUNT_H,
-	.fifo_r_w               = INV_MPU6050_REG_FIFO_R_W,
+	.fअगरo_count_h           = INV_MPU6050_REG_FIFO_COUNT_H,
+	.fअगरo_r_w               = INV_MPU6050_REG_FIFO_R_W,
 	.raw_gyro               = INV_MPU6050_REG_RAW_GYRO,
 	.raw_accl               = INV_MPU6050_REG_RAW_ACCEL,
 	.temperature            = INV_MPU6050_REG_TEMPERATURE,
-	.int_enable             = INV_MPU6050_REG_INT_ENABLE,
-	.int_status             = INV_MPU6050_REG_INT_STATUS,
+	.पूर्णांक_enable             = INV_MPU6050_REG_INT_ENABLE,
+	.पूर्णांक_status             = INV_MPU6050_REG_INT_STATUS,
 	.pwr_mgmt_1             = INV_MPU6050_REG_PWR_MGMT_1,
 	.pwr_mgmt_2             = INV_MPU6050_REG_PWR_MGMT_2,
-	.int_pin_cfg		= INV_MPU6050_REG_INT_PIN_CFG,
+	.पूर्णांक_pin_cfg		= INV_MPU6050_REG_INT_PIN_CFG,
 	.accl_offset		= INV_MPU6500_REG_ACCEL_OFFSET,
 	.gyro_offset		= INV_MPU6050_REG_GYRO_OFFSET,
-	.i2c_if                 = 0,
-};
+	.i2c_अगर                 = 0,
+पूर्ण;
 
-static const struct inv_mpu6050_reg_map reg_set_6050 = {
-	.sample_rate_div	= INV_MPU6050_REG_SAMPLE_RATE_DIV,
+अटल स्थिर काष्ठा inv_mpu6050_reg_map reg_set_6050 = अणु
+	.sample_rate_भाग	= INV_MPU6050_REG_SAMPLE_RATE_DIV,
 	.lpf                    = INV_MPU6050_REG_CONFIG,
 	.user_ctrl              = INV_MPU6050_REG_USER_CTRL,
-	.fifo_en                = INV_MPU6050_REG_FIFO_EN,
+	.fअगरo_en                = INV_MPU6050_REG_FIFO_EN,
 	.gyro_config            = INV_MPU6050_REG_GYRO_CONFIG,
 	.accl_config            = INV_MPU6050_REG_ACCEL_CONFIG,
-	.fifo_count_h           = INV_MPU6050_REG_FIFO_COUNT_H,
-	.fifo_r_w               = INV_MPU6050_REG_FIFO_R_W,
+	.fअगरo_count_h           = INV_MPU6050_REG_FIFO_COUNT_H,
+	.fअगरo_r_w               = INV_MPU6050_REG_FIFO_R_W,
 	.raw_gyro               = INV_MPU6050_REG_RAW_GYRO,
 	.raw_accl               = INV_MPU6050_REG_RAW_ACCEL,
 	.temperature            = INV_MPU6050_REG_TEMPERATURE,
-	.int_enable             = INV_MPU6050_REG_INT_ENABLE,
+	.पूर्णांक_enable             = INV_MPU6050_REG_INT_ENABLE,
 	.pwr_mgmt_1             = INV_MPU6050_REG_PWR_MGMT_1,
 	.pwr_mgmt_2             = INV_MPU6050_REG_PWR_MGMT_2,
-	.int_pin_cfg		= INV_MPU6050_REG_INT_PIN_CFG,
+	.पूर्णांक_pin_cfg		= INV_MPU6050_REG_INT_PIN_CFG,
 	.accl_offset		= INV_MPU6050_REG_ACCEL_OFFSET,
 	.gyro_offset		= INV_MPU6050_REG_GYRO_OFFSET,
-	.i2c_if                 = 0,
-};
+	.i2c_अगर                 = 0,
+पूर्ण;
 
-static const struct inv_mpu6050_chip_config chip_config_6050 = {
+अटल स्थिर काष्ठा inv_mpu6050_chip_config chip_config_6050 = अणु
 	.clk = INV_CLK_INTERNAL,
 	.fsr = INV_MPU6050_FSR_2000DPS,
 	.lpf = INV_MPU6050_FILTER_20HZ,
-	.divider = INV_MPU6050_FIFO_RATE_TO_DIVIDER(50),
+	.भागider = INV_MPU6050_FIFO_RATE_TO_DIVIDER(50),
 	.gyro_en = true,
 	.accl_en = true,
 	.temp_en = true,
 	.magn_en = false,
-	.gyro_fifo_enable = false,
-	.accl_fifo_enable = false,
-	.temp_fifo_enable = false,
-	.magn_fifo_enable = false,
+	.gyro_fअगरo_enable = false,
+	.accl_fअगरo_enable = false,
+	.temp_fअगरo_enable = false,
+	.magn_fअगरo_enable = false,
 	.accl_fs = INV_MPU6050_FS_02G,
 	.user_ctrl = 0,
-};
+पूर्ण;
 
-static const struct inv_mpu6050_chip_config chip_config_6500 = {
+अटल स्थिर काष्ठा inv_mpu6050_chip_config chip_config_6500 = अणु
 	.clk = INV_CLK_PLL,
 	.fsr = INV_MPU6050_FSR_2000DPS,
 	.lpf = INV_MPU6050_FILTER_20HZ,
-	.divider = INV_MPU6050_FIFO_RATE_TO_DIVIDER(50),
+	.भागider = INV_MPU6050_FIFO_RATE_TO_DIVIDER(50),
 	.gyro_en = true,
 	.accl_en = true,
 	.temp_en = true,
 	.magn_en = false,
-	.gyro_fifo_enable = false,
-	.accl_fifo_enable = false,
-	.temp_fifo_enable = false,
-	.magn_fifo_enable = false,
+	.gyro_fअगरo_enable = false,
+	.accl_fअगरo_enable = false,
+	.temp_fअगरo_enable = false,
+	.magn_fअगरo_enable = false,
 	.accl_fs = INV_MPU6050_FS_02G,
 	.user_ctrl = 0,
-};
+पूर्ण;
 
-/* Indexed by enum inv_devices */
-static const struct inv_mpu6050_hw hw_info[] = {
-	{
+/* Indexed by क्रमागत inv_devices */
+अटल स्थिर काष्ठा inv_mpu6050_hw hw_info[] = अणु
+	अणु
 		.whoami = INV_MPU6050_WHOAMI_VALUE,
 		.name = "MPU6050",
 		.reg = &reg_set_6050,
 		.config = &chip_config_6050,
-		.fifo_size = 1024,
-		.temp = {INV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 1024,
+		.temp = अणुINV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU6500_WHOAMI_VALUE,
 		.name = "MPU6500",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 512,
-		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 512,
+		.temp = अणुINV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU6515_WHOAMI_VALUE,
 		.name = "MPU6515",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 512,
-		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 512,
+		.temp = अणुINV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU6880_WHOAMI_VALUE,
 		.name = "MPU6880",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 4096,
-		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 4096,
+		.temp = अणुINV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU6000_WHOAMI_VALUE,
 		.name = "MPU6000",
 		.reg = &reg_set_6050,
 		.config = &chip_config_6050,
-		.fifo_size = 1024,
-		.temp = {INV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 1024,
+		.temp = अणुINV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU9150_WHOAMI_VALUE,
 		.name = "MPU9150",
 		.reg = &reg_set_6050,
 		.config = &chip_config_6050,
-		.fifo_size = 1024,
-		.temp = {INV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 1024,
+		.temp = अणुINV_MPU6050_TEMP_OFFSET, INV_MPU6050_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU9250_WHOAMI_VALUE,
 		.name = "MPU9250",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 512,
-		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 512,
+		.temp = अणुINV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_MPU9255_WHOAMI_VALUE,
 		.name = "MPU9255",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 512,
-		.temp = {INV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 512,
+		.temp = अणुINV_MPU6500_TEMP_OFFSET, INV_MPU6500_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_ICM20608_WHOAMI_VALUE,
 		.name = "ICM20608",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 512,
-		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 512,
+		.temp = अणुINV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_ICM20609_WHOAMI_VALUE,
 		.name = "ICM20609",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 4 * 1024,
-		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 4 * 1024,
+		.temp = अणुINV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_ICM20689_WHOAMI_VALUE,
 		.name = "ICM20689",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 4 * 1024,
-		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 4 * 1024,
+		.temp = अणुINV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_ICM20602_WHOAMI_VALUE,
 		.name = "ICM20602",
 		.reg = &reg_set_icm20602,
 		.config = &chip_config_6500,
-		.fifo_size = 1008,
-		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 1008,
+		.temp = अणुINV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_ICM20690_WHOAMI_VALUE,
 		.name = "ICM20690",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 1024,
-		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
-	},
-	{
+		.fअगरo_size = 1024,
+		.temp = अणुINV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALEपूर्ण,
+	पूर्ण,
+	अणु
 		.whoami = INV_IAM20680_WHOAMI_VALUE,
 		.name = "IAM20680",
 		.reg = &reg_set_6500,
 		.config = &chip_config_6500,
-		.fifo_size = 512,
-		.temp = {INV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALE},
-	},
-};
+		.fअगरo_size = 512,
+		.temp = अणुINV_ICM20608_TEMP_OFFSET, INV_ICM20608_TEMP_SCALEपूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int inv_mpu6050_pwr_mgmt_1_write(struct inv_mpu6050_state *st, bool sleep,
-					int clock, int temp_dis)
-{
+अटल पूर्णांक inv_mpu6050_pwr_mgmt_1_ग_लिखो(काष्ठा inv_mpu6050_state *st, bool sleep,
+					पूर्णांक घड़ी, पूर्णांक temp_dis)
+अणु
 	u8 val;
 
-	if (clock < 0)
-		clock = st->chip_config.clk;
-	if (temp_dis < 0)
+	अगर (घड़ी < 0)
+		घड़ी = st->chip_config.clk;
+	अगर (temp_dis < 0)
 		temp_dis = !st->chip_config.temp_en;
 
-	val = clock & INV_MPU6050_BIT_CLK_MASK;
-	if (temp_dis)
+	val = घड़ी & INV_MPU6050_BIT_CLK_MASK;
+	अगर (temp_dis)
 		val |= INV_MPU6050_BIT_TEMP_DIS;
-	if (sleep)
+	अगर (sleep)
 		val |= INV_MPU6050_BIT_SLEEP;
 
 	dev_dbg(regmap_get_device(st->map), "pwr_mgmt_1: 0x%x\n", val);
-	return regmap_write(st->map, st->reg->pwr_mgmt_1, val);
-}
+	वापस regmap_ग_लिखो(st->map, st->reg->pwr_mgmt_1, val);
+पूर्ण
 
-static int inv_mpu6050_clock_switch(struct inv_mpu6050_state *st,
-				    unsigned int clock)
-{
-	int ret;
+अटल पूर्णांक inv_mpu6050_घड़ी_चयन(काष्ठा inv_mpu6050_state *st,
+				    अचिन्हित पूर्णांक घड़ी)
+अणु
+	पूर्णांक ret;
 
-	switch (st->chip_type) {
-	case INV_MPU6050:
-	case INV_MPU6000:
-	case INV_MPU9150:
-		/* old chips: switch clock manually */
-		ret = inv_mpu6050_pwr_mgmt_1_write(st, false, clock, -1);
-		if (ret)
-			return ret;
-		st->chip_config.clk = clock;
-		break;
-	default:
-		/* automatic clock switching, nothing to do */
-		break;
-	}
+	चयन (st->chip_type) अणु
+	हाल INV_MPU6050:
+	हाल INV_MPU6000:
+	हाल INV_MPU9150:
+		/* old chips: चयन घड़ी manually */
+		ret = inv_mpu6050_pwr_mgmt_1_ग_लिखो(st, false, घड़ी, -1);
+		अगर (ret)
+			वापस ret;
+		st->chip_config.clk = घड़ी;
+		अवरोध;
+	शेष:
+		/* स्वतःmatic घड़ी चयनing, nothing to करो */
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int inv_mpu6050_switch_engine(struct inv_mpu6050_state *st, bool en,
-			      unsigned int mask)
-{
-	unsigned int sleep;
+पूर्णांक inv_mpu6050_चयन_engine(काष्ठा inv_mpu6050_state *st, bool en,
+			      अचिन्हित पूर्णांक mask)
+अणु
+	अचिन्हित पूर्णांक sleep;
 	u8 pwr_mgmt2, user_ctrl;
-	int ret;
+	पूर्णांक ret;
 
 	/* delete useless requests */
-	if (mask & INV_MPU6050_SENSOR_ACCL && en == st->chip_config.accl_en)
+	अगर (mask & INV_MPU6050_SENSOR_ACCL && en == st->chip_config.accl_en)
 		mask &= ~INV_MPU6050_SENSOR_ACCL;
-	if (mask & INV_MPU6050_SENSOR_GYRO && en == st->chip_config.gyro_en)
+	अगर (mask & INV_MPU6050_SENSOR_GYRO && en == st->chip_config.gyro_en)
 		mask &= ~INV_MPU6050_SENSOR_GYRO;
-	if (mask & INV_MPU6050_SENSOR_TEMP && en == st->chip_config.temp_en)
+	अगर (mask & INV_MPU6050_SENSOR_TEMP && en == st->chip_config.temp_en)
 		mask &= ~INV_MPU6050_SENSOR_TEMP;
-	if (mask & INV_MPU6050_SENSOR_MAGN && en == st->chip_config.magn_en)
+	अगर (mask & INV_MPU6050_SENSOR_MAGN && en == st->chip_config.magn_en)
 		mask &= ~INV_MPU6050_SENSOR_MAGN;
-	if (mask == 0)
-		return 0;
+	अगर (mask == 0)
+		वापस 0;
 
 	/* turn on/off temperature sensor */
-	if (mask & INV_MPU6050_SENSOR_TEMP) {
-		ret = inv_mpu6050_pwr_mgmt_1_write(st, false, -1, !en);
-		if (ret)
-			return ret;
+	अगर (mask & INV_MPU6050_SENSOR_TEMP) अणु
+		ret = inv_mpu6050_pwr_mgmt_1_ग_लिखो(st, false, -1, !en);
+		अगर (ret)
+			वापस ret;
 		st->chip_config.temp_en = en;
-	}
+	पूर्ण
 
-	/* update user_crtl for driving magnetometer */
-	if (mask & INV_MPU6050_SENSOR_MAGN) {
+	/* update user_crtl क्रम driving magnetometer */
+	अगर (mask & INV_MPU6050_SENSOR_MAGN) अणु
 		user_ctrl = st->chip_config.user_ctrl;
-		if (en)
+		अगर (en)
 			user_ctrl |= INV_MPU6050_BIT_I2C_MST_EN;
-		else
+		अन्यथा
 			user_ctrl &= ~INV_MPU6050_BIT_I2C_MST_EN;
-		ret = regmap_write(st->map, st->reg->user_ctrl, user_ctrl);
-		if (ret)
-			return ret;
+		ret = regmap_ग_लिखो(st->map, st->reg->user_ctrl, user_ctrl);
+		अगर (ret)
+			वापस ret;
 		st->chip_config.user_ctrl = user_ctrl;
 		st->chip_config.magn_en = en;
-	}
+	पूर्ण
 
 	/* manage accel & gyro engines */
-	if (mask & (INV_MPU6050_SENSOR_ACCL | INV_MPU6050_SENSOR_GYRO)) {
-		/* compute power management 2 current value */
+	अगर (mask & (INV_MPU6050_SENSOR_ACCL | INV_MPU6050_SENSOR_GYRO)) अणु
+		/* compute घातer management 2 current value */
 		pwr_mgmt2 = 0;
-		if (!st->chip_config.accl_en)
+		अगर (!st->chip_config.accl_en)
 			pwr_mgmt2 |= INV_MPU6050_BIT_PWR_ACCL_STBY;
-		if (!st->chip_config.gyro_en)
+		अगर (!st->chip_config.gyro_en)
 			pwr_mgmt2 |= INV_MPU6050_BIT_PWR_GYRO_STBY;
 
 		/* update to new requested value */
-		if (mask & INV_MPU6050_SENSOR_ACCL) {
-			if (en)
+		अगर (mask & INV_MPU6050_SENSOR_ACCL) अणु
+			अगर (en)
 				pwr_mgmt2 &= ~INV_MPU6050_BIT_PWR_ACCL_STBY;
-			else
+			अन्यथा
 				pwr_mgmt2 |= INV_MPU6050_BIT_PWR_ACCL_STBY;
-		}
-		if (mask & INV_MPU6050_SENSOR_GYRO) {
-			if (en)
+		पूर्ण
+		अगर (mask & INV_MPU6050_SENSOR_GYRO) अणु
+			अगर (en)
 				pwr_mgmt2 &= ~INV_MPU6050_BIT_PWR_GYRO_STBY;
-			else
+			अन्यथा
 				pwr_mgmt2 |= INV_MPU6050_BIT_PWR_GYRO_STBY;
-		}
+		पूर्ण
 
-		/* switch clock to internal when turning gyro off */
-		if (mask & INV_MPU6050_SENSOR_GYRO && !en) {
-			ret = inv_mpu6050_clock_switch(st, INV_CLK_INTERNAL);
-			if (ret)
-				return ret;
-		}
+		/* चयन घड़ी to पूर्णांकernal when turning gyro off */
+		अगर (mask & INV_MPU6050_SENSOR_GYRO && !en) अणु
+			ret = inv_mpu6050_घड़ी_चयन(st, INV_CLK_INTERNAL);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
 		/* update sensors engine */
 		dev_dbg(regmap_get_device(st->map), "pwr_mgmt_2: 0x%x\n",
 			pwr_mgmt2);
-		ret = regmap_write(st->map, st->reg->pwr_mgmt_2, pwr_mgmt2);
-		if (ret)
-			return ret;
-		if (mask & INV_MPU6050_SENSOR_ACCL)
+		ret = regmap_ग_लिखो(st->map, st->reg->pwr_mgmt_2, pwr_mgmt2);
+		अगर (ret)
+			वापस ret;
+		अगर (mask & INV_MPU6050_SENSOR_ACCL)
 			st->chip_config.accl_en = en;
-		if (mask & INV_MPU6050_SENSOR_GYRO)
+		अगर (mask & INV_MPU6050_SENSOR_GYRO)
 			st->chip_config.gyro_en = en;
 
-		/* compute required time to have sensors stabilized */
+		/* compute required समय to have sensors stabilized */
 		sleep = 0;
-		if (en) {
-			if (mask & INV_MPU6050_SENSOR_ACCL) {
-				if (sleep < INV_MPU6050_ACCEL_UP_TIME)
+		अगर (en) अणु
+			अगर (mask & INV_MPU6050_SENSOR_ACCL) अणु
+				अगर (sleep < INV_MPU6050_ACCEL_UP_TIME)
 					sleep = INV_MPU6050_ACCEL_UP_TIME;
-			}
-			if (mask & INV_MPU6050_SENSOR_GYRO) {
-				if (sleep < INV_MPU6050_GYRO_UP_TIME)
+			पूर्ण
+			अगर (mask & INV_MPU6050_SENSOR_GYRO) अणु
+				अगर (sleep < INV_MPU6050_GYRO_UP_TIME)
 					sleep = INV_MPU6050_GYRO_UP_TIME;
-			}
-		} else {
-			if (mask & INV_MPU6050_SENSOR_GYRO) {
-				if (sleep < INV_MPU6050_GYRO_DOWN_TIME)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (mask & INV_MPU6050_SENSOR_GYRO) अणु
+				अगर (sleep < INV_MPU6050_GYRO_DOWN_TIME)
 					sleep = INV_MPU6050_GYRO_DOWN_TIME;
-			}
-		}
-		if (sleep)
+			पूर्ण
+		पूर्ण
+		अगर (sleep)
 			msleep(sleep);
 
-		/* switch clock to PLL when turning gyro on */
-		if (mask & INV_MPU6050_SENSOR_GYRO && en) {
-			ret = inv_mpu6050_clock_switch(st, INV_CLK_PLL);
-			if (ret)
-				return ret;
-		}
-	}
+		/* चयन घड़ी to PLL when turning gyro on */
+		अगर (mask & INV_MPU6050_SENSOR_GYRO && en) अणु
+			ret = inv_mpu6050_घड़ी_चयन(st, INV_CLK_PLL);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int inv_mpu6050_set_power_itg(struct inv_mpu6050_state *st,
-				     bool power_on)
-{
-	int result;
+अटल पूर्णांक inv_mpu6050_set_घातer_itg(काष्ठा inv_mpu6050_state *st,
+				     bool घातer_on)
+अणु
+	पूर्णांक result;
 
-	result = inv_mpu6050_pwr_mgmt_1_write(st, !power_on, -1, -1);
-	if (result)
-		return result;
+	result = inv_mpu6050_pwr_mgmt_1_ग_लिखो(st, !घातer_on, -1, -1);
+	अगर (result)
+		वापस result;
 
-	if (power_on)
+	अगर (घातer_on)
 		usleep_range(INV_MPU6050_REG_UP_TIME_MIN,
 			     INV_MPU6050_REG_UP_TIME_MAX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int inv_mpu6050_set_gyro_fsr(struct inv_mpu6050_state *st,
-				    enum inv_mpu6050_fsr_e val)
-{
-	unsigned int gyro_shift;
+अटल पूर्णांक inv_mpu6050_set_gyro_fsr(काष्ठा inv_mpu6050_state *st,
+				    क्रमागत inv_mpu6050_fsr_e val)
+अणु
+	अचिन्हित पूर्णांक gyro_shअगरt;
 	u8 data;
 
-	switch (st->chip_type) {
-	case INV_ICM20690:
-		gyro_shift = INV_ICM20690_GYRO_CONFIG_FSR_SHIFT;
-		break;
-	default:
-		gyro_shift = INV_MPU6050_GYRO_CONFIG_FSR_SHIFT;
-		break;
-	}
+	चयन (st->chip_type) अणु
+	हाल INV_ICM20690:
+		gyro_shअगरt = INV_ICM20690_GYRO_CONFIG_FSR_SHIFT;
+		अवरोध;
+	शेष:
+		gyro_shअगरt = INV_MPU6050_GYRO_CONFIG_FSR_SHIFT;
+		अवरोध;
+	पूर्ण
 
-	data = val << gyro_shift;
-	return regmap_write(st->map, st->reg->gyro_config, data);
-}
+	data = val << gyro_shअगरt;
+	वापस regmap_ग_लिखो(st->map, st->reg->gyro_config, data);
+पूर्ण
 
 /*
- *  inv_mpu6050_set_lpf_regs() - set low pass filter registers, chip dependent
+ *  inv_mpu6050_set_lpf_regs() - set low pass filter रेजिस्टरs, chip dependent
  *
- *  MPU60xx/MPU9150 use only 1 register for accelerometer + gyroscope
- *  MPU6500 and above have a dedicated register for accelerometer
+ *  MPU60xx/MPU9150 use only 1 रेजिस्टर क्रम accelerometer + gyroscope
+ *  MPU6500 and above have a dedicated रेजिस्टर क्रम accelerometer
  */
-static int inv_mpu6050_set_lpf_regs(struct inv_mpu6050_state *st,
-				    enum inv_mpu6050_filter_e val)
-{
-	int result;
+अटल पूर्णांक inv_mpu6050_set_lpf_regs(काष्ठा inv_mpu6050_state *st,
+				    क्रमागत inv_mpu6050_filter_e val)
+अणु
+	पूर्णांक result;
 
-	result = regmap_write(st->map, st->reg->lpf, val);
-	if (result)
-		return result;
+	result = regmap_ग_लिखो(st->map, st->reg->lpf, val);
+	अगर (result)
+		वापस result;
 
 	/* set accel lpf */
-	switch (st->chip_type) {
-	case INV_MPU6050:
-	case INV_MPU6000:
-	case INV_MPU9150:
-		/* old chips, nothing to do */
-		return 0;
-	case INV_ICM20689:
-	case INV_ICM20690:
+	चयन (st->chip_type) अणु
+	हाल INV_MPU6050:
+	हाल INV_MPU6000:
+	हाल INV_MPU9150:
+		/* old chips, nothing to करो */
+		वापस 0;
+	हाल INV_ICM20689:
+	हाल INV_ICM20690:
 		/* set FIFO size to maximum value */
 		val |= INV_ICM20689_BITS_FIFO_SIZE_MAX;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return regmap_write(st->map, st->reg->accel_lpf, val);
-}
+	वापस regmap_ग_लिखो(st->map, st->reg->accel_lpf, val);
+पूर्ण
 
 /*
  *  inv_mpu6050_init_config() - Initialize hardware, disable FIFO.
  *
  *  Initial configuration:
- *  FSR: ± 2000DPS
+ *  FSR: तऔ 2000DPS
  *  DLPF: 20Hz
  *  FIFO rate: 50Hz
  *  Clock source: Gyro PLL
  */
-static int inv_mpu6050_init_config(struct iio_dev *indio_dev)
-{
-	int result;
+अटल पूर्णांक inv_mpu6050_init_config(काष्ठा iio_dev *indio_dev)
+अणु
+	पूर्णांक result;
 	u8 d;
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
 
 	result = inv_mpu6050_set_gyro_fsr(st, st->chip_config.fsr);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	result = inv_mpu6050_set_lpf_regs(st, st->chip_config.lpf);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	d = st->chip_config.divider;
-	result = regmap_write(st->map, st->reg->sample_rate_div, d);
-	if (result)
-		return result;
+	d = st->chip_config.भागider;
+	result = regmap_ग_लिखो(st->map, st->reg->sample_rate_भाग, d);
+	अगर (result)
+		वापस result;
 
 	d = (st->chip_config.accl_fs << INV_MPU6050_ACCL_CONFIG_FSR_SHIFT);
-	result = regmap_write(st->map, st->reg->accl_config, d);
-	if (result)
-		return result;
+	result = regmap_ग_लिखो(st->map, st->reg->accl_config, d);
+	अगर (result)
+		वापस result;
 
-	result = regmap_write(st->map, st->reg->int_pin_cfg, st->irq_mask);
-	if (result)
-		return result;
+	result = regmap_ग_लिखो(st->map, st->reg->पूर्णांक_pin_cfg, st->irq_mask);
+	अगर (result)
+		वापस result;
 
 	/*
 	 * Internal chip period is 1ms (1kHz).
-	 * Let's use at the beginning the theorical value before measuring
-	 * with interrupt timestamps.
+	 * Let's use at the beginning the theorical value beक्रमe measuring
+	 * with पूर्णांकerrupt बारtamps.
 	 */
 	st->chip_period = NSEC_PER_MSEC;
 
-	/* magn chip init, noop if not present in the chip */
+	/* magn chip init, noop अगर not present in the chip */
 	result = inv_mpu_magn_probe(st);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int inv_mpu6050_sensor_set(struct inv_mpu6050_state  *st, int reg,
-				int axis, int val)
-{
-	int ind, result;
+अटल पूर्णांक inv_mpu6050_sensor_set(काष्ठा inv_mpu6050_state  *st, पूर्णांक reg,
+				पूर्णांक axis, पूर्णांक val)
+अणु
+	पूर्णांक ind, result;
 	__be16 d = cpu_to_be16(val);
 
 	ind = (axis - IIO_MOD_X) * 2;
-	result = regmap_bulk_write(st->map, reg + ind, &d, sizeof(d));
-	if (result)
-		return -EINVAL;
+	result = regmap_bulk_ग_लिखो(st->map, reg + ind, &d, माप(d));
+	अगर (result)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int inv_mpu6050_sensor_show(struct inv_mpu6050_state  *st, int reg,
-				   int axis, int *val)
-{
-	int ind, result;
+अटल पूर्णांक inv_mpu6050_sensor_show(काष्ठा inv_mpu6050_state  *st, पूर्णांक reg,
+				   पूर्णांक axis, पूर्णांक *val)
+अणु
+	पूर्णांक ind, result;
 	__be16 d;
 
 	ind = (axis - IIO_MOD_X) * 2;
-	result = regmap_bulk_read(st->map, reg + ind, &d, sizeof(d));
-	if (result)
-		return -EINVAL;
-	*val = (short)be16_to_cpup(&d);
+	result = regmap_bulk_पढ़ो(st->map, reg + ind, &d, माप(d));
+	अगर (result)
+		वापस -EINVAL;
+	*val = (लघु)be16_to_cpup(&d);
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static int inv_mpu6050_read_channel_data(struct iio_dev *indio_dev,
-					 struct iio_chan_spec const *chan,
-					 int *val)
-{
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
-	struct device *pdev = regmap_get_device(st->map);
-	unsigned int freq_hz, period_us, min_sleep_us, max_sleep_us;
-	int result;
-	int ret;
+अटल पूर्णांक inv_mpu6050_पढ़ो_channel_data(काष्ठा iio_dev *indio_dev,
+					 काष्ठा iio_chan_spec स्थिर *chan,
+					 पूर्णांक *val)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
+	काष्ठा device *pdev = regmap_get_device(st->map);
+	अचिन्हित पूर्णांक freq_hz, period_us, min_sleep_us, max_sleep_us;
+	पूर्णांक result;
+	पूर्णांक ret;
 
 	/* compute sample period */
-	freq_hz = INV_MPU6050_DIVIDER_TO_FIFO_RATE(st->chip_config.divider);
+	freq_hz = INV_MPU6050_DIVIDER_TO_FIFO_RATE(st->chip_config.भागider);
 	period_us = 1000000 / freq_hz;
 
-	result = pm_runtime_get_sync(pdev);
-	if (result < 0) {
-		pm_runtime_put_noidle(pdev);
-		return result;
-	}
+	result = pm_runसमय_get_sync(pdev);
+	अगर (result < 0) अणु
+		pm_runसमय_put_noidle(pdev);
+		वापस result;
+	पूर्ण
 
-	switch (chan->type) {
-	case IIO_ANGL_VEL:
-		if (!st->chip_config.gyro_en) {
-			result = inv_mpu6050_switch_engine(st, true,
+	चयन (chan->type) अणु
+	हाल IIO_ANGL_VEL:
+		अगर (!st->chip_config.gyro_en) अणु
+			result = inv_mpu6050_चयन_engine(st, true,
 					INV_MPU6050_SENSOR_GYRO);
-			if (result)
-				goto error_power_off;
-			/* need to wait 2 periods to have first valid sample */
+			अगर (result)
+				जाओ error_घातer_off;
+			/* need to रुको 2 periods to have first valid sample */
 			min_sleep_us = 2 * period_us;
 			max_sleep_us = 2 * (period_us + period_us / 2);
 			usleep_range(min_sleep_us, max_sleep_us);
-		}
+		पूर्ण
 		ret = inv_mpu6050_sensor_show(st, st->reg->raw_gyro,
 					      chan->channel2, val);
-		break;
-	case IIO_ACCEL:
-		if (!st->chip_config.accl_en) {
-			result = inv_mpu6050_switch_engine(st, true,
+		अवरोध;
+	हाल IIO_ACCEL:
+		अगर (!st->chip_config.accl_en) अणु
+			result = inv_mpu6050_चयन_engine(st, true,
 					INV_MPU6050_SENSOR_ACCL);
-			if (result)
-				goto error_power_off;
-			/* wait 1 period for first sample availability */
+			अगर (result)
+				जाओ error_घातer_off;
+			/* रुको 1 period क्रम first sample availability */
 			min_sleep_us = period_us;
 			max_sleep_us = period_us + period_us / 2;
 			usleep_range(min_sleep_us, max_sleep_us);
-		}
+		पूर्ण
 		ret = inv_mpu6050_sensor_show(st, st->reg->raw_accl,
 					      chan->channel2, val);
-		break;
-	case IIO_TEMP:
+		अवरोध;
+	हाल IIO_TEMP:
 		/* temperature sensor work only with accel and/or gyro */
-		if (!st->chip_config.accl_en && !st->chip_config.gyro_en) {
+		अगर (!st->chip_config.accl_en && !st->chip_config.gyro_en) अणु
 			result = -EBUSY;
-			goto error_power_off;
-		}
-		if (!st->chip_config.temp_en) {
-			result = inv_mpu6050_switch_engine(st, true,
+			जाओ error_घातer_off;
+		पूर्ण
+		अगर (!st->chip_config.temp_en) अणु
+			result = inv_mpu6050_चयन_engine(st, true,
 					INV_MPU6050_SENSOR_TEMP);
-			if (result)
-				goto error_power_off;
-			/* wait 1 period for first sample availability */
+			अगर (result)
+				जाओ error_घातer_off;
+			/* रुको 1 period क्रम first sample availability */
 			min_sleep_us = period_us;
 			max_sleep_us = period_us + period_us / 2;
 			usleep_range(min_sleep_us, max_sleep_us);
-		}
+		पूर्ण
 		ret = inv_mpu6050_sensor_show(st, st->reg->temperature,
 					      IIO_MOD_X, val);
-		break;
-	case IIO_MAGN:
-		if (!st->chip_config.magn_en) {
-			result = inv_mpu6050_switch_engine(st, true,
+		अवरोध;
+	हाल IIO_MAGN:
+		अगर (!st->chip_config.magn_en) अणु
+			result = inv_mpu6050_चयन_engine(st, true,
 					INV_MPU6050_SENSOR_MAGN);
-			if (result)
-				goto error_power_off;
-			/* frequency is limited for magnetometer */
-			if (freq_hz > INV_MPU_MAGN_FREQ_HZ_MAX) {
+			अगर (result)
+				जाओ error_घातer_off;
+			/* frequency is limited क्रम magnetometer */
+			अगर (freq_hz > INV_MPU_MAGN_FREQ_HZ_MAX) अणु
 				freq_hz = INV_MPU_MAGN_FREQ_HZ_MAX;
 				period_us = 1000000 / freq_hz;
-			}
-			/* need to wait 2 periods to have first valid sample */
+			पूर्ण
+			/* need to रुको 2 periods to have first valid sample */
 			min_sleep_us = 2 * period_us;
 			max_sleep_us = 2 * (period_us + period_us / 2);
 			usleep_range(min_sleep_us, max_sleep_us);
-		}
-		ret = inv_mpu_magn_read(st, chan->channel2, val);
-		break;
-	default:
+		पूर्ण
+		ret = inv_mpu_magn_पढ़ो(st, chan->channel2, val);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pm_runtime_mark_last_busy(pdev);
-	pm_runtime_put_autosuspend(pdev);
+	pm_runसमय_mark_last_busy(pdev);
+	pm_runसमय_put_स्वतःsuspend(pdev);
 
-	return ret;
+	वापस ret;
 
-error_power_off:
-	pm_runtime_put_autosuspend(pdev);
-	return result;
-}
+error_घातer_off:
+	pm_runसमय_put_स्वतःsuspend(pdev);
+	वापस result;
+पूर्ण
 
-static int
-inv_mpu6050_read_raw(struct iio_dev *indio_dev,
-		     struct iio_chan_spec const *chan,
-		     int *val, int *val2, long mask)
-{
-	struct inv_mpu6050_state  *st = iio_priv(indio_dev);
-	int ret = 0;
+अटल पूर्णांक
+inv_mpu6050_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+		     काष्ठा iio_chan_spec स्थिर *chan,
+		     पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा inv_mpu6050_state  *st = iio_priv(indio_dev);
+	पूर्णांक ret = 0;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = iio_device_claim_direct_mode(indio_dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		mutex_lock(&st->lock);
-		ret = inv_mpu6050_read_channel_data(indio_dev, chan, val);
+		ret = inv_mpu6050_पढ़ो_channel_data(indio_dev, chan, val);
 		mutex_unlock(&st->lock);
 		iio_device_release_direct_mode(indio_dev);
-		return ret;
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ANGL_VEL:
+		वापस ret;
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ANGL_VEL:
 			mutex_lock(&st->lock);
 			*val  = 0;
 			*val2 = gyro_scale_6050[st->chip_config.fsr];
 			mutex_unlock(&st->lock);
 
-			return IIO_VAL_INT_PLUS_NANO;
-		case IIO_ACCEL:
+			वापस IIO_VAL_INT_PLUS_न_अंकO;
+		हाल IIO_ACCEL:
 			mutex_lock(&st->lock);
 			*val = 0;
 			*val2 = accel_scale[st->chip_config.accl_fs];
 			mutex_unlock(&st->lock);
 
-			return IIO_VAL_INT_PLUS_MICRO;
-		case IIO_TEMP:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		हाल IIO_TEMP:
 			*val = st->hw->temp.scale / 1000000;
 			*val2 = st->hw->temp.scale % 1000000;
-			return IIO_VAL_INT_PLUS_MICRO;
-		case IIO_MAGN:
-			return inv_mpu_magn_get_scale(st, chan, val, val2);
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_OFFSET:
-		switch (chan->type) {
-		case IIO_TEMP:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		हाल IIO_MAGN:
+			वापस inv_mpu_magn_get_scale(st, chan, val, val2);
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_OFFSET:
+		चयन (chan->type) अणु
+		हाल IIO_TEMP:
 			*val = st->hw->temp.offset;
-			return IIO_VAL_INT;
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_CALIBBIAS:
-		switch (chan->type) {
-		case IIO_ANGL_VEL:
+			वापस IIO_VAL_INT;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_CALIBBIAS:
+		चयन (chan->type) अणु
+		हाल IIO_ANGL_VEL:
 			mutex_lock(&st->lock);
 			ret = inv_mpu6050_sensor_show(st, st->reg->gyro_offset,
 						chan->channel2, val);
 			mutex_unlock(&st->lock);
-			return IIO_VAL_INT;
-		case IIO_ACCEL:
+			वापस IIO_VAL_INT;
+		हाल IIO_ACCEL:
 			mutex_lock(&st->lock);
 			ret = inv_mpu6050_sensor_show(st, st->reg->accl_offset,
 						chan->channel2, val);
 			mutex_unlock(&st->lock);
-			return IIO_VAL_INT;
+			वापस IIO_VAL_INT;
 
-		default:
-			return -EINVAL;
-		}
-	default:
-		return -EINVAL;
-	}
-}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int inv_mpu6050_write_gyro_scale(struct inv_mpu6050_state *st, int val,
-					int val2)
-{
-	int result, i;
+अटल पूर्णांक inv_mpu6050_ग_लिखो_gyro_scale(काष्ठा inv_mpu6050_state *st, पूर्णांक val,
+					पूर्णांक val2)
+अणु
+	पूर्णांक result, i;
 
-	if (val != 0)
-		return -EINVAL;
+	अगर (val != 0)
+		वापस -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(gyro_scale_6050); ++i) {
-		if (gyro_scale_6050[i] == val2) {
+	क्रम (i = 0; i < ARRAY_SIZE(gyro_scale_6050); ++i) अणु
+		अगर (gyro_scale_6050[i] == val2) अणु
 			result = inv_mpu6050_set_gyro_fsr(st, i);
-			if (result)
-				return result;
+			अगर (result)
+				वापस result;
 
 			st->chip_config.fsr = i;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int inv_write_raw_get_fmt(struct iio_dev *indio_dev,
-				 struct iio_chan_spec const *chan, long mask)
-{
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ANGL_VEL:
-			return IIO_VAL_INT_PLUS_NANO;
-		default:
-			return IIO_VAL_INT_PLUS_MICRO;
-		}
-	default:
-		return IIO_VAL_INT_PLUS_MICRO;
-	}
+अटल पूर्णांक inv_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+				 काष्ठा iio_chan_spec स्थिर *chan, दीर्घ mask)
+अणु
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ANGL_VEL:
+			वापस IIO_VAL_INT_PLUS_न_अंकO;
+		शेष:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		पूर्ण
+	शेष:
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int inv_mpu6050_write_accel_scale(struct inv_mpu6050_state *st, int val,
-					 int val2)
-{
-	int result, i;
+अटल पूर्णांक inv_mpu6050_ग_लिखो_accel_scale(काष्ठा inv_mpu6050_state *st, पूर्णांक val,
+					 पूर्णांक val2)
+अणु
+	पूर्णांक result, i;
 	u8 d;
 
-	if (val != 0)
-		return -EINVAL;
+	अगर (val != 0)
+		वापस -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(accel_scale); ++i) {
-		if (accel_scale[i] == val2) {
+	क्रम (i = 0; i < ARRAY_SIZE(accel_scale); ++i) अणु
+		अगर (accel_scale[i] == val2) अणु
 			d = (i << INV_MPU6050_ACCL_CONFIG_FSR_SHIFT);
-			result = regmap_write(st->map, st->reg->accl_config, d);
-			if (result)
-				return result;
+			result = regmap_ग_लिखो(st->map, st->reg->accl_config, d);
+			अगर (result)
+				वापस result;
 
 			st->chip_config.accl_fs = i;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int inv_mpu6050_write_raw(struct iio_dev *indio_dev,
-				 struct iio_chan_spec const *chan,
-				 int val, int val2, long mask)
-{
-	struct inv_mpu6050_state  *st = iio_priv(indio_dev);
-	struct device *pdev = regmap_get_device(st->map);
-	int result;
+अटल पूर्णांक inv_mpu6050_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+				 काष्ठा iio_chan_spec स्थिर *chan,
+				 पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा inv_mpu6050_state  *st = iio_priv(indio_dev);
+	काष्ठा device *pdev = regmap_get_device(st->map);
+	पूर्णांक result;
 
 	/*
 	 * we should only update scale when the chip is disabled, i.e.
 	 * not running
 	 */
 	result = iio_device_claim_direct_mode(indio_dev);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	mutex_lock(&st->lock);
-	result = pm_runtime_get_sync(pdev);
-	if (result < 0) {
-		pm_runtime_put_noidle(pdev);
-		goto error_write_raw_unlock;
-	}
+	result = pm_runसमय_get_sync(pdev);
+	अगर (result < 0) अणु
+		pm_runसमय_put_noidle(pdev);
+		जाओ error_ग_लिखो_raw_unlock;
+	पूर्ण
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ANGL_VEL:
-			result = inv_mpu6050_write_gyro_scale(st, val, val2);
-			break;
-		case IIO_ACCEL:
-			result = inv_mpu6050_write_accel_scale(st, val, val2);
-			break;
-		default:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ANGL_VEL:
+			result = inv_mpu6050_ग_लिखो_gyro_scale(st, val, val2);
+			अवरोध;
+		हाल IIO_ACCEL:
+			result = inv_mpu6050_ग_लिखो_accel_scale(st, val, val2);
+			अवरोध;
+		शेष:
 			result = -EINVAL;
-			break;
-		}
-		break;
-	case IIO_CHAN_INFO_CALIBBIAS:
-		switch (chan->type) {
-		case IIO_ANGL_VEL:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IIO_CHAN_INFO_CALIBBIAS:
+		चयन (chan->type) अणु
+		हाल IIO_ANGL_VEL:
 			result = inv_mpu6050_sensor_set(st,
 							st->reg->gyro_offset,
 							chan->channel2, val);
-			break;
-		case IIO_ACCEL:
+			अवरोध;
+		हाल IIO_ACCEL:
 			result = inv_mpu6050_sensor_set(st,
 							st->reg->accl_offset,
 							chan->channel2, val);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			result = -EINVAL;
-			break;
-		}
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
 		result = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pm_runtime_mark_last_busy(pdev);
-	pm_runtime_put_autosuspend(pdev);
-error_write_raw_unlock:
+	pm_runसमय_mark_last_busy(pdev);
+	pm_runसमय_put_स्वतःsuspend(pdev);
+error_ग_लिखो_raw_unlock:
 	mutex_unlock(&st->lock);
 	iio_device_release_direct_mode(indio_dev);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- *  inv_mpu6050_set_lpf() - set low pass filer based on fifo rate.
+ *  inv_mpu6050_set_lpf() - set low pass filer based on fअगरo rate.
  *
  *                  Based on the Nyquist principle, the bandwidth of the low
- *                  pass filter must not exceed the signal sampling rate divided
+ *                  pass filter must not exceed the संकेत sampling rate भागided
  *                  by 2, or there would be aliasing.
- *                  This function basically search for the correct low pass
- *                  parameters based on the fifo rate, e.g, sampling frequency.
+ *                  This function basically search क्रम the correct low pass
+ *                  parameters based on the fअगरo rate, e.g, sampling frequency.
  *
- *  lpf is set automatically when setting sampling rate to avoid any aliases.
+ *  lpf is set स्वतःmatically when setting sampling rate to aव्योम any aliases.
  */
-static int inv_mpu6050_set_lpf(struct inv_mpu6050_state *st, int rate)
-{
-	static const int hz[] = {400, 200, 90, 40, 20, 10};
-	static const int d[] = {
+अटल पूर्णांक inv_mpu6050_set_lpf(काष्ठा inv_mpu6050_state *st, पूर्णांक rate)
+अणु
+	अटल स्थिर पूर्णांक hz[] = अणु400, 200, 90, 40, 20, 10पूर्ण;
+	अटल स्थिर पूर्णांक d[] = अणु
 		INV_MPU6050_FILTER_200HZ, INV_MPU6050_FILTER_100HZ,
 		INV_MPU6050_FILTER_45HZ, INV_MPU6050_FILTER_20HZ,
 		INV_MPU6050_FILTER_10HZ, INV_MPU6050_FILTER_5HZ
-	};
-	int i, result;
+	पूर्ण;
+	पूर्णांक i, result;
 	u8 data;
 
 	data = INV_MPU6050_FILTER_5HZ;
-	for (i = 0; i < ARRAY_SIZE(hz); ++i) {
-		if (rate >= hz[i]) {
+	क्रम (i = 0; i < ARRAY_SIZE(hz); ++i) अणु
+		अगर (rate >= hz[i]) अणु
 			data = d[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	result = inv_mpu6050_set_lpf_regs(st, data);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 	st->chip_config.lpf = data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * inv_mpu6050_fifo_rate_store() - Set fifo rate.
+ * inv_mpu6050_fअगरo_rate_store() - Set fअगरo rate.
  */
-static ssize_t
-inv_mpu6050_fifo_rate_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	int fifo_rate;
+अटल sमाप_प्रकार
+inv_mpu6050_fअगरo_rate_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक fअगरo_rate;
 	u8 d;
-	int result;
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
-	struct device *pdev = regmap_get_device(st->map);
+	पूर्णांक result;
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
+	काष्ठा device *pdev = regmap_get_device(st->map);
 
-	if (kstrtoint(buf, 10, &fifo_rate))
-		return -EINVAL;
-	if (fifo_rate < INV_MPU6050_MIN_FIFO_RATE ||
-	    fifo_rate > INV_MPU6050_MAX_FIFO_RATE)
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 10, &fअगरo_rate))
+		वापस -EINVAL;
+	अगर (fअगरo_rate < INV_MPU6050_MIN_FIFO_RATE ||
+	    fअगरo_rate > INV_MPU6050_MAX_FIFO_RATE)
+		वापस -EINVAL;
 
-	/* compute the chip sample rate divider */
-	d = INV_MPU6050_FIFO_RATE_TO_DIVIDER(fifo_rate);
-	/* compute back the fifo rate to handle truncation cases */
-	fifo_rate = INV_MPU6050_DIVIDER_TO_FIFO_RATE(d);
+	/* compute the chip sample rate भागider */
+	d = INV_MPU6050_FIFO_RATE_TO_DIVIDER(fअगरo_rate);
+	/* compute back the fअगरo rate to handle truncation हालs */
+	fअगरo_rate = INV_MPU6050_DIVIDER_TO_FIFO_RATE(d);
 
 	mutex_lock(&st->lock);
-	if (d == st->chip_config.divider) {
+	अगर (d == st->chip_config.भागider) अणु
 		result = 0;
-		goto fifo_rate_fail_unlock;
-	}
-	result = pm_runtime_get_sync(pdev);
-	if (result < 0) {
-		pm_runtime_put_noidle(pdev);
-		goto fifo_rate_fail_unlock;
-	}
+		जाओ fअगरo_rate_fail_unlock;
+	पूर्ण
+	result = pm_runसमय_get_sync(pdev);
+	अगर (result < 0) अणु
+		pm_runसमय_put_noidle(pdev);
+		जाओ fअगरo_rate_fail_unlock;
+	पूर्ण
 
-	result = regmap_write(st->map, st->reg->sample_rate_div, d);
-	if (result)
-		goto fifo_rate_fail_power_off;
-	st->chip_config.divider = d;
+	result = regmap_ग_लिखो(st->map, st->reg->sample_rate_भाग, d);
+	अगर (result)
+		जाओ fअगरo_rate_fail_घातer_off;
+	st->chip_config.भागider = d;
 
-	result = inv_mpu6050_set_lpf(st, fifo_rate);
-	if (result)
-		goto fifo_rate_fail_power_off;
+	result = inv_mpu6050_set_lpf(st, fअगरo_rate);
+	अगर (result)
+		जाओ fअगरo_rate_fail_घातer_off;
 
-	/* update rate for magn, noop if not present in chip */
-	result = inv_mpu_magn_set_rate(st, fifo_rate);
-	if (result)
-		goto fifo_rate_fail_power_off;
+	/* update rate क्रम magn, noop अगर not present in chip */
+	result = inv_mpu_magn_set_rate(st, fअगरo_rate);
+	अगर (result)
+		जाओ fअगरo_rate_fail_घातer_off;
 
-	pm_runtime_mark_last_busy(pdev);
-fifo_rate_fail_power_off:
-	pm_runtime_put_autosuspend(pdev);
-fifo_rate_fail_unlock:
+	pm_runसमय_mark_last_busy(pdev);
+fअगरo_rate_fail_घातer_off:
+	pm_runसमय_put_स्वतःsuspend(pdev);
+fअगरo_rate_fail_unlock:
 	mutex_unlock(&st->lock);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * inv_fifo_rate_show() - Get the current sampling rate.
+ * inv_fअगरo_rate_show() - Get the current sampling rate.
  */
-static ssize_t
-inv_fifo_rate_show(struct device *dev, struct device_attribute *attr,
-		   char *buf)
-{
-	struct inv_mpu6050_state *st = iio_priv(dev_to_iio_dev(dev));
-	unsigned fifo_rate;
+अटल sमाप_प्रकार
+inv_fअगरo_rate_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		   अक्षर *buf)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(dev_to_iio_dev(dev));
+	अचिन्हित fअगरo_rate;
 
 	mutex_lock(&st->lock);
-	fifo_rate = INV_MPU6050_DIVIDER_TO_FIFO_RATE(st->chip_config.divider);
+	fअगरo_rate = INV_MPU6050_DIVIDER_TO_FIFO_RATE(st->chip_config.भागider);
 	mutex_unlock(&st->lock);
 
-	return scnprintf(buf, PAGE_SIZE, "%u\n", fifo_rate);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%u\n", fअगरo_rate);
+पूर्ण
 
 /*
  * inv_attr_show() - calling this function will show current
@@ -986,106 +987,106 @@ inv_fifo_rate_show(struct device *dev, struct device_attribute *attr,
  *
  * See inv_get_mount_matrix()
  */
-static ssize_t inv_attr_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct inv_mpu6050_state *st = iio_priv(dev_to_iio_dev(dev));
-	struct iio_dev_attr *this_attr = to_iio_dev_attr(attr);
+अटल sमाप_प्रकार inv_attr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(dev_to_iio_dev(dev));
+	काष्ठा iio_dev_attr *this_attr = to_iio_dev_attr(attr);
 	s8 *m;
 
-	switch (this_attr->address) {
+	चयन (this_attr->address) अणु
 	/*
 	 * In MPU6050, the two matrix are the same because gyro and accel
-	 * are integrated in one chip
+	 * are पूर्णांकegrated in one chip
 	 */
-	case ATTR_GYRO_MATRIX:
-	case ATTR_ACCL_MATRIX:
+	हाल ATTR_GYRO_MATRIX:
+	हाल ATTR_ACCL_MATRIX:
 		m = st->plat_data.orientation;
 
-		return scnprintf(buf, PAGE_SIZE,
+		वापस scnम_लिखो(buf, PAGE_SIZE,
 			"%d, %d, %d; %d, %d, %d; %d, %d, %d\n",
 			m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8]);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
- * inv_mpu6050_validate_trigger() - validate_trigger callback for invensense
+ * inv_mpu6050_validate_trigger() - validate_trigger callback क्रम invensense
  *                                  MPU6050 device.
  * @indio_dev: The IIO device
  * @trig: The new trigger
  *
- * Returns: 0 if the 'trig' matches the trigger registered by the MPU6050
+ * Returns: 0 अगर the 'trig' matches the trigger रेजिस्टरed by the MPU6050
  * device, -EINVAL otherwise.
  */
-static int inv_mpu6050_validate_trigger(struct iio_dev *indio_dev,
-					struct iio_trigger *trig)
-{
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
+अटल पूर्णांक inv_mpu6050_validate_trigger(काष्ठा iio_dev *indio_dev,
+					काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
 
-	if (st->trig != trig)
-		return -EINVAL;
+	अगर (st->trig != trig)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iio_mount_matrix *
-inv_get_mount_matrix(const struct iio_dev *indio_dev,
-		     const struct iio_chan_spec *chan)
-{
-	struct inv_mpu6050_state *data = iio_priv(indio_dev);
-	const struct iio_mount_matrix *matrix;
+अटल स्थिर काष्ठा iio_mount_matrix *
+inv_get_mount_matrix(स्थिर काष्ठा iio_dev *indio_dev,
+		     स्थिर काष्ठा iio_chan_spec *chan)
+अणु
+	काष्ठा inv_mpu6050_state *data = iio_priv(indio_dev);
+	स्थिर काष्ठा iio_mount_matrix *matrix;
 
-	if (chan->type == IIO_MAGN)
+	अगर (chan->type == IIO_MAGN)
 		matrix = &data->magn_orient;
-	else
+	अन्यथा
 		matrix = &data->orientation;
 
-	return matrix;
-}
+	वापस matrix;
+पूर्ण
 
-static const struct iio_chan_spec_ext_info inv_ext_info[] = {
+अटल स्थिर काष्ठा iio_chan_spec_ext_info inv_ext_info[] = अणु
 	IIO_MOUNT_MATRIX(IIO_SHARED_BY_TYPE, inv_get_mount_matrix),
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
-#define INV_MPU6050_CHAN(_type, _channel2, _index)                    \
-	{                                                             \
+#घोषणा INV_MPU6050_CHAN(_type, _channel2, _index)                    \
+	अणु                                                             \
 		.type = _type,                                        \
-		.modified = 1,                                        \
+		.modअगरied = 1,                                        \
 		.channel2 = _channel2,                                \
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE), \
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |	      \
 				      BIT(IIO_CHAN_INFO_CALIBBIAS),   \
 		.scan_index = _index,                                 \
-		.scan_type = {                                        \
+		.scan_type = अणु                                        \
 				.sign = 's',                          \
 				.realbits = 16,                       \
 				.storagebits = 16,                    \
-				.shift = 0,                           \
+				.shअगरt = 0,                           \
 				.endianness = IIO_BE,                 \
-			     },                                       \
+			     पूर्ण,                                       \
 		.ext_info = inv_ext_info,                             \
-	}
+	पूर्ण
 
-#define INV_MPU6050_TEMP_CHAN(_index)				\
-	{							\
+#घोषणा INV_MPU6050_TEMP_CHAN(_index)				\
+	अणु							\
 		.type = IIO_TEMP,				\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW)	\
 				| BIT(IIO_CHAN_INFO_OFFSET)	\
 				| BIT(IIO_CHAN_INFO_SCALE),	\
 		.scan_index = _index,				\
-		.scan_type = {					\
+		.scan_type = अणु					\
 			.sign = 's',				\
 			.realbits = 16,				\
 			.storagebits = 16,			\
-			.shift = 0,				\
+			.shअगरt = 0,				\
 			.endianness = IIO_BE,			\
-		},						\
-	}
+		पूर्ण,						\
+	पूर्ण
 
-static const struct iio_chan_spec inv_mpu_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec inv_mpu_channels[] = अणु
 	IIO_CHAN_SOFT_TIMESTAMP(INV_MPU6050_SCAN_TIMESTAMP),
 
 	INV_MPU6050_TEMP_CHAN(INV_MPU6050_SCAN_TEMP),
@@ -1097,21 +1098,21 @@ static const struct iio_chan_spec inv_mpu_channels[] = {
 	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_X, INV_MPU6050_SCAN_ACCL_X),
 	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_Y, INV_MPU6050_SCAN_ACCL_Y),
 	INV_MPU6050_CHAN(IIO_ACCEL, IIO_MOD_Z, INV_MPU6050_SCAN_ACCL_Z),
-};
+पूर्ण;
 
-#define INV_MPU6050_SCAN_MASK_3AXIS_ACCEL	\
+#घोषणा INV_MPU6050_SCAN_MASK_3AXIS_ACCEL	\
 	(BIT(INV_MPU6050_SCAN_ACCL_X)		\
 	| BIT(INV_MPU6050_SCAN_ACCL_Y)		\
 	| BIT(INV_MPU6050_SCAN_ACCL_Z))
 
-#define INV_MPU6050_SCAN_MASK_3AXIS_GYRO	\
+#घोषणा INV_MPU6050_SCAN_MASK_3AXIS_GYRO	\
 	(BIT(INV_MPU6050_SCAN_GYRO_X)		\
 	| BIT(INV_MPU6050_SCAN_GYRO_Y)		\
 	| BIT(INV_MPU6050_SCAN_GYRO_Z))
 
-#define INV_MPU6050_SCAN_MASK_TEMP		(BIT(INV_MPU6050_SCAN_TEMP))
+#घोषणा INV_MPU6050_SCAN_MASK_TEMP		(BIT(INV_MPU6050_SCAN_TEMP))
 
-static const unsigned long inv_mpu_scan_masks[] = {
+अटल स्थिर अचिन्हित दीर्घ inv_mpu_scan_masks[] = अणु
 	/* 3-axis accel */
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL,
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL | INV_MPU6050_SCAN_MASK_TEMP,
@@ -1123,27 +1124,27 @@ static const unsigned long inv_mpu_scan_masks[] = {
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL | INV_MPU6050_SCAN_MASK_3AXIS_GYRO
 		| INV_MPU6050_SCAN_MASK_TEMP,
 	0,
-};
+पूर्ण;
 
-#define INV_MPU9X50_MAGN_CHAN(_chan2, _bits, _index)			\
-	{								\
+#घोषणा INV_MPU9X50_MAGN_CHAN(_chan2, _bits, _index)			\
+	अणु								\
 		.type = IIO_MAGN,					\
-		.modified = 1,						\
+		.modअगरied = 1,						\
 		.channel2 = _chan2,					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_SCALE) |	\
 				      BIT(IIO_CHAN_INFO_RAW),		\
 		.scan_index = _index,					\
-		.scan_type = {						\
+		.scan_type = अणु						\
 			.sign = 's',					\
 			.realbits = _bits,				\
 			.storagebits = 16,				\
-			.shift = 0,					\
+			.shअगरt = 0,					\
 			.endianness = IIO_BE,				\
-		},							\
+		पूर्ण,							\
 		.ext_info = inv_ext_info,				\
-	}
+	पूर्ण
 
-static const struct iio_chan_spec inv_mpu9150_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec inv_mpu9150_channels[] = अणु
 	IIO_CHAN_SOFT_TIMESTAMP(INV_MPU9X50_SCAN_TIMESTAMP),
 
 	INV_MPU6050_TEMP_CHAN(INV_MPU6050_SCAN_TEMP),
@@ -1160,9 +1161,9 @@ static const struct iio_chan_spec inv_mpu9150_channels[] = {
 	INV_MPU9X50_MAGN_CHAN(IIO_MOD_X, 13, INV_MPU9X50_SCAN_MAGN_X),
 	INV_MPU9X50_MAGN_CHAN(IIO_MOD_Y, 13, INV_MPU9X50_SCAN_MAGN_Y),
 	INV_MPU9X50_MAGN_CHAN(IIO_MOD_Z, 13, INV_MPU9X50_SCAN_MAGN_Z),
-};
+पूर्ण;
 
-static const struct iio_chan_spec inv_mpu9250_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec inv_mpu9250_channels[] = अणु
 	IIO_CHAN_SOFT_TIMESTAMP(INV_MPU9X50_SCAN_TIMESTAMP),
 
 	INV_MPU6050_TEMP_CHAN(INV_MPU6050_SCAN_TEMP),
@@ -1179,14 +1180,14 @@ static const struct iio_chan_spec inv_mpu9250_channels[] = {
 	INV_MPU9X50_MAGN_CHAN(IIO_MOD_X, 16, INV_MPU9X50_SCAN_MAGN_X),
 	INV_MPU9X50_MAGN_CHAN(IIO_MOD_Y, 16, INV_MPU9X50_SCAN_MAGN_Y),
 	INV_MPU9X50_MAGN_CHAN(IIO_MOD_Z, 16, INV_MPU9X50_SCAN_MAGN_Z),
-};
+पूर्ण;
 
-#define INV_MPU9X50_SCAN_MASK_3AXIS_MAGN	\
+#घोषणा INV_MPU9X50_SCAN_MASK_3AXIS_MAGN	\
 	(BIT(INV_MPU9X50_SCAN_MAGN_X)		\
 	| BIT(INV_MPU9X50_SCAN_MAGN_Y)		\
 	| BIT(INV_MPU9X50_SCAN_MAGN_Z))
 
-static const unsigned long inv_mpu9x50_scan_masks[] = {
+अटल स्थिर अचिन्हित दीर्घ inv_mpu9x50_scan_masks[] = अणु
 	/* 3-axis accel */
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL,
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL | INV_MPU6050_SCAN_MASK_TEMP,
@@ -1215,9 +1216,9 @@ static const unsigned long inv_mpu9x50_scan_masks[] = {
 		| INV_MPU9X50_SCAN_MASK_3AXIS_MAGN
 		| INV_MPU6050_SCAN_MASK_TEMP,
 	0,
-};
+पूर्ण;
 
-static const unsigned long inv_icm20602_scan_masks[] = {
+अटल स्थिर अचिन्हित दीर्घ inv_icm20602_scan_masks[] = अणु
 	/* 3-axis accel + temp (mandatory) */
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL | INV_MPU6050_SCAN_MASK_TEMP,
 	/* 3-axis gyro + temp (mandatory) */
@@ -1226,227 +1227,227 @@ static const unsigned long inv_icm20602_scan_masks[] = {
 	INV_MPU6050_SCAN_MASK_3AXIS_ACCEL | INV_MPU6050_SCAN_MASK_3AXIS_GYRO
 		| INV_MPU6050_SCAN_MASK_TEMP,
 	0,
-};
+पूर्ण;
 
 /*
  * The user can choose any frequency between INV_MPU6050_MIN_FIFO_RATE and
  * INV_MPU6050_MAX_FIFO_RATE, but only these frequencies are matched by the
- * low-pass filter. Specifically, each of these sampling rates are about twice
+ * low-pass filter. Specअगरically, each of these sampling rates are about twice
  * the bandwidth of a corresponding low-pass filter, which should eliminate
- * aliasing following the Nyquist principle. By picking a frequency different
+ * aliasing following the Nyquist principle. By picking a frequency dअगरferent
  * from these, the user risks aliasing effects.
  */
-static IIO_CONST_ATTR_SAMP_FREQ_AVAIL("10 20 50 100 200 500");
-static IIO_CONST_ATTR(in_anglvel_scale_available,
+अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL("10 20 50 100 200 500");
+अटल IIO_CONST_ATTR(in_anglvel_scale_available,
 					  "0.000133090 0.000266181 0.000532362 0.001064724");
-static IIO_CONST_ATTR(in_accel_scale_available,
+अटल IIO_CONST_ATTR(in_accel_scale_available,
 					  "0.000598 0.001196 0.002392 0.004785");
-static IIO_DEV_ATTR_SAMP_FREQ(S_IRUGO | S_IWUSR, inv_fifo_rate_show,
-	inv_mpu6050_fifo_rate_store);
+अटल IIO_DEV_ATTR_SAMP_FREQ(S_IRUGO | S_IWUSR, inv_fअगरo_rate_show,
+	inv_mpu6050_fअगरo_rate_store);
 
-/* Deprecated: kept for userspace backward compatibility. */
-static IIO_DEVICE_ATTR(in_gyro_matrix, S_IRUGO, inv_attr_show, NULL,
+/* Deprecated: kept क्रम userspace backward compatibility. */
+अटल IIO_DEVICE_ATTR(in_gyro_matrix, S_IRUGO, inv_attr_show, शून्य,
 	ATTR_GYRO_MATRIX);
-static IIO_DEVICE_ATTR(in_accel_matrix, S_IRUGO, inv_attr_show, NULL,
+अटल IIO_DEVICE_ATTR(in_accel_matrix, S_IRUGO, inv_attr_show, शून्य,
 	ATTR_ACCL_MATRIX);
 
-static struct attribute *inv_attributes[] = {
+अटल काष्ठा attribute *inv_attributes[] = अणु
 	&iio_dev_attr_in_gyro_matrix.dev_attr.attr,  /* deprecated */
 	&iio_dev_attr_in_accel_matrix.dev_attr.attr, /* deprecated */
 	&iio_dev_attr_sampling_frequency.dev_attr.attr,
-	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
-	&iio_const_attr_in_accel_scale_available.dev_attr.attr,
-	&iio_const_attr_in_anglvel_scale_available.dev_attr.attr,
-	NULL,
-};
+	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
+	&iio_स्थिर_attr_in_accel_scale_available.dev_attr.attr,
+	&iio_स्थिर_attr_in_anglvel_scale_available.dev_attr.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group inv_attribute_group = {
+अटल स्थिर काष्ठा attribute_group inv_attribute_group = अणु
 	.attrs = inv_attributes
-};
+पूर्ण;
 
-static int inv_mpu6050_reg_access(struct iio_dev *indio_dev,
-				  unsigned int reg,
-				  unsigned int writeval,
-				  unsigned int *readval)
-{
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक inv_mpu6050_reg_access(काष्ठा iio_dev *indio_dev,
+				  अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक ग_लिखोval,
+				  अचिन्हित पूर्णांक *पढ़ोval)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
-	if (readval)
-		ret = regmap_read(st->map, reg, readval);
-	else
-		ret = regmap_write(st->map, reg, writeval);
+	अगर (पढ़ोval)
+		ret = regmap_पढ़ो(st->map, reg, पढ़ोval);
+	अन्यथा
+		ret = regmap_ग_लिखो(st->map, reg, ग_लिखोval);
 	mutex_unlock(&st->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info mpu_info = {
-	.read_raw = &inv_mpu6050_read_raw,
-	.write_raw = &inv_mpu6050_write_raw,
-	.write_raw_get_fmt = &inv_write_raw_get_fmt,
+अटल स्थिर काष्ठा iio_info mpu_info = अणु
+	.पढ़ो_raw = &inv_mpu6050_पढ़ो_raw,
+	.ग_लिखो_raw = &inv_mpu6050_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt = &inv_ग_लिखो_raw_get_fmt,
 	.attrs = &inv_attribute_group,
 	.validate_trigger = inv_mpu6050_validate_trigger,
 	.debugfs_reg_access = &inv_mpu6050_reg_access,
-};
+पूर्ण;
 
 /*
  *  inv_check_and_setup_chip() - check and setup chip.
  */
-static int inv_check_and_setup_chip(struct inv_mpu6050_state *st)
-{
-	int result;
-	unsigned int regval, mask;
-	int i;
+अटल पूर्णांक inv_check_and_setup_chip(काष्ठा inv_mpu6050_state *st)
+अणु
+	पूर्णांक result;
+	अचिन्हित पूर्णांक regval, mask;
+	पूर्णांक i;
 
 	st->hw  = &hw_info[st->chip_type];
 	st->reg = hw_info[st->chip_type].reg;
-	memcpy(&st->chip_config, hw_info[st->chip_type].config,
-	       sizeof(st->chip_config));
+	स_नकल(&st->chip_config, hw_info[st->chip_type].config,
+	       माप(st->chip_config));
 
-	/* check chip self-identification */
-	result = regmap_read(st->map, INV_MPU6050_REG_WHOAMI, &regval);
-	if (result)
-		return result;
-	if (regval != st->hw->whoami) {
+	/* check chip self-identअगरication */
+	result = regmap_पढ़ो(st->map, INV_MPU6050_REG_WHOAMI, &regval);
+	अगर (result)
+		वापस result;
+	अगर (regval != st->hw->whoami) अणु
 		/* check whoami against all possible values */
-		for (i = 0; i < INV_NUM_PARTS; ++i) {
-			if (regval == hw_info[i].whoami) {
+		क्रम (i = 0; i < INV_NUM_PARTS; ++i) अणु
+			अगर (regval == hw_info[i].whoami) अणु
 				dev_warn(regmap_get_device(st->map),
 					"whoami mismatch got %#02x (%s)"
 					"expected %#02hhx (%s)\n",
 					regval, hw_info[i].name,
 					st->hw->whoami, st->hw->name);
-				break;
-			}
-		}
-		if (i >= INV_NUM_PARTS) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i >= INV_NUM_PARTS) अणु
 			dev_err(regmap_get_device(st->map),
 				"invalid whoami %#02x expected %#02hhx (%s)\n",
 				regval, st->hw->whoami, st->hw->name);
-			return -ENODEV;
-		}
-	}
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	/* reset to make sure previous state are not there */
-	result = regmap_write(st->map, st->reg->pwr_mgmt_1,
+	result = regmap_ग_लिखो(st->map, st->reg->pwr_mgmt_1,
 			      INV_MPU6050_BIT_H_RESET);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 	msleep(INV_MPU6050_POWER_UP_TIME);
-	switch (st->chip_type) {
-	case INV_MPU6000:
-	case INV_MPU6500:
-	case INV_MPU6515:
-	case INV_MPU6880:
-	case INV_MPU9250:
-	case INV_MPU9255:
-		/* reset signal path (required for spi connection) */
+	चयन (st->chip_type) अणु
+	हाल INV_MPU6000:
+	हाल INV_MPU6500:
+	हाल INV_MPU6515:
+	हाल INV_MPU6880:
+	हाल INV_MPU9250:
+	हाल INV_MPU9255:
+		/* reset संकेत path (required क्रम spi connection) */
 		regval = INV_MPU6050_BIT_TEMP_RST | INV_MPU6050_BIT_ACCEL_RST |
 			 INV_MPU6050_BIT_GYRO_RST;
-		result = regmap_write(st->map, INV_MPU6050_REG_SIGNAL_PATH_RESET,
+		result = regmap_ग_लिखो(st->map, INV_MPU6050_REG_SIGNAL_PATH_RESET,
 				      regval);
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 		msleep(INV_MPU6050_POWER_UP_TIME);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * Turn power on. After reset, the sleep bit could be on
-	 * or off depending on the OTP settings. Turning power on
+	 * Turn घातer on. After reset, the sleep bit could be on
+	 * or off depending on the OTP settings. Turning घातer on
 	 * make it in a definite state as well as making the hardware
 	 * state align with the software state
 	 */
-	result = inv_mpu6050_set_power_itg(st, true);
-	if (result)
-		return result;
+	result = inv_mpu6050_set_घातer_itg(st, true);
+	अगर (result)
+		वापस result;
 	mask = INV_MPU6050_SENSOR_ACCL | INV_MPU6050_SENSOR_GYRO |
 			INV_MPU6050_SENSOR_TEMP | INV_MPU6050_SENSOR_MAGN;
-	result = inv_mpu6050_switch_engine(st, false, mask);
-	if (result)
-		goto error_power_off;
+	result = inv_mpu6050_चयन_engine(st, false, mask);
+	अगर (result)
+		जाओ error_घातer_off;
 
-	return 0;
+	वापस 0;
 
-error_power_off:
-	inv_mpu6050_set_power_itg(st, false);
-	return result;
-}
+error_घातer_off:
+	inv_mpu6050_set_घातer_itg(st, false);
+	वापस result;
+पूर्ण
 
-static int inv_mpu_core_enable_regulator_vddio(struct inv_mpu6050_state *st)
-{
-	int result;
+अटल पूर्णांक inv_mpu_core_enable_regulator_vddio(काष्ठा inv_mpu6050_state *st)
+अणु
+	पूर्णांक result;
 
 	result = regulator_enable(st->vddio_supply);
-	if (result) {
+	अगर (result) अणु
 		dev_err(regmap_get_device(st->map),
 			"Failed to enable vddio regulator: %d\n", result);
-	} else {
-		/* Give the device a little bit of time to start up. */
+	पूर्ण अन्यथा अणु
+		/* Give the device a little bit of समय to start up. */
 		usleep_range(3000, 5000);
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int inv_mpu_core_disable_regulator_vddio(struct inv_mpu6050_state *st)
-{
-	int result;
+अटल पूर्णांक inv_mpu_core_disable_regulator_vddio(काष्ठा inv_mpu6050_state *st)
+अणु
+	पूर्णांक result;
 
 	result = regulator_disable(st->vddio_supply);
-	if (result)
+	अगर (result)
 		dev_err(regmap_get_device(st->map),
 			"Failed to disable vddio regulator: %d\n", result);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void inv_mpu_core_disable_regulator_action(void *_data)
-{
-	struct inv_mpu6050_state *st = _data;
-	int result;
+अटल व्योम inv_mpu_core_disable_regulator_action(व्योम *_data)
+अणु
+	काष्ठा inv_mpu6050_state *st = _data;
+	पूर्णांक result;
 
 	result = regulator_disable(st->vdd_supply);
-	if (result)
+	अगर (result)
 		dev_err(regmap_get_device(st->map),
 			"Failed to disable vdd regulator: %d\n", result);
 
 	inv_mpu_core_disable_regulator_vddio(st);
-}
+पूर्ण
 
-static void inv_mpu_pm_disable(void *data)
-{
-	struct device *dev = data;
+अटल व्योम inv_mpu_pm_disable(व्योम *data)
+अणु
+	काष्ठा device *dev = data;
 
-	pm_runtime_put_sync_suspend(dev);
-	pm_runtime_disable(dev);
-}
+	pm_runसमय_put_sync_suspend(dev);
+	pm_runसमय_disable(dev);
+पूर्ण
 
-int inv_mpu_core_probe(struct regmap *regmap, int irq, const char *name,
-		int (*inv_mpu_bus_setup)(struct iio_dev *), int chip_type)
-{
-	struct inv_mpu6050_state *st;
-	struct iio_dev *indio_dev;
-	struct inv_mpu6050_platform_data *pdata;
-	struct device *dev = regmap_get_device(regmap);
-	int result;
-	struct irq_data *desc;
-	int irq_type;
+पूर्णांक inv_mpu_core_probe(काष्ठा regmap *regmap, पूर्णांक irq, स्थिर अक्षर *name,
+		पूर्णांक (*inv_mpu_bus_setup)(काष्ठा iio_dev *), पूर्णांक chip_type)
+अणु
+	काष्ठा inv_mpu6050_state *st;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा inv_mpu6050_platक्रमm_data *pdata;
+	काष्ठा device *dev = regmap_get_device(regmap);
+	पूर्णांक result;
+	काष्ठा irq_data *desc;
+	पूर्णांक irq_type;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*st));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*st));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	BUILD_BUG_ON(ARRAY_SIZE(hw_info) != INV_NUM_PARTS);
-	if (chip_type < 0 || chip_type >= INV_NUM_PARTS) {
+	अगर (chip_type < 0 || chip_type >= INV_NUM_PARTS) अणु
 		dev_err(dev, "Bad invensense chip_type=%d name=%s\n",
 				chip_type, name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	st = iio_priv(indio_dev);
 	mutex_init(&st->lock);
 	st->chip_type = chip_type;
@@ -1454,309 +1455,309 @@ int inv_mpu_core_probe(struct regmap *regmap, int irq, const char *name,
 	st->map = regmap;
 
 	pdata = dev_get_platdata(dev);
-	if (!pdata) {
-		result = iio_read_mount_matrix(dev, "mount-matrix",
+	अगर (!pdata) अणु
+		result = iio_पढ़ो_mount_matrix(dev, "mount-matrix",
 					       &st->orientation);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "Failed to retrieve mounting matrix %d\n",
 				result);
-			return result;
-		}
-	} else {
+			वापस result;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		st->plat_data = *pdata;
-	}
+	पूर्ण
 
-	if (irq > 0) {
+	अगर (irq > 0) अणु
 		desc = irq_get_irq_data(irq);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(dev, "Could not find IRQ %d\n", irq);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		irq_type = irqd_get_trigger_type(desc);
-		if (!irq_type)
+		अगर (!irq_type)
 			irq_type = IRQF_TRIGGER_RISING;
-	} else {
-		/* Doesn't really matter, use the default */
+	पूर्ण अन्यथा अणु
+		/* Doesn't really matter, use the शेष */
 		irq_type = IRQF_TRIGGER_RISING;
-	}
+	पूर्ण
 
-	if (irq_type & IRQF_TRIGGER_RISING)	// rising or both-edge
+	अगर (irq_type & IRQF_TRIGGER_RISING)	// rising or both-edge
 		st->irq_mask = INV_MPU6050_ACTIVE_HIGH;
-	else if (irq_type == IRQF_TRIGGER_FALLING)
+	अन्यथा अगर (irq_type == IRQF_TRIGGER_FALLING)
 		st->irq_mask = INV_MPU6050_ACTIVE_LOW;
-	else if (irq_type == IRQF_TRIGGER_HIGH)
+	अन्यथा अगर (irq_type == IRQF_TRIGGER_HIGH)
 		st->irq_mask = INV_MPU6050_ACTIVE_HIGH |
 			INV_MPU6050_LATCH_INT_EN;
-	else if (irq_type == IRQF_TRIGGER_LOW)
+	अन्यथा अगर (irq_type == IRQF_TRIGGER_LOW)
 		st->irq_mask = INV_MPU6050_ACTIVE_LOW |
 			INV_MPU6050_LATCH_INT_EN;
-	else {
+	अन्यथा अणु
 		dev_err(dev, "Invalid interrupt type 0x%x specified\n",
 			irq_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	st->vdd_supply = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(st->vdd_supply))
-		return dev_err_probe(dev, PTR_ERR(st->vdd_supply),
+	अगर (IS_ERR(st->vdd_supply))
+		वापस dev_err_probe(dev, PTR_ERR(st->vdd_supply),
 				     "Failed to get vdd regulator\n");
 
 	st->vddio_supply = devm_regulator_get(dev, "vddio");
-	if (IS_ERR(st->vddio_supply))
-		return dev_err_probe(dev, PTR_ERR(st->vddio_supply),
+	अगर (IS_ERR(st->vddio_supply))
+		वापस dev_err_probe(dev, PTR_ERR(st->vddio_supply),
 				     "Failed to get vddio regulator\n");
 
 	result = regulator_enable(st->vdd_supply);
-	if (result) {
+	अगर (result) अणु
 		dev_err(dev, "Failed to enable vdd regulator: %d\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 	msleep(INV_MPU6050_POWER_UP_TIME);
 
 	result = inv_mpu_core_enable_regulator_vddio(st);
-	if (result) {
+	अगर (result) अणु
 		regulator_disable(st->vdd_supply);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	result = devm_add_action_or_reset(dev, inv_mpu_core_disable_regulator_action,
 				 st);
-	if (result) {
+	अगर (result) अणु
 		dev_err(dev, "Failed to setup regulator cleanup action %d\n",
 			result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/* fill magnetometer orientation */
 	result = inv_mpu_magn_set_orient(st);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	/* power is turned on inside check chip type*/
+	/* घातer is turned on inside check chip type*/
 	result = inv_check_and_setup_chip(st);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	result = inv_mpu6050_init_config(indio_dev);
-	if (result) {
+	अगर (result) अणु
 		dev_err(dev, "Could not initialize device.\n");
-		goto error_power_off;
-	}
+		जाओ error_घातer_off;
+	पूर्ण
 
 	dev_set_drvdata(dev, indio_dev);
-	/* name will be NULL when enumerated via ACPI */
-	if (name)
+	/* name will be शून्य when क्रमागतerated via ACPI */
+	अगर (name)
 		indio_dev->name = name;
-	else
+	अन्यथा
 		indio_dev->name = dev_name(dev);
 
 	/* requires parent device set in indio_dev */
-	if (inv_mpu_bus_setup) {
+	अगर (inv_mpu_bus_setup) अणु
 		result = inv_mpu_bus_setup(indio_dev);
-		if (result)
-			goto error_power_off;
-	}
+		अगर (result)
+			जाओ error_घातer_off;
+	पूर्ण
 
-	/* chip init is done, turning on runtime power management */
-	result = pm_runtime_set_active(dev);
-	if (result)
-		goto error_power_off;
-	pm_runtime_get_noresume(dev);
-	pm_runtime_enable(dev);
-	pm_runtime_set_autosuspend_delay(dev, INV_MPU6050_SUSPEND_DELAY_MS);
-	pm_runtime_use_autosuspend(dev);
-	pm_runtime_put(dev);
+	/* chip init is करोne, turning on runसमय घातer management */
+	result = pm_runसमय_set_active(dev);
+	अगर (result)
+		जाओ error_घातer_off;
+	pm_runसमय_get_noresume(dev);
+	pm_runसमय_enable(dev);
+	pm_runसमय_set_स्वतःsuspend_delay(dev, INV_MPU6050_SUSPEND_DELAY_MS);
+	pm_runसमय_use_स्वतःsuspend(dev);
+	pm_runसमय_put(dev);
 	result = devm_add_action_or_reset(dev, inv_mpu_pm_disable, dev);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	switch (chip_type) {
-	case INV_MPU9150:
+	चयन (chip_type) अणु
+	हाल INV_MPU9150:
 		indio_dev->channels = inv_mpu9150_channels;
 		indio_dev->num_channels = ARRAY_SIZE(inv_mpu9150_channels);
 		indio_dev->available_scan_masks = inv_mpu9x50_scan_masks;
-		break;
-	case INV_MPU9250:
-	case INV_MPU9255:
+		अवरोध;
+	हाल INV_MPU9250:
+	हाल INV_MPU9255:
 		indio_dev->channels = inv_mpu9250_channels;
 		indio_dev->num_channels = ARRAY_SIZE(inv_mpu9250_channels);
 		indio_dev->available_scan_masks = inv_mpu9x50_scan_masks;
-		break;
-	case INV_ICM20602:
+		अवरोध;
+	हाल INV_ICM20602:
 		indio_dev->channels = inv_mpu_channels;
 		indio_dev->num_channels = ARRAY_SIZE(inv_mpu_channels);
 		indio_dev->available_scan_masks = inv_icm20602_scan_masks;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		indio_dev->channels = inv_mpu_channels;
 		indio_dev->num_channels = ARRAY_SIZE(inv_mpu_channels);
 		indio_dev->available_scan_masks = inv_mpu_scan_masks;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/*
-	 * Use magnetometer inside the chip only if there is no i2c
+	 * Use magnetometer inside the chip only अगर there is no i2c
 	 * auxiliary device in use. Otherwise Going back to 6-axis only.
 	 */
-	if (st->magn_disabled) {
+	अगर (st->magn_disabled) अणु
 		indio_dev->channels = inv_mpu_channels;
 		indio_dev->num_channels = ARRAY_SIZE(inv_mpu_channels);
 		indio_dev->available_scan_masks = inv_mpu_scan_masks;
-	}
+	पूर्ण
 
 	indio_dev->info = &mpu_info;
 
-	if (irq > 0) {
+	अगर (irq > 0) अणु
 		/*
 		 * The driver currently only supports buffered capture with its
 		 * own trigger. So no IRQ, no trigger, no buffer
 		 */
 		result = devm_iio_triggered_buffer_setup(dev, indio_dev,
-							 iio_pollfunc_store_time,
-							 inv_mpu6050_read_fifo,
-							 NULL);
-		if (result) {
+							 iio_pollfunc_store_समय,
+							 inv_mpu6050_पढ़ो_fअगरo,
+							 शून्य);
+		अगर (result) अणु
 			dev_err(dev, "configure buffer fail %d\n", result);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
 		result = inv_mpu6050_probe_trigger(indio_dev, irq_type);
-		if (result) {
+		अगर (result) अणु
 			dev_err(dev, "trigger probe fail %d\n", result);
-			return result;
-		}
-	}
+			वापस result;
+		पूर्ण
+	पूर्ण
 
-	result = devm_iio_device_register(dev, indio_dev);
-	if (result) {
+	result = devm_iio_device_रेजिस्टर(dev, indio_dev);
+	अगर (result) अणु
 		dev_err(dev, "IIO register fail %d\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-error_power_off:
-	inv_mpu6050_set_power_itg(st, false);
-	return result;
-}
+error_घातer_off:
+	inv_mpu6050_set_घातer_itg(st, false);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL_GPL(inv_mpu_core_probe);
 
-static int __maybe_unused inv_mpu_resume(struct device *dev)
-{
-	struct iio_dev *indio_dev = dev_get_drvdata(dev);
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
-	int result;
+अटल पूर्णांक __maybe_unused inv_mpu_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
+	पूर्णांक result;
 
 	mutex_lock(&st->lock);
 	result = inv_mpu_core_enable_regulator_vddio(st);
-	if (result)
-		goto out_unlock;
+	अगर (result)
+		जाओ out_unlock;
 
-	result = inv_mpu6050_set_power_itg(st, true);
-	if (result)
-		goto out_unlock;
+	result = inv_mpu6050_set_घातer_itg(st, true);
+	अगर (result)
+		जाओ out_unlock;
 
-	pm_runtime_disable(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
 
-	result = inv_mpu6050_switch_engine(st, true, st->suspended_sensors);
-	if (result)
-		goto out_unlock;
+	result = inv_mpu6050_चयन_engine(st, true, st->suspended_sensors);
+	अगर (result)
+		जाओ out_unlock;
 
-	if (iio_buffer_enabled(indio_dev))
-		result = inv_mpu6050_prepare_fifo(st, true);
+	अगर (iio_buffer_enabled(indio_dev))
+		result = inv_mpu6050_prepare_fअगरo(st, true);
 
 out_unlock:
 	mutex_unlock(&st->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int __maybe_unused inv_mpu_suspend(struct device *dev)
-{
-	struct iio_dev *indio_dev = dev_get_drvdata(dev);
-	struct inv_mpu6050_state *st = iio_priv(indio_dev);
-	int result;
+अटल पूर्णांक __maybe_unused inv_mpu_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
+	काष्ठा inv_mpu6050_state *st = iio_priv(indio_dev);
+	पूर्णांक result;
 
 	mutex_lock(&st->lock);
 
 	st->suspended_sensors = 0;
-	if (pm_runtime_suspended(dev)) {
+	अगर (pm_runसमय_suspended(dev)) अणु
 		result = 0;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (iio_buffer_enabled(indio_dev)) {
-		result = inv_mpu6050_prepare_fifo(st, false);
-		if (result)
-			goto out_unlock;
-	}
+	अगर (iio_buffer_enabled(indio_dev)) अणु
+		result = inv_mpu6050_prepare_fअगरo(st, false);
+		अगर (result)
+			जाओ out_unlock;
+	पूर्ण
 
-	if (st->chip_config.accl_en)
+	अगर (st->chip_config.accl_en)
 		st->suspended_sensors |= INV_MPU6050_SENSOR_ACCL;
-	if (st->chip_config.gyro_en)
+	अगर (st->chip_config.gyro_en)
 		st->suspended_sensors |= INV_MPU6050_SENSOR_GYRO;
-	if (st->chip_config.temp_en)
+	अगर (st->chip_config.temp_en)
 		st->suspended_sensors |= INV_MPU6050_SENSOR_TEMP;
-	if (st->chip_config.magn_en)
+	अगर (st->chip_config.magn_en)
 		st->suspended_sensors |= INV_MPU6050_SENSOR_MAGN;
-	result = inv_mpu6050_switch_engine(st, false, st->suspended_sensors);
-	if (result)
-		goto out_unlock;
+	result = inv_mpu6050_चयन_engine(st, false, st->suspended_sensors);
+	अगर (result)
+		जाओ out_unlock;
 
-	result = inv_mpu6050_set_power_itg(st, false);
-	if (result)
-		goto out_unlock;
+	result = inv_mpu6050_set_घातer_itg(st, false);
+	अगर (result)
+		जाओ out_unlock;
 
 	inv_mpu_core_disable_regulator_vddio(st);
 out_unlock:
 	mutex_unlock(&st->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int __maybe_unused inv_mpu_runtime_suspend(struct device *dev)
-{
-	struct inv_mpu6050_state *st = iio_priv(dev_get_drvdata(dev));
-	unsigned int sensors;
-	int ret;
+अटल पूर्णांक __maybe_unused inv_mpu_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(dev_get_drvdata(dev));
+	अचिन्हित पूर्णांक sensors;
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
 
 	sensors = INV_MPU6050_SENSOR_ACCL | INV_MPU6050_SENSOR_GYRO |
 			INV_MPU6050_SENSOR_TEMP | INV_MPU6050_SENSOR_MAGN;
-	ret = inv_mpu6050_switch_engine(st, false, sensors);
-	if (ret)
-		goto out_unlock;
+	ret = inv_mpu6050_चयन_engine(st, false, sensors);
+	अगर (ret)
+		जाओ out_unlock;
 
-	ret = inv_mpu6050_set_power_itg(st, false);
-	if (ret)
-		goto out_unlock;
+	ret = inv_mpu6050_set_घातer_itg(st, false);
+	अगर (ret)
+		जाओ out_unlock;
 
 	inv_mpu_core_disable_regulator_vddio(st);
 
 out_unlock:
 	mutex_unlock(&st->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused inv_mpu_runtime_resume(struct device *dev)
-{
-	struct inv_mpu6050_state *st = iio_priv(dev_get_drvdata(dev));
-	int ret;
+अटल पूर्णांक __maybe_unused inv_mpu_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा inv_mpu6050_state *st = iio_priv(dev_get_drvdata(dev));
+	पूर्णांक ret;
 
 	ret = inv_mpu_core_enable_regulator_vddio(st);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return inv_mpu6050_set_power_itg(st, true);
-}
+	वापस inv_mpu6050_set_घातer_itg(st, true);
+पूर्ण
 
-const struct dev_pm_ops inv_mpu_pmops = {
+स्थिर काष्ठा dev_pm_ops inv_mpu_pmops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(inv_mpu_suspend, inv_mpu_resume)
-	SET_RUNTIME_PM_OPS(inv_mpu_runtime_suspend, inv_mpu_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(inv_mpu_runसमय_suspend, inv_mpu_runसमय_resume, शून्य)
+पूर्ण;
 EXPORT_SYMBOL_GPL(inv_mpu_pmops);
 
 MODULE_AUTHOR("Invensense Corporation");

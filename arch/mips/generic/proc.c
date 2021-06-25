@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Imagination Technologies
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#include <linux/of.h>
+#समावेश <linux/of.h>
 
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/bootinfo.h>
 
-char *system_type;
+अक्षर *प्रणाली_type;
 
-const char *get_system_type(void)
-{
-	const char *str;
-	int err;
+स्थिर अक्षर *get_प्रणाली_type(व्योम)
+अणु
+	स्थिर अक्षर *str;
+	पूर्णांक err;
 
-	if (system_type)
-		return system_type;
+	अगर (प्रणाली_type)
+		वापस प्रणाली_type;
 
-	err = of_property_read_string(of_root, "model", &str);
-	if (!err)
-		return str;
+	err = of_property_पढ़ो_string(of_root, "model", &str);
+	अगर (!err)
+		वापस str;
 
-	err = of_property_read_string_index(of_root, "compatible", 0, &str);
-	if (!err)
-		return str;
+	err = of_property_पढ़ो_string_index(of_root, "compatible", 0, &str);
+	अगर (!err)
+		वापस str;
 
-	return "Unknown";
-}
+	वापस "Unknown";
+पूर्ण

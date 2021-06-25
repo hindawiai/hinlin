@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Most of the string-functions are rather heavily hand-optimized,
- * see especially strsep,strstr,str[c]spn. They should work, but are not
- * very easy to understand. Everything is done entirely within the register
- * set, making the functions fast and clean. String instructions have been
- * used through-out, making for "slightly" unclear code :-)
+ * see especially strsep,म_माला,str[c]spn. They should work, but are not
+ * very easy to understand. Everything is करोne entirely within the रेजिस्टर
+ * set, making the functions fast and clean. String inकाष्ठाions have been
+ * used through-out, making क्रम "slightly" unclear code :-)
  *
- * AK: On P4 and K7 using non string instruction implementations might be faster
- * for large memory blocks. But most of them are unlikely to be used on large
+ * AK: On P4 and K7 using non string inकाष्ठाion implementations might be faster
+ * क्रम large memory blocks. But most of them are unlikely to be used on large
  * strings.
  */
 
-#include <linux/string.h>
-#include <linux/export.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/export.h>
 
-#ifdef __HAVE_ARCH_STRCPY
-char *strcpy(char *dest, const char *src)
-{
-	int d0, d1, d2;
-	asm volatile("1:\tlodsb\n\t"
+#अगर_घोषित __HAVE_ARCH_STRCPY
+अक्षर *म_नकल(अक्षर *dest, स्थिर अक्षर *src)
+अणु
+	पूर्णांक d0, d1, d2;
+	यंत्र अस्थिर("1:\tlodsb\n\t"
 		"stosb\n\t"
 		"testb %%al,%%al\n\t"
 		"jne 1b"
 		: "=&S" (d0), "=&D" (d1), "=&a" (d2)
 		: "0" (src), "1" (dest) : "memory");
-	return dest;
-}
-EXPORT_SYMBOL(strcpy);
-#endif
+	वापस dest;
+पूर्ण
+EXPORT_SYMBOL(म_नकल);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRNCPY
-char *strncpy(char *dest, const char *src, size_t count)
-{
-	int d0, d1, d2, d3;
-	asm volatile("1:\tdecl %2\n\t"
+#अगर_घोषित __HAVE_ARCH_STRNCPY
+अक्षर *म_नकलन(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
+अणु
+	पूर्णांक d0, d1, d2, d3;
+	यंत्र अस्थिर("1:\tdecl %2\n\t"
 		"js 2f\n\t"
 		"lodsb\n\t"
 		"stosb\n\t"
@@ -44,16 +45,16 @@ char *strncpy(char *dest, const char *src, size_t count)
 		"2:"
 		: "=&S" (d0), "=&D" (d1), "=&c" (d2), "=&a" (d3)
 		: "0" (src), "1" (dest), "2" (count) : "memory");
-	return dest;
-}
-EXPORT_SYMBOL(strncpy);
-#endif
+	वापस dest;
+पूर्ण
+EXPORT_SYMBOL(म_नकलन);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRCAT
-char *strcat(char *dest, const char *src)
-{
-	int d0, d1, d2, d3;
-	asm volatile("repne\n\t"
+#अगर_घोषित __HAVE_ARCH_STRCAT
+अक्षर *म_जोड़ो(अक्षर *dest, स्थिर अक्षर *src)
+अणु
+	पूर्णांक d0, d1, d2, d3;
+	यंत्र अस्थिर("repne\n\t"
 		"scasb\n\t"
 		"decl %1\n"
 		"1:\tlodsb\n\t"
@@ -62,16 +63,16 @@ char *strcat(char *dest, const char *src)
 		"jne 1b"
 		: "=&S" (d0), "=&D" (d1), "=&a" (d2), "=&c" (d3)
 		: "0" (src), "1" (dest), "2" (0), "3" (0xffffffffu) : "memory");
-	return dest;
-}
-EXPORT_SYMBOL(strcat);
-#endif
+	वापस dest;
+पूर्ण
+EXPORT_SYMBOL(म_जोड़ो);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRNCAT
-char *strncat(char *dest, const char *src, size_t count)
-{
-	int d0, d1, d2, d3;
-	asm volatile("repne\n\t"
+#अगर_घोषित __HAVE_ARCH_STRNCAT
+अक्षर *म_जोड़न(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार count)
+अणु
+	पूर्णांक d0, d1, d2, d3;
+	यंत्र अस्थिर("repne\n\t"
 		"scasb\n\t"
 		"decl %1\n\t"
 		"movl %8,%3\n"
@@ -86,17 +87,17 @@ char *strncat(char *dest, const char *src, size_t count)
 		: "=&S" (d0), "=&D" (d1), "=&a" (d2), "=&c" (d3)
 		: "0" (src), "1" (dest), "2" (0), "3" (0xffffffffu), "g" (count)
 		: "memory");
-	return dest;
-}
-EXPORT_SYMBOL(strncat);
-#endif
+	वापस dest;
+पूर्ण
+EXPORT_SYMBOL(म_जोड़न);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRCMP
-int strcmp(const char *cs, const char *ct)
-{
-	int d0, d1;
-	int res;
-	asm volatile("1:\tlodsb\n\t"
+#अगर_घोषित __HAVE_ARCH_STRCMP
+पूर्णांक म_भेद(स्थिर अक्षर *cs, स्थिर अक्षर *ct)
+अणु
+	पूर्णांक d0, d1;
+	पूर्णांक res;
+	यंत्र अस्थिर("1:\tlodsb\n\t"
 		"scasb\n\t"
 		"jne 2f\n\t"
 		"testb %%al,%%al\n\t"
@@ -109,17 +110,17 @@ int strcmp(const char *cs, const char *ct)
 		: "=a" (res), "=&S" (d0), "=&D" (d1)
 		: "1" (cs), "2" (ct)
 		: "memory");
-	return res;
-}
-EXPORT_SYMBOL(strcmp);
-#endif
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(म_भेद);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRNCMP
-int strncmp(const char *cs, const char *ct, size_t count)
-{
-	int res;
-	int d0, d1, d2;
-	asm volatile("1:\tdecl %3\n\t"
+#अगर_घोषित __HAVE_ARCH_STRNCMP
+पूर्णांक म_भेदन(स्थिर अक्षर *cs, स्थिर अक्षर *ct, माप_प्रकार count)
+अणु
+	पूर्णांक res;
+	पूर्णांक d0, d1, d2;
+	यंत्र अस्थिर("1:\tdecl %3\n\t"
 		"js 2f\n\t"
 		"lodsb\n\t"
 		"scasb\n\t"
@@ -134,17 +135,17 @@ int strncmp(const char *cs, const char *ct, size_t count)
 		: "=a" (res), "=&S" (d0), "=&D" (d1), "=&c" (d2)
 		: "1" (cs), "2" (ct), "3" (count)
 		: "memory");
-	return res;
-}
-EXPORT_SYMBOL(strncmp);
-#endif
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(म_भेदन);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRCHR
-char *strchr(const char *s, int c)
-{
-	int d0;
-	char *res;
-	asm volatile("movb %%al,%%ah\n"
+#अगर_घोषित __HAVE_ARCH_STRCHR
+अक्षर *म_अक्षर(स्थिर अक्षर *s, पूर्णांक c)
+अणु
+	पूर्णांक d0;
+	अक्षर *res;
+	यंत्र अस्थिर("movb %%al,%%ah\n"
 		"1:\tlodsb\n\t"
 		"cmpb %%ah,%%al\n\t"
 		"je 2f\n\t"
@@ -156,34 +157,34 @@ char *strchr(const char *s, int c)
 		: "=a" (res), "=&S" (d0)
 		: "1" (s), "0" (c)
 		: "memory");
-	return res;
-}
-EXPORT_SYMBOL(strchr);
-#endif
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(म_अक्षर);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRLEN
-size_t strlen(const char *s)
-{
-	int d0;
-	size_t res;
-	asm volatile("repne\n\t"
+#अगर_घोषित __HAVE_ARCH_STRLEN
+माप_प्रकार म_माप(स्थिर अक्षर *s)
+अणु
+	पूर्णांक d0;
+	माप_प्रकार res;
+	यंत्र अस्थिर("repne\n\t"
 		"scasb"
 		: "=c" (res), "=&D" (d0)
 		: "1" (s), "a" (0), "0" (0xffffffffu)
 		: "memory");
-	return ~res - 1;
-}
-EXPORT_SYMBOL(strlen);
-#endif
+	वापस ~res - 1;
+पूर्ण
+EXPORT_SYMBOL(म_माप);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_MEMCHR
-void *memchr(const void *cs, int c, size_t count)
-{
-	int d0;
-	void *res;
-	if (!count)
-		return NULL;
-	asm volatile("repne\n\t"
+#अगर_घोषित __HAVE_ARCH_MEMCHR
+व्योम *स_प्रथम(स्थिर व्योम *cs, पूर्णांक c, माप_प्रकार count)
+अणु
+	पूर्णांक d0;
+	व्योम *res;
+	अगर (!count)
+		वापस शून्य;
+	यंत्र अस्थिर("repne\n\t"
 		"scasb\n\t"
 		"je 1f\n\t"
 		"movl $1,%0\n"
@@ -191,34 +192,34 @@ void *memchr(const void *cs, int c, size_t count)
 		: "=D" (res), "=&c" (d0)
 		: "a" (c), "0" (cs), "1" (count)
 		: "memory");
-	return res;
-}
-EXPORT_SYMBOL(memchr);
-#endif
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL(स_प्रथम);
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_MEMSCAN
-void *memscan(void *addr, int c, size_t size)
-{
-	if (!size)
-		return addr;
-	asm volatile("repnz; scasb\n\t"
+#अगर_घोषित __HAVE_ARCH_MEMSCAN
+व्योम *memscan(व्योम *addr, पूर्णांक c, माप_प्रकार size)
+अणु
+	अगर (!size)
+		वापस addr;
+	यंत्र अस्थिर("repnz; scasb\n\t"
 	    "jnz 1f\n\t"
 	    "dec %%edi\n"
 	    "1:"
 	    : "=D" (addr), "=c" (size)
 	    : "0" (addr), "1" (size), "a" (c)
 	    : "memory");
-	return addr;
-}
+	वापस addr;
+पूर्ण
 EXPORT_SYMBOL(memscan);
-#endif
+#पूर्ण_अगर
 
-#ifdef __HAVE_ARCH_STRNLEN
-size_t strnlen(const char *s, size_t count)
-{
-	int d0;
-	int res;
-	asm volatile("movl %2,%0\n\t"
+#अगर_घोषित __HAVE_ARCH_STRNLEN
+माप_प्रकार strnlen(स्थिर अक्षर *s, माप_प्रकार count)
+अणु
+	पूर्णांक d0;
+	पूर्णांक res;
+	यंत्र अस्थिर("movl %2,%0\n\t"
 		"jmp 2f\n"
 		"1:\tcmpb $0,(%0)\n\t"
 		"je 3f\n\t"
@@ -230,7 +231,7 @@ size_t strnlen(const char *s, size_t count)
 		: "=a" (res), "=&d" (d0)
 		: "c" (s), "1" (count)
 		: "memory");
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(strnlen);
-#endif
+#पूर्ण_अगर

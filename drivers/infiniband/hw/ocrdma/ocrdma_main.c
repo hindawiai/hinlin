@@ -1,4 +1,5 @@
-/* This file is part of the Emulex RoCE Device Driver for
+<शैली गुरु>
+/* This file is part of the Emulex RoCE Device Driver क्रम
  * RoCE (RDMA over Converged Ethernet) adapters.
  * Copyright (C) 2012-2015 Emulex. All rights reserved.
  * EMULEX and SLI are trademarks of Emulex.
@@ -6,25 +7,25 @@
  *
  * This software is available to you under a choice of one of two licenses.
  * You may choose to be licensed under the terms of the GNU General Public
- * License (GPL) Version 2, available from the file COPYING in the main
+ * License (GPL) Version 2, available from the file COPYING in the मुख्य
  * directory of this source tree, or the BSD license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * - Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  *
- * - Redistributions in binary form must reproduce the above copyright
+ * - Redistributions in binary क्रमm must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
- *   the documentation and/or other materials provided with the distribution.
+ *   the करोcumentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,7 +33,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * linux-drivers@emulex.com
  *
  * Emulex
@@ -40,33 +41,33 @@
  * Costa Mesa, CA 92626
  */
 
-#include <linux/module.h>
-#include <linux/idr.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_user_verbs.h>
-#include <rdma/ib_addr.h>
-#include <rdma/ib_mad.h>
+#समावेश <linux/module.h>
+#समावेश <linux/idr.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_user_verbs.h>
+#समावेश <rdma/ib_addr.h>
+#समावेश <rdma/ib_mad.h>
 
-#include <linux/netdevice.h>
-#include <net/addrconf.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/addrconf.h>
 
-#include "ocrdma.h"
-#include "ocrdma_verbs.h"
-#include "ocrdma_ah.h"
-#include "be_roce.h"
-#include "ocrdma_hw.h"
-#include "ocrdma_stats.h"
-#include <rdma/ocrdma-abi.h>
+#समावेश "ocrdma.h"
+#समावेश "ocrdma_verbs.h"
+#समावेश "ocrdma_ah.h"
+#समावेश "be_roce.h"
+#समावेश "ocrdma_hw.h"
+#समावेश "ocrdma_stats.h"
+#समावेश <rdma/ocrdma-abi.h>
 
 MODULE_DESCRIPTION(OCRDMA_ROCE_DRV_DESC " " OCRDMA_ROCE_DRV_VERSION);
 MODULE_AUTHOR("Emulex Corporation");
 MODULE_LICENSE("Dual BSD/GPL");
 
-void ocrdma_get_guid(struct ocrdma_dev *dev, u8 *guid)
-{
+व्योम ocrdma_get_guid(काष्ठा ocrdma_dev *dev, u8 *guid)
+अणु
 	u8 mac_addr[6];
 
-	memcpy(&mac_addr[0], &dev->nic_info.mac_addr[0], ETH_ALEN);
+	स_नकल(&mac_addr[0], &dev->nic_info.mac_addr[0], ETH_ALEN);
 	guid[0] = mac_addr[0] ^ 2;
 	guid[1] = mac_addr[1];
 	guid[2] = mac_addr[2];
@@ -75,75 +76,75 @@ void ocrdma_get_guid(struct ocrdma_dev *dev, u8 *guid)
 	guid[5] = mac_addr[3];
 	guid[6] = mac_addr[4];
 	guid[7] = mac_addr[5];
-}
-static enum rdma_link_layer ocrdma_link_layer(struct ib_device *device,
+पूर्ण
+अटल क्रमागत rdma_link_layer ocrdma_link_layer(काष्ठा ib_device *device,
 					      u32 port_num)
-{
-	return IB_LINK_LAYER_ETHERNET;
-}
+अणु
+	वापस IB_LINK_LAYER_ETHERNET;
+पूर्ण
 
-static int ocrdma_port_immutable(struct ib_device *ibdev, u32 port_num,
-			         struct ib_port_immutable *immutable)
-{
-	struct ib_port_attr attr;
-	struct ocrdma_dev *dev;
-	int err;
+अटल पूर्णांक ocrdma_port_immutable(काष्ठा ib_device *ibdev, u32 port_num,
+			         काष्ठा ib_port_immutable *immutable)
+अणु
+	काष्ठा ib_port_attr attr;
+	काष्ठा ocrdma_dev *dev;
+	पूर्णांक err;
 
 	dev = get_ocrdma_dev(ibdev);
 	immutable->core_cap_flags = RDMA_CORE_PORT_IBA_ROCE;
-	if (ocrdma_is_udp_encap_supported(dev))
+	अगर (ocrdma_is_udp_encap_supported(dev))
 		immutable->core_cap_flags |= RDMA_CORE_CAP_PROT_ROCE_UDP_ENCAP;
 
 	err = ib_query_port(ibdev, port_num, &attr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	immutable->pkey_tbl_len = attr.pkey_tbl_len;
 	immutable->gid_tbl_len = attr.gid_tbl_len;
 	immutable->max_mad_size = IB_MGMT_MAD_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void get_dev_fw_str(struct ib_device *device, char *str)
-{
-	struct ocrdma_dev *dev = get_ocrdma_dev(device);
+अटल व्योम get_dev_fw_str(काष्ठा ib_device *device, अक्षर *str)
+अणु
+	काष्ठा ocrdma_dev *dev = get_ocrdma_dev(device);
 
-	snprintf(str, IB_FW_VERSION_NAME_MAX, "%s", &dev->attr.fw_ver[0]);
-}
+	snम_लिखो(str, IB_FW_VERSION_NAME_MAX, "%s", &dev->attr.fw_ver[0]);
+पूर्ण
 
-/* OCRDMA sysfs interface */
-static ssize_t hw_rev_show(struct device *device,
-			   struct device_attribute *attr, char *buf)
-{
-	struct ocrdma_dev *dev =
-		rdma_device_to_drv_device(device, struct ocrdma_dev, ibdev);
+/* OCRDMA sysfs पूर्णांकerface */
+अटल sमाप_प्रकार hw_rev_show(काष्ठा device *device,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ocrdma_dev *dev =
+		rdma_device_to_drv_device(device, काष्ठा ocrdma_dev, ibdev);
 
-	return sysfs_emit(buf, "0x%x\n", dev->nic_info.pdev->vendor);
-}
-static DEVICE_ATTR_RO(hw_rev);
+	वापस sysfs_emit(buf, "0x%x\n", dev->nic_info.pdev->venकरोr);
+पूर्ण
+अटल DEVICE_ATTR_RO(hw_rev);
 
-static ssize_t hca_type_show(struct device *device,
-			     struct device_attribute *attr, char *buf)
-{
-	struct ocrdma_dev *dev =
-		rdma_device_to_drv_device(device, struct ocrdma_dev, ibdev);
+अटल sमाप_प्रकार hca_type_show(काष्ठा device *device,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ocrdma_dev *dev =
+		rdma_device_to_drv_device(device, काष्ठा ocrdma_dev, ibdev);
 
-	return sysfs_emit(buf, "%s\n", &dev->model_number[0]);
-}
-static DEVICE_ATTR_RO(hca_type);
+	वापस sysfs_emit(buf, "%s\n", &dev->model_number[0]);
+पूर्ण
+अटल DEVICE_ATTR_RO(hca_type);
 
-static struct attribute *ocrdma_attributes[] = {
+अटल काष्ठा attribute *ocrdma_attributes[] = अणु
 	&dev_attr_hw_rev.attr,
 	&dev_attr_hca_type.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group ocrdma_attr_group = {
+अटल स्थिर काष्ठा attribute_group ocrdma_attr_group = अणु
 	.attrs = ocrdma_attributes,
-};
+पूर्ण;
 
-static const struct ib_device_ops ocrdma_dev_ops = {
+अटल स्थिर काष्ठा ib_device_ops ocrdma_dev_ops = अणु
 	.owner = THIS_MODULE,
 	.driver_id = RDMA_DRIVER_OCRDMA,
 	.uverbs_abi_ver = OCRDMA_ABI_VERSION,
@@ -167,7 +168,7 @@ static const struct ib_device_ops ocrdma_dev_ops = {
 	.get_port_immutable = ocrdma_port_immutable,
 	.map_mr_sg = ocrdma_map_mr_sg,
 	.mmap = ocrdma_mmap,
-	.modify_qp = ocrdma_modify_qp,
+	.modअगरy_qp = ocrdma_modअगरy_qp,
 	.poll_cq = ocrdma_poll_cq,
 	.post_recv = ocrdma_post_recv,
 	.post_send = ocrdma_post_send,
@@ -178,33 +179,33 @@ static const struct ib_device_ops ocrdma_dev_ops = {
 	.query_port = ocrdma_query_port,
 	.query_qp = ocrdma_query_qp,
 	.reg_user_mr = ocrdma_reg_user_mr,
-	.req_notify_cq = ocrdma_arm_cq,
+	.req_notअगरy_cq = ocrdma_arm_cq,
 	.resize_cq = ocrdma_resize_cq,
 
 	INIT_RDMA_OBJ_SIZE(ib_ah, ocrdma_ah, ibah),
 	INIT_RDMA_OBJ_SIZE(ib_cq, ocrdma_cq, ibcq),
 	INIT_RDMA_OBJ_SIZE(ib_pd, ocrdma_pd, ibpd),
 	INIT_RDMA_OBJ_SIZE(ib_ucontext, ocrdma_ucontext, ibucontext),
-};
+पूर्ण;
 
-static const struct ib_device_ops ocrdma_dev_srq_ops = {
+अटल स्थिर काष्ठा ib_device_ops ocrdma_dev_srq_ops = अणु
 	.create_srq = ocrdma_create_srq,
 	.destroy_srq = ocrdma_destroy_srq,
-	.modify_srq = ocrdma_modify_srq,
+	.modअगरy_srq = ocrdma_modअगरy_srq,
 	.post_srq_recv = ocrdma_post_srq_recv,
 	.query_srq = ocrdma_query_srq,
 
 	INIT_RDMA_OBJ_SIZE(ib_srq, ocrdma_srq, ibsrq),
-};
+पूर्ण;
 
-static int ocrdma_register_device(struct ocrdma_dev *dev)
-{
-	int ret;
+अटल पूर्णांक ocrdma_रेजिस्टर_device(काष्ठा ocrdma_dev *dev)
+अणु
+	पूर्णांक ret;
 
 	ocrdma_get_guid(dev, (u8 *)&dev->ibdev.node_guid);
-	BUILD_BUG_ON(sizeof(OCRDMA_NODE_DESC) > IB_DEVICE_NODE_DESC_MAX);
-	memcpy(dev->ibdev.node_desc, OCRDMA_NODE_DESC,
-	       sizeof(OCRDMA_NODE_DESC));
+	BUILD_BUG_ON(माप(OCRDMA_NODE_DESC) > IB_DEVICE_NODE_DESC_MAX);
+	स_नकल(dev->ibdev.node_desc, OCRDMA_NODE_DESC,
+	       माप(OCRDMA_NODE_DESC));
 
 	dev->ibdev.node_type = RDMA_NODE_IB_CA;
 	dev->ibdev.phys_port_cnt = 1;
@@ -215,103 +216,103 @@ static int ocrdma_register_device(struct ocrdma_dev *dev)
 
 	ib_set_device_ops(&dev->ibdev, &ocrdma_dev_ops);
 
-	if (ocrdma_get_asic_type(dev) == OCRDMA_ASIC_GEN_SKH_R)
+	अगर (ocrdma_get_asic_type(dev) == OCRDMA_ASIC_GEN_SKH_R)
 		ib_set_device_ops(&dev->ibdev, &ocrdma_dev_srq_ops);
 
 	rdma_set_device_sysfs_group(&dev->ibdev, &ocrdma_attr_group);
 	ret = ib_device_set_netdev(&dev->ibdev, dev->nic_info.netdev, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dma_set_max_seg_size(&dev->nic_info.pdev->dev, UINT_MAX);
-	return ib_register_device(&dev->ibdev, "ocrdma%d",
+	dma_set_max_seg_size(&dev->nic_info.pdev->dev, अच_पूर्णांक_उच्च);
+	वापस ib_रेजिस्टर_device(&dev->ibdev, "ocrdma%d",
 				  &dev->nic_info.pdev->dev);
-}
+पूर्ण
 
-static int ocrdma_alloc_resources(struct ocrdma_dev *dev)
-{
+अटल पूर्णांक ocrdma_alloc_resources(काष्ठा ocrdma_dev *dev)
+अणु
 	mutex_init(&dev->dev_lock);
-	dev->cq_tbl = kcalloc(OCRDMA_MAX_CQ, sizeof(struct ocrdma_cq *),
+	dev->cq_tbl = kसुस्मृति(OCRDMA_MAX_CQ, माप(काष्ठा ocrdma_cq *),
 			      GFP_KERNEL);
-	if (!dev->cq_tbl)
-		goto alloc_err;
+	अगर (!dev->cq_tbl)
+		जाओ alloc_err;
 
-	if (dev->attr.max_qp) {
-		dev->qp_tbl = kcalloc(OCRDMA_MAX_QP,
-				      sizeof(struct ocrdma_qp *),
+	अगर (dev->attr.max_qp) अणु
+		dev->qp_tbl = kसुस्मृति(OCRDMA_MAX_QP,
+				      माप(काष्ठा ocrdma_qp *),
 				      GFP_KERNEL);
-		if (!dev->qp_tbl)
-			goto alloc_err;
-	}
+		अगर (!dev->qp_tbl)
+			जाओ alloc_err;
+	पूर्ण
 
-	dev->stag_arr = kcalloc(OCRDMA_MAX_STAG, sizeof(u64), GFP_KERNEL);
-	if (dev->stag_arr == NULL)
-		goto alloc_err;
+	dev->stag_arr = kसुस्मृति(OCRDMA_MAX_STAG, माप(u64), GFP_KERNEL);
+	अगर (dev->stag_arr == शून्य)
+		जाओ alloc_err;
 
 	ocrdma_alloc_pd_pool(dev);
 
-	if (!ocrdma_alloc_stats_resources(dev)) {
+	अगर (!ocrdma_alloc_stats_resources(dev)) अणु
 		pr_err("%s: stats resource allocation failed\n", __func__);
-		goto alloc_err;
-	}
+		जाओ alloc_err;
+	पूर्ण
 
 	spin_lock_init(&dev->av_tbl.lock);
 	spin_lock_init(&dev->flush_q_lock);
-	return 0;
+	वापस 0;
 alloc_err:
 	pr_err("%s(%d) error.\n", __func__, dev->id);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void ocrdma_free_resources(struct ocrdma_dev *dev)
-{
+अटल व्योम ocrdma_मुक्त_resources(काष्ठा ocrdma_dev *dev)
+अणु
 	ocrdma_release_stats_resources(dev);
-	kfree(dev->stag_arr);
-	kfree(dev->qp_tbl);
-	kfree(dev->cq_tbl);
-}
+	kमुक्त(dev->stag_arr);
+	kमुक्त(dev->qp_tbl);
+	kमुक्त(dev->cq_tbl);
+पूर्ण
 
-static struct ocrdma_dev *ocrdma_add(struct be_dev_info *dev_info)
-{
-	int status = 0;
+अटल काष्ठा ocrdma_dev *ocrdma_add(काष्ठा be_dev_info *dev_info)
+अणु
+	पूर्णांक status = 0;
 	u8 lstate = 0;
-	struct ocrdma_dev *dev;
+	काष्ठा ocrdma_dev *dev;
 
 	dev = ib_alloc_device(ocrdma_dev, ibdev);
-	if (!dev) {
+	अगर (!dev) अणु
 		pr_err("Unable to allocate ib device\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	dev->mbx_cmd = kzalloc(sizeof(struct ocrdma_mqe_emb_cmd), GFP_KERNEL);
-	if (!dev->mbx_cmd)
-		goto init_err;
+	dev->mbx_cmd = kzalloc(माप(काष्ठा ocrdma_mqe_emb_cmd), GFP_KERNEL);
+	अगर (!dev->mbx_cmd)
+		जाओ init_err;
 
-	memcpy(&dev->nic_info, dev_info, sizeof(*dev_info));
+	स_नकल(&dev->nic_info, dev_info, माप(*dev_info));
 	dev->id = PCI_FUNC(dev->nic_info.pdev->devfn);
 	status = ocrdma_init_hw(dev);
-	if (status)
-		goto init_err;
+	अगर (status)
+		जाओ init_err;
 
 	status = ocrdma_alloc_resources(dev);
-	if (status)
-		goto alloc_err;
+	अगर (status)
+		जाओ alloc_err;
 
 	ocrdma_init_service_level(dev);
-	status = ocrdma_register_device(dev);
-	if (status)
-		goto alloc_err;
+	status = ocrdma_रेजिस्टर_device(dev);
+	अगर (status)
+		जाओ alloc_err;
 
 	/* Query Link state and update */
-	status = ocrdma_mbx_get_link_speed(dev, NULL, &lstate);
-	if (!status)
+	status = ocrdma_mbx_get_link_speed(dev, शून्य, &lstate);
+	अगर (!status)
 		ocrdma_update_link_state(dev, lstate);
 
 	/* Init stats */
 	ocrdma_add_port_stats(dev);
 	/* Interrupt Moderation */
 	INIT_DELAYED_WORK(&dev->eqd_work, ocrdma_eqd_set_task);
-	schedule_delayed_work(&dev->eqd_work, msecs_to_jiffies(1000));
+	schedule_delayed_work(&dev->eqd_work, msecs_to_jअगरfies(1000));
 
 	pr_info("%s %s: %s \"%s\" port %d\n",
 		dev_name(&dev->nic_info.pdev->dev), hca_name(dev),
@@ -319,126 +320,126 @@ static struct ocrdma_dev *ocrdma_add(struct be_dev_info *dev_info)
 		dev->hba_port_num);
 	pr_info("%s ocrdma%d driver loaded successfully\n",
 		dev_name(&dev->nic_info.pdev->dev), dev->id);
-	return dev;
+	वापस dev;
 
 alloc_err:
-	ocrdma_free_resources(dev);
+	ocrdma_मुक्त_resources(dev);
 	ocrdma_cleanup_hw(dev);
 init_err:
-	kfree(dev->mbx_cmd);
+	kमुक्त(dev->mbx_cmd);
 	ib_dealloc_device(&dev->ibdev);
 	pr_err("%s() leaving. ret=%d\n", __func__, status);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void ocrdma_remove_free(struct ocrdma_dev *dev)
-{
+अटल व्योम ocrdma_हटाओ_मुक्त(काष्ठा ocrdma_dev *dev)
+अणु
 
-	kfree(dev->mbx_cmd);
+	kमुक्त(dev->mbx_cmd);
 	ib_dealloc_device(&dev->ibdev);
-}
+पूर्ण
 
-static void ocrdma_remove(struct ocrdma_dev *dev)
-{
-	/* first unregister with stack to stop all the active traffic
-	 * of the registered clients.
+अटल व्योम ocrdma_हटाओ(काष्ठा ocrdma_dev *dev)
+अणु
+	/* first unरेजिस्टर with stack to stop all the active traffic
+	 * of the रेजिस्टरed clients.
 	 */
 	cancel_delayed_work_sync(&dev->eqd_work);
-	ib_unregister_device(&dev->ibdev);
+	ib_unरेजिस्टर_device(&dev->ibdev);
 
 	ocrdma_rem_port_stats(dev);
-	ocrdma_free_resources(dev);
+	ocrdma_मुक्त_resources(dev);
 	ocrdma_cleanup_hw(dev);
-	ocrdma_remove_free(dev);
-}
+	ocrdma_हटाओ_मुक्त(dev);
+पूर्ण
 
-static int ocrdma_dispatch_port_active(struct ocrdma_dev *dev)
-{
-	struct ib_event port_event;
+अटल पूर्णांक ocrdma_dispatch_port_active(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा ib_event port_event;
 
 	port_event.event = IB_EVENT_PORT_ACTIVE;
 	port_event.element.port_num = 1;
 	port_event.device = &dev->ibdev;
 	ib_dispatch_event(&port_event);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocrdma_dispatch_port_error(struct ocrdma_dev *dev)
-{
-	struct ib_event err_event;
+अटल पूर्णांक ocrdma_dispatch_port_error(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा ib_event err_event;
 
 	err_event.event = IB_EVENT_PORT_ERR;
 	err_event.element.port_num = 1;
 	err_event.device = &dev->ibdev;
 	ib_dispatch_event(&err_event);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ocrdma_shutdown(struct ocrdma_dev *dev)
-{
+अटल व्योम ocrdma_shutकरोwn(काष्ठा ocrdma_dev *dev)
+अणु
 	ocrdma_dispatch_port_error(dev);
-	ocrdma_remove(dev);
-}
+	ocrdma_हटाओ(dev);
+पूर्ण
 
-/* event handling via NIC driver ensures that all the NIC specific
- * initialization done before RoCE driver notifies
+/* event handling via NIC driver ensures that all the NIC specअगरic
+ * initialization करोne beक्रमe RoCE driver notअगरies
  * event to stack.
  */
-static void ocrdma_event_handler(struct ocrdma_dev *dev, u32 event)
-{
-	switch (event) {
-	case BE_DEV_SHUTDOWN:
-		ocrdma_shutdown(dev);
-		break;
-	default:
-		break;
-	}
-}
+अटल व्योम ocrdma_event_handler(काष्ठा ocrdma_dev *dev, u32 event)
+अणु
+	चयन (event) अणु
+	हाल BE_DEV_SHUTDOWN:
+		ocrdma_shutकरोwn(dev);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void ocrdma_update_link_state(struct ocrdma_dev *dev, u8 lstate)
-{
-	if (!(dev->flags & OCRDMA_FLAGS_LINK_STATUS_INIT)) {
+व्योम ocrdma_update_link_state(काष्ठा ocrdma_dev *dev, u8 lstate)
+अणु
+	अगर (!(dev->flags & OCRDMA_FLAGS_LINK_STATUS_INIT)) अणु
 		dev->flags |= OCRDMA_FLAGS_LINK_STATUS_INIT;
-		if (!lstate)
-			return;
-	}
+		अगर (!lstate)
+			वापस;
+	पूर्ण
 
-	if (!lstate)
+	अगर (!lstate)
 		ocrdma_dispatch_port_error(dev);
-	else
+	अन्यथा
 		ocrdma_dispatch_port_active(dev);
-}
+पूर्ण
 
-static struct ocrdma_driver ocrdma_drv = {
+अटल काष्ठा ocrdma_driver ocrdma_drv = अणु
 	.name			= "ocrdma_driver",
 	.add			= ocrdma_add,
-	.remove			= ocrdma_remove,
+	.हटाओ			= ocrdma_हटाओ,
 	.state_change_handler	= ocrdma_event_handler,
 	.be_abi_version		= OCRDMA_BE_ROCE_ABI_VERSION,
-};
+पूर्ण;
 
-static int __init ocrdma_init_module(void)
-{
-	int status;
+अटल पूर्णांक __init ocrdma_init_module(व्योम)
+अणु
+	पूर्णांक status;
 
 	ocrdma_init_debugfs();
 
-	status = be_roce_register_driver(&ocrdma_drv);
-	if (status)
-		goto err_be_reg;
+	status = be_roce_रेजिस्टर_driver(&ocrdma_drv);
+	अगर (status)
+		जाओ err_be_reg;
 
-	return 0;
+	वापस 0;
 
 err_be_reg:
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void __exit ocrdma_exit_module(void)
-{
-	be_roce_unregister_driver(&ocrdma_drv);
+अटल व्योम __निकास ocrdma_निकास_module(व्योम)
+अणु
+	be_roce_unरेजिस्टर_driver(&ocrdma_drv);
 	ocrdma_rem_debugfs();
-}
+पूर्ण
 
 module_init(ocrdma_init_module);
-module_exit(ocrdma_exit_module);
+module_निकास(ocrdma_निकास_module);

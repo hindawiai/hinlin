@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// smdk_spdif.c - S/PDIF audio for SMDK
+// smdk_spdअगर.c - S/PDIF audio क्रम SMDK
 //
 // Copyright (C) 2010 Samsung Electronics Co., Ltd.
 
-#include <linux/clk.h>
-#include <linux/module.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
 
-#include <sound/soc.h>
+#समावेश <sound/soc.h>
 
-#include "spdif.h"
+#समावेश "spdif.h"
 
-/* Audio clock settings are belonged to board specific part. Every
- * board can set audio source clock setting which is matched with H/W
+/* Audio घड़ी settings are beदीर्घed to board specअगरic part. Every
+ * board can set audio source घड़ी setting which is matched with H/W
  * like this function-'set_audio_clock_heirachy'.
  */
-static int set_audio_clock_heirachy(struct platform_device *pdev)
-{
-	struct clk *fout_epll, *mout_epll, *sclk_audio0, *sclk_spdif;
-	int ret = 0;
+अटल पूर्णांक set_audio_घड़ी_heirachy(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा clk *fout_epll, *mout_epll, *sclk_audio0, *sclk_spdअगर;
+	पूर्णांक ret = 0;
 
-	fout_epll = clk_get(NULL, "fout_epll");
-	if (IS_ERR(fout_epll)) {
-		printk(KERN_WARNING "%s: Cannot find fout_epll.\n",
+	fout_epll = clk_get(शून्य, "fout_epll");
+	अगर (IS_ERR(fout_epll)) अणु
+		prपूर्णांकk(KERN_WARNING "%s: Cannot find fout_epll.\n",
 				__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	mout_epll = clk_get(NULL, "mout_epll");
-	if (IS_ERR(mout_epll)) {
-		printk(KERN_WARNING "%s: Cannot find mout_epll.\n",
+	mout_epll = clk_get(शून्य, "mout_epll");
+	अगर (IS_ERR(mout_epll)) अणु
+		prपूर्णांकk(KERN_WARNING "%s: Cannot find mout_epll.\n",
 				__func__);
 		ret = -EINVAL;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
 	sclk_audio0 = clk_get(&pdev->dev, "sclk_audio");
-	if (IS_ERR(sclk_audio0)) {
-		printk(KERN_WARNING "%s: Cannot find sclk_audio.\n",
+	अगर (IS_ERR(sclk_audio0)) अणु
+		prपूर्णांकk(KERN_WARNING "%s: Cannot find sclk_audio.\n",
 				__func__);
 		ret = -EINVAL;
-		goto out2;
-	}
+		जाओ out2;
+	पूर्ण
 
-	sclk_spdif = clk_get(NULL, "sclk_spdif");
-	if (IS_ERR(sclk_spdif)) {
-		printk(KERN_WARNING "%s: Cannot find sclk_spdif.\n",
+	sclk_spdअगर = clk_get(शून्य, "sclk_spdif");
+	अगर (IS_ERR(sclk_spdअगर)) अणु
+		prपूर्णांकk(KERN_WARNING "%s: Cannot find sclk_spdif.\n",
 				__func__);
 		ret = -EINVAL;
-		goto out3;
-	}
+		जाओ out3;
+	पूर्ण
 
-	/* Set audio clock hierarchy for S/PDIF */
+	/* Set audio घड़ी hierarchy क्रम S/PDIF */
 	clk_set_parent(mout_epll, fout_epll);
 	clk_set_parent(sclk_audio0, mout_epll);
-	clk_set_parent(sclk_spdif, sclk_audio0);
+	clk_set_parent(sclk_spdअगर, sclk_audio0);
 
-	clk_put(sclk_spdif);
+	clk_put(sclk_spdअगर);
 out3:
 	clk_put(sclk_audio0);
 out2:
@@ -64,155 +65,155 @@ out2:
 out1:
 	clk_put(fout_epll);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* We should haved to set clock directly on this part because of clock
- * scheme of Samsudng SoCs did not support to set rates from abstrct
- * clock of it's hierarchy.
+/* We should haved to set घड़ी directly on this part because of घड़ी
+ * scheme of Samsudng SoCs did not support to set rates from असलtrct
+ * घड़ी of it's hierarchy.
  */
-static int set_audio_clock_rate(unsigned long epll_rate,
-				unsigned long audio_rate)
-{
-	struct clk *fout_epll, *sclk_spdif;
+अटल पूर्णांक set_audio_घड़ी_rate(अचिन्हित दीर्घ epll_rate,
+				अचिन्हित दीर्घ audio_rate)
+अणु
+	काष्ठा clk *fout_epll, *sclk_spdअगर;
 
-	fout_epll = clk_get(NULL, "fout_epll");
-	if (IS_ERR(fout_epll)) {
-		printk(KERN_ERR "%s: failed to get fout_epll\n", __func__);
-		return -ENOENT;
-	}
+	fout_epll = clk_get(शून्य, "fout_epll");
+	अगर (IS_ERR(fout_epll)) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to get fout_epll\n", __func__);
+		वापस -ENOENT;
+	पूर्ण
 
 	clk_set_rate(fout_epll, epll_rate);
 	clk_put(fout_epll);
 
-	sclk_spdif = clk_get(NULL, "sclk_spdif");
-	if (IS_ERR(sclk_spdif)) {
-		printk(KERN_ERR "%s: failed to get sclk_spdif\n", __func__);
-		return -ENOENT;
-	}
+	sclk_spdअगर = clk_get(शून्य, "sclk_spdif");
+	अगर (IS_ERR(sclk_spdअगर)) अणु
+		prपूर्णांकk(KERN_ERR "%s: failed to get sclk_spdif\n", __func__);
+		वापस -ENOENT;
+	पूर्ण
 
-	clk_set_rate(sclk_spdif, audio_rate);
-	clk_put(sclk_spdif);
+	clk_set_rate(sclk_spdअगर, audio_rate);
+	clk_put(sclk_spdअगर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smdk_hw_params(struct snd_pcm_substream *substream,
-		struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	unsigned long pll_out, rclk_rate;
-	int ret, ratio;
+अटल पूर्णांक smdk_hw_params(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	अचिन्हित दीर्घ pll_out, rclk_rate;
+	पूर्णांक ret, ratio;
 
-	switch (params_rate(params)) {
-	case 44100:
+	चयन (params_rate(params)) अणु
+	हाल 44100:
 		pll_out = 45158400;
-		break;
-	case 32000:
-	case 48000:
-	case 96000:
+		अवरोध;
+	हाल 32000:
+	हाल 48000:
+	हाल 96000:
 		pll_out = 49152000;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Setting ratio to 512fs helps to use S/PDIF with HDMI without
-	 * modify S/PDIF ASoC machine driver.
+	 * modअगरy S/PDIF ASoC machine driver.
 	 */
 	ratio = 512;
 	rclk_rate = params_rate(params) * ratio;
 
-	/* Set audio source clock rates */
-	ret = set_audio_clock_rate(pll_out, rclk_rate);
-	if (ret < 0)
-		return ret;
+	/* Set audio source घड़ी rates */
+	ret = set_audio_घड़ी_rate(pll_out, rclk_rate);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Set S/PDIF uses internal source clock */
+	/* Set S/PDIF uses पूर्णांकernal source घड़ी */
 	ret = snd_soc_dai_set_sysclk(cpu_dai, SND_SOC_SPDIF_INT_MCLK,
 					rclk_rate, SND_SOC_CLOCK_IN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_soc_ops smdk_spdif_ops = {
+अटल स्थिर काष्ठा snd_soc_ops smdk_spdअगर_ops = अणु
 	.hw_params = smdk_hw_params,
-};
+पूर्ण;
 
-SND_SOC_DAILINK_DEFS(spdif,
+SND_SOC_DAILINK_DEFS(spdअगर,
 	DAILINK_COMP_ARRAY(COMP_CPU("samsung-spdif")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("spdif-dit", "dit-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("samsung-spdif")));
 
-static struct snd_soc_dai_link smdk_dai = {
+अटल काष्ठा snd_soc_dai_link smdk_dai = अणु
 	.name = "S/PDIF",
 	.stream_name = "S/PDIF PCM Playback",
-	.ops = &smdk_spdif_ops,
-	SND_SOC_DAILINK_REG(spdif),
-};
+	.ops = &smdk_spdअगर_ops,
+	SND_SOC_DAILINK_REG(spdअगर),
+पूर्ण;
 
-static struct snd_soc_card smdk = {
+अटल काष्ठा snd_soc_card smdk = अणु
 	.name = "SMDK-S/PDIF",
 	.owner = THIS_MODULE,
 	.dai_link = &smdk_dai,
 	.num_links = 1,
-};
+पूर्ण;
 
-static struct platform_device *smdk_snd_spdif_dit_device;
-static struct platform_device *smdk_snd_spdif_device;
+अटल काष्ठा platक्रमm_device *smdk_snd_spdअगर_dit_device;
+अटल काष्ठा platक्रमm_device *smdk_snd_spdअगर_device;
 
-static int __init smdk_init(void)
-{
-	int ret;
+अटल पूर्णांक __init smdk_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	smdk_snd_spdif_dit_device = platform_device_alloc("spdif-dit", -1);
-	if (!smdk_snd_spdif_dit_device)
-		return -ENOMEM;
+	smdk_snd_spdअगर_dit_device = platक्रमm_device_alloc("spdif-dit", -1);
+	अगर (!smdk_snd_spdअगर_dit_device)
+		वापस -ENOMEM;
 
-	ret = platform_device_add(smdk_snd_spdif_dit_device);
-	if (ret)
-		goto err1;
+	ret = platक्रमm_device_add(smdk_snd_spdअगर_dit_device);
+	अगर (ret)
+		जाओ err1;
 
-	smdk_snd_spdif_device = platform_device_alloc("soc-audio", -1);
-	if (!smdk_snd_spdif_device) {
+	smdk_snd_spdअगर_device = platक्रमm_device_alloc("soc-audio", -1);
+	अगर (!smdk_snd_spdअगर_device) अणु
 		ret = -ENOMEM;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	platform_set_drvdata(smdk_snd_spdif_device, &smdk);
+	platक्रमm_set_drvdata(smdk_snd_spdअगर_device, &smdk);
 
-	ret = platform_device_add(smdk_snd_spdif_device);
-	if (ret)
-		goto err3;
+	ret = platक्रमm_device_add(smdk_snd_spdअगर_device);
+	अगर (ret)
+		जाओ err3;
 
-	/* Set audio clock hierarchy manually */
-	ret = set_audio_clock_heirachy(smdk_snd_spdif_device);
-	if (ret)
-		goto err4;
+	/* Set audio घड़ी hierarchy manually */
+	ret = set_audio_घड़ी_heirachy(smdk_snd_spdअगर_device);
+	अगर (ret)
+		जाओ err4;
 
-	return 0;
+	वापस 0;
 err4:
-	platform_device_del(smdk_snd_spdif_device);
+	platक्रमm_device_del(smdk_snd_spdअगर_device);
 err3:
-	platform_device_put(smdk_snd_spdif_device);
+	platक्रमm_device_put(smdk_snd_spdअगर_device);
 err2:
-	platform_device_del(smdk_snd_spdif_dit_device);
+	platक्रमm_device_del(smdk_snd_spdअगर_dit_device);
 err1:
-	platform_device_put(smdk_snd_spdif_dit_device);
-	return ret;
-}
+	platक्रमm_device_put(smdk_snd_spdअगर_dit_device);
+	वापस ret;
+पूर्ण
 
-static void __exit smdk_exit(void)
-{
-	platform_device_unregister(smdk_snd_spdif_device);
-	platform_device_unregister(smdk_snd_spdif_dit_device);
-}
+अटल व्योम __निकास smdk_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(smdk_snd_spdअगर_device);
+	platक्रमm_device_unरेजिस्टर(smdk_snd_spdअगर_dit_device);
+पूर्ण
 
 module_init(smdk_init);
-module_exit(smdk_exit);
+module_निकास(smdk_निकास);
 
 MODULE_AUTHOR("Seungwhan Youn, <sw.youn@samsung.com>");
 MODULE_DESCRIPTION("ALSA SoC SMDK+S/PDIF");

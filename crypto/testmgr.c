@@ -1,1533 +1,1534 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Algorithm testing framework and tests.
  *
- * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
  * Copyright (c) 2002 Jean-Francois Dive <jef@linuxbe.org>
  * Copyright (c) 2007 Nokia Siemens Networks
- * Copyright (c) 2008 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2008 Herbert Xu <herbert@gonकरोr.apana.org.au>
  * Copyright (c) 2019 Google LLC
  *
  * Updated RFC4106 AES-GCM testing.
- *    Authors: Aidan O'Mahony (aidan.o.mahony@intel.com)
- *             Adrian Hoban <adrian.hoban@intel.com>
- *             Gabriele Paoloni <gabriele.paoloni@intel.com>
- *             Tadeusz Struk (tadeusz.struk@intel.com)
+ *    Authors: Aidan O'Mahony (aidan.o.mahony@पूर्णांकel.com)
+ *             Adrian Hoban <adrian.hoban@पूर्णांकel.com>
+ *             Gabriele Paoloni <gabriele.paoloni@पूर्णांकel.com>
+ *             Tadeusz Struk (tadeusz.struk@पूर्णांकel.com)
  *    Copyright (c) 2010, Intel Corporation.
  */
 
-#include <crypto/aead.h>
-#include <crypto/hash.h>
-#include <crypto/skcipher.h>
-#include <linux/err.h>
-#include <linux/fips.h>
-#include <linux/module.h>
-#include <linux/once.h>
-#include <linux/random.h>
-#include <linux/scatterlist.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/uio.h>
-#include <crypto/rng.h>
-#include <crypto/drbg.h>
-#include <crypto/akcipher.h>
-#include <crypto/kpp.h>
-#include <crypto/acompress.h>
-#include <crypto/internal/cipher.h>
-#include <crypto/internal/simd.h>
+#समावेश <crypto/aead.h>
+#समावेश <crypto/hash.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fips.h>
+#समावेश <linux/module.h>
+#समावेश <linux/once.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uपन.स>
+#समावेश <crypto/rng.h>
+#समावेश <crypto/drbg.h>
+#समावेश <crypto/akcipher.h>
+#समावेश <crypto/kpp.h>
+#समावेश <crypto/acompress.h>
+#समावेश <crypto/पूर्णांकernal/cipher.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 MODULE_IMPORT_NS(CRYPTO_INTERNAL);
 
-static bool notests;
+अटल bool notests;
 module_param(notests, bool, 0644);
 MODULE_PARM_DESC(notests, "disable crypto self-tests");
 
-static bool panic_on_fail;
+अटल bool panic_on_fail;
 module_param(panic_on_fail, bool, 0444);
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
-static bool noextratests;
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+अटल bool noextratests;
 module_param(noextratests, bool, 0644);
 MODULE_PARM_DESC(noextratests, "disable expensive crypto self-tests");
 
-static unsigned int fuzz_iterations = 100;
-module_param(fuzz_iterations, uint, 0644);
+अटल अचिन्हित पूर्णांक fuzz_iterations = 100;
+module_param(fuzz_iterations, uपूर्णांक, 0644);
 MODULE_PARM_DESC(fuzz_iterations, "number of fuzz test iterations");
 
-DEFINE_PER_CPU(bool, crypto_simd_disabled_for_test);
-EXPORT_PER_CPU_SYMBOL_GPL(crypto_simd_disabled_for_test);
-#endif
+DEFINE_PER_CPU(bool, crypto_simd_disabled_क्रम_test);
+EXPORT_PER_CPU_SYMBOL_GPL(crypto_simd_disabled_क्रम_test);
+#पूर्ण_अगर
 
-#ifdef CONFIG_CRYPTO_MANAGER_DISABLE_TESTS
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_DISABLE_TESTS
 
 /* a perfect nop */
-int alg_test(const char *driver, const char *alg, u32 type, u32 mask)
-{
-	return 0;
-}
+पूर्णांक alg_test(स्थिर अक्षर *driver, स्थिर अक्षर *alg, u32 type, u32 mask)
+अणु
+	वापस 0;
+पूर्ण
 
-#else
+#अन्यथा
 
-#include "testmgr.h"
+#समावेश "testmgr.h"
 
 /*
- * Need slab memory for testing (size in number of pages).
+ * Need slab memory क्रम testing (size in number of pages).
  */
-#define XBUFSIZE	8
+#घोषणा Xबफ_मानE	8
 
 /*
 * Used by test_cipher()
 */
-#define ENCRYPT 1
-#define DECRYPT 0
+#घोषणा ENCRYPT 1
+#घोषणा DECRYPT 0
 
-struct aead_test_suite {
-	const struct aead_testvec *vecs;
-	unsigned int count;
+काष्ठा aead_test_suite अणु
+	स्थिर काष्ठा aead_testvec *vecs;
+	अचिन्हित पूर्णांक count;
 
 	/*
-	 * Set if trying to decrypt an inauthentic ciphertext with this
+	 * Set अगर trying to decrypt an inauthentic ciphertext with this
 	 * algorithm might result in EINVAL rather than EBADMSG, due to other
-	 * validation the algorithm does on the inputs such as length checks.
+	 * validation the algorithm करोes on the inमाला_दो such as length checks.
 	 */
-	unsigned int einval_allowed : 1;
+	अचिन्हित पूर्णांक einval_allowed : 1;
 
 	/*
-	 * Set if this algorithm requires that the IV be located at the end of
+	 * Set अगर this algorithm requires that the IV be located at the end of
 	 * the AAD buffer, in addition to being given in the normal way.  The
-	 * behavior when the two IV copies differ is implementation-defined.
+	 * behavior when the two IV copies dअगरfer is implementation-defined.
 	 */
-	unsigned int aad_iv : 1;
-};
+	अचिन्हित पूर्णांक aad_iv : 1;
+पूर्ण;
 
-struct cipher_test_suite {
-	const struct cipher_testvec *vecs;
-	unsigned int count;
-};
+काष्ठा cipher_test_suite अणु
+	स्थिर काष्ठा cipher_testvec *vecs;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct comp_test_suite {
-	struct {
-		const struct comp_testvec *vecs;
-		unsigned int count;
-	} comp, decomp;
-};
+काष्ठा comp_test_suite अणु
+	काष्ठा अणु
+		स्थिर काष्ठा comp_testvec *vecs;
+		अचिन्हित पूर्णांक count;
+	पूर्ण comp, decomp;
+पूर्ण;
 
-struct hash_test_suite {
-	const struct hash_testvec *vecs;
-	unsigned int count;
-};
+काष्ठा hash_test_suite अणु
+	स्थिर काष्ठा hash_testvec *vecs;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct cprng_test_suite {
-	const struct cprng_testvec *vecs;
-	unsigned int count;
-};
+काष्ठा cprng_test_suite अणु
+	स्थिर काष्ठा cprng_testvec *vecs;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct drbg_test_suite {
-	const struct drbg_testvec *vecs;
-	unsigned int count;
-};
+काष्ठा drbg_test_suite अणु
+	स्थिर काष्ठा drbg_testvec *vecs;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct akcipher_test_suite {
-	const struct akcipher_testvec *vecs;
-	unsigned int count;
-};
+काष्ठा akcipher_test_suite अणु
+	स्थिर काष्ठा akcipher_testvec *vecs;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct kpp_test_suite {
-	const struct kpp_testvec *vecs;
-	unsigned int count;
-};
+काष्ठा kpp_test_suite अणु
+	स्थिर काष्ठा kpp_testvec *vecs;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct alg_test_desc {
-	const char *alg;
-	const char *generic_driver;
-	int (*test)(const struct alg_test_desc *desc, const char *driver,
+काष्ठा alg_test_desc अणु
+	स्थिर अक्षर *alg;
+	स्थिर अक्षर *generic_driver;
+	पूर्णांक (*test)(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 		    u32 type, u32 mask);
-	int fips_allowed;	/* set if alg is allowed in fips mode */
+	पूर्णांक fips_allowed;	/* set अगर alg is allowed in fips mode */
 
-	union {
-		struct aead_test_suite aead;
-		struct cipher_test_suite cipher;
-		struct comp_test_suite comp;
-		struct hash_test_suite hash;
-		struct cprng_test_suite cprng;
-		struct drbg_test_suite drbg;
-		struct akcipher_test_suite akcipher;
-		struct kpp_test_suite kpp;
-	} suite;
-};
+	जोड़ अणु
+		काष्ठा aead_test_suite aead;
+		काष्ठा cipher_test_suite cipher;
+		काष्ठा comp_test_suite comp;
+		काष्ठा hash_test_suite hash;
+		काष्ठा cprng_test_suite cprng;
+		काष्ठा drbg_test_suite drbg;
+		काष्ठा akcipher_test_suite akcipher;
+		काष्ठा kpp_test_suite kpp;
+	पूर्ण suite;
+पूर्ण;
 
-static void hexdump(unsigned char *buf, unsigned int len)
-{
-	print_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET,
+अटल व्योम hexdump(अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक len)
+अणु
+	prपूर्णांक_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET,
 			16, 1,
 			buf, len, false);
-}
+पूर्ण
 
-static int __testmgr_alloc_buf(char *buf[XBUFSIZE], int order)
-{
-	int i;
+अटल पूर्णांक __tesपंचांगgr_alloc_buf(अक्षर *buf[Xबफ_मानE], पूर्णांक order)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < XBUFSIZE; i++) {
-		buf[i] = (char *)__get_free_pages(GFP_KERNEL, order);
-		if (!buf[i])
-			goto err_free_buf;
-	}
+	क्रम (i = 0; i < Xबफ_मानE; i++) अणु
+		buf[i] = (अक्षर *)__get_मुक्त_pages(GFP_KERNEL, order);
+		अगर (!buf[i])
+			जाओ err_मुक्त_buf;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_free_buf:
-	while (i-- > 0)
-		free_pages((unsigned long)buf[i], order);
+err_मुक्त_buf:
+	जबतक (i-- > 0)
+		मुक्त_pages((अचिन्हित दीर्घ)buf[i], order);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int testmgr_alloc_buf(char *buf[XBUFSIZE])
-{
-	return __testmgr_alloc_buf(buf, 0);
-}
+अटल पूर्णांक tesपंचांगgr_alloc_buf(अक्षर *buf[Xबफ_मानE])
+अणु
+	वापस __tesपंचांगgr_alloc_buf(buf, 0);
+पूर्ण
 
-static void __testmgr_free_buf(char *buf[XBUFSIZE], int order)
-{
-	int i;
+अटल व्योम __tesपंचांगgr_मुक्त_buf(अक्षर *buf[Xबफ_मानE], पूर्णांक order)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < XBUFSIZE; i++)
-		free_pages((unsigned long)buf[i], order);
-}
+	क्रम (i = 0; i < Xबफ_मानE; i++)
+		मुक्त_pages((अचिन्हित दीर्घ)buf[i], order);
+पूर्ण
 
-static void testmgr_free_buf(char *buf[XBUFSIZE])
-{
-	__testmgr_free_buf(buf, 0);
-}
+अटल व्योम tesपंचांगgr_मुक्त_buf(अक्षर *buf[Xबफ_मानE])
+अणु
+	__tesपंचांगgr_मुक्त_buf(buf, 0);
+पूर्ण
 
-#define TESTMGR_POISON_BYTE	0xfe
-#define TESTMGR_POISON_LEN	16
+#घोषणा TESTMGR_POISON_BYTE	0xfe
+#घोषणा TESTMGR_POISON_LEN	16
 
-static inline void testmgr_poison(void *addr, size_t len)
-{
-	memset(addr, TESTMGR_POISON_BYTE, len);
-}
+अटल अंतरभूत व्योम tesपंचांगgr_poison(व्योम *addr, माप_प्रकार len)
+अणु
+	स_रखो(addr, TESTMGR_POISON_BYTE, len);
+पूर्ण
 
 /* Is the memory region still fully poisoned? */
-static inline bool testmgr_is_poison(const void *addr, size_t len)
-{
-	return memchr_inv(addr, TESTMGR_POISON_BYTE, len) == NULL;
-}
+अटल अंतरभूत bool tesपंचांगgr_is_poison(स्थिर व्योम *addr, माप_प्रकार len)
+अणु
+	वापस स_प्रथम_inv(addr, TESTMGR_POISON_BYTE, len) == शून्य;
+पूर्ण
 
-/* flush type for hash algorithms */
-enum flush_type {
+/* flush type क्रम hash algorithms */
+क्रमागत flush_type अणु
 	/* merge with update of previous buffer(s) */
 	FLUSH_TYPE_NONE = 0,
 
-	/* update with previous buffer(s) before doing this one */
+	/* update with previous buffer(s) beक्रमe करोing this one */
 	FLUSH_TYPE_FLUSH,
 
-	/* likewise, but also export and re-import the intermediate state */
+	/* likewise, but also export and re-import the पूर्णांकermediate state */
 	FLUSH_TYPE_REIMPORT,
-};
+पूर्ण;
 
-/* finalization function for hash algorithms */
-enum finalization_type {
+/* finalization function क्रम hash algorithms */
+क्रमागत finalization_type अणु
 	FINALIZATION_TYPE_FINAL,	/* use final() */
 	FINALIZATION_TYPE_FINUP,	/* use finup() */
 	FINALIZATION_TYPE_DIGEST,	/* use digest() */
-};
+पूर्ण;
 
-#define TEST_SG_TOTAL	10000
+#घोषणा TEST_SG_TOTAL	10000
 
 /**
- * struct test_sg_division - description of a scatterlist entry
+ * काष्ठा test_sg_भागision - description of a scatterlist entry
  *
- * This struct describes one entry of a scatterlist being constructed to check a
+ * This काष्ठा describes one entry of a scatterlist being स्थिरructed to check a
  * crypto test vector.
  *
  * @proportion_of_total: length of this chunk relative to the total length,
  *			 given as a proportion out of TEST_SG_TOTAL so that it
  *			 scales to fit any test vector
- * @offset: byte offset into a 2-page buffer at which this chunk will start
- * @offset_relative_to_alignmask: if true, add the algorithm's alignmask to the
+ * @offset: byte offset पूर्णांकo a 2-page buffer at which this chunk will start
+ * @offset_relative_to_alignmask: अगर true, add the algorithm's alignmask to the
  *				  @offset
- * @flush_type: for hashes, whether an update() should be done now vs.
+ * @flush_type: क्रम hashes, whether an update() should be करोne now vs.
  *		continuing to accumulate data
- * @nosimd: if doing the pending update(), do it with SIMD disabled?
+ * @nosimd: अगर करोing the pending update(), करो it with SIMD disabled?
  */
-struct test_sg_division {
-	unsigned int proportion_of_total;
-	unsigned int offset;
+काष्ठा test_sg_भागision अणु
+	अचिन्हित पूर्णांक proportion_of_total;
+	अचिन्हित पूर्णांक offset;
 	bool offset_relative_to_alignmask;
-	enum flush_type flush_type;
+	क्रमागत flush_type flush_type;
 	bool nosimd;
-};
+पूर्ण;
 
 /**
- * struct testvec_config - configuration for testing a crypto test vector
+ * काष्ठा testvec_config - configuration क्रम testing a crypto test vector
  *
- * This struct describes the data layout and other parameters with which each
+ * This काष्ठा describes the data layout and other parameters with which each
  * crypto test vector can be tested.
  *
- * @name: name of this config, logged for debugging purposes if a test fails
- * @inplace: operate on the data in-place, if applicable for the algorithm type?
+ * @name: name of this config, logged क्रम debugging purposes अगर a test fails
+ * @inplace: operate on the data in-place, अगर applicable क्रम the algorithm type?
  * @req_flags: extra request_flags, e.g. CRYPTO_TFM_REQ_MAY_SLEEP
- * @src_divs: description of how to arrange the source scatterlist
- * @dst_divs: description of how to arrange the dst scatterlist, if applicable
- *	      for the algorithm type.  Defaults to @src_divs if unset.
+ * @src_भागs: description of how to arrange the source scatterlist
+ * @dst_भागs: description of how to arrange the dst scatterlist, अगर applicable
+ *	      क्रम the algorithm type.  Defaults to @src_भागs अगर unset.
  * @iv_offset: misalignment of the IV in the range [0..MAX_ALGAPI_ALIGNMASK+1],
  *	       where 0 is aligned to a 2*(MAX_ALGAPI_ALIGNMASK+1) byte boundary
- * @iv_offset_relative_to_alignmask: if true, add the algorithm's alignmask to
+ * @iv_offset_relative_to_alignmask: अगर true, add the algorithm's alignmask to
  *				     the @iv_offset
- * @key_offset: misalignment of the key, where 0 is default alignment
- * @key_offset_relative_to_alignmask: if true, add the algorithm's alignmask to
+ * @key_offset: misalignment of the key, where 0 is शेष alignment
+ * @key_offset_relative_to_alignmask: अगर true, add the algorithm's alignmask to
  *				      the @key_offset
- * @finalization_type: what finalization function to use for hashes
+ * @finalization_type: what finalization function to use क्रम hashes
  * @nosimd: execute with SIMD disabled?  Requires !CRYPTO_TFM_REQ_MAY_SLEEP.
  */
-struct testvec_config {
-	const char *name;
+काष्ठा testvec_config अणु
+	स्थिर अक्षर *name;
 	bool inplace;
 	u32 req_flags;
-	struct test_sg_division src_divs[XBUFSIZE];
-	struct test_sg_division dst_divs[XBUFSIZE];
-	unsigned int iv_offset;
-	unsigned int key_offset;
+	काष्ठा test_sg_भागision src_भागs[Xबफ_मानE];
+	काष्ठा test_sg_भागision dst_भागs[Xबफ_मानE];
+	अचिन्हित पूर्णांक iv_offset;
+	अचिन्हित पूर्णांक key_offset;
 	bool iv_offset_relative_to_alignmask;
 	bool key_offset_relative_to_alignmask;
-	enum finalization_type finalization_type;
+	क्रमागत finalization_type finalization_type;
 	bool nosimd;
-};
+पूर्ण;
 
-#define TESTVEC_CONFIG_NAMELEN	192
+#घोषणा TESTVEC_CONFIG_NAMELEN	192
 
 /*
- * The following are the lists of testvec_configs to test for each algorithm
+ * The following are the lists of testvec_configs to test क्रम each algorithm
  * type when the basic crypto self-tests are enabled, i.e. when
  * CONFIG_CRYPTO_MANAGER_DISABLE_TESTS is unset.  They aim to provide good test
- * coverage, while keeping the test time much shorter than the full fuzz tests
+ * coverage, जबतक keeping the test समय much लघुer than the full fuzz tests
  * so that the basic tests can be enabled in a wider range of circumstances.
  */
 
-/* Configs for skciphers and aeads */
-static const struct testvec_config default_cipher_testvec_configs[] = {
-	{
+/* Configs क्रम skciphers and aeads */
+अटल स्थिर काष्ठा testvec_config शेष_cipher_testvec_configs[] = अणु
+	अणु
 		.name = "in-place",
 		.inplace = true,
-		.src_divs = { { .proportion_of_total = 10000 } },
-	}, {
+		.src_भागs = अणु अणु .proportion_of_total = 10000 पूर्ण पूर्ण,
+	पूर्ण, अणु
 		.name = "out-of-place",
-		.src_divs = { { .proportion_of_total = 10000 } },
-	}, {
+		.src_भागs = अणु अणु .proportion_of_total = 10000 पूर्ण पूर्ण,
+	पूर्ण, अणु
 		.name = "unaligned buffer, offset=1",
-		.src_divs = { { .proportion_of_total = 10000, .offset = 1 } },
+		.src_भागs = अणु अणु .proportion_of_total = 10000, .offset = 1 पूर्ण पूर्ण,
 		.iv_offset = 1,
 		.key_offset = 1,
-	}, {
+	पूर्ण, अणु
 		.name = "buffer aligned only to alignmask",
-		.src_divs = {
-			{
+		.src_भागs = अणु
+			अणु
 				.proportion_of_total = 10000,
 				.offset = 1,
 				.offset_relative_to_alignmask = true,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.iv_offset = 1,
 		.iv_offset_relative_to_alignmask = true,
 		.key_offset = 1,
 		.key_offset_relative_to_alignmask = true,
-	}, {
+	पूर्ण, अणु
 		.name = "two even aligned splits",
-		.src_divs = {
-			{ .proportion_of_total = 5000 },
-			{ .proportion_of_total = 5000 },
-		},
-	}, {
+		.src_भागs = अणु
+			अणु .proportion_of_total = 5000 पूर्ण,
+			अणु .proportion_of_total = 5000 पूर्ण,
+		पूर्ण,
+	पूर्ण, अणु
 		.name = "uneven misaligned splits, may sleep",
 		.req_flags = CRYPTO_TFM_REQ_MAY_SLEEP,
-		.src_divs = {
-			{ .proportion_of_total = 1900, .offset = 33 },
-			{ .proportion_of_total = 3300, .offset = 7  },
-			{ .proportion_of_total = 4800, .offset = 18 },
-		},
+		.src_भागs = अणु
+			अणु .proportion_of_total = 1900, .offset = 33 पूर्ण,
+			अणु .proportion_of_total = 3300, .offset = 7  पूर्ण,
+			अणु .proportion_of_total = 4800, .offset = 18 पूर्ण,
+		पूर्ण,
 		.iv_offset = 3,
 		.key_offset = 3,
-	}, {
+	पूर्ण, अणु
 		.name = "misaligned splits crossing pages, inplace",
 		.inplace = true,
-		.src_divs = {
-			{
+		.src_भागs = अणु
+			अणु
 				.proportion_of_total = 7500,
 				.offset = PAGE_SIZE - 32
-			}, {
+			पूर्ण, अणु
 				.proportion_of_total = 2500,
 				.offset = PAGE_SIZE - 7
-			},
-		},
-	}
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static const struct testvec_config default_hash_testvec_configs[] = {
-	{
+अटल स्थिर काष्ठा testvec_config शेष_hash_testvec_configs[] = अणु
+	अणु
 		.name = "init+update+final aligned buffer",
-		.src_divs = { { .proportion_of_total = 10000 } },
+		.src_भागs = अणु अणु .proportion_of_total = 10000 पूर्ण पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_FINAL,
-	}, {
+	पूर्ण, अणु
 		.name = "init+finup aligned buffer",
-		.src_divs = { { .proportion_of_total = 10000 } },
+		.src_भागs = अणु अणु .proportion_of_total = 10000 पूर्ण पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_FINUP,
-	}, {
+	पूर्ण, अणु
 		.name = "digest aligned buffer",
-		.src_divs = { { .proportion_of_total = 10000 } },
+		.src_भागs = अणु अणु .proportion_of_total = 10000 पूर्ण पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_DIGEST,
-	}, {
+	पूर्ण, अणु
 		.name = "init+update+final misaligned buffer",
-		.src_divs = { { .proportion_of_total = 10000, .offset = 1 } },
+		.src_भागs = अणु अणु .proportion_of_total = 10000, .offset = 1 पूर्ण पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_FINAL,
 		.key_offset = 1,
-	}, {
+	पूर्ण, अणु
 		.name = "digest buffer aligned only to alignmask",
-		.src_divs = {
-			{
+		.src_भागs = अणु
+			अणु
 				.proportion_of_total = 10000,
 				.offset = 1,
 				.offset_relative_to_alignmask = true,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_DIGEST,
 		.key_offset = 1,
 		.key_offset_relative_to_alignmask = true,
-	}, {
+	पूर्ण, अणु
 		.name = "init+update+update+final two even splits",
-		.src_divs = {
-			{ .proportion_of_total = 5000 },
-			{
+		.src_भागs = अणु
+			अणु .proportion_of_total = 5000 पूर्ण,
+			अणु
 				.proportion_of_total = 5000,
 				.flush_type = FLUSH_TYPE_FLUSH,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_FINAL,
-	}, {
+	पूर्ण, अणु
 		.name = "digest uneven misaligned splits, may sleep",
 		.req_flags = CRYPTO_TFM_REQ_MAY_SLEEP,
-		.src_divs = {
-			{ .proportion_of_total = 1900, .offset = 33 },
-			{ .proportion_of_total = 3300, .offset = 7  },
-			{ .proportion_of_total = 4800, .offset = 18 },
-		},
+		.src_भागs = अणु
+			अणु .proportion_of_total = 1900, .offset = 33 पूर्ण,
+			अणु .proportion_of_total = 3300, .offset = 7  पूर्ण,
+			अणु .proportion_of_total = 4800, .offset = 18 पूर्ण,
+		पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_DIGEST,
-	}, {
+	पूर्ण, अणु
 		.name = "digest misaligned splits crossing pages",
-		.src_divs = {
-			{
+		.src_भागs = अणु
+			अणु
 				.proportion_of_total = 7500,
 				.offset = PAGE_SIZE - 32,
-			}, {
+			पूर्ण, अणु
 				.proportion_of_total = 2500,
 				.offset = PAGE_SIZE - 7,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_DIGEST,
-	}, {
+	पूर्ण, अणु
 		.name = "import/export",
-		.src_divs = {
-			{
+		.src_भागs = अणु
+			अणु
 				.proportion_of_total = 6500,
 				.flush_type = FLUSH_TYPE_REIMPORT,
-			}, {
+			पूर्ण, अणु
 				.proportion_of_total = 3500,
 				.flush_type = FLUSH_TYPE_REIMPORT,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.finalization_type = FINALIZATION_TYPE_FINAL,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static unsigned int count_test_sg_divisions(const struct test_sg_division *divs)
-{
-	unsigned int remaining = TEST_SG_TOTAL;
-	unsigned int ndivs = 0;
+अटल अचिन्हित पूर्णांक count_test_sg_भागisions(स्थिर काष्ठा test_sg_भागision *भागs)
+अणु
+	अचिन्हित पूर्णांक reमुख्यing = TEST_SG_TOTAL;
+	अचिन्हित पूर्णांक nभागs = 0;
 
-	do {
-		remaining -= divs[ndivs++].proportion_of_total;
-	} while (remaining);
+	करो अणु
+		reमुख्यing -= भागs[nभागs++].proportion_of_total;
+	पूर्ण जबतक (reमुख्यing);
 
-	return ndivs;
-}
+	वापस nभागs;
+पूर्ण
 
-#define SGDIVS_HAVE_FLUSHES	BIT(0)
-#define SGDIVS_HAVE_NOSIMD	BIT(1)
+#घोषणा SGDIVS_HAVE_FLUSHES	BIT(0)
+#घोषणा SGDIVS_HAVE_NOSIMD	BIT(1)
 
-static bool valid_sg_divisions(const struct test_sg_division *divs,
-			       unsigned int count, int *flags_ret)
-{
-	unsigned int total = 0;
-	unsigned int i;
+अटल bool valid_sg_भागisions(स्थिर काष्ठा test_sg_भागision *भागs,
+			       अचिन्हित पूर्णांक count, पूर्णांक *flags_ret)
+अणु
+	अचिन्हित पूर्णांक total = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count && total != TEST_SG_TOTAL; i++) {
-		if (divs[i].proportion_of_total <= 0 ||
-		    divs[i].proportion_of_total > TEST_SG_TOTAL - total)
-			return false;
-		total += divs[i].proportion_of_total;
-		if (divs[i].flush_type != FLUSH_TYPE_NONE)
+	क्रम (i = 0; i < count && total != TEST_SG_TOTAL; i++) अणु
+		अगर (भागs[i].proportion_of_total <= 0 ||
+		    भागs[i].proportion_of_total > TEST_SG_TOTAL - total)
+			वापस false;
+		total += भागs[i].proportion_of_total;
+		अगर (भागs[i].flush_type != FLUSH_TYPE_NONE)
 			*flags_ret |= SGDIVS_HAVE_FLUSHES;
-		if (divs[i].nosimd)
+		अगर (भागs[i].nosimd)
 			*flags_ret |= SGDIVS_HAVE_NOSIMD;
-	}
-	return total == TEST_SG_TOTAL &&
-		memchr_inv(&divs[i], 0, (count - i) * sizeof(divs[0])) == NULL;
-}
+	पूर्ण
+	वापस total == TEST_SG_TOTAL &&
+		स_प्रथम_inv(&भागs[i], 0, (count - i) * माप(भागs[0])) == शून्य;
+पूर्ण
 
 /*
  * Check whether the given testvec_config is valid.  This isn't strictly needed
  * since every testvec_config should be valid, but check anyway so that people
- * don't unknowingly add broken configs that don't do what they wanted.
+ * करोn't unknowingly add broken configs that don't करो what they wanted.
  */
-static bool valid_testvec_config(const struct testvec_config *cfg)
-{
-	int flags = 0;
+अटल bool valid_testvec_config(स्थिर काष्ठा testvec_config *cfg)
+अणु
+	पूर्णांक flags = 0;
 
-	if (cfg->name == NULL)
-		return false;
+	अगर (cfg->name == शून्य)
+		वापस false;
 
-	if (!valid_sg_divisions(cfg->src_divs, ARRAY_SIZE(cfg->src_divs),
+	अगर (!valid_sg_भागisions(cfg->src_भागs, ARRAY_SIZE(cfg->src_भागs),
 				&flags))
-		return false;
+		वापस false;
 
-	if (cfg->dst_divs[0].proportion_of_total) {
-		if (!valid_sg_divisions(cfg->dst_divs,
-					ARRAY_SIZE(cfg->dst_divs), &flags))
-			return false;
-	} else {
-		if (memchr_inv(cfg->dst_divs, 0, sizeof(cfg->dst_divs)))
-			return false;
-		/* defaults to dst_divs=src_divs */
-	}
+	अगर (cfg->dst_भागs[0].proportion_of_total) अणु
+		अगर (!valid_sg_भागisions(cfg->dst_भागs,
+					ARRAY_SIZE(cfg->dst_भागs), &flags))
+			वापस false;
+	पूर्ण अन्यथा अणु
+		अगर (स_प्रथम_inv(cfg->dst_भागs, 0, माप(cfg->dst_भागs)))
+			वापस false;
+		/* शेषs to dst_भागs=src_भागs */
+	पूर्ण
 
-	if (cfg->iv_offset +
+	अगर (cfg->iv_offset +
 	    (cfg->iv_offset_relative_to_alignmask ? MAX_ALGAPI_ALIGNMASK : 0) >
 	    MAX_ALGAPI_ALIGNMASK + 1)
-		return false;
+		वापस false;
 
-	if ((flags & (SGDIVS_HAVE_FLUSHES | SGDIVS_HAVE_NOSIMD)) &&
+	अगर ((flags & (SGDIVS_HAVE_FLUSHES | SGDIVS_HAVE_NOSIMD)) &&
 	    cfg->finalization_type == FINALIZATION_TYPE_DIGEST)
-		return false;
+		वापस false;
 
-	if ((cfg->nosimd || (flags & SGDIVS_HAVE_NOSIMD)) &&
+	अगर ((cfg->nosimd || (flags & SGDIVS_HAVE_NOSIMD)) &&
 	    (cfg->req_flags & CRYPTO_TFM_REQ_MAY_SLEEP))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct test_sglist {
-	char *bufs[XBUFSIZE];
-	struct scatterlist sgl[XBUFSIZE];
-	struct scatterlist sgl_saved[XBUFSIZE];
-	struct scatterlist *sgl_ptr;
-	unsigned int nents;
-};
+काष्ठा test_sglist अणु
+	अक्षर *bufs[Xबफ_मानE];
+	काष्ठा scatterlist sgl[Xबफ_मानE];
+	काष्ठा scatterlist sgl_saved[Xबफ_मानE];
+	काष्ठा scatterlist *sgl_ptr;
+	अचिन्हित पूर्णांक nents;
+पूर्ण;
 
-static int init_test_sglist(struct test_sglist *tsgl)
-{
-	return __testmgr_alloc_buf(tsgl->bufs, 1 /* two pages per buffer */);
-}
+अटल पूर्णांक init_test_sglist(काष्ठा test_sglist *tsgl)
+अणु
+	वापस __tesपंचांगgr_alloc_buf(tsgl->bufs, 1 /* two pages per buffer */);
+पूर्ण
 
-static void destroy_test_sglist(struct test_sglist *tsgl)
-{
-	return __testmgr_free_buf(tsgl->bufs, 1 /* two pages per buffer */);
-}
+अटल व्योम destroy_test_sglist(काष्ठा test_sglist *tsgl)
+अणु
+	वापस __tesपंचांगgr_मुक्त_buf(tsgl->bufs, 1 /* two pages per buffer */);
+पूर्ण
 
 /**
- * build_test_sglist() - build a scatterlist for a crypto test
+ * build_test_sglist() - build a scatterlist क्रम a crypto test
  *
  * @tsgl: the scatterlist to build.  @tsgl->bufs[] contains an array of 2-page
- *	  buffers which the scatterlist @tsgl->sgl[] will be made to point into.
- * @divs: the layout specification on which the scatterlist will be based
+ *	  buffers which the scatterlist @tsgl->sgl[] will be made to poपूर्णांक पूर्णांकo.
+ * @भागs: the layout specअगरication on which the scatterlist will be based
  * @alignmask: the algorithm's alignmask
  * @total_len: the total length of the scatterlist to build in bytes
- * @data: if non-NULL, the buffers will be filled with this data until it ends.
- *	  Otherwise the buffers will be poisoned.  In both cases, some bytes
+ * @data: अगर non-शून्य, the buffers will be filled with this data until it ends.
+ *	  Otherwise the buffers will be poisoned.  In both हालs, some bytes
  *	  past the end of each buffer will be poisoned to help detect overruns.
- * @out_divs: if non-NULL, the test_sg_division to which each scatterlist entry
- *	      corresponds will be returned here.  This will match @divs except
- *	      that divisions resolving to a length of 0 are omitted as they are
+ * @out_भागs: अगर non-शून्य, the test_sg_भागision to which each scatterlist entry
+ *	      corresponds will be वापसed here.  This will match @भागs except
+ *	      that भागisions resolving to a length of 0 are omitted as they are
  *	      not included in the scatterlist.
  *
- * Return: 0 or a -errno value
+ * Return: 0 or a -त्रुटि_सं value
  */
-static int build_test_sglist(struct test_sglist *tsgl,
-			     const struct test_sg_division *divs,
-			     const unsigned int alignmask,
-			     const unsigned int total_len,
-			     struct iov_iter *data,
-			     const struct test_sg_division *out_divs[XBUFSIZE])
-{
-	struct {
-		const struct test_sg_division *div;
-		size_t length;
-	} partitions[XBUFSIZE];
-	const unsigned int ndivs = count_test_sg_divisions(divs);
-	unsigned int len_remaining = total_len;
-	unsigned int i;
+अटल पूर्णांक build_test_sglist(काष्ठा test_sglist *tsgl,
+			     स्थिर काष्ठा test_sg_भागision *भागs,
+			     स्थिर अचिन्हित पूर्णांक alignmask,
+			     स्थिर अचिन्हित पूर्णांक total_len,
+			     काष्ठा iov_iter *data,
+			     स्थिर काष्ठा test_sg_भागision *out_भागs[Xबफ_मानE])
+अणु
+	काष्ठा अणु
+		स्थिर काष्ठा test_sg_भागision *भाग;
+		माप_प्रकार length;
+	पूर्ण partitions[Xबफ_मानE];
+	स्थिर अचिन्हित पूर्णांक nभागs = count_test_sg_भागisions(भागs);
+	अचिन्हित पूर्णांक len_reमुख्यing = total_len;
+	अचिन्हित पूर्णांक i;
 
 	BUILD_BUG_ON(ARRAY_SIZE(partitions) != ARRAY_SIZE(tsgl->sgl));
-	if (WARN_ON(ndivs > ARRAY_SIZE(partitions)))
-		return -EINVAL;
+	अगर (WARN_ON(nभागs > ARRAY_SIZE(partitions)))
+		वापस -EINVAL;
 
-	/* Calculate the (div, length) pairs */
+	/* Calculate the (भाग, length) pairs */
 	tsgl->nents = 0;
-	for (i = 0; i < ndivs; i++) {
-		unsigned int len_this_sg =
-			min(len_remaining,
-			    (total_len * divs[i].proportion_of_total +
+	क्रम (i = 0; i < nभागs; i++) अणु
+		अचिन्हित पूर्णांक len_this_sg =
+			min(len_reमुख्यing,
+			    (total_len * भागs[i].proportion_of_total +
 			     TEST_SG_TOTAL / 2) / TEST_SG_TOTAL);
 
-		if (len_this_sg != 0) {
-			partitions[tsgl->nents].div = &divs[i];
+		अगर (len_this_sg != 0) अणु
+			partitions[tsgl->nents].भाग = &भागs[i];
 			partitions[tsgl->nents].length = len_this_sg;
 			tsgl->nents++;
-			len_remaining -= len_this_sg;
-		}
-	}
-	if (tsgl->nents == 0) {
-		partitions[tsgl->nents].div = &divs[0];
+			len_reमुख्यing -= len_this_sg;
+		पूर्ण
+	पूर्ण
+	अगर (tsgl->nents == 0) अणु
+		partitions[tsgl->nents].भाग = &भागs[0];
 		partitions[tsgl->nents].length = 0;
 		tsgl->nents++;
-	}
-	partitions[tsgl->nents - 1].length += len_remaining;
+	पूर्ण
+	partitions[tsgl->nents - 1].length += len_reमुख्यing;
 
 	/* Set up the sgl entries and fill the data or poison */
 	sg_init_table(tsgl->sgl, tsgl->nents);
-	for (i = 0; i < tsgl->nents; i++) {
-		unsigned int offset = partitions[i].div->offset;
-		void *addr;
+	क्रम (i = 0; i < tsgl->nents; i++) अणु
+		अचिन्हित पूर्णांक offset = partitions[i].भाग->offset;
+		व्योम *addr;
 
-		if (partitions[i].div->offset_relative_to_alignmask)
+		अगर (partitions[i].भाग->offset_relative_to_alignmask)
 			offset += alignmask;
 
-		while (offset + partitions[i].length + TESTMGR_POISON_LEN >
-		       2 * PAGE_SIZE) {
-			if (WARN_ON(offset <= 0))
-				return -EINVAL;
+		जबतक (offset + partitions[i].length + TESTMGR_POISON_LEN >
+		       2 * PAGE_SIZE) अणु
+			अगर (WARN_ON(offset <= 0))
+				वापस -EINVAL;
 			offset /= 2;
-		}
+		पूर्ण
 
 		addr = &tsgl->bufs[i][offset];
 		sg_set_buf(&tsgl->sgl[i], addr, partitions[i].length);
 
-		if (out_divs)
-			out_divs[i] = partitions[i].div;
+		अगर (out_भागs)
+			out_भागs[i] = partitions[i].भाग;
 
-		if (data) {
-			size_t copy_len, copied;
+		अगर (data) अणु
+			माप_प्रकार copy_len, copied;
 
 			copy_len = min(partitions[i].length, data->count);
 			copied = copy_from_iter(addr, copy_len, data);
-			if (WARN_ON(copied != copy_len))
-				return -EINVAL;
-			testmgr_poison(addr + copy_len, partitions[i].length +
+			अगर (WARN_ON(copied != copy_len))
+				वापस -EINVAL;
+			tesपंचांगgr_poison(addr + copy_len, partitions[i].length +
 				       TESTMGR_POISON_LEN - copy_len);
-		} else {
-			testmgr_poison(addr, partitions[i].length +
+		पूर्ण अन्यथा अणु
+			tesपंचांगgr_poison(addr, partitions[i].length +
 				       TESTMGR_POISON_LEN);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sg_mark_end(&tsgl->sgl[tsgl->nents - 1]);
 	tsgl->sgl_ptr = tsgl->sgl;
-	memcpy(tsgl->sgl_saved, tsgl->sgl, tsgl->nents * sizeof(tsgl->sgl[0]));
-	return 0;
-}
+	स_नकल(tsgl->sgl_saved, tsgl->sgl, tsgl->nents * माप(tsgl->sgl[0]));
+	वापस 0;
+पूर्ण
 
 /*
- * Verify that a scatterlist crypto operation produced the correct output.
+ * Verअगरy that a scatterlist crypto operation produced the correct output.
  *
  * @tsgl: scatterlist containing the actual output
  * @expected_output: buffer containing the expected output
  * @len_to_check: length of @expected_output in bytes
  * @unchecked_prefix_len: number of ignored bytes in @tsgl prior to real result
- * @check_poison: verify that the poison bytes after each chunk are intact?
+ * @check_poison: verअगरy that the poison bytes after each chunk are पूर्णांकact?
  *
- * Return: 0 if correct, -EINVAL if incorrect, -EOVERFLOW if buffer overrun.
+ * Return: 0 अगर correct, -EINVAL अगर incorrect, -EOVERFLOW अगर buffer overrun.
  */
-static int verify_correct_output(const struct test_sglist *tsgl,
-				 const char *expected_output,
-				 unsigned int len_to_check,
-				 unsigned int unchecked_prefix_len,
+अटल पूर्णांक verअगरy_correct_output(स्थिर काष्ठा test_sglist *tsgl,
+				 स्थिर अक्षर *expected_output,
+				 अचिन्हित पूर्णांक len_to_check,
+				 अचिन्हित पूर्णांक unchecked_prefix_len,
 				 bool check_poison)
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < tsgl->nents; i++) {
-		struct scatterlist *sg = &tsgl->sgl_ptr[i];
-		unsigned int len = sg->length;
-		unsigned int offset = sg->offset;
-		const char *actual_output;
+	क्रम (i = 0; i < tsgl->nents; i++) अणु
+		काष्ठा scatterlist *sg = &tsgl->sgl_ptr[i];
+		अचिन्हित पूर्णांक len = sg->length;
+		अचिन्हित पूर्णांक offset = sg->offset;
+		स्थिर अक्षर *actual_output;
 
-		if (unchecked_prefix_len) {
-			if (unchecked_prefix_len >= len) {
+		अगर (unchecked_prefix_len) अणु
+			अगर (unchecked_prefix_len >= len) अणु
 				unchecked_prefix_len -= len;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			offset += unchecked_prefix_len;
 			len -= unchecked_prefix_len;
 			unchecked_prefix_len = 0;
-		}
+		पूर्ण
 		len = min(len, len_to_check);
 		actual_output = page_address(sg_page(sg)) + offset;
-		if (memcmp(expected_output, actual_output, len) != 0)
-			return -EINVAL;
-		if (check_poison &&
-		    !testmgr_is_poison(actual_output + len, TESTMGR_POISON_LEN))
-			return -EOVERFLOW;
+		अगर (स_भेद(expected_output, actual_output, len) != 0)
+			वापस -EINVAL;
+		अगर (check_poison &&
+		    !tesपंचांगgr_is_poison(actual_output + len, TESTMGR_POISON_LEN))
+			वापस -EOVERFLOW;
 		len_to_check -= len;
 		expected_output += len;
-	}
-	if (WARN_ON(len_to_check != 0))
-		return -EINVAL;
-	return 0;
-}
+	पूर्ण
+	अगर (WARN_ON(len_to_check != 0))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static bool is_test_sglist_corrupted(const struct test_sglist *tsgl)
-{
-	unsigned int i;
+अटल bool is_test_sglist_corrupted(स्थिर काष्ठा test_sglist *tsgl)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < tsgl->nents; i++) {
-		if (tsgl->sgl[i].page_link != tsgl->sgl_saved[i].page_link)
-			return true;
-		if (tsgl->sgl[i].offset != tsgl->sgl_saved[i].offset)
-			return true;
-		if (tsgl->sgl[i].length != tsgl->sgl_saved[i].length)
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < tsgl->nents; i++) अणु
+		अगर (tsgl->sgl[i].page_link != tsgl->sgl_saved[i].page_link)
+			वापस true;
+		अगर (tsgl->sgl[i].offset != tsgl->sgl_saved[i].offset)
+			वापस true;
+		अगर (tsgl->sgl[i].length != tsgl->sgl_saved[i].length)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-struct cipher_test_sglists {
-	struct test_sglist src;
-	struct test_sglist dst;
-};
+काष्ठा cipher_test_sglists अणु
+	काष्ठा test_sglist src;
+	काष्ठा test_sglist dst;
+पूर्ण;
 
-static struct cipher_test_sglists *alloc_cipher_test_sglists(void)
-{
-	struct cipher_test_sglists *tsgls;
+अटल काष्ठा cipher_test_sglists *alloc_cipher_test_sglists(व्योम)
+अणु
+	काष्ठा cipher_test_sglists *tsgls;
 
-	tsgls = kmalloc(sizeof(*tsgls), GFP_KERNEL);
-	if (!tsgls)
-		return NULL;
+	tsgls = kदो_स्मृति(माप(*tsgls), GFP_KERNEL);
+	अगर (!tsgls)
+		वापस शून्य;
 
-	if (init_test_sglist(&tsgls->src) != 0)
-		goto fail_kfree;
-	if (init_test_sglist(&tsgls->dst) != 0)
-		goto fail_destroy_src;
+	अगर (init_test_sglist(&tsgls->src) != 0)
+		जाओ fail_kमुक्त;
+	अगर (init_test_sglist(&tsgls->dst) != 0)
+		जाओ fail_destroy_src;
 
-	return tsgls;
+	वापस tsgls;
 
 fail_destroy_src:
 	destroy_test_sglist(&tsgls->src);
-fail_kfree:
-	kfree(tsgls);
-	return NULL;
-}
+fail_kमुक्त:
+	kमुक्त(tsgls);
+	वापस शून्य;
+पूर्ण
 
-static void free_cipher_test_sglists(struct cipher_test_sglists *tsgls)
-{
-	if (tsgls) {
+अटल व्योम मुक्त_cipher_test_sglists(काष्ठा cipher_test_sglists *tsgls)
+अणु
+	अगर (tsgls) अणु
 		destroy_test_sglist(&tsgls->src);
 		destroy_test_sglist(&tsgls->dst);
-		kfree(tsgls);
-	}
-}
+		kमुक्त(tsgls);
+	पूर्ण
+पूर्ण
 
-/* Build the src and dst scatterlists for an skcipher or AEAD test */
-static int build_cipher_test_sglists(struct cipher_test_sglists *tsgls,
-				     const struct testvec_config *cfg,
-				     unsigned int alignmask,
-				     unsigned int src_total_len,
-				     unsigned int dst_total_len,
-				     const struct kvec *inputs,
-				     unsigned int nr_inputs)
-{
-	struct iov_iter input;
-	int err;
+/* Build the src and dst scatterlists क्रम an skcipher or AEAD test */
+अटल पूर्णांक build_cipher_test_sglists(काष्ठा cipher_test_sglists *tsgls,
+				     स्थिर काष्ठा testvec_config *cfg,
+				     अचिन्हित पूर्णांक alignmask,
+				     अचिन्हित पूर्णांक src_total_len,
+				     अचिन्हित पूर्णांक dst_total_len,
+				     स्थिर काष्ठा kvec *inमाला_दो,
+				     अचिन्हित पूर्णांक nr_inमाला_दो)
+अणु
+	काष्ठा iov_iter input;
+	पूर्णांक err;
 
-	iov_iter_kvec(&input, WRITE, inputs, nr_inputs, src_total_len);
-	err = build_test_sglist(&tsgls->src, cfg->src_divs, alignmask,
+	iov_iter_kvec(&input, WRITE, inमाला_दो, nr_inमाला_दो, src_total_len);
+	err = build_test_sglist(&tsgls->src, cfg->src_भागs, alignmask,
 				cfg->inplace ?
 					max(dst_total_len, src_total_len) :
 					src_total_len,
-				&input, NULL);
-	if (err)
-		return err;
+				&input, शून्य);
+	अगर (err)
+		वापस err;
 
-	if (cfg->inplace) {
+	अगर (cfg->inplace) अणु
 		tsgls->dst.sgl_ptr = tsgls->src.sgl;
 		tsgls->dst.nents = tsgls->src.nents;
-		return 0;
-	}
-	return build_test_sglist(&tsgls->dst,
-				 cfg->dst_divs[0].proportion_of_total ?
-					cfg->dst_divs : cfg->src_divs,
-				 alignmask, dst_total_len, NULL, NULL);
-}
+		वापस 0;
+	पूर्ण
+	वापस build_test_sglist(&tsgls->dst,
+				 cfg->dst_भागs[0].proportion_of_total ?
+					cfg->dst_भागs : cfg->src_भागs,
+				 alignmask, dst_total_len, शून्य, शून्य);
+पूर्ण
 
 /*
- * Support for testing passing a misaligned key to setkey():
+ * Support क्रम testing passing a misaligned key to setkey():
  *
- * If cfg->key_offset is set, copy the key into a new buffer at that offset,
+ * If cfg->key_offset is set, copy the key पूर्णांकo a new buffer at that offset,
  * optionally adding alignmask.  Else, just use the key directly.
  */
-static int prepare_keybuf(const u8 *key, unsigned int ksize,
-			  const struct testvec_config *cfg,
-			  unsigned int alignmask,
-			  const u8 **keybuf_ret, const u8 **keyptr_ret)
-{
-	unsigned int key_offset = cfg->key_offset;
-	u8 *keybuf = NULL, *keyptr = (u8 *)key;
+अटल पूर्णांक prepare_keybuf(स्थिर u8 *key, अचिन्हित पूर्णांक ksize,
+			  स्थिर काष्ठा testvec_config *cfg,
+			  अचिन्हित पूर्णांक alignmask,
+			  स्थिर u8 **keybuf_ret, स्थिर u8 **keyptr_ret)
+अणु
+	अचिन्हित पूर्णांक key_offset = cfg->key_offset;
+	u8 *keybuf = शून्य, *keyptr = (u8 *)key;
 
-	if (key_offset != 0) {
-		if (cfg->key_offset_relative_to_alignmask)
+	अगर (key_offset != 0) अणु
+		अगर (cfg->key_offset_relative_to_alignmask)
 			key_offset += alignmask;
-		keybuf = kmalloc(key_offset + ksize, GFP_KERNEL);
-		if (!keybuf)
-			return -ENOMEM;
+		keybuf = kदो_स्मृति(key_offset + ksize, GFP_KERNEL);
+		अगर (!keybuf)
+			वापस -ENOMEM;
 		keyptr = keybuf + key_offset;
-		memcpy(keyptr, key, ksize);
-	}
+		स_नकल(keyptr, key, ksize);
+	पूर्ण
 	*keybuf_ret = keybuf;
 	*keyptr_ret = keyptr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Like setkey_f(tfm, key, ksize), but sometimes misalign the key */
-#define do_setkey(setkey_f, tfm, key, ksize, cfg, alignmask)		\
-({									\
-	const u8 *keybuf, *keyptr;					\
-	int err;							\
+/* Like setkey_f(tfm, key, ksize), but someबार misalign the key */
+#घोषणा करो_setkey(setkey_f, tfm, key, ksize, cfg, alignmask)		\
+(अणु									\
+	स्थिर u8 *keybuf, *keyptr;					\
+	पूर्णांक err;							\
 									\
 	err = prepare_keybuf((key), (ksize), (cfg), (alignmask),	\
 			     &keybuf, &keyptr);				\
-	if (err == 0) {							\
+	अगर (err == 0) अणु							\
 		err = setkey_f((tfm), keyptr, (ksize));			\
-		kfree(keybuf);						\
-	}								\
+		kमुक्त(keybuf);						\
+	पूर्ण								\
 	err;								\
-})
+पूर्ण)
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
 
-/* Generate a random length in range [0, max_len], but prefer smaller values */
-static unsigned int generate_random_length(unsigned int max_len)
-{
-	unsigned int len = prandom_u32() % (max_len + 1);
+/* Generate a अक्रमom length in range [0, max_len], but prefer smaller values */
+अटल अचिन्हित पूर्णांक generate_अक्रमom_length(अचिन्हित पूर्णांक max_len)
+अणु
+	अचिन्हित पूर्णांक len = pअक्रमom_u32() % (max_len + 1);
 
-	switch (prandom_u32() % 4) {
-	case 0:
-		return len % 64;
-	case 1:
-		return len % 256;
-	case 2:
-		return len % 1024;
-	default:
-		return len;
-	}
-}
+	चयन (pअक्रमom_u32() % 4) अणु
+	हाल 0:
+		वापस len % 64;
+	हाल 1:
+		वापस len % 256;
+	हाल 2:
+		वापस len % 1024;
+	शेष:
+		वापस len;
+	पूर्ण
+पूर्ण
 
-/* Flip a random bit in the given nonempty data buffer */
-static void flip_random_bit(u8 *buf, size_t size)
-{
-	size_t bitpos;
+/* Flip a अक्रमom bit in the given nonempty data buffer */
+अटल व्योम flip_अक्रमom_bit(u8 *buf, माप_प्रकार size)
+अणु
+	माप_प्रकार bitpos;
 
-	bitpos = prandom_u32() % (size * 8);
+	bitpos = pअक्रमom_u32() % (size * 8);
 	buf[bitpos / 8] ^= 1 << (bitpos % 8);
-}
+पूर्ण
 
-/* Flip a random byte in the given nonempty data buffer */
-static void flip_random_byte(u8 *buf, size_t size)
-{
-	buf[prandom_u32() % size] ^= 0xff;
-}
+/* Flip a अक्रमom byte in the given nonempty data buffer */
+अटल व्योम flip_अक्रमom_byte(u8 *buf, माप_प्रकार size)
+अणु
+	buf[pअक्रमom_u32() % size] ^= 0xff;
+पूर्ण
 
-/* Sometimes make some random changes to the given nonempty data buffer */
-static void mutate_buffer(u8 *buf, size_t size)
-{
-	size_t num_flips;
-	size_t i;
+/* Someबार make some अक्रमom changes to the given nonempty data buffer */
+अटल व्योम mutate_buffer(u8 *buf, माप_प्रकार size)
+अणु
+	माप_प्रकार num_flips;
+	माप_प्रकार i;
 
-	/* Sometimes flip some bits */
-	if (prandom_u32() % 4 == 0) {
-		num_flips = min_t(size_t, 1 << (prandom_u32() % 8), size * 8);
-		for (i = 0; i < num_flips; i++)
-			flip_random_bit(buf, size);
-	}
+	/* Someबार flip some bits */
+	अगर (pअक्रमom_u32() % 4 == 0) अणु
+		num_flips = min_t(माप_प्रकार, 1 << (pअक्रमom_u32() % 8), size * 8);
+		क्रम (i = 0; i < num_flips; i++)
+			flip_अक्रमom_bit(buf, size);
+	पूर्ण
 
-	/* Sometimes flip some bytes */
-	if (prandom_u32() % 4 == 0) {
-		num_flips = min_t(size_t, 1 << (prandom_u32() % 8), size);
-		for (i = 0; i < num_flips; i++)
-			flip_random_byte(buf, size);
-	}
-}
+	/* Someबार flip some bytes */
+	अगर (pअक्रमom_u32() % 4 == 0) अणु
+		num_flips = min_t(माप_प्रकार, 1 << (pअक्रमom_u32() % 8), size);
+		क्रम (i = 0; i < num_flips; i++)
+			flip_अक्रमom_byte(buf, size);
+	पूर्ण
+पूर्ण
 
-/* Randomly generate 'count' bytes, but sometimes make them "interesting" */
-static void generate_random_bytes(u8 *buf, size_t count)
-{
+/* Ranकरोmly generate 'count' bytes, but someबार make them "interesting" */
+अटल व्योम generate_अक्रमom_bytes(u8 *buf, माप_प्रकार count)
+अणु
 	u8 b;
 	u8 increment;
-	size_t i;
+	माप_प्रकार i;
 
-	if (count == 0)
-		return;
+	अगर (count == 0)
+		वापस;
 
-	switch (prandom_u32() % 8) { /* Choose a generation strategy */
-	case 0:
-	case 1:
+	चयन (pअक्रमom_u32() % 8) अणु /* Choose a generation strategy */
+	हाल 0:
+	हाल 1:
 		/* All the same byte, plus optional mutations */
-		switch (prandom_u32() % 4) {
-		case 0:
+		चयन (pअक्रमom_u32() % 4) अणु
+		हाल 0:
 			b = 0x00;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			b = 0xff;
-			break;
-		default:
-			b = (u8)prandom_u32();
-			break;
-		}
-		memset(buf, b, count);
+			अवरोध;
+		शेष:
+			b = (u8)pअक्रमom_u32();
+			अवरोध;
+		पूर्ण
+		स_रखो(buf, b, count);
 		mutate_buffer(buf, count);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* Ascending or descending bytes, plus optional mutations */
-		increment = (u8)prandom_u32();
-		b = (u8)prandom_u32();
-		for (i = 0; i < count; i++, b += increment)
+		increment = (u8)pअक्रमom_u32();
+		b = (u8)pअक्रमom_u32();
+		क्रम (i = 0; i < count; i++, b += increment)
 			buf[i] = b;
 		mutate_buffer(buf, count);
-		break;
-	default:
-		/* Fully random bytes */
-		for (i = 0; i < count; i++)
-			buf[i] = (u8)prandom_u32();
-	}
-}
+		अवरोध;
+	शेष:
+		/* Fully अक्रमom bytes */
+		क्रम (i = 0; i < count; i++)
+			buf[i] = (u8)pअक्रमom_u32();
+	पूर्ण
+पूर्ण
 
-static char *generate_random_sgl_divisions(struct test_sg_division *divs,
-					   size_t max_divs, char *p, char *end,
+अटल अक्षर *generate_अक्रमom_sgl_भागisions(काष्ठा test_sg_भागision *भागs,
+					   माप_प्रकार max_भागs, अक्षर *p, अक्षर *end,
 					   bool gen_flushes, u32 req_flags)
-{
-	struct test_sg_division *div = divs;
-	unsigned int remaining = TEST_SG_TOTAL;
+अणु
+	काष्ठा test_sg_भागision *भाग = भागs;
+	अचिन्हित पूर्णांक reमुख्यing = TEST_SG_TOTAL;
 
-	do {
-		unsigned int this_len;
-		const char *flushtype_str;
+	करो अणु
+		अचिन्हित पूर्णांक this_len;
+		स्थिर अक्षर *flushtype_str;
 
-		if (div == &divs[max_divs - 1] || prandom_u32() % 2 == 0)
-			this_len = remaining;
-		else
-			this_len = 1 + (prandom_u32() % remaining);
-		div->proportion_of_total = this_len;
+		अगर (भाग == &भागs[max_भागs - 1] || pअक्रमom_u32() % 2 == 0)
+			this_len = reमुख्यing;
+		अन्यथा
+			this_len = 1 + (pअक्रमom_u32() % reमुख्यing);
+		भाग->proportion_of_total = this_len;
 
-		if (prandom_u32() % 4 == 0)
-			div->offset = (PAGE_SIZE - 128) + (prandom_u32() % 128);
-		else if (prandom_u32() % 2 == 0)
-			div->offset = prandom_u32() % 32;
-		else
-			div->offset = prandom_u32() % PAGE_SIZE;
-		if (prandom_u32() % 8 == 0)
-			div->offset_relative_to_alignmask = true;
+		अगर (pअक्रमom_u32() % 4 == 0)
+			भाग->offset = (PAGE_SIZE - 128) + (pअक्रमom_u32() % 128);
+		अन्यथा अगर (pअक्रमom_u32() % 2 == 0)
+			भाग->offset = pअक्रमom_u32() % 32;
+		अन्यथा
+			भाग->offset = pअक्रमom_u32() % PAGE_SIZE;
+		अगर (pअक्रमom_u32() % 8 == 0)
+			भाग->offset_relative_to_alignmask = true;
 
-		div->flush_type = FLUSH_TYPE_NONE;
-		if (gen_flushes) {
-			switch (prandom_u32() % 4) {
-			case 0:
-				div->flush_type = FLUSH_TYPE_REIMPORT;
-				break;
-			case 1:
-				div->flush_type = FLUSH_TYPE_FLUSH;
-				break;
-			}
-		}
+		भाग->flush_type = FLUSH_TYPE_NONE;
+		अगर (gen_flushes) अणु
+			चयन (pअक्रमom_u32() % 4) अणु
+			हाल 0:
+				भाग->flush_type = FLUSH_TYPE_REIMPORT;
+				अवरोध;
+			हाल 1:
+				भाग->flush_type = FLUSH_TYPE_FLUSH;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (div->flush_type != FLUSH_TYPE_NONE &&
+		अगर (भाग->flush_type != FLUSH_TYPE_NONE &&
 		    !(req_flags & CRYPTO_TFM_REQ_MAY_SLEEP) &&
-		    prandom_u32() % 2 == 0)
-			div->nosimd = true;
+		    pअक्रमom_u32() % 2 == 0)
+			भाग->nosimd = true;
 
-		switch (div->flush_type) {
-		case FLUSH_TYPE_FLUSH:
-			if (div->nosimd)
+		चयन (भाग->flush_type) अणु
+		हाल FLUSH_TYPE_FLUSH:
+			अगर (भाग->nosimd)
 				flushtype_str = "<flush,nosimd>";
-			else
+			अन्यथा
 				flushtype_str = "<flush>";
-			break;
-		case FLUSH_TYPE_REIMPORT:
-			if (div->nosimd)
+			अवरोध;
+		हाल FLUSH_TYPE_REIMPORT:
+			अगर (भाग->nosimd)
 				flushtype_str = "<reimport,nosimd>";
-			else
+			अन्यथा
 				flushtype_str = "<reimport>";
-			break;
-		default:
+			अवरोध;
+		शेष:
 			flushtype_str = "";
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		BUILD_BUG_ON(TEST_SG_TOTAL != 10000); /* for "%u.%u%%" */
-		p += scnprintf(p, end - p, "%s%u.%u%%@%s+%u%s", flushtype_str,
+		BUILD_BUG_ON(TEST_SG_TOTAL != 10000); /* क्रम "%u.%u%%" */
+		p += scnम_लिखो(p, end - p, "%s%u.%u%%@%s+%u%s", flushtype_str,
 			       this_len / 100, this_len % 100,
-			       div->offset_relative_to_alignmask ?
+			       भाग->offset_relative_to_alignmask ?
 					"alignmask" : "",
-			       div->offset, this_len == remaining ? "" : ", ");
-		remaining -= this_len;
-		div++;
-	} while (remaining);
+			       भाग->offset, this_len == reमुख्यing ? "" : ", ");
+		reमुख्यing -= this_len;
+		भाग++;
+	पूर्ण जबतक (reमुख्यing);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-/* Generate a random testvec_config for fuzz testing */
-static void generate_random_testvec_config(struct testvec_config *cfg,
-					   char *name, size_t max_namelen)
-{
-	char *p = name;
-	char * const end = name + max_namelen;
+/* Generate a अक्रमom testvec_config क्रम fuzz testing */
+अटल व्योम generate_अक्रमom_testvec_config(काष्ठा testvec_config *cfg,
+					   अक्षर *name, माप_प्रकार max_namelen)
+अणु
+	अक्षर *p = name;
+	अक्षर * स्थिर end = name + max_namelen;
 
-	memset(cfg, 0, sizeof(*cfg));
+	स_रखो(cfg, 0, माप(*cfg));
 
 	cfg->name = name;
 
-	p += scnprintf(p, end - p, "random:");
+	p += scnम_लिखो(p, end - p, "random:");
 
-	if (prandom_u32() % 2 == 0) {
+	अगर (pअक्रमom_u32() % 2 == 0) अणु
 		cfg->inplace = true;
-		p += scnprintf(p, end - p, " inplace");
-	}
+		p += scnम_लिखो(p, end - p, " inplace");
+	पूर्ण
 
-	if (prandom_u32() % 2 == 0) {
+	अगर (pअक्रमom_u32() % 2 == 0) अणु
 		cfg->req_flags |= CRYPTO_TFM_REQ_MAY_SLEEP;
-		p += scnprintf(p, end - p, " may_sleep");
-	}
+		p += scnम_लिखो(p, end - p, " may_sleep");
+	पूर्ण
 
-	switch (prandom_u32() % 4) {
-	case 0:
+	चयन (pअक्रमom_u32() % 4) अणु
+	हाल 0:
 		cfg->finalization_type = FINALIZATION_TYPE_FINAL;
-		p += scnprintf(p, end - p, " use_final");
-		break;
-	case 1:
+		p += scnम_लिखो(p, end - p, " use_final");
+		अवरोध;
+	हाल 1:
 		cfg->finalization_type = FINALIZATION_TYPE_FINUP;
-		p += scnprintf(p, end - p, " use_finup");
-		break;
-	default:
+		p += scnम_लिखो(p, end - p, " use_finup");
+		अवरोध;
+	शेष:
 		cfg->finalization_type = FINALIZATION_TYPE_DIGEST;
-		p += scnprintf(p, end - p, " use_digest");
-		break;
-	}
+		p += scnम_लिखो(p, end - p, " use_digest");
+		अवरोध;
+	पूर्ण
 
-	if (!(cfg->req_flags & CRYPTO_TFM_REQ_MAY_SLEEP) &&
-	    prandom_u32() % 2 == 0) {
+	अगर (!(cfg->req_flags & CRYPTO_TFM_REQ_MAY_SLEEP) &&
+	    pअक्रमom_u32() % 2 == 0) अणु
 		cfg->nosimd = true;
-		p += scnprintf(p, end - p, " nosimd");
-	}
+		p += scnम_लिखो(p, end - p, " nosimd");
+	पूर्ण
 
-	p += scnprintf(p, end - p, " src_divs=[");
-	p = generate_random_sgl_divisions(cfg->src_divs,
-					  ARRAY_SIZE(cfg->src_divs), p, end,
+	p += scnम_लिखो(p, end - p, " src_divs=[");
+	p = generate_अक्रमom_sgl_भागisions(cfg->src_भागs,
+					  ARRAY_SIZE(cfg->src_भागs), p, end,
 					  (cfg->finalization_type !=
 					   FINALIZATION_TYPE_DIGEST),
 					  cfg->req_flags);
-	p += scnprintf(p, end - p, "]");
+	p += scnम_लिखो(p, end - p, "]");
 
-	if (!cfg->inplace && prandom_u32() % 2 == 0) {
-		p += scnprintf(p, end - p, " dst_divs=[");
-		p = generate_random_sgl_divisions(cfg->dst_divs,
-						  ARRAY_SIZE(cfg->dst_divs),
+	अगर (!cfg->inplace && pअक्रमom_u32() % 2 == 0) अणु
+		p += scnम_लिखो(p, end - p, " dst_divs=[");
+		p = generate_अक्रमom_sgl_भागisions(cfg->dst_भागs,
+						  ARRAY_SIZE(cfg->dst_भागs),
 						  p, end, false,
 						  cfg->req_flags);
-		p += scnprintf(p, end - p, "]");
-	}
+		p += scnम_लिखो(p, end - p, "]");
+	पूर्ण
 
-	if (prandom_u32() % 2 == 0) {
-		cfg->iv_offset = 1 + (prandom_u32() % MAX_ALGAPI_ALIGNMASK);
-		p += scnprintf(p, end - p, " iv_offset=%u", cfg->iv_offset);
-	}
+	अगर (pअक्रमom_u32() % 2 == 0) अणु
+		cfg->iv_offset = 1 + (pअक्रमom_u32() % MAX_ALGAPI_ALIGNMASK);
+		p += scnम_लिखो(p, end - p, " iv_offset=%u", cfg->iv_offset);
+	पूर्ण
 
-	if (prandom_u32() % 2 == 0) {
-		cfg->key_offset = 1 + (prandom_u32() % MAX_ALGAPI_ALIGNMASK);
-		p += scnprintf(p, end - p, " key_offset=%u", cfg->key_offset);
-	}
+	अगर (pअक्रमom_u32() % 2 == 0) अणु
+		cfg->key_offset = 1 + (pअक्रमom_u32() % MAX_ALGAPI_ALIGNMASK);
+		p += scnम_लिखो(p, end - p, " key_offset=%u", cfg->key_offset);
+	पूर्ण
 
 	WARN_ON_ONCE(!valid_testvec_config(cfg));
-}
+पूर्ण
 
-static void crypto_disable_simd_for_test(void)
-{
+अटल व्योम crypto_disable_simd_क्रम_test(व्योम)
+अणु
 	preempt_disable();
-	__this_cpu_write(crypto_simd_disabled_for_test, true);
-}
+	__this_cpu_ग_लिखो(crypto_simd_disabled_क्रम_test, true);
+पूर्ण
 
-static void crypto_reenable_simd_for_test(void)
-{
-	__this_cpu_write(crypto_simd_disabled_for_test, false);
+अटल व्योम crypto_reenable_simd_क्रम_test(व्योम)
+अणु
+	__this_cpu_ग_लिखो(crypto_simd_disabled_क्रम_test, false);
 	preempt_enable();
-}
+पूर्ण
 
 /*
  * Given an algorithm name, build the name of the generic implementation of that
- * algorithm, assuming the usual naming convention.  Specifically, this appends
- * "-generic" to every part of the name that is not a template name.  Examples:
+ * algorithm, assuming the usual naming convention.  Specअगरically, this appends
+ * "-generic" to every part of the name that is not a ढाँचा name.  Examples:
  *
  *	aes => aes-generic
  *	cbc(aes) => cbc(aes-generic)
  *	cts(cbc(aes)) => cts(cbc(aes-generic))
  *	rfc7539(chacha20,poly1305) => rfc7539(chacha20-generic,poly1305-generic)
  *
- * Return: 0 on success, or -ENAMETOOLONG if the generic name would be too long
+ * Return: 0 on success, or -ENAMETOOLONG अगर the generic name would be too दीर्घ
  */
-static int build_generic_driver_name(const char *algname,
-				     char driver_name[CRYPTO_MAX_ALG_NAME])
-{
-	const char *in = algname;
-	char *out = driver_name;
-	size_t len = strlen(algname);
+अटल पूर्णांक build_generic_driver_name(स्थिर अक्षर *algname,
+				     अक्षर driver_name[CRYPTO_MAX_ALG_NAME])
+अणु
+	स्थिर अक्षर *in = algname;
+	अक्षर *out = driver_name;
+	माप_प्रकार len = म_माप(algname);
 
-	if (len >= CRYPTO_MAX_ALG_NAME)
-		goto too_long;
-	do {
-		const char *in_saved = in;
+	अगर (len >= CRYPTO_MAX_ALG_NAME)
+		जाओ too_दीर्घ;
+	करो अणु
+		स्थिर अक्षर *in_saved = in;
 
-		while (*in && *in != '(' && *in != ')' && *in != ',')
+		जबतक (*in && *in != '(' && *in != ')' && *in != ',')
 			*out++ = *in++;
-		if (*in != '(' && in > in_saved) {
+		अगर (*in != '(' && in > in_saved) अणु
 			len += 8;
-			if (len >= CRYPTO_MAX_ALG_NAME)
-				goto too_long;
-			memcpy(out, "-generic", 8);
+			अगर (len >= CRYPTO_MAX_ALG_NAME)
+				जाओ too_दीर्घ;
+			स_नकल(out, "-generic", 8);
 			out += 8;
-		}
-	} while ((*out++ = *in++) != '\0');
-	return 0;
+		पूर्ण
+	पूर्ण जबतक ((*out++ = *in++) != '\0');
+	वापस 0;
 
-too_long:
+too_दीर्घ:
 	pr_err("alg: generic driver name for \"%s\" would be too long\n",
 	       algname);
-	return -ENAMETOOLONG;
-}
-#else /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
-static void crypto_disable_simd_for_test(void)
-{
-}
+	वापस -ENAMETOOLONG;
+पूर्ण
+#अन्यथा /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+अटल व्योम crypto_disable_simd_क्रम_test(व्योम)
+अणु
+पूर्ण
 
-static void crypto_reenable_simd_for_test(void)
-{
-}
-#endif /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+अटल व्योम crypto_reenable_simd_क्रम_test(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
 
-static int build_hash_sglist(struct test_sglist *tsgl,
-			     const struct hash_testvec *vec,
-			     const struct testvec_config *cfg,
-			     unsigned int alignmask,
-			     const struct test_sg_division *divs[XBUFSIZE])
-{
-	struct kvec kv;
-	struct iov_iter input;
+अटल पूर्णांक build_hash_sglist(काष्ठा test_sglist *tsgl,
+			     स्थिर काष्ठा hash_testvec *vec,
+			     स्थिर काष्ठा testvec_config *cfg,
+			     अचिन्हित पूर्णांक alignmask,
+			     स्थिर काष्ठा test_sg_भागision *भागs[Xबफ_मानE])
+अणु
+	काष्ठा kvec kv;
+	काष्ठा iov_iter input;
 
-	kv.iov_base = (void *)vec->plaintext;
+	kv.iov_base = (व्योम *)vec->plaपूर्णांकext;
 	kv.iov_len = vec->psize;
 	iov_iter_kvec(&input, WRITE, &kv, 1, vec->psize);
-	return build_test_sglist(tsgl, cfg->src_divs, alignmask, vec->psize,
-				 &input, divs);
-}
+	वापस build_test_sglist(tsgl, cfg->src_भागs, alignmask, vec->psize,
+				 &input, भागs);
+पूर्ण
 
-static int check_hash_result(const char *type,
-			     const u8 *result, unsigned int digestsize,
-			     const struct hash_testvec *vec,
-			     const char *vec_name,
-			     const char *driver,
-			     const struct testvec_config *cfg)
-{
-	if (memcmp(result, vec->digest, digestsize) != 0) {
+अटल पूर्णांक check_hash_result(स्थिर अक्षर *type,
+			     स्थिर u8 *result, अचिन्हित पूर्णांक digestsize,
+			     स्थिर काष्ठा hash_testvec *vec,
+			     स्थिर अक्षर *vec_name,
+			     स्थिर अक्षर *driver,
+			     स्थिर काष्ठा testvec_config *cfg)
+अणु
+	अगर (स_भेद(result, vec->digest, digestsize) != 0) अणु
 		pr_err("alg: %s: %s test failed (wrong result) on test vector %s, cfg=\"%s\"\n",
 		       type, driver, vec_name, cfg->name);
-		return -EINVAL;
-	}
-	if (!testmgr_is_poison(&result[digestsize], TESTMGR_POISON_LEN)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!tesपंचांगgr_is_poison(&result[digestsize], TESTMGR_POISON_LEN)) अणु
 		pr_err("alg: %s: %s overran result buffer on test vector %s, cfg=\"%s\"\n",
 		       type, driver, vec_name, cfg->name);
-		return -EOVERFLOW;
-	}
-	return 0;
-}
+		वापस -EOVERFLOW;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int check_shash_op(const char *op, int err,
-				 const char *driver, const char *vec_name,
-				 const struct testvec_config *cfg)
-{
-	if (err)
+अटल अंतरभूत पूर्णांक check_shash_op(स्थिर अक्षर *op, पूर्णांक err,
+				 स्थिर अक्षर *driver, स्थिर अक्षर *vec_name,
+				 स्थिर काष्ठा testvec_config *cfg)
+अणु
+	अगर (err)
 		pr_err("alg: shash: %s %s() failed with err %d on test vector %s, cfg=\"%s\"\n",
 		       driver, op, err, vec_name, cfg->name);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Test one hash test vector in one configuration, using the shash API */
-static int test_shash_vec_cfg(const struct hash_testvec *vec,
-			      const char *vec_name,
-			      const struct testvec_config *cfg,
-			      struct shash_desc *desc,
-			      struct test_sglist *tsgl,
+अटल पूर्णांक test_shash_vec_cfg(स्थिर काष्ठा hash_testvec *vec,
+			      स्थिर अक्षर *vec_name,
+			      स्थिर काष्ठा testvec_config *cfg,
+			      काष्ठा shash_desc *desc,
+			      काष्ठा test_sglist *tsgl,
 			      u8 *hashstate)
-{
-	struct crypto_shash *tfm = desc->tfm;
-	const unsigned int alignmask = crypto_shash_alignmask(tfm);
-	const unsigned int digestsize = crypto_shash_digestsize(tfm);
-	const unsigned int statesize = crypto_shash_statesize(tfm);
-	const char *driver = crypto_shash_driver_name(tfm);
-	const struct test_sg_division *divs[XBUFSIZE];
-	unsigned int i;
+अणु
+	काष्ठा crypto_shash *tfm = desc->tfm;
+	स्थिर अचिन्हित पूर्णांक alignmask = crypto_shash_alignmask(tfm);
+	स्थिर अचिन्हित पूर्णांक digestsize = crypto_shash_digestsize(tfm);
+	स्थिर अचिन्हित पूर्णांक statesize = crypto_shash_statesize(tfm);
+	स्थिर अक्षर *driver = crypto_shash_driver_name(tfm);
+	स्थिर काष्ठा test_sg_भागision *भागs[Xबफ_मानE];
+	अचिन्हित पूर्णांक i;
 	u8 result[HASH_MAX_DIGESTSIZE + TESTMGR_POISON_LEN];
-	int err;
+	पूर्णांक err;
 
-	/* Set the key, if specified */
-	if (vec->ksize) {
-		err = do_setkey(crypto_shash_setkey, tfm, vec->key, vec->ksize,
+	/* Set the key, अगर specअगरied */
+	अगर (vec->ksize) अणु
+		err = करो_setkey(crypto_shash_setkey, tfm, vec->key, vec->ksize,
 				cfg, alignmask);
-		if (err) {
-			if (err == vec->setkey_error)
-				return 0;
+		अगर (err) अणु
+			अगर (err == vec->setkey_error)
+				वापस 0;
 			pr_err("alg: shash: %s setkey failed on test vector %s; expected_error=%d, actual_error=%d, flags=%#x\n",
 			       driver, vec_name, vec->setkey_error, err,
 			       crypto_shash_get_flags(tfm));
-			return err;
-		}
-		if (vec->setkey_error) {
+			वापस err;
+		पूर्ण
+		अगर (vec->setkey_error) अणु
 			pr_err("alg: shash: %s setkey unexpectedly succeeded on test vector %s; expected_error=%d\n",
 			       driver, vec_name, vec->setkey_error);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Build the scatterlist for the source data */
-	err = build_hash_sglist(tsgl, vec, cfg, alignmask, divs);
-	if (err) {
+	/* Build the scatterlist क्रम the source data */
+	err = build_hash_sglist(tsgl, vec, cfg, alignmask, भागs);
+	अगर (err) अणु
 		pr_err("alg: shash: %s: error preparing scatterlist for test vector %s, cfg=\"%s\"\n",
 		       driver, vec_name, cfg->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Do the actual hashing */
 
-	testmgr_poison(desc->__ctx, crypto_shash_descsize(tfm));
-	testmgr_poison(result, digestsize + TESTMGR_POISON_LEN);
+	tesपंचांगgr_poison(desc->__ctx, crypto_shash_descsize(tfm));
+	tesपंचांगgr_poison(result, digestsize + TESTMGR_POISON_LEN);
 
-	if (cfg->finalization_type == FINALIZATION_TYPE_DIGEST ||
-	    vec->digest_error) {
+	अगर (cfg->finalization_type == FINALIZATION_TYPE_DIGEST ||
+	    vec->digest_error) अणु
 		/* Just using digest() */
-		if (tsgl->nents != 1)
-			return 0;
-		if (cfg->nosimd)
-			crypto_disable_simd_for_test();
+		अगर (tsgl->nents != 1)
+			वापस 0;
+		अगर (cfg->nosimd)
+			crypto_disable_simd_क्रम_test();
 		err = crypto_shash_digest(desc, sg_virt(&tsgl->sgl[0]),
 					  tsgl->sgl[0].length, result);
-		if (cfg->nosimd)
-			crypto_reenable_simd_for_test();
-		if (err) {
-			if (err == vec->digest_error)
-				return 0;
+		अगर (cfg->nosimd)
+			crypto_reenable_simd_क्रम_test();
+		अगर (err) अणु
+			अगर (err == vec->digest_error)
+				वापस 0;
 			pr_err("alg: shash: %s digest() failed on test vector %s; expected_error=%d, actual_error=%d, cfg=\"%s\"\n",
 			       driver, vec_name, vec->digest_error, err,
 			       cfg->name);
-			return err;
-		}
-		if (vec->digest_error) {
+			वापस err;
+		पूर्ण
+		अगर (vec->digest_error) अणु
 			pr_err("alg: shash: %s digest() unexpectedly succeeded on test vector %s; expected_error=%d, cfg=\"%s\"\n",
 			       driver, vec_name, vec->digest_error, cfg->name);
-			return -EINVAL;
-		}
-		goto result_ready;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		जाओ result_पढ़ोy;
+	पूर्ण
 
 	/* Using init(), zero or more update(), then final() or finup() */
 
-	if (cfg->nosimd)
-		crypto_disable_simd_for_test();
+	अगर (cfg->nosimd)
+		crypto_disable_simd_क्रम_test();
 	err = crypto_shash_init(desc);
-	if (cfg->nosimd)
-		crypto_reenable_simd_for_test();
+	अगर (cfg->nosimd)
+		crypto_reenable_simd_क्रम_test();
 	err = check_shash_op("init", err, driver, vec_name, cfg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < tsgl->nents; i++) {
-		if (i + 1 == tsgl->nents &&
-		    cfg->finalization_type == FINALIZATION_TYPE_FINUP) {
-			if (divs[i]->nosimd)
-				crypto_disable_simd_for_test();
+	क्रम (i = 0; i < tsgl->nents; i++) अणु
+		अगर (i + 1 == tsgl->nents &&
+		    cfg->finalization_type == FINALIZATION_TYPE_FINUP) अणु
+			अगर (भागs[i]->nosimd)
+				crypto_disable_simd_क्रम_test();
 			err = crypto_shash_finup(desc, sg_virt(&tsgl->sgl[i]),
 						 tsgl->sgl[i].length, result);
-			if (divs[i]->nosimd)
-				crypto_reenable_simd_for_test();
+			अगर (भागs[i]->nosimd)
+				crypto_reenable_simd_क्रम_test();
 			err = check_shash_op("finup", err, driver, vec_name,
 					     cfg);
-			if (err)
-				return err;
-			goto result_ready;
-		}
-		if (divs[i]->nosimd)
-			crypto_disable_simd_for_test();
+			अगर (err)
+				वापस err;
+			जाओ result_पढ़ोy;
+		पूर्ण
+		अगर (भागs[i]->nosimd)
+			crypto_disable_simd_क्रम_test();
 		err = crypto_shash_update(desc, sg_virt(&tsgl->sgl[i]),
 					  tsgl->sgl[i].length);
-		if (divs[i]->nosimd)
-			crypto_reenable_simd_for_test();
+		अगर (भागs[i]->nosimd)
+			crypto_reenable_simd_क्रम_test();
 		err = check_shash_op("update", err, driver, vec_name, cfg);
-		if (err)
-			return err;
-		if (divs[i]->flush_type == FLUSH_TYPE_REIMPORT) {
+		अगर (err)
+			वापस err;
+		अगर (भागs[i]->flush_type == FLUSH_TYPE_REIMPORT) अणु
 			/* Test ->export() and ->import() */
-			testmgr_poison(hashstate + statesize,
+			tesपंचांगgr_poison(hashstate + statesize,
 				       TESTMGR_POISON_LEN);
 			err = crypto_shash_export(desc, hashstate);
 			err = check_shash_op("export", err, driver, vec_name,
 					     cfg);
-			if (err)
-				return err;
-			if (!testmgr_is_poison(hashstate + statesize,
-					       TESTMGR_POISON_LEN)) {
+			अगर (err)
+				वापस err;
+			अगर (!tesपंचांगgr_is_poison(hashstate + statesize,
+					       TESTMGR_POISON_LEN)) अणु
 				pr_err("alg: shash: %s export() overran state buffer on test vector %s, cfg=\"%s\"\n",
 				       driver, vec_name, cfg->name);
-				return -EOVERFLOW;
-			}
-			testmgr_poison(desc->__ctx, crypto_shash_descsize(tfm));
+				वापस -EOVERFLOW;
+			पूर्ण
+			tesपंचांगgr_poison(desc->__ctx, crypto_shash_descsize(tfm));
 			err = crypto_shash_import(desc, hashstate);
 			err = check_shash_op("import", err, driver, vec_name,
 					     cfg);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (cfg->nosimd)
-		crypto_disable_simd_for_test();
+	अगर (cfg->nosimd)
+		crypto_disable_simd_क्रम_test();
 	err = crypto_shash_final(desc, result);
-	if (cfg->nosimd)
-		crypto_reenable_simd_for_test();
+	अगर (cfg->nosimd)
+		crypto_reenable_simd_क्रम_test();
 	err = check_shash_op("final", err, driver, vec_name, cfg);
-	if (err)
-		return err;
-result_ready:
-	return check_hash_result("shash", result, digestsize, vec, vec_name,
+	अगर (err)
+		वापस err;
+result_पढ़ोy:
+	वापस check_hash_result("shash", result, digestsize, vec, vec_name,
 				 driver, cfg);
-}
+पूर्ण
 
-static int do_ahash_op(int (*op)(struct ahash_request *req),
-		       struct ahash_request *req,
-		       struct crypto_wait *wait, bool nosimd)
-{
-	int err;
+अटल पूर्णांक करो_ahash_op(पूर्णांक (*op)(काष्ठा ahash_request *req),
+		       काष्ठा ahash_request *req,
+		       काष्ठा crypto_रुको *रुको, bool nosimd)
+अणु
+	पूर्णांक err;
 
-	if (nosimd)
-		crypto_disable_simd_for_test();
+	अगर (nosimd)
+		crypto_disable_simd_क्रम_test();
 
 	err = op(req);
 
-	if (nosimd)
-		crypto_reenable_simd_for_test();
+	अगर (nosimd)
+		crypto_reenable_simd_क्रम_test();
 
-	return crypto_wait_req(err, wait);
-}
+	वापस crypto_रुको_req(err, रुको);
+पूर्ण
 
-static int check_nonfinal_ahash_op(const char *op, int err,
-				   u8 *result, unsigned int digestsize,
-				   const char *driver, const char *vec_name,
-				   const struct testvec_config *cfg)
-{
-	if (err) {
+अटल पूर्णांक check_nonfinal_ahash_op(स्थिर अक्षर *op, पूर्णांक err,
+				   u8 *result, अचिन्हित पूर्णांक digestsize,
+				   स्थिर अक्षर *driver, स्थिर अक्षर *vec_name,
+				   स्थिर काष्ठा testvec_config *cfg)
+अणु
+	अगर (err) अणु
 		pr_err("alg: ahash: %s %s() failed with err %d on test vector %s, cfg=\"%s\"\n",
 		       driver, op, err, vec_name, cfg->name);
-		return err;
-	}
-	if (!testmgr_is_poison(result, digestsize)) {
+		वापस err;
+	पूर्ण
+	अगर (!tesपंचांगgr_is_poison(result, digestsize)) अणु
 		pr_err("alg: ahash: %s %s() used result buffer on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Test one hash test vector in one configuration, using the ahash API */
-static int test_ahash_vec_cfg(const struct hash_testvec *vec,
-			      const char *vec_name,
-			      const struct testvec_config *cfg,
-			      struct ahash_request *req,
-			      struct test_sglist *tsgl,
+अटल पूर्णांक test_ahash_vec_cfg(स्थिर काष्ठा hash_testvec *vec,
+			      स्थिर अक्षर *vec_name,
+			      स्थिर काष्ठा testvec_config *cfg,
+			      काष्ठा ahash_request *req,
+			      काष्ठा test_sglist *tsgl,
 			      u8 *hashstate)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	const unsigned int alignmask = crypto_ahash_alignmask(tfm);
-	const unsigned int digestsize = crypto_ahash_digestsize(tfm);
-	const unsigned int statesize = crypto_ahash_statesize(tfm);
-	const char *driver = crypto_ahash_driver_name(tfm);
-	const u32 req_flags = CRYPTO_TFM_REQ_MAY_BACKLOG | cfg->req_flags;
-	const struct test_sg_division *divs[XBUFSIZE];
-	DECLARE_CRYPTO_WAIT(wait);
-	unsigned int i;
-	struct scatterlist *pending_sgl;
-	unsigned int pending_len;
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक alignmask = crypto_ahash_alignmask(tfm);
+	स्थिर अचिन्हित पूर्णांक digestsize = crypto_ahash_digestsize(tfm);
+	स्थिर अचिन्हित पूर्णांक statesize = crypto_ahash_statesize(tfm);
+	स्थिर अक्षर *driver = crypto_ahash_driver_name(tfm);
+	स्थिर u32 req_flags = CRYPTO_TFM_REQ_MAY_BACKLOG | cfg->req_flags;
+	स्थिर काष्ठा test_sg_भागision *भागs[Xबफ_मानE];
+	DECLARE_CRYPTO_WAIT(रुको);
+	अचिन्हित पूर्णांक i;
+	काष्ठा scatterlist *pending_sgl;
+	अचिन्हित पूर्णांक pending_len;
 	u8 result[HASH_MAX_DIGESTSIZE + TESTMGR_POISON_LEN];
-	int err;
+	पूर्णांक err;
 
-	/* Set the key, if specified */
-	if (vec->ksize) {
-		err = do_setkey(crypto_ahash_setkey, tfm, vec->key, vec->ksize,
+	/* Set the key, अगर specअगरied */
+	अगर (vec->ksize) अणु
+		err = करो_setkey(crypto_ahash_setkey, tfm, vec->key, vec->ksize,
 				cfg, alignmask);
-		if (err) {
-			if (err == vec->setkey_error)
-				return 0;
+		अगर (err) अणु
+			अगर (err == vec->setkey_error)
+				वापस 0;
 			pr_err("alg: ahash: %s setkey failed on test vector %s; expected_error=%d, actual_error=%d, flags=%#x\n",
 			       driver, vec_name, vec->setkey_error, err,
 			       crypto_ahash_get_flags(tfm));
-			return err;
-		}
-		if (vec->setkey_error) {
+			वापस err;
+		पूर्ण
+		अगर (vec->setkey_error) अणु
 			pr_err("alg: ahash: %s setkey unexpectedly succeeded on test vector %s; expected_error=%d\n",
 			       driver, vec_name, vec->setkey_error);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Build the scatterlist for the source data */
-	err = build_hash_sglist(tsgl, vec, cfg, alignmask, divs);
-	if (err) {
+	/* Build the scatterlist क्रम the source data */
+	err = build_hash_sglist(tsgl, vec, cfg, alignmask, भागs);
+	अगर (err) अणु
 		pr_err("alg: ahash: %s: error preparing scatterlist for test vector %s, cfg=\"%s\"\n",
 		       driver, vec_name, cfg->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Do the actual hashing */
 
-	testmgr_poison(req->__ctx, crypto_ahash_reqsize(tfm));
-	testmgr_poison(result, digestsize + TESTMGR_POISON_LEN);
+	tesपंचांगgr_poison(req->__ctx, crypto_ahash_reqsize(tfm));
+	tesपंचांगgr_poison(result, digestsize + TESTMGR_POISON_LEN);
 
-	if (cfg->finalization_type == FINALIZATION_TYPE_DIGEST ||
-	    vec->digest_error) {
+	अगर (cfg->finalization_type == FINALIZATION_TYPE_DIGEST ||
+	    vec->digest_error) अणु
 		/* Just using digest() */
-		ahash_request_set_callback(req, req_flags, crypto_req_done,
-					   &wait);
+		ahash_request_set_callback(req, req_flags, crypto_req_करोne,
+					   &रुको);
 		ahash_request_set_crypt(req, tsgl->sgl, result, vec->psize);
-		err = do_ahash_op(crypto_ahash_digest, req, &wait, cfg->nosimd);
-		if (err) {
-			if (err == vec->digest_error)
-				return 0;
+		err = करो_ahash_op(crypto_ahash_digest, req, &रुको, cfg->nosimd);
+		अगर (err) अणु
+			अगर (err == vec->digest_error)
+				वापस 0;
 			pr_err("alg: ahash: %s digest() failed on test vector %s; expected_error=%d, actual_error=%d, cfg=\"%s\"\n",
 			       driver, vec_name, vec->digest_error, err,
 			       cfg->name);
-			return err;
-		}
-		if (vec->digest_error) {
+			वापस err;
+		पूर्ण
+		अगर (vec->digest_error) अणु
 			pr_err("alg: ahash: %s digest() unexpectedly succeeded on test vector %s; expected_error=%d, cfg=\"%s\"\n",
 			       driver, vec_name, vec->digest_error, cfg->name);
-			return -EINVAL;
-		}
-		goto result_ready;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		जाओ result_पढ़ोy;
+	पूर्ण
 
 	/* Using init(), zero or more update(), then final() or finup() */
 
-	ahash_request_set_callback(req, req_flags, crypto_req_done, &wait);
-	ahash_request_set_crypt(req, NULL, result, 0);
-	err = do_ahash_op(crypto_ahash_init, req, &wait, cfg->nosimd);
+	ahash_request_set_callback(req, req_flags, crypto_req_करोne, &रुको);
+	ahash_request_set_crypt(req, शून्य, result, 0);
+	err = करो_ahash_op(crypto_ahash_init, req, &रुको, cfg->nosimd);
 	err = check_nonfinal_ahash_op("init", err, result, digestsize,
 				      driver, vec_name, cfg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	pending_sgl = NULL;
+	pending_sgl = शून्य;
 	pending_len = 0;
-	for (i = 0; i < tsgl->nents; i++) {
-		if (divs[i]->flush_type != FLUSH_TYPE_NONE &&
-		    pending_sgl != NULL) {
+	क्रम (i = 0; i < tsgl->nents; i++) अणु
+		अगर (भागs[i]->flush_type != FLUSH_TYPE_NONE &&
+		    pending_sgl != शून्य) अणु
 			/* update() with the pending data */
 			ahash_request_set_callback(req, req_flags,
-						   crypto_req_done, &wait);
+						   crypto_req_करोne, &रुको);
 			ahash_request_set_crypt(req, pending_sgl, result,
 						pending_len);
-			err = do_ahash_op(crypto_ahash_update, req, &wait,
-					  divs[i]->nosimd);
+			err = करो_ahash_op(crypto_ahash_update, req, &रुको,
+					  भागs[i]->nosimd);
 			err = check_nonfinal_ahash_op("update", err,
 						      result, digestsize,
 						      driver, vec_name, cfg);
-			if (err)
-				return err;
-			pending_sgl = NULL;
+			अगर (err)
+				वापस err;
+			pending_sgl = शून्य;
 			pending_len = 0;
-		}
-		if (divs[i]->flush_type == FLUSH_TYPE_REIMPORT) {
+		पूर्ण
+		अगर (भागs[i]->flush_type == FLUSH_TYPE_REIMPORT) अणु
 			/* Test ->export() and ->import() */
-			testmgr_poison(hashstate + statesize,
+			tesपंचांगgr_poison(hashstate + statesize,
 				       TESTMGR_POISON_LEN);
 			err = crypto_ahash_export(req, hashstate);
 			err = check_nonfinal_ahash_op("export", err,
 						      result, digestsize,
 						      driver, vec_name, cfg);
-			if (err)
-				return err;
-			if (!testmgr_is_poison(hashstate + statesize,
-					       TESTMGR_POISON_LEN)) {
+			अगर (err)
+				वापस err;
+			अगर (!tesपंचांगgr_is_poison(hashstate + statesize,
+					       TESTMGR_POISON_LEN)) अणु
 				pr_err("alg: ahash: %s export() overran state buffer on test vector %s, cfg=\"%s\"\n",
 				       driver, vec_name, cfg->name);
-				return -EOVERFLOW;
-			}
+				वापस -EOVERFLOW;
+			पूर्ण
 
-			testmgr_poison(req->__ctx, crypto_ahash_reqsize(tfm));
+			tesपंचांगgr_poison(req->__ctx, crypto_ahash_reqsize(tfm));
 			err = crypto_ahash_import(req, hashstate);
 			err = check_nonfinal_ahash_op("import", err,
 						      result, digestsize,
 						      driver, vec_name, cfg);
-			if (err)
-				return err;
-		}
-		if (pending_sgl == NULL)
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (pending_sgl == शून्य)
 			pending_sgl = &tsgl->sgl[i];
 		pending_len += tsgl->sgl[i].length;
-	}
+	पूर्ण
 
-	ahash_request_set_callback(req, req_flags, crypto_req_done, &wait);
+	ahash_request_set_callback(req, req_flags, crypto_req_करोne, &रुको);
 	ahash_request_set_crypt(req, pending_sgl, result, pending_len);
-	if (cfg->finalization_type == FINALIZATION_TYPE_FINAL) {
+	अगर (cfg->finalization_type == FINALIZATION_TYPE_FINAL) अणु
 		/* finish with update() and final() */
-		err = do_ahash_op(crypto_ahash_update, req, &wait, cfg->nosimd);
+		err = करो_ahash_op(crypto_ahash_update, req, &रुको, cfg->nosimd);
 		err = check_nonfinal_ahash_op("update", err, result, digestsize,
 					      driver, vec_name, cfg);
-		if (err)
-			return err;
-		err = do_ahash_op(crypto_ahash_final, req, &wait, cfg->nosimd);
-		if (err) {
+		अगर (err)
+			वापस err;
+		err = करो_ahash_op(crypto_ahash_final, req, &रुको, cfg->nosimd);
+		अगर (err) अणु
 			pr_err("alg: ahash: %s final() failed with err %d on test vector %s, cfg=\"%s\"\n",
 			       driver, err, vec_name, cfg->name);
-			return err;
-		}
-	} else {
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* finish with finup() */
-		err = do_ahash_op(crypto_ahash_finup, req, &wait, cfg->nosimd);
-		if (err) {
+		err = करो_ahash_op(crypto_ahash_finup, req, &रुको, cfg->nosimd);
+		अगर (err) अणु
 			pr_err("alg: ahash: %s finup() failed with err %d on test vector %s, cfg=\"%s\"\n",
 			       driver, err, vec_name, cfg->name);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-result_ready:
-	return check_hash_result("ahash", result, digestsize, vec, vec_name,
+result_पढ़ोy:
+	वापस check_hash_result("ahash", result, digestsize, vec, vec_name,
 				 driver, cfg);
-}
+पूर्ण
 
-static int test_hash_vec_cfg(const struct hash_testvec *vec,
-			     const char *vec_name,
-			     const struct testvec_config *cfg,
-			     struct ahash_request *req,
-			     struct shash_desc *desc,
-			     struct test_sglist *tsgl,
+अटल पूर्णांक test_hash_vec_cfg(स्थिर काष्ठा hash_testvec *vec,
+			     स्थिर अक्षर *vec_name,
+			     स्थिर काष्ठा testvec_config *cfg,
+			     काष्ठा ahash_request *req,
+			     काष्ठा shash_desc *desc,
+			     काष्ठा test_sglist *tsgl,
 			     u8 *hashstate)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	/*
 	 * For algorithms implemented as "shash", most bugs will be detected by
@@ -1535,67 +1536,67 @@ static int test_hash_vec_cfg(const struct hash_testvec *vec,
 	 * failures involve less indirection, so are easier to debug.
 	 */
 
-	if (desc) {
+	अगर (desc) अणु
 		err = test_shash_vec_cfg(vec, vec_name, cfg, desc, tsgl,
 					 hashstate);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return test_ahash_vec_cfg(vec, vec_name, cfg, req, tsgl, hashstate);
-}
+	वापस test_ahash_vec_cfg(vec, vec_name, cfg, req, tsgl, hashstate);
+पूर्ण
 
-static int test_hash_vec(const struct hash_testvec *vec, unsigned int vec_num,
-			 struct ahash_request *req, struct shash_desc *desc,
-			 struct test_sglist *tsgl, u8 *hashstate)
-{
-	char vec_name[16];
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_hash_vec(स्थिर काष्ठा hash_testvec *vec, अचिन्हित पूर्णांक vec_num,
+			 काष्ठा ahash_request *req, काष्ठा shash_desc *desc,
+			 काष्ठा test_sglist *tsgl, u8 *hashstate)
+अणु
+	अक्षर vec_name[16];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	sprintf(vec_name, "%u", vec_num);
+	प्र_लिखो(vec_name, "%u", vec_num);
 
-	for (i = 0; i < ARRAY_SIZE(default_hash_testvec_configs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(शेष_hash_testvec_configs); i++) अणु
 		err = test_hash_vec_cfg(vec, vec_name,
-					&default_hash_testvec_configs[i],
+					&शेष_hash_testvec_configs[i],
 					req, desc, tsgl, hashstate);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
-	if (!noextratests) {
-		struct testvec_config cfg;
-		char cfgname[TESTVEC_CONFIG_NAMELEN];
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+	अगर (!noextratests) अणु
+		काष्ठा testvec_config cfg;
+		अक्षर cfgname[TESTVEC_CONFIG_NAMELEN];
 
-		for (i = 0; i < fuzz_iterations; i++) {
-			generate_random_testvec_config(&cfg, cfgname,
-						       sizeof(cfgname));
+		क्रम (i = 0; i < fuzz_iterations; i++) अणु
+			generate_अक्रमom_testvec_config(&cfg, cfgname,
+						       माप(cfgname));
 			err = test_hash_vec_cfg(vec, vec_name, &cfg,
 						req, desc, tsgl, hashstate);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			cond_resched();
-		}
-	}
-#endif
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
 /*
  * Generate a hash test vector from the given implementation.
- * Assumes the buffers in 'vec' were already allocated.
+ * Assumes the buffers in 'vec' were alपढ़ोy allocated.
  */
-static void generate_random_hash_testvec(struct shash_desc *desc,
-					 struct hash_testvec *vec,
-					 unsigned int maxkeysize,
-					 unsigned int maxdatasize,
-					 char *name, size_t max_namelen)
-{
+अटल व्योम generate_अक्रमom_hash_testvec(काष्ठा shash_desc *desc,
+					 काष्ठा hash_testvec *vec,
+					 अचिन्हित पूर्णांक maxkeysize,
+					 अचिन्हित पूर्णांक maxdatasize,
+					 अक्षर *name, माप_प्रकार max_namelen)
+अणु
 	/* Data */
-	vec->psize = generate_random_length(maxdatasize);
-	generate_random_bytes((u8 *)vec->plaintext, vec->psize);
+	vec->psize = generate_अक्रमom_length(maxdatasize);
+	generate_अक्रमom_bytes((u8 *)vec->plaपूर्णांकext, vec->psize);
 
 	/*
 	 * Key: length in range [1, maxkeysize], but usually choose maxkeysize.
@@ -1603,205 +1604,205 @@ static void generate_random_hash_testvec(struct shash_desc *desc,
 	 */
 	vec->setkey_error = 0;
 	vec->ksize = 0;
-	if (maxkeysize) {
+	अगर (maxkeysize) अणु
 		vec->ksize = maxkeysize;
-		if (prandom_u32() % 4 == 0)
-			vec->ksize = 1 + (prandom_u32() % maxkeysize);
-		generate_random_bytes((u8 *)vec->key, vec->ksize);
+		अगर (pअक्रमom_u32() % 4 == 0)
+			vec->ksize = 1 + (pअक्रमom_u32() % maxkeysize);
+		generate_अक्रमom_bytes((u8 *)vec->key, vec->ksize);
 
 		vec->setkey_error = crypto_shash_setkey(desc->tfm, vec->key,
 							vec->ksize);
-		/* If the key couldn't be set, no need to continue to digest. */
-		if (vec->setkey_error)
-			goto done;
-	}
+		/* If the key couldn't be set, no need to जारी to digest. */
+		अगर (vec->setkey_error)
+			जाओ करोne;
+	पूर्ण
 
 	/* Digest */
-	vec->digest_error = crypto_shash_digest(desc, vec->plaintext,
+	vec->digest_error = crypto_shash_digest(desc, vec->plaपूर्णांकext,
 						vec->psize, (u8 *)vec->digest);
-done:
-	snprintf(name, max_namelen, "\"random: psize=%u ksize=%u\"",
+करोne:
+	snम_लिखो(name, max_namelen, "\"random: psize=%u ksize=%u\"",
 		 vec->psize, vec->ksize);
-}
+पूर्ण
 
 /*
  * Test the hash algorithm represented by @req against the corresponding generic
- * implementation, if one is available.
+ * implementation, अगर one is available.
  */
-static int test_hash_vs_generic_impl(const char *generic_driver,
-				     unsigned int maxkeysize,
-				     struct ahash_request *req,
-				     struct shash_desc *desc,
-				     struct test_sglist *tsgl,
+अटल पूर्णांक test_hash_vs_generic_impl(स्थिर अक्षर *generic_driver,
+				     अचिन्हित पूर्णांक maxkeysize,
+				     काष्ठा ahash_request *req,
+				     काष्ठा shash_desc *desc,
+				     काष्ठा test_sglist *tsgl,
 				     u8 *hashstate)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	const unsigned int digestsize = crypto_ahash_digestsize(tfm);
-	const unsigned int blocksize = crypto_ahash_blocksize(tfm);
-	const unsigned int maxdatasize = (2 * PAGE_SIZE) - TESTMGR_POISON_LEN;
-	const char *algname = crypto_hash_alg_common(tfm)->base.cra_name;
-	const char *driver = crypto_ahash_driver_name(tfm);
-	char _generic_driver[CRYPTO_MAX_ALG_NAME];
-	struct crypto_shash *generic_tfm = NULL;
-	struct shash_desc *generic_desc = NULL;
-	unsigned int i;
-	struct hash_testvec vec = { 0 };
-	char vec_name[64];
-	struct testvec_config *cfg;
-	char cfgname[TESTVEC_CONFIG_NAMELEN];
-	int err;
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक digestsize = crypto_ahash_digestsize(tfm);
+	स्थिर अचिन्हित पूर्णांक blocksize = crypto_ahash_blocksize(tfm);
+	स्थिर अचिन्हित पूर्णांक maxdatasize = (2 * PAGE_SIZE) - TESTMGR_POISON_LEN;
+	स्थिर अक्षर *algname = crypto_hash_alg_common(tfm)->base.cra_name;
+	स्थिर अक्षर *driver = crypto_ahash_driver_name(tfm);
+	अक्षर _generic_driver[CRYPTO_MAX_ALG_NAME];
+	काष्ठा crypto_shash *generic_tfm = शून्य;
+	काष्ठा shash_desc *generic_desc = शून्य;
+	अचिन्हित पूर्णांक i;
+	काष्ठा hash_testvec vec = अणु 0 पूर्ण;
+	अक्षर vec_name[64];
+	काष्ठा testvec_config *cfg;
+	अक्षर cfgname[TESTVEC_CONFIG_NAMELEN];
+	पूर्णांक err;
 
-	if (noextratests)
-		return 0;
+	अगर (noextratests)
+		वापस 0;
 
-	if (!generic_driver) { /* Use default naming convention? */
+	अगर (!generic_driver) अणु /* Use शेष naming convention? */
 		err = build_generic_driver_name(algname, _generic_driver);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		generic_driver = _generic_driver;
-	}
+	पूर्ण
 
-	if (strcmp(generic_driver, driver) == 0) /* Already the generic impl? */
-		return 0;
+	अगर (म_भेद(generic_driver, driver) == 0) /* Alपढ़ोy the generic impl? */
+		वापस 0;
 
 	generic_tfm = crypto_alloc_shash(generic_driver, 0, 0);
-	if (IS_ERR(generic_tfm)) {
+	अगर (IS_ERR(generic_tfm)) अणु
 		err = PTR_ERR(generic_tfm);
-		if (err == -ENOENT) {
+		अगर (err == -ENOENT) अणु
 			pr_warn("alg: hash: skipping comparison tests for %s because %s is unavailable\n",
 				driver, generic_driver);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		pr_err("alg: hash: error allocating %s (generic impl of %s): %d\n",
 		       generic_driver, algname, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	cfg = kzalloc(sizeof(*cfg), GFP_KERNEL);
-	if (!cfg) {
+	cfg = kzalloc(माप(*cfg), GFP_KERNEL);
+	अगर (!cfg) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	generic_desc = kzalloc(sizeof(*desc) +
+	generic_desc = kzalloc(माप(*desc) +
 			       crypto_shash_descsize(generic_tfm), GFP_KERNEL);
-	if (!generic_desc) {
+	अगर (!generic_desc) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	generic_desc->tfm = generic_tfm;
 
-	/* Check the algorithm properties for consistency. */
+	/* Check the algorithm properties क्रम consistency. */
 
-	if (digestsize != crypto_shash_digestsize(generic_tfm)) {
+	अगर (digestsize != crypto_shash_digestsize(generic_tfm)) अणु
 		pr_err("alg: hash: digestsize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, digestsize,
 		       crypto_shash_digestsize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (blocksize != crypto_shash_blocksize(generic_tfm)) {
+	अगर (blocksize != crypto_shash_blocksize(generic_tfm)) अणु
 		pr_err("alg: hash: blocksize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, blocksize, crypto_shash_blocksize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Now generate test vectors using the generic implementation, and test
 	 * the other implementation against them.
 	 */
 
-	vec.key = kmalloc(maxkeysize, GFP_KERNEL);
-	vec.plaintext = kmalloc(maxdatasize, GFP_KERNEL);
-	vec.digest = kmalloc(digestsize, GFP_KERNEL);
-	if (!vec.key || !vec.plaintext || !vec.digest) {
+	vec.key = kदो_स्मृति(maxkeysize, GFP_KERNEL);
+	vec.plaपूर्णांकext = kदो_स्मृति(maxdatasize, GFP_KERNEL);
+	vec.digest = kदो_स्मृति(digestsize, GFP_KERNEL);
+	अगर (!vec.key || !vec.plaपूर्णांकext || !vec.digest) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < fuzz_iterations * 8; i++) {
-		generate_random_hash_testvec(generic_desc, &vec,
+	क्रम (i = 0; i < fuzz_iterations * 8; i++) अणु
+		generate_अक्रमom_hash_testvec(generic_desc, &vec,
 					     maxkeysize, maxdatasize,
-					     vec_name, sizeof(vec_name));
-		generate_random_testvec_config(cfg, cfgname, sizeof(cfgname));
+					     vec_name, माप(vec_name));
+		generate_अक्रमom_testvec_config(cfg, cfgname, माप(cfgname));
 
 		err = test_hash_vec_cfg(&vec, vec_name, cfg,
 					req, desc, tsgl, hashstate);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		cond_resched();
-	}
+	पूर्ण
 	err = 0;
 out:
-	kfree(cfg);
-	kfree(vec.key);
-	kfree(vec.plaintext);
-	kfree(vec.digest);
-	crypto_free_shash(generic_tfm);
-	kfree_sensitive(generic_desc);
-	return err;
-}
-#else /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
-static int test_hash_vs_generic_impl(const char *generic_driver,
-				     unsigned int maxkeysize,
-				     struct ahash_request *req,
-				     struct shash_desc *desc,
-				     struct test_sglist *tsgl,
+	kमुक्त(cfg);
+	kमुक्त(vec.key);
+	kमुक्त(vec.plaपूर्णांकext);
+	kमुक्त(vec.digest);
+	crypto_मुक्त_shash(generic_tfm);
+	kमुक्त_sensitive(generic_desc);
+	वापस err;
+पूर्ण
+#अन्यथा /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+अटल पूर्णांक test_hash_vs_generic_impl(स्थिर अक्षर *generic_driver,
+				     अचिन्हित पूर्णांक maxkeysize,
+				     काष्ठा ahash_request *req,
+				     काष्ठा shash_desc *desc,
+				     काष्ठा test_sglist *tsgl,
 				     u8 *hashstate)
-{
-	return 0;
-}
-#endif /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
 
-static int alloc_shash(const char *driver, u32 type, u32 mask,
-		       struct crypto_shash **tfm_ret,
-		       struct shash_desc **desc_ret)
-{
-	struct crypto_shash *tfm;
-	struct shash_desc *desc;
+अटल पूर्णांक alloc_shash(स्थिर अक्षर *driver, u32 type, u32 mask,
+		       काष्ठा crypto_shash **tfm_ret,
+		       काष्ठा shash_desc **desc_ret)
+अणु
+	काष्ठा crypto_shash *tfm;
+	काष्ठा shash_desc *desc;
 
 	tfm = crypto_alloc_shash(driver, type, mask);
-	if (IS_ERR(tfm)) {
-		if (PTR_ERR(tfm) == -ENOENT) {
+	अगर (IS_ERR(tfm)) अणु
+		अगर (PTR_ERR(tfm) == -ENOENT) अणु
 			/*
 			 * This algorithm is only available through the ahash
 			 * API, not the shash API, so skip the shash tests.
 			 */
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		pr_err("alg: hash: failed to allocate shash transform for %s: %ld\n",
 		       driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
+		वापस PTR_ERR(tfm);
+	पूर्ण
 
-	desc = kmalloc(sizeof(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
-	if (!desc) {
-		crypto_free_shash(tfm);
-		return -ENOMEM;
-	}
+	desc = kदो_स्मृति(माप(*desc) + crypto_shash_descsize(tfm), GFP_KERNEL);
+	अगर (!desc) अणु
+		crypto_मुक्त_shash(tfm);
+		वापस -ENOMEM;
+	पूर्ण
 	desc->tfm = tfm;
 
 	*tfm_ret = tfm;
 	*desc_ret = desc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __alg_test_hash(const struct hash_testvec *vecs,
-			   unsigned int num_vecs, const char *driver,
+अटल पूर्णांक __alg_test_hash(स्थिर काष्ठा hash_testvec *vecs,
+			   अचिन्हित पूर्णांक num_vecs, स्थिर अक्षर *driver,
 			   u32 type, u32 mask,
-			   const char *generic_driver, unsigned int maxkeysize)
-{
-	struct crypto_ahash *atfm = NULL;
-	struct ahash_request *req = NULL;
-	struct crypto_shash *stfm = NULL;
-	struct shash_desc *desc = NULL;
-	struct test_sglist *tsgl = NULL;
-	u8 *hashstate = NULL;
-	unsigned int statesize;
-	unsigned int i;
-	int err;
+			   स्थिर अक्षर *generic_driver, अचिन्हित पूर्णांक maxkeysize)
+अणु
+	काष्ठा crypto_ahash *atfm = शून्य;
+	काष्ठा ahash_request *req = शून्य;
+	काष्ठा crypto_shash *stfm = शून्य;
+	काष्ठा shash_desc *desc = शून्य;
+	काष्ठा test_sglist *tsgl = शून्य;
+	u8 *hashstate = शून्य;
+	अचिन्हित पूर्णांक statesize;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
 	/*
 	 * Always test the ahash API.  This works regardless of whether the
@@ -1809,183 +1810,183 @@ static int __alg_test_hash(const struct hash_testvec *vecs,
 	 */
 
 	atfm = crypto_alloc_ahash(driver, type, mask);
-	if (IS_ERR(atfm)) {
+	अगर (IS_ERR(atfm)) अणु
 		pr_err("alg: hash: failed to allocate transform for %s: %ld\n",
 		       driver, PTR_ERR(atfm));
-		return PTR_ERR(atfm);
-	}
+		वापस PTR_ERR(atfm);
+	पूर्ण
 	driver = crypto_ahash_driver_name(atfm);
 
 	req = ahash_request_alloc(atfm, GFP_KERNEL);
-	if (!req) {
+	अगर (!req) अणु
 		pr_err("alg: hash: failed to allocate request for %s\n",
 		       driver);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If available also test the shash API, to cover corner cases that may
+	 * If available also test the shash API, to cover corner हालs that may
 	 * be missed by testing the ahash API only.
 	 */
 	err = alloc_shash(driver, type, mask, &stfm, &desc);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	tsgl = kmalloc(sizeof(*tsgl), GFP_KERNEL);
-	if (!tsgl || init_test_sglist(tsgl) != 0) {
+	tsgl = kदो_स्मृति(माप(*tsgl), GFP_KERNEL);
+	अगर (!tsgl || init_test_sglist(tsgl) != 0) अणु
 		pr_err("alg: hash: failed to allocate test buffers for %s\n",
 		       driver);
-		kfree(tsgl);
-		tsgl = NULL;
+		kमुक्त(tsgl);
+		tsgl = शून्य;
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	statesize = crypto_ahash_statesize(atfm);
-	if (stfm)
+	अगर (stfm)
 		statesize = max(statesize, crypto_shash_statesize(stfm));
-	hashstate = kmalloc(statesize + TESTMGR_POISON_LEN, GFP_KERNEL);
-	if (!hashstate) {
+	hashstate = kदो_स्मृति(statesize + TESTMGR_POISON_LEN, GFP_KERNEL);
+	अगर (!hashstate) अणु
 		pr_err("alg: hash: failed to allocate hash state buffer for %s\n",
 		       driver);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < num_vecs; i++) {
+	क्रम (i = 0; i < num_vecs; i++) अणु
 		err = test_hash_vec(&vecs[i], i, req, desc, tsgl, hashstate);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		cond_resched();
-	}
+	पूर्ण
 	err = test_hash_vs_generic_impl(generic_driver, maxkeysize, req,
 					desc, tsgl, hashstate);
 out:
-	kfree(hashstate);
-	if (tsgl) {
+	kमुक्त(hashstate);
+	अगर (tsgl) अणु
 		destroy_test_sglist(tsgl);
-		kfree(tsgl);
-	}
-	kfree(desc);
-	crypto_free_shash(stfm);
-	ahash_request_free(req);
-	crypto_free_ahash(atfm);
-	return err;
-}
+		kमुक्त(tsgl);
+	पूर्ण
+	kमुक्त(desc);
+	crypto_मुक्त_shash(stfm);
+	ahash_request_मुक्त(req);
+	crypto_मुक्त_ahash(atfm);
+	वापस err;
+पूर्ण
 
-static int alg_test_hash(const struct alg_test_desc *desc, const char *driver,
+अटल पूर्णांक alg_test_hash(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 			 u32 type, u32 mask)
-{
-	const struct hash_testvec *template = desc->suite.hash.vecs;
-	unsigned int tcount = desc->suite.hash.count;
-	unsigned int nr_unkeyed, nr_keyed;
-	unsigned int maxkeysize = 0;
-	int err;
+अणु
+	स्थिर काष्ठा hash_testvec *ढाँचा = desc->suite.hash.vecs;
+	अचिन्हित पूर्णांक tcount = desc->suite.hash.count;
+	अचिन्हित पूर्णांक nr_unkeyed, nr_keyed;
+	अचिन्हित पूर्णांक maxkeysize = 0;
+	पूर्णांक err;
 
 	/*
-	 * For OPTIONAL_KEY algorithms, we have to do all the unkeyed tests
-	 * first, before setting a key on the tfm.  To make this easier, we
-	 * require that the unkeyed test vectors (if any) are listed first.
+	 * For OPTIONAL_KEY algorithms, we have to करो all the unkeyed tests
+	 * first, beक्रमe setting a key on the tfm.  To make this easier, we
+	 * require that the unkeyed test vectors (अगर any) are listed first.
 	 */
 
-	for (nr_unkeyed = 0; nr_unkeyed < tcount; nr_unkeyed++) {
-		if (template[nr_unkeyed].ksize)
-			break;
-	}
-	for (nr_keyed = 0; nr_unkeyed + nr_keyed < tcount; nr_keyed++) {
-		if (!template[nr_unkeyed + nr_keyed].ksize) {
+	क्रम (nr_unkeyed = 0; nr_unkeyed < tcount; nr_unkeyed++) अणु
+		अगर (ढाँचा[nr_unkeyed].ksize)
+			अवरोध;
+	पूर्ण
+	क्रम (nr_keyed = 0; nr_unkeyed + nr_keyed < tcount; nr_keyed++) अणु
+		अगर (!ढाँचा[nr_unkeyed + nr_keyed].ksize) अणु
 			pr_err("alg: hash: test vectors for %s out of order, "
 			       "unkeyed ones must come first\n", desc->alg);
-			return -EINVAL;
-		}
-		maxkeysize = max_t(unsigned int, maxkeysize,
-				   template[nr_unkeyed + nr_keyed].ksize);
-	}
+			वापस -EINVAL;
+		पूर्ण
+		maxkeysize = max_t(अचिन्हित पूर्णांक, maxkeysize,
+				   ढाँचा[nr_unkeyed + nr_keyed].ksize);
+	पूर्ण
 
 	err = 0;
-	if (nr_unkeyed) {
-		err = __alg_test_hash(template, nr_unkeyed, driver, type, mask,
+	अगर (nr_unkeyed) अणु
+		err = __alg_test_hash(ढाँचा, nr_unkeyed, driver, type, mask,
 				      desc->generic_driver, maxkeysize);
-		template += nr_unkeyed;
-	}
+		ढाँचा += nr_unkeyed;
+	पूर्ण
 
-	if (!err && nr_keyed)
-		err = __alg_test_hash(template, nr_keyed, driver, type, mask,
+	अगर (!err && nr_keyed)
+		err = __alg_test_hash(ढाँचा, nr_keyed, driver, type, mask,
 				      desc->generic_driver, maxkeysize);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int test_aead_vec_cfg(int enc, const struct aead_testvec *vec,
-			     const char *vec_name,
-			     const struct testvec_config *cfg,
-			     struct aead_request *req,
-			     struct cipher_test_sglists *tsgls)
-{
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	const unsigned int alignmask = crypto_aead_alignmask(tfm);
-	const unsigned int ivsize = crypto_aead_ivsize(tfm);
-	const unsigned int authsize = vec->clen - vec->plen;
-	const char *driver = crypto_aead_driver_name(tfm);
-	const u32 req_flags = CRYPTO_TFM_REQ_MAY_BACKLOG | cfg->req_flags;
-	const char *op = enc ? "encryption" : "decryption";
-	DECLARE_CRYPTO_WAIT(wait);
+अटल पूर्णांक test_aead_vec_cfg(पूर्णांक enc, स्थिर काष्ठा aead_testvec *vec,
+			     स्थिर अक्षर *vec_name,
+			     स्थिर काष्ठा testvec_config *cfg,
+			     काष्ठा aead_request *req,
+			     काष्ठा cipher_test_sglists *tsgls)
+अणु
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक alignmask = crypto_aead_alignmask(tfm);
+	स्थिर अचिन्हित पूर्णांक ivsize = crypto_aead_ivsize(tfm);
+	स्थिर अचिन्हित पूर्णांक authsize = vec->clen - vec->plen;
+	स्थिर अक्षर *driver = crypto_aead_driver_name(tfm);
+	स्थिर u32 req_flags = CRYPTO_TFM_REQ_MAY_BACKLOG | cfg->req_flags;
+	स्थिर अक्षर *op = enc ? "encryption" : "decryption";
+	DECLARE_CRYPTO_WAIT(रुको);
 	u8 _iv[3 * (MAX_ALGAPI_ALIGNMASK + 1) + MAX_IVLEN];
 	u8 *iv = PTR_ALIGN(&_iv[0], 2 * (MAX_ALGAPI_ALIGNMASK + 1)) +
 		 cfg->iv_offset +
 		 (cfg->iv_offset_relative_to_alignmask ? alignmask : 0);
-	struct kvec input[2];
-	int err;
+	काष्ठा kvec input[2];
+	पूर्णांक err;
 
 	/* Set the key */
-	if (vec->wk)
+	अगर (vec->wk)
 		crypto_aead_set_flags(tfm, CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
-	else
+	अन्यथा
 		crypto_aead_clear_flags(tfm, CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
 
-	err = do_setkey(crypto_aead_setkey, tfm, vec->key, vec->klen,
+	err = करो_setkey(crypto_aead_setkey, tfm, vec->key, vec->klen,
 			cfg, alignmask);
-	if (err && err != vec->setkey_error) {
+	अगर (err && err != vec->setkey_error) अणु
 		pr_err("alg: aead: %s setkey failed on test vector %s; expected_error=%d, actual_error=%d, flags=%#x\n",
 		       driver, vec_name, vec->setkey_error, err,
 		       crypto_aead_get_flags(tfm));
-		return err;
-	}
-	if (!err && vec->setkey_error) {
+		वापस err;
+	पूर्ण
+	अगर (!err && vec->setkey_error) अणु
 		pr_err("alg: aead: %s setkey unexpectedly succeeded on test vector %s; expected_error=%d\n",
 		       driver, vec_name, vec->setkey_error);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Set the authentication tag size */
 	err = crypto_aead_setauthsize(tfm, authsize);
-	if (err && err != vec->setauthsize_error) {
+	अगर (err && err != vec->setauthsize_error) अणु
 		pr_err("alg: aead: %s setauthsize failed on test vector %s; expected_error=%d, actual_error=%d\n",
 		       driver, vec_name, vec->setauthsize_error, err);
-		return err;
-	}
-	if (!err && vec->setauthsize_error) {
+		वापस err;
+	पूर्ण
+	अगर (!err && vec->setauthsize_error) अणु
 		pr_err("alg: aead: %s setauthsize unexpectedly succeeded on test vector %s; expected_error=%d\n",
 		       driver, vec_name, vec->setauthsize_error);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (vec->setkey_error || vec->setauthsize_error)
-		return 0;
+	अगर (vec->setkey_error || vec->setauthsize_error)
+		वापस 0;
 
-	/* The IV must be copied to a buffer, as the algorithm may modify it */
-	if (WARN_ON(ivsize > MAX_IVLEN))
-		return -EINVAL;
-	if (vec->iv)
-		memcpy(iv, vec->iv, ivsize);
-	else
-		memset(iv, 0, ivsize);
+	/* The IV must be copied to a buffer, as the algorithm may modअगरy it */
+	अगर (WARN_ON(ivsize > MAX_IVLEN))
+		वापस -EINVAL;
+	अगर (vec->iv)
+		स_नकल(iv, vec->iv, ivsize);
+	अन्यथा
+		स_रखो(iv, 0, ivsize);
 
 	/* Build the src/dst scatterlists */
-	input[0].iov_base = (void *)vec->assoc;
+	input[0].iov_base = (व्योम *)vec->assoc;
 	input[0].iov_len = vec->alen;
-	input[1].iov_base = enc ? (void *)vec->ptext : (void *)vec->ctext;
+	input[1].iov_base = enc ? (व्योम *)vec->ptext : (व्योम *)vec->ctext;
 	input[1].iov_len = enc ? vec->plen : vec->clen;
 	err = build_cipher_test_sglists(tsgls, cfg, alignmask,
 					vec->alen + (enc ? vec->plen :
@@ -1993,1602 +1994,1602 @@ static int test_aead_vec_cfg(int enc, const struct aead_testvec *vec,
 					vec->alen + (enc ? vec->clen :
 						     vec->plen),
 					input, 2);
-	if (err) {
+	अगर (err) अणु
 		pr_err("alg: aead: %s %s: error preparing scatterlists for test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Do the actual encryption or decryption */
-	testmgr_poison(req->__ctx, crypto_aead_reqsize(tfm));
-	aead_request_set_callback(req, req_flags, crypto_req_done, &wait);
+	tesपंचांगgr_poison(req->__ctx, crypto_aead_reqsize(tfm));
+	aead_request_set_callback(req, req_flags, crypto_req_करोne, &रुको);
 	aead_request_set_crypt(req, tsgls->src.sgl_ptr, tsgls->dst.sgl_ptr,
 			       enc ? vec->plen : vec->clen, iv);
 	aead_request_set_ad(req, vec->alen);
-	if (cfg->nosimd)
-		crypto_disable_simd_for_test();
+	अगर (cfg->nosimd)
+		crypto_disable_simd_क्रम_test();
 	err = enc ? crypto_aead_encrypt(req) : crypto_aead_decrypt(req);
-	if (cfg->nosimd)
-		crypto_reenable_simd_for_test();
-	err = crypto_wait_req(err, &wait);
+	अगर (cfg->nosimd)
+		crypto_reenable_simd_क्रम_test();
+	err = crypto_रुको_req(err, &रुको);
 
 	/* Check that the algorithm didn't overwrite things it shouldn't have */
-	if (req->cryptlen != (enc ? vec->plen : vec->clen) ||
+	अगर (req->cryptlen != (enc ? vec->plen : vec->clen) ||
 	    req->assoclen != vec->alen ||
 	    req->iv != iv ||
 	    req->src != tsgls->src.sgl_ptr ||
 	    req->dst != tsgls->dst.sgl_ptr ||
 	    crypto_aead_reqtfm(req) != tfm ||
-	    req->base.complete != crypto_req_done ||
+	    req->base.complete != crypto_req_करोne ||
 	    req->base.flags != req_flags ||
-	    req->base.data != &wait) {
+	    req->base.data != &रुको) अणु
 		pr_err("alg: aead: %s %s corrupted request struct on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		if (req->cryptlen != (enc ? vec->plen : vec->clen))
+		अगर (req->cryptlen != (enc ? vec->plen : vec->clen))
 			pr_err("alg: aead: changed 'req->cryptlen'\n");
-		if (req->assoclen != vec->alen)
+		अगर (req->assoclen != vec->alen)
 			pr_err("alg: aead: changed 'req->assoclen'\n");
-		if (req->iv != iv)
+		अगर (req->iv != iv)
 			pr_err("alg: aead: changed 'req->iv'\n");
-		if (req->src != tsgls->src.sgl_ptr)
+		अगर (req->src != tsgls->src.sgl_ptr)
 			pr_err("alg: aead: changed 'req->src'\n");
-		if (req->dst != tsgls->dst.sgl_ptr)
+		अगर (req->dst != tsgls->dst.sgl_ptr)
 			pr_err("alg: aead: changed 'req->dst'\n");
-		if (crypto_aead_reqtfm(req) != tfm)
+		अगर (crypto_aead_reqtfm(req) != tfm)
 			pr_err("alg: aead: changed 'req->base.tfm'\n");
-		if (req->base.complete != crypto_req_done)
+		अगर (req->base.complete != crypto_req_करोne)
 			pr_err("alg: aead: changed 'req->base.complete'\n");
-		if (req->base.flags != req_flags)
+		अगर (req->base.flags != req_flags)
 			pr_err("alg: aead: changed 'req->base.flags'\n");
-		if (req->base.data != &wait)
+		अगर (req->base.data != &रुको)
 			pr_err("alg: aead: changed 'req->base.data'\n");
-		return -EINVAL;
-	}
-	if (is_test_sglist_corrupted(&tsgls->src)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (is_test_sglist_corrupted(&tsgls->src)) अणु
 		pr_err("alg: aead: %s %s corrupted src sgl on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return -EINVAL;
-	}
-	if (tsgls->dst.sgl_ptr != tsgls->src.sgl &&
-	    is_test_sglist_corrupted(&tsgls->dst)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (tsgls->dst.sgl_ptr != tsgls->src.sgl &&
+	    is_test_sglist_corrupted(&tsgls->dst)) अणु
 		pr_err("alg: aead: %s %s corrupted dst sgl on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check for unexpected success or failure, or wrong error code */
-	if ((err == 0 && vec->novrfy) ||
-	    (err != vec->crypt_error && !(err == -EBADMSG && vec->novrfy))) {
-		char expected_error[32];
+	/* Check क्रम unexpected success or failure, or wrong error code */
+	अगर ((err == 0 && vec->novrfy) ||
+	    (err != vec->crypt_error && !(err == -EBADMSG && vec->novrfy))) अणु
+		अक्षर expected_error[32];
 
-		if (vec->novrfy &&
+		अगर (vec->novrfy &&
 		    vec->crypt_error != 0 && vec->crypt_error != -EBADMSG)
-			sprintf(expected_error, "-EBADMSG or %d",
+			प्र_लिखो(expected_error, "-EBADMSG or %d",
 				vec->crypt_error);
-		else if (vec->novrfy)
-			sprintf(expected_error, "-EBADMSG");
-		else
-			sprintf(expected_error, "%d", vec->crypt_error);
-		if (err) {
+		अन्यथा अगर (vec->novrfy)
+			प्र_लिखो(expected_error, "-EBADMSG");
+		अन्यथा
+			प्र_लिखो(expected_error, "%d", vec->crypt_error);
+		अगर (err) अणु
 			pr_err("alg: aead: %s %s failed on test vector %s; expected_error=%s, actual_error=%d, cfg=\"%s\"\n",
 			       driver, op, vec_name, expected_error, err,
 			       cfg->name);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		pr_err("alg: aead: %s %s unexpectedly succeeded on test vector %s; expected_error=%s, cfg=\"%s\"\n",
 		       driver, op, vec_name, expected_error, cfg->name);
-		return -EINVAL;
-	}
-	if (err) /* Expectedly failed. */
-		return 0;
+		वापस -EINVAL;
+	पूर्ण
+	अगर (err) /* Expectedly failed. */
+		वापस 0;
 
-	/* Check for the correct output (ciphertext or plaintext) */
-	err = verify_correct_output(&tsgls->dst, enc ? vec->ctext : vec->ptext,
+	/* Check क्रम the correct output (ciphertext or plaपूर्णांकext) */
+	err = verअगरy_correct_output(&tsgls->dst, enc ? vec->ctext : vec->ptext,
 				    enc ? vec->clen : vec->plen,
 				    vec->alen, enc || !cfg->inplace);
-	if (err == -EOVERFLOW) {
+	अगर (err == -EOVERFLOW) अणु
 		pr_err("alg: aead: %s %s overran dst buffer on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return err;
-	}
-	if (err) {
+		वापस err;
+	पूर्ण
+	अगर (err) अणु
 		pr_err("alg: aead: %s %s test failed (wrong result) on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_aead_vec(int enc, const struct aead_testvec *vec,
-			 unsigned int vec_num, struct aead_request *req,
-			 struct cipher_test_sglists *tsgls)
-{
-	char vec_name[16];
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_aead_vec(पूर्णांक enc, स्थिर काष्ठा aead_testvec *vec,
+			 अचिन्हित पूर्णांक vec_num, काष्ठा aead_request *req,
+			 काष्ठा cipher_test_sglists *tsgls)
+अणु
+	अक्षर vec_name[16];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (enc && vec->novrfy)
-		return 0;
+	अगर (enc && vec->novrfy)
+		वापस 0;
 
-	sprintf(vec_name, "%u", vec_num);
+	प्र_लिखो(vec_name, "%u", vec_num);
 
-	for (i = 0; i < ARRAY_SIZE(default_cipher_testvec_configs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(शेष_cipher_testvec_configs); i++) अणु
 		err = test_aead_vec_cfg(enc, vec, vec_name,
-					&default_cipher_testvec_configs[i],
+					&शेष_cipher_testvec_configs[i],
 					req, tsgls);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
-	if (!noextratests) {
-		struct testvec_config cfg;
-		char cfgname[TESTVEC_CONFIG_NAMELEN];
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+	अगर (!noextratests) अणु
+		काष्ठा testvec_config cfg;
+		अक्षर cfgname[TESTVEC_CONFIG_NAMELEN];
 
-		for (i = 0; i < fuzz_iterations; i++) {
-			generate_random_testvec_config(&cfg, cfgname,
-						       sizeof(cfgname));
+		क्रम (i = 0; i < fuzz_iterations; i++) अणु
+			generate_अक्रमom_testvec_config(&cfg, cfgname,
+						       माप(cfgname));
 			err = test_aead_vec_cfg(enc, vec, vec_name,
 						&cfg, req, tsgls);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			cond_resched();
-		}
-	}
-#endif
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
 
-struct aead_extra_tests_ctx {
-	struct aead_request *req;
-	struct crypto_aead *tfm;
-	const struct alg_test_desc *test_desc;
-	struct cipher_test_sglists *tsgls;
-	unsigned int maxdatasize;
-	unsigned int maxkeysize;
+काष्ठा aead_extra_tests_ctx अणु
+	काष्ठा aead_request *req;
+	काष्ठा crypto_aead *tfm;
+	स्थिर काष्ठा alg_test_desc *test_desc;
+	काष्ठा cipher_test_sglists *tsgls;
+	अचिन्हित पूर्णांक maxdatasize;
+	अचिन्हित पूर्णांक maxkeysize;
 
-	struct aead_testvec vec;
-	char vec_name[64];
-	char cfgname[TESTVEC_CONFIG_NAMELEN];
-	struct testvec_config cfg;
-};
+	काष्ठा aead_testvec vec;
+	अक्षर vec_name[64];
+	अक्षर cfgname[TESTVEC_CONFIG_NAMELEN];
+	काष्ठा testvec_config cfg;
+पूर्ण;
 
 /*
- * Make at least one random change to a (ciphertext, AAD) pair.  "Ciphertext"
+ * Make at least one अक्रमom change to a (ciphertext, AAD) pair.  "Ciphertext"
  * here means the full ciphertext including the authentication tag.  The
  * authentication tag (and hence also the ciphertext) is assumed to be nonempty.
  */
-static void mutate_aead_message(struct aead_testvec *vec, bool aad_iv,
-				unsigned int ivsize)
-{
-	const unsigned int aad_tail_size = aad_iv ? ivsize : 0;
-	const unsigned int authsize = vec->clen - vec->plen;
+अटल व्योम mutate_aead_message(काष्ठा aead_testvec *vec, bool aad_iv,
+				अचिन्हित पूर्णांक ivsize)
+अणु
+	स्थिर अचिन्हित पूर्णांक aad_tail_size = aad_iv ? ivsize : 0;
+	स्थिर अचिन्हित पूर्णांक authsize = vec->clen - vec->plen;
 
-	if (prandom_u32() % 2 == 0 && vec->alen > aad_tail_size) {
+	अगर (pअक्रमom_u32() % 2 == 0 && vec->alen > aad_tail_size) अणु
 		 /* Mutate the AAD */
-		flip_random_bit((u8 *)vec->assoc, vec->alen - aad_tail_size);
-		if (prandom_u32() % 2 == 0)
-			return;
-	}
-	if (prandom_u32() % 2 == 0) {
+		flip_अक्रमom_bit((u8 *)vec->assoc, vec->alen - aad_tail_size);
+		अगर (pअक्रमom_u32() % 2 == 0)
+			वापस;
+	पूर्ण
+	अगर (pअक्रमom_u32() % 2 == 0) अणु
 		/* Mutate auth tag (assuming it's at the end of ciphertext) */
-		flip_random_bit((u8 *)vec->ctext + vec->plen, authsize);
-	} else {
+		flip_अक्रमom_bit((u8 *)vec->ctext + vec->plen, authsize);
+	पूर्ण अन्यथा अणु
 		/* Mutate any part of the ciphertext */
-		flip_random_bit((u8 *)vec->ctext, vec->clen);
-	}
-}
+		flip_अक्रमom_bit((u8 *)vec->ctext, vec->clen);
+	पूर्ण
+पूर्ण
 
 /*
  * Minimum authentication tag size in bytes at which we assume that we can
  * reliably generate inauthentic messages, i.e. not generate an authentic
  * message by chance.
  */
-#define MIN_COLLISION_FREE_AUTHSIZE 8
+#घोषणा MIN_COLLISION_FREE_AUTHSIZE 8
 
-static void generate_aead_message(struct aead_request *req,
-				  const struct aead_test_suite *suite,
-				  struct aead_testvec *vec,
+अटल व्योम generate_aead_message(काष्ठा aead_request *req,
+				  स्थिर काष्ठा aead_test_suite *suite,
+				  काष्ठा aead_testvec *vec,
 				  bool prefer_inauthentic)
-{
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	const unsigned int ivsize = crypto_aead_ivsize(tfm);
-	const unsigned int authsize = vec->clen - vec->plen;
-	const bool inauthentic = (authsize >= MIN_COLLISION_FREE_AUTHSIZE) &&
-				 (prefer_inauthentic || prandom_u32() % 4 == 0);
+अणु
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक ivsize = crypto_aead_ivsize(tfm);
+	स्थिर अचिन्हित पूर्णांक authsize = vec->clen - vec->plen;
+	स्थिर bool inauthentic = (authsize >= MIN_COLLISION_FREE_AUTHSIZE) &&
+				 (prefer_inauthentic || pअक्रमom_u32() % 4 == 0);
 
 	/* Generate the AAD. */
-	generate_random_bytes((u8 *)vec->assoc, vec->alen);
-	if (suite->aad_iv && vec->alen >= ivsize)
-		/* Avoid implementation-defined behavior. */
-		memcpy((u8 *)vec->assoc + vec->alen - ivsize, vec->iv, ivsize);
+	generate_अक्रमom_bytes((u8 *)vec->assoc, vec->alen);
+	अगर (suite->aad_iv && vec->alen >= ivsize)
+		/* Aव्योम implementation-defined behavior. */
+		स_नकल((u8 *)vec->assoc + vec->alen - ivsize, vec->iv, ivsize);
 
-	if (inauthentic && prandom_u32() % 2 == 0) {
-		/* Generate a random ciphertext. */
-		generate_random_bytes((u8 *)vec->ctext, vec->clen);
-	} else {
-		int i = 0;
-		struct scatterlist src[2], dst;
+	अगर (inauthentic && pअक्रमom_u32() % 2 == 0) अणु
+		/* Generate a अक्रमom ciphertext. */
+		generate_अक्रमom_bytes((u8 *)vec->ctext, vec->clen);
+	पूर्ण अन्यथा अणु
+		पूर्णांक i = 0;
+		काष्ठा scatterlist src[2], dst;
 		u8 iv[MAX_IVLEN];
-		DECLARE_CRYPTO_WAIT(wait);
+		DECLARE_CRYPTO_WAIT(रुको);
 
-		/* Generate a random plaintext and encrypt it. */
+		/* Generate a अक्रमom plaपूर्णांकext and encrypt it. */
 		sg_init_table(src, 2);
-		if (vec->alen)
+		अगर (vec->alen)
 			sg_set_buf(&src[i++], vec->assoc, vec->alen);
-		if (vec->plen) {
-			generate_random_bytes((u8 *)vec->ptext, vec->plen);
+		अगर (vec->plen) अणु
+			generate_अक्रमom_bytes((u8 *)vec->ptext, vec->plen);
 			sg_set_buf(&src[i++], vec->ptext, vec->plen);
-		}
+		पूर्ण
 		sg_init_one(&dst, vec->ctext, vec->alen + vec->clen);
-		memcpy(iv, vec->iv, ivsize);
-		aead_request_set_callback(req, 0, crypto_req_done, &wait);
+		स_नकल(iv, vec->iv, ivsize);
+		aead_request_set_callback(req, 0, crypto_req_करोne, &रुको);
 		aead_request_set_crypt(req, src, &dst, vec->plen, iv);
 		aead_request_set_ad(req, vec->alen);
-		vec->crypt_error = crypto_wait_req(crypto_aead_encrypt(req),
-						   &wait);
-		/* If encryption failed, we're done. */
-		if (vec->crypt_error != 0)
-			return;
-		memmove((u8 *)vec->ctext, vec->ctext + vec->alen, vec->clen);
-		if (!inauthentic)
-			return;
+		vec->crypt_error = crypto_रुको_req(crypto_aead_encrypt(req),
+						   &रुको);
+		/* If encryption failed, we're करोne. */
+		अगर (vec->crypt_error != 0)
+			वापस;
+		स_हटाओ((u8 *)vec->ctext, vec->ctext + vec->alen, vec->clen);
+		अगर (!inauthentic)
+			वापस;
 		/*
 		 * Mutate the authentic (ciphertext, AAD) pair to get an
 		 * inauthentic one.
 		 */
 		mutate_aead_message(vec, suite->aad_iv, ivsize);
-	}
+	पूर्ण
 	vec->novrfy = 1;
-	if (suite->einval_allowed)
+	अगर (suite->einval_allowed)
 		vec->crypt_error = -EINVAL;
-}
+पूर्ण
 
 /*
- * Generate an AEAD test vector 'vec' using the implementation specified by
- * 'req'.  The buffers in 'vec' must already be allocated.
+ * Generate an AEAD test vector 'vec' using the implementation specअगरied by
+ * 'req'.  The buffers in 'vec' must alपढ़ोy be allocated.
  *
  * If 'prefer_inauthentic' is true, then this function will generate inauthentic
  * test vectors (i.e. vectors with 'vec->novrfy=1') more often.
  */
-static void generate_random_aead_testvec(struct aead_request *req,
-					 struct aead_testvec *vec,
-					 const struct aead_test_suite *suite,
-					 unsigned int maxkeysize,
-					 unsigned int maxdatasize,
-					 char *name, size_t max_namelen,
+अटल व्योम generate_अक्रमom_aead_testvec(काष्ठा aead_request *req,
+					 काष्ठा aead_testvec *vec,
+					 स्थिर काष्ठा aead_test_suite *suite,
+					 अचिन्हित पूर्णांक maxkeysize,
+					 अचिन्हित पूर्णांक maxdatasize,
+					 अक्षर *name, माप_प्रकार max_namelen,
 					 bool prefer_inauthentic)
-{
-	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-	const unsigned int ivsize = crypto_aead_ivsize(tfm);
-	const unsigned int maxauthsize = crypto_aead_maxauthsize(tfm);
-	unsigned int authsize;
-	unsigned int total_len;
+अणु
+	काष्ठा crypto_aead *tfm = crypto_aead_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक ivsize = crypto_aead_ivsize(tfm);
+	स्थिर अचिन्हित पूर्णांक maxauthsize = crypto_aead_maxauthsize(tfm);
+	अचिन्हित पूर्णांक authsize;
+	अचिन्हित पूर्णांक total_len;
 
 	/* Key: length in [0, maxkeysize], but usually choose maxkeysize */
 	vec->klen = maxkeysize;
-	if (prandom_u32() % 4 == 0)
-		vec->klen = prandom_u32() % (maxkeysize + 1);
-	generate_random_bytes((u8 *)vec->key, vec->klen);
+	अगर (pअक्रमom_u32() % 4 == 0)
+		vec->klen = pअक्रमom_u32() % (maxkeysize + 1);
+	generate_अक्रमom_bytes((u8 *)vec->key, vec->klen);
 	vec->setkey_error = crypto_aead_setkey(tfm, vec->key, vec->klen);
 
 	/* IV */
-	generate_random_bytes((u8 *)vec->iv, ivsize);
+	generate_अक्रमom_bytes((u8 *)vec->iv, ivsize);
 
 	/* Tag length: in [0, maxauthsize], but usually choose maxauthsize */
 	authsize = maxauthsize;
-	if (prandom_u32() % 4 == 0)
-		authsize = prandom_u32() % (maxauthsize + 1);
-	if (prefer_inauthentic && authsize < MIN_COLLISION_FREE_AUTHSIZE)
+	अगर (pअक्रमom_u32() % 4 == 0)
+		authsize = pअक्रमom_u32() % (maxauthsize + 1);
+	अगर (prefer_inauthentic && authsize < MIN_COLLISION_FREE_AUTHSIZE)
 		authsize = MIN_COLLISION_FREE_AUTHSIZE;
-	if (WARN_ON(authsize > maxdatasize))
+	अगर (WARN_ON(authsize > maxdatasize))
 		authsize = maxdatasize;
 	maxdatasize -= authsize;
 	vec->setauthsize_error = crypto_aead_setauthsize(tfm, authsize);
 
-	/* AAD, plaintext, and ciphertext lengths */
-	total_len = generate_random_length(maxdatasize);
-	if (prandom_u32() % 4 == 0)
+	/* AAD, plaपूर्णांकext, and ciphertext lengths */
+	total_len = generate_अक्रमom_length(maxdatasize);
+	अगर (pअक्रमom_u32() % 4 == 0)
 		vec->alen = 0;
-	else
-		vec->alen = generate_random_length(total_len);
+	अन्यथा
+		vec->alen = generate_अक्रमom_length(total_len);
 	vec->plen = total_len - vec->alen;
 	vec->clen = vec->plen + authsize;
 
 	/*
-	 * Generate the AAD, plaintext, and ciphertext.  Not applicable if the
+	 * Generate the AAD, plaपूर्णांकext, and ciphertext.  Not applicable अगर the
 	 * key or the authentication tag size couldn't be set.
 	 */
 	vec->novrfy = 0;
 	vec->crypt_error = 0;
-	if (vec->setkey_error == 0 && vec->setauthsize_error == 0)
+	अगर (vec->setkey_error == 0 && vec->setauthsize_error == 0)
 		generate_aead_message(req, suite, vec, prefer_inauthentic);
-	snprintf(name, max_namelen,
+	snम_लिखो(name, max_namelen,
 		 "\"random: alen=%u plen=%u authsize=%u klen=%u novrfy=%d\"",
 		 vec->alen, vec->plen, authsize, vec->klen, vec->novrfy);
-}
+पूर्ण
 
-static void try_to_generate_inauthentic_testvec(
-					struct aead_extra_tests_ctx *ctx)
-{
-	int i;
+अटल व्योम try_to_generate_inauthentic_testvec(
+					काष्ठा aead_extra_tests_ctx *ctx)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 10; i++) {
-		generate_random_aead_testvec(ctx->req, &ctx->vec,
+	क्रम (i = 0; i < 10; i++) अणु
+		generate_अक्रमom_aead_testvec(ctx->req, &ctx->vec,
 					     &ctx->test_desc->suite.aead,
 					     ctx->maxkeysize, ctx->maxdatasize,
 					     ctx->vec_name,
-					     sizeof(ctx->vec_name), true);
-		if (ctx->vec.novrfy)
-			return;
-	}
-}
+					     माप(ctx->vec_name), true);
+		अगर (ctx->vec.novrfy)
+			वापस;
+	पूर्ण
+पूर्ण
 
 /*
  * Generate inauthentic test vectors (i.e. ciphertext, AAD pairs that aren't the
- * result of an encryption with the key) and verify that decryption fails.
+ * result of an encryption with the key) and verअगरy that decryption fails.
  */
-static int test_aead_inauthentic_inputs(struct aead_extra_tests_ctx *ctx)
-{
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_aead_inauthentic_inमाला_दो(काष्ठा aead_extra_tests_ctx *ctx)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < fuzz_iterations * 8; i++) {
+	क्रम (i = 0; i < fuzz_iterations * 8; i++) अणु
 		/*
 		 * Since this part of the tests isn't comparing the
-		 * implementation to another, there's no point in testing any
+		 * implementation to another, there's no poपूर्णांक in testing any
 		 * test vectors other than inauthentic ones (vec.novrfy=1) here.
 		 *
 		 * If we're having trouble generating such a test vector, e.g.
-		 * if the algorithm keeps rejecting the generated keys, don't
-		 * retry forever; just continue on.
+		 * अगर the algorithm keeps rejecting the generated keys, करोn't
+		 * retry क्रमever; just जारी on.
 		 */
 		try_to_generate_inauthentic_testvec(ctx);
-		if (ctx->vec.novrfy) {
-			generate_random_testvec_config(&ctx->cfg, ctx->cfgname,
-						       sizeof(ctx->cfgname));
+		अगर (ctx->vec.novrfy) अणु
+			generate_अक्रमom_testvec_config(&ctx->cfg, ctx->cfgname,
+						       माप(ctx->cfgname));
 			err = test_aead_vec_cfg(DECRYPT, &ctx->vec,
 						ctx->vec_name, &ctx->cfg,
 						ctx->req, ctx->tsgls);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		cond_resched();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Test the AEAD algorithm against the corresponding generic implementation, if
+ * Test the AEAD algorithm against the corresponding generic implementation, अगर
  * one is available.
  */
-static int test_aead_vs_generic_impl(struct aead_extra_tests_ctx *ctx)
-{
-	struct crypto_aead *tfm = ctx->tfm;
-	const char *algname = crypto_aead_alg(tfm)->base.cra_name;
-	const char *driver = crypto_aead_driver_name(tfm);
-	const char *generic_driver = ctx->test_desc->generic_driver;
-	char _generic_driver[CRYPTO_MAX_ALG_NAME];
-	struct crypto_aead *generic_tfm = NULL;
-	struct aead_request *generic_req = NULL;
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_aead_vs_generic_impl(काष्ठा aead_extra_tests_ctx *ctx)
+अणु
+	काष्ठा crypto_aead *tfm = ctx->tfm;
+	स्थिर अक्षर *algname = crypto_aead_alg(tfm)->base.cra_name;
+	स्थिर अक्षर *driver = crypto_aead_driver_name(tfm);
+	स्थिर अक्षर *generic_driver = ctx->test_desc->generic_driver;
+	अक्षर _generic_driver[CRYPTO_MAX_ALG_NAME];
+	काष्ठा crypto_aead *generic_tfm = शून्य;
+	काष्ठा aead_request *generic_req = शून्य;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (!generic_driver) { /* Use default naming convention? */
+	अगर (!generic_driver) अणु /* Use शेष naming convention? */
 		err = build_generic_driver_name(algname, _generic_driver);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		generic_driver = _generic_driver;
-	}
+	पूर्ण
 
-	if (strcmp(generic_driver, driver) == 0) /* Already the generic impl? */
-		return 0;
+	अगर (म_भेद(generic_driver, driver) == 0) /* Alपढ़ोy the generic impl? */
+		वापस 0;
 
 	generic_tfm = crypto_alloc_aead(generic_driver, 0, 0);
-	if (IS_ERR(generic_tfm)) {
+	अगर (IS_ERR(generic_tfm)) अणु
 		err = PTR_ERR(generic_tfm);
-		if (err == -ENOENT) {
+		अगर (err == -ENOENT) अणु
 			pr_warn("alg: aead: skipping comparison tests for %s because %s is unavailable\n",
 				driver, generic_driver);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		pr_err("alg: aead: error allocating %s (generic impl of %s): %d\n",
 		       generic_driver, algname, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	generic_req = aead_request_alloc(generic_tfm, GFP_KERNEL);
-	if (!generic_req) {
+	अगर (!generic_req) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Check the algorithm properties for consistency. */
+	/* Check the algorithm properties क्रम consistency. */
 
-	if (crypto_aead_maxauthsize(tfm) !=
-	    crypto_aead_maxauthsize(generic_tfm)) {
+	अगर (crypto_aead_maxauthsize(tfm) !=
+	    crypto_aead_maxauthsize(generic_tfm)) अणु
 		pr_err("alg: aead: maxauthsize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, crypto_aead_maxauthsize(tfm),
 		       crypto_aead_maxauthsize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (crypto_aead_ivsize(tfm) != crypto_aead_ivsize(generic_tfm)) {
+	अगर (crypto_aead_ivsize(tfm) != crypto_aead_ivsize(generic_tfm)) अणु
 		pr_err("alg: aead: ivsize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, crypto_aead_ivsize(tfm),
 		       crypto_aead_ivsize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (crypto_aead_blocksize(tfm) != crypto_aead_blocksize(generic_tfm)) {
+	अगर (crypto_aead_blocksize(tfm) != crypto_aead_blocksize(generic_tfm)) अणु
 		pr_err("alg: aead: blocksize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, crypto_aead_blocksize(tfm),
 		       crypto_aead_blocksize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Now generate test vectors using the generic implementation, and test
 	 * the other implementation against them.
 	 */
-	for (i = 0; i < fuzz_iterations * 8; i++) {
-		generate_random_aead_testvec(generic_req, &ctx->vec,
+	क्रम (i = 0; i < fuzz_iterations * 8; i++) अणु
+		generate_अक्रमom_aead_testvec(generic_req, &ctx->vec,
 					     &ctx->test_desc->suite.aead,
 					     ctx->maxkeysize, ctx->maxdatasize,
 					     ctx->vec_name,
-					     sizeof(ctx->vec_name), false);
-		generate_random_testvec_config(&ctx->cfg, ctx->cfgname,
-					       sizeof(ctx->cfgname));
-		if (!ctx->vec.novrfy) {
+					     माप(ctx->vec_name), false);
+		generate_अक्रमom_testvec_config(&ctx->cfg, ctx->cfgname,
+					       माप(ctx->cfgname));
+		अगर (!ctx->vec.novrfy) अणु
 			err = test_aead_vec_cfg(ENCRYPT, &ctx->vec,
 						ctx->vec_name, &ctx->cfg,
 						ctx->req, ctx->tsgls);
-			if (err)
-				goto out;
-		}
-		if (ctx->vec.crypt_error == 0 || ctx->vec.novrfy) {
+			अगर (err)
+				जाओ out;
+		पूर्ण
+		अगर (ctx->vec.crypt_error == 0 || ctx->vec.novrfy) अणु
 			err = test_aead_vec_cfg(DECRYPT, &ctx->vec,
 						ctx->vec_name, &ctx->cfg,
 						ctx->req, ctx->tsgls);
-			if (err)
-				goto out;
-		}
+			अगर (err)
+				जाओ out;
+		पूर्ण
 		cond_resched();
-	}
+	पूर्ण
 	err = 0;
 out:
-	crypto_free_aead(generic_tfm);
-	aead_request_free(generic_req);
-	return err;
-}
+	crypto_मुक्त_aead(generic_tfm);
+	aead_request_मुक्त(generic_req);
+	वापस err;
+पूर्ण
 
-static int test_aead_extra(const struct alg_test_desc *test_desc,
-			   struct aead_request *req,
-			   struct cipher_test_sglists *tsgls)
-{
-	struct aead_extra_tests_ctx *ctx;
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_aead_extra(स्थिर काष्ठा alg_test_desc *test_desc,
+			   काष्ठा aead_request *req,
+			   काष्ठा cipher_test_sglists *tsgls)
+अणु
+	काष्ठा aead_extra_tests_ctx *ctx;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (noextratests)
-		return 0;
+	अगर (noextratests)
+		वापस 0;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 	ctx->req = req;
 	ctx->tfm = crypto_aead_reqtfm(req);
 	ctx->test_desc = test_desc;
 	ctx->tsgls = tsgls;
 	ctx->maxdatasize = (2 * PAGE_SIZE) - TESTMGR_POISON_LEN;
 	ctx->maxkeysize = 0;
-	for (i = 0; i < test_desc->suite.aead.count; i++)
-		ctx->maxkeysize = max_t(unsigned int, ctx->maxkeysize,
+	क्रम (i = 0; i < test_desc->suite.aead.count; i++)
+		ctx->maxkeysize = max_t(अचिन्हित पूर्णांक, ctx->maxkeysize,
 					test_desc->suite.aead.vecs[i].klen);
 
-	ctx->vec.key = kmalloc(ctx->maxkeysize, GFP_KERNEL);
-	ctx->vec.iv = kmalloc(crypto_aead_ivsize(ctx->tfm), GFP_KERNEL);
-	ctx->vec.assoc = kmalloc(ctx->maxdatasize, GFP_KERNEL);
-	ctx->vec.ptext = kmalloc(ctx->maxdatasize, GFP_KERNEL);
-	ctx->vec.ctext = kmalloc(ctx->maxdatasize, GFP_KERNEL);
-	if (!ctx->vec.key || !ctx->vec.iv || !ctx->vec.assoc ||
-	    !ctx->vec.ptext || !ctx->vec.ctext) {
+	ctx->vec.key = kदो_स्मृति(ctx->maxkeysize, GFP_KERNEL);
+	ctx->vec.iv = kदो_स्मृति(crypto_aead_ivsize(ctx->tfm), GFP_KERNEL);
+	ctx->vec.assoc = kदो_स्मृति(ctx->maxdatasize, GFP_KERNEL);
+	ctx->vec.ptext = kदो_स्मृति(ctx->maxdatasize, GFP_KERNEL);
+	ctx->vec.ctext = kदो_स्मृति(ctx->maxdatasize, GFP_KERNEL);
+	अगर (!ctx->vec.key || !ctx->vec.iv || !ctx->vec.assoc ||
+	    !ctx->vec.ptext || !ctx->vec.ctext) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = test_aead_vs_generic_impl(ctx);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = test_aead_inauthentic_inputs(ctx);
+	err = test_aead_inauthentic_inमाला_दो(ctx);
 out:
-	kfree(ctx->vec.key);
-	kfree(ctx->vec.iv);
-	kfree(ctx->vec.assoc);
-	kfree(ctx->vec.ptext);
-	kfree(ctx->vec.ctext);
-	kfree(ctx);
-	return err;
-}
-#else /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
-static int test_aead_extra(const struct alg_test_desc *test_desc,
-			   struct aead_request *req,
-			   struct cipher_test_sglists *tsgls)
-{
-	return 0;
-}
-#endif /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+	kमुक्त(ctx->vec.key);
+	kमुक्त(ctx->vec.iv);
+	kमुक्त(ctx->vec.assoc);
+	kमुक्त(ctx->vec.ptext);
+	kमुक्त(ctx->vec.ctext);
+	kमुक्त(ctx);
+	वापस err;
+पूर्ण
+#अन्यथा /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+अटल पूर्णांक test_aead_extra(स्थिर काष्ठा alg_test_desc *test_desc,
+			   काष्ठा aead_request *req,
+			   काष्ठा cipher_test_sglists *tsgls)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
 
-static int test_aead(int enc, const struct aead_test_suite *suite,
-		     struct aead_request *req,
-		     struct cipher_test_sglists *tsgls)
-{
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_aead(पूर्णांक enc, स्थिर काष्ठा aead_test_suite *suite,
+		     काष्ठा aead_request *req,
+		     काष्ठा cipher_test_sglists *tsgls)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < suite->count; i++) {
+	क्रम (i = 0; i < suite->count; i++) अणु
 		err = test_aead_vec(enc, &suite->vecs[i], i, req, tsgls);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		cond_resched();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int alg_test_aead(const struct alg_test_desc *desc, const char *driver,
+अटल पूर्णांक alg_test_aead(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 			 u32 type, u32 mask)
-{
-	const struct aead_test_suite *suite = &desc->suite.aead;
-	struct crypto_aead *tfm;
-	struct aead_request *req = NULL;
-	struct cipher_test_sglists *tsgls = NULL;
-	int err;
+अणु
+	स्थिर काष्ठा aead_test_suite *suite = &desc->suite.aead;
+	काष्ठा crypto_aead *tfm;
+	काष्ठा aead_request *req = शून्य;
+	काष्ठा cipher_test_sglists *tsgls = शून्य;
+	पूर्णांक err;
 
-	if (suite->count <= 0) {
+	अगर (suite->count <= 0) अणु
 		pr_err("alg: aead: empty test suite for %s\n", driver);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tfm = crypto_alloc_aead(driver, type, mask);
-	if (IS_ERR(tfm)) {
+	अगर (IS_ERR(tfm)) अणु
 		pr_err("alg: aead: failed to allocate transform for %s: %ld\n",
 		       driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
+		वापस PTR_ERR(tfm);
+	पूर्ण
 	driver = crypto_aead_driver_name(tfm);
 
 	req = aead_request_alloc(tfm, GFP_KERNEL);
-	if (!req) {
+	अगर (!req) अणु
 		pr_err("alg: aead: failed to allocate request for %s\n",
 		       driver);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	tsgls = alloc_cipher_test_sglists();
-	if (!tsgls) {
+	अगर (!tsgls) अणु
 		pr_err("alg: aead: failed to allocate test buffers for %s\n",
 		       driver);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = test_aead(ENCRYPT, suite, req, tsgls);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = test_aead(DECRYPT, suite, req, tsgls);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = test_aead_extra(desc, req, tsgls);
 out:
-	free_cipher_test_sglists(tsgls);
-	aead_request_free(req);
-	crypto_free_aead(tfm);
-	return err;
-}
+	मुक्त_cipher_test_sglists(tsgls);
+	aead_request_मुक्त(req);
+	crypto_मुक्त_aead(tfm);
+	वापस err;
+पूर्ण
 
-static int test_cipher(struct crypto_cipher *tfm, int enc,
-		       const struct cipher_testvec *template,
-		       unsigned int tcount)
-{
-	const char *algo = crypto_tfm_alg_driver_name(crypto_cipher_tfm(tfm));
-	unsigned int i, j, k;
-	char *q;
-	const char *e;
-	const char *input, *result;
-	void *data;
-	char *xbuf[XBUFSIZE];
-	int ret = -ENOMEM;
+अटल पूर्णांक test_cipher(काष्ठा crypto_cipher *tfm, पूर्णांक enc,
+		       स्थिर काष्ठा cipher_testvec *ढाँचा,
+		       अचिन्हित पूर्णांक tcount)
+अणु
+	स्थिर अक्षर *algo = crypto_tfm_alg_driver_name(crypto_cipher_tfm(tfm));
+	अचिन्हित पूर्णांक i, j, k;
+	अक्षर *q;
+	स्थिर अक्षर *e;
+	स्थिर अक्षर *input, *result;
+	व्योम *data;
+	अक्षर *xbuf[Xबफ_मानE];
+	पूर्णांक ret = -ENOMEM;
 
-	if (testmgr_alloc_buf(xbuf))
-		goto out_nobuf;
+	अगर (tesपंचांगgr_alloc_buf(xbuf))
+		जाओ out_nobuf;
 
-	if (enc == ENCRYPT)
+	अगर (enc == ENCRYPT)
 	        e = "encryption";
-	else
+	अन्यथा
 		e = "decryption";
 
 	j = 0;
-	for (i = 0; i < tcount; i++) {
+	क्रम (i = 0; i < tcount; i++) अणु
 
-		if (fips_enabled && template[i].fips_skip)
-			continue;
+		अगर (fips_enabled && ढाँचा[i].fips_skip)
+			जारी;
 
-		input  = enc ? template[i].ptext : template[i].ctext;
-		result = enc ? template[i].ctext : template[i].ptext;
+		input  = enc ? ढाँचा[i].ptext : ढाँचा[i].ctext;
+		result = enc ? ढाँचा[i].ctext : ढाँचा[i].ptext;
 		j++;
 
 		ret = -EINVAL;
-		if (WARN_ON(template[i].len > PAGE_SIZE))
-			goto out;
+		अगर (WARN_ON(ढाँचा[i].len > PAGE_SIZE))
+			जाओ out;
 
 		data = xbuf[0];
-		memcpy(data, input, template[i].len);
+		स_नकल(data, input, ढाँचा[i].len);
 
 		crypto_cipher_clear_flags(tfm, ~0);
-		if (template[i].wk)
+		अगर (ढाँचा[i].wk)
 			crypto_cipher_set_flags(tfm, CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
 
-		ret = crypto_cipher_setkey(tfm, template[i].key,
-					   template[i].klen);
-		if (ret) {
-			if (ret == template[i].setkey_error)
-				continue;
+		ret = crypto_cipher_setkey(tfm, ढाँचा[i].key,
+					   ढाँचा[i].klen);
+		अगर (ret) अणु
+			अगर (ret == ढाँचा[i].setkey_error)
+				जारी;
 			pr_err("alg: cipher: %s setkey failed on test vector %u; expected_error=%d, actual_error=%d, flags=%#x\n",
-			       algo, j, template[i].setkey_error, ret,
+			       algo, j, ढाँचा[i].setkey_error, ret,
 			       crypto_cipher_get_flags(tfm));
-			goto out;
-		}
-		if (template[i].setkey_error) {
+			जाओ out;
+		पूर्ण
+		अगर (ढाँचा[i].setkey_error) अणु
 			pr_err("alg: cipher: %s setkey unexpectedly succeeded on test vector %u; expected_error=%d\n",
-			       algo, j, template[i].setkey_error);
+			       algo, j, ढाँचा[i].setkey_error);
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (k = 0; k < template[i].len;
-		     k += crypto_cipher_blocksize(tfm)) {
-			if (enc)
+		क्रम (k = 0; k < ढाँचा[i].len;
+		     k += crypto_cipher_blocksize(tfm)) अणु
+			अगर (enc)
 				crypto_cipher_encrypt_one(tfm, data + k,
 							  data + k);
-			else
+			अन्यथा
 				crypto_cipher_decrypt_one(tfm, data + k,
 							  data + k);
-		}
+		पूर्ण
 
 		q = data;
-		if (memcmp(q, result, template[i].len)) {
-			printk(KERN_ERR "alg: cipher: Test %d failed "
+		अगर (स_भेद(q, result, ढाँचा[i].len)) अणु
+			prपूर्णांकk(KERN_ERR "alg: cipher: Test %d failed "
 			       "on %s for %s\n", j, e, algo);
-			hexdump(q, template[i].len);
+			hexdump(q, ढाँचा[i].len);
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 
 out:
-	testmgr_free_buf(xbuf);
+	tesपंचांगgr_मुक्त_buf(xbuf);
 out_nobuf:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int test_skcipher_vec_cfg(int enc, const struct cipher_testvec *vec,
-				 const char *vec_name,
-				 const struct testvec_config *cfg,
-				 struct skcipher_request *req,
-				 struct cipher_test_sglists *tsgls)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const unsigned int alignmask = crypto_skcipher_alignmask(tfm);
-	const unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-	const char *driver = crypto_skcipher_driver_name(tfm);
-	const u32 req_flags = CRYPTO_TFM_REQ_MAY_BACKLOG | cfg->req_flags;
-	const char *op = enc ? "encryption" : "decryption";
-	DECLARE_CRYPTO_WAIT(wait);
+अटल पूर्णांक test_skcipher_vec_cfg(पूर्णांक enc, स्थिर काष्ठा cipher_testvec *vec,
+				 स्थिर अक्षर *vec_name,
+				 स्थिर काष्ठा testvec_config *cfg,
+				 काष्ठा skcipher_request *req,
+				 काष्ठा cipher_test_sglists *tsgls)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक alignmask = crypto_skcipher_alignmask(tfm);
+	स्थिर अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(tfm);
+	स्थिर अक्षर *driver = crypto_skcipher_driver_name(tfm);
+	स्थिर u32 req_flags = CRYPTO_TFM_REQ_MAY_BACKLOG | cfg->req_flags;
+	स्थिर अक्षर *op = enc ? "encryption" : "decryption";
+	DECLARE_CRYPTO_WAIT(रुको);
 	u8 _iv[3 * (MAX_ALGAPI_ALIGNMASK + 1) + MAX_IVLEN];
 	u8 *iv = PTR_ALIGN(&_iv[0], 2 * (MAX_ALGAPI_ALIGNMASK + 1)) +
 		 cfg->iv_offset +
 		 (cfg->iv_offset_relative_to_alignmask ? alignmask : 0);
-	struct kvec input;
-	int err;
+	काष्ठा kvec input;
+	पूर्णांक err;
 
 	/* Set the key */
-	if (vec->wk)
+	अगर (vec->wk)
 		crypto_skcipher_set_flags(tfm, CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
-	else
+	अन्यथा
 		crypto_skcipher_clear_flags(tfm,
 					    CRYPTO_TFM_REQ_FORBID_WEAK_KEYS);
-	err = do_setkey(crypto_skcipher_setkey, tfm, vec->key, vec->klen,
+	err = करो_setkey(crypto_skcipher_setkey, tfm, vec->key, vec->klen,
 			cfg, alignmask);
-	if (err) {
-		if (err == vec->setkey_error)
-			return 0;
+	अगर (err) अणु
+		अगर (err == vec->setkey_error)
+			वापस 0;
 		pr_err("alg: skcipher: %s setkey failed on test vector %s; expected_error=%d, actual_error=%d, flags=%#x\n",
 		       driver, vec_name, vec->setkey_error, err,
 		       crypto_skcipher_get_flags(tfm));
-		return err;
-	}
-	if (vec->setkey_error) {
+		वापस err;
+	पूर्ण
+	अगर (vec->setkey_error) अणु
 		pr_err("alg: skcipher: %s setkey unexpectedly succeeded on test vector %s; expected_error=%d\n",
 		       driver, vec_name, vec->setkey_error);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* The IV must be copied to a buffer, as the algorithm may modify it */
-	if (ivsize) {
-		if (WARN_ON(ivsize > MAX_IVLEN))
-			return -EINVAL;
-		if (vec->generates_iv && !enc)
-			memcpy(iv, vec->iv_out, ivsize);
-		else if (vec->iv)
-			memcpy(iv, vec->iv, ivsize);
-		else
-			memset(iv, 0, ivsize);
-	} else {
-		if (vec->generates_iv) {
+	/* The IV must be copied to a buffer, as the algorithm may modअगरy it */
+	अगर (ivsize) अणु
+		अगर (WARN_ON(ivsize > MAX_IVLEN))
+			वापस -EINVAL;
+		अगर (vec->generates_iv && !enc)
+			स_नकल(iv, vec->iv_out, ivsize);
+		अन्यथा अगर (vec->iv)
+			स_नकल(iv, vec->iv, ivsize);
+		अन्यथा
+			स_रखो(iv, 0, ivsize);
+	पूर्ण अन्यथा अणु
+		अगर (vec->generates_iv) अणु
 			pr_err("alg: skcipher: %s has ivsize=0 but test vector %s generates IV!\n",
 			       driver, vec_name);
-			return -EINVAL;
-		}
-		iv = NULL;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		iv = शून्य;
+	पूर्ण
 
 	/* Build the src/dst scatterlists */
-	input.iov_base = enc ? (void *)vec->ptext : (void *)vec->ctext;
+	input.iov_base = enc ? (व्योम *)vec->ptext : (व्योम *)vec->ctext;
 	input.iov_len = vec->len;
 	err = build_cipher_test_sglists(tsgls, cfg, alignmask,
 					vec->len, vec->len, &input, 1);
-	if (err) {
+	अगर (err) अणु
 		pr_err("alg: skcipher: %s %s: error preparing scatterlists for test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Do the actual encryption or decryption */
-	testmgr_poison(req->__ctx, crypto_skcipher_reqsize(tfm));
-	skcipher_request_set_callback(req, req_flags, crypto_req_done, &wait);
+	tesपंचांगgr_poison(req->__ctx, crypto_skcipher_reqsize(tfm));
+	skcipher_request_set_callback(req, req_flags, crypto_req_करोne, &रुको);
 	skcipher_request_set_crypt(req, tsgls->src.sgl_ptr, tsgls->dst.sgl_ptr,
 				   vec->len, iv);
-	if (cfg->nosimd)
-		crypto_disable_simd_for_test();
+	अगर (cfg->nosimd)
+		crypto_disable_simd_क्रम_test();
 	err = enc ? crypto_skcipher_encrypt(req) : crypto_skcipher_decrypt(req);
-	if (cfg->nosimd)
-		crypto_reenable_simd_for_test();
-	err = crypto_wait_req(err, &wait);
+	अगर (cfg->nosimd)
+		crypto_reenable_simd_क्रम_test();
+	err = crypto_रुको_req(err, &रुको);
 
 	/* Check that the algorithm didn't overwrite things it shouldn't have */
-	if (req->cryptlen != vec->len ||
+	अगर (req->cryptlen != vec->len ||
 	    req->iv != iv ||
 	    req->src != tsgls->src.sgl_ptr ||
 	    req->dst != tsgls->dst.sgl_ptr ||
 	    crypto_skcipher_reqtfm(req) != tfm ||
-	    req->base.complete != crypto_req_done ||
+	    req->base.complete != crypto_req_करोne ||
 	    req->base.flags != req_flags ||
-	    req->base.data != &wait) {
+	    req->base.data != &रुको) अणु
 		pr_err("alg: skcipher: %s %s corrupted request struct on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		if (req->cryptlen != vec->len)
+		अगर (req->cryptlen != vec->len)
 			pr_err("alg: skcipher: changed 'req->cryptlen'\n");
-		if (req->iv != iv)
+		अगर (req->iv != iv)
 			pr_err("alg: skcipher: changed 'req->iv'\n");
-		if (req->src != tsgls->src.sgl_ptr)
+		अगर (req->src != tsgls->src.sgl_ptr)
 			pr_err("alg: skcipher: changed 'req->src'\n");
-		if (req->dst != tsgls->dst.sgl_ptr)
+		अगर (req->dst != tsgls->dst.sgl_ptr)
 			pr_err("alg: skcipher: changed 'req->dst'\n");
-		if (crypto_skcipher_reqtfm(req) != tfm)
+		अगर (crypto_skcipher_reqtfm(req) != tfm)
 			pr_err("alg: skcipher: changed 'req->base.tfm'\n");
-		if (req->base.complete != crypto_req_done)
+		अगर (req->base.complete != crypto_req_करोne)
 			pr_err("alg: skcipher: changed 'req->base.complete'\n");
-		if (req->base.flags != req_flags)
+		अगर (req->base.flags != req_flags)
 			pr_err("alg: skcipher: changed 'req->base.flags'\n");
-		if (req->base.data != &wait)
+		अगर (req->base.data != &रुको)
 			pr_err("alg: skcipher: changed 'req->base.data'\n");
-		return -EINVAL;
-	}
-	if (is_test_sglist_corrupted(&tsgls->src)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (is_test_sglist_corrupted(&tsgls->src)) अणु
 		pr_err("alg: skcipher: %s %s corrupted src sgl on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return -EINVAL;
-	}
-	if (tsgls->dst.sgl_ptr != tsgls->src.sgl &&
-	    is_test_sglist_corrupted(&tsgls->dst)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (tsgls->dst.sgl_ptr != tsgls->src.sgl &&
+	    is_test_sglist_corrupted(&tsgls->dst)) अणु
 		pr_err("alg: skcipher: %s %s corrupted dst sgl on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check for success or failure */
-	if (err) {
-		if (err == vec->crypt_error)
-			return 0;
+	/* Check क्रम success or failure */
+	अगर (err) अणु
+		अगर (err == vec->crypt_error)
+			वापस 0;
 		pr_err("alg: skcipher: %s %s failed on test vector %s; expected_error=%d, actual_error=%d, cfg=\"%s\"\n",
 		       driver, op, vec_name, vec->crypt_error, err, cfg->name);
-		return err;
-	}
-	if (vec->crypt_error) {
+		वापस err;
+	पूर्ण
+	अगर (vec->crypt_error) अणु
 		pr_err("alg: skcipher: %s %s unexpectedly succeeded on test vector %s; expected_error=%d, cfg=\"%s\"\n",
 		       driver, op, vec_name, vec->crypt_error, cfg->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check for the correct output (ciphertext or plaintext) */
-	err = verify_correct_output(&tsgls->dst, enc ? vec->ctext : vec->ptext,
+	/* Check क्रम the correct output (ciphertext or plaपूर्णांकext) */
+	err = verअगरy_correct_output(&tsgls->dst, enc ? vec->ctext : vec->ptext,
 				    vec->len, 0, true);
-	if (err == -EOVERFLOW) {
+	अगर (err == -EOVERFLOW) अणु
 		pr_err("alg: skcipher: %s %s overran dst buffer on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return err;
-	}
-	if (err) {
+		वापस err;
+	पूर्ण
+	अगर (err) अणु
 		pr_err("alg: skcipher: %s %s test failed (wrong result) on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* If applicable, check that the algorithm generated the correct IV */
-	if (vec->iv_out && memcmp(iv, vec->iv_out, ivsize) != 0) {
+	अगर (vec->iv_out && स_भेद(iv, vec->iv_out, ivsize) != 0) अणु
 		pr_err("alg: skcipher: %s %s test failed (wrong output IV) on test vector %s, cfg=\"%s\"\n",
 		       driver, op, vec_name, cfg->name);
 		hexdump(iv, ivsize);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int test_skcipher_vec(int enc, const struct cipher_testvec *vec,
-			     unsigned int vec_num,
-			     struct skcipher_request *req,
-			     struct cipher_test_sglists *tsgls)
-{
-	char vec_name[16];
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_skcipher_vec(पूर्णांक enc, स्थिर काष्ठा cipher_testvec *vec,
+			     अचिन्हित पूर्णांक vec_num,
+			     काष्ठा skcipher_request *req,
+			     काष्ठा cipher_test_sglists *tsgls)
+अणु
+	अक्षर vec_name[16];
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (fips_enabled && vec->fips_skip)
-		return 0;
+	अगर (fips_enabled && vec->fips_skip)
+		वापस 0;
 
-	sprintf(vec_name, "%u", vec_num);
+	प्र_लिखो(vec_name, "%u", vec_num);
 
-	for (i = 0; i < ARRAY_SIZE(default_cipher_testvec_configs); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(शेष_cipher_testvec_configs); i++) अणु
 		err = test_skcipher_vec_cfg(enc, vec, vec_name,
-					    &default_cipher_testvec_configs[i],
+					    &शेष_cipher_testvec_configs[i],
 					    req, tsgls);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
-	if (!noextratests) {
-		struct testvec_config cfg;
-		char cfgname[TESTVEC_CONFIG_NAMELEN];
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+	अगर (!noextratests) अणु
+		काष्ठा testvec_config cfg;
+		अक्षर cfgname[TESTVEC_CONFIG_NAMELEN];
 
-		for (i = 0; i < fuzz_iterations; i++) {
-			generate_random_testvec_config(&cfg, cfgname,
-						       sizeof(cfgname));
+		क्रम (i = 0; i < fuzz_iterations; i++) अणु
+			generate_अक्रमom_testvec_config(&cfg, cfgname,
+						       माप(cfgname));
 			err = test_skcipher_vec_cfg(enc, vec, vec_name,
 						    &cfg, req, tsgls);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			cond_resched();
-		}
-	}
-#endif
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
 /*
  * Generate a symmetric cipher test vector from the given implementation.
- * Assumes the buffers in 'vec' were already allocated.
+ * Assumes the buffers in 'vec' were alपढ़ोy allocated.
  */
-static void generate_random_cipher_testvec(struct skcipher_request *req,
-					   struct cipher_testvec *vec,
-					   unsigned int maxdatasize,
-					   char *name, size_t max_namelen)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const unsigned int maxkeysize = crypto_skcipher_max_keysize(tfm);
-	const unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-	struct scatterlist src, dst;
+अटल व्योम generate_अक्रमom_cipher_testvec(काष्ठा skcipher_request *req,
+					   काष्ठा cipher_testvec *vec,
+					   अचिन्हित पूर्णांक maxdatasize,
+					   अक्षर *name, माप_प्रकार max_namelen)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक maxkeysize = crypto_skcipher_max_keysize(tfm);
+	स्थिर अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(tfm);
+	काष्ठा scatterlist src, dst;
 	u8 iv[MAX_IVLEN];
-	DECLARE_CRYPTO_WAIT(wait);
+	DECLARE_CRYPTO_WAIT(रुको);
 
 	/* Key: length in [0, maxkeysize], but usually choose maxkeysize */
 	vec->klen = maxkeysize;
-	if (prandom_u32() % 4 == 0)
-		vec->klen = prandom_u32() % (maxkeysize + 1);
-	generate_random_bytes((u8 *)vec->key, vec->klen);
+	अगर (pअक्रमom_u32() % 4 == 0)
+		vec->klen = pअक्रमom_u32() % (maxkeysize + 1);
+	generate_अक्रमom_bytes((u8 *)vec->key, vec->klen);
 	vec->setkey_error = crypto_skcipher_setkey(tfm, vec->key, vec->klen);
 
 	/* IV */
-	generate_random_bytes((u8 *)vec->iv, ivsize);
+	generate_अक्रमom_bytes((u8 *)vec->iv, ivsize);
 
-	/* Plaintext */
-	vec->len = generate_random_length(maxdatasize);
-	generate_random_bytes((u8 *)vec->ptext, vec->len);
+	/* Plaपूर्णांकext */
+	vec->len = generate_अक्रमom_length(maxdatasize);
+	generate_अक्रमom_bytes((u8 *)vec->ptext, vec->len);
 
-	/* If the key couldn't be set, no need to continue to encrypt. */
-	if (vec->setkey_error)
-		goto done;
+	/* If the key couldn't be set, no need to जारी to encrypt. */
+	अगर (vec->setkey_error)
+		जाओ करोne;
 
 	/* Ciphertext */
 	sg_init_one(&src, vec->ptext, vec->len);
 	sg_init_one(&dst, vec->ctext, vec->len);
-	memcpy(iv, vec->iv, ivsize);
-	skcipher_request_set_callback(req, 0, crypto_req_done, &wait);
+	स_नकल(iv, vec->iv, ivsize);
+	skcipher_request_set_callback(req, 0, crypto_req_करोne, &रुको);
 	skcipher_request_set_crypt(req, &src, &dst, vec->len, iv);
-	vec->crypt_error = crypto_wait_req(crypto_skcipher_encrypt(req), &wait);
-	if (vec->crypt_error != 0) {
+	vec->crypt_error = crypto_रुको_req(crypto_skcipher_encrypt(req), &रुको);
+	अगर (vec->crypt_error != 0) अणु
 		/*
-		 * The only acceptable error here is for an invalid length, so
+		 * The only acceptable error here is क्रम an invalid length, so
 		 * skcipher decryption should fail with the same error too.
-		 * We'll test for this.  But to keep the API usage well-defined,
+		 * We'll test क्रम this.  But to keep the API usage well-defined,
 		 * explicitly initialize the ciphertext buffer too.
 		 */
-		memset((u8 *)vec->ctext, 0, vec->len);
-	}
-done:
-	snprintf(name, max_namelen, "\"random: len=%u klen=%u\"",
+		स_रखो((u8 *)vec->ctext, 0, vec->len);
+	पूर्ण
+करोne:
+	snम_लिखो(name, max_namelen, "\"random: len=%u klen=%u\"",
 		 vec->len, vec->klen);
-}
+पूर्ण
 
 /*
  * Test the skcipher algorithm represented by @req against the corresponding
- * generic implementation, if one is available.
+ * generic implementation, अगर one is available.
  */
-static int test_skcipher_vs_generic_impl(const char *generic_driver,
-					 struct skcipher_request *req,
-					 struct cipher_test_sglists *tsgls)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const unsigned int maxkeysize = crypto_skcipher_max_keysize(tfm);
-	const unsigned int ivsize = crypto_skcipher_ivsize(tfm);
-	const unsigned int blocksize = crypto_skcipher_blocksize(tfm);
-	const unsigned int maxdatasize = (2 * PAGE_SIZE) - TESTMGR_POISON_LEN;
-	const char *algname = crypto_skcipher_alg(tfm)->base.cra_name;
-	const char *driver = crypto_skcipher_driver_name(tfm);
-	char _generic_driver[CRYPTO_MAX_ALG_NAME];
-	struct crypto_skcipher *generic_tfm = NULL;
-	struct skcipher_request *generic_req = NULL;
-	unsigned int i;
-	struct cipher_testvec vec = { 0 };
-	char vec_name[64];
-	struct testvec_config *cfg;
-	char cfgname[TESTVEC_CONFIG_NAMELEN];
-	int err;
+अटल पूर्णांक test_skcipher_vs_generic_impl(स्थिर अक्षर *generic_driver,
+					 काष्ठा skcipher_request *req,
+					 काष्ठा cipher_test_sglists *tsgls)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर अचिन्हित पूर्णांक maxkeysize = crypto_skcipher_max_keysize(tfm);
+	स्थिर अचिन्हित पूर्णांक ivsize = crypto_skcipher_ivsize(tfm);
+	स्थिर अचिन्हित पूर्णांक blocksize = crypto_skcipher_blocksize(tfm);
+	स्थिर अचिन्हित पूर्णांक maxdatasize = (2 * PAGE_SIZE) - TESTMGR_POISON_LEN;
+	स्थिर अक्षर *algname = crypto_skcipher_alg(tfm)->base.cra_name;
+	स्थिर अक्षर *driver = crypto_skcipher_driver_name(tfm);
+	अक्षर _generic_driver[CRYPTO_MAX_ALG_NAME];
+	काष्ठा crypto_skcipher *generic_tfm = शून्य;
+	काष्ठा skcipher_request *generic_req = शून्य;
+	अचिन्हित पूर्णांक i;
+	काष्ठा cipher_testvec vec = अणु 0 पूर्ण;
+	अक्षर vec_name[64];
+	काष्ठा testvec_config *cfg;
+	अक्षर cfgname[TESTVEC_CONFIG_NAMELEN];
+	पूर्णांक err;
 
-	if (noextratests)
-		return 0;
+	अगर (noextratests)
+		वापस 0;
 
-	/* Keywrap isn't supported here yet as it handles its IV differently. */
-	if (strncmp(algname, "kw(", 3) == 0)
-		return 0;
+	/* Keywrap isn't supported here yet as it handles its IV dअगरferently. */
+	अगर (म_भेदन(algname, "kw(", 3) == 0)
+		वापस 0;
 
-	if (!generic_driver) { /* Use default naming convention? */
+	अगर (!generic_driver) अणु /* Use शेष naming convention? */
 		err = build_generic_driver_name(algname, _generic_driver);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		generic_driver = _generic_driver;
-	}
+	पूर्ण
 
-	if (strcmp(generic_driver, driver) == 0) /* Already the generic impl? */
-		return 0;
+	अगर (म_भेद(generic_driver, driver) == 0) /* Alपढ़ोy the generic impl? */
+		वापस 0;
 
 	generic_tfm = crypto_alloc_skcipher(generic_driver, 0, 0);
-	if (IS_ERR(generic_tfm)) {
+	अगर (IS_ERR(generic_tfm)) अणु
 		err = PTR_ERR(generic_tfm);
-		if (err == -ENOENT) {
+		अगर (err == -ENOENT) अणु
 			pr_warn("alg: skcipher: skipping comparison tests for %s because %s is unavailable\n",
 				driver, generic_driver);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		pr_err("alg: skcipher: error allocating %s (generic impl of %s): %d\n",
 		       generic_driver, algname, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	cfg = kzalloc(sizeof(*cfg), GFP_KERNEL);
-	if (!cfg) {
+	cfg = kzalloc(माप(*cfg), GFP_KERNEL);
+	अगर (!cfg) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	generic_req = skcipher_request_alloc(generic_tfm, GFP_KERNEL);
-	if (!generic_req) {
+	अगर (!generic_req) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Check the algorithm properties for consistency. */
+	/* Check the algorithm properties क्रम consistency. */
 
-	if (crypto_skcipher_min_keysize(tfm) !=
-	    crypto_skcipher_min_keysize(generic_tfm)) {
+	अगर (crypto_skcipher_min_keysize(tfm) !=
+	    crypto_skcipher_min_keysize(generic_tfm)) अणु
 		pr_err("alg: skcipher: min keysize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, crypto_skcipher_min_keysize(tfm),
 		       crypto_skcipher_min_keysize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (maxkeysize != crypto_skcipher_max_keysize(generic_tfm)) {
+	अगर (maxkeysize != crypto_skcipher_max_keysize(generic_tfm)) अणु
 		pr_err("alg: skcipher: max keysize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, maxkeysize,
 		       crypto_skcipher_max_keysize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ivsize != crypto_skcipher_ivsize(generic_tfm)) {
+	अगर (ivsize != crypto_skcipher_ivsize(generic_tfm)) अणु
 		pr_err("alg: skcipher: ivsize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, ivsize, crypto_skcipher_ivsize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (blocksize != crypto_skcipher_blocksize(generic_tfm)) {
+	अगर (blocksize != crypto_skcipher_blocksize(generic_tfm)) अणु
 		pr_err("alg: skcipher: blocksize for %s (%u) doesn't match generic impl (%u)\n",
 		       driver, blocksize,
 		       crypto_skcipher_blocksize(generic_tfm));
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Now generate test vectors using the generic implementation, and test
 	 * the other implementation against them.
 	 */
 
-	vec.key = kmalloc(maxkeysize, GFP_KERNEL);
-	vec.iv = kmalloc(ivsize, GFP_KERNEL);
-	vec.ptext = kmalloc(maxdatasize, GFP_KERNEL);
-	vec.ctext = kmalloc(maxdatasize, GFP_KERNEL);
-	if (!vec.key || !vec.iv || !vec.ptext || !vec.ctext) {
+	vec.key = kदो_स्मृति(maxkeysize, GFP_KERNEL);
+	vec.iv = kदो_स्मृति(ivsize, GFP_KERNEL);
+	vec.ptext = kदो_स्मृति(maxdatasize, GFP_KERNEL);
+	vec.ctext = kदो_स्मृति(maxdatasize, GFP_KERNEL);
+	अगर (!vec.key || !vec.iv || !vec.ptext || !vec.ctext) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < fuzz_iterations * 8; i++) {
-		generate_random_cipher_testvec(generic_req, &vec, maxdatasize,
-					       vec_name, sizeof(vec_name));
-		generate_random_testvec_config(cfg, cfgname, sizeof(cfgname));
+	क्रम (i = 0; i < fuzz_iterations * 8; i++) अणु
+		generate_अक्रमom_cipher_testvec(generic_req, &vec, maxdatasize,
+					       vec_name, माप(vec_name));
+		generate_अक्रमom_testvec_config(cfg, cfgname, माप(cfgname));
 
 		err = test_skcipher_vec_cfg(ENCRYPT, &vec, vec_name,
 					    cfg, req, tsgls);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		err = test_skcipher_vec_cfg(DECRYPT, &vec, vec_name,
 					    cfg, req, tsgls);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		cond_resched();
-	}
+	पूर्ण
 	err = 0;
 out:
-	kfree(cfg);
-	kfree(vec.key);
-	kfree(vec.iv);
-	kfree(vec.ptext);
-	kfree(vec.ctext);
-	crypto_free_skcipher(generic_tfm);
-	skcipher_request_free(generic_req);
-	return err;
-}
-#else /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
-static int test_skcipher_vs_generic_impl(const char *generic_driver,
-					 struct skcipher_request *req,
-					 struct cipher_test_sglists *tsgls)
-{
-	return 0;
-}
-#endif /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+	kमुक्त(cfg);
+	kमुक्त(vec.key);
+	kमुक्त(vec.iv);
+	kमुक्त(vec.ptext);
+	kमुक्त(vec.ctext);
+	crypto_मुक्त_skcipher(generic_tfm);
+	skcipher_request_मुक्त(generic_req);
+	वापस err;
+पूर्ण
+#अन्यथा /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
+अटल पूर्णांक test_skcipher_vs_generic_impl(स्थिर अक्षर *generic_driver,
+					 काष्ठा skcipher_request *req,
+					 काष्ठा cipher_test_sglists *tsgls)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_CRYPTO_MANAGER_EXTRA_TESTS */
 
-static int test_skcipher(int enc, const struct cipher_test_suite *suite,
-			 struct skcipher_request *req,
-			 struct cipher_test_sglists *tsgls)
-{
-	unsigned int i;
-	int err;
+अटल पूर्णांक test_skcipher(पूर्णांक enc, स्थिर काष्ठा cipher_test_suite *suite,
+			 काष्ठा skcipher_request *req,
+			 काष्ठा cipher_test_sglists *tsgls)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < suite->count; i++) {
+	क्रम (i = 0; i < suite->count; i++) अणु
 		err = test_skcipher_vec(enc, &suite->vecs[i], i, req, tsgls);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		cond_resched();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int alg_test_skcipher(const struct alg_test_desc *desc,
-			     const char *driver, u32 type, u32 mask)
-{
-	const struct cipher_test_suite *suite = &desc->suite.cipher;
-	struct crypto_skcipher *tfm;
-	struct skcipher_request *req = NULL;
-	struct cipher_test_sglists *tsgls = NULL;
-	int err;
+अटल पूर्णांक alg_test_skcipher(स्थिर काष्ठा alg_test_desc *desc,
+			     स्थिर अक्षर *driver, u32 type, u32 mask)
+अणु
+	स्थिर काष्ठा cipher_test_suite *suite = &desc->suite.cipher;
+	काष्ठा crypto_skcipher *tfm;
+	काष्ठा skcipher_request *req = शून्य;
+	काष्ठा cipher_test_sglists *tsgls = शून्य;
+	पूर्णांक err;
 
-	if (suite->count <= 0) {
+	अगर (suite->count <= 0) अणु
 		pr_err("alg: skcipher: empty test suite for %s\n", driver);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tfm = crypto_alloc_skcipher(driver, type, mask);
-	if (IS_ERR(tfm)) {
+	अगर (IS_ERR(tfm)) अणु
 		pr_err("alg: skcipher: failed to allocate transform for %s: %ld\n",
 		       driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
+		वापस PTR_ERR(tfm);
+	पूर्ण
 	driver = crypto_skcipher_driver_name(tfm);
 
 	req = skcipher_request_alloc(tfm, GFP_KERNEL);
-	if (!req) {
+	अगर (!req) अणु
 		pr_err("alg: skcipher: failed to allocate request for %s\n",
 		       driver);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	tsgls = alloc_cipher_test_sglists();
-	if (!tsgls) {
+	अगर (!tsgls) अणु
 		pr_err("alg: skcipher: failed to allocate test buffers for %s\n",
 		       driver);
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = test_skcipher(ENCRYPT, suite, req, tsgls);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = test_skcipher(DECRYPT, suite, req, tsgls);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	err = test_skcipher_vs_generic_impl(desc->generic_driver, req, tsgls);
 out:
-	free_cipher_test_sglists(tsgls);
-	skcipher_request_free(req);
-	crypto_free_skcipher(tfm);
-	return err;
-}
+	मुक्त_cipher_test_sglists(tsgls);
+	skcipher_request_मुक्त(req);
+	crypto_मुक्त_skcipher(tfm);
+	वापस err;
+पूर्ण
 
-static int test_comp(struct crypto_comp *tfm,
-		     const struct comp_testvec *ctemplate,
-		     const struct comp_testvec *dtemplate,
-		     int ctcount, int dtcount)
-{
-	const char *algo = crypto_tfm_alg_driver_name(crypto_comp_tfm(tfm));
-	char *output, *decomp_output;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक test_comp(काष्ठा crypto_comp *tfm,
+		     स्थिर काष्ठा comp_testvec *cढाँचा,
+		     स्थिर काष्ठा comp_testvec *dढाँचा,
+		     पूर्णांक ctcount, पूर्णांक dtcount)
+अणु
+	स्थिर अक्षर *algo = crypto_tfm_alg_driver_name(crypto_comp_tfm(tfm));
+	अक्षर *output, *decomp_output;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	output = kmalloc(COMP_BUF_SIZE, GFP_KERNEL);
-	if (!output)
-		return -ENOMEM;
+	output = kदो_स्मृति(COMP_BUF_SIZE, GFP_KERNEL);
+	अगर (!output)
+		वापस -ENOMEM;
 
-	decomp_output = kmalloc(COMP_BUF_SIZE, GFP_KERNEL);
-	if (!decomp_output) {
-		kfree(output);
-		return -ENOMEM;
-	}
+	decomp_output = kदो_स्मृति(COMP_BUF_SIZE, GFP_KERNEL);
+	अगर (!decomp_output) अणु
+		kमुक्त(output);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < ctcount; i++) {
-		int ilen;
-		unsigned int dlen = COMP_BUF_SIZE;
+	क्रम (i = 0; i < ctcount; i++) अणु
+		पूर्णांक ilen;
+		अचिन्हित पूर्णांक dlen = COMP_BUF_SIZE;
 
-		memset(output, 0, COMP_BUF_SIZE);
-		memset(decomp_output, 0, COMP_BUF_SIZE);
+		स_रखो(output, 0, COMP_BUF_SIZE);
+		स_रखो(decomp_output, 0, COMP_BUF_SIZE);
 
-		ilen = ctemplate[i].inlen;
-		ret = crypto_comp_compress(tfm, ctemplate[i].input,
+		ilen = cढाँचा[i].inlen;
+		ret = crypto_comp_compress(tfm, cढाँचा[i].input,
 					   ilen, output, &dlen);
-		if (ret) {
-			printk(KERN_ERR "alg: comp: compression failed "
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "alg: comp: compression failed "
 			       "on test %d for %s: ret=%d\n", i + 1, algo,
 			       -ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ilen = dlen;
 		dlen = COMP_BUF_SIZE;
 		ret = crypto_comp_decompress(tfm, output,
 					     ilen, decomp_output, &dlen);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("alg: comp: compression failed: decompress: on test %d for %s failed: ret=%d\n",
 			       i + 1, algo, -ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (dlen != ctemplate[i].inlen) {
-			printk(KERN_ERR "alg: comp: Compression test %d "
+		अगर (dlen != cढाँचा[i].inlen) अणु
+			prपूर्णांकk(KERN_ERR "alg: comp: Compression test %d "
 			       "failed for %s: output len = %d\n", i + 1, algo,
 			       dlen);
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (memcmp(decomp_output, ctemplate[i].input,
-			   ctemplate[i].inlen)) {
+		अगर (स_भेद(decomp_output, cढाँचा[i].input,
+			   cढाँचा[i].inlen)) अणु
 			pr_err("alg: comp: compression failed: output differs: on test %d for %s\n",
 			       i + 1, algo);
 			hexdump(decomp_output, dlen);
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < dtcount; i++) {
-		int ilen;
-		unsigned int dlen = COMP_BUF_SIZE;
+	क्रम (i = 0; i < dtcount; i++) अणु
+		पूर्णांक ilen;
+		अचिन्हित पूर्णांक dlen = COMP_BUF_SIZE;
 
-		memset(decomp_output, 0, COMP_BUF_SIZE);
+		स_रखो(decomp_output, 0, COMP_BUF_SIZE);
 
-		ilen = dtemplate[i].inlen;
-		ret = crypto_comp_decompress(tfm, dtemplate[i].input,
+		ilen = dढाँचा[i].inlen;
+		ret = crypto_comp_decompress(tfm, dढाँचा[i].input,
 					     ilen, decomp_output, &dlen);
-		if (ret) {
-			printk(KERN_ERR "alg: comp: decompression failed "
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "alg: comp: decompression failed "
 			       "on test %d for %s: ret=%d\n", i + 1, algo,
 			       -ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (dlen != dtemplate[i].outlen) {
-			printk(KERN_ERR "alg: comp: Decompression test %d "
+		अगर (dlen != dढाँचा[i].outlen) अणु
+			prपूर्णांकk(KERN_ERR "alg: comp: Decompression test %d "
 			       "failed for %s: output len = %d\n", i + 1, algo,
 			       dlen);
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (memcmp(decomp_output, dtemplate[i].output, dlen)) {
-			printk(KERN_ERR "alg: comp: Decompression test %d "
+		अगर (स_भेद(decomp_output, dढाँचा[i].output, dlen)) अणु
+			prपूर्णांकk(KERN_ERR "alg: comp: Decompression test %d "
 			       "failed for %s\n", i + 1, algo);
 			hexdump(decomp_output, dlen);
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 
 out:
-	kfree(decomp_output);
-	kfree(output);
-	return ret;
-}
+	kमुक्त(decomp_output);
+	kमुक्त(output);
+	वापस ret;
+पूर्ण
 
-static int test_acomp(struct crypto_acomp *tfm,
-			      const struct comp_testvec *ctemplate,
-		      const struct comp_testvec *dtemplate,
-		      int ctcount, int dtcount)
-{
-	const char *algo = crypto_tfm_alg_driver_name(crypto_acomp_tfm(tfm));
-	unsigned int i;
-	char *output, *decomp_out;
-	int ret;
-	struct scatterlist src, dst;
-	struct acomp_req *req;
-	struct crypto_wait wait;
+अटल पूर्णांक test_acomp(काष्ठा crypto_acomp *tfm,
+			      स्थिर काष्ठा comp_testvec *cढाँचा,
+		      स्थिर काष्ठा comp_testvec *dढाँचा,
+		      पूर्णांक ctcount, पूर्णांक dtcount)
+अणु
+	स्थिर अक्षर *algo = crypto_tfm_alg_driver_name(crypto_acomp_tfm(tfm));
+	अचिन्हित पूर्णांक i;
+	अक्षर *output, *decomp_out;
+	पूर्णांक ret;
+	काष्ठा scatterlist src, dst;
+	काष्ठा acomp_req *req;
+	काष्ठा crypto_रुको रुको;
 
-	output = kmalloc(COMP_BUF_SIZE, GFP_KERNEL);
-	if (!output)
-		return -ENOMEM;
+	output = kदो_स्मृति(COMP_BUF_SIZE, GFP_KERNEL);
+	अगर (!output)
+		वापस -ENOMEM;
 
-	decomp_out = kmalloc(COMP_BUF_SIZE, GFP_KERNEL);
-	if (!decomp_out) {
-		kfree(output);
-		return -ENOMEM;
-	}
+	decomp_out = kदो_स्मृति(COMP_BUF_SIZE, GFP_KERNEL);
+	अगर (!decomp_out) अणु
+		kमुक्त(output);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < ctcount; i++) {
-		unsigned int dlen = COMP_BUF_SIZE;
-		int ilen = ctemplate[i].inlen;
-		void *input_vec;
+	क्रम (i = 0; i < ctcount; i++) अणु
+		अचिन्हित पूर्णांक dlen = COMP_BUF_SIZE;
+		पूर्णांक ilen = cढाँचा[i].inlen;
+		व्योम *input_vec;
 
-		input_vec = kmemdup(ctemplate[i].input, ilen, GFP_KERNEL);
-		if (!input_vec) {
+		input_vec = kmemdup(cढाँचा[i].input, ilen, GFP_KERNEL);
+		अगर (!input_vec) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		memset(output, 0, dlen);
-		crypto_init_wait(&wait);
+		स_रखो(output, 0, dlen);
+		crypto_init_रुको(&रुको);
 		sg_init_one(&src, input_vec, ilen);
 		sg_init_one(&dst, output, dlen);
 
 		req = acomp_request_alloc(tfm);
-		if (!req) {
+		अगर (!req) अणु
 			pr_err("alg: acomp: request alloc failed for %s\n",
 			       algo);
-			kfree(input_vec);
+			kमुक्त(input_vec);
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		acomp_request_set_params(req, &src, &dst, ilen, dlen);
 		acomp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-					   crypto_req_done, &wait);
+					   crypto_req_करोne, &रुको);
 
-		ret = crypto_wait_req(crypto_acomp_compress(req), &wait);
-		if (ret) {
+		ret = crypto_रुको_req(crypto_acomp_compress(req), &रुको);
+		अगर (ret) अणु
 			pr_err("alg: acomp: compression failed on test %d for %s: ret=%d\n",
 			       i + 1, algo, -ret);
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
 		ilen = req->dlen;
 		dlen = COMP_BUF_SIZE;
 		sg_init_one(&src, output, ilen);
 		sg_init_one(&dst, decomp_out, dlen);
-		crypto_init_wait(&wait);
+		crypto_init_रुको(&रुको);
 		acomp_request_set_params(req, &src, &dst, ilen, dlen);
 
-		ret = crypto_wait_req(crypto_acomp_decompress(req), &wait);
-		if (ret) {
+		ret = crypto_रुको_req(crypto_acomp_decompress(req), &रुको);
+		अगर (ret) अणु
 			pr_err("alg: acomp: compression failed on test %d for %s: ret=%d\n",
 			       i + 1, algo, -ret);
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
-		if (req->dlen != ctemplate[i].inlen) {
+		अगर (req->dlen != cढाँचा[i].inlen) अणु
 			pr_err("alg: acomp: Compression test %d failed for %s: output len = %d\n",
 			       i + 1, algo, req->dlen);
 			ret = -EINVAL;
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
-		if (memcmp(input_vec, decomp_out, req->dlen)) {
+		अगर (स_भेद(input_vec, decomp_out, req->dlen)) अणु
 			pr_err("alg: acomp: Compression test %d failed for %s\n",
 			       i + 1, algo);
 			hexdump(output, req->dlen);
 			ret = -EINVAL;
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
-		kfree(input_vec);
-		acomp_request_free(req);
-	}
+		kमुक्त(input_vec);
+		acomp_request_मुक्त(req);
+	पूर्ण
 
-	for (i = 0; i < dtcount; i++) {
-		unsigned int dlen = COMP_BUF_SIZE;
-		int ilen = dtemplate[i].inlen;
-		void *input_vec;
+	क्रम (i = 0; i < dtcount; i++) अणु
+		अचिन्हित पूर्णांक dlen = COMP_BUF_SIZE;
+		पूर्णांक ilen = dढाँचा[i].inlen;
+		व्योम *input_vec;
 
-		input_vec = kmemdup(dtemplate[i].input, ilen, GFP_KERNEL);
-		if (!input_vec) {
+		input_vec = kmemdup(dढाँचा[i].input, ilen, GFP_KERNEL);
+		अगर (!input_vec) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		memset(output, 0, dlen);
-		crypto_init_wait(&wait);
+		स_रखो(output, 0, dlen);
+		crypto_init_रुको(&रुको);
 		sg_init_one(&src, input_vec, ilen);
 		sg_init_one(&dst, output, dlen);
 
 		req = acomp_request_alloc(tfm);
-		if (!req) {
+		अगर (!req) अणु
 			pr_err("alg: acomp: request alloc failed for %s\n",
 			       algo);
-			kfree(input_vec);
+			kमुक्त(input_vec);
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		acomp_request_set_params(req, &src, &dst, ilen, dlen);
 		acomp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-					   crypto_req_done, &wait);
+					   crypto_req_करोne, &रुको);
 
-		ret = crypto_wait_req(crypto_acomp_decompress(req), &wait);
-		if (ret) {
+		ret = crypto_रुको_req(crypto_acomp_decompress(req), &रुको);
+		अगर (ret) अणु
 			pr_err("alg: acomp: decompression failed on test %d for %s: ret=%d\n",
 			       i + 1, algo, -ret);
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
-		if (req->dlen != dtemplate[i].outlen) {
+		अगर (req->dlen != dढाँचा[i].outlen) अणु
 			pr_err("alg: acomp: Decompression test %d failed for %s: output len = %d\n",
 			       i + 1, algo, req->dlen);
 			ret = -EINVAL;
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
-		if (memcmp(output, dtemplate[i].output, req->dlen)) {
+		अगर (स_भेद(output, dढाँचा[i].output, req->dlen)) अणु
 			pr_err("alg: acomp: Decompression test %d failed for %s\n",
 			       i + 1, algo);
 			hexdump(output, req->dlen);
 			ret = -EINVAL;
-			kfree(input_vec);
-			acomp_request_free(req);
-			goto out;
-		}
+			kमुक्त(input_vec);
+			acomp_request_मुक्त(req);
+			जाओ out;
+		पूर्ण
 
-		kfree(input_vec);
-		acomp_request_free(req);
-	}
+		kमुक्त(input_vec);
+		acomp_request_मुक्त(req);
+	पूर्ण
 
 	ret = 0;
 
 out:
-	kfree(decomp_out);
-	kfree(output);
-	return ret;
-}
+	kमुक्त(decomp_out);
+	kमुक्त(output);
+	वापस ret;
+पूर्ण
 
-static int test_cprng(struct crypto_rng *tfm,
-		      const struct cprng_testvec *template,
-		      unsigned int tcount)
-{
-	const char *algo = crypto_tfm_alg_driver_name(crypto_rng_tfm(tfm));
-	int err = 0, i, j, seedsize;
+अटल पूर्णांक test_cprng(काष्ठा crypto_rng *tfm,
+		      स्थिर काष्ठा cprng_testvec *ढाँचा,
+		      अचिन्हित पूर्णांक tcount)
+अणु
+	स्थिर अक्षर *algo = crypto_tfm_alg_driver_name(crypto_rng_tfm(tfm));
+	पूर्णांक err = 0, i, j, seedsize;
 	u8 *seed;
-	char result[32];
+	अक्षर result[32];
 
 	seedsize = crypto_rng_seedsize(tfm);
 
-	seed = kmalloc(seedsize, GFP_KERNEL);
-	if (!seed) {
-		printk(KERN_ERR "alg: cprng: Failed to allocate seed space "
+	seed = kदो_स्मृति(seedsize, GFP_KERNEL);
+	अगर (!seed) अणु
+		prपूर्णांकk(KERN_ERR "alg: cprng: Failed to allocate seed space "
 		       "for %s\n", algo);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < tcount; i++) {
-		memset(result, 0, 32);
+	क्रम (i = 0; i < tcount; i++) अणु
+		स_रखो(result, 0, 32);
 
-		memcpy(seed, template[i].v, template[i].vlen);
-		memcpy(seed + template[i].vlen, template[i].key,
-		       template[i].klen);
-		memcpy(seed + template[i].vlen + template[i].klen,
-		       template[i].dt, template[i].dtlen);
+		स_नकल(seed, ढाँचा[i].v, ढाँचा[i].vlen);
+		स_नकल(seed + ढाँचा[i].vlen, ढाँचा[i].key,
+		       ढाँचा[i].klen);
+		स_नकल(seed + ढाँचा[i].vlen + ढाँचा[i].klen,
+		       ढाँचा[i].dt, ढाँचा[i].dtlen);
 
 		err = crypto_rng_reset(tfm, seed, seedsize);
-		if (err) {
-			printk(KERN_ERR "alg: cprng: Failed to reset rng "
+		अगर (err) अणु
+			prपूर्णांकk(KERN_ERR "alg: cprng: Failed to reset rng "
 			       "for %s\n", algo);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (j = 0; j < template[i].loops; j++) {
+		क्रम (j = 0; j < ढाँचा[i].loops; j++) अणु
 			err = crypto_rng_get_bytes(tfm, result,
-						   template[i].rlen);
-			if (err < 0) {
-				printk(KERN_ERR "alg: cprng: Failed to obtain "
+						   ढाँचा[i].rlen);
+			अगर (err < 0) अणु
+				prपूर्णांकk(KERN_ERR "alg: cprng: Failed to obtain "
 				       "the correct amount of random data for "
 				       "%s (requested %d)\n", algo,
-				       template[i].rlen);
-				goto out;
-			}
-		}
+				       ढाँचा[i].rlen);
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-		err = memcmp(result, template[i].result,
-			     template[i].rlen);
-		if (err) {
-			printk(KERN_ERR "alg: cprng: Test %d failed for %s\n",
+		err = स_भेद(result, ढाँचा[i].result,
+			     ढाँचा[i].rlen);
+		अगर (err) अणु
+			prपूर्णांकk(KERN_ERR "alg: cprng: Test %d failed for %s\n",
 			       i, algo);
-			hexdump(result, template[i].rlen);
+			hexdump(result, ढाँचा[i].rlen);
 			err = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	kfree(seed);
-	return err;
-}
+	kमुक्त(seed);
+	वापस err;
+पूर्ण
 
-static int alg_test_cipher(const struct alg_test_desc *desc,
-			   const char *driver, u32 type, u32 mask)
-{
-	const struct cipher_test_suite *suite = &desc->suite.cipher;
-	struct crypto_cipher *tfm;
-	int err;
+अटल पूर्णांक alg_test_cipher(स्थिर काष्ठा alg_test_desc *desc,
+			   स्थिर अक्षर *driver, u32 type, u32 mask)
+अणु
+	स्थिर काष्ठा cipher_test_suite *suite = &desc->suite.cipher;
+	काष्ठा crypto_cipher *tfm;
+	पूर्णांक err;
 
 	tfm = crypto_alloc_cipher(driver, type, mask);
-	if (IS_ERR(tfm)) {
-		printk(KERN_ERR "alg: cipher: Failed to load transform for "
+	अगर (IS_ERR(tfm)) अणु
+		prपूर्णांकk(KERN_ERR "alg: cipher: Failed to load transform for "
 		       "%s: %ld\n", driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
+		वापस PTR_ERR(tfm);
+	पूर्ण
 
 	err = test_cipher(tfm, ENCRYPT, suite->vecs, suite->count);
-	if (!err)
+	अगर (!err)
 		err = test_cipher(tfm, DECRYPT, suite->vecs, suite->count);
 
-	crypto_free_cipher(tfm);
-	return err;
-}
+	crypto_मुक्त_cipher(tfm);
+	वापस err;
+पूर्ण
 
-static int alg_test_comp(const struct alg_test_desc *desc, const char *driver,
+अटल पूर्णांक alg_test_comp(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 			 u32 type, u32 mask)
-{
-	struct crypto_comp *comp;
-	struct crypto_acomp *acomp;
-	int err;
+अणु
+	काष्ठा crypto_comp *comp;
+	काष्ठा crypto_acomp *acomp;
+	पूर्णांक err;
 	u32 algo_type = type & CRYPTO_ALG_TYPE_ACOMPRESS_MASK;
 
-	if (algo_type == CRYPTO_ALG_TYPE_ACOMPRESS) {
+	अगर (algo_type == CRYPTO_ALG_TYPE_ACOMPRESS) अणु
 		acomp = crypto_alloc_acomp(driver, type, mask);
-		if (IS_ERR(acomp)) {
+		अगर (IS_ERR(acomp)) अणु
 			pr_err("alg: acomp: Failed to load transform for %s: %ld\n",
 			       driver, PTR_ERR(acomp));
-			return PTR_ERR(acomp);
-		}
+			वापस PTR_ERR(acomp);
+		पूर्ण
 		err = test_acomp(acomp, desc->suite.comp.comp.vecs,
 				 desc->suite.comp.decomp.vecs,
 				 desc->suite.comp.comp.count,
 				 desc->suite.comp.decomp.count);
-		crypto_free_acomp(acomp);
-	} else {
+		crypto_मुक्त_acomp(acomp);
+	पूर्ण अन्यथा अणु
 		comp = crypto_alloc_comp(driver, type, mask);
-		if (IS_ERR(comp)) {
+		अगर (IS_ERR(comp)) अणु
 			pr_err("alg: comp: Failed to load transform for %s: %ld\n",
 			       driver, PTR_ERR(comp));
-			return PTR_ERR(comp);
-		}
+			वापस PTR_ERR(comp);
+		पूर्ण
 
 		err = test_comp(comp, desc->suite.comp.comp.vecs,
 				desc->suite.comp.decomp.vecs,
 				desc->suite.comp.comp.count,
 				desc->suite.comp.decomp.count);
 
-		crypto_free_comp(comp);
-	}
-	return err;
-}
+		crypto_मुक्त_comp(comp);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int alg_test_crc32c(const struct alg_test_desc *desc,
-			   const char *driver, u32 type, u32 mask)
-{
-	struct crypto_shash *tfm;
+अटल पूर्णांक alg_test_crc32c(स्थिर काष्ठा alg_test_desc *desc,
+			   स्थिर अक्षर *driver, u32 type, u32 mask)
+अणु
+	काष्ठा crypto_shash *tfm;
 	__le32 val;
-	int err;
+	पूर्णांक err;
 
 	err = alg_test_hash(desc, driver, type, mask);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	tfm = crypto_alloc_shash(driver, type, mask);
-	if (IS_ERR(tfm)) {
-		if (PTR_ERR(tfm) == -ENOENT) {
+	अगर (IS_ERR(tfm)) अणु
+		अगर (PTR_ERR(tfm) == -ENOENT) अणु
 			/*
 			 * This crc32c implementation is only available through
-			 * ahash API, not the shash API, so the remaining part
+			 * ahash API, not the shash API, so the reमुख्यing part
 			 * of the test is not applicable to it.
 			 */
-			return 0;
-		}
-		printk(KERN_ERR "alg: crc32c: Failed to load transform for %s: "
+			वापस 0;
+		पूर्ण
+		prपूर्णांकk(KERN_ERR "alg: crc32c: Failed to load transform for %s: "
 		       "%ld\n", driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
+		वापस PTR_ERR(tfm);
+	पूर्ण
 	driver = crypto_shash_driver_name(tfm);
 
-	do {
+	करो अणु
 		SHASH_DESC_ON_STACK(shash, tfm);
 		u32 *ctx = (u32 *)shash_desc_ctx(shash);
 
@@ -3596,382 +3597,382 @@ static int alg_test_crc32c(const struct alg_test_desc *desc,
 
 		*ctx = 420553207;
 		err = crypto_shash_final(shash, (u8 *)&val);
-		if (err) {
-			printk(KERN_ERR "alg: crc32c: Operation failed for "
+		अगर (err) अणु
+			prपूर्णांकk(KERN_ERR "alg: crc32c: Operation failed for "
 			       "%s: %d\n", driver, err);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (val != cpu_to_le32(~420553207)) {
+		अगर (val != cpu_to_le32(~420553207)) अणु
 			pr_err("alg: crc32c: Test failed for %s: %u\n",
 			       driver, le32_to_cpu(val));
 			err = -EINVAL;
-		}
-	} while (0);
+		पूर्ण
+	पूर्ण जबतक (0);
 
-	crypto_free_shash(tfm);
+	crypto_मुक्त_shash(tfm);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int alg_test_cprng(const struct alg_test_desc *desc, const char *driver,
+अटल पूर्णांक alg_test_cprng(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 			  u32 type, u32 mask)
-{
-	struct crypto_rng *rng;
-	int err;
+अणु
+	काष्ठा crypto_rng *rng;
+	पूर्णांक err;
 
 	rng = crypto_alloc_rng(driver, type, mask);
-	if (IS_ERR(rng)) {
-		printk(KERN_ERR "alg: cprng: Failed to load transform for %s: "
+	अगर (IS_ERR(rng)) अणु
+		prपूर्णांकk(KERN_ERR "alg: cprng: Failed to load transform for %s: "
 		       "%ld\n", driver, PTR_ERR(rng));
-		return PTR_ERR(rng);
-	}
+		वापस PTR_ERR(rng);
+	पूर्ण
 
 	err = test_cprng(rng, desc->suite.cprng.vecs, desc->suite.cprng.count);
 
-	crypto_free_rng(rng);
+	crypto_मुक्त_rng(rng);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int drbg_cavs_test(const struct drbg_testvec *test, int pr,
-			  const char *driver, u32 type, u32 mask)
-{
-	int ret = -EAGAIN;
-	struct crypto_rng *drng;
-	struct drbg_test_data test_data;
-	struct drbg_string addtl, pers, testentropy;
-	unsigned char *buf = kzalloc(test->expectedlen, GFP_KERNEL);
+अटल पूर्णांक drbg_cavs_test(स्थिर काष्ठा drbg_testvec *test, पूर्णांक pr,
+			  स्थिर अक्षर *driver, u32 type, u32 mask)
+अणु
+	पूर्णांक ret = -EAGAIN;
+	काष्ठा crypto_rng *drng;
+	काष्ठा drbg_test_data test_data;
+	काष्ठा drbg_string addtl, pers, testentropy;
+	अचिन्हित अक्षर *buf = kzalloc(test->expectedlen, GFP_KERNEL);
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	drng = crypto_alloc_rng(driver, type, mask);
-	if (IS_ERR(drng)) {
-		printk(KERN_ERR "alg: drbg: could not allocate DRNG handle for "
+	अगर (IS_ERR(drng)) अणु
+		prपूर्णांकk(KERN_ERR "alg: drbg: could not allocate DRNG handle for "
 		       "%s\n", driver);
-		kfree_sensitive(buf);
-		return -ENOMEM;
-	}
+		kमुक्त_sensitive(buf);
+		वापस -ENOMEM;
+	पूर्ण
 
 	test_data.testentropy = &testentropy;
 	drbg_string_fill(&testentropy, test->entropy, test->entropylen);
 	drbg_string_fill(&pers, test->pers, test->perslen);
 	ret = crypto_drbg_reset_test(drng, &pers, &test_data);
-	if (ret) {
-		printk(KERN_ERR "alg: drbg: Failed to reset rng\n");
-		goto outbuf;
-	}
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "alg: drbg: Failed to reset rng\n");
+		जाओ outbuf;
+	पूर्ण
 
 	drbg_string_fill(&addtl, test->addtla, test->addtllen);
-	if (pr) {
+	अगर (pr) अणु
 		drbg_string_fill(&testentropy, test->entpra, test->entprlen);
 		ret = crypto_drbg_get_bytes_addtl_test(drng,
 			buf, test->expectedlen, &addtl,	&test_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = crypto_drbg_get_bytes_addtl(drng,
 			buf, test->expectedlen, &addtl);
-	}
-	if (ret < 0) {
-		printk(KERN_ERR "alg: drbg: could not obtain random data for "
+	पूर्ण
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "alg: drbg: could not obtain random data for "
 		       "driver %s\n", driver);
-		goto outbuf;
-	}
+		जाओ outbuf;
+	पूर्ण
 
 	drbg_string_fill(&addtl, test->addtlb, test->addtllen);
-	if (pr) {
+	अगर (pr) अणु
 		drbg_string_fill(&testentropy, test->entprb, test->entprlen);
 		ret = crypto_drbg_get_bytes_addtl_test(drng,
 			buf, test->expectedlen, &addtl, &test_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = crypto_drbg_get_bytes_addtl(drng,
 			buf, test->expectedlen, &addtl);
-	}
-	if (ret < 0) {
-		printk(KERN_ERR "alg: drbg: could not obtain random data for "
+	पूर्ण
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "alg: drbg: could not obtain random data for "
 		       "driver %s\n", driver);
-		goto outbuf;
-	}
+		जाओ outbuf;
+	पूर्ण
 
-	ret = memcmp(test->expected, buf, test->expectedlen);
+	ret = स_भेद(test->expected, buf, test->expectedlen);
 
 outbuf:
-	crypto_free_rng(drng);
-	kfree_sensitive(buf);
-	return ret;
-}
+	crypto_मुक्त_rng(drng);
+	kमुक्त_sensitive(buf);
+	वापस ret;
+पूर्ण
 
 
-static int alg_test_drbg(const struct alg_test_desc *desc, const char *driver,
+अटल पूर्णांक alg_test_drbg(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 			 u32 type, u32 mask)
-{
-	int err = 0;
-	int pr = 0;
-	int i = 0;
-	const struct drbg_testvec *template = desc->suite.drbg.vecs;
-	unsigned int tcount = desc->suite.drbg.count;
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक pr = 0;
+	पूर्णांक i = 0;
+	स्थिर काष्ठा drbg_testvec *ढाँचा = desc->suite.drbg.vecs;
+	अचिन्हित पूर्णांक tcount = desc->suite.drbg.count;
 
-	if (0 == memcmp(driver, "drbg_pr_", 8))
+	अगर (0 == स_भेद(driver, "drbg_pr_", 8))
 		pr = 1;
 
-	for (i = 0; i < tcount; i++) {
-		err = drbg_cavs_test(&template[i], pr, driver, type, mask);
-		if (err) {
-			printk(KERN_ERR "alg: drbg: Test %d failed for %s\n",
+	क्रम (i = 0; i < tcount; i++) अणु
+		err = drbg_cavs_test(&ढाँचा[i], pr, driver, type, mask);
+		अगर (err) अणु
+			prपूर्णांकk(KERN_ERR "alg: drbg: Test %d failed for %s\n",
 			       i, driver);
 			err = -EINVAL;
-			break;
-		}
-	}
-	return err;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस err;
 
-}
+पूर्ण
 
-static int do_test_kpp(struct crypto_kpp *tfm, const struct kpp_testvec *vec,
-		       const char *alg)
-{
-	struct kpp_request *req;
-	void *input_buf = NULL;
-	void *output_buf = NULL;
-	void *a_public = NULL;
-	void *a_ss = NULL;
-	void *shared_secret = NULL;
-	struct crypto_wait wait;
-	unsigned int out_len_max;
-	int err = -ENOMEM;
-	struct scatterlist src, dst;
+अटल पूर्णांक करो_test_kpp(काष्ठा crypto_kpp *tfm, स्थिर काष्ठा kpp_testvec *vec,
+		       स्थिर अक्षर *alg)
+अणु
+	काष्ठा kpp_request *req;
+	व्योम *input_buf = शून्य;
+	व्योम *output_buf = शून्य;
+	व्योम *a_खुला = शून्य;
+	व्योम *a_ss = शून्य;
+	व्योम *shared_secret = शून्य;
+	काष्ठा crypto_रुको रुको;
+	अचिन्हित पूर्णांक out_len_max;
+	पूर्णांक err = -ENOMEM;
+	काष्ठा scatterlist src, dst;
 
 	req = kpp_request_alloc(tfm, GFP_KERNEL);
-	if (!req)
-		return err;
+	अगर (!req)
+		वापस err;
 
-	crypto_init_wait(&wait);
+	crypto_init_रुको(&रुको);
 
 	err = crypto_kpp_set_secret(tfm, vec->secret, vec->secret_size);
-	if (err < 0)
-		goto free_req;
+	अगर (err < 0)
+		जाओ मुक्त_req;
 
 	out_len_max = crypto_kpp_maxsize(tfm);
 	output_buf = kzalloc(out_len_max, GFP_KERNEL);
-	if (!output_buf) {
+	अगर (!output_buf) अणु
 		err = -ENOMEM;
-		goto free_req;
-	}
+		जाओ मुक्त_req;
+	पूर्ण
 
 	/* Use appropriate parameter as base */
-	kpp_request_set_input(req, NULL, 0);
+	kpp_request_set_input(req, शून्य, 0);
 	sg_init_one(&dst, output_buf, out_len_max);
 	kpp_request_set_output(req, &dst, out_len_max);
 	kpp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				 crypto_req_done, &wait);
+				 crypto_req_करोne, &रुको);
 
-	/* Compute party A's public key */
-	err = crypto_wait_req(crypto_kpp_generate_public_key(req), &wait);
-	if (err) {
+	/* Compute party A's खुला key */
+	err = crypto_रुको_req(crypto_kpp_generate_खुला_key(req), &रुको);
+	अगर (err) अणु
 		pr_err("alg: %s: Party A: generate public key test failed. err %d\n",
 		       alg, err);
-		goto free_output;
-	}
+		जाओ मुक्त_output;
+	पूर्ण
 
-	if (vec->genkey) {
-		/* Save party A's public key */
-		a_public = kmemdup(sg_virt(req->dst), out_len_max, GFP_KERNEL);
-		if (!a_public) {
+	अगर (vec->genkey) अणु
+		/* Save party A's खुला key */
+		a_खुला = kmemdup(sg_virt(req->dst), out_len_max, GFP_KERNEL);
+		अगर (!a_खुला) अणु
 			err = -ENOMEM;
-			goto free_output;
-		}
-	} else {
-		/* Verify calculated public key */
-		if (memcmp(vec->expected_a_public, sg_virt(req->dst),
-			   vec->expected_a_public_size)) {
+			जाओ मुक्त_output;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Verअगरy calculated खुला key */
+		अगर (स_भेद(vec->expected_a_खुला, sg_virt(req->dst),
+			   vec->expected_a_खुला_size)) अणु
 			pr_err("alg: %s: Party A: generate public key test failed. Invalid output\n",
 			       alg);
 			err = -EINVAL;
-			goto free_output;
-		}
-	}
+			जाओ मुक्त_output;
+		पूर्ण
+	पूर्ण
 
-	/* Calculate shared secret key by using counter part (b) public key. */
-	input_buf = kmemdup(vec->b_public, vec->b_public_size, GFP_KERNEL);
-	if (!input_buf) {
+	/* Calculate shared secret key by using counter part (b) खुला key. */
+	input_buf = kmemdup(vec->b_खुला, vec->b_खुला_size, GFP_KERNEL);
+	अगर (!input_buf) अणु
 		err = -ENOMEM;
-		goto free_output;
-	}
+		जाओ मुक्त_output;
+	पूर्ण
 
-	sg_init_one(&src, input_buf, vec->b_public_size);
+	sg_init_one(&src, input_buf, vec->b_खुला_size);
 	sg_init_one(&dst, output_buf, out_len_max);
-	kpp_request_set_input(req, &src, vec->b_public_size);
+	kpp_request_set_input(req, &src, vec->b_खुला_size);
 	kpp_request_set_output(req, &dst, out_len_max);
 	kpp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				 crypto_req_done, &wait);
-	err = crypto_wait_req(crypto_kpp_compute_shared_secret(req), &wait);
-	if (err) {
+				 crypto_req_करोne, &रुको);
+	err = crypto_रुको_req(crypto_kpp_compute_shared_secret(req), &रुको);
+	अगर (err) अणु
 		pr_err("alg: %s: Party A: compute shared secret test failed. err %d\n",
 		       alg, err);
-		goto free_all;
-	}
+		जाओ मुक्त_all;
+	पूर्ण
 
-	if (vec->genkey) {
+	अगर (vec->genkey) अणु
 		/* Save the shared secret obtained by party A */
 		a_ss = kmemdup(sg_virt(req->dst), vec->expected_ss_size, GFP_KERNEL);
-		if (!a_ss) {
+		अगर (!a_ss) अणु
 			err = -ENOMEM;
-			goto free_all;
-		}
+			जाओ मुक्त_all;
+		पूर्ण
 
 		/*
 		 * Calculate party B's shared secret by using party A's
-		 * public key.
+		 * खुला key.
 		 */
 		err = crypto_kpp_set_secret(tfm, vec->b_secret,
 					    vec->b_secret_size);
-		if (err < 0)
-			goto free_all;
+		अगर (err < 0)
+			जाओ मुक्त_all;
 
-		sg_init_one(&src, a_public, vec->expected_a_public_size);
+		sg_init_one(&src, a_खुला, vec->expected_a_खुला_size);
 		sg_init_one(&dst, output_buf, out_len_max);
-		kpp_request_set_input(req, &src, vec->expected_a_public_size);
+		kpp_request_set_input(req, &src, vec->expected_a_खुला_size);
 		kpp_request_set_output(req, &dst, out_len_max);
 		kpp_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-					 crypto_req_done, &wait);
-		err = crypto_wait_req(crypto_kpp_compute_shared_secret(req),
-				      &wait);
-		if (err) {
+					 crypto_req_करोne, &रुको);
+		err = crypto_रुको_req(crypto_kpp_compute_shared_secret(req),
+				      &रुको);
+		अगर (err) अणु
 			pr_err("alg: %s: Party B: compute shared secret failed. err %d\n",
 			       alg, err);
-			goto free_all;
-		}
+			जाओ मुक्त_all;
+		पूर्ण
 
 		shared_secret = a_ss;
-	} else {
-		shared_secret = (void *)vec->expected_ss;
-	}
+	पूर्ण अन्यथा अणु
+		shared_secret = (व्योम *)vec->expected_ss;
+	पूर्ण
 
 	/*
-	 * verify shared secret from which the user will derive
+	 * verअगरy shared secret from which the user will derive
 	 * secret key by executing whatever hash it has chosen
 	 */
-	if (memcmp(shared_secret, sg_virt(req->dst),
-		   vec->expected_ss_size)) {
+	अगर (स_भेद(shared_secret, sg_virt(req->dst),
+		   vec->expected_ss_size)) अणु
 		pr_err("alg: %s: compute shared secret test failed. Invalid output\n",
 		       alg);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-free_all:
-	kfree(a_ss);
-	kfree(input_buf);
-free_output:
-	kfree(a_public);
-	kfree(output_buf);
-free_req:
-	kpp_request_free(req);
-	return err;
-}
+मुक्त_all:
+	kमुक्त(a_ss);
+	kमुक्त(input_buf);
+मुक्त_output:
+	kमुक्त(a_खुला);
+	kमुक्त(output_buf);
+मुक्त_req:
+	kpp_request_मुक्त(req);
+	वापस err;
+पूर्ण
 
-static int test_kpp(struct crypto_kpp *tfm, const char *alg,
-		    const struct kpp_testvec *vecs, unsigned int tcount)
-{
-	int ret, i;
+अटल पूर्णांक test_kpp(काष्ठा crypto_kpp *tfm, स्थिर अक्षर *alg,
+		    स्थिर काष्ठा kpp_testvec *vecs, अचिन्हित पूर्णांक tcount)
+अणु
+	पूर्णांक ret, i;
 
-	for (i = 0; i < tcount; i++) {
-		ret = do_test_kpp(tfm, vecs++, alg);
-		if (ret) {
+	क्रम (i = 0; i < tcount; i++) अणु
+		ret = करो_test_kpp(tfm, vecs++, alg);
+		अगर (ret) अणु
 			pr_err("alg: %s: test failed on vector %d, err=%d\n",
 			       alg, i + 1, ret);
-			return ret;
-		}
-	}
-	return 0;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int alg_test_kpp(const struct alg_test_desc *desc, const char *driver,
+अटल पूर्णांक alg_test_kpp(स्थिर काष्ठा alg_test_desc *desc, स्थिर अक्षर *driver,
 			u32 type, u32 mask)
-{
-	struct crypto_kpp *tfm;
-	int err = 0;
+अणु
+	काष्ठा crypto_kpp *tfm;
+	पूर्णांक err = 0;
 
 	tfm = crypto_alloc_kpp(driver, type, mask);
-	if (IS_ERR(tfm)) {
+	अगर (IS_ERR(tfm)) अणु
 		pr_err("alg: kpp: Failed to load tfm for %s: %ld\n",
 		       driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
-	if (desc->suite.kpp.vecs)
+		वापस PTR_ERR(tfm);
+	पूर्ण
+	अगर (desc->suite.kpp.vecs)
 		err = test_kpp(tfm, desc->alg, desc->suite.kpp.vecs,
 			       desc->suite.kpp.count);
 
-	crypto_free_kpp(tfm);
-	return err;
-}
+	crypto_मुक्त_kpp(tfm);
+	वापस err;
+पूर्ण
 
-static u8 *test_pack_u32(u8 *dst, u32 val)
-{
-	memcpy(dst, &val, sizeof(val));
-	return dst + sizeof(val);
-}
+अटल u8 *test_pack_u32(u8 *dst, u32 val)
+अणु
+	स_नकल(dst, &val, माप(val));
+	वापस dst + माप(val);
+पूर्ण
 
-static int test_akcipher_one(struct crypto_akcipher *tfm,
-			     const struct akcipher_testvec *vecs)
-{
-	char *xbuf[XBUFSIZE];
-	struct akcipher_request *req;
-	void *outbuf_enc = NULL;
-	void *outbuf_dec = NULL;
-	struct crypto_wait wait;
-	unsigned int out_len_max, out_len = 0;
-	int err = -ENOMEM;
-	struct scatterlist src, dst, src_tab[3];
-	const char *m, *c;
-	unsigned int m_size, c_size;
-	const char *op;
+अटल पूर्णांक test_akcipher_one(काष्ठा crypto_akcipher *tfm,
+			     स्थिर काष्ठा akcipher_testvec *vecs)
+अणु
+	अक्षर *xbuf[Xबफ_मानE];
+	काष्ठा akcipher_request *req;
+	व्योम *outbuf_enc = शून्य;
+	व्योम *outbuf_dec = शून्य;
+	काष्ठा crypto_रुको रुको;
+	अचिन्हित पूर्णांक out_len_max, out_len = 0;
+	पूर्णांक err = -ENOMEM;
+	काष्ठा scatterlist src, dst, src_tab[3];
+	स्थिर अक्षर *m, *c;
+	अचिन्हित पूर्णांक m_size, c_size;
+	स्थिर अक्षर *op;
 	u8 *key, *ptr;
 
-	if (testmgr_alloc_buf(xbuf))
-		return err;
+	अगर (tesपंचांगgr_alloc_buf(xbuf))
+		वापस err;
 
 	req = akcipher_request_alloc(tfm, GFP_KERNEL);
-	if (!req)
-		goto free_xbuf;
+	अगर (!req)
+		जाओ मुक्त_xbuf;
 
-	crypto_init_wait(&wait);
+	crypto_init_रुको(&रुको);
 
-	key = kmalloc(vecs->key_len + sizeof(u32) * 2 + vecs->param_len,
+	key = kदो_स्मृति(vecs->key_len + माप(u32) * 2 + vecs->param_len,
 		      GFP_KERNEL);
-	if (!key)
-		goto free_req;
-	memcpy(key, vecs->key, vecs->key_len);
+	अगर (!key)
+		जाओ मुक्त_req;
+	स_नकल(key, vecs->key, vecs->key_len);
 	ptr = key + vecs->key_len;
 	ptr = test_pack_u32(ptr, vecs->algo);
 	ptr = test_pack_u32(ptr, vecs->param_len);
-	memcpy(ptr, vecs->params, vecs->param_len);
+	स_नकल(ptr, vecs->params, vecs->param_len);
 
-	if (vecs->public_key_vec)
+	अगर (vecs->खुला_key_vec)
 		err = crypto_akcipher_set_pub_key(tfm, key, vecs->key_len);
-	else
+	अन्यथा
 		err = crypto_akcipher_set_priv_key(tfm, key, vecs->key_len);
-	if (err)
-		goto free_key;
+	अगर (err)
+		जाओ मुक्त_key;
 
 	/*
-	 * First run test which do not require a private key, such as
-	 * encrypt or verify.
+	 * First run test which करो not require a निजी key, such as
+	 * encrypt or verअगरy.
 	 */
 	err = -ENOMEM;
 	out_len_max = crypto_akcipher_maxsize(tfm);
 	outbuf_enc = kzalloc(out_len_max, GFP_KERNEL);
-	if (!outbuf_enc)
-		goto free_key;
+	अगर (!outbuf_enc)
+		जाओ मुक्त_key;
 
-	if (!vecs->siggen_sigver_test) {
+	अगर (!vecs->siggen_sigver_test) अणु
 		m = vecs->m;
 		m_size = vecs->m_size;
 		c = vecs->c;
 		c_size = vecs->c_size;
 		op = "encrypt";
-	} else {
-		/* Swap args so we could keep plaintext (digest)
+	पूर्ण अन्यथा अणु
+		/* Swap args so we could keep plaपूर्णांकext (digest)
 		 * in vecs->m, and cooked signature in vecs->c.
 		 */
 		m = vecs->c; /* signature */
@@ -3979,1686 +3980,1686 @@ static int test_akcipher_one(struct crypto_akcipher *tfm,
 		c = vecs->m; /* digest */
 		c_size = vecs->m_size;
 		op = "verify";
-	}
+	पूर्ण
 
 	err = -E2BIG;
-	if (WARN_ON(m_size > PAGE_SIZE))
-		goto free_all;
-	memcpy(xbuf[0], m, m_size);
+	अगर (WARN_ON(m_size > PAGE_SIZE))
+		जाओ मुक्त_all;
+	स_नकल(xbuf[0], m, m_size);
 
 	sg_init_table(src_tab, 3);
 	sg_set_buf(&src_tab[0], xbuf[0], 8);
 	sg_set_buf(&src_tab[1], xbuf[0] + 8, m_size - 8);
-	if (vecs->siggen_sigver_test) {
-		if (WARN_ON(c_size > PAGE_SIZE))
-			goto free_all;
-		memcpy(xbuf[1], c, c_size);
+	अगर (vecs->siggen_sigver_test) अणु
+		अगर (WARN_ON(c_size > PAGE_SIZE))
+			जाओ मुक्त_all;
+		स_नकल(xbuf[1], c, c_size);
 		sg_set_buf(&src_tab[2], xbuf[1], c_size);
-		akcipher_request_set_crypt(req, src_tab, NULL, m_size, c_size);
-	} else {
+		akcipher_request_set_crypt(req, src_tab, शून्य, m_size, c_size);
+	पूर्ण अन्यथा अणु
 		sg_init_one(&dst, outbuf_enc, out_len_max);
 		akcipher_request_set_crypt(req, src_tab, &dst, m_size,
 					   out_len_max);
-	}
+	पूर्ण
 	akcipher_request_set_callback(req, CRYPTO_TFM_REQ_MAY_BACKLOG,
-				      crypto_req_done, &wait);
+				      crypto_req_करोne, &रुको);
 
-	err = crypto_wait_req(vecs->siggen_sigver_test ?
-			      /* Run asymmetric signature verification */
-			      crypto_akcipher_verify(req) :
+	err = crypto_रुको_req(vecs->siggen_sigver_test ?
+			      /* Run asymmetric signature verअगरication */
+			      crypto_akcipher_verअगरy(req) :
 			      /* Run asymmetric encrypt */
-			      crypto_akcipher_encrypt(req), &wait);
-	if (err) {
+			      crypto_akcipher_encrypt(req), &रुको);
+	अगर (err) अणु
 		pr_err("alg: akcipher: %s test failed. err %d\n", op, err);
-		goto free_all;
-	}
-	if (!vecs->siggen_sigver_test && c) {
-		if (req->dst_len != c_size) {
+		जाओ मुक्त_all;
+	पूर्ण
+	अगर (!vecs->siggen_sigver_test && c) अणु
+		अगर (req->dst_len != c_size) अणु
 			pr_err("alg: akcipher: %s test failed. Invalid output len\n",
 			       op);
 			err = -EINVAL;
-			goto free_all;
-		}
-		/* verify that encrypted message is equal to expected */
-		if (memcmp(c, outbuf_enc, c_size) != 0) {
+			जाओ मुक्त_all;
+		पूर्ण
+		/* verअगरy that encrypted message is equal to expected */
+		अगर (स_भेद(c, outbuf_enc, c_size) != 0) अणु
 			pr_err("alg: akcipher: %s test failed. Invalid output\n",
 			       op);
 			hexdump(outbuf_enc, c_size);
 			err = -EINVAL;
-			goto free_all;
-		}
-	}
+			जाओ मुक्त_all;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Don't invoke (decrypt or sign) test which require a private key
-	 * for vectors with only a public key.
+	 * Don't invoke (decrypt or sign) test which require a निजी key
+	 * क्रम vectors with only a खुला key.
 	 */
-	if (vecs->public_key_vec) {
+	अगर (vecs->खुला_key_vec) अणु
 		err = 0;
-		goto free_all;
-	}
+		जाओ मुक्त_all;
+	पूर्ण
 	outbuf_dec = kzalloc(out_len_max, GFP_KERNEL);
-	if (!outbuf_dec) {
+	अगर (!outbuf_dec) अणु
 		err = -ENOMEM;
-		goto free_all;
-	}
+		जाओ मुक्त_all;
+	पूर्ण
 
-	if (!vecs->siggen_sigver_test && !c) {
+	अगर (!vecs->siggen_sigver_test && !c) अणु
 		c = outbuf_enc;
 		c_size = req->dst_len;
-	}
+	पूर्ण
 
 	err = -E2BIG;
 	op = vecs->siggen_sigver_test ? "sign" : "decrypt";
-	if (WARN_ON(c_size > PAGE_SIZE))
-		goto free_all;
-	memcpy(xbuf[0], c, c_size);
+	अगर (WARN_ON(c_size > PAGE_SIZE))
+		जाओ मुक्त_all;
+	स_नकल(xbuf[0], c, c_size);
 
 	sg_init_one(&src, xbuf[0], c_size);
 	sg_init_one(&dst, outbuf_dec, out_len_max);
-	crypto_init_wait(&wait);
+	crypto_init_रुको(&रुको);
 	akcipher_request_set_crypt(req, &src, &dst, c_size, out_len_max);
 
-	err = crypto_wait_req(vecs->siggen_sigver_test ?
+	err = crypto_रुको_req(vecs->siggen_sigver_test ?
 			      /* Run asymmetric signature generation */
 			      crypto_akcipher_sign(req) :
 			      /* Run asymmetric decrypt */
-			      crypto_akcipher_decrypt(req), &wait);
-	if (err) {
+			      crypto_akcipher_decrypt(req), &रुको);
+	अगर (err) अणु
 		pr_err("alg: akcipher: %s test failed. err %d\n", op, err);
-		goto free_all;
-	}
+		जाओ मुक्त_all;
+	पूर्ण
 	out_len = req->dst_len;
-	if (out_len < m_size) {
+	अगर (out_len < m_size) अणु
 		pr_err("alg: akcipher: %s test failed. Invalid output len %u\n",
 		       op, out_len);
 		err = -EINVAL;
-		goto free_all;
-	}
-	/* verify that decrypted message is equal to the original msg */
-	if (memchr_inv(outbuf_dec, 0, out_len - m_size) ||
-	    memcmp(m, outbuf_dec + out_len - m_size, m_size)) {
+		जाओ मुक्त_all;
+	पूर्ण
+	/* verअगरy that decrypted message is equal to the original msg */
+	अगर (स_प्रथम_inv(outbuf_dec, 0, out_len - m_size) ||
+	    स_भेद(m, outbuf_dec + out_len - m_size, m_size)) अणु
 		pr_err("alg: akcipher: %s test failed. Invalid output\n", op);
 		hexdump(outbuf_dec, out_len);
 		err = -EINVAL;
-	}
-free_all:
-	kfree(outbuf_dec);
-	kfree(outbuf_enc);
-free_key:
-	kfree(key);
-free_req:
-	akcipher_request_free(req);
-free_xbuf:
-	testmgr_free_buf(xbuf);
-	return err;
-}
+	पूर्ण
+मुक्त_all:
+	kमुक्त(outbuf_dec);
+	kमुक्त(outbuf_enc);
+मुक्त_key:
+	kमुक्त(key);
+मुक्त_req:
+	akcipher_request_मुक्त(req);
+मुक्त_xbuf:
+	tesपंचांगgr_मुक्त_buf(xbuf);
+	वापस err;
+पूर्ण
 
-static int test_akcipher(struct crypto_akcipher *tfm, const char *alg,
-			 const struct akcipher_testvec *vecs,
-			 unsigned int tcount)
-{
-	const char *algo =
+अटल पूर्णांक test_akcipher(काष्ठा crypto_akcipher *tfm, स्थिर अक्षर *alg,
+			 स्थिर काष्ठा akcipher_testvec *vecs,
+			 अचिन्हित पूर्णांक tcount)
+अणु
+	स्थिर अक्षर *algo =
 		crypto_tfm_alg_driver_name(crypto_akcipher_tfm(tfm));
-	int ret, i;
+	पूर्णांक ret, i;
 
-	for (i = 0; i < tcount; i++) {
+	क्रम (i = 0; i < tcount; i++) अणु
 		ret = test_akcipher_one(tfm, vecs++);
-		if (!ret)
-			continue;
+		अगर (!ret)
+			जारी;
 
 		pr_err("alg: akcipher: test %d failed for %s, err=%d\n",
 		       i + 1, algo, ret);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int alg_test_akcipher(const struct alg_test_desc *desc,
-			     const char *driver, u32 type, u32 mask)
-{
-	struct crypto_akcipher *tfm;
-	int err = 0;
+अटल पूर्णांक alg_test_akcipher(स्थिर काष्ठा alg_test_desc *desc,
+			     स्थिर अक्षर *driver, u32 type, u32 mask)
+अणु
+	काष्ठा crypto_akcipher *tfm;
+	पूर्णांक err = 0;
 
 	tfm = crypto_alloc_akcipher(driver, type, mask);
-	if (IS_ERR(tfm)) {
+	अगर (IS_ERR(tfm)) अणु
 		pr_err("alg: akcipher: Failed to load tfm for %s: %ld\n",
 		       driver, PTR_ERR(tfm));
-		return PTR_ERR(tfm);
-	}
-	if (desc->suite.akcipher.vecs)
+		वापस PTR_ERR(tfm);
+	पूर्ण
+	अगर (desc->suite.akcipher.vecs)
 		err = test_akcipher(tfm, desc->alg, desc->suite.akcipher.vecs,
 				    desc->suite.akcipher.count);
 
-	crypto_free_akcipher(tfm);
-	return err;
-}
+	crypto_मुक्त_akcipher(tfm);
+	वापस err;
+पूर्ण
 
-static int alg_test_null(const struct alg_test_desc *desc,
-			     const char *driver, u32 type, u32 mask)
-{
-	return 0;
-}
+अटल पूर्णांक alg_test_null(स्थिर काष्ठा alg_test_desc *desc,
+			     स्थिर अक्षर *driver, u32 type, u32 mask)
+अणु
+	वापस 0;
+पूर्ण
 
-#define ____VECS(tv)	.vecs = tv, .count = ARRAY_SIZE(tv)
-#define __VECS(tv)	{ ____VECS(tv) }
+#घोषणा ____VECS(tv)	.vecs = tv, .count = ARRAY_SIZE(tv)
+#घोषणा __VECS(tv)	अणु ____VECS(tv) पूर्ण
 
 /* Please keep this list sorted by algorithm name. */
-static const struct alg_test_desc alg_test_descs[] = {
-	{
+अटल स्थिर काष्ठा alg_test_desc alg_test_descs[] = अणु
+	अणु
 		.alg = "adiantum(xchacha12,aes)",
 		.generic_driver = "adiantum(xchacha12-generic,aes-generic,nhpoly1305-generic)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(adiantum_xchacha12_aes_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(adiantum_xchacha12_aes_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "adiantum(xchacha20,aes)",
 		.generic_driver = "adiantum(xchacha20-generic,aes-generic,nhpoly1305-generic)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(adiantum_xchacha20_aes_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(adiantum_xchacha20_aes_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "aegis128",
 		.test = alg_test_aead,
-		.suite = {
-			.aead = __VECS(aegis128_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.aead = __VECS(aegis128_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ansi_cprng",
 		.test = alg_test_cprng,
-		.suite = {
-			.cprng = __VECS(ansi_cprng_aes_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cprng = __VECS(ansi_cprng_aes_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(md5),ecb(cipher_null))",
 		.test = alg_test_aead,
-		.suite = {
-			.aead = __VECS(hmac_md5_ecb_cipher_null_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.aead = __VECS(hmac_md5_ecb_cipher_null_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha1),cbc(aes))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha1_aes_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha1),cbc(des))",
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha1_des_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha1),cbc(des3_ede))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha1_des3_ede_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha1),ctr(aes))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha1),ecb(cipher_null))",
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha1_ecb_cipher_null_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha1),rfc3686(ctr(aes)))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha224),cbc(des))",
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha224_des_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha224),cbc(des3_ede))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha224_des3_ede_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha256),cbc(aes))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha256_aes_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha256),cbc(des))",
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha256_des_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha256),cbc(des3_ede))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha256_des3_ede_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha256),ctr(aes))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha256),rfc3686(ctr(aes)))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha384),cbc(des))",
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha384_des_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha384),cbc(des3_ede))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha384_des3_ede_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha384),ctr(aes))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha384),rfc3686(ctr(aes)))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha512),cbc(aes))",
 		.fips_allowed = 1,
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha512_aes_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha512),cbc(des))",
 		.test = alg_test_aead,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha512_des_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha512),cbc(des3_ede))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(hmac_sha512_des3_ede_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha512),ctr(aes))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "authenc(hmac(sha512),rfc3686(ctr(aes)))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "blake2b-160",
 		.test = alg_test_hash,
 		.fips_allowed = 0,
-		.suite = {
-			.hash = __VECS(blake2b_160_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blake2b_160_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2b-256",
 		.test = alg_test_hash,
 		.fips_allowed = 0,
-		.suite = {
-			.hash = __VECS(blake2b_256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blake2b_256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2b-384",
 		.test = alg_test_hash,
 		.fips_allowed = 0,
-		.suite = {
-			.hash = __VECS(blake2b_384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blake2b_384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2b-512",
 		.test = alg_test_hash,
 		.fips_allowed = 0,
-		.suite = {
-			.hash = __VECS(blake2b_512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blake2b_512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2s-128",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(blakes2s_128_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blakes2s_128_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2s-160",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(blakes2s_160_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blakes2s_160_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2s-224",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(blakes2s_224_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blakes2s_224_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "blake2s-256",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(blakes2s_256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(blakes2s_256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "cbc(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(anubis)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(anubis_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(anubis_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(blowfish)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(bf_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(bf_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(camellia)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(camellia_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(camellia_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(cast5)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast5_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast5_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(cast6)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast6_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast6_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(des)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(des_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(des_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(des3_ede)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(des3_ede_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(des3_ede_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		/* Same as cbc(aes) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "cbc(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		/* Same as cbc(sm4) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "cbc(psm4)",
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "cbc(serpent)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(serpent_cbc_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(serpent_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cbc(sm4)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(sm4_cbc_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(sm4_cbc_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "cbc(twofish)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(tf_cbc_tv_template)
-		},
-	}, {
-#if IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
+		.suite = अणु
+			.cipher = __VECS(tf_cbc_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
+#अगर IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
 		.alg = "cbc-paes-s390",
 		.fips_allowed = 1,
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(aes_cbc_tv_template)
-		}
-	}, {
-#endif
+		.suite = अणु
+			.cipher = __VECS(aes_cbc_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#पूर्ण_अगर
 		.alg = "cbcmac(aes)",
 		.fips_allowed = 1,
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(aes_cbcmac_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(aes_cbcmac_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ccm(aes)",
 		.generic_driver = "ccm_base(ctr(aes-generic),cbcmac(aes-generic))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
-			.aead = {
-				____VECS(aes_ccm_tv_template),
+		.suite = अणु
+			.aead = अणु
+				____VECS(aes_ccm_tv_ढाँचा),
 				.einval_allowed = 1,
-			}
-		}
-	}, {
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "cfb(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_cfb_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_cfb_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cfb(sm4)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(sm4_cfb_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(sm4_cfb_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "chacha20",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(chacha20_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(chacha20_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "cmac(aes)",
 		.fips_allowed = 1,
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(aes_cmac128_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(aes_cmac128_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "cmac(des3_ede)",
 		.fips_allowed = 1,
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(des3_ede_cmac64_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(des3_ede_cmac64_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "compress_null",
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "crc32",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(crc32_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(crc32_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "crc32c",
 		.test = alg_test_crc32c,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(crc32c_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(crc32c_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "crct10dif",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(crct10dif_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(crct10dअगर_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(blowfish)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(bf_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(bf_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(camellia)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(camellia_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(camellia_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(cast5)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast5_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast5_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(cast6)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast6_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast6_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(des)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(des_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(des_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(des3_ede)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(des3_ede_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(des3_ede_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* Same as ctr(aes) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "ctr(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 
 		/* Same as ctr(sm4) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "ctr(psm4)",
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "ctr(serpent)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(serpent_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(serpent_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(sm4)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(sm4_ctr_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(sm4_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ctr(twofish)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(tf_ctr_tv_template)
-		}
-	}, {
-#if IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
+		.suite = अणु
+			.cipher = __VECS(tf_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#अगर IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
 		.alg = "ctr-paes-s390",
 		.fips_allowed = 1,
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(aes_ctr_tv_template)
-		}
-	}, {
-#endif
+		.suite = अणु
+			.cipher = __VECS(aes_ctr_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#पूर्ण_अगर
 		.alg = "cts(cbc(aes))",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(cts_mode_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cts_mode_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* Same as cts(cbc((aes)) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "cts(cbc(paes))",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "curve25519",
 		.test = alg_test_kpp,
-		.suite = {
-			.kpp = __VECS(curve25519_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.kpp = __VECS(curve25519_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "deflate",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(deflate_comp_tv_template),
-				.decomp = __VECS(deflate_decomp_tv_template)
-			}
-		}
-	}, {
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(deflate_comp_tv_ढाँचा),
+				.decomp = __VECS(deflate_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "dh",
 		.test = alg_test_kpp,
 		.fips_allowed = 1,
-		.suite = {
-			.kpp = __VECS(dh_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.kpp = __VECS(dh_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "digest_null",
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_nopr_ctr_aes128",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_nopr_ctr_aes128_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_nopr_ctr_aes128_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "drbg_nopr_ctr_aes192",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_nopr_ctr_aes192_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_nopr_ctr_aes192_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "drbg_nopr_ctr_aes256",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_nopr_ctr_aes256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_nopr_ctr_aes256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/*
-		 * There is no need to specifically test the DRBG with every
+		 * There is no need to specअगरically test the DRBG with every
 		 * backend cipher -- covered by drbg_nopr_hmac_sha256 test
 		 */
 		.alg = "drbg_nopr_hmac_sha1",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_nopr_hmac_sha256",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_nopr_hmac_sha256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_nopr_hmac_sha256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* covered by drbg_nopr_hmac_sha256 test */
 		.alg = "drbg_nopr_hmac_sha384",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_nopr_hmac_sha512",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_nopr_sha1",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_nopr_sha256",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_nopr_sha256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_nopr_sha256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* covered by drbg_nopr_sha256 test */
 		.alg = "drbg_nopr_sha384",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_nopr_sha512",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_ctr_aes128",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_pr_ctr_aes128_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_pr_ctr_aes128_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* covered by drbg_pr_ctr_aes128 test */
 		.alg = "drbg_pr_ctr_aes192",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_ctr_aes256",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_hmac_sha1",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_hmac_sha256",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_pr_hmac_sha256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_pr_hmac_sha256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* covered by drbg_pr_hmac_sha256 test */
 		.alg = "drbg_pr_hmac_sha384",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_hmac_sha512",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_sha1",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_sha256",
 		.test = alg_test_drbg,
 		.fips_allowed = 1,
-		.suite = {
-			.drbg = __VECS(drbg_pr_sha256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.drbg = __VECS(drbg_pr_sha256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* covered by drbg_pr_sha256 test */
 		.alg = "drbg_pr_sha384",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "drbg_pr_sha512",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "ecb(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(anubis)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(anubis_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(anubis_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(arc4)",
 		.generic_driver = "ecb(arc4)-generic",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(arc4_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(arc4_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(blowfish)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(bf_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(bf_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(camellia)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(camellia_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(camellia_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(cast5)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast5_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast5_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(cast6)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast6_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast6_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(cipher_null)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "ecb(des)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(des_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(des_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(des3_ede)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(des3_ede_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(des3_ede_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(fcrypt)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = {
-				.vecs = fcrypt_pcbc_tv_template,
+		.suite = अणु
+			.cipher = अणु
+				.vecs = fcrypt_pcbc_tv_ढाँचा,
 				.count = 1
-			}
-		}
-	}, {
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(khazad)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(khazad_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(khazad_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* Same as ecb(aes) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "ecb(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "ecb(seed)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(seed_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(seed_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(serpent)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(serpent_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(serpent_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(sm4)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(sm4_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(sm4_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(tea)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(tea_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(tea_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(twofish)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(tf_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(tf_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(xeta)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(xeta_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(xeta_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecb(xtea)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(xtea_tv_template)
-		}
-	}, {
-#if IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
+		.suite = अणु
+			.cipher = __VECS(xtea_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#अगर IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
 		.alg = "ecb-paes-s390",
 		.fips_allowed = 1,
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(aes_tv_template)
-		}
-	}, {
-#endif
-#ifndef CONFIG_CRYPTO_FIPS
+		.suite = अणु
+			.cipher = __VECS(aes_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_CRYPTO_FIPS
 		.alg = "ecdh-nist-p192",
 		.test = alg_test_kpp,
 		.fips_allowed = 1,
-		.suite = {
-			.kpp = __VECS(ecdh_p192_tv_template)
-		}
-	}, {
-#endif
+		.suite = अणु
+			.kpp = __VECS(ecdh_p192_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#पूर्ण_अगर
 		.alg = "ecdh-nist-p256",
 		.test = alg_test_kpp,
 		.fips_allowed = 1,
-		.suite = {
-			.kpp = __VECS(ecdh_p256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.kpp = __VECS(ecdh_p256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecdsa-nist-p192",
 		.test = alg_test_akcipher,
-		.suite = {
-			.akcipher = __VECS(ecdsa_nist_p192_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(ecdsa_nist_p192_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecdsa-nist-p256",
 		.test = alg_test_akcipher,
-		.suite = {
-			.akcipher = __VECS(ecdsa_nist_p256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(ecdsa_nist_p256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecdsa-nist-p384",
 		.test = alg_test_akcipher,
-		.suite = {
-			.akcipher = __VECS(ecdsa_nist_p384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(ecdsa_nist_p384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ecrdsa",
 		.test = alg_test_akcipher,
-		.suite = {
-			.akcipher = __VECS(ecrdsa_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(ecrdsa_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "essiv(authenc(hmac(sha256),cbc(aes)),sha256)",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
+		.suite = अणु
 			.aead = __VECS(essiv_hmac_sha256_aes_cbc_tv_temp)
-		}
-	}, {
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "essiv(cbc(aes),sha256)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(essiv_aes_cbc_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(essiv_aes_cbc_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "gcm(aes)",
 		.generic_driver = "gcm_base(ctr(aes-generic),ghash-generic)",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
-			.aead = __VECS(aes_gcm_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.aead = __VECS(aes_gcm_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ghash",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(ghash_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(ghash_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(md5)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(hmac_md5_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_md5_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(rmd160)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(hmac_rmd160_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_rmd160_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha1)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha1_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha1_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha224)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha224_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha224_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha256)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha3-224)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha3_224_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha3_224_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha3-256)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha3_256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha3_256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha3-384)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha3_384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha3_384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha3-512)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha3_512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha3_512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha384)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sha512)",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(hmac_sha512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sha512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(sm3)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(hmac_sm3_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_sm3_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(streebog256)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(hmac_streebog256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_streebog256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "hmac(streebog512)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(hmac_streebog512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(hmac_streebog512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "jitterentropy_rng",
 		.fips_allowed = 1,
 		.test = alg_test_null,
-	}, {
+	पूर्ण, अणु
 		.alg = "kw(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_kw_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_kw_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lrw(aes)",
 		.generic_driver = "lrw(ecb(aes-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(aes_lrw_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_lrw_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lrw(camellia)",
 		.generic_driver = "lrw(ecb(camellia-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(camellia_lrw_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(camellia_lrw_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lrw(cast6)",
 		.generic_driver = "lrw(ecb(cast6-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast6_lrw_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast6_lrw_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lrw(serpent)",
 		.generic_driver = "lrw(ecb(serpent-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(serpent_lrw_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(serpent_lrw_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lrw(twofish)",
 		.generic_driver = "lrw(ecb(twofish-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(tf_lrw_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(tf_lrw_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lz4",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(lz4_comp_tv_template),
-				.decomp = __VECS(lz4_decomp_tv_template)
-			}
-		}
-	}, {
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(lz4_comp_tv_ढाँचा),
+				.decomp = __VECS(lz4_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lz4hc",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(lz4hc_comp_tv_template),
-				.decomp = __VECS(lz4hc_decomp_tv_template)
-			}
-		}
-	}, {
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(lz4hc_comp_tv_ढाँचा),
+				.decomp = __VECS(lz4hc_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lzo",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(lzo_comp_tv_template),
-				.decomp = __VECS(lzo_decomp_tv_template)
-			}
-		}
-	}, {
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(lzo_comp_tv_ढाँचा),
+				.decomp = __VECS(lzo_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "lzo-rle",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(lzorle_comp_tv_template),
-				.decomp = __VECS(lzorle_decomp_tv_template)
-			}
-		}
-	}, {
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(lzorle_comp_tv_ढाँचा),
+				.decomp = __VECS(lzorle_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "md4",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(md4_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(md4_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "md5",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(md5_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(md5_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "michael_mic",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(michael_mic_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(michael_mic_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "nhpoly1305",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(nhpoly1305_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(nhpoly1305_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "ofb(aes)",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_ofb_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_ofb_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* Same as ofb(aes) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "ofb(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "ofb(sm4)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(sm4_ofb_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(sm4_ofb_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "pcbc(fcrypt)",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(fcrypt_pcbc_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(fcrypt_pcbc_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "pkcs1pad(rsa,sha224)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "pkcs1pad(rsa,sha256)",
 		.test = alg_test_akcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.akcipher = __VECS(pkcs1pad_rsa_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(pkcs1pad_rsa_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "pkcs1pad(rsa,sha384)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "pkcs1pad(rsa,sha512)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "poly1305",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(poly1305_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(poly1305_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc3686(ctr(aes))",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_ctr_rfc3686_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_ctr_rfc3686_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc3686(ctr(sm4))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(sm4_ctr_rfc3686_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(sm4_ctr_rfc3686_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc4106(gcm(aes))",
 		.generic_driver = "rfc4106(gcm_base(ctr(aes-generic),ghash-generic))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
-			.aead = {
-				____VECS(aes_gcm_rfc4106_tv_template),
+		.suite = अणु
+			.aead = अणु
+				____VECS(aes_gcm_rfc4106_tv_ढाँचा),
 				.einval_allowed = 1,
 				.aad_iv = 1,
-			}
-		}
-	}, {
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc4309(ccm(aes))",
 		.generic_driver = "rfc4309(ccm_base(ctr(aes-generic),cbcmac(aes-generic)))",
 		.test = alg_test_aead,
 		.fips_allowed = 1,
-		.suite = {
-			.aead = {
-				____VECS(aes_ccm_rfc4309_tv_template),
+		.suite = अणु
+			.aead = अणु
+				____VECS(aes_ccm_rfc4309_tv_ढाँचा),
 				.einval_allowed = 1,
 				.aad_iv = 1,
-			}
-		}
-	}, {
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc4543(gcm(aes))",
 		.generic_driver = "rfc4543(gcm_base(ctr(aes-generic),ghash-generic))",
 		.test = alg_test_aead,
-		.suite = {
-			.aead = {
-				____VECS(aes_gcm_rfc4543_tv_template),
+		.suite = अणु
+			.aead = अणु
+				____VECS(aes_gcm_rfc4543_tv_ढाँचा),
 				.einval_allowed = 1,
 				.aad_iv = 1,
-			}
-		}
-	}, {
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc7539(chacha20,poly1305)",
 		.test = alg_test_aead,
-		.suite = {
-			.aead = __VECS(rfc7539_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.aead = __VECS(rfc7539_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rfc7539esp(chacha20,poly1305)",
 		.test = alg_test_aead,
-		.suite = {
-			.aead = {
-				____VECS(rfc7539esp_tv_template),
+		.suite = अणु
+			.aead = अणु
+				____VECS(rfc7539esp_tv_ढाँचा),
 				.einval_allowed = 1,
 				.aad_iv = 1,
-			}
-		}
-	}, {
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rmd160",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(rmd160_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(rmd160_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "rsa",
 		.test = alg_test_akcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.akcipher = __VECS(rsa_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(rsa_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha1",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha1_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha1_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha224",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha224_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha224_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha256",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha3-224",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha3_224_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha3_224_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha3-256",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha3_256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha3_256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha3-384",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha3_384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha3_384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha3-512",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha3_512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha3_512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha384",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sha512",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(sha512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sha512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sm2",
 		.test = alg_test_akcipher,
-		.suite = {
-			.akcipher = __VECS(sm2_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.akcipher = __VECS(sm2_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "sm3",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(sm3_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(sm3_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "streebog256",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(streebog256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(streebog256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "streebog512",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(streebog512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(streebog512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "vmac64(aes)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(vmac64_aes_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(vmac64_aes_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "wp256",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(wp256_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(wp256_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "wp384",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(wp384_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(wp384_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "wp512",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(wp512_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(wp512_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "xcbc(aes)",
 		.test = alg_test_hash,
-		.suite = {
-			.hash = __VECS(aes_xcbc128_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(aes_xcbc128_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "xchacha12",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(xchacha12_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(xchacha12_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "xchacha20",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(xchacha20_tv_template)
-		},
-	}, {
+		.suite = अणु
+			.cipher = __VECS(xchacha20_tv_ढाँचा)
+		पूर्ण,
+	पूर्ण, अणु
 		.alg = "xts(aes)",
 		.generic_driver = "xts(ecb(aes-generic))",
 		.test = alg_test_skcipher,
 		.fips_allowed = 1,
-		.suite = {
-			.cipher = __VECS(aes_xts_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(aes_xts_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "xts(camellia)",
 		.generic_driver = "xts(ecb(camellia-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(camellia_xts_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(camellia_xts_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "xts(cast6)",
 		.generic_driver = "xts(ecb(cast6-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(cast6_xts_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(cast6_xts_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		/* Same as xts(aes) except the key is stored in
 		 * hardware secure memory which we reference by index
 		 */
 		.alg = "xts(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "xts(serpent)",
 		.generic_driver = "xts(ecb(serpent-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(serpent_xts_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.cipher = __VECS(serpent_xts_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "xts(twofish)",
 		.generic_driver = "xts(ecb(twofish-generic))",
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(tf_xts_tv_template)
-		}
-	}, {
-#if IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
+		.suite = अणु
+			.cipher = __VECS(tf_xts_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#अगर IS_ENABLED(CONFIG_CRYPTO_PAES_S390)
 		.alg = "xts-paes-s390",
 		.fips_allowed = 1,
 		.test = alg_test_skcipher,
-		.suite = {
-			.cipher = __VECS(aes_xts_tv_template)
-		}
-	}, {
-#endif
+		.suite = अणु
+			.cipher = __VECS(aes_xts_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
+#पूर्ण_अगर
 		.alg = "xts4096(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "xts512(paes)",
 		.test = alg_test_null,
 		.fips_allowed = 1,
-	}, {
+	पूर्ण, अणु
 		.alg = "xxhash64",
 		.test = alg_test_hash,
 		.fips_allowed = 1,
-		.suite = {
-			.hash = __VECS(xxhash64_tv_template)
-		}
-	}, {
+		.suite = अणु
+			.hash = __VECS(xxhash64_tv_ढाँचा)
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "zlib-deflate",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(zlib_deflate_comp_tv_template),
-				.decomp = __VECS(zlib_deflate_decomp_tv_template)
-			}
-		}
-	}, {
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(zlib_deflate_comp_tv_ढाँचा),
+				.decomp = __VECS(zlib_deflate_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण, अणु
 		.alg = "zstd",
 		.test = alg_test_comp,
 		.fips_allowed = 1,
-		.suite = {
-			.comp = {
-				.comp = __VECS(zstd_comp_tv_template),
-				.decomp = __VECS(zstd_decomp_tv_template)
-			}
-		}
-	}
-};
+		.suite = अणु
+			.comp = अणु
+				.comp = __VECS(zstd_comp_tv_ढाँचा),
+				.decomp = __VECS(zstd_decomp_tv_ढाँचा)
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static void alg_check_test_descs_order(void)
-{
-	int i;
+अटल व्योम alg_check_test_descs_order(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 1; i < ARRAY_SIZE(alg_test_descs); i++) {
-		int diff = strcmp(alg_test_descs[i - 1].alg,
+	क्रम (i = 1; i < ARRAY_SIZE(alg_test_descs); i++) अणु
+		पूर्णांक dअगरf = म_भेद(alg_test_descs[i - 1].alg,
 				  alg_test_descs[i].alg);
 
-		if (WARN_ON(diff > 0)) {
+		अगर (WARN_ON(dअगरf > 0)) अणु
 			pr_warn("testmgr: alg_test_descs entries in wrong order: '%s' before '%s'\n",
 				alg_test_descs[i - 1].alg,
 				alg_test_descs[i].alg);
-		}
+		पूर्ण
 
-		if (WARN_ON(diff == 0)) {
+		अगर (WARN_ON(dअगरf == 0)) अणु
 			pr_warn("testmgr: duplicate alg_test_descs entry: '%s'\n",
 				alg_test_descs[i].alg);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void alg_check_testvec_configs(void)
-{
-	int i;
+अटल व्योम alg_check_testvec_configs(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(default_cipher_testvec_configs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(शेष_cipher_testvec_configs); i++)
 		WARN_ON(!valid_testvec_config(
-				&default_cipher_testvec_configs[i]));
+				&शेष_cipher_testvec_configs[i]));
 
-	for (i = 0; i < ARRAY_SIZE(default_hash_testvec_configs); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(शेष_hash_testvec_configs); i++)
 		WARN_ON(!valid_testvec_config(
-				&default_hash_testvec_configs[i]));
-}
+				&शेष_hash_testvec_configs[i]));
+पूर्ण
 
-static void testmgr_onetime_init(void)
-{
+अटल व्योम tesपंचांगgr_oneसमय_init(व्योम)
+अणु
 	alg_check_test_descs_order();
 	alg_check_testvec_configs();
 
-#ifdef CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
+#अगर_घोषित CONFIG_CRYPTO_MANAGER_EXTRA_TESTS
 	pr_warn("alg: extra crypto tests enabled.  This is intended for developer use only.\n");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int alg_find_test(const char *alg)
-{
-	int start = 0;
-	int end = ARRAY_SIZE(alg_test_descs);
+अटल पूर्णांक alg_find_test(स्थिर अक्षर *alg)
+अणु
+	पूर्णांक start = 0;
+	पूर्णांक end = ARRAY_SIZE(alg_test_descs);
 
-	while (start < end) {
-		int i = (start + end) / 2;
-		int diff = strcmp(alg_test_descs[i].alg, alg);
+	जबतक (start < end) अणु
+		पूर्णांक i = (start + end) / 2;
+		पूर्णांक dअगरf = म_भेद(alg_test_descs[i].alg, alg);
 
-		if (diff > 0) {
+		अगर (dअगरf > 0) अणु
 			end = i;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (diff < 0) {
+		अगर (dअगरf < 0) अणु
 			start = i + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int alg_test(const char *driver, const char *alg, u32 type, u32 mask)
-{
-	int i;
-	int j;
-	int rc;
+पूर्णांक alg_test(स्थिर अक्षर *driver, स्थिर अक्षर *alg, u32 type, u32 mask)
+अणु
+	पूर्णांक i;
+	पूर्णांक j;
+	पूर्णांक rc;
 
-	if (!fips_enabled && notests) {
-		printk_once(KERN_INFO "alg: self-tests disabled\n");
-		return 0;
-	}
+	अगर (!fips_enabled && notests) अणु
+		prपूर्णांकk_once(KERN_INFO "alg: self-tests disabled\n");
+		वापस 0;
+	पूर्ण
 
-	DO_ONCE(testmgr_onetime_init);
+	DO_ONCE(tesपंचांगgr_oneसमय_init);
 
-	if ((type & CRYPTO_ALG_TYPE_MASK) == CRYPTO_ALG_TYPE_CIPHER) {
-		char nalg[CRYPTO_MAX_ALG_NAME];
+	अगर ((type & CRYPTO_ALG_TYPE_MASK) == CRYPTO_ALG_TYPE_CIPHER) अणु
+		अक्षर nalg[CRYPTO_MAX_ALG_NAME];
 
-		if (snprintf(nalg, sizeof(nalg), "ecb(%s)", alg) >=
-		    sizeof(nalg))
-			return -ENAMETOOLONG;
+		अगर (snम_लिखो(nalg, माप(nalg), "ecb(%s)", alg) >=
+		    माप(nalg))
+			वापस -ENAMETOOLONG;
 
 		i = alg_find_test(nalg);
-		if (i < 0)
-			goto notest;
+		अगर (i < 0)
+			जाओ notest;
 
-		if (fips_enabled && !alg_test_descs[i].fips_allowed)
-			goto non_fips_alg;
+		अगर (fips_enabled && !alg_test_descs[i].fips_allowed)
+			जाओ non_fips_alg;
 
 		rc = alg_test_cipher(alg_test_descs + i, driver, type, mask);
-		goto test_done;
-	}
+		जाओ test_करोne;
+	पूर्ण
 
 	i = alg_find_test(alg);
 	j = alg_find_test(driver);
-	if (i < 0 && j < 0)
-		goto notest;
+	अगर (i < 0 && j < 0)
+		जाओ notest;
 
-	if (fips_enabled && ((i >= 0 && !alg_test_descs[i].fips_allowed) ||
+	अगर (fips_enabled && ((i >= 0 && !alg_test_descs[i].fips_allowed) ||
 			     (j >= 0 && !alg_test_descs[j].fips_allowed)))
-		goto non_fips_alg;
+		जाओ non_fips_alg;
 
 	rc = 0;
-	if (i >= 0)
+	अगर (i >= 0)
 		rc |= alg_test_descs[i].test(alg_test_descs + i, driver,
 					     type, mask);
-	if (j >= 0 && j != i)
+	अगर (j >= 0 && j != i)
 		rc |= alg_test_descs[j].test(alg_test_descs + j, driver,
 					     type, mask);
 
-test_done:
-	if (rc) {
-		if (fips_enabled || panic_on_fail) {
-			fips_fail_notify();
+test_करोne:
+	अगर (rc) अणु
+		अगर (fips_enabled || panic_on_fail) अणु
+			fips_fail_notअगरy();
 			panic("alg: self-tests for %s (%s) failed in %s mode!\n",
 			      driver, alg,
 			      fips_enabled ? "fips" : "panic_on_fail");
-		}
+		पूर्ण
 		WARN(1, "alg: self-tests for %s (%s) failed (rc=%d)",
 		     driver, alg, rc);
-	} else {
-		if (fips_enabled)
+	पूर्ण अन्यथा अणु
+		अगर (fips_enabled)
 			pr_info("alg: self-tests for %s (%s) passed\n",
 				driver, alg);
-	}
+	पूर्ण
 
-	return rc;
+	वापस rc;
 
 notest:
-	printk(KERN_INFO "alg: No test for %s (%s)\n", alg, driver);
-	return 0;
+	prपूर्णांकk(KERN_INFO "alg: No test for %s (%s)\n", alg, driver);
+	वापस 0;
 non_fips_alg:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-#endif /* CONFIG_CRYPTO_MANAGER_DISABLE_TESTS */
+#पूर्ण_अगर /* CONFIG_CRYPTO_MANAGER_DISABLE_TESTS */
 
 EXPORT_SYMBOL_GPL(alg_test);

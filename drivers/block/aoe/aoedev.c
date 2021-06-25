@@ -1,117 +1,118 @@
-/* Copyright (c) 2013 Coraid, Inc.  See COPYING for GPL terms. */
+<शैली गुरु>
+/* Copyright (c) 2013 Coraid, Inc.  See COPYING क्रम GPL terms. */
 /*
  * aoedev.c
- * AoE device utility functions; maintains device list.
+ * AoE device utility functions; मुख्यtains device list.
  */
 
-#include <linux/hdreg.h>
-#include <linux/blk-mq.h>
-#include <linux/netdevice.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/bitmap.h>
-#include <linux/kdev_t.h>
-#include <linux/moduleparam.h>
-#include <linux/string.h>
-#include "aoe.h"
+#समावेश <linux/hdreg.h>
+#समावेश <linux/blk-mq.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/माला.स>
+#समावेश "aoe.h"
 
-static void freetgt(struct aoedev *d, struct aoetgt *t);
-static void skbpoolfree(struct aoedev *d);
+अटल व्योम मुक्तtgt(काष्ठा aoedev *d, काष्ठा aoetgt *t);
+अटल व्योम skbpoolमुक्त(काष्ठा aoedev *d);
 
-static int aoe_dyndevs = 1;
-module_param(aoe_dyndevs, int, 0644);
+अटल पूर्णांक aoe_dyndevs = 1;
+module_param(aoe_dyndevs, पूर्णांक, 0644);
 MODULE_PARM_DESC(aoe_dyndevs, "Use dynamic minor numbers for devices.");
 
-static struct aoedev *devlist;
-static DEFINE_SPINLOCK(devlist_lock);
+अटल काष्ठा aoedev *devlist;
+अटल DEFINE_SPINLOCK(devlist_lock);
 
-/* Because some systems will have one, many, or no
+/* Because some प्रणालीs will have one, many, or no
  *   - partitions,
  *   - slots per shelf,
  *   - or shelves,
  * we need some flexibility in the way the minor numbers
  * are allocated.  So they are dynamic.
  */
-#define N_DEVS ((1U<<MINORBITS)/AOE_PARTITIONS)
+#घोषणा N_DEVS ((1U<<MINORBITS)/AOE_PARTITIONS)
 
-static DEFINE_SPINLOCK(used_minors_lock);
-static DECLARE_BITMAP(used_minors, N_DEVS);
+अटल DEFINE_SPINLOCK(used_minors_lock);
+अटल DECLARE_BITMAP(used_minors, N_DEVS);
 
-static int
-minor_get_dyn(ulong *sysminor)
-{
-	ulong flags;
-	ulong n;
-	int error = 0;
+अटल पूर्णांक
+minor_get_dyn(uदीर्घ *sysminor)
+अणु
+	uदीर्घ flags;
+	uदीर्घ n;
+	पूर्णांक error = 0;
 
 	spin_lock_irqsave(&used_minors_lock, flags);
 	n = find_first_zero_bit(used_minors, N_DEVS);
-	if (n < N_DEVS)
+	अगर (n < N_DEVS)
 		set_bit(n, used_minors);
-	else
+	अन्यथा
 		error = -1;
 	spin_unlock_irqrestore(&used_minors_lock, flags);
 
 	*sysminor = n * AOE_PARTITIONS;
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int
-minor_get_static(ulong *sysminor, ulong aoemaj, int aoemin)
-{
-	ulong flags;
-	ulong n;
-	int error = 0;
-	enum {
-		/* for backwards compatibility when !aoe_dyndevs,
-		 * a static number of supported slots per shelf */
+अटल पूर्णांक
+minor_get_अटल(uदीर्घ *sysminor, uदीर्घ aoemaj, पूर्णांक aoemin)
+अणु
+	uदीर्घ flags;
+	uदीर्घ n;
+	पूर्णांक error = 0;
+	क्रमागत अणु
+		/* क्रम backwards compatibility when !aoe_dyndevs,
+		 * a अटल number of supported slots per shelf */
 		NPERSHELF = 16,
-	};
+	पूर्ण;
 
-	if (aoemin >= NPERSHELF) {
+	अगर (aoemin >= NPERSHELF) अणु
 		pr_err("aoe: %s %d slots per shelf\n",
 			"static minor device numbers support only",
 			NPERSHELF);
 		error = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	n = aoemaj * NPERSHELF + aoemin;
-	if (n >= N_DEVS) {
+	अगर (n >= N_DEVS) अणु
 		pr_err("aoe: %s with e%ld.%d\n",
 			"cannot use static minor device numbers",
 			aoemaj, aoemin);
 		error = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock_irqsave(&used_minors_lock, flags);
-	if (test_bit(n, used_minors)) {
+	अगर (test_bit(n, used_minors)) अणु
 		pr_err("aoe: %s %lu\n",
 			"existing device already has static minor number",
 			n);
 		error = -1;
-	} else
+	पूर्ण अन्यथा
 		set_bit(n, used_minors);
 	spin_unlock_irqrestore(&used_minors_lock, flags);
 	*sysminor = n * AOE_PARTITIONS;
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int
-minor_get(ulong *sysminor, ulong aoemaj, int aoemin)
-{
-	if (aoe_dyndevs)
-		return minor_get_dyn(sysminor);
-	else
-		return minor_get_static(sysminor, aoemaj, aoemin);
-}
+अटल पूर्णांक
+minor_get(uदीर्घ *sysminor, uदीर्घ aoemaj, पूर्णांक aoemin)
+अणु
+	अगर (aoe_dyndevs)
+		वापस minor_get_dyn(sysminor);
+	अन्यथा
+		वापस minor_get_अटल(sysminor, aoemaj, aoemin);
+पूर्ण
 
-static void
-minor_free(ulong minor)
-{
-	ulong flags;
+अटल व्योम
+minor_मुक्त(uदीर्घ minor)
+अणु
+	uदीर्घ flags;
 
 	minor /= AOE_PARTITIONS;
 	BUG_ON(minor >= N_DEVS);
@@ -120,367 +121,367 @@ minor_free(ulong minor)
 	BUG_ON(!test_bit(minor, used_minors));
 	clear_bit(minor, used_minors);
 	spin_unlock_irqrestore(&used_minors_lock, flags);
-}
+पूर्ण
 
 /*
- * Users who grab a pointer to the device with aoedev_by_aoeaddr
- * automatically get a reference count and must be responsible
- * for performing a aoedev_put.  With the addition of async
- * kthread processing I'm no longer confident that we can
+ * Users who grab a poपूर्णांकer to the device with aoedev_by_aoeaddr
+ * स्वतःmatically get a reference count and must be responsible
+ * क्रम perक्रमming a aoedev_put.  With the addition of async
+ * kthपढ़ो processing I'm no दीर्घer confident that we can
  * guarantee consistency in the face of device flushes.
  *
- * For the time being, we only bother to add extra references for
- * frames sitting on the iocq.  When the kthreads finish processing
+ * For the समय being, we only bother to add extra references क्रम
+ * frames sitting on the iocq.  When the kthपढ़ोs finish processing
  * these frames, they will aoedev_put the device.
  */
 
-void
-aoedev_put(struct aoedev *d)
-{
-	ulong flags;
+व्योम
+aoedev_put(काष्ठा aoedev *d)
+अणु
+	uदीर्घ flags;
 
 	spin_lock_irqsave(&devlist_lock, flags);
 	d->ref--;
 	spin_unlock_irqrestore(&devlist_lock, flags);
-}
+पूर्ण
 
-static void
-dummy_timer(struct timer_list *t)
-{
-	struct aoedev *d;
+अटल व्योम
+dummy_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा aoedev *d;
 
-	d = from_timer(d, t, timer);
-	if (d->flags & DEVFL_TKILL)
-		return;
-	d->timer.expires = jiffies + HZ;
-	add_timer(&d->timer);
-}
+	d = from_समयr(d, t, समयr);
+	अगर (d->flags & DEVFL_TKILL)
+		वापस;
+	d->समयr.expires = jअगरfies + HZ;
+	add_समयr(&d->समयr);
+पूर्ण
 
-static void
-aoe_failip(struct aoedev *d)
-{
-	struct request *rq;
-	struct aoe_req *req;
-	struct bio *bio;
+अटल व्योम
+aoe_failip(काष्ठा aoedev *d)
+अणु
+	काष्ठा request *rq;
+	काष्ठा aoe_req *req;
+	काष्ठा bio *bio;
 
 	aoe_failbuf(d, d->ip.buf);
 	rq = d->ip.rq;
-	if (rq == NULL)
-		return;
+	अगर (rq == शून्य)
+		वापस;
 
 	req = blk_mq_rq_to_pdu(rq);
-	while ((bio = d->ip.nxbio)) {
+	जबतक ((bio = d->ip.nxbio)) अणु
 		bio->bi_status = BLK_STS_IOERR;
 		d->ip.nxbio = bio->bi_next;
 		req->nr_bios--;
-	}
+	पूर्ण
 
-	if (!req->nr_bios)
+	अगर (!req->nr_bios)
 		aoe_end_request(d, rq, 0);
-}
+पूर्ण
 
-static void
-downdev_frame(struct list_head *pos)
-{
-	struct frame *f;
+अटल व्योम
+करोwndev_frame(काष्ठा list_head *pos)
+अणु
+	काष्ठा frame *f;
 
-	f = list_entry(pos, struct frame, head);
+	f = list_entry(pos, काष्ठा frame, head);
 	list_del(pos);
-	if (f->buf) {
+	अगर (f->buf) अणु
 		f->buf->nframesout--;
 		aoe_failbuf(f->t->d, f->buf);
-	}
-	aoe_freetframe(f);
-}
+	पूर्ण
+	aoe_मुक्तtframe(f);
+पूर्ण
 
-void
-aoedev_downdev(struct aoedev *d)
-{
-	struct aoetgt *t, **tt, **te;
-	struct list_head *head, *pos, *nx;
-	int i;
+व्योम
+aoedev_करोwndev(काष्ठा aoedev *d)
+अणु
+	काष्ठा aoetgt *t, **tt, **te;
+	काष्ठा list_head *head, *pos, *nx;
+	पूर्णांक i;
 
 	d->flags &= ~DEVFL_UP;
 
 	/* clean out active and to-be-retransmitted buffers */
-	for (i = 0; i < NFACTIVE; i++) {
+	क्रम (i = 0; i < NFACTIVE; i++) अणु
 		head = &d->factive[i];
-		list_for_each_safe(pos, nx, head)
-			downdev_frame(pos);
-	}
+		list_क्रम_each_safe(pos, nx, head)
+			करोwndev_frame(pos);
+	पूर्ण
 	head = &d->rexmitq;
-	list_for_each_safe(pos, nx, head)
-		downdev_frame(pos);
+	list_क्रम_each_safe(pos, nx, head)
+		करोwndev_frame(pos);
 
-	/* reset window dressings */
-	tt = d->targets;
-	te = tt + d->ntargets;
-	for (; tt < te && (t = *tt); tt++) {
+	/* reset winकरोw dressings */
+	tt = d->tarमाला_लो;
+	te = tt + d->ntarमाला_लो;
+	क्रम (; tt < te && (t = *tt); tt++) अणु
 		aoecmd_wreset(t);
 		t->nout = 0;
-	}
+	पूर्ण
 
-	/* clean out the in-process request (if any) */
+	/* clean out the in-process request (अगर any) */
 	aoe_failip(d);
 
 	/* fast fail all pending I/O */
-	if (d->blkq) {
-		/* UP is cleared, freeze+quiesce to insure all are errored */
-		blk_mq_freeze_queue(d->blkq);
+	अगर (d->blkq) अणु
+		/* UP is cleared, मुक्तze+quiesce to insure all are errored */
+		blk_mq_मुक्तze_queue(d->blkq);
 		blk_mq_quiesce_queue(d->blkq);
 		blk_mq_unquiesce_queue(d->blkq);
-		blk_mq_unfreeze_queue(d->blkq);
-	}
+		blk_mq_unमुक्तze_queue(d->blkq);
+	पूर्ण
 
-	if (d->gd)
+	अगर (d->gd)
 		set_capacity(d->gd, 0);
-}
+पूर्ण
 
-/* return whether the user asked for this particular
+/* वापस whether the user asked क्रम this particular
  * device to be flushed
  */
-static int
-user_req(char *s, size_t slen, struct aoedev *d)
-{
-	const char *p;
-	size_t lim;
+अटल पूर्णांक
+user_req(अक्षर *s, माप_प्रकार slen, काष्ठा aoedev *d)
+अणु
+	स्थिर अक्षर *p;
+	माप_प्रकार lim;
 
-	if (!d->gd)
-		return 0;
+	अगर (!d->gd)
+		वापस 0;
 	p = kbasename(d->gd->disk_name);
-	lim = sizeof(d->gd->disk_name);
+	lim = माप(d->gd->disk_name);
 	lim -= p - d->gd->disk_name;
-	if (slen < lim)
+	अगर (slen < lim)
 		lim = slen;
 
-	return !strncmp(s, p, lim);
-}
+	वापस !म_भेदन(s, p, lim);
+पूर्ण
 
-static void
-freedev(struct aoedev *d)
-{
-	struct aoetgt **t, **e;
-	int freeing = 0;
-	unsigned long flags;
+अटल व्योम
+मुक्तdev(काष्ठा aoedev *d)
+अणु
+	काष्ठा aoetgt **t, **e;
+	पूर्णांक मुक्तing = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&d->lock, flags);
-	if (d->flags & DEVFL_TKILL
-	&& !(d->flags & DEVFL_FREEING)) {
+	अगर (d->flags & DEVFL_TKILL
+	&& !(d->flags & DEVFL_FREEING)) अणु
 		d->flags |= DEVFL_FREEING;
-		freeing = 1;
-	}
+		मुक्तing = 1;
+	पूर्ण
 	spin_unlock_irqrestore(&d->lock, flags);
-	if (!freeing)
-		return;
+	अगर (!मुक्तing)
+		वापस;
 
-	del_timer_sync(&d->timer);
-	if (d->gd) {
+	del_समयr_sync(&d->समयr);
+	अगर (d->gd) अणु
 		aoedisk_rm_debugfs(d);
 		del_gendisk(d->gd);
 		put_disk(d->gd);
-		blk_mq_free_tag_set(&d->tag_set);
+		blk_mq_मुक्त_tag_set(&d->tag_set);
 		blk_cleanup_queue(d->blkq);
-	}
-	t = d->targets;
-	e = t + d->ntargets;
-	for (; t < e && *t; t++)
-		freetgt(d, *t);
+	पूर्ण
+	t = d->tarमाला_लो;
+	e = t + d->ntarमाला_लो;
+	क्रम (; t < e && *t; t++)
+		मुक्तtgt(d, *t);
 
 	mempool_destroy(d->bufpool);
-	skbpoolfree(d);
-	minor_free(d->sysminor);
+	skbpoolमुक्त(d);
+	minor_मुक्त(d->sysminor);
 
 	spin_lock_irqsave(&d->lock, flags);
 	d->flags |= DEVFL_FREED;
 	spin_unlock_irqrestore(&d->lock, flags);
-}
+पूर्ण
 
-enum flush_parms {
+क्रमागत flush_parms अणु
 	NOT_EXITING = 0,
 	EXITING = 1,
-};
+पूर्ण;
 
-static int
-flush(const char __user *str, size_t cnt, int exiting)
-{
-	ulong flags;
-	struct aoedev *d, **dd;
-	char buf[16];
-	int all = 0;
-	int specified = 0;	/* flush a specific device */
-	unsigned int skipflags;
+अटल पूर्णांक
+flush(स्थिर अक्षर __user *str, माप_प्रकार cnt, पूर्णांक निकासing)
+अणु
+	uदीर्घ flags;
+	काष्ठा aoedev *d, **dd;
+	अक्षर buf[16];
+	पूर्णांक all = 0;
+	पूर्णांक specअगरied = 0;	/* flush a specअगरic device */
+	अचिन्हित पूर्णांक skipflags;
 
 	skipflags = DEVFL_GDALLOC | DEVFL_NEWSIZE | DEVFL_TKILL;
 
-	if (!exiting && cnt >= 3) {
-		if (cnt > sizeof buf)
-			cnt = sizeof buf;
-		if (copy_from_user(buf, str, cnt))
-			return -EFAULT;
-		all = !strncmp(buf, "all", 3);
-		if (!all)
-			specified = 1;
-	}
+	अगर (!निकासing && cnt >= 3) अणु
+		अगर (cnt > माप buf)
+			cnt = माप buf;
+		अगर (copy_from_user(buf, str, cnt))
+			वापस -EFAULT;
+		all = !म_भेदन(buf, "all", 3);
+		अगर (!all)
+			specअगरied = 1;
+	पूर्ण
 
 	flush_scheduled_work();
-	/* pass one: do aoedev_downdev, which might sleep */
+	/* pass one: करो aoedev_करोwndev, which might sleep */
 restart1:
 	spin_lock_irqsave(&devlist_lock, flags);
-	for (d = devlist; d; d = d->next) {
+	क्रम (d = devlist; d; d = d->next) अणु
 		spin_lock(&d->lock);
-		if (d->flags & DEVFL_TKILL)
-			goto cont;
+		अगर (d->flags & DEVFL_TKILL)
+			जाओ cont;
 
-		if (exiting) {
-			/* unconditionally take each device down */
-		} else if (specified) {
-			if (!user_req(buf, cnt, d))
-				goto cont;
-		} else if ((!all && (d->flags & DEVFL_UP))
+		अगर (निकासing) अणु
+			/* unconditionally take each device करोwn */
+		पूर्ण अन्यथा अगर (specअगरied) अणु
+			अगर (!user_req(buf, cnt, d))
+				जाओ cont;
+		पूर्ण अन्यथा अगर ((!all && (d->flags & DEVFL_UP))
 		|| d->flags & skipflags
-		|| d->nopen
+		|| d->nखोलो
 		|| d->ref)
-			goto cont;
+			जाओ cont;
 
 		spin_unlock(&d->lock);
 		spin_unlock_irqrestore(&devlist_lock, flags);
-		aoedev_downdev(d);
+		aoedev_करोwndev(d);
 		d->flags |= DEVFL_TKILL;
-		goto restart1;
+		जाओ restart1;
 cont:
 		spin_unlock(&d->lock);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&devlist_lock, flags);
 
-	/* pass two: call freedev, which might sleep,
-	 * for aoedevs marked with DEVFL_TKILL
+	/* pass two: call मुक्तdev, which might sleep,
+	 * क्रम aoedevs marked with DEVFL_TKILL
 	 */
 restart2:
 	spin_lock_irqsave(&devlist_lock, flags);
-	for (d = devlist; d; d = d->next) {
+	क्रम (d = devlist; d; d = d->next) अणु
 		spin_lock(&d->lock);
-		if (d->flags & DEVFL_TKILL
-		&& !(d->flags & DEVFL_FREEING)) {
+		अगर (d->flags & DEVFL_TKILL
+		&& !(d->flags & DEVFL_FREEING)) अणु
 			spin_unlock(&d->lock);
 			spin_unlock_irqrestore(&devlist_lock, flags);
-			freedev(d);
-			goto restart2;
-		}
+			मुक्तdev(d);
+			जाओ restart2;
+		पूर्ण
 		spin_unlock(&d->lock);
-	}
+	पूर्ण
 
-	/* pass three: remove aoedevs marked with DEVFL_FREED */
-	for (dd = &devlist, d = *dd; d; d = *dd) {
-		struct aoedev *doomed = NULL;
+	/* pass three: हटाओ aoedevs marked with DEVFL_FREED */
+	क्रम (dd = &devlist, d = *dd; d; d = *dd) अणु
+		काष्ठा aoedev *करोomed = शून्य;
 
 		spin_lock(&d->lock);
-		if (d->flags & DEVFL_FREED) {
+		अगर (d->flags & DEVFL_FREED) अणु
 			*dd = d->next;
-			doomed = d;
-		} else {
+			करोomed = d;
+		पूर्ण अन्यथा अणु
 			dd = &d->next;
-		}
+		पूर्ण
 		spin_unlock(&d->lock);
-		if (doomed)
-			kfree(doomed->targets);
-		kfree(doomed);
-	}
+		अगर (करोomed)
+			kमुक्त(करोomed->tarमाला_लो);
+		kमुक्त(करोomed);
+	पूर्ण
 	spin_unlock_irqrestore(&devlist_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-aoedev_flush(const char __user *str, size_t cnt)
-{
-	return flush(str, cnt, NOT_EXITING);
-}
+पूर्णांक
+aoedev_flush(स्थिर अक्षर __user *str, माप_प्रकार cnt)
+अणु
+	वापस flush(str, cnt, NOT_EXITING);
+पूर्ण
 
 /* This has been confirmed to occur once with Tms=3*1000 due to the
  * driver changing link and not processing its transmit ring.  The
- * problem is hard enough to solve by returning an error that I'm
+ * problem is hard enough to solve by वापसing an error that I'm
  * still punting on "solving" this.
  */
-static void
-skbfree(struct sk_buff *skb)
-{
-	enum { Sms = 250, Tms = 30 * 1000};
-	int i = Tms / Sms;
+अटल व्योम
+skbमुक्त(काष्ठा sk_buff *skb)
+अणु
+	क्रमागत अणु Sms = 250, Tms = 30 * 1000पूर्ण;
+	पूर्णांक i = Tms / Sms;
 
-	if (skb == NULL)
-		return;
-	while (atomic_read(&skb_shinfo(skb)->dataref) != 1 && i-- > 0)
+	अगर (skb == शून्य)
+		वापस;
+	जबतक (atomic_पढ़ो(&skb_shinfo(skb)->dataref) != 1 && i-- > 0)
 		msleep(Sms);
-	if (i < 0) {
-		printk(KERN_ERR
+	अगर (i < 0) अणु
+		prपूर्णांकk(KERN_ERR
 			"aoe: %s holds ref: %s\n",
 			skb->dev ? skb->dev->name : "netif",
 			"cannot free skb -- memory leaked.");
-		return;
-	}
+		वापस;
+	पूर्ण
 	skb->truesize -= skb->data_len;
 	skb_shinfo(skb)->nr_frags = skb->data_len = 0;
 	skb_trim(skb, 0);
-	dev_kfree_skb(skb);
-}
+	dev_kमुक्त_skb(skb);
+पूर्ण
 
-static void
-skbpoolfree(struct aoedev *d)
-{
-	struct sk_buff *skb, *tmp;
+अटल व्योम
+skbpoolमुक्त(काष्ठा aoedev *d)
+अणु
+	काष्ठा sk_buff *skb, *पंचांगp;
 
-	skb_queue_walk_safe(&d->skbpool, skb, tmp)
-		skbfree(skb);
+	skb_queue_walk_safe(&d->skbpool, skb, पंचांगp)
+		skbमुक्त(skb);
 
 	__skb_queue_head_init(&d->skbpool);
-}
+पूर्ण
 
 /* find it or allocate it */
-struct aoedev *
-aoedev_by_aoeaddr(ulong maj, int min, int do_alloc)
-{
-	struct aoedev *d;
-	int i;
-	ulong flags;
-	ulong sysminor = 0;
+काष्ठा aoedev *
+aoedev_by_aoeaddr(uदीर्घ maj, पूर्णांक min, पूर्णांक करो_alloc)
+अणु
+	काष्ठा aoedev *d;
+	पूर्णांक i;
+	uदीर्घ flags;
+	uदीर्घ sysminor = 0;
 
 	spin_lock_irqsave(&devlist_lock, flags);
 
-	for (d=devlist; d; d=d->next)
-		if (d->aoemajor == maj && d->aoeminor == min) {
+	क्रम (d=devlist; d; d=d->next)
+		अगर (d->aoemajor == maj && d->aoeminor == min) अणु
 			spin_lock(&d->lock);
-			if (d->flags & DEVFL_TKILL) {
+			अगर (d->flags & DEVFL_TKILL) अणु
 				spin_unlock(&d->lock);
-				d = NULL;
-				goto out;
-			}
+				d = शून्य;
+				जाओ out;
+			पूर्ण
 			d->ref++;
 			spin_unlock(&d->lock);
-			break;
-		}
-	if (d || !do_alloc || minor_get(&sysminor, maj, min) < 0)
-		goto out;
-	d = kcalloc(1, sizeof *d, GFP_ATOMIC);
-	if (!d)
-		goto out;
-	d->targets = kcalloc(NTARGETS, sizeof(*d->targets), GFP_ATOMIC);
-	if (!d->targets) {
-		kfree(d);
-		d = NULL;
-		goto out;
-	}
-	d->ntargets = NTARGETS;
+			अवरोध;
+		पूर्ण
+	अगर (d || !करो_alloc || minor_get(&sysminor, maj, min) < 0)
+		जाओ out;
+	d = kसुस्मृति(1, माप *d, GFP_ATOMIC);
+	अगर (!d)
+		जाओ out;
+	d->tarमाला_लो = kसुस्मृति(NTARGETS, माप(*d->tarमाला_लो), GFP_ATOMIC);
+	अगर (!d->tarमाला_लो) अणु
+		kमुक्त(d);
+		d = शून्य;
+		जाओ out;
+	पूर्ण
+	d->ntarमाला_लो = NTARGETS;
 	INIT_WORK(&d->work, aoecmd_sleepwork);
 	spin_lock_init(&d->lock);
 	INIT_LIST_HEAD(&d->rq_list);
 	skb_queue_head_init(&d->skbpool);
-	timer_setup(&d->timer, dummy_timer, 0);
-	d->timer.expires = jiffies + HZ;
-	add_timer(&d->timer);
-	d->bufpool = NULL;	/* defer to aoeblk_gdalloc */
-	d->tgt = d->targets;
+	समयr_setup(&d->समयr, dummy_समयr, 0);
+	d->समयr.expires = jअगरfies + HZ;
+	add_समयr(&d->समयr);
+	d->bufpool = शून्य;	/* defer to aoeblk_gdalloc */
+	d->tgt = d->tarमाला_लो;
 	d->ref = 1;
-	for (i = 0; i < NFACTIVE; i++)
+	क्रम (i = 0; i < NFACTIVE; i++)
 		INIT_LIST_HEAD(&d->factive[i]);
 	INIT_LIST_HEAD(&d->rexmitq);
 	d->sysminor = sysminor;
@@ -492,41 +493,41 @@ aoedev_by_aoeaddr(ulong maj, int min, int do_alloc)
 	devlist = d;
  out:
 	spin_unlock_irqrestore(&devlist_lock, flags);
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static void
-freetgt(struct aoedev *d, struct aoetgt *t)
-{
-	struct frame *f;
-	struct list_head *pos, *nx, *head;
-	struct aoeif *ifp;
+अटल व्योम
+मुक्तtgt(काष्ठा aoedev *d, काष्ठा aoetgt *t)
+अणु
+	काष्ठा frame *f;
+	काष्ठा list_head *pos, *nx, *head;
+	काष्ठा aoeअगर *अगरp;
 
-	for (ifp = t->ifs; ifp < &t->ifs[NAOEIFS]; ++ifp) {
-		if (!ifp->nd)
-			break;
-		dev_put(ifp->nd);
-	}
+	क्रम (अगरp = t->अगरs; अगरp < &t->अगरs[NAOEIFS]; ++अगरp) अणु
+		अगर (!अगरp->nd)
+			अवरोध;
+		dev_put(अगरp->nd);
+	पूर्ण
 
-	head = &t->ffree;
-	list_for_each_safe(pos, nx, head) {
+	head = &t->fमुक्त;
+	list_क्रम_each_safe(pos, nx, head) अणु
 		list_del(pos);
-		f = list_entry(pos, struct frame, head);
-		skbfree(f->skb);
-		kfree(f);
-	}
-	kfree(t);
-}
+		f = list_entry(pos, काष्ठा frame, head);
+		skbमुक्त(f->skb);
+		kमुक्त(f);
+	पूर्ण
+	kमुक्त(t);
+पूर्ण
 
-void
-aoedev_exit(void)
-{
+व्योम
+aoedev_निकास(व्योम)
+अणु
 	flush_scheduled_work();
-	flush(NULL, 0, EXITING);
-}
+	flush(शून्य, 0, EXITING);
+पूर्ण
 
-int __init
-aoedev_init(void)
-{
-	return 0;
-}
+पूर्णांक __init
+aoedev_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण

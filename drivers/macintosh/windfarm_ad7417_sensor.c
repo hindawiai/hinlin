@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Windfarm PowerMac thermal control. AD7417 sensors
  *
  * Copyright 2012 Benjamin Herrenschmidt, IBM Corp.
  */
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/wait.h>
-#include <linux/i2c.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/io.h>
-#include <asm/sections.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/i2c.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sections.h>
 
-#include "windfarm.h"
-#include "windfarm_mpu.h"
+#समावेश "windfarm.h"
+#समावेश "windfarm_mpu.h"
 
-#define VERSION "1.0"
+#घोषणा VERSION "1.0"
 
-struct wf_ad7417_priv {
-	struct kref		ref;
-	struct i2c_client	*i2c;
+काष्ठा wf_ad7417_priv अणु
+	काष्ठा kref		ref;
+	काष्ठा i2c_client	*i2c;
 	u8			config;
 	u8			cpu;
-	const struct mpu_data	*mpu;
-	struct wf_sensor	sensors[5];
-	struct mutex		lock;
-};
+	स्थिर काष्ठा mpu_data	*mpu;
+	काष्ठा wf_sensor	sensors[5];
+	काष्ठा mutex		lock;
+पूर्ण;
 
-static int wf_ad7417_temp_get(struct wf_sensor *sr, s32 *value)
-{
-	struct wf_ad7417_priv *pv = sr->priv;
+अटल पूर्णांक wf_ad7417_temp_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा wf_ad7417_priv *pv = sr->priv;
 	u8 buf[2];
 	s16 raw;
-	int rc;
+	पूर्णांक rc;
 
 	*value = 0;
 	mutex_lock(&pv->lock);
 
-	/* Read temp register */
+	/* Read temp रेजिस्टर */
 	buf[0] = 0;
 	rc = i2c_master_send(pv->i2c, buf, 1);
-	if (rc < 0)
-		goto error;
+	अगर (rc < 0)
+		जाओ error;
 	rc = i2c_master_recv(pv->i2c, buf, 2);
-	if (rc < 0)
-		goto error;
+	अगर (rc < 0)
+		जाओ error;
 
-	/* Read a a 16-bit signed value */
+	/* Read a a 16-bit चिन्हित value */
 	raw = be16_to_cpup((__le16 *)buf);
 
-	/* Convert 8.8-bit to 16.16 fixed point */
+	/* Convert 8.8-bit to 16.16 fixed poपूर्णांक */
 	*value = ((s32)raw) << 8;
 
 	mutex_unlock(&pv->lock);
-	return 0;
+	वापस 0;
 
 error:
 	mutex_unlock(&pv->lock);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * Scaling factors for the AD7417 ADC converters (except
- * for the CPU diode which is obtained from the EEPROM).
+ * Scaling factors क्रम the AD7417 ADC converters (except
+ * क्रम the CPU diode which is obtained from the EEPROM).
  * Those values are obtained from the property list of
  * the darwin driver
  */
-#define ADC_12V_CURRENT_SCALE	0x0320	/* _AD2 */
-#define ADC_CPU_VOLTAGE_SCALE	0x00a0	/* _AD3 */
-#define ADC_CPU_CURRENT_SCALE	0x1f40	/* _AD4 */
+#घोषणा ADC_12V_CURRENT_SCALE	0x0320	/* _AD2 */
+#घोषणा ADC_CPU_VOLTAGE_SCALE	0x00a0	/* _AD3 */
+#घोषणा ADC_CPU_CURRENT_SCALE	0x1f40	/* _AD4 */
 
-static void wf_ad7417_adc_convert(struct wf_ad7417_priv *pv,
-				  int chan, s32 raw, s32 *value)
-{
-	switch(chan) {
-	case 1: /* Diode */
+अटल व्योम wf_ad7417_adc_convert(काष्ठा wf_ad7417_priv *pv,
+				  पूर्णांक chan, s32 raw, s32 *value)
+अणु
+	चयन(chan) अणु
+	हाल 1: /* Diode */
 		*value = (raw * (s32)pv->mpu->mdiode +
 			((s32)pv->mpu->bdiode << 12)) >> 2;
-		break;
-	case 2: /* 12v current */
+		अवरोध;
+	हाल 2: /* 12v current */
 		*value = raw * ADC_12V_CURRENT_SCALE;
-		break;
-	case 3: /* core voltage */
+		अवरोध;
+	हाल 3: /* core voltage */
 		*value = raw * ADC_CPU_VOLTAGE_SCALE;
-		break;
-	case 4: /* core current */
+		अवरोध;
+	हाल 4: /* core current */
 		*value = raw * ADC_CPU_CURRENT_SCALE;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int wf_ad7417_adc_get(struct wf_sensor *sr, s32 *value)
-{
-	struct wf_ad7417_priv *pv = sr->priv;
-	int chan = sr - pv->sensors;
-	int i, rc;
+अटल पूर्णांक wf_ad7417_adc_get(काष्ठा wf_sensor *sr, s32 *value)
+अणु
+	काष्ठा wf_ad7417_priv *pv = sr->priv;
+	पूर्णांक chan = sr - pv->sensors;
+	पूर्णांक i, rc;
 	u8 buf[2];
 	u16 raw;
 
 	*value = 0;
 	mutex_lock(&pv->lock);
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		/* Set channel */
 		buf[0] = 1;
 		buf[1] = (pv->config & 0x1f) | (chan << 5);
 		rc = i2c_master_send(pv->i2c, buf, 2);
-		if (rc < 0)
-			goto error;
+		अगर (rc < 0)
+			जाओ error;
 
-		/* Wait for conversion */
+		/* Wait क्रम conversion */
 		msleep(1);
 
-		/* Switch to data register */
+		/* Switch to data रेजिस्टर */
 		buf[0] = 4;
 		rc = i2c_master_send(pv->i2c, buf, 1);
-		if (rc < 0)
-			goto error;
+		अगर (rc < 0)
+			जाओ error;
 
 		/* Read result */
 		rc = i2c_master_recv(pv->i2c, buf, 2);
-		if (rc < 0)
-			goto error;
+		अगर (rc < 0)
+			जाओ error;
 
-		/* Read a a 16-bit signed value */
+		/* Read a a 16-bit चिन्हित value */
 		raw = be16_to_cpup((__le16 *)buf) >> 6;
 		wf_ad7417_adc_convert(pv, chan, raw, value);
 
@@ -137,67 +138,67 @@ static int wf_ad7417_adc_get(struct wf_sensor *sr, s32 *value)
 			 chan, sr->name, raw, *value);
 
 		mutex_unlock(&pv->lock);
-		return 0;
+		वापस 0;
 
 	error:
 		dev_dbg(&pv->i2c->dev,
 			  "Error reading ADC, try %d...\n", i);
-		if (i < 9)
+		अगर (i < 9)
 			msleep(10);
-	}
+	पूर्ण
 	mutex_unlock(&pv->lock);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void wf_ad7417_release(struct kref *ref)
-{
-	struct wf_ad7417_priv *pv = container_of(ref,
-						 struct wf_ad7417_priv, ref);
-	kfree(pv);
-}
+अटल व्योम wf_ad7417_release(काष्ठा kref *ref)
+अणु
+	काष्ठा wf_ad7417_priv *pv = container_of(ref,
+						 काष्ठा wf_ad7417_priv, ref);
+	kमुक्त(pv);
+पूर्ण
 
-static void wf_ad7417_sensor_release(struct wf_sensor *sr)
-{
-	struct wf_ad7417_priv *pv = sr->priv;
+अटल व्योम wf_ad7417_sensor_release(काष्ठा wf_sensor *sr)
+अणु
+	काष्ठा wf_ad7417_priv *pv = sr->priv;
 
-	kfree(sr->name);
+	kमुक्त(sr->name);
 	kref_put(&pv->ref, wf_ad7417_release);
-}
+पूर्ण
 
-static const struct wf_sensor_ops wf_ad7417_temp_ops = {
+अटल स्थिर काष्ठा wf_sensor_ops wf_ad7417_temp_ops = अणु
 	.get_value	= wf_ad7417_temp_get,
 	.release	= wf_ad7417_sensor_release,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct wf_sensor_ops wf_ad7417_adc_ops = {
+अटल स्थिर काष्ठा wf_sensor_ops wf_ad7417_adc_ops = अणु
 	.get_value	= wf_ad7417_adc_get,
 	.release	= wf_ad7417_sensor_release,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static void wf_ad7417_add_sensor(struct wf_ad7417_priv *pv,
-				 int index, const char *name,
-				 const struct wf_sensor_ops *ops)
-{
-	pv->sensors[index].name = kasprintf(GFP_KERNEL, "%s-%d", name, pv->cpu);
+अटल व्योम wf_ad7417_add_sensor(काष्ठा wf_ad7417_priv *pv,
+				 पूर्णांक index, स्थिर अक्षर *name,
+				 स्थिर काष्ठा wf_sensor_ops *ops)
+अणु
+	pv->sensors[index].name = kaप्र_लिखो(GFP_KERNEL, "%s-%d", name, pv->cpu);
 	pv->sensors[index].priv = pv;
 	pv->sensors[index].ops = ops;
-	if (!wf_register_sensor(&pv->sensors[index]))
+	अगर (!wf_रेजिस्टर_sensor(&pv->sensors[index]))
 		kref_get(&pv->ref);
-}
+पूर्ण
 
-static void wf_ad7417_init_chip(struct wf_ad7417_priv *pv)
-{
-	int rc;
+अटल व्योम wf_ad7417_init_chip(काष्ठा wf_ad7417_priv *pv)
+अणु
+	पूर्णांक rc;
 	u8 buf[2];
 	u8 config = 0;
 
 	/*
-	 * Read ADC the configuration register and cache it. We
+	 * Read ADC the configuration रेजिस्टर and cache it. We
 	 * also make sure Config2 contains proper values, I've seen
-	 * cases where we got stale grabage in there, thus preventing
-	 * proper reading of conv. values
+	 * हालs where we got stale grabage in there, thus preventing
+	 * proper पढ़ोing of conv. values
 	 */
 
 	/* Clear Config2 */
@@ -208,62 +209,62 @@ static void wf_ad7417_init_chip(struct wf_ad7417_priv *pv)
 	/* Read & cache Config1 */
 	buf[0] = 1;
 	rc = i2c_master_send(pv->i2c, buf, 1);
-	if (rc > 0) {
+	अगर (rc > 0) अणु
 		rc = i2c_master_recv(pv->i2c, buf, 1);
-		if (rc > 0) {
+		अगर (rc > 0) अणु
 			config = buf[0];
 
 			dev_dbg(&pv->i2c->dev, "ADC config reg: %02x\n",
 				config);
 
-			/* Disable shutdown mode */
+			/* Disable shutकरोwn mode */
 			config &= 0xfe;
 			buf[0] = 1;
 			buf[1] = config;
 			rc = i2c_master_send(pv->i2c, buf, 2);
-		}
-	}
-	if (rc <= 0)
+		पूर्ण
+	पूर्ण
+	अगर (rc <= 0)
 		dev_err(&pv->i2c->dev, "Error reading ADC config\n");
 
 	pv->config = config;
-}
+पूर्ण
 
-static int wf_ad7417_probe(struct i2c_client *client,
-			   const struct i2c_device_id *id)
-{
-	struct wf_ad7417_priv *pv;
-	const struct mpu_data *mpu;
-	const char *loc;
-	int cpu_nr;
+अटल पूर्णांक wf_ad7417_probe(काष्ठा i2c_client *client,
+			   स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा wf_ad7417_priv *pv;
+	स्थिर काष्ठा mpu_data *mpu;
+	स्थिर अक्षर *loc;
+	पूर्णांक cpu_nr;
 
-	loc = of_get_property(client->dev.of_node, "hwsensor-location", NULL);
-	if (!loc) {
+	loc = of_get_property(client->dev.of_node, "hwsensor-location", शून्य);
+	अगर (!loc) अणु
 		dev_warn(&client->dev, "Missing hwsensor-location property!\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/*
-	 * Identify which CPU we belong to by looking at the first entry
+	 * Identअगरy which CPU we beदीर्घ to by looking at the first entry
 	 * in the hwsensor-location list
 	 */
-	if (!strncmp(loc, "CPU A", 5))
+	अगर (!म_भेदन(loc, "CPU A", 5))
 		cpu_nr = 0;
-	else if (!strncmp(loc, "CPU B", 5))
+	अन्यथा अगर (!म_भेदन(loc, "CPU B", 5))
 		cpu_nr = 1;
-	else {
+	अन्यथा अणु
 		pr_err("wf_ad7417: Can't identify location %s\n", loc);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	mpu = wf_get_mpu(cpu_nr);
-	if (!mpu) {
+	अगर (!mpu) अणु
 		dev_err(&client->dev, "Failed to retrieve MPU data\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	pv = kzalloc(sizeof(struct wf_ad7417_priv), GFP_KERNEL);
-	if (pv == NULL)
-		return -ENODEV;
+	pv = kzalloc(माप(काष्ठा wf_ad7417_priv), GFP_KERNEL);
+	अगर (pv == शून्य)
+		वापस -ENODEV;
 
 	kref_init(&pv->ref);
 	mutex_init(&pv->lock);
@@ -277,7 +278,7 @@ static int wf_ad7417_probe(struct i2c_client *client,
 
 	/*
 	 * We cannot rely on Apple device-tree giving us child
-	 * node with the names of the individual sensors so we
+	 * node with the names of the inभागidual sensors so we
 	 * just hard code what we know about them
 	 */
 	wf_ad7417_add_sensor(pv, 0, "cpu-amb-temp", &wf_ad7417_temp_ops);
@@ -286,66 +287,66 @@ static int wf_ad7417_probe(struct i2c_client *client,
 	wf_ad7417_add_sensor(pv, 3, "cpu-voltage", &wf_ad7417_adc_ops);
 	wf_ad7417_add_sensor(pv, 4, "cpu-current", &wf_ad7417_adc_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wf_ad7417_remove(struct i2c_client *client)
-{
-	struct wf_ad7417_priv *pv = dev_get_drvdata(&client->dev);
-	int i;
+अटल पूर्णांक wf_ad7417_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा wf_ad7417_priv *pv = dev_get_drvdata(&client->dev);
+	पूर्णांक i;
 
 	/* Mark client detached */
-	pv->i2c = NULL;
+	pv->i2c = शून्य;
 
 	/* Release sensor */
-	for (i = 0; i < 5; i++)
-		wf_unregister_sensor(&pv->sensors[i]);
+	क्रम (i = 0; i < 5; i++)
+		wf_unरेजिस्टर_sensor(&pv->sensors[i]);
 
 	kref_put(&pv->ref, wf_ad7417_release);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id wf_ad7417_id[] = {
-	{ "MAC,ad7417", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id wf_ad7417_id[] = अणु
+	अणु "MAC,ad7417", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, wf_ad7417_id);
 
-static const struct of_device_id wf_ad7417_of_id[] = {
-	{ .compatible = "ad7417", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id wf_ad7417_of_id[] = अणु
+	अणु .compatible = "ad7417", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, wf_ad7417_of_id);
 
-static struct i2c_driver wf_ad7417_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver wf_ad7417_driver = अणु
+	.driver = अणु
 		.name	= "wf_ad7417",
 		.of_match_table = wf_ad7417_of_id,
-	},
+	पूर्ण,
 	.probe		= wf_ad7417_probe,
-	.remove		= wf_ad7417_remove,
+	.हटाओ		= wf_ad7417_हटाओ,
 	.id_table	= wf_ad7417_id,
-};
+पूर्ण;
 
-static int wf_ad7417_init(void)
-{
+अटल पूर्णांक wf_ad7417_init(व्योम)
+अणु
 	/* This is only supported on these machines */
-	if (!of_machine_is_compatible("PowerMac7,2") &&
+	अगर (!of_machine_is_compatible("PowerMac7,2") &&
 	    !of_machine_is_compatible("PowerMac7,3") &&
 	    !of_machine_is_compatible("RackMac3,1"))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	return i2c_add_driver(&wf_ad7417_driver);
-}
+	वापस i2c_add_driver(&wf_ad7417_driver);
+पूर्ण
 
-static void wf_ad7417_exit(void)
-{
+अटल व्योम wf_ad7417_निकास(व्योम)
+अणु
 	i2c_del_driver(&wf_ad7417_driver);
-}
+पूर्ण
 
 module_init(wf_ad7417_init);
-module_exit(wf_ad7417_exit);
+module_निकास(wf_ad7417_निकास);
 
 MODULE_AUTHOR("Benjamin Herrenschmidt <benh@kernel.crashing.org>");
 MODULE_DESCRIPTION("ad7417 sensor driver for PowerMacs");

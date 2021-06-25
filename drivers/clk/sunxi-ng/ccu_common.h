@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#ifndef _COMMON_H_
-#define _COMMON_H_
+#अगर_अघोषित _COMMON_H_
+#घोषणा _COMMON_H_
 
-#include <linux/compiler.h>
-#include <linux/clk-provider.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/clk-provider.h>
 
-#define CCU_FEATURE_FRACTIONAL		BIT(0)
-#define CCU_FEATURE_VARIABLE_PREDIV	BIT(1)
-#define CCU_FEATURE_FIXED_PREDIV	BIT(2)
-#define CCU_FEATURE_FIXED_POSTDIV	BIT(3)
-#define CCU_FEATURE_ALL_PREDIV		BIT(4)
-#define CCU_FEATURE_LOCK_REG		BIT(5)
-#define CCU_FEATURE_MMC_TIMING_SWITCH	BIT(6)
-#define CCU_FEATURE_SIGMA_DELTA_MOD	BIT(7)
+#घोषणा CCU_FEATURE_FRACTIONAL		BIT(0)
+#घोषणा CCU_FEATURE_VARIABLE_PREDIV	BIT(1)
+#घोषणा CCU_FEATURE_FIXED_PREDIV	BIT(2)
+#घोषणा CCU_FEATURE_FIXED_POSTDIV	BIT(3)
+#घोषणा CCU_FEATURE_ALL_PREDIV		BIT(4)
+#घोषणा CCU_FEATURE_LOCK_REG		BIT(5)
+#घोषणा CCU_FEATURE_MMC_TIMING_SWITCH	BIT(6)
+#घोषणा CCU_FEATURE_SIGMA_DELTA_MOD	BIT(7)
 
-/* MMC timing mode switch bit */
-#define CCU_MMC_NEW_TIMING_MODE		BIT(30)
+/* MMC timing mode चयन bit */
+#घोषणा CCU_MMC_NEW_TIMING_MODE		BIT(30)
 
-struct device_node;
+काष्ठा device_node;
 
-struct ccu_common {
-	void __iomem	*base;
+काष्ठा ccu_common अणु
+	व्योम __iomem	*base;
 	u16		reg;
 	u16		lock_reg;
-	u32		prediv;
+	u32		preभाग;
 
-	unsigned long	features;
+	अचिन्हित दीर्घ	features;
 	spinlock_t	*lock;
-	struct clk_hw	hw;
-};
+	काष्ठा clk_hw	hw;
+पूर्ण;
 
-static inline struct ccu_common *hw_to_ccu_common(struct clk_hw *hw)
-{
-	return container_of(hw, struct ccu_common, hw);
-}
+अटल अंतरभूत काष्ठा ccu_common *hw_to_ccu_common(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा ccu_common, hw);
+पूर्ण
 
-struct sunxi_ccu_desc {
-	struct ccu_common		**ccu_clks;
-	unsigned long			num_ccu_clks;
+काष्ठा sunxi_ccu_desc अणु
+	काष्ठा ccu_common		**ccu_clks;
+	अचिन्हित दीर्घ			num_ccu_clks;
 
-	struct clk_hw_onecell_data	*hw_clks;
+	काष्ठा clk_hw_onecell_data	*hw_clks;
 
-	struct ccu_reset_map		*resets;
-	unsigned long			num_resets;
-};
+	काष्ठा ccu_reset_map		*resets;
+	अचिन्हित दीर्घ			num_resets;
+पूर्ण;
 
-void ccu_helper_wait_for_lock(struct ccu_common *common, u32 lock);
+व्योम ccu_helper_रुको_क्रम_lock(काष्ठा ccu_common *common, u32 lock);
 
-struct ccu_pll_nb {
-	struct notifier_block	clk_nb;
-	struct ccu_common	*common;
+काष्ठा ccu_pll_nb अणु
+	काष्ठा notअगरier_block	clk_nb;
+	काष्ठा ccu_common	*common;
 
 	u32	enable;
 	u32	lock;
-};
+पूर्ण;
 
-#define to_ccu_pll_nb(_nb) container_of(_nb, struct ccu_pll_nb, clk_nb)
+#घोषणा to_ccu_pll_nb(_nb) container_of(_nb, काष्ठा ccu_pll_nb, clk_nb)
 
-int ccu_pll_notifier_register(struct ccu_pll_nb *pll_nb);
+पूर्णांक ccu_pll_notअगरier_रेजिस्टर(काष्ठा ccu_pll_nb *pll_nb);
 
-int sunxi_ccu_probe(struct device_node *node, void __iomem *reg,
-		    const struct sunxi_ccu_desc *desc);
+पूर्णांक sunxi_ccu_probe(काष्ठा device_node *node, व्योम __iomem *reg,
+		    स्थिर काष्ठा sunxi_ccu_desc *desc);
 
-#endif /* _COMMON_H_ */
+#पूर्ण_अगर /* _COMMON_H_ */

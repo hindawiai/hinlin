@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_BRIDGE_EBT_NFLOG_H
-#define __LINUX_BRIDGE_EBT_NFLOG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_BRIDGE_EBT_NFLOG_H
+#घोषणा __LINUX_BRIDGE_EBT_NFLOG_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define EBT_NFLOG_MASK 0x0
+#घोषणा EBT_NFLOG_MASK 0x0
 
-#define EBT_NFLOG_PREFIX_SIZE 64
-#define EBT_NFLOG_WATCHER "nflog"
+#घोषणा EBT_NFLOG_PREFIX_SIZE 64
+#घोषणा EBT_NFLOG_WATCHER "nflog"
 
-#define EBT_NFLOG_DEFAULT_GROUP		0x1
-#define EBT_NFLOG_DEFAULT_THRESHOLD	1
+#घोषणा EBT_NFLOG_DEFAULT_GROUP		0x1
+#घोषणा EBT_NFLOG_DEFAULT_THRESHOLD	1
 
-struct ebt_nflog_info {
+काष्ठा ebt_nflog_info अणु
 	__u32 len;
 	__u16 group;
 	__u16 threshold;
 	__u16 flags;
 	__u16 pad;
-	char prefix[EBT_NFLOG_PREFIX_SIZE];
-};
+	अक्षर prefix[EBT_NFLOG_PREFIX_SIZE];
+पूर्ण;
 
-#endif				/* __LINUX_BRIDGE_EBT_NFLOG_H */
+#पूर्ण_अगर				/* __LINUX_BRIDGE_EBT_NFLOG_H */

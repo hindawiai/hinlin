@@ -1,112 +1,113 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_ELF_H
-#define _LINUX_ELF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_ELF_H
+#घोषणा _LINUX_ELF_H
 
-#include <linux/types.h>
-#include <asm/elf.h>
-#include <uapi/linux/elf.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <uapi/linux/elf.h>
 
-#ifndef elf_read_implies_exec
-  /* Executables for which elf_read_implies_exec() returns TRUE will
-     have the READ_IMPLIES_EXEC personality flag set automatically.
-     Override in asm/elf.h as needed.  */
-# define elf_read_implies_exec(ex, have_pt_gnu_stack)	0
-#endif
-#ifndef SET_PERSONALITY
-#define SET_PERSONALITY(ex) \
+#अगर_अघोषित elf_पढ़ो_implies_exec
+  /* Executables क्रम which elf_पढ़ो_implies_exec() वापसs TRUE will
+     have the READ_IMPLIES_EXEC personality flag set स्वतःmatically.
+     Override in यंत्र/elf.h as needed.  */
+# define elf_पढ़ो_implies_exec(ex, have_pt_gnu_stack)	0
+#पूर्ण_अगर
+#अगर_अघोषित SET_PERSONALITY
+#घोषणा SET_PERSONALITY(ex) \
 	set_personality(PER_LINUX | (current->personality & (~PER_MASK)))
-#endif
+#पूर्ण_अगर
 
-#ifndef SET_PERSONALITY2
-#define SET_PERSONALITY2(ex, state) \
+#अगर_अघोषित SET_PERSONALITY2
+#घोषणा SET_PERSONALITY2(ex, state) \
 	SET_PERSONALITY(ex)
-#endif
+#पूर्ण_अगर
 
-#ifndef START_THREAD
-#define START_THREAD(elf_ex, regs, elf_entry, start_stack)	\
-	start_thread(regs, elf_entry, start_stack)
-#endif
+#अगर_अघोषित START_THREAD
+#घोषणा START_THREAD(elf_ex, regs, elf_entry, start_stack)	\
+	start_thपढ़ो(regs, elf_entry, start_stack)
+#पूर्ण_अगर
 
-#if defined(ARCH_HAS_SETUP_ADDITIONAL_PAGES) && !defined(ARCH_SETUP_ADDITIONAL_PAGES)
-#define ARCH_SETUP_ADDITIONAL_PAGES(bprm, ex, interpreter) \
-	arch_setup_additional_pages(bprm, interpreter)
-#endif
+#अगर defined(ARCH_HAS_SETUP_ADDITIONAL_PAGES) && !defined(ARCH_SETUP_ADDITIONAL_PAGES)
+#घोषणा ARCH_SETUP_ADDITIONAL_PAGES(bprm, ex, पूर्णांकerpreter) \
+	arch_setup_additional_pages(bprm, पूर्णांकerpreter)
+#पूर्ण_अगर
 
-#define ELF32_GNU_PROPERTY_ALIGN	4
-#define ELF64_GNU_PROPERTY_ALIGN	8
+#घोषणा ELF32_GNU_PROPERTY_ALIGN	4
+#घोषणा ELF64_GNU_PROPERTY_ALIGN	8
 
-#if ELF_CLASS == ELFCLASS32
+#अगर ELF_CLASS == ELFCLASS32
 
-extern Elf32_Dyn _DYNAMIC [];
-#define elfhdr		elf32_hdr
-#define elf_phdr	elf32_phdr
-#define elf_shdr	elf32_shdr
-#define elf_note	elf32_note
-#define elf_addr_t	Elf32_Off
-#define Elf_Half	Elf32_Half
-#define Elf_Word	Elf32_Word
-#define ELF_GNU_PROPERTY_ALIGN	ELF32_GNU_PROPERTY_ALIGN
+बाह्य Elf32_Dyn _DYNAMIC [];
+#घोषणा elfhdr		elf32_hdr
+#घोषणा elf_phdr	elf32_phdr
+#घोषणा elf_shdr	elf32_shdr
+#घोषणा elf_note	elf32_note
+#घोषणा elf_addr_t	Elf32_Off
+#घोषणा Elf_Half	Elf32_Half
+#घोषणा Elf_Word	Elf32_Word
+#घोषणा ELF_GNU_PROPERTY_ALIGN	ELF32_GNU_PROPERTY_ALIGN
 
-#else
+#अन्यथा
 
-extern Elf64_Dyn _DYNAMIC [];
-#define elfhdr		elf64_hdr
-#define elf_phdr	elf64_phdr
-#define elf_shdr	elf64_shdr
-#define elf_note	elf64_note
-#define elf_addr_t	Elf64_Off
-#define Elf_Half	Elf64_Half
-#define Elf_Word	Elf64_Word
-#define ELF_GNU_PROPERTY_ALIGN	ELF64_GNU_PROPERTY_ALIGN
+बाह्य Elf64_Dyn _DYNAMIC [];
+#घोषणा elfhdr		elf64_hdr
+#घोषणा elf_phdr	elf64_phdr
+#घोषणा elf_shdr	elf64_shdr
+#घोषणा elf_note	elf64_note
+#घोषणा elf_addr_t	Elf64_Off
+#घोषणा Elf_Half	Elf64_Half
+#घोषणा Elf_Word	Elf64_Word
+#घोषणा ELF_GNU_PROPERTY_ALIGN	ELF64_GNU_PROPERTY_ALIGN
 
-#endif
+#पूर्ण_अगर
 
-/* Optional callbacks to write extra ELF notes. */
-struct file;
-struct coredump_params;
+/* Optional callbacks to ग_लिखो extra ELF notes. */
+काष्ठा file;
+काष्ठा coredump_params;
 
-#ifndef ARCH_HAVE_EXTRA_ELF_NOTES
-static inline int elf_coredump_extra_notes_size(void) { return 0; }
-static inline int elf_coredump_extra_notes_write(struct coredump_params *cprm) { return 0; }
-#else
-extern int elf_coredump_extra_notes_size(void);
-extern int elf_coredump_extra_notes_write(struct coredump_params *cprm);
-#endif
+#अगर_अघोषित ARCH_HAVE_EXTRA_ELF_NOTES
+अटल अंतरभूत पूर्णांक elf_coredump_extra_notes_size(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक elf_coredump_extra_notes_ग_लिखो(काष्ठा coredump_params *cprm) अणु वापस 0; पूर्ण
+#अन्यथा
+बाह्य पूर्णांक elf_coredump_extra_notes_size(व्योम);
+बाह्य पूर्णांक elf_coredump_extra_notes_ग_लिखो(काष्ठा coredump_params *cprm);
+#पूर्ण_अगर
 
 /*
  * NT_GNU_PROPERTY_TYPE_0 header:
- * Keep this internal until/unless there is an agreed UAPI definition.
- * pr_type values (GNU_PROPERTY_*) are public and defined in the UAPI header.
+ * Keep this पूर्णांकernal until/unless there is an agreed UAPI definition.
+ * pr_type values (GNU_PROPERTY_*) are खुला and defined in the UAPI header.
  */
-struct gnu_property {
+काष्ठा gnu_property अणु
 	u32 pr_type;
 	u32 pr_datasz;
-};
+पूर्ण;
 
-struct arch_elf_state;
+काष्ठा arch_elf_state;
 
-#ifndef CONFIG_ARCH_USE_GNU_PROPERTY
-static inline int arch_parse_elf_property(u32 type, const void *data,
-					  size_t datasz, bool compat,
-					  struct arch_elf_state *arch)
-{
-	return 0;
-}
-#else
-extern int arch_parse_elf_property(u32 type, const void *data, size_t datasz,
-				   bool compat, struct arch_elf_state *arch);
-#endif
+#अगर_अघोषित CONFIG_ARCH_USE_GNU_PROPERTY
+अटल अंतरभूत पूर्णांक arch_parse_elf_property(u32 type, स्थिर व्योम *data,
+					  माप_प्रकार datasz, bool compat,
+					  काष्ठा arch_elf_state *arch)
+अणु
+	वापस 0;
+पूर्ण
+#अन्यथा
+बाह्य पूर्णांक arch_parse_elf_property(u32 type, स्थिर व्योम *data, माप_प्रकार datasz,
+				   bool compat, काष्ठा arch_elf_state *arch);
+#पूर्ण_अगर
 
-#ifdef CONFIG_ARCH_HAVE_ELF_PROT
-int arch_elf_adjust_prot(int prot, const struct arch_elf_state *state,
-			 bool has_interp, bool is_interp);
-#else
-static inline int arch_elf_adjust_prot(int prot,
-				       const struct arch_elf_state *state,
-				       bool has_interp, bool is_interp)
-{
-	return prot;
-}
-#endif
+#अगर_घोषित CONFIG_ARCH_HAVE_ELF_PROT
+पूर्णांक arch_elf_adjust_prot(पूर्णांक prot, स्थिर काष्ठा arch_elf_state *state,
+			 bool has_पूर्णांकerp, bool is_पूर्णांकerp);
+#अन्यथा
+अटल अंतरभूत पूर्णांक arch_elf_adjust_prot(पूर्णांक prot,
+				       स्थिर काष्ठा arch_elf_state *state,
+				       bool has_पूर्णांकerp, bool is_पूर्णांकerp)
+अणु
+	वापस prot;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_ELF_H */
+#पूर्ण_अगर /* _LINUX_ELF_H */

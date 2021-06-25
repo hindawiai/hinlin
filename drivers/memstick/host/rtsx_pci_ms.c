@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Realtek PCI-Express Memstick Card Interface driver
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
@@ -7,73 +8,73 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
-#include <linux/module.h>
-#include <linux/highmem.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/memstick.h>
-#include <linux/rtsx_pci.h>
-#include <asm/unaligned.h>
+#समावेश <linux/module.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/memstick.h>
+#समावेश <linux/rtsx_pci.h>
+#समावेश <यंत्र/unaligned.h>
 
-struct realtek_pci_ms {
-	struct platform_device	*pdev;
-	struct rtsx_pcr		*pcr;
-	struct memstick_host	*msh;
-	struct memstick_request	*req;
+काष्ठा realtek_pci_ms अणु
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा rtsx_pcr		*pcr;
+	काष्ठा memstick_host	*msh;
+	काष्ठा memstick_request	*req;
 
-	struct mutex		host_mutex;
-	struct work_struct	handle_req;
+	काष्ठा mutex		host_mutex;
+	काष्ठा work_काष्ठा	handle_req;
 
 	u8			ssc_depth;
-	unsigned int		clock;
-	unsigned char           ifmode;
+	अचिन्हित पूर्णांक		घड़ी;
+	अचिन्हित अक्षर           अगरmode;
 	bool			eject;
-};
+पूर्ण;
 
-static inline struct device *ms_dev(struct realtek_pci_ms *host)
-{
-	return &(host->pdev->dev);
-}
+अटल अंतरभूत काष्ठा device *ms_dev(काष्ठा realtek_pci_ms *host)
+अणु
+	वापस &(host->pdev->dev);
+पूर्ण
 
-static inline void ms_clear_error(struct realtek_pci_ms *host)
-{
-	rtsx_pci_write_register(host->pcr, CARD_STOP,
+अटल अंतरभूत व्योम ms_clear_error(काष्ठा realtek_pci_ms *host)
+अणु
+	rtsx_pci_ग_लिखो_रेजिस्टर(host->pcr, CARD_STOP,
 			MS_STOP | MS_CLR_ERR, MS_STOP | MS_CLR_ERR);
-}
+पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 
-static void ms_print_debug_regs(struct realtek_pci_ms *host)
-{
-	struct rtsx_pcr *pcr = host->pcr;
+अटल व्योम ms_prपूर्णांक_debug_regs(काष्ठा realtek_pci_ms *host)
+अणु
+	काष्ठा rtsx_pcr *pcr = host->pcr;
 	u16 i;
 	u8 *ptr;
 
-	/* Print MS host internal registers */
+	/* Prपूर्णांक MS host पूर्णांकernal रेजिस्टरs */
 	rtsx_pci_init_cmd(pcr);
-	for (i = 0xFD40; i <= 0xFD44; i++)
+	क्रम (i = 0xFD40; i <= 0xFD44; i++)
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD, i, 0, 0);
-	for (i = 0xFD52; i <= 0xFD69; i++)
+	क्रम (i = 0xFD52; i <= 0xFD69; i++)
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD, i, 0, 0);
 	rtsx_pci_send_cmd(pcr, 100);
 
 	ptr = rtsx_pci_get_cmd_data(pcr);
-	for (i = 0xFD40; i <= 0xFD44; i++)
+	क्रम (i = 0xFD40; i <= 0xFD44; i++)
 		dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", i, *(ptr++));
-	for (i = 0xFD52; i <= 0xFD69; i++)
+	क्रम (i = 0xFD52; i <= 0xFD69; i++)
 		dev_dbg(ms_dev(host), "0x%04X: 0x%02x\n", i, *(ptr++));
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#define ms_print_debug_regs(host)
+#घोषणा ms_prपूर्णांक_debug_regs(host)
 
-#endif
+#पूर्ण_अगर
 
-static int ms_power_on(struct realtek_pci_ms *host)
-{
-	struct rtsx_pcr *pcr = host->pcr;
-	int err;
+अटल पूर्णांक ms_घातer_on(काष्ठा realtek_pci_ms *host)
+अणु
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	पूर्णांक err;
 
 	rtsx_pci_init_cmd(pcr);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CARD_SELECT, 0x07, MS_MOD_SEL);
@@ -82,32 +83,32 @@ static int ms_power_on(struct realtek_pci_ms *host)
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CARD_CLK_EN,
 			MS_CLK_EN, MS_CLK_EN);
 	err = rtsx_pci_send_cmd(pcr, 100);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = rtsx_pci_card_pull_ctl_enable(pcr, RTSX_MS_CARD);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = rtsx_pci_card_power_on(pcr, RTSX_MS_CARD);
-	if (err < 0)
-		return err;
+	err = rtsx_pci_card_घातer_on(pcr, RTSX_MS_CARD);
+	अगर (err < 0)
+		वापस err;
 
-	/* Wait ms power stable */
+	/* Wait ms घातer stable */
 	msleep(150);
 
-	err = rtsx_pci_write_register(pcr, CARD_OE,
+	err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_OE,
 			MS_OUTPUT_EN, MS_OUTPUT_EN);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ms_power_off(struct realtek_pci_ms *host)
-{
-	struct rtsx_pcr *pcr = host->pcr;
-	int err;
+अटल पूर्णांक ms_घातer_off(काष्ठा realtek_pci_ms *host)
+अणु
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	पूर्णांक err;
 
 	rtsx_pci_init_cmd(pcr);
 
@@ -115,48 +116,48 @@ static int ms_power_off(struct realtek_pci_ms *host)
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CARD_OE, MS_OUTPUT_EN, 0);
 
 	err = rtsx_pci_send_cmd(pcr, 100);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = rtsx_pci_card_power_off(pcr, RTSX_MS_CARD);
-	if (err < 0)
-		return err;
+	err = rtsx_pci_card_घातer_off(pcr, RTSX_MS_CARD);
+	अगर (err < 0)
+		वापस err;
 
-	return rtsx_pci_card_pull_ctl_disable(pcr, RTSX_MS_CARD);
-}
+	वापस rtsx_pci_card_pull_ctl_disable(pcr, RTSX_MS_CARD);
+पूर्ण
 
-static int ms_transfer_data(struct realtek_pci_ms *host, unsigned char data_dir,
-		u8 tpc, u8 cfg, struct scatterlist *sg)
-{
-	struct rtsx_pcr *pcr = host->pcr;
-	int err;
-	unsigned int length = sg->length;
+अटल पूर्णांक ms_transfer_data(काष्ठा realtek_pci_ms *host, अचिन्हित अक्षर data_dir,
+		u8 tpc, u8 cfg, काष्ठा scatterlist *sg)
+अणु
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक length = sg->length;
 	u16 sec_cnt = (u16)(length / 512);
 	u8 val, trans_mode, dma_dir;
-	struct memstick_dev *card = host->msh->card;
+	काष्ठा memstick_dev *card = host->msh->card;
 	bool pro_card = card->id.type == MEMSTICK_TYPE_PRO;
 
 	dev_dbg(ms_dev(host), "%s: tpc = 0x%02x, data_dir = %s, length = %d\n",
 			__func__, tpc, (data_dir == READ) ? "READ" : "WRITE",
 			length);
 
-	if (data_dir == READ) {
-		dma_dir = DMA_DIR_FROM_CARD;
+	अगर (data_dir == READ) अणु
+		dma_dir = DMA_सूची_FROM_CARD;
 		trans_mode = pro_card ? MS_TM_AUTO_READ : MS_TM_NORMAL_READ;
-	} else {
-		dma_dir = DMA_DIR_TO_CARD;
+	पूर्ण अन्यथा अणु
+		dma_dir = DMA_सूची_TO_CARD;
 		trans_mode = pro_card ? MS_TM_AUTO_WRITE : MS_TM_NORMAL_WRITE;
-	}
+	पूर्ण
 
 	rtsx_pci_init_cmd(pcr);
 
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, MS_TPC, 0xFF, tpc);
-	if (pro_card) {
+	अगर (pro_card) अणु
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, MS_SECTOR_CNT_H,
 				0xFF, (u8)(sec_cnt >> 8));
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, MS_SECTOR_CNT_L,
 				0xFF, (u8)sec_cnt);
-	}
+	पूर्ण
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, MS_TRANS_CFG, 0xFF, cfg);
 
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, IRQSTAT0,
@@ -175,44 +176,44 @@ static int ms_transfer_data(struct realtek_pci_ms *host, unsigned char data_dir,
 	rtsx_pci_add_cmd(pcr, CHECK_REG_CMD, MS_TRANSFER,
 			MS_TRANSFER_END, MS_TRANSFER_END);
 
-	rtsx_pci_send_cmd_no_wait(pcr);
+	rtsx_pci_send_cmd_no_रुको(pcr);
 
 	err = rtsx_pci_transfer_data(pcr, sg, 1, data_dir == READ, 10000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		ms_clear_error(host);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	rtsx_pci_read_register(pcr, MS_TRANS_CFG, &val);
-	if (pro_card) {
-		if (val & (MS_INT_CMDNK | MS_INT_ERR |
+	rtsx_pci_पढ़ो_रेजिस्टर(pcr, MS_TRANS_CFG, &val);
+	अगर (pro_card) अणु
+		अगर (val & (MS_INT_CMDNK | MS_INT_ERR |
 				MS_CRC16_ERR | MS_RDY_TIMEOUT))
-			return -EIO;
-	} else {
-		if (val & (MS_CRC16_ERR | MS_RDY_TIMEOUT))
-			return -EIO;
-	}
+			वापस -EIO;
+	पूर्ण अन्यथा अणु
+		अगर (val & (MS_CRC16_ERR | MS_RDY_TIMEOUT))
+			वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ms_write_bytes(struct realtek_pci_ms *host, u8 tpc,
-		u8 cfg, u8 cnt, u8 *data, u8 *int_reg)
-{
-	struct rtsx_pcr *pcr = host->pcr;
-	int err, i;
+अटल पूर्णांक ms_ग_लिखो_bytes(काष्ठा realtek_pci_ms *host, u8 tpc,
+		u8 cfg, u8 cnt, u8 *data, u8 *पूर्णांक_reg)
+अणु
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	पूर्णांक err, i;
 
 	dev_dbg(ms_dev(host), "%s: tpc = 0x%02x\n", __func__, tpc);
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	rtsx_pci_init_cmd(pcr);
 
-	for (i = 0; i < cnt; i++)
+	क्रम (i = 0; i < cnt; i++)
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD,
 				PPBUF_BASE2 + i, 0xFF, data[i]);
-	if (cnt % 2)
+	अगर (cnt % 2)
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD,
 				PPBUF_BASE2 + i, 0xFF, 0xFF);
 
@@ -226,55 +227,55 @@ static int ms_write_bytes(struct realtek_pci_ms *host, u8 tpc,
 			0xFF, MS_TRANSFER_START | MS_TM_WRITE_BYTES);
 	rtsx_pci_add_cmd(pcr, CHECK_REG_CMD, MS_TRANSFER,
 			MS_TRANSFER_END, MS_TRANSFER_END);
-	if (int_reg)
+	अगर (पूर्णांक_reg)
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD, MS_TRANS_CFG, 0, 0);
 
 	err = rtsx_pci_send_cmd(pcr, 5000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		u8 val;
 
-		rtsx_pci_read_register(pcr, MS_TRANS_CFG, &val);
+		rtsx_pci_पढ़ो_रेजिस्टर(pcr, MS_TRANS_CFG, &val);
 		dev_dbg(ms_dev(host), "MS_TRANS_CFG: 0x%02x\n", val);
 
-		if (int_reg)
-			*int_reg = val & 0x0F;
+		अगर (पूर्णांक_reg)
+			*पूर्णांक_reg = val & 0x0F;
 
-		ms_print_debug_regs(host);
+		ms_prपूर्णांक_debug_regs(host);
 
 		ms_clear_error(host);
 
-		if (!(tpc & 0x08)) {
-			if (val & MS_CRC16_ERR)
-				return -EIO;
-		} else {
-			if (!(val & 0x80)) {
-				if (val & (MS_INT_ERR | MS_INT_CMDNK))
-					return -EIO;
-			}
-		}
+		अगर (!(tpc & 0x08)) अणु
+			अगर (val & MS_CRC16_ERR)
+				वापस -EIO;
+		पूर्ण अन्यथा अणु
+			अगर (!(val & 0x80)) अणु
+				अगर (val & (MS_INT_ERR | MS_INT_CMDNK))
+					वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (int_reg) {
+	अगर (पूर्णांक_reg) अणु
 		u8 *ptr = rtsx_pci_get_cmd_data(pcr) + 1;
-		*int_reg = *ptr & 0x0F;
-	}
+		*पूर्णांक_reg = *ptr & 0x0F;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ms_read_bytes(struct realtek_pci_ms *host, u8 tpc,
-		u8 cfg, u8 cnt, u8 *data, u8 *int_reg)
-{
-	struct rtsx_pcr *pcr = host->pcr;
-	int err, i;
+अटल पूर्णांक ms_पढ़ो_bytes(काष्ठा realtek_pci_ms *host, u8 tpc,
+		u8 cfg, u8 cnt, u8 *data, u8 *पूर्णांक_reg)
+अणु
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	पूर्णांक err, i;
 	u8 *ptr;
 
 	dev_dbg(ms_dev(host), "%s: tpc = 0x%02x\n", __func__, tpc);
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	rtsx_pci_init_cmd(pcr);
 
@@ -288,273 +289,273 @@ static int ms_read_bytes(struct realtek_pci_ms *host, u8 tpc,
 			0xFF, MS_TRANSFER_START | MS_TM_READ_BYTES);
 	rtsx_pci_add_cmd(pcr, CHECK_REG_CMD, MS_TRANSFER,
 			MS_TRANSFER_END, MS_TRANSFER_END);
-	for (i = 0; i < cnt - 1; i++)
+	क्रम (i = 0; i < cnt - 1; i++)
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD, PPBUF_BASE2 + i, 0, 0);
-	if (cnt % 2)
+	अगर (cnt % 2)
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD, PPBUF_BASE2 + cnt, 0, 0);
-	else
+	अन्यथा
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD,
 				PPBUF_BASE2 + cnt - 1, 0, 0);
-	if (int_reg)
+	अगर (पूर्णांक_reg)
 		rtsx_pci_add_cmd(pcr, READ_REG_CMD, MS_TRANS_CFG, 0, 0);
 
 	err = rtsx_pci_send_cmd(pcr, 5000);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		u8 val;
 
-		rtsx_pci_read_register(pcr, MS_TRANS_CFG, &val);
+		rtsx_pci_पढ़ो_रेजिस्टर(pcr, MS_TRANS_CFG, &val);
 		dev_dbg(ms_dev(host), "MS_TRANS_CFG: 0x%02x\n", val);
 
-		if (int_reg)
-			*int_reg = val & 0x0F;
+		अगर (पूर्णांक_reg)
+			*पूर्णांक_reg = val & 0x0F;
 
-		ms_print_debug_regs(host);
+		ms_prपूर्णांक_debug_regs(host);
 
 		ms_clear_error(host);
 
-		if (!(tpc & 0x08)) {
-			if (val & MS_CRC16_ERR)
-				return -EIO;
-		} else {
-			if (!(val & 0x80)) {
-				if (val & (MS_INT_ERR | MS_INT_CMDNK))
-					return -EIO;
-			}
-		}
+		अगर (!(tpc & 0x08)) अणु
+			अगर (val & MS_CRC16_ERR)
+				वापस -EIO;
+		पूर्ण अन्यथा अणु
+			अगर (!(val & 0x80)) अणु
+				अगर (val & (MS_INT_ERR | MS_INT_CMDNK))
+					वापस -EIO;
+			पूर्ण
+		पूर्ण
 
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	ptr = rtsx_pci_get_cmd_data(pcr) + 1;
-	for (i = 0; i < cnt; i++)
+	क्रम (i = 0; i < cnt; i++)
 		data[i] = *ptr++;
 
-	if (int_reg)
-		*int_reg = *ptr & 0x0F;
+	अगर (पूर्णांक_reg)
+		*पूर्णांक_reg = *ptr & 0x0F;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtsx_pci_ms_issue_cmd(struct realtek_pci_ms *host)
-{
-	struct memstick_request *req = host->req;
-	int err = 0;
-	u8 cfg = 0, int_reg;
+अटल पूर्णांक rtsx_pci_ms_issue_cmd(काष्ठा realtek_pci_ms *host)
+अणु
+	काष्ठा memstick_request *req = host->req;
+	पूर्णांक err = 0;
+	u8 cfg = 0, पूर्णांक_reg;
 
 	dev_dbg(ms_dev(host), "%s\n", __func__);
 
-	if (req->need_card_int) {
-		if (host->ifmode != MEMSTICK_SERIAL)
+	अगर (req->need_card_पूर्णांक) अणु
+		अगर (host->अगरmode != MEMSTICK_SERIAL)
 			cfg = WAIT_INT;
-	}
+	पूर्ण
 
-	if (req->long_data) {
+	अगर (req->दीर्घ_data) अणु
 		err = ms_transfer_data(host, req->data_dir,
 				req->tpc, cfg, &(req->sg));
-	} else {
-		if (req->data_dir == READ) {
-			err = ms_read_bytes(host, req->tpc, cfg,
-					req->data_len, req->data, &int_reg);
-		} else {
-			err = ms_write_bytes(host, req->tpc, cfg,
-					req->data_len, req->data, &int_reg);
-		}
-	}
-	if (err < 0)
-		return err;
+	पूर्ण अन्यथा अणु
+		अगर (req->data_dir == READ) अणु
+			err = ms_पढ़ो_bytes(host, req->tpc, cfg,
+					req->data_len, req->data, &पूर्णांक_reg);
+		पूर्ण अन्यथा अणु
+			err = ms_ग_लिखो_bytes(host, req->tpc, cfg,
+					req->data_len, req->data, &पूर्णांक_reg);
+		पूर्ण
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
-	if (req->need_card_int && (host->ifmode == MEMSTICK_SERIAL)) {
-		err = ms_read_bytes(host, MS_TPC_GET_INT,
-				NO_WAIT_INT, 1, &int_reg, NULL);
-		if (err < 0)
-			return err;
-	}
+	अगर (req->need_card_पूर्णांक && (host->अगरmode == MEMSTICK_SERIAL)) अणु
+		err = ms_पढ़ो_bytes(host, MS_TPC_GET_INT,
+				NO_WAIT_INT, 1, &पूर्णांक_reg, शून्य);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (req->need_card_int) {
-		dev_dbg(ms_dev(host), "int_reg: 0x%02x\n", int_reg);
+	अगर (req->need_card_पूर्णांक) अणु
+		dev_dbg(ms_dev(host), "int_reg: 0x%02x\n", पूर्णांक_reg);
 
-		if (int_reg & MS_INT_CMDNK)
-			req->int_reg |= MEMSTICK_INT_CMDNAK;
-		if (int_reg & MS_INT_BREQ)
-			req->int_reg |= MEMSTICK_INT_BREQ;
-		if (int_reg & MS_INT_ERR)
-			req->int_reg |= MEMSTICK_INT_ERR;
-		if (int_reg & MS_INT_CED)
-			req->int_reg |= MEMSTICK_INT_CED;
-	}
+		अगर (पूर्णांक_reg & MS_INT_CMDNK)
+			req->पूर्णांक_reg |= MEMSTICK_INT_CMDNAK;
+		अगर (पूर्णांक_reg & MS_INT_BREQ)
+			req->पूर्णांक_reg |= MEMSTICK_INT_BREQ;
+		अगर (पूर्णांक_reg & MS_INT_ERR)
+			req->पूर्णांक_reg |= MEMSTICK_INT_ERR;
+		अगर (पूर्णांक_reg & MS_INT_CED)
+			req->पूर्णांक_reg |= MEMSTICK_INT_CED;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtsx_pci_ms_handle_req(struct work_struct *work)
-{
-	struct realtek_pci_ms *host = container_of(work,
-			struct realtek_pci_ms, handle_req);
-	struct rtsx_pcr *pcr = host->pcr;
-	struct memstick_host *msh = host->msh;
-	int rc;
+अटल व्योम rtsx_pci_ms_handle_req(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा realtek_pci_ms *host = container_of(work,
+			काष्ठा realtek_pci_ms, handle_req);
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	काष्ठा memstick_host *msh = host->msh;
+	पूर्णांक rc;
 
 	mutex_lock(&pcr->pcr_mutex);
 
 	rtsx_pci_start_run(pcr);
 
-	rtsx_pci_switch_clock(host->pcr, host->clock, host->ssc_depth,
+	rtsx_pci_चयन_घड़ी(host->pcr, host->घड़ी, host->ssc_depth,
 			false, true, false);
-	rtsx_pci_write_register(pcr, CARD_SELECT, 0x07, MS_MOD_SEL);
-	rtsx_pci_write_register(pcr, CARD_SHARE_MODE,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_SELECT, 0x07, MS_MOD_SEL);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_SHARE_MODE,
 			CARD_SHARE_MASK, CARD_SHARE_48_MS);
 
-	if (!host->req) {
-		do {
+	अगर (!host->req) अणु
+		करो अणु
 			rc = memstick_next_req(msh, &host->req);
 			dev_dbg(ms_dev(host), "next req %d\n", rc);
 
-			if (!rc)
+			अगर (!rc)
 				host->req->error = rtsx_pci_ms_issue_cmd(host);
-		} while (!rc);
-	}
+		पूर्ण जबतक (!rc);
+	पूर्ण
 
 	mutex_unlock(&pcr->pcr_mutex);
-}
+पूर्ण
 
-static void rtsx_pci_ms_request(struct memstick_host *msh)
-{
-	struct realtek_pci_ms *host = memstick_priv(msh);
+अटल व्योम rtsx_pci_ms_request(काष्ठा memstick_host *msh)
+अणु
+	काष्ठा realtek_pci_ms *host = memstick_priv(msh);
 
 	dev_dbg(ms_dev(host), "--> %s\n", __func__);
 
-	if (rtsx_pci_card_exclusive_check(host->pcr, RTSX_MS_CARD))
-		return;
+	अगर (rtsx_pci_card_exclusive_check(host->pcr, RTSX_MS_CARD))
+		वापस;
 
 	schedule_work(&host->handle_req);
-}
+पूर्ण
 
-static int rtsx_pci_ms_set_param(struct memstick_host *msh,
-		enum memstick_param param, int value)
-{
-	struct realtek_pci_ms *host = memstick_priv(msh);
-	struct rtsx_pcr *pcr = host->pcr;
-	unsigned int clock = 0;
+अटल पूर्णांक rtsx_pci_ms_set_param(काष्ठा memstick_host *msh,
+		क्रमागत memstick_param param, पूर्णांक value)
+अणु
+	काष्ठा realtek_pci_ms *host = memstick_priv(msh);
+	काष्ठा rtsx_pcr *pcr = host->pcr;
+	अचिन्हित पूर्णांक घड़ी = 0;
 	u8 ssc_depth = 0;
-	int err;
+	पूर्णांक err;
 
 	dev_dbg(ms_dev(host), "%s: param = %d, value = %d\n",
 			__func__, param, value);
 
 	err = rtsx_pci_card_exclusive_check(host->pcr, RTSX_MS_CARD);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (param) {
-	case MEMSTICK_POWER:
-		if (value == MEMSTICK_POWER_ON)
-			err = ms_power_on(host);
-		else if (value == MEMSTICK_POWER_OFF)
-			err = ms_power_off(host);
-		else
-			return -EINVAL;
-		break;
+	चयन (param) अणु
+	हाल MEMSTICK_POWER:
+		अगर (value == MEMSTICK_POWER_ON)
+			err = ms_घातer_on(host);
+		अन्यथा अगर (value == MEMSTICK_POWER_OFF)
+			err = ms_घातer_off(host);
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
 
-	case MEMSTICK_INTERFACE:
-		if (value == MEMSTICK_SERIAL) {
-			clock = 19000000;
+	हाल MEMSTICK_INTERFACE:
+		अगर (value == MEMSTICK_SERIAL) अणु
+			घड़ी = 19000000;
 			ssc_depth = RTSX_SSC_DEPTH_500K;
 
-			err = rtsx_pci_write_register(pcr, MS_CFG, 0x58,
+			err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr, MS_CFG, 0x58,
 					MS_BUS_WIDTH_1 | PUSH_TIME_DEFAULT);
-			if (err < 0)
-				return err;
-		} else if (value == MEMSTICK_PAR4) {
-			clock = 39000000;
+			अगर (err < 0)
+				वापस err;
+		पूर्ण अन्यथा अगर (value == MEMSTICK_PAR4) अणु
+			घड़ी = 39000000;
 			ssc_depth = RTSX_SSC_DEPTH_1M;
 
-			err = rtsx_pci_write_register(pcr, MS_CFG,
+			err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr, MS_CFG,
 					0x58, MS_BUS_WIDTH_4 | PUSH_TIME_ODD);
-			if (err < 0)
-				return err;
-		} else {
-			return -EINVAL;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -EINVAL;
+		पूर्ण
 
-		err = rtsx_pci_switch_clock(pcr, clock,
+		err = rtsx_pci_चयन_घड़ी(pcr, घड़ी,
 				ssc_depth, false, true, false);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		host->ssc_depth = ssc_depth;
-		host->clock = clock;
-		host->ifmode = value;
-		break;
-	}
+		host->घड़ी = घड़ी;
+		host->अगरmode = value;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int rtsx_pci_ms_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct realtek_pci_ms *host = platform_get_drvdata(pdev);
-	struct memstick_host *msh = host->msh;
+अटल पूर्णांक rtsx_pci_ms_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा realtek_pci_ms *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा memstick_host *msh = host->msh;
 
 	dev_dbg(ms_dev(host), "--> %s\n", __func__);
 
 	memstick_suspend_host(msh);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtsx_pci_ms_resume(struct platform_device *pdev)
-{
-	struct realtek_pci_ms *host = platform_get_drvdata(pdev);
-	struct memstick_host *msh = host->msh;
+अटल पूर्णांक rtsx_pci_ms_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा realtek_pci_ms *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा memstick_host *msh = host->msh;
 
 	dev_dbg(ms_dev(host), "--> %s\n", __func__);
 
 	memstick_resume_host(msh);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* CONFIG_PM */
+#अन्यथा /* CONFIG_PM */
 
-#define rtsx_pci_ms_suspend NULL
-#define rtsx_pci_ms_resume NULL
+#घोषणा rtsx_pci_ms_suspend शून्य
+#घोषणा rtsx_pci_ms_resume शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static void rtsx_pci_ms_card_event(struct platform_device *pdev)
-{
-	struct realtek_pci_ms *host = platform_get_drvdata(pdev);
+अटल व्योम rtsx_pci_ms_card_event(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा realtek_pci_ms *host = platक्रमm_get_drvdata(pdev);
 
 	memstick_detect_change(host->msh);
-}
+पूर्ण
 
-static int rtsx_pci_ms_drv_probe(struct platform_device *pdev)
-{
-	struct memstick_host *msh;
-	struct realtek_pci_ms *host;
-	struct rtsx_pcr *pcr;
-	struct pcr_handle *handle = pdev->dev.platform_data;
-	int rc;
+अटल पूर्णांक rtsx_pci_ms_drv_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा memstick_host *msh;
+	काष्ठा realtek_pci_ms *host;
+	काष्ठा rtsx_pcr *pcr;
+	काष्ठा pcr_handle *handle = pdev->dev.platक्रमm_data;
+	पूर्णांक rc;
 
-	if (!handle)
-		return -ENXIO;
+	अगर (!handle)
+		वापस -ENXIO;
 
 	pcr = handle->pcr;
-	if (!pcr)
-		return -ENXIO;
+	अगर (!pcr)
+		वापस -ENXIO;
 
 	dev_dbg(&(pdev->dev),
 			": Realtek PCI-E Memstick controller found\n");
 
-	msh = memstick_alloc_host(sizeof(*host), &pdev->dev);
-	if (!msh)
-		return -ENOMEM;
+	msh = memstick_alloc_host(माप(*host), &pdev->dev);
+	अगर (!msh)
+		वापस -ENOMEM;
 
 	host = memstick_priv(msh);
 	host->pcr = pcr;
 	host->msh = msh;
 	host->pdev = pdev;
-	platform_set_drvdata(pdev, host);
+	platक्रमm_set_drvdata(pdev, host);
 	pcr->slots[RTSX_MS_CARD].p_dev = pdev;
 	pcr->slots[RTSX_MS_CARD].card_event = rtsx_pci_ms_card_event;
 
@@ -566,33 +567,33 @@ static int rtsx_pci_ms_drv_probe(struct platform_device *pdev)
 	msh->caps = MEMSTICK_CAP_PAR4;
 
 	rc = memstick_add_host(msh);
-	if (rc) {
-		memstick_free_host(msh);
-		return rc;
-	}
+	अगर (rc) अणु
+		memstick_मुक्त_host(msh);
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtsx_pci_ms_drv_remove(struct platform_device *pdev)
-{
-	struct realtek_pci_ms *host = platform_get_drvdata(pdev);
-	struct rtsx_pcr *pcr;
-	struct memstick_host *msh;
-	int rc;
+अटल पूर्णांक rtsx_pci_ms_drv_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा realtek_pci_ms *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा rtsx_pcr *pcr;
+	काष्ठा memstick_host *msh;
+	पूर्णांक rc;
 
-	if (!host)
-		return 0;
+	अगर (!host)
+		वापस 0;
 
 	pcr = host->pcr;
-	pcr->slots[RTSX_MS_CARD].p_dev = NULL;
-	pcr->slots[RTSX_MS_CARD].card_event = NULL;
+	pcr->slots[RTSX_MS_CARD].p_dev = शून्य;
+	pcr->slots[RTSX_MS_CARD].card_event = शून्य;
 	msh = host->msh;
 	host->eject = true;
 	cancel_work_sync(&host->handle_req);
 
 	mutex_lock(&host->host_mutex);
-	if (host->req) {
+	अगर (host->req) अणु
 		dev_dbg(&(pdev->dev),
 			"%s: Controller removed during transfer\n",
 			dev_name(&msh->dev));
@@ -600,43 +601,43 @@ static int rtsx_pci_ms_drv_remove(struct platform_device *pdev)
 		rtsx_pci_complete_unfinished_transfer(pcr);
 
 		host->req->error = -ENOMEDIUM;
-		do {
+		करो अणु
 			rc = memstick_next_req(msh, &host->req);
-			if (!rc)
+			अगर (!rc)
 				host->req->error = -ENOMEDIUM;
-		} while (!rc);
-	}
+		पूर्ण जबतक (!rc);
+	पूर्ण
 	mutex_unlock(&host->host_mutex);
 
-	memstick_remove_host(msh);
-	memstick_free_host(msh);
+	memstick_हटाओ_host(msh);
+	memstick_मुक्त_host(msh);
 
 	dev_dbg(&(pdev->dev),
 		": Realtek PCI-E Memstick controller has been removed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_device_id rtsx_pci_ms_ids[] = {
-	{
+अटल काष्ठा platक्रमm_device_id rtsx_pci_ms_ids[] = अणु
+	अणु
 		.name = DRV_NAME_RTSX_PCI_MS,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(platform, rtsx_pci_ms_ids);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, rtsx_pci_ms_ids);
 
-static struct platform_driver rtsx_pci_ms_driver = {
+अटल काष्ठा platक्रमm_driver rtsx_pci_ms_driver = अणु
 	.probe		= rtsx_pci_ms_drv_probe,
-	.remove		= rtsx_pci_ms_drv_remove,
+	.हटाओ		= rtsx_pci_ms_drv_हटाओ,
 	.id_table       = rtsx_pci_ms_ids,
 	.suspend	= rtsx_pci_ms_suspend,
 	.resume		= rtsx_pci_ms_resume,
-	.driver		= {
+	.driver		= अणु
 		.name	= DRV_NAME_RTSX_PCI_MS,
-	},
-};
-module_platform_driver(rtsx_pci_ms_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rtsx_pci_ms_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Wei WANG <wei_wang@realsil.com.cn>");

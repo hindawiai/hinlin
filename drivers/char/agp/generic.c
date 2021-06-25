@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * AGPGART driver.
  * Copyright (C) 2004 Silicon Graphics, Inc.
  * Copyright (C) 2002-2005 Dave Jones.
- * Copyright (C) 1999 Jeff Hartmann.
+ * Copyright (C) 1999 Jeff Harपंचांगann.
  * Copyright (C) 1999 Precision Insight, Inc.
  * Copyright (C) 1999 Xi Graphics, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -25,406 +26,406 @@
  * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * TODO:
- * - Allocate more than order 0 pages to avoid too much linear map splitting.
+ * - Allocate more than order 0 pages to aव्योम too much linear map splitting.
  */
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/pagemap.h>
-#include <linux/miscdevice.h>
-#include <linux/pm.h>
-#include <linux/agp_backend.h>
-#include <linux/vmalloc.h>
-#include <linux/dma-mapping.h>
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <asm/io.h>
-#ifdef CONFIG_X86
-#include <asm/set_memory.h>
-#endif
-#include "agp.h"
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/पन.स>
+#अगर_घोषित CONFIG_X86
+#समावेश <यंत्र/set_memory.h>
+#पूर्ण_अगर
+#समावेश "agp.h"
 
 __u32 *agp_gatt_table;
-int agp_memory_reserved;
+पूर्णांक agp_memory_reserved;
 
 /*
- * Needed by the Nforce GART driver for the time being. Would be
- * nice to do this some other way instead of needing this export.
+ * Needed by the Nक्रमce GART driver क्रम the समय being. Would be
+ * nice to करो this some other way instead of needing this export.
  */
 EXPORT_SYMBOL_GPL(agp_memory_reserved);
 
 /*
- * Generic routines for handling agp_memory structures -
- * They use the basic page allocation routines to do the brunt of the work.
+ * Generic routines क्रम handling agp_memory काष्ठाures -
+ * They use the basic page allocation routines to करो the brunt of the work.
  */
 
-void agp_free_key(int key)
-{
-	if (key < 0)
-		return;
+व्योम agp_मुक्त_key(पूर्णांक key)
+अणु
+	अगर (key < 0)
+		वापस;
 
-	if (key < MAXKEY)
+	अगर (key < MAXKEY)
 		clear_bit(key, agp_bridge->key_list);
-}
-EXPORT_SYMBOL(agp_free_key);
+पूर्ण
+EXPORT_SYMBOL(agp_मुक्त_key);
 
 
-static int agp_get_key(void)
-{
-	int bit;
+अटल पूर्णांक agp_get_key(व्योम)
+अणु
+	पूर्णांक bit;
 
 	bit = find_first_zero_bit(agp_bridge->key_list, MAXKEY);
-	if (bit < MAXKEY) {
+	अगर (bit < MAXKEY) अणु
 		set_bit(bit, agp_bridge->key_list);
-		return bit;
-	}
-	return -1;
-}
+		वापस bit;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
 /*
- * Use kmalloc if possible for the page list. Otherwise fall back to
- * vmalloc. This speeds things up and also saves memory for small AGP
+ * Use kदो_स्मृति अगर possible क्रम the page list. Otherwise fall back to
+ * vदो_स्मृति. This speeds things up and also saves memory क्रम small AGP
  * regions.
  */
 
-void agp_alloc_page_array(size_t size, struct agp_memory *mem)
-{
-	mem->pages = kvmalloc(size, GFP_KERNEL);
-}
+व्योम agp_alloc_page_array(माप_प्रकार size, काष्ठा agp_memory *mem)
+अणु
+	mem->pages = kvदो_स्मृति(size, GFP_KERNEL);
+पूर्ण
 EXPORT_SYMBOL(agp_alloc_page_array);
 
-static struct agp_memory *agp_create_user_memory(unsigned long num_agp_pages)
-{
-	struct agp_memory *new;
-	unsigned long alloc_size = num_agp_pages*sizeof(struct page *);
+अटल काष्ठा agp_memory *agp_create_user_memory(अचिन्हित दीर्घ num_agp_pages)
+अणु
+	काष्ठा agp_memory *new;
+	अचिन्हित दीर्घ alloc_size = num_agp_pages*माप(काष्ठा page *);
 
-	if (INT_MAX/sizeof(struct page *) < num_agp_pages)
-		return NULL;
+	अगर (पूर्णांक_उच्च/माप(काष्ठा page *) < num_agp_pages)
+		वापस शून्य;
 
-	new = kzalloc(sizeof(struct agp_memory), GFP_KERNEL);
-	if (new == NULL)
-		return NULL;
+	new = kzalloc(माप(काष्ठा agp_memory), GFP_KERNEL);
+	अगर (new == शून्य)
+		वापस शून्य;
 
 	new->key = agp_get_key();
 
-	if (new->key < 0) {
-		kfree(new);
-		return NULL;
-	}
+	अगर (new->key < 0) अणु
+		kमुक्त(new);
+		वापस शून्य;
+	पूर्ण
 
 	agp_alloc_page_array(alloc_size, new);
 
-	if (new->pages == NULL) {
-		agp_free_key(new->key);
-		kfree(new);
-		return NULL;
-	}
+	अगर (new->pages == शून्य) अणु
+		agp_मुक्त_key(new->key);
+		kमुक्त(new);
+		वापस शून्य;
+	पूर्ण
 	new->num_scratch_pages = 0;
-	return new;
-}
+	वापस new;
+पूर्ण
 
-struct agp_memory *agp_create_memory(int scratch_pages)
-{
-	struct agp_memory *new;
+काष्ठा agp_memory *agp_create_memory(पूर्णांक scratch_pages)
+अणु
+	काष्ठा agp_memory *new;
 
-	new = kzalloc(sizeof(struct agp_memory), GFP_KERNEL);
-	if (new == NULL)
-		return NULL;
+	new = kzalloc(माप(काष्ठा agp_memory), GFP_KERNEL);
+	अगर (new == शून्य)
+		वापस शून्य;
 
 	new->key = agp_get_key();
 
-	if (new->key < 0) {
-		kfree(new);
-		return NULL;
-	}
+	अगर (new->key < 0) अणु
+		kमुक्त(new);
+		वापस शून्य;
+	पूर्ण
 
 	agp_alloc_page_array(PAGE_SIZE * scratch_pages, new);
 
-	if (new->pages == NULL) {
-		agp_free_key(new->key);
-		kfree(new);
-		return NULL;
-	}
+	अगर (new->pages == शून्य) अणु
+		agp_मुक्त_key(new->key);
+		kमुक्त(new);
+		वापस शून्य;
+	पूर्ण
 	new->num_scratch_pages = scratch_pages;
 	new->type = AGP_NORMAL_MEMORY;
-	return new;
-}
+	वापस new;
+पूर्ण
 EXPORT_SYMBOL(agp_create_memory);
 
 /**
- *	agp_free_memory - free memory associated with an agp_memory pointer.
+ *	agp_मुक्त_memory - मुक्त memory associated with an agp_memory poपूर्णांकer.
  *
- *	@curr:		agp_memory pointer to be freed.
+ *	@curr:		agp_memory poपूर्णांकer to be मुक्तd.
  *
  *	It is the only function that can be called when the backend is not owned
- *	by the caller.  (So it can free memory on client death.)
+ *	by the caller.  (So it can मुक्त memory on client death.)
  */
-void agp_free_memory(struct agp_memory *curr)
-{
-	size_t i;
+व्योम agp_मुक्त_memory(काष्ठा agp_memory *curr)
+अणु
+	माप_प्रकार i;
 
-	if (curr == NULL)
-		return;
+	अगर (curr == शून्य)
+		वापस;
 
-	if (curr->is_bound)
+	अगर (curr->is_bound)
 		agp_unbind_memory(curr);
 
-	if (curr->type >= AGP_USER_TYPES) {
-		agp_generic_free_by_type(curr);
-		return;
-	}
+	अगर (curr->type >= AGP_USER_TYPES) अणु
+		agp_generic_मुक्त_by_type(curr);
+		वापस;
+	पूर्ण
 
-	if (curr->type != 0) {
-		curr->bridge->driver->free_by_type(curr);
-		return;
-	}
-	if (curr->page_count != 0) {
-		if (curr->bridge->driver->agp_destroy_pages) {
+	अगर (curr->type != 0) अणु
+		curr->bridge->driver->मुक्त_by_type(curr);
+		वापस;
+	पूर्ण
+	अगर (curr->page_count != 0) अणु
+		अगर (curr->bridge->driver->agp_destroy_pages) अणु
 			curr->bridge->driver->agp_destroy_pages(curr);
-		} else {
+		पूर्ण अन्यथा अणु
 
-			for (i = 0; i < curr->page_count; i++) {
+			क्रम (i = 0; i < curr->page_count; i++) अणु
 				curr->bridge->driver->agp_destroy_page(
 					curr->pages[i],
 					AGP_PAGE_DESTROY_UNMAP);
-			}
-			for (i = 0; i < curr->page_count; i++) {
+			पूर्ण
+			क्रम (i = 0; i < curr->page_count; i++) अणु
 				curr->bridge->driver->agp_destroy_page(
 					curr->pages[i],
 					AGP_PAGE_DESTROY_FREE);
-			}
-		}
-	}
-	agp_free_key(curr->key);
-	agp_free_page_array(curr);
-	kfree(curr);
-}
-EXPORT_SYMBOL(agp_free_memory);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	agp_मुक्त_key(curr->key);
+	agp_मुक्त_page_array(curr);
+	kमुक्त(curr);
+पूर्ण
+EXPORT_SYMBOL(agp_मुक्त_memory);
 
-#define ENTRIES_PER_PAGE		(PAGE_SIZE / sizeof(unsigned long))
+#घोषणा ENTRIES_PER_PAGE		(PAGE_SIZE / माप(अचिन्हित दीर्घ))
 
 /**
  *	agp_allocate_memory  -  allocate a group of pages of a certain type.
  *
- *	@bridge: an agp_bridge_data struct allocated for the AGP host bridge.
- *	@page_count:	size_t argument of the number of pages
+ *	@bridge: an agp_bridge_data काष्ठा allocated क्रम the AGP host bridge.
+ *	@page_count:	माप_प्रकार argument of the number of pages
  *	@type:	u32 argument of the type of memory to be allocated.
  *
  *	Every agp bridge device will allow you to allocate AGP_NORMAL_MEMORY which
  *	maps to physical ram.  Any other type is device dependent.
  *
- *	It returns NULL whenever memory is unavailable.
+ *	It वापसs शून्य whenever memory is unavailable.
  */
-struct agp_memory *agp_allocate_memory(struct agp_bridge_data *bridge,
-					size_t page_count, u32 type)
-{
-	int scratch_pages;
-	struct agp_memory *new;
-	size_t i;
-	int cur_memory;
+काष्ठा agp_memory *agp_allocate_memory(काष्ठा agp_bridge_data *bridge,
+					माप_प्रकार page_count, u32 type)
+अणु
+	पूर्णांक scratch_pages;
+	काष्ठा agp_memory *new;
+	माप_प्रकार i;
+	पूर्णांक cur_memory;
 
-	if (!bridge)
-		return NULL;
+	अगर (!bridge)
+		वापस शून्य;
 
-	cur_memory = atomic_read(&bridge->current_memory_agp);
-	if ((cur_memory + page_count > bridge->max_memory_agp) ||
+	cur_memory = atomic_पढ़ो(&bridge->current_memory_agp);
+	अगर ((cur_memory + page_count > bridge->max_memory_agp) ||
 	    (cur_memory + page_count < page_count))
-		return NULL;
+		वापस शून्य;
 
-	if (type >= AGP_USER_TYPES) {
+	अगर (type >= AGP_USER_TYPES) अणु
 		new = agp_generic_alloc_user(page_count, type);
-		if (new)
+		अगर (new)
 			new->bridge = bridge;
-		return new;
-	}
+		वापस new;
+	पूर्ण
 
-	if (type != 0) {
+	अगर (type != 0) अणु
 		new = bridge->driver->alloc_by_type(page_count, type);
-		if (new)
+		अगर (new)
 			new->bridge = bridge;
-		return new;
-	}
+		वापस new;
+	पूर्ण
 
 	scratch_pages = (page_count + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
 
 	new = agp_create_memory(scratch_pages);
 
-	if (new == NULL)
-		return NULL;
+	अगर (new == शून्य)
+		वापस शून्य;
 
-	if (bridge->driver->agp_alloc_pages) {
-		if (bridge->driver->agp_alloc_pages(bridge, new, page_count)) {
-			agp_free_memory(new);
-			return NULL;
-		}
+	अगर (bridge->driver->agp_alloc_pages) अणु
+		अगर (bridge->driver->agp_alloc_pages(bridge, new, page_count)) अणु
+			agp_मुक्त_memory(new);
+			वापस शून्य;
+		पूर्ण
 		new->bridge = bridge;
-		return new;
-	}
+		वापस new;
+	पूर्ण
 
-	for (i = 0; i < page_count; i++) {
-		struct page *page = bridge->driver->agp_alloc_page(bridge);
+	क्रम (i = 0; i < page_count; i++) अणु
+		काष्ठा page *page = bridge->driver->agp_alloc_page(bridge);
 
-		if (page == NULL) {
-			agp_free_memory(new);
-			return NULL;
-		}
+		अगर (page == शून्य) अणु
+			agp_मुक्त_memory(new);
+			वापस शून्य;
+		पूर्ण
 		new->pages[i] = page;
 		new->page_count++;
-	}
+	पूर्ण
 	new->bridge = bridge;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 EXPORT_SYMBOL(agp_allocate_memory);
 
 
-/* End - Generic routines for handling agp_memory structures */
+/* End - Generic routines क्रम handling agp_memory काष्ठाures */
 
 
-static int agp_return_size(void)
-{
-	int current_size;
-	void *temp;
+अटल पूर्णांक agp_वापस_size(व्योम)
+अणु
+	पूर्णांक current_size;
+	व्योम *temp;
 
 	temp = agp_bridge->current_size;
 
-	switch (agp_bridge->driver->size_type) {
-	case U8_APER_SIZE:
+	चयन (agp_bridge->driver->माप_प्रकारype) अणु
+	हाल U8_APER_SIZE:
 		current_size = A_SIZE_8(temp)->size;
-		break;
-	case U16_APER_SIZE:
+		अवरोध;
+	हाल U16_APER_SIZE:
 		current_size = A_SIZE_16(temp)->size;
-		break;
-	case U32_APER_SIZE:
+		अवरोध;
+	हाल U32_APER_SIZE:
 		current_size = A_SIZE_32(temp)->size;
-		break;
-	case LVL2_APER_SIZE:
+		अवरोध;
+	हाल LVL2_APER_SIZE:
 		current_size = A_SIZE_LVL2(temp)->size;
-		break;
-	case FIXED_APER_SIZE:
+		अवरोध;
+	हाल FIXED_APER_SIZE:
 		current_size = A_SIZE_FIX(temp)->size;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		current_size = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	current_size -= (agp_memory_reserved / (1024*1024));
-	if (current_size <0)
+	अगर (current_size <0)
 		current_size = 0;
-	return current_size;
-}
+	वापस current_size;
+पूर्ण
 
 
-int agp_num_entries(void)
-{
-	int num_entries;
-	void *temp;
+पूर्णांक agp_num_entries(व्योम)
+अणु
+	पूर्णांक num_entries;
+	व्योम *temp;
 
 	temp = agp_bridge->current_size;
 
-	switch (agp_bridge->driver->size_type) {
-	case U8_APER_SIZE:
+	चयन (agp_bridge->driver->माप_प्रकारype) अणु
+	हाल U8_APER_SIZE:
 		num_entries = A_SIZE_8(temp)->num_entries;
-		break;
-	case U16_APER_SIZE:
+		अवरोध;
+	हाल U16_APER_SIZE:
 		num_entries = A_SIZE_16(temp)->num_entries;
-		break;
-	case U32_APER_SIZE:
+		अवरोध;
+	हाल U32_APER_SIZE:
 		num_entries = A_SIZE_32(temp)->num_entries;
-		break;
-	case LVL2_APER_SIZE:
+		अवरोध;
+	हाल LVL2_APER_SIZE:
 		num_entries = A_SIZE_LVL2(temp)->num_entries;
-		break;
-	case FIXED_APER_SIZE:
+		अवरोध;
+	हाल FIXED_APER_SIZE:
 		num_entries = A_SIZE_FIX(temp)->num_entries;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		num_entries = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	num_entries -= agp_memory_reserved>>PAGE_SHIFT;
-	if (num_entries<0)
+	अगर (num_entries<0)
 		num_entries = 0;
-	return num_entries;
-}
+	वापस num_entries;
+पूर्ण
 EXPORT_SYMBOL_GPL(agp_num_entries);
 
 
 /**
- *	agp_copy_info  -  copy bridge state information
+ *	agp_copy_info  -  copy bridge state inक्रमmation
  *
- *	@bridge: an agp_bridge_data struct allocated for the AGP host bridge.
- *	@info:		agp_kern_info pointer.  The caller should insure that this pointer is valid.
+ *	@bridge: an agp_bridge_data काष्ठा allocated क्रम the AGP host bridge.
+ *	@info:		agp_kern_info poपूर्णांकer.  The caller should insure that this poपूर्णांकer is valid.
  *
- *	This function copies information about the agp bridge device and the state of
- *	the agp backend into an agp_kern_info pointer.
+ *	This function copies inक्रमmation about the agp bridge device and the state of
+ *	the agp backend पूर्णांकo an agp_kern_info poपूर्णांकer.
  */
-int agp_copy_info(struct agp_bridge_data *bridge, struct agp_kern_info *info)
-{
-	memset(info, 0, sizeof(struct agp_kern_info));
-	if (!bridge) {
+पूर्णांक agp_copy_info(काष्ठा agp_bridge_data *bridge, काष्ठा agp_kern_info *info)
+अणु
+	स_रखो(info, 0, माप(काष्ठा agp_kern_info));
+	अगर (!bridge) अणु
 		info->chipset = NOT_SUPPORTED;
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	info->version.major = bridge->version->major;
 	info->version.minor = bridge->version->minor;
 	info->chipset = SUPPORTED;
 	info->device = bridge->dev;
-	if (bridge->mode & AGPSTAT_MODE_3_0)
+	अगर (bridge->mode & AGPSTAT_MODE_3_0)
 		info->mode = bridge->mode & ~AGP3_RESERVED_MASK;
-	else
+	अन्यथा
 		info->mode = bridge->mode & ~AGP2_RESERVED_MASK;
 	info->aper_base = bridge->gart_bus_addr;
-	info->aper_size = agp_return_size();
+	info->aper_size = agp_वापस_size();
 	info->max_memory = bridge->max_memory_agp;
-	info->current_memory = atomic_read(&bridge->current_memory_agp);
+	info->current_memory = atomic_पढ़ो(&bridge->current_memory_agp);
 	info->cant_use_aperture = bridge->driver->cant_use_aperture;
 	info->vm_ops = bridge->vm_ops;
 	info->page_mask = ~0UL;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp_copy_info);
 
-/* End - Routine to copy over information structure */
+/* End - Routine to copy over inक्रमmation काष्ठाure */
 
 /*
- * Routines for handling swapping of agp_memory into the GATT -
- * These routines take agp_memory and insert them into the GATT.
- * They call device specific routines to actually write to the GATT.
+ * Routines क्रम handling swapping of agp_memory पूर्णांकo the GATT -
+ * These routines take agp_memory and insert them पूर्णांकo the GATT.
+ * They call device specअगरic routines to actually ग_लिखो to the GATT.
  */
 
 /**
- *	agp_bind_memory  -  Bind an agp_memory structure into the GATT.
+ *	agp_bind_memory  -  Bind an agp_memory काष्ठाure पूर्णांकo the GATT.
  *
- *	@curr:		agp_memory pointer
- *	@pg_start:	an offset into the graphics aperture translation table
+ *	@curr:		agp_memory poपूर्णांकer
+ *	@pg_start:	an offset पूर्णांकo the graphics aperture translation table
  *
- *	It returns -EINVAL if the pointer == NULL.
- *	It returns -EBUSY if the area of the table requested is already in use.
+ *	It वापसs -EINVAL अगर the poपूर्णांकer == शून्य.
+ *	It वापसs -EBUSY अगर the area of the table requested is alपढ़ोy in use.
  */
-int agp_bind_memory(struct agp_memory *curr, off_t pg_start)
-{
-	int ret_val;
+पूर्णांक agp_bind_memory(काष्ठा agp_memory *curr, off_t pg_start)
+अणु
+	पूर्णांक ret_val;
 
-	if (curr == NULL)
-		return -EINVAL;
+	अगर (curr == शून्य)
+		वापस -EINVAL;
 
-	if (curr->is_bound) {
-		printk(KERN_INFO PFX "memory %p is already bound!\n", curr);
-		return -EINVAL;
-	}
-	if (!curr->is_flushed) {
+	अगर (curr->is_bound) अणु
+		prपूर्णांकk(KERN_INFO PFX "memory %p is already bound!\n", curr);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!curr->is_flushed) अणु
 		curr->bridge->driver->cache_flush();
 		curr->is_flushed = true;
-	}
+	पूर्ण
 
 	ret_val = curr->bridge->driver->insert_memory(curr, pg_start, curr->type);
 
-	if (ret_val != 0)
-		return ret_val;
+	अगर (ret_val != 0)
+		वापस ret_val;
 
 	curr->is_bound = true;
 	curr->pg_start = pg_start;
@@ -432,377 +433,377 @@ int agp_bind_memory(struct agp_memory *curr, off_t pg_start)
 	list_add(&curr->mapped_list, &agp_bridge->mapped_list);
 	spin_unlock(&agp_bridge->mapped_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp_bind_memory);
 
 
 /**
- *	agp_unbind_memory  -  Removes an agp_memory structure from the GATT
+ *	agp_unbind_memory  -  Removes an agp_memory काष्ठाure from the GATT
  *
- * @curr:	agp_memory pointer to be removed from the GATT.
+ * @curr:	agp_memory poपूर्णांकer to be हटाओd from the GATT.
  *
- * It returns -EINVAL if this piece of agp_memory is not currently bound to
- * the graphics aperture translation table or if the agp_memory pointer == NULL
+ * It वापसs -EINVAL अगर this piece of agp_memory is not currently bound to
+ * the graphics aperture translation table or अगर the agp_memory poपूर्णांकer == शून्य
  */
-int agp_unbind_memory(struct agp_memory *curr)
-{
-	int ret_val;
+पूर्णांक agp_unbind_memory(काष्ठा agp_memory *curr)
+अणु
+	पूर्णांक ret_val;
 
-	if (curr == NULL)
-		return -EINVAL;
+	अगर (curr == शून्य)
+		वापस -EINVAL;
 
-	if (!curr->is_bound) {
-		printk(KERN_INFO PFX "memory %p was not bound!\n", curr);
-		return -EINVAL;
-	}
+	अगर (!curr->is_bound) अणु
+		prपूर्णांकk(KERN_INFO PFX "memory %p was not bound!\n", curr);
+		वापस -EINVAL;
+	पूर्ण
 
-	ret_val = curr->bridge->driver->remove_memory(curr, curr->pg_start, curr->type);
+	ret_val = curr->bridge->driver->हटाओ_memory(curr, curr->pg_start, curr->type);
 
-	if (ret_val != 0)
-		return ret_val;
+	अगर (ret_val != 0)
+		वापस ret_val;
 
 	curr->is_bound = false;
 	curr->pg_start = 0;
 	spin_lock(&curr->bridge->mapped_lock);
 	list_del(&curr->mapped_list);
 	spin_unlock(&curr->bridge->mapped_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp_unbind_memory);
 
 
-/* End - Routines for handling swapping of agp_memory into the GATT */
+/* End - Routines क्रम handling swapping of agp_memory पूर्णांकo the GATT */
 
 
 /* Generic Agp routines - Start */
-static void agp_v2_parse_one(u32 *requested_mode, u32 *bridge_agpstat, u32 *vga_agpstat)
-{
-	u32 tmp;
+अटल व्योम agp_v2_parse_one(u32 *requested_mode, u32 *bridge_agpstat, u32 *vga_agpstat)
+अणु
+	u32 पंचांगp;
 
-	if (*requested_mode & AGP2_RESERVED_MASK) {
-		printk(KERN_INFO PFX "reserved bits set (%x) in mode 0x%x. Fixed.\n",
+	अगर (*requested_mode & AGP2_RESERVED_MASK) अणु
+		prपूर्णांकk(KERN_INFO PFX "reserved bits set (%x) in mode 0x%x. Fixed.\n",
 			*requested_mode & AGP2_RESERVED_MASK, *requested_mode);
 		*requested_mode &= ~AGP2_RESERVED_MASK;
-	}
+	पूर्ण
 
 	/*
 	 * Some dumb bridges are programmed to disobey the AGP2 spec.
-	 * This is likely a BIOS misprogramming rather than poweron default, or
+	 * This is likely a BIOS misprogramming rather than घातeron शेष, or
 	 * it would be a lot more common.
-	 * https://bugs.freedesktop.org/show_bug.cgi?id=8816
+	 * https://bugs.मुक्तdesktop.org/show_bug.cgi?id=8816
 	 * AGPv2 spec 6.1.9 states:
 	 *   The RATE field indicates the data transfer rates supported by this
 	 *   device. A.G.P. devices must report all that apply.
 	 * Fix them up as best we can.
 	 */
-	switch (*bridge_agpstat & 7) {
-	case 4:
+	चयन (*bridge_agpstat & 7) अणु
+	हाल 4:
 		*bridge_agpstat |= (AGPSTAT2_2X | AGPSTAT2_1X);
-		printk(KERN_INFO PFX "BIOS bug. AGP bridge claims to only support x4 rate. "
+		prपूर्णांकk(KERN_INFO PFX "BIOS bug. AGP bridge claims to only support x4 rate. "
 			"Fixing up support for x2 & x1\n");
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*bridge_agpstat |= AGPSTAT2_1X;
-		printk(KERN_INFO PFX "BIOS bug. AGP bridge claims to only support x2 rate. "
+		prपूर्णांकk(KERN_INFO PFX "BIOS bug. AGP bridge claims to only support x2 rate. "
 			"Fixing up support for x1\n");
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* Check the speed bits make sense. Only one should be set. */
-	tmp = *requested_mode & 7;
-	switch (tmp) {
-		case 0:
-			printk(KERN_INFO PFX "%s tried to set rate=x0. Setting to x1 mode.\n", current->comm);
+	पंचांगp = *requested_mode & 7;
+	चयन (पंचांगp) अणु
+		हाल 0:
+			prपूर्णांकk(KERN_INFO PFX "%s tried to set rate=x0. Setting to x1 mode.\n", current->comm);
 			*requested_mode |= AGPSTAT2_1X;
-			break;
-		case 1:
-		case 2:
-			break;
-		case 3:
+			अवरोध;
+		हाल 1:
+		हाल 2:
+			अवरोध;
+		हाल 3:
 			*requested_mode &= ~(AGPSTAT2_1X);	/* rate=2 */
-			break;
-		case 4:
-			break;
-		case 5:
-		case 6:
-		case 7:
+			अवरोध;
+		हाल 4:
+			अवरोध;
+		हाल 5:
+		हाल 6:
+		हाल 7:
 			*requested_mode &= ~(AGPSTAT2_1X|AGPSTAT2_2X); /* rate=4*/
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	/* disable SBA if it's not supported */
-	if (!((*bridge_agpstat & AGPSTAT_SBA) && (*vga_agpstat & AGPSTAT_SBA) && (*requested_mode & AGPSTAT_SBA)))
+	/* disable SBA अगर it's not supported */
+	अगर (!((*bridge_agpstat & AGPSTAT_SBA) && (*vga_agpstat & AGPSTAT_SBA) && (*requested_mode & AGPSTAT_SBA)))
 		*bridge_agpstat &= ~AGPSTAT_SBA;
 
 	/* Set rate */
-	if (!((*bridge_agpstat & AGPSTAT2_4X) && (*vga_agpstat & AGPSTAT2_4X) && (*requested_mode & AGPSTAT2_4X)))
+	अगर (!((*bridge_agpstat & AGPSTAT2_4X) && (*vga_agpstat & AGPSTAT2_4X) && (*requested_mode & AGPSTAT2_4X)))
 		*bridge_agpstat &= ~AGPSTAT2_4X;
 
-	if (!((*bridge_agpstat & AGPSTAT2_2X) && (*vga_agpstat & AGPSTAT2_2X) && (*requested_mode & AGPSTAT2_2X)))
+	अगर (!((*bridge_agpstat & AGPSTAT2_2X) && (*vga_agpstat & AGPSTAT2_2X) && (*requested_mode & AGPSTAT2_2X)))
 		*bridge_agpstat &= ~AGPSTAT2_2X;
 
-	if (!((*bridge_agpstat & AGPSTAT2_1X) && (*vga_agpstat & AGPSTAT2_1X) && (*requested_mode & AGPSTAT2_1X)))
+	अगर (!((*bridge_agpstat & AGPSTAT2_1X) && (*vga_agpstat & AGPSTAT2_1X) && (*requested_mode & AGPSTAT2_1X)))
 		*bridge_agpstat &= ~AGPSTAT2_1X;
 
 	/* Now we know what mode it should be, clear out the unwanted bits. */
-	if (*bridge_agpstat & AGPSTAT2_4X)
+	अगर (*bridge_agpstat & AGPSTAT2_4X)
 		*bridge_agpstat &= ~(AGPSTAT2_1X | AGPSTAT2_2X);	/* 4X */
 
-	if (*bridge_agpstat & AGPSTAT2_2X)
+	अगर (*bridge_agpstat & AGPSTAT2_2X)
 		*bridge_agpstat &= ~(AGPSTAT2_1X | AGPSTAT2_4X);	/* 2X */
 
-	if (*bridge_agpstat & AGPSTAT2_1X)
+	अगर (*bridge_agpstat & AGPSTAT2_1X)
 		*bridge_agpstat &= ~(AGPSTAT2_2X | AGPSTAT2_4X);	/* 1X */
 
 	/* Apply any errata. */
-	if (agp_bridge->flags & AGP_ERRATA_FASTWRITES)
+	अगर (agp_bridge->flags & AGP_ERRATA_FASTWRITES)
 		*bridge_agpstat &= ~AGPSTAT_FW;
 
-	if (agp_bridge->flags & AGP_ERRATA_SBA)
+	अगर (agp_bridge->flags & AGP_ERRATA_SBA)
 		*bridge_agpstat &= ~AGPSTAT_SBA;
 
-	if (agp_bridge->flags & AGP_ERRATA_1X) {
+	अगर (agp_bridge->flags & AGP_ERRATA_1X) अणु
 		*bridge_agpstat &= ~(AGPSTAT2_2X | AGPSTAT2_4X);
 		*bridge_agpstat |= AGPSTAT2_1X;
-	}
+	पूर्ण
 
-	/* If we've dropped down to 1X, disable fast writes. */
-	if (*bridge_agpstat & AGPSTAT2_1X)
+	/* If we've dropped करोwn to 1X, disable fast ग_लिखोs. */
+	अगर (*bridge_agpstat & AGPSTAT2_1X)
 		*bridge_agpstat &= ~AGPSTAT_FW;
-}
+पूर्ण
 
 /*
  * requested_mode = Mode requested by (typically) X.
  * bridge_agpstat = PCI_AGP_STATUS from agp bridge.
  * vga_agpstat = PCI_AGP_STATUS from graphic card.
  */
-static void agp_v3_parse_one(u32 *requested_mode, u32 *bridge_agpstat, u32 *vga_agpstat)
-{
+अटल व्योम agp_v3_parse_one(u32 *requested_mode, u32 *bridge_agpstat, u32 *vga_agpstat)
+अणु
 	u32 origbridge=*bridge_agpstat, origvga=*vga_agpstat;
-	u32 tmp;
+	u32 पंचांगp;
 
-	if (*requested_mode & AGP3_RESERVED_MASK) {
-		printk(KERN_INFO PFX "reserved bits set (%x) in mode 0x%x. Fixed.\n",
+	अगर (*requested_mode & AGP3_RESERVED_MASK) अणु
+		prपूर्णांकk(KERN_INFO PFX "reserved bits set (%x) in mode 0x%x. Fixed.\n",
 			*requested_mode & AGP3_RESERVED_MASK, *requested_mode);
 		*requested_mode &= ~AGP3_RESERVED_MASK;
-	}
+	पूर्ण
 
 	/* Check the speed bits make sense. */
-	tmp = *requested_mode & 7;
-	if (tmp == 0) {
-		printk(KERN_INFO PFX "%s tried to set rate=x0. Setting to AGP3 x4 mode.\n", current->comm);
+	पंचांगp = *requested_mode & 7;
+	अगर (पंचांगp == 0) अणु
+		prपूर्णांकk(KERN_INFO PFX "%s tried to set rate=x0. Setting to AGP3 x4 mode.\n", current->comm);
 		*requested_mode |= AGPSTAT3_4X;
-	}
-	if (tmp >= 3) {
-		printk(KERN_INFO PFX "%s tried to set rate=x%d. Setting to AGP3 x8 mode.\n", current->comm, tmp * 4);
+	पूर्ण
+	अगर (पंचांगp >= 3) अणु
+		prपूर्णांकk(KERN_INFO PFX "%s tried to set rate=x%d. Setting to AGP3 x8 mode.\n", current->comm, पंचांगp * 4);
 		*requested_mode = (*requested_mode & ~7) | AGPSTAT3_8X;
-	}
+	पूर्ण
 
 	/* ARQSZ - Set the value to the maximum one.
-	 * Don't allow the mode register to override values. */
+	 * Don't allow the mode रेजिस्टर to override values. */
 	*bridge_agpstat = ((*bridge_agpstat & ~AGPSTAT_ARQSZ) |
 		max_t(u32,(*bridge_agpstat & AGPSTAT_ARQSZ),(*vga_agpstat & AGPSTAT_ARQSZ)));
 
 	/* Calibration cycle.
-	 * Don't allow the mode register to override values. */
+	 * Don't allow the mode रेजिस्टर to override values. */
 	*bridge_agpstat = ((*bridge_agpstat & ~AGPSTAT_CAL_MASK) |
 		min_t(u32,(*bridge_agpstat & AGPSTAT_CAL_MASK),(*vga_agpstat & AGPSTAT_CAL_MASK)));
 
-	/* SBA *must* be supported for AGP v3 */
+	/* SBA *must* be supported क्रम AGP v3 */
 	*bridge_agpstat |= AGPSTAT_SBA;
 
 	/*
 	 * Set speed.
-	 * Check for invalid speeds. This can happen when applications
-	 * written before the AGP 3.0 standard pass AGP2.x modes to AGP3 hardware
+	 * Check क्रम invalid speeds. This can happen when applications
+	 * written beक्रमe the AGP 3.0 standard pass AGP2.x modes to AGP3 hardware
 	 */
-	if (*requested_mode & AGPSTAT_MODE_3_0) {
+	अगर (*requested_mode & AGPSTAT_MODE_3_0) अणु
 		/*
-		 * Caller hasn't a clue what it is doing. Bridge is in 3.0 mode,
+		 * Caller hasn't a clue what it is करोing. Bridge is in 3.0 mode,
 		 * have been passed a 3.0 mode, but with 2.x speed bits set.
 		 * AGP2.x 4x -> AGP3.0 4x.
 		 */
-		if (*requested_mode & AGPSTAT2_4X) {
-			printk(KERN_INFO PFX "%s passes broken AGP3 flags (%x). Fixed.\n",
+		अगर (*requested_mode & AGPSTAT2_4X) अणु
+			prपूर्णांकk(KERN_INFO PFX "%s passes broken AGP3 flags (%x). Fixed.\n",
 						current->comm, *requested_mode);
 			*requested_mode &= ~AGPSTAT2_4X;
 			*requested_mode |= AGPSTAT3_4X;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * The caller doesn't know what they are doing. We are in 3.0 mode,
+		 * The caller करोesn't know what they are करोing. We are in 3.0 mode,
 		 * but have been passed an AGP 2.x mode.
 		 * Convert AGP 1x,2x,4x -> AGP 3.0 4x.
 		 */
-		printk(KERN_INFO PFX "%s passes broken AGP2 flags (%x) in AGP3 mode. Fixed.\n",
+		prपूर्णांकk(KERN_INFO PFX "%s passes broken AGP2 flags (%x) in AGP3 mode. Fixed.\n",
 					current->comm, *requested_mode);
 		*requested_mode &= ~(AGPSTAT2_4X | AGPSTAT2_2X | AGPSTAT2_1X);
 		*requested_mode |= AGPSTAT3_4X;
-	}
+	पूर्ण
 
-	if (*requested_mode & AGPSTAT3_8X) {
-		if (!(*bridge_agpstat & AGPSTAT3_8X)) {
+	अगर (*requested_mode & AGPSTAT3_8X) अणु
+		अगर (!(*bridge_agpstat & AGPSTAT3_8X)) अणु
 			*bridge_agpstat &= ~(AGPSTAT3_8X | AGPSTAT3_RSVD);
 			*bridge_agpstat |= AGPSTAT3_4X;
-			printk(KERN_INFO PFX "%s requested AGPx8 but bridge not capable.\n", current->comm);
-			return;
-		}
-		if (!(*vga_agpstat & AGPSTAT3_8X)) {
+			prपूर्णांकk(KERN_INFO PFX "%s requested AGPx8 but bridge not capable.\n", current->comm);
+			वापस;
+		पूर्ण
+		अगर (!(*vga_agpstat & AGPSTAT3_8X)) अणु
 			*bridge_agpstat &= ~(AGPSTAT3_8X | AGPSTAT3_RSVD);
 			*bridge_agpstat |= AGPSTAT3_4X;
-			printk(KERN_INFO PFX "%s requested AGPx8 but graphic card not capable.\n", current->comm);
-			return;
-		}
-		/* All set, bridge & device can do AGP x8*/
+			prपूर्णांकk(KERN_INFO PFX "%s requested AGPx8 but graphic card not capable.\n", current->comm);
+			वापस;
+		पूर्ण
+		/* All set, bridge & device can करो AGP x8*/
 		*bridge_agpstat &= ~(AGPSTAT3_4X | AGPSTAT3_RSVD);
-		goto done;
+		जाओ करोne;
 
-	} else if (*requested_mode & AGPSTAT3_4X) {
+	पूर्ण अन्यथा अगर (*requested_mode & AGPSTAT3_4X) अणु
 		*bridge_agpstat &= ~(AGPSTAT3_8X | AGPSTAT3_RSVD);
 		*bridge_agpstat |= AGPSTAT3_4X;
-		goto done;
+		जाओ करोne;
 
-	} else {
+	पूर्ण अन्यथा अणु
 
 		/*
-		 * If we didn't specify an AGP mode, we see if both
-		 * the graphics card, and the bridge can do x8, and use if so.
+		 * If we didn't specअगरy an AGP mode, we see अगर both
+		 * the graphics card, and the bridge can करो x8, and use अगर so.
 		 * If not, we fall back to x4 mode.
 		 */
-		if ((*bridge_agpstat & AGPSTAT3_8X) && (*vga_agpstat & AGPSTAT3_8X)) {
-			printk(KERN_INFO PFX "No AGP mode specified. Setting to highest mode "
+		अगर ((*bridge_agpstat & AGPSTAT3_8X) && (*vga_agpstat & AGPSTAT3_8X)) अणु
+			prपूर्णांकk(KERN_INFO PFX "No AGP mode specified. Setting to highest mode "
 				"supported by bridge & card (x8).\n");
 			*bridge_agpstat &= ~(AGPSTAT3_4X | AGPSTAT3_RSVD);
 			*vga_agpstat &= ~(AGPSTAT3_4X | AGPSTAT3_RSVD);
-		} else {
-			printk(KERN_INFO PFX "Fell back to AGPx4 mode because ");
-			if (!(*bridge_agpstat & AGPSTAT3_8X)) {
-				printk(KERN_INFO PFX "bridge couldn't do x8. bridge_agpstat:%x (orig=%x)\n",
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_INFO PFX "Fell back to AGPx4 mode because ");
+			अगर (!(*bridge_agpstat & AGPSTAT3_8X)) अणु
+				prपूर्णांकk(KERN_INFO PFX "bridge couldn't do x8. bridge_agpstat:%x (orig=%x)\n",
 					*bridge_agpstat, origbridge);
 				*bridge_agpstat &= ~(AGPSTAT3_8X | AGPSTAT3_RSVD);
 				*bridge_agpstat |= AGPSTAT3_4X;
-			}
-			if (!(*vga_agpstat & AGPSTAT3_8X)) {
-				printk(KERN_INFO PFX "graphics card couldn't do x8. vga_agpstat:%x (orig=%x)\n",
+			पूर्ण
+			अगर (!(*vga_agpstat & AGPSTAT3_8X)) अणु
+				prपूर्णांकk(KERN_INFO PFX "graphics card couldn't do x8. vga_agpstat:%x (orig=%x)\n",
 					*vga_agpstat, origvga);
 				*vga_agpstat &= ~(AGPSTAT3_8X | AGPSTAT3_RSVD);
 				*vga_agpstat |= AGPSTAT3_4X;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	/* Apply any errata. */
-	if (agp_bridge->flags & AGP_ERRATA_FASTWRITES)
+	अगर (agp_bridge->flags & AGP_ERRATA_FASTWRITES)
 		*bridge_agpstat &= ~AGPSTAT_FW;
 
-	if (agp_bridge->flags & AGP_ERRATA_SBA)
+	अगर (agp_bridge->flags & AGP_ERRATA_SBA)
 		*bridge_agpstat &= ~AGPSTAT_SBA;
 
-	if (agp_bridge->flags & AGP_ERRATA_1X) {
+	अगर (agp_bridge->flags & AGP_ERRATA_1X) अणु
 		*bridge_agpstat &= ~(AGPSTAT2_2X | AGPSTAT2_4X);
 		*bridge_agpstat |= AGPSTAT2_1X;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /**
  * agp_collect_device_status - determine correct agp_cmd from various agp_stat's
- * @bridge: an agp_bridge_data struct allocated for the AGP host bridge.
+ * @bridge: an agp_bridge_data काष्ठा allocated क्रम the AGP host bridge.
  * @requested_mode: requested agp_stat from userspace (Typically from X)
  * @bridge_agpstat: current agp_stat from AGP bridge.
  *
- * This function will hunt for an AGP graphics card, and try to match
+ * This function will hunt क्रम an AGP graphics card, and try to match
  * the requested mode to the capabilities of both the bridge and the card.
  */
-u32 agp_collect_device_status(struct agp_bridge_data *bridge, u32 requested_mode, u32 bridge_agpstat)
-{
-	struct pci_dev *device = NULL;
+u32 agp_collect_device_status(काष्ठा agp_bridge_data *bridge, u32 requested_mode, u32 bridge_agpstat)
+अणु
+	काष्ठा pci_dev *device = शून्य;
 	u32 vga_agpstat;
 	u8 cap_ptr;
 
-	for (;;) {
+	क्रम (;;) अणु
 		device = pci_get_class(PCI_CLASS_DISPLAY_VGA << 8, device);
-		if (!device) {
-			printk(KERN_INFO PFX "Couldn't find an AGP VGA controller.\n");
-			return 0;
-		}
+		अगर (!device) अणु
+			prपूर्णांकk(KERN_INFO PFX "Couldn't find an AGP VGA controller.\n");
+			वापस 0;
+		पूर्ण
 		cap_ptr = pci_find_capability(device, PCI_CAP_ID_AGP);
-		if (cap_ptr)
-			break;
-	}
+		अगर (cap_ptr)
+			अवरोध;
+	पूर्ण
 
 	/*
 	 * Ok, here we have a AGP device. Disable impossible
-	 * settings, and adjust the readqueue to the minimum.
+	 * settings, and adjust the पढ़ोqueue to the minimum.
 	 */
-	pci_read_config_dword(device, cap_ptr+PCI_AGP_STATUS, &vga_agpstat);
+	pci_पढ़ो_config_dword(device, cap_ptr+PCI_AGP_STATUS, &vga_agpstat);
 
 	/* adjust RQ depth */
 	bridge_agpstat = ((bridge_agpstat & ~AGPSTAT_RQ_DEPTH) |
 	     min_t(u32, (requested_mode & AGPSTAT_RQ_DEPTH),
 		 min_t(u32, (bridge_agpstat & AGPSTAT_RQ_DEPTH), (vga_agpstat & AGPSTAT_RQ_DEPTH))));
 
-	/* disable FW if it's not supported */
-	if (!((bridge_agpstat & AGPSTAT_FW) &&
+	/* disable FW अगर it's not supported */
+	अगर (!((bridge_agpstat & AGPSTAT_FW) &&
 		 (vga_agpstat & AGPSTAT_FW) &&
 		 (requested_mode & AGPSTAT_FW)))
 		bridge_agpstat &= ~AGPSTAT_FW;
 
-	/* Check to see if we are operating in 3.0 mode */
-	if (agp_bridge->mode & AGPSTAT_MODE_3_0)
+	/* Check to see अगर we are operating in 3.0 mode */
+	अगर (agp_bridge->mode & AGPSTAT_MODE_3_0)
 		agp_v3_parse_one(&requested_mode, &bridge_agpstat, &vga_agpstat);
-	else
+	अन्यथा
 		agp_v2_parse_one(&requested_mode, &bridge_agpstat, &vga_agpstat);
 
 	pci_dev_put(device);
-	return bridge_agpstat;
-}
+	वापस bridge_agpstat;
+पूर्ण
 EXPORT_SYMBOL(agp_collect_device_status);
 
 
-void agp_device_command(u32 bridge_agpstat, bool agp_v3)
-{
-	struct pci_dev *device = NULL;
-	int mode;
+व्योम agp_device_command(u32 bridge_agpstat, bool agp_v3)
+अणु
+	काष्ठा pci_dev *device = शून्य;
+	पूर्णांक mode;
 
 	mode = bridge_agpstat & 0x7;
-	if (agp_v3)
+	अगर (agp_v3)
 		mode *= 4;
 
-	for_each_pci_dev(device) {
+	क्रम_each_pci_dev(device) अणु
 		u8 agp = pci_find_capability(device, PCI_CAP_ID_AGP);
-		if (!agp)
-			continue;
+		अगर (!agp)
+			जारी;
 
 		dev_info(&device->dev, "putting AGP V%d device into %dx mode\n",
 			 agp_v3 ? 3 : 2, mode);
-		pci_write_config_dword(device, agp + PCI_AGP_COMMAND, bridge_agpstat);
-	}
-}
+		pci_ग_लिखो_config_dword(device, agp + PCI_AGP_COMMAND, bridge_agpstat);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(agp_device_command);
 
 
-void get_agp_version(struct agp_bridge_data *bridge)
-{
+व्योम get_agp_version(काष्ठा agp_bridge_data *bridge)
+अणु
 	u32 ncapid;
 
-	/* Exit early if already set by errata workarounds. */
-	if (bridge->major_version != 0)
-		return;
+	/* Exit early अगर alपढ़ोy set by errata workarounds. */
+	अगर (bridge->major_version != 0)
+		वापस;
 
-	pci_read_config_dword(bridge->dev, bridge->capndx, &ncapid);
+	pci_पढ़ो_config_dword(bridge->dev, bridge->capndx, &ncapid);
 	bridge->major_version = (ncapid >> AGP_MAJOR_VERSION_SHIFT) & 0xf;
 	bridge->minor_version = (ncapid >> AGP_MINOR_VERSION_SHIFT) & 0xf;
-}
+पूर्ण
 EXPORT_SYMBOL(get_agp_version);
 
 
-void agp_generic_enable(struct agp_bridge_data *bridge, u32 requested_mode)
-{
+व्योम agp_generic_enable(काष्ठा agp_bridge_data *bridge, u32 requested_mode)
+अणु
 	u32 bridge_agpstat, temp;
 
 	get_agp_version(agp_bridge);
@@ -810,569 +811,569 @@ void agp_generic_enable(struct agp_bridge_data *bridge, u32 requested_mode)
 	dev_info(&agp_bridge->dev->dev, "AGP %d.%d bridge\n",
 		 agp_bridge->major_version, agp_bridge->minor_version);
 
-	pci_read_config_dword(agp_bridge->dev,
+	pci_पढ़ो_config_dword(agp_bridge->dev,
 		      agp_bridge->capndx + PCI_AGP_STATUS, &bridge_agpstat);
 
 	bridge_agpstat = agp_collect_device_status(agp_bridge, requested_mode, bridge_agpstat);
-	if (bridge_agpstat == 0)
+	अगर (bridge_agpstat == 0)
 		/* Something bad happened. FIXME: Return error code? */
-		return;
+		वापस;
 
 	bridge_agpstat |= AGPSTAT_AGP_ENABLE;
 
-	/* Do AGP version specific frobbing. */
-	if (bridge->major_version >= 3) {
-		if (bridge->mode & AGPSTAT_MODE_3_0) {
-			/* If we have 3.5, we can do the isoch stuff. */
-			if (bridge->minor_version >= 5)
+	/* Do AGP version specअगरic frobbing. */
+	अगर (bridge->major_version >= 3) अणु
+		अगर (bridge->mode & AGPSTAT_MODE_3_0) अणु
+			/* If we have 3.5, we can करो the isoch stuff. */
+			अगर (bridge->minor_version >= 5)
 				agp_3_5_enable(bridge);
 			agp_device_command(bridge_agpstat, true);
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 		    /* Disable calibration cycle in RX91<1> when not in AGP3.0 mode of operation.*/
 		    bridge_agpstat &= ~(7<<10) ;
-		    pci_read_config_dword(bridge->dev,
+		    pci_पढ़ो_config_dword(bridge->dev,
 					bridge->capndx+AGPCTRL, &temp);
 		    temp |= (1<<9);
-		    pci_write_config_dword(bridge->dev,
+		    pci_ग_लिखो_config_dword(bridge->dev,
 					bridge->capndx+AGPCTRL, temp);
 
 		    dev_info(&bridge->dev->dev, "bridge is in legacy mode, falling back to 2.x\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* AGP v<3 */
 	agp_device_command(bridge_agpstat, false);
-}
+पूर्ण
 EXPORT_SYMBOL(agp_generic_enable);
 
 
-int agp_generic_create_gatt_table(struct agp_bridge_data *bridge)
-{
-	char *table;
-	char *table_end;
-	int page_order;
-	int num_entries;
-	int i;
-	void *temp;
-	struct page *page;
+पूर्णांक agp_generic_create_gatt_table(काष्ठा agp_bridge_data *bridge)
+अणु
+	अक्षर *table;
+	अक्षर *table_end;
+	पूर्णांक page_order;
+	पूर्णांक num_entries;
+	पूर्णांक i;
+	व्योम *temp;
+	काष्ठा page *page;
 
 	/* The generic routines can't handle 2 level gatt's */
-	if (bridge->driver->size_type == LVL2_APER_SIZE)
-		return -EINVAL;
+	अगर (bridge->driver->माप_प्रकारype == LVL2_APER_SIZE)
+		वापस -EINVAL;
 
-	table = NULL;
+	table = शून्य;
 	i = bridge->aperture_size_idx;
 	temp = bridge->current_size;
 	page_order = num_entries = 0;
 
-	if (bridge->driver->size_type != FIXED_APER_SIZE) {
-		do {
-			switch (bridge->driver->size_type) {
-			case U8_APER_SIZE:
+	अगर (bridge->driver->माप_प्रकारype != FIXED_APER_SIZE) अणु
+		करो अणु
+			चयन (bridge->driver->माप_प्रकारype) अणु
+			हाल U8_APER_SIZE:
 				page_order =
 				    A_SIZE_8(temp)->page_order;
 				num_entries =
 				    A_SIZE_8(temp)->num_entries;
-				break;
-			case U16_APER_SIZE:
+				अवरोध;
+			हाल U16_APER_SIZE:
 				page_order = A_SIZE_16(temp)->page_order;
 				num_entries = A_SIZE_16(temp)->num_entries;
-				break;
-			case U32_APER_SIZE:
+				अवरोध;
+			हाल U32_APER_SIZE:
 				page_order = A_SIZE_32(temp)->page_order;
 				num_entries = A_SIZE_32(temp)->num_entries;
-				break;
-				/* This case will never really happen. */
-			case FIXED_APER_SIZE:
-			case LVL2_APER_SIZE:
-			default:
+				अवरोध;
+				/* This हाल will never really happen. */
+			हाल FIXED_APER_SIZE:
+			हाल LVL2_APER_SIZE:
+			शेष:
 				page_order = num_entries = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			table = alloc_gatt_pages(page_order);
 
-			if (table == NULL) {
+			अगर (table == शून्य) अणु
 				i++;
-				switch (bridge->driver->size_type) {
-				case U8_APER_SIZE:
+				चयन (bridge->driver->माप_प्रकारype) अणु
+				हाल U8_APER_SIZE:
 					bridge->current_size = A_IDX8(bridge);
-					break;
-				case U16_APER_SIZE:
+					अवरोध;
+				हाल U16_APER_SIZE:
 					bridge->current_size = A_IDX16(bridge);
-					break;
-				case U32_APER_SIZE:
+					अवरोध;
+				हाल U32_APER_SIZE:
 					bridge->current_size = A_IDX32(bridge);
-					break;
-				/* These cases will never really happen. */
-				case FIXED_APER_SIZE:
-				case LVL2_APER_SIZE:
-				default:
-					break;
-				}
+					अवरोध;
+				/* These हालs will never really happen. */
+				हाल FIXED_APER_SIZE:
+				हाल LVL2_APER_SIZE:
+				शेष:
+					अवरोध;
+				पूर्ण
 				temp = bridge->current_size;
-			} else {
+			पूर्ण अन्यथा अणु
 				bridge->aperture_size_idx = i;
-			}
-		} while (!table && (i < bridge->driver->num_aperture_sizes));
-	} else {
-		page_order = ((struct aper_size_info_fixed *) temp)->page_order;
-		num_entries = ((struct aper_size_info_fixed *) temp)->num_entries;
+			पूर्ण
+		पूर्ण जबतक (!table && (i < bridge->driver->num_aperture_sizes));
+	पूर्ण अन्यथा अणु
+		page_order = ((काष्ठा aper_size_info_fixed *) temp)->page_order;
+		num_entries = ((काष्ठा aper_size_info_fixed *) temp)->num_entries;
 		table = alloc_gatt_pages(page_order);
-	}
+	पूर्ण
 
-	if (table == NULL)
-		return -ENOMEM;
+	अगर (table == शून्य)
+		वापस -ENOMEM;
 
 	table_end = table + ((PAGE_SIZE * (1 << page_order)) - 1);
 
-	for (page = virt_to_page(table); page <= virt_to_page(table_end); page++)
+	क्रम (page = virt_to_page(table); page <= virt_to_page(table_end); page++)
 		SetPageReserved(page);
 
 	bridge->gatt_table_real = (u32 *) table;
-	agp_gatt_table = (void *)table;
+	agp_gatt_table = (व्योम *)table;
 
 	bridge->driver->cache_flush();
-#ifdef CONFIG_X86
-	if (set_memory_uc((unsigned long)table, 1 << page_order))
-		printk(KERN_WARNING "Could not set GATT table memory to UC!\n");
+#अगर_घोषित CONFIG_X86
+	अगर (set_memory_uc((अचिन्हित दीर्घ)table, 1 << page_order))
+		prपूर्णांकk(KERN_WARNING "Could not set GATT table memory to UC!\n");
 
 	bridge->gatt_table = (u32 __iomem *)table;
-#else
+#अन्यथा
 	bridge->gatt_table = ioremap(virt_to_phys(table),
 					(PAGE_SIZE * (1 << page_order)));
 	bridge->driver->cache_flush();
-#endif
+#पूर्ण_अगर
 
-	if (bridge->gatt_table == NULL) {
-		for (page = virt_to_page(table); page <= virt_to_page(table_end); page++)
+	अगर (bridge->gatt_table == शून्य) अणु
+		क्रम (page = virt_to_page(table); page <= virt_to_page(table_end); page++)
 			ClearPageReserved(page);
 
-		free_gatt_pages(table, page_order);
+		मुक्त_gatt_pages(table, page_order);
 
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	bridge->gatt_bus_addr = virt_to_phys(bridge->gatt_table_real);
 
 	/* AK: bogus, should encode addresses > 4GB */
-	for (i = 0; i < num_entries; i++) {
-		writel(bridge->scratch_page, bridge->gatt_table+i);
-		readl(bridge->gatt_table+i);	/* PCI Posting. */
-	}
+	क्रम (i = 0; i < num_entries; i++) अणु
+		ग_लिखोl(bridge->scratch_page, bridge->gatt_table+i);
+		पढ़ोl(bridge->gatt_table+i);	/* PCI Posting. */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_create_gatt_table);
 
-int agp_generic_free_gatt_table(struct agp_bridge_data *bridge)
-{
-	int page_order;
-	char *table, *table_end;
-	void *temp;
-	struct page *page;
+पूर्णांक agp_generic_मुक्त_gatt_table(काष्ठा agp_bridge_data *bridge)
+अणु
+	पूर्णांक page_order;
+	अक्षर *table, *table_end;
+	व्योम *temp;
+	काष्ठा page *page;
 
 	temp = bridge->current_size;
 
-	switch (bridge->driver->size_type) {
-	case U8_APER_SIZE:
+	चयन (bridge->driver->माप_प्रकारype) अणु
+	हाल U8_APER_SIZE:
 		page_order = A_SIZE_8(temp)->page_order;
-		break;
-	case U16_APER_SIZE:
+		अवरोध;
+	हाल U16_APER_SIZE:
 		page_order = A_SIZE_16(temp)->page_order;
-		break;
-	case U32_APER_SIZE:
+		अवरोध;
+	हाल U32_APER_SIZE:
 		page_order = A_SIZE_32(temp)->page_order;
-		break;
-	case FIXED_APER_SIZE:
+		अवरोध;
+	हाल FIXED_APER_SIZE:
 		page_order = A_SIZE_FIX(temp)->page_order;
-		break;
-	case LVL2_APER_SIZE:
+		अवरोध;
+	हाल LVL2_APER_SIZE:
 		/* The generic routines can't deal with 2 level gatt's */
-		return -EINVAL;
-	default:
+		वापस -EINVAL;
+	शेष:
 		page_order = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Do not worry about freeing memory, because if this is
-	 * called, then all agp memory is deallocated and removed
+	/* Do not worry about मुक्तing memory, because अगर this is
+	 * called, then all agp memory is deallocated and हटाओd
 	 * from the table. */
 
-#ifdef CONFIG_X86
-	set_memory_wb((unsigned long)bridge->gatt_table, 1 << page_order);
-#else
+#अगर_घोषित CONFIG_X86
+	set_memory_wb((अचिन्हित दीर्घ)bridge->gatt_table, 1 << page_order);
+#अन्यथा
 	iounmap(bridge->gatt_table);
-#endif
-	table = (char *) bridge->gatt_table_real;
+#पूर्ण_अगर
+	table = (अक्षर *) bridge->gatt_table_real;
 	table_end = table + ((PAGE_SIZE * (1 << page_order)) - 1);
 
-	for (page = virt_to_page(table); page <= virt_to_page(table_end); page++)
+	क्रम (page = virt_to_page(table); page <= virt_to_page(table_end); page++)
 		ClearPageReserved(page);
 
-	free_gatt_pages(bridge->gatt_table_real, page_order);
+	मुक्त_gatt_pages(bridge->gatt_table_real, page_order);
 
-	agp_gatt_table = NULL;
-	bridge->gatt_table = NULL;
-	bridge->gatt_table_real = NULL;
+	agp_gatt_table = शून्य;
+	bridge->gatt_table = शून्य;
+	bridge->gatt_table_real = शून्य;
 	bridge->gatt_bus_addr = 0;
 
-	return 0;
-}
-EXPORT_SYMBOL(agp_generic_free_gatt_table);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(agp_generic_मुक्त_gatt_table);
 
 
-int agp_generic_insert_memory(struct agp_memory * mem, off_t pg_start, int type)
-{
-	int num_entries;
-	size_t i;
+पूर्णांक agp_generic_insert_memory(काष्ठा agp_memory * mem, off_t pg_start, पूर्णांक type)
+अणु
+	पूर्णांक num_entries;
+	माप_प्रकार i;
 	off_t j;
-	void *temp;
-	struct agp_bridge_data *bridge;
-	int mask_type;
+	व्योम *temp;
+	काष्ठा agp_bridge_data *bridge;
+	पूर्णांक mask_type;
 
 	bridge = mem->bridge;
-	if (!bridge)
-		return -EINVAL;
+	अगर (!bridge)
+		वापस -EINVAL;
 
-	if (mem->page_count == 0)
-		return 0;
+	अगर (mem->page_count == 0)
+		वापस 0;
 
 	temp = bridge->current_size;
 
-	switch (bridge->driver->size_type) {
-	case U8_APER_SIZE:
+	चयन (bridge->driver->माप_प्रकारype) अणु
+	हाल U8_APER_SIZE:
 		num_entries = A_SIZE_8(temp)->num_entries;
-		break;
-	case U16_APER_SIZE:
+		अवरोध;
+	हाल U16_APER_SIZE:
 		num_entries = A_SIZE_16(temp)->num_entries;
-		break;
-	case U32_APER_SIZE:
+		अवरोध;
+	हाल U32_APER_SIZE:
 		num_entries = A_SIZE_32(temp)->num_entries;
-		break;
-	case FIXED_APER_SIZE:
+		अवरोध;
+	हाल FIXED_APER_SIZE:
 		num_entries = A_SIZE_FIX(temp)->num_entries;
-		break;
-	case LVL2_APER_SIZE:
+		अवरोध;
+	हाल LVL2_APER_SIZE:
 		/* The generic routines can't deal with 2 level gatt's */
-		return -EINVAL;
-	default:
+		वापस -EINVAL;
+	शेष:
 		num_entries = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	num_entries -= agp_memory_reserved/PAGE_SIZE;
-	if (num_entries < 0) num_entries = 0;
+	अगर (num_entries < 0) num_entries = 0;
 
-	if (type != mem->type)
-		return -EINVAL;
+	अगर (type != mem->type)
+		वापस -EINVAL;
 
 	mask_type = bridge->driver->agp_type_to_mask_type(bridge, type);
-	if (mask_type != 0) {
+	अगर (mask_type != 0) अणु
 		/* The generic routines know nothing of memory types */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (((pg_start + mem->page_count) > num_entries) ||
+	अगर (((pg_start + mem->page_count) > num_entries) ||
 	    ((pg_start + mem->page_count) < pg_start))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	j = pg_start;
 
-	while (j < (pg_start + mem->page_count)) {
-		if (!PGE_EMPTY(bridge, readl(bridge->gatt_table+j)))
-			return -EBUSY;
+	जबतक (j < (pg_start + mem->page_count)) अणु
+		अगर (!PGE_EMPTY(bridge, पढ़ोl(bridge->gatt_table+j)))
+			वापस -EBUSY;
 		j++;
-	}
+	पूर्ण
 
-	if (!mem->is_flushed) {
+	अगर (!mem->is_flushed) अणु
 		bridge->driver->cache_flush();
 		mem->is_flushed = true;
-	}
+	पूर्ण
 
-	for (i = 0, j = pg_start; i < mem->page_count; i++, j++) {
-		writel(bridge->driver->mask_memory(bridge,
+	क्रम (i = 0, j = pg_start; i < mem->page_count; i++, j++) अणु
+		ग_लिखोl(bridge->driver->mask_memory(bridge,
 						   page_to_phys(mem->pages[i]),
 						   mask_type),
 		       bridge->gatt_table+j);
-	}
-	readl(bridge->gatt_table+j-1);	/* PCI Posting. */
+	पूर्ण
+	पढ़ोl(bridge->gatt_table+j-1);	/* PCI Posting. */
 
 	bridge->driver->tlb_flush(mem);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_insert_memory);
 
 
-int agp_generic_remove_memory(struct agp_memory *mem, off_t pg_start, int type)
-{
-	size_t i;
-	struct agp_bridge_data *bridge;
-	int mask_type, num_entries;
+पूर्णांक agp_generic_हटाओ_memory(काष्ठा agp_memory *mem, off_t pg_start, पूर्णांक type)
+अणु
+	माप_प्रकार i;
+	काष्ठा agp_bridge_data *bridge;
+	पूर्णांक mask_type, num_entries;
 
 	bridge = mem->bridge;
-	if (!bridge)
-		return -EINVAL;
+	अगर (!bridge)
+		वापस -EINVAL;
 
-	if (mem->page_count == 0)
-		return 0;
+	अगर (mem->page_count == 0)
+		वापस 0;
 
-	if (type != mem->type)
-		return -EINVAL;
+	अगर (type != mem->type)
+		वापस -EINVAL;
 
 	num_entries = agp_num_entries();
-	if (((pg_start + mem->page_count) > num_entries) ||
+	अगर (((pg_start + mem->page_count) > num_entries) ||
 	    ((pg_start + mem->page_count) < pg_start))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mask_type = bridge->driver->agp_type_to_mask_type(bridge, type);
-	if (mask_type != 0) {
+	अगर (mask_type != 0) अणु
 		/* The generic routines know nothing of memory types */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* AK: bogus, should encode addresses > 4GB */
-	for (i = pg_start; i < (mem->page_count + pg_start); i++) {
-		writel(bridge->scratch_page, bridge->gatt_table+i);
-	}
-	readl(bridge->gatt_table+i-1);	/* PCI Posting. */
+	क्रम (i = pg_start; i < (mem->page_count + pg_start); i++) अणु
+		ग_लिखोl(bridge->scratch_page, bridge->gatt_table+i);
+	पूर्ण
+	पढ़ोl(bridge->gatt_table+i-1);	/* PCI Posting. */
 
 	bridge->driver->tlb_flush(mem);
-	return 0;
-}
-EXPORT_SYMBOL(agp_generic_remove_memory);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(agp_generic_हटाओ_memory);
 
-struct agp_memory *agp_generic_alloc_by_type(size_t page_count, int type)
-{
-	return NULL;
-}
+काष्ठा agp_memory *agp_generic_alloc_by_type(माप_प्रकार page_count, पूर्णांक type)
+अणु
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_alloc_by_type);
 
-void agp_generic_free_by_type(struct agp_memory *curr)
-{
-	agp_free_page_array(curr);
-	agp_free_key(curr->key);
-	kfree(curr);
-}
-EXPORT_SYMBOL(agp_generic_free_by_type);
+व्योम agp_generic_मुक्त_by_type(काष्ठा agp_memory *curr)
+अणु
+	agp_मुक्त_page_array(curr);
+	agp_मुक्त_key(curr->key);
+	kमुक्त(curr);
+पूर्ण
+EXPORT_SYMBOL(agp_generic_मुक्त_by_type);
 
-struct agp_memory *agp_generic_alloc_user(size_t page_count, int type)
-{
-	struct agp_memory *new;
-	int i;
-	int pages;
+काष्ठा agp_memory *agp_generic_alloc_user(माप_प्रकार page_count, पूर्णांक type)
+अणु
+	काष्ठा agp_memory *new;
+	पूर्णांक i;
+	पूर्णांक pages;
 
 	pages = (page_count + ENTRIES_PER_PAGE - 1) / ENTRIES_PER_PAGE;
 	new = agp_create_user_memory(page_count);
-	if (new == NULL)
-		return NULL;
+	अगर (new == शून्य)
+		वापस शून्य;
 
-	for (i = 0; i < page_count; i++)
-		new->pages[i] = NULL;
+	क्रम (i = 0; i < page_count; i++)
+		new->pages[i] = शून्य;
 	new->page_count = 0;
 	new->type = type;
 	new->num_scratch_pages = pages;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_alloc_user);
 
 /*
  * Basic Page Allocation Routines -
- * These routines handle page allocation and by default they reserve the allocated
+ * These routines handle page allocation and by शेष they reserve the allocated
  * memory.  They also handle incrementing the current_memory_agp value, Which is checked
  * against a maximum value.
  */
 
-int agp_generic_alloc_pages(struct agp_bridge_data *bridge, struct agp_memory *mem, size_t num_pages)
-{
-	struct page * page;
-	int i, ret = -ENOMEM;
+पूर्णांक agp_generic_alloc_pages(काष्ठा agp_bridge_data *bridge, काष्ठा agp_memory *mem, माप_प्रकार num_pages)
+अणु
+	काष्ठा page * page;
+	पूर्णांक i, ret = -ENOMEM;
 
-	for (i = 0; i < num_pages; i++) {
+	क्रम (i = 0; i < num_pages; i++) अणु
 		page = alloc_page(GFP_KERNEL | GFP_DMA32 | __GFP_ZERO);
-		/* agp_free_memory() needs gart address */
-		if (page == NULL)
-			goto out;
+		/* agp_मुक्त_memory() needs gart address */
+		अगर (page == शून्य)
+			जाओ out;
 
-#ifndef CONFIG_X86
-		map_page_into_agp(page);
-#endif
+#अगर_अघोषित CONFIG_X86
+		map_page_पूर्णांकo_agp(page);
+#पूर्ण_अगर
 		get_page(page);
 		atomic_inc(&agp_bridge->current_memory_agp);
 
 		mem->pages[i] = page;
 		mem->page_count++;
-	}
+	पूर्ण
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 	set_pages_array_uc(mem->pages, num_pages);
-#endif
+#पूर्ण_अगर
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_alloc_pages);
 
-struct page *agp_generic_alloc_page(struct agp_bridge_data *bridge)
-{
-	struct page * page;
+काष्ठा page *agp_generic_alloc_page(काष्ठा agp_bridge_data *bridge)
+अणु
+	काष्ठा page * page;
 
 	page = alloc_page(GFP_KERNEL | GFP_DMA32 | __GFP_ZERO);
-	if (page == NULL)
-		return NULL;
+	अगर (page == शून्य)
+		वापस शून्य;
 
-	map_page_into_agp(page);
+	map_page_पूर्णांकo_agp(page);
 
 	get_page(page);
 	atomic_inc(&agp_bridge->current_memory_agp);
-	return page;
-}
+	वापस page;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_alloc_page);
 
-void agp_generic_destroy_pages(struct agp_memory *mem)
-{
-	int i;
-	struct page *page;
+व्योम agp_generic_destroy_pages(काष्ठा agp_memory *mem)
+अणु
+	पूर्णांक i;
+	काष्ठा page *page;
 
-	if (!mem)
-		return;
+	अगर (!mem)
+		वापस;
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 	set_pages_array_wb(mem->pages, mem->page_count);
-#endif
+#पूर्ण_अगर
 
-	for (i = 0; i < mem->page_count; i++) {
+	क्रम (i = 0; i < mem->page_count; i++) अणु
 		page = mem->pages[i];
 
-#ifndef CONFIG_X86
+#अगर_अघोषित CONFIG_X86
 		unmap_page_from_agp(page);
-#endif
+#पूर्ण_अगर
 		put_page(page);
-		__free_page(page);
+		__मुक्त_page(page);
 		atomic_dec(&agp_bridge->current_memory_agp);
-		mem->pages[i] = NULL;
-	}
-}
+		mem->pages[i] = शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(agp_generic_destroy_pages);
 
-void agp_generic_destroy_page(struct page *page, int flags)
-{
-	if (page == NULL)
-		return;
+व्योम agp_generic_destroy_page(काष्ठा page *page, पूर्णांक flags)
+अणु
+	अगर (page == शून्य)
+		वापस;
 
-	if (flags & AGP_PAGE_DESTROY_UNMAP)
+	अगर (flags & AGP_PAGE_DESTROY_UNMAP)
 		unmap_page_from_agp(page);
 
-	if (flags & AGP_PAGE_DESTROY_FREE) {
+	अगर (flags & AGP_PAGE_DESTROY_FREE) अणु
 		put_page(page);
-		__free_page(page);
+		__मुक्त_page(page);
 		atomic_dec(&agp_bridge->current_memory_agp);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(agp_generic_destroy_page);
 
 /* End Basic Page Allocation Routines */
 
 
 /**
- * agp_enable  -  initialise the agp point-to-point connection.
+ * agp_enable  -  initialise the agp poपूर्णांक-to-poपूर्णांक connection.
  *
- * @bridge: an agp_bridge_data struct allocated for the AGP host bridge.
- * @mode:	agp mode register value to configure with.
+ * @bridge: an agp_bridge_data काष्ठा allocated क्रम the AGP host bridge.
+ * @mode:	agp mode रेजिस्टर value to configure with.
  */
-void agp_enable(struct agp_bridge_data *bridge, u32 mode)
-{
-	if (!bridge)
-		return;
+व्योम agp_enable(काष्ठा agp_bridge_data *bridge, u32 mode)
+अणु
+	अगर (!bridge)
+		वापस;
 	bridge->driver->agp_enable(bridge, mode);
-}
+पूर्ण
 EXPORT_SYMBOL(agp_enable);
 
-/* When we remove the global variable agp_bridge from all drivers
+/* When we हटाओ the global variable agp_bridge from all drivers
  * then agp_alloc_bridge and agp_generic_find_bridge need to be updated
  */
 
-struct agp_bridge_data *agp_generic_find_bridge(struct pci_dev *pdev)
-{
-	if (list_empty(&agp_bridges))
-		return NULL;
+काष्ठा agp_bridge_data *agp_generic_find_bridge(काष्ठा pci_dev *pdev)
+अणु
+	अगर (list_empty(&agp_bridges))
+		वापस शून्य;
 
-	return agp_bridge;
-}
+	वापस agp_bridge;
+पूर्ण
 
-static void ipi_handler(void *null)
-{
+अटल व्योम ipi_handler(व्योम *null)
+अणु
 	flush_agp_cache();
-}
+पूर्ण
 
-void global_cache_flush(void)
-{
-	on_each_cpu(ipi_handler, NULL, 1);
-}
+व्योम global_cache_flush(व्योम)
+अणु
+	on_each_cpu(ipi_handler, शून्य, 1);
+पूर्ण
 EXPORT_SYMBOL(global_cache_flush);
 
-unsigned long agp_generic_mask_memory(struct agp_bridge_data *bridge,
-				      dma_addr_t addr, int type)
-{
+अचिन्हित दीर्घ agp_generic_mask_memory(काष्ठा agp_bridge_data *bridge,
+				      dma_addr_t addr, पूर्णांक type)
+अणु
 	/* memory type is ignored in the generic routine */
-	if (bridge->driver->masks)
-		return addr | bridge->driver->masks[0].mask;
-	else
-		return addr;
-}
+	अगर (bridge->driver->masks)
+		वापस addr | bridge->driver->masks[0].mask;
+	अन्यथा
+		वापस addr;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_mask_memory);
 
-int agp_generic_type_to_mask_type(struct agp_bridge_data *bridge,
-				  int type)
-{
-	if (type >= AGP_USER_TYPES)
-		return 0;
-	return type;
-}
+पूर्णांक agp_generic_type_to_mask_type(काष्ठा agp_bridge_data *bridge,
+				  पूर्णांक type)
+अणु
+	अगर (type >= AGP_USER_TYPES)
+		वापस 0;
+	वापस type;
+पूर्ण
 EXPORT_SYMBOL(agp_generic_type_to_mask_type);
 
 /*
  * These functions are implemented according to the AGPv3 spec,
  * which covers implementation details that had previously been
- * left open.
+ * left खोलो.
  */
 
-int agp3_generic_fetch_size(void)
-{
+पूर्णांक agp3_generic_fetch_size(व्योम)
+अणु
 	u16 temp_size;
-	int i;
-	struct aper_size_info_16 *values;
+	पूर्णांक i;
+	काष्ठा aper_size_info_16 *values;
 
-	pci_read_config_word(agp_bridge->dev, agp_bridge->capndx+AGPAPSIZE, &temp_size);
+	pci_पढ़ो_config_word(agp_bridge->dev, agp_bridge->capndx+AGPAPSIZE, &temp_size);
 	values = A_SIZE_16(agp_bridge->driver->aperture_sizes);
 
-	for (i = 0; i < agp_bridge->driver->num_aperture_sizes; i++) {
-		if (temp_size == values[i].size_value) {
+	क्रम (i = 0; i < agp_bridge->driver->num_aperture_sizes; i++) अणु
+		अगर (temp_size == values[i].size_value) अणु
 			agp_bridge->previous_size =
-				agp_bridge->current_size = (void *) (values + i);
+				agp_bridge->current_size = (व्योम *) (values + i);
 
 			agp_bridge->aperture_size_idx = i;
-			return values[i].size;
-		}
-	}
-	return 0;
-}
+			वापस values[i].size;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp3_generic_fetch_size);
 
-void agp3_generic_tlbflush(struct agp_memory *mem)
-{
+व्योम agp3_generic_tlbflush(काष्ठा agp_memory *mem)
+अणु
 	u32 ctrl;
-	pci_read_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, &ctrl);
-	pci_write_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, ctrl & ~AGPCTRL_GTLBEN);
-	pci_write_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, ctrl);
-}
+	pci_पढ़ो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, &ctrl);
+	pci_ग_लिखो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, ctrl & ~AGPCTRL_GTLBEN);
+	pci_ग_लिखो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, ctrl);
+पूर्ण
 EXPORT_SYMBOL(agp3_generic_tlbflush);
 
-int agp3_generic_configure(void)
-{
+पूर्णांक agp3_generic_configure(व्योम)
+अणु
 	u32 temp;
-	struct aper_size_info_16 *current_size;
+	काष्ठा aper_size_info_16 *current_size;
 
 	current_size = A_SIZE_16(agp_bridge->current_size);
 
@@ -1380,37 +1381,37 @@ int agp3_generic_configure(void)
 						    AGP_APERTURE_BAR);
 
 	/* set aperture size */
-	pci_write_config_word(agp_bridge->dev, agp_bridge->capndx+AGPAPSIZE, current_size->size_value);
-	/* set gart pointer */
-	pci_write_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPGARTLO, agp_bridge->gatt_bus_addr);
+	pci_ग_लिखो_config_word(agp_bridge->dev, agp_bridge->capndx+AGPAPSIZE, current_size->size_value);
+	/* set gart poपूर्णांकer */
+	pci_ग_लिखो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPGARTLO, agp_bridge->gatt_bus_addr);
 	/* enable aperture and GTLB */
-	pci_read_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, &temp);
-	pci_write_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, temp | AGPCTRL_APERENB | AGPCTRL_GTLBEN);
-	return 0;
-}
+	pci_पढ़ो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, &temp);
+	pci_ग_लिखो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, temp | AGPCTRL_APERENB | AGPCTRL_GTLBEN);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(agp3_generic_configure);
 
-void agp3_generic_cleanup(void)
-{
+व्योम agp3_generic_cleanup(व्योम)
+अणु
 	u32 ctrl;
-	pci_read_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, &ctrl);
-	pci_write_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, ctrl & ~AGPCTRL_APERENB);
-}
+	pci_पढ़ो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, &ctrl);
+	pci_ग_लिखो_config_dword(agp_bridge->dev, agp_bridge->capndx+AGPCTRL, ctrl & ~AGPCTRL_APERENB);
+पूर्ण
 EXPORT_SYMBOL(agp3_generic_cleanup);
 
-const struct aper_size_info_16 agp3_generic_sizes[AGP_GENERIC_SIZES_ENTRIES] =
-{
-	{4096, 1048576, 10,0x000},
-	{2048,  524288, 9, 0x800},
-	{1024,  262144, 8, 0xc00},
-	{ 512,  131072, 7, 0xe00},
-	{ 256,   65536, 6, 0xf00},
-	{ 128,   32768, 5, 0xf20},
-	{  64,   16384, 4, 0xf30},
-	{  32,    8192, 3, 0xf38},
-	{  16,    4096, 2, 0xf3c},
-	{   8,    2048, 1, 0xf3e},
-	{   4,    1024, 0, 0xf3f}
-};
+स्थिर काष्ठा aper_size_info_16 agp3_generic_sizes[AGP_GENERIC_SIZES_ENTRIES] =
+अणु
+	अणु4096, 1048576, 10,0x000पूर्ण,
+	अणु2048,  524288, 9, 0x800पूर्ण,
+	अणु1024,  262144, 8, 0xc00पूर्ण,
+	अणु 512,  131072, 7, 0xe00पूर्ण,
+	अणु 256,   65536, 6, 0xf00पूर्ण,
+	अणु 128,   32768, 5, 0xf20पूर्ण,
+	अणु  64,   16384, 4, 0xf30पूर्ण,
+	अणु  32,    8192, 3, 0xf38पूर्ण,
+	अणु  16,    4096, 2, 0xf3cपूर्ण,
+	अणु   8,    2048, 1, 0xf3eपूर्ण,
+	अणु   4,    1024, 0, 0xf3fपूर्ण
+पूर्ण;
 EXPORT_SYMBOL(agp3_generic_sizes);
 

@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_LSPCON_H__
-#define __INTEL_LSPCON_H__
+#अगर_अघोषित __INTEL_LSPCON_H__
+#घोषणा __INTEL_LSPCON_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_connector;
-struct drm_connector_state;
-struct intel_crtc_state;
-struct intel_digital_port;
-struct intel_encoder;
-struct intel_lspcon;
+काष्ठा drm_connector;
+काष्ठा drm_connector_state;
+काष्ठा पूर्णांकel_crtc_state;
+काष्ठा पूर्णांकel_digital_port;
+काष्ठा पूर्णांकel_encoder;
+काष्ठा पूर्णांकel_lspcon;
 
-bool lspcon_init(struct intel_digital_port *dig_port);
-void lspcon_detect_hdr_capability(struct intel_lspcon *lspcon);
-void lspcon_resume(struct intel_digital_port *dig_port);
-void lspcon_wait_pcon_mode(struct intel_lspcon *lspcon);
-void lspcon_write_infoframe(struct intel_encoder *encoder,
-			    const struct intel_crtc_state *crtc_state,
-			    unsigned int type,
-			    const void *buf, ssize_t len);
-void lspcon_read_infoframe(struct intel_encoder *encoder,
-			   const struct intel_crtc_state *crtc_state,
-			   unsigned int type,
-			   void *frame, ssize_t len);
-void lspcon_set_infoframes(struct intel_encoder *encoder,
+bool lspcon_init(काष्ठा पूर्णांकel_digital_port *dig_port);
+व्योम lspcon_detect_hdr_capability(काष्ठा पूर्णांकel_lspcon *lspcon);
+व्योम lspcon_resume(काष्ठा पूर्णांकel_digital_port *dig_port);
+व्योम lspcon_रुको_pcon_mode(काष्ठा पूर्णांकel_lspcon *lspcon);
+व्योम lspcon_ग_लिखो_infoframe(काष्ठा पूर्णांकel_encoder *encoder,
+			    स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			    अचिन्हित पूर्णांक type,
+			    स्थिर व्योम *buf, sमाप_प्रकार len);
+व्योम lspcon_पढ़ो_infoframe(काष्ठा पूर्णांकel_encoder *encoder,
+			   स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			   अचिन्हित पूर्णांक type,
+			   व्योम *frame, sमाप_प्रकार len);
+व्योम lspcon_set_infoframes(काष्ठा पूर्णांकel_encoder *encoder,
 			   bool enable,
-			   const struct intel_crtc_state *crtc_state,
-			   const struct drm_connector_state *conn_state);
-u32 lspcon_infoframes_enabled(struct intel_encoder *encoder,
-			      const struct intel_crtc_state *pipe_config);
-u32 intel_lspcon_infoframes_enabled(struct intel_encoder *encoder,
-				    const struct intel_crtc_state *pipe_config);
-void hsw_write_infoframe(struct intel_encoder *encoder,
-			 const struct intel_crtc_state *crtc_state,
-			 unsigned int type,
-			 const void *frame, ssize_t len);
-void hsw_read_infoframe(struct intel_encoder *encoder,
-			const struct intel_crtc_state *crtc_state,
-			unsigned int type,
-			void *frame, ssize_t len);
+			   स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			   स्थिर काष्ठा drm_connector_state *conn_state);
+u32 lspcon_infoframes_enabled(काष्ठा पूर्णांकel_encoder *encoder,
+			      स्थिर काष्ठा पूर्णांकel_crtc_state *pipe_config);
+u32 पूर्णांकel_lspcon_infoframes_enabled(काष्ठा पूर्णांकel_encoder *encoder,
+				    स्थिर काष्ठा पूर्णांकel_crtc_state *pipe_config);
+व्योम hsw_ग_लिखो_infoframe(काष्ठा पूर्णांकel_encoder *encoder,
+			 स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			 अचिन्हित पूर्णांक type,
+			 स्थिर व्योम *frame, sमाप_प्रकार len);
+व्योम hsw_पढ़ो_infoframe(काष्ठा पूर्णांकel_encoder *encoder,
+			स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			अचिन्हित पूर्णांक type,
+			व्योम *frame, sमाप_प्रकार len);
 
-#endif /* __INTEL_LSPCON_H__ */
+#पूर्ण_अगर /* __INTEL_LSPCON_H__ */

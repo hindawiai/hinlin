@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2015 Naveen N. Rao, IBM Corporation
  */
 
-#include "dso.h"
-#include "symbol.h"
-#include "map.h"
-#include "probe-event.h"
-#include "probe-file.h"
+#समावेश "dso.h"
+#समावेश "symbol.h"
+#समावेश "map.h"
+#समावेश "probe-event.h"
+#समावेश "probe-file.h"
 
-int arch__choose_best_symbol(struct symbol *syma,
-			     struct symbol *symb __maybe_unused)
-{
-	char *sym = syma->name;
+पूर्णांक arch__choose_best_symbol(काष्ठा symbol *syma,
+			     काष्ठा symbol *symb __maybe_unused)
+अणु
+	अक्षर *sym = syma->name;
 
-#if !defined(_CALL_ELF) || _CALL_ELF != 2
-	/* Skip over any initial dot */
-	if (*sym == '.')
+#अगर !defined(_CALL_ELF) || _CALL_ELF != 2
+	/* Skip over any initial करोt */
+	अगर (*sym == '.')
 		sym++;
-#endif
+#पूर्ण_अगर
 
-	/* Avoid "SyS" kernel syscall aliases */
-	if (strlen(sym) >= 3 && !strncmp(sym, "SyS", 3))
-		return SYMBOL_B;
-	if (strlen(sym) >= 10 && !strncmp(sym, "compat_SyS", 10))
-		return SYMBOL_B;
+	/* Aव्योम "SyS" kernel syscall aliases */
+	अगर (म_माप(sym) >= 3 && !म_भेदन(sym, "SyS", 3))
+		वापस SYMBOL_B;
+	अगर (म_माप(sym) >= 10 && !म_भेदन(sym, "compat_SyS", 10))
+		वापस SYMBOL_B;
 
-	return SYMBOL_A;
-}
+	वापस SYMBOL_A;
+पूर्ण
 
-#if !defined(_CALL_ELF) || _CALL_ELF != 2
-/* Allow matching against dot variants */
-int arch__compare_symbol_names(const char *namea, const char *nameb)
-{
-	/* Skip over initial dot */
-	if (*namea == '.')
+#अगर !defined(_CALL_ELF) || _CALL_ELF != 2
+/* Allow matching against करोt variants */
+पूर्णांक arch__compare_symbol_names(स्थिर अक्षर *namea, स्थिर अक्षर *nameb)
+अणु
+	/* Skip over initial करोt */
+	अगर (*namea == '.')
 		namea++;
-	if (*nameb == '.')
+	अगर (*nameb == '.')
 		nameb++;
 
-	return strcmp(namea, nameb);
-}
+	वापस म_भेद(namea, nameb);
+पूर्ण
 
-int arch__compare_symbol_names_n(const char *namea, const char *nameb,
-				 unsigned int n)
-{
-	/* Skip over initial dot */
-	if (*namea == '.')
+पूर्णांक arch__compare_symbol_names_n(स्थिर अक्षर *namea, स्थिर अक्षर *nameb,
+				 अचिन्हित पूर्णांक n)
+अणु
+	/* Skip over initial करोt */
+	अगर (*namea == '.')
 		namea++;
-	if (*nameb == '.')
+	अगर (*nameb == '.')
 		nameb++;
 
-	return strncmp(namea, nameb, n);
-}
+	वापस म_भेदन(namea, nameb, n);
+पूर्ण
 
-const char *arch__normalize_symbol_name(const char *name)
-{
-	/* Skip over initial dot */
-	if (name && *name == '.')
+स्थिर अक्षर *arch__normalize_symbol_name(स्थिर अक्षर *name)
+अणु
+	/* Skip over initial करोt */
+	अगर (name && *name == '.')
 		name++;
-	return name;
-}
-#endif
+	वापस name;
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(_CALL_ELF) && _CALL_ELF == 2
+#अगर defined(_CALL_ELF) && _CALL_ELF == 2
 
-#ifdef HAVE_LIBELF_SUPPORT
-void arch__sym_update(struct symbol *s, GElf_Sym *sym)
-{
+#अगर_घोषित HAVE_LIBELF_SUPPORT
+व्योम arch__sym_update(काष्ठा symbol *s, GElf_Sym *sym)
+अणु
 	s->arch_sym = sym->st_other;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#define PPC64LE_LEP_OFFSET	8
+#घोषणा PPC64LE_LEP_OFFSET	8
 
-void arch__fix_tev_from_maps(struct perf_probe_event *pev,
-			     struct probe_trace_event *tev, struct map *map,
-			     struct symbol *sym)
-{
-	int lep_offset;
+व्योम arch__fix_tev_from_maps(काष्ठा perf_probe_event *pev,
+			     काष्ठा probe_trace_event *tev, काष्ठा map *map,
+			     काष्ठा symbol *sym)
+अणु
+	पूर्णांक lep_offset;
 
 	/*
-	 * When probing at a function entry point, we normally always want the
+	 * When probing at a function entry poपूर्णांक, we normally always want the
 	 * LEP since that catches calls to the function through both the GEP and
-	 * the LEP. Hence, we would like to probe at an offset of 8 bytes if
-	 * the user only specified the function entry.
+	 * the LEP. Hence, we would like to probe at an offset of 8 bytes अगर
+	 * the user only specअगरied the function entry.
 	 *
-	 * However, if the user specifies an offset, we fall back to using the
-	 * GEP since all userspace applications (objdump/readelf) show function
+	 * However, अगर the user specअगरies an offset, we fall back to using the
+	 * GEP since all userspace applications (objdump/पढ़ोelf) show function
 	 * disassembly with offsets from the GEP.
 	 */
-	if (pev->point.offset || !map || !sym)
-		return;
+	अगर (pev->poपूर्णांक.offset || !map || !sym)
+		वापस;
 
-	/* For kretprobes, add an offset only if the kernel supports it */
-	if (!pev->uprobes && pev->point.retprobe) {
-#ifdef HAVE_LIBELF_SUPPORT
-		if (!kretprobe_offset_is_supported())
-#endif
-			return;
-	}
+	/* For kretprobes, add an offset only अगर the kernel supports it */
+	अगर (!pev->uprobes && pev->poपूर्णांक.retprobe) अणु
+#अगर_घोषित HAVE_LIBELF_SUPPORT
+		अगर (!kretprobe_offset_is_supported())
+#पूर्ण_अगर
+			वापस;
+	पूर्ण
 
 	lep_offset = PPC64_LOCAL_ENTRY_OFFSET(sym->arch_sym);
 
-	if (map->dso->symtab_type == DSO_BINARY_TYPE__KALLSYMS)
-		tev->point.offset += PPC64LE_LEP_OFFSET;
-	else if (lep_offset) {
-		if (pev->uprobes)
-			tev->point.address += lep_offset;
-		else
-			tev->point.offset += lep_offset;
-	}
-}
+	अगर (map->dso->symtab_type == DSO_BINARY_TYPE__KALLSYMS)
+		tev->poपूर्णांक.offset += PPC64LE_LEP_OFFSET;
+	अन्यथा अगर (lep_offset) अणु
+		अगर (pev->uprobes)
+			tev->poपूर्णांक.address += lep_offset;
+		अन्यथा
+			tev->poपूर्णांक.offset += lep_offset;
+	पूर्ण
+पूर्ण
 
-#ifdef HAVE_LIBELF_SUPPORT
-void arch__post_process_probe_trace_events(struct perf_probe_event *pev,
-					   int ntevs)
-{
-	struct probe_trace_event *tev;
-	struct map *map;
-	struct symbol *sym = NULL;
-	struct rb_node *tmp;
-	int i = 0;
+#अगर_घोषित HAVE_LIBELF_SUPPORT
+व्योम arch__post_process_probe_trace_events(काष्ठा perf_probe_event *pev,
+					   पूर्णांक ntevs)
+अणु
+	काष्ठा probe_trace_event *tev;
+	काष्ठा map *map;
+	काष्ठा symbol *sym = शून्य;
+	काष्ठा rb_node *पंचांगp;
+	पूर्णांक i = 0;
 
 	map = get_target_map(pev->target, pev->nsi, pev->uprobes);
-	if (!map || map__load(map) < 0)
-		return;
+	अगर (!map || map__load(map) < 0)
+		वापस;
 
-	for (i = 0; i < ntevs; i++) {
+	क्रम (i = 0; i < ntevs; i++) अणु
 		tev = &pev->tevs[i];
-		map__for_each_symbol(map, sym, tmp) {
-			if (map->unmap_ip(map, sym->start) == tev->point.address) {
+		map__क्रम_each_symbol(map, sym, पंचांगp) अणु
+			अगर (map->unmap_ip(map, sym->start) == tev->poपूर्णांक.address) अणु
 				arch__fix_tev_from_maps(pev, tev, map, sym);
-				break;
-			}
-		}
-	}
-}
-#endif /* HAVE_LIBELF_SUPPORT */
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* HAVE_LIBELF_SUPPORT */
 
-#endif
+#पूर्ण_अगर

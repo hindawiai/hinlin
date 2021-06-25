@@ -1,161 +1,162 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * vmx.h: VMX Architecture related definitions
  * Copyright (c) 2004, Intel Corporation.
  *
- * A few random additions are:
+ * A few अक्रमom additions are:
  * Copyright (C) 2006 Qumranet
  *    Avi Kivity <avi@qumranet.com>
  *    Yaniv Kamay <yaniv@qumranet.com>
  */
-#ifndef VMX_H
-#define VMX_H
+#अगर_अघोषित VMX_H
+#घोषणा VMX_H
 
 
-#include <linux/bitops.h>
-#include <linux/types.h>
-#include <uapi/asm/vmx.h>
-#include <asm/vmxfeatures.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/यंत्र/vmx.h>
+#समावेश <यंत्र/vmxfeatures.h>
 
-#define VMCS_CONTROL_BIT(x)	BIT(VMX_FEATURE_##x & 0x1f)
+#घोषणा VMCS_CONTROL_BIT(x)	BIT(VMX_FEATURE_##x & 0x1f)
 
 /*
  * Definitions of Primary Processor-Based VM-Execution Controls.
  */
-#define CPU_BASED_INTR_WINDOW_EXITING           VMCS_CONTROL_BIT(INTR_WINDOW_EXITING)
-#define CPU_BASED_USE_TSC_OFFSETTING            VMCS_CONTROL_BIT(USE_TSC_OFFSETTING)
-#define CPU_BASED_HLT_EXITING                   VMCS_CONTROL_BIT(HLT_EXITING)
-#define CPU_BASED_INVLPG_EXITING                VMCS_CONTROL_BIT(INVLPG_EXITING)
-#define CPU_BASED_MWAIT_EXITING                 VMCS_CONTROL_BIT(MWAIT_EXITING)
-#define CPU_BASED_RDPMC_EXITING                 VMCS_CONTROL_BIT(RDPMC_EXITING)
-#define CPU_BASED_RDTSC_EXITING                 VMCS_CONTROL_BIT(RDTSC_EXITING)
-#define CPU_BASED_CR3_LOAD_EXITING		VMCS_CONTROL_BIT(CR3_LOAD_EXITING)
-#define CPU_BASED_CR3_STORE_EXITING		VMCS_CONTROL_BIT(CR3_STORE_EXITING)
-#define CPU_BASED_CR8_LOAD_EXITING              VMCS_CONTROL_BIT(CR8_LOAD_EXITING)
-#define CPU_BASED_CR8_STORE_EXITING             VMCS_CONTROL_BIT(CR8_STORE_EXITING)
-#define CPU_BASED_TPR_SHADOW                    VMCS_CONTROL_BIT(VIRTUAL_TPR)
-#define CPU_BASED_NMI_WINDOW_EXITING		VMCS_CONTROL_BIT(NMI_WINDOW_EXITING)
-#define CPU_BASED_MOV_DR_EXITING                VMCS_CONTROL_BIT(MOV_DR_EXITING)
-#define CPU_BASED_UNCOND_IO_EXITING             VMCS_CONTROL_BIT(UNCOND_IO_EXITING)
-#define CPU_BASED_USE_IO_BITMAPS                VMCS_CONTROL_BIT(USE_IO_BITMAPS)
-#define CPU_BASED_MONITOR_TRAP_FLAG             VMCS_CONTROL_BIT(MONITOR_TRAP_FLAG)
-#define CPU_BASED_USE_MSR_BITMAPS               VMCS_CONTROL_BIT(USE_MSR_BITMAPS)
-#define CPU_BASED_MONITOR_EXITING               VMCS_CONTROL_BIT(MONITOR_EXITING)
-#define CPU_BASED_PAUSE_EXITING                 VMCS_CONTROL_BIT(PAUSE_EXITING)
-#define CPU_BASED_ACTIVATE_SECONDARY_CONTROLS   VMCS_CONTROL_BIT(SEC_CONTROLS)
+#घोषणा CPU_BASED_INTR_WINDOW_EXITING           VMCS_CONTROL_BIT(INTR_WINDOW_EXITING)
+#घोषणा CPU_BASED_USE_TSC_OFFSETTING            VMCS_CONTROL_BIT(USE_TSC_OFFSETTING)
+#घोषणा CPU_BASED_HLT_EXITING                   VMCS_CONTROL_BIT(HLT_EXITING)
+#घोषणा CPU_BASED_INVLPG_EXITING                VMCS_CONTROL_BIT(INVLPG_EXITING)
+#घोषणा CPU_BASED_MWAIT_EXITING                 VMCS_CONTROL_BIT(MWAIT_EXITING)
+#घोषणा CPU_BASED_RDPMC_EXITING                 VMCS_CONTROL_BIT(RDPMC_EXITING)
+#घोषणा CPU_BASED_RDTSC_EXITING                 VMCS_CONTROL_BIT(RDTSC_EXITING)
+#घोषणा CPU_BASED_CR3_LOAD_EXITING		VMCS_CONTROL_BIT(CR3_LOAD_EXITING)
+#घोषणा CPU_BASED_CR3_STORE_EXITING		VMCS_CONTROL_BIT(CR3_STORE_EXITING)
+#घोषणा CPU_BASED_CR8_LOAD_EXITING              VMCS_CONTROL_BIT(CR8_LOAD_EXITING)
+#घोषणा CPU_BASED_CR8_STORE_EXITING             VMCS_CONTROL_BIT(CR8_STORE_EXITING)
+#घोषणा CPU_BASED_TPR_SHADOW                    VMCS_CONTROL_BIT(VIRTUAL_TPR)
+#घोषणा CPU_BASED_NMI_WINDOW_EXITING		VMCS_CONTROL_BIT(NMI_WINDOW_EXITING)
+#घोषणा CPU_BASED_MOV_DR_EXITING                VMCS_CONTROL_BIT(MOV_DR_EXITING)
+#घोषणा CPU_BASED_UNCOND_IO_EXITING             VMCS_CONTROL_BIT(UNCOND_IO_EXITING)
+#घोषणा CPU_BASED_USE_IO_BITMAPS                VMCS_CONTROL_BIT(USE_IO_BITMAPS)
+#घोषणा CPU_BASED_MONITOR_TRAP_FLAG             VMCS_CONTROL_BIT(MONITOR_TRAP_FLAG)
+#घोषणा CPU_BASED_USE_MSR_BITMAPS               VMCS_CONTROL_BIT(USE_MSR_BITMAPS)
+#घोषणा CPU_BASED_MONITOR_EXITING               VMCS_CONTROL_BIT(MONITOR_EXITING)
+#घोषणा CPU_BASED_PAUSE_EXITING                 VMCS_CONTROL_BIT(PAUSE_EXITING)
+#घोषणा CPU_BASED_ACTIVATE_SECONDARY_CONTROLS   VMCS_CONTROL_BIT(SEC_CONTROLS)
 
-#define CPU_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x0401e172
+#घोषणा CPU_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x0401e172
 
 /*
  * Definitions of Secondary Processor-Based VM-Execution Controls.
  */
-#define SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES VMCS_CONTROL_BIT(VIRT_APIC_ACCESSES)
-#define SECONDARY_EXEC_ENABLE_EPT               VMCS_CONTROL_BIT(EPT)
-#define SECONDARY_EXEC_DESC			VMCS_CONTROL_BIT(DESC_EXITING)
-#define SECONDARY_EXEC_ENABLE_RDTSCP		VMCS_CONTROL_BIT(RDTSCP)
-#define SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE   VMCS_CONTROL_BIT(VIRTUAL_X2APIC)
-#define SECONDARY_EXEC_ENABLE_VPID              VMCS_CONTROL_BIT(VPID)
-#define SECONDARY_EXEC_WBINVD_EXITING		VMCS_CONTROL_BIT(WBINVD_EXITING)
-#define SECONDARY_EXEC_UNRESTRICTED_GUEST	VMCS_CONTROL_BIT(UNRESTRICTED_GUEST)
-#define SECONDARY_EXEC_APIC_REGISTER_VIRT       VMCS_CONTROL_BIT(APIC_REGISTER_VIRT)
-#define SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY    VMCS_CONTROL_BIT(VIRT_INTR_DELIVERY)
-#define SECONDARY_EXEC_PAUSE_LOOP_EXITING	VMCS_CONTROL_BIT(PAUSE_LOOP_EXITING)
-#define SECONDARY_EXEC_RDRAND_EXITING		VMCS_CONTROL_BIT(RDRAND_EXITING)
-#define SECONDARY_EXEC_ENABLE_INVPCID		VMCS_CONTROL_BIT(INVPCID)
-#define SECONDARY_EXEC_ENABLE_VMFUNC            VMCS_CONTROL_BIT(VMFUNC)
-#define SECONDARY_EXEC_SHADOW_VMCS              VMCS_CONTROL_BIT(SHADOW_VMCS)
-#define SECONDARY_EXEC_ENCLS_EXITING		VMCS_CONTROL_BIT(ENCLS_EXITING)
-#define SECONDARY_EXEC_RDSEED_EXITING		VMCS_CONTROL_BIT(RDSEED_EXITING)
-#define SECONDARY_EXEC_ENABLE_PML               VMCS_CONTROL_BIT(PAGE_MOD_LOGGING)
-#define SECONDARY_EXEC_PT_CONCEAL_VMX		VMCS_CONTROL_BIT(PT_CONCEAL_VMX)
-#define SECONDARY_EXEC_XSAVES			VMCS_CONTROL_BIT(XSAVES)
-#define SECONDARY_EXEC_MODE_BASED_EPT_EXEC	VMCS_CONTROL_BIT(MODE_BASED_EPT_EXEC)
-#define SECONDARY_EXEC_PT_USE_GPA		VMCS_CONTROL_BIT(PT_USE_GPA)
-#define SECONDARY_EXEC_TSC_SCALING              VMCS_CONTROL_BIT(TSC_SCALING)
-#define SECONDARY_EXEC_ENABLE_USR_WAIT_PAUSE	VMCS_CONTROL_BIT(USR_WAIT_PAUSE)
-#define SECONDARY_EXEC_BUS_LOCK_DETECTION	VMCS_CONTROL_BIT(BUS_LOCK_DETECTION)
+#घोषणा SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES VMCS_CONTROL_BIT(VIRT_APIC_ACCESSES)
+#घोषणा SECONDARY_EXEC_ENABLE_EPT               VMCS_CONTROL_BIT(EPT)
+#घोषणा SECONDARY_EXEC_DESC			VMCS_CONTROL_BIT(DESC_EXITING)
+#घोषणा SECONDARY_EXEC_ENABLE_RDTSCP		VMCS_CONTROL_BIT(RDTSCP)
+#घोषणा SECONDARY_EXEC_VIRTUALIZE_X2APIC_MODE   VMCS_CONTROL_BIT(VIRTUAL_X2APIC)
+#घोषणा SECONDARY_EXEC_ENABLE_VPID              VMCS_CONTROL_BIT(VPID)
+#घोषणा SECONDARY_EXEC_WBINVD_EXITING		VMCS_CONTROL_BIT(WBINVD_EXITING)
+#घोषणा SECONDARY_EXEC_UNRESTRICTED_GUEST	VMCS_CONTROL_BIT(UNRESTRICTED_GUEST)
+#घोषणा SECONDARY_EXEC_APIC_REGISTER_VIRT       VMCS_CONTROL_BIT(APIC_REGISTER_VIRT)
+#घोषणा SECONDARY_EXEC_VIRTUAL_INTR_DELIVERY    VMCS_CONTROL_BIT(VIRT_INTR_DELIVERY)
+#घोषणा SECONDARY_EXEC_PAUSE_LOOP_EXITING	VMCS_CONTROL_BIT(PAUSE_LOOP_EXITING)
+#घोषणा SECONDARY_EXEC_RDRAND_EXITING		VMCS_CONTROL_BIT(RDRAND_EXITING)
+#घोषणा SECONDARY_EXEC_ENABLE_INVPCID		VMCS_CONTROL_BIT(INVPCID)
+#घोषणा SECONDARY_EXEC_ENABLE_VMFUNC            VMCS_CONTROL_BIT(VMFUNC)
+#घोषणा SECONDARY_EXEC_SHADOW_VMCS              VMCS_CONTROL_BIT(SHADOW_VMCS)
+#घोषणा SECONDARY_EXEC_ENCLS_EXITING		VMCS_CONTROL_BIT(ENCLS_EXITING)
+#घोषणा SECONDARY_EXEC_RDSEED_EXITING		VMCS_CONTROL_BIT(RDSEED_EXITING)
+#घोषणा SECONDARY_EXEC_ENABLE_PML               VMCS_CONTROL_BIT(PAGE_MOD_LOGGING)
+#घोषणा SECONDARY_EXEC_PT_CONCEAL_VMX		VMCS_CONTROL_BIT(PT_CONCEAL_VMX)
+#घोषणा SECONDARY_EXEC_XSAVES			VMCS_CONTROL_BIT(XSAVES)
+#घोषणा SECONDARY_EXEC_MODE_BASED_EPT_EXEC	VMCS_CONTROL_BIT(MODE_BASED_EPT_EXEC)
+#घोषणा SECONDARY_EXEC_PT_USE_GPA		VMCS_CONTROL_BIT(PT_USE_GPA)
+#घोषणा SECONDARY_EXEC_TSC_SCALING              VMCS_CONTROL_BIT(TSC_SCALING)
+#घोषणा SECONDARY_EXEC_ENABLE_USR_WAIT_PAUSE	VMCS_CONTROL_BIT(USR_WAIT_PAUSE)
+#घोषणा SECONDARY_EXEC_BUS_LOCK_DETECTION	VMCS_CONTROL_BIT(BUS_LOCK_DETECTION)
 
-#define PIN_BASED_EXT_INTR_MASK                 VMCS_CONTROL_BIT(INTR_EXITING)
-#define PIN_BASED_NMI_EXITING                   VMCS_CONTROL_BIT(NMI_EXITING)
-#define PIN_BASED_VIRTUAL_NMIS                  VMCS_CONTROL_BIT(VIRTUAL_NMIS)
-#define PIN_BASED_VMX_PREEMPTION_TIMER          VMCS_CONTROL_BIT(PREEMPTION_TIMER)
-#define PIN_BASED_POSTED_INTR                   VMCS_CONTROL_BIT(POSTED_INTR)
+#घोषणा PIN_BASED_EXT_INTR_MASK                 VMCS_CONTROL_BIT(INTR_EXITING)
+#घोषणा PIN_BASED_NMI_EXITING                   VMCS_CONTROL_BIT(NMI_EXITING)
+#घोषणा PIN_BASED_VIRTUAL_NMIS                  VMCS_CONTROL_BIT(VIRTUAL_NMIS)
+#घोषणा PIN_BASED_VMX_PREEMPTION_TIMER          VMCS_CONTROL_BIT(PREEMPTION_TIMER)
+#घोषणा PIN_BASED_POSTED_INTR                   VMCS_CONTROL_BIT(POSTED_INTR)
 
-#define PIN_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x00000016
+#घोषणा PIN_BASED_ALWAYSON_WITHOUT_TRUE_MSR	0x00000016
 
-#define VM_EXIT_SAVE_DEBUG_CONTROLS             0x00000004
-#define VM_EXIT_HOST_ADDR_SPACE_SIZE            0x00000200
-#define VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL      0x00001000
-#define VM_EXIT_ACK_INTR_ON_EXIT                0x00008000
-#define VM_EXIT_SAVE_IA32_PAT			0x00040000
-#define VM_EXIT_LOAD_IA32_PAT			0x00080000
-#define VM_EXIT_SAVE_IA32_EFER                  0x00100000
-#define VM_EXIT_LOAD_IA32_EFER                  0x00200000
-#define VM_EXIT_SAVE_VMX_PREEMPTION_TIMER       0x00400000
-#define VM_EXIT_CLEAR_BNDCFGS                   0x00800000
-#define VM_EXIT_PT_CONCEAL_PIP			0x01000000
-#define VM_EXIT_CLEAR_IA32_RTIT_CTL		0x02000000
+#घोषणा VM_EXIT_SAVE_DEBUG_CONTROLS             0x00000004
+#घोषणा VM_EXIT_HOST_ADDR_SPACE_SIZE            0x00000200
+#घोषणा VM_EXIT_LOAD_IA32_PERF_GLOBAL_CTRL      0x00001000
+#घोषणा VM_EXIT_ACK_INTR_ON_EXIT                0x00008000
+#घोषणा VM_EXIT_SAVE_IA32_PAT			0x00040000
+#घोषणा VM_EXIT_LOAD_IA32_PAT			0x00080000
+#घोषणा VM_EXIT_SAVE_IA32_EFER                  0x00100000
+#घोषणा VM_EXIT_LOAD_IA32_EFER                  0x00200000
+#घोषणा VM_EXIT_SAVE_VMX_PREEMPTION_TIMER       0x00400000
+#घोषणा VM_EXIT_CLEAR_BNDCFGS                   0x00800000
+#घोषणा VM_EXIT_PT_CONCEAL_PIP			0x01000000
+#घोषणा VM_EXIT_CLEAR_IA32_RTIT_CTL		0x02000000
 
-#define VM_EXIT_ALWAYSON_WITHOUT_TRUE_MSR	0x00036dff
+#घोषणा VM_EXIT_ALWAYSON_WITHOUT_TRUE_MSR	0x00036dff
 
-#define VM_ENTRY_LOAD_DEBUG_CONTROLS            0x00000004
-#define VM_ENTRY_IA32E_MODE                     0x00000200
-#define VM_ENTRY_SMM                            0x00000400
-#define VM_ENTRY_DEACT_DUAL_MONITOR             0x00000800
-#define VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL     0x00002000
-#define VM_ENTRY_LOAD_IA32_PAT			0x00004000
-#define VM_ENTRY_LOAD_IA32_EFER                 0x00008000
-#define VM_ENTRY_LOAD_BNDCFGS                   0x00010000
-#define VM_ENTRY_PT_CONCEAL_PIP			0x00020000
-#define VM_ENTRY_LOAD_IA32_RTIT_CTL		0x00040000
+#घोषणा VM_ENTRY_LOAD_DEBUG_CONTROLS            0x00000004
+#घोषणा VM_ENTRY_IA32E_MODE                     0x00000200
+#घोषणा VM_ENTRY_SMM                            0x00000400
+#घोषणा VM_ENTRY_DEACT_DUAL_MONITOR             0x00000800
+#घोषणा VM_ENTRY_LOAD_IA32_PERF_GLOBAL_CTRL     0x00002000
+#घोषणा VM_ENTRY_LOAD_IA32_PAT			0x00004000
+#घोषणा VM_ENTRY_LOAD_IA32_EFER                 0x00008000
+#घोषणा VM_ENTRY_LOAD_BNDCFGS                   0x00010000
+#घोषणा VM_ENTRY_PT_CONCEAL_PIP			0x00020000
+#घोषणा VM_ENTRY_LOAD_IA32_RTIT_CTL		0x00040000
 
-#define VM_ENTRY_ALWAYSON_WITHOUT_TRUE_MSR	0x000011ff
+#घोषणा VM_ENTRY_ALWAYSON_WITHOUT_TRUE_MSR	0x000011ff
 
-#define VMX_MISC_PREEMPTION_TIMER_RATE_MASK	0x0000001f
-#define VMX_MISC_SAVE_EFER_LMA			0x00000020
-#define VMX_MISC_ACTIVITY_HLT			0x00000040
-#define VMX_MISC_ACTIVITY_WAIT_SIPI		0x00000100
-#define VMX_MISC_ZERO_LEN_INS			0x40000000
-#define VMX_MISC_MSR_LIST_MULTIPLIER		512
+#घोषणा VMX_MISC_PREEMPTION_TIMER_RATE_MASK	0x0000001f
+#घोषणा VMX_MISC_SAVE_EFER_LMA			0x00000020
+#घोषणा VMX_MISC_ACTIVITY_HLT			0x00000040
+#घोषणा VMX_MISC_ACTIVITY_WAIT_SIPI		0x00000100
+#घोषणा VMX_MISC_ZERO_LEN_INS			0x40000000
+#घोषणा VMX_MISC_MSR_LIST_MULTIPLIER		512
 
 /* VMFUNC functions */
-#define VMFUNC_CONTROL_BIT(x)	BIT((VMX_FEATURE_##x & 0x1f) - 28)
+#घोषणा VMFUNC_CONTROL_BIT(x)	BIT((VMX_FEATURE_##x & 0x1f) - 28)
 
-#define VMX_VMFUNC_EPTP_SWITCHING               VMFUNC_CONTROL_BIT(EPTP_SWITCHING)
-#define VMFUNC_EPTP_ENTRIES  512
+#घोषणा VMX_VMFUNC_EPTP_SWITCHING               VMFUNC_CONTROL_BIT(EPTP_SWITCHING)
+#घोषणा VMFUNC_EPTP_ENTRIES  512
 
-static inline u32 vmx_basic_vmcs_revision_id(u64 vmx_basic)
-{
-	return vmx_basic & GENMASK_ULL(30, 0);
-}
+अटल अंतरभूत u32 vmx_basic_vmcs_revision_id(u64 vmx_basic)
+अणु
+	वापस vmx_basic & GENMASK_ULL(30, 0);
+पूर्ण
 
-static inline u32 vmx_basic_vmcs_size(u64 vmx_basic)
-{
-	return (vmx_basic & GENMASK_ULL(44, 32)) >> 32;
-}
+अटल अंतरभूत u32 vmx_basic_vmcs_size(u64 vmx_basic)
+अणु
+	वापस (vmx_basic & GENMASK_ULL(44, 32)) >> 32;
+पूर्ण
 
-static inline int vmx_misc_preemption_timer_rate(u64 vmx_misc)
-{
-	return vmx_misc & VMX_MISC_PREEMPTION_TIMER_RATE_MASK;
-}
+अटल अंतरभूत पूर्णांक vmx_misc_preemption_समयr_rate(u64 vmx_misc)
+अणु
+	वापस vmx_misc & VMX_MISC_PREEMPTION_TIMER_RATE_MASK;
+पूर्ण
 
-static inline int vmx_misc_cr3_count(u64 vmx_misc)
-{
-	return (vmx_misc & GENMASK_ULL(24, 16)) >> 16;
-}
+अटल अंतरभूत पूर्णांक vmx_misc_cr3_count(u64 vmx_misc)
+अणु
+	वापस (vmx_misc & GENMASK_ULL(24, 16)) >> 16;
+पूर्ण
 
-static inline int vmx_misc_max_msr(u64 vmx_misc)
-{
-	return (vmx_misc & GENMASK_ULL(27, 25)) >> 25;
-}
+अटल अंतरभूत पूर्णांक vmx_misc_max_msr(u64 vmx_misc)
+अणु
+	वापस (vmx_misc & GENMASK_ULL(27, 25)) >> 25;
+पूर्ण
 
-static inline int vmx_misc_mseg_revid(u64 vmx_misc)
-{
-	return (vmx_misc & GENMASK_ULL(63, 32)) >> 32;
-}
+अटल अंतरभूत पूर्णांक vmx_misc_mseg_revid(u64 vmx_misc)
+अणु
+	वापस (vmx_misc & GENMASK_ULL(63, 32)) >> 32;
+पूर्ण
 
 /* VMCS Encodings */
-enum vmcs_field {
+क्रमागत vmcs_field अणु
 	VIRTUAL_PROCESSOR_ID            = 0x00000000,
 	POSTED_INTR_NV                  = 0x00000002,
 	GUEST_ES_SELECTOR               = 0x00000800,
@@ -342,223 +343,223 @@ enum vmcs_field {
 	HOST_IA32_SYSENTER_EIP          = 0x00006c12,
 	HOST_RSP                        = 0x00006c14,
 	HOST_RIP                        = 0x00006c16,
-};
+पूर्ण;
 
 /*
- * Interruption-information format
+ * Interruption-inक्रमmation क्रमmat
  */
-#define INTR_INFO_VECTOR_MASK           0xff            /* 7:0 */
-#define INTR_INFO_INTR_TYPE_MASK        0x700           /* 10:8 */
-#define INTR_INFO_DELIVER_CODE_MASK     0x800           /* 11 */
-#define INTR_INFO_UNBLOCK_NMI		0x1000		/* 12 */
-#define INTR_INFO_VALID_MASK            0x80000000      /* 31 */
-#define INTR_INFO_RESVD_BITS_MASK       0x7ffff000
+#घोषणा INTR_INFO_VECTOR_MASK           0xff            /* 7:0 */
+#घोषणा INTR_INFO_INTR_TYPE_MASK        0x700           /* 10:8 */
+#घोषणा INTR_INFO_DELIVER_CODE_MASK     0x800           /* 11 */
+#घोषणा INTR_INFO_UNBLOCK_NMI		0x1000		/* 12 */
+#घोषणा INTR_INFO_VALID_MASK            0x80000000      /* 31 */
+#घोषणा INTR_INFO_RESVD_BITS_MASK       0x7ffff000
 
-#define VECTORING_INFO_VECTOR_MASK           	INTR_INFO_VECTOR_MASK
-#define VECTORING_INFO_TYPE_MASK        	INTR_INFO_INTR_TYPE_MASK
-#define VECTORING_INFO_DELIVER_CODE_MASK    	INTR_INFO_DELIVER_CODE_MASK
-#define VECTORING_INFO_VALID_MASK       	INTR_INFO_VALID_MASK
+#घोषणा VECTORING_INFO_VECTOR_MASK           	INTR_INFO_VECTOR_MASK
+#घोषणा VECTORING_INFO_TYPE_MASK        	INTR_INFO_INTR_TYPE_MASK
+#घोषणा VECTORING_INFO_DELIVER_CODE_MASK    	INTR_INFO_DELIVER_CODE_MASK
+#घोषणा VECTORING_INFO_VALID_MASK       	INTR_INFO_VALID_MASK
 
-#define INTR_TYPE_EXT_INTR              (0 << 8) /* external interrupt */
-#define INTR_TYPE_RESERVED              (1 << 8) /* reserved */
-#define INTR_TYPE_NMI_INTR		(2 << 8) /* NMI */
-#define INTR_TYPE_HARD_EXCEPTION	(3 << 8) /* processor exception */
-#define INTR_TYPE_SOFT_INTR             (4 << 8) /* software interrupt */
-#define INTR_TYPE_PRIV_SW_EXCEPTION	(5 << 8) /* ICE breakpoint - undocumented */
-#define INTR_TYPE_SOFT_EXCEPTION	(6 << 8) /* software exception */
-#define INTR_TYPE_OTHER_EVENT           (7 << 8) /* other event */
+#घोषणा INTR_TYPE_EXT_INTR              (0 << 8) /* बाह्यal पूर्णांकerrupt */
+#घोषणा INTR_TYPE_RESERVED              (1 << 8) /* reserved */
+#घोषणा INTR_TYPE_NMI_INTR		(2 << 8) /* NMI */
+#घोषणा INTR_TYPE_HARD_EXCEPTION	(3 << 8) /* processor exception */
+#घोषणा INTR_TYPE_SOFT_INTR             (4 << 8) /* software पूर्णांकerrupt */
+#घोषणा INTR_TYPE_PRIV_SW_EXCEPTION	(5 << 8) /* ICE अवरोधpoपूर्णांक - unकरोcumented */
+#घोषणा INTR_TYPE_SOFT_EXCEPTION	(6 << 8) /* software exception */
+#घोषणा INTR_TYPE_OTHER_EVENT           (7 << 8) /* other event */
 
 /* GUEST_INTERRUPTIBILITY_INFO flags. */
-#define GUEST_INTR_STATE_STI		0x00000001
-#define GUEST_INTR_STATE_MOV_SS		0x00000002
-#define GUEST_INTR_STATE_SMI		0x00000004
-#define GUEST_INTR_STATE_NMI		0x00000008
-#define GUEST_INTR_STATE_ENCLAVE_INTR	0x00000010
+#घोषणा GUEST_INTR_STATE_STI		0x00000001
+#घोषणा GUEST_INTR_STATE_MOV_SS		0x00000002
+#घोषणा GUEST_INTR_STATE_SMI		0x00000004
+#घोषणा GUEST_INTR_STATE_NMI		0x00000008
+#घोषणा GUEST_INTR_STATE_ENCLAVE_INTR	0x00000010
 
 /* GUEST_ACTIVITY_STATE flags */
-#define GUEST_ACTIVITY_ACTIVE		0
-#define GUEST_ACTIVITY_HLT		1
-#define GUEST_ACTIVITY_SHUTDOWN		2
-#define GUEST_ACTIVITY_WAIT_SIPI	3
+#घोषणा GUEST_ACTIVITY_ACTIVE		0
+#घोषणा GUEST_ACTIVITY_HLT		1
+#घोषणा GUEST_ACTIVITY_SHUTDOWN		2
+#घोषणा GUEST_ACTIVITY_WAIT_SIPI	3
 
 /*
- * Exit Qualifications for MOV for Control Register Access
+ * Exit Qualअगरications क्रम MOV क्रम Control Register Access
  */
-#define CONTROL_REG_ACCESS_NUM          0x7     /* 2:0, number of control reg.*/
-#define CONTROL_REG_ACCESS_TYPE         0x30    /* 5:4, access type */
-#define CONTROL_REG_ACCESS_REG          0xf00   /* 10:8, general purpose reg. */
-#define LMSW_SOURCE_DATA_SHIFT 16
-#define LMSW_SOURCE_DATA  (0xFFFF << LMSW_SOURCE_DATA_SHIFT) /* 16:31 lmsw source */
-#define REG_EAX                         (0 << 8)
-#define REG_ECX                         (1 << 8)
-#define REG_EDX                         (2 << 8)
-#define REG_EBX                         (3 << 8)
-#define REG_ESP                         (4 << 8)
-#define REG_EBP                         (5 << 8)
-#define REG_ESI                         (6 << 8)
-#define REG_EDI                         (7 << 8)
-#define REG_R8                         (8 << 8)
-#define REG_R9                         (9 << 8)
-#define REG_R10                        (10 << 8)
-#define REG_R11                        (11 << 8)
-#define REG_R12                        (12 << 8)
-#define REG_R13                        (13 << 8)
-#define REG_R14                        (14 << 8)
-#define REG_R15                        (15 << 8)
+#घोषणा CONTROL_REG_ACCESS_NUM          0x7     /* 2:0, number of control reg.*/
+#घोषणा CONTROL_REG_ACCESS_TYPE         0x30    /* 5:4, access type */
+#घोषणा CONTROL_REG_ACCESS_REG          0xf00   /* 10:8, general purpose reg. */
+#घोषणा LMSW_SOURCE_DATA_SHIFT 16
+#घोषणा LMSW_SOURCE_DATA  (0xFFFF << LMSW_SOURCE_DATA_SHIFT) /* 16:31 lmsw source */
+#घोषणा REG_EAX                         (0 << 8)
+#घोषणा REG_ECX                         (1 << 8)
+#घोषणा REG_EDX                         (2 << 8)
+#घोषणा REG_EBX                         (3 << 8)
+#घोषणा REG_ESP                         (4 << 8)
+#घोषणा REG_EBP                         (5 << 8)
+#घोषणा REG_ESI                         (6 << 8)
+#घोषणा REG_EDI                         (7 << 8)
+#घोषणा REG_R8                         (8 << 8)
+#घोषणा REG_R9                         (9 << 8)
+#घोषणा REG_R10                        (10 << 8)
+#घोषणा REG_R11                        (11 << 8)
+#घोषणा REG_R12                        (12 << 8)
+#घोषणा REG_R13                        (13 << 8)
+#घोषणा REG_R14                        (14 << 8)
+#घोषणा REG_R15                        (15 << 8)
 
 /*
- * Exit Qualifications for MOV for Debug Register Access
+ * Exit Qualअगरications क्रम MOV क्रम Debug Register Access
  */
-#define DEBUG_REG_ACCESS_NUM            0x7     /* 2:0, number of debug reg. */
-#define DEBUG_REG_ACCESS_TYPE           0x10    /* 4, direction of access */
-#define TYPE_MOV_TO_DR                  (0 << 4)
-#define TYPE_MOV_FROM_DR                (1 << 4)
-#define DEBUG_REG_ACCESS_REG(eq)        (((eq) >> 8) & 0xf) /* 11:8, general purpose reg. */
+#घोषणा DEBUG_REG_ACCESS_NUM            0x7     /* 2:0, number of debug reg. */
+#घोषणा DEBUG_REG_ACCESS_TYPE           0x10    /* 4, direction of access */
+#घोषणा TYPE_MOV_TO_DR                  (0 << 4)
+#घोषणा TYPE_MOV_FROM_DR                (1 << 4)
+#घोषणा DEBUG_REG_ACCESS_REG(eq)        (((eq) >> 8) & 0xf) /* 11:8, general purpose reg. */
 
 
 /*
- * Exit Qualifications for APIC-Access
+ * Exit Qualअगरications क्रम APIC-Access
  */
-#define APIC_ACCESS_OFFSET              0xfff   /* 11:0, offset within the APIC page */
-#define APIC_ACCESS_TYPE                0xf000  /* 15:12, access type */
-#define TYPE_LINEAR_APIC_INST_READ      (0 << 12)
-#define TYPE_LINEAR_APIC_INST_WRITE     (1 << 12)
-#define TYPE_LINEAR_APIC_INST_FETCH     (2 << 12)
-#define TYPE_LINEAR_APIC_EVENT          (3 << 12)
-#define TYPE_PHYSICAL_APIC_EVENT        (10 << 12)
-#define TYPE_PHYSICAL_APIC_INST         (15 << 12)
+#घोषणा APIC_ACCESS_OFFSET              0xfff   /* 11:0, offset within the APIC page */
+#घोषणा APIC_ACCESS_TYPE                0xf000  /* 15:12, access type */
+#घोषणा TYPE_LINEAR_APIC_INST_READ      (0 << 12)
+#घोषणा TYPE_LINEAR_APIC_INST_WRITE     (1 << 12)
+#घोषणा TYPE_LINEAR_APIC_INST_FETCH     (2 << 12)
+#घोषणा TYPE_LINEAR_APIC_EVENT          (3 << 12)
+#घोषणा TYPE_PHYSICAL_APIC_EVENT        (10 << 12)
+#घोषणा TYPE_PHYSICAL_APIC_INST         (15 << 12)
 
-/* segment AR in VMCS -- these are different from what LAR reports */
-#define VMX_SEGMENT_AR_L_MASK (1 << 13)
+/* segment AR in VMCS -- these are dअगरferent from what LAR reports */
+#घोषणा VMX_SEGMENT_AR_L_MASK (1 << 13)
 
-#define VMX_AR_TYPE_ACCESSES_MASK 1
-#define VMX_AR_TYPE_READABLE_MASK (1 << 1)
-#define VMX_AR_TYPE_WRITEABLE_MASK (1 << 2)
-#define VMX_AR_TYPE_CODE_MASK (1 << 3)
-#define VMX_AR_TYPE_MASK 0x0f
-#define VMX_AR_TYPE_BUSY_64_TSS 11
-#define VMX_AR_TYPE_BUSY_32_TSS 11
-#define VMX_AR_TYPE_BUSY_16_TSS 3
-#define VMX_AR_TYPE_LDT 2
+#घोषणा VMX_AR_TYPE_ACCESSES_MASK 1
+#घोषणा VMX_AR_TYPE_READABLE_MASK (1 << 1)
+#घोषणा VMX_AR_TYPE_WRITEABLE_MASK (1 << 2)
+#घोषणा VMX_AR_TYPE_CODE_MASK (1 << 3)
+#घोषणा VMX_AR_TYPE_MASK 0x0f
+#घोषणा VMX_AR_TYPE_BUSY_64_TSS 11
+#घोषणा VMX_AR_TYPE_BUSY_32_TSS 11
+#घोषणा VMX_AR_TYPE_BUSY_16_TSS 3
+#घोषणा VMX_AR_TYPE_LDT 2
 
-#define VMX_AR_UNUSABLE_MASK (1 << 16)
-#define VMX_AR_S_MASK (1 << 4)
-#define VMX_AR_P_MASK (1 << 7)
-#define VMX_AR_L_MASK (1 << 13)
-#define VMX_AR_DB_MASK (1 << 14)
-#define VMX_AR_G_MASK (1 << 15)
-#define VMX_AR_DPL_SHIFT 5
-#define VMX_AR_DPL(ar) (((ar) >> VMX_AR_DPL_SHIFT) & 3)
+#घोषणा VMX_AR_UNUSABLE_MASK (1 << 16)
+#घोषणा VMX_AR_S_MASK (1 << 4)
+#घोषणा VMX_AR_P_MASK (1 << 7)
+#घोषणा VMX_AR_L_MASK (1 << 13)
+#घोषणा VMX_AR_DB_MASK (1 << 14)
+#घोषणा VMX_AR_G_MASK (1 << 15)
+#घोषणा VMX_AR_DPL_SHIFT 5
+#घोषणा VMX_AR_DPL(ar) (((ar) >> VMX_AR_DPL_SHIFT) & 3)
 
-#define VMX_AR_RESERVD_MASK 0xfffe0f00
+#घोषणा VMX_AR_RESERVD_MASK 0xfffe0f00
 
-#define TSS_PRIVATE_MEMSLOT			(KVM_USER_MEM_SLOTS + 0)
-#define APIC_ACCESS_PAGE_PRIVATE_MEMSLOT	(KVM_USER_MEM_SLOTS + 1)
-#define IDENTITY_PAGETABLE_PRIVATE_MEMSLOT	(KVM_USER_MEM_SLOTS + 2)
+#घोषणा TSS_PRIVATE_MEMSLOT			(KVM_USER_MEM_SLOTS + 0)
+#घोषणा APIC_ACCESS_PAGE_PRIVATE_MEMSLOT	(KVM_USER_MEM_SLOTS + 1)
+#घोषणा IDENTITY_PAGETABLE_PRIVATE_MEMSLOT	(KVM_USER_MEM_SLOTS + 2)
 
-#define VMX_NR_VPIDS				(1 << 16)
-#define VMX_VPID_EXTENT_INDIVIDUAL_ADDR		0
-#define VMX_VPID_EXTENT_SINGLE_CONTEXT		1
-#define VMX_VPID_EXTENT_ALL_CONTEXT		2
-#define VMX_VPID_EXTENT_SINGLE_NON_GLOBAL	3
+#घोषणा VMX_NR_VPIDS				(1 << 16)
+#घोषणा VMX_VPID_EXTENT_INDIVIDUAL_ADDR		0
+#घोषणा VMX_VPID_EXTENT_SINGLE_CONTEXT		1
+#घोषणा VMX_VPID_EXTENT_ALL_CONTEXT		2
+#घोषणा VMX_VPID_EXTENT_SINGLE_NON_GLOBAL	3
 
-#define VMX_EPT_EXTENT_CONTEXT			1
-#define VMX_EPT_EXTENT_GLOBAL			2
-#define VMX_EPT_EXTENT_SHIFT			24
+#घोषणा VMX_EPT_EXTENT_CONTEXT			1
+#घोषणा VMX_EPT_EXTENT_GLOBAL			2
+#घोषणा VMX_EPT_EXTENT_SHIFT			24
 
-#define VMX_EPT_EXECUTE_ONLY_BIT		(1ull)
-#define VMX_EPT_PAGE_WALK_4_BIT			(1ull << 6)
-#define VMX_EPT_PAGE_WALK_5_BIT			(1ull << 7)
-#define VMX_EPTP_UC_BIT				(1ull << 8)
-#define VMX_EPTP_WB_BIT				(1ull << 14)
-#define VMX_EPT_2MB_PAGE_BIT			(1ull << 16)
-#define VMX_EPT_1GB_PAGE_BIT			(1ull << 17)
-#define VMX_EPT_INVEPT_BIT			(1ull << 20)
-#define VMX_EPT_AD_BIT				    (1ull << 21)
-#define VMX_EPT_EXTENT_CONTEXT_BIT		(1ull << 25)
-#define VMX_EPT_EXTENT_GLOBAL_BIT		(1ull << 26)
+#घोषणा VMX_EPT_EXECUTE_ONLY_BIT		(1ull)
+#घोषणा VMX_EPT_PAGE_WALK_4_BIT			(1ull << 6)
+#घोषणा VMX_EPT_PAGE_WALK_5_BIT			(1ull << 7)
+#घोषणा VMX_EPTP_UC_BIT				(1ull << 8)
+#घोषणा VMX_EPTP_WB_BIT				(1ull << 14)
+#घोषणा VMX_EPT_2MB_PAGE_BIT			(1ull << 16)
+#घोषणा VMX_EPT_1GB_PAGE_BIT			(1ull << 17)
+#घोषणा VMX_EPT_INVEPT_BIT			(1ull << 20)
+#घोषणा VMX_EPT_AD_BIT				    (1ull << 21)
+#घोषणा VMX_EPT_EXTENT_CONTEXT_BIT		(1ull << 25)
+#घोषणा VMX_EPT_EXTENT_GLOBAL_BIT		(1ull << 26)
 
-#define VMX_VPID_INVVPID_BIT                    (1ull << 0) /* (32 - 32) */
-#define VMX_VPID_EXTENT_INDIVIDUAL_ADDR_BIT     (1ull << 8) /* (40 - 32) */
-#define VMX_VPID_EXTENT_SINGLE_CONTEXT_BIT      (1ull << 9) /* (41 - 32) */
-#define VMX_VPID_EXTENT_GLOBAL_CONTEXT_BIT      (1ull << 10) /* (42 - 32) */
-#define VMX_VPID_EXTENT_SINGLE_NON_GLOBAL_BIT   (1ull << 11) /* (43 - 32) */
+#घोषणा VMX_VPID_INVVPID_BIT                    (1ull << 0) /* (32 - 32) */
+#घोषणा VMX_VPID_EXTENT_INDIVIDUAL_ADDR_BIT     (1ull << 8) /* (40 - 32) */
+#घोषणा VMX_VPID_EXTENT_SINGLE_CONTEXT_BIT      (1ull << 9) /* (41 - 32) */
+#घोषणा VMX_VPID_EXTENT_GLOBAL_CONTEXT_BIT      (1ull << 10) /* (42 - 32) */
+#घोषणा VMX_VPID_EXTENT_SINGLE_NON_GLOBAL_BIT   (1ull << 11) /* (43 - 32) */
 
-#define VMX_EPT_MT_EPTE_SHIFT			3
-#define VMX_EPTP_PWL_MASK			0x38ull
-#define VMX_EPTP_PWL_4				0x18ull
-#define VMX_EPTP_PWL_5				0x20ull
-#define VMX_EPTP_AD_ENABLE_BIT			(1ull << 6)
-#define VMX_EPTP_MT_MASK			0x7ull
-#define VMX_EPTP_MT_WB				0x6ull
-#define VMX_EPTP_MT_UC				0x0ull
-#define VMX_EPT_READABLE_MASK			0x1ull
-#define VMX_EPT_WRITABLE_MASK			0x2ull
-#define VMX_EPT_EXECUTABLE_MASK			0x4ull
-#define VMX_EPT_IPAT_BIT    			(1ull << 6)
-#define VMX_EPT_ACCESS_BIT			(1ull << 8)
-#define VMX_EPT_DIRTY_BIT			(1ull << 9)
-#define VMX_EPT_RWX_MASK                        (VMX_EPT_READABLE_MASK |       \
+#घोषणा VMX_EPT_MT_EPTE_SHIFT			3
+#घोषणा VMX_EPTP_PWL_MASK			0x38ull
+#घोषणा VMX_EPTP_PWL_4				0x18ull
+#घोषणा VMX_EPTP_PWL_5				0x20ull
+#घोषणा VMX_EPTP_AD_ENABLE_BIT			(1ull << 6)
+#घोषणा VMX_EPTP_MT_MASK			0x7ull
+#घोषणा VMX_EPTP_MT_WB				0x6ull
+#घोषणा VMX_EPTP_MT_UC				0x0ull
+#घोषणा VMX_EPT_READABLE_MASK			0x1ull
+#घोषणा VMX_EPT_WRITABLE_MASK			0x2ull
+#घोषणा VMX_EPT_EXECUTABLE_MASK			0x4ull
+#घोषणा VMX_EPT_IPAT_BIT    			(1ull << 6)
+#घोषणा VMX_EPT_ACCESS_BIT			(1ull << 8)
+#घोषणा VMX_EPT_सूचीTY_BIT			(1ull << 9)
+#घोषणा VMX_EPT_RWX_MASK                        (VMX_EPT_READABLE_MASK |       \
 						 VMX_EPT_WRITABLE_MASK |       \
 						 VMX_EPT_EXECUTABLE_MASK)
-#define VMX_EPT_MT_MASK				(7ull << VMX_EPT_MT_EPTE_SHIFT)
+#घोषणा VMX_EPT_MT_MASK				(7ull << VMX_EPT_MT_EPTE_SHIFT)
 
-static inline u8 vmx_eptp_page_walk_level(u64 eptp)
-{
+अटल अंतरभूत u8 vmx_eptp_page_walk_level(u64 eptp)
+अणु
 	u64 encoded_level = eptp & VMX_EPTP_PWL_MASK;
 
-	if (encoded_level == VMX_EPTP_PWL_5)
-		return 5;
+	अगर (encoded_level == VMX_EPTP_PWL_5)
+		वापस 5;
 
 	/* @eptp must be pre-validated by the caller. */
 	WARN_ON_ONCE(encoded_level != VMX_EPTP_PWL_4);
-	return 4;
-}
+	वापस 4;
+पूर्ण
 
 /* The mask to use to trigger an EPT Misconfiguration in order to track MMIO */
-#define VMX_EPT_MISCONFIG_WX_VALUE		(VMX_EPT_WRITABLE_MASK |       \
+#घोषणा VMX_EPT_MISCONFIG_WX_VALUE		(VMX_EPT_WRITABLE_MASK |       \
 						 VMX_EPT_EXECUTABLE_MASK)
 
-#define VMX_EPT_IDENTITY_PAGETABLE_ADDR		0xfffbc000ul
+#घोषणा VMX_EPT_IDENTITY_PAGETABLE_ADDR		0xfffbc000ul
 
-struct vmx_msr_entry {
+काष्ठा vmx_msr_entry अणु
 	u32 index;
 	u32 reserved;
 	u64 value;
-} __aligned(16);
+पूर्ण __aligned(16);
 
 /*
- * Exit Qualifications for entry failure during or after loading guest state
+ * Exit Qualअगरications क्रम entry failure during or after loading guest state
  */
-enum vm_entry_failure_code {
+क्रमागत vm_entry_failure_code अणु
 	ENTRY_FAIL_DEFAULT		= 0,
 	ENTRY_FAIL_PDPTE		= 2,
 	ENTRY_FAIL_NMI			= 3,
 	ENTRY_FAIL_VMCS_LINK_PTR	= 4,
-};
+पूर्ण;
 
 /*
- * Exit Qualifications for EPT Violations
+ * Exit Qualअगरications क्रम EPT Violations
  */
-#define EPT_VIOLATION_ACC_READ_BIT	0
-#define EPT_VIOLATION_ACC_WRITE_BIT	1
-#define EPT_VIOLATION_ACC_INSTR_BIT	2
-#define EPT_VIOLATION_READABLE_BIT	3
-#define EPT_VIOLATION_WRITABLE_BIT	4
-#define EPT_VIOLATION_EXECUTABLE_BIT	5
-#define EPT_VIOLATION_GVA_TRANSLATED_BIT 8
-#define EPT_VIOLATION_ACC_READ		(1 << EPT_VIOLATION_ACC_READ_BIT)
-#define EPT_VIOLATION_ACC_WRITE		(1 << EPT_VIOLATION_ACC_WRITE_BIT)
-#define EPT_VIOLATION_ACC_INSTR		(1 << EPT_VIOLATION_ACC_INSTR_BIT)
-#define EPT_VIOLATION_READABLE		(1 << EPT_VIOLATION_READABLE_BIT)
-#define EPT_VIOLATION_WRITABLE		(1 << EPT_VIOLATION_WRITABLE_BIT)
-#define EPT_VIOLATION_EXECUTABLE	(1 << EPT_VIOLATION_EXECUTABLE_BIT)
-#define EPT_VIOLATION_GVA_TRANSLATED	(1 << EPT_VIOLATION_GVA_TRANSLATED_BIT)
+#घोषणा EPT_VIOLATION_ACC_READ_BIT	0
+#घोषणा EPT_VIOLATION_ACC_WRITE_BIT	1
+#घोषणा EPT_VIOLATION_ACC_INSTR_BIT	2
+#घोषणा EPT_VIOLATION_READABLE_BIT	3
+#घोषणा EPT_VIOLATION_WRITABLE_BIT	4
+#घोषणा EPT_VIOLATION_EXECUTABLE_BIT	5
+#घोषणा EPT_VIOLATION_GVA_TRANSLATED_BIT 8
+#घोषणा EPT_VIOLATION_ACC_READ		(1 << EPT_VIOLATION_ACC_READ_BIT)
+#घोषणा EPT_VIOLATION_ACC_WRITE		(1 << EPT_VIOLATION_ACC_WRITE_BIT)
+#घोषणा EPT_VIOLATION_ACC_INSTR		(1 << EPT_VIOLATION_ACC_INSTR_BIT)
+#घोषणा EPT_VIOLATION_READABLE		(1 << EPT_VIOLATION_READABLE_BIT)
+#घोषणा EPT_VIOLATION_WRITABLE		(1 << EPT_VIOLATION_WRITABLE_BIT)
+#घोषणा EPT_VIOLATION_EXECUTABLE	(1 << EPT_VIOLATION_EXECUTABLE_BIT)
+#घोषणा EPT_VIOLATION_GVA_TRANSLATED	(1 << EPT_VIOLATION_GVA_TRANSLATED_BIT)
 
 /*
- * VM-instruction error numbers
+ * VM-inकाष्ठाion error numbers
  */
-enum vm_instruction_error_number {
+क्रमागत vm_inकाष्ठाion_error_number अणु
 	VMXERR_VMCALL_IN_VMX_ROOT_OPERATION = 1,
 	VMXERR_VMCLEAR_INVALID_ADDRESS = 2,
 	VMXERR_VMCLEAR_VMXON_POINTER = 3,
@@ -584,31 +585,31 @@ enum vm_instruction_error_number {
 	VMXERR_ENTRY_INVALID_VM_EXECUTION_CONTROL_FIELDS_IN_EXECUTIVE_VMCS = 25,
 	VMXERR_ENTRY_EVENTS_BLOCKED_BY_MOV_SS = 26,
 	VMXERR_INVALID_OPERAND_TO_INVEPT_INVVPID = 28,
-};
+पूर्ण;
 
 /*
- * VM-instruction errors that can be encountered on VM-Enter, used to trace
+ * VM-inकाष्ठाion errors that can be encountered on VM-Enter, used to trace
  * nested VM-Enter failures reported by hardware.  Errors unique to VM-Enter
  * from a SMI Transfer Monitor are not included as things have gone seriously
- * sideways if we get one of those...
+ * sideways अगर we get one of those...
  */
-#define VMX_VMENTER_INSTRUCTION_ERRORS \
-	{ VMXERR_VMLAUNCH_NONCLEAR_VMCS,		"VMLAUNCH_NONCLEAR_VMCS" }, \
-	{ VMXERR_VMRESUME_NONLAUNCHED_VMCS,		"VMRESUME_NONLAUNCHED_VMCS" }, \
-	{ VMXERR_VMRESUME_AFTER_VMXOFF,			"VMRESUME_AFTER_VMXOFF" }, \
-	{ VMXERR_ENTRY_INVALID_CONTROL_FIELD,		"VMENTRY_INVALID_CONTROL_FIELD" }, \
-	{ VMXERR_ENTRY_INVALID_HOST_STATE_FIELD,	"VMENTRY_INVALID_HOST_STATE_FIELD" }, \
-	{ VMXERR_ENTRY_EVENTS_BLOCKED_BY_MOV_SS,	"VMENTRY_EVENTS_BLOCKED_BY_MOV_SS" }
+#घोषणा VMX_VMENTER_INSTRUCTION_ERRORS \
+	अणु VMXERR_VMLAUNCH_NONCLEAR_VMCS,		"VMLAUNCH_NONCLEAR_VMCS" पूर्ण, \
+	अणु VMXERR_VMRESUME_NONLAUNCHED_VMCS,		"VMRESUME_NONLAUNCHED_VMCS" पूर्ण, \
+	अणु VMXERR_VMRESUME_AFTER_VMXOFF,			"VMRESUME_AFTER_VMXOFF" पूर्ण, \
+	अणु VMXERR_ENTRY_INVALID_CONTROL_FIELD,		"VMENTRY_INVALID_CONTROL_FIELD" पूर्ण, \
+	अणु VMXERR_ENTRY_INVALID_HOST_STATE_FIELD,	"VMENTRY_INVALID_HOST_STATE_FIELD" पूर्ण, \
+	अणु VMXERR_ENTRY_EVENTS_BLOCKED_BY_MOV_SS,	"VMENTRY_EVENTS_BLOCKED_BY_MOV_SS" पूर्ण
 
-enum vmx_l1d_flush_state {
+क्रमागत vmx_l1d_flush_state अणु
 	VMENTER_L1D_FLUSH_AUTO,
 	VMENTER_L1D_FLUSH_NEVER,
 	VMENTER_L1D_FLUSH_COND,
 	VMENTER_L1D_FLUSH_ALWAYS,
 	VMENTER_L1D_FLUSH_EPT_DISABLED,
 	VMENTER_L1D_FLUSH_NOT_REQUIRED,
-};
+पूर्ण;
 
-extern enum vmx_l1d_flush_state l1tf_vmx_mitigation;
+बाह्य क्रमागत vmx_l1d_flush_state l1tf_vmx_mitigation;
 
-#endif
+#पूर्ण_अगर

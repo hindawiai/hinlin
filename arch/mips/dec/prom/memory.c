@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * memory.c: memory initialisation code.
  *
  * Copyright (C) 1998 Harald Koerfgen, Frieder Streffer and Paul M. Antoine
  * Copyright (C) 2000, 2002  Maciej W. Rozycki
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/memblock.h>
-#include <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/types.h>
 
-#include <asm/addrspace.h>
-#include <asm/dec/machtype.h>
-#include <asm/dec/prom.h>
-#include <asm/page.h>
-#include <asm/sections.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/dec/machtype.h>
+#समावेश <यंत्र/dec/prom.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/sections.h>
 
 
-volatile unsigned long mem_err;		/* So we know an error occurred */
+अस्थिर अचिन्हित दीर्घ mem_err;		/* So we know an error occurred */
 
 /*
- * Probe memory in 4MB chunks, waiting for an error to tell us we've fallen
- * off the end of real memory.  Only suitable for the 2100/3100's (PMAX).
+ * Probe memory in 4MB chunks, रुकोing क्रम an error to tell us we've fallen
+ * off the end of real memory.  Only suitable क्रम the 2100/3100's (PMAX).
  */
 
-#define CHUNK_SIZE 0x400000
+#घोषणा CHUNK_SIZE 0x400000
 
-static __init void pmax_setup_memory_region(void)
-{
-	volatile unsigned char *memory_page, dummy;
-	char old_handler[0x80];
-	extern char genexcept_early;
+अटल __init व्योम pmax_setup_memory_region(व्योम)
+अणु
+	अस्थिर अचिन्हित अक्षर *memory_page, dummy;
+	अक्षर old_handler[0x80];
+	बाह्य अक्षर genexcept_early;
 
 	/* Install exception handler */
-	memcpy(&old_handler, (void *)(CKSEG0 + 0x80), 0x80);
-	memcpy((void *)(CKSEG0 + 0x80), &genexcept_early, 0x80);
+	स_नकल(&old_handler, (व्योम *)(CKSEG0 + 0x80), 0x80);
+	स_नकल((व्योम *)(CKSEG0 + 0x80), &genexcept_early, 0x80);
 
-	/* read unmapped and uncached (KSEG1)
+	/* पढ़ो unmapped and uncached (KSEG1)
 	 * DECstations have at least 4MB RAM
-	 * Assume less than 480MB of RAM, as this is max for 5000/2xx
-	 * FIXME this should be replaced by the first free page!
+	 * Assume less than 480MB of RAM, as this is max क्रम 5000/2xx
+	 * FIXME this should be replaced by the first मुक्त page!
 	 */
-	for (memory_page = (unsigned char *)CKSEG1 + CHUNK_SIZE;
-	     mem_err == 0 && memory_page < (unsigned char *)CKSEG1 + 0x1e00000;
-	     memory_page += CHUNK_SIZE) {
+	क्रम (memory_page = (अचिन्हित अक्षर *)CKSEG1 + CHUNK_SIZE;
+	     mem_err == 0 && memory_page < (अचिन्हित अक्षर *)CKSEG1 + 0x1e00000;
+	     memory_page += CHUNK_SIZE) अणु
 		dummy = *memory_page;
-	}
-	memcpy((void *)(CKSEG0 + 0x80), &old_handler, 0x80);
+	पूर्ण
+	स_नकल((व्योम *)(CKSEG0 + 0x80), &old_handler, 0x80);
 
-	memblock_add(0, (unsigned long)memory_page - CKSEG1 - CHUNK_SIZE);
-}
+	memblock_add(0, (अचिन्हित दीर्घ)memory_page - CKSEG1 - CHUNK_SIZE);
+पूर्ण
 
 /*
- * Use the REX prom calls to get hold of the memory bitmap, and thence
+ * Use the REX prom calls to get hold of the memory biपंचांगap, and thence
  * determine memory size.
  */
-static __init void rex_setup_memory_region(void)
-{
-	int i, bitmap_size;
-	unsigned long mem_start = 0, mem_size = 0;
+अटल __init व्योम rex_setup_memory_region(व्योम)
+अणु
+	पूर्णांक i, biपंचांगap_size;
+	अचिन्हित दीर्घ mem_start = 0, mem_size = 0;
 	memmap *bm;
 
-	/* some free 64k */
+	/* some मुक्त 64k */
 	bm = (memmap *)CKSEG0ADDR(0x28000);
 
-	bitmap_size = rex_getbitmap(bm);
+	biपंचांगap_size = rex_getbiपंचांगap(bm);
 
-	for (i = 0; i < bitmap_size; i++) {
+	क्रम (i = 0; i < biपंचांगap_size; i++) अणु
 		/* FIXME: very simplistically only add full sets of pages */
-		if (bm->bitmap[i] == 0xff)
+		अगर (bm->biपंचांगap[i] == 0xff)
 			mem_size += (8 * bm->pagesize);
-		else if (!mem_size)
+		अन्यथा अगर (!mem_size)
 			mem_start += (8 * bm->pagesize);
-		else {
+		अन्यथा अणु
 			memblock_add(mem_start, mem_size);
 			mem_start += mem_size + (8 * bm->pagesize);
 			mem_size = 0;
-		}
-	}
-	if (mem_size)
+		पूर्ण
+	पूर्ण
+	अगर (mem_size)
 		memblock_add(mem_start, mem_size);
-}
+पूर्ण
 
-void __init prom_meminit(u32 magic)
-{
-	if (!prom_is_rex(magic))
+व्योम __init prom_meminit(u32 magic)
+अणु
+	अगर (!prom_is_rex(magic))
 		pmax_setup_memory_region();
-	else
+	अन्यथा
 		rex_setup_memory_region();
-}
+पूर्ण
 
-void __init prom_free_prom_memory(void)
-{
-	unsigned long end;
+व्योम __init prom_मुक्त_prom_memory(व्योम)
+अणु
+	अचिन्हित दीर्घ end;
 
 	/*
 	 * Free everything below the kernel itself but leave
-	 * the first page reserved for the exception handlers.
+	 * the first page reserved क्रम the exception handlers.
 	 */
 
-#if IS_ENABLED(CONFIG_DECLANCE)
+#अगर IS_ENABLED(CONFIG_DECLANCE)
 	/*
-	 * Leave 128 KB reserved for Lance memory for
+	 * Leave 128 KB reserved क्रम Lance memory क्रम
 	 * IOASIC DECstations.
 	 *
-	 * XXX: save this address for use in dec_lance.c?
+	 * XXX: save this address क्रम use in dec_lance.c?
 	 */
-	if (IOASIC)
+	अगर (IOASIC)
 		end = __pa(&_text) - 0x00020000;
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		end = __pa(&_text);
 
-	free_init_pages("unused PROM memory", PAGE_SIZE, end);
-}
+	मुक्त_init_pages("unused PROM memory", PAGE_SIZE, end);
+पूर्ण

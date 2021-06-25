@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tascam-hwdep.c - a part of driver for TASCAM FireWire series
+ * tascam-hwdep.c - a part of driver क्रम TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
@@ -8,270 +9,270 @@
 /*
  * This codes give three functionality.
  *
- * 1.get firewire node information
- * 2.get notification about starting/stopping stream
+ * 1.get firewire node inक्रमmation
+ * 2.get notअगरication about starting/stopping stream
  * 3.lock/unlock stream
  */
 
-#include "tascam.h"
+#समावेश "tascam.h"
 
-static long tscm_hwdep_read_locked(struct snd_tscm *tscm, char __user *buf,
-				   long count, loff_t *offset)
+अटल दीर्घ tscm_hwdep_पढ़ो_locked(काष्ठा snd_tscm *tscm, अक्षर __user *buf,
+				   दीर्घ count, loff_t *offset)
 	__releases(&tscm->lock)
-{
-	struct snd_firewire_event_lock_status event = {
+अणु
+	काष्ठा snd_firewire_event_lock_status event = अणु
 		.type = SNDRV_FIREWIRE_EVENT_LOCK_STATUS,
-	};
+	पूर्ण;
 
 	event.status = (tscm->dev_lock_count > 0);
 	tscm->dev_lock_changed = false;
-	count = min_t(long, count, sizeof(event));
+	count = min_t(दीर्घ, count, माप(event));
 
 	spin_unlock_irq(&tscm->lock);
 
-	if (copy_to_user(buf, &event, count))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &event, count))
+		वापस -EFAULT;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static long tscm_hwdep_read_queue(struct snd_tscm *tscm, char __user *buf,
-				  long remained, loff_t *offset)
+अटल दीर्घ tscm_hwdep_पढ़ो_queue(काष्ठा snd_tscm *tscm, अक्षर __user *buf,
+				  दीर्घ reमुख्यed, loff_t *offset)
 	__releases(&tscm->lock)
-{
-	char __user *pos = buf;
-	unsigned int type = SNDRV_FIREWIRE_EVENT_TASCAM_CONTROL;
-	struct snd_firewire_tascam_change *entries = tscm->queue;
-	long count;
+अणु
+	अक्षर __user *pos = buf;
+	अचिन्हित पूर्णांक type = SNDRV_FIREWIRE_EVENT_TASCAM_CONTROL;
+	काष्ठा snd_firewire_tascam_change *entries = tscm->queue;
+	दीर्घ count;
 
 	// At least, one control event can be copied.
-	if (remained < sizeof(type) + sizeof(*entries)) {
+	अगर (reमुख्यed < माप(type) + माप(*entries)) अणु
 		spin_unlock_irq(&tscm->lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	// Copy the type field later.
-	count = sizeof(type);
-	remained -= sizeof(type);
-	pos += sizeof(type);
+	count = माप(type);
+	reमुख्यed -= माप(type);
+	pos += माप(type);
 
-	while (true) {
-		unsigned int head_pos;
-		unsigned int tail_pos;
-		unsigned int length;
+	जबतक (true) अणु
+		अचिन्हित पूर्णांक head_pos;
+		अचिन्हित पूर्णांक tail_pos;
+		अचिन्हित पूर्णांक length;
 
-		if (tscm->pull_pos == tscm->push_pos)
-			break;
-		else if (tscm->pull_pos < tscm->push_pos)
+		अगर (tscm->pull_pos == tscm->push_pos)
+			अवरोध;
+		अन्यथा अगर (tscm->pull_pos < tscm->push_pos)
 			tail_pos = tscm->push_pos;
-		else
+		अन्यथा
 			tail_pos = SND_TSCM_QUEUE_COUNT;
 		head_pos = tscm->pull_pos;
 
-		length = (tail_pos - head_pos) * sizeof(*entries);
-		if (remained < length)
-			length = rounddown(remained, sizeof(*entries));
-		if (length == 0)
-			break;
+		length = (tail_pos - head_pos) * माप(*entries);
+		अगर (reमुख्यed < length)
+			length = roundकरोwn(reमुख्यed, माप(*entries));
+		अगर (length == 0)
+			अवरोध;
 
 		spin_unlock_irq(&tscm->lock);
-		if (copy_to_user(pos, &entries[head_pos], length))
-			return -EFAULT;
+		अगर (copy_to_user(pos, &entries[head_pos], length))
+			वापस -EFAULT;
 
 		spin_lock_irq(&tscm->lock);
 
 		tscm->pull_pos = tail_pos % SND_TSCM_QUEUE_COUNT;
 
 		count += length;
-		remained -= length;
+		reमुख्यed -= length;
 		pos += length;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&tscm->lock);
 
-	if (copy_to_user(buf, &type, sizeof(type)))
-		return -EFAULT;
+	अगर (copy_to_user(buf, &type, माप(type)))
+		वापस -EFAULT;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static long hwdep_read(struct snd_hwdep *hwdep, char __user *buf, long count,
+अटल दीर्घ hwdep_पढ़ो(काष्ठा snd_hwdep *hwdep, अक्षर __user *buf, दीर्घ count,
 		       loff_t *offset)
-{
-	struct snd_tscm *tscm = hwdep->private_data;
-	DEFINE_WAIT(wait);
+अणु
+	काष्ठा snd_tscm *tscm = hwdep->निजी_data;
+	DEFINE_WAIT(रुको);
 
 	spin_lock_irq(&tscm->lock);
 
-	while (!tscm->dev_lock_changed && tscm->push_pos == tscm->pull_pos) {
-		prepare_to_wait(&tscm->hwdep_wait, &wait, TASK_INTERRUPTIBLE);
+	जबतक (!tscm->dev_lock_changed && tscm->push_pos == tscm->pull_pos) अणु
+		prepare_to_रुको(&tscm->hwdep_रुको, &रुको, TASK_INTERRUPTIBLE);
 		spin_unlock_irq(&tscm->lock);
 		schedule();
-		finish_wait(&tscm->hwdep_wait, &wait);
-		if (signal_pending(current))
-			return -ERESTARTSYS;
+		finish_रुको(&tscm->hwdep_रुको, &रुको);
+		अगर (संकेत_pending(current))
+			वापस -ERESTARTSYS;
 		spin_lock_irq(&tscm->lock);
-	}
+	पूर्ण
 
 	// NOTE: The acquired lock should be released in callee side.
-	if (tscm->dev_lock_changed) {
-		count = tscm_hwdep_read_locked(tscm, buf, count, offset);
-	} else if (tscm->push_pos != tscm->pull_pos) {
-		count = tscm_hwdep_read_queue(tscm, buf, count, offset);
-	} else {
+	अगर (tscm->dev_lock_changed) अणु
+		count = tscm_hwdep_पढ़ो_locked(tscm, buf, count, offset);
+	पूर्ण अन्यथा अगर (tscm->push_pos != tscm->pull_pos) अणु
+		count = tscm_hwdep_पढ़ो_queue(tscm, buf, count, offset);
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&tscm->lock);
 		count = 0;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static __poll_t hwdep_poll(struct snd_hwdep *hwdep, struct file *file,
-			       poll_table *wait)
-{
-	struct snd_tscm *tscm = hwdep->private_data;
+अटल __poll_t hwdep_poll(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
+			       poll_table *रुको)
+अणु
+	काष्ठा snd_tscm *tscm = hwdep->निजी_data;
 	__poll_t events;
 
-	poll_wait(file, &tscm->hwdep_wait, wait);
+	poll_रुको(file, &tscm->hwdep_रुको, रुको);
 
 	spin_lock_irq(&tscm->lock);
-	if (tscm->dev_lock_changed || tscm->push_pos != tscm->pull_pos)
+	अगर (tscm->dev_lock_changed || tscm->push_pos != tscm->pull_pos)
 		events = EPOLLIN | EPOLLRDNORM;
-	else
+	अन्यथा
 		events = 0;
 	spin_unlock_irq(&tscm->lock);
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
-static int hwdep_get_info(struct snd_tscm *tscm, void __user *arg)
-{
-	struct fw_device *dev = fw_parent_device(tscm->unit);
-	struct snd_firewire_get_info info;
+अटल पूर्णांक hwdep_get_info(काष्ठा snd_tscm *tscm, व्योम __user *arg)
+अणु
+	काष्ठा fw_device *dev = fw_parent_device(tscm->unit);
+	काष्ठा snd_firewire_get_info info;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	info.type = SNDRV_FIREWIRE_TYPE_TASCAM;
 	info.card = dev->card->index;
 	*(__be32 *)&info.guid[0] = cpu_to_be32(dev->config_rom[3]);
 	*(__be32 *)&info.guid[4] = cpu_to_be32(dev->config_rom[4]);
 	strscpy(info.device_name, dev_name(&dev->device),
-		sizeof(info.device_name));
+		माप(info.device_name));
 
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwdep_lock(struct snd_tscm *tscm)
-{
-	int err;
+अटल पूर्णांक hwdep_lock(काष्ठा snd_tscm *tscm)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&tscm->lock);
 
-	if (tscm->dev_lock_count == 0) {
+	अगर (tscm->dev_lock_count == 0) अणु
 		tscm->dev_lock_count = -1;
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EBUSY;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&tscm->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hwdep_unlock(struct snd_tscm *tscm)
-{
-	int err;
+अटल पूर्णांक hwdep_unlock(काष्ठा snd_tscm *tscm)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&tscm->lock);
 
-	if (tscm->dev_lock_count == -1) {
+	अगर (tscm->dev_lock_count == -1) अणु
 		tscm->dev_lock_count = 0;
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EBADFD;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&tscm->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tscm_hwdep_state(struct snd_tscm *tscm, void __user *arg)
-{
-	if (copy_to_user(arg, tscm->state, sizeof(tscm->state)))
-		return -EFAULT;
+अटल पूर्णांक tscm_hwdep_state(काष्ठा snd_tscm *tscm, व्योम __user *arg)
+अणु
+	अगर (copy_to_user(arg, tscm->state, माप(tscm->state)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwdep_release(struct snd_hwdep *hwdep, struct file *file)
-{
-	struct snd_tscm *tscm = hwdep->private_data;
+अटल पूर्णांक hwdep_release(काष्ठा snd_hwdep *hwdep, काष्ठा file *file)
+अणु
+	काष्ठा snd_tscm *tscm = hwdep->निजी_data;
 
 	spin_lock_irq(&tscm->lock);
-	if (tscm->dev_lock_count == -1)
+	अगर (tscm->dev_lock_count == -1)
 		tscm->dev_lock_count = 0;
 	spin_unlock_irq(&tscm->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hwdep_ioctl(struct snd_hwdep *hwdep, struct file *file,
-	    unsigned int cmd, unsigned long arg)
-{
-	struct snd_tscm *tscm = hwdep->private_data;
+अटल पूर्णांक hwdep_ioctl(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
+	    अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा snd_tscm *tscm = hwdep->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_FIREWIRE_IOCTL_GET_INFO:
-		return hwdep_get_info(tscm, (void __user *)arg);
-	case SNDRV_FIREWIRE_IOCTL_LOCK:
-		return hwdep_lock(tscm);
-	case SNDRV_FIREWIRE_IOCTL_UNLOCK:
-		return hwdep_unlock(tscm);
-	case SNDRV_FIREWIRE_IOCTL_TASCAM_STATE:
-		return tscm_hwdep_state(tscm, (void __user *)arg);
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+	चयन (cmd) अणु
+	हाल SNDRV_FIREWIRE_IOCTL_GET_INFO:
+		वापस hwdep_get_info(tscm, (व्योम __user *)arg);
+	हाल SNDRV_FIREWIRE_IOCTL_LOCK:
+		वापस hwdep_lock(tscm);
+	हाल SNDRV_FIREWIRE_IOCTL_UNLOCK:
+		वापस hwdep_unlock(tscm);
+	हाल SNDRV_FIREWIRE_IOCTL_TASCAM_STATE:
+		वापस tscm_hwdep_state(tscm, (व्योम __user *)arg);
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int hwdep_compat_ioctl(struct snd_hwdep *hwdep, struct file *file,
-			      unsigned int cmd, unsigned long arg)
-{
-	return hwdep_ioctl(hwdep, file, cmd,
-			   (unsigned long)compat_ptr(arg));
-}
-#else
-#define hwdep_compat_ioctl NULL
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक hwdep_compat_ioctl(काष्ठा snd_hwdep *hwdep, काष्ठा file *file,
+			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस hwdep_ioctl(hwdep, file, cmd,
+			   (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#अन्यथा
+#घोषणा hwdep_compat_ioctl शून्य
+#पूर्ण_अगर
 
-int snd_tscm_create_hwdep_device(struct snd_tscm *tscm)
-{
-	static const struct snd_hwdep_ops ops = {
-		.read		= hwdep_read,
+पूर्णांक snd_tscm_create_hwdep_device(काष्ठा snd_tscm *tscm)
+अणु
+	अटल स्थिर काष्ठा snd_hwdep_ops ops = अणु
+		.पढ़ो		= hwdep_पढ़ो,
 		.release	= hwdep_release,
 		.poll		= hwdep_poll,
 		.ioctl		= hwdep_ioctl,
 		.ioctl_compat	= hwdep_compat_ioctl,
-	};
-	struct snd_hwdep *hwdep;
-	int err;
+	पूर्ण;
+	काष्ठा snd_hwdep *hwdep;
+	पूर्णांक err;
 
 	err = snd_hwdep_new(tscm->card, "Tascam", 0, &hwdep);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	strcpy(hwdep->name, "Tascam");
-	hwdep->iface = SNDRV_HWDEP_IFACE_FW_TASCAM;
+	म_नकल(hwdep->name, "Tascam");
+	hwdep->अगरace = SNDRV_HWDEP_IFACE_FW_TASCAM;
 	hwdep->ops = ops;
-	hwdep->private_data = tscm;
+	hwdep->निजी_data = tscm;
 	hwdep->exclusive = true;
 
 	tscm->hwdep = hwdep;
 
-	return err;
-}
+	वापस err;
+पूर्ण

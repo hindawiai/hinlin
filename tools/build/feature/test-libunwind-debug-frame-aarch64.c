@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <libunwind-aarch64.h>
-#include <stdlib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <libunwind-aarch64.h>
+#समावेश <मानककोष.स>
 
-extern int
-UNW_OBJ(dwarf_find_debug_frame) (int found, unw_dyn_info_t *di_debug,
+बाह्य पूर्णांक
+UNW_OBJ(dwarf_find_debug_frame) (पूर्णांक found, unw_dyn_info_t *di_debug,
 				 unw_word_t ip, unw_word_t segbase,
-				 const char *obj_name, unw_word_t start,
+				 स्थिर अक्षर *obj_name, unw_word_t start,
 				 unw_word_t end);
 
-#define dwarf_find_debug_frame UNW_OBJ(dwarf_find_debug_frame)
+#घोषणा dwarf_find_debug_frame UNW_OBJ(dwarf_find_debug_frame)
 
-int main(void)
-{
-	dwarf_find_debug_frame(0, NULL, 0, 0, NULL, 0, 0);
-	return 0;
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	dwarf_find_debug_frame(0, शून्य, 0, 0, शून्य, 0, 0);
+	वापस 0;
+पूर्ण

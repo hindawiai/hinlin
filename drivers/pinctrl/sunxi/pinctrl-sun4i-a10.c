@@ -1,24 +1,25 @@
+<शैली गुरु>
 /*
  * Allwinner A10 SoCs pinctrl driver.
  *
  * Copyright (C) 2014 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun4i_a10_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun4i_a10_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(A, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -100,7 +101,7 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "emac"),		/* ERXERR */
 		  SUNXI_FUNCTION(0x3, "spi3"),		/* CS1 */
-		  SUNXI_FUNCTION_VARIANT(0x5, "gmac",	/* GNULL / ERXERR */
+		  SUNXI_FUNCTION_VARIANT(0x5, "gmac",	/* Gशून्य / ERXERR */
 					 PINCTRL_SUN7I_A20 |
 					 PINCTRL_SUN8I_R40),
 		  SUNXI_FUNCTION_VARIANT(0x6, "i2s1",	/* MCLK */
@@ -146,7 +147,7 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 		  SUNXI_FUNCTION(0x2, "emac"),		/* ETXCK */
 		  SUNXI_FUNCTION(0x3, "uart7"),		/* TX */
 		  SUNXI_FUNCTION(0x4, "uart1"),		/* DTR */
-		  SUNXI_FUNCTION_VARIANT(0x5, "gmac",	/* GNULL / ETXCK */
+		  SUNXI_FUNCTION_VARIANT(0x5, "gmac",	/* Gशून्य / ETXCK */
 					 PINCTRL_SUN7I_A20 |
 					 PINCTRL_SUN8I_R40),
 		  SUNXI_FUNCTION_VARIANT(0x6, "i2s1",	/* BCLK */
@@ -182,7 +183,7 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 		  SUNXI_FUNCTION(0x2, "emac"),		/* ETXERR */
 		  SUNXI_FUNCTION(0x3, "can"),		/* RX */
 		  SUNXI_FUNCTION(0x4, "uart1"),		/* RING */
-		  SUNXI_FUNCTION_VARIANT(0x5, "gmac",	/* GNULL / ETXERR */
+		  SUNXI_FUNCTION_VARIANT(0x5, "gmac",	/* Gशून्य / ETXERR */
 					 PINCTRL_SUN7I_A20 |
 					 PINCTRL_SUN8I_R40),
 		  SUNXI_FUNCTION_VARIANT(0x6, "i2s1",	/* DI */
@@ -232,7 +233,7 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 		  /*
 		   * On A10 there's only one I2S controller and the pin group
 		   * is simply named "i2s". On A20 there's two and thus it's
-		   * renamed to "i2s0". Deal with these name here, in order
+		   * नामd to "i2s0". Deal with these name here, in order
 		   * to satisfy existing device trees.
 		   */
 		  SUNXI_FUNCTION_VARIANT(0x2, "i2s",	/* MCLK */
@@ -305,7 +306,7 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 					 PINCTRL_SUN7I_A20 |
 					 PINCTRL_SUN8I_R40),
 		  SUNXI_FUNCTION(0x3, "ac97"),		/* DI */
-		/* Undocumented mux function on A10 - See SPDIF MCLK above */
+		/* Unकरोcumented mux function on A10 - See SPDIF MCLK above */
 		  SUNXI_FUNCTION_VARIANT(0x4, "spdif",	/* SPDIF IN */
 					 PINCTRL_SUN4I_A10 |
 					 PINCTRL_SUN7I_A20)),
@@ -313,7 +314,7 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION(0x2, "spi2"),		/* CS1 */
-		/* Undocumented mux function on A10 - See SPDIF MCLK above */
+		/* Unकरोcumented mux function on A10 - See SPDIF MCLK above */
 		  SUNXI_FUNCTION(0x4, "spdif")),        /* SPDIF OUT */
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(B, 14),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
@@ -1282,45 +1283,45 @@ static const struct sunxi_desc_pin sun4i_a10_pins[] = {
 					 PINCTRL_SUN7I_A20),
 		  SUNXI_FUNCTION_VARIANT(0x6, "pwm",	/* PWM3 */
 					 PINCTRL_SUN8I_R40)),
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun4i_a10_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun4i_a10_pinctrl_data = अणु
 	.pins = sun4i_a10_pins,
 	.npins = ARRAY_SIZE(sun4i_a10_pins),
 	.irq_banks = 1,
-	.irq_read_needs_mux = true,
+	.irq_पढ़ो_needs_mux = true,
 	.disable_strict_mode = true,
-};
+पूर्ण;
 
-static int sun4i_a10_pinctrl_probe(struct platform_device *pdev)
-{
-	unsigned long variant = (unsigned long)of_device_get_match_data(&pdev->dev);
+अटल पूर्णांक sun4i_a10_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अचिन्हित दीर्घ variant = (अचिन्हित दीर्घ)of_device_get_match_data(&pdev->dev);
 
-	return sunxi_pinctrl_init_with_variant(pdev, &sun4i_a10_pinctrl_data,
+	वापस sunxi_pinctrl_init_with_variant(pdev, &sun4i_a10_pinctrl_data,
 					       variant);
-}
+पूर्ण
 
-static const struct of_device_id sun4i_a10_pinctrl_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sun4i_a10_pinctrl_match[] = अणु
+	अणु
 		.compatible = "allwinner,sun4i-a10-pinctrl",
-		.data = (void *)PINCTRL_SUN4I_A10
-	},
-	{
+		.data = (व्योम *)PINCTRL_SUN4I_A10
+	पूर्ण,
+	अणु
 		.compatible = "allwinner,sun7i-a20-pinctrl",
-		.data = (void *)PINCTRL_SUN7I_A20
-	},
-	{
+		.data = (व्योम *)PINCTRL_SUN7I_A20
+	पूर्ण,
+	अणु
 		.compatible = "allwinner,sun8i-r40-pinctrl",
-		.data = (void *)PINCTRL_SUN8I_R40
-	},
-	{}
-};
+		.data = (व्योम *)PINCTRL_SUN8I_R40
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver sun4i_a10_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun4i_a10_pinctrl_driver = अणु
 	.probe	= sun4i_a10_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun4i-pinctrl",
 		.of_match_table	= sun4i_a10_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun4i_a10_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun4i_a10_pinctrl_driver);

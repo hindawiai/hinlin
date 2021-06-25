@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4/T5 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4/T5 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2003-2014 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,11 +32,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef __T4_PCI_ID_TBL_H__
-#define __T4_PCI_ID_TBL_H__
+#अगर_अघोषित __T4_PCI_ID_TBL_H__
+#घोषणा __T4_PCI_ID_TBL_H__
 
-/* The code can defined cpp macros for creating a PCI Device ID Table. This is
- * useful because it allows the PCI ID Table to be maintained in a single place.
+/* The code can defined cpp macros क्रम creating a PCI Device ID Table. This is
+ * useful because it allows the PCI ID Table to be मुख्यtained in a single place.
  *
  * The macros are:
  *
@@ -44,52 +45,52 @@
  *
  * CH_PCI_DEVICE_ID_FUNCTION
  *   -- The PCI Function Number to use in the PCI Device ID Table.  "0"
- *   -- for drivers attaching to PF0-3, "4" for drivers attaching to PF4,
- *   -- "8" for drivers attaching to SR-IOV Virtual Functions, etc.
+ *   -- क्रम drivers attaching to PF0-3, "4" क्रम drivers attaching to PF4,
+ *   -- "8" क्रम drivers attaching to SR-IOV Virtual Functions, etc.
  *
  * CH_PCI_DEVICE_ID_FUNCTION2 [optional]
  *   -- If defined, create a PCI Device ID Table with both
  *   -- CH_PCI_DEVICE_ID_FUNCTION and CH_PCI_DEVICE_ID_FUNCTION2 populated.
  *
  * CH_PCI_ID_TABLE_ENTRY(DeviceID)
- *   -- Used for the individual PCI Device ID entries.  Note that we will
+ *   -- Used क्रम the inभागidual PCI Device ID entries.  Note that we will
  *   -- be adding a trailing comma (",") after all of the entries (and
- *   -- between the pairs of entries if CH_PCI_DEVICE_ID_FUNCTION2 is defined).
+ *   -- between the pairs of entries अगर CH_PCI_DEVICE_ID_FUNCTION2 is defined).
  *
  * CH_PCI_DEVICE_ID_TABLE_DEFINE_END
  *   -- Used to finish the definition of the PCI ID Table.  Note that we
  *   -- will be adding a trailing semi-colon (";") here.
  */
-#ifndef CH_PCI_DEVICE_ID_FUNCTION
-#error CH_PCI_DEVICE_ID_FUNCTION not defined!
-#endif
-#ifndef CH_PCI_ID_TABLE_ENTRY
-#error CH_PCI_ID_TABLE_ENTRY not defined!
-#endif
-#ifndef CH_PCI_DEVICE_ID_TABLE_DEFINE_END
-#error CH_PCI_DEVICE_ID_TABLE_DEFINE_END not defined!
-#endif
+#अगर_अघोषित CH_PCI_DEVICE_ID_FUNCTION
+#त्रुटि CH_PCI_DEVICE_ID_FUNCTION not defined!
+#पूर्ण_अगर
+#अगर_अघोषित CH_PCI_ID_TABLE_ENTRY
+#त्रुटि CH_PCI_ID_TABLE_ENTRY not defined!
+#पूर्ण_अगर
+#अगर_अघोषित CH_PCI_DEVICE_ID_TABLE_DEFINE_END
+#त्रुटि CH_PCI_DEVICE_ID_TABLE_DEFINE_END not defined!
+#पूर्ण_अगर
 
 /* T4 and later ASICs use a PCI Device ID scheme of 0xVFPP where:
  *
- *   V  = "4" for T4; "5" for T5, etc.
- *   F  = "0" for PF 0..3; "4".."7" for PF4..7; and "8" for VFs
+ *   V  = "4" क्रम T4; "5" क्रम T5, etc.
+ *   F  = "0" क्रम PF 0..3; "4".."7" क्रम PF4..7; and "8" क्रम VFs
  *   PP = adapter product designation
  *
  * We use this consistency in order to create the proper PCI Device IDs
- * for the specified CH_PCI_DEVICE_ID_FUNCTION.
+ * क्रम the specअगरied CH_PCI_DEVICE_ID_FUNCTION.
  */
-#ifndef CH_PCI_DEVICE_ID_FUNCTION2
-#define CH_PCI_ID_TABLE_FENTRY(devid) \
+#अगर_अघोषित CH_PCI_DEVICE_ID_FUNCTION2
+#घोषणा CH_PCI_ID_TABLE_FENTRY(devid) \
 	CH_PCI_ID_TABLE_ENTRY((devid) | \
 			      ((CH_PCI_DEVICE_ID_FUNCTION) << 8))
-#else
-#define CH_PCI_ID_TABLE_FENTRY(devid) \
+#अन्यथा
+#घोषणा CH_PCI_ID_TABLE_FENTRY(devid) \
 	CH_PCI_ID_TABLE_ENTRY((devid) | \
 			      ((CH_PCI_DEVICE_ID_FUNCTION) << 8)), \
 	CH_PCI_ID_TABLE_ENTRY((devid) | \
 			      ((CH_PCI_DEVICE_ID_FUNCTION2) << 8))
-#endif
+#पूर्ण_अगर
 
 CH_PCI_DEVICE_ID_TABLE_DEFINE_BEGIN
 	/* T4 adapters:
@@ -222,4 +223,4 @@ CH_PCI_DEVICE_ID_TABLE_DEFINE_BEGIN
 	CH_PCI_ID_TABLE_FENTRY(0x6092), /* Custom T62100-CR-LOM */
 CH_PCI_DEVICE_ID_TABLE_DEFINE_END;
 
-#endif /* __T4_PCI_ID_TBL_H__ */
+#पूर्ण_अगर /* __T4_PCI_ID_TBL_H__ */

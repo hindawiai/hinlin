@@ -1,358 +1,359 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2009, Oracle.  All rights reserved.
  *
  * Convert socket addresses to presentation addresses and universal
  * addresses, and vice versa.
  *
- * Universal addresses are introduced by RFC 1833 and further refined by
- * recent RFCs describing NFSv4.  The universal address format is part
- * of the external (network) interface provided by rpcbind version 3
+ * Universal addresses are पूर्णांकroduced by RFC 1833 and further refined by
+ * recent RFCs describing NFSv4.  The universal address क्रमmat is part
+ * of the बाह्यal (network) पूर्णांकerface provided by rpcbind version 3
  * and 4, and by NFSv4.  Such an address is a string containing a
- * presentation format IP address followed by a port number in
- * "hibyte.lobyte" format.
+ * presentation क्रमmat IP address followed by a port number in
+ * "hibyte.lobyte" क्रमmat.
  *
  * IPv6 addresses can also include a scope ID, typically denoted by
- * a '%' followed by a device name or a non-negative integer.  Refer to
- * RFC 4291, Section 2.2 for details on IPv6 presentation formats.
+ * a '%' followed by a device name or a non-negative पूर्णांकeger.  Refer to
+ * RFC 4291, Section 2.2 क्रम details on IPv6 presentation क्रमmats.
  */
 
-#include <net/ipv6.h>
-#include <linux/sunrpc/addr.h>
-#include <linux/sunrpc/msg_prot.h>
-#include <linux/slab.h>
-#include <linux/export.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/sunrpc/addr.h>
+#समावेश <linux/sunrpc/msg_prot.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 
-static size_t rpc_ntop6_noscopeid(const struct sockaddr *sap,
-				  char *buf, const int buflen)
-{
-	const struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sap;
-	const struct in6_addr *addr = &sin6->sin6_addr;
+अटल माप_प्रकार rpc_ntop6_noscopeid(स्थिर काष्ठा sockaddr *sap,
+				  अक्षर *buf, स्थिर पूर्णांक buflen)
+अणु
+	स्थिर काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)sap;
+	स्थिर काष्ठा in6_addr *addr = &sin6->sin6_addr;
 
 	/*
 	 * RFC 4291, Section 2.2.2
 	 *
 	 * Shorthanded ANY address
 	 */
-	if (ipv6_addr_any(addr))
-		return snprintf(buf, buflen, "::");
+	अगर (ipv6_addr_any(addr))
+		वापस snम_लिखो(buf, buflen, "::");
 
 	/*
 	 * RFC 4291, Section 2.2.2
 	 *
 	 * Shorthanded loopback address
 	 */
-	if (ipv6_addr_loopback(addr))
-		return snprintf(buf, buflen, "::1");
+	अगर (ipv6_addr_loopback(addr))
+		वापस snम_लिखो(buf, buflen, "::1");
 
 	/*
 	 * RFC 4291, Section 2.2.3
 	 *
-	 * Special presentation address format for mapped v4
+	 * Special presentation address क्रमmat क्रम mapped v4
 	 * addresses.
 	 */
-	if (ipv6_addr_v4mapped(addr))
-		return snprintf(buf, buflen, "::ffff:%pI4",
+	अगर (ipv6_addr_v4mapped(addr))
+		वापस snम_लिखो(buf, buflen, "::ffff:%pI4",
 					&addr->s6_addr32[3]);
 
 	/*
 	 * RFC 4291, Section 2.2.1
 	 */
-	return snprintf(buf, buflen, "%pI6c", addr);
-}
+	वापस snम_लिखो(buf, buflen, "%pI6c", addr);
+पूर्ण
 
-static size_t rpc_ntop6(const struct sockaddr *sap,
-			char *buf, const size_t buflen)
-{
-	const struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sap;
-	char scopebuf[IPV6_SCOPE_ID_LEN];
-	size_t len;
-	int rc;
+अटल माप_प्रकार rpc_ntop6(स्थिर काष्ठा sockaddr *sap,
+			अक्षर *buf, स्थिर माप_प्रकार buflen)
+अणु
+	स्थिर काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)sap;
+	अक्षर scopebuf[IPV6_SCOPE_ID_LEN];
+	माप_प्रकार len;
+	पूर्णांक rc;
 
 	len = rpc_ntop6_noscopeid(sap, buf, buflen);
-	if (unlikely(len == 0))
-		return len;
+	अगर (unlikely(len == 0))
+		वापस len;
 
-	if (!(ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_LINKLOCAL))
-		return len;
-	if (sin6->sin6_scope_id == 0)
-		return len;
+	अगर (!(ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_LINKLOCAL))
+		वापस len;
+	अगर (sin6->sin6_scope_id == 0)
+		वापस len;
 
-	rc = snprintf(scopebuf, sizeof(scopebuf), "%c%u",
+	rc = snम_लिखो(scopebuf, माप(scopebuf), "%c%u",
 			IPV6_SCOPE_DELIMITER, sin6->sin6_scope_id);
-	if (unlikely((size_t)rc >= sizeof(scopebuf)))
-		return 0;
+	अगर (unlikely((माप_प्रकार)rc >= माप(scopebuf)))
+		वापस 0;
 
 	len += rc;
-	if (unlikely(len >= buflen))
-		return 0;
+	अगर (unlikely(len >= buflen))
+		वापस 0;
 
-	strcat(buf, scopebuf);
-	return len;
-}
+	म_जोड़ो(buf, scopebuf);
+	वापस len;
+पूर्ण
 
-#else	/* !IS_ENABLED(CONFIG_IPV6) */
+#अन्यथा	/* !IS_ENABLED(CONFIG_IPV6) */
 
-static size_t rpc_ntop6_noscopeid(const struct sockaddr *sap,
-				  char *buf, const int buflen)
-{
-	return 0;
-}
+अटल माप_प्रकार rpc_ntop6_noscopeid(स्थिर काष्ठा sockaddr *sap,
+				  अक्षर *buf, स्थिर पूर्णांक buflen)
+अणु
+	वापस 0;
+पूर्ण
 
-static size_t rpc_ntop6(const struct sockaddr *sap,
-			char *buf, const size_t buflen)
-{
-	return 0;
-}
+अटल माप_प्रकार rpc_ntop6(स्थिर काष्ठा sockaddr *sap,
+			अक्षर *buf, स्थिर माप_प्रकार buflen)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif	/* !IS_ENABLED(CONFIG_IPV6) */
+#पूर्ण_अगर	/* !IS_ENABLED(CONFIG_IPV6) */
 
-static int rpc_ntop4(const struct sockaddr *sap,
-		     char *buf, const size_t buflen)
-{
-	const struct sockaddr_in *sin = (struct sockaddr_in *)sap;
+अटल पूर्णांक rpc_ntop4(स्थिर काष्ठा sockaddr *sap,
+		     अक्षर *buf, स्थिर माप_प्रकार buflen)
+अणु
+	स्थिर काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)sap;
 
-	return snprintf(buf, buflen, "%pI4", &sin->sin_addr);
-}
+	वापस snम_लिखो(buf, buflen, "%pI4", &sin->sin_addr);
+पूर्ण
 
 /**
- * rpc_ntop - construct a presentation address in @buf
+ * rpc_ntop - स्थिरruct a presentation address in @buf
  * @sap: socket address
- * @buf: construction area
+ * @buf: स्थिरruction area
  * @buflen: size of @buf, in bytes
  *
- * Plants a %NUL-terminated string in @buf and returns the length
- * of the string, excluding the %NUL.  Otherwise zero is returned.
+ * Plants a %NUL-terminated string in @buf and वापसs the length
+ * of the string, excluding the %NUL.  Otherwise zero is वापसed.
  */
-size_t rpc_ntop(const struct sockaddr *sap, char *buf, const size_t buflen)
-{
-	switch (sap->sa_family) {
-	case AF_INET:
-		return rpc_ntop4(sap, buf, buflen);
-	case AF_INET6:
-		return rpc_ntop6(sap, buf, buflen);
-	}
+माप_प्रकार rpc_ntop(स्थिर काष्ठा sockaddr *sap, अक्षर *buf, स्थिर माप_प्रकार buflen)
+अणु
+	चयन (sap->sa_family) अणु
+	हाल AF_INET:
+		वापस rpc_ntop4(sap, buf, buflen);
+	हाल AF_INET6:
+		वापस rpc_ntop6(sap, buf, buflen);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpc_ntop);
 
-static size_t rpc_pton4(const char *buf, const size_t buflen,
-			struct sockaddr *sap, const size_t salen)
-{
-	struct sockaddr_in *sin = (struct sockaddr_in *)sap;
+अटल माप_प्रकार rpc_pton4(स्थिर अक्षर *buf, स्थिर माप_प्रकार buflen,
+			काष्ठा sockaddr *sap, स्थिर माप_प्रकार salen)
+अणु
+	काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)sap;
 	u8 *addr = (u8 *)&sin->sin_addr.s_addr;
 
-	if (buflen > INET_ADDRSTRLEN || salen < sizeof(struct sockaddr_in))
-		return 0;
+	अगर (buflen > INET_ADDRSTRLEN || salen < माप(काष्ठा sockaddr_in))
+		वापस 0;
 
-	memset(sap, 0, sizeof(struct sockaddr_in));
+	स_रखो(sap, 0, माप(काष्ठा sockaddr_in));
 
-	if (in4_pton(buf, buflen, addr, '\0', NULL) == 0)
-		return 0;
+	अगर (in4_pton(buf, buflen, addr, '\0', शून्य) == 0)
+		वापस 0;
 
 	sin->sin_family = AF_INET;
-	return sizeof(struct sockaddr_in);
-}
+	वापस माप(काष्ठा sockaddr_in);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static int rpc_parse_scope_id(struct net *net, const char *buf,
-			      const size_t buflen, const char *delim,
-			      struct sockaddr_in6 *sin6)
-{
-	char *p;
-	size_t len;
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल पूर्णांक rpc_parse_scope_id(काष्ठा net *net, स्थिर अक्षर *buf,
+			      स्थिर माप_प्रकार buflen, स्थिर अक्षर *delim,
+			      काष्ठा sockaddr_in6 *sin6)
+अणु
+	अक्षर *p;
+	माप_प्रकार len;
 
-	if ((buf + buflen) == delim)
-		return 1;
+	अगर ((buf + buflen) == delim)
+		वापस 1;
 
-	if (*delim != IPV6_SCOPE_DELIMITER)
-		return 0;
+	अगर (*delim != IPV6_SCOPE_DELIMITER)
+		वापस 0;
 
-	if (!(ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_LINKLOCAL))
-		return 0;
+	अगर (!(ipv6_addr_type(&sin6->sin6_addr) & IPV6_ADDR_LINKLOCAL))
+		वापस 0;
 
 	len = (buf + buflen) - delim - 1;
 	p = kmemdup_nul(delim + 1, len, GFP_KERNEL);
-	if (p) {
+	अगर (p) अणु
 		u32 scope_id = 0;
-		struct net_device *dev;
+		काष्ठा net_device *dev;
 
 		dev = dev_get_by_name(net, p);
-		if (dev != NULL) {
-			scope_id = dev->ifindex;
+		अगर (dev != शून्य) अणु
+			scope_id = dev->अगरindex;
 			dev_put(dev);
-		} else {
-			if (kstrtou32(p, 10, &scope_id) != 0) {
-				kfree(p);
-				return 0;
-			}
-		}
+		पूर्ण अन्यथा अणु
+			अगर (kstrtou32(p, 10, &scope_id) != 0) अणु
+				kमुक्त(p);
+				वापस 0;
+			पूर्ण
+		पूर्ण
 
-		kfree(p);
+		kमुक्त(p);
 
 		sin6->sin6_scope_id = scope_id;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t rpc_pton6(struct net *net, const char *buf, const size_t buflen,
-			struct sockaddr *sap, const size_t salen)
-{
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sap;
+अटल माप_प्रकार rpc_pton6(काष्ठा net *net, स्थिर अक्षर *buf, स्थिर माप_प्रकार buflen,
+			काष्ठा sockaddr *sap, स्थिर माप_प्रकार salen)
+अणु
+	काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)sap;
 	u8 *addr = (u8 *)&sin6->sin6_addr.in6_u;
-	const char *delim;
+	स्थिर अक्षर *delim;
 
-	if (buflen > (INET6_ADDRSTRLEN + IPV6_SCOPE_ID_LEN) ||
-	    salen < sizeof(struct sockaddr_in6))
-		return 0;
+	अगर (buflen > (INET6_ADDRSTRLEN + IPV6_SCOPE_ID_LEN) ||
+	    salen < माप(काष्ठा sockaddr_in6))
+		वापस 0;
 
-	memset(sap, 0, sizeof(struct sockaddr_in6));
+	स_रखो(sap, 0, माप(काष्ठा sockaddr_in6));
 
-	if (in6_pton(buf, buflen, addr, IPV6_SCOPE_DELIMITER, &delim) == 0)
-		return 0;
+	अगर (in6_pton(buf, buflen, addr, IPV6_SCOPE_DELIMITER, &delim) == 0)
+		वापस 0;
 
-	if (!rpc_parse_scope_id(net, buf, buflen, delim, sin6))
-		return 0;
+	अगर (!rpc_parse_scope_id(net, buf, buflen, delim, sin6))
+		वापस 0;
 
 	sin6->sin6_family = AF_INET6;
-	return sizeof(struct sockaddr_in6);
-}
-#else
-static size_t rpc_pton6(struct net *net, const char *buf, const size_t buflen,
-			struct sockaddr *sap, const size_t salen)
-{
-	return 0;
-}
-#endif
+	वापस माप(काष्ठा sockaddr_in6);
+पूर्ण
+#अन्यथा
+अटल माप_प्रकार rpc_pton6(काष्ठा net *net, स्थिर अक्षर *buf, स्थिर माप_प्रकार buflen,
+			काष्ठा sockaddr *sap, स्थिर माप_प्रकार salen)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * rpc_pton - Construct a sockaddr in @sap
+ * rpc_pton - Conकाष्ठा a sockaddr in @sap
  * @net: applicable network namespace
- * @buf: C string containing presentation format IP address
+ * @buf: C string containing presentation क्रमmat IP address
  * @buflen: length of presentation address in bytes
- * @sap: buffer into which to plant socket address
+ * @sap: buffer पूर्णांकo which to plant socket address
  * @salen: size of buffer in bytes
  *
- * Returns the size of the socket address if successful; otherwise
- * zero is returned.
+ * Returns the size of the socket address अगर successful; otherwise
+ * zero is वापसed.
  *
- * Plants a socket address in @sap and returns the size of the
- * socket address, if successful.  Returns zero if an error
+ * Plants a socket address in @sap and वापसs the size of the
+ * socket address, अगर successful.  Returns zero अगर an error
  * occurred.
  */
-size_t rpc_pton(struct net *net, const char *buf, const size_t buflen,
-		struct sockaddr *sap, const size_t salen)
-{
-	unsigned int i;
+माप_प्रकार rpc_pton(काष्ठा net *net, स्थिर अक्षर *buf, स्थिर माप_प्रकार buflen,
+		काष्ठा sockaddr *sap, स्थिर माप_प्रकार salen)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < buflen; i++)
-		if (buf[i] == ':')
-			return rpc_pton6(net, buf, buflen, sap, salen);
-	return rpc_pton4(buf, buflen, sap, salen);
-}
+	क्रम (i = 0; i < buflen; i++)
+		अगर (buf[i] == ':')
+			वापस rpc_pton6(net, buf, buflen, sap, salen);
+	वापस rpc_pton4(buf, buflen, sap, salen);
+पूर्ण
 EXPORT_SYMBOL_GPL(rpc_pton);
 
 /**
- * rpc_sockaddr2uaddr - Construct a universal address string from @sap.
+ * rpc_sockaddr2uaddr - Conकाष्ठा a universal address string from @sap.
  * @sap: socket address
  * @gfp_flags: allocation mode
  *
  * Returns a %NUL-terminated string in dynamically allocated memory;
- * otherwise NULL is returned if an error occurred.  Caller must
- * free the returned string.
+ * otherwise शून्य is वापसed अगर an error occurred.  Caller must
+ * मुक्त the वापसed string.
  */
-char *rpc_sockaddr2uaddr(const struct sockaddr *sap, gfp_t gfp_flags)
-{
-	char portbuf[RPCBIND_MAXUADDRPLEN];
-	char addrbuf[RPCBIND_MAXUADDRLEN];
-	unsigned short port;
+अक्षर *rpc_sockaddr2uaddr(स्थिर काष्ठा sockaddr *sap, gfp_t gfp_flags)
+अणु
+	अक्षर portbuf[RPCBIND_MAXUADDRPLEN];
+	अक्षर addrbuf[RPCBIND_MAXUADDRLEN];
+	अचिन्हित लघु port;
 
-	switch (sap->sa_family) {
-	case AF_INET:
-		if (rpc_ntop4(sap, addrbuf, sizeof(addrbuf)) == 0)
-			return NULL;
-		port = ntohs(((struct sockaddr_in *)sap)->sin_port);
-		break;
-	case AF_INET6:
-		if (rpc_ntop6_noscopeid(sap, addrbuf, sizeof(addrbuf)) == 0)
-			return NULL;
-		port = ntohs(((struct sockaddr_in6 *)sap)->sin6_port);
-		break;
-	default:
-		return NULL;
-	}
+	चयन (sap->sa_family) अणु
+	हाल AF_INET:
+		अगर (rpc_ntop4(sap, addrbuf, माप(addrbuf)) == 0)
+			वापस शून्य;
+		port = ntohs(((काष्ठा sockaddr_in *)sap)->sin_port);
+		अवरोध;
+	हाल AF_INET6:
+		अगर (rpc_ntop6_noscopeid(sap, addrbuf, माप(addrbuf)) == 0)
+			वापस शून्य;
+		port = ntohs(((काष्ठा sockaddr_in6 *)sap)->sin6_port);
+		अवरोध;
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
-	if (snprintf(portbuf, sizeof(portbuf),
-		     ".%u.%u", port >> 8, port & 0xff) > (int)sizeof(portbuf))
-		return NULL;
+	अगर (snम_लिखो(portbuf, माप(portbuf),
+		     ".%u.%u", port >> 8, port & 0xff) > (पूर्णांक)माप(portbuf))
+		वापस शून्य;
 
-	if (strlcat(addrbuf, portbuf, sizeof(addrbuf)) > sizeof(addrbuf))
-		return NULL;
+	अगर (strlcat(addrbuf, portbuf, माप(addrbuf)) > माप(addrbuf))
+		वापस शून्य;
 
-	return kstrdup(addrbuf, gfp_flags);
-}
+	वापस kstrdup(addrbuf, gfp_flags);
+पूर्ण
 
 /**
  * rpc_uaddr2sockaddr - convert a universal address to a socket address.
  * @net: applicable network namespace
  * @uaddr: C string containing universal address to convert
  * @uaddr_len: length of universal address string
- * @sap: buffer into which to plant socket address
+ * @sap: buffer पूर्णांकo which to plant socket address
  * @salen: size of buffer
  *
- * @uaddr does not have to be '\0'-terminated, but kstrtou8() and
+ * @uaddr करोes not have to be '\0'-terminated, but kstrtou8() and
  * rpc_pton() require proper string termination to be successful.
  *
- * Returns the size of the socket address if successful; otherwise
- * zero is returned.
+ * Returns the size of the socket address अगर successful; otherwise
+ * zero is वापसed.
  */
-size_t rpc_uaddr2sockaddr(struct net *net, const char *uaddr,
-			  const size_t uaddr_len, struct sockaddr *sap,
-			  const size_t salen)
-{
-	char *c, buf[RPCBIND_MAXUADDRLEN + sizeof('\0')];
+माप_प्रकार rpc_uaddr2sockaddr(काष्ठा net *net, स्थिर अक्षर *uaddr,
+			  स्थिर माप_प्रकार uaddr_len, काष्ठा sockaddr *sap,
+			  स्थिर माप_प्रकार salen)
+अणु
+	अक्षर *c, buf[RPCBIND_MAXUADDRLEN + माप('\0')];
 	u8 portlo, porthi;
-	unsigned short port;
+	अचिन्हित लघु port;
 
-	if (uaddr_len > RPCBIND_MAXUADDRLEN)
-		return 0;
+	अगर (uaddr_len > RPCBIND_MAXUADDRLEN)
+		वापस 0;
 
-	memcpy(buf, uaddr, uaddr_len);
+	स_नकल(buf, uaddr, uaddr_len);
 
 	buf[uaddr_len] = '\0';
-	c = strrchr(buf, '.');
-	if (unlikely(c == NULL))
-		return 0;
-	if (unlikely(kstrtou8(c + 1, 10, &portlo) != 0))
-		return 0;
+	c = म_खोजप(buf, '.');
+	अगर (unlikely(c == शून्य))
+		वापस 0;
+	अगर (unlikely(kstrtou8(c + 1, 10, &portlo) != 0))
+		वापस 0;
 
 	*c = '\0';
-	c = strrchr(buf, '.');
-	if (unlikely(c == NULL))
-		return 0;
-	if (unlikely(kstrtou8(c + 1, 10, &porthi) != 0))
-		return 0;
+	c = म_खोजप(buf, '.');
+	अगर (unlikely(c == शून्य))
+		वापस 0;
+	अगर (unlikely(kstrtou8(c + 1, 10, &porthi) != 0))
+		वापस 0;
 
-	port = (unsigned short)((porthi << 8) | portlo);
+	port = (अचिन्हित लघु)((porthi << 8) | portlo);
 
 	*c = '\0';
-	if (rpc_pton(net, buf, strlen(buf), sap, salen) == 0)
-		return 0;
+	अगर (rpc_pton(net, buf, म_माप(buf), sap, salen) == 0)
+		वापस 0;
 
-	switch (sap->sa_family) {
-	case AF_INET:
-		((struct sockaddr_in *)sap)->sin_port = htons(port);
-		return sizeof(struct sockaddr_in);
-	case AF_INET6:
-		((struct sockaddr_in6 *)sap)->sin6_port = htons(port);
-		return sizeof(struct sockaddr_in6);
-	}
+	चयन (sap->sa_family) अणु
+	हाल AF_INET:
+		((काष्ठा sockaddr_in *)sap)->sin_port = htons(port);
+		वापस माप(काष्ठा sockaddr_in);
+	हाल AF_INET6:
+		((काष्ठा sockaddr_in6 *)sap)->sin6_port = htons(port);
+		वापस माप(काष्ठा sockaddr_in6);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpc_uaddr2sockaddr);

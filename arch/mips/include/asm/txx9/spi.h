@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Definitions for TX4937/TX4938 SPI
+ * Definitions क्रम TX4937/TX4938 SPI
  *
  * Copyright (C) 2000-2001 Toshiba Corporation
  *
@@ -8,27 +9,27 @@
  * licensed "as is" without any warranty of any kind, whether express
  * or implied.
  *
- * Support for TX4938 in 2.6 - Manish Lachwani (mlachwani@mvista.com)
+ * Support क्रम TX4938 in 2.6 - Manish Lachwani (mlachwani@mvista.com)
  */
-#ifndef __ASM_TXX9_SPI_H
-#define __ASM_TXX9_SPI_H
+#अगर_अघोषित __ASM_TXX9_SPI_H
+#घोषणा __ASM_TXX9_SPI_H
 
-#include <linux/errno.h>
+#समावेश <linux/त्रुटिसं.स>
 
-#ifdef CONFIG_SPI
-int spi_eeprom_register(int busid, int chipid, int size);
-int spi_eeprom_read(int busid, int chipid,
-		    int address, unsigned char *buf, int len);
-#else
-static inline int spi_eeprom_register(int busid, int chipid, int size)
-{
-	return -ENODEV;
-}
-static inline int spi_eeprom_read(int busid, int chipid,
-				  int address, unsigned char *buf, int len)
-{
-	return -ENODEV;
-}
-#endif
+#अगर_घोषित CONFIG_SPI
+पूर्णांक spi_eeprom_रेजिस्टर(पूर्णांक busid, पूर्णांक chipid, पूर्णांक size);
+पूर्णांक spi_eeprom_पढ़ो(पूर्णांक busid, पूर्णांक chipid,
+		    पूर्णांक address, अचिन्हित अक्षर *buf, पूर्णांक len);
+#अन्यथा
+अटल अंतरभूत पूर्णांक spi_eeprom_रेजिस्टर(पूर्णांक busid, पूर्णांक chipid, पूर्णांक size)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत पूर्णांक spi_eeprom_पढ़ो(पूर्णांक busid, पूर्णांक chipid,
+				  पूर्णांक address, अचिन्हित अक्षर *buf, पूर्णांक len)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASM_TXX9_SPI_H */
+#पूर्ण_अगर /* __ASM_TXX9_SPI_H */

@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * dice_transaction.c - a part of driver for Dice based devices
+ * dice_transaction.c - a part of driver क्रम Dice based devices
  *
  * Copyright (c) Clemens Ladisch
  * Copyright (c) 2014 Takashi Sakamoto
  */
 
-#include "dice.h"
+#समावेश "dice.h"
 
-static u64 get_subaddr(struct snd_dice *dice, enum snd_dice_addr_type type,
+अटल u64 get_subaddr(काष्ठा snd_dice *dice, क्रमागत snd_dice_addr_type type,
 		       u64 offset)
-{
-	switch (type) {
-	case SND_DICE_ADDR_TYPE_TX:
+अणु
+	चयन (type) अणु
+	हाल SND_DICE_ADDR_TYPE_TX:
 		offset += dice->tx_offset;
-		break;
-	case SND_DICE_ADDR_TYPE_RX:
+		अवरोध;
+	हाल SND_DICE_ADDR_TYPE_RX:
 		offset += dice->rx_offset;
-		break;
-	case SND_DICE_ADDR_TYPE_SYNC:
+		अवरोध;
+	हाल SND_DICE_ADDR_TYPE_SYNC:
 		offset += dice->sync_offset;
-		break;
-	case SND_DICE_ADDR_TYPE_RSRV:
+		अवरोध;
+	हाल SND_DICE_ADDR_TYPE_RSRV:
 		offset += dice->rsrv_offset;
-		break;
-	case SND_DICE_ADDR_TYPE_GLOBAL:
-	default:
+		अवरोध;
+	हाल SND_DICE_ADDR_TYPE_GLOBAL:
+	शेष:
 		offset += dice->global_offset;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	offset += DICE_PRIVATE_SPACE;
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-int snd_dice_transaction_write(struct snd_dice *dice,
-			       enum snd_dice_addr_type type,
-			       unsigned int offset, void *buf, unsigned int len)
-{
-	return snd_fw_transaction(dice->unit,
+पूर्णांक snd_dice_transaction_ग_लिखो(काष्ठा snd_dice *dice,
+			       क्रमागत snd_dice_addr_type type,
+			       अचिन्हित पूर्णांक offset, व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_fw_transaction(dice->unit,
 				  (len == 4) ? TCODE_WRITE_QUADLET_REQUEST :
 					       TCODE_WRITE_BLOCK_REQUEST,
 				  get_subaddr(dice, type, offset), buf, len, 0);
-}
+पूर्ण
 
-int snd_dice_transaction_read(struct snd_dice *dice,
-			      enum snd_dice_addr_type type, unsigned int offset,
-			      void *buf, unsigned int len)
-{
-	return snd_fw_transaction(dice->unit,
+पूर्णांक snd_dice_transaction_पढ़ो(काष्ठा snd_dice *dice,
+			      क्रमागत snd_dice_addr_type type, अचिन्हित पूर्णांक offset,
+			      व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_fw_transaction(dice->unit,
 				  (len == 4) ? TCODE_READ_QUADLET_REQUEST :
 					       TCODE_READ_BLOCK_REQUEST,
 				  get_subaddr(dice, type, offset), buf, len, 0);
-}
+पूर्ण
 
-static unsigned int get_clock_info(struct snd_dice *dice, __be32 *info)
-{
-	return snd_dice_transaction_read_global(dice, GLOBAL_CLOCK_SELECT,
+अटल अचिन्हित पूर्णांक get_घड़ी_info(काष्ठा snd_dice *dice, __be32 *info)
+अणु
+	वापस snd_dice_transaction_पढ़ो_global(dice, GLOBAL_CLOCK_SELECT,
 						info, 4);
-}
+पूर्ण
 
-int snd_dice_transaction_get_clock_source(struct snd_dice *dice,
-					  unsigned int *source)
-{
+पूर्णांक snd_dice_transaction_get_घड़ी_source(काष्ठा snd_dice *dice,
+					  अचिन्हित पूर्णांक *source)
+अणु
 	__be32 info;
-	int err;
+	पूर्णांक err;
 
-	err = get_clock_info(dice, &info);
-	if (err >= 0)
+	err = get_घड़ी_info(dice, &info);
+	अगर (err >= 0)
 		*source = be32_to_cpu(info) & CLOCK_SOURCE_MASK;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_dice_transaction_get_rate(struct snd_dice *dice, unsigned int *rate)
-{
+पूर्णांक snd_dice_transaction_get_rate(काष्ठा snd_dice *dice, अचिन्हित पूर्णांक *rate)
+अणु
 	__be32 info;
-	unsigned int index;
-	int err;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक err;
 
-	err = get_clock_info(dice, &info);
-	if (err < 0)
-		goto end;
+	err = get_घड़ी_info(dice, &info);
+	अगर (err < 0)
+		जाओ end;
 
 	index = (be32_to_cpu(info) & CLOCK_RATE_MASK) >> CLOCK_RATE_SHIFT;
-	if (index >= SND_DICE_RATES_COUNT) {
+	अगर (index >= SND_DICE_RATES_COUNT) अणु
 		err = -ENOSYS;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	*rate = snd_dice_rates[index];
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_dice_transaction_set_enable(struct snd_dice *dice)
-{
+पूर्णांक snd_dice_transaction_set_enable(काष्ठा snd_dice *dice)
+अणु
 	__be32 value;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (dice->global_enabled)
-		goto end;
+	अगर (dice->global_enabled)
+		जाओ end;
 
 	value = cpu_to_be32(1);
 	err = snd_fw_transaction(dice->unit, TCODE_WRITE_QUADLET_REQUEST,
@@ -107,16 +108,16 @@ int snd_dice_transaction_set_enable(struct snd_dice *dice)
 					     GLOBAL_ENABLE),
 				 &value, 4,
 				 FW_FIXED_GENERATION | dice->owner_generation);
-	if (err < 0)
-		goto end;
+	अगर (err < 0)
+		जाओ end;
 
 	dice->global_enabled = true;
 end:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_dice_transaction_clear_enable(struct snd_dice *dice)
-{
+व्योम snd_dice_transaction_clear_enable(काष्ठा snd_dice *dice)
+अणु
 	__be32 value;
 
 	value = 0;
@@ -127,57 +128,57 @@ void snd_dice_transaction_clear_enable(struct snd_dice *dice)
 			   FW_FIXED_GENERATION | dice->owner_generation);
 
 	dice->global_enabled = false;
-}
+पूर्ण
 
-static void dice_notification(struct fw_card *card, struct fw_request *request,
-			      int tcode, int destination, int source,
-			      int generation, unsigned long long offset,
-			      void *data, size_t length, void *callback_data)
-{
-	struct snd_dice *dice = callback_data;
+अटल व्योम dice_notअगरication(काष्ठा fw_card *card, काष्ठा fw_request *request,
+			      पूर्णांक tcode, पूर्णांक destination, पूर्णांक source,
+			      पूर्णांक generation, अचिन्हित दीर्घ दीर्घ offset,
+			      व्योम *data, माप_प्रकार length, व्योम *callback_data)
+अणु
+	काष्ठा snd_dice *dice = callback_data;
 	u32 bits;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (tcode != TCODE_WRITE_QUADLET_REQUEST) {
+	अगर (tcode != TCODE_WRITE_QUADLET_REQUEST) अणु
 		fw_send_response(card, request, RCODE_TYPE_ERROR);
-		return;
-	}
-	if ((offset & 3) != 0) {
+		वापस;
+	पूर्ण
+	अगर ((offset & 3) != 0) अणु
 		fw_send_response(card, request, RCODE_ADDRESS_ERROR);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bits = be32_to_cpup(data);
 
 	spin_lock_irqsave(&dice->lock, flags);
-	dice->notification_bits |= bits;
+	dice->notअगरication_bits |= bits;
 	spin_unlock_irqrestore(&dice->lock, flags);
 
 	fw_send_response(card, request, RCODE_COMPLETE);
 
-	if (bits & NOTIFY_LOCK_CHG)
-		complete(&dice->clock_accepted);
-	wake_up(&dice->hwdep_wait);
-}
+	अगर (bits & NOTIFY_LOCK_CHG)
+		complete(&dice->घड़ी_accepted);
+	wake_up(&dice->hwdep_रुको);
+पूर्ण
 
-static int register_notification_address(struct snd_dice *dice, bool retry)
-{
-	struct fw_device *device = fw_parent_device(dice->unit);
+अटल पूर्णांक रेजिस्टर_notअगरication_address(काष्ठा snd_dice *dice, bool retry)
+अणु
+	काष्ठा fw_device *device = fw_parent_device(dice->unit);
 	__be64 *buffer;
-	unsigned int retries;
-	int err;
+	अचिन्हित पूर्णांक retries;
+	पूर्णांक err;
 
 	retries = (retry) ? 3 : 0;
 
-	buffer = kmalloc(2 * 8, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति(2 * 8, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
-	for (;;) {
+	क्रम (;;) अणु
 		buffer[0] = cpu_to_be64(OWNER_NO_OWNER);
 		buffer[1] = cpu_to_be64(
 			((u64)device->card->node_id << OWNER_NODE_SHIFT) |
-			dice->notification_handler.offset);
+			dice->notअगरication_handler.offset);
 
 		dice->owner_generation = device->generation;
 		smp_rmb(); /* node_id vs. generation */
@@ -188,44 +189,44 @@ static int register_notification_address(struct snd_dice *dice, bool retry)
 					 buffer, 2 * 8,
 					 FW_FIXED_GENERATION |
 							dice->owner_generation);
-		if (err == 0) {
+		अगर (err == 0) अणु
 			/* success */
-			if (buffer[0] == cpu_to_be64(OWNER_NO_OWNER))
-				break;
-			/* The address seems to be already registered. */
-			if (buffer[0] == buffer[1])
-				break;
+			अगर (buffer[0] == cpu_to_be64(OWNER_NO_OWNER))
+				अवरोध;
+			/* The address seems to be alपढ़ोy रेजिस्टरed. */
+			अगर (buffer[0] == buffer[1])
+				अवरोध;
 
 			dev_err(&dice->unit->device,
 				"device is already in use\n");
 			err = -EBUSY;
-		}
-		if (err != -EAGAIN || retries-- > 0)
-			break;
+		पूर्ण
+		अगर (err != -EAGAIN || retries-- > 0)
+			अवरोध;
 
 		msleep(20);
-	}
+	पूर्ण
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	if (err < 0)
+	अगर (err < 0)
 		dice->owner_generation = -1;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void unregister_notification_address(struct snd_dice *dice)
-{
-	struct fw_device *device = fw_parent_device(dice->unit);
+अटल व्योम unरेजिस्टर_notअगरication_address(काष्ठा snd_dice *dice)
+अणु
+	काष्ठा fw_device *device = fw_parent_device(dice->unit);
 	__be64 *buffer;
 
-	buffer = kmalloc(2 * 8, GFP_KERNEL);
-	if (buffer == NULL)
-		return;
+	buffer = kदो_स्मृति(2 * 8, GFP_KERNEL);
+	अगर (buffer == शून्य)
+		वापस;
 
 	buffer[0] = cpu_to_be64(
 		((u64)device->card->node_id << OWNER_NODE_SHIFT) |
-		dice->notification_handler.offset);
+		dice->notअगरication_handler.offset);
 	buffer[1] = cpu_to_be64(OWNER_NO_OWNER);
 	snd_fw_transaction(dice->unit, TCODE_LOCK_COMPARE_SWAP,
 			   get_subaddr(dice, SND_DICE_ADDR_TYPE_GLOBAL,
@@ -233,137 +234,137 @@ static void unregister_notification_address(struct snd_dice *dice)
 			   buffer, 2 * 8, FW_QUIET |
 			   FW_FIXED_GENERATION | dice->owner_generation);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
 	dice->owner_generation = -1;
-}
+पूर्ण
 
-void snd_dice_transaction_destroy(struct snd_dice *dice)
-{
-	struct fw_address_handler *handler = &dice->notification_handler;
+व्योम snd_dice_transaction_destroy(काष्ठा snd_dice *dice)
+अणु
+	काष्ठा fw_address_handler *handler = &dice->notअगरication_handler;
 
-	if (handler->callback_data == NULL)
-		return;
+	अगर (handler->callback_data == शून्य)
+		वापस;
 
-	unregister_notification_address(dice);
+	unरेजिस्टर_notअगरication_address(dice);
 
-	fw_core_remove_address_handler(handler);
-	handler->callback_data = NULL;
-}
+	fw_core_हटाओ_address_handler(handler);
+	handler->callback_data = शून्य;
+पूर्ण
 
-int snd_dice_transaction_reinit(struct snd_dice *dice)
-{
-	struct fw_address_handler *handler = &dice->notification_handler;
+पूर्णांक snd_dice_transaction_reinit(काष्ठा snd_dice *dice)
+अणु
+	काष्ठा fw_address_handler *handler = &dice->notअगरication_handler;
 
-	if (handler->callback_data == NULL)
-		return -EINVAL;
+	अगर (handler->callback_data == शून्य)
+		वापस -EINVAL;
 
-	return register_notification_address(dice, false);
-}
+	वापस रेजिस्टर_notअगरication_address(dice, false);
+पूर्ण
 
-static int get_subaddrs(struct snd_dice *dice)
-{
-	static const int min_values[10] = {
+अटल पूर्णांक get_subaddrs(काष्ठा snd_dice *dice)
+अणु
+	अटल स्थिर पूर्णांक min_values[10] = अणु
 		10, 0x60 / 4,
 		10, 0x18 / 4,
 		10, 0x18 / 4,
 		0, 0,
 		0, 0,
-	};
-	__be32 *pointers;
+	पूर्ण;
+	__be32 *poपूर्णांकers;
 	__be32 version;
 	u32 data;
-	unsigned int i;
-	int err;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	pointers = kmalloc_array(ARRAY_SIZE(min_values), sizeof(__be32),
+	poपूर्णांकers = kदो_स्मृति_array(ARRAY_SIZE(min_values), माप(__be32),
 				 GFP_KERNEL);
-	if (pointers == NULL)
-		return -ENOMEM;
+	अगर (poपूर्णांकers == शून्य)
+		वापस -ENOMEM;
 
 	/*
 	 * Check that the sub address spaces exist and are located inside the
-	 * private address space.  The minimum values are chosen so that all
-	 * minimally required registers are included.
+	 * निजी address space.  The minimum values are chosen so that all
+	 * minimally required रेजिस्टरs are included.
 	 */
 	err = snd_fw_transaction(dice->unit, TCODE_READ_BLOCK_REQUEST,
-				 DICE_PRIVATE_SPACE, pointers,
-				 sizeof(__be32) * ARRAY_SIZE(min_values), 0);
-	if (err < 0)
-		goto end;
+				 DICE_PRIVATE_SPACE, poपूर्णांकers,
+				 माप(__be32) * ARRAY_SIZE(min_values), 0);
+	अगर (err < 0)
+		जाओ end;
 
-	for (i = 0; i < ARRAY_SIZE(min_values); ++i) {
-		data = be32_to_cpu(pointers[i]);
-		if (data < min_values[i] || data >= 0x40000) {
+	क्रम (i = 0; i < ARRAY_SIZE(min_values); ++i) अणु
+		data = be32_to_cpu(poपूर्णांकers[i]);
+		अगर (data < min_values[i] || data >= 0x40000) अणु
 			err = -ENODEV;
-			goto end;
-		}
-	}
+			जाओ end;
+		पूर्ण
+	पूर्ण
 
-	if (be32_to_cpu(pointers[1]) > 0x18) {
+	अगर (be32_to_cpu(poपूर्णांकers[1]) > 0x18) अणु
 		/*
-		 * Check that the implemented DICE driver specification major
+		 * Check that the implemented DICE driver specअगरication major
 		 * version number matches.
 		 */
 		err = snd_fw_transaction(dice->unit, TCODE_READ_QUADLET_REQUEST,
 				DICE_PRIVATE_SPACE +
-				be32_to_cpu(pointers[0]) * 4 + GLOBAL_VERSION,
-				&version, sizeof(version), 0);
-		if (err < 0)
-			goto end;
+				be32_to_cpu(poपूर्णांकers[0]) * 4 + GLOBAL_VERSION,
+				&version, माप(version), 0);
+		अगर (err < 0)
+			जाओ end;
 
-		if ((version & cpu_to_be32(0xff000000)) !=
-						cpu_to_be32(0x01000000)) {
+		अगर ((version & cpu_to_be32(0xff000000)) !=
+						cpu_to_be32(0x01000000)) अणु
 			dev_err(&dice->unit->device,
 				"unknown DICE version: 0x%08x\n",
 				be32_to_cpu(version));
 			err = -ENODEV;
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
 		/* Set up later. */
-		dice->clock_caps = 1;
-	}
+		dice->घड़ी_caps = 1;
+	पूर्ण
 
-	dice->global_offset = be32_to_cpu(pointers[0]) * 4;
-	dice->tx_offset = be32_to_cpu(pointers[2]) * 4;
-	dice->rx_offset = be32_to_cpu(pointers[4]) * 4;
+	dice->global_offset = be32_to_cpu(poपूर्णांकers[0]) * 4;
+	dice->tx_offset = be32_to_cpu(poपूर्णांकers[2]) * 4;
+	dice->rx_offset = be32_to_cpu(poपूर्णांकers[4]) * 4;
 
-	/* Old firmware doesn't support these fields. */
-	if (pointers[7])
-		dice->sync_offset = be32_to_cpu(pointers[6]) * 4;
-	if (pointers[9])
-		dice->rsrv_offset = be32_to_cpu(pointers[8]) * 4;
+	/* Old firmware करोesn't support these fields. */
+	अगर (poपूर्णांकers[7])
+		dice->sync_offset = be32_to_cpu(poपूर्णांकers[6]) * 4;
+	अगर (poपूर्णांकers[9])
+		dice->rsrv_offset = be32_to_cpu(poपूर्णांकers[8]) * 4;
 end:
-	kfree(pointers);
-	return err;
-}
+	kमुक्त(poपूर्णांकers);
+	वापस err;
+पूर्ण
 
-int snd_dice_transaction_init(struct snd_dice *dice)
-{
-	struct fw_address_handler *handler = &dice->notification_handler;
-	int err;
+पूर्णांक snd_dice_transaction_init(काष्ठा snd_dice *dice)
+अणु
+	काष्ठा fw_address_handler *handler = &dice->notअगरication_handler;
+	पूर्णांक err;
 
 	err = get_subaddrs(dice);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Allocation callback in address space over host controller */
 	handler->length = 4;
-	handler->address_callback = dice_notification;
+	handler->address_callback = dice_notअगरication;
 	handler->callback_data = dice;
 	err = fw_core_add_address_handler(handler, &fw_high_memory_region);
-	if (err < 0) {
-		handler->callback_data = NULL;
-		return err;
-	}
+	अगर (err < 0) अणु
+		handler->callback_data = शून्य;
+		वापस err;
+	पूर्ण
 
 	/* Register the address space */
-	err = register_notification_address(dice, true);
-	if (err < 0) {
-		fw_core_remove_address_handler(handler);
-		handler->callback_data = NULL;
-	}
+	err = रेजिस्टर_notअगरication_address(dice, true);
+	अगर (err < 0) अणु
+		fw_core_हटाओ_address_handler(handler);
+		handler->callback_data = शून्य;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण

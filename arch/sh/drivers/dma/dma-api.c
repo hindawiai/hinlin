@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/drivers/dma/dma-api.c
  *
- * SuperH-specific DMA management API
+ * SuperH-specअगरic DMA management API
  *
  * Copyright (C) 2003, 2004, 2005  Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/list.h>
-#include <linux/platform_device.h>
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <asm/dma.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/list.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/dma.h>
 
 DEFINE_SPINLOCK(dma_spin_lock);
-static LIST_HEAD(registered_dmac_list);
+अटल LIST_HEAD(रेजिस्टरed_dmac_list);
 
-struct dma_info *get_dma_info(unsigned int chan)
-{
-	struct dma_info *info;
+काष्ठा dma_info *get_dma_info(अचिन्हित पूर्णांक chan)
+अणु
+	काष्ठा dma_info *info;
 
 	/*
-	 * Look for each DMAC's range to determine who the owner of
+	 * Look क्रम each DMAC's range to determine who the owner of
 	 * the channel is.
 	 */
-	list_for_each_entry(info, &registered_dmac_list, list) {
-		if ((chan <  info->first_vchannel_nr) ||
+	list_क्रम_each_entry(info, &रेजिस्टरed_dmac_list, list) अणु
+		अगर ((chan <  info->first_vchannel_nr) ||
 		    (chan >= info->first_vchannel_nr + info->nr_channels))
-			continue;
+			जारी;
 
-		return info;
-	}
+		वापस info;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(get_dma_info);
 
-struct dma_info *get_dma_info_by_name(const char *dmac_name)
-{
-	struct dma_info *info;
+काष्ठा dma_info *get_dma_info_by_name(स्थिर अक्षर *dmac_name)
+अणु
+	काष्ठा dma_info *info;
 
-	list_for_each_entry(info, &registered_dmac_list, list) {
-		if (dmac_name && (strcmp(dmac_name, info->name) != 0))
-			continue;
-		else
-			return info;
-	}
+	list_क्रम_each_entry(info, &रेजिस्टरed_dmac_list, list) अणु
+		अगर (dmac_name && (म_भेद(dmac_name, info->name) != 0))
+			जारी;
+		अन्यथा
+			वापस info;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(get_dma_info_by_name);
 
-static unsigned int get_nr_channels(void)
-{
-	struct dma_info *info;
-	unsigned int nr = 0;
+अटल अचिन्हित पूर्णांक get_nr_channels(व्योम)
+अणु
+	काष्ठा dma_info *info;
+	अचिन्हित पूर्णांक nr = 0;
 
-	if (unlikely(list_empty(&registered_dmac_list)))
-		return nr;
+	अगर (unlikely(list_empty(&रेजिस्टरed_dmac_list)))
+		वापस nr;
 
-	list_for_each_entry(info, &registered_dmac_list, list)
+	list_क्रम_each_entry(info, &रेजिस्टरed_dmac_list, list)
 		nr += info->nr_channels;
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-struct dma_channel *get_dma_channel(unsigned int chan)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel;
-	int i;
+काष्ठा dma_channel *get_dma_channel(अचिन्हित पूर्णांक chan)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel;
+	पूर्णांक i;
 
-	if (unlikely(!info))
-		return ERR_PTR(-EINVAL);
+	अगर (unlikely(!info))
+		वापस ERR_PTR(-EINVAL);
 
-	for (i = 0; i < info->nr_channels; i++) {
+	क्रम (i = 0; i < info->nr_channels; i++) अणु
 		channel = &info->channels[i];
-		if (channel->vchan == chan)
-			return channel;
-	}
+		अगर (channel->vchan == chan)
+			वापस channel;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(get_dma_channel);
 
-int get_dma_residue(unsigned int chan)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel = get_dma_channel(chan);
+पूर्णांक get_dma_residue(अचिन्हित पूर्णांक chan)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel = get_dma_channel(chan);
 
-	if (info->ops->get_residue)
-		return info->ops->get_residue(channel);
+	अगर (info->ops->get_residue)
+		वापस info->ops->get_residue(channel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(get_dma_residue);
 
-static int search_cap(const char **haystack, const char *needle)
-{
-	const char **p;
+अटल पूर्णांक search_cap(स्थिर अक्षर **haystack, स्थिर अक्षर *needle)
+अणु
+	स्थिर अक्षर **p;
 
-	for (p = haystack; *p; p++)
-		if (strcmp(*p, needle) == 0)
-			return 1;
+	क्रम (p = haystack; *p; p++)
+		अगर (म_भेद(*p, needle) == 0)
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * request_dma_bycap - Allocate a DMA channel based on its capabilities
@@ -119,297 +120,297 @@ static int search_cap(const char **haystack, const char *needle)
  *
  * Search all channels of all DMA controllers to find a channel which
  * matches the requested capabilities. The result is the channel
- * number if a match is found, or %-ENODEV if no match is found.
+ * number अगर a match is found, or %-ENODEV अगर no match is found.
  *
  * Note that not all DMA controllers export capabilities, in which
- * case they can never be allocated using this API, and so
- * request_dma() must be used specifying the channel number.
+ * हाल they can never be allocated using this API, and so
+ * request_dma() must be used specअगरying the channel number.
  */
-int request_dma_bycap(const char **dmac, const char **caps, const char *dev_id)
-{
-	unsigned int found = 0;
-	struct dma_info *info;
-	const char **p;
-	int i;
+पूर्णांक request_dma_bycap(स्थिर अक्षर **dmac, स्थिर अक्षर **caps, स्थिर अक्षर *dev_id)
+अणु
+	अचिन्हित पूर्णांक found = 0;
+	काष्ठा dma_info *info;
+	स्थिर अक्षर **p;
+	पूर्णांक i;
 
 	BUG_ON(!dmac || !caps);
 
-	list_for_each_entry(info, &registered_dmac_list, list)
-		if (strcmp(*dmac, info->name) == 0) {
+	list_क्रम_each_entry(info, &रेजिस्टरed_dmac_list, list)
+		अगर (म_भेद(*dmac, info->name) == 0) अणु
 			found = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (!found)
-		return -ENODEV;
+	अगर (!found)
+		वापस -ENODEV;
 
-	for (i = 0; i < info->nr_channels; i++) {
-		struct dma_channel *channel = &info->channels[i];
+	क्रम (i = 0; i < info->nr_channels; i++) अणु
+		काष्ठा dma_channel *channel = &info->channels[i];
 
-		if (unlikely(!channel->caps))
-			continue;
+		अगर (unlikely(!channel->caps))
+			जारी;
 
-		for (p = caps; *p; p++) {
-			if (!search_cap(channel->caps, *p))
-				break;
-			if (request_dma(channel->chan, dev_id) == 0)
-				return channel->chan;
-		}
-	}
+		क्रम (p = caps; *p; p++) अणु
+			अगर (!search_cap(channel->caps, *p))
+				अवरोध;
+			अगर (request_dma(channel->chan, dev_id) == 0)
+				वापस channel->chan;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(request_dma_bycap);
 
-int dmac_search_free_channel(const char *dev_id)
-{
-	struct dma_channel *channel = { 0 };
-	struct dma_info *info = get_dma_info(0);
-	int i;
+पूर्णांक dmac_search_मुक्त_channel(स्थिर अक्षर *dev_id)
+अणु
+	काष्ठा dma_channel *channel = अणु 0 पूर्ण;
+	काष्ठा dma_info *info = get_dma_info(0);
+	पूर्णांक i;
 
-	for (i = 0; i < info->nr_channels; i++) {
+	क्रम (i = 0; i < info->nr_channels; i++) अणु
 		channel = &info->channels[i];
-		if (unlikely(!channel))
-			return -ENODEV;
+		अगर (unlikely(!channel))
+			वापस -ENODEV;
 
-		if (atomic_read(&channel->busy) == 0)
-			break;
-	}
+		अगर (atomic_पढ़ो(&channel->busy) == 0)
+			अवरोध;
+	पूर्ण
 
-	if (info->ops->request) {
-		int result = info->ops->request(channel);
-		if (result)
-			return result;
+	अगर (info->ops->request) अणु
+		पूर्णांक result = info->ops->request(channel);
+		अगर (result)
+			वापस result;
 
 		atomic_set(&channel->busy, 1);
-		return channel->chan;
-	}
+		वापस channel->chan;
+	पूर्ण
 
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-int request_dma(unsigned int chan, const char *dev_id)
-{
-	struct dma_channel *channel = { 0 };
-	struct dma_info *info = get_dma_info(chan);
-	int result;
+पूर्णांक request_dma(अचिन्हित पूर्णांक chan, स्थिर अक्षर *dev_id)
+अणु
+	काष्ठा dma_channel *channel = अणु 0 पूर्ण;
+	काष्ठा dma_info *info = get_dma_info(chan);
+	पूर्णांक result;
 
 	channel = get_dma_channel(chan);
-	if (atomic_xchg(&channel->busy, 1))
-		return -EBUSY;
+	अगर (atomic_xchg(&channel->busy, 1))
+		वापस -EBUSY;
 
-	strlcpy(channel->dev_id, dev_id, sizeof(channel->dev_id));
+	strlcpy(channel->dev_id, dev_id, माप(channel->dev_id));
 
-	if (info->ops->request) {
+	अगर (info->ops->request) अणु
 		result = info->ops->request(channel);
-		if (result)
+		अगर (result)
 			atomic_set(&channel->busy, 0);
 
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(request_dma);
 
-void free_dma(unsigned int chan)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel = get_dma_channel(chan);
+व्योम मुक्त_dma(अचिन्हित पूर्णांक chan)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel = get_dma_channel(chan);
 
-	if (info->ops->free)
-		info->ops->free(channel);
+	अगर (info->ops->मुक्त)
+		info->ops->मुक्त(channel);
 
 	atomic_set(&channel->busy, 0);
-}
-EXPORT_SYMBOL(free_dma);
+पूर्ण
+EXPORT_SYMBOL(मुक्त_dma);
 
-void dma_wait_for_completion(unsigned int chan)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel = get_dma_channel(chan);
+व्योम dma_रुको_क्रम_completion(अचिन्हित पूर्णांक chan)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel = get_dma_channel(chan);
 
-	if (channel->flags & DMA_TEI_CAPABLE) {
-		wait_event(channel->wait_queue,
+	अगर (channel->flags & DMA_TEI_CAPABLE) अणु
+		रुको_event(channel->रुको_queue,
 			   (info->ops->get_residue(channel) == 0));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (info->ops->get_residue(channel))
+	जबतक (info->ops->get_residue(channel))
 		cpu_relax();
-}
-EXPORT_SYMBOL(dma_wait_for_completion);
+पूर्ण
+EXPORT_SYMBOL(dma_रुको_क्रम_completion);
 
-int register_chan_caps(const char *dmac, struct dma_chan_caps *caps)
-{
-	struct dma_info *info;
-	unsigned int found = 0;
-	int i;
+पूर्णांक रेजिस्टर_chan_caps(स्थिर अक्षर *dmac, काष्ठा dma_chan_caps *caps)
+अणु
+	काष्ठा dma_info *info;
+	अचिन्हित पूर्णांक found = 0;
+	पूर्णांक i;
 
-	list_for_each_entry(info, &registered_dmac_list, list)
-		if (strcmp(dmac, info->name) == 0) {
+	list_क्रम_each_entry(info, &रेजिस्टरed_dmac_list, list)
+		अगर (म_भेद(dmac, info->name) == 0) अणु
 			found = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (unlikely(!found))
-		return -ENODEV;
+	अगर (unlikely(!found))
+		वापस -ENODEV;
 
-	for (i = 0; i < info->nr_channels; i++, caps++) {
-		struct dma_channel *channel;
+	क्रम (i = 0; i < info->nr_channels; i++, caps++) अणु
+		काष्ठा dma_channel *channel;
 
-		if ((info->first_channel_nr + i) != caps->ch_num)
-			return -EINVAL;
+		अगर ((info->first_channel_nr + i) != caps->ch_num)
+			वापस -EINVAL;
 
 		channel = &info->channels[i];
 		channel->caps = caps->caplist;
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(register_chan_caps);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_chan_caps);
 
-void dma_configure_channel(unsigned int chan, unsigned long flags)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel = get_dma_channel(chan);
+व्योम dma_configure_channel(अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel = get_dma_channel(chan);
 
-	if (info->ops->configure)
+	अगर (info->ops->configure)
 		info->ops->configure(channel, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(dma_configure_channel);
 
-int dma_xfer(unsigned int chan, unsigned long from,
-	     unsigned long to, size_t size, unsigned int mode)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel = get_dma_channel(chan);
+पूर्णांक dma_xfer(अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ from,
+	     अचिन्हित दीर्घ to, माप_प्रकार size, अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel = get_dma_channel(chan);
 
 	channel->sar	= from;
 	channel->dar	= to;
 	channel->count	= size;
 	channel->mode	= mode;
 
-	return info->ops->xfer(channel);
-}
+	वापस info->ops->xfer(channel);
+पूर्ण
 EXPORT_SYMBOL(dma_xfer);
 
-int dma_extend(unsigned int chan, unsigned long op, void *param)
-{
-	struct dma_info *info = get_dma_info(chan);
-	struct dma_channel *channel = get_dma_channel(chan);
+पूर्णांक dma_extend(अचिन्हित पूर्णांक chan, अचिन्हित दीर्घ op, व्योम *param)
+अणु
+	काष्ठा dma_info *info = get_dma_info(chan);
+	काष्ठा dma_channel *channel = get_dma_channel(chan);
 
-	if (info->ops->extend)
-		return info->ops->extend(channel, op, param);
+	अगर (info->ops->extend)
+		वापस info->ops->extend(channel, op, param);
 
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 EXPORT_SYMBOL(dma_extend);
 
-static int dma_proc_show(struct seq_file *m, void *v)
-{
-	struct dma_info *info = v;
+अटल पूर्णांक dma_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा dma_info *info = v;
 
-	if (list_empty(&registered_dmac_list))
-		return 0;
+	अगर (list_empty(&रेजिस्टरed_dmac_list))
+		वापस 0;
 
 	/*
-	 * Iterate over each registered DMAC
+	 * Iterate over each रेजिस्टरed DMAC
 	 */
-	list_for_each_entry(info, &registered_dmac_list, list) {
-		int i;
+	list_क्रम_each_entry(info, &रेजिस्टरed_dmac_list, list) अणु
+		पूर्णांक i;
 
 		/*
 		 * Iterate over each channel
 		 */
-		for (i = 0; i < info->nr_channels; i++) {
-			struct dma_channel *channel = info->channels + i;
+		क्रम (i = 0; i < info->nr_channels; i++) अणु
+			काष्ठा dma_channel *channel = info->channels + i;
 
-			if (!(channel->flags & DMA_CONFIGURED))
-				continue;
+			अगर (!(channel->flags & DMA_CONFIGURED))
+				जारी;
 
-			seq_printf(m, "%2d: %14s    %s\n", i,
+			seq_म_लिखो(m, "%2d: %14s    %s\n", i,
 				   info->name, channel->dev_id);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int register_dmac(struct dma_info *info)
-{
-	unsigned int total_channels, i;
+पूर्णांक रेजिस्टर_dmac(काष्ठा dma_info *info)
+अणु
+	अचिन्हित पूर्णांक total_channels, i;
 
 	INIT_LIST_HEAD(&info->list);
 
-	printk(KERN_INFO "DMA: Registering %s handler (%d channel%s).\n",
+	prपूर्णांकk(KERN_INFO "DMA: Registering %s handler (%d channel%s).\n",
 	       info->name, info->nr_channels, info->nr_channels > 1 ? "s" : "");
 
 	BUG_ON((info->flags & DMAC_CHANNELS_CONFIGURED) && !info->channels);
 
-	info->pdev = platform_device_register_simple(info->name, -1,
-						     NULL, 0);
-	if (IS_ERR(info->pdev))
-		return PTR_ERR(info->pdev);
+	info->pdev = platक्रमm_device_रेजिस्टर_simple(info->name, -1,
+						     शून्य, 0);
+	अगर (IS_ERR(info->pdev))
+		वापस PTR_ERR(info->pdev);
 
 	/*
 	 * Don't touch pre-configured channels
 	 */
-	if (!(info->flags & DMAC_CHANNELS_CONFIGURED)) {
-		unsigned int size;
+	अगर (!(info->flags & DMAC_CHANNELS_CONFIGURED)) अणु
+		अचिन्हित पूर्णांक size;
 
-		size = sizeof(struct dma_channel) * info->nr_channels;
+		size = माप(काष्ठा dma_channel) * info->nr_channels;
 
 		info->channels = kzalloc(size, GFP_KERNEL);
-		if (!info->channels)
-			return -ENOMEM;
-	}
+		अगर (!info->channels)
+			वापस -ENOMEM;
+	पूर्ण
 
 	total_channels = get_nr_channels();
 	info->first_vchannel_nr = total_channels;
-	for (i = 0; i < info->nr_channels; i++) {
-		struct dma_channel *chan = &info->channels[i];
+	क्रम (i = 0; i < info->nr_channels; i++) अणु
+		काष्ठा dma_channel *chan = &info->channels[i];
 
 		atomic_set(&chan->busy, 0);
 
 		chan->chan  = info->first_channel_nr + i;
 		chan->vchan = info->first_channel_nr + i + total_channels;
 
-		memcpy(chan->dev_id, "Unused", 7);
+		स_नकल(chan->dev_id, "Unused", 7);
 
-		if (info->flags & DMAC_CHANNELS_TEI_CAPABLE)
+		अगर (info->flags & DMAC_CHANNELS_TEI_CAPABLE)
 			chan->flags |= DMA_TEI_CAPABLE;
 
-		init_waitqueue_head(&chan->wait_queue);
+		init_रुकोqueue_head(&chan->रुको_queue);
 		dma_create_sysfs_files(chan, info);
-	}
+	पूर्ण
 
-	list_add(&info->list, &registered_dmac_list);
+	list_add(&info->list, &रेजिस्टरed_dmac_list);
 
-	return 0;
-}
-EXPORT_SYMBOL(register_dmac);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_dmac);
 
-void unregister_dmac(struct dma_info *info)
-{
-	unsigned int i;
+व्योम unरेजिस्टर_dmac(काष्ठा dma_info *info)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < info->nr_channels; i++)
-		dma_remove_sysfs_files(info->channels + i, info);
+	क्रम (i = 0; i < info->nr_channels; i++)
+		dma_हटाओ_sysfs_files(info->channels + i, info);
 
-	if (!(info->flags & DMAC_CHANNELS_CONFIGURED))
-		kfree(info->channels);
+	अगर (!(info->flags & DMAC_CHANNELS_CONFIGURED))
+		kमुक्त(info->channels);
 
 	list_del(&info->list);
-	platform_device_unregister(info->pdev);
-}
-EXPORT_SYMBOL(unregister_dmac);
+	platक्रमm_device_unरेजिस्टर(info->pdev);
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_dmac);
 
-static int __init dma_api_init(void)
-{
-	printk(KERN_NOTICE "DMA: Registering DMA API.\n");
-	return proc_create_single("dma", 0, NULL, dma_proc_show) ? 0 : -ENOMEM;
-}
+अटल पूर्णांक __init dma_api_init(व्योम)
+अणु
+	prपूर्णांकk(KERN_NOTICE "DMA: Registering DMA API.\n");
+	वापस proc_create_single("dma", 0, शून्य, dma_proc_show) ? 0 : -ENOMEM;
+पूर्ण
 subsys_initcall(dma_api_init);
 
 MODULE_AUTHOR("Paul Mundt <lethal@linux-sh.org>");

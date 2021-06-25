@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for NXP Fxas21002c Gyroscope - SPI
+ * Driver क्रम NXP Fxas21002c Gyroscope - SPI
  *
  * Copyright (C) 2019 Linaro Ltd.
  */
 
-#include <linux/err.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
 
-#include "fxas21002c.h"
+#समावेश "fxas21002c.h"
 
-static const struct regmap_config fxas21002c_regmap_spi_conf = {
+अटल स्थिर काष्ठा regmap_config fxas21002c_regmap_spi_conf = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = FXAS21002C_REG_CTRL3,
-};
+	.max_रेजिस्टर = FXAS21002C_REG_CTRL3,
+पूर्ण;
 
-static int fxas21002c_spi_probe(struct spi_device *spi)
-{
-	const struct spi_device_id *id = spi_get_device_id(spi);
-	struct regmap *regmap;
+अटल पूर्णांक fxas21002c_spi_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &fxas21002c_regmap_spi_conf);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&spi->dev, "Failed to register spi regmap: %ld\n",
 			PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return fxas21002c_core_probe(&spi->dev, regmap, spi->irq, id->name);
-}
+	वापस fxas21002c_core_probe(&spi->dev, regmap, spi->irq, id->name);
+पूर्ण
 
-static int fxas21002c_spi_remove(struct spi_device *spi)
-{
-	fxas21002c_core_remove(&spi->dev);
+अटल पूर्णांक fxas21002c_spi_हटाओ(काष्ठा spi_device *spi)
+अणु
+	fxas21002c_core_हटाओ(&spi->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id fxas21002c_spi_id[] = {
-	{ "fxas21002c", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id fxas21002c_spi_id[] = अणु
+	अणु "fxas21002c", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, fxas21002c_spi_id);
 
-static const struct of_device_id fxas21002c_spi_of_match[] = {
-	{ .compatible = "nxp,fxas21002c", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id fxas21002c_spi_of_match[] = अणु
+	अणु .compatible = "nxp,fxas21002c", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fxas21002c_spi_of_match);
 
-static struct spi_driver fxas21002c_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver fxas21002c_spi_driver = अणु
+	.driver = अणु
 		.name = "fxas21002c_spi",
 		.pm = &fxas21002c_pm_ops,
 		.of_match_table = fxas21002c_spi_of_match,
-	},
+	पूर्ण,
 	.probe		= fxas21002c_spi_probe,
-	.remove		= fxas21002c_spi_remove,
+	.हटाओ		= fxas21002c_spi_हटाओ,
 	.id_table	= fxas21002c_spi_id,
-};
+पूर्ण;
 module_spi_driver(fxas21002c_spi_driver);
 
 MODULE_AUTHOR("Rui Miguel Silva <rui.silva@linaro.org>");

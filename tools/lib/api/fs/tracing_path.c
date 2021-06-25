@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0
-#ifndef _GNU_SOURCE
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#अगर_अघोषित _GNU_SOURCE
 # define _GNU_SOURCE
-#endif
+#पूर्ण_अगर
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <linux/string.h>
-#include <errno.h>
-#include <unistd.h>
-#include "fs.h"
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <linux/माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश "fs.h"
 
-#include "tracing_path.h"
+#समावेश "tracing_path.h"
 
-static char tracing_mnt[PATH_MAX]  = "/sys/kernel/debug";
-static char tracing_path[PATH_MAX]        = "/sys/kernel/debug/tracing";
-static char tracing_events_path[PATH_MAX] = "/sys/kernel/debug/tracing/events";
+अटल अक्षर tracing_mnt[PATH_MAX]  = "/sys/kernel/debug";
+अटल अक्षर tracing_path[PATH_MAX]        = "/sys/kernel/debug/tracing";
+अटल अक्षर tracing_events_path[PATH_MAX] = "/sys/kernel/debug/tracing/events";
 
-static void __tracing_path_set(const char *tracing, const char *mountpoint)
-{
-	snprintf(tracing_mnt, sizeof(tracing_mnt), "%s", mountpoint);
-	snprintf(tracing_path, sizeof(tracing_path), "%s/%s",
-		 mountpoint, tracing);
-	snprintf(tracing_events_path, sizeof(tracing_events_path), "%s/%s%s",
-		 mountpoint, tracing, "events");
-}
+अटल व्योम __tracing_path_set(स्थिर अक्षर *tracing, स्थिर अक्षर *mountpoपूर्णांक)
+अणु
+	snम_लिखो(tracing_mnt, माप(tracing_mnt), "%s", mountpoपूर्णांक);
+	snम_लिखो(tracing_path, माप(tracing_path), "%s/%s",
+		 mountpoपूर्णांक, tracing);
+	snम_लिखो(tracing_events_path, माप(tracing_events_path), "%s/%s%s",
+		 mountpoपूर्णांक, tracing, "events");
+पूर्ण
 
-static const char *tracing_path_tracefs_mount(void)
-{
-	const char *mnt;
+अटल स्थिर अक्षर *tracing_path_tracefs_mount(व्योम)
+अणु
+	स्थिर अक्षर *mnt;
 
 	mnt = tracefs__mount();
-	if (!mnt)
-		return NULL;
+	अगर (!mnt)
+		वापस शून्य;
 
 	__tracing_path_set("", mnt);
 
-	return tracing_path;
-}
+	वापस tracing_path;
+पूर्ण
 
-static const char *tracing_path_debugfs_mount(void)
-{
-	const char *mnt;
+अटल स्थिर अक्षर *tracing_path_debugfs_mount(व्योम)
+अणु
+	स्थिर अक्षर *mnt;
 
 	mnt = debugfs__mount();
-	if (!mnt)
-		return NULL;
+	अगर (!mnt)
+		वापस शून्य;
 
 	__tracing_path_set("tracing/", mnt);
 
-	return tracing_path;
-}
+	वापस tracing_path;
+पूर्ण
 
-const char *tracing_path_mount(void)
-{
-	const char *mnt;
+स्थिर अक्षर *tracing_path_mount(व्योम)
+अणु
+	स्थिर अक्षर *mnt;
 
 	mnt = tracing_path_tracefs_mount();
-	if (mnt)
-		return mnt;
+	अगर (mnt)
+		वापस mnt;
 
 	mnt = tracing_path_debugfs_mount();
 
-	return mnt;
-}
+	वापस mnt;
+पूर्ण
 
-void tracing_path_set(const char *mntpt)
-{
+व्योम tracing_path_set(स्थिर अक्षर *mntpt)
+अणु
 	__tracing_path_set("tracing/", mntpt);
-}
+पूर्ण
 
-char *get_tracing_file(const char *name)
-{
-	char *file;
+अक्षर *get_tracing_file(स्थिर अक्षर *name)
+अणु
+	अक्षर *file;
 
-	if (asprintf(&file, "%s/%s", tracing_path_mount(), name) < 0)
-		return NULL;
+	अगर (aप्र_लिखो(&file, "%s/%s", tracing_path_mount(), name) < 0)
+		वापस शून्य;
 
-	return file;
-}
+	वापस file;
+पूर्ण
 
-void put_tracing_file(char *file)
-{
-	free(file);
-}
+व्योम put_tracing_file(अक्षर *file)
+अणु
+	मुक्त(file);
+पूर्ण
 
-char *get_events_file(const char *name)
-{
-	char *file;
+अक्षर *get_events_file(स्थिर अक्षर *name)
+अणु
+	अक्षर *file;
 
-	if (asprintf(&file, "%s/events/%s", tracing_path_mount(), name) < 0)
-		return NULL;
+	अगर (aप्र_लिखो(&file, "%s/events/%s", tracing_path_mount(), name) < 0)
+		वापस शून्य;
 
-	return file;
-}
+	वापस file;
+पूर्ण
 
-void put_events_file(char *file)
-{
-	free(file);
-}
+व्योम put_events_file(अक्षर *file)
+अणु
+	मुक्त(file);
+पूर्ण
 
-DIR *tracing_events__opendir(void)
-{
-	DIR *dir = NULL;
-	char *path = get_tracing_file("events");
+सूची *tracing_events__सूची_खोलो(व्योम)
+अणु
+	सूची *dir = शून्य;
+	अक्षर *path = get_tracing_file("events");
 
-	if (path) {
-		dir = opendir(path);
+	अगर (path) अणु
+		dir = सूची_खोलो(path);
 		put_events_file(path);
-	}
+	पूर्ण
 
-	return dir;
-}
+	वापस dir;
+पूर्ण
 
-int tracing_path__strerror_open_tp(int err, char *buf, size_t size,
-				   const char *sys, const char *name)
-{
-	char sbuf[128];
-	char filename[PATH_MAX];
+पूर्णांक tracing_path__म_त्रुटि_खोलो_tp(पूर्णांक err, अक्षर *buf, माप_प्रकार size,
+				   स्थिर अक्षर *sys, स्थिर अक्षर *name)
+अणु
+	अक्षर sbuf[128];
+	अक्षर filename[PATH_MAX];
 
-	snprintf(filename, PATH_MAX, "%s/%s", sys, name ?: "*");
+	snम_लिखो(filename, PATH_MAX, "%s/%s", sys, name ?: "*");
 
-	switch (err) {
-	case ENOENT:
+	चयन (err) अणु
+	हाल ENOENT:
 		/*
-		 * We will get here if we can't find the tracepoint, but one of
+		 * We will get here अगर we can't find the tracepoपूर्णांक, but one of
 		 * debugfs or tracefs is configured, which means you probably
-		 * want some tracepoint which wasn't compiled in your kernel.
+		 * want some tracepoपूर्णांक which wasn't compiled in your kernel.
 		 * - jirka
 		 */
-		if (debugfs__configured() || tracefs__configured()) {
+		अगर (debugfs__configured() || tracefs__configured()) अणु
 			/* sdt markers */
-			if (!strncmp(filename, "sdt_", 4)) {
-				snprintf(buf, size,
+			अगर (!म_भेदन(filename, "sdt_", 4)) अणु
+				snम_लिखो(buf, size,
 					"Error:\tFile %s/%s not found.\n"
 					"Hint:\tSDT event cannot be directly recorded on.\n"
 					"\tPlease first use 'perf probe %s:%s' before recording it.\n",
 					tracing_events_path, filename, sys, name);
-			} else {
-				snprintf(buf, size,
+			पूर्ण अन्यथा अणु
+				snम_लिखो(buf, size,
 					 "Error:\tFile %s/%s not found.\n"
 					 "Hint:\tPerhaps this kernel misses some CONFIG_ setting to enable this feature?.\n",
 					 tracing_events_path, filename);
-			}
-			break;
-		}
-		snprintf(buf, size, "%s",
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		snम_लिखो(buf, size, "%s",
 			 "Error:\tUnable to find debugfs/tracefs\n"
 			 "Hint:\tWas your kernel compiled with debugfs/tracefs support?\n"
 			 "Hint:\tIs the debugfs/tracefs filesystem mounted?\n"
 			 "Hint:\tTry 'sudo mount -t debugfs nodev /sys/kernel/debug'");
-		break;
-	case EACCES: {
-		snprintf(buf, size,
+		अवरोध;
+	हाल EACCES: अणु
+		snम_लिखो(buf, size,
 			 "Error:\tNo permissions to read %s/%s\n"
 			 "Hint:\tTry 'sudo mount -o remount,mode=755 %s'\n",
 			 tracing_events_path, filename, tracing_path_mount());
-	}
-		break;
-	default:
-		snprintf(buf, size, "%s", str_error_r(err, sbuf, sizeof(sbuf)));
-		break;
-	}
+	पूर्ण
+		अवरोध;
+	शेष:
+		snम_लिखो(buf, size, "%s", str_error_r(err, sbuf, माप(sbuf)));
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

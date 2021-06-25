@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
  * AGPGART driver frontend
  * Copyright (C) 2004 Silicon Graphics, Inc.
  * Copyright (C) 2002-2003 Dave Jones
- * Copyright (C) 1999 Jeff Hartmann
+ * Copyright (C) 1999 Jeff Harपंचांगann
  * Copyright (C) 1999 Precision Insight, Inc.
  * Copyright (C) 1999 Xi Graphics, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -26,555 +27,555 @@
  *
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mman.h>
-#include <linux/pci.h>
-#include <linux/miscdevice.h>
-#include <linux/agp_backend.h>
-#include <linux/agpgart.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/uaccess.h>
-#include "agp.h"
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/agp_backend.h>
+#समावेश <linux/agpgart.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/uaccess.h>
+#समावेश "agp.h"
 
-struct agp_front_data agp_fe;
+काष्ठा agp_front_data agp_fe;
 
-struct agp_memory *agp_find_mem_by_key(int key)
-{
-	struct agp_memory *curr;
+काष्ठा agp_memory *agp_find_mem_by_key(पूर्णांक key)
+अणु
+	काष्ठा agp_memory *curr;
 
-	if (agp_fe.current_controller == NULL)
-		return NULL;
+	अगर (agp_fe.current_controller == शून्य)
+		वापस शून्य;
 
 	curr = agp_fe.current_controller->pool;
 
-	while (curr != NULL) {
-		if (curr->key == key)
-			break;
+	जबतक (curr != शून्य) अणु
+		अगर (curr->key == key)
+			अवरोध;
 		curr = curr->next;
-	}
+	पूर्ण
 
 	DBG("key=%d -> mem=%p", key, curr);
-	return curr;
-}
+	वापस curr;
+पूर्ण
 
-static void agp_remove_from_pool(struct agp_memory *temp)
-{
-	struct agp_memory *prev;
-	struct agp_memory *next;
+अटल व्योम agp_हटाओ_from_pool(काष्ठा agp_memory *temp)
+अणु
+	काष्ठा agp_memory *prev;
+	काष्ठा agp_memory *next;
 
-	/* Check to see if this is even in the memory pool */
+	/* Check to see अगर this is even in the memory pool */
 
 	DBG("mem=%p", temp);
-	if (agp_find_mem_by_key(temp->key) != NULL) {
+	अगर (agp_find_mem_by_key(temp->key) != शून्य) अणु
 		next = temp->next;
 		prev = temp->prev;
 
-		if (prev != NULL) {
+		अगर (prev != शून्य) अणु
 			prev->next = next;
-			if (next != NULL)
+			अगर (next != शून्य)
 				next->prev = prev;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* This is the first item on the list */
-			if (next != NULL)
-				next->prev = NULL;
+			अगर (next != शून्य)
+				next->prev = शून्य;
 
 			agp_fe.current_controller->pool = next;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Routines for managing each client's segment list -
+ * Routines क्रम managing each client's segment list -
  * These routines handle adding and removing segments
  * to each auth'ed client.
  */
 
-static struct
-agp_segment_priv *agp_find_seg_in_client(const struct agp_client *client,
-						unsigned long offset,
-					    int size, pgprot_t page_prot)
-{
-	struct agp_segment_priv *seg;
-	int i;
+अटल काष्ठा
+agp_segment_priv *agp_find_seg_in_client(स्थिर काष्ठा agp_client *client,
+						अचिन्हित दीर्घ offset,
+					    पूर्णांक size, pgprot_t page_prot)
+अणु
+	काष्ठा agp_segment_priv *seg;
+	पूर्णांक i;
 	off_t pg_start;
-	size_t pg_count;
+	माप_प्रकार pg_count;
 
 	pg_start = offset / 4096;
 	pg_count = size / 4096;
 	seg = *(client->segments);
 
-	for (i = 0; i < client->num_segments; i++) {
-		if ((seg[i].pg_start == pg_start) &&
+	क्रम (i = 0; i < client->num_segments; i++) अणु
+		अगर ((seg[i].pg_start == pg_start) &&
 		    (seg[i].pg_count == pg_count) &&
-		    (pgprot_val(seg[i].prot) == pgprot_val(page_prot))) {
-			return seg + i;
-		}
-	}
+		    (pgprot_val(seg[i].prot) == pgprot_val(page_prot))) अणु
+			वापस seg + i;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void agp_remove_seg_from_client(struct agp_client *client)
-{
+अटल व्योम agp_हटाओ_seg_from_client(काष्ठा agp_client *client)
+अणु
 	DBG("client=%p", client);
 
-	if (client->segments != NULL) {
-		if (*(client->segments) != NULL) {
+	अगर (client->segments != शून्य) अणु
+		अगर (*(client->segments) != शून्य) अणु
 			DBG("Freeing %p from client %p", *(client->segments), client);
-			kfree(*(client->segments));
-		}
+			kमुक्त(*(client->segments));
+		पूर्ण
 		DBG("Freeing %p from client %p", client->segments, client);
-		kfree(client->segments);
-		client->segments = NULL;
-	}
-}
+		kमुक्त(client->segments);
+		client->segments = शून्य;
+	पूर्ण
+पूर्ण
 
-static void agp_add_seg_to_client(struct agp_client *client,
-			       struct agp_segment_priv ** seg, int num_segments)
-{
-	struct agp_segment_priv **prev_seg;
+अटल व्योम agp_add_seg_to_client(काष्ठा agp_client *client,
+			       काष्ठा agp_segment_priv ** seg, पूर्णांक num_segments)
+अणु
+	काष्ठा agp_segment_priv **prev_seg;
 
 	prev_seg = client->segments;
 
-	if (prev_seg != NULL)
-		agp_remove_seg_from_client(client);
+	अगर (prev_seg != शून्य)
+		agp_हटाओ_seg_from_client(client);
 
 	DBG("Adding seg %p (%d segments) to client %p", seg, num_segments, client);
 	client->num_segments = num_segments;
 	client->segments = seg;
-}
+पूर्ण
 
-static pgprot_t agp_convert_mmap_flags(int prot)
-{
-	unsigned long prot_bits;
+अटल pgprot_t agp_convert_mmap_flags(पूर्णांक prot)
+अणु
+	अचिन्हित दीर्घ prot_bits;
 
 	prot_bits = calc_vm_prot_bits(prot, 0) | VM_SHARED;
-	return vm_get_page_prot(prot_bits);
-}
+	वापस vm_get_page_prot(prot_bits);
+पूर्ण
 
-int agp_create_segment(struct agp_client *client, struct agp_region *region)
-{
-	struct agp_segment_priv **ret_seg;
-	struct agp_segment_priv *seg;
-	struct agp_segment *user_seg;
-	size_t i;
+पूर्णांक agp_create_segment(काष्ठा agp_client *client, काष्ठा agp_region *region)
+अणु
+	काष्ठा agp_segment_priv **ret_seg;
+	काष्ठा agp_segment_priv *seg;
+	काष्ठा agp_segment *user_seg;
+	माप_प्रकार i;
 
-	seg = kzalloc((sizeof(struct agp_segment_priv) * region->seg_count), GFP_KERNEL);
-	if (seg == NULL) {
-		kfree(region->seg_list);
-		region->seg_list = NULL;
-		return -ENOMEM;
-	}
+	seg = kzalloc((माप(काष्ठा agp_segment_priv) * region->seg_count), GFP_KERNEL);
+	अगर (seg == शून्य) अणु
+		kमुक्त(region->seg_list);
+		region->seg_list = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 	user_seg = region->seg_list;
 
-	for (i = 0; i < region->seg_count; i++) {
+	क्रम (i = 0; i < region->seg_count; i++) अणु
 		seg[i].pg_start = user_seg[i].pg_start;
 		seg[i].pg_count = user_seg[i].pg_count;
 		seg[i].prot = agp_convert_mmap_flags(user_seg[i].prot);
-	}
-	kfree(region->seg_list);
-	region->seg_list = NULL;
+	पूर्ण
+	kमुक्त(region->seg_list);
+	region->seg_list = शून्य;
 
-	ret_seg = kmalloc(sizeof(void *), GFP_KERNEL);
-	if (ret_seg == NULL) {
-		kfree(seg);
-		return -ENOMEM;
-	}
+	ret_seg = kदो_स्मृति(माप(व्योम *), GFP_KERNEL);
+	अगर (ret_seg == शून्य) अणु
+		kमुक्त(seg);
+		वापस -ENOMEM;
+	पूर्ण
 	*ret_seg = seg;
 	agp_add_seg_to_client(client, ret_seg, region->seg_count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* End - Routines for managing each client's segment list */
+/* End - Routines क्रम managing each client's segment list */
 
-/* This function must only be called when current_controller != NULL */
-static void agp_insert_into_pool(struct agp_memory * temp)
-{
-	struct agp_memory *prev;
+/* This function must only be called when current_controller != शून्य */
+अटल व्योम agp_insert_पूर्णांकo_pool(काष्ठा agp_memory * temp)
+अणु
+	काष्ठा agp_memory *prev;
 
 	prev = agp_fe.current_controller->pool;
 
-	if (prev != NULL) {
+	अगर (prev != शून्य) अणु
 		prev->prev = temp;
 		temp->next = prev;
-	}
+	पूर्ण
 	agp_fe.current_controller->pool = temp;
-}
+पूर्ण
 
 
-/* File private list routines */
+/* File निजी list routines */
 
-struct agp_file_private *agp_find_private(pid_t pid)
-{
-	struct agp_file_private *curr;
+काष्ठा agp_file_निजी *agp_find_निजी(pid_t pid)
+अणु
+	काष्ठा agp_file_निजी *curr;
 
 	curr = agp_fe.file_priv_list;
 
-	while (curr != NULL) {
-		if (curr->my_pid == pid)
-			return curr;
+	जबतक (curr != शून्य) अणु
+		अगर (curr->my_pid == pid)
+			वापस curr;
 		curr = curr->next;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void agp_insert_file_private(struct agp_file_private * priv)
-{
-	struct agp_file_private *prev;
+अटल व्योम agp_insert_file_निजी(काष्ठा agp_file_निजी * priv)
+अणु
+	काष्ठा agp_file_निजी *prev;
 
 	prev = agp_fe.file_priv_list;
 
-	if (prev != NULL)
+	अगर (prev != शून्य)
 		prev->prev = priv;
 	priv->next = prev;
 	agp_fe.file_priv_list = priv;
-}
+पूर्ण
 
-static void agp_remove_file_private(struct agp_file_private * priv)
-{
-	struct agp_file_private *next;
-	struct agp_file_private *prev;
+अटल व्योम agp_हटाओ_file_निजी(काष्ठा agp_file_निजी * priv)
+अणु
+	काष्ठा agp_file_निजी *next;
+	काष्ठा agp_file_निजी *prev;
 
 	next = priv->next;
 	prev = priv->prev;
 
-	if (prev != NULL) {
+	अगर (prev != शून्य) अणु
 		prev->next = next;
 
-		if (next != NULL)
+		अगर (next != शून्य)
 			next->prev = prev;
 
-	} else {
-		if (next != NULL)
-			next->prev = NULL;
+	पूर्ण अन्यथा अणु
+		अगर (next != शून्य)
+			next->prev = शून्य;
 
 		agp_fe.file_priv_list = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* End - File flag list routines */
 
 /*
- * Wrappers for agp_free_memory & agp_allocate_memory
- * These make sure that internal lists are kept updated.
+ * Wrappers क्रम agp_मुक्त_memory & agp_allocate_memory
+ * These make sure that पूर्णांकernal lists are kept updated.
  */
-void agp_free_memory_wrap(struct agp_memory *memory)
-{
-	agp_remove_from_pool(memory);
-	agp_free_memory(memory);
-}
+व्योम agp_मुक्त_memory_wrap(काष्ठा agp_memory *memory)
+अणु
+	agp_हटाओ_from_pool(memory);
+	agp_मुक्त_memory(memory);
+पूर्ण
 
-struct agp_memory *agp_allocate_memory_wrap(size_t pg_count, u32 type)
-{
-	struct agp_memory *memory;
+काष्ठा agp_memory *agp_allocate_memory_wrap(माप_प्रकार pg_count, u32 type)
+अणु
+	काष्ठा agp_memory *memory;
 
 	memory = agp_allocate_memory(agp_bridge, pg_count, type);
-	if (memory == NULL)
-		return NULL;
+	अगर (memory == शून्य)
+		वापस शून्य;
 
-	agp_insert_into_pool(memory);
-	return memory;
-}
+	agp_insert_पूर्णांकo_pool(memory);
+	वापस memory;
+पूर्ण
 
-/* Routines for managing the list of controllers -
+/* Routines क्रम managing the list of controllers -
  * These routines manage the current controller, and the list of
  * controllers
  */
 
-static struct agp_controller *agp_find_controller_by_pid(pid_t id)
-{
-	struct agp_controller *controller;
+अटल काष्ठा agp_controller *agp_find_controller_by_pid(pid_t id)
+अणु
+	काष्ठा agp_controller *controller;
 
 	controller = agp_fe.controllers;
 
-	while (controller != NULL) {
-		if (controller->pid == id)
-			return controller;
+	जबतक (controller != शून्य) अणु
+		अगर (controller->pid == id)
+			वापस controller;
 		controller = controller->next;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct agp_controller *agp_create_controller(pid_t id)
-{
-	struct agp_controller *controller;
+अटल काष्ठा agp_controller *agp_create_controller(pid_t id)
+अणु
+	काष्ठा agp_controller *controller;
 
-	controller = kzalloc(sizeof(struct agp_controller), GFP_KERNEL);
-	if (controller == NULL)
-		return NULL;
+	controller = kzalloc(माप(काष्ठा agp_controller), GFP_KERNEL);
+	अगर (controller == शून्य)
+		वापस शून्य;
 
 	controller->pid = id;
-	return controller;
-}
+	वापस controller;
+पूर्ण
 
-static int agp_insert_controller(struct agp_controller *controller)
-{
-	struct agp_controller *prev_controller;
+अटल पूर्णांक agp_insert_controller(काष्ठा agp_controller *controller)
+अणु
+	काष्ठा agp_controller *prev_controller;
 
 	prev_controller = agp_fe.controllers;
 	controller->next = prev_controller;
 
-	if (prev_controller != NULL)
+	अगर (prev_controller != शून्य)
 		prev_controller->prev = controller;
 
 	agp_fe.controllers = controller;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void agp_remove_all_clients(struct agp_controller *controller)
-{
-	struct agp_client *client;
-	struct agp_client *temp;
+अटल व्योम agp_हटाओ_all_clients(काष्ठा agp_controller *controller)
+अणु
+	काष्ठा agp_client *client;
+	काष्ठा agp_client *temp;
 
 	client = controller->clients;
 
-	while (client) {
-		struct agp_file_private *priv;
+	जबतक (client) अणु
+		काष्ठा agp_file_निजी *priv;
 
 		temp = client;
-		agp_remove_seg_from_client(temp);
-		priv = agp_find_private(temp->pid);
+		agp_हटाओ_seg_from_client(temp);
+		priv = agp_find_निजी(temp->pid);
 
-		if (priv != NULL) {
+		अगर (priv != शून्य) अणु
 			clear_bit(AGP_FF_IS_VALID, &priv->access_flags);
 			clear_bit(AGP_FF_IS_CLIENT, &priv->access_flags);
-		}
+		पूर्ण
 		client = client->next;
-		kfree(temp);
-	}
-}
+		kमुक्त(temp);
+	पूर्ण
+पूर्ण
 
-static void agp_remove_all_memory(struct agp_controller *controller)
-{
-	struct agp_memory *memory;
-	struct agp_memory *temp;
+अटल व्योम agp_हटाओ_all_memory(काष्ठा agp_controller *controller)
+अणु
+	काष्ठा agp_memory *memory;
+	काष्ठा agp_memory *temp;
 
 	memory = controller->pool;
 
-	while (memory) {
+	जबतक (memory) अणु
 		temp = memory;
 		memory = memory->next;
-		agp_free_memory_wrap(temp);
-	}
-}
+		agp_मुक्त_memory_wrap(temp);
+	पूर्ण
+पूर्ण
 
-static int agp_remove_controller(struct agp_controller *controller)
-{
-	struct agp_controller *prev_controller;
-	struct agp_controller *next_controller;
+अटल पूर्णांक agp_हटाओ_controller(काष्ठा agp_controller *controller)
+अणु
+	काष्ठा agp_controller *prev_controller;
+	काष्ठा agp_controller *next_controller;
 
 	prev_controller = controller->prev;
 	next_controller = controller->next;
 
-	if (prev_controller != NULL) {
+	अगर (prev_controller != शून्य) अणु
 		prev_controller->next = next_controller;
-		if (next_controller != NULL)
+		अगर (next_controller != शून्य)
 			next_controller->prev = prev_controller;
 
-	} else {
-		if (next_controller != NULL)
-			next_controller->prev = NULL;
+	पूर्ण अन्यथा अणु
+		अगर (next_controller != शून्य)
+			next_controller->prev = शून्य;
 
 		agp_fe.controllers = next_controller;
-	}
+	पूर्ण
 
-	agp_remove_all_memory(controller);
-	agp_remove_all_clients(controller);
+	agp_हटाओ_all_memory(controller);
+	agp_हटाओ_all_clients(controller);
 
-	if (agp_fe.current_controller == controller) {
-		agp_fe.current_controller = NULL;
+	अगर (agp_fe.current_controller == controller) अणु
+		agp_fe.current_controller = शून्य;
 		agp_fe.backend_acquired = false;
 		agp_backend_release(agp_bridge);
-	}
-	kfree(controller);
-	return 0;
-}
+	पूर्ण
+	kमुक्त(controller);
+	वापस 0;
+पूर्ण
 
-static void agp_controller_make_current(struct agp_controller *controller)
-{
-	struct agp_client *clients;
+अटल व्योम agp_controller_make_current(काष्ठा agp_controller *controller)
+अणु
+	काष्ठा agp_client *clients;
 
 	clients = controller->clients;
 
-	while (clients != NULL) {
-		struct agp_file_private *priv;
+	जबतक (clients != शून्य) अणु
+		काष्ठा agp_file_निजी *priv;
 
-		priv = agp_find_private(clients->pid);
+		priv = agp_find_निजी(clients->pid);
 
-		if (priv != NULL) {
+		अगर (priv != शून्य) अणु
 			set_bit(AGP_FF_IS_VALID, &priv->access_flags);
 			set_bit(AGP_FF_IS_CLIENT, &priv->access_flags);
-		}
+		पूर्ण
 		clients = clients->next;
-	}
+	पूर्ण
 
 	agp_fe.current_controller = controller;
-}
+पूर्ण
 
-static void agp_controller_release_current(struct agp_controller *controller,
-				      struct agp_file_private *controller_priv)
-{
-	struct agp_client *clients;
+अटल व्योम agp_controller_release_current(काष्ठा agp_controller *controller,
+				      काष्ठा agp_file_निजी *controller_priv)
+अणु
+	काष्ठा agp_client *clients;
 
 	clear_bit(AGP_FF_IS_VALID, &controller_priv->access_flags);
 	clients = controller->clients;
 
-	while (clients != NULL) {
-		struct agp_file_private *priv;
+	जबतक (clients != शून्य) अणु
+		काष्ठा agp_file_निजी *priv;
 
-		priv = agp_find_private(clients->pid);
+		priv = agp_find_निजी(clients->pid);
 
-		if (priv != NULL)
+		अगर (priv != शून्य)
 			clear_bit(AGP_FF_IS_VALID, &priv->access_flags);
 
 		clients = clients->next;
-	}
+	पूर्ण
 
-	agp_fe.current_controller = NULL;
+	agp_fe.current_controller = शून्य;
 	agp_fe.used_by_controller = false;
 	agp_backend_release(agp_bridge);
-}
+पूर्ण
 
 /*
- * Routines for managing client lists -
- * These routines are for managing the list of auth'ed clients.
+ * Routines क्रम managing client lists -
+ * These routines are क्रम managing the list of auth'ed clients.
  */
 
-static struct agp_client
-*agp_find_client_in_controller(struct agp_controller *controller, pid_t id)
-{
-	struct agp_client *client;
+अटल काष्ठा agp_client
+*agp_find_client_in_controller(काष्ठा agp_controller *controller, pid_t id)
+अणु
+	काष्ठा agp_client *client;
 
-	if (controller == NULL)
-		return NULL;
+	अगर (controller == शून्य)
+		वापस शून्य;
 
 	client = controller->clients;
 
-	while (client != NULL) {
-		if (client->pid == id)
-			return client;
+	जबतक (client != शून्य) अणु
+		अगर (client->pid == id)
+			वापस client;
 		client = client->next;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct agp_controller *agp_find_controller_for_client(pid_t id)
-{
-	struct agp_controller *controller;
+अटल काष्ठा agp_controller *agp_find_controller_क्रम_client(pid_t id)
+अणु
+	काष्ठा agp_controller *controller;
 
 	controller = agp_fe.controllers;
 
-	while (controller != NULL) {
-		if ((agp_find_client_in_controller(controller, id)) != NULL)
-			return controller;
+	जबतक (controller != शून्य) अणु
+		अगर ((agp_find_client_in_controller(controller, id)) != शून्य)
+			वापस controller;
 		controller = controller->next;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct agp_client *agp_find_client_by_pid(pid_t id)
-{
-	struct agp_client *temp;
+काष्ठा agp_client *agp_find_client_by_pid(pid_t id)
+अणु
+	काष्ठा agp_client *temp;
 
-	if (agp_fe.current_controller == NULL)
-		return NULL;
+	अगर (agp_fe.current_controller == शून्य)
+		वापस शून्य;
 
 	temp = agp_find_client_in_controller(agp_fe.current_controller, id);
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static void agp_insert_client(struct agp_client *client)
-{
-	struct agp_client *prev_client;
+अटल व्योम agp_insert_client(काष्ठा agp_client *client)
+अणु
+	काष्ठा agp_client *prev_client;
 
 	prev_client = agp_fe.current_controller->clients;
 	client->next = prev_client;
 
-	if (prev_client != NULL)
+	अगर (prev_client != शून्य)
 		prev_client->prev = client;
 
 	agp_fe.current_controller->clients = client;
 	agp_fe.current_controller->num_clients++;
-}
+पूर्ण
 
-struct agp_client *agp_create_client(pid_t id)
-{
-	struct agp_client *new_client;
+काष्ठा agp_client *agp_create_client(pid_t id)
+अणु
+	काष्ठा agp_client *new_client;
 
-	new_client = kzalloc(sizeof(struct agp_client), GFP_KERNEL);
-	if (new_client == NULL)
-		return NULL;
+	new_client = kzalloc(माप(काष्ठा agp_client), GFP_KERNEL);
+	अगर (new_client == शून्य)
+		वापस शून्य;
 
 	new_client->pid = id;
 	agp_insert_client(new_client);
-	return new_client;
-}
+	वापस new_client;
+पूर्ण
 
-int agp_remove_client(pid_t id)
-{
-	struct agp_client *client;
-	struct agp_client *prev_client;
-	struct agp_client *next_client;
-	struct agp_controller *controller;
+पूर्णांक agp_हटाओ_client(pid_t id)
+अणु
+	काष्ठा agp_client *client;
+	काष्ठा agp_client *prev_client;
+	काष्ठा agp_client *next_client;
+	काष्ठा agp_controller *controller;
 
-	controller = agp_find_controller_for_client(id);
-	if (controller == NULL)
-		return -EINVAL;
+	controller = agp_find_controller_क्रम_client(id);
+	अगर (controller == शून्य)
+		वापस -EINVAL;
 
 	client = agp_find_client_in_controller(controller, id);
-	if (client == NULL)
-		return -EINVAL;
+	अगर (client == शून्य)
+		वापस -EINVAL;
 
 	prev_client = client->prev;
 	next_client = client->next;
 
-	if (prev_client != NULL) {
+	अगर (prev_client != शून्य) अणु
 		prev_client->next = next_client;
-		if (next_client != NULL)
+		अगर (next_client != शून्य)
 			next_client->prev = prev_client;
 
-	} else {
-		if (next_client != NULL)
-			next_client->prev = NULL;
+	पूर्ण अन्यथा अणु
+		अगर (next_client != शून्य)
+			next_client->prev = शून्य;
 		controller->clients = next_client;
-	}
+	पूर्ण
 
 	controller->num_clients--;
-	agp_remove_seg_from_client(client);
-	kfree(client);
-	return 0;
-}
+	agp_हटाओ_seg_from_client(client);
+	kमुक्त(client);
+	वापस 0;
+पूर्ण
 
-/* End - Routines for managing client lists */
+/* End - Routines क्रम managing client lists */
 
 /* File Operations */
 
-static int agp_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	unsigned int size, current_size;
-	unsigned long offset;
-	struct agp_client *client;
-	struct agp_file_private *priv = file->private_data;
-	struct agp_kern_info kerninfo;
+अटल पूर्णांक agp_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	अचिन्हित पूर्णांक size, current_size;
+	अचिन्हित दीर्घ offset;
+	काष्ठा agp_client *client;
+	काष्ठा agp_file_निजी *priv = file->निजी_data;
+	काष्ठा agp_kern_info kerninfo;
 
 	mutex_lock(&(agp_fe.agp_mutex));
 
-	if (agp_fe.backend_acquired != true)
-		goto out_eperm;
+	अगर (agp_fe.backend_acquired != true)
+		जाओ out_eperm;
 
-	if (!(test_bit(AGP_FF_IS_VALID, &priv->access_flags)))
-		goto out_eperm;
+	अगर (!(test_bit(AGP_FF_IS_VALID, &priv->access_flags)))
+		जाओ out_eperm;
 
 	agp_copy_info(agp_bridge, &kerninfo);
 	size = vma->vm_end - vma->vm_start;
@@ -583,172 +584,172 @@ static int agp_mmap(struct file *file, struct vm_area_struct *vma)
 	offset = vma->vm_pgoff << PAGE_SHIFT;
 	DBG("%lx:%lx", offset, offset+size);
 
-	if (test_bit(AGP_FF_IS_CLIENT, &priv->access_flags)) {
-		if ((size + offset) > current_size)
-			goto out_inval;
+	अगर (test_bit(AGP_FF_IS_CLIENT, &priv->access_flags)) अणु
+		अगर ((size + offset) > current_size)
+			जाओ out_inval;
 
 		client = agp_find_client_by_pid(current->pid);
 
-		if (client == NULL)
-			goto out_eperm;
+		अगर (client == शून्य)
+			जाओ out_eperm;
 
-		if (!agp_find_seg_in_client(client, offset, size, vma->vm_page_prot))
-			goto out_inval;
+		अगर (!agp_find_seg_in_client(client, offset, size, vma->vm_page_prot))
+			जाओ out_inval;
 
 		DBG("client vm_ops=%p", kerninfo.vm_ops);
-		if (kerninfo.vm_ops) {
+		अगर (kerninfo.vm_ops) अणु
 			vma->vm_ops = kerninfo.vm_ops;
-		} else if (io_remap_pfn_range(vma, vma->vm_start,
+		पूर्ण अन्यथा अगर (io_remap_pfn_range(vma, vma->vm_start,
 				(kerninfo.aper_base + offset) >> PAGE_SHIFT,
 				size,
-				pgprot_writecombine(vma->vm_page_prot))) {
-			goto out_again;
-		}
+				pgprot_ग_लिखोcombine(vma->vm_page_prot))) अणु
+			जाओ out_again;
+		पूर्ण
 		mutex_unlock(&(agp_fe.agp_mutex));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (test_bit(AGP_FF_IS_CONTROLLER, &priv->access_flags)) {
-		if (size != current_size)
-			goto out_inval;
+	अगर (test_bit(AGP_FF_IS_CONTROLLER, &priv->access_flags)) अणु
+		अगर (size != current_size)
+			जाओ out_inval;
 
 		DBG("controller vm_ops=%p", kerninfo.vm_ops);
-		if (kerninfo.vm_ops) {
+		अगर (kerninfo.vm_ops) अणु
 			vma->vm_ops = kerninfo.vm_ops;
-		} else if (io_remap_pfn_range(vma, vma->vm_start,
+		पूर्ण अन्यथा अगर (io_remap_pfn_range(vma, vma->vm_start,
 				kerninfo.aper_base >> PAGE_SHIFT,
 				size,
-				pgprot_writecombine(vma->vm_page_prot))) {
-			goto out_again;
-		}
+				pgprot_ग_लिखोcombine(vma->vm_page_prot))) अणु
+			जाओ out_again;
+		पूर्ण
 		mutex_unlock(&(agp_fe.agp_mutex));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 out_eperm:
 	mutex_unlock(&(agp_fe.agp_mutex));
-	return -EPERM;
+	वापस -EPERM;
 
 out_inval:
 	mutex_unlock(&(agp_fe.agp_mutex));
-	return -EINVAL;
+	वापस -EINVAL;
 
 out_again:
 	mutex_unlock(&(agp_fe.agp_mutex));
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int agp_release(struct inode *inode, struct file *file)
-{
-	struct agp_file_private *priv = file->private_data;
+अटल पूर्णांक agp_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा agp_file_निजी *priv = file->निजी_data;
 
 	mutex_lock(&(agp_fe.agp_mutex));
 
 	DBG("priv=%p", priv);
 
-	if (test_bit(AGP_FF_IS_CONTROLLER, &priv->access_flags)) {
-		struct agp_controller *controller;
+	अगर (test_bit(AGP_FF_IS_CONTROLLER, &priv->access_flags)) अणु
+		काष्ठा agp_controller *controller;
 
 		controller = agp_find_controller_by_pid(priv->my_pid);
 
-		if (controller != NULL) {
-			if (controller == agp_fe.current_controller)
+		अगर (controller != शून्य) अणु
+			अगर (controller == agp_fe.current_controller)
 				agp_controller_release_current(controller, priv);
-			agp_remove_controller(controller);
-			controller = NULL;
-		}
-	}
+			agp_हटाओ_controller(controller);
+			controller = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (test_bit(AGP_FF_IS_CLIENT, &priv->access_flags))
-		agp_remove_client(priv->my_pid);
+	अगर (test_bit(AGP_FF_IS_CLIENT, &priv->access_flags))
+		agp_हटाओ_client(priv->my_pid);
 
-	agp_remove_file_private(priv);
-	kfree(priv);
-	file->private_data = NULL;
+	agp_हटाओ_file_निजी(priv);
+	kमुक्त(priv);
+	file->निजी_data = शून्य;
 	mutex_unlock(&(agp_fe.agp_mutex));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int agp_open(struct inode *inode, struct file *file)
-{
-	int minor = iminor(inode);
-	struct agp_file_private *priv;
-	struct agp_client *client;
+अटल पूर्णांक agp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक minor = iminor(inode);
+	काष्ठा agp_file_निजी *priv;
+	काष्ठा agp_client *client;
 
-	if (minor != AGPGART_MINOR)
-		return -ENXIO;
+	अगर (minor != AGPGART_MINOR)
+		वापस -ENXIO;
 
 	mutex_lock(&(agp_fe.agp_mutex));
 
-	priv = kzalloc(sizeof(struct agp_file_private), GFP_KERNEL);
-	if (priv == NULL) {
+	priv = kzalloc(माप(काष्ठा agp_file_निजी), GFP_KERNEL);
+	अगर (priv == शून्य) अणु
 		mutex_unlock(&(agp_fe.agp_mutex));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	set_bit(AGP_FF_ALLOW_CLIENT, &priv->access_flags);
 	priv->my_pid = current->pid;
 
-	if (capable(CAP_SYS_RAWIO))
+	अगर (capable(CAP_SYS_RAWIO))
 		/* Root priv, can be controller */
 		set_bit(AGP_FF_ALLOW_CONTROLLER, &priv->access_flags);
 
 	client = agp_find_client_by_pid(current->pid);
 
-	if (client != NULL) {
+	अगर (client != शून्य) अणु
 		set_bit(AGP_FF_IS_CLIENT, &priv->access_flags);
 		set_bit(AGP_FF_IS_VALID, &priv->access_flags);
-	}
-	file->private_data = (void *) priv;
-	agp_insert_file_private(priv);
+	पूर्ण
+	file->निजी_data = (व्योम *) priv;
+	agp_insert_file_निजी(priv);
 	DBG("private=%p, client=%p", priv, client);
 
 	mutex_unlock(&(agp_fe.agp_mutex));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int agpioc_info_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_info userinfo;
-	struct agp_kern_info kerninfo;
+अटल पूर्णांक agpioc_info_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_info userinfo;
+	काष्ठा agp_kern_info kerninfo;
 
 	agp_copy_info(agp_bridge, &kerninfo);
 
-	memset(&userinfo, 0, sizeof(userinfo));
+	स_रखो(&userinfo, 0, माप(userinfo));
 	userinfo.version.major = kerninfo.version.major;
 	userinfo.version.minor = kerninfo.version.minor;
-	userinfo.bridge_id = kerninfo.device->vendor |
+	userinfo.bridge_id = kerninfo.device->venकरोr |
 	    (kerninfo.device->device << 16);
 	userinfo.agp_mode = kerninfo.mode;
 	userinfo.aper_base = kerninfo.aper_base;
 	userinfo.aper_size = kerninfo.aper_size;
-	userinfo.pg_total = userinfo.pg_system = kerninfo.max_memory;
+	userinfo.pg_total = userinfo.pg_प्रणाली = kerninfo.max_memory;
 	userinfo.pg_used = kerninfo.current_memory;
 
-	if (copy_to_user(arg, &userinfo, sizeof(struct agp_info)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &userinfo, माप(काष्ठा agp_info)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int agpioc_acquire_wrap(struct agp_file_private *priv)
-{
-	struct agp_controller *controller;
+पूर्णांक agpioc_acquire_wrap(काष्ठा agp_file_निजी *priv)
+अणु
+	काष्ठा agp_controller *controller;
 
 	DBG("");
 
-	if (!(test_bit(AGP_FF_ALLOW_CONTROLLER, &priv->access_flags)))
-		return -EPERM;
+	अगर (!(test_bit(AGP_FF_ALLOW_CONTROLLER, &priv->access_flags)))
+		वापस -EPERM;
 
-	if (agp_fe.current_controller != NULL)
-		return -EBUSY;
+	अगर (agp_fe.current_controller != शून्य)
+		वापस -EBUSY;
 
-	if (!agp_bridge)
-		return -ENODEV;
+	अगर (!agp_bridge)
+		वापस -ENODEV;
 
-        if (atomic_read(&agp_bridge->agp_in_use))
-                return -EBUSY;
+        अगर (atomic_पढ़ो(&agp_bridge->agp_in_use))
+                वापस -EBUSY;
 
 	atomic_inc(&agp_bridge->agp_in_use);
 
@@ -756,311 +757,311 @@ int agpioc_acquire_wrap(struct agp_file_private *priv)
 
 	controller = agp_find_controller_by_pid(priv->my_pid);
 
-	if (controller != NULL) {
+	अगर (controller != शून्य) अणु
 		agp_controller_make_current(controller);
-	} else {
+	पूर्ण अन्यथा अणु
 		controller = agp_create_controller(priv->my_pid);
 
-		if (controller == NULL) {
+		अगर (controller == शून्य) अणु
 			agp_fe.backend_acquired = false;
 			agp_backend_release(agp_bridge);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		agp_insert_controller(controller);
 		agp_controller_make_current(controller);
-	}
+	पूर्ण
 
 	set_bit(AGP_FF_IS_CONTROLLER, &priv->access_flags);
 	set_bit(AGP_FF_IS_VALID, &priv->access_flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int agpioc_release_wrap(struct agp_file_private *priv)
-{
+पूर्णांक agpioc_release_wrap(काष्ठा agp_file_निजी *priv)
+अणु
 	DBG("");
 	agp_controller_release_current(agp_fe.current_controller, priv);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int agpioc_setup_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_setup mode;
+पूर्णांक agpioc_setup_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_setup mode;
 
 	DBG("");
-	if (copy_from_user(&mode, arg, sizeof(struct agp_setup)))
-		return -EFAULT;
+	अगर (copy_from_user(&mode, arg, माप(काष्ठा agp_setup)))
+		वापस -EFAULT;
 
 	agp_enable(agp_bridge, mode.agp_mode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int agpioc_reserve_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_region reserve;
-	struct agp_client *client;
-	struct agp_file_private *client_priv;
+अटल पूर्णांक agpioc_reserve_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_region reserve;
+	काष्ठा agp_client *client;
+	काष्ठा agp_file_निजी *client_priv;
 
 	DBG("");
-	if (copy_from_user(&reserve, arg, sizeof(struct agp_region)))
-		return -EFAULT;
+	अगर (copy_from_user(&reserve, arg, माप(काष्ठा agp_region)))
+		वापस -EFAULT;
 
-	if ((unsigned) reserve.seg_count >= ~0U/sizeof(struct agp_segment))
-		return -EFAULT;
+	अगर ((अचिन्हित) reserve.seg_count >= ~0U/माप(काष्ठा agp_segment))
+		वापस -EFAULT;
 
 	client = agp_find_client_by_pid(reserve.pid);
 
-	if (reserve.seg_count == 0) {
-		/* remove a client */
-		client_priv = agp_find_private(reserve.pid);
+	अगर (reserve.seg_count == 0) अणु
+		/* हटाओ a client */
+		client_priv = agp_find_निजी(reserve.pid);
 
-		if (client_priv != NULL) {
+		अगर (client_priv != शून्य) अणु
 			set_bit(AGP_FF_IS_CLIENT, &client_priv->access_flags);
 			set_bit(AGP_FF_IS_VALID, &client_priv->access_flags);
-		}
-		if (client == NULL) {
-			/* client is already removed */
-			return 0;
-		}
-		return agp_remove_client(reserve.pid);
-	} else {
-		struct agp_segment *segment;
+		पूर्ण
+		अगर (client == शून्य) अणु
+			/* client is alपढ़ोy हटाओd */
+			वापस 0;
+		पूर्ण
+		वापस agp_हटाओ_client(reserve.pid);
+	पूर्ण अन्यथा अणु
+		काष्ठा agp_segment *segment;
 
-		if (reserve.seg_count >= 16384)
-			return -EINVAL;
+		अगर (reserve.seg_count >= 16384)
+			वापस -EINVAL;
 
-		segment = kmalloc((sizeof(struct agp_segment) * reserve.seg_count),
+		segment = kदो_स्मृति((माप(काष्ठा agp_segment) * reserve.seg_count),
 				  GFP_KERNEL);
 
-		if (segment == NULL)
-			return -ENOMEM;
+		अगर (segment == शून्य)
+			वापस -ENOMEM;
 
-		if (copy_from_user(segment, (void __user *) reserve.seg_list,
-				   sizeof(struct agp_segment) * reserve.seg_count)) {
-			kfree(segment);
-			return -EFAULT;
-		}
+		अगर (copy_from_user(segment, (व्योम __user *) reserve.seg_list,
+				   माप(काष्ठा agp_segment) * reserve.seg_count)) अणु
+			kमुक्त(segment);
+			वापस -EFAULT;
+		पूर्ण
 		reserve.seg_list = segment;
 
-		if (client == NULL) {
+		अगर (client == शून्य) अणु
 			/* Create the client and add the segment */
 			client = agp_create_client(reserve.pid);
 
-			if (client == NULL) {
-				kfree(segment);
-				return -ENOMEM;
-			}
-			client_priv = agp_find_private(reserve.pid);
+			अगर (client == शून्य) अणु
+				kमुक्त(segment);
+				वापस -ENOMEM;
+			पूर्ण
+			client_priv = agp_find_निजी(reserve.pid);
 
-			if (client_priv != NULL) {
+			अगर (client_priv != शून्य) अणु
 				set_bit(AGP_FF_IS_CLIENT, &client_priv->access_flags);
 				set_bit(AGP_FF_IS_VALID, &client_priv->access_flags);
-			}
-		}
-		return agp_create_segment(client, &reserve);
-	}
+			पूर्ण
+		पूर्ण
+		वापस agp_create_segment(client, &reserve);
+	पूर्ण
 	/* Will never really happen */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int agpioc_protect_wrap(struct agp_file_private *priv)
-{
+पूर्णांक agpioc_protect_wrap(काष्ठा agp_file_निजी *priv)
+अणु
 	DBG("");
 	/* This function is not currently implemented */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int agpioc_allocate_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_memory *memory;
-	struct agp_allocate alloc;
+अटल पूर्णांक agpioc_allocate_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_memory *memory;
+	काष्ठा agp_allocate alloc;
 
 	DBG("");
-	if (copy_from_user(&alloc, arg, sizeof(struct agp_allocate)))
-		return -EFAULT;
+	अगर (copy_from_user(&alloc, arg, माप(काष्ठा agp_allocate)))
+		वापस -EFAULT;
 
-	if (alloc.type >= AGP_USER_TYPES)
-		return -EINVAL;
+	अगर (alloc.type >= AGP_USER_TYPES)
+		वापस -EINVAL;
 
 	memory = agp_allocate_memory_wrap(alloc.pg_count, alloc.type);
 
-	if (memory == NULL)
-		return -ENOMEM;
+	अगर (memory == शून्य)
+		वापस -ENOMEM;
 
 	alloc.key = memory->key;
 	alloc.physical = memory->physical;
 
-	if (copy_to_user(arg, &alloc, sizeof(struct agp_allocate))) {
-		agp_free_memory_wrap(memory);
-		return -EFAULT;
-	}
-	return 0;
-}
+	अगर (copy_to_user(arg, &alloc, माप(काष्ठा agp_allocate))) अणु
+		agp_मुक्त_memory_wrap(memory);
+		वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int agpioc_deallocate_wrap(struct agp_file_private *priv, int arg)
-{
-	struct agp_memory *memory;
+पूर्णांक agpioc_deallocate_wrap(काष्ठा agp_file_निजी *priv, पूर्णांक arg)
+अणु
+	काष्ठा agp_memory *memory;
 
 	DBG("");
 	memory = agp_find_mem_by_key(arg);
 
-	if (memory == NULL)
-		return -EINVAL;
+	अगर (memory == शून्य)
+		वापस -EINVAL;
 
-	agp_free_memory_wrap(memory);
-	return 0;
-}
+	agp_मुक्त_memory_wrap(memory);
+	वापस 0;
+पूर्ण
 
-static int agpioc_bind_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_bind bind_info;
-	struct agp_memory *memory;
+अटल पूर्णांक agpioc_bind_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_bind bind_info;
+	काष्ठा agp_memory *memory;
 
 	DBG("");
-	if (copy_from_user(&bind_info, arg, sizeof(struct agp_bind)))
-		return -EFAULT;
+	अगर (copy_from_user(&bind_info, arg, माप(काष्ठा agp_bind)))
+		वापस -EFAULT;
 
 	memory = agp_find_mem_by_key(bind_info.key);
 
-	if (memory == NULL)
-		return -EINVAL;
+	अगर (memory == शून्य)
+		वापस -EINVAL;
 
-	return agp_bind_memory(memory, bind_info.pg_start);
-}
+	वापस agp_bind_memory(memory, bind_info.pg_start);
+पूर्ण
 
-static int agpioc_unbind_wrap(struct agp_file_private *priv, void __user *arg)
-{
-	struct agp_memory *memory;
-	struct agp_unbind unbind;
+अटल पूर्णांक agpioc_unbind_wrap(काष्ठा agp_file_निजी *priv, व्योम __user *arg)
+अणु
+	काष्ठा agp_memory *memory;
+	काष्ठा agp_unbind unbind;
 
 	DBG("");
-	if (copy_from_user(&unbind, arg, sizeof(struct agp_unbind)))
-		return -EFAULT;
+	अगर (copy_from_user(&unbind, arg, माप(काष्ठा agp_unbind)))
+		वापस -EFAULT;
 
 	memory = agp_find_mem_by_key(unbind.key);
 
-	if (memory == NULL)
-		return -EINVAL;
+	अगर (memory == शून्य)
+		वापस -EINVAL;
 
-	return agp_unbind_memory(memory);
-}
+	वापस agp_unbind_memory(memory);
+पूर्ण
 
-static long agp_ioctl(struct file *file,
-		     unsigned int cmd, unsigned long arg)
-{
-	struct agp_file_private *curr_priv = file->private_data;
-	int ret_val = -ENOTTY;
+अटल दीर्घ agp_ioctl(काष्ठा file *file,
+		     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा agp_file_निजी *curr_priv = file->निजी_data;
+	पूर्णांक ret_val = -ENOTTY;
 
 	DBG("priv=%p, cmd=%x", curr_priv, cmd);
 	mutex_lock(&(agp_fe.agp_mutex));
 
-	if ((agp_fe.current_controller == NULL) &&
-	    (cmd != AGPIOC_ACQUIRE)) {
+	अगर ((agp_fe.current_controller == शून्य) &&
+	    (cmd != AGPIOC_ACQUIRE)) अणु
 		ret_val = -EINVAL;
-		goto ioctl_out;
-	}
-	if ((agp_fe.backend_acquired != true) &&
-	    (cmd != AGPIOC_ACQUIRE)) {
+		जाओ ioctl_out;
+	पूर्ण
+	अगर ((agp_fe.backend_acquired != true) &&
+	    (cmd != AGPIOC_ACQUIRE)) अणु
 		ret_val = -EBUSY;
-		goto ioctl_out;
-	}
-	if (cmd != AGPIOC_ACQUIRE) {
-		if (!(test_bit(AGP_FF_IS_CONTROLLER, &curr_priv->access_flags))) {
+		जाओ ioctl_out;
+	पूर्ण
+	अगर (cmd != AGPIOC_ACQUIRE) अणु
+		अगर (!(test_bit(AGP_FF_IS_CONTROLLER, &curr_priv->access_flags))) अणु
 			ret_val = -EPERM;
-			goto ioctl_out;
-		}
+			जाओ ioctl_out;
+		पूर्ण
 		/* Use the original pid of the controller,
-		 * in case it's threaded */
+		 * in हाल it's thपढ़ोed */
 
-		if (agp_fe.current_controller->pid != curr_priv->my_pid) {
+		अगर (agp_fe.current_controller->pid != curr_priv->my_pid) अणु
 			ret_val = -EBUSY;
-			goto ioctl_out;
-		}
-	}
+			जाओ ioctl_out;
+		पूर्ण
+	पूर्ण
 
-	switch (cmd) {
-	case AGPIOC_INFO:
-		ret_val = agpioc_info_wrap(curr_priv, (void __user *) arg);
-		break;
+	चयन (cmd) अणु
+	हाल AGPIOC_INFO:
+		ret_val = agpioc_info_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_ACQUIRE:
+	हाल AGPIOC_ACQUIRE:
 		ret_val = agpioc_acquire_wrap(curr_priv);
-		break;
+		अवरोध;
 
-	case AGPIOC_RELEASE:
+	हाल AGPIOC_RELEASE:
 		ret_val = agpioc_release_wrap(curr_priv);
-		break;
+		अवरोध;
 
-	case AGPIOC_SETUP:
-		ret_val = agpioc_setup_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_SETUP:
+		ret_val = agpioc_setup_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_RESERVE:
-		ret_val = agpioc_reserve_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_RESERVE:
+		ret_val = agpioc_reserve_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_PROTECT:
+	हाल AGPIOC_PROTECT:
 		ret_val = agpioc_protect_wrap(curr_priv);
-		break;
+		अवरोध;
 
-	case AGPIOC_ALLOCATE:
-		ret_val = agpioc_allocate_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_ALLOCATE:
+		ret_val = agpioc_allocate_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_DEALLOCATE:
-		ret_val = agpioc_deallocate_wrap(curr_priv, (int) arg);
-		break;
+	हाल AGPIOC_DEALLOCATE:
+		ret_val = agpioc_deallocate_wrap(curr_priv, (पूर्णांक) arg);
+		अवरोध;
 
-	case AGPIOC_BIND:
-		ret_val = agpioc_bind_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_BIND:
+		ret_val = agpioc_bind_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 
-	case AGPIOC_UNBIND:
-		ret_val = agpioc_unbind_wrap(curr_priv, (void __user *) arg);
-		break;
+	हाल AGPIOC_UNBIND:
+		ret_val = agpioc_unbind_wrap(curr_priv, (व्योम __user *) arg);
+		अवरोध;
 	       
-	case AGPIOC_CHIPSET_FLUSH:
-		break;
-	}
+	हाल AGPIOC_CHIPSET_FLUSH:
+		अवरोध;
+	पूर्ण
 
 ioctl_out:
 	DBG("ioctl returns %d\n", ret_val);
 	mutex_unlock(&(agp_fe.agp_mutex));
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-static const struct file_operations agp_fops =
-{
+अटल स्थिर काष्ठा file_operations agp_fops =
+अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
 	.unlocked_ioctl	= agp_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= compat_agp_ioctl,
-#endif
+#पूर्ण_अगर
 	.mmap		= agp_mmap,
-	.open		= agp_open,
+	.खोलो		= agp_खोलो,
 	.release	= agp_release,
-};
+पूर्ण;
 
-static struct miscdevice agp_miscdev =
-{
+अटल काष्ठा miscdevice agp_miscdev =
+अणु
 	.minor	= AGPGART_MINOR,
 	.name	= "agpgart",
 	.fops	= &agp_fops
-};
+पूर्ण;
 
-int agp_frontend_initialize(void)
-{
-	memset(&agp_fe, 0, sizeof(struct agp_front_data));
+पूर्णांक agp_frontend_initialize(व्योम)
+अणु
+	स_रखो(&agp_fe, 0, माप(काष्ठा agp_front_data));
 	mutex_init(&(agp_fe.agp_mutex));
 
-	if (misc_register(&agp_miscdev)) {
-		printk(KERN_ERR PFX "unable to get minor: %d\n", AGPGART_MINOR);
-		return -EIO;
-	}
-	return 0;
-}
+	अगर (misc_रेजिस्टर(&agp_miscdev)) अणु
+		prपूर्णांकk(KERN_ERR PFX "unable to get minor: %d\n", AGPGART_MINOR);
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void agp_frontend_cleanup(void)
-{
-	misc_deregister(&agp_miscdev);
-}
+व्योम agp_frontend_cleanup(व्योम)
+अणु
+	misc_deरेजिस्टर(&agp_miscdev);
+पूर्ण

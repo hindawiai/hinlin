@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_BITOPS_BUILTIN___FFS_H_
-#define _ASM_GENERIC_BITOPS_BUILTIN___FFS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_BITOPS_BUILTIN___FFS_H_
+#घोषणा _ASM_GENERIC_BITOPS_BUILTIN___FFS_H_
 
 /**
  * __ffs - find first bit in word.
  * @word: The word to search
  *
- * Undefined if no bit exists, so code should check against 0 first.
+ * Undefined अगर no bit exists, so code should check against 0 first.
  */
-static __always_inline unsigned long __ffs(unsigned long word)
-{
-	return __builtin_ctzl(word);
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ __ffs(अचिन्हित दीर्घ word)
+अणु
+	वापस __builtin_ctzl(word);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

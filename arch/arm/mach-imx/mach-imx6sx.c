@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
  */
 
-#include <linux/irqchip.h>
-#include <linux/of_platform.h>
-#include <linux/phy.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
-#include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "common.h"
-#include "cpuidle.h"
+#समावेश "common.h"
+#समावेश "cpuidle.h"
 
-static int ar8031_phy_fixup(struct phy_device *dev)
-{
+अटल पूर्णांक ar8031_phy_fixup(काष्ठा phy_device *dev)
+अणु
 	u16 val;
 
 	/* Set RGMII IO voltage to 1.8V */
-	phy_write(dev, 0x1d, 0x1f);
-	phy_write(dev, 0x1e, 0x8);
+	phy_ग_लिखो(dev, 0x1d, 0x1f);
+	phy_ग_लिखो(dev, 0x1e, 0x8);
 
-	/* introduce tx clock delay */
-	phy_write(dev, 0x1d, 0x5);
-	val = phy_read(dev, 0x1e);
+	/* पूर्णांकroduce tx घड़ी delay */
+	phy_ग_लिखो(dev, 0x1d, 0x5);
+	val = phy_पढ़ो(dev, 0x1e);
 	val |= 0x0100;
-	phy_write(dev, 0x1e, val);
+	phy_ग_लिखो(dev, 0x1e, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PHY_ID_AR8031   0x004dd074
-static void __init imx6sx_enet_phy_init(void)
-{
-	if (IS_BUILTIN(CONFIG_PHYLIB))
-		phy_register_fixup_for_uid(PHY_ID_AR8031, 0xffffffff,
+#घोषणा PHY_ID_AR8031   0x004dd074
+अटल व्योम __init imx6sx_enet_phy_init(व्योम)
+अणु
+	अगर (IS_BUILTIN(CONFIG_PHYLIB))
+		phy_रेजिस्टर_fixup_क्रम_uid(PHY_ID_AR8031, 0xffffffff,
 					   ar8031_phy_fixup);
-}
+पूर्ण
 
-static void __init imx6sx_enet_clk_sel(void)
-{
-	struct regmap *gpr;
+अटल व्योम __init imx6sx_enet_clk_sel(व्योम)
+अणु
+	काष्ठा regmap *gpr;
 
 	gpr = syscon_regmap_lookup_by_compatible("fsl,imx6sx-iomuxc-gpr");
-	if (!IS_ERR(gpr)) {
+	अगर (!IS_ERR(gpr)) अणु
 		regmap_update_bits(gpr, IOMUXC_GPR1,
 				   IMX6SX_GPR1_FEC_CLOCK_MUX_SEL_MASK, 0);
 		regmap_update_bits(gpr, IOMUXC_GPR1,
-				   IMX6SX_GPR1_FEC_CLOCK_PAD_DIR_MASK, 0);
-	} else {
+				   IMX6SX_GPR1_FEC_CLOCK_PAD_सूची_MASK, 0);
+	पूर्ण अन्यथा अणु
 		pr_err("failed to find fsl,imx6sx-iomux-gpr regmap\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void imx6sx_enet_init(void)
-{
+अटल अंतरभूत व्योम imx6sx_enet_init(व्योम)
+अणु
 	imx6sx_enet_phy_init();
 	imx6sx_enet_clk_sel();
-}
+पूर्ण
 
-static void __init imx6sx_init_machine(void)
-{
-	of_platform_default_populate(NULL, NULL, NULL);
+अटल व्योम __init imx6sx_init_machine(व्योम)
+अणु
+	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
 
 	imx6sx_enet_init();
 	imx_anatop_init();
 	imx6sx_pm_init();
-}
+पूर्ण
 
-static void __init imx6sx_init_irq(void)
-{
+अटल व्योम __init imx6sx_init_irq(व्योम)
+अणु
 	imx_gpc_check_dt();
 	imx_init_revision_from_anatop();
 	imx_init_l2cache();
 	imx_src_init();
 	irqchip_init();
 	imx6_pm_ccm_init("fsl,imx6sx-ccm");
-}
+पूर्ण
 
-static void __init imx6sx_init_late(void)
-{
+अटल व्योम __init imx6sx_init_late(व्योम)
+अणु
 	imx6sx_cpuidle_init();
 
-	if (IS_ENABLED(CONFIG_ARM_IMX6Q_CPUFREQ))
-		platform_device_register_simple("imx6q-cpufreq", -1, NULL, 0);
-}
+	अगर (IS_ENABLED(CONFIG_ARM_IMX6Q_CPUFREQ))
+		platक्रमm_device_रेजिस्टर_simple("imx6q-cpufreq", -1, शून्य, 0);
+पूर्ण
 
-static const char * const imx6sx_dt_compat[] __initconst = {
+अटल स्थिर अक्षर * स्थिर imx6sx_dt_compat[] __initस्थिर = अणु
 	"fsl,imx6sx",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(IMX6SX, "Freescale i.MX6 SoloX (Device Tree)")
 	.l2c_aux_val 	= 0,

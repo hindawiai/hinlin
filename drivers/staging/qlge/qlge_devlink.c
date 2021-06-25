@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-#include "qlge.h"
-#include "qlge_devlink.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+#समावेश "qlge.h"
+#समावेश "qlge_devlink.h"
 
-static int qlge_fill_seg_(struct devlink_fmsg *fmsg,
-			  struct mpi_coredump_segment_header *seg_header,
+अटल पूर्णांक qlge_fill_seg_(काष्ठा devlink_fmsg *fmsg,
+			  काष्ठा mpi_coredump_segment_header *seg_header,
 			  u32 *reg_data)
-{
-	int regs_num = (seg_header->seg_size
-			- sizeof(struct mpi_coredump_segment_header)) / sizeof(u32);
-	int err;
-	int i;
+अणु
+	पूर्णांक regs_num = (seg_header->seg_size
+			- माप(काष्ठा mpi_coredump_segment_header)) / माप(u32);
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, seg_header->description);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_obj_nest_start(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_u32_pair_put(fmsg, "segment", seg_header->seg_num);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, "values");
-	if (err)
-		return err;
-	for (i = 0; i < regs_num; i++) {
+	अगर (err)
+		वापस err;
+	क्रम (i = 0; i < regs_num; i++) अणु
 		err = devlink_fmsg_u32_put(fmsg, *reg_data);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		reg_data++;
-	}
+	पूर्ण
 	err = devlink_fmsg_obj_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_arr_pair_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define FILL_SEG(seg_hdr, seg_regs)			                    \
-	do {                                                                \
+#घोषणा FILL_SEG(seg_hdr, seg_regs)			                    \
+	करो अणु                                                                \
 		err = qlge_fill_seg_(fmsg, &dump->seg_hdr, dump->seg_regs); \
-		if (err) {					            \
-			kvfree(dump);                                       \
-			return err;				            \
-		}                                                           \
-	} while (0)
+		अगर (err) अणु					            \
+			kvमुक्त(dump);                                       \
+			वापस err;				            \
+		पूर्ण                                                           \
+	पूर्ण जबतक (0)
 
-static int qlge_reporter_coredump(struct devlink_health_reporter *reporter,
-				  struct devlink_fmsg *fmsg, void *priv_ctx,
-				  struct netlink_ext_ack *extack)
-{
-	int err = 0;
+अटल पूर्णांक qlge_reporter_coredump(काष्ठा devlink_health_reporter *reporter,
+				  काष्ठा devlink_fmsg *fmsg, व्योम *priv_ctx,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err = 0;
 
-	struct qlge_adapter *qdev = devlink_health_reporter_priv(reporter);
-	struct qlge_mpi_coredump *dump;
-	wait_queue_head_t wait;
+	काष्ठा qlge_adapter *qdev = devlink_health_reporter_priv(reporter);
+	काष्ठा qlge_mpi_coredump *dump;
+	रुको_queue_head_t रुको;
 
-	if (!netif_running(qdev->ndev))
-		return 0;
+	अगर (!netअगर_running(qdev->ndev))
+		वापस 0;
 
-	if (test_bit(QL_FRC_COREDUMP, &qdev->flags)) {
-		if (qlge_own_firmware(qdev)) {
+	अगर (test_bit(QL_FRC_COREDUMP, &qdev->flags)) अणु
+		अगर (qlge_own_firmware(qdev)) अणु
 			qlge_queue_fw_error(qdev);
-			init_waitqueue_head(&wait);
-			wait_event_timeout(wait, 0, 5 * HZ);
-		} else {
-			netif_err(qdev, ifup, qdev->ndev,
+			init_रुकोqueue_head(&रुको);
+			रुको_event_समयout(रुको, 0, 5 * HZ);
+		पूर्ण अन्यथा अणु
+			netअगर_err(qdev, अगरup, qdev->ndev,
 				  "Force Coredump failed because this NIC function doesn't own the firmware\n");
-			return -EPERM;
-		}
-	}
+			वापस -EPERM;
+		पूर्ण
+	पूर्ण
 
-	dump = kvmalloc(sizeof(*dump), GFP_KERNEL);
-	if (!dump)
-		return -ENOMEM;
+	dump = kvदो_स्मृति(माप(*dump), GFP_KERNEL);
+	अगर (!dump)
+		वापस -ENOMEM;
 
 	err = qlge_core_dump(qdev, dump);
-	if (err) {
-		kvfree(dump);
-		return err;
-	}
+	अगर (err) अणु
+		kvमुक्त(dump);
+		वापस err;
+	पूर्ण
 
 	qlge_soft_reset_mpi_risc(qdev);
 
@@ -117,12 +118,12 @@ static int qlge_reporter_coredump(struct devlink_health_reporter *reporter,
 
 	err = qlge_fill_seg_(fmsg, &dump->misc_nic_seg_hdr,
 			     (u32 *)&dump->misc_nic_info);
-	if (err) {
-		kvfree(dump);
-		return err;
-	}
+	अगर (err) अणु
+		kvमुक्त(dump);
+		वापस err;
+	पूर्ण
 
-	FILL_SEG(intr_states_seg_hdr, intr_states);
+	FILL_SEG(पूर्णांकr_states_seg_hdr, पूर्णांकr_states);
 	FILL_SEG(cam_entries_seg_hdr, cam_entries);
 	FILL_SEG(nic_routing_words_seg_hdr, nic_routing_words);
 	FILL_SEG(ets_seg_hdr, ets);
@@ -139,29 +140,29 @@ static int qlge_reporter_coredump(struct devlink_health_reporter *reporter,
 	FILL_SEG(xfi2_hss_pll_hdr, serdes2_xfi_hss_pll);
 	FILL_SEG(sem_regs_seg_hdr, sem_regs);
 
-	kvfree(dump);
-	return err;
-}
+	kvमुक्त(dump);
+	वापस err;
+पूर्ण
 
-static const struct devlink_health_reporter_ops qlge_reporter_ops = {
+अटल स्थिर काष्ठा devlink_health_reporter_ops qlge_reporter_ops = अणु
 	.name = "coredump",
 	.dump = qlge_reporter_coredump,
-};
+पूर्ण;
 
-long qlge_health_create_reporters(struct qlge_adapter *priv)
-{
-	struct devlink *devlink;
-	long err = 0;
+दीर्घ qlge_health_create_reporters(काष्ठा qlge_adapter *priv)
+अणु
+	काष्ठा devlink *devlink;
+	दीर्घ err = 0;
 
 	devlink = priv_to_devlink(priv);
 	priv->reporter =
 		devlink_health_reporter_create(devlink, &qlge_reporter_ops,
 					       0, priv);
-	if (IS_ERR(priv->reporter)) {
+	अगर (IS_ERR(priv->reporter)) अणु
 		err = PTR_ERR(priv->reporter);
 		netdev_warn(priv->ndev,
 			    "Failed to create reporter, err = %ld\n",
 			    err);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण

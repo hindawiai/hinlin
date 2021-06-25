@@ -1,266 +1,267 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* AFS filesystem file handling
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* AFS fileप्रणाली file handling
  *
  * Copyright (C) 2002, 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
-#include <linux/writeback.h>
-#include <linux/gfp.h>
-#include <linux/task_io_accounting_ops.h>
-#include <linux/mm.h>
-#include <linux/netfs.h>
-#include "internal.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/task_io_accounting_ops.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/netfs.h>
+#समावेश "internal.h"
 
-static int afs_file_mmap(struct file *file, struct vm_area_struct *vma);
-static int afs_readpage(struct file *file, struct page *page);
-static void afs_invalidatepage(struct page *page, unsigned int offset,
-			       unsigned int length);
-static int afs_releasepage(struct page *page, gfp_t gfp_flags);
+अटल पूर्णांक afs_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma);
+अटल पूर्णांक afs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page);
+अटल व्योम afs_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+			       अचिन्हित पूर्णांक length);
+अटल पूर्णांक afs_releasepage(काष्ठा page *page, gfp_t gfp_flags);
 
-static void afs_readahead(struct readahead_control *ractl);
+अटल व्योम afs_पढ़ोahead(काष्ठा पढ़ोahead_control *ractl);
 
-const struct file_operations afs_file_operations = {
-	.open		= afs_open,
+स्थिर काष्ठा file_operations afs_file_operations = अणु
+	.खोलो		= afs_खोलो,
 	.release	= afs_release,
 	.llseek		= generic_file_llseek,
-	.read_iter	= generic_file_read_iter,
-	.write_iter	= afs_file_write,
+	.पढ़ो_iter	= generic_file_पढ़ो_iter,
+	.ग_लिखो_iter	= afs_file_ग_लिखो,
 	.mmap		= afs_file_mmap,
-	.splice_read	= generic_file_splice_read,
-	.splice_write	= iter_file_splice_write,
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+	.splice_ग_लिखो	= iter_file_splice_ग_लिखो,
 	.fsync		= afs_fsync,
 	.lock		= afs_lock,
 	.flock		= afs_flock,
-};
+पूर्ण;
 
-const struct inode_operations afs_file_inode_operations = {
+स्थिर काष्ठा inode_operations afs_file_inode_operations = अणु
 	.getattr	= afs_getattr,
 	.setattr	= afs_setattr,
 	.permission	= afs_permission,
-};
+पूर्ण;
 
-const struct address_space_operations afs_fs_aops = {
-	.readpage	= afs_readpage,
-	.readahead	= afs_readahead,
+स्थिर काष्ठा address_space_operations afs_fs_aops = अणु
+	.पढ़ोpage	= afs_पढ़ोpage,
+	.पढ़ोahead	= afs_पढ़ोahead,
 	.set_page_dirty	= afs_set_page_dirty,
 	.launder_page	= afs_launder_page,
 	.releasepage	= afs_releasepage,
 	.invalidatepage	= afs_invalidatepage,
-	.write_begin	= afs_write_begin,
-	.write_end	= afs_write_end,
-	.writepage	= afs_writepage,
-	.writepages	= afs_writepages,
-};
+	.ग_लिखो_begin	= afs_ग_लिखो_begin,
+	.ग_लिखो_end	= afs_ग_लिखो_end,
+	.ग_लिखोpage	= afs_ग_लिखोpage,
+	.ग_लिखोpages	= afs_ग_लिखोpages,
+पूर्ण;
 
-static const struct vm_operations_struct afs_vm_ops = {
+अटल स्थिर काष्ठा vm_operations_काष्ठा afs_vm_ops = अणु
 	.fault		= filemap_fault,
 	.map_pages	= filemap_map_pages,
-	.page_mkwrite	= afs_page_mkwrite,
-};
+	.page_mkग_लिखो	= afs_page_mkग_लिखो,
+पूर्ण;
 
 /*
- * Discard a pin on a writeback key.
+ * Discard a pin on a ग_लिखोback key.
  */
-void afs_put_wb_key(struct afs_wb_key *wbk)
-{
-	if (wbk && refcount_dec_and_test(&wbk->usage)) {
+व्योम afs_put_wb_key(काष्ठा afs_wb_key *wbk)
+अणु
+	अगर (wbk && refcount_dec_and_test(&wbk->usage)) अणु
 		key_put(wbk->key);
-		kfree(wbk);
-	}
-}
+		kमुक्त(wbk);
+	पूर्ण
+पूर्ण
 
 /*
- * Cache key for writeback.
+ * Cache key क्रम ग_लिखोback.
  */
-int afs_cache_wb_key(struct afs_vnode *vnode, struct afs_file *af)
-{
-	struct afs_wb_key *wbk, *p;
+पूर्णांक afs_cache_wb_key(काष्ठा afs_vnode *vnode, काष्ठा afs_file *af)
+अणु
+	काष्ठा afs_wb_key *wbk, *p;
 
-	wbk = kzalloc(sizeof(struct afs_wb_key), GFP_KERNEL);
-	if (!wbk)
-		return -ENOMEM;
+	wbk = kzalloc(माप(काष्ठा afs_wb_key), GFP_KERNEL);
+	अगर (!wbk)
+		वापस -ENOMEM;
 	refcount_set(&wbk->usage, 2);
 	wbk->key = af->key;
 
 	spin_lock(&vnode->wb_lock);
-	list_for_each_entry(p, &vnode->wb_keys, vnode_link) {
-		if (p->key == wbk->key)
-			goto found;
-	}
+	list_क्रम_each_entry(p, &vnode->wb_keys, vnode_link) अणु
+		अगर (p->key == wbk->key)
+			जाओ found;
+	पूर्ण
 
 	key_get(wbk->key);
 	list_add_tail(&wbk->vnode_link, &vnode->wb_keys);
 	spin_unlock(&vnode->wb_lock);
 	af->wb = wbk;
-	return 0;
+	वापस 0;
 
 found:
 	refcount_inc(&p->usage);
 	spin_unlock(&vnode->wb_lock);
 	af->wb = p;
-	kfree(wbk);
-	return 0;
-}
+	kमुक्त(wbk);
+	वापस 0;
+पूर्ण
 
 /*
- * open an AFS file or directory and attach a key to it
+ * खोलो an AFS file or directory and attach a key to it
  */
-int afs_open(struct inode *inode, struct file *file)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	struct afs_file *af;
-	struct key *key;
-	int ret;
+पूर्णांक afs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	काष्ठा afs_file *af;
+	काष्ठा key *key;
+	पूर्णांक ret;
 
 	_enter("{%llx:%llu},", vnode->fid.vid, vnode->fid.vnode);
 
 	key = afs_request_key(vnode->volume->cell);
-	if (IS_ERR(key)) {
+	अगर (IS_ERR(key)) अणु
 		ret = PTR_ERR(key);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	af = kzalloc(sizeof(*af), GFP_KERNEL);
-	if (!af) {
+	af = kzalloc(माप(*af), GFP_KERNEL);
+	अगर (!af) अणु
 		ret = -ENOMEM;
-		goto error_key;
-	}
+		जाओ error_key;
+	पूर्ण
 	af->key = key;
 
 	ret = afs_validate(vnode, key);
-	if (ret < 0)
-		goto error_af;
+	अगर (ret < 0)
+		जाओ error_af;
 
-	if (file->f_mode & FMODE_WRITE) {
+	अगर (file->f_mode & FMODE_WRITE) अणु
 		ret = afs_cache_wb_key(vnode, af);
-		if (ret < 0)
-			goto error_af;
-	}
+		अगर (ret < 0)
+			जाओ error_af;
+	पूर्ण
 
-	if (file->f_flags & O_TRUNC)
+	अगर (file->f_flags & O_TRUNC)
 		set_bit(AFS_VNODE_NEW_CONTENT, &vnode->flags);
 	
-	file->private_data = af;
+	file->निजी_data = af;
 	_leave(" = 0");
-	return 0;
+	वापस 0;
 
 error_af:
-	kfree(af);
+	kमुक्त(af);
 error_key:
 	key_put(key);
 error:
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * release an AFS file or directory and discard its key
  */
-int afs_release(struct inode *inode, struct file *file)
-{
-	struct afs_vnode *vnode = AFS_FS_I(inode);
-	struct afs_file *af = file->private_data;
-	int ret = 0;
+पूर्णांक afs_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(inode);
+	काष्ठा afs_file *af = file->निजी_data;
+	पूर्णांक ret = 0;
 
 	_enter("{%llx:%llu},", vnode->fid.vid, vnode->fid.vnode);
 
-	if ((file->f_mode & FMODE_WRITE))
+	अगर ((file->f_mode & FMODE_WRITE))
 		ret = vfs_fsync(file, 0);
 
-	file->private_data = NULL;
-	if (af->wb)
+	file->निजी_data = शून्य;
+	अगर (af->wb)
 		afs_put_wb_key(af->wb);
 	key_put(af->key);
-	kfree(af);
+	kमुक्त(af);
 	afs_prune_wb_keys(vnode);
 	_leave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Allocate a new read record.
+ * Allocate a new पढ़ो record.
  */
-struct afs_read *afs_alloc_read(gfp_t gfp)
-{
-	struct afs_read *req;
+काष्ठा afs_पढ़ो *afs_alloc_पढ़ो(gfp_t gfp)
+अणु
+	काष्ठा afs_पढ़ो *req;
 
-	req = kzalloc(sizeof(struct afs_read), gfp);
-	if (req)
+	req = kzalloc(माप(काष्ठा afs_पढ़ो), gfp);
+	अगर (req)
 		refcount_set(&req->usage, 1);
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
 /*
- * Dispose of a ref to a read record.
+ * Dispose of a ref to a पढ़ो record.
  */
-void afs_put_read(struct afs_read *req)
-{
-	if (refcount_dec_and_test(&req->usage)) {
-		if (req->cleanup)
+व्योम afs_put_पढ़ो(काष्ठा afs_पढ़ो *req)
+अणु
+	अगर (refcount_dec_and_test(&req->usage)) अणु
+		अगर (req->cleanup)
 			req->cleanup(req);
 		key_put(req->key);
-		kfree(req);
-	}
-}
+		kमुक्त(req);
+	पूर्ण
+पूर्ण
 
-static void afs_fetch_data_notify(struct afs_operation *op)
-{
-	struct afs_read *req = op->fetch.req;
-	struct netfs_read_subrequest *subreq = req->subreq;
-	int error = op->error;
+अटल व्योम afs_fetch_data_notअगरy(काष्ठा afs_operation *op)
+अणु
+	काष्ठा afs_पढ़ो *req = op->fetch.req;
+	काष्ठा netfs_पढ़ो_subrequest *subreq = req->subreq;
+	पूर्णांक error = op->error;
 
-	if (error == -ECONNABORTED)
-		error = afs_abort_to_error(op->ac.abort_code);
+	अगर (error == -ECONNABORTED)
+		error = afs_पात_to_error(op->ac.पात_code);
 	req->error = error;
 
-	if (subreq) {
+	अगर (subreq) अणु
 		__set_bit(NETFS_SREQ_CLEAR_TAIL, &subreq->flags);
 		netfs_subreq_terminated(subreq, error ?: req->actual_len, false);
-		req->subreq = NULL;
-	} else if (req->done) {
-		req->done(req);
-	}
-}
+		req->subreq = शून्य;
+	पूर्ण अन्यथा अगर (req->करोne) अणु
+		req->करोne(req);
+	पूर्ण
+पूर्ण
 
-static void afs_fetch_data_success(struct afs_operation *op)
-{
-	struct afs_vnode *vnode = op->file[0].vnode;
+अटल व्योम afs_fetch_data_success(काष्ठा afs_operation *op)
+अणु
+	काष्ठा afs_vnode *vnode = op->file[0].vnode;
 
 	_enter("op=%08x", op->debug_id);
 	afs_vnode_commit_status(op, &op->file[0]);
 	afs_stat_v(vnode, n_fetches);
-	atomic_long_add(op->fetch.req->actual_len, &op->net->n_fetch_bytes);
-	afs_fetch_data_notify(op);
-}
+	atomic_दीर्घ_add(op->fetch.req->actual_len, &op->net->n_fetch_bytes);
+	afs_fetch_data_notअगरy(op);
+पूर्ण
 
-static void afs_fetch_data_put(struct afs_operation *op)
-{
+अटल व्योम afs_fetch_data_put(काष्ठा afs_operation *op)
+अणु
 	op->fetch.req->error = op->error;
-	afs_put_read(op->fetch.req);
-}
+	afs_put_पढ़ो(op->fetch.req);
+पूर्ण
 
-static const struct afs_operation_ops afs_fetch_data_operation = {
+अटल स्थिर काष्ठा afs_operation_ops afs_fetch_data_operation = अणु
 	.issue_afs_rpc	= afs_fs_fetch_data,
 	.issue_yfs_rpc	= yfs_fs_fetch_data,
 	.success	= afs_fetch_data_success,
-	.aborted	= afs_check_for_remote_deletion,
-	.failed		= afs_fetch_data_notify,
+	.पातed	= afs_check_क्रम_remote_deletion,
+	.failed		= afs_fetch_data_notअगरy,
 	.put		= afs_fetch_data_put,
-};
+पूर्ण;
 
 /*
  * Fetch file data from the volume.
  */
-int afs_fetch_data(struct afs_vnode *vnode, struct afs_read *req)
-{
-	struct afs_operation *op;
+पूर्णांक afs_fetch_data(काष्ठा afs_vnode *vnode, काष्ठा afs_पढ़ो *req)
+अणु
+	काष्ठा afs_operation *op;
 
 	_enter("%s{%llx:%llu.%u},%x,,,",
 	       vnode->volume->name,
@@ -270,27 +271,27 @@ int afs_fetch_data(struct afs_vnode *vnode, struct afs_read *req)
 	       key_serial(req->key));
 
 	op = afs_alloc_operation(req->key, vnode->volume);
-	if (IS_ERR(op)) {
-		if (req->subreq)
+	अगर (IS_ERR(op)) अणु
+		अगर (req->subreq)
 			netfs_subreq_terminated(req->subreq, PTR_ERR(op), false);
-		return PTR_ERR(op);
-	}
+		वापस PTR_ERR(op);
+	पूर्ण
 
 	afs_op_set_vnode(op, 0, vnode);
 
-	op->fetch.req	= afs_get_read(req);
+	op->fetch.req	= afs_get_पढ़ो(req);
 	op->ops		= &afs_fetch_data_operation;
-	return afs_do_sync_operation(op);
-}
+	वापस afs_करो_sync_operation(op);
+पूर्ण
 
-static void afs_req_issue_op(struct netfs_read_subrequest *subreq)
-{
-	struct afs_vnode *vnode = AFS_FS_I(subreq->rreq->inode);
-	struct afs_read *fsreq;
+अटल व्योम afs_req_issue_op(काष्ठा netfs_पढ़ो_subrequest *subreq)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(subreq->rreq->inode);
+	काष्ठा afs_पढ़ो *fsreq;
 
-	fsreq = afs_alloc_read(GFP_NOFS);
-	if (!fsreq)
-		return netfs_subreq_terminated(subreq, -ENOMEM, false);
+	fsreq = afs_alloc_पढ़ो(GFP_NOFS);
+	अगर (!fsreq)
+		वापस netfs_subreq_terminated(subreq, -ENOMEM, false);
 
 	fsreq->subreq	= subreq;
 	fsreq->pos	= subreq->start + subreq->transferred;
@@ -304,17 +305,17 @@ static void afs_req_issue_op(struct netfs_read_subrequest *subreq)
 			fsreq->pos, fsreq->len);
 
 	afs_fetch_data(fsreq->vnode, fsreq);
-}
+पूर्ण
 
-static int afs_symlink_readpage(struct page *page)
-{
-	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
-	struct afs_read *fsreq;
-	int ret;
+अटल पूर्णांक afs_symlink_पढ़ोpage(काष्ठा page *page)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(page->mapping->host);
+	काष्ठा afs_पढ़ो *fsreq;
+	पूर्णांक ret;
 
-	fsreq = afs_alloc_read(GFP_NOFS);
-	if (!fsreq)
-		return -ENOMEM;
+	fsreq = afs_alloc_पढ़ो(GFP_NOFS);
+	अगर (!fsreq)
+		वापस -ENOMEM;
 
 	fsreq->pos	= page->index * PAGE_SIZE;
 	fsreq->len	= PAGE_SIZE;
@@ -325,180 +326,180 @@ static int afs_symlink_readpage(struct page *page)
 
 	ret = afs_fetch_data(fsreq->vnode, fsreq);
 	page_endio(page, false, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void afs_init_rreq(struct netfs_read_request *rreq, struct file *file)
-{
+अटल व्योम afs_init_rreq(काष्ठा netfs_पढ़ो_request *rreq, काष्ठा file *file)
+अणु
 	rreq->netfs_priv = key_get(afs_file_key(file));
-}
+पूर्ण
 
-static bool afs_is_cache_enabled(struct inode *inode)
-{
-	struct fscache_cookie *cookie = afs_vnode_cache(AFS_FS_I(inode));
+अटल bool afs_is_cache_enabled(काष्ठा inode *inode)
+अणु
+	काष्ठा fscache_cookie *cookie = afs_vnode_cache(AFS_FS_I(inode));
 
-	return fscache_cookie_enabled(cookie) && !hlist_empty(&cookie->backing_objects);
-}
+	वापस fscache_cookie_enabled(cookie) && !hlist_empty(&cookie->backing_objects);
+पूर्ण
 
-static int afs_begin_cache_operation(struct netfs_read_request *rreq)
-{
-	struct afs_vnode *vnode = AFS_FS_I(rreq->inode);
+अटल पूर्णांक afs_begin_cache_operation(काष्ठा netfs_पढ़ो_request *rreq)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(rreq->inode);
 
-	return fscache_begin_read_operation(rreq, afs_vnode_cache(vnode));
-}
+	वापस fscache_begin_पढ़ो_operation(rreq, afs_vnode_cache(vnode));
+पूर्ण
 
-static int afs_check_write_begin(struct file *file, loff_t pos, unsigned len,
-				 struct page *page, void **_fsdata)
-{
-	struct afs_vnode *vnode = AFS_FS_I(file_inode(file));
+अटल पूर्णांक afs_check_ग_लिखो_begin(काष्ठा file *file, loff_t pos, अचिन्हित len,
+				 काष्ठा page *page, व्योम **_fsdata)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(file_inode(file));
 
-	return test_bit(AFS_VNODE_DELETED, &vnode->flags) ? -ESTALE : 0;
-}
+	वापस test_bit(AFS_VNODE_DELETED, &vnode->flags) ? -ESTALE : 0;
+पूर्ण
 
-static void afs_priv_cleanup(struct address_space *mapping, void *netfs_priv)
-{
+अटल व्योम afs_priv_cleanup(काष्ठा address_space *mapping, व्योम *netfs_priv)
+अणु
 	key_put(netfs_priv);
-}
+पूर्ण
 
-const struct netfs_read_request_ops afs_req_ops = {
+स्थिर काष्ठा netfs_पढ़ो_request_ops afs_req_ops = अणु
 	.init_rreq		= afs_init_rreq,
 	.is_cache_enabled	= afs_is_cache_enabled,
 	.begin_cache_operation	= afs_begin_cache_operation,
-	.check_write_begin	= afs_check_write_begin,
+	.check_ग_लिखो_begin	= afs_check_ग_लिखो_begin,
 	.issue_op		= afs_req_issue_op,
 	.cleanup		= afs_priv_cleanup,
-};
+पूर्ण;
 
-static int afs_readpage(struct file *file, struct page *page)
-{
-	if (!file)
-		return afs_symlink_readpage(page);
+अटल पूर्णांक afs_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	अगर (!file)
+		वापस afs_symlink_पढ़ोpage(page);
 
-	return netfs_readpage(file, page, &afs_req_ops, NULL);
-}
+	वापस netfs_पढ़ोpage(file, page, &afs_req_ops, शून्य);
+पूर्ण
 
-static void afs_readahead(struct readahead_control *ractl)
-{
-	netfs_readahead(ractl, &afs_req_ops, NULL);
-}
+अटल व्योम afs_पढ़ोahead(काष्ठा पढ़ोahead_control *ractl)
+अणु
+	netfs_पढ़ोahead(ractl, &afs_req_ops, शून्य);
+पूर्ण
 
 /*
  * Adjust the dirty region of the page on truncation or full invalidation,
- * getting rid of the markers altogether if the region is entirely invalidated.
+ * getting rid of the markers altogether अगर the region is entirely invalidated.
  */
-static void afs_invalidate_dirty(struct page *page, unsigned int offset,
-				 unsigned int length)
-{
-	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
-	unsigned long priv;
-	unsigned int f, t, end = offset + length;
+अटल व्योम afs_invalidate_dirty(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+				 अचिन्हित पूर्णांक length)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(page->mapping->host);
+	अचिन्हित दीर्घ priv;
+	अचिन्हित पूर्णांक f, t, end = offset + length;
 
-	priv = page_private(page);
+	priv = page_निजी(page);
 
-	/* we clean up only if the entire page is being invalidated */
-	if (offset == 0 && length == thp_size(page))
-		goto full_invalidate;
+	/* we clean up only अगर the entire page is being invalidated */
+	अगर (offset == 0 && length == thp_size(page))
+		जाओ full_invalidate;
 
-	 /* If the page was dirtied by page_mkwrite(), the PTE stays writable
-	  * and we don't get another notification to tell us to expand it
+	 /* If the page was dirtied by page_mkग_लिखो(), the PTE stays writable
+	  * and we करोn't get another notअगरication to tell us to expand it
 	  * again.
 	  */
-	if (afs_is_page_dirty_mmapped(priv))
-		return;
+	अगर (afs_is_page_dirty_mmapped(priv))
+		वापस;
 
-	/* We may need to shorten the dirty region */
+	/* We may need to लघुen the dirty region */
 	f = afs_page_dirty_from(page, priv);
 	t = afs_page_dirty_to(page, priv);
 
-	if (t <= offset || f >= end)
-		return; /* Doesn't overlap */
+	अगर (t <= offset || f >= end)
+		वापस; /* Doesn't overlap */
 
-	if (f < offset && t > end)
-		return; /* Splits the dirty region - just absorb it */
+	अगर (f < offset && t > end)
+		वापस; /* Splits the dirty region - just असलorb it */
 
-	if (f >= offset && t <= end)
-		goto undirty;
+	अगर (f >= offset && t <= end)
+		जाओ undirty;
 
-	if (f < offset)
+	अगर (f < offset)
 		t = offset;
-	else
+	अन्यथा
 		f = end;
-	if (f == t)
-		goto undirty;
+	अगर (f == t)
+		जाओ undirty;
 
 	priv = afs_page_dirty(page, f, t);
-	set_page_private(page, priv);
-	trace_afs_page_dirty(vnode, tracepoint_string("trunc"), page);
-	return;
+	set_page_निजी(page, priv);
+	trace_afs_page_dirty(vnode, tracepoपूर्णांक_string("trunc"), page);
+	वापस;
 
 undirty:
-	trace_afs_page_dirty(vnode, tracepoint_string("undirty"), page);
-	clear_page_dirty_for_io(page);
+	trace_afs_page_dirty(vnode, tracepoपूर्णांक_string("undirty"), page);
+	clear_page_dirty_क्रम_io(page);
 full_invalidate:
-	trace_afs_page_dirty(vnode, tracepoint_string("inval"), page);
-	detach_page_private(page);
-}
+	trace_afs_page_dirty(vnode, tracepoपूर्णांक_string("inval"), page);
+	detach_page_निजी(page);
+पूर्ण
 
 /*
  * invalidate part or all of a page
- * - release a page and clean up its private data if offset is 0 (indicating
+ * - release a page and clean up its निजी data अगर offset is 0 (indicating
  *   the entire page)
  */
-static void afs_invalidatepage(struct page *page, unsigned int offset,
-			       unsigned int length)
-{
+अटल व्योम afs_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+			       अचिन्हित पूर्णांक length)
+अणु
 	_enter("{%lu},%u,%u", page->index, offset, length);
 
 	BUG_ON(!PageLocked(page));
 
-	if (PagePrivate(page))
+	अगर (PagePrivate(page))
 		afs_invalidate_dirty(page, offset, length);
 
-	wait_on_page_fscache(page);
+	रुको_on_page_fscache(page);
 	_leave("");
-}
+पूर्ण
 
 /*
- * release a page and clean up its private state if it's not busy
- * - return true if the page can now be released, false if not
+ * release a page and clean up its निजी state अगर it's not busy
+ * - वापस true अगर the page can now be released, false अगर not
  */
-static int afs_releasepage(struct page *page, gfp_t gfp_flags)
-{
-	struct afs_vnode *vnode = AFS_FS_I(page->mapping->host);
+अटल पूर्णांक afs_releasepage(काष्ठा page *page, gfp_t gfp_flags)
+अणु
+	काष्ठा afs_vnode *vnode = AFS_FS_I(page->mapping->host);
 
 	_enter("{{%llx:%llu}[%lu],%lx},%x",
 	       vnode->fid.vid, vnode->fid.vnode, page->index, page->flags,
 	       gfp_flags);
 
-	/* deny if page is being written to the cache and the caller hasn't
-	 * elected to wait */
-#ifdef CONFIG_AFS_FSCACHE
-	if (PageFsCache(page)) {
-		if (!(gfp_flags & __GFP_DIRECT_RECLAIM) || !(gfp_flags & __GFP_FS))
-			return false;
-		wait_on_page_fscache(page);
-	}
-#endif
+	/* deny अगर page is being written to the cache and the caller hasn't
+	 * elected to रुको */
+#अगर_घोषित CONFIG_AFS_FSCACHE
+	अगर (PageFsCache(page)) अणु
+		अगर (!(gfp_flags & __GFP_सूचीECT_RECLAIM) || !(gfp_flags & __GFP_FS))
+			वापस false;
+		रुको_on_page_fscache(page);
+	पूर्ण
+#पूर्ण_अगर
 
-	if (PagePrivate(page)) {
-		trace_afs_page_dirty(vnode, tracepoint_string("rel"), page);
-		detach_page_private(page);
-	}
+	अगर (PagePrivate(page)) अणु
+		trace_afs_page_dirty(vnode, tracepoपूर्णांक_string("rel"), page);
+		detach_page_निजी(page);
+	पूर्ण
 
 	/* indicate that the page can be released */
 	_leave(" = T");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Handle setting up a memory mapping on an AFS file.
  */
-static int afs_file_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	int ret;
+अटल पूर्णांक afs_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक ret;
 
 	ret = generic_file_mmap(file, vma);
-	if (ret == 0)
+	अगर (ret == 0)
 		vma->vm_ops = &afs_vm_ops;
-	return ret;
-}
+	वापस ret;
+पूर्ण

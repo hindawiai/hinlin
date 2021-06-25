@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,332 +16,332 @@
  * SOFTWARE.
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/debugfs.h>
-#include <linux/vmalloc.h>
-#include "fnic.h"
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "fnic.h"
 
-static struct dentry *fnic_trace_debugfs_root;
-static struct dentry *fnic_trace_debugfs_file;
-static struct dentry *fnic_trace_enable;
-static struct dentry *fnic_stats_debugfs_root;
+अटल काष्ठा dentry *fnic_trace_debugfs_root;
+अटल काष्ठा dentry *fnic_trace_debugfs_file;
+अटल काष्ठा dentry *fnic_trace_enable;
+अटल काष्ठा dentry *fnic_stats_debugfs_root;
 
-static struct dentry *fnic_fc_trace_debugfs_file;
-static struct dentry *fnic_fc_rdata_trace_debugfs_file;
-static struct dentry *fnic_fc_trace_enable;
-static struct dentry *fnic_fc_trace_clear;
+अटल काष्ठा dentry *fnic_fc_trace_debugfs_file;
+अटल काष्ठा dentry *fnic_fc_rdata_trace_debugfs_file;
+अटल काष्ठा dentry *fnic_fc_trace_enable;
+अटल काष्ठा dentry *fnic_fc_trace_clear;
 
-struct fc_trace_flag_type {
+काष्ठा fc_trace_flag_type अणु
 	u8 fc_row_file;
 	u8 fc_normal_file;
 	u8 fnic_trace;
 	u8 fc_trace;
 	u8 fc_clear;
-};
+पूर्ण;
 
-static struct fc_trace_flag_type *fc_trc_flag;
+अटल काष्ठा fc_trace_flag_type *fc_trc_flag;
 
 /*
- * fnic_debugfs_init - Initialize debugfs for fnic debug logging
+ * fnic_debugfs_init - Initialize debugfs क्रम fnic debug logging
  *
  * Description:
  * When Debugfs is configured this routine sets up the fnic debugfs
- * file system. If not already created, this routine will create the
- * fnic directory and statistics directory for trace buffer and
+ * file प्रणाली. If not alपढ़ोy created, this routine will create the
+ * fnic directory and statistics directory क्रम trace buffer and
  * stats logging.
  */
-int fnic_debugfs_init(void)
-{
-	fnic_trace_debugfs_root = debugfs_create_dir("fnic", NULL);
+पूर्णांक fnic_debugfs_init(व्योम)
+अणु
+	fnic_trace_debugfs_root = debugfs_create_dir("fnic", शून्य);
 
 	fnic_stats_debugfs_root = debugfs_create_dir("statistics",
 						fnic_trace_debugfs_root);
 
-	/* Allocate memory to structure */
-	fc_trc_flag = vmalloc(sizeof(struct fc_trace_flag_type));
+	/* Allocate memory to काष्ठाure */
+	fc_trc_flag = vदो_स्मृति(माप(काष्ठा fc_trace_flag_type));
 
-	if (fc_trc_flag) {
+	अगर (fc_trc_flag) अणु
 		fc_trc_flag->fc_row_file = 0;
 		fc_trc_flag->fc_normal_file = 1;
 		fc_trc_flag->fnic_trace = 2;
 		fc_trc_flag->fc_trace = 3;
 		fc_trc_flag->fc_clear = 4;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * fnic_debugfs_terminate - Tear down debugfs infrastructure
+ * fnic_debugfs_terminate - Tear करोwn debugfs infraकाष्ठाure
  *
  * Description:
- * When Debugfs is configured this routine removes debugfs file system
- * elements that are specific to fnic.
+ * When Debugfs is configured this routine हटाओs debugfs file प्रणाली
+ * elements that are specअगरic to fnic.
  */
-void fnic_debugfs_terminate(void)
-{
-	debugfs_remove(fnic_stats_debugfs_root);
-	fnic_stats_debugfs_root = NULL;
+व्योम fnic_debugfs_terminate(व्योम)
+अणु
+	debugfs_हटाओ(fnic_stats_debugfs_root);
+	fnic_stats_debugfs_root = शून्य;
 
-	debugfs_remove(fnic_trace_debugfs_root);
-	fnic_trace_debugfs_root = NULL;
+	debugfs_हटाओ(fnic_trace_debugfs_root);
+	fnic_trace_debugfs_root = शून्य;
 
-	if (fc_trc_flag)
-		vfree(fc_trc_flag);
-}
+	अगर (fc_trc_flag)
+		vमुक्त(fc_trc_flag);
+पूर्ण
 
 /*
- * fnic_trace_ctrl_read -
+ * fnic_trace_ctrl_पढ़ो -
  *          Read  trace_enable ,fc_trace_enable
  *              or fc_trace_clear debugfs file
- * @filp: The file pointer to read from.
+ * @filp: The file poपूर्णांकer to पढ़ो from.
  * @ubuf: The buffer to copy the data to.
- * @cnt: The number of bytes to read.
- * @ppos: The position in the file to start reading from.
+ * @cnt: The number of bytes to पढ़ो.
+ * @ppos: The position in the file to start पढ़ोing from.
  *
  * Description:
- * This routine reads value of variable fnic_tracing_enabled or
+ * This routine पढ़ोs value of variable fnic_tracing_enabled or
  * fnic_fc_tracing_enabled or fnic_fc_trace_cleared
- * and stores into local @buf.
- * It will start reading file at @ppos and
+ * and stores पूर्णांकo local @buf.
+ * It will start पढ़ोing file at @ppos and
  * copy up to @cnt of data to @ubuf from @buf.
  *
  * Returns:
- * This function returns the amount of data that was read.
+ * This function वापसs the amount of data that was पढ़ो.
  */
-static ssize_t fnic_trace_ctrl_read(struct file *filp,
-				  char __user *ubuf,
-				  size_t cnt, loff_t *ppos)
-{
-	char buf[64];
-	int len;
+अटल sमाप_प्रकार fnic_trace_ctrl_पढ़ो(काष्ठा file *filp,
+				  अक्षर __user *ubuf,
+				  माप_प्रकार cnt, loff_t *ppos)
+अणु
+	अक्षर buf[64];
+	पूर्णांक len;
 	u8 *trace_type;
 	len = 0;
-	trace_type = (u8 *)filp->private_data;
-	if (*trace_type == fc_trc_flag->fnic_trace)
-		len = sprintf(buf, "%d\n", fnic_tracing_enabled);
-	else if (*trace_type == fc_trc_flag->fc_trace)
-		len = sprintf(buf, "%d\n", fnic_fc_tracing_enabled);
-	else if (*trace_type == fc_trc_flag->fc_clear)
-		len = sprintf(buf, "%d\n", fnic_fc_trace_cleared);
-	else
+	trace_type = (u8 *)filp->निजी_data;
+	अगर (*trace_type == fc_trc_flag->fnic_trace)
+		len = प्र_लिखो(buf, "%d\n", fnic_tracing_enabled);
+	अन्यथा अगर (*trace_type == fc_trc_flag->fc_trace)
+		len = प्र_लिखो(buf, "%d\n", fnic_fc_tracing_enabled);
+	अन्यथा अगर (*trace_type == fc_trc_flag->fc_clear)
+		len = प्र_लिखो(buf, "%d\n", fnic_fc_trace_cleared);
+	अन्यथा
 		pr_err("fnic: Cannot read to any debugfs file\n");
 
-	return simple_read_from_buffer(ubuf, cnt, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, len);
+पूर्ण
 
 /*
- * fnic_trace_ctrl_write -
+ * fnic_trace_ctrl_ग_लिखो -
  * Write to trace_enable, fc_trace_enable or
  *         fc_trace_clear debugfs file
- * @filp: The file pointer to write from.
+ * @filp: The file poपूर्णांकer to ग_लिखो from.
  * @ubuf: The buffer to copy the data from.
- * @cnt: The number of bytes to write.
+ * @cnt: The number of bytes to ग_लिखो.
  * @ppos: The position in the file to start writing to.
  *
  * Description:
- * This routine writes data from user buffer @ubuf to buffer @buf and
+ * This routine ग_लिखोs data from user buffer @ubuf to buffer @buf and
  * sets fc_trace_enable ,tracing_enable or fnic_fc_trace_cleared
  * value as per user input.
  *
  * Returns:
- * This function returns the amount of data that was written.
+ * This function वापसs the amount of data that was written.
  */
-static ssize_t fnic_trace_ctrl_write(struct file *filp,
-				  const char __user *ubuf,
-				  size_t cnt, loff_t *ppos)
-{
-	char buf[64];
-	unsigned long val;
-	int ret;
+अटल sमाप_प्रकार fnic_trace_ctrl_ग_लिखो(काष्ठा file *filp,
+				  स्थिर अक्षर __user *ubuf,
+				  माप_प्रकार cnt, loff_t *ppos)
+अणु
+	अक्षर buf[64];
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 	u8 *trace_type;
-	trace_type = (u8 *)filp->private_data;
+	trace_type = (u8 *)filp->निजी_data;
 
-	if (cnt >= sizeof(buf))
-		return -EINVAL;
+	अगर (cnt >= माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, cnt))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, cnt))
+		वापस -EFAULT;
 
 	buf[cnt] = 0;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (*trace_type == fc_trc_flag->fnic_trace)
+	अगर (*trace_type == fc_trc_flag->fnic_trace)
 		fnic_tracing_enabled = val;
-	else if (*trace_type == fc_trc_flag->fc_trace)
+	अन्यथा अगर (*trace_type == fc_trc_flag->fc_trace)
 		fnic_fc_tracing_enabled = val;
-	else if (*trace_type == fc_trc_flag->fc_clear)
+	अन्यथा अगर (*trace_type == fc_trc_flag->fc_clear)
 		fnic_fc_trace_cleared = val;
-	else
+	अन्यथा
 		pr_err("fnic: cannot write to any debugfs file\n");
 
 	(*ppos)++;
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static const struct file_operations fnic_trace_ctrl_fops = {
+अटल स्थिर काष्ठा file_operations fnic_trace_ctrl_fops = अणु
 	.owner = THIS_MODULE,
-	.open = simple_open,
-	.read = fnic_trace_ctrl_read,
-	.write = fnic_trace_ctrl_write,
-};
+	.खोलो = simple_खोलो,
+	.पढ़ो = fnic_trace_ctrl_पढ़ो,
+	.ग_लिखो = fnic_trace_ctrl_ग_लिखो,
+पूर्ण;
 
 /*
- * fnic_trace_debugfs_open - Open the fnic trace log
- * @inode: The inode pointer
- * @file: The file pointer to attach the log output
+ * fnic_trace_debugfs_खोलो - Open the fnic trace log
+ * @inode: The inode poपूर्णांकer
+ * @file: The file poपूर्णांकer to attach the log output
  *
  * Description:
- * This routine is the entry point for the debugfs open file operation.
- * It allocates the necessary buffer for the log, fills the buffer from
- * the in-memory log and then returns a pointer to that log in
- * the private_data field in @file.
+ * This routine is the entry poपूर्णांक क्रम the debugfs खोलो file operation.
+ * It allocates the necessary buffer क्रम the log, fills the buffer from
+ * the in-memory log and then वापसs a poपूर्णांकer to that log in
+ * the निजी_data field in @file.
  *
  * Returns:
- * This function returns zero if successful. On error it will return
+ * This function वापसs zero अगर successful. On error it will वापस
  * a negative error value.
  */
-static int fnic_trace_debugfs_open(struct inode *inode,
-				  struct file *file)
-{
+अटल पूर्णांक fnic_trace_debugfs_खोलो(काष्ठा inode *inode,
+				  काष्ठा file *file)
+अणु
 	fnic_dbgfs_t *fnic_dbg_prt;
 	u8 *rdata_ptr;
-	rdata_ptr = (u8 *)inode->i_private;
-	fnic_dbg_prt = kzalloc(sizeof(fnic_dbgfs_t), GFP_KERNEL);
-	if (!fnic_dbg_prt)
-		return -ENOMEM;
+	rdata_ptr = (u8 *)inode->i_निजी;
+	fnic_dbg_prt = kzalloc(माप(fnic_dbgfs_t), GFP_KERNEL);
+	अगर (!fnic_dbg_prt)
+		वापस -ENOMEM;
 
-	if (*rdata_ptr == fc_trc_flag->fnic_trace) {
-		fnic_dbg_prt->buffer = vmalloc(array3_size(3, trace_max_pages,
+	अगर (*rdata_ptr == fc_trc_flag->fnic_trace) अणु
+		fnic_dbg_prt->buffer = vदो_स्मृति(array3_size(3, trace_max_pages,
 							   PAGE_SIZE));
-		if (!fnic_dbg_prt->buffer) {
-			kfree(fnic_dbg_prt);
-			return -ENOMEM;
-		}
-		memset((void *)fnic_dbg_prt->buffer, 0,
+		अगर (!fnic_dbg_prt->buffer) अणु
+			kमुक्त(fnic_dbg_prt);
+			वापस -ENOMEM;
+		पूर्ण
+		स_रखो((व्योम *)fnic_dbg_prt->buffer, 0,
 		3 * (trace_max_pages * PAGE_SIZE));
 		fnic_dbg_prt->buffer_len = fnic_get_trace_data(fnic_dbg_prt);
-	} else {
+	पूर्ण अन्यथा अणु
 		fnic_dbg_prt->buffer =
-			vmalloc(array3_size(3, fnic_fc_trace_max_pages,
+			vदो_स्मृति(array3_size(3, fnic_fc_trace_max_pages,
 					    PAGE_SIZE));
-		if (!fnic_dbg_prt->buffer) {
-			kfree(fnic_dbg_prt);
-			return -ENOMEM;
-		}
-		memset((void *)fnic_dbg_prt->buffer, 0,
+		अगर (!fnic_dbg_prt->buffer) अणु
+			kमुक्त(fnic_dbg_prt);
+			वापस -ENOMEM;
+		पूर्ण
+		स_रखो((व्योम *)fnic_dbg_prt->buffer, 0,
 			3 * (fnic_fc_trace_max_pages * PAGE_SIZE));
 		fnic_dbg_prt->buffer_len =
 			fnic_fc_trace_get_data(fnic_dbg_prt, *rdata_ptr);
-	}
-	file->private_data = fnic_dbg_prt;
+	पूर्ण
+	file->निजी_data = fnic_dbg_prt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * fnic_trace_debugfs_lseek - Seek through a debugfs file
- * @file: The file pointer to seek through.
+ * @file: The file poपूर्णांकer to seek through.
  * @offset: The offset to seek to or the amount to seek by.
  * @howto: Indicates how to seek.
  *
  * Description:
- * This routine is the entry point for the debugfs lseek file operation.
+ * This routine is the entry poपूर्णांक क्रम the debugfs lseek file operation.
  * The @howto parameter indicates whether @offset is the offset to directly
- * seek to, or if it is a value to seek forward or reverse by. This function
+ * seek to, or अगर it is a value to seek क्रमward or reverse by. This function
  * figures out what the new offset of the debugfs file will be and assigns
  * that value to the f_pos field of @file.
  *
  * Returns:
- * This function returns the new offset if successful and returns a negative
- * error if unable to process the seek.
+ * This function वापसs the new offset अगर successful and वापसs a negative
+ * error अगर unable to process the seek.
  */
-static loff_t fnic_trace_debugfs_lseek(struct file *file,
+अटल loff_t fnic_trace_debugfs_lseek(काष्ठा file *file,
 					loff_t offset,
-					int howto)
-{
-	fnic_dbgfs_t *fnic_dbg_prt = file->private_data;
-	return fixed_size_llseek(file, offset, howto,
+					पूर्णांक howto)
+अणु
+	fnic_dbgfs_t *fnic_dbg_prt = file->निजी_data;
+	वापस fixed_size_llseek(file, offset, howto,
 				fnic_dbg_prt->buffer_len);
-}
+पूर्ण
 
 /*
- * fnic_trace_debugfs_read - Read a debugfs file
- * @file: The file pointer to read from.
+ * fnic_trace_debugfs_पढ़ो - Read a debugfs file
+ * @file: The file poपूर्णांकer to पढ़ो from.
  * @ubuf: The buffer to copy the data to.
- * @nbytes: The number of bytes to read.
- * @pos: The position in the file to start reading from.
+ * @nbytes: The number of bytes to पढ़ो.
+ * @pos: The position in the file to start पढ़ोing from.
  *
  * Description:
- * This routine reads data from the buffer indicated in the private_data
- * field of @file. It will start reading at @pos and copy up to @nbytes of
+ * This routine पढ़ोs data from the buffer indicated in the निजी_data
+ * field of @file. It will start पढ़ोing at @pos and copy up to @nbytes of
  * data to @ubuf.
  *
  * Returns:
- * This function returns the amount of data that was read (this could be
- * less than @nbytes if the end of the file was reached).
+ * This function वापसs the amount of data that was पढ़ो (this could be
+ * less than @nbytes अगर the end of the file was reached).
  */
-static ssize_t fnic_trace_debugfs_read(struct file *file,
-					char __user *ubuf,
-					size_t nbytes,
+अटल sमाप_प्रकार fnic_trace_debugfs_पढ़ो(काष्ठा file *file,
+					अक्षर __user *ubuf,
+					माप_प्रकार nbytes,
 					loff_t *pos)
-{
-	fnic_dbgfs_t *fnic_dbg_prt = file->private_data;
-	int rc = 0;
-	rc = simple_read_from_buffer(ubuf, nbytes, pos,
+अणु
+	fnic_dbgfs_t *fnic_dbg_prt = file->निजी_data;
+	पूर्णांक rc = 0;
+	rc = simple_पढ़ो_from_buffer(ubuf, nbytes, pos,
 				  fnic_dbg_prt->buffer,
 				  fnic_dbg_prt->buffer_len);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * fnic_trace_debugfs_release - Release the buffer used to store
  * debugfs file data
- * @inode: The inode pointer
- * @file: The file pointer that contains the buffer to release
+ * @inode: The inode poपूर्णांकer
+ * @file: The file poपूर्णांकer that contains the buffer to release
  *
  * Description:
- * This routine frees the buffer that was allocated when the debugfs
- * file was opened.
+ * This routine मुक्तs the buffer that was allocated when the debugfs
+ * file was खोलोed.
  *
  * Returns:
- * This function returns zero.
+ * This function वापसs zero.
  */
-static int fnic_trace_debugfs_release(struct inode *inode,
-					  struct file *file)
-{
-	fnic_dbgfs_t *fnic_dbg_prt = file->private_data;
+अटल पूर्णांक fnic_trace_debugfs_release(काष्ठा inode *inode,
+					  काष्ठा file *file)
+अणु
+	fnic_dbgfs_t *fnic_dbg_prt = file->निजी_data;
 
-	vfree(fnic_dbg_prt->buffer);
-	kfree(fnic_dbg_prt);
-	return 0;
-}
+	vमुक्त(fnic_dbg_prt->buffer);
+	kमुक्त(fnic_dbg_prt);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations fnic_trace_debugfs_fops = {
+अटल स्थिर काष्ठा file_operations fnic_trace_debugfs_fops = अणु
 	.owner = THIS_MODULE,
-	.open = fnic_trace_debugfs_open,
+	.खोलो = fnic_trace_debugfs_खोलो,
 	.llseek = fnic_trace_debugfs_lseek,
-	.read = fnic_trace_debugfs_read,
+	.पढ़ो = fnic_trace_debugfs_पढ़ो,
 	.release = fnic_trace_debugfs_release,
-};
+पूर्ण;
 
 /*
- * fnic_trace_debugfs_init - Initialize debugfs for fnic trace logging
+ * fnic_trace_debugfs_init - Initialize debugfs क्रम fnic trace logging
  *
  * Description:
  * When Debugfs is configured this routine sets up the fnic debugfs
- * file system. If not already created, this routine will create the
- * create file trace to log fnic trace buffer output into debugfs and
+ * file प्रणाली. If not alपढ़ोy created, this routine will create the
+ * create file trace to log fnic trace buffer output पूर्णांकo debugfs and
  * it will also create file trace_enable to control enable/disable of
- * trace logging into trace buffer.
+ * trace logging पूर्णांकo trace buffer.
  */
-void fnic_trace_debugfs_init(void)
-{
+व्योम fnic_trace_debugfs_init(व्योम)
+अणु
 	fnic_trace_enable = debugfs_create_file("tracing_enable",
 					S_IFREG|S_IRUGO|S_IWUSR,
 					fnic_trace_debugfs_root,
@@ -352,38 +353,38 @@ void fnic_trace_debugfs_init(void)
 					fnic_trace_debugfs_root,
 					&(fc_trc_flag->fnic_trace),
 					&fnic_trace_debugfs_fops);
-}
+पूर्ण
 
 /*
- * fnic_trace_debugfs_terminate - Tear down debugfs infrastructure
+ * fnic_trace_debugfs_terminate - Tear करोwn debugfs infraकाष्ठाure
  *
  * Description:
- * When Debugfs is configured this routine removes debugfs file system
- * elements that are specific to fnic trace logging.
+ * When Debugfs is configured this routine हटाओs debugfs file प्रणाली
+ * elements that are specअगरic to fnic trace logging.
  */
-void fnic_trace_debugfs_terminate(void)
-{
-	debugfs_remove(fnic_trace_debugfs_file);
-	fnic_trace_debugfs_file = NULL;
+व्योम fnic_trace_debugfs_terminate(व्योम)
+अणु
+	debugfs_हटाओ(fnic_trace_debugfs_file);
+	fnic_trace_debugfs_file = शून्य;
 
-	debugfs_remove(fnic_trace_enable);
-	fnic_trace_enable = NULL;
-}
+	debugfs_हटाओ(fnic_trace_enable);
+	fnic_trace_enable = शून्य;
+पूर्ण
 
 /*
  * fnic_fc_trace_debugfs_init -
- * Initialize debugfs for fnic control frame trace logging
+ * Initialize debugfs क्रम fnic control frame trace logging
  *
  * Description:
  * When Debugfs is configured this routine sets up the fnic_fc debugfs
- * file system. If not already created, this routine will create the
- * create file trace to log fnic fc trace buffer output into debugfs and
+ * file प्रणाली. If not alपढ़ोy created, this routine will create the
+ * create file trace to log fnic fc trace buffer output पूर्णांकo debugfs and
  * it will also create file fc_trace_enable to control enable/disable of
- * trace logging into trace buffer.
+ * trace logging पूर्णांकo trace buffer.
  */
 
-void fnic_fc_trace_debugfs_init(void)
-{
+व्योम fnic_fc_trace_debugfs_init(व्योम)
+अणु
 	fnic_fc_trace_enable = debugfs_create_file("fc_trace_enable",
 					S_IFREG|S_IRUGO|S_IWUSR,
 					fnic_trace_debugfs_root,
@@ -409,293 +410,293 @@ void fnic_fc_trace_debugfs_init(void)
 				    fnic_trace_debugfs_root,
 				    &(fc_trc_flag->fc_row_file),
 				    &fnic_trace_debugfs_fops);
-}
+पूर्ण
 
 /*
- * fnic_fc_trace_debugfs_terminate - Tear down debugfs infrastructure
+ * fnic_fc_trace_debugfs_terminate - Tear करोwn debugfs infraकाष्ठाure
  *
  * Description:
- * When Debugfs is configured this routine removes debugfs file system
- * elements that are specific to fnic_fc trace logging.
+ * When Debugfs is configured this routine हटाओs debugfs file प्रणाली
+ * elements that are specअगरic to fnic_fc trace logging.
  */
 
-void fnic_fc_trace_debugfs_terminate(void)
-{
-	debugfs_remove(fnic_fc_trace_debugfs_file);
-	fnic_fc_trace_debugfs_file = NULL;
+व्योम fnic_fc_trace_debugfs_terminate(व्योम)
+अणु
+	debugfs_हटाओ(fnic_fc_trace_debugfs_file);
+	fnic_fc_trace_debugfs_file = शून्य;
 
-	debugfs_remove(fnic_fc_rdata_trace_debugfs_file);
-	fnic_fc_rdata_trace_debugfs_file = NULL;
+	debugfs_हटाओ(fnic_fc_rdata_trace_debugfs_file);
+	fnic_fc_rdata_trace_debugfs_file = शून्य;
 
-	debugfs_remove(fnic_fc_trace_enable);
-	fnic_fc_trace_enable = NULL;
+	debugfs_हटाओ(fnic_fc_trace_enable);
+	fnic_fc_trace_enable = शून्य;
 
-	debugfs_remove(fnic_fc_trace_clear);
-	fnic_fc_trace_clear = NULL;
-}
+	debugfs_हटाओ(fnic_fc_trace_clear);
+	fnic_fc_trace_clear = शून्य;
+पूर्ण
 
 /*
- * fnic_reset_stats_open - Open the reset_stats file
- * @inode: The inode pointer.
- * @file: The file pointer to attach the stats reset flag.
+ * fnic_reset_stats_खोलो - Open the reset_stats file
+ * @inode: The inode poपूर्णांकer.
+ * @file: The file poपूर्णांकer to attach the stats reset flag.
  *
  * Description:
- * This routine opens a debugsfs file reset_stats and stores i_private data
- * to debug structure to retrieve later for while performing other
+ * This routine खोलोs a debugsfs file reset_stats and stores i_निजी data
+ * to debug काष्ठाure to retrieve later क्रम जबतक perक्रमming other
  * file oprations.
  *
  * Returns:
- * This function returns zero if successful.
+ * This function वापसs zero अगर successful.
  */
-static int fnic_reset_stats_open(struct inode *inode, struct file *file)
-{
-	struct stats_debug_info *debug;
+अटल पूर्णांक fnic_reset_stats_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा stats_debug_info *debug;
 
-	debug = kzalloc(sizeof(struct stats_debug_info), GFP_KERNEL);
-	if (!debug)
-		return -ENOMEM;
+	debug = kzalloc(माप(काष्ठा stats_debug_info), GFP_KERNEL);
+	अगर (!debug)
+		वापस -ENOMEM;
 
-	debug->i_private = inode->i_private;
+	debug->i_निजी = inode->i_निजी;
 
-	file->private_data = debug;
+	file->निजी_data = debug;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * fnic_reset_stats_read - Read a reset_stats debugfs file
- * @filp: The file pointer to read from.
+ * fnic_reset_stats_पढ़ो - Read a reset_stats debugfs file
+ * @filp: The file poपूर्णांकer to पढ़ो from.
  * @ubuf: The buffer to copy the data to.
- * @cnt: The number of bytes to read.
- * @ppos: The position in the file to start reading from.
+ * @cnt: The number of bytes to पढ़ो.
+ * @ppos: The position in the file to start पढ़ोing from.
  *
  * Description:
- * This routine reads value of variable reset_stats
- * and stores into local @buf. It will start reading file at @ppos and
+ * This routine पढ़ोs value of variable reset_stats
+ * and stores पूर्णांकo local @buf. It will start पढ़ोing file at @ppos and
  * copy up to @cnt of data to @ubuf from @buf.
  *
  * Returns:
- * This function returns the amount of data that was read.
+ * This function वापसs the amount of data that was पढ़ो.
  */
-static ssize_t fnic_reset_stats_read(struct file *file,
-					char __user *ubuf,
-					size_t cnt, loff_t *ppos)
-{
-	struct stats_debug_info *debug = file->private_data;
-	struct fnic *fnic = (struct fnic *)debug->i_private;
-	char buf[64];
-	int len;
+अटल sमाप_प्रकार fnic_reset_stats_पढ़ो(काष्ठा file *file,
+					अक्षर __user *ubuf,
+					माप_प्रकार cnt, loff_t *ppos)
+अणु
+	काष्ठा stats_debug_info *debug = file->निजी_data;
+	काष्ठा fnic *fnic = (काष्ठा fnic *)debug->i_निजी;
+	अक्षर buf[64];
+	पूर्णांक len;
 
-	len = sprintf(buf, "%u\n", fnic->reset_stats);
+	len = प्र_लिखो(buf, "%u\n", fnic->reset_stats);
 
-	return simple_read_from_buffer(ubuf, cnt, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, len);
+पूर्ण
 
 /*
- * fnic_reset_stats_write - Write to reset_stats debugfs file
- * @filp: The file pointer to write from.
+ * fnic_reset_stats_ग_लिखो - Write to reset_stats debugfs file
+ * @filp: The file poपूर्णांकer to ग_लिखो from.
  * @ubuf: The buffer to copy the data from.
- * @cnt: The number of bytes to write.
+ * @cnt: The number of bytes to ग_लिखो.
  * @ppos: The position in the file to start writing to.
  *
  * Description:
- * This routine writes data from user buffer @ubuf to buffer @buf and
+ * This routine ग_लिखोs data from user buffer @ubuf to buffer @buf and
  * resets cumulative stats of fnic.
  *
  * Returns:
- * This function returns the amount of data that was written.
+ * This function वापसs the amount of data that was written.
  */
-static ssize_t fnic_reset_stats_write(struct file *file,
-					const char __user *ubuf,
-					size_t cnt, loff_t *ppos)
-{
-	struct stats_debug_info *debug = file->private_data;
-	struct fnic *fnic = (struct fnic *)debug->i_private;
-	struct fnic_stats *stats = &fnic->fnic_stats;
+अटल sमाप_प्रकार fnic_reset_stats_ग_लिखो(काष्ठा file *file,
+					स्थिर अक्षर __user *ubuf,
+					माप_प्रकार cnt, loff_t *ppos)
+अणु
+	काष्ठा stats_debug_info *debug = file->निजी_data;
+	काष्ठा fnic *fnic = (काष्ठा fnic *)debug->i_निजी;
+	काष्ठा fnic_stats *stats = &fnic->fnic_stats;
 	u64 *io_stats_p = (u64 *)&stats->io_stats;
 	u64 *fw_stats_p = (u64 *)&stats->fw_stats;
-	char buf[64];
-	unsigned long val;
-	int ret;
+	अक्षर buf[64];
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	if (cnt >= sizeof(buf))
-		return -EINVAL;
+	अगर (cnt >= माप(buf))
+		वापस -EINVAL;
 
-	if (copy_from_user(&buf, ubuf, cnt))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, cnt))
+		वापस -EFAULT;
 
 	buf[cnt] = 0;
 
-	ret = kstrtoul(buf, 10, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret < 0)
+		वापस ret;
 
 	fnic->reset_stats = val;
 
-	if (fnic->reset_stats) {
-		/* Skip variable is used to avoid descrepancies to Num IOs
+	अगर (fnic->reset_stats) अणु
+		/* Skip variable is used to aव्योम descrepancies to Num IOs
 		 * and IO Completions stats. Skip incrementing No IO Compls
-		 * for pending active IOs after reset stats
+		 * क्रम pending active IOs after reset stats
 		 */
 		atomic64_set(&fnic->io_cmpl_skip,
-			atomic64_read(&stats->io_stats.active_ios));
-		memset(&stats->abts_stats, 0, sizeof(struct abort_stats));
-		memset(&stats->term_stats, 0,
-			sizeof(struct terminate_stats));
-		memset(&stats->reset_stats, 0, sizeof(struct reset_stats));
-		memset(&stats->misc_stats, 0, sizeof(struct misc_stats));
-		memset(&stats->vlan_stats, 0, sizeof(struct vlan_stats));
-		memset(io_stats_p+1, 0,
-			sizeof(struct io_path_stats) - sizeof(u64));
-		memset(fw_stats_p+1, 0,
-			sizeof(struct fw_stats) - sizeof(u64));
-		ktime_get_real_ts64(&stats->stats_timestamps.last_reset_time);
-	}
+			atomic64_पढ़ो(&stats->io_stats.active_ios));
+		स_रखो(&stats->abts_stats, 0, माप(काष्ठा पात_stats));
+		स_रखो(&stats->term_stats, 0,
+			माप(काष्ठा terminate_stats));
+		स_रखो(&stats->reset_stats, 0, माप(काष्ठा reset_stats));
+		स_रखो(&stats->misc_stats, 0, माप(काष्ठा misc_stats));
+		स_रखो(&stats->vlan_stats, 0, माप(काष्ठा vlan_stats));
+		स_रखो(io_stats_p+1, 0,
+			माप(काष्ठा io_path_stats) - माप(u64));
+		स_रखो(fw_stats_p+1, 0,
+			माप(काष्ठा fw_stats) - माप(u64));
+		kसमय_get_real_ts64(&stats->stats_बारtamps.last_reset_समय);
+	पूर्ण
 
 	(*ppos)++;
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
 /*
  * fnic_reset_stats_release - Release the buffer used to store
  * debugfs file data
- * @inode: The inode pointer
- * @file: The file pointer that contains the buffer to release
+ * @inode: The inode poपूर्णांकer
+ * @file: The file poपूर्णांकer that contains the buffer to release
  *
  * Description:
- * This routine frees the buffer that was allocated when the debugfs
- * file was opened.
+ * This routine मुक्तs the buffer that was allocated when the debugfs
+ * file was खोलोed.
  *
  * Returns:
- * This function returns zero.
+ * This function वापसs zero.
  */
-static int fnic_reset_stats_release(struct inode *inode,
-					struct file *file)
-{
-	struct stats_debug_info *debug = file->private_data;
-	kfree(debug);
-	return 0;
-}
+अटल पूर्णांक fnic_reset_stats_release(काष्ठा inode *inode,
+					काष्ठा file *file)
+अणु
+	काष्ठा stats_debug_info *debug = file->निजी_data;
+	kमुक्त(debug);
+	वापस 0;
+पूर्ण
 
 /*
- * fnic_stats_debugfs_open - Open the stats file for specific host
+ * fnic_stats_debugfs_खोलो - Open the stats file क्रम specअगरic host
  * and get fnic stats.
- * @inode: The inode pointer.
- * @file: The file pointer to attach the specific host statistics.
+ * @inode: The inode poपूर्णांकer.
+ * @file: The file poपूर्णांकer to attach the specअगरic host statistics.
  *
  * Description:
- * This routine opens a debugsfs file stats of specific host and print
+ * This routine खोलोs a debugsfs file stats of specअगरic host and prपूर्णांक
  * fnic stats.
  *
  * Returns:
- * This function returns zero if successful.
+ * This function वापसs zero अगर successful.
  */
-static int fnic_stats_debugfs_open(struct inode *inode,
-					struct file *file)
-{
-	struct fnic *fnic = inode->i_private;
-	struct fnic_stats *fnic_stats = &fnic->fnic_stats;
-	struct stats_debug_info *debug;
-	int buf_size = 2 * PAGE_SIZE;
+अटल पूर्णांक fnic_stats_debugfs_खोलो(काष्ठा inode *inode,
+					काष्ठा file *file)
+अणु
+	काष्ठा fnic *fnic = inode->i_निजी;
+	काष्ठा fnic_stats *fnic_stats = &fnic->fnic_stats;
+	काष्ठा stats_debug_info *debug;
+	पूर्णांक buf_size = 2 * PAGE_SIZE;
 
-	debug = kzalloc(sizeof(struct stats_debug_info), GFP_KERNEL);
-	if (!debug)
-		return -ENOMEM;
+	debug = kzalloc(माप(काष्ठा stats_debug_info), GFP_KERNEL);
+	अगर (!debug)
+		वापस -ENOMEM;
 
-	debug->debug_buffer = vmalloc(buf_size);
-	if (!debug->debug_buffer) {
-		kfree(debug);
-		return -ENOMEM;
-	}
+	debug->debug_buffer = vदो_स्मृति(buf_size);
+	अगर (!debug->debug_buffer) अणु
+		kमुक्त(debug);
+		वापस -ENOMEM;
+	पूर्ण
 
 	debug->buf_size = buf_size;
-	memset((void *)debug->debug_buffer, 0, buf_size);
+	स_रखो((व्योम *)debug->debug_buffer, 0, buf_size);
 	debug->buffer_len = fnic_get_stats_data(debug, fnic_stats);
 
-	file->private_data = debug;
+	file->निजी_data = debug;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * fnic_stats_debugfs_read - Read a debugfs file
- * @file: The file pointer to read from.
+ * fnic_stats_debugfs_पढ़ो - Read a debugfs file
+ * @file: The file poपूर्णांकer to पढ़ो from.
  * @ubuf: The buffer to copy the data to.
- * @nbytes: The number of bytes to read.
- * @pos: The position in the file to start reading from.
+ * @nbytes: The number of bytes to पढ़ो.
+ * @pos: The position in the file to start पढ़ोing from.
  *
  * Description:
- * This routine reads data from the buffer indicated in the private_data
- * field of @file. It will start reading at @pos and copy up to @nbytes of
+ * This routine पढ़ोs data from the buffer indicated in the निजी_data
+ * field of @file. It will start पढ़ोing at @pos and copy up to @nbytes of
  * data to @ubuf.
  *
  * Returns:
- * This function returns the amount of data that was read (this could be
- * less than @nbytes if the end of the file was reached).
+ * This function वापसs the amount of data that was पढ़ो (this could be
+ * less than @nbytes अगर the end of the file was reached).
  */
-static ssize_t fnic_stats_debugfs_read(struct file *file,
-					char __user *ubuf,
-					size_t nbytes,
+अटल sमाप_प्रकार fnic_stats_debugfs_पढ़ो(काष्ठा file *file,
+					अक्षर __user *ubuf,
+					माप_प्रकार nbytes,
 					loff_t *pos)
-{
-	struct stats_debug_info *debug = file->private_data;
-	int rc = 0;
-	rc = simple_read_from_buffer(ubuf, nbytes, pos,
+अणु
+	काष्ठा stats_debug_info *debug = file->निजी_data;
+	पूर्णांक rc = 0;
+	rc = simple_पढ़ो_from_buffer(ubuf, nbytes, pos,
 					debug->debug_buffer,
 					debug->buffer_len);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * fnic_stats_stats_release - Release the buffer used to store
  * debugfs file data
- * @inode: The inode pointer
- * @file: The file pointer that contains the buffer to release
+ * @inode: The inode poपूर्णांकer
+ * @file: The file poपूर्णांकer that contains the buffer to release
  *
  * Description:
- * This routine frees the buffer that was allocated when the debugfs
- * file was opened.
+ * This routine मुक्तs the buffer that was allocated when the debugfs
+ * file was खोलोed.
  *
  * Returns:
- * This function returns zero.
+ * This function वापसs zero.
  */
-static int fnic_stats_debugfs_release(struct inode *inode,
-					struct file *file)
-{
-	struct stats_debug_info *debug = file->private_data;
-	vfree(debug->debug_buffer);
-	kfree(debug);
-	return 0;
-}
+अटल पूर्णांक fnic_stats_debugfs_release(काष्ठा inode *inode,
+					काष्ठा file *file)
+अणु
+	काष्ठा stats_debug_info *debug = file->निजी_data;
+	vमुक्त(debug->debug_buffer);
+	kमुक्त(debug);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations fnic_stats_debugfs_fops = {
+अटल स्थिर काष्ठा file_operations fnic_stats_debugfs_fops = अणु
 	.owner = THIS_MODULE,
-	.open = fnic_stats_debugfs_open,
-	.read = fnic_stats_debugfs_read,
+	.खोलो = fnic_stats_debugfs_खोलो,
+	.पढ़ो = fnic_stats_debugfs_पढ़ो,
 	.release = fnic_stats_debugfs_release,
-};
+पूर्ण;
 
-static const struct file_operations fnic_reset_debugfs_fops = {
+अटल स्थिर काष्ठा file_operations fnic_reset_debugfs_fops = अणु
 	.owner = THIS_MODULE,
-	.open = fnic_reset_stats_open,
-	.read = fnic_reset_stats_read,
-	.write = fnic_reset_stats_write,
+	.खोलो = fnic_reset_stats_खोलो,
+	.पढ़ो = fnic_reset_stats_पढ़ो,
+	.ग_लिखो = fnic_reset_stats_ग_लिखो,
 	.release = fnic_reset_stats_release,
-};
+पूर्ण;
 
 /*
- * fnic_stats_init - Initialize stats struct and create stats file per fnic
+ * fnic_stats_init - Initialize stats काष्ठा and create stats file per fnic
  *
  * Description:
  * When Debugfs is configured this routine sets up the stats file per fnic
  * It will create file stats and reset_stats under statistics/host# directory
  * to log per fnic stats.
  */
-void fnic_stats_debugfs_init(struct fnic *fnic)
-{
-	char name[16];
+व्योम fnic_stats_debugfs_init(काष्ठा fnic *fnic)
+अणु
+	अक्षर name[16];
 
-	snprintf(name, sizeof(name), "host%d", fnic->lport->host->host_no);
+	snम_लिखो(name, माप(name), "host%d", fnic->lport->host->host_no);
 
 	fnic->fnic_stats_debugfs_host = debugfs_create_dir(name,
 						fnic_stats_debugfs_root);
@@ -711,26 +712,26 @@ void fnic_stats_debugfs_init(struct fnic *fnic)
 						fnic->fnic_stats_debugfs_host,
 						fnic,
 						&fnic_reset_debugfs_fops);
-}
+पूर्ण
 
 /*
- * fnic_stats_debugfs_remove - Tear down debugfs infrastructure of stats
+ * fnic_stats_debugfs_हटाओ - Tear करोwn debugfs infraकाष्ठाure of stats
  *
  * Description:
- * When Debugfs is configured this routine removes debugfs file system
- * elements that are specific to fnic stats.
+ * When Debugfs is configured this routine हटाओs debugfs file प्रणाली
+ * elements that are specअगरic to fnic stats.
  */
-void fnic_stats_debugfs_remove(struct fnic *fnic)
-{
-	if (!fnic)
-		return;
+व्योम fnic_stats_debugfs_हटाओ(काष्ठा fnic *fnic)
+अणु
+	अगर (!fnic)
+		वापस;
 
-	debugfs_remove(fnic->fnic_stats_debugfs_file);
-	fnic->fnic_stats_debugfs_file = NULL;
+	debugfs_हटाओ(fnic->fnic_stats_debugfs_file);
+	fnic->fnic_stats_debugfs_file = शून्य;
 
-	debugfs_remove(fnic->fnic_reset_debugfs_file);
-	fnic->fnic_reset_debugfs_file = NULL;
+	debugfs_हटाओ(fnic->fnic_reset_debugfs_file);
+	fnic->fnic_reset_debugfs_file = शून्य;
 
-	debugfs_remove(fnic->fnic_stats_debugfs_host);
-	fnic->fnic_stats_debugfs_host = NULL;
-}
+	debugfs_हटाओ(fnic->fnic_stats_debugfs_host);
+	fnic->fnic_stats_debugfs_host = शून्य;
+पूर्ण

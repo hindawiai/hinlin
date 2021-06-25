@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  *  Digianswer Bluetooth USB driver
  *
- *  Copyright (C) 2004-2007  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2004-2007  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
 
-#include <linux/usb.h>
+#समावेश <linux/usb.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "h4_recv.h"
+#समावेश "h4_recv.h"
 
-#define VERSION "0.11"
+#घोषणा VERSION "0.11"
 
-static const struct usb_device_id bpa10x_table[] = {
+अटल स्थिर काष्ठा usb_device_id bpa10x_table[] = अणु
 	/* Tektronix BPA 100/105 (Digianswer) */
-	{ USB_DEVICE(0x08fd, 0x0002) },
+	अणु USB_DEVICE(0x08fd, 0x0002) पूर्ण,
 
-	{ }	/* Terminating entry */
-};
+	अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, bpa10x_table);
 
-struct bpa10x_data {
-	struct hci_dev    *hdev;
-	struct usb_device *udev;
+काष्ठा bpa10x_data अणु
+	काष्ठा hci_dev    *hdev;
+	काष्ठा usb_device *udev;
 
-	struct usb_anchor tx_anchor;
-	struct usb_anchor rx_anchor;
+	काष्ठा usb_anchor tx_anchor;
+	काष्ठा usb_anchor rx_anchor;
 
-	struct sk_buff *rx_skb[2];
-};
+	काष्ठा sk_buff *rx_skb[2];
+पूर्ण;
 
-static void bpa10x_tx_complete(struct urb *urb)
-{
-	struct sk_buff *skb = urb->context;
-	struct hci_dev *hdev = (struct hci_dev *) skb->dev;
+अटल व्योम bpa10x_tx_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा sk_buff *skb = urb->context;
+	काष्ठा hci_dev *hdev = (काष्ठा hci_dev *) skb->dev;
 
 	BT_DBG("%s urb %p status %d count %d", hdev->name,
 					urb, urb->status, urb->actual_length);
 
-	if (!test_bit(HCI_RUNNING, &hdev->flags))
-		goto done;
+	अगर (!test_bit(HCI_RUNNING, &hdev->flags))
+		जाओ करोne;
 
-	if (!urb->status)
+	अगर (!urb->status)
 		hdev->stat.byte_tx += urb->transfer_buffer_length;
-	else
+	अन्यथा
 		hdev->stat.err_tx++;
 
-done:
-	kfree(urb->setup_packet);
+करोne:
+	kमुक्त(urb->setup_packet);
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-#define HCI_VENDOR_HDR_SIZE 5
+#घोषणा HCI_VENDOR_HDR_SIZE 5
 
-#define HCI_RECV_VENDOR \
+#घोषणा HCI_RECV_VENDOR \
 	.type = HCI_VENDOR_PKT, \
 	.hlen = HCI_VENDOR_HDR_SIZE, \
 	.loff = 3, \
 	.lsize = 2, \
 	.maxlen = HCI_MAX_FRAME_SIZE
 
-static const struct h4_recv_pkt bpa10x_recv_pkts[] = {
-	{ H4_RECV_ACL,     .recv = hci_recv_frame },
-	{ H4_RECV_SCO,     .recv = hci_recv_frame },
-	{ H4_RECV_EVENT,   .recv = hci_recv_frame },
-	{ HCI_RECV_VENDOR, .recv = hci_recv_diag  },
-};
+अटल स्थिर काष्ठा h4_recv_pkt bpa10x_recv_pkts[] = अणु
+	अणु H4_RECV_ACL,     .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_SCO,     .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_EVENT,   .recv = hci_recv_frame पूर्ण,
+	अणु HCI_RECV_VENDOR, .recv = hci_recv_diag  पूर्ण,
+पूर्ण;
 
-static void bpa10x_rx_complete(struct urb *urb)
-{
-	struct hci_dev *hdev = urb->context;
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
-	int err;
+अटल व्योम bpa10x_rx_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा hci_dev *hdev = urb->context;
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
+	पूर्णांक err;
 
 	BT_DBG("%s urb %p status %d count %d", hdev->name,
 					urb, urb->status, urb->actual_length);
 
-	if (!test_bit(HCI_RUNNING, &hdev->flags))
-		return;
+	अगर (!test_bit(HCI_RUNNING, &hdev->flags))
+		वापस;
 
-	if (urb->status == 0) {
+	अगर (urb->status == 0) अणु
 		bool idx = usb_pipebulk(urb->pipe);
 
 		data->rx_skb[idx] = h4_recv_buf(hdev, data->rx_skb[idx],
@@ -101,45 +102,45 @@ static void bpa10x_rx_complete(struct urb *urb)
 						urb->actual_length,
 						bpa10x_recv_pkts,
 						ARRAY_SIZE(bpa10x_recv_pkts));
-		if (IS_ERR(data->rx_skb[idx])) {
+		अगर (IS_ERR(data->rx_skb[idx])) अणु
 			bt_dev_err(hdev, "corrupted event packet");
 			hdev->stat.err_rx++;
-			data->rx_skb[idx] = NULL;
-		}
-	}
+			data->rx_skb[idx] = शून्य;
+		पूर्ण
+	पूर्ण
 
 	usb_anchor_urb(urb, &data->rx_anchor);
 
 	err = usb_submit_urb(urb, GFP_ATOMIC);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		bt_dev_err(hdev, "urb %p failed to resubmit (%d)", urb, -err);
 		usb_unanchor_urb(urb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int bpa10x_submit_intr_urb(struct hci_dev *hdev)
-{
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
-	struct urb *urb;
-	unsigned char *buf;
-	unsigned int pipe;
-	int err, size = 16;
+अटल अंतरभूत पूर्णांक bpa10x_submit_पूर्णांकr_urb(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
+	काष्ठा urb *urb;
+	अचिन्हित अक्षर *buf;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक err, size = 16;
 
 	BT_DBG("%s", hdev->name);
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!urb)
-		return -ENOMEM;
+	अगर (!urb)
+		वापस -ENOMEM;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf) {
-		usb_free_urb(urb);
-		return -ENOMEM;
-	}
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf) अणु
+		usb_मुक्त_urb(urb);
+		वापस -ENOMEM;
+	पूर्ण
 
-	pipe = usb_rcvintpipe(data->udev, 0x81);
+	pipe = usb_rcvपूर्णांकpipe(data->udev, 0x81);
 
-	usb_fill_int_urb(urb, data->udev, pipe, buf, size,
+	usb_fill_पूर्णांक_urb(urb, data->udev, pipe, buf, size,
 						bpa10x_rx_complete, hdev, 1);
 
 	urb->transfer_flags |= URB_FREE_BUFFER;
@@ -147,35 +148,35 @@ static inline int bpa10x_submit_intr_urb(struct hci_dev *hdev)
 	usb_anchor_urb(urb, &data->rx_anchor);
 
 	err = usb_submit_urb(urb, GFP_KERNEL);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		bt_dev_err(hdev, "urb %p submission failed (%d)", urb, -err);
 		usb_unanchor_urb(urb);
-	}
+	पूर्ण
 
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int bpa10x_submit_bulk_urb(struct hci_dev *hdev)
-{
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
-	struct urb *urb;
-	unsigned char *buf;
-	unsigned int pipe;
-	int err, size = 64;
+अटल अंतरभूत पूर्णांक bpa10x_submit_bulk_urb(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
+	काष्ठा urb *urb;
+	अचिन्हित अक्षर *buf;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक err, size = 64;
 
 	BT_DBG("%s", hdev->name);
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!urb)
-		return -ENOMEM;
+	अगर (!urb)
+		वापस -ENOMEM;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf) {
-		usb_free_urb(urb);
-		return -ENOMEM;
-	}
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf) अणु
+		usb_मुक्त_urb(urb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	pipe = usb_rcvbulkpipe(data->udev, 0x82);
 
@@ -187,107 +188,107 @@ static inline int bpa10x_submit_bulk_urb(struct hci_dev *hdev)
 	usb_anchor_urb(urb, &data->rx_anchor);
 
 	err = usb_submit_urb(urb, GFP_KERNEL);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		bt_dev_err(hdev, "urb %p submission failed (%d)", urb, -err);
 		usb_unanchor_urb(urb);
-	}
+	पूर्ण
 
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bpa10x_open(struct hci_dev *hdev)
-{
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
-	int err;
+अटल पूर्णांक bpa10x_खोलो(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
+	पूर्णांक err;
 
 	BT_DBG("%s", hdev->name);
 
-	err = bpa10x_submit_intr_urb(hdev);
-	if (err < 0)
-		goto error;
+	err = bpa10x_submit_पूर्णांकr_urb(hdev);
+	अगर (err < 0)
+		जाओ error;
 
 	err = bpa10x_submit_bulk_urb(hdev);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	usb_kill_anchored_urbs(&data->rx_anchor);
+	usb_समाप्त_anchored_urbs(&data->rx_anchor);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bpa10x_close(struct hci_dev *hdev)
-{
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
-
-	BT_DBG("%s", hdev->name);
-
-	usb_kill_anchored_urbs(&data->rx_anchor);
-
-	return 0;
-}
-
-static int bpa10x_flush(struct hci_dev *hdev)
-{
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
+अटल पूर्णांक bpa10x_बंद(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
 
 	BT_DBG("%s", hdev->name);
 
-	usb_kill_anchored_urbs(&data->tx_anchor);
+	usb_समाप्त_anchored_urbs(&data->rx_anchor);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bpa10x_setup(struct hci_dev *hdev)
-{
-	static const u8 req[] = { 0x07 };
-	struct sk_buff *skb;
+अटल पूर्णांक bpa10x_flush(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
+
+	BT_DBG("%s", hdev->name);
+
+	usb_समाप्त_anchored_urbs(&data->tx_anchor);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक bpa10x_setup(काष्ठा hci_dev *hdev)
+अणु
+	अटल स्थिर u8 req[] = अणु 0x07 पूर्ण;
+	काष्ठा sk_buff *skb;
 
 	BT_DBG("%s", hdev->name);
 
 	/* Read revision string */
-	skb = __hci_cmd_sync(hdev, 0xfc0e, sizeof(req), req, HCI_INIT_TIMEOUT);
-	if (IS_ERR(skb))
-		return PTR_ERR(skb);
+	skb = __hci_cmd_sync(hdev, 0xfc0e, माप(req), req, HCI_INIT_TIMEOUT);
+	अगर (IS_ERR(skb))
+		वापस PTR_ERR(skb);
 
-	bt_dev_info(hdev, "%s", (char *)(skb->data + 1));
+	bt_dev_info(hdev, "%s", (अक्षर *)(skb->data + 1));
 
 	hci_set_fw_info(hdev, "%s", skb->data + 1);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int bpa10x_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct bpa10x_data *data = hci_get_drvdata(hdev);
-	struct usb_ctrlrequest *dr;
-	struct urb *urb;
-	unsigned int pipe;
-	int err;
+अटल पूर्णांक bpa10x_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bpa10x_data *data = hci_get_drvdata(hdev);
+	काष्ठा usb_ctrlrequest *dr;
+	काष्ठा urb *urb;
+	अचिन्हित पूर्णांक pipe;
+	पूर्णांक err;
 
 	BT_DBG("%s", hdev->name);
 
-	skb->dev = (void *) hdev;
+	skb->dev = (व्योम *) hdev;
 
 	urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!urb)
-		return -ENOMEM;
+	अगर (!urb)
+		वापस -ENOMEM;
 
 	/* Prepend skb with frame type */
 	*(u8 *)skb_push(skb, 1) = hci_skb_pkt_type(skb);
 
-	switch (hci_skb_pkt_type(skb)) {
-	case HCI_COMMAND_PKT:
-		dr = kmalloc(sizeof(*dr), GFP_KERNEL);
-		if (!dr) {
-			usb_free_urb(urb);
-			return -ENOMEM;
-		}
+	चयन (hci_skb_pkt_type(skb)) अणु
+	हाल HCI_COMMAND_PKT:
+		dr = kदो_स्मृति(माप(*dr), GFP_KERNEL);
+		अगर (!dr) अणु
+			usb_मुक्त_urb(urb);
+			वापस -ENOMEM;
+		पूर्ण
 
 		dr->bRequestType = USB_TYPE_VENDOR;
 		dr->bRequest     = 0;
@@ -297,102 +298,102 @@ static int bpa10x_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
 
 		pipe = usb_sndctrlpipe(data->udev, 0x00);
 
-		usb_fill_control_urb(urb, data->udev, pipe, (void *) dr,
+		usb_fill_control_urb(urb, data->udev, pipe, (व्योम *) dr,
 				skb->data, skb->len, bpa10x_tx_complete, skb);
 
 		hdev->stat.cmd_tx++;
-		break;
+		अवरोध;
 
-	case HCI_ACLDATA_PKT:
+	हाल HCI_ACLDATA_PKT:
 		pipe = usb_sndbulkpipe(data->udev, 0x02);
 
 		usb_fill_bulk_urb(urb, data->udev, pipe,
 				skb->data, skb->len, bpa10x_tx_complete, skb);
 
 		hdev->stat.acl_tx++;
-		break;
+		अवरोध;
 
-	case HCI_SCODATA_PKT:
+	हाल HCI_SCODATA_PKT:
 		pipe = usb_sndbulkpipe(data->udev, 0x02);
 
 		usb_fill_bulk_urb(urb, data->udev, pipe,
 				skb->data, skb->len, bpa10x_tx_complete, skb);
 
 		hdev->stat.sco_tx++;
-		break;
+		अवरोध;
 
-	default:
-		usb_free_urb(urb);
-		return -EILSEQ;
-	}
+	शेष:
+		usb_मुक्त_urb(urb);
+		वापस -EILSEQ;
+	पूर्ण
 
 	usb_anchor_urb(urb, &data->tx_anchor);
 
 	err = usb_submit_urb(urb, GFP_KERNEL);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		bt_dev_err(hdev, "urb %p submission failed", urb);
-		kfree(urb->setup_packet);
+		kमुक्त(urb->setup_packet);
 		usb_unanchor_urb(urb);
-	}
+	पूर्ण
 
-	usb_free_urb(urb);
+	usb_मुक्त_urb(urb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bpa10x_set_diag(struct hci_dev *hdev, bool enable)
-{
-	const u8 req[] = { 0x00, enable };
-	struct sk_buff *skb;
+अटल पूर्णांक bpa10x_set_diag(काष्ठा hci_dev *hdev, bool enable)
+अणु
+	स्थिर u8 req[] = अणु 0x00, enable पूर्ण;
+	काष्ठा sk_buff *skb;
 
 	BT_DBG("%s", hdev->name);
 
-	if (!test_bit(HCI_RUNNING, &hdev->flags))
-		return -ENETDOWN;
+	अगर (!test_bit(HCI_RUNNING, &hdev->flags))
+		वापस -ENETDOWN;
 
-	/* Enable sniffer operation */
-	skb = __hci_cmd_sync(hdev, 0xfc0e, sizeof(req), req, HCI_INIT_TIMEOUT);
-	if (IS_ERR(skb))
-		return PTR_ERR(skb);
+	/* Enable snअगरfer operation */
+	skb = __hci_cmd_sync(hdev, 0xfc0e, माप(req), req, HCI_INIT_TIMEOUT);
+	अगर (IS_ERR(skb))
+		वापस PTR_ERR(skb);
 
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int bpa10x_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	struct bpa10x_data *data;
-	struct hci_dev *hdev;
-	int err;
+अटल पूर्णांक bpa10x_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा bpa10x_data *data;
+	काष्ठा hci_dev *hdev;
+	पूर्णांक err;
 
-	BT_DBG("intf %p id %p", intf, id);
+	BT_DBG("intf %p id %p", पूर्णांकf, id);
 
-	if (intf->cur_altsetting->desc.bInterfaceNumber != 0)
-		return -ENODEV;
+	अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceNumber != 0)
+		वापस -ENODEV;
 
-	data = devm_kzalloc(&intf->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&पूर्णांकf->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	data->udev = interface_to_usbdev(intf);
+	data->udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
 
 	init_usb_anchor(&data->tx_anchor);
 	init_usb_anchor(&data->rx_anchor);
 
 	hdev = hci_alloc_dev();
-	if (!hdev)
-		return -ENOMEM;
+	अगर (!hdev)
+		वापस -ENOMEM;
 
 	hdev->bus = HCI_USB;
 	hci_set_drvdata(hdev, data);
 
 	data->hdev = hdev;
 
-	SET_HCIDEV_DEV(hdev, &intf->dev);
+	SET_HCIDEV_DEV(hdev, &पूर्णांकf->dev);
 
-	hdev->open     = bpa10x_open;
-	hdev->close    = bpa10x_close;
+	hdev->खोलो     = bpa10x_खोलो;
+	hdev->बंद    = bpa10x_बंद;
 	hdev->flush    = bpa10x_flush;
 	hdev->setup    = bpa10x_setup;
 	hdev->send     = bpa10x_send_frame;
@@ -400,42 +401,42 @@ static int bpa10x_probe(struct usb_interface *intf,
 
 	set_bit(HCI_QUIRK_RESET_ON_CLOSE, &hdev->quirks);
 
-	err = hci_register_dev(hdev);
-	if (err < 0) {
-		hci_free_dev(hdev);
-		return err;
-	}
+	err = hci_रेजिस्टर_dev(hdev);
+	अगर (err < 0) अणु
+		hci_मुक्त_dev(hdev);
+		वापस err;
+	पूर्ण
 
-	usb_set_intfdata(intf, data);
+	usb_set_पूर्णांकfdata(पूर्णांकf, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bpa10x_disconnect(struct usb_interface *intf)
-{
-	struct bpa10x_data *data = usb_get_intfdata(intf);
+अटल व्योम bpa10x_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा bpa10x_data *data = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	BT_DBG("intf %p", intf);
+	BT_DBG("intf %p", पूर्णांकf);
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	hci_unregister_dev(data->hdev);
+	hci_unरेजिस्टर_dev(data->hdev);
 
-	hci_free_dev(data->hdev);
-	kfree_skb(data->rx_skb[0]);
-	kfree_skb(data->rx_skb[1]);
-}
+	hci_मुक्त_dev(data->hdev);
+	kमुक्त_skb(data->rx_skb[0]);
+	kमुक्त_skb(data->rx_skb[1]);
+पूर्ण
 
-static struct usb_driver bpa10x_driver = {
+अटल काष्ठा usb_driver bpa10x_driver = अणु
 	.name		= "bpa10x",
 	.probe		= bpa10x_probe,
 	.disconnect	= bpa10x_disconnect,
 	.id_table	= bpa10x_table,
 	.disable_hub_initiated_lpm = 1,
-};
+पूर्ण;
 
 module_usb_driver(bpa10x_driver);
 

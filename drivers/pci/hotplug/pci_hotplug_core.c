@@ -1,580 +1,581 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * PCI HotPlug Controller Core
  *
- * Copyright (C) 2001-2002 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (C) 2001-2002 Greg Kroah-Harपंचांगan (greg@kroah.com)
  * Copyright (C) 2001-2002 IBM Corp.
  *
  * All rights reserved.
  *
- * Send feedback to <kristen.c.accardi@intel.com>
+ * Send feedback to <kristen.c.accardi@पूर्णांकel.com>
  *
  * Authors:
- *   Greg Kroah-Hartman <greg@kroah.com>
- *   Scott Murray <scottm@somanetworks.com>
+ *   Greg Kroah-Harपंचांगan <greg@kroah.com>
+ *   Scott Murray <scotपंचांग@somanetworks.com>
  */
 
-#include <linux/module.h>	/* try_module_get & module_put */
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/kobject.h>
-#include <linux/sysfs.h>
-#include <linux/pagemap.h>
-#include <linux/init.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/pci_hotplug.h>
-#include <linux/uaccess.h>
-#include "../pci.h"
-#include "cpci_hotplug.h"
+#समावेश <linux/module.h>	/* try_module_get & module_put */
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_hotplug.h>
+#समावेश <linux/uaccess.h>
+#समावेश "../pci.h"
+#समावेश "cpci_hotplug.h"
 
-#define MY_NAME	"pci_hotplug"
+#घोषणा MY_NAME	"pci_hotplug"
 
-#define dbg(fmt, arg...) do { if (debug) printk(KERN_DEBUG "%s: %s: " fmt, MY_NAME, __func__, ## arg); } while (0)
-#define err(format, arg...) printk(KERN_ERR "%s: " format, MY_NAME, ## arg)
-#define info(format, arg...) printk(KERN_INFO "%s: " format, MY_NAME, ## arg)
-#define warn(format, arg...) printk(KERN_WARNING "%s: " format, MY_NAME, ## arg)
+#घोषणा dbg(fmt, arg...) करो अणु अगर (debug) prपूर्णांकk(KERN_DEBUG "%s: %s: " fmt, MY_NAME, __func__, ## arg); पूर्ण जबतक (0)
+#घोषणा err(क्रमmat, arg...) prपूर्णांकk(KERN_ERR "%s: " क्रमmat, MY_NAME, ## arg)
+#घोषणा info(क्रमmat, arg...) prपूर्णांकk(KERN_INFO "%s: " क्रमmat, MY_NAME, ## arg)
+#घोषणा warn(क्रमmat, arg...) prपूर्णांकk(KERN_WARNING "%s: " क्रमmat, MY_NAME, ## arg)
 
 /* local variables */
-static bool debug;
+अटल bool debug;
 
-static LIST_HEAD(pci_hotplug_slot_list);
-static DEFINE_MUTEX(pci_hp_mutex);
+अटल LIST_HEAD(pci_hotplug_slot_list);
+अटल DEFINE_MUTEX(pci_hp_mutex);
 
 /* Weee, fun with macros... */
-#define GET_STATUS(name, type)	\
-static int get_##name(struct hotplug_slot *slot, type *value)		\
-{									\
-	const struct hotplug_slot_ops *ops = slot->ops;			\
-	int retval = 0;							\
-	if (!try_module_get(slot->owner))				\
-		return -ENODEV;						\
-	if (ops->get_##name)						\
+#घोषणा GET_STATUS(name, type)	\
+अटल पूर्णांक get_##name(काष्ठा hotplug_slot *slot, type *value)		\
+अणु									\
+	स्थिर काष्ठा hotplug_slot_ops *ops = slot->ops;			\
+	पूर्णांक retval = 0;							\
+	अगर (!try_module_get(slot->owner))				\
+		वापस -ENODEV;						\
+	अगर (ops->get_##name)						\
 		retval = ops->get_##name(slot, value);			\
 	module_put(slot->owner);					\
-	return retval;							\
-}
+	वापस retval;							\
+पूर्ण
 
-GET_STATUS(power_status, u8)
+GET_STATUS(घातer_status, u8)
 GET_STATUS(attention_status, u8)
 GET_STATUS(latch_status, u8)
 GET_STATUS(adapter_status, u8)
 
-static ssize_t power_read_file(struct pci_slot *pci_slot, char *buf)
-{
-	int retval;
+अटल sमाप_प्रकार घातer_पढ़ो_file(काष्ठा pci_slot *pci_slot, अक्षर *buf)
+अणु
+	पूर्णांक retval;
 	u8 value;
 
-	retval = get_power_status(pci_slot->hotplug, &value);
-	if (retval)
-		return retval;
+	retval = get_घातer_status(pci_slot->hotplug, &value);
+	अगर (retval)
+		वापस retval;
 
-	return sprintf(buf, "%d\n", value);
-}
+	वापस प्र_लिखो(buf, "%d\n", value);
+पूर्ण
 
-static ssize_t power_write_file(struct pci_slot *pci_slot, const char *buf,
-				size_t count)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
-	unsigned long lpower;
-	u8 power;
-	int retval = 0;
+अटल sमाप_प्रकार घातer_ग_लिखो_file(काष्ठा pci_slot *pci_slot, स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
+	अचिन्हित दीर्घ lघातer;
+	u8 घातer;
+	पूर्णांक retval = 0;
 
-	lpower = simple_strtoul(buf, NULL, 10);
-	power = (u8)(lpower & 0xff);
-	dbg("power = %d\n", power);
+	lघातer = simple_म_से_अदीर्घ(buf, शून्य, 10);
+	घातer = (u8)(lघातer & 0xff);
+	dbg("power = %d\n", घातer);
 
-	if (!try_module_get(slot->owner)) {
+	अगर (!try_module_get(slot->owner)) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
-	switch (power) {
-	case 0:
-		if (slot->ops->disable_slot)
+		जाओ निकास;
+	पूर्ण
+	चयन (घातer) अणु
+	हाल 0:
+		अगर (slot->ops->disable_slot)
 			retval = slot->ops->disable_slot(slot);
-		break;
+		अवरोध;
 
-	case 1:
-		if (slot->ops->enable_slot)
+	हाल 1:
+		अगर (slot->ops->enable_slot)
 			retval = slot->ops->enable_slot(slot);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err("Illegal value specified for power\n");
 		retval = -EINVAL;
-	}
+	पूर्ण
 	module_put(slot->owner);
 
-exit:
-	if (retval)
-		return retval;
-	return count;
-}
+निकास:
+	अगर (retval)
+		वापस retval;
+	वापस count;
+पूर्ण
 
-static struct pci_slot_attribute hotplug_slot_attr_power = {
-	.attr = {.name = "power", .mode = S_IFREG | S_IRUGO | S_IWUSR},
-	.show = power_read_file,
-	.store = power_write_file
-};
+अटल काष्ठा pci_slot_attribute hotplug_slot_attr_घातer = अणु
+	.attr = अणु.name = "power", .mode = S_IFREG | S_IRUGO | S_IWUSRपूर्ण,
+	.show = घातer_पढ़ो_file,
+	.store = घातer_ग_लिखो_file
+पूर्ण;
 
-static ssize_t attention_read_file(struct pci_slot *pci_slot, char *buf)
-{
-	int retval;
+अटल sमाप_प्रकार attention_पढ़ो_file(काष्ठा pci_slot *pci_slot, अक्षर *buf)
+अणु
+	पूर्णांक retval;
 	u8 value;
 
 	retval = get_attention_status(pci_slot->hotplug, &value);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return sprintf(buf, "%d\n", value);
-}
+	वापस प्र_लिखो(buf, "%d\n", value);
+पूर्ण
 
-static ssize_t attention_write_file(struct pci_slot *pci_slot, const char *buf,
-				    size_t count)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
-	const struct hotplug_slot_ops *ops = slot->ops;
-	unsigned long lattention;
+अटल sमाप_प्रकार attention_ग_लिखो_file(काष्ठा pci_slot *pci_slot, स्थिर अक्षर *buf,
+				    माप_प्रकार count)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
+	स्थिर काष्ठा hotplug_slot_ops *ops = slot->ops;
+	अचिन्हित दीर्घ lattention;
 	u8 attention;
-	int retval = 0;
+	पूर्णांक retval = 0;
 
-	lattention = simple_strtoul(buf, NULL, 10);
+	lattention = simple_म_से_अदीर्घ(buf, शून्य, 10);
 	attention = (u8)(lattention & 0xff);
 	dbg(" - attention = %d\n", attention);
 
-	if (!try_module_get(slot->owner)) {
+	अगर (!try_module_get(slot->owner)) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
-	if (ops->set_attention_status)
+		जाओ निकास;
+	पूर्ण
+	अगर (ops->set_attention_status)
 		retval = ops->set_attention_status(slot, attention);
 	module_put(slot->owner);
 
-exit:
-	if (retval)
-		return retval;
-	return count;
-}
+निकास:
+	अगर (retval)
+		वापस retval;
+	वापस count;
+पूर्ण
 
-static struct pci_slot_attribute hotplug_slot_attr_attention = {
-	.attr = {.name = "attention", .mode = S_IFREG | S_IRUGO | S_IWUSR},
-	.show = attention_read_file,
-	.store = attention_write_file
-};
+अटल काष्ठा pci_slot_attribute hotplug_slot_attr_attention = अणु
+	.attr = अणु.name = "attention", .mode = S_IFREG | S_IRUGO | S_IWUSRपूर्ण,
+	.show = attention_पढ़ो_file,
+	.store = attention_ग_लिखो_file
+पूर्ण;
 
-static ssize_t latch_read_file(struct pci_slot *pci_slot, char *buf)
-{
-	int retval;
+अटल sमाप_प्रकार latch_पढ़ो_file(काष्ठा pci_slot *pci_slot, अक्षर *buf)
+अणु
+	पूर्णांक retval;
 	u8 value;
 
 	retval = get_latch_status(pci_slot->hotplug, &value);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return sprintf(buf, "%d\n", value);
-}
+	वापस प्र_लिखो(buf, "%d\n", value);
+पूर्ण
 
-static struct pci_slot_attribute hotplug_slot_attr_latch = {
-	.attr = {.name = "latch", .mode = S_IFREG | S_IRUGO},
-	.show = latch_read_file,
-};
+अटल काष्ठा pci_slot_attribute hotplug_slot_attr_latch = अणु
+	.attr = अणु.name = "latch", .mode = S_IFREG | S_IRUGOपूर्ण,
+	.show = latch_पढ़ो_file,
+पूर्ण;
 
-static ssize_t presence_read_file(struct pci_slot *pci_slot, char *buf)
-{
-	int retval;
+अटल sमाप_प्रकार presence_पढ़ो_file(काष्ठा pci_slot *pci_slot, अक्षर *buf)
+अणु
+	पूर्णांक retval;
 	u8 value;
 
 	retval = get_adapter_status(pci_slot->hotplug, &value);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return sprintf(buf, "%d\n", value);
-}
+	वापस प्र_लिखो(buf, "%d\n", value);
+पूर्ण
 
-static struct pci_slot_attribute hotplug_slot_attr_presence = {
-	.attr = {.name = "adapter", .mode = S_IFREG | S_IRUGO},
-	.show = presence_read_file,
-};
+अटल काष्ठा pci_slot_attribute hotplug_slot_attr_presence = अणु
+	.attr = अणु.name = "adapter", .mode = S_IFREG | S_IRUGOपूर्ण,
+	.show = presence_पढ़ो_file,
+पूर्ण;
 
-static ssize_t test_write_file(struct pci_slot *pci_slot, const char *buf,
-			       size_t count)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
-	unsigned long ltest;
+अटल sमाप_प्रकार test_ग_लिखो_file(काष्ठा pci_slot *pci_slot, स्थिर अक्षर *buf,
+			       माप_प्रकार count)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
+	अचिन्हित दीर्घ ltest;
 	u32 test;
-	int retval = 0;
+	पूर्णांक retval = 0;
 
-	ltest = simple_strtoul(buf, NULL, 10);
+	ltest = simple_म_से_अदीर्घ(buf, शून्य, 10);
 	test = (u32)(ltest & 0xffffffff);
 	dbg("test = %d\n", test);
 
-	if (!try_module_get(slot->owner)) {
+	अगर (!try_module_get(slot->owner)) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
-	if (slot->ops->hardware_test)
+		जाओ निकास;
+	पूर्ण
+	अगर (slot->ops->hardware_test)
 		retval = slot->ops->hardware_test(slot, test);
 	module_put(slot->owner);
 
-exit:
-	if (retval)
-		return retval;
-	return count;
-}
+निकास:
+	अगर (retval)
+		वापस retval;
+	वापस count;
+पूर्ण
 
-static struct pci_slot_attribute hotplug_slot_attr_test = {
-	.attr = {.name = "test", .mode = S_IFREG | S_IRUGO | S_IWUSR},
-	.store = test_write_file
-};
+अटल काष्ठा pci_slot_attribute hotplug_slot_attr_test = अणु
+	.attr = अणु.name = "test", .mode = S_IFREG | S_IRUGO | S_IWUSRपूर्ण,
+	.store = test_ग_लिखो_file
+पूर्ण;
 
-static bool has_power_file(struct pci_slot *pci_slot)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
+अटल bool has_घातer_file(काष्ठा pci_slot *pci_slot)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
 
-	if ((!slot) || (!slot->ops))
-		return false;
-	if ((slot->ops->enable_slot) ||
+	अगर ((!slot) || (!slot->ops))
+		वापस false;
+	अगर ((slot->ops->enable_slot) ||
 	    (slot->ops->disable_slot) ||
-	    (slot->ops->get_power_status))
-		return true;
-	return false;
-}
+	    (slot->ops->get_घातer_status))
+		वापस true;
+	वापस false;
+पूर्ण
 
-static bool has_attention_file(struct pci_slot *pci_slot)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
+अटल bool has_attention_file(काष्ठा pci_slot *pci_slot)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
 
-	if ((!slot) || (!slot->ops))
-		return false;
-	if ((slot->ops->set_attention_status) ||
+	अगर ((!slot) || (!slot->ops))
+		वापस false;
+	अगर ((slot->ops->set_attention_status) ||
 	    (slot->ops->get_attention_status))
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-static bool has_latch_file(struct pci_slot *pci_slot)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
+अटल bool has_latch_file(काष्ठा pci_slot *pci_slot)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
 
-	if ((!slot) || (!slot->ops))
-		return false;
-	if (slot->ops->get_latch_status)
-		return true;
-	return false;
-}
+	अगर ((!slot) || (!slot->ops))
+		वापस false;
+	अगर (slot->ops->get_latch_status)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static bool has_adapter_file(struct pci_slot *pci_slot)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
+अटल bool has_adapter_file(काष्ठा pci_slot *pci_slot)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
 
-	if ((!slot) || (!slot->ops))
-		return false;
-	if (slot->ops->get_adapter_status)
-		return true;
-	return false;
-}
+	अगर ((!slot) || (!slot->ops))
+		वापस false;
+	अगर (slot->ops->get_adapter_status)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static bool has_test_file(struct pci_slot *pci_slot)
-{
-	struct hotplug_slot *slot = pci_slot->hotplug;
+अटल bool has_test_file(काष्ठा pci_slot *pci_slot)
+अणु
+	काष्ठा hotplug_slot *slot = pci_slot->hotplug;
 
-	if ((!slot) || (!slot->ops))
-		return false;
-	if (slot->ops->hardware_test)
-		return true;
-	return false;
-}
+	अगर ((!slot) || (!slot->ops))
+		वापस false;
+	अगर (slot->ops->hardware_test)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static int fs_add_slot(struct pci_slot *pci_slot)
-{
-	int retval = 0;
+अटल पूर्णांक fs_add_slot(काष्ठा pci_slot *pci_slot)
+अणु
+	पूर्णांक retval = 0;
 
 	/* Create symbolic link to the hotplug driver module */
 	pci_hp_create_module_link(pci_slot);
 
-	if (has_power_file(pci_slot)) {
+	अगर (has_घातer_file(pci_slot)) अणु
 		retval = sysfs_create_file(&pci_slot->kobj,
-					   &hotplug_slot_attr_power.attr);
-		if (retval)
-			goto exit_power;
-	}
+					   &hotplug_slot_attr_घातer.attr);
+		अगर (retval)
+			जाओ निकास_घातer;
+	पूर्ण
 
-	if (has_attention_file(pci_slot)) {
+	अगर (has_attention_file(pci_slot)) अणु
 		retval = sysfs_create_file(&pci_slot->kobj,
 					   &hotplug_slot_attr_attention.attr);
-		if (retval)
-			goto exit_attention;
-	}
+		अगर (retval)
+			जाओ निकास_attention;
+	पूर्ण
 
-	if (has_latch_file(pci_slot)) {
+	अगर (has_latch_file(pci_slot)) अणु
 		retval = sysfs_create_file(&pci_slot->kobj,
 					   &hotplug_slot_attr_latch.attr);
-		if (retval)
-			goto exit_latch;
-	}
+		अगर (retval)
+			जाओ निकास_latch;
+	पूर्ण
 
-	if (has_adapter_file(pci_slot)) {
+	अगर (has_adapter_file(pci_slot)) अणु
 		retval = sysfs_create_file(&pci_slot->kobj,
 					   &hotplug_slot_attr_presence.attr);
-		if (retval)
-			goto exit_adapter;
-	}
+		अगर (retval)
+			जाओ निकास_adapter;
+	पूर्ण
 
-	if (has_test_file(pci_slot)) {
+	अगर (has_test_file(pci_slot)) अणु
 		retval = sysfs_create_file(&pci_slot->kobj,
 					   &hotplug_slot_attr_test.attr);
-		if (retval)
-			goto exit_test;
-	}
+		अगर (retval)
+			जाओ निकास_test;
+	पूर्ण
 
-	goto exit;
+	जाओ निकास;
 
-exit_test:
-	if (has_adapter_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj,
+निकास_test:
+	अगर (has_adapter_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj,
 				  &hotplug_slot_attr_presence.attr);
-exit_adapter:
-	if (has_latch_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj, &hotplug_slot_attr_latch.attr);
-exit_latch:
-	if (has_attention_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj,
+निकास_adapter:
+	अगर (has_latch_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj, &hotplug_slot_attr_latch.attr);
+निकास_latch:
+	अगर (has_attention_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj,
 				  &hotplug_slot_attr_attention.attr);
-exit_attention:
-	if (has_power_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj, &hotplug_slot_attr_power.attr);
-exit_power:
-	pci_hp_remove_module_link(pci_slot);
-exit:
-	return retval;
-}
+निकास_attention:
+	अगर (has_घातer_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj, &hotplug_slot_attr_घातer.attr);
+निकास_घातer:
+	pci_hp_हटाओ_module_link(pci_slot);
+निकास:
+	वापस retval;
+पूर्ण
 
-static void fs_remove_slot(struct pci_slot *pci_slot)
-{
-	if (has_power_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj, &hotplug_slot_attr_power.attr);
+अटल व्योम fs_हटाओ_slot(काष्ठा pci_slot *pci_slot)
+अणु
+	अगर (has_घातer_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj, &hotplug_slot_attr_घातer.attr);
 
-	if (has_attention_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj,
+	अगर (has_attention_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj,
 				  &hotplug_slot_attr_attention.attr);
 
-	if (has_latch_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj, &hotplug_slot_attr_latch.attr);
+	अगर (has_latch_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj, &hotplug_slot_attr_latch.attr);
 
-	if (has_adapter_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj,
+	अगर (has_adapter_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj,
 				  &hotplug_slot_attr_presence.attr);
 
-	if (has_test_file(pci_slot))
-		sysfs_remove_file(&pci_slot->kobj, &hotplug_slot_attr_test.attr);
+	अगर (has_test_file(pci_slot))
+		sysfs_हटाओ_file(&pci_slot->kobj, &hotplug_slot_attr_test.attr);
 
-	pci_hp_remove_module_link(pci_slot);
-}
+	pci_hp_हटाओ_module_link(pci_slot);
+पूर्ण
 
-static struct hotplug_slot *get_slot_from_name(const char *name)
-{
-	struct hotplug_slot *slot;
+अटल काष्ठा hotplug_slot *get_slot_from_name(स्थिर अक्षर *name)
+अणु
+	काष्ठा hotplug_slot *slot;
 
-	list_for_each_entry(slot, &pci_hotplug_slot_list, slot_list) {
-		if (strcmp(hotplug_slot_name(slot), name) == 0)
-			return slot;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(slot, &pci_hotplug_slot_list, slot_list) अणु
+		अगर (म_भेद(hotplug_slot_name(slot), name) == 0)
+			वापस slot;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * __pci_hp_register - register a hotplug_slot with the PCI hotplug subsystem
+ * __pci_hp_रेजिस्टर - रेजिस्टर a hotplug_slot with the PCI hotplug subप्रणाली
  * @bus: bus this slot is on
- * @slot: pointer to the &struct hotplug_slot to register
+ * @slot: poपूर्णांकer to the &काष्ठा hotplug_slot to रेजिस्टर
  * @devnr: device number
- * @name: name registered with kobject core
+ * @name: name रेजिस्टरed with kobject core
  * @owner: caller module owner
  * @mod_name: caller module name
  *
- * Prepares a hotplug slot for in-kernel use and immediately publishes it to
+ * Prepares a hotplug slot क्रम in-kernel use and immediately publishes it to
  * user space in one go.  Drivers may alternatively carry out the two steps
  * separately by invoking pci_hp_initialize() and pci_hp_add().
  *
- * Returns 0 if successful, anything else for an error.
+ * Returns 0 अगर successful, anything अन्यथा क्रम an error.
  */
-int __pci_hp_register(struct hotplug_slot *slot, struct pci_bus *bus,
-		      int devnr, const char *name,
-		      struct module *owner, const char *mod_name)
-{
-	int result;
+पूर्णांक __pci_hp_रेजिस्टर(काष्ठा hotplug_slot *slot, काष्ठा pci_bus *bus,
+		      पूर्णांक devnr, स्थिर अक्षर *name,
+		      काष्ठा module *owner, स्थिर अक्षर *mod_name)
+अणु
+	पूर्णांक result;
 
 	result = __pci_hp_initialize(slot, bus, devnr, name, owner, mod_name);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	result = pci_hp_add(slot);
-	if (result)
+	अगर (result)
 		pci_hp_destroy(slot);
 
-	return result;
-}
-EXPORT_SYMBOL_GPL(__pci_hp_register);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL_GPL(__pci_hp_रेजिस्टर);
 
 /**
- * __pci_hp_initialize - prepare hotplug slot for in-kernel use
- * @slot: pointer to the &struct hotplug_slot to initialize
+ * __pci_hp_initialize - prepare hotplug slot क्रम in-kernel use
+ * @slot: poपूर्णांकer to the &काष्ठा hotplug_slot to initialize
  * @bus: bus this slot is on
  * @devnr: slot number
- * @name: name registered with kobject core
+ * @name: name रेजिस्टरed with kobject core
  * @owner: caller module owner
  * @mod_name: caller module name
  *
- * Allocate and fill in a PCI slot for use by a hotplug driver.  Once this has
+ * Allocate and fill in a PCI slot क्रम use by a hotplug driver.  Once this has
  * been called, the driver may invoke hotplug_slot_name() to get the slot's
  * unique name.  The driver must be prepared to handle a ->reset_slot callback
- * from this point on.
+ * from this poपूर्णांक on.
  *
- * Returns 0 on success or a negative int on error.
+ * Returns 0 on success or a negative पूर्णांक on error.
  */
-int __pci_hp_initialize(struct hotplug_slot *slot, struct pci_bus *bus,
-			int devnr, const char *name, struct module *owner,
-			const char *mod_name)
-{
-	struct pci_slot *pci_slot;
+पूर्णांक __pci_hp_initialize(काष्ठा hotplug_slot *slot, काष्ठा pci_bus *bus,
+			पूर्णांक devnr, स्थिर अक्षर *name, काष्ठा module *owner,
+			स्थिर अक्षर *mod_name)
+अणु
+	काष्ठा pci_slot *pci_slot;
 
-	if (slot == NULL)
-		return -ENODEV;
-	if (slot->ops == NULL)
-		return -EINVAL;
+	अगर (slot == शून्य)
+		वापस -ENODEV;
+	अगर (slot->ops == शून्य)
+		वापस -EINVAL;
 
 	slot->owner = owner;
 	slot->mod_name = mod_name;
 
 	/*
-	 * No problems if we call this interface from both ACPI_PCI_SLOT
-	 * driver and call it here again. If we've already created the
-	 * pci_slot, the interface will simply bump the refcount.
+	 * No problems अगर we call this पूर्णांकerface from both ACPI_PCI_SLOT
+	 * driver and call it here again. If we've alपढ़ोy created the
+	 * pci_slot, the पूर्णांकerface will simply bump the refcount.
 	 */
 	pci_slot = pci_create_slot(bus, devnr, name, slot);
-	if (IS_ERR(pci_slot))
-		return PTR_ERR(pci_slot);
+	अगर (IS_ERR(pci_slot))
+		वापस PTR_ERR(pci_slot);
 
 	slot->pci_slot = pci_slot;
 	pci_slot->hotplug = slot;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__pci_hp_initialize);
 
 /**
  * pci_hp_add - publish hotplug slot to user space
- * @slot: pointer to the &struct hotplug_slot to publish
+ * @slot: poपूर्णांकer to the &काष्ठा hotplug_slot to publish
  *
- * Make a hotplug slot's sysfs interface available and inform user space of its
+ * Make a hotplug slot's sysfs पूर्णांकerface available and inक्रमm user space of its
  * addition by sending a uevent.  The hotplug driver must be prepared to handle
- * all &struct hotplug_slot_ops callbacks from this point on.
+ * all &काष्ठा hotplug_slot_ops callbacks from this poपूर्णांक on.
  *
- * Returns 0 on success or a negative int on error.
+ * Returns 0 on success or a negative पूर्णांक on error.
  */
-int pci_hp_add(struct hotplug_slot *slot)
-{
-	struct pci_slot *pci_slot = slot->pci_slot;
-	int result;
+पूर्णांक pci_hp_add(काष्ठा hotplug_slot *slot)
+अणु
+	काष्ठा pci_slot *pci_slot = slot->pci_slot;
+	पूर्णांक result;
 
 	result = fs_add_slot(pci_slot);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	kobject_uevent(&pci_slot->kobj, KOBJ_ADD);
 	mutex_lock(&pci_hp_mutex);
 	list_add(&slot->slot_list, &pci_hotplug_slot_list);
 	mutex_unlock(&pci_hp_mutex);
 	dbg("Added slot %s to the list\n", hotplug_slot_name(slot));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_hp_add);
 
 /**
- * pci_hp_deregister - deregister a hotplug_slot with the PCI hotplug subsystem
- * @slot: pointer to the &struct hotplug_slot to deregister
+ * pci_hp_deरेजिस्टर - deरेजिस्टर a hotplug_slot with the PCI hotplug subप्रणाली
+ * @slot: poपूर्णांकer to the &काष्ठा hotplug_slot to deरेजिस्टर
  *
- * The @slot must have been registered with the pci hotplug subsystem
- * previously with a call to pci_hp_register().
+ * The @slot must have been रेजिस्टरed with the pci hotplug subप्रणाली
+ * previously with a call to pci_hp_रेजिस्टर().
  *
- * Returns 0 if successful, anything else for an error.
+ * Returns 0 अगर successful, anything अन्यथा क्रम an error.
  */
-void pci_hp_deregister(struct hotplug_slot *slot)
-{
+व्योम pci_hp_deरेजिस्टर(काष्ठा hotplug_slot *slot)
+अणु
 	pci_hp_del(slot);
 	pci_hp_destroy(slot);
-}
-EXPORT_SYMBOL_GPL(pci_hp_deregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(pci_hp_deरेजिस्टर);
 
 /**
  * pci_hp_del - unpublish hotplug slot from user space
- * @slot: pointer to the &struct hotplug_slot to unpublish
+ * @slot: poपूर्णांकer to the &काष्ठा hotplug_slot to unpublish
  *
- * Remove a hotplug slot's sysfs interface.
+ * Remove a hotplug slot's sysfs पूर्णांकerface.
  *
- * Returns 0 on success or a negative int on error.
+ * Returns 0 on success or a negative पूर्णांक on error.
  */
-void pci_hp_del(struct hotplug_slot *slot)
-{
-	struct hotplug_slot *temp;
+व्योम pci_hp_del(काष्ठा hotplug_slot *slot)
+अणु
+	काष्ठा hotplug_slot *temp;
 
-	if (WARN_ON(!slot))
-		return;
+	अगर (WARN_ON(!slot))
+		वापस;
 
 	mutex_lock(&pci_hp_mutex);
 	temp = get_slot_from_name(hotplug_slot_name(slot));
-	if (WARN_ON(temp != slot)) {
+	अगर (WARN_ON(temp != slot)) अणु
 		mutex_unlock(&pci_hp_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	list_del(&slot->slot_list);
 	mutex_unlock(&pci_hp_mutex);
 	dbg("Removed slot %s from the list\n", hotplug_slot_name(slot));
-	fs_remove_slot(slot->pci_slot);
-}
+	fs_हटाओ_slot(slot->pci_slot);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_hp_del);
 
 /**
- * pci_hp_destroy - remove hotplug slot from in-kernel use
- * @slot: pointer to the &struct hotplug_slot to destroy
+ * pci_hp_destroy - हटाओ hotplug slot from in-kernel use
+ * @slot: poपूर्णांकer to the &काष्ठा hotplug_slot to destroy
  *
  * Destroy a PCI slot used by a hotplug driver.  Once this has been called,
- * the driver may no longer invoke hotplug_slot_name() to get the slot's
- * unique name.  The driver no longer needs to handle a ->reset_slot callback
- * from this point on.
+ * the driver may no दीर्घer invoke hotplug_slot_name() to get the slot's
+ * unique name.  The driver no दीर्घer needs to handle a ->reset_slot callback
+ * from this poपूर्णांक on.
  *
- * Returns 0 on success or a negative int on error.
+ * Returns 0 on success or a negative पूर्णांक on error.
  */
-void pci_hp_destroy(struct hotplug_slot *slot)
-{
-	struct pci_slot *pci_slot = slot->pci_slot;
+व्योम pci_hp_destroy(काष्ठा hotplug_slot *slot)
+अणु
+	काष्ठा pci_slot *pci_slot = slot->pci_slot;
 
-	slot->pci_slot = NULL;
-	pci_slot->hotplug = NULL;
+	slot->pci_slot = शून्य;
+	pci_slot->hotplug = शून्य;
 	pci_destroy_slot(pci_slot);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_hp_destroy);
 
-static int __init pci_hotplug_init(void)
-{
-	int result;
+अटल पूर्णांक __init pci_hotplug_init(व्योम)
+अणु
+	पूर्णांक result;
 
 	result = cpci_hotplug_init(debug);
-	if (result) {
+	अगर (result) अणु
 		err("cpci_hotplug_init with error %d\n", result);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 device_initcall(pci_hotplug_init);
 
 /*
  * not really modular, but the easiest way to keep compat with existing
- * bootargs behaviour is to continue using module_param here.
+ * bootargs behaviour is to जारी using module_param here.
  */
 module_param(debug, bool, 0644);
 MODULE_PARM_DESC(debug, "Debugging mode enabled or not");

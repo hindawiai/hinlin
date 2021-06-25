@@ -1,206 +1,207 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /*
  * Based on:
  *
  * Minimal BPF JIT image disassembler
  *
- * Disassembles BPF JIT compiler emitted opcodes back to asm insn's for
- * debugging or verification purposes.
+ * Disassembles BPF JIT compiler emitted opcodes back to यंत्र insn's क्रम
+ * debugging or verअगरication purposes.
  *
  * Copyright 2013 Daniel Borkmann <daniel@iogearbox.net>
  * Licensed under the GNU General Public License, version 2.0 (GPLv2)
  */
 
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <unistd.h>
-#include <string.h>
-#include <bfd.h>
-#include <dis-asm.h>
-#include <sys/stat.h>
-#include <limits.h>
-#include <bpf/libbpf.h>
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <मानकतर्क.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <निश्चित.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <bfd.h>
+#समावेश <dis-यंत्र.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <सीमा.स>
+#समावेश <bpf/libbpf.h>
 
-#include "json_writer.h"
-#include "main.h"
+#समावेश "json_writer.h"
+#समावेश "main.h"
 
-static void get_exec_path(char *tpath, size_t size)
-{
-	const char *path = "/proc/self/exe";
-	ssize_t len;
+अटल व्योम get_exec_path(अक्षर *tpath, माप_प्रकार size)
+अणु
+	स्थिर अक्षर *path = "/proc/self/exe";
+	sमाप_प्रकार len;
 
-	len = readlink(path, tpath, size - 1);
-	assert(len > 0);
+	len = पढ़ोlink(path, tpath, size - 1);
+	निश्चित(len > 0);
 	tpath[len] = 0;
-}
+पूर्ण
 
-static int oper_count;
-static int fprintf_json(void *out, const char *fmt, ...)
-{
-	va_list ap;
-	char *s;
+अटल पूर्णांक oper_count;
+अटल पूर्णांक ख_लिखो_json(व्योम *out, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
+	अक्षर *s;
 
-	va_start(ap, fmt);
-	if (vasprintf(&s, fmt, ap) < 0)
-		return -1;
-	va_end(ap);
+	बहु_शुरू(ap, fmt);
+	अगर (vaप्र_लिखो(&s, fmt, ap) < 0)
+		वापस -1;
+	बहु_पूर्ण(ap);
 
-	if (!oper_count) {
-		int i;
+	अगर (!oper_count) अणु
+		पूर्णांक i;
 
 		/* Strip trailing spaces */
-		i = strlen(s) - 1;
-		while (s[i] == ' ')
+		i = म_माप(s) - 1;
+		जबतक (s[i] == ' ')
 			s[i--] = '\0';
 
 		jsonw_string_field(json_wtr, "operation", s);
 		jsonw_name(json_wtr, "operands");
 		jsonw_start_array(json_wtr);
 		oper_count++;
-	} else if (!strcmp(fmt, ",")) {
+	पूर्ण अन्यथा अगर (!म_भेद(fmt, ",")) अणु
 		   /* Skip */
-	} else {
+	पूर्ण अन्यथा अणु
 		jsonw_string(json_wtr, s);
 		oper_count++;
-	}
-	free(s);
-	return 0;
-}
+	पूर्ण
+	मुक्त(s);
+	वापस 0;
+पूर्ण
 
-void disasm_print_insn(unsigned char *image, ssize_t len, int opcodes,
-		       const char *arch, const char *disassembler_options,
-		       const struct btf *btf,
-		       const struct bpf_prog_linfo *prog_linfo,
-		       __u64 func_ksym, unsigned int func_idx,
+व्योम disयंत्र_prपूर्णांक_insn(अचिन्हित अक्षर *image, sमाप_प्रकार len, पूर्णांक opcodes,
+		       स्थिर अक्षर *arch, स्थिर अक्षर *disassembler_options,
+		       स्थिर काष्ठा btf *btf,
+		       स्थिर काष्ठा bpf_prog_linfo *prog_linfo,
+		       __u64 func_ksym, अचिन्हित पूर्णांक func_idx,
 		       bool linum)
-{
-	const struct bpf_line_info *linfo = NULL;
+अणु
+	स्थिर काष्ठा bpf_line_info *linfo = शून्य;
 	disassembler_ftype disassemble;
-	struct disassemble_info info;
-	unsigned int nr_skip = 0;
-	int count, i, pc = 0;
-	char tpath[PATH_MAX];
+	काष्ठा disassemble_info info;
+	अचिन्हित पूर्णांक nr_skip = 0;
+	पूर्णांक count, i, pc = 0;
+	अक्षर tpath[PATH_MAX];
 	bfd *bfdf;
 
-	if (!len)
-		return;
+	अगर (!len)
+		वापस;
 
-	memset(tpath, 0, sizeof(tpath));
-	get_exec_path(tpath, sizeof(tpath));
+	स_रखो(tpath, 0, माप(tpath));
+	get_exec_path(tpath, माप(tpath));
 
-	bfdf = bfd_openr(tpath, NULL);
-	assert(bfdf);
-	assert(bfd_check_format(bfdf, bfd_object));
+	bfdf = bfd_खोलोr(tpath, शून्य);
+	निश्चित(bfdf);
+	निश्चित(bfd_check_क्रमmat(bfdf, bfd_object));
 
-	if (json_output)
-		init_disassemble_info(&info, stdout,
-				      (fprintf_ftype) fprintf_json);
-	else
-		init_disassemble_info(&info, stdout,
-				      (fprintf_ftype) fprintf);
+	अगर (json_output)
+		init_disassemble_info(&info, मानक_निकास,
+				      (ख_लिखो_ftype) ख_लिखो_json);
+	अन्यथा
+		init_disassemble_info(&info, मानक_निकास,
+				      (ख_लिखो_ftype) ख_लिखो);
 
-	/* Update architecture info for offload. */
-	if (arch) {
-		const bfd_arch_info_type *inf = bfd_scan_arch(arch);
+	/* Update architecture info क्रम offload. */
+	अगर (arch) अणु
+		स्थिर bfd_arch_info_type *inf = bfd_scan_arch(arch);
 
-		if (inf) {
+		अगर (inf) अणु
 			bfdf->arch_info = inf;
-		} else {
+		पूर्ण अन्यथा अणु
 			p_err("No libbfd support for %s", arch);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	info.arch = bfd_get_arch(bfdf);
 	info.mach = bfd_get_mach(bfdf);
-	if (disassembler_options)
+	अगर (disassembler_options)
 		info.disassembler_options = disassembler_options;
 	info.buffer = image;
 	info.buffer_length = len;
 
-	disassemble_init_for_target(&info);
+	disassemble_init_क्रम_target(&info);
 
-#ifdef DISASM_FOUR_ARGS_SIGNATURE
+#अगर_घोषित DISASM_FOUR_ARGS_SIGNATURE
 	disassemble = disassembler(info.arch,
 				   bfd_big_endian(bfdf),
 				   info.mach,
 				   bfdf);
-#else
+#अन्यथा
 	disassemble = disassembler(bfdf);
-#endif
-	assert(disassemble);
+#पूर्ण_अगर
+	निश्चित(disassemble);
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
-	do {
-		if (prog_linfo) {
+	करो अणु
+		अगर (prog_linfo) अणु
 			linfo = bpf_prog_linfo__lfind_addr_func(prog_linfo,
 								func_ksym + pc,
 								func_idx,
 								nr_skip);
-			if (linfo)
+			अगर (linfo)
 				nr_skip++;
-		}
+		पूर्ण
 
-		if (json_output) {
+		अगर (json_output) अणु
 			jsonw_start_object(json_wtr);
 			oper_count = 0;
-			if (linfo)
+			अगर (linfo)
 				btf_dump_linfo_json(btf, linfo, linum);
 			jsonw_name(json_wtr, "pc");
-			jsonw_printf(json_wtr, "\"0x%x\"", pc);
-		} else {
-			if (linfo)
+			jsonw_म_लिखो(json_wtr, "\"0x%x\"", pc);
+		पूर्ण अन्यथा अणु
+			अगर (linfo)
 				btf_dump_linfo_plain(btf, linfo, "; ",
 						     linum);
-			printf("%4x:\t", pc);
-		}
+			म_लिखो("%4x:\t", pc);
+		पूर्ण
 
 		count = disassemble(pc, &info);
-		if (json_output) {
-			/* Operand array, was started in fprintf_json. Before
-			 * that, make sure we have a _null_ value if no operand
+		अगर (json_output) अणु
+			/* Opeअक्रम array, was started in ख_लिखो_json. Beक्रमe
+			 * that, make sure we have a _null_ value अगर no opeअक्रम
 			 * other than operation code was present.
 			 */
-			if (oper_count == 1)
+			अगर (oper_count == 1)
 				jsonw_null(json_wtr);
 			jsonw_end_array(json_wtr);
-		}
+		पूर्ण
 
-		if (opcodes) {
-			if (json_output) {
+		अगर (opcodes) अणु
+			अगर (json_output) अणु
 				jsonw_name(json_wtr, "opcodes");
 				jsonw_start_array(json_wtr);
-				for (i = 0; i < count; ++i)
-					jsonw_printf(json_wtr, "\"0x%02hhx\"",
-						     (uint8_t)image[pc + i]);
+				क्रम (i = 0; i < count; ++i)
+					jsonw_म_लिखो(json_wtr, "\"0x%02hhx\"",
+						     (uपूर्णांक8_t)image[pc + i]);
 				jsonw_end_array(json_wtr);
-			} else {
-				printf("\n\t");
-				for (i = 0; i < count; ++i)
-					printf("%02x ",
-					       (uint8_t)image[pc + i]);
-			}
-		}
-		if (json_output)
+			पूर्ण अन्यथा अणु
+				म_लिखो("\n\t");
+				क्रम (i = 0; i < count; ++i)
+					म_लिखो("%02x ",
+					       (uपूर्णांक8_t)image[pc + i]);
+			पूर्ण
+		पूर्ण
+		अगर (json_output)
 			jsonw_end_object(json_wtr);
-		else
-			printf("\n");
+		अन्यथा
+			म_लिखो("\n");
 
 		pc += count;
-	} while (count > 0 && pc < len);
-	if (json_output)
+	पूर्ण जबतक (count > 0 && pc < len);
+	अगर (json_output)
 		jsonw_end_array(json_wtr);
 
-	bfd_close(bfdf);
-}
+	bfd_बंद(bfdf);
+पूर्ण
 
-int disasm_init(void)
-{
+पूर्णांक disयंत्र_init(व्योम)
+अणु
 	bfd_init();
-	return 0;
-}
+	वापस 0;
+पूर्ण

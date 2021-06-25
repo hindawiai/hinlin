@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/nfs/nfs3proc.c
  *
@@ -7,302 +8,302 @@
  *  Copyright (C) 1997, Olaf Kirch
  */
 
-#include <linux/mm.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/slab.h>
-#include <linux/nfs.h>
-#include <linux/nfs3.h>
-#include <linux/nfs_fs.h>
-#include <linux/nfs_page.h>
-#include <linux/lockd/bind.h>
-#include <linux/nfs_mount.h>
-#include <linux/freezer.h>
-#include <linux/xattr.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/nfs.h>
+#समावेश <linux/nfs3.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/nfs_page.h>
+#समावेश <linux/lockd/bind.h>
+#समावेश <linux/nfs_mount.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/xattr.h>
 
-#include "iostat.h"
-#include "internal.h"
-#include "nfs3_fs.h"
+#समावेश "iostat.h"
+#समावेश "internal.h"
+#समावेश "nfs3_fs.h"
 
-#define NFSDBG_FACILITY		NFSDBG_PROC
+#घोषणा NFSDBG_FACILITY		NFSDBG_PROC
 
 /* A wrapper to handle the EJUKEBOX error messages */
-static int
-nfs3_rpc_wrapper(struct rpc_clnt *clnt, struct rpc_message *msg, int flags)
-{
-	int res;
-	do {
+अटल पूर्णांक
+nfs3_rpc_wrapper(काष्ठा rpc_clnt *clnt, काष्ठा rpc_message *msg, पूर्णांक flags)
+अणु
+	पूर्णांक res;
+	करो अणु
 		res = rpc_call_sync(clnt, msg, flags);
-		if (res != -EJUKEBOX)
-			break;
-		freezable_schedule_timeout_killable_unsafe(NFS_JUKEBOX_RETRY_TIME);
+		अगर (res != -EJUKEBOX)
+			अवरोध;
+		मुक्तzable_schedule_समयout_समाप्तable_unsafe(NFS_JUKEBOX_RETRY_TIME);
 		res = -ERESTARTSYS;
-	} while (!fatal_signal_pending(current));
-	return res;
-}
+	पूर्ण जबतक (!fatal_संकेत_pending(current));
+	वापस res;
+पूर्ण
 
-#define rpc_call_sync(clnt, msg, flags)	nfs3_rpc_wrapper(clnt, msg, flags)
+#घोषणा rpc_call_sync(clnt, msg, flags)	nfs3_rpc_wrapper(clnt, msg, flags)
 
-static int
-nfs3_async_handle_jukebox(struct rpc_task *task, struct inode *inode)
-{
-	if (task->tk_status != -EJUKEBOX)
-		return 0;
-	if (task->tk_status == -EJUKEBOX)
+अटल पूर्णांक
+nfs3_async_handle_jukebox(काष्ठा rpc_task *task, काष्ठा inode *inode)
+अणु
+	अगर (task->tk_status != -EJUKEBOX)
+		वापस 0;
+	अगर (task->tk_status == -EJUKEBOX)
 		nfs_inc_stats(inode, NFSIOS_DELAY);
 	task->tk_status = 0;
 	rpc_restart_call(task);
 	rpc_delay(task, NFS_JUKEBOX_RETRY_TIME);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int
-do_proc_get_root(struct rpc_clnt *client, struct nfs_fh *fhandle,
-		 struct nfs_fsinfo *info)
-{
-	struct rpc_message msg = {
+अटल पूर्णांक
+करो_proc_get_root(काष्ठा rpc_clnt *client, काष्ठा nfs_fh *fhandle,
+		 काष्ठा nfs_fsinfo *info)
+अणु
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_FSINFO],
 		.rpc_argp	= fhandle,
 		.rpc_resp	= info,
-	};
-	int	status;
+	पूर्ण;
+	पूर्णांक	status;
 
-	dprintk("%s: call  fsinfo\n", __func__);
+	dprपूर्णांकk("%s: call  fsinfo\n", __func__);
 	nfs_fattr_init(info->fattr);
 	status = rpc_call_sync(client, &msg, 0);
-	dprintk("%s: reply fsinfo: %d\n", __func__, status);
-	if (status == 0 && !(info->fattr->valid & NFS_ATTR_FATTR)) {
+	dprपूर्णांकk("%s: reply fsinfo: %d\n", __func__, status);
+	अगर (status == 0 && !(info->fattr->valid & NFS_ATTR_FATTR)) अणु
 		msg.rpc_proc = &nfs3_procedures[NFS3PROC_GETATTR];
 		msg.rpc_resp = info->fattr;
 		status = rpc_call_sync(client, &msg, 0);
-		dprintk("%s: reply getattr: %d\n", __func__, status);
-	}
-	return status;
-}
+		dprपूर्णांकk("%s: reply getattr: %d\n", __func__, status);
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /*
- * Bare-bones access to getattr: this is for nfs_get_root/nfs_get_sb
+ * Bare-bones access to getattr: this is क्रम nfs_get_root/nfs_get_sb
  */
-static int
-nfs3_proc_get_root(struct nfs_server *server, struct nfs_fh *fhandle,
-		   struct nfs_fsinfo *info)
-{
-	int	status;
+अटल पूर्णांक
+nfs3_proc_get_root(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle,
+		   काष्ठा nfs_fsinfo *info)
+अणु
+	पूर्णांक	status;
 
-	status = do_proc_get_root(server->client, fhandle, info);
-	if (status && server->nfs_client->cl_rpcclient != server->client)
-		status = do_proc_get_root(server->nfs_client->cl_rpcclient, fhandle, info);
-	return status;
-}
+	status = करो_proc_get_root(server->client, fhandle, info);
+	अगर (status && server->nfs_client->cl_rpcclient != server->client)
+		status = करो_proc_get_root(server->nfs_client->cl_rpcclient, fhandle, info);
+	वापस status;
+पूर्ण
 
 /*
- * One function for each procedure in the NFS protocol.
+ * One function क्रम each procedure in the NFS protocol.
  */
-static int
-nfs3_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle,
-		struct nfs_fattr *fattr, struct nfs4_label *label,
-		struct inode *inode)
-{
-	struct rpc_message msg = {
+अटल पूर्णांक
+nfs3_proc_getattr(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle,
+		काष्ठा nfs_fattr *fattr, काष्ठा nfs4_label *label,
+		काष्ठा inode *inode)
+अणु
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_GETATTR],
 		.rpc_argp	= fhandle,
 		.rpc_resp	= fattr,
-	};
-	int	status;
-	unsigned short task_flags = 0;
+	पूर्ण;
+	पूर्णांक	status;
+	अचिन्हित लघु task_flags = 0;
 
 	/* Is this is an attribute revalidation, subject to softreval? */
-	if (inode && (server->flags & NFS_MOUNT_SOFTREVAL))
+	अगर (inode && (server->flags & NFS_MOUNT_SOFTREVAL))
 		task_flags |= RPC_TASK_TIMEOUT;
 
-	dprintk("NFS call  getattr\n");
+	dprपूर्णांकk("NFS call  getattr\n");
 	nfs_fattr_init(fattr);
 	status = rpc_call_sync(server->client, &msg, task_flags);
-	dprintk("NFS reply getattr: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply getattr: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_setattr(struct dentry *dentry, struct nfs_fattr *fattr,
-			struct iattr *sattr)
-{
-	struct inode *inode = d_inode(dentry);
-	struct nfs3_sattrargs	arg = {
+अटल पूर्णांक
+nfs3_proc_setattr(काष्ठा dentry *dentry, काष्ठा nfs_fattr *fattr,
+			काष्ठा iattr *sattr)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा nfs3_sattrargs	arg = अणु
 		.fh		= NFS_FH(inode),
 		.sattr		= sattr,
-	};
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_SETATTR],
 		.rpc_argp	= &arg,
 		.rpc_resp	= fattr,
-	};
-	int	status;
+	पूर्ण;
+	पूर्णांक	status;
 
-	dprintk("NFS call  setattr\n");
-	if (sattr->ia_valid & ATTR_FILE)
+	dprपूर्णांकk("NFS call  setattr\n");
+	अगर (sattr->ia_valid & ATTR_खाता)
 		msg.rpc_cred = nfs_file_cred(sattr->ia_file);
 	nfs_fattr_init(fattr);
 	status = rpc_call_sync(NFS_CLIENT(inode), &msg, 0);
-	if (status == 0) {
+	अगर (status == 0) अणु
 		nfs_setattr_update_inode(inode, sattr, fattr);
-		if (NFS_I(inode)->cache_validity & NFS_INO_INVALID_ACL)
+		अगर (NFS_I(inode)->cache_validity & NFS_INO_INVALID_ACL)
 			nfs_zap_acl_cache(inode);
-	}
-	dprintk("NFS reply setattr: %d\n", status);
-	return status;
-}
+	पूर्ण
+	dprपूर्णांकk("NFS reply setattr: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-__nfs3_proc_lookup(struct inode *dir, const char *name, size_t len,
-		   struct nfs_fh *fhandle, struct nfs_fattr *fattr,
-		   unsigned short task_flags)
-{
-	struct nfs3_diropargs	arg = {
+अटल पूर्णांक
+__nfs3_proc_lookup(काष्ठा inode *dir, स्थिर अक्षर *name, माप_प्रकार len,
+		   काष्ठा nfs_fh *fhandle, काष्ठा nfs_fattr *fattr,
+		   अचिन्हित लघु task_flags)
+अणु
+	काष्ठा nfs3_diropargs	arg = अणु
 		.fh		= NFS_FH(dir),
 		.name		= name,
 		.len		= len
-	};
-	struct nfs3_diropres	res = {
+	पूर्ण;
+	काष्ठा nfs3_diropres	res = अणु
 		.fh		= fhandle,
 		.fattr		= fattr
-	};
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_LOOKUP],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
-	};
-	int			status;
+	पूर्ण;
+	पूर्णांक			status;
 
 	res.dir_attr = nfs_alloc_fattr();
-	if (res.dir_attr == NULL)
-		return -ENOMEM;
+	अगर (res.dir_attr == शून्य)
+		वापस -ENOMEM;
 
 	nfs_fattr_init(fattr);
 	status = rpc_call_sync(NFS_CLIENT(dir), &msg, task_flags);
 	nfs_refresh_inode(dir, res.dir_attr);
-	if (status >= 0 && !(fattr->valid & NFS_ATTR_FATTR)) {
+	अगर (status >= 0 && !(fattr->valid & NFS_ATTR_FATTR)) अणु
 		msg.rpc_proc = &nfs3_procedures[NFS3PROC_GETATTR];
 		msg.rpc_argp = fhandle;
 		msg.rpc_resp = fattr;
 		status = rpc_call_sync(NFS_CLIENT(dir), &msg, task_flags);
-	}
-	nfs_free_fattr(res.dir_attr);
-	dprintk("NFS reply lookup: %d\n", status);
-	return status;
-}
+	पूर्ण
+	nfs_मुक्त_fattr(res.dir_attr);
+	dprपूर्णांकk("NFS reply lookup: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_lookup(struct inode *dir, struct dentry *dentry,
-		 struct nfs_fh *fhandle, struct nfs_fattr *fattr,
-		 struct nfs4_label *label)
-{
-	unsigned short task_flags = 0;
+अटल पूर्णांक
+nfs3_proc_lookup(काष्ठा inode *dir, काष्ठा dentry *dentry,
+		 काष्ठा nfs_fh *fhandle, काष्ठा nfs_fattr *fattr,
+		 काष्ठा nfs4_label *label)
+अणु
+	अचिन्हित लघु task_flags = 0;
 
 	/* Is this is an attribute revalidation, subject to softreval? */
-	if (nfs_lookup_is_soft_revalidate(dentry))
+	अगर (nfs_lookup_is_soft_revalidate(dentry))
 		task_flags |= RPC_TASK_TIMEOUT;
 
-	dprintk("NFS call  lookup %pd2\n", dentry);
-	return __nfs3_proc_lookup(dir, dentry->d_name.name,
+	dprपूर्णांकk("NFS call  lookup %pd2\n", dentry);
+	वापस __nfs3_proc_lookup(dir, dentry->d_name.name,
 				  dentry->d_name.len, fhandle, fattr,
 				  task_flags);
-}
+पूर्ण
 
-static int nfs3_proc_lookupp(struct inode *inode, struct nfs_fh *fhandle,
-			     struct nfs_fattr *fattr, struct nfs4_label *label)
-{
-	const char dotdot[] = "..";
-	const size_t len = strlen(dotdot);
-	unsigned short task_flags = 0;
+अटल पूर्णांक nfs3_proc_lookupp(काष्ठा inode *inode, काष्ठा nfs_fh *fhandle,
+			     काष्ठा nfs_fattr *fattr, काष्ठा nfs4_label *label)
+अणु
+	स्थिर अक्षर करोtकरोt[] = "..";
+	स्थिर माप_प्रकार len = म_माप(करोtकरोt);
+	अचिन्हित लघु task_flags = 0;
 
-	if (NFS_SERVER(inode)->flags & NFS_MOUNT_SOFTREVAL)
+	अगर (NFS_SERVER(inode)->flags & NFS_MOUNT_SOFTREVAL)
 		task_flags |= RPC_TASK_TIMEOUT;
 
-	return __nfs3_proc_lookup(inode, dotdot, len, fhandle, fattr,
+	वापस __nfs3_proc_lookup(inode, करोtकरोt, len, fhandle, fattr,
 				  task_flags);
-}
+पूर्ण
 
-static int nfs3_proc_access(struct inode *inode, struct nfs_access_entry *entry)
-{
-	struct nfs3_accessargs	arg = {
+अटल पूर्णांक nfs3_proc_access(काष्ठा inode *inode, काष्ठा nfs_access_entry *entry)
+अणु
+	काष्ठा nfs3_accessargs	arg = अणु
 		.fh		= NFS_FH(inode),
 		.access		= entry->mask,
-	};
-	struct nfs3_accessres	res;
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा nfs3_accessres	res;
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_ACCESS],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
 		.rpc_cred	= entry->cred,
-	};
-	int status = -ENOMEM;
+	पूर्ण;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  access\n");
+	dprपूर्णांकk("NFS call  access\n");
 	res.fattr = nfs_alloc_fattr();
-	if (res.fattr == NULL)
-		goto out;
+	अगर (res.fattr == शून्य)
+		जाओ out;
 
 	status = rpc_call_sync(NFS_CLIENT(inode), &msg, 0);
 	nfs_refresh_inode(inode, res.fattr);
-	if (status == 0)
+	अगर (status == 0)
 		nfs_access_set_mask(entry, res.access);
-	nfs_free_fattr(res.fattr);
+	nfs_मुक्त_fattr(res.fattr);
 out:
-	dprintk("NFS reply access: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply access: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int nfs3_proc_readlink(struct inode *inode, struct page *page,
-		unsigned int pgbase, unsigned int pglen)
-{
-	struct nfs_fattr	*fattr;
-	struct nfs3_readlinkargs args = {
+अटल पूर्णांक nfs3_proc_पढ़ोlink(काष्ठा inode *inode, काष्ठा page *page,
+		अचिन्हित पूर्णांक pgbase, अचिन्हित पूर्णांक pglen)
+अणु
+	काष्ठा nfs_fattr	*fattr;
+	काष्ठा nfs3_पढ़ोlinkargs args = अणु
 		.fh		= NFS_FH(inode),
 		.pgbase		= pgbase,
 		.pglen		= pglen,
 		.pages		= &page
-	};
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_READLINK],
 		.rpc_argp	= &args,
-	};
-	int status = -ENOMEM;
+	पूर्ण;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  readlink\n");
+	dprपूर्णांकk("NFS call  readlink\n");
 	fattr = nfs_alloc_fattr();
-	if (fattr == NULL)
-		goto out;
+	अगर (fattr == शून्य)
+		जाओ out;
 	msg.rpc_resp = fattr;
 
 	status = rpc_call_sync(NFS_CLIENT(inode), &msg, 0);
 	nfs_refresh_inode(inode, fattr);
-	nfs_free_fattr(fattr);
+	nfs_मुक्त_fattr(fattr);
 out:
-	dprintk("NFS reply readlink: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply readlink: %d\n", status);
+	वापस status;
+पूर्ण
 
-struct nfs3_createdata {
-	struct rpc_message msg;
-	union {
-		struct nfs3_createargs create;
-		struct nfs3_mkdirargs mkdir;
-		struct nfs3_symlinkargs symlink;
-		struct nfs3_mknodargs mknod;
-	} arg;
-	struct nfs3_diropres res;
-	struct nfs_fh fh;
-	struct nfs_fattr fattr;
-	struct nfs_fattr dir_attr;
-};
+काष्ठा nfs3_createdata अणु
+	काष्ठा rpc_message msg;
+	जोड़ अणु
+		काष्ठा nfs3_createargs create;
+		काष्ठा nfs3_सूची_गढ़ोargs सूची_गढ़ो;
+		काष्ठा nfs3_symlinkargs symlink;
+		काष्ठा nfs3_mknodargs mknod;
+	पूर्ण arg;
+	काष्ठा nfs3_diropres res;
+	काष्ठा nfs_fh fh;
+	काष्ठा nfs_fattr fattr;
+	काष्ठा nfs_fattr dir_attr;
+पूर्ण;
 
-static struct nfs3_createdata *nfs3_alloc_createdata(void)
-{
-	struct nfs3_createdata *data;
+अटल काष्ठा nfs3_createdata *nfs3_alloc_createdata(व्योम)
+अणु
+	काष्ठा nfs3_createdata *data;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (data != NULL) {
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (data != शून्य) अणु
 		data->msg.rpc_argp = &data->arg;
 		data->msg.rpc_resp = &data->res;
 		data->res.fh = &data->fh;
@@ -310,45 +311,45 @@ static struct nfs3_createdata *nfs3_alloc_createdata(void)
 		data->res.dir_attr = &data->dir_attr;
 		nfs_fattr_init(data->res.fattr);
 		nfs_fattr_init(data->res.dir_attr);
-	}
-	return data;
-}
+	पूर्ण
+	वापस data;
+पूर्ण
 
-static struct dentry *
-nfs3_do_create(struct inode *dir, struct dentry *dentry, struct nfs3_createdata *data)
-{
-	int status;
+अटल काष्ठा dentry *
+nfs3_करो_create(काष्ठा inode *dir, काष्ठा dentry *dentry, काष्ठा nfs3_createdata *data)
+अणु
+	पूर्णांक status;
 
 	status = rpc_call_sync(NFS_CLIENT(dir), &data->msg, 0);
 	nfs_post_op_update_inode(dir, data->res.dir_attr);
-	if (status != 0)
-		return ERR_PTR(status);
+	अगर (status != 0)
+		वापस ERR_PTR(status);
 
-	return nfs_add_or_obtain(dentry, data->res.fh, data->res.fattr, NULL);
-}
+	वापस nfs_add_or_obtain(dentry, data->res.fh, data->res.fattr, शून्य);
+पूर्ण
 
-static void nfs3_free_createdata(struct nfs3_createdata *data)
-{
-	kfree(data);
-}
+अटल व्योम nfs3_मुक्त_createdata(काष्ठा nfs3_createdata *data)
+अणु
+	kमुक्त(data);
+पूर्ण
 
 /*
  * Create a regular file.
  */
-static int
-nfs3_proc_create(struct inode *dir, struct dentry *dentry, struct iattr *sattr,
-		 int flags)
-{
-	struct posix_acl *default_acl, *acl;
-	struct nfs3_createdata *data;
-	struct dentry *d_alias;
-	int status = -ENOMEM;
+अटल पूर्णांक
+nfs3_proc_create(काष्ठा inode *dir, काष्ठा dentry *dentry, काष्ठा iattr *sattr,
+		 पूर्णांक flags)
+अणु
+	काष्ठा posix_acl *शेष_acl, *acl;
+	काष्ठा nfs3_createdata *data;
+	काष्ठा dentry *d_alias;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  create %pd\n", dentry);
+	dprपूर्णांकk("NFS call  create %pd\n", dentry);
 
 	data = nfs3_alloc_createdata();
-	if (data == NULL)
-		goto out;
+	अगर (data == शून्य)
+		जाओ out;
 
 	data->msg.rpc_proc = &nfs3_procedures[NFS3PROC_CREATE];
 	data->arg.create.fh = NFS_FH(dir);
@@ -357,54 +358,54 @@ nfs3_proc_create(struct inode *dir, struct dentry *dentry, struct iattr *sattr,
 	data->arg.create.sattr = sattr;
 
 	data->arg.create.createmode = NFS3_CREATE_UNCHECKED;
-	if (flags & O_EXCL) {
+	अगर (flags & O_EXCL) अणु
 		data->arg.create.createmode  = NFS3_CREATE_EXCLUSIVE;
-		data->arg.create.verifier[0] = cpu_to_be32(jiffies);
-		data->arg.create.verifier[1] = cpu_to_be32(current->pid);
-	}
+		data->arg.create.verअगरier[0] = cpu_to_be32(jअगरfies);
+		data->arg.create.verअगरier[1] = cpu_to_be32(current->pid);
+	पूर्ण
 
-	status = posix_acl_create(dir, &sattr->ia_mode, &default_acl, &acl);
-	if (status)
-		goto out;
+	status = posix_acl_create(dir, &sattr->ia_mode, &शेष_acl, &acl);
+	अगर (status)
+		जाओ out;
 
-	for (;;) {
-		d_alias = nfs3_do_create(dir, dentry, data);
+	क्रम (;;) अणु
+		d_alias = nfs3_करो_create(dir, dentry, data);
 		status = PTR_ERR_OR_ZERO(d_alias);
 
-		if (status != -ENOTSUPP)
-			break;
-		/* If the server doesn't support the exclusive creation
+		अगर (status != -ENOTSUPP)
+			अवरोध;
+		/* If the server करोesn't support the exclusive creation
 		 * semantics, try again with simple 'guarded' mode. */
-		switch (data->arg.create.createmode) {
-			case NFS3_CREATE_EXCLUSIVE:
+		चयन (data->arg.create.createmode) अणु
+			हाल NFS3_CREATE_EXCLUSIVE:
 				data->arg.create.createmode = NFS3_CREATE_GUARDED;
-				break;
+				अवरोध;
 
-			case NFS3_CREATE_GUARDED:
+			हाल NFS3_CREATE_GUARDED:
 				data->arg.create.createmode = NFS3_CREATE_UNCHECKED;
-				break;
+				अवरोध;
 
-			case NFS3_CREATE_UNCHECKED:
-				goto out;
-		}
+			हाल NFS3_CREATE_UNCHECKED:
+				जाओ out;
+		पूर्ण
 		nfs_fattr_init(data->res.dir_attr);
 		nfs_fattr_init(data->res.fattr);
-	}
+	पूर्ण
 
-	if (status != 0)
-		goto out_release_acls;
+	अगर (status != 0)
+		जाओ out_release_acls;
 
-	if (d_alias)
+	अगर (d_alias)
 		dentry = d_alias;
 
 	/* When we created the file with exclusive semantics, make
 	 * sure we set the attributes afterwards. */
-	if (data->arg.create.createmode == NFS3_CREATE_EXCLUSIVE) {
-		dprintk("NFS call  setattr (post-create)\n");
+	अगर (data->arg.create.createmode == NFS3_CREATE_EXCLUSIVE) अणु
+		dprपूर्णांकk("NFS call  setattr (post-create)\n");
 
-		if (!(sattr->ia_valid & ATTR_ATIME_SET))
+		अगर (!(sattr->ia_valid & ATTR_ATIME_SET))
 			sattr->ia_valid |= ATTR_ATIME;
-		if (!(sattr->ia_valid & ATTR_MTIME_SET))
+		अगर (!(sattr->ia_valid & ATTR_MTIME_SET))
 			sattr->ia_valid |= ATTR_MTIME;
 
 		/* Note: we could use a guarded setattr here, but I'm
@@ -412,153 +413,153 @@ nfs3_proc_create(struct inode *dir, struct dentry *dentry, struct iattr *sattr,
 		 * to revamp the NFSv3 XDR code) */
 		status = nfs3_proc_setattr(dentry, data->res.fattr, sattr);
 		nfs_post_op_update_inode(d_inode(dentry), data->res.fattr);
-		dprintk("NFS reply setattr (post-create): %d\n", status);
-		if (status != 0)
-			goto out_dput;
-	}
+		dprपूर्णांकk("NFS reply setattr (post-create): %d\n", status);
+		अगर (status != 0)
+			जाओ out_dput;
+	पूर्ण
 
-	status = nfs3_proc_setacls(d_inode(dentry), acl, default_acl);
+	status = nfs3_proc_setacls(d_inode(dentry), acl, शेष_acl);
 
 out_dput:
 	dput(d_alias);
 out_release_acls:
 	posix_acl_release(acl);
-	posix_acl_release(default_acl);
+	posix_acl_release(शेष_acl);
 out:
-	nfs3_free_createdata(data);
-	dprintk("NFS reply create: %d\n", status);
-	return status;
-}
+	nfs3_मुक्त_createdata(data);
+	dprपूर्णांकk("NFS reply create: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_remove(struct inode *dir, struct dentry *dentry)
-{
-	struct nfs_removeargs arg = {
+अटल पूर्णांक
+nfs3_proc_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा nfs_हटाओargs arg = अणु
 		.fh = NFS_FH(dir),
 		.name = dentry->d_name,
-	};
-	struct nfs_removeres res;
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा nfs_हटाओres res;
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc = &nfs3_procedures[NFS3PROC_REMOVE],
 		.rpc_argp = &arg,
 		.rpc_resp = &res,
-	};
-	int status = -ENOMEM;
+	पूर्ण;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  remove %pd2\n", dentry);
+	dprपूर्णांकk("NFS call  remove %pd2\n", dentry);
 	res.dir_attr = nfs_alloc_fattr();
-	if (res.dir_attr == NULL)
-		goto out;
+	अगर (res.dir_attr == शून्य)
+		जाओ out;
 
 	status = rpc_call_sync(NFS_CLIENT(dir), &msg, 0);
 	nfs_post_op_update_inode(dir, res.dir_attr);
-	nfs_free_fattr(res.dir_attr);
+	nfs_मुक्त_fattr(res.dir_attr);
 out:
-	dprintk("NFS reply remove: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply remove: %d\n", status);
+	वापस status;
+पूर्ण
 
-static void
-nfs3_proc_unlink_setup(struct rpc_message *msg,
-		struct dentry *dentry,
-		struct inode *inode)
-{
+अटल व्योम
+nfs3_proc_unlink_setup(काष्ठा rpc_message *msg,
+		काष्ठा dentry *dentry,
+		काष्ठा inode *inode)
+अणु
 	msg->rpc_proc = &nfs3_procedures[NFS3PROC_REMOVE];
-}
+पूर्ण
 
-static void nfs3_proc_unlink_rpc_prepare(struct rpc_task *task, struct nfs_unlinkdata *data)
-{
+अटल व्योम nfs3_proc_unlink_rpc_prepare(काष्ठा rpc_task *task, काष्ठा nfs_unlinkdata *data)
+अणु
 	rpc_call_start(task);
-}
+पूर्ण
 
-static int
-nfs3_proc_unlink_done(struct rpc_task *task, struct inode *dir)
-{
-	struct nfs_removeres *res;
-	if (nfs3_async_handle_jukebox(task, dir))
-		return 0;
+अटल पूर्णांक
+nfs3_proc_unlink_करोne(काष्ठा rpc_task *task, काष्ठा inode *dir)
+अणु
+	काष्ठा nfs_हटाओres *res;
+	अगर (nfs3_async_handle_jukebox(task, dir))
+		वापस 0;
 	res = task->tk_msg.rpc_resp;
 	nfs_post_op_update_inode(dir, res->dir_attr);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void
-nfs3_proc_rename_setup(struct rpc_message *msg,
-		struct dentry *old_dentry,
-		struct dentry *new_dentry)
-{
+अटल व्योम
+nfs3_proc_नाम_setup(काष्ठा rpc_message *msg,
+		काष्ठा dentry *old_dentry,
+		काष्ठा dentry *new_dentry)
+अणु
 	msg->rpc_proc = &nfs3_procedures[NFS3PROC_RENAME];
-}
+पूर्ण
 
-static void nfs3_proc_rename_rpc_prepare(struct rpc_task *task, struct nfs_renamedata *data)
-{
+अटल व्योम nfs3_proc_नाम_rpc_prepare(काष्ठा rpc_task *task, काष्ठा nfs_नामdata *data)
+अणु
 	rpc_call_start(task);
-}
+पूर्ण
 
-static int
-nfs3_proc_rename_done(struct rpc_task *task, struct inode *old_dir,
-		      struct inode *new_dir)
-{
-	struct nfs_renameres *res;
+अटल पूर्णांक
+nfs3_proc_नाम_करोne(काष्ठा rpc_task *task, काष्ठा inode *old_dir,
+		      काष्ठा inode *new_dir)
+अणु
+	काष्ठा nfs_नामres *res;
 
-	if (nfs3_async_handle_jukebox(task, old_dir))
-		return 0;
+	अगर (nfs3_async_handle_jukebox(task, old_dir))
+		वापस 0;
 	res = task->tk_msg.rpc_resp;
 
 	nfs_post_op_update_inode(old_dir, res->old_fattr);
 	nfs_post_op_update_inode(new_dir, res->new_fattr);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int
-nfs3_proc_link(struct inode *inode, struct inode *dir, const struct qstr *name)
-{
-	struct nfs3_linkargs	arg = {
+अटल पूर्णांक
+nfs3_proc_link(काष्ठा inode *inode, काष्ठा inode *dir, स्थिर काष्ठा qstr *name)
+अणु
+	काष्ठा nfs3_linkargs	arg = अणु
 		.fromfh		= NFS_FH(inode),
 		.tofh		= NFS_FH(dir),
 		.toname		= name->name,
 		.tolen		= name->len
-	};
-	struct nfs3_linkres	res;
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा nfs3_linkres	res;
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_LINK],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
-	};
-	int status = -ENOMEM;
+	पूर्ण;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  link %s\n", name->name);
+	dprपूर्णांकk("NFS call  link %s\n", name->name);
 	res.fattr = nfs_alloc_fattr();
 	res.dir_attr = nfs_alloc_fattr();
-	if (res.fattr == NULL || res.dir_attr == NULL)
-		goto out;
+	अगर (res.fattr == शून्य || res.dir_attr == शून्य)
+		जाओ out;
 
 	status = rpc_call_sync(NFS_CLIENT(inode), &msg, 0);
 	nfs_post_op_update_inode(dir, res.dir_attr);
 	nfs_post_op_update_inode(inode, res.fattr);
 out:
-	nfs_free_fattr(res.dir_attr);
-	nfs_free_fattr(res.fattr);
-	dprintk("NFS reply link: %d\n", status);
-	return status;
-}
+	nfs_मुक्त_fattr(res.dir_attr);
+	nfs_मुक्त_fattr(res.fattr);
+	dprपूर्णांकk("NFS reply link: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_symlink(struct inode *dir, struct dentry *dentry, struct page *page,
-		  unsigned int len, struct iattr *sattr)
-{
-	struct nfs3_createdata *data;
-	struct dentry *d_alias;
-	int status = -ENOMEM;
+अटल पूर्णांक
+nfs3_proc_symlink(काष्ठा inode *dir, काष्ठा dentry *dentry, काष्ठा page *page,
+		  अचिन्हित पूर्णांक len, काष्ठा iattr *sattr)
+अणु
+	काष्ठा nfs3_createdata *data;
+	काष्ठा dentry *d_alias;
+	पूर्णांक status = -ENOMEM;
 
-	if (len > NFS3_MAXPATHLEN)
-		return -ENAMETOOLONG;
+	अगर (len > NFS3_MAXPATHLEN)
+		वापस -ENAMETOOLONG;
 
-	dprintk("NFS call  symlink %pd\n", dentry);
+	dprपूर्णांकk("NFS call  symlink %pd\n", dentry);
 
 	data = nfs3_alloc_createdata();
-	if (data == NULL)
-		goto out;
+	अगर (data == शून्य)
+		जाओ out;
 	data->msg.rpc_proc = &nfs3_procedures[NFS3PROC_SYMLINK];
 	data->arg.symlink.fromfh = NFS_FH(dir);
 	data->arg.symlink.fromname = dentry->d_name.name;
@@ -567,167 +568,167 @@ nfs3_proc_symlink(struct inode *dir, struct dentry *dentry, struct page *page,
 	data->arg.symlink.pathlen = len;
 	data->arg.symlink.sattr = sattr;
 
-	d_alias = nfs3_do_create(dir, dentry, data);
+	d_alias = nfs3_करो_create(dir, dentry, data);
 	status = PTR_ERR_OR_ZERO(d_alias);
 
-	if (status == 0)
+	अगर (status == 0)
 		dput(d_alias);
 
-	nfs3_free_createdata(data);
+	nfs3_मुक्त_createdata(data);
 out:
-	dprintk("NFS reply symlink: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply symlink: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_mkdir(struct inode *dir, struct dentry *dentry, struct iattr *sattr)
-{
-	struct posix_acl *default_acl, *acl;
-	struct nfs3_createdata *data;
-	struct dentry *d_alias;
-	int status = -ENOMEM;
+अटल पूर्णांक
+nfs3_proc_सूची_गढ़ो(काष्ठा inode *dir, काष्ठा dentry *dentry, काष्ठा iattr *sattr)
+अणु
+	काष्ठा posix_acl *शेष_acl, *acl;
+	काष्ठा nfs3_createdata *data;
+	काष्ठा dentry *d_alias;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  mkdir %pd\n", dentry);
+	dprपूर्णांकk("NFS call  mkdir %pd\n", dentry);
 
 	data = nfs3_alloc_createdata();
-	if (data == NULL)
-		goto out;
+	अगर (data == शून्य)
+		जाओ out;
 
-	status = posix_acl_create(dir, &sattr->ia_mode, &default_acl, &acl);
-	if (status)
-		goto out;
+	status = posix_acl_create(dir, &sattr->ia_mode, &शेष_acl, &acl);
+	अगर (status)
+		जाओ out;
 
-	data->msg.rpc_proc = &nfs3_procedures[NFS3PROC_MKDIR];
-	data->arg.mkdir.fh = NFS_FH(dir);
-	data->arg.mkdir.name = dentry->d_name.name;
-	data->arg.mkdir.len = dentry->d_name.len;
-	data->arg.mkdir.sattr = sattr;
+	data->msg.rpc_proc = &nfs3_procedures[NFS3PROC_MKसूची];
+	data->arg.सूची_गढ़ो.fh = NFS_FH(dir);
+	data->arg.सूची_गढ़ो.name = dentry->d_name.name;
+	data->arg.सूची_गढ़ो.len = dentry->d_name.len;
+	data->arg.सूची_गढ़ो.sattr = sattr;
 
-	d_alias = nfs3_do_create(dir, dentry, data);
+	d_alias = nfs3_करो_create(dir, dentry, data);
 	status = PTR_ERR_OR_ZERO(d_alias);
 
-	if (status != 0)
-		goto out_release_acls;
+	अगर (status != 0)
+		जाओ out_release_acls;
 
-	if (d_alias)
+	अगर (d_alias)
 		dentry = d_alias;
 
-	status = nfs3_proc_setacls(d_inode(dentry), acl, default_acl);
+	status = nfs3_proc_setacls(d_inode(dentry), acl, शेष_acl);
 
 	dput(d_alias);
 out_release_acls:
 	posix_acl_release(acl);
-	posix_acl_release(default_acl);
+	posix_acl_release(शेष_acl);
 out:
-	nfs3_free_createdata(data);
-	dprintk("NFS reply mkdir: %d\n", status);
-	return status;
-}
+	nfs3_मुक्त_createdata(data);
+	dprपूर्णांकk("NFS reply mkdir: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_rmdir(struct inode *dir, const struct qstr *name)
-{
-	struct nfs_fattr	*dir_attr;
-	struct nfs3_diropargs	arg = {
+अटल पूर्णांक
+nfs3_proc_सूची_हटाओ(काष्ठा inode *dir, स्थिर काष्ठा qstr *name)
+अणु
+	काष्ठा nfs_fattr	*dir_attr;
+	काष्ठा nfs3_diropargs	arg = अणु
 		.fh		= NFS_FH(dir),
 		.name		= name->name,
 		.len		= name->len
-	};
-	struct rpc_message msg = {
-		.rpc_proc	= &nfs3_procedures[NFS3PROC_RMDIR],
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
+		.rpc_proc	= &nfs3_procedures[NFS3PROC_RMसूची],
 		.rpc_argp	= &arg,
-	};
-	int status = -ENOMEM;
+	पूर्ण;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  rmdir %s\n", name->name);
+	dprपूर्णांकk("NFS call  rmdir %s\n", name->name);
 	dir_attr = nfs_alloc_fattr();
-	if (dir_attr == NULL)
-		goto out;
+	अगर (dir_attr == शून्य)
+		जाओ out;
 
 	msg.rpc_resp = dir_attr;
 	status = rpc_call_sync(NFS_CLIENT(dir), &msg, 0);
 	nfs_post_op_update_inode(dir, dir_attr);
-	nfs_free_fattr(dir_attr);
+	nfs_मुक्त_fattr(dir_attr);
 out:
-	dprintk("NFS reply rmdir: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply rmdir: %d\n", status);
+	वापस status;
+पूर्ण
 
 /*
- * The READDIR implementation is somewhat hackish - we pass the user buffer
+ * The READसूची implementation is somewhat hackish - we pass the user buffer
  * to the encode function, which installs it in the receive iovec.
- * The decode function itself doesn't perform any decoding, it just makes
+ * The decode function itself करोesn't perक्रमm any decoding, it just makes
  * sure the reply is syntactically correct.
  *
- * Also note that this implementation handles both plain readdir and
- * readdirplus.
+ * Also note that this implementation handles both plain सूची_पढ़ो and
+ * सूची_पढ़ोplus.
  */
-static int nfs3_proc_readdir(struct nfs_readdir_arg *nr_arg,
-			     struct nfs_readdir_res *nr_res)
-{
-	struct inode		*dir = d_inode(nr_arg->dentry);
-	struct nfs3_readdirargs	arg = {
+अटल पूर्णांक nfs3_proc_सूची_पढ़ो(काष्ठा nfs_सूची_पढ़ो_arg *nr_arg,
+			     काष्ठा nfs_सूची_पढ़ो_res *nr_res)
+अणु
+	काष्ठा inode		*dir = d_inode(nr_arg->dentry);
+	काष्ठा nfs3_सूची_पढ़ोargs	arg = अणु
 		.fh		= NFS_FH(dir),
 		.cookie		= nr_arg->cookie,
 		.plus		= nr_arg->plus,
 		.count		= nr_arg->page_len,
 		.pages		= nr_arg->pages
-	};
-	struct nfs3_readdirres	res = {
+	पूर्ण;
+	काष्ठा nfs3_सूची_पढ़ोres	res = अणु
 		.verf		= nr_res->verf,
 		.plus		= nr_arg->plus,
-	};
-	struct rpc_message	msg = {
-		.rpc_proc	= &nfs3_procedures[NFS3PROC_READDIR],
+	पूर्ण;
+	काष्ठा rpc_message	msg = अणु
+		.rpc_proc	= &nfs3_procedures[NFS3PROC_READसूची],
 		.rpc_argp	= &arg,
 		.rpc_resp	= &res,
 		.rpc_cred	= nr_arg->cred,
-	};
-	int status = -ENOMEM;
+	पूर्ण;
+	पूर्णांक status = -ENOMEM;
 
-	if (nr_arg->plus)
-		msg.rpc_proc = &nfs3_procedures[NFS3PROC_READDIRPLUS];
-	if (arg.cookie)
-		memcpy(arg.verf, nr_arg->verf, sizeof(arg.verf));
+	अगर (nr_arg->plus)
+		msg.rpc_proc = &nfs3_procedures[NFS3PROC_READसूचीPLUS];
+	अगर (arg.cookie)
+		स_नकल(arg.verf, nr_arg->verf, माप(arg.verf));
 
-	dprintk("NFS call  readdir%s %llu\n", nr_arg->plus ? "plus" : "",
-		(unsigned long long)nr_arg->cookie);
+	dprपूर्णांकk("NFS call  readdir%s %llu\n", nr_arg->plus ? "plus" : "",
+		(अचिन्हित दीर्घ दीर्घ)nr_arg->cookie);
 
 	res.dir_attr = nfs_alloc_fattr();
-	if (res.dir_attr == NULL)
-		goto out;
+	अगर (res.dir_attr == शून्य)
+		जाओ out;
 
 	status = rpc_call_sync(NFS_CLIENT(dir), &msg, 0);
 
-	nfs_invalidate_atime(dir);
+	nfs_invalidate_aसमय(dir);
 	nfs_refresh_inode(dir, res.dir_attr);
 
-	nfs_free_fattr(res.dir_attr);
+	nfs_मुक्त_fattr(res.dir_attr);
 out:
-	dprintk("NFS reply readdir%s: %d\n", nr_arg->plus ? "plus" : "",
+	dprपूर्णांकk("NFS reply readdir%s: %d\n", nr_arg->plus ? "plus" : "",
 		status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_mknod(struct inode *dir, struct dentry *dentry, struct iattr *sattr,
+अटल पूर्णांक
+nfs3_proc_mknod(काष्ठा inode *dir, काष्ठा dentry *dentry, काष्ठा iattr *sattr,
 		dev_t rdev)
-{
-	struct posix_acl *default_acl, *acl;
-	struct nfs3_createdata *data;
-	struct dentry *d_alias;
-	int status = -ENOMEM;
+अणु
+	काष्ठा posix_acl *शेष_acl, *acl;
+	काष्ठा nfs3_createdata *data;
+	काष्ठा dentry *d_alias;
+	पूर्णांक status = -ENOMEM;
 
-	dprintk("NFS call  mknod %pd %u:%u\n", dentry,
+	dprपूर्णांकk("NFS call  mknod %pd %u:%u\n", dentry,
 			MAJOR(rdev), MINOR(rdev));
 
 	data = nfs3_alloc_createdata();
-	if (data == NULL)
-		goto out;
+	अगर (data == शून्य)
+		जाओ out;
 
-	status = posix_acl_create(dir, &sattr->ia_mode, &default_acl, &acl);
-	if (status)
-		goto out;
+	status = posix_acl_create(dir, &sattr->ia_mode, &शेष_acl, &acl);
+	अगर (status)
+		जाओ out;
 
 	data->msg.rpc_proc = &nfs3_procedures[NFS3PROC_MKNOD];
 	data->arg.mknod.fh = NFS_FH(dir);
@@ -736,292 +737,292 @@ nfs3_proc_mknod(struct inode *dir, struct dentry *dentry, struct iattr *sattr,
 	data->arg.mknod.sattr = sattr;
 	data->arg.mknod.rdev = rdev;
 
-	switch (sattr->ia_mode & S_IFMT) {
-	case S_IFBLK:
+	चयन (sattr->ia_mode & S_IFMT) अणु
+	हाल S_IFBLK:
 		data->arg.mknod.type = NF3BLK;
-		break;
-	case S_IFCHR:
+		अवरोध;
+	हाल S_IFCHR:
 		data->arg.mknod.type = NF3CHR;
-		break;
-	case S_IFIFO:
+		अवरोध;
+	हाल S_IFIFO:
 		data->arg.mknod.type = NF3FIFO;
-		break;
-	case S_IFSOCK:
+		अवरोध;
+	हाल S_IFSOCK:
 		data->arg.mknod.type = NF3SOCK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		status = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	d_alias = nfs3_do_create(dir, dentry, data);
+	d_alias = nfs3_करो_create(dir, dentry, data);
 	status = PTR_ERR_OR_ZERO(d_alias);
-	if (status != 0)
-		goto out_release_acls;
+	अगर (status != 0)
+		जाओ out_release_acls;
 
-	if (d_alias)
+	अगर (d_alias)
 		dentry = d_alias;
 
-	status = nfs3_proc_setacls(d_inode(dentry), acl, default_acl);
+	status = nfs3_proc_setacls(d_inode(dentry), acl, शेष_acl);
 
 	dput(d_alias);
 out_release_acls:
 	posix_acl_release(acl);
-	posix_acl_release(default_acl);
+	posix_acl_release(शेष_acl);
 out:
-	nfs3_free_createdata(data);
-	dprintk("NFS reply mknod: %d\n", status);
-	return status;
-}
+	nfs3_मुक्त_createdata(data);
+	dprपूर्णांकk("NFS reply mknod: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_statfs(struct nfs_server *server, struct nfs_fh *fhandle,
-		 struct nfs_fsstat *stat)
-{
-	struct rpc_message msg = {
+अटल पूर्णांक
+nfs3_proc_statfs(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle,
+		 काष्ठा nfs_fsstat *stat)
+अणु
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_FSSTAT],
 		.rpc_argp	= fhandle,
 		.rpc_resp	= stat,
-	};
-	int	status;
+	पूर्ण;
+	पूर्णांक	status;
 
-	dprintk("NFS call  fsstat\n");
+	dprपूर्णांकk("NFS call  fsstat\n");
 	nfs_fattr_init(stat->fattr);
 	status = rpc_call_sync(server->client, &msg, 0);
-	dprintk("NFS reply fsstat: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply fsstat: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int
-do_proc_fsinfo(struct rpc_clnt *client, struct nfs_fh *fhandle,
-		 struct nfs_fsinfo *info)
-{
-	struct rpc_message msg = {
+अटल पूर्णांक
+करो_proc_fsinfo(काष्ठा rpc_clnt *client, काष्ठा nfs_fh *fhandle,
+		 काष्ठा nfs_fsinfo *info)
+अणु
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_FSINFO],
 		.rpc_argp	= fhandle,
 		.rpc_resp	= info,
-	};
-	int	status;
+	पूर्ण;
+	पूर्णांक	status;
 
-	dprintk("NFS call  fsinfo\n");
+	dprपूर्णांकk("NFS call  fsinfo\n");
 	nfs_fattr_init(info->fattr);
 	status = rpc_call_sync(client, &msg, 0);
-	dprintk("NFS reply fsinfo: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply fsinfo: %d\n", status);
+	वापस status;
+पूर्ण
 
 /*
- * Bare-bones access to fsinfo: this is for nfs_get_root/nfs_get_sb via
+ * Bare-bones access to fsinfo: this is क्रम nfs_get_root/nfs_get_sb via
  * nfs_create_server
  */
-static int
-nfs3_proc_fsinfo(struct nfs_server *server, struct nfs_fh *fhandle,
-		   struct nfs_fsinfo *info)
-{
-	int	status;
+अटल पूर्णांक
+nfs3_proc_fsinfo(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle,
+		   काष्ठा nfs_fsinfo *info)
+अणु
+	पूर्णांक	status;
 
-	status = do_proc_fsinfo(server->client, fhandle, info);
-	if (status && server->nfs_client->cl_rpcclient != server->client)
-		status = do_proc_fsinfo(server->nfs_client->cl_rpcclient, fhandle, info);
-	return status;
-}
+	status = करो_proc_fsinfo(server->client, fhandle, info);
+	अगर (status && server->nfs_client->cl_rpcclient != server->client)
+		status = करो_proc_fsinfo(server->nfs_client->cl_rpcclient, fhandle, info);
+	वापस status;
+पूर्ण
 
-static int
-nfs3_proc_pathconf(struct nfs_server *server, struct nfs_fh *fhandle,
-		   struct nfs_pathconf *info)
-{
-	struct rpc_message msg = {
+अटल पूर्णांक
+nfs3_proc_pathconf(काष्ठा nfs_server *server, काष्ठा nfs_fh *fhandle,
+		   काष्ठा nfs_pathconf *info)
+अणु
+	काष्ठा rpc_message msg = अणु
 		.rpc_proc	= &nfs3_procedures[NFS3PROC_PATHCONF],
 		.rpc_argp	= fhandle,
 		.rpc_resp	= info,
-	};
-	int	status;
+	पूर्ण;
+	पूर्णांक	status;
 
-	dprintk("NFS call  pathconf\n");
+	dprपूर्णांकk("NFS call  pathconf\n");
 	nfs_fattr_init(info->fattr);
 	status = rpc_call_sync(server->client, &msg, 0);
-	dprintk("NFS reply pathconf: %d\n", status);
-	return status;
-}
+	dprपूर्णांकk("NFS reply pathconf: %d\n", status);
+	वापस status;
+पूर्ण
 
-static int nfs3_read_done(struct rpc_task *task, struct nfs_pgio_header *hdr)
-{
-	struct inode *inode = hdr->inode;
-	struct nfs_server *server = NFS_SERVER(inode);
+अटल पूर्णांक nfs3_पढ़ो_करोne(काष्ठा rpc_task *task, काष्ठा nfs_pgio_header *hdr)
+अणु
+	काष्ठा inode *inode = hdr->inode;
+	काष्ठा nfs_server *server = NFS_SERVER(inode);
 
-	if (hdr->pgio_done_cb != NULL)
-		return hdr->pgio_done_cb(task, hdr);
+	अगर (hdr->pgio_करोne_cb != शून्य)
+		वापस hdr->pgio_करोne_cb(task, hdr);
 
-	if (nfs3_async_handle_jukebox(task, inode))
-		return -EAGAIN;
+	अगर (nfs3_async_handle_jukebox(task, inode))
+		वापस -EAGAIN;
 
-	if (task->tk_status >= 0 && !server->read_hdrsize)
-		cmpxchg(&server->read_hdrsize, 0, hdr->res.replen);
+	अगर (task->tk_status >= 0 && !server->पढ़ो_hdrsize)
+		cmpxchg(&server->पढ़ो_hdrsize, 0, hdr->res.replen);
 
-	nfs_invalidate_atime(inode);
+	nfs_invalidate_aसमय(inode);
 	nfs_refresh_inode(inode, &hdr->fattr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nfs3_proc_read_setup(struct nfs_pgio_header *hdr,
-				 struct rpc_message *msg)
-{
+अटल व्योम nfs3_proc_पढ़ो_setup(काष्ठा nfs_pgio_header *hdr,
+				 काष्ठा rpc_message *msg)
+अणु
 	msg->rpc_proc = &nfs3_procedures[NFS3PROC_READ];
-	hdr->args.replen = NFS_SERVER(hdr->inode)->read_hdrsize;
-}
+	hdr->args.replen = NFS_SERVER(hdr->inode)->पढ़ो_hdrsize;
+पूर्ण
 
-static int nfs3_proc_pgio_rpc_prepare(struct rpc_task *task,
-				      struct nfs_pgio_header *hdr)
-{
+अटल पूर्णांक nfs3_proc_pgio_rpc_prepare(काष्ठा rpc_task *task,
+				      काष्ठा nfs_pgio_header *hdr)
+अणु
 	rpc_call_start(task);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfs3_write_done(struct rpc_task *task, struct nfs_pgio_header *hdr)
-{
-	struct inode *inode = hdr->inode;
+अटल पूर्णांक nfs3_ग_लिखो_करोne(काष्ठा rpc_task *task, काष्ठा nfs_pgio_header *hdr)
+अणु
+	काष्ठा inode *inode = hdr->inode;
 
-	if (hdr->pgio_done_cb != NULL)
-		return hdr->pgio_done_cb(task, hdr);
+	अगर (hdr->pgio_करोne_cb != शून्य)
+		वापस hdr->pgio_करोne_cb(task, hdr);
 
-	if (nfs3_async_handle_jukebox(task, inode))
-		return -EAGAIN;
-	if (task->tk_status >= 0)
-		nfs_writeback_update_inode(hdr);
-	return 0;
-}
+	अगर (nfs3_async_handle_jukebox(task, inode))
+		वापस -EAGAIN;
+	अगर (task->tk_status >= 0)
+		nfs_ग_लिखोback_update_inode(hdr);
+	वापस 0;
+पूर्ण
 
-static void nfs3_proc_write_setup(struct nfs_pgio_header *hdr,
-				  struct rpc_message *msg,
-				  struct rpc_clnt **clnt)
-{
+अटल व्योम nfs3_proc_ग_लिखो_setup(काष्ठा nfs_pgio_header *hdr,
+				  काष्ठा rpc_message *msg,
+				  काष्ठा rpc_clnt **clnt)
+अणु
 	msg->rpc_proc = &nfs3_procedures[NFS3PROC_WRITE];
-}
+पूर्ण
 
-static void nfs3_proc_commit_rpc_prepare(struct rpc_task *task, struct nfs_commit_data *data)
-{
+अटल व्योम nfs3_proc_commit_rpc_prepare(काष्ठा rpc_task *task, काष्ठा nfs_commit_data *data)
+अणु
 	rpc_call_start(task);
-}
+पूर्ण
 
-static int nfs3_commit_done(struct rpc_task *task, struct nfs_commit_data *data)
-{
-	if (data->commit_done_cb != NULL)
-		return data->commit_done_cb(task, data);
+अटल पूर्णांक nfs3_commit_करोne(काष्ठा rpc_task *task, काष्ठा nfs_commit_data *data)
+अणु
+	अगर (data->commit_करोne_cb != शून्य)
+		वापस data->commit_करोne_cb(task, data);
 
-	if (nfs3_async_handle_jukebox(task, data->inode))
-		return -EAGAIN;
+	अगर (nfs3_async_handle_jukebox(task, data->inode))
+		वापस -EAGAIN;
 	nfs_refresh_inode(data->inode, data->res.fattr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nfs3_proc_commit_setup(struct nfs_commit_data *data, struct rpc_message *msg,
-				   struct rpc_clnt **clnt)
-{
+अटल व्योम nfs3_proc_commit_setup(काष्ठा nfs_commit_data *data, काष्ठा rpc_message *msg,
+				   काष्ठा rpc_clnt **clnt)
+अणु
 	msg->rpc_proc = &nfs3_procedures[NFS3PROC_COMMIT];
-}
+पूर्ण
 
-static void nfs3_nlm_alloc_call(void *data)
-{
-	struct nfs_lock_context *l_ctx = data;
-	if (l_ctx && test_bit(NFS_CONTEXT_UNLOCK, &l_ctx->open_context->flags)) {
-		get_nfs_open_context(l_ctx->open_context);
-		nfs_get_lock_context(l_ctx->open_context);
-	}
-}
+अटल व्योम nfs3_nlm_alloc_call(व्योम *data)
+अणु
+	काष्ठा nfs_lock_context *l_ctx = data;
+	अगर (l_ctx && test_bit(NFS_CONTEXT_UNLOCK, &l_ctx->खोलो_context->flags)) अणु
+		get_nfs_खोलो_context(l_ctx->खोलो_context);
+		nfs_get_lock_context(l_ctx->खोलो_context);
+	पूर्ण
+पूर्ण
 
-static bool nfs3_nlm_unlock_prepare(struct rpc_task *task, void *data)
-{
-	struct nfs_lock_context *l_ctx = data;
-	if (l_ctx && test_bit(NFS_CONTEXT_UNLOCK, &l_ctx->open_context->flags))
-		return nfs_async_iocounter_wait(task, l_ctx);
-	return false;
+अटल bool nfs3_nlm_unlock_prepare(काष्ठा rpc_task *task, व्योम *data)
+अणु
+	काष्ठा nfs_lock_context *l_ctx = data;
+	अगर (l_ctx && test_bit(NFS_CONTEXT_UNLOCK, &l_ctx->खोलो_context->flags))
+		वापस nfs_async_iocounter_रुको(task, l_ctx);
+	वापस false;
 
-}
+पूर्ण
 
-static void nfs3_nlm_release_call(void *data)
-{
-	struct nfs_lock_context *l_ctx = data;
-	struct nfs_open_context *ctx;
-	if (l_ctx && test_bit(NFS_CONTEXT_UNLOCK, &l_ctx->open_context->flags)) {
-		ctx = l_ctx->open_context;
+अटल व्योम nfs3_nlm_release_call(व्योम *data)
+अणु
+	काष्ठा nfs_lock_context *l_ctx = data;
+	काष्ठा nfs_खोलो_context *ctx;
+	अगर (l_ctx && test_bit(NFS_CONTEXT_UNLOCK, &l_ctx->खोलो_context->flags)) अणु
+		ctx = l_ctx->खोलो_context;
 		nfs_put_lock_context(l_ctx);
-		put_nfs_open_context(ctx);
-	}
-}
+		put_nfs_खोलो_context(ctx);
+	पूर्ण
+पूर्ण
 
-static const struct nlmclnt_operations nlmclnt_fl_close_lock_ops = {
+अटल स्थिर काष्ठा nlmclnt_operations nlmclnt_fl_बंद_lock_ops = अणु
 	.nlmclnt_alloc_call = nfs3_nlm_alloc_call,
 	.nlmclnt_unlock_prepare = nfs3_nlm_unlock_prepare,
 	.nlmclnt_release_call = nfs3_nlm_release_call,
-};
+पूर्ण;
 
-static int
-nfs3_proc_lock(struct file *filp, int cmd, struct file_lock *fl)
-{
-	struct inode *inode = file_inode(filp);
-	struct nfs_lock_context *l_ctx = NULL;
-	struct nfs_open_context *ctx = nfs_file_open_context(filp);
-	int status;
+अटल पूर्णांक
+nfs3_proc_lock(काष्ठा file *filp, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा inode *inode = file_inode(filp);
+	काष्ठा nfs_lock_context *l_ctx = शून्य;
+	काष्ठा nfs_खोलो_context *ctx = nfs_file_खोलो_context(filp);
+	पूर्णांक status;
 
-	if (fl->fl_flags & FL_CLOSE) {
+	अगर (fl->fl_flags & FL_CLOSE) अणु
 		l_ctx = nfs_get_lock_context(ctx);
-		if (IS_ERR(l_ctx))
-			l_ctx = NULL;
-		else
+		अगर (IS_ERR(l_ctx))
+			l_ctx = शून्य;
+		अन्यथा
 			set_bit(NFS_CONTEXT_UNLOCK, &ctx->flags);
-	}
+	पूर्ण
 
 	status = nlmclnt_proc(NFS_SERVER(inode)->nlm_host, cmd, fl, l_ctx);
 
-	if (l_ctx)
+	अगर (l_ctx)
 		nfs_put_lock_context(l_ctx);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int nfs3_have_delegation(struct inode *inode, fmode_t flags)
-{
-	return 0;
-}
+अटल पूर्णांक nfs3_have_delegation(काष्ठा inode *inode, भ_शेषe_t flags)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct inode_operations nfs3_dir_inode_operations = {
+अटल स्थिर काष्ठा inode_operations nfs3_dir_inode_operations = अणु
 	.create		= nfs_create,
 	.lookup		= nfs_lookup,
 	.link		= nfs_link,
 	.unlink		= nfs_unlink,
 	.symlink	= nfs_symlink,
-	.mkdir		= nfs_mkdir,
-	.rmdir		= nfs_rmdir,
+	.सूची_गढ़ो		= nfs_सूची_गढ़ो,
+	.सूची_हटाओ		= nfs_सूची_हटाओ,
 	.mknod		= nfs_mknod,
-	.rename		= nfs_rename,
+	.नाम		= nfs_नाम,
 	.permission	= nfs_permission,
 	.getattr	= nfs_getattr,
 	.setattr	= nfs_setattr,
-#ifdef CONFIG_NFS_V3_ACL
+#अगर_घोषित CONFIG_NFS_V3_ACL
 	.listxattr	= nfs3_listxattr,
 	.get_acl	= nfs3_get_acl,
 	.set_acl	= nfs3_set_acl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct inode_operations nfs3_file_inode_operations = {
+अटल स्थिर काष्ठा inode_operations nfs3_file_inode_operations = अणु
 	.permission	= nfs_permission,
 	.getattr	= nfs_getattr,
 	.setattr	= nfs_setattr,
-#ifdef CONFIG_NFS_V3_ACL
+#अगर_घोषित CONFIG_NFS_V3_ACL
 	.listxattr	= nfs3_listxattr,
 	.get_acl	= nfs3_get_acl,
 	.set_acl	= nfs3_set_acl,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-const struct nfs_rpc_ops nfs_v3_clientops = {
+स्थिर काष्ठा nfs_rpc_ops nfs_v3_clientops = अणु
 	.version	= 3,			/* protocol version */
 	.dentry_ops	= &nfs_dentry_operations,
 	.dir_inode_ops	= &nfs3_dir_inode_operations,
 	.file_inode_ops	= &nfs3_file_inode_operations,
 	.file_ops	= &nfs_file_operations,
-	.nlmclnt_ops	= &nlmclnt_fl_close_lock_ops,
+	.nlmclnt_ops	= &nlmclnt_fl_बंद_lock_ops,
 	.getroot	= nfs3_proc_get_root,
 	.submount	= nfs_submount,
 	.try_get_tree	= nfs_try_get_tree,
@@ -1030,40 +1031,40 @@ const struct nfs_rpc_ops nfs_v3_clientops = {
 	.lookup		= nfs3_proc_lookup,
 	.lookupp	= nfs3_proc_lookupp,
 	.access		= nfs3_proc_access,
-	.readlink	= nfs3_proc_readlink,
+	.पढ़ोlink	= nfs3_proc_पढ़ोlink,
 	.create		= nfs3_proc_create,
-	.remove		= nfs3_proc_remove,
+	.हटाओ		= nfs3_proc_हटाओ,
 	.unlink_setup	= nfs3_proc_unlink_setup,
 	.unlink_rpc_prepare = nfs3_proc_unlink_rpc_prepare,
-	.unlink_done	= nfs3_proc_unlink_done,
-	.rename_setup	= nfs3_proc_rename_setup,
-	.rename_rpc_prepare = nfs3_proc_rename_rpc_prepare,
-	.rename_done	= nfs3_proc_rename_done,
+	.unlink_करोne	= nfs3_proc_unlink_करोne,
+	.नाम_setup	= nfs3_proc_नाम_setup,
+	.नाम_rpc_prepare = nfs3_proc_नाम_rpc_prepare,
+	.नाम_करोne	= nfs3_proc_नाम_करोne,
 	.link		= nfs3_proc_link,
 	.symlink	= nfs3_proc_symlink,
-	.mkdir		= nfs3_proc_mkdir,
-	.rmdir		= nfs3_proc_rmdir,
-	.readdir	= nfs3_proc_readdir,
+	.सूची_गढ़ो		= nfs3_proc_सूची_गढ़ो,
+	.सूची_हटाओ		= nfs3_proc_सूची_हटाओ,
+	.सूची_पढ़ो	= nfs3_proc_सूची_पढ़ो,
 	.mknod		= nfs3_proc_mknod,
 	.statfs		= nfs3_proc_statfs,
 	.fsinfo		= nfs3_proc_fsinfo,
 	.pathconf	= nfs3_proc_pathconf,
 	.decode_dirent	= nfs3_decode_dirent,
 	.pgio_rpc_prepare = nfs3_proc_pgio_rpc_prepare,
-	.read_setup	= nfs3_proc_read_setup,
-	.read_done	= nfs3_read_done,
-	.write_setup	= nfs3_proc_write_setup,
-	.write_done	= nfs3_write_done,
+	.पढ़ो_setup	= nfs3_proc_पढ़ो_setup,
+	.पढ़ो_करोne	= nfs3_पढ़ो_करोne,
+	.ग_लिखो_setup	= nfs3_proc_ग_लिखो_setup,
+	.ग_लिखो_करोne	= nfs3_ग_लिखो_करोne,
 	.commit_setup	= nfs3_proc_commit_setup,
 	.commit_rpc_prepare = nfs3_proc_commit_rpc_prepare,
-	.commit_done	= nfs3_commit_done,
+	.commit_करोne	= nfs3_commit_करोne,
 	.lock		= nfs3_proc_lock,
-	.clear_acl_cache = forget_all_cached_acls,
-	.close_context	= nfs_close_context,
+	.clear_acl_cache = क्रमget_all_cached_acls,
+	.बंद_context	= nfs_बंद_context,
 	.have_delegation = nfs3_have_delegation,
 	.alloc_client	= nfs_alloc_client,
 	.init_client	= nfs_init_client,
-	.free_client	= nfs_free_client,
+	.मुक्त_client	= nfs_मुक्त_client,
 	.create_server	= nfs3_create_server,
 	.clone_server	= nfs3_clone_server,
-};
+पूर्ण;

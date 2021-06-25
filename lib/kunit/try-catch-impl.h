@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Internal kunit try catch implementation to be shared with tests.
  *
@@ -6,22 +7,22 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
-#ifndef _KUNIT_TRY_CATCH_IMPL_H
-#define _KUNIT_TRY_CATCH_IMPL_H
+#अगर_अघोषित _KUNIT_TRY_CATCH_IMPL_H
+#घोषणा _KUNIT_TRY_CATCH_IMPL_H
 
-#include <kunit/try-catch.h>
-#include <linux/types.h>
+#समावेश <kunit/try-catch.h>
+#समावेश <linux/types.h>
 
-struct kunit;
+काष्ठा kunit;
 
-static inline void kunit_try_catch_init(struct kunit_try_catch *try_catch,
-					struct kunit *test,
+अटल अंतरभूत व्योम kunit_try_catch_init(काष्ठा kunit_try_catch *try_catch,
+					काष्ठा kunit *test,
 					kunit_try_catch_func_t try,
 					kunit_try_catch_func_t catch)
-{
+अणु
 	try_catch->test = test;
 	try_catch->try = try;
 	try_catch->catch = catch;
-}
+पूर्ण
 
-#endif /* _KUNIT_TRY_CATCH_IMPL_H */
+#पूर्ण_अगर /* _KUNIT_TRY_CATCH_IMPL_H */

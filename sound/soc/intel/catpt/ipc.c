@@ -1,298 +1,299 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
 // Copyright(c) 2020 Intel Corporation. All rights reserved.
 //
-// Author: Cezary Rojewski <cezary.rojewski@intel.com>
+// Author: Cezary Rojewski <cezary.rojewski@पूर्णांकel.com>
 //
 
-#include <linux/irqreturn.h>
-#include "core.h"
-#include "messages.h"
-#include "registers.h"
-#include "trace.h"
+#समावेश <linux/irqवापस.h>
+#समावेश "core.h"
+#समावेश "messages.h"
+#समावेश "registers.h"
+#समावेश "trace.h"
 
-#define CATPT_IPC_TIMEOUT_MS	300
+#घोषणा CATPT_IPC_TIMEOUT_MS	300
 
-void catpt_ipc_init(struct catpt_ipc *ipc, struct device *dev)
-{
+व्योम catpt_ipc_init(काष्ठा catpt_ipc *ipc, काष्ठा device *dev)
+अणु
 	ipc->dev = dev;
-	ipc->ready = false;
-	ipc->default_timeout = CATPT_IPC_TIMEOUT_MS;
-	init_completion(&ipc->done_completion);
+	ipc->पढ़ोy = false;
+	ipc->शेष_समयout = CATPT_IPC_TIMEOUT_MS;
+	init_completion(&ipc->करोne_completion);
 	init_completion(&ipc->busy_completion);
 	spin_lock_init(&ipc->lock);
 	mutex_init(&ipc->mutex);
-}
+पूर्ण
 
-static int catpt_ipc_arm(struct catpt_ipc *ipc, struct catpt_fw_ready *config)
-{
+अटल पूर्णांक catpt_ipc_arm(काष्ठा catpt_ipc *ipc, काष्ठा catpt_fw_पढ़ोy *config)
+अणु
 	/*
-	 * Both tx and rx are put into and received from outbox. Inbox is
-	 * only used for notifications where payload size is known upfront,
-	 * thus no separate buffer is allocated for it.
+	 * Both tx and rx are put पूर्णांकo and received from outbox. Inbox is
+	 * only used क्रम notअगरications where payload size is known upfront,
+	 * thus no separate buffer is allocated क्रम it.
 	 */
 	ipc->rx.data = devm_kzalloc(ipc->dev, config->outbox_size, GFP_KERNEL);
-	if (!ipc->rx.data)
-		return -ENOMEM;
+	अगर (!ipc->rx.data)
+		वापस -ENOMEM;
 
-	memcpy(&ipc->config, config, sizeof(*config));
-	ipc->ready = true;
+	स_नकल(&ipc->config, config, माप(*config));
+	ipc->पढ़ोy = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void catpt_ipc_msg_init(struct catpt_ipc *ipc,
-			       struct catpt_ipc_msg *reply)
-{
-	lockdep_assert_held(&ipc->lock);
+अटल व्योम catpt_ipc_msg_init(काष्ठा catpt_ipc *ipc,
+			       काष्ठा catpt_ipc_msg *reply)
+अणु
+	lockdep_निश्चित_held(&ipc->lock);
 
 	ipc->rx.header = 0;
 	ipc->rx.size = reply ? reply->size : 0;
-	reinit_completion(&ipc->done_completion);
+	reinit_completion(&ipc->करोne_completion);
 	reinit_completion(&ipc->busy_completion);
-}
+पूर्ण
 
-static void catpt_dsp_send_tx(struct catpt_dev *cdev,
-			      const struct catpt_ipc_msg *tx)
-{
+अटल व्योम catpt_dsp_send_tx(काष्ठा catpt_dev *cdev,
+			      स्थिर काष्ठा catpt_ipc_msg *tx)
+अणु
 	u32 header = tx->header | CATPT_IPCC_BUSY;
 
 	trace_catpt_ipc_request(header);
 	trace_catpt_ipc_payload(tx->data, tx->size);
 
-	memcpy_toio(catpt_outbox_addr(cdev), tx->data, tx->size);
-	catpt_writel_shim(cdev, IPCC, header);
-}
+	स_नकल_toio(catpt_outbox_addr(cdev), tx->data, tx->size);
+	catpt_ग_लिखोl_shim(cdev, IPCC, header);
+पूर्ण
 
-static int catpt_wait_msg_completion(struct catpt_dev *cdev, int timeout)
-{
-	struct catpt_ipc *ipc = &cdev->ipc;
-	int ret;
+अटल पूर्णांक catpt_रुको_msg_completion(काष्ठा catpt_dev *cdev, पूर्णांक समयout)
+अणु
+	काष्ठा catpt_ipc *ipc = &cdev->ipc;
+	पूर्णांक ret;
 
-	ret = wait_for_completion_timeout(&ipc->done_completion,
-					  msecs_to_jiffies(timeout));
-	if (!ret)
-		return -ETIMEDOUT;
-	if (ipc->rx.rsp.status != CATPT_REPLY_PENDING)
-		return 0;
+	ret = रुको_क्रम_completion_समयout(&ipc->करोne_completion,
+					  msecs_to_jअगरfies(समयout));
+	अगर (!ret)
+		वापस -ETIMEDOUT;
+	अगर (ipc->rx.rsp.status != CATPT_REPLY_PENDING)
+		वापस 0;
 
-	/* wait for delayed reply */
-	ret = wait_for_completion_timeout(&ipc->busy_completion,
-					  msecs_to_jiffies(timeout));
-	return ret ? 0 : -ETIMEDOUT;
-}
+	/* रुको क्रम delayed reply */
+	ret = रुको_क्रम_completion_समयout(&ipc->busy_completion,
+					  msecs_to_jअगरfies(समयout));
+	वापस ret ? 0 : -ETIMEDOUT;
+पूर्ण
 
-static int catpt_dsp_do_send_msg(struct catpt_dev *cdev,
-				 struct catpt_ipc_msg request,
-				 struct catpt_ipc_msg *reply, int timeout)
-{
-	struct catpt_ipc *ipc = &cdev->ipc;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक catpt_dsp_करो_send_msg(काष्ठा catpt_dev *cdev,
+				 काष्ठा catpt_ipc_msg request,
+				 काष्ठा catpt_ipc_msg *reply, पूर्णांक समयout)
+अणु
+	काष्ठा catpt_ipc *ipc = &cdev->ipc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!ipc->ready)
-		return -EPERM;
-	if (request.size > ipc->config.outbox_size ||
+	अगर (!ipc->पढ़ोy)
+		वापस -EPERM;
+	अगर (request.size > ipc->config.outbox_size ||
 	    (reply && reply->size > ipc->config.outbox_size))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&ipc->lock, flags);
 	catpt_ipc_msg_init(ipc, reply);
 	catpt_dsp_send_tx(cdev, &request);
 	spin_unlock_irqrestore(&ipc->lock, flags);
 
-	ret = catpt_wait_msg_completion(cdev, timeout);
-	if (ret) {
+	ret = catpt_रुको_msg_completion(cdev, समयout);
+	अगर (ret) अणु
 		dev_crit(cdev->dev, "communication severed: %d, rebooting dsp..\n",
 			 ret);
-		ipc->ready = false;
+		ipc->पढ़ोy = false;
 		/* TODO: attempt recovery */
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ipc->rx.rsp.status;
-	if (reply) {
+	अगर (reply) अणु
 		reply->header = ipc->rx.header;
 
-		if (!ret && reply->data)
-			memcpy(reply->data, ipc->rx.data, reply->size);
-	}
+		अगर (!ret && reply->data)
+			स_नकल(reply->data, ipc->rx.data, reply->size);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int catpt_dsp_send_msg_timeout(struct catpt_dev *cdev,
-			       struct catpt_ipc_msg request,
-			       struct catpt_ipc_msg *reply, int timeout)
-{
-	struct catpt_ipc *ipc = &cdev->ipc;
-	int ret;
+पूर्णांक catpt_dsp_send_msg_समयout(काष्ठा catpt_dev *cdev,
+			       काष्ठा catpt_ipc_msg request,
+			       काष्ठा catpt_ipc_msg *reply, पूर्णांक समयout)
+अणु
+	काष्ठा catpt_ipc *ipc = &cdev->ipc;
+	पूर्णांक ret;
 
 	mutex_lock(&ipc->mutex);
-	ret = catpt_dsp_do_send_msg(cdev, request, reply, timeout);
+	ret = catpt_dsp_करो_send_msg(cdev, request, reply, समयout);
 	mutex_unlock(&ipc->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int catpt_dsp_send_msg(struct catpt_dev *cdev, struct catpt_ipc_msg request,
-		       struct catpt_ipc_msg *reply)
-{
-	return catpt_dsp_send_msg_timeout(cdev, request, reply,
-					  cdev->ipc.default_timeout);
-}
+पूर्णांक catpt_dsp_send_msg(काष्ठा catpt_dev *cdev, काष्ठा catpt_ipc_msg request,
+		       काष्ठा catpt_ipc_msg *reply)
+अणु
+	वापस catpt_dsp_send_msg_समयout(cdev, request, reply,
+					  cdev->ipc.शेष_समयout);
+पूर्ण
 
-static void
-catpt_dsp_notify_stream(struct catpt_dev *cdev, union catpt_notify_msg msg)
-{
-	struct catpt_stream_runtime *stream;
-	struct catpt_notify_position pos;
-	struct catpt_notify_glitch glitch;
+अटल व्योम
+catpt_dsp_notअगरy_stream(काष्ठा catpt_dev *cdev, जोड़ catpt_notअगरy_msg msg)
+अणु
+	काष्ठा catpt_stream_runसमय *stream;
+	काष्ठा catpt_notअगरy_position pos;
+	काष्ठा catpt_notअगरy_glitch glitch;
 
 	stream = catpt_stream_find(cdev, msg.stream_hw_id);
-	if (!stream) {
+	अगर (!stream) अणु
 		dev_warn(cdev->dev, "notify %d for non-existent stream %d\n",
-			 msg.notify_reason, msg.stream_hw_id);
-		return;
-	}
+			 msg.notअगरy_reason, msg.stream_hw_id);
+		वापस;
+	पूर्ण
 
-	switch (msg.notify_reason) {
-	case CATPT_NOTIFY_POSITION_CHANGED:
-		memcpy_fromio(&pos, catpt_inbox_addr(cdev), sizeof(pos));
-		trace_catpt_ipc_payload((u8 *)&pos, sizeof(pos));
+	चयन (msg.notअगरy_reason) अणु
+	हाल CATPT_NOTIFY_POSITION_CHANGED:
+		स_नकल_fromio(&pos, catpt_inbox_addr(cdev), माप(pos));
+		trace_catpt_ipc_payload((u8 *)&pos, माप(pos));
 
 		catpt_stream_update_position(cdev, stream, &pos);
-		break;
+		अवरोध;
 
-	case CATPT_NOTIFY_GLITCH_OCCURRED:
-		memcpy_fromio(&glitch, catpt_inbox_addr(cdev), sizeof(glitch));
-		trace_catpt_ipc_payload((u8 *)&glitch, sizeof(glitch));
+	हाल CATPT_NOTIFY_GLITCH_OCCURRED:
+		स_नकल_fromio(&glitch, catpt_inbox_addr(cdev), माप(glitch));
+		trace_catpt_ipc_payload((u8 *)&glitch, माप(glitch));
 
 		dev_warn(cdev->dev, "glitch %d at pos: 0x%08llx, wp: 0x%08x\n",
 			 glitch.type, glitch.presentation_pos,
-			 glitch.write_pos);
-		break;
+			 glitch.ग_लिखो_pos);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(cdev->dev, "unknown notification: %d received\n",
-			 msg.notify_reason);
-		break;
-	}
-}
+			 msg.notअगरy_reason);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void catpt_dsp_copy_rx(struct catpt_dev *cdev, u32 header)
-{
-	struct catpt_ipc *ipc = &cdev->ipc;
+अटल व्योम catpt_dsp_copy_rx(काष्ठा catpt_dev *cdev, u32 header)
+अणु
+	काष्ठा catpt_ipc *ipc = &cdev->ipc;
 
 	ipc->rx.header = header;
-	if (ipc->rx.rsp.status != CATPT_REPLY_SUCCESS)
-		return;
+	अगर (ipc->rx.rsp.status != CATPT_REPLY_SUCCESS)
+		वापस;
 
-	memcpy_fromio(ipc->rx.data, catpt_outbox_addr(cdev), ipc->rx.size);
+	स_नकल_fromio(ipc->rx.data, catpt_outbox_addr(cdev), ipc->rx.size);
 	trace_catpt_ipc_payload(ipc->rx.data, ipc->rx.size);
-}
+पूर्ण
 
-static void catpt_dsp_process_response(struct catpt_dev *cdev, u32 header)
-{
-	union catpt_notify_msg msg = CATPT_MSG(header);
-	struct catpt_ipc *ipc = &cdev->ipc;
+अटल व्योम catpt_dsp_process_response(काष्ठा catpt_dev *cdev, u32 header)
+अणु
+	जोड़ catpt_notअगरy_msg msg = CATPT_MSG(header);
+	काष्ठा catpt_ipc *ipc = &cdev->ipc;
 
-	if (msg.fw_ready) {
-		struct catpt_fw_ready config;
-		/* to fit 32b header original address is shifted right by 3 */
+	अगर (msg.fw_पढ़ोy) अणु
+		काष्ठा catpt_fw_पढ़ोy config;
+		/* to fit 32b header original address is shअगरted right by 3 */
 		u32 off = msg.mailbox_address << 3;
 
-		memcpy_fromio(&config, cdev->lpe_ba + off, sizeof(config));
-		trace_catpt_ipc_payload((u8 *)&config, sizeof(config));
+		स_नकल_fromio(&config, cdev->lpe_ba + off, माप(config));
+		trace_catpt_ipc_payload((u8 *)&config, माप(config));
 
 		catpt_ipc_arm(ipc, &config);
-		complete(&cdev->fw_ready);
-		return;
-	}
+		complete(&cdev->fw_पढ़ोy);
+		वापस;
+	पूर्ण
 
-	switch (msg.global_msg_type) {
-	case CATPT_GLB_REQUEST_CORE_DUMP:
+	चयन (msg.global_msg_type) अणु
+	हाल CATPT_GLB_REQUEST_CORE_DUMP:
 		dev_err(cdev->dev, "ADSP device coredump received\n");
-		ipc->ready = false;
+		ipc->पढ़ोy = false;
 		catpt_coredump(cdev);
 		/* TODO: attempt recovery */
-		break;
+		अवरोध;
 
-	case CATPT_GLB_STREAM_MESSAGE:
-		switch (msg.stream_msg_type) {
-		case CATPT_STRM_NOTIFICATION:
-			catpt_dsp_notify_stream(cdev, msg);
-			break;
-		default:
+	हाल CATPT_GLB_STREAM_MESSAGE:
+		चयन (msg.stream_msg_type) अणु
+		हाल CATPT_STRM_NOTIFICATION:
+			catpt_dsp_notअगरy_stream(cdev, msg);
+			अवरोध;
+		शेष:
 			catpt_dsp_copy_rx(cdev, header);
-			/* signal completion of delayed reply */
+			/* संकेत completion of delayed reply */
 			complete(&ipc->busy_completion);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(cdev->dev, "unknown response: %d received\n",
 			 msg.global_msg_type);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-irqreturn_t catpt_dsp_irq_thread(int irq, void *dev_id)
-{
-	struct catpt_dev *cdev = dev_id;
+irqवापस_t catpt_dsp_irq_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा catpt_dev *cdev = dev_id;
 	u32 ipcd;
 
-	ipcd = catpt_readl_shim(cdev, IPCD);
-	trace_catpt_ipc_notify(ipcd);
+	ipcd = catpt_पढ़ोl_shim(cdev, IPCD);
+	trace_catpt_ipc_notअगरy(ipcd);
 
-	/* ensure there is delayed reply or notification to process */
-	if (!(ipcd & CATPT_IPCD_BUSY))
-		return IRQ_NONE;
+	/* ensure there is delayed reply or notअगरication to process */
+	अगर (!(ipcd & CATPT_IPCD_BUSY))
+		वापस IRQ_NONE;
 
 	catpt_dsp_process_response(cdev, ipcd);
 
 	/* tell DSP processing is completed */
 	catpt_updatel_shim(cdev, IPCD, CATPT_IPCD_BUSY | CATPT_IPCD_DONE,
 			   CATPT_IPCD_DONE);
-	/* unmask dsp BUSY interrupt */
+	/* unmask dsp BUSY पूर्णांकerrupt */
 	catpt_updatel_shim(cdev, IMC, CATPT_IMC_IPCDB, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-irqreturn_t catpt_dsp_irq_handler(int irq, void *dev_id)
-{
-	struct catpt_dev *cdev = dev_id;
-	irqreturn_t ret = IRQ_NONE;
+irqवापस_t catpt_dsp_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा catpt_dev *cdev = dev_id;
+	irqवापस_t ret = IRQ_NONE;
 	u32 isc, ipcc;
 
-	isc = catpt_readl_shim(cdev, ISC);
+	isc = catpt_पढ़ोl_shim(cdev, ISC);
 	trace_catpt_irq(isc);
 
 	/* immediate reply */
-	if (isc & CATPT_ISC_IPCCD) {
-		/* mask host DONE interrupt */
+	अगर (isc & CATPT_ISC_IPCCD) अणु
+		/* mask host DONE पूर्णांकerrupt */
 		catpt_updatel_shim(cdev, IMC, CATPT_IMC_IPCCD, CATPT_IMC_IPCCD);
 
-		ipcc = catpt_readl_shim(cdev, IPCC);
+		ipcc = catpt_पढ़ोl_shim(cdev, IPCC);
 		trace_catpt_ipc_reply(ipcc);
 		catpt_dsp_copy_rx(cdev, ipcc);
-		complete(&cdev->ipc.done_completion);
+		complete(&cdev->ipc.करोne_completion);
 
 		/* tell DSP processing is completed */
 		catpt_updatel_shim(cdev, IPCC, CATPT_IPCC_DONE, 0);
-		/* unmask host DONE interrupt */
+		/* unmask host DONE पूर्णांकerrupt */
 		catpt_updatel_shim(cdev, IMC, CATPT_IMC_IPCCD, 0);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	/* delayed reply or notification */
-	if (isc & CATPT_ISC_IPCDB) {
-		/* mask dsp BUSY interrupt */
+	/* delayed reply or notअगरication */
+	अगर (isc & CATPT_ISC_IPCDB) अणु
+		/* mask dsp BUSY पूर्णांकerrupt */
 		catpt_updatel_shim(cdev, IMC, CATPT_IMC_IPCDB, CATPT_IMC_IPCDB);
 		ret = IRQ_WAKE_THREAD;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

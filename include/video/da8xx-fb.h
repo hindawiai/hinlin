@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Header file for TI DA8XX LCD controller platform data.
+ * Header file क्रम TI DA8XX LCD controller platक्रमm data.
  *
  * Copyright (C) 2008-2009 MontaVista Software Inc.
  * Copyright (C) 2008-2009 Texas Instruments Inc
@@ -9,86 +10,86 @@
  * kind, whether express or implied.
  */
 
-#ifndef DA8XX_FB_H
-#define DA8XX_FB_H
+#अगर_अघोषित DA8XX_FB_H
+#घोषणा DA8XX_FB_H
 
-enum panel_shade {
+क्रमागत panel_shade अणु
 	MONOCHROME = 0,
 	COLOR_ACTIVE,
 	COLOR_PASSIVE,
-};
+पूर्ण;
 
-enum raster_load_mode {
+क्रमागत raster_load_mode अणु
 	LOAD_DATA = 1,
 	LOAD_PALETTE,
-};
+पूर्ण;
 
-enum da8xx_frame_complete {
+क्रमागत da8xx_frame_complete अणु
 	DA8XX_FRAME_WAIT,
 	DA8XX_FRAME_NOWAIT,
-};
+पूर्ण;
 
-struct da8xx_lcdc_platform_data {
-	const char manu_name[10];
-	void *controller_data;
-	const char type[25];
-};
+काष्ठा da8xx_lcdc_platक्रमm_data अणु
+	स्थिर अक्षर manu_name[10];
+	व्योम *controller_data;
+	स्थिर अक्षर type[25];
+पूर्ण;
 
-struct lcd_ctrl_config {
-	enum panel_shade panel_shade;
+काष्ठा lcd_ctrl_config अणु
+	क्रमागत panel_shade panel_shade;
 
 	/* AC Bias Pin Frequency */
-	int ac_bias;
+	पूर्णांक ac_bias;
 
 	/* AC Bias Pin Transitions per Interrupt */
-	int ac_bias_intrpt;
+	पूर्णांक ac_bias_पूर्णांकrpt;
 
 	/* DMA burst size */
-	int dma_burst_sz;
+	पूर्णांक dma_burst_sz;
 
 	/* Bits per pixel */
-	int bpp;
+	पूर्णांक bpp;
 
 	/* FIFO DMA Request Delay */
-	int fdd;
+	पूर्णांक fdd;
 
-	/* TFT Alternative Signal Mapping (Only for active) */
-	unsigned char tft_alt_mode;
+	/* TFT Alternative Signal Mapping (Only क्रम active) */
+	अचिन्हित अक्षर tft_alt_mode;
 
-	/* 12 Bit Per Pixel (5-6-5) Mode (Only for passive) */
-	unsigned char stn_565_mode;
+	/* 12 Bit Per Pixel (5-6-5) Mode (Only क्रम passive) */
+	अचिन्हित अक्षर stn_565_mode;
 
 	/* Mono 8-bit Mode: 1=D0-D7 or 0=D0-D3 */
-	unsigned char mono_8bit_mode;
+	अचिन्हित अक्षर mono_8bit_mode;
 
 	/* Horizontal and Vertical Sync Edge: 0=rising 1=falling */
-	unsigned char sync_edge;
+	अचिन्हित अक्षर sync_edge;
 
 	/* Raster Data Order Select: 1=Most-to-least 0=Least-to-most */
-	unsigned char raster_order;
+	अचिन्हित अक्षर raster_order;
 
 	/* DMA FIFO threshold */
-	int fifo_th;
-};
+	पूर्णांक fअगरo_th;
+पूर्ण;
 
-struct lcd_sync_arg {
-	int back_porch;
-	int front_porch;
-	int pulse_width;
-};
+काष्ठा lcd_sync_arg अणु
+	पूर्णांक back_porch;
+	पूर्णांक front_porch;
+	पूर्णांक pulse_width;
+पूर्ण;
 
 /* ioctls */
-#define FBIOGET_CONTRAST	_IOR('F', 1, int)
-#define FBIOPUT_CONTRAST	_IOW('F', 2, int)
-#define FBIGET_BRIGHTNESS	_IOR('F', 3, int)
-#define FBIPUT_BRIGHTNESS	_IOW('F', 3, int)
-#define FBIGET_COLOR		_IOR('F', 5, int)
-#define FBIPUT_COLOR		_IOW('F', 6, int)
-#define FBIPUT_HSYNC		_IOW('F', 9, int)
-#define FBIPUT_VSYNC		_IOW('F', 10, int)
+#घोषणा FBIOGET_CONTRAST	_IOR('F', 1, पूर्णांक)
+#घोषणा FBIOPUT_CONTRAST	_IOW('F', 2, पूर्णांक)
+#घोषणा FBIGET_BRIGHTNESS	_IOR('F', 3, पूर्णांक)
+#घोषणा FBIPUT_BRIGHTNESS	_IOW('F', 3, पूर्णांक)
+#घोषणा FBIGET_COLOR		_IOR('F', 5, पूर्णांक)
+#घोषणा FBIPUT_COLOR		_IOW('F', 6, पूर्णांक)
+#घोषणा FBIPUT_HSYNC		_IOW('F', 9, पूर्णांक)
+#घोषणा FBIPUT_VSYNC		_IOW('F', 10, पूर्णांक)
 
 /* Proprietary FB_SYNC_ flags */
-#define FB_SYNC_CLK_INVERT 0x40000000
+#घोषणा FB_SYNC_CLK_INVERT 0x40000000
 
-#endif  /* ifndef DA8XX_FB_H */
+#पूर्ण_अगर  /* अगरndef DA8XX_FB_H */
 

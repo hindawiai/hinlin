@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Copyright SUSE Linux Products GmbH 2010
@@ -6,47 +7,47 @@
  * Authors: Alexander Graf <agraf@suse.de>
  */
 
-#ifndef __ASM_KVM_BOOK3S_64_H__
-#define __ASM_KVM_BOOK3S_64_H__
+#अगर_अघोषित __ASM_KVM_BOOK3S_64_H__
+#घोषणा __ASM_KVM_BOOK3S_64_H__
 
-#include <linux/string.h>
-#include <asm/bitops.h>
-#include <asm/book3s/64/mmu-hash.h>
-#include <asm/cpu_has_feature.h>
-#include <asm/ppc-opcode.h>
-#include <asm/pte-walk.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/bitops.h>
+#समावेश <यंत्र/book3s/64/mmu-hash.h>
+#समावेश <यंत्र/cpu_has_feature.h>
+#समावेश <यंत्र/ppc-opcode.h>
+#समावेश <यंत्र/pte-walk.h>
 
-#ifdef CONFIG_PPC_PSERIES
-static inline bool kvmhv_on_pseries(void)
-{
-	return !cpu_has_feature(CPU_FTR_HVMODE);
-}
-#else
-static inline bool kvmhv_on_pseries(void)
-{
-	return false;
-}
-#endif
+#अगर_घोषित CONFIG_PPC_PSERIES
+अटल अंतरभूत bool kvmhv_on_pseries(व्योम)
+अणु
+	वापस !cpu_has_feature(CPU_FTR_HVMODE);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool kvmhv_on_pseries(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Structure for a nested guest, that is, for a guest that is managed by
+ * Structure क्रम a nested guest, that is, क्रम a guest that is managed by
  * one of our guests.
  */
-struct kvm_nested_guest {
-	struct kvm *l1_host;		/* L1 VM that owns this nested guest */
-	int l1_lpid;			/* lpid L1 guest thinks this guest is */
-	int shadow_lpid;		/* real lpid of this nested guest */
-	pgd_t *shadow_pgtable;		/* our page table for this guest */
+काष्ठा kvm_nested_guest अणु
+	काष्ठा kvm *l1_host;		/* L1 VM that owns this nested guest */
+	पूर्णांक l1_lpid;			/* lpid L1 guest thinks this guest is */
+	पूर्णांक shaकरोw_lpid;		/* real lpid of this nested guest */
+	pgd_t *shaकरोw_pgtable;		/* our page table क्रम this guest */
 	u64 l1_gr_to_hr;		/* L1's addr of part'n-scoped table */
-	u64 process_table;		/* process table entry for this guest */
-	long refcnt;			/* number of pointers to this struct */
-	struct mutex tlb_lock;		/* serialize page faults and tlbies */
-	struct kvm_nested_guest *next;
+	u64 process_table;		/* process table entry क्रम this guest */
+	दीर्घ refcnt;			/* number of poपूर्णांकers to this काष्ठा */
+	काष्ठा mutex tlb_lock;		/* serialize page faults and tlbies */
+	काष्ठा kvm_nested_guest *next;
 	cpumask_t need_tlb_flush;
 	cpumask_t cpu_in_guest;
-	short prev_cpu[NR_CPUS];
+	लघु prev_cpu[NR_CPUS];
 	u8 radix;			/* is this nested guest radix */
-};
+पूर्ण;
 
 /*
  * We define a nested rmap entry as a single 64-bit quantity
@@ -54,128 +55,128 @@ struct kvm_nested_guest {
  * 0x000FFFFFFFFFF000	40-bit guest 4k page frame number
  * 0x0000000000000001	1-bit  single entry flag
  */
-#define RMAP_NESTED_LPID_MASK		0xFFF0000000000000UL
-#define RMAP_NESTED_LPID_SHIFT		(52)
-#define RMAP_NESTED_GPA_MASK		0x000FFFFFFFFFF000UL
-#define RMAP_NESTED_IS_SINGLE_ENTRY	0x0000000000000001UL
+#घोषणा RMAP_NESTED_LPID_MASK		0xFFF0000000000000UL
+#घोषणा RMAP_NESTED_LPID_SHIFT		(52)
+#घोषणा RMAP_NESTED_GPA_MASK		0x000FFFFFFFFFF000UL
+#घोषणा RMAP_NESTED_IS_SINGLE_ENTRY	0x0000000000000001UL
 
-/* Structure for a nested guest rmap entry */
-struct rmap_nested {
-	struct llist_node list;
+/* Structure क्रम a nested guest rmap entry */
+काष्ठा rmap_nested अणु
+	काष्ठा llist_node list;
 	u64 rmap;
-};
+पूर्ण;
 
 /*
- * for_each_nest_rmap_safe - iterate over the list of nested rmap entries
- *			     safe against removal of the list entry or NULL list
- * @pos:	a (struct rmap_nested *) to use as a loop cursor
- * @node:	pointer to the first entry
- *		NOTE: this can be NULL
- * @rmapp:	an (unsigned long *) in which to return the rmap entries on each
+ * क्रम_each_nest_rmap_safe - iterate over the list of nested rmap entries
+ *			     safe against removal of the list entry or शून्य list
+ * @pos:	a (काष्ठा rmap_nested *) to use as a loop cursor
+ * @node:	poपूर्णांकer to the first entry
+ *		NOTE: this can be शून्य
+ * @rmapp:	an (अचिन्हित दीर्घ *) in which to वापस the rmap entries on each
  *		iteration
- *		NOTE: this must point to already allocated memory
+ *		NOTE: this must poपूर्णांक to alपढ़ोy allocated memory
  *
- * The nested_rmap is a llist of (struct rmap_nested) entries pointed to by the
+ * The nested_rmap is a llist of (काष्ठा rmap_nested) entries poपूर्णांकed to by the
  * rmap entry in the memslot. The list is always terminated by a "single entry"
  * stored in the list element of the final entry of the llist. If there is ONLY
  * a single entry then this is itself in the rmap entry of the memslot, not a
- * llist head pointer.
+ * llist head poपूर्णांकer.
  *
  * Note that the iterator below assumes that a nested rmap entry is always
- * non-zero.  This is true for our usage because the LPID field is always
- * non-zero (zero is reserved for the host).
+ * non-zero.  This is true क्रम our usage because the LPID field is always
+ * non-zero (zero is reserved क्रम the host).
  *
  * This should be used to iterate over the list of rmap_nested entries with
- * processing done on the u64 rmap value given by each iteration. This is safe
- * against removal of list entries and it is always safe to call free on (pos).
+ * processing करोne on the u64 rmap value given by each iteration. This is safe
+ * against removal of list entries and it is always safe to call मुक्त on (pos).
  *
  * e.g.
- * struct rmap_nested *cursor;
- * struct llist_node *first;
- * unsigned long rmap;
- * for_each_nest_rmap_safe(cursor, first, &rmap) {
- *	do_something(rmap);
- *	free(cursor);
- * }
+ * काष्ठा rmap_nested *cursor;
+ * काष्ठा llist_node *first;
+ * अचिन्हित दीर्घ rmap;
+ * क्रम_each_nest_rmap_safe(cursor, first, &rmap) अणु
+ *	करो_something(rmap);
+ *	मुक्त(cursor);
+ * पूर्ण
  */
-#define for_each_nest_rmap_safe(pos, node, rmapp)			       \
-	for ((pos) = llist_entry((node), typeof(*(pos)), list);		       \
+#घोषणा क्रम_each_nest_rmap_safe(pos, node, rmapp)			       \
+	क्रम ((pos) = llist_entry((node), typeof(*(pos)), list);		       \
 	     (node) &&							       \
 	     (*(rmapp) = ((RMAP_NESTED_IS_SINGLE_ENTRY & ((u64) (node))) ?     \
 			  ((u64) (node)) : ((pos)->rmap))) &&		       \
 	     (((node) = ((RMAP_NESTED_IS_SINGLE_ENTRY & ((u64) (node))) ?      \
-			 ((struct llist_node *) ((pos) = NULL)) :	       \
+			 ((काष्ठा llist_node *) ((pos) = शून्य)) :	       \
 			 (pos)->list.next)), true);			       \
 	     (pos) = llist_entry((node), typeof(*(pos)), list))
 
-struct kvm_nested_guest *kvmhv_get_nested(struct kvm *kvm, int l1_lpid,
+काष्ठा kvm_nested_guest *kvmhv_get_nested(काष्ठा kvm *kvm, पूर्णांक l1_lpid,
 					  bool create);
-void kvmhv_put_nested(struct kvm_nested_guest *gp);
-int kvmhv_nested_next_lpid(struct kvm *kvm, int lpid);
+व्योम kvmhv_put_nested(काष्ठा kvm_nested_guest *gp);
+पूर्णांक kvmhv_nested_next_lpid(काष्ठा kvm *kvm, पूर्णांक lpid);
 
-/* Encoding of first parameter for H_TLB_INVALIDATE */
-#define H_TLBIE_P1_ENC(ric, prs, r)	(___PPC_RIC(ric) | ___PPC_PRS(prs) | \
+/* Encoding of first parameter क्रम H_TLB_INVALIDATE */
+#घोषणा H_TLBIE_P1_ENC(ric, prs, r)	(___PPC_RIC(ric) | ___PPC_PRS(prs) | \
 					 ___PPC_R(r))
 
 /* Power architecture requires HPT is at least 256kiB, at most 64TiB */
-#define PPC_MIN_HPT_ORDER	18
-#define PPC_MAX_HPT_ORDER	46
+#घोषणा PPC_MIN_HPT_ORDER	18
+#घोषणा PPC_MAX_HPT_ORDER	46
 
-#ifdef CONFIG_KVM_BOOK3S_PR_POSSIBLE
-static inline struct kvmppc_book3s_shadow_vcpu *svcpu_get(struct kvm_vcpu *vcpu)
-{
+#अगर_घोषित CONFIG_KVM_BOOK3S_PR_POSSIBLE
+अटल अंतरभूत काष्ठा kvmppc_book3s_shaकरोw_vcpu *svcpu_get(काष्ठा kvm_vcpu *vcpu)
+अणु
 	preempt_disable();
-	return &get_paca()->shadow_vcpu;
-}
+	वापस &get_paca()->shaकरोw_vcpu;
+पूर्ण
 
-static inline void svcpu_put(struct kvmppc_book3s_shadow_vcpu *svcpu)
-{
+अटल अंतरभूत व्योम svcpu_put(काष्ठा kvmppc_book3s_shaकरोw_vcpu *svcpu)
+अणु
 	preempt_enable();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
 
-static inline bool kvm_is_radix(struct kvm *kvm)
-{
-	return kvm->arch.radix;
-}
+अटल अंतरभूत bool kvm_is_radix(काष्ठा kvm *kvm)
+अणु
+	वापस kvm->arch.radix;
+पूर्ण
 
-static inline bool kvmhv_vcpu_is_radix(struct kvm_vcpu *vcpu)
-{
+अटल अंतरभूत bool kvmhv_vcpu_is_radix(काष्ठा kvm_vcpu *vcpu)
+अणु
 	bool radix;
 
-	if (vcpu->arch.nested)
+	अगर (vcpu->arch.nested)
 		radix = vcpu->arch.nested->radix;
-	else
+	अन्यथा
 		radix = kvm_is_radix(vcpu->kvm);
 
-	return radix;
-}
+	वापस radix;
+पूर्ण
 
-#define KVM_DEFAULT_HPT_ORDER	24	/* 16MB HPT by default */
-#endif
+#घोषणा KVM_DEFAULT_HPT_ORDER	24	/* 16MB HPT by शेष */
+#पूर्ण_अगर
 
 /*
  * We use a lock bit in HPTE dword 0 to synchronize updates and
  * accesses to each HPTE, and another bit to indicate non-present
  * HPTEs.
  */
-#define HPTE_V_HVLOCK	0x40UL
-#define HPTE_V_ABSENT	0x20UL
+#घोषणा HPTE_V_HVLOCK	0x40UL
+#घोषणा HPTE_V_ABSENT	0x20UL
 
 /*
  * We use this bit in the guest_rpte field of the revmap entry
- * to indicate a modified HPTE.
+ * to indicate a modअगरied HPTE.
  */
-#define HPTE_GR_MODIFIED	(1ul << 62)
+#घोषणा HPTE_GR_MODIFIED	(1ul << 62)
 
 /* These bits are reserved in the guest view of the HPTE */
-#define HPTE_GR_RESERVED	HPTE_GR_MODIFIED
+#घोषणा HPTE_GR_RESERVED	HPTE_GR_MODIFIED
 
-static inline long try_lock_hpte(__be64 *hpte, unsigned long bits)
-{
-	unsigned long tmp, old;
+अटल अंतरभूत दीर्घ try_lock_hpte(__be64 *hpte, अचिन्हित दीर्घ bits)
+अणु
+	अचिन्हित दीर्घ पंचांगp, old;
 	__be64 be_lockbit, be_bits;
 
 	/*
@@ -186,7 +187,7 @@ static inline long try_lock_hpte(__be64 *hpte, unsigned long bits)
 	be_lockbit = cpu_to_be64(HPTE_V_HVLOCK);
 	be_bits = cpu_to_be64(bits);
 
-	asm volatile("	ldarx	%0,0,%2\n"
+	यंत्र अस्थिर("	ldarx	%0,0,%2\n"
 		     "	and.	%1,%0,%3\n"
 		     "	bne	2f\n"
 		     "	or	%0,%0,%4\n"
@@ -194,121 +195,121 @@ static inline long try_lock_hpte(__be64 *hpte, unsigned long bits)
 		     "	beq+	2f\n"
 		     "	mr	%1,%3\n"
 		     "2:	isync"
-		     : "=&r" (tmp), "=&r" (old)
+		     : "=&r" (पंचांगp), "=&r" (old)
 		     : "r" (hpte), "r" (be_bits), "r" (be_lockbit)
 		     : "cc", "memory");
-	return old == 0;
-}
+	वापस old == 0;
+पूर्ण
 
-static inline void unlock_hpte(__be64 *hpte, unsigned long hpte_v)
-{
+अटल अंतरभूत व्योम unlock_hpte(__be64 *hpte, अचिन्हित दीर्घ hpte_v)
+अणु
 	hpte_v &= ~HPTE_V_HVLOCK;
-	asm volatile(PPC_RELEASE_BARRIER "" : : : "memory");
+	यंत्र अस्थिर(PPC_RELEASE_BARRIER "" : : : "memory");
 	hpte[0] = cpu_to_be64(hpte_v);
-}
+पूर्ण
 
 /* Without barrier */
-static inline void __unlock_hpte(__be64 *hpte, unsigned long hpte_v)
-{
+अटल अंतरभूत व्योम __unlock_hpte(__be64 *hpte, अचिन्हित दीर्घ hpte_v)
+अणु
 	hpte_v &= ~HPTE_V_HVLOCK;
 	hpte[0] = cpu_to_be64(hpte_v);
-}
+पूर्ण
 
 /*
  * These functions encode knowledge of the POWER7/8/9 hardware
- * interpretations of the HPTE LP (large page size) field.
+ * पूर्णांकerpretations of the HPTE LP (large page size) field.
  */
-static inline int kvmppc_hpte_page_shifts(unsigned long h, unsigned long l)
-{
-	unsigned int lphi;
+अटल अंतरभूत पूर्णांक kvmppc_hpte_page_shअगरts(अचिन्हित दीर्घ h, अचिन्हित दीर्घ l)
+अणु
+	अचिन्हित पूर्णांक lphi;
 
-	if (!(h & HPTE_V_LARGE))
-		return 12;	/* 4kB */
+	अगर (!(h & HPTE_V_LARGE))
+		वापस 12;	/* 4kB */
 	lphi = (l >> 16) & 0xf;
-	switch ((l >> 12) & 0xf) {
-	case 0:
-		return !lphi ? 24 : 0;		/* 16MB */
-		break;
-	case 1:
-		return 16;			/* 64kB */
-		break;
-	case 3:
-		return !lphi ? 34 : 0;		/* 16GB */
-		break;
-	case 7:
-		return (16 << 8) + 12;		/* 64kB in 4kB */
-		break;
-	case 8:
-		if (!lphi)
-			return (24 << 8) + 16;	/* 16MB in 64kkB */
-		if (lphi == 3)
-			return (24 << 8) + 12;	/* 16MB in 4kB */
-		break;
-	}
-	return 0;
-}
+	चयन ((l >> 12) & 0xf) अणु
+	हाल 0:
+		वापस !lphi ? 24 : 0;		/* 16MB */
+		अवरोध;
+	हाल 1:
+		वापस 16;			/* 64kB */
+		अवरोध;
+	हाल 3:
+		वापस !lphi ? 34 : 0;		/* 16GB */
+		अवरोध;
+	हाल 7:
+		वापस (16 << 8) + 12;		/* 64kB in 4kB */
+		अवरोध;
+	हाल 8:
+		अगर (!lphi)
+			वापस (24 << 8) + 16;	/* 16MB in 64kkB */
+		अगर (lphi == 3)
+			वापस (24 << 8) + 12;	/* 16MB in 4kB */
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int kvmppc_hpte_base_page_shift(unsigned long h, unsigned long l)
-{
-	return kvmppc_hpte_page_shifts(h, l) & 0xff;
-}
+अटल अंतरभूत पूर्णांक kvmppc_hpte_base_page_shअगरt(अचिन्हित दीर्घ h, अचिन्हित दीर्घ l)
+अणु
+	वापस kvmppc_hpte_page_shअगरts(h, l) & 0xff;
+पूर्ण
 
-static inline int kvmppc_hpte_actual_page_shift(unsigned long h, unsigned long l)
-{
-	int tmp = kvmppc_hpte_page_shifts(h, l);
+अटल अंतरभूत पूर्णांक kvmppc_hpte_actual_page_shअगरt(अचिन्हित दीर्घ h, अचिन्हित दीर्घ l)
+अणु
+	पूर्णांक पंचांगp = kvmppc_hpte_page_shअगरts(h, l);
 
-	if (tmp >= 0x100)
-		tmp >>= 8;
-	return tmp;
-}
+	अगर (पंचांगp >= 0x100)
+		पंचांगp >>= 8;
+	वापस पंचांगp;
+पूर्ण
 
-static inline unsigned long kvmppc_actual_pgsz(unsigned long v, unsigned long r)
-{
-	int shift = kvmppc_hpte_actual_page_shift(v, r);
+अटल अंतरभूत अचिन्हित दीर्घ kvmppc_actual_pgsz(अचिन्हित दीर्घ v, अचिन्हित दीर्घ r)
+अणु
+	पूर्णांक shअगरt = kvmppc_hpte_actual_page_shअगरt(v, r);
 
-	if (shift)
-		return 1ul << shift;
-	return 0;
-}
+	अगर (shअगरt)
+		वापस 1ul << shअगरt;
+	वापस 0;
+पूर्ण
 
-static inline int kvmppc_pgsize_lp_encoding(int base_shift, int actual_shift)
-{
-	switch (base_shift) {
-	case 12:
-		switch (actual_shift) {
-		case 12:
-			return 0;
-		case 16:
-			return 7;
-		case 24:
-			return 0x38;
-		}
-		break;
-	case 16:
-		switch (actual_shift) {
-		case 16:
-			return 1;
-		case 24:
-			return 8;
-		}
-		break;
-	case 24:
-		return 0;
-	}
-	return -1;
-}
+अटल अंतरभूत पूर्णांक kvmppc_pgsize_lp_encoding(पूर्णांक base_shअगरt, पूर्णांक actual_shअगरt)
+अणु
+	चयन (base_shअगरt) अणु
+	हाल 12:
+		चयन (actual_shअगरt) अणु
+		हाल 12:
+			वापस 0;
+		हाल 16:
+			वापस 7;
+		हाल 24:
+			वापस 0x38;
+		पूर्ण
+		अवरोध;
+	हाल 16:
+		चयन (actual_shअगरt) अणु
+		हाल 16:
+			वापस 1;
+		हाल 24:
+			वापस 8;
+		पूर्ण
+		अवरोध;
+	हाल 24:
+		वापस 0;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static inline unsigned long compute_tlbie_rb(unsigned long v, unsigned long r,
-					     unsigned long pte_index)
-{
-	int a_pgshift, b_pgshift;
-	unsigned long rb = 0, va_low, sllp;
+अटल अंतरभूत अचिन्हित दीर्घ compute_tlbie_rb(अचिन्हित दीर्घ v, अचिन्हित दीर्घ r,
+					     अचिन्हित दीर्घ pte_index)
+अणु
+	पूर्णांक a_pgshअगरt, b_pgshअगरt;
+	अचिन्हित दीर्घ rb = 0, va_low, sllp;
 
-	b_pgshift = a_pgshift = kvmppc_hpte_page_shifts(v, r);
-	if (a_pgshift >= 0x100) {
-		b_pgshift &= 0xff;
-		a_pgshift >>= 8;
-	}
+	b_pgshअगरt = a_pgshअगरt = kvmppc_hpte_page_shअगरts(v, r);
+	अगर (a_pgshअगरt >= 0x100) अणु
+		b_pgshअगरt &= 0xff;
+		a_pgshअगरt >>= 8;
+	पूर्ण
 
 	/*
 	 * Ignore the top 14 bits of va
@@ -327,355 +328,355 @@ static inline unsigned long compute_tlbie_rb(unsigned long v, unsigned long r,
 	 * that from pteg index
 	 */
 	va_low = pte_index >> 3;
-	if (v & HPTE_V_SECONDARY)
+	अगर (v & HPTE_V_SECONDARY)
 		va_low = ~va_low;
 	/*
 	 * get the vpn bits from va_low using reverse of hashing.
-	 * In v we have va with 23 bits dropped and then left shifted
+	 * In v we have va with 23 bits dropped and then left shअगरted
 	 * HPTE_V_AVPN_SHIFT (7) bits. Now to find vsid we need
-	 * right shift it with (SID_SHIFT - (23 - 7))
+	 * right shअगरt it with (SID_SHIFT - (23 - 7))
 	 */
-	if (!(v & HPTE_V_1TB_SEG))
+	अगर (!(v & HPTE_V_1TB_SEG))
 		va_low ^= v >> (SID_SHIFT - 16);
-	else
+	अन्यथा
 		va_low ^= v >> (SID_SHIFT_1T - 16);
 	va_low &= 0x7ff;
 
-	if (b_pgshift <= 12) {
-		if (a_pgshift > 12) {
-			sllp = (a_pgshift == 16) ? 5 : 4;
+	अगर (b_pgshअगरt <= 12) अणु
+		अगर (a_pgshअगरt > 12) अणु
+			sllp = (a_pgshअगरt == 16) ? 5 : 4;
 			rb |= sllp << 5;	/*  AP field */
-		}
-		rb |= (va_low & 0x7ff) << 12;	/* remaining 11 bits of AVA */
-	} else {
-		int aval_shift;
+		पूर्ण
+		rb |= (va_low & 0x7ff) << 12;	/* reमुख्यing 11 bits of AVA */
+	पूर्ण अन्यथा अणु
+		पूर्णांक aval_shअगरt;
 		/*
-		 * remaining bits of AVA/LP fields
+		 * reमुख्यing bits of AVA/LP fields
 		 * Also contain the rr bits of LP
 		 */
-		rb |= (va_low << b_pgshift) & 0x7ff000;
+		rb |= (va_low << b_pgshअगरt) & 0x7ff000;
 		/*
 		 * Now clear not needed LP bits based on actual psize
 		 */
-		rb &= ~((1ul << a_pgshift) - 1);
+		rb &= ~((1ul << a_pgshअगरt) - 1);
 		/*
-		 * AVAL field 58..77 - base_page_shift bits of va
-		 * we have space for 58..64 bits, Missing bits should
-		 * be zero filled. +1 is to take care of L bit shift
+		 * AVAL field 58..77 - base_page_shअगरt bits of va
+		 * we have space क्रम 58..64 bits, Missing bits should
+		 * be zero filled. +1 is to take care of L bit shअगरt
 		 */
-		aval_shift = 64 - (77 - b_pgshift) + 1;
-		rb |= ((va_low << aval_shift) & 0xfe);
+		aval_shअगरt = 64 - (77 - b_pgshअगरt) + 1;
+		rb |= ((va_low << aval_shअगरt) & 0xfe);
 
 		rb |= 1;		/* L field */
-		rb |= r & 0xff000 & ((1ul << a_pgshift) - 1); /* LP field */
-	}
+		rb |= r & 0xff000 & ((1ul << a_pgshअगरt) - 1); /* LP field */
+	पूर्ण
 	rb |= (v >> HPTE_V_SSIZE_SHIFT) << 8;	/* B field */
-	return rb;
-}
+	वापस rb;
+पूर्ण
 
-static inline unsigned long hpte_rpn(unsigned long ptel, unsigned long psize)
-{
-	return ((ptel & HPTE_R_RPN) & ~(psize - 1)) >> PAGE_SHIFT;
-}
+अटल अंतरभूत अचिन्हित दीर्घ hpte_rpn(अचिन्हित दीर्घ ptel, अचिन्हित दीर्घ psize)
+अणु
+	वापस ((ptel & HPTE_R_RPN) & ~(psize - 1)) >> PAGE_SHIFT;
+पूर्ण
 
-static inline int hpte_is_writable(unsigned long ptel)
-{
-	unsigned long pp = ptel & (HPTE_R_PP0 | HPTE_R_PP);
+अटल अंतरभूत पूर्णांक hpte_is_writable(अचिन्हित दीर्घ ptel)
+अणु
+	अचिन्हित दीर्घ pp = ptel & (HPTE_R_PP0 | HPTE_R_PP);
 
-	return pp != PP_RXRX && pp != PP_RXXX;
-}
+	वापस pp != PP_RXRX && pp != PP_RXXX;
+पूर्ण
 
-static inline unsigned long hpte_make_readonly(unsigned long ptel)
-{
-	if ((ptel & HPTE_R_PP0) || (ptel & HPTE_R_PP) == PP_RWXX)
+अटल अंतरभूत अचिन्हित दीर्घ hpte_make_पढ़ोonly(अचिन्हित दीर्घ ptel)
+अणु
+	अगर ((ptel & HPTE_R_PP0) || (ptel & HPTE_R_PP) == PP_RWXX)
 		ptel = (ptel & ~HPTE_R_PP) | PP_RXXX;
-	else
+	अन्यथा
 		ptel |= PP_RXRX;
-	return ptel;
-}
+	वापस ptel;
+पूर्ण
 
-static inline bool hpte_cache_flags_ok(unsigned long hptel, bool is_ci)
-{
-	unsigned int wimg = hptel & HPTE_R_WIMG;
+अटल अंतरभूत bool hpte_cache_flags_ok(अचिन्हित दीर्घ hptel, bool is_ci)
+अणु
+	अचिन्हित पूर्णांक wimg = hptel & HPTE_R_WIMG;
 
 	/* Handle SAO */
-	if (wimg == (HPTE_R_W | HPTE_R_I | HPTE_R_M) &&
+	अगर (wimg == (HPTE_R_W | HPTE_R_I | HPTE_R_M) &&
 	    cpu_has_feature(CPU_FTR_ARCH_206))
 		wimg = HPTE_R_M;
 
-	if (!is_ci)
-		return wimg == HPTE_R_M;
+	अगर (!is_ci)
+		वापस wimg == HPTE_R_M;
 	/*
-	 * if host is mapped cache inhibited, make sure hptel also have
+	 * अगर host is mapped cache inhibited, make sure hptel also have
 	 * cache inhibited.
 	 */
-	if (wimg & HPTE_R_W) /* FIXME!! is this ok for all guest. ? */
-		return false;
-	return !!(wimg & HPTE_R_I);
-}
+	अगर (wimg & HPTE_R_W) /* FIXME!! is this ok क्रम all guest. ? */
+		वापस false;
+	वापस !!(wimg & HPTE_R_I);
+पूर्ण
 
 /*
  * If it's present and writable, atomically set dirty and referenced bits and
- * return the PTE, otherwise return 0.
+ * वापस the PTE, otherwise वापस 0.
  */
-static inline pte_t kvmppc_read_update_linux_pte(pte_t *ptep, int writing)
-{
+अटल अंतरभूत pte_t kvmppc_पढ़ो_update_linux_pte(pte_t *ptep, पूर्णांक writing)
+अणु
 	pte_t old_pte, new_pte = __pte(0);
 
-	while (1) {
+	जबतक (1) अणु
 		/*
-		 * Make sure we don't reload from ptep
+		 * Make sure we करोn't reload from ptep
 		 */
 		old_pte = READ_ONCE(*ptep);
 		/*
-		 * wait until H_PAGE_BUSY is clear then set it atomically
+		 * रुको until H_PAGE_BUSY is clear then set it atomically
 		 */
-		if (unlikely(pte_val(old_pte) & H_PAGE_BUSY)) {
+		अगर (unlikely(pte_val(old_pte) & H_PAGE_BUSY)) अणु
 			cpu_relax();
-			continue;
-		}
-		/* If pte is not present return None */
-		if (unlikely(!pte_present(old_pte)))
-			return __pte(0);
+			जारी;
+		पूर्ण
+		/* If pte is not present वापस None */
+		अगर (unlikely(!pte_present(old_pte)))
+			वापस __pte(0);
 
 		new_pte = pte_mkyoung(old_pte);
-		if (writing && pte_write(old_pte))
-			new_pte = pte_mkdirty(new_pte);
+		अगर (writing && pte_ग_लिखो(old_pte))
+			new_pte = pte_सूची_गढ़ोty(new_pte);
 
-		if (pte_xchg(ptep, old_pte, new_pte))
-			break;
-	}
-	return new_pte;
-}
+		अगर (pte_xchg(ptep, old_pte, new_pte))
+			अवरोध;
+	पूर्ण
+	वापस new_pte;
+पूर्ण
 
-static inline bool hpte_read_permission(unsigned long pp, unsigned long key)
-{
-	if (key)
-		return PP_RWRX <= pp && pp <= PP_RXRX;
-	return true;
-}
+अटल अंतरभूत bool hpte_पढ़ो_permission(अचिन्हित दीर्घ pp, अचिन्हित दीर्घ key)
+अणु
+	अगर (key)
+		वापस PP_RWRX <= pp && pp <= PP_RXRX;
+	वापस true;
+पूर्ण
 
-static inline bool hpte_write_permission(unsigned long pp, unsigned long key)
-{
-	if (key)
-		return pp == PP_RWRW;
-	return pp <= PP_RWRW;
-}
+अटल अंतरभूत bool hpte_ग_लिखो_permission(अचिन्हित दीर्घ pp, अचिन्हित दीर्घ key)
+अणु
+	अगर (key)
+		वापस pp == PP_RWRW;
+	वापस pp <= PP_RWRW;
+पूर्ण
 
-static inline int hpte_get_skey_perm(unsigned long hpte_r, unsigned long amr)
-{
-	unsigned long skey;
+अटल अंतरभूत पूर्णांक hpte_get_skey_perm(अचिन्हित दीर्घ hpte_r, अचिन्हित दीर्घ amr)
+अणु
+	अचिन्हित दीर्घ skey;
 
 	skey = ((hpte_r & HPTE_R_KEY_HI) >> 57) |
 		((hpte_r & HPTE_R_KEY_LO) >> 9);
-	return (amr >> (62 - 2 * skey)) & 3;
-}
+	वापस (amr >> (62 - 2 * skey)) & 3;
+पूर्ण
 
-static inline void lock_rmap(unsigned long *rmap)
-{
-	do {
-		while (test_bit(KVMPPC_RMAP_LOCK_BIT, rmap))
+अटल अंतरभूत व्योम lock_rmap(अचिन्हित दीर्घ *rmap)
+अणु
+	करो अणु
+		जबतक (test_bit(KVMPPC_RMAP_LOCK_BIT, rmap))
 			cpu_relax();
-	} while (test_and_set_bit_lock(KVMPPC_RMAP_LOCK_BIT, rmap));
-}
+	पूर्ण जबतक (test_and_set_bit_lock(KVMPPC_RMAP_LOCK_BIT, rmap));
+पूर्ण
 
-static inline void unlock_rmap(unsigned long *rmap)
-{
+अटल अंतरभूत व्योम unlock_rmap(अचिन्हित दीर्घ *rmap)
+अणु
 	__clear_bit_unlock(KVMPPC_RMAP_LOCK_BIT, rmap);
-}
+पूर्ण
 
-static inline bool slot_is_aligned(struct kvm_memory_slot *memslot,
-				   unsigned long pagesize)
-{
-	unsigned long mask = (pagesize >> PAGE_SHIFT) - 1;
+अटल अंतरभूत bool slot_is_aligned(काष्ठा kvm_memory_slot *memslot,
+				   अचिन्हित दीर्घ pagesize)
+अणु
+	अचिन्हित दीर्घ mask = (pagesize >> PAGE_SHIFT) - 1;
 
-	if (pagesize <= PAGE_SIZE)
-		return true;
-	return !(memslot->base_gfn & mask) && !(memslot->npages & mask);
-}
+	अगर (pagesize <= PAGE_SIZE)
+		वापस true;
+	वापस !(memslot->base_gfn & mask) && !(memslot->npages & mask);
+पूर्ण
 
 /*
- * This works for 4k, 64k and 16M pages on POWER7,
+ * This works क्रम 4k, 64k and 16M pages on POWER7,
  * and 4k and 16M pages on PPC970.
  */
-static inline unsigned long slb_pgsize_encoding(unsigned long psize)
-{
-	unsigned long senc = 0;
+अटल अंतरभूत अचिन्हित दीर्घ slb_pgsize_encoding(अचिन्हित दीर्घ psize)
+अणु
+	अचिन्हित दीर्घ senc = 0;
 
-	if (psize > 0x1000) {
+	अगर (psize > 0x1000) अणु
 		senc = SLB_VSID_L;
-		if (psize == 0x10000)
+		अगर (psize == 0x10000)
 			senc |= SLB_VSID_LP_01;
-	}
-	return senc;
-}
+	पूर्ण
+	वापस senc;
+पूर्ण
 
-static inline int is_vrma_hpte(unsigned long hpte_v)
-{
-	return (hpte_v & ~0xffffffUL) ==
+अटल अंतरभूत पूर्णांक is_vrma_hpte(अचिन्हित दीर्घ hpte_v)
+अणु
+	वापस (hpte_v & ~0xffffffUL) ==
 		(HPTE_V_1TB_SEG | (VRMA_VSID << (40 - 16)));
-}
+पूर्ण
 
-#ifdef CONFIG_KVM_BOOK3S_HV_POSSIBLE
+#अगर_घोषित CONFIG_KVM_BOOK3S_HV_POSSIBLE
 /*
- * Note modification of an HPTE; set the HPTE modified bit
- * if anyone is interested.
+ * Note modअगरication of an HPTE; set the HPTE modअगरied bit
+ * अगर anyone is पूर्णांकerested.
  */
-static inline void note_hpte_modification(struct kvm *kvm,
-					  struct revmap_entry *rev)
-{
-	if (atomic_read(&kvm->arch.hpte_mod_interest))
+अटल अंतरभूत व्योम note_hpte_modअगरication(काष्ठा kvm *kvm,
+					  काष्ठा revmap_entry *rev)
+अणु
+	अगर (atomic_पढ़ो(&kvm->arch.hpte_mod_पूर्णांकerest))
 		rev->guest_rpte |= HPTE_GR_MODIFIED;
-}
+पूर्ण
 
 /*
- * Like kvm_memslots(), but for use in real mode when we can't do
- * any RCU stuff (since the secondary threads are offline from the
- * kernel's point of view), and we can't print anything.
+ * Like kvm_memslots(), but क्रम use in real mode when we can't करो
+ * any RCU stuff (since the secondary thपढ़ोs are offline from the
+ * kernel's point of view), and we can't prपूर्णांक anything.
  * Thus we use rcu_dereference_raw() rather than rcu_dereference_check().
  */
-static inline struct kvm_memslots *kvm_memslots_raw(struct kvm *kvm)
-{
-	return rcu_dereference_raw_check(kvm->memslots[0]);
-}
+अटल अंतरभूत काष्ठा kvm_memslots *kvm_memslots_raw(काष्ठा kvm *kvm)
+अणु
+	वापस rcu_dereference_raw_check(kvm->memslots[0]);
+पूर्ण
 
-extern void kvmppc_mmu_debugfs_init(struct kvm *kvm);
-extern void kvmhv_radix_debugfs_init(struct kvm *kvm);
+बाह्य व्योम kvmppc_mmu_debugfs_init(काष्ठा kvm *kvm);
+बाह्य व्योम kvmhv_radix_debugfs_init(काष्ठा kvm *kvm);
 
-extern void kvmhv_rm_send_ipi(int cpu);
+बाह्य व्योम kvmhv_rm_send_ipi(पूर्णांक cpu);
 
-static inline unsigned long kvmppc_hpt_npte(struct kvm_hpt_info *hpt)
-{
-	/* HPTEs are 2**4 bytes long */
-	return 1UL << (hpt->order - 4);
-}
+अटल अंतरभूत अचिन्हित दीर्घ kvmppc_hpt_npte(काष्ठा kvm_hpt_info *hpt)
+अणु
+	/* HPTEs are 2**4 bytes दीर्घ */
+	वापस 1UL << (hpt->order - 4);
+पूर्ण
 
-static inline unsigned long kvmppc_hpt_mask(struct kvm_hpt_info *hpt)
-{
+अटल अंतरभूत अचिन्हित दीर्घ kvmppc_hpt_mask(काष्ठा kvm_hpt_info *hpt)
+अणु
 	/* 128 (2**7) bytes in each HPTEG */
-	return (1UL << (hpt->order - 7)) - 1;
-}
+	वापस (1UL << (hpt->order - 7)) - 1;
+पूर्ण
 
-/* Set bits in a dirty bitmap, which is in LE format */
-static inline void set_dirty_bits(unsigned long *map, unsigned long i,
-				  unsigned long npages)
-{
+/* Set bits in a dirty biपंचांगap, which is in LE क्रमmat */
+अटल अंतरभूत व्योम set_dirty_bits(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ i,
+				  अचिन्हित दीर्घ npages)
+अणु
 
-	if (npages >= 8)
-		memset((char *)map + i / 8, 0xff, npages / 8);
-	else
-		for (; npages; ++i, --npages)
+	अगर (npages >= 8)
+		स_रखो((अक्षर *)map + i / 8, 0xff, npages / 8);
+	अन्यथा
+		क्रम (; npages; ++i, --npages)
 			__set_bit_le(i, map);
-}
+पूर्ण
 
-static inline void set_dirty_bits_atomic(unsigned long *map, unsigned long i,
-					 unsigned long npages)
-{
-	if (npages >= 8)
-		memset((char *)map + i / 8, 0xff, npages / 8);
-	else
-		for (; npages; ++i, --npages)
+अटल अंतरभूत व्योम set_dirty_bits_atomic(अचिन्हित दीर्घ *map, अचिन्हित दीर्घ i,
+					 अचिन्हित दीर्घ npages)
+अणु
+	अगर (npages >= 8)
+		स_रखो((अक्षर *)map + i / 8, 0xff, npages / 8);
+	अन्यथा
+		क्रम (; npages; ++i, --npages)
 			set_bit_le(i, map);
-}
+पूर्ण
 
-static inline u64 sanitize_msr(u64 msr)
-{
+अटल अंतरभूत u64 sanitize_msr(u64 msr)
+अणु
 	msr &= ~MSR_HV;
 	msr |= MSR_ME;
-	return msr;
-}
+	वापस msr;
+पूर्ण
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-static inline void copy_from_checkpoint(struct kvm_vcpu *vcpu)
-{
-	vcpu->arch.regs.ccr  = vcpu->arch.cr_tm;
-	vcpu->arch.regs.xer = vcpu->arch.xer_tm;
-	vcpu->arch.regs.link  = vcpu->arch.lr_tm;
-	vcpu->arch.regs.ctr = vcpu->arch.ctr_tm;
-	vcpu->arch.amr = vcpu->arch.amr_tm;
-	vcpu->arch.ppr = vcpu->arch.ppr_tm;
-	vcpu->arch.dscr = vcpu->arch.dscr_tm;
-	vcpu->arch.tar = vcpu->arch.tar_tm;
-	memcpy(vcpu->arch.regs.gpr, vcpu->arch.gpr_tm,
-	       sizeof(vcpu->arch.regs.gpr));
-	vcpu->arch.fp  = vcpu->arch.fp_tm;
-	vcpu->arch.vr  = vcpu->arch.vr_tm;
-	vcpu->arch.vrsave = vcpu->arch.vrsave_tm;
-}
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+अटल अंतरभूत व्योम copy_from_checkpoपूर्णांक(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->arch.regs.ccr  = vcpu->arch.cr_पंचांग;
+	vcpu->arch.regs.xer = vcpu->arch.xer_पंचांग;
+	vcpu->arch.regs.link  = vcpu->arch.lr_पंचांग;
+	vcpu->arch.regs.ctr = vcpu->arch.ctr_पंचांग;
+	vcpu->arch.amr = vcpu->arch.amr_पंचांग;
+	vcpu->arch.ppr = vcpu->arch.ppr_पंचांग;
+	vcpu->arch.dscr = vcpu->arch.dscr_पंचांग;
+	vcpu->arch.tar = vcpu->arch.tar_पंचांग;
+	स_नकल(vcpu->arch.regs.gpr, vcpu->arch.gpr_पंचांग,
+	       माप(vcpu->arch.regs.gpr));
+	vcpu->arch.fp  = vcpu->arch.fp_पंचांग;
+	vcpu->arch.vr  = vcpu->arch.vr_पंचांग;
+	vcpu->arch.vrsave = vcpu->arch.vrsave_पंचांग;
+पूर्ण
 
-static inline void copy_to_checkpoint(struct kvm_vcpu *vcpu)
-{
-	vcpu->arch.cr_tm  = vcpu->arch.regs.ccr;
-	vcpu->arch.xer_tm = vcpu->arch.regs.xer;
-	vcpu->arch.lr_tm  = vcpu->arch.regs.link;
-	vcpu->arch.ctr_tm = vcpu->arch.regs.ctr;
-	vcpu->arch.amr_tm = vcpu->arch.amr;
-	vcpu->arch.ppr_tm = vcpu->arch.ppr;
-	vcpu->arch.dscr_tm = vcpu->arch.dscr;
-	vcpu->arch.tar_tm = vcpu->arch.tar;
-	memcpy(vcpu->arch.gpr_tm, vcpu->arch.regs.gpr,
-	       sizeof(vcpu->arch.regs.gpr));
-	vcpu->arch.fp_tm  = vcpu->arch.fp;
-	vcpu->arch.vr_tm  = vcpu->arch.vr;
-	vcpu->arch.vrsave_tm = vcpu->arch.vrsave;
-}
-#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
+अटल अंतरभूत व्योम copy_to_checkpoपूर्णांक(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->arch.cr_पंचांग  = vcpu->arch.regs.ccr;
+	vcpu->arch.xer_पंचांग = vcpu->arch.regs.xer;
+	vcpu->arch.lr_पंचांग  = vcpu->arch.regs.link;
+	vcpu->arch.ctr_पंचांग = vcpu->arch.regs.ctr;
+	vcpu->arch.amr_पंचांग = vcpu->arch.amr;
+	vcpu->arch.ppr_पंचांग = vcpu->arch.ppr;
+	vcpu->arch.dscr_पंचांग = vcpu->arch.dscr;
+	vcpu->arch.tar_पंचांग = vcpu->arch.tar;
+	स_नकल(vcpu->arch.gpr_पंचांग, vcpu->arch.regs.gpr,
+	       माप(vcpu->arch.regs.gpr));
+	vcpu->arch.fp_पंचांग  = vcpu->arch.fp;
+	vcpu->arch.vr_पंचांग  = vcpu->arch.vr;
+	vcpu->arch.vrsave_पंचांग = vcpu->arch.vrsave;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
-extern int kvmppc_create_pte(struct kvm *kvm, pgd_t *pgtable, pte_t pte,
-			     unsigned long gpa, unsigned int level,
-			     unsigned long mmu_seq, unsigned int lpid,
-			     unsigned long *rmapp, struct rmap_nested **n_rmap);
-extern void kvmhv_insert_nest_rmap(struct kvm *kvm, unsigned long *rmapp,
-				   struct rmap_nested **n_rmap);
-extern void kvmhv_update_nest_rmap_rc_list(struct kvm *kvm, unsigned long *rmapp,
-					   unsigned long clr, unsigned long set,
-					   unsigned long hpa, unsigned long nbytes);
-extern void kvmhv_remove_nest_rmap_range(struct kvm *kvm,
-				const struct kvm_memory_slot *memslot,
-				unsigned long gpa, unsigned long hpa,
-				unsigned long nbytes);
+बाह्य पूर्णांक kvmppc_create_pte(काष्ठा kvm *kvm, pgd_t *pgtable, pte_t pte,
+			     अचिन्हित दीर्घ gpa, अचिन्हित पूर्णांक level,
+			     अचिन्हित दीर्घ mmu_seq, अचिन्हित पूर्णांक lpid,
+			     अचिन्हित दीर्घ *rmapp, काष्ठा rmap_nested **n_rmap);
+बाह्य व्योम kvmhv_insert_nest_rmap(काष्ठा kvm *kvm, अचिन्हित दीर्घ *rmapp,
+				   काष्ठा rmap_nested **n_rmap);
+बाह्य व्योम kvmhv_update_nest_rmap_rc_list(काष्ठा kvm *kvm, अचिन्हित दीर्घ *rmapp,
+					   अचिन्हित दीर्घ clr, अचिन्हित दीर्घ set,
+					   अचिन्हित दीर्घ hpa, अचिन्हित दीर्घ nbytes);
+बाह्य व्योम kvmhv_हटाओ_nest_rmap_range(काष्ठा kvm *kvm,
+				स्थिर काष्ठा kvm_memory_slot *memslot,
+				अचिन्हित दीर्घ gpa, अचिन्हित दीर्घ hpa,
+				अचिन्हित दीर्घ nbytes);
 
-static inline pte_t *
-find_kvm_secondary_pte_unlocked(struct kvm *kvm, unsigned long ea,
-				unsigned *hshift)
-{
+अटल अंतरभूत pte_t *
+find_kvm_secondary_pte_unlocked(काष्ठा kvm *kvm, अचिन्हित दीर्घ ea,
+				अचिन्हित *hshअगरt)
+अणु
 	pte_t *pte;
 
-	pte = __find_linux_pte(kvm->arch.pgtable, ea, NULL, hshift);
-	return pte;
-}
+	pte = __find_linux_pte(kvm->arch.pgtable, ea, शून्य, hshअगरt);
+	वापस pte;
+पूर्ण
 
-static inline pte_t *find_kvm_secondary_pte(struct kvm *kvm, unsigned long ea,
-					    unsigned *hshift)
-{
-	pte_t *pte;
-
-	VM_WARN(!spin_is_locked(&kvm->mmu_lock),
-		"%s called with kvm mmu_lock not held \n", __func__);
-	pte = __find_linux_pte(kvm->arch.pgtable, ea, NULL, hshift);
-
-	return pte;
-}
-
-static inline pte_t *find_kvm_host_pte(struct kvm *kvm, unsigned long mmu_seq,
-				       unsigned long ea, unsigned *hshift)
-{
+अटल अंतरभूत pte_t *find_kvm_secondary_pte(काष्ठा kvm *kvm, अचिन्हित दीर्घ ea,
+					    अचिन्हित *hshअगरt)
+अणु
 	pte_t *pte;
 
 	VM_WARN(!spin_is_locked(&kvm->mmu_lock),
 		"%s called with kvm mmu_lock not held \n", __func__);
+	pte = __find_linux_pte(kvm->arch.pgtable, ea, शून्य, hshअगरt);
 
-	if (mmu_notifier_retry(kvm, mmu_seq))
-		return NULL;
+	वापस pte;
+पूर्ण
 
-	pte = __find_linux_pte(kvm->mm->pgd, ea, NULL, hshift);
+अटल अंतरभूत pte_t *find_kvm_host_pte(काष्ठा kvm *kvm, अचिन्हित दीर्घ mmu_seq,
+				       अचिन्हित दीर्घ ea, अचिन्हित *hshअगरt)
+अणु
+	pte_t *pte;
 
-	return pte;
-}
+	VM_WARN(!spin_is_locked(&kvm->mmu_lock),
+		"%s called with kvm mmu_lock not held \n", __func__);
 
-extern pte_t *find_kvm_nested_guest_pte(struct kvm *kvm, unsigned long lpid,
-					unsigned long ea, unsigned *hshift);
+	अगर (mmu_notअगरier_retry(kvm, mmu_seq))
+		वापस शून्य;
 
-#endif /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
+	pte = __find_linux_pte(kvm->mm->pgd, ea, शून्य, hshअगरt);
 
-#endif /* __ASM_KVM_BOOK3S_64_H__ */
+	वापस pte;
+पूर्ण
+
+बाह्य pte_t *find_kvm_nested_guest_pte(काष्ठा kvm *kvm, अचिन्हित दीर्घ lpid,
+					अचिन्हित दीर्घ ea, अचिन्हित *hshअगरt);
+
+#पूर्ण_अगर /* CONFIG_KVM_BOOK3S_HV_POSSIBLE */
+
+#पूर्ण_अगर /* __ASM_KVM_BOOK3S_64_H__ */

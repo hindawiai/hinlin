@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright 2019 NXP
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/io.h>
-#include <linux/fsl/mc.h>
-#include "dpdmai.h"
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/fsl/mc.h>
+#समावेश "dpdmai.h"
 
-struct dpdmai_rsp_get_attributes {
+काष्ठा dpdmai_rsp_get_attributes अणु
 	__le32 id;
 	u8 num_of_priorities;
 	u8 pad0[3];
 	__le16 major;
 	__le16 minor;
-};
+पूर्ण;
 
-struct dpdmai_cmd_queue {
+काष्ठा dpdmai_cmd_queue अणु
 	__le32 dest_id;
 	u8 priority;
 	u8 queue;
 	u8 dest_type;
 	u8 pad;
 	__le64 user_ctx;
-	union {
+	जोड़ अणु
 		__le32 options;
 		__le32 fqid;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct dpdmai_rsp_get_tx_queue {
+काष्ठा dpdmai_rsp_get_tx_queue अणु
 	__le64 pad;
 	__le32 fqid;
-};
+पूर्ण;
 
-#define MC_CMD_OP(_cmd, _param, _offset, _width, _type, _arg) \
+#घोषणा MC_CMD_OP(_cmd, _param, _offset, _width, _type, _arg) \
 	((_cmd).params[_param] |= mc_enc((_offset), (_width), _arg))
 
 /* cmd, param, offset, width, type, arg_name */
-#define DPDMAI_CMD_CREATE(cmd, cfg) \
-do { \
+#घोषणा DPDMAI_CMD_CREATE(cmd, cfg) \
+करो अणु \
 	MC_CMD_OP(cmd, 0, 8,  8,  u8,  (cfg)->priorities[0]);\
 	MC_CMD_OP(cmd, 0, 16, 8,  u8,  (cfg)->priorities[1]);\
-} while (0)
+पूर्ण जबतक (0)
 
-static inline u64 mc_enc(int lsoffset, int width, u64 val)
-{
-	return (val & MAKE_UMASK64(width)) << lsoffset;
-}
+अटल अंतरभूत u64 mc_enc(पूर्णांक lsoffset, पूर्णांक width, u64 val)
+अणु
+	वापस (val & MAKE_UMASK64(width)) << lsoffset;
+पूर्ण
 
 /**
- * dpdmai_open() - Open a control session for the specified object
- * @mc_io:	Pointer to MC portal's I/O object
+ * dpdmai_खोलो() - Open a control session क्रम the specअगरied object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @dpdmai_id:	DPDMAI unique ID
  * @token:	Returned token; use in subsequent API calls
  *
- * This function can be used to open a control session for an
- * already created object; an object may have been declared in
+ * This function can be used to खोलो a control session क्रम an
+ * alपढ़ोy created object; an object may have been declared in
  * the DPL or by calling the dpdmai_create() function.
- * This function returns a unique authentication token,
- * associated with the specific object ID and the specific MC
- * portal; this token must be used in all subsequent commands for
- * this specific object.
+ * This function वापसs a unique authentication token,
+ * associated with the specअगरic object ID and the specअगरic MC
+ * portal; this token must be used in all subsequent commands क्रम
+ * this specअगरic object.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_open(struct fsl_mc_io *mc_io, u32 cmd_flags,
-		int dpdmai_id, u16 *token)
-{
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_खोलो(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags,
+		पूर्णांक dpdmai_id, u16 *token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 	__le64 *cmd_dpdmai_id;
-	int err;
+	पूर्णांक err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_OPEN,
@@ -81,67 +82,67 @@ int dpdmai_open(struct fsl_mc_io *mc_io, u32 cmd_flags,
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* retrieve response parameters */
-	*token = mc_cmd_hdr_read_token(&cmd);
+	*token = mc_cmd_hdr_पढ़ो_token(&cmd);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(dpdmai_open);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(dpdmai_खोलो);
 
 /**
- * dpdmai_close() - Close the control session of the object
- * @mc_io:	Pointer to MC portal's I/O object
+ * dpdmai_बंद() - Close the control session of the object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  *
  * After this function is called, no further operations are
- * allowed on the object without opening a new control session.
+ * allowed on the object without खोलोing a new control session.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_close(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
-{
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_बंद(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_CLOSE,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	return mc_send_command(mc_io, &cmd);
-}
-EXPORT_SYMBOL_GPL(dpdmai_close);
+	वापस mc_send_command(mc_io, &cmd);
+पूर्ण
+EXPORT_SYMBOL_GPL(dpdmai_बंद);
 
 /**
  * dpdmai_create() - Create the DPDMAI object
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
- * @cfg:	Configuration structure
+ * @cfg:	Configuration काष्ठाure
  * @token:	Returned token; use in subsequent API calls
  *
  * Create the DPDMAI object, allocate required resources and
- * perform required initialization.
+ * perक्रमm required initialization.
  *
  * The object can be created either by declaring it in the
  * DPL file, or by calling this function.
  *
- * This function returns a unique authentication token,
- * associated with the specific object ID and the specific MC
+ * This function वापसs a unique authentication token,
+ * associated with the specअगरic object ID and the specअगरic MC
  * portal; this token must be used in all subsequent calls to
- * this specific object. For objects that are created using the
- * DPL file, call dpdmai_open() function to get an authentication
+ * this specअगरic object. For objects that are created using the
+ * DPL file, call dpdmai_खोलो() function to get an authentication
  * token first.
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_create(struct fsl_mc_io *mc_io, u32 cmd_flags,
-		  const struct dpdmai_cfg *cfg, u16 *token)
-{
-	struct fsl_mc_command cmd = { 0 };
-	int err;
+पूर्णांक dpdmai_create(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags,
+		  स्थिर काष्ठा dpdmai_cfg *cfg, u16 *token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+	पूर्णांक err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_CREATE,
@@ -150,114 +151,114 @@ int dpdmai_create(struct fsl_mc_io *mc_io, u32 cmd_flags,
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* retrieve response parameters */
-	*token = mc_cmd_hdr_read_token(&cmd);
+	*token = mc_cmd_hdr_पढ़ो_token(&cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * dpdmai_destroy() - Destroy the DPDMAI object and release all its resources.
- * @mc_io:      Pointer to MC portal's I/O object
+ * @mc_io:      Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:  Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:      Token of DPDMAI object
  *
  * Return:      '0' on Success; error code otherwise.
  */
-int dpdmai_destroy(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
-{
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_destroy(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_DESTROY,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	return mc_send_command(mc_io, &cmd);
-}
+	वापस mc_send_command(mc_io, &cmd);
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_destroy);
 
 /**
  * dpdmai_enable() - Enable the DPDMAI, allow sending and receiving frames.
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_enable(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
-{
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_enable(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_ENABLE,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	return mc_send_command(mc_io, &cmd);
-}
+	वापस mc_send_command(mc_io, &cmd);
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_enable);
 
 /**
  * dpdmai_disable() - Disable the DPDMAI, stop sending and receiving frames.
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_disable(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
-{
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_disable(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_DISABLE,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	return mc_send_command(mc_io, &cmd);
-}
+	वापस mc_send_command(mc_io, &cmd);
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_disable);
 
 /**
- * dpdmai_reset() - Reset the DPDMAI, returns the object to initial state.
- * @mc_io:	Pointer to MC portal's I/O object
+ * dpdmai_reset() - Reset the DPDMAI, वापसs the object to initial state.
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_reset(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
-{
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_reset(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token)
+अणु
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_RESET,
 					  cmd_flags, token);
 
 	/* send command to mc*/
-	return mc_send_command(mc_io, &cmd);
-}
+	वापस mc_send_command(mc_io, &cmd);
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_reset);
 
 /**
  * dpdmai_get_attributes() - Retrieve DPDMAI attributes.
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  * @attr:	Returned object's attributes
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_get_attributes(struct fsl_mc_io *mc_io, u32 cmd_flags,
-			  u16 token, struct dpdmai_attr *attr)
-{
-	struct dpdmai_rsp_get_attributes *rsp_params;
-	struct fsl_mc_command cmd = { 0 };
-	int err;
+पूर्णांक dpdmai_get_attributes(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags,
+			  u16 token, काष्ठा dpdmai_attr *attr)
+अणु
+	काष्ठा dpdmai_rsp_get_attributes *rsp_params;
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+	पूर्णांक err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_GET_ATTR,
@@ -265,23 +266,23 @@ int dpdmai_get_attributes(struct fsl_mc_io *mc_io, u32 cmd_flags,
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* retrieve response parameters */
-	rsp_params = (struct dpdmai_rsp_get_attributes *)cmd.params;
+	rsp_params = (काष्ठा dpdmai_rsp_get_attributes *)cmd.params;
 	attr->id = le32_to_cpu(rsp_params->id);
 	attr->version.major = le16_to_cpu(rsp_params->major);
 	attr->version.minor = le16_to_cpu(rsp_params->minor);
 	attr->num_of_priorities = rsp_params->num_of_priorities;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_get_attributes);
 
 /**
  * dpdmai_set_rx_queue() - Set Rx queue configuration
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  * @priority:	Select the queue relative to number of
@@ -290,17 +291,17 @@ EXPORT_SYMBOL_GPL(dpdmai_get_attributes);
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_set_rx_queue(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
-			u8 priority, const struct dpdmai_rx_queue_cfg *cfg)
-{
-	struct dpdmai_cmd_queue *cmd_params;
-	struct fsl_mc_command cmd = { 0 };
+पूर्णांक dpdmai_set_rx_queue(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
+			u8 priority, स्थिर काष्ठा dpdmai_rx_queue_cfg *cfg)
+अणु
+	काष्ठा dpdmai_cmd_queue *cmd_params;
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_SET_RX_QUEUE,
 					  cmd_flags, token);
 
-	cmd_params = (struct dpdmai_cmd_queue *)cmd.params;
+	cmd_params = (काष्ठा dpdmai_cmd_queue *)cmd.params;
 	cmd_params->dest_id = cpu_to_le32(cfg->dest_cfg.dest_id);
 	cmd_params->priority = cfg->dest_cfg.priority;
 	cmd_params->queue = priority;
@@ -309,13 +310,13 @@ int dpdmai_set_rx_queue(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
 	cmd_params->options = cpu_to_le32(cfg->options);
 
 	/* send command to mc*/
-	return mc_send_command(mc_io, &cmd);
-}
+	वापस mc_send_command(mc_io, &cmd);
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_set_rx_queue);
 
 /**
  * dpdmai_get_rx_queue() - Retrieve Rx queue attributes.
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  * @priority:	Select the queue relative to number of
@@ -324,24 +325,24 @@ EXPORT_SYMBOL_GPL(dpdmai_set_rx_queue);
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_get_rx_queue(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
-			u8 priority, struct dpdmai_rx_queue_attr *attr)
-{
-	struct dpdmai_cmd_queue *cmd_params;
-	struct fsl_mc_command cmd = { 0 };
-	int err;
+पूर्णांक dpdmai_get_rx_queue(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
+			u8 priority, काष्ठा dpdmai_rx_queue_attr *attr)
+अणु
+	काष्ठा dpdmai_cmd_queue *cmd_params;
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+	पूर्णांक err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_GET_RX_QUEUE,
 					  cmd_flags, token);
 
-	cmd_params = (struct dpdmai_cmd_queue *)cmd.params;
+	cmd_params = (काष्ठा dpdmai_cmd_queue *)cmd.params;
 	cmd_params->queue = priority;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* retrieve response parameters */
 	attr->dest_cfg.dest_id = le32_to_cpu(cmd_params->dest_id);
@@ -350,13 +351,13 @@ int dpdmai_get_rx_queue(struct fsl_mc_io *mc_io, u32 cmd_flags, u16 token,
 	attr->user_ctx = le64_to_cpu(cmd_params->user_ctx);
 	attr->fqid = le32_to_cpu(cmd_params->fqid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_get_rx_queue);
 
 /**
  * dpdmai_get_tx_queue() - Retrieve Tx queue attributes.
- * @mc_io:	Pointer to MC portal's I/O object
+ * @mc_io:	Poपूर्णांकer to MC portal's I/O object
  * @cmd_flags:	Command flags; one or more of 'MC_CMD_FLAG_'
  * @token:	Token of DPDMAI object
  * @priority:	Select the queue relative to number of
@@ -365,33 +366,33 @@ EXPORT_SYMBOL_GPL(dpdmai_get_rx_queue);
  *
  * Return:	'0' on Success; Error code otherwise.
  */
-int dpdmai_get_tx_queue(struct fsl_mc_io *mc_io, u32 cmd_flags,
+पूर्णांक dpdmai_get_tx_queue(काष्ठा fsl_mc_io *mc_io, u32 cmd_flags,
 			u16 token, u8 priority, u32 *fqid)
-{
-	struct dpdmai_rsp_get_tx_queue *rsp_params;
-	struct dpdmai_cmd_queue *cmd_params;
-	struct fsl_mc_command cmd = { 0 };
-	int err;
+अणु
+	काष्ठा dpdmai_rsp_get_tx_queue *rsp_params;
+	काष्ठा dpdmai_cmd_queue *cmd_params;
+	काष्ठा fsl_mc_command cmd = अणु 0 पूर्ण;
+	पूर्णांक err;
 
 	/* prepare command */
 	cmd.header = mc_encode_cmd_header(DPDMAI_CMDID_GET_TX_QUEUE,
 					  cmd_flags, token);
 
-	cmd_params = (struct dpdmai_cmd_queue *)cmd.params;
+	cmd_params = (काष्ठा dpdmai_cmd_queue *)cmd.params;
 	cmd_params->queue = priority;
 
 	/* send command to mc*/
 	err = mc_send_command(mc_io, &cmd);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* retrieve response parameters */
 
-	rsp_params = (struct dpdmai_rsp_get_tx_queue *)cmd.params;
+	rsp_params = (काष्ठा dpdmai_rsp_get_tx_queue *)cmd.params;
 	*fqid = le32_to_cpu(rsp_params->fqid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dpdmai_get_tx_queue);
 
 MODULE_LICENSE("GPL v2");

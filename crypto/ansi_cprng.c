@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * PRNG: Pseudo Random Number Generator
+ * PRNG: Pseuकरो Ranकरोm Number Generator
  *       Based on NIST Recommended PRNG From ANSI X9.31 Appendix A.2.4 using
  *       AES 128 cipher
  *
  *  (C) Neil Horman <nhorman@tuxdriver.com>
  */
 
-#include <crypto/internal/cipher.h>
-#include <crypto/internal/rng.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/string.h>
+#समावेश <crypto/पूर्णांकernal/cipher.h>
+#समावेश <crypto/पूर्णांकernal/rng.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/माला.स>
 
-#define DEFAULT_PRNG_KEY "0123456789abcdef"
-#define DEFAULT_PRNG_KSZ 16
-#define DEFAULT_BLK_SZ 16
-#define DEFAULT_V_SEED "zaybxcwdveuftgsh"
+#घोषणा DEFAULT_PRNG_KEY "0123456789abcdef"
+#घोषणा DEFAULT_PRNG_KSZ 16
+#घोषणा DEFAULT_BLK_SZ 16
+#घोषणा DEFAULT_V_SEED "zaybxcwdveuftgsh"
 
 /*
- * Flags for the prng_context flags field
+ * Flags क्रम the prng_context flags field
  */
 
-#define PRNG_FIXED_SIZE 0x1
-#define PRNG_NEED_RESET 0x2
+#घोषणा PRNG_FIXED_SIZE 0x1
+#घोषणा PRNG_NEED_RESET 0x2
 
 /*
  * Note: DT is our counter value
- *	 I is our intermediate value
+ *	 I is our पूर्णांकermediate value
  *	 V is our seed vector
- * See http://csrc.nist.gov/groups/STM/cavp/documents/rng/931rngext.pdf
- * for implementation details
+ * See http://csrc.nist.gov/groups/STM/cavp/करोcuments/rng/931rngext.pdf
+ * क्रम implementation details
  */
 
 
-struct prng_context {
+काष्ठा prng_context अणु
 	spinlock_t prng_lock;
-	unsigned char rand_data[DEFAULT_BLK_SZ];
-	unsigned char last_rand_data[DEFAULT_BLK_SZ];
-	unsigned char DT[DEFAULT_BLK_SZ];
-	unsigned char I[DEFAULT_BLK_SZ];
-	unsigned char V[DEFAULT_BLK_SZ];
-	u32 rand_data_valid;
-	struct crypto_cipher *tfm;
+	अचिन्हित अक्षर अक्रम_data[DEFAULT_BLK_SZ];
+	अचिन्हित अक्षर last_अक्रम_data[DEFAULT_BLK_SZ];
+	अचिन्हित अक्षर DT[DEFAULT_BLK_SZ];
+	अचिन्हित अक्षर I[DEFAULT_BLK_SZ];
+	अचिन्हित अक्षर V[DEFAULT_BLK_SZ];
+	u32 अक्रम_data_valid;
+	काष्ठा crypto_cipher *tfm;
 	u32 flags;
-};
+पूर्ण;
 
-static int dbg;
+अटल पूर्णांक dbg;
 
-static void hexdump(char *note, unsigned char *buf, unsigned int len)
-{
-	if (dbg) {
-		printk(KERN_CRIT "%s", note);
-		print_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET,
+अटल व्योम hexdump(अक्षर *note, अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक len)
+अणु
+	अगर (dbg) अणु
+		prपूर्णांकk(KERN_CRIT "%s", note);
+		prपूर्णांक_hex_dump(KERN_CONT, "", DUMP_PREFIX_OFFSET,
 				16, 1,
 				buf, len, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define dbgprint(format, args...) do {\
-if (dbg)\
-	printk(format, ##args);\
-} while (0)
+#घोषणा dbgprपूर्णांक(क्रमmat, args...) करो अणु\
+अगर (dbg)\
+	prपूर्णांकk(क्रमmat, ##args);\
+पूर्ण जबतक (0)
 
-static void xor_vectors(unsigned char *in1, unsigned char *in2,
-			unsigned char *out, unsigned int size)
-{
-	int i;
+अटल व्योम xor_vectors(अचिन्हित अक्षर *in1, अचिन्हित अक्षर *in2,
+			अचिन्हित अक्षर *out, अचिन्हित पूर्णांक size)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < size; i++)
+	क्रम (i = 0; i < size; i++)
 		out[i] = in1[i] ^ in2[i];
 
-}
+पूर्ण
 /*
- * Returns DEFAULT_BLK_SZ bytes of random data per call
- * returns 0 if generation succeeded, <0 if something went wrong
+ * Returns DEFAULT_BLK_SZ bytes of अक्रमom data per call
+ * वापसs 0 अगर generation succeeded, <0 अगर something went wrong
  */
-static int _get_more_prng_bytes(struct prng_context *ctx, int cont_test)
-{
-	int i;
-	unsigned char tmp[DEFAULT_BLK_SZ];
-	unsigned char *output = NULL;
+अटल पूर्णांक _get_more_prng_bytes(काष्ठा prng_context *ctx, पूर्णांक cont_test)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर पंचांगp[DEFAULT_BLK_SZ];
+	अचिन्हित अक्षर *output = शून्य;
 
 
-	dbgprint(KERN_CRIT "Calling _get_more_prng_bytes for context %p\n",
+	dbgprपूर्णांक(KERN_CRIT "Calling _get_more_prng_bytes for context %p\n",
 		ctx);
 
 	hexdump("Input DT: ", ctx->DT, DEFAULT_BLK_SZ);
@@ -95,380 +96,380 @@ static int _get_more_prng_bytes(struct prng_context *ctx, int cont_test)
 	/*
 	 * This algorithm is a 3 stage state machine
 	 */
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 
-		switch (i) {
-		case 0:
+		चयन (i) अणु
+		हाल 0:
 			/*
 			 * Start by encrypting the counter value
-			 * This gives us an intermediate value I
+			 * This gives us an पूर्णांकermediate value I
 			 */
-			memcpy(tmp, ctx->DT, DEFAULT_BLK_SZ);
+			स_नकल(पंचांगp, ctx->DT, DEFAULT_BLK_SZ);
 			output = ctx->I;
-			hexdump("tmp stage 0: ", tmp, DEFAULT_BLK_SZ);
-			break;
-		case 1:
+			hexdump("tmp stage 0: ", पंचांगp, DEFAULT_BLK_SZ);
+			अवरोध;
+		हाल 1:
 
 			/*
 			 * Next xor I with our secret vector V
 			 * encrypt that result to obtain our
-			 * pseudo random data which we output
+			 * pseuकरो अक्रमom data which we output
 			 */
-			xor_vectors(ctx->I, ctx->V, tmp, DEFAULT_BLK_SZ);
-			hexdump("tmp stage 1: ", tmp, DEFAULT_BLK_SZ);
-			output = ctx->rand_data;
-			break;
-		case 2:
+			xor_vectors(ctx->I, ctx->V, पंचांगp, DEFAULT_BLK_SZ);
+			hexdump("tmp stage 1: ", पंचांगp, DEFAULT_BLK_SZ);
+			output = ctx->अक्रम_data;
+			अवरोध;
+		हाल 2:
 			/*
 			 * First check that we didn't produce the same
-			 * random data that we did last time around through this
+			 * अक्रमom data that we did last समय around through this
 			 */
-			if (!memcmp(ctx->rand_data, ctx->last_rand_data,
-					DEFAULT_BLK_SZ)) {
-				if (cont_test) {
+			अगर (!स_भेद(ctx->अक्रम_data, ctx->last_अक्रम_data,
+					DEFAULT_BLK_SZ)) अणु
+				अगर (cont_test) अणु
 					panic("cprng %p Failed repetition check!\n",
 						ctx);
-				}
+				पूर्ण
 
-				printk(KERN_ERR
+				prपूर्णांकk(KERN_ERR
 					"ctx %p Failed repetition check!\n",
 					ctx);
 
 				ctx->flags |= PRNG_NEED_RESET;
-				return -EINVAL;
-			}
-			memcpy(ctx->last_rand_data, ctx->rand_data,
+				वापस -EINVAL;
+			पूर्ण
+			स_नकल(ctx->last_अक्रम_data, ctx->अक्रम_data,
 				DEFAULT_BLK_SZ);
 
 			/*
-			 * Lastly xor the random data with I
+			 * Lastly xor the अक्रमom data with I
 			 * and encrypt that to obtain a new secret vector V
 			 */
-			xor_vectors(ctx->rand_data, ctx->I, tmp,
+			xor_vectors(ctx->अक्रम_data, ctx->I, पंचांगp,
 				DEFAULT_BLK_SZ);
 			output = ctx->V;
-			hexdump("tmp stage 2: ", tmp, DEFAULT_BLK_SZ);
-			break;
-		}
+			hexdump("tmp stage 2: ", पंचांगp, DEFAULT_BLK_SZ);
+			अवरोध;
+		पूर्ण
 
 
-		/* do the encryption */
-		crypto_cipher_encrypt_one(ctx->tfm, output, tmp);
+		/* करो the encryption */
+		crypto_cipher_encrypt_one(ctx->tfm, output, पंचांगp);
 
-	}
+	पूर्ण
 
 	/*
 	 * Now update our DT value
 	 */
-	for (i = DEFAULT_BLK_SZ - 1; i >= 0; i--) {
+	क्रम (i = DEFAULT_BLK_SZ - 1; i >= 0; i--) अणु
 		ctx->DT[i] += 1;
-		if (ctx->DT[i] != 0)
-			break;
-	}
+		अगर (ctx->DT[i] != 0)
+			अवरोध;
+	पूर्ण
 
-	dbgprint("Returning new block for context %p\n", ctx);
-	ctx->rand_data_valid = 0;
+	dbgprपूर्णांक("Returning new block for context %p\n", ctx);
+	ctx->अक्रम_data_valid = 0;
 
 	hexdump("Output DT: ", ctx->DT, DEFAULT_BLK_SZ);
 	hexdump("Output I: ", ctx->I, DEFAULT_BLK_SZ);
 	hexdump("Output V: ", ctx->V, DEFAULT_BLK_SZ);
-	hexdump("New Random Data: ", ctx->rand_data, DEFAULT_BLK_SZ);
+	hexdump("New Random Data: ", ctx->अक्रम_data, DEFAULT_BLK_SZ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Our exported functions */
-static int get_prng_bytes(char *buf, size_t nbytes, struct prng_context *ctx,
-				int do_cont_test)
-{
-	unsigned char *ptr = buf;
-	unsigned int byte_count = (unsigned int)nbytes;
-	int err;
+अटल पूर्णांक get_prng_bytes(अक्षर *buf, माप_प्रकार nbytes, काष्ठा prng_context *ctx,
+				पूर्णांक करो_cont_test)
+अणु
+	अचिन्हित अक्षर *ptr = buf;
+	अचिन्हित पूर्णांक byte_count = (अचिन्हित पूर्णांक)nbytes;
+	पूर्णांक err;
 
 
 	spin_lock_bh(&ctx->prng_lock);
 
 	err = -EINVAL;
-	if (ctx->flags & PRNG_NEED_RESET)
-		goto done;
+	अगर (ctx->flags & PRNG_NEED_RESET)
+		जाओ करोne;
 
 	/*
-	 * If the FIXED_SIZE flag is on, only return whole blocks of
-	 * pseudo random data
+	 * If the FIXED_SIZE flag is on, only वापस whole blocks of
+	 * pseuकरो अक्रमom data
 	 */
 	err = -EINVAL;
-	if (ctx->flags & PRNG_FIXED_SIZE) {
-		if (nbytes < DEFAULT_BLK_SZ)
-			goto done;
+	अगर (ctx->flags & PRNG_FIXED_SIZE) अणु
+		अगर (nbytes < DEFAULT_BLK_SZ)
+			जाओ करोne;
 		byte_count = DEFAULT_BLK_SZ;
-	}
+	पूर्ण
 
 	/*
-	 * Return 0 in case of success as mandated by the kernel
-	 * crypto API interface definition.
+	 * Return 0 in हाल of success as mandated by the kernel
+	 * crypto API पूर्णांकerface definition.
 	 */
 	err = 0;
 
-	dbgprint(KERN_CRIT "getting %d random bytes for context %p\n",
+	dbgprपूर्णांक(KERN_CRIT "getting %d random bytes for context %p\n",
 		byte_count, ctx);
 
 
-remainder:
-	if (ctx->rand_data_valid == DEFAULT_BLK_SZ) {
-		if (_get_more_prng_bytes(ctx, do_cont_test) < 0) {
-			memset(buf, 0, nbytes);
+reमुख्यder:
+	अगर (ctx->अक्रम_data_valid == DEFAULT_BLK_SZ) अणु
+		अगर (_get_more_prng_bytes(ctx, करो_cont_test) < 0) अणु
+			स_रखो(buf, 0, nbytes);
 			err = -EINVAL;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Copy any data less than an entire block
 	 */
-	if (byte_count < DEFAULT_BLK_SZ) {
+	अगर (byte_count < DEFAULT_BLK_SZ) अणु
 empty_rbuf:
-		while (ctx->rand_data_valid < DEFAULT_BLK_SZ) {
-			*ptr = ctx->rand_data[ctx->rand_data_valid];
+		जबतक (ctx->अक्रम_data_valid < DEFAULT_BLK_SZ) अणु
+			*ptr = ctx->अक्रम_data[ctx->अक्रम_data_valid];
 			ptr++;
 			byte_count--;
-			ctx->rand_data_valid++;
-			if (byte_count == 0)
-				goto done;
-		}
-	}
+			ctx->अक्रम_data_valid++;
+			अगर (byte_count == 0)
+				जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Now copy whole blocks
 	 */
-	for (; byte_count >= DEFAULT_BLK_SZ; byte_count -= DEFAULT_BLK_SZ) {
-		if (ctx->rand_data_valid == DEFAULT_BLK_SZ) {
-			if (_get_more_prng_bytes(ctx, do_cont_test) < 0) {
-				memset(buf, 0, nbytes);
+	क्रम (; byte_count >= DEFAULT_BLK_SZ; byte_count -= DEFAULT_BLK_SZ) अणु
+		अगर (ctx->अक्रम_data_valid == DEFAULT_BLK_SZ) अणु
+			अगर (_get_more_prng_bytes(ctx, करो_cont_test) < 0) अणु
+				स_रखो(buf, 0, nbytes);
 				err = -EINVAL;
-				goto done;
-			}
-		}
-		if (ctx->rand_data_valid > 0)
-			goto empty_rbuf;
-		memcpy(ptr, ctx->rand_data, DEFAULT_BLK_SZ);
-		ctx->rand_data_valid += DEFAULT_BLK_SZ;
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+		अगर (ctx->अक्रम_data_valid > 0)
+			जाओ empty_rbuf;
+		स_नकल(ptr, ctx->अक्रम_data, DEFAULT_BLK_SZ);
+		ctx->अक्रम_data_valid += DEFAULT_BLK_SZ;
 		ptr += DEFAULT_BLK_SZ;
-	}
+	पूर्ण
 
 	/*
-	 * Now go back and get any remaining partial block
+	 * Now go back and get any reमुख्यing partial block
 	 */
-	if (byte_count)
-		goto remainder;
+	अगर (byte_count)
+		जाओ reमुख्यder;
 
-done:
+करोne:
 	spin_unlock_bh(&ctx->prng_lock);
-	dbgprint(KERN_CRIT "returning %d from get_prng_bytes in context %p\n",
+	dbgprपूर्णांक(KERN_CRIT "returning %d from get_prng_bytes in context %p\n",
 		err, ctx);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void free_prng_context(struct prng_context *ctx)
-{
-	crypto_free_cipher(ctx->tfm);
-}
+अटल व्योम मुक्त_prng_context(काष्ठा prng_context *ctx)
+अणु
+	crypto_मुक्त_cipher(ctx->tfm);
+पूर्ण
 
-static int reset_prng_context(struct prng_context *ctx,
-			      const unsigned char *key, size_t klen,
-			      const unsigned char *V, const unsigned char *DT)
-{
-	int ret;
-	const unsigned char *prng_key;
+अटल पूर्णांक reset_prng_context(काष्ठा prng_context *ctx,
+			      स्थिर अचिन्हित अक्षर *key, माप_प्रकार klen,
+			      स्थिर अचिन्हित अक्षर *V, स्थिर अचिन्हित अक्षर *DT)
+अणु
+	पूर्णांक ret;
+	स्थिर अचिन्हित अक्षर *prng_key;
 
 	spin_lock_bh(&ctx->prng_lock);
 	ctx->flags |= PRNG_NEED_RESET;
 
-	prng_key = (key != NULL) ? key : (unsigned char *)DEFAULT_PRNG_KEY;
+	prng_key = (key != शून्य) ? key : (अचिन्हित अक्षर *)DEFAULT_PRNG_KEY;
 
-	if (!key)
+	अगर (!key)
 		klen = DEFAULT_PRNG_KSZ;
 
-	if (V)
-		memcpy(ctx->V, V, DEFAULT_BLK_SZ);
-	else
-		memcpy(ctx->V, DEFAULT_V_SEED, DEFAULT_BLK_SZ);
+	अगर (V)
+		स_नकल(ctx->V, V, DEFAULT_BLK_SZ);
+	अन्यथा
+		स_नकल(ctx->V, DEFAULT_V_SEED, DEFAULT_BLK_SZ);
 
-	if (DT)
-		memcpy(ctx->DT, DT, DEFAULT_BLK_SZ);
-	else
-		memset(ctx->DT, 0, DEFAULT_BLK_SZ);
+	अगर (DT)
+		स_नकल(ctx->DT, DT, DEFAULT_BLK_SZ);
+	अन्यथा
+		स_रखो(ctx->DT, 0, DEFAULT_BLK_SZ);
 
-	memset(ctx->rand_data, 0, DEFAULT_BLK_SZ);
-	memset(ctx->last_rand_data, 0, DEFAULT_BLK_SZ);
+	स_रखो(ctx->अक्रम_data, 0, DEFAULT_BLK_SZ);
+	स_रखो(ctx->last_अक्रम_data, 0, DEFAULT_BLK_SZ);
 
-	ctx->rand_data_valid = DEFAULT_BLK_SZ;
+	ctx->अक्रम_data_valid = DEFAULT_BLK_SZ;
 
 	ret = crypto_cipher_setkey(ctx->tfm, prng_key, klen);
-	if (ret) {
-		dbgprint(KERN_CRIT "PRNG: setkey() failed flags=%x\n",
+	अगर (ret) अणु
+		dbgprपूर्णांक(KERN_CRIT "PRNG: setkey() failed flags=%x\n",
 			crypto_cipher_get_flags(ctx->tfm));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = 0;
 	ctx->flags &= ~PRNG_NEED_RESET;
 out:
 	spin_unlock_bh(&ctx->prng_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cprng_init(struct crypto_tfm *tfm)
-{
-	struct prng_context *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक cprng_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा prng_context *ctx = crypto_tfm_ctx(tfm);
 
 	spin_lock_init(&ctx->prng_lock);
 	ctx->tfm = crypto_alloc_cipher("aes", 0, 0);
-	if (IS_ERR(ctx->tfm)) {
-		dbgprint(KERN_CRIT "Failed to alloc tfm for context %p\n",
+	अगर (IS_ERR(ctx->tfm)) अणु
+		dbgprपूर्णांक(KERN_CRIT "Failed to alloc tfm for context %p\n",
 				ctx);
-		return PTR_ERR(ctx->tfm);
-	}
+		वापस PTR_ERR(ctx->tfm);
+	पूर्ण
 
-	if (reset_prng_context(ctx, NULL, DEFAULT_PRNG_KSZ, NULL, NULL) < 0)
-		return -EINVAL;
+	अगर (reset_prng_context(ctx, शून्य, DEFAULT_PRNG_KSZ, शून्य, शून्य) < 0)
+		वापस -EINVAL;
 
 	/*
-	 * after allocation, we should always force the user to reset
-	 * so they don't inadvertently use the insecure default values
-	 * without specifying them intentially
+	 * after allocation, we should always क्रमce the user to reset
+	 * so they करोn't inadvertently use the insecure शेष values
+	 * without specअगरying them पूर्णांकentially
 	 */
 	ctx->flags |= PRNG_NEED_RESET;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cprng_exit(struct crypto_tfm *tfm)
-{
-	free_prng_context(crypto_tfm_ctx(tfm));
-}
+अटल व्योम cprng_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	मुक्त_prng_context(crypto_tfm_ctx(tfm));
+पूर्ण
 
-static int cprng_get_random(struct crypto_rng *tfm,
-			    const u8 *src, unsigned int slen,
-			    u8 *rdata, unsigned int dlen)
-{
-	struct prng_context *prng = crypto_rng_ctx(tfm);
+अटल पूर्णांक cprng_get_अक्रमom(काष्ठा crypto_rng *tfm,
+			    स्थिर u8 *src, अचिन्हित पूर्णांक slen,
+			    u8 *rdata, अचिन्हित पूर्णांक dlen)
+अणु
+	काष्ठा prng_context *prng = crypto_rng_ctx(tfm);
 
-	return get_prng_bytes(rdata, dlen, prng, 0);
-}
+	वापस get_prng_bytes(rdata, dlen, prng, 0);
+पूर्ण
 
 /*
- *  This is the cprng_registered reset method the seed value is
- *  interpreted as the tuple { V KEY DT}
+ *  This is the cprng_रेजिस्टरed reset method the seed value is
+ *  पूर्णांकerpreted as the tuple अणु V KEY DTपूर्ण
  *  V and KEY are required during reset, and DT is optional, detected
  *  as being present by testing the length of the seed
  */
-static int cprng_reset(struct crypto_rng *tfm,
-		       const u8 *seed, unsigned int slen)
-{
-	struct prng_context *prng = crypto_rng_ctx(tfm);
-	const u8 *key = seed + DEFAULT_BLK_SZ;
-	const u8 *dt = NULL;
+अटल पूर्णांक cprng_reset(काष्ठा crypto_rng *tfm,
+		       स्थिर u8 *seed, अचिन्हित पूर्णांक slen)
+अणु
+	काष्ठा prng_context *prng = crypto_rng_ctx(tfm);
+	स्थिर u8 *key = seed + DEFAULT_BLK_SZ;
+	स्थिर u8 *dt = शून्य;
 
-	if (slen < DEFAULT_PRNG_KSZ + DEFAULT_BLK_SZ)
-		return -EINVAL;
+	अगर (slen < DEFAULT_PRNG_KSZ + DEFAULT_BLK_SZ)
+		वापस -EINVAL;
 
-	if (slen >= (2 * DEFAULT_BLK_SZ + DEFAULT_PRNG_KSZ))
+	अगर (slen >= (2 * DEFAULT_BLK_SZ + DEFAULT_PRNG_KSZ))
 		dt = key + DEFAULT_PRNG_KSZ;
 
 	reset_prng_context(prng, key, DEFAULT_PRNG_KSZ, seed, dt);
 
-	if (prng->flags & PRNG_NEED_RESET)
-		return -EINVAL;
-	return 0;
-}
+	अगर (prng->flags & PRNG_NEED_RESET)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CRYPTO_FIPS
-static int fips_cprng_get_random(struct crypto_rng *tfm,
-				 const u8 *src, unsigned int slen,
-				 u8 *rdata, unsigned int dlen)
-{
-	struct prng_context *prng = crypto_rng_ctx(tfm);
+#अगर_घोषित CONFIG_CRYPTO_FIPS
+अटल पूर्णांक fips_cprng_get_अक्रमom(काष्ठा crypto_rng *tfm,
+				 स्थिर u8 *src, अचिन्हित पूर्णांक slen,
+				 u8 *rdata, अचिन्हित पूर्णांक dlen)
+अणु
+	काष्ठा prng_context *prng = crypto_rng_ctx(tfm);
 
-	return get_prng_bytes(rdata, dlen, prng, 1);
-}
+	वापस get_prng_bytes(rdata, dlen, prng, 1);
+पूर्ण
 
-static int fips_cprng_reset(struct crypto_rng *tfm,
-			    const u8 *seed, unsigned int slen)
-{
+अटल पूर्णांक fips_cprng_reset(काष्ठा crypto_rng *tfm,
+			    स्थिर u8 *seed, अचिन्हित पूर्णांक slen)
+अणु
 	u8 rdata[DEFAULT_BLK_SZ];
-	const u8 *key = seed + DEFAULT_BLK_SZ;
-	int rc;
+	स्थिर u8 *key = seed + DEFAULT_BLK_SZ;
+	पूर्णांक rc;
 
-	struct prng_context *prng = crypto_rng_ctx(tfm);
+	काष्ठा prng_context *prng = crypto_rng_ctx(tfm);
 
-	if (slen < DEFAULT_PRNG_KSZ + DEFAULT_BLK_SZ)
-		return -EINVAL;
+	अगर (slen < DEFAULT_PRNG_KSZ + DEFAULT_BLK_SZ)
+		वापस -EINVAL;
 
 	/* fips strictly requires seed != key */
-	if (!memcmp(seed, key, DEFAULT_PRNG_KSZ))
-		return -EINVAL;
+	अगर (!स_भेद(seed, key, DEFAULT_PRNG_KSZ))
+		वापस -EINVAL;
 
 	rc = cprng_reset(tfm, seed, slen);
 
-	if (!rc)
-		goto out;
+	अगर (!rc)
+		जाओ out;
 
 	/* this primes our continuity test */
 	rc = get_prng_bytes(rdata, DEFAULT_BLK_SZ, prng, 0);
-	prng->rand_data_valid = DEFAULT_BLK_SZ;
+	prng->अक्रम_data_valid = DEFAULT_BLK_SZ;
 
 out:
-	return rc;
-}
-#endif
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर
 
-static struct rng_alg rng_algs[] = { {
-	.generate		= cprng_get_random,
+अटल काष्ठा rng_alg rng_algs[] = अणु अणु
+	.generate		= cprng_get_अक्रमom,
 	.seed			= cprng_reset,
 	.seedsize		= DEFAULT_PRNG_KSZ + 2 * DEFAULT_BLK_SZ,
-	.base			=	{
+	.base			=	अणु
 		.cra_name		= "stdrng",
 		.cra_driver_name	= "ansi_cprng",
 		.cra_priority		= 100,
-		.cra_ctxsize		= sizeof(struct prng_context),
+		.cra_ctxsize		= माप(काष्ठा prng_context),
 		.cra_module		= THIS_MODULE,
 		.cra_init		= cprng_init,
-		.cra_exit		= cprng_exit,
-	}
-#ifdef CONFIG_CRYPTO_FIPS
-}, {
-	.generate		= fips_cprng_get_random,
+		.cra_निकास		= cprng_निकास,
+	पूर्ण
+#अगर_घोषित CONFIG_CRYPTO_FIPS
+पूर्ण, अणु
+	.generate		= fips_cprng_get_अक्रमom,
 	.seed			= fips_cprng_reset,
 	.seedsize		= DEFAULT_PRNG_KSZ + 2 * DEFAULT_BLK_SZ,
-	.base			=	{
+	.base			=	अणु
 		.cra_name		= "fips(ansi_cprng)",
 		.cra_driver_name	= "fips_ansi_cprng",
 		.cra_priority		= 300,
-		.cra_ctxsize		= sizeof(struct prng_context),
+		.cra_ctxsize		= माप(काष्ठा prng_context),
 		.cra_module		= THIS_MODULE,
 		.cra_init		= cprng_init,
-		.cra_exit		= cprng_exit,
-	}
-#endif
-} };
+		.cra_निकास		= cprng_निकास,
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण पूर्ण;
 
 /* Module initalization */
-static int __init prng_mod_init(void)
-{
-	return crypto_register_rngs(rng_algs, ARRAY_SIZE(rng_algs));
-}
+अटल पूर्णांक __init prng_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_rngs(rng_algs, ARRAY_SIZE(rng_algs));
+पूर्ण
 
-static void __exit prng_mod_fini(void)
-{
-	crypto_unregister_rngs(rng_algs, ARRAY_SIZE(rng_algs));
-}
+अटल व्योम __निकास prng_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_rngs(rng_algs, ARRAY_SIZE(rng_algs));
+पूर्ण
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Software Pseudo Random Number Generator");
 MODULE_AUTHOR("Neil Horman <nhorman@tuxdriver.com>");
-module_param(dbg, int, 0);
+module_param(dbg, पूर्णांक, 0);
 MODULE_PARM_DESC(dbg, "Boolean to enable debugging (0/1 == off/on)");
 subsys_initcall(prng_mod_init);
-module_exit(prng_mod_fini);
+module_निकास(prng_mod_fini);
 MODULE_ALIAS_CRYPTO("stdrng");
 MODULE_ALIAS_CRYPTO("ansi_cprng");
 MODULE_IMPORT_NS(CRYPTO_INTERNAL);

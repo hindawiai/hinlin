@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2010 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,22 +23,22 @@
  * Authors: Ben Skeggs
  */
 
-#ifndef __NOUVEAU_PM_H__
-#define __NOUVEAU_PM_H__
+#अगर_अघोषित __NOUVEAU_PM_H__
+#घोषणा __NOUVEAU_PM_H__
 
-struct nouveau_hwmon {
-	struct drm_device *dev;
-	struct device *hwmon;
-};
+काष्ठा nouveau_hwmon अणु
+	काष्ठा drm_device *dev;
+	काष्ठा device *hwmon;
+पूर्ण;
 
-static inline struct nouveau_hwmon *
-nouveau_hwmon(struct drm_device *dev)
-{
-	return nouveau_drm(dev)->hwmon;
-}
+अटल अंतरभूत काष्ठा nouveau_hwmon *
+nouveau_hwmon(काष्ठा drm_device *dev)
+अणु
+	वापस nouveau_drm(dev)->hwmon;
+पूर्ण
 
 /* nouveau_hwmon.c */
-int  nouveau_hwmon_init(struct drm_device *dev);
-void nouveau_hwmon_fini(struct drm_device *dev);
+पूर्णांक  nouveau_hwmon_init(काष्ठा drm_device *dev);
+व्योम nouveau_hwmon_fini(काष्ठा drm_device *dev);
 
-#endif
+#पूर्ण_अगर

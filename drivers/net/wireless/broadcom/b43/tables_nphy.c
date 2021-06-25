@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43 wireless driver
   IEEE 802.11n PHY data tables
 
   Copyright (c) 2008 Michael Buesch <m@bues.ch>
-  Copyright (c) 2010 Rafał Miłecki <zajec5@gmail.com>
+  Copyright (c) 2010 Rafaध Miधecki <zajec5@gmail.com>
 
 
 */
 
-#include "b43.h"
-#include "tables_nphy.h"
-#include "phy_common.h"
-#include "phy_n.h"
+#समावेश "b43.h"
+#समावेश "tables_nphy.h"
+#समावेश "phy_common.h"
+#समावेश "phy_n.h"
 
-static const u8 b43_ntab_adjustpower0[] = {
+अटल स्थिर u8 b43_ntab_adjustघातer0[] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -32,9 +33,9 @@ static const u8 b43_ntab_adjustpower0[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u8 b43_ntab_adjustpower1[] = {
+अटल स्थिर u8 b43_ntab_adjustघातer1[] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -51,13 +52,13 @@ static const u8 b43_ntab_adjustpower1[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u16 b43_ntab_bdi[] = {
+अटल स्थिर u16 b43_ntab_bdi[] = अणु
 	0x0070, 0x0126, 0x012C, 0x0246, 0x048D, 0x04D2,
-};
+पूर्ण;
 
-static const u32 b43_ntab_channelest[] = {
+अटल स्थिर u32 b43_ntab_channelest[] = अणु
 	0x44444444, 0x44444444, 0x44444444, 0x44444444,
 	0x44444444, 0x44444444, 0x44444444, 0x44444444,
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
@@ -82,9 +83,9 @@ static const u32 b43_ntab_channelest[] = {
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
-};
+पूर्ण;
 
-static const u8 b43_ntab_estimatepowerlt0[] = {
+अटल स्थिर u8 b43_ntab_estimateघातerlt0[] = अणु
 	0x50, 0x4F, 0x4E, 0x4D, 0x4C, 0x4B, 0x4A, 0x49,
 	0x48, 0x47, 0x46, 0x45, 0x44, 0x43, 0x42, 0x41,
 	0x40, 0x3F, 0x3E, 0x3D, 0x3C, 0x3B, 0x3A, 0x39,
@@ -93,9 +94,9 @@ static const u8 b43_ntab_estimatepowerlt0[] = {
 	0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21,
 	0x20, 0x1F, 0x1E, 0x1D, 0x1C, 0x1B, 0x1A, 0x19,
 	0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11,
-};
+पूर्ण;
 
-static const u8 b43_ntab_estimatepowerlt1[] = {
+अटल स्थिर u8 b43_ntab_estimateघातerlt1[] = अणु
 	0x50, 0x4F, 0x4E, 0x4D, 0x4C, 0x4B, 0x4A, 0x49,
 	0x48, 0x47, 0x46, 0x45, 0x44, 0x43, 0x42, 0x41,
 	0x40, 0x3F, 0x3E, 0x3D, 0x3C, 0x3B, 0x3A, 0x39,
@@ -104,16 +105,16 @@ static const u8 b43_ntab_estimatepowerlt1[] = {
 	0x28, 0x27, 0x26, 0x25, 0x24, 0x23, 0x22, 0x21,
 	0x20, 0x1F, 0x1E, 0x1D, 0x1C, 0x1B, 0x1A, 0x19,
 	0x18, 0x17, 0x16, 0x15, 0x14, 0x13, 0x12, 0x11,
-};
+पूर्ण;
 
-static const u8 b43_ntab_framelookup[] = {
+अटल स्थिर u8 b43_ntab_framelookup[] = अणु
 	0x02, 0x04, 0x14, 0x14, 0x03, 0x05, 0x16, 0x16,
 	0x0A, 0x0C, 0x1C, 0x1C, 0x0B, 0x0D, 0x1E, 0x1E,
 	0x06, 0x08, 0x18, 0x18, 0x07, 0x09, 0x1A, 0x1A,
 	0x0E, 0x10, 0x20, 0x28, 0x0F, 0x11, 0x22, 0x2A,
-};
+पूर्ण;
 
-static const u32 b43_ntab_framestruct[] = {
+अटल स्थिर u32 b43_ntab_frameकाष्ठा[] = अणु
 	0x08004A04, 0x00100000, 0x01000A05, 0x00100020,
 	0x09804506, 0x00100030, 0x09804507, 0x00100030,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -322,9 +323,9 @@ static const u32 b43_ntab_framestruct[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_gainctl0[] = {
+अटल स्थिर u32 b43_ntab_gainctl0[] = अणु
 	0x03CC2B44, 0x03CC2B42, 0x03CC2B40, 0x03CC2B3E,
 	0x03CC2B3D, 0x03CC2B3B, 0x03C82B44, 0x03C82B42,
 	0x03C82B40, 0x03C82B3E, 0x03C82B3D, 0x03C82B3B,
@@ -357,9 +358,9 @@ static const u32 b43_ntab_gainctl0[] = {
 	0x03802B18, 0x03802B18, 0x03802B18, 0x03802B18,
 	0x03802B18, 0x03802B18, 0x03802B18, 0x03802B18,
 	0x03802B18, 0x03802B18, 0x03802B18, 0x00002B00,
-};
+पूर्ण;
 
-static const u32 b43_ntab_gainctl1[] = {
+अटल स्थिर u32 b43_ntab_gainctl1[] = अणु
 	0x03CC2B44, 0x03CC2B42, 0x03CC2B40, 0x03CC2B3E,
 	0x03CC2B3D, 0x03CC2B3B, 0x03C82B44, 0x03C82B42,
 	0x03C82B40, 0x03C82B3E, 0x03C82B3D, 0x03C82B3B,
@@ -392,14 +393,14 @@ static const u32 b43_ntab_gainctl1[] = {
 	0x03802B18, 0x03802B18, 0x03802B18, 0x03802B18,
 	0x03802B18, 0x03802B18, 0x03802B18, 0x03802B18,
 	0x03802B18, 0x03802B18, 0x03802B18, 0x00002B00,
-};
+पूर्ण;
 
-static const u32 b43_ntab_intlevel[] = {
+अटल स्थिर u32 b43_ntab_पूर्णांकlevel[] = अणु
 	0x00802070, 0x0671188D, 0x0A60192C, 0x0A300E46,
 	0x00C1188D, 0x080024D2, 0x00000070,
-};
+पूर्ण;
 
-static const u32 b43_ntab_iqlt0[] = {
+अटल स्थिर u32 b43_ntab_iqlt0[] = अणु
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
@@ -432,9 +433,9 @@ static const u32 b43_ntab_iqlt0[] = {
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
-};
+पूर्ण;
 
-static const u32 b43_ntab_iqlt1[] = {
+अटल स्थिर u32 b43_ntab_iqlt1[] = अणु
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
@@ -467,9 +468,9 @@ static const u32 b43_ntab_iqlt1[] = {
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
 	0x0000007F, 0x0000007F, 0x0000007F, 0x0000007F,
-};
+पूर्ण;
 
-static const u16 b43_ntab_loftlt0[] = {
+अटल स्थिर u16 b43_ntab_loftlt0[] = अणु
 	0x0000, 0x0101, 0x0002, 0x0103, 0x0000, 0x0101,
 	0x0002, 0x0103, 0x0000, 0x0101, 0x0002, 0x0103,
 	0x0000, 0x0101, 0x0002, 0x0103, 0x0000, 0x0101,
@@ -492,9 +493,9 @@ static const u16 b43_ntab_loftlt0[] = {
 	0x0002, 0x0103, 0x0000, 0x0101, 0x0002, 0x0103,
 	0x0000, 0x0101, 0x0002, 0x0103, 0x0000, 0x0101,
 	0x0002, 0x0103,
-};
+पूर्ण;
 
-static const u16 b43_ntab_loftlt1[] = {
+अटल स्थिर u16 b43_ntab_loftlt1[] = अणु
 	0x0000, 0x0101, 0x0002, 0x0103, 0x0000, 0x0101,
 	0x0002, 0x0103, 0x0000, 0x0101, 0x0002, 0x0103,
 	0x0000, 0x0101, 0x0002, 0x0103, 0x0000, 0x0101,
@@ -517,9 +518,9 @@ static const u16 b43_ntab_loftlt1[] = {
 	0x0002, 0x0103, 0x0000, 0x0101, 0x0002, 0x0103,
 	0x0000, 0x0101, 0x0002, 0x0103, 0x0000, 0x0101,
 	0x0002, 0x0103,
-};
+पूर्ण;
 
-static const u8 b43_ntab_mcs[] = {
+अटल स्थिर u8 b43_ntab_mcs[] = अणु
 	0x00, 0x08, 0x0A, 0x10, 0x12, 0x19, 0x1A, 0x1C,
 	0x40, 0x48, 0x4A, 0x50, 0x52, 0x59, 0x5A, 0x5C,
 	0x80, 0x88, 0x8A, 0x90, 0x92, 0x99, 0x9A, 0x9C,
@@ -536,9 +537,9 @@ static const u8 b43_ntab_mcs[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u32 b43_ntab_noisevar10[] = {
+अटल स्थिर u32 b43_ntab_noisevar10[] = अणु
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
@@ -603,9 +604,9 @@ static const u32 b43_ntab_noisevar10[] = {
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
-};
+पूर्ण;
 
-static const u32 b43_ntab_noisevar11[] = {
+अटल स्थिर u32 b43_ntab_noisevar11[] = अणु
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
@@ -670,9 +671,9 @@ static const u32 b43_ntab_noisevar11[] = {
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
 	0x020C020C, 0x0000014D, 0x020C020C, 0x0000014D,
-};
+पूर्ण;
 
-static const u16 b43_ntab_pilot[] = {
+अटल स्थिर u16 b43_ntab_pilot[] = अणु
 	0xFF08, 0xFF08, 0xFF08, 0xFF08, 0xFF08, 0xFF08,
 	0xFF08, 0xFF08, 0x80D5, 0x80D5, 0x80D5, 0x80D5,
 	0x80D5, 0x80D5, 0x80D5, 0x80D5, 0xFF0A, 0xFF82,
@@ -688,14 +689,14 @@ static const u16 b43_ntab_pilot[] = {
 	0xF002, 0xF800, 0xF200, 0xF080, 0xF020, 0xF008,
 	0xFFFF, 0xFFFF, 0xF00A, 0xF802, 0xFA00, 0xF280,
 	0xF0A0, 0xF028, 0xFFFF, 0xFFFF,
-};
+पूर्ण;
 
-static const u32 b43_ntab_pilotlt[] = {
+अटल स्थिर u32 b43_ntab_pilotlt[] = अणु
 	0x76540123, 0x62407351, 0x76543201, 0x76540213,
 	0x76540123, 0x76430521,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi20a0[] = {
+अटल स्थिर u32 b43_ntab_tdi20a0[] = अणु
 	0x00091226, 0x000A1429, 0x000B56AD, 0x000C58B0,
 	0x000D5AB3, 0x000E9CB6, 0x000F9EBA, 0x0000C13D,
 	0x00020301, 0x00030504, 0x00040708, 0x0005090B,
@@ -710,9 +711,9 @@ static const u32 b43_ntab_tdi20a0[] = {
 	0x000F5E10, 0x00008093, 0x00018297, 0x0002C49A,
 	0x0003C680, 0x0004C880, 0x00060B00, 0x00070D00,
 	0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi20a1[] = {
+अटल स्थिर u32 b43_ntab_tdi20a1[] = अणु
 	0x00014B26, 0x00028D29, 0x000393AD, 0x00049630,
 	0x0005D833, 0x0006DA36, 0x00099C3A, 0x000A9E3D,
 	0x000BC081, 0x000CC284, 0x000DC488, 0x000F068B,
@@ -727,9 +728,9 @@ static const u32 b43_ntab_tdi20a1[] = {
 	0x00095B90, 0x000A5D93, 0x000B9F97, 0x000C821A,
 	0x000D8400, 0x000EC600, 0x000FC800, 0x00010A00,
 	0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi40a0[] = {
+अटल स्थिर u32 b43_ntab_tdi40a0[] = अणु
 	0x0011A346, 0x00136CCF, 0x0014F5D9, 0x001641E2,
 	0x0017CB6B, 0x00195475, 0x001B2383, 0x001CAD0C,
 	0x001E7616, 0x0000821F, 0x00020BA8, 0x0003D4B2,
@@ -758,9 +759,9 @@ static const u32 b43_ntab_tdi40a0[] = {
 	0x00039374, 0x00051CFD, 0x0006EC0B, 0x00087515,
 	0x0009FE9E, 0x000B4AA7, 0x000CD3B1, 0x000E9D3A,
 	0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi40a1[] = {
+अटल स्थिर u32 b43_ntab_tdi40a1[] = अणु
 	0x001EDB36, 0x000129CA, 0x0002B353, 0x00047CDD,
 	0x0005C8E6, 0x000791EF, 0x00091BF9, 0x000AAA07,
 	0x000C3391, 0x000DFD1A, 0x00120923, 0x0013D22D,
@@ -789,9 +790,9 @@ static const u32 b43_ntab_tdi40a1[] = {
 	0x001390EE, 0x00151A78, 0x0016A906, 0x00183290,
 	0x0019BC19, 0x001B4822, 0x001CD12C, 0x001E9AB5,
 	0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdtrn[] = {
+अटल स्थिर u32 b43_ntab_tdtrn[] = अणु
 	0x061C061C, 0x0050EE68, 0xF592FE36, 0xFE5212F6,
 	0x00000C38, 0xFE5212F6, 0xF592FE36, 0x0050EE68,
 	0x061C061C, 0xEE680050, 0xFE36F592, 0x12F6FE52,
@@ -968,9 +969,9 @@ static const u32 b43_ntab_tdtrn[] = {
 	0xFA58FC00, 0xFC9C0926, 0xF800098E, 0x0710F8E4,
 	0x05A8FA58, 0xF8F0071C, 0xF800098E, 0x0364F6DA,
 	0xFA58FC00, 0x0B64FC7E, 0x0800F7B6, 0x00F006BE,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tmap[] = {
+अटल स्थिर u32 b43_ntab_पंचांगap[] = अणु
 	0x8A88AA80, 0x8AAAAA8A, 0x8A8A8AA8, 0x00000888,
 	0x88000000, 0x8A8A88AA, 0x8AA88888, 0x8888A8A8,
 	0xF1111110, 0x11111111, 0x11F11111, 0x00000111,
@@ -1083,10 +1084,10 @@ static const u32 b43_ntab_tmap[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-/* static tables, PHY revision >= 3 */
-static const u32 b43_ntab_framestruct_r3[] = {
+/* अटल tables, PHY revision >= 3 */
+अटल स्थिर u32 b43_ntab_frameकाष्ठा_r3[] = अणु
 	0x08004a04, 0x00100000, 0x01000a05, 0x00100020,
 	0x09804506, 0x00100030, 0x09804507, 0x00100030,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -1295,9 +1296,9 @@ static const u32 b43_ntab_framestruct_r3[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u16 b43_ntab_pilot_r3[] = {
+अटल स्थिर u16 b43_ntab_pilot_r3[] = अणु
 	0xff08, 0xff08, 0xff08, 0xff08, 0xff08, 0xff08,
 	0xff08, 0xff08, 0x80d5, 0x80d5, 0x80d5, 0x80d5,
 	0x80d5, 0x80d5, 0x80d5, 0x80d5, 0xff0a, 0xff82,
@@ -1313,9 +1314,9 @@ static const u16 b43_ntab_pilot_r3[] = {
 	0xf002, 0xf800, 0xf200, 0xf080, 0xf020, 0xf008,
 	0xffff, 0xffff, 0xf00a, 0xf802, 0xfa00, 0xf280,
 	0xf0a0, 0xf028, 0xffff, 0xffff,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tmap_r3[] = {
+अटल स्थिर u32 b43_ntab_पंचांगap_r3[] = अणु
 	0x8a88aa80, 0x8aaaaa8a, 0x8a8a8aa8, 0x00000888,
 	0x88000000, 0x8a8a88aa, 0x8aa88888, 0x8888a8a8,
 	0xf1111110, 0x11111111, 0x11f11111, 0x00000111,
@@ -1428,14 +1429,14 @@ static const u32 b43_ntab_tmap_r3[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_intlevel_r3[] = {
+अटल स्थिर u32 b43_ntab_पूर्णांकlevel_r3[] = अणु
 	0x00802070, 0x0671188d, 0x0a60192c, 0x0a300e46,
 	0x00c1188d, 0x080024d2, 0x00000070,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdtrn_r3[] = {
+अटल स्थिर u32 b43_ntab_tdtrn_r3[] = अणु
 	0x061c061c, 0x0050ee68, 0xf592fe36, 0xfe5212f6,
 	0x00000c38, 0xfe5212f6, 0xf592fe36, 0x0050ee68,
 	0x061c061c, 0xee680050, 0xfe36f592, 0x12f6fe52,
@@ -1612,9 +1613,9 @@ static const u32 b43_ntab_tdtrn_r3[] = {
 	0xfa58fc00, 0xfc9c0926, 0xf800098e, 0x0710f8e4,
 	0x05a8fa58, 0xf8f0071c, 0xf800098e, 0x0364f6da,
 	0xfa58fc00, 0x0b64fc7e, 0x0800f7b6, 0x00f006be,
-};
+पूर्ण;
 
-static const u32 b43_ntab_noisevar_r3[] = {
+अटल स्थिर u32 b43_ntab_noisevar_r3[] = अणु
 	0x02110211, 0x0000014d, 0x02110211, 0x0000014d,
 	0x02110211, 0x0000014d, 0x02110211, 0x0000014d,
 	0x02110211, 0x0000014d, 0x02110211, 0x0000014d,
@@ -1679,9 +1680,9 @@ static const u32 b43_ntab_noisevar_r3[] = {
 	0x02110211, 0x0000014d, 0x02110211, 0x0000014d,
 	0x02110211, 0x0000014d, 0x02110211, 0x0000014d,
 	0x02110211, 0x0000014d, 0x02110211, 0x0000014d,
-};
+पूर्ण;
 
-static const u16 b43_ntab_mcs_r3[] = {
+अटल स्थिर u16 b43_ntab_mcs_r3[] = अणु
 	0x0000, 0x0008, 0x000a, 0x0010, 0x0012, 0x0019,
 	0x001a, 0x001c, 0x0080, 0x0088, 0x008a, 0x0090,
 	0x0092, 0x0099, 0x009a, 0x009c, 0x0100, 0x0108,
@@ -1704,9 +1705,9 @@ static const u16 b43_ntab_mcs_r3[] = {
 	0x0007, 0x0007, 0x0007, 0x0007, 0x0007, 0x0007,
 	0x0007, 0x0007, 0x0007, 0x0007, 0x0007, 0x0007,
 	0x0007, 0x0007,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi20a0_r3[] = {
+अटल स्थिर u32 b43_ntab_tdi20a0_r3[] = अणु
 	0x00091226, 0x000a1429, 0x000b56ad, 0x000c58b0,
 	0x000d5ab3, 0x000e9cb6, 0x000f9eba, 0x0000c13d,
 	0x00020301, 0x00030504, 0x00040708, 0x0005090b,
@@ -1721,9 +1722,9 @@ static const u32 b43_ntab_tdi20a0_r3[] = {
 	0x000f5e10, 0x00008093, 0x00018297, 0x0002c49a,
 	0x0003c680, 0x0004c880, 0x00060b00, 0x00070d00,
 	0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi20a1_r3[] = {
+अटल स्थिर u32 b43_ntab_tdi20a1_r3[] = अणु
 	0x00014b26, 0x00028d29, 0x000393ad, 0x00049630,
 	0x0005d833, 0x0006da36, 0x00099c3a, 0x000a9e3d,
 	0x000bc081, 0x000cc284, 0x000dc488, 0x000f068b,
@@ -1738,9 +1739,9 @@ static const u32 b43_ntab_tdi20a1_r3[] = {
 	0x00095b90, 0x000a5d93, 0x000b9f97, 0x000c821a,
 	0x000d8400, 0x000ec600, 0x000fc800, 0x00010a00,
 	0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi40a0_r3[] = {
+अटल स्थिर u32 b43_ntab_tdi40a0_r3[] = अणु
 	0x0011a346, 0x00136ccf, 0x0014f5d9, 0x001641e2,
 	0x0017cb6b, 0x00195475, 0x001b2383, 0x001cad0c,
 	0x001e7616, 0x0000821f, 0x00020ba8, 0x0003d4b2,
@@ -1769,9 +1770,9 @@ static const u32 b43_ntab_tdi40a0_r3[] = {
 	0x00039374, 0x00051cfd, 0x0006ec0b, 0x00087515,
 	0x0009fe9e, 0x000b4aa7, 0x000cd3b1, 0x000e9d3a,
 	0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tdi40a1_r3[] = {
+अटल स्थिर u32 b43_ntab_tdi40a1_r3[] = अणु
 	0x001edb36, 0x000129ca, 0x0002b353, 0x00047cdd,
 	0x0005c8e6, 0x000791ef, 0x00091bf9, 0x000aaa07,
 	0x000c3391, 0x000dfd1a, 0x00120923, 0x0013d22d,
@@ -1800,14 +1801,14 @@ static const u32 b43_ntab_tdi40a1_r3[] = {
 	0x001390ee, 0x00151a78, 0x0016a906, 0x00183290,
 	0x0019bc19, 0x001b4822, 0x001cd12c, 0x001e9ab5,
 	0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_pilotlt_r3[] = {
+अटल स्थिर u32 b43_ntab_pilotlt_r3[] = अणु
 	0x76540213, 0x62407351, 0x76543210, 0x76540213,
 	0x76540213, 0x76430521,
-};
+पूर्ण;
 
-static const u32 b43_ntab_channelest_r3[] = {
+अटल स्थिर u32 b43_ntab_channelest_r3[] = अणु
 	0x44444444, 0x44444444, 0x44444444, 0x44444444,
 	0x44444444, 0x44444444, 0x44444444, 0x44444444,
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
@@ -1832,16 +1833,16 @@ static const u32 b43_ntab_channelest_r3[] = {
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
 	0x10101010, 0x10101010, 0x10101010, 0x10101010,
-};
+पूर्ण;
 
-static const u8 b43_ntab_framelookup_r3[] = {
+अटल स्थिर u8 b43_ntab_framelookup_r3[] = अणु
 	0x02, 0x04, 0x14, 0x14, 0x03, 0x05, 0x16, 0x16,
 	0x0a, 0x0c, 0x1c, 0x1c, 0x0b, 0x0d, 0x1e, 0x1e,
 	0x06, 0x08, 0x18, 0x18, 0x07, 0x09, 0x1a, 0x1a,
 	0x0e, 0x10, 0x20, 0x28, 0x0f, 0x11, 0x22, 0x2a,
-};
+पूर्ण;
 
-static const u8 b43_ntab_estimatepowerlt0_r3[] = {
+अटल स्थिर u8 b43_ntab_estimateघातerlt0_r3[] = अणु
 	0x55, 0x54, 0x54, 0x53, 0x52, 0x52, 0x51, 0x51,
 	0x50, 0x4f, 0x4f, 0x4e, 0x4e, 0x4d, 0x4c, 0x4c,
 	0x4b, 0x4a, 0x49, 0x49, 0x48, 0x47, 0x46, 0x46,
@@ -1850,9 +1851,9 @@ static const u8 b43_ntab_estimatepowerlt0_r3[] = {
 	0x35, 0x33, 0x32, 0x31, 0x2f, 0x2e, 0x2c, 0x2b,
 	0x29, 0x27, 0x25, 0x23, 0x21, 0x1f, 0x1d, 0x1a,
 	0x18, 0x15, 0x12, 0x0e, 0x0b, 0x07, 0x02, 0xfd,
-};
+पूर्ण;
 
-static const u8 b43_ntab_estimatepowerlt1_r3[] = {
+अटल स्थिर u8 b43_ntab_estimateघातerlt1_r3[] = अणु
 	0x55, 0x54, 0x54, 0x53, 0x52, 0x52, 0x51, 0x51,
 	0x50, 0x4f, 0x4f, 0x4e, 0x4e, 0x4d, 0x4c, 0x4c,
 	0x4b, 0x4a, 0x49, 0x49, 0x48, 0x47, 0x46, 0x46,
@@ -1861,9 +1862,9 @@ static const u8 b43_ntab_estimatepowerlt1_r3[] = {
 	0x35, 0x33, 0x32, 0x31, 0x2f, 0x2e, 0x2c, 0x2b,
 	0x29, 0x27, 0x25, 0x23, 0x21, 0x1f, 0x1d, 0x1a,
 	0x18, 0x15, 0x12, 0x0e, 0x0b, 0x07, 0x02, 0xfd,
-};
+पूर्ण;
 
-static const u8 b43_ntab_adjustpower0_r3[] = {
+अटल स्थिर u8 b43_ntab_adjustघातer0_r3[] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1880,9 +1881,9 @@ static const u8 b43_ntab_adjustpower0_r3[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u8 b43_ntab_adjustpower1_r3[] = {
+अटल स्थिर u8 b43_ntab_adjustघातer1_r3[] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1899,9 +1900,9 @@ static const u8 b43_ntab_adjustpower1_r3[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u32 b43_ntab_gainctl0_r3[] = {
+अटल स्थिर u32 b43_ntab_gainctl0_r3[] = अणु
 	0x5bf70044, 0x5bf70042, 0x5bf70040, 0x5bf7003e,
 	0x5bf7003c, 0x5bf7003b, 0x5bf70039, 0x5bf70037,
 	0x5bf70036, 0x5bf70034, 0x5bf70033, 0x5bf70031,
@@ -1934,9 +1935,9 @@ static const u32 b43_ntab_gainctl0_r3[] = {
 	0x5b070026, 0x5b070025, 0x5b070024, 0x5b070023,
 	0x5b070022, 0x5b070021, 0x5b070020, 0x5b07001f,
 	0x5b07001e, 0x5b07001d, 0x5b07001d, 0x5b07001c,
-};
+पूर्ण;
 
-static const u32 b43_ntab_gainctl1_r3[] = {
+अटल स्थिर u32 b43_ntab_gainctl1_r3[] = अणु
 	0x5bf70044, 0x5bf70042, 0x5bf70040, 0x5bf7003e,
 	0x5bf7003c, 0x5bf7003b, 0x5bf70039, 0x5bf70037,
 	0x5bf70036, 0x5bf70034, 0x5bf70033, 0x5bf70031,
@@ -1969,9 +1970,9 @@ static const u32 b43_ntab_gainctl1_r3[] = {
 	0x5b070026, 0x5b070025, 0x5b070024, 0x5b070023,
 	0x5b070022, 0x5b070021, 0x5b070020, 0x5b07001f,
 	0x5b07001e, 0x5b07001d, 0x5b07001d, 0x5b07001c,
-};
+पूर्ण;
 
-static const u32 b43_ntab_iqlt0_r3[] = {
+अटल स्थिर u32 b43_ntab_iqlt0_r3[] = अणु
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -2004,9 +2005,9 @@ static const u32 b43_ntab_iqlt0_r3[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_ntab_iqlt1_r3[] = {
+अटल स्थिर u32 b43_ntab_iqlt1_r3[] = अणु
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -2039,9 +2040,9 @@ static const u32 b43_ntab_iqlt1_r3[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u16 b43_ntab_loftlt0_r3[] = {
+अटल स्थिर u16 b43_ntab_loftlt0_r3[] = अणु
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2064,9 +2065,9 @@ static const u16 b43_ntab_loftlt0_r3[] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000,
-};
+पूर्ण;
 
-static const u16 b43_ntab_loftlt1_r3[] = {
+अटल स्थिर u16 b43_ntab_loftlt1_r3[] = अणु
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -2089,13 +2090,13 @@ static const u16 b43_ntab_loftlt1_r3[] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000,
-};
+पूर्ण;
 
-/* volatile  tables, PHY revision >= 3 */
+/* अस्थिर  tables, PHY revision >= 3 */
 
 /* indexed by antswctl2g */
-static const u16 b43_ntab_antswctl_r3[4][32] = {
-	{
+अटल स्थिर u16 b43_ntab_antswctl_r3[4][32] = अणु
+	अणु
 		0x0082, 0x0082, 0x0211, 0x0222, 0x0328,
 		0x0000, 0x0000, 0x0000, 0x0144, 0x0000,
 		0x0000, 0x0000, 0x0188, 0x0000, 0x0000,
@@ -2103,8 +2104,8 @@ static const u16 b43_ntab_antswctl_r3[4][32] = {
 		0x0328, 0x0000, 0x0000, 0x0000, 0x0144,
 		0x0000, 0x0000, 0x0000, 0x0188, 0x0000,
 		0x0000, 0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		0x0022, 0x0022, 0x0011, 0x0022, 0x0022,
 		0x0000, 0x0000, 0x0000, 0x0011, 0x0000,
 		0x0000, 0x0000, 0x0022, 0x0000, 0x0000,
@@ -2112,8 +2113,8 @@ static const u16 b43_ntab_antswctl_r3[4][32] = {
 		0x0022, 0x0000, 0x0000, 0x0000, 0x0011,
 		0x0000, 0x0000, 0x0000, 0x0022, 0x0000,
 		0x0000, 0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		0x0088, 0x0088, 0x0044, 0x0088, 0x0088,
 		0x0000, 0x0000, 0x0000, 0x0044, 0x0000,
 		0x0000, 0x0000, 0x0088, 0x0000, 0x0000,
@@ -2121,8 +2122,8 @@ static const u16 b43_ntab_antswctl_r3[4][32] = {
 		0x0088, 0x0000, 0x0000, 0x0000, 0x0044,
 		0x0000, 0x0000, 0x0000, 0x0088, 0x0000,
 		0x0000, 0x0000,
-	},
-	{
+	पूर्ण,
+	अणु
 		0x0022, 0x0022, 0x0011, 0x0022, 0x0000,
 		0x0000, 0x0000, 0x0000, 0x0011, 0x0000,
 		0x0000, 0x0000, 0x0022, 0x0000, 0x0000,
@@ -2130,13 +2131,13 @@ static const u16 b43_ntab_antswctl_r3[4][32] = {
 		0x0000, 0x0000, 0x0000, 0x0000, 0x0011,
 		0x0000, 0x0000, 0x0000, 0x0022, 0x0000,
 		0x0000, 0x03cc,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-/* static tables, PHY revision >= 7 */
+/* अटल tables, PHY revision >= 7 */
 
 /* Copied from brcmsmac (5.75.11) */
-static const u32 b43_ntab_tmap_r7[] = {
+अटल स्थिर u32 b43_ntab_पंचांगap_r7[] = अणु
 	0x8a88aa80, 0x8aaaaa8a, 0x8a8a8aa8, 0x00000888,
 	0x88000000, 0x8a8a88aa, 0x8aa88888, 0x8888a8a8,
 	0xf1111110, 0x11111111, 0x11f11111, 0x00000111,
@@ -2249,10 +2250,10 @@ static const u32 b43_ntab_tmap_r7[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.141 */
-static const u32 b43_ntab_noisevar_r7[] = {
+अटल स्थिर u32 b43_ntab_noisevar_r7[] = अणु
 	0x020c020c, 0x0000014d, 0x020c020c, 0x0000014d,
 	0x020c020c, 0x0000014d, 0x020c020c, 0x0000014d,
 	0x020c020c, 0x0000014d, 0x020c020c, 0x0000014d,
@@ -2317,13 +2318,13 @@ static const u32 b43_ntab_noisevar_r7[] = {
 	0x020c020c, 0x0000014d, 0x020c020c, 0x0000014d,
 	0x020c020c, 0x0000014d, 0x020c020c, 0x0000014d,
 	0x020c020c, 0x0000014d, 0x020c020c, 0x0000014d,
-};
+पूर्ण;
 
 /**************************************************
  * TX gain tables
  **************************************************/
 
-static const u32 b43_ntab_tx_gain_rev0_1_2[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_rev0_1_2[] = अणु
 	0x03cc2b44, 0x03cc2b42, 0x03cc2a44, 0x03cc2a42,
 	0x03cc2944, 0x03c82b44, 0x03c82b42, 0x03c82a44,
 	0x03c82a42, 0x03c82944, 0x03c82942, 0x03c82844,
@@ -2356,11 +2357,11 @@ static const u32 b43_ntab_tx_gain_rev0_1_2[] = {
 	0x03801842, 0x03801744, 0x03801742, 0x03801644,
 	0x03801642, 0x03801544, 0x03801542, 0x03801444,
 	0x03801442, 0x03801344, 0x03801342, 0x00002b00,
-};
+पूर्ण;
 
 /* EPA 2 GHz */
 
-static const u32 b43_ntab_tx_gain_epa_rev3_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_epa_rev3_2g[] = अणु
 	0x1f410044, 0x1f410042, 0x1f410040, 0x1f41003e,
 	0x1f41003c, 0x1f41003b, 0x1f410039, 0x1f410037,
 	0x1e410044, 0x1e410042, 0x1e410040, 0x1e41003e,
@@ -2393,9 +2394,9 @@ static const u32 b43_ntab_tx_gain_epa_rev3_2g[] = {
 	0x1141003c, 0x1141003b, 0x11410039, 0x11410037,
 	0x10410044, 0x10410042, 0x10410040, 0x1041003e,
 	0x1041003c, 0x1041003b, 0x10410039, 0x10410037,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tx_gain_epa_rev3_hi_pwr_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_epa_rev3_hi_pwr_2g[] = अणु
 	0x0f410044, 0x0f410042, 0x0f410040, 0x0f41003e,
 	0x0f41003c, 0x0f41003b, 0x0f410039, 0x0f410037,
 	0x0e410044, 0x0e410042, 0x0e410040, 0x0e41003e,
@@ -2428,11 +2429,11 @@ static const u32 b43_ntab_tx_gain_epa_rev3_hi_pwr_2g[] = {
 	0x0141003c, 0x0141003b, 0x01410039, 0x01410037,
 	0x00410044, 0x00410042, 0x00410040, 0x0041003e,
 	0x0041003c, 0x0041003b, 0x00410039, 0x00410037
-};
+पूर्ण;
 
 /* EPA 5 GHz */
 
-static const u32 b43_ntab_tx_gain_epa_rev3_5g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_epa_rev3_5g[] = अणु
 	0xcff70044, 0xcff70042, 0xcff70040, 0xcff7003e,
 	0xcff7003c, 0xcff7003b, 0xcff70039, 0xcff70037,
 	0xcef70044, 0xcef70042, 0xcef70040, 0xcef7003e,
@@ -2465,9 +2466,9 @@ static const u32 b43_ntab_tx_gain_epa_rev3_5g[] = {
 	0xc1f7003c, 0xc1f7003b, 0xc1f70039, 0xc1f70037,
 	0xc0f70044, 0xc0f70042, 0xc0f70040, 0xc0f7003e,
 	0xc0f7003c, 0xc0f7003b, 0xc0f70039, 0xc0f70037,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tx_gain_epa_rev4_5g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_epa_rev4_5g[] = अणु
 	0x2ff20044, 0x2ff20042, 0x2ff20040, 0x2ff2003e,
 	0x2ff2003c, 0x2ff2003b, 0x2ff20039, 0x2ff20037,
 	0x2ef20044, 0x2ef20042, 0x2ef20040, 0x2ef2003e,
@@ -2500,9 +2501,9 @@ static const u32 b43_ntab_tx_gain_epa_rev4_5g[] = {
 	0x21f2003c, 0x21f2003b, 0x21f20039, 0x21f20037,
 	0x20d20043, 0x20d20041, 0x20d2003e, 0x20d2003c,
 	0x20d2003a, 0x20d20038, 0x20d20036, 0x20d20034,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tx_gain_epa_rev4_hi_pwr_5g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_epa_rev4_hi_pwr_5g[] = अणु
 	0x2ff10044, 0x2ff10042, 0x2ff10040, 0x2ff1003e,
 	0x2ff1003c, 0x2ff1003b, 0x2ff10039, 0x2ff10037,
 	0x2ef10044, 0x2ef10042, 0x2ef10040, 0x2ef1003e,
@@ -2535,9 +2536,9 @@ static const u32 b43_ntab_tx_gain_epa_rev4_hi_pwr_5g[] = {
 	0x21f1003c, 0x21f1003b, 0x21f10039, 0x21f10037,
 	0x20d10043, 0x20d10041, 0x20d1003e, 0x20d1003c,
 	0x20d1003a, 0x20d10038, 0x20d10036, 0x20d10034
-};
+पूर्ण;
 
-static const u32 b43_ntab_tx_gain_epa_rev5_5g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_epa_rev5_5g[] = अणु
 	0x0f62004a, 0x0f620048, 0x0f620046, 0x0f620044,
 	0x0f620042, 0x0f620040, 0x0f62003e, 0x0f62003c,
 	0x0e620044, 0x0e620042, 0x0e620040, 0x0e62003e,
@@ -2570,11 +2571,11 @@ static const u32 b43_ntab_tx_gain_epa_rev5_5g[] = {
 	0x01620043, 0x01620042, 0x01620041, 0x01620040,
 	0x00620042, 0x00620040, 0x0062003e, 0x0062003c,
 	0x0062003b, 0x00620039, 0x00620037, 0x00620035,
-};
+पूर्ण;
 
 /* IPA 2 GHz */
 
-static const u32 b43_ntab_tx_gain_ipa_rev3_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_rev3_2g[] = अणु
 	0x5ff7002d, 0x5ff7002b, 0x5ff7002a, 0x5ff70029,
 	0x5ff70028, 0x5ff70027, 0x5ff70026, 0x5ff70025,
 	0x5ef7002d, 0x5ef7002b, 0x5ef7002a, 0x5ef70029,
@@ -2607,9 +2608,9 @@ static const u32 b43_ntab_tx_gain_ipa_rev3_2g[] = {
 	0x51f70028, 0x51f70027, 0x51f70026, 0x51f70025,
 	0x50f7002d, 0x50f7002b, 0x50f7002a, 0x50f70029,
 	0x50f70028, 0x50f70027, 0x50f70026, 0x50f70025,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tx_gain_ipa_rev5_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_rev5_2g[] = अणु
 	0x1ff7002d, 0x1ff7002b, 0x1ff7002a, 0x1ff70029,
 	0x1ff70028, 0x1ff70027, 0x1ff70026, 0x1ff70025,
 	0x1ef7002d, 0x1ef7002b, 0x1ef7002a, 0x1ef70029,
@@ -2642,9 +2643,9 @@ static const u32 b43_ntab_tx_gain_ipa_rev5_2g[] = {
 	0x11f70028, 0x11f70027, 0x11f70026, 0x11f70025,
 	0x10f7002d, 0x10f7002b, 0x10f7002a, 0x10f70029,
 	0x10f70028, 0x10f70027, 0x10f70026, 0x10f70025,
-};
+पूर्ण;
 
-static const u32 b43_ntab_tx_gain_ipa_rev6_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_rev6_2g[] = अणु
 	0x0ff7002d, 0x0ff7002b, 0x0ff7002a, 0x0ff70029,
 	0x0ff70028, 0x0ff70027, 0x0ff70026, 0x0ff70025,
 	0x0ef7002d, 0x0ef7002b, 0x0ef7002a, 0x0ef70029,
@@ -2677,10 +2678,10 @@ static const u32 b43_ntab_tx_gain_ipa_rev6_2g[] = {
 	0x01f70028, 0x01f70027, 0x01f70026, 0x01f70025,
 	0x00f7002d, 0x00f7002b, 0x00f7002a, 0x00f70029,
 	0x00f70028, 0x00f70027, 0x00f70026, 0x00f70025,
-};
+पूर्ण;
 
 /* Copied from brcmsmac (5.75.11): nphy_tpc_txgain_ipa_2g_2057rev5 */
-static const u32 b43_ntab_tx_gain_ipa_2057_rev5_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_2057_rev5_2g[] = अणु
 	0x30ff0031, 0x30e70031, 0x30e7002e, 0x30cf002e,
 	0x30bf002e, 0x30af002e, 0x309f002f, 0x307f0033,
 	0x307f0031, 0x307f002e, 0x3077002e, 0x306f002e,
@@ -2713,10 +2714,10 @@ static const u32 b43_ntab_tx_gain_ipa_2057_rev5_2g[] = {
 	0x300f0715, 0x300f0715, 0x300f0715, 0x300f0715,
 	0x300f0715, 0x300f0715, 0x300f0715, 0x300f0715,
 	0x300f0715, 0x300f0715, 0x300f0715, 0x300f0715,
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.141 */
-static const u32 b43_ntab_tx_gain_ipa_2057_rev9_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_2057_rev9_2g[] = अणु
 	0x60ff0031, 0x60e7002c, 0x60cf002a, 0x60c70029,
 	0x60b70029, 0x60a70029, 0x609f002a, 0x6097002b,
 	0x6087002e, 0x60770031, 0x606f0032, 0x60670034,
@@ -2749,10 +2750,10 @@ static const u32 b43_ntab_tx_gain_ipa_2057_rev9_2g[] = {
 	0x600f0715, 0x600f0715, 0x600f0715, 0x600f0715,
 	0x600f0715, 0x600f0715, 0x600f0715, 0x600f0715,
 	0x600f0715, 0x600f0715, 0x600f0715, 0x600f0715,
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.248 */
-static const u32 b43_ntab_tx_gain_ipa_2057_rev14_2g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_2057_rev14_2g[] = अणु
 	0x50df002e, 0x50cf002d, 0x50bf002c, 0x50b7002b,
 	0x50af002a, 0x50a70029, 0x509f0029, 0x50970028,
 	0x508f0027, 0x50870027, 0x507f0027, 0x50770027,
@@ -2785,11 +2786,11 @@ static const u32 b43_ntab_tx_gain_ipa_2057_rev14_2g[] = {
 	0x500f0015, 0x500f0015, 0x500f0015, 0x500f0015,
 	0x500f0015, 0x500f0015, 0x500f0015, 0x500f0015,
 	0x500f0015, 0x500f0015, 0x500f0015, 0x500f0015,
-};
+पूर्ण;
 
 /* IPA 2 5Hz */
 
-static const u32 b43_ntab_tx_gain_ipa_rev3_5g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_rev3_5g[] = अणु
 	0x7ff70035, 0x7ff70033, 0x7ff70032, 0x7ff70031,
 	0x7ff7002f, 0x7ff7002e, 0x7ff7002d, 0x7ff7002b,
 	0x7ff7002a, 0x7ff70029, 0x7ff70028, 0x7ff70027,
@@ -2822,10 +2823,10 @@ static const u32 b43_ntab_tx_gain_ipa_rev3_5g[] = {
 	0x71f70024, 0x71f70023, 0x70f70028, 0x70f70027,
 	0x70f70026, 0x70f70024, 0x70f70023, 0x70f70022,
 	0x70f70021, 0x70f70020, 0x70f70020, 0x70f7001f,
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.141 */
-static const u32 b43_ntab_tx_gain_ipa_2057_rev9_5g[] = {
+अटल स्थिर u32 b43_ntab_tx_gain_ipa_2057_rev9_5g[] = अणु
 	0x7f7f0053, 0x7f7f004b, 0x7f7f0044, 0x7f7f003f,
 	0x7f7f0039, 0x7f7f0035, 0x7f7f0032, 0x7f7f0030,
 	0x7f7f002d, 0x7e7f0030, 0x7e7f002d, 0x7d7f0032,
@@ -2858,17 +2859,17 @@ static const u32 b43_ntab_tx_gain_ipa_2057_rev9_5g[] = {
 	0x707f0002, 0x707f0002, 0x707f0002, 0x707f0002,
 	0x707f0002, 0x707f0001, 0x707f0001, 0x707f0001,
 	0x707f0001, 0x707f0001, 0x707f0001, 0x707f0001,
-};
+पूर्ण;
 
-const s8 b43_ntab_papd_pga_gain_delta_ipa_2g[] = {
+स्थिर s8 b43_ntab_papd_pga_gain_delta_ipa_2g[] = अणु
 	-114, -108, -98, -91, -84, -78, -70, -62,
 	-54, -46, -39, -31, -23, -15, -8, 0
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.248
  * Entries: 0, 15, 17, 21, 24, 26, 27, 29, 30 were guessed
  */
-static const s16 b43_ntab_rf_pwr_offset_2057_rev9_2g[] = {
+अटल स्थिर s16 b43_ntab_rf_pwr_offset_2057_rev9_2g[] = अणु
 	-133, -133, -107, -92, -81,
 	-73, -66, -61, -56, -52,
 	-48, -44, -41, -37, -34,
@@ -2876,20 +2877,20 @@ static const s16 b43_ntab_rf_pwr_offset_2057_rev9_2g[] = {
 	-17, -14, -12, -10, -9,
 	-7, -5, -4, -3, -2,
 	-1, 0,
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.248 */
-static const s16 b43_ntab_rf_pwr_offset_2057_rev9_5g[] = {
+अटल स्थिर s16 b43_ntab_rf_pwr_offset_2057_rev9_5g[] = अणु
 	-101, -94, -86, -79, -72,
 	-65, -57, -50, -42, -35,
 	-28, -21, -16, -9, -4,
 	0,
-};
+पूर्ण;
 
 /* Extracted from MMIO dump of 6.30.223.248
  * Entries: 0, 26, 28, 29, 30, 31 were guessed
  */
-static const s16 b43_ntab_rf_pwr_offset_2057_rev14_2g[] = {
+अटल स्थिर s16 b43_ntab_rf_pwr_offset_2057_rev14_2g[] = अणु
 	-111, -111, -111, -84, -70,
 	-59, -52, -45, -40, -36,
 	-32, -29, -26, -23, -21,
@@ -2897,76 +2898,76 @@ static const s16 b43_ntab_rf_pwr_offset_2057_rev14_2g[] = {
 	-10, -8, -7, -6, -5,
 	-4, -4, -3, -3, -2,
 	-2, -1,
-};
+पूर्ण;
 
-const u16 tbl_iqcal_gainparams[2][9][8] = {
-	{
-		{ 0x000, 0, 0, 2, 0x69, 0x69, 0x69, 0x69 },
-		{ 0x700, 7, 0, 0, 0x69, 0x69, 0x69, 0x69 },
-		{ 0x710, 7, 1, 0, 0x68, 0x68, 0x68, 0x68 },
-		{ 0x720, 7, 2, 0, 0x67, 0x67, 0x67, 0x67 },
-		{ 0x730, 7, 3, 0, 0x66, 0x66, 0x66, 0x66 },
-		{ 0x740, 7, 4, 0, 0x65, 0x65, 0x65, 0x65 },
-		{ 0x741, 7, 4, 1, 0x65, 0x65, 0x65, 0x65 },
-		{ 0x742, 7, 4, 2, 0x65, 0x65, 0x65, 0x65 },
-		{ 0x743, 7, 4, 3, 0x65, 0x65, 0x65, 0x65 }
-	},
-	{
-		{ 0x000, 7, 0, 0, 0x79, 0x79, 0x79, 0x79 },
-		{ 0x700, 7, 0, 0, 0x79, 0x79, 0x79, 0x79 },
-		{ 0x710, 7, 1, 0, 0x79, 0x79, 0x79, 0x79 },
-		{ 0x720, 7, 2, 0, 0x78, 0x78, 0x78, 0x78 },
-		{ 0x730, 7, 3, 0, 0x78, 0x78, 0x78, 0x78 },
-		{ 0x740, 7, 4, 0, 0x78, 0x78, 0x78, 0x78 },
-		{ 0x741, 7, 4, 1, 0x78, 0x78, 0x78, 0x78 },
-		{ 0x742, 7, 4, 2, 0x78, 0x78, 0x78, 0x78 },
-		{ 0x743, 7, 4, 3, 0x78, 0x78, 0x78, 0x78 }
-	}
-};
+स्थिर u16 tbl_iqcal_gainparams[2][9][8] = अणु
+	अणु
+		अणु 0x000, 0, 0, 2, 0x69, 0x69, 0x69, 0x69 पूर्ण,
+		अणु 0x700, 7, 0, 0, 0x69, 0x69, 0x69, 0x69 पूर्ण,
+		अणु 0x710, 7, 1, 0, 0x68, 0x68, 0x68, 0x68 पूर्ण,
+		अणु 0x720, 7, 2, 0, 0x67, 0x67, 0x67, 0x67 पूर्ण,
+		अणु 0x730, 7, 3, 0, 0x66, 0x66, 0x66, 0x66 पूर्ण,
+		अणु 0x740, 7, 4, 0, 0x65, 0x65, 0x65, 0x65 पूर्ण,
+		अणु 0x741, 7, 4, 1, 0x65, 0x65, 0x65, 0x65 पूर्ण,
+		अणु 0x742, 7, 4, 2, 0x65, 0x65, 0x65, 0x65 पूर्ण,
+		अणु 0x743, 7, 4, 3, 0x65, 0x65, 0x65, 0x65 पूर्ण
+	पूर्ण,
+	अणु
+		अणु 0x000, 7, 0, 0, 0x79, 0x79, 0x79, 0x79 पूर्ण,
+		अणु 0x700, 7, 0, 0, 0x79, 0x79, 0x79, 0x79 पूर्ण,
+		अणु 0x710, 7, 1, 0, 0x79, 0x79, 0x79, 0x79 पूर्ण,
+		अणु 0x720, 7, 2, 0, 0x78, 0x78, 0x78, 0x78 पूर्ण,
+		अणु 0x730, 7, 3, 0, 0x78, 0x78, 0x78, 0x78 पूर्ण,
+		अणु 0x740, 7, 4, 0, 0x78, 0x78, 0x78, 0x78 पूर्ण,
+		अणु 0x741, 7, 4, 1, 0x78, 0x78, 0x78, 0x78 पूर्ण,
+		अणु 0x742, 7, 4, 2, 0x78, 0x78, 0x78, 0x78 पूर्ण,
+		अणु 0x743, 7, 4, 3, 0x78, 0x78, 0x78, 0x78 पूर्ण
+	पूर्ण
+पूर्ण;
 
-const struct nphy_txiqcal_ladder ladder_lo[] = {
-	{ 3, 0 },
-	{ 4, 0 },
-	{ 6, 0 },
-	{ 9, 0 },
-	{ 13, 0 },
-	{ 18, 0 },
-	{ 25, 0 },
-	{ 25, 1 },
-	{ 25, 2 },
-	{ 25, 3 },
-	{ 25, 4 },
-	{ 25, 5 },
-	{ 25, 6 },
-	{ 25, 7 },
-	{ 35, 7 },
-	{ 50, 7 },
-	{ 71, 7 },
-	{ 100, 7 }
-};
+स्थिर काष्ठा nphy_txiqcal_ladder ladder_lo[] = अणु
+	अणु 3, 0 पूर्ण,
+	अणु 4, 0 पूर्ण,
+	अणु 6, 0 पूर्ण,
+	अणु 9, 0 पूर्ण,
+	अणु 13, 0 पूर्ण,
+	अणु 18, 0 पूर्ण,
+	अणु 25, 0 पूर्ण,
+	अणु 25, 1 पूर्ण,
+	अणु 25, 2 पूर्ण,
+	अणु 25, 3 पूर्ण,
+	अणु 25, 4 पूर्ण,
+	अणु 25, 5 पूर्ण,
+	अणु 25, 6 पूर्ण,
+	अणु 25, 7 पूर्ण,
+	अणु 35, 7 पूर्ण,
+	अणु 50, 7 पूर्ण,
+	अणु 71, 7 पूर्ण,
+	अणु 100, 7 पूर्ण
+पूर्ण;
 
-const struct nphy_txiqcal_ladder ladder_iq[] = {
-	{ 3, 0 },
-	{ 4, 0 },
-	{ 6, 0 },
-	{ 9, 0 },
-	{ 13, 0 },
-	{ 18, 0 },
-	{ 25, 0 },
-	{ 35, 0 },
-	{ 50, 0 },
-	{ 71, 0 },
-	{ 100, 0 },
-	{ 100, 1 },
-	{ 100, 2 },
-	{ 100, 3 },
-	{ 100, 4 },
-	{ 100, 5 },
-	{ 100, 6 },
-	{ 100, 7 }
-};
+स्थिर काष्ठा nphy_txiqcal_ladder ladder_iq[] = अणु
+	अणु 3, 0 पूर्ण,
+	अणु 4, 0 पूर्ण,
+	अणु 6, 0 पूर्ण,
+	अणु 9, 0 पूर्ण,
+	अणु 13, 0 पूर्ण,
+	अणु 18, 0 पूर्ण,
+	अणु 25, 0 पूर्ण,
+	अणु 35, 0 पूर्ण,
+	अणु 50, 0 पूर्ण,
+	अणु 71, 0 पूर्ण,
+	अणु 100, 0 पूर्ण,
+	अणु 100, 1 पूर्ण,
+	अणु 100, 2 पूर्ण,
+	अणु 100, 3 पूर्ण,
+	अणु 100, 4 पूर्ण,
+	अणु 100, 5 पूर्ण,
+	अणु 100, 6 पूर्ण,
+	अणु 100, 7 पूर्ण
+पूर्ण;
 
-const u16 loscale[] = {
+स्थिर u16 loscale[] = अणु
 	256, 256, 271, 271,
 	287, 256, 256, 271,
 	271, 287, 287, 304,
@@ -2999,295 +3000,295 @@ const u16 loscale[] = {
 	764, 810, 810, 858,
 	858, 908, 908, 962,
 	962, 1019, 1019, 256
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_loft_ladder_40[] = {
+स्थिर u16 tbl_tx_iqlo_cal_loft_ladder_40[] = अणु
 	0x0200, 0x0300, 0x0400, 0x0700,
 	0x0900, 0x0c00, 0x1200, 0x1201,
 	0x1202, 0x1203, 0x1204, 0x1205,
 	0x1206, 0x1207, 0x1907, 0x2307,
 	0x3207, 0x4707
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_loft_ladder_20[] = {
+स्थिर u16 tbl_tx_iqlo_cal_loft_ladder_20[] = अणु
 	0x0300, 0x0500, 0x0700, 0x0900,
 	0x0d00, 0x1100, 0x1900, 0x1901,
 	0x1902, 0x1903, 0x1904, 0x1905,
 	0x1906, 0x1907, 0x2407, 0x3207,
 	0x4607, 0x6407
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_iqimb_ladder_40[] = {
+स्थिर u16 tbl_tx_iqlo_cal_iqimb_ladder_40[] = अणु
 	0x0100, 0x0200, 0x0400, 0x0700,
 	0x0900, 0x0c00, 0x1200, 0x1900,
 	0x2300, 0x3200, 0x4700, 0x4701,
 	0x4702, 0x4703, 0x4704, 0x4705,
 	0x4706, 0x4707
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_iqimb_ladder_20[] = {
+स्थिर u16 tbl_tx_iqlo_cal_iqimb_ladder_20[] = अणु
 	0x0200, 0x0300, 0x0600, 0x0900,
 	0x0d00, 0x1100, 0x1900, 0x2400,
 	0x3200, 0x4600, 0x6400, 0x6401,
 	0x6402, 0x6403, 0x6404, 0x6405,
 	0x6406, 0x6407
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_startcoefs_nphyrev3[B43_NTAB_TX_IQLO_CAL_STARTCOEFS_REV3] = { };
+स्थिर u16 tbl_tx_iqlo_cal_startcoefs_nphyrev3[B43_NTAB_TX_IQLO_CAL_STARTCOEFS_REV3] = अणु पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_startcoefs[B43_NTAB_TX_IQLO_CAL_STARTCOEFS] = { };
+स्थिर u16 tbl_tx_iqlo_cal_startcoefs[B43_NTAB_TX_IQLO_CAL_STARTCOEFS] = अणु पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_cmds_recal_nphyrev3[] = {
+स्थिर u16 tbl_tx_iqlo_cal_cmds_recal_nphyrev3[] = अणु
 	0x8423, 0x8323, 0x8073, 0x8256,
 	0x8045, 0x8223, 0x9423, 0x9323,
 	0x9073, 0x9256, 0x9045, 0x9223
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_cmds_recal[] = {
+स्थिर u16 tbl_tx_iqlo_cal_cmds_recal[] = अणु
 	0x8101, 0x8253, 0x8053, 0x8234,
 	0x8034, 0x9101, 0x9253, 0x9053,
 	0x9234, 0x9034
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_cmds_fullcal[] = {
+स्थिर u16 tbl_tx_iqlo_cal_cmds_fullcal[] = अणु
 	0x8123, 0x8264, 0x8086, 0x8245,
 	0x8056, 0x9123, 0x9264, 0x9086,
 	0x9245, 0x9056
-};
+पूर्ण;
 
-const u16 tbl_tx_iqlo_cal_cmds_fullcal_nphyrev3[] = {
+स्थिर u16 tbl_tx_iqlo_cal_cmds_fullcal_nphyrev3[] = अणु
 	0x8434, 0x8334, 0x8084, 0x8267,
 	0x8056, 0x8234, 0x9434, 0x9334,
 	0x9084, 0x9267, 0x9056, 0x9234
-};
+पूर्ण;
 
-const s16 tbl_tx_filter_coef_rev4[7][15] = {
-	{  -377,   137,  -407,   208, -1527,
+स्थिर s16 tbl_tx_filter_coef_rev4[7][15] = अणु
+	अणु  -377,   137,  -407,   208, -1527,
 	    956,    93,   186,    93,   230,
-	    -44,   230,   201,  -191,   201 },
-	{   -77,    20,   -98,    49,   -93,
+	    -44,   230,   201,  -191,   201 पूर्ण,
+	अणु   -77,    20,   -98,    49,   -93,
 	     60,    56,   111,    56,    26,
-	     -5,    26,    34,   -32,    34 },
-	{  -360,   164,  -376,   164, -1533,
+	     -5,    26,    34,   -32,    34 पूर्ण,
+	अणु  -360,   164,  -376,   164, -1533,
 	    576,   308,  -314,   308,   121,
-	    -73,   121,    91,   124,    91 },
-	{  -295,   200,  -363,   142, -1391,
+	    -73,   121,    91,   124,    91 पूर्ण,
+	अणु  -295,   200,  -363,   142, -1391,
 	    826,   151,   301,   151,   151,
-	    301,   151,   602,  -752,   602 },
-	{   -92,    58,   -96,    49,  -104,
+	    301,   151,   602,  -752,   602 पूर्ण,
+	अणु   -92,    58,   -96,    49,  -104,
 	     44,    17,    35,    17,    12,
-	     25,    12,    13,    27,    13 },
-	{  -375,   136,  -399,   209, -1479,
+	     25,    12,    13,    27,    13 पूर्ण,
+	अणु  -375,   136,  -399,   209, -1479,
 	    949,   130,   260,   130,   230,
-	    -44,   230,   201,  -191,   201 },
-	{ 0xed9,  0xc8, 0xe95,  0x8e, 0xa91,
+	    -44,   230,   201,  -191,   201 पूर्ण,
+	अणु 0xed9,  0xc8, 0xe95,  0x8e, 0xa91,
 	  0x33a,  0x97, 0x12d,  0x97,  0x97,
-	  0x12d,  0x97, 0x25a, 0xd10, 0x25a }
-};
+	  0x12d,  0x97, 0x25a, 0xd10, 0x25a पूर्ण
+पूर्ण;
 
-/* addr0,  addr1,  bmask,  shift */
-const struct nphy_rf_control_override_rev2 tbl_rf_control_override_rev2[] = {
-	{ 0x78, 0x78, 0x0038,  3 }, /* for field == 0x0002 (fls == 2) */
-	{ 0x7A, 0x7D, 0x0001,  0 }, /* for field == 0x0004 (fls == 3) */
-	{ 0x7A, 0x7D, 0x0002,  1 }, /* for field == 0x0008 (fls == 4) */
-	{ 0x7A, 0x7D, 0x0004,  2 }, /* for field == 0x0010 (fls == 5) */
-	{ 0x7A, 0x7D, 0x0030,  4 }, /* for field == 0x0020 (fls == 6) */
-	{ 0x7A, 0x7D, 0x00C0,  6 }, /* for field == 0x0040 (fls == 7) */
-	{ 0x7A, 0x7D, 0x0100,  8 }, /* for field == 0x0080 (fls == 8) */
-	{ 0x7A, 0x7D, 0x0200,  9 }, /* for field == 0x0100 (fls == 9) */
-	{ 0x78, 0x78, 0x0004,  2 }, /* for field == 0x0200 (fls == 10) */
-	{ 0x7B, 0x7E, 0x01FF,  0 }, /* for field == 0x0400 (fls == 11) */
-	{ 0x7C, 0x7F, 0x01FF,  0 }, /* for field == 0x0800 (fls == 12) */
-	{ 0x78, 0x78, 0x0100,  8 }, /* for field == 0x1000 (fls == 13) */
-	{ 0x78, 0x78, 0x0200,  9 }, /* for field == 0x2000 (fls == 14) */
-	{ 0x78, 0x78, 0xF000, 12 }  /* for field == 0x4000 (fls == 15) */
-};
+/* addr0,  addr1,  bmask,  shअगरt */
+स्थिर काष्ठा nphy_rf_control_override_rev2 tbl_rf_control_override_rev2[] = अणु
+	अणु 0x78, 0x78, 0x0038,  3 पूर्ण, /* क्रम field == 0x0002 (fls == 2) */
+	अणु 0x7A, 0x7D, 0x0001,  0 पूर्ण, /* क्रम field == 0x0004 (fls == 3) */
+	अणु 0x7A, 0x7D, 0x0002,  1 पूर्ण, /* क्रम field == 0x0008 (fls == 4) */
+	अणु 0x7A, 0x7D, 0x0004,  2 पूर्ण, /* क्रम field == 0x0010 (fls == 5) */
+	अणु 0x7A, 0x7D, 0x0030,  4 पूर्ण, /* क्रम field == 0x0020 (fls == 6) */
+	अणु 0x7A, 0x7D, 0x00C0,  6 पूर्ण, /* क्रम field == 0x0040 (fls == 7) */
+	अणु 0x7A, 0x7D, 0x0100,  8 पूर्ण, /* क्रम field == 0x0080 (fls == 8) */
+	अणु 0x7A, 0x7D, 0x0200,  9 पूर्ण, /* क्रम field == 0x0100 (fls == 9) */
+	अणु 0x78, 0x78, 0x0004,  2 पूर्ण, /* क्रम field == 0x0200 (fls == 10) */
+	अणु 0x7B, 0x7E, 0x01FF,  0 पूर्ण, /* क्रम field == 0x0400 (fls == 11) */
+	अणु 0x7C, 0x7F, 0x01FF,  0 पूर्ण, /* क्रम field == 0x0800 (fls == 12) */
+	अणु 0x78, 0x78, 0x0100,  8 पूर्ण, /* क्रम field == 0x1000 (fls == 13) */
+	अणु 0x78, 0x78, 0x0200,  9 पूर्ण, /* क्रम field == 0x2000 (fls == 14) */
+	अणु 0x78, 0x78, 0xF000, 12 पूर्ण  /* क्रम field == 0x4000 (fls == 15) */
+पूर्ण;
 
-/* val_mask, val_shift, en_addr0, val_addr0, en_addr1, val_addr1 */
-const struct nphy_rf_control_override_rev3 tbl_rf_control_override_rev3[] = {
-	{ 0x8000, 15, 0xE5, 0xF9, 0xE6, 0xFB }, /* field == 0x0001 (fls 1) */
-	{ 0x0001,  0, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0002 (fls 2) */
-	{ 0x0002,  1, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0004 (fls 3) */
-	{ 0x0004,  2, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0008 (fls 4) */
-	{ 0x0010,  4, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0010 (fls 5) */
-	{ 0x0020,  5, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0020 (fls 6) */
-	{ 0x0040,  6, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0040 (fls 7) */
-	{ 0x0080,  7, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0080 (fls 8) */
-	{ 0x0100,  8, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0100 (fls 9) */
-	{ 0x0007,  0, 0xE7, 0xF8, 0xEC, 0xFA }, /* field == 0x0200 (fls 10) */
-	{ 0x0070,  4, 0xE7, 0xF8, 0xEC, 0xFA }, /* field == 0x0400 (fls 11) */
-	{ 0xE000, 13, 0xE7, 0x7A, 0xEC, 0x7D }, /* field == 0x0800 (fls 12) */
-	{ 0xFFFF,  0, 0xE7, 0x7B, 0xEC, 0x7E }, /* field == 0x1000 (fls 13) */
-	{ 0xFFFF,  0, 0xE7, 0x7C, 0xEC, 0x7F }, /* field == 0x2000 (fls 14) */
-	{ 0x00C0,  6, 0xE7, 0xF9, 0xEC, 0xFB }  /* field == 0x4000 (fls 15) */
-};
+/* val_mask, val_shअगरt, en_addr0, val_addr0, en_addr1, val_addr1 */
+स्थिर काष्ठा nphy_rf_control_override_rev3 tbl_rf_control_override_rev3[] = अणु
+	अणु 0x8000, 15, 0xE5, 0xF9, 0xE6, 0xFB पूर्ण, /* field == 0x0001 (fls 1) */
+	अणु 0x0001,  0, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0002 (fls 2) */
+	अणु 0x0002,  1, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0004 (fls 3) */
+	अणु 0x0004,  2, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0008 (fls 4) */
+	अणु 0x0010,  4, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0010 (fls 5) */
+	अणु 0x0020,  5, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0020 (fls 6) */
+	अणु 0x0040,  6, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0040 (fls 7) */
+	अणु 0x0080,  7, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0080 (fls 8) */
+	अणु 0x0100,  8, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0100 (fls 9) */
+	अणु 0x0007,  0, 0xE7, 0xF8, 0xEC, 0xFA पूर्ण, /* field == 0x0200 (fls 10) */
+	अणु 0x0070,  4, 0xE7, 0xF8, 0xEC, 0xFA पूर्ण, /* field == 0x0400 (fls 11) */
+	अणु 0xE000, 13, 0xE7, 0x7A, 0xEC, 0x7D पूर्ण, /* field == 0x0800 (fls 12) */
+	अणु 0xFFFF,  0, 0xE7, 0x7B, 0xEC, 0x7E पूर्ण, /* field == 0x1000 (fls 13) */
+	अणु 0xFFFF,  0, 0xE7, 0x7C, 0xEC, 0x7F पूर्ण, /* field == 0x2000 (fls 14) */
+	अणु 0x00C0,  6, 0xE7, 0xF9, 0xEC, 0xFB पूर्ण  /* field == 0x4000 (fls 15) */
+पूर्ण;
 
-/* field, val_addr_core0, val_addr_core1, val_mask, val_shift */
-static const struct nphy_rf_control_override_rev7
-			tbl_rf_control_override_rev7_over0[] = {
-	{ 0x0004, 0x07A, 0x07D, 0x0002, 1 },
-	{ 0x0008, 0x07A, 0x07D, 0x0004, 2 },
-	{ 0x0010, 0x07A, 0x07D, 0x0010, 4 },
-	{ 0x0020, 0x07A, 0x07D, 0x0020, 5 },
-	{ 0x0040, 0x07A, 0x07D, 0x0040, 6 },
-	{ 0x0080, 0x07A, 0x07D, 0x0080, 7 },
-	{ 0x0400, 0x0F8, 0x0FA, 0x0070, 4 },
-	{ 0x0800, 0x07B, 0x07E, 0xFFFF, 0 },
-	{ 0x1000, 0x07C, 0x07F, 0xFFFF, 0 },
-	{ 0x6000, 0x348, 0x349, 0x00FF, 0 },
-	{ 0x2000, 0x348, 0x349, 0x000F, 0 },
-};
+/* field, val_addr_core0, val_addr_core1, val_mask, val_shअगरt */
+अटल स्थिर काष्ठा nphy_rf_control_override_rev7
+			tbl_rf_control_override_rev7_over0[] = अणु
+	अणु 0x0004, 0x07A, 0x07D, 0x0002, 1 पूर्ण,
+	अणु 0x0008, 0x07A, 0x07D, 0x0004, 2 पूर्ण,
+	अणु 0x0010, 0x07A, 0x07D, 0x0010, 4 पूर्ण,
+	अणु 0x0020, 0x07A, 0x07D, 0x0020, 5 पूर्ण,
+	अणु 0x0040, 0x07A, 0x07D, 0x0040, 6 पूर्ण,
+	अणु 0x0080, 0x07A, 0x07D, 0x0080, 7 पूर्ण,
+	अणु 0x0400, 0x0F8, 0x0FA, 0x0070, 4 पूर्ण,
+	अणु 0x0800, 0x07B, 0x07E, 0xFFFF, 0 पूर्ण,
+	अणु 0x1000, 0x07C, 0x07F, 0xFFFF, 0 पूर्ण,
+	अणु 0x6000, 0x348, 0x349, 0x00FF, 0 पूर्ण,
+	अणु 0x2000, 0x348, 0x349, 0x000F, 0 पूर्ण,
+पूर्ण;
 
-/* field, val_addr_core0, val_addr_core1, val_mask, val_shift */
-static const struct nphy_rf_control_override_rev7
-			tbl_rf_control_override_rev7_over1[] = {
-	{ 0x0002, 0x340, 0x341, 0x0002, 1 },
-	{ 0x0008, 0x340, 0x341, 0x0008, 3 },
-	{ 0x0020, 0x340, 0x341, 0x0020, 5 },
-	{ 0x0010, 0x340, 0x341, 0x0010, 4 },
-	{ 0x0004, 0x340, 0x341, 0x0004, 2 },
-	{ 0x0080, 0x340, 0x341, 0x0700, 8 },
-	{ 0x0800, 0x340, 0x341, 0x4000, 14 },
-	{ 0x0400, 0x340, 0x341, 0x2000, 13 },
-	{ 0x0200, 0x340, 0x341, 0x0800, 12 },
-	{ 0x0100, 0x340, 0x341, 0x0100, 11 },
-	{ 0x0040, 0x340, 0x341, 0x0040, 6 },
-	{ 0x0001, 0x340, 0x341, 0x0001, 0 },
-};
+/* field, val_addr_core0, val_addr_core1, val_mask, val_shअगरt */
+अटल स्थिर काष्ठा nphy_rf_control_override_rev7
+			tbl_rf_control_override_rev7_over1[] = अणु
+	अणु 0x0002, 0x340, 0x341, 0x0002, 1 पूर्ण,
+	अणु 0x0008, 0x340, 0x341, 0x0008, 3 पूर्ण,
+	अणु 0x0020, 0x340, 0x341, 0x0020, 5 पूर्ण,
+	अणु 0x0010, 0x340, 0x341, 0x0010, 4 पूर्ण,
+	अणु 0x0004, 0x340, 0x341, 0x0004, 2 पूर्ण,
+	अणु 0x0080, 0x340, 0x341, 0x0700, 8 पूर्ण,
+	अणु 0x0800, 0x340, 0x341, 0x4000, 14 पूर्ण,
+	अणु 0x0400, 0x340, 0x341, 0x2000, 13 पूर्ण,
+	अणु 0x0200, 0x340, 0x341, 0x0800, 12 पूर्ण,
+	अणु 0x0100, 0x340, 0x341, 0x0100, 11 पूर्ण,
+	अणु 0x0040, 0x340, 0x341, 0x0040, 6 पूर्ण,
+	अणु 0x0001, 0x340, 0x341, 0x0001, 0 पूर्ण,
+पूर्ण;
 
-/* field, val_addr_core0, val_addr_core1, val_mask, val_shift */
-static const struct nphy_rf_control_override_rev7
-			tbl_rf_control_override_rev7_over2[] = {
-	{ 0x0008, 0x344, 0x345, 0x0008, 3 },
-	{ 0x0002, 0x344, 0x345, 0x0002, 1 },
-	{ 0x0001, 0x344, 0x345, 0x0001, 0 },
-	{ 0x0004, 0x344, 0x345, 0x0004, 2 },
-	{ 0x0010, 0x344, 0x345, 0x0010, 4 },
-};
+/* field, val_addr_core0, val_addr_core1, val_mask, val_shअगरt */
+अटल स्थिर काष्ठा nphy_rf_control_override_rev7
+			tbl_rf_control_override_rev7_over2[] = अणु
+	अणु 0x0008, 0x344, 0x345, 0x0008, 3 पूर्ण,
+	अणु 0x0002, 0x344, 0x345, 0x0002, 1 पूर्ण,
+	अणु 0x0001, 0x344, 0x345, 0x0001, 0 पूर्ण,
+	अणु 0x0004, 0x344, 0x345, 0x0004, 2 पूर्ण,
+	अणु 0x0010, 0x344, 0x345, 0x0010, 4 पूर्ण,
+पूर्ण;
 
-static struct nphy_gain_ctl_workaround_entry nphy_gain_ctl_wa_phy6_radio11_ghz2 = {
-	{ 10, 14, 19, 27 },
-	{ -5, 6, 10, 15 },
-	{ 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA },
-	{ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 },
+अटल काष्ठा nphy_gain_ctl_workaround_entry nphy_gain_ctl_wa_phy6_radio11_ghz2 = अणु
+	अणु 10, 14, 19, 27 पूर्ण,
+	अणु -5, 6, 10, 15 पूर्ण,
+	अणु 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA पूर्ण,
+	अणु 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 पूर्ण,
 	0x427E,
-	{ 0x413F, 0x413F, 0x413F, 0x413F },
+	अणु 0x413F, 0x413F, 0x413F, 0x413F पूर्ण,
 	0x007E, 0x0066, 0x1074,
 	0x18, 0x18, 0x18,
 	0x01D0, 0x5,
-};
-static struct nphy_gain_ctl_workaround_entry nphy_gain_ctl_workaround[2][4] = {
-	{ /* 2GHz */
-		{ /* PHY rev 3 */
-			{ 7, 11, 16, 23 },
-			{ -5, 6, 10, 14 },
-			{ 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA },
-			{ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 },
+पूर्ण;
+अटल काष्ठा nphy_gain_ctl_workaround_entry nphy_gain_ctl_workaround[2][4] = अणु
+	अणु /* 2GHz */
+		अणु /* PHY rev 3 */
+			अणु 7, 11, 16, 23 पूर्ण,
+			अणु -5, 6, 10, 14 पूर्ण,
+			अणु 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA पूर्ण,
+			अणु 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 पूर्ण,
 			0x627E,
-			{ 0x613F, 0x613F, 0x613F, 0x613F },
+			अणु 0x613F, 0x613F, 0x613F, 0x613F पूर्ण,
 			0x107E, 0x0066, 0x0074,
 			0x18, 0x18, 0x18,
 			0x020D, 0x5,
-		},
-		{ /* PHY rev 4 */
-			{ 8, 12, 17, 25 },
-			{ -5, 6, 10, 14 },
-			{ 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA },
-			{ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 },
+		पूर्ण,
+		अणु /* PHY rev 4 */
+			अणु 8, 12, 17, 25 पूर्ण,
+			अणु -5, 6, 10, 14 पूर्ण,
+			अणु 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA पूर्ण,
+			अणु 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 पूर्ण,
 			0x527E,
-			{ 0x513F, 0x513F, 0x513F, 0x513F },
+			अणु 0x513F, 0x513F, 0x513F, 0x513F पूर्ण,
 			0x007E, 0x0066, 0x0074,
 			0x18, 0x18, 0x18,
 			0x01A1, 0x5,
-		},
-		{ /* PHY rev 5 */
-			{ 9, 13, 18, 26 },
-			{ -3, 7, 11, 16 },
-			{ 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA },
-			{ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 },
-			0x427E, /* invalid for external LNA! */
-			{ 0x413F, 0x413F, 0x413F, 0x413F }, /* invalid for external LNA! */
+		पूर्ण,
+		अणु /* PHY rev 5 */
+			अणु 9, 13, 18, 26 पूर्ण,
+			अणु -3, 7, 11, 16 पूर्ण,
+			अणु 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA पूर्ण,
+			अणु 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 पूर्ण,
+			0x427E, /* invalid क्रम बाह्यal LNA! */
+			अणु 0x413F, 0x413F, 0x413F, 0x413F पूर्ण, /* invalid क्रम बाह्यal LNA! */
 			0x1076, 0x0066, 0x0000, /* low is invalid (the last one) */
 			0x18, 0x18, 0x18,
 			0x01D0, 0x9,
-		},
-		{ /* PHY rev 6+ */
-			{ 8, 13, 18, 25 },
-			{ -5, 6, 10, 14 },
-			{ 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA },
-			{ 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 },
-			0x527E, /* invalid for external LNA! */
-			{ 0x513F, 0x513F, 0x513F, 0x513F }, /* invalid for external LNA! */
+		पूर्ण,
+		अणु /* PHY rev 6+ */
+			अणु 8, 13, 18, 25 पूर्ण,
+			अणु -5, 6, 10, 14 पूर्ण,
+			अणु 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA पूर्ण,
+			अणु 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 पूर्ण,
+			0x527E, /* invalid क्रम बाह्यal LNA! */
+			अणु 0x513F, 0x513F, 0x513F, 0x513F पूर्ण, /* invalid क्रम बाह्यal LNA! */
 			0x007E, 0x0066, 0x0000, /* low is invalid (the last one) */
 			0x18, 0x18, 0x18,
 			0x01D0, 0x5,
-		},
-	},
-	{ /* 5GHz */
-		{ /* PHY rev 3 */
-			{ 7, 11, 17, 23 },
-			{ -6, 2, 6, 10 },
-			{ 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13 },
-			{ 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 },
+		पूर्ण,
+	पूर्ण,
+	अणु /* 5GHz */
+		अणु /* PHY rev 3 */
+			अणु 7, 11, 17, 23 पूर्ण,
+			अणु -6, 2, 6, 10 पूर्ण,
+			अणु 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13, 0x13 पूर्ण,
+			अणु 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 पूर्ण,
 			0x52DE,
-			{ 0x516F, 0x516F, 0x516F, 0x516F },
+			अणु 0x516F, 0x516F, 0x516F, 0x516F पूर्ण,
 			0x00DE, 0x00CA, 0x00CC,
 			0x1E, 0x1E, 0x1E,
 			0x01A1, 25,
-		},
-		{ /* PHY rev 4 */
-			{ 8, 12, 18, 23 },
-			{ -5, 2, 6, 10 },
-			{ 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD },
-			{ 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 },
+		पूर्ण,
+		अणु /* PHY rev 4 */
+			अणु 8, 12, 18, 23 पूर्ण,
+			अणु -5, 2, 6, 10 पूर्ण,
+			अणु 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD पूर्ण,
+			अणु 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 पूर्ण,
 			0x629E,
-			{ 0x614F, 0x614F, 0x614F, 0x614F },
+			अणु 0x614F, 0x614F, 0x614F, 0x614F पूर्ण,
 			0x029E, 0x1084, 0x0086,
 			0x24, 0x24, 0x24,
 			0x0107, 25,
-		},
-		{ /* PHY rev 5 */
-			{ 6, 10, 16, 21 },
-			{ -7, 0, 4, 8 },
-			{ 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD },
-			{ 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 },
+		पूर्ण,
+		अणु /* PHY rev 5 */
+			अणु 6, 10, 16, 21 पूर्ण,
+			अणु -7, 0, 4, 8 पूर्ण,
+			अणु 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD पूर्ण,
+			अणु 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 पूर्ण,
 			0x729E,
-			{ 0x714F, 0x714F, 0x714F, 0x714F },
+			अणु 0x714F, 0x714F, 0x714F, 0x714F पूर्ण,
 			0x029E, 0x2084, 0x2086,
 			0x24, 0x24, 0x24,
 			0x00A9, 25,
-		},
-		{ /* PHY rev 6+ */
-			{ 6, 10, 16, 21 },
-			{ -7, 0, 4, 8 },
-			{ 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD },
-			{ 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 },
+		पूर्ण,
+		अणु /* PHY rev 6+ */
+			अणु 6, 10, 16, 21 पूर्ण,
+			अणु -7, 0, 4, 8 पूर्ण,
+			अणु 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD, 0xD पूर्ण,
+			अणु 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 पूर्ण,
 			0x729E,
-			{ 0x714F, 0x714F, 0x714F, 0x714F },
+			अणु 0x714F, 0x714F, 0x714F, 0x714F पूर्ण,
 			0x029E, 0x2084, 0x2086,
-			0x24, 0x24, 0x24, /* low is invalid for radio rev 11! */
+			0x24, 0x24, 0x24, /* low is invalid क्रम radio rev 11! */
 			0x00F0, 25,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static inline void assert_ntab_array_sizes(void)
-{
-#undef check
-#define check(table, size)	\
+अटल अंतरभूत व्योम निश्चित_ntab_array_sizes(व्योम)
+अणु
+#अघोषित check
+#घोषणा check(table, size)	\
 	BUILD_BUG_ON(ARRAY_SIZE(b43_ntab_##table) != B43_NTAB_##size##_SIZE)
 
-	check(adjustpower0, C0_ADJPLT);
-	check(adjustpower1, C1_ADJPLT);
+	check(adjustघातer0, C0_ADJPLT);
+	check(adjustघातer1, C1_ADJPLT);
 	check(bdi, BDI);
 	check(channelest, CHANEST);
-	check(estimatepowerlt0, C0_ESTPLT);
-	check(estimatepowerlt1, C1_ESTPLT);
+	check(estimateघातerlt0, C0_ESTPLT);
+	check(estimateघातerlt1, C1_ESTPLT);
 	check(framelookup, FRAMELT);
-	check(framestruct, FRAMESTRUCT);
+	check(frameकाष्ठा, FRAMESTRUCT);
 	check(gainctl0, C0_GAINCTL);
 	check(gainctl1, C1_GAINCTL);
-	check(intlevel, INTLEVEL);
+	check(पूर्णांकlevel, INTLEVEL);
 	check(iqlt0, C0_IQLT);
 	check(iqlt1, C1_IQLT);
 	check(loftlt0, C0_LOFEEDTH);
@@ -3302,235 +3303,235 @@ static inline void assert_ntab_array_sizes(void)
 	check(tdi40a0, TDI40A0);
 	check(tdi40a1, TDI40A1);
 	check(tdtrn, TDTRN);
-	check(tmap, TMAP);
+	check(पंचांगap, TMAP);
 
-#undef check
-}
+#अघोषित check
+पूर्ण
 
-u32 b43_ntab_read(struct b43_wldev *dev, u32 offset)
-{
+u32 b43_ntab_पढ़ो(काष्ठा b43_wldev *dev, u32 offset)
+अणु
 	u32 type, value;
 
 	type = offset & B43_NTAB_TYPEMASK;
 	offset &= ~B43_NTAB_TYPEMASK;
 	B43_WARN_ON(offset > 0xFFFF);
 
-	switch (type) {
-	case B43_NTAB_8BIT:
-		b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
-		value = b43_phy_read(dev, B43_NPHY_TABLE_DATALO) & 0xFF;
-		break;
-	case B43_NTAB_16BIT:
-		b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
-		value = b43_phy_read(dev, B43_NPHY_TABLE_DATALO);
-		break;
-	case B43_NTAB_32BIT:
-		b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
-		value = b43_phy_read(dev, B43_NPHY_TABLE_DATALO);
-		value |= b43_phy_read(dev, B43_NPHY_TABLE_DATAHI) << 16;
-		break;
-	default:
+	चयन (type) अणु
+	हाल B43_NTAB_8BIT:
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
+		value = b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO) & 0xFF;
+		अवरोध;
+	हाल B43_NTAB_16BIT:
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
+		value = b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO);
+		अवरोध;
+	हाल B43_NTAB_32BIT:
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
+		value = b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO);
+		value |= b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATAHI) << 16;
+		अवरोध;
+	शेष:
 		B43_WARN_ON(1);
 		value = 0;
-	}
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-void b43_ntab_read_bulk(struct b43_wldev *dev, u32 offset,
-			 unsigned int nr_elements, void *_data)
-{
+व्योम b43_ntab_पढ़ो_bulk(काष्ठा b43_wldev *dev, u32 offset,
+			 अचिन्हित पूर्णांक nr_elements, व्योम *_data)
+अणु
 	u32 type;
 	u8 *data = _data;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	type = offset & B43_NTAB_TYPEMASK;
 	offset &= ~B43_NTAB_TYPEMASK;
 	B43_WARN_ON(offset > 0xFFFF);
 
-	b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
+	b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
 
-	for (i = 0; i < nr_elements; i++) {
+	क्रम (i = 0; i < nr_elements; i++) अणु
 		/* Auto increment broken + caching issue on BCM43224? */
-		if (dev->dev->chip_id == 43224 && dev->dev->chip_rev == 1) {
-			b43_phy_read(dev, B43_NPHY_TABLE_DATALO);
-			b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset + i);
-		}
+		अगर (dev->dev->chip_id == 43224 && dev->dev->chip_rev == 1) अणु
+			b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO);
+			b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset + i);
+		पूर्ण
 
-		switch (type) {
-		case B43_NTAB_8BIT:
-			*data = b43_phy_read(dev, B43_NPHY_TABLE_DATALO) & 0xFF;
+		चयन (type) अणु
+		हाल B43_NTAB_8BIT:
+			*data = b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO) & 0xFF;
 			data++;
-			break;
-		case B43_NTAB_16BIT:
-			*((u16 *)data) = b43_phy_read(dev, B43_NPHY_TABLE_DATALO);
+			अवरोध;
+		हाल B43_NTAB_16BIT:
+			*((u16 *)data) = b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO);
 			data += 2;
-			break;
-		case B43_NTAB_32BIT:
+			अवरोध;
+		हाल B43_NTAB_32BIT:
 			*((u32 *)data) =
-				b43_phy_read(dev, B43_NPHY_TABLE_DATALO);
+				b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO);
 			*((u32 *)data) |=
-				b43_phy_read(dev, B43_NPHY_TABLE_DATAHI) << 16;
+				b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATAHI) << 16;
 			data += 4;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			B43_WARN_ON(1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void b43_ntab_write(struct b43_wldev *dev, u32 offset, u32 value)
-{
+व्योम b43_ntab_ग_लिखो(काष्ठा b43_wldev *dev, u32 offset, u32 value)
+अणु
 	u32 type;
 
 	type = offset & B43_NTAB_TYPEMASK;
 	offset &= 0xFFFF;
 
-	switch (type) {
-	case B43_NTAB_8BIT:
+	चयन (type) अणु
+	हाल B43_NTAB_8BIT:
 		B43_WARN_ON(value & ~0xFF);
-		b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
-		b43_phy_write(dev, B43_NPHY_TABLE_DATALO, value);
-		break;
-	case B43_NTAB_16BIT:
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATALO, value);
+		अवरोध;
+	हाल B43_NTAB_16BIT:
 		B43_WARN_ON(value & ~0xFFFF);
-		b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
-		b43_phy_write(dev, B43_NPHY_TABLE_DATALO, value);
-		break;
-	case B43_NTAB_32BIT:
-		b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
-		b43_phy_write(dev, B43_NPHY_TABLE_DATAHI, value >> 16);
-		b43_phy_write(dev, B43_NPHY_TABLE_DATALO, value & 0xFFFF);
-		break;
-	default:
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATALO, value);
+		अवरोध;
+	हाल B43_NTAB_32BIT:
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATAHI, value >> 16);
+		b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATALO, value & 0xFFFF);
+		अवरोध;
+	शेष:
 		B43_WARN_ON(1);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
-	/* Some compiletime assertions... */
-	assert_ntab_array_sizes();
-}
+	/* Some compileसमय निश्चितions... */
+	निश्चित_ntab_array_sizes();
+पूर्ण
 
-void b43_ntab_write_bulk(struct b43_wldev *dev, u32 offset,
-			  unsigned int nr_elements, const void *_data)
-{
+व्योम b43_ntab_ग_लिखो_bulk(काष्ठा b43_wldev *dev, u32 offset,
+			  अचिन्हित पूर्णांक nr_elements, स्थिर व्योम *_data)
+अणु
 	u32 type, value;
-	const u8 *data = _data;
-	unsigned int i;
+	स्थिर u8 *data = _data;
+	अचिन्हित पूर्णांक i;
 
 	type = offset & B43_NTAB_TYPEMASK;
 	offset &= ~B43_NTAB_TYPEMASK;
 	B43_WARN_ON(offset > 0xFFFF);
 
-	b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset);
+	b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset);
 
-	for (i = 0; i < nr_elements; i++) {
+	क्रम (i = 0; i < nr_elements; i++) अणु
 		/* Auto increment broken + caching issue on BCM43224? */
-		if ((offset >> 10) == 9 && dev->dev->chip_id == 43224 &&
-		    dev->dev->chip_rev == 1) {
-			b43_phy_read(dev, B43_NPHY_TABLE_DATALO);
-			b43_phy_write(dev, B43_NPHY_TABLE_ADDR, offset + i);
-		}
+		अगर ((offset >> 10) == 9 && dev->dev->chip_id == 43224 &&
+		    dev->dev->chip_rev == 1) अणु
+			b43_phy_पढ़ो(dev, B43_NPHY_TABLE_DATALO);
+			b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_ADDR, offset + i);
+		पूर्ण
 
-		switch (type) {
-		case B43_NTAB_8BIT:
+		चयन (type) अणु
+		हाल B43_NTAB_8BIT:
 			value = *data;
 			data++;
 			B43_WARN_ON(value & ~0xFF);
-			b43_phy_write(dev, B43_NPHY_TABLE_DATALO, value);
-			break;
-		case B43_NTAB_16BIT:
+			b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATALO, value);
+			अवरोध;
+		हाल B43_NTAB_16BIT:
 			value = *((u16 *)data);
 			data += 2;
 			B43_WARN_ON(value & ~0xFFFF);
-			b43_phy_write(dev, B43_NPHY_TABLE_DATALO, value);
-			break;
-		case B43_NTAB_32BIT:
+			b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATALO, value);
+			अवरोध;
+		हाल B43_NTAB_32BIT:
 			value = *((u32 *)data);
 			data += 4;
-			b43_phy_write(dev, B43_NPHY_TABLE_DATAHI, value >> 16);
-			b43_phy_write(dev, B43_NPHY_TABLE_DATALO,
+			b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATAHI, value >> 16);
+			b43_phy_ग_लिखो(dev, B43_NPHY_TABLE_DATALO,
 					value & 0xFFFF);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			B43_WARN_ON(1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define ntab_upload(dev, offset, data) do { \
-		b43_ntab_write_bulk(dev, offset, ARRAY_SIZE(data), data); \
-	} while (0)
+#घोषणा ntab_upload(dev, offset, data) करो अणु \
+		b43_ntab_ग_लिखो_bulk(dev, offset, ARRAY_SIZE(data), data); \
+	पूर्ण जबतक (0)
 
-static void b43_nphy_tables_init_shared_lut(struct b43_wldev *dev)
-{
-	ntab_upload(dev, B43_NTAB_C0_ESTPLT_R3, b43_ntab_estimatepowerlt0_r3);
-	ntab_upload(dev, B43_NTAB_C1_ESTPLT_R3, b43_ntab_estimatepowerlt1_r3);
-	ntab_upload(dev, B43_NTAB_C0_ADJPLT_R3, b43_ntab_adjustpower0_r3);
-	ntab_upload(dev, B43_NTAB_C1_ADJPLT_R3, b43_ntab_adjustpower1_r3);
+अटल व्योम b43_nphy_tables_init_shared_lut(काष्ठा b43_wldev *dev)
+अणु
+	ntab_upload(dev, B43_NTAB_C0_ESTPLT_R3, b43_ntab_estimateघातerlt0_r3);
+	ntab_upload(dev, B43_NTAB_C1_ESTPLT_R3, b43_ntab_estimateघातerlt1_r3);
+	ntab_upload(dev, B43_NTAB_C0_ADJPLT_R3, b43_ntab_adjustघातer0_r3);
+	ntab_upload(dev, B43_NTAB_C1_ADJPLT_R3, b43_ntab_adjustघातer1_r3);
 	ntab_upload(dev, B43_NTAB_C0_GAINCTL_R3, b43_ntab_gainctl0_r3);
 	ntab_upload(dev, B43_NTAB_C1_GAINCTL_R3, b43_ntab_gainctl1_r3);
 	ntab_upload(dev, B43_NTAB_C0_IQLT_R3, b43_ntab_iqlt0_r3);
 	ntab_upload(dev, B43_NTAB_C1_IQLT_R3, b43_ntab_iqlt1_r3);
 	ntab_upload(dev, B43_NTAB_C0_LOFEEDTH_R3, b43_ntab_loftlt0_r3);
 	ntab_upload(dev, B43_NTAB_C1_LOFEEDTH_R3, b43_ntab_loftlt1_r3);
-}
+पूर्ण
 
-static void b43_nphy_tables_init_rev7_volatile(struct b43_wldev *dev)
-{
-	struct ssb_sprom *sprom = dev->dev->bus_sprom;
+अटल व्योम b43_nphy_tables_init_rev7_अस्थिर(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा ssb_sprom *sprom = dev->dev->bus_sprom;
 	u8 antswlut;
-	int core, offset, i;
+	पूर्णांक core, offset, i;
 
-	const int antswlut0_offsets[] = { 0, 4, 8, }; /* Offsets for values */
-	const u8 antswlut0_values[][3] = {
-		{ 0x2, 0x12, 0x8 }, /* Core 0 */
-		{ 0x2, 0x18, 0x2 }, /* Core 1 */
-	};
+	स्थिर पूर्णांक antswlut0_offsets[] = अणु 0, 4, 8, पूर्ण; /* Offsets क्रम values */
+	स्थिर u8 antswlut0_values[][3] = अणु
+		अणु 0x2, 0x12, 0x8 पूर्ण, /* Core 0 */
+		अणु 0x2, 0x18, 0x2 पूर्ण, /* Core 1 */
+	पूर्ण;
 
-	if (b43_current_band(dev->wl) == NL80211_BAND_5GHZ)
+	अगर (b43_current_band(dev->wl) == NL80211_BAND_5GHZ)
 		antswlut = sprom->fem.ghz5.antswlut;
-	else
+	अन्यथा
 		antswlut = sprom->fem.ghz2.antswlut;
 
-	switch (antswlut) {
-	case 0:
-		for (core = 0; core < 2; core++) {
-			for (i = 0; i < ARRAY_SIZE(antswlut0_values[0]); i++) {
+	चयन (antswlut) अणु
+	हाल 0:
+		क्रम (core = 0; core < 2; core++) अणु
+			क्रम (i = 0; i < ARRAY_SIZE(antswlut0_values[0]); i++) अणु
 				offset = core ? 0x20 : 0x00;
 				offset += antswlut0_offsets[i];
-				b43_ntab_write(dev, B43_NTAB8(9, offset),
+				b43_ntab_ग_लिखो(dev, B43_NTAB8(9, offset),
 					       antswlut0_values[core][i]);
-			}
-		}
-		break;
-	default:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		b43err(dev->wl, "Unsupported antswlut: %d\n", antswlut);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void b43_nphy_tables_init_rev16(struct b43_wldev *dev)
-{
+अटल व्योम b43_nphy_tables_init_rev16(काष्ठा b43_wldev *dev)
+अणु
 	/* Static tables */
-	if (dev->phy.do_full_init) {
+	अगर (dev->phy.करो_full_init) अणु
 		ntab_upload(dev, B43_NTAB_NOISEVAR_R7, b43_ntab_noisevar_r7);
 		b43_nphy_tables_init_shared_lut(dev);
-	}
+	पूर्ण
 
 	/* Volatile tables */
-	b43_nphy_tables_init_rev7_volatile(dev);
-}
+	b43_nphy_tables_init_rev7_अस्थिर(dev);
+पूर्ण
 
-static void b43_nphy_tables_init_rev7(struct b43_wldev *dev)
-{
+अटल व्योम b43_nphy_tables_init_rev7(काष्ठा b43_wldev *dev)
+अणु
 	/* Static tables */
-	if (dev->phy.do_full_init) {
-		ntab_upload(dev, B43_NTAB_FRAMESTRUCT_R3, b43_ntab_framestruct_r3);
+	अगर (dev->phy.करो_full_init) अणु
+		ntab_upload(dev, B43_NTAB_FRAMESTRUCT_R3, b43_ntab_frameकाष्ठा_r3);
 		ntab_upload(dev, B43_NTAB_PILOT_R3, b43_ntab_pilot_r3);
-		ntab_upload(dev, B43_NTAB_TMAP_R7, b43_ntab_tmap_r7);
-		ntab_upload(dev, B43_NTAB_INTLEVEL_R3, b43_ntab_intlevel_r3);
+		ntab_upload(dev, B43_NTAB_TMAP_R7, b43_ntab_पंचांगap_r7);
+		ntab_upload(dev, B43_NTAB_INTLEVEL_R3, b43_ntab_पूर्णांकlevel_r3);
 		ntab_upload(dev, B43_NTAB_TDTRN_R3, b43_ntab_tdtrn_r3);
 		ntab_upload(dev, B43_NTAB_NOISEVAR_R7, b43_ntab_noisevar_r7);
 		ntab_upload(dev, B43_NTAB_MCS_R3, b43_ntab_mcs_r3);
@@ -3542,28 +3543,28 @@ static void b43_nphy_tables_init_rev7(struct b43_wldev *dev)
 		ntab_upload(dev, B43_NTAB_CHANEST_R3, b43_ntab_channelest_r3);
 		ntab_upload(dev, B43_NTAB_FRAMELT_R3, b43_ntab_framelookup_r3);
 		b43_nphy_tables_init_shared_lut(dev);
-	}
+	पूर्ण
 
 	/* Volatile tables */
-	b43_nphy_tables_init_rev7_volatile(dev);
-}
+	b43_nphy_tables_init_rev7_अस्थिर(dev);
+पूर्ण
 
-static void b43_nphy_tables_init_rev3(struct b43_wldev *dev)
-{
-	struct ssb_sprom *sprom = dev->dev->bus_sprom;
+अटल व्योम b43_nphy_tables_init_rev3(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा ssb_sprom *sprom = dev->dev->bus_sprom;
 	u8 antswlut;
 
-	if (b43_current_band(dev->wl) == NL80211_BAND_5GHZ)
+	अगर (b43_current_band(dev->wl) == NL80211_BAND_5GHZ)
 		antswlut = sprom->fem.ghz5.antswlut;
-	else
+	अन्यथा
 		antswlut = sprom->fem.ghz2.antswlut;
 
 	/* Static tables */
-	if (dev->phy.do_full_init) {
-		ntab_upload(dev, B43_NTAB_FRAMESTRUCT_R3, b43_ntab_framestruct_r3);
+	अगर (dev->phy.करो_full_init) अणु
+		ntab_upload(dev, B43_NTAB_FRAMESTRUCT_R3, b43_ntab_frameकाष्ठा_r3);
 		ntab_upload(dev, B43_NTAB_PILOT_R3, b43_ntab_pilot_r3);
-		ntab_upload(dev, B43_NTAB_TMAP_R3, b43_ntab_tmap_r3);
-		ntab_upload(dev, B43_NTAB_INTLEVEL_R3, b43_ntab_intlevel_r3);
+		ntab_upload(dev, B43_NTAB_TMAP_R3, b43_ntab_पंचांगap_r3);
+		ntab_upload(dev, B43_NTAB_INTLEVEL_R3, b43_ntab_पूर्णांकlevel_r3);
 		ntab_upload(dev, B43_NTAB_TDTRN_R3, b43_ntab_tdtrn_r3);
 		ntab_upload(dev, B43_NTAB_NOISEVAR_R3, b43_ntab_noisevar_r3);
 		ntab_upload(dev, B43_NTAB_MCS_R3, b43_ntab_mcs_r3);
@@ -3575,25 +3576,25 @@ static void b43_nphy_tables_init_rev3(struct b43_wldev *dev)
 		ntab_upload(dev, B43_NTAB_CHANEST_R3, b43_ntab_channelest_r3);
 		ntab_upload(dev, B43_NTAB_FRAMELT_R3, b43_ntab_framelookup_r3);
 		b43_nphy_tables_init_shared_lut(dev);
-	}
+	पूर्ण
 
 	/* Volatile tables */
-	if (antswlut < ARRAY_SIZE(b43_ntab_antswctl_r3))
+	अगर (antswlut < ARRAY_SIZE(b43_ntab_antswctl_r3))
 		ntab_upload(dev, B43_NTAB_ANT_SW_CTL_R3,
 			    b43_ntab_antswctl_r3[antswlut]);
-	else
+	अन्यथा
 		B43_WARN_ON(1);
-}
+पूर्ण
 
-static void b43_nphy_tables_init_rev0(struct b43_wldev *dev)
-{
+अटल व्योम b43_nphy_tables_init_rev0(काष्ठा b43_wldev *dev)
+अणु
 	/* Static tables */
-	if (dev->phy.do_full_init) {
-		ntab_upload(dev, B43_NTAB_FRAMESTRUCT, b43_ntab_framestruct);
+	अगर (dev->phy.करो_full_init) अणु
+		ntab_upload(dev, B43_NTAB_FRAMESTRUCT, b43_ntab_frameकाष्ठा);
 		ntab_upload(dev, B43_NTAB_FRAMELT, b43_ntab_framelookup);
-		ntab_upload(dev, B43_NTAB_TMAP, b43_ntab_tmap);
+		ntab_upload(dev, B43_NTAB_TMAP, b43_ntab_पंचांगap);
 		ntab_upload(dev, B43_NTAB_TDTRN, b43_ntab_tdtrn);
-		ntab_upload(dev, B43_NTAB_INTLEVEL, b43_ntab_intlevel);
+		ntab_upload(dev, B43_NTAB_INTLEVEL, b43_ntab_पूर्णांकlevel);
 		ntab_upload(dev, B43_NTAB_PILOT, b43_ntab_pilot);
 		ntab_upload(dev, B43_NTAB_TDI20A0, b43_ntab_tdi20a0);
 		ntab_upload(dev, B43_NTAB_TDI20A1, b43_ntab_tdi20a1);
@@ -3603,219 +3604,219 @@ static void b43_nphy_tables_init_rev0(struct b43_wldev *dev)
 		ntab_upload(dev, B43_NTAB_MCS, b43_ntab_mcs);
 		ntab_upload(dev, B43_NTAB_NOISEVAR10, b43_ntab_noisevar10);
 		ntab_upload(dev, B43_NTAB_NOISEVAR11, b43_ntab_noisevar11);
-	}
+	पूर्ण
 
 	/* Volatile tables */
 	ntab_upload(dev, B43_NTAB_BDI, b43_ntab_bdi);
 	ntab_upload(dev, B43_NTAB_PILOTLT, b43_ntab_pilotlt);
 	ntab_upload(dev, B43_NTAB_C0_GAINCTL, b43_ntab_gainctl0);
 	ntab_upload(dev, B43_NTAB_C1_GAINCTL, b43_ntab_gainctl1);
-	ntab_upload(dev, B43_NTAB_C0_ESTPLT, b43_ntab_estimatepowerlt0);
-	ntab_upload(dev, B43_NTAB_C1_ESTPLT, b43_ntab_estimatepowerlt1);
-	ntab_upload(dev, B43_NTAB_C0_ADJPLT, b43_ntab_adjustpower0);
-	ntab_upload(dev, B43_NTAB_C1_ADJPLT, b43_ntab_adjustpower1);
+	ntab_upload(dev, B43_NTAB_C0_ESTPLT, b43_ntab_estimateघातerlt0);
+	ntab_upload(dev, B43_NTAB_C1_ESTPLT, b43_ntab_estimateघातerlt1);
+	ntab_upload(dev, B43_NTAB_C0_ADJPLT, b43_ntab_adjustघातer0);
+	ntab_upload(dev, B43_NTAB_C1_ADJPLT, b43_ntab_adjustघातer1);
 	ntab_upload(dev, B43_NTAB_C0_IQLT, b43_ntab_iqlt0);
 	ntab_upload(dev, B43_NTAB_C1_IQLT, b43_ntab_iqlt1);
 	ntab_upload(dev, B43_NTAB_C0_LOFEEDTH, b43_ntab_loftlt0);
 	ntab_upload(dev, B43_NTAB_C1_LOFEEDTH, b43_ntab_loftlt1);
-}
+पूर्ण
 
 /* https://bcm-v4.sipsolutions.net/802.11/PHY/N/InitTables */
-void b43_nphy_tables_init(struct b43_wldev *dev)
-{
-	if (dev->phy.rev >= 16)
+व्योम b43_nphy_tables_init(काष्ठा b43_wldev *dev)
+अणु
+	अगर (dev->phy.rev >= 16)
 		b43_nphy_tables_init_rev16(dev);
-	else if (dev->phy.rev >= 7)
+	अन्यथा अगर (dev->phy.rev >= 7)
 		b43_nphy_tables_init_rev7(dev);
-	else if (dev->phy.rev >= 3)
+	अन्यथा अगर (dev->phy.rev >= 3)
 		b43_nphy_tables_init_rev3(dev);
-	else
+	अन्यथा
 		b43_nphy_tables_init_rev0(dev);
-}
+पूर्ण
 
 /* https://bcm-v4.sipsolutions.net/802.11/PHY/N/GetIpaGainTbl */
-static const u32 *b43_nphy_get_ipa_gain_table(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
+अटल स्थिर u32 *b43_nphy_get_ipa_gain_table(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
 
-	if (b43_current_band(dev->wl) == NL80211_BAND_2GHZ) {
-		switch (phy->rev) {
-		case 17:
-			if (phy->radio_rev == 14)
-				return b43_ntab_tx_gain_ipa_2057_rev14_2g;
-			break;
-		case 16:
-			if (phy->radio_rev == 9)
-				return b43_ntab_tx_gain_ipa_2057_rev9_2g;
-			break;
-		case 8:
-			if (phy->radio_rev == 5)
-				return b43_ntab_tx_gain_ipa_2057_rev5_2g;
-			break;
-		case 6:
-			if (dev->dev->chip_id == BCMA_CHIP_ID_BCM47162)
-				return b43_ntab_tx_gain_ipa_rev5_2g;
-			return b43_ntab_tx_gain_ipa_rev6_2g;
-		case 5:
-			return b43_ntab_tx_gain_ipa_rev5_2g;
-		case 4:
-		case 3:
-			return b43_ntab_tx_gain_ipa_rev3_2g;
-		}
+	अगर (b43_current_band(dev->wl) == NL80211_BAND_2GHZ) अणु
+		चयन (phy->rev) अणु
+		हाल 17:
+			अगर (phy->radio_rev == 14)
+				वापस b43_ntab_tx_gain_ipa_2057_rev14_2g;
+			अवरोध;
+		हाल 16:
+			अगर (phy->radio_rev == 9)
+				वापस b43_ntab_tx_gain_ipa_2057_rev9_2g;
+			अवरोध;
+		हाल 8:
+			अगर (phy->radio_rev == 5)
+				वापस b43_ntab_tx_gain_ipa_2057_rev5_2g;
+			अवरोध;
+		हाल 6:
+			अगर (dev->dev->chip_id == BCMA_CHIP_ID_BCM47162)
+				वापस b43_ntab_tx_gain_ipa_rev5_2g;
+			वापस b43_ntab_tx_gain_ipa_rev6_2g;
+		हाल 5:
+			वापस b43_ntab_tx_gain_ipa_rev5_2g;
+		हाल 4:
+		हाल 3:
+			वापस b43_ntab_tx_gain_ipa_rev3_2g;
+		पूर्ण
 
 		b43err(dev->wl,
 		       "No 2GHz IPA gain table available for this device\n");
-		return NULL;
-	} else {
-		switch (phy->rev) {
-		case 16:
-			if (phy->radio_rev == 9)
-				return b43_ntab_tx_gain_ipa_2057_rev9_5g;
-			break;
-		case 3 ... 6:
-			return b43_ntab_tx_gain_ipa_rev3_5g;
-		}
+		वापस शून्य;
+	पूर्ण अन्यथा अणु
+		चयन (phy->rev) अणु
+		हाल 16:
+			अगर (phy->radio_rev == 9)
+				वापस b43_ntab_tx_gain_ipa_2057_rev9_5g;
+			अवरोध;
+		हाल 3 ... 6:
+			वापस b43_ntab_tx_gain_ipa_rev3_5g;
+		पूर्ण
 
 		b43err(dev->wl,
 		       "No 5GHz IPA gain table available for this device\n");
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-const u32 *b43_nphy_get_tx_gain_table(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
-	enum nl80211_band band = b43_current_band(dev->wl);
-	struct ssb_sprom *sprom = dev->dev->bus_sprom;
+स्थिर u32 *b43_nphy_get_tx_gain_table(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	क्रमागत nl80211_band band = b43_current_band(dev->wl);
+	काष्ठा ssb_sprom *sprom = dev->dev->bus_sprom;
 
-	if (dev->phy.rev < 3)
-		return b43_ntab_tx_gain_rev0_1_2;
+	अगर (dev->phy.rev < 3)
+		वापस b43_ntab_tx_gain_rev0_1_2;
 
 	/* rev 3+ */
-	if ((dev->phy.n->ipa2g_on && band == NL80211_BAND_2GHZ) ||
-	    (dev->phy.n->ipa5g_on && band == NL80211_BAND_5GHZ)) {
-		return b43_nphy_get_ipa_gain_table(dev);
-	} else if (b43_current_band(dev->wl) == NL80211_BAND_5GHZ) {
-		switch (phy->rev) {
-		case 6:
-		case 5:
-			return b43_ntab_tx_gain_epa_rev5_5g;
-		case 4:
-			return sprom->fem.ghz5.extpa_gain == 3 ?
+	अगर ((dev->phy.n->ipa2g_on && band == NL80211_BAND_2GHZ) ||
+	    (dev->phy.n->ipa5g_on && band == NL80211_BAND_5GHZ)) अणु
+		वापस b43_nphy_get_ipa_gain_table(dev);
+	पूर्ण अन्यथा अगर (b43_current_band(dev->wl) == NL80211_BAND_5GHZ) अणु
+		चयन (phy->rev) अणु
+		हाल 6:
+		हाल 5:
+			वापस b43_ntab_tx_gain_epa_rev5_5g;
+		हाल 4:
+			वापस sprom->fem.ghz5.extpa_gain == 3 ?
 				b43_ntab_tx_gain_epa_rev4_5g :
 				b43_ntab_tx_gain_epa_rev4_hi_pwr_5g;
-		case 3:
-			return b43_ntab_tx_gain_epa_rev3_5g;
-		default:
+		हाल 3:
+			वापस b43_ntab_tx_gain_epa_rev3_5g;
+		शेष:
 			b43err(dev->wl,
 			       "No 5GHz EPA gain table available for this device\n");
-			return NULL;
-		}
-	} else {
-		switch (phy->rev) {
-		case 6:
-		case 5:
-			if (sprom->fem.ghz2.extpa_gain == 3)
-				return b43_ntab_tx_gain_epa_rev3_hi_pwr_2g;
+			वापस शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (phy->rev) अणु
+		हाल 6:
+		हाल 5:
+			अगर (sprom->fem.ghz2.extpa_gain == 3)
+				वापस b43_ntab_tx_gain_epa_rev3_hi_pwr_2g;
 			fallthrough;
-		case 4:
-		case 3:
-			return b43_ntab_tx_gain_epa_rev3_2g;
-		default:
+		हाल 4:
+		हाल 3:
+			वापस b43_ntab_tx_gain_epa_rev3_2g;
+		शेष:
 			b43err(dev->wl,
 			       "No 2GHz EPA gain table available for this device\n");
-			return NULL;
-		}
-	}
-}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-const s16 *b43_ntab_get_rf_pwr_offset_table(struct b43_wldev *dev)
-{
-	struct b43_phy *phy = &dev->phy;
+स्थिर s16 *b43_ntab_get_rf_pwr_offset_table(काष्ठा b43_wldev *dev)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
 
-	if (b43_current_band(dev->wl) == NL80211_BAND_2GHZ) {
-		switch (phy->rev) {
-		case 17:
-			if (phy->radio_rev == 14)
-				return b43_ntab_rf_pwr_offset_2057_rev14_2g;
-			break;
-		case 16:
-			if (phy->radio_rev == 9)
-				return b43_ntab_rf_pwr_offset_2057_rev9_2g;
-			break;
-		}
+	अगर (b43_current_band(dev->wl) == NL80211_BAND_2GHZ) अणु
+		चयन (phy->rev) अणु
+		हाल 17:
+			अगर (phy->radio_rev == 14)
+				वापस b43_ntab_rf_pwr_offset_2057_rev14_2g;
+			अवरोध;
+		हाल 16:
+			अगर (phy->radio_rev == 9)
+				वापस b43_ntab_rf_pwr_offset_2057_rev9_2g;
+			अवरोध;
+		पूर्ण
 
 		b43err(dev->wl,
 		       "No 2GHz RF power table available for this device\n");
-		return NULL;
-	} else {
-		switch (phy->rev) {
-		case 16:
-			if (phy->radio_rev == 9)
-				return b43_ntab_rf_pwr_offset_2057_rev9_5g;
-			break;
-		}
+		वापस शून्य;
+	पूर्ण अन्यथा अणु
+		चयन (phy->rev) अणु
+		हाल 16:
+			अगर (phy->radio_rev == 9)
+				वापस b43_ntab_rf_pwr_offset_2057_rev9_5g;
+			अवरोध;
+		पूर्ण
 
 		b43err(dev->wl,
 		       "No 5GHz RF power table available for this device\n");
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-struct nphy_gain_ctl_workaround_entry *b43_nphy_get_gain_ctl_workaround_ent(
-	struct b43_wldev *dev, bool ghz5, bool ext_lna)
-{
-	struct b43_phy *phy = &dev->phy;
-	struct nphy_gain_ctl_workaround_entry *e;
+काष्ठा nphy_gain_ctl_workaround_entry *b43_nphy_get_gain_ctl_workaround_ent(
+	काष्ठा b43_wldev *dev, bool ghz5, bool ext_lna)
+अणु
+	काष्ठा b43_phy *phy = &dev->phy;
+	काष्ठा nphy_gain_ctl_workaround_entry *e;
 	u8 phy_idx;
 
-	if (!ghz5 && dev->phy.rev >= 6 && dev->phy.radio_rev == 11)
-		return &nphy_gain_ctl_wa_phy6_radio11_ghz2;
+	अगर (!ghz5 && dev->phy.rev >= 6 && dev->phy.radio_rev == 11)
+		वापस &nphy_gain_ctl_wa_phy6_radio11_ghz2;
 
 	B43_WARN_ON(dev->phy.rev < 3);
-	if (dev->phy.rev >= 6)
+	अगर (dev->phy.rev >= 6)
 		phy_idx = 3;
-	else if (dev->phy.rev == 5)
+	अन्यथा अगर (dev->phy.rev == 5)
 		phy_idx = 2;
-	else if (dev->phy.rev == 4)
+	अन्यथा अगर (dev->phy.rev == 4)
 		phy_idx = 1;
-	else
+	अन्यथा
 		phy_idx = 0;
 	e = &nphy_gain_ctl_workaround[ghz5][phy_idx];
 
 	/* Some workarounds to the workarounds... */
-	if (!ghz5) {
+	अगर (!ghz5) अणु
 		u8 tr_iso = dev->dev->bus_sprom->fem.ghz2.tr_iso;
 
-		if (tr_iso > 7)
+		अगर (tr_iso > 7)
 			tr_iso = 3;
 
-		if (phy->rev >= 6) {
-			static const int gain_data[] = { 0x106a, 0x106c, 0x1074,
+		अगर (phy->rev >= 6) अणु
+			अटल स्थिर पूर्णांक gain_data[] = अणु 0x106a, 0x106c, 0x1074,
 							 0x107c, 0x007e, 0x107e,
-							 0x207e, 0x307e, };
+							 0x207e, 0x307e, पूर्ण;
 
 			e->cliplo_gain = gain_data[tr_iso];
-		} else if (phy->rev == 5) {
-			static const int gain_data[] = { 0x0062, 0x0064, 0x006a,
+		पूर्ण अन्यथा अगर (phy->rev == 5) अणु
+			अटल स्थिर पूर्णांक gain_data[] = अणु 0x0062, 0x0064, 0x006a,
 							 0x106a, 0x106c, 0x1074,
-							 0x107c, 0x207c, };
+							 0x107c, 0x207c, पूर्ण;
 
 			e->cliplo_gain = gain_data[tr_iso];
-		}
+		पूर्ण
 
-		if (phy->rev >= 5 && ext_lna) {
+		अगर (phy->rev >= 5 && ext_lna) अणु
 			e->rfseq_init[0] &= ~0x4000;
 			e->rfseq_init[1] &= ~0x4000;
 			e->rfseq_init[2] &= ~0x4000;
 			e->rfseq_init[3] &= ~0x4000;
 			e->init_gain &= ~0x4000;
-		}
-	} else {
-		if (phy->rev >= 6) {
-			if (phy->radio_rev == 11 && !b43_is_40mhz(dev))
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (phy->rev >= 6) अणु
+			अगर (phy->radio_rev == 11 && !b43_is_40mhz(dev))
 				e->crsminu = 0x2d;
-		} else if (phy->rev == 4 && ext_lna) {
+		पूर्ण अन्यथा अगर (phy->rev == 4 && ext_lna) अणु
 			e->rfseq_init[0] &= ~0x4000;
 			e->rfseq_init[1] &= ~0x4000;
 			e->rfseq_init[2] &= ~0x4000;
@@ -3826,40 +3827,40 @@ struct nphy_gain_ctl_workaround_entry *b43_nphy_get_gain_ctl_workaround_ent(
 			e->rfseq_init[2] |= 0x1000;
 			e->rfseq_init[3] |= 0x1000;
 			e->init_gain |= 0x1000;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return e;
-}
+	वापस e;
+पूर्ण
 
-const struct nphy_rf_control_override_rev7 *b43_nphy_get_rf_ctl_over_rev7(
-	struct b43_wldev *dev, u16 field, u8 override)
-{
-	const struct nphy_rf_control_override_rev7 *e;
+स्थिर काष्ठा nphy_rf_control_override_rev7 *b43_nphy_get_rf_ctl_over_rev7(
+	काष्ठा b43_wldev *dev, u16 field, u8 override)
+अणु
+	स्थिर काष्ठा nphy_rf_control_override_rev7 *e;
 	u8 size, i;
 
-	switch (override) {
-	case 0:
+	चयन (override) अणु
+	हाल 0:
 		e = tbl_rf_control_override_rev7_over0;
 		size = ARRAY_SIZE(tbl_rf_control_override_rev7_over0);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		e = tbl_rf_control_override_rev7_over1;
 		size = ARRAY_SIZE(tbl_rf_control_override_rev7_over1);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		e = tbl_rf_control_override_rev7_over2;
 		size = ARRAY_SIZE(tbl_rf_control_override_rev7_over2);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		b43err(dev->wl, "Invalid override value %d\n", override);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < size; i++) {
-		if (e[i].field == field)
-			return &e[i];
-	}
+	क्रम (i = 0; i < size; i++) अणु
+		अगर (e[i].field == field)
+			वापस &e[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

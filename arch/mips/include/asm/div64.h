@@ -1,27 +1,28 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2000, 2004, 2021  Maciej W. Rozycki
  * Copyright (C) 2003, 07 Ralf Baechle (ralf@linux-mips.org)
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#ifndef __ASM_DIV64_H
-#define __ASM_DIV64_H
+#अगर_अघोषित __ASM_DIV64_H
+#घोषणा __ASM_DIV64_H
 
-#include <asm/bitsperlong.h>
+#समावेश <यंत्र/bitsperदीर्घ.h>
 
-#if BITS_PER_LONG == 32
+#अगर BITS_PER_LONG == 32
 
 /*
- * No traps on overflows for any of these...
+ * No traps on overflows क्रम any of these...
  */
 
-#define do_div64_32(res, high, low, base) ({				\
-	unsigned long __cf, __tmp, __tmp2, __i;				\
-	unsigned long __quot32, __mod32;				\
+#घोषणा करो_भाग64_32(res, high, low, base) (अणु				\
+	अचिन्हित दीर्घ __cf, __पंचांगp, __पंचांगp2, __i;				\
+	अचिन्हित दीर्घ __quot32, __mod32;				\
 									\
-	__asm__(							\
+	__यंत्र__(							\
 	"	.set	push					\n"	\
 	"	.set	noat					\n"	\
 	"	.set	noreorder				\n"	\
@@ -47,45 +48,45 @@
 	"	bnez	%4, 0b					\n"	\
 	"	 srl	%5, %1, 0x1f				\n"	\
 	"	.set	pop"						\
-	: "=&r" (__mod32), "=&r" (__tmp),				\
+	: "=&r" (__mod32), "=&r" (__पंचांगp),				\
 	  "=&r" (__quot32), "=&r" (__cf),				\
-	  "=&r" (__i), "=&r" (__tmp2)					\
+	  "=&r" (__i), "=&r" (__पंचांगp2)					\
 	: "Jr" (base), "0" (high), "1" (low));				\
 									\
 	(res) = __quot32;						\
 	__mod32;							\
-})
+पूर्ण)
 
-#define __div64_32(n, base) ({						\
-	unsigned long __upper, __low, __high, __radix;			\
-	unsigned long long __quot;					\
-	unsigned long long __div;					\
-	unsigned long __mod;						\
+#घोषणा __भाग64_32(n, base) (अणु						\
+	अचिन्हित दीर्घ __upper, __low, __high, __radix;			\
+	अचिन्हित दीर्घ दीर्घ __quot;					\
+	अचिन्हित दीर्घ दीर्घ __भाग;					\
+	अचिन्हित दीर्घ __mod;						\
 									\
-	__div = (*n);							\
+	__भाग = (*n);							\
 	__radix = (base);						\
 									\
-	__high = __div >> 32;						\
-	__low = __div;							\
+	__high = __भाग >> 32;						\
+	__low = __भाग;							\
 									\
-	if (__high < __radix) {						\
+	अगर (__high < __radix) अणु						\
 		__upper = __high;					\
 		__high = 0;						\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		__upper = __high % __radix;				\
 		__high /= __radix;					\
-	}								\
+	पूर्ण								\
 									\
-	__mod = do_div64_32(__low, __upper, __low, __radix);		\
+	__mod = करो_भाग64_32(__low, __upper, __low, __radix);		\
 									\
 	__quot = __high;						\
 	__quot = __quot << 32 | __low;					\
 	(*n) = __quot;							\
 	__mod;								\
-})
+पूर्ण)
 
-#endif /* BITS_PER_LONG == 32 */
+#पूर्ण_अगर /* BITS_PER_LONG == 32 */
 
-#include <asm-generic/div64.h>
+#समावेश <यंत्र-generic/भाग64.h>
 
-#endif /* __ASM_DIV64_H */
+#पूर्ण_अगर /* __ASM_DIV64_H */

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*======================================================================
 
-  Device driver for the PCMCIA control functionality of PXA2xx
+  Device driver क्रम the PCMCIA control functionality of PXA2xx
   microprocessors.
 
 
@@ -15,156 +16,156 @@
 
   ======================================================================*/
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/cpufreq.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <mach/hardware.h>
-#include <mach/smemc.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <mach/pxa2xx-regs.h>
-#include <asm/mach-types.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/smemc.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <mach/pxa2xx-regs.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include <pcmcia/ss.h>
-#include <pcmcia/cistpl.h>
+#समावेश <pcmcia/ss.h>
+#समावेश <pcmcia/cistpl.h>
 
-#include "soc_common.h"
-#include "pxa2xx_base.h"
+#समावेश "soc_common.h"
+#समावेश "pxa2xx_base.h"
 
 /*
  * Personal Computer Memory Card International Association (PCMCIA) sockets
  */
 
-#define PCMCIAPrtSp	0x04000000	/* PCMCIA Partition Space [byte]   */
-#define PCMCIASp	(4*PCMCIAPrtSp)	/* PCMCIA Space [byte]             */
-#define PCMCIAIOSp	PCMCIAPrtSp	/* PCMCIA I/O Space [byte]         */
-#define PCMCIAAttrSp	PCMCIAPrtSp	/* PCMCIA Attribute Space [byte]   */
-#define PCMCIAMemSp	PCMCIAPrtSp	/* PCMCIA Memory Space [byte]      */
+#घोषणा PCMCIAPrtSp	0x04000000	/* PCMCIA Partition Space [byte]   */
+#घोषणा PCMCIASp	(4*PCMCIAPrtSp)	/* PCMCIA Space [byte]             */
+#घोषणा PCMCIAIOSp	PCMCIAPrtSp	/* PCMCIA I/O Space [byte]         */
+#घोषणा PCMCIAAttrSp	PCMCIAPrtSp	/* PCMCIA Attribute Space [byte]   */
+#घोषणा PCMCIAMemSp	PCMCIAPrtSp	/* PCMCIA Memory Space [byte]      */
 
-#define PCMCIA0Sp	PCMCIASp	/* PCMCIA 0 Space [byte]           */
-#define PCMCIA0IOSp	PCMCIAIOSp	/* PCMCIA 0 I/O Space [byte]       */
-#define PCMCIA0AttrSp	PCMCIAAttrSp	/* PCMCIA 0 Attribute Space [byte] */
-#define PCMCIA0MemSp	PCMCIAMemSp	/* PCMCIA 0 Memory Space [byte]    */
+#घोषणा PCMCIA0Sp	PCMCIASp	/* PCMCIA 0 Space [byte]           */
+#घोषणा PCMCIA0IOSp	PCMCIAIOSp	/* PCMCIA 0 I/O Space [byte]       */
+#घोषणा PCMCIA0AttrSp	PCMCIAAttrSp	/* PCMCIA 0 Attribute Space [byte] */
+#घोषणा PCMCIA0MemSp	PCMCIAMemSp	/* PCMCIA 0 Memory Space [byte]    */
 
-#define PCMCIA1Sp	PCMCIASp	/* PCMCIA 1 Space [byte]           */
-#define PCMCIA1IOSp	PCMCIAIOSp	/* PCMCIA 1 I/O Space [byte]       */
-#define PCMCIA1AttrSp	PCMCIAAttrSp	/* PCMCIA 1 Attribute Space [byte] */
-#define PCMCIA1MemSp	PCMCIAMemSp	/* PCMCIA 1 Memory Space [byte]    */
+#घोषणा PCMCIA1Sp	PCMCIASp	/* PCMCIA 1 Space [byte]           */
+#घोषणा PCMCIA1IOSp	PCMCIAIOSp	/* PCMCIA 1 I/O Space [byte]       */
+#घोषणा PCMCIA1AttrSp	PCMCIAAttrSp	/* PCMCIA 1 Attribute Space [byte] */
+#घोषणा PCMCIA1MemSp	PCMCIAMemSp	/* PCMCIA 1 Memory Space [byte]    */
 
-#define _PCMCIA(Nb)			/* PCMCIA [0..1]                   */ \
+#घोषणा _PCMCIA(Nb)			/* PCMCIA [0..1]                   */ \
 			(0x20000000 + (Nb) * PCMCIASp)
-#define _PCMCIAIO(Nb)	_PCMCIA(Nb)	/* PCMCIA I/O [0..1]               */
-#define _PCMCIAAttr(Nb)			/* PCMCIA Attribute [0..1]         */ \
+#घोषणा _PCMCIAIO(Nb)	_PCMCIA(Nb)	/* PCMCIA I/O [0..1]               */
+#घोषणा _PCMCIAAttr(Nb)			/* PCMCIA Attribute [0..1]         */ \
 			(_PCMCIA(Nb) + 2 * PCMCIAPrtSp)
-#define _PCMCIAMem(Nb)			/* PCMCIA Memory [0..1]            */ \
+#घोषणा _PCMCIAMem(Nb)			/* PCMCIA Memory [0..1]            */ \
 			(_PCMCIA(Nb) + 3 * PCMCIAPrtSp)
 
-#define _PCMCIA0	_PCMCIA(0)	/* PCMCIA 0                        */
-#define _PCMCIA0IO	_PCMCIAIO(0)	/* PCMCIA 0 I/O                    */
-#define _PCMCIA0Attr	_PCMCIAAttr(0)	/* PCMCIA 0 Attribute              */
-#define _PCMCIA0Mem	_PCMCIAMem(0)	/* PCMCIA 0 Memory                 */
+#घोषणा _PCMCIA0	_PCMCIA(0)	/* PCMCIA 0                        */
+#घोषणा _PCMCIA0IO	_PCMCIAIO(0)	/* PCMCIA 0 I/O                    */
+#घोषणा _PCMCIA0Attr	_PCMCIAAttr(0)	/* PCMCIA 0 Attribute              */
+#घोषणा _PCMCIA0Mem	_PCMCIAMem(0)	/* PCMCIA 0 Memory                 */
 
-#define _PCMCIA1	_PCMCIA(1)	/* PCMCIA 1                        */
-#define _PCMCIA1IO	_PCMCIAIO(1)	/* PCMCIA 1 I/O                    */
-#define _PCMCIA1Attr	_PCMCIAAttr(1)	/* PCMCIA 1 Attribute              */
-#define _PCMCIA1Mem	_PCMCIAMem(1)	/* PCMCIA 1 Memory                 */
+#घोषणा _PCMCIA1	_PCMCIA(1)	/* PCMCIA 1                        */
+#घोषणा _PCMCIA1IO	_PCMCIAIO(1)	/* PCMCIA 1 I/O                    */
+#घोषणा _PCMCIA1Attr	_PCMCIAAttr(1)	/* PCMCIA 1 Attribute              */
+#घोषणा _PCMCIA1Mem	_PCMCIAMem(1)	/* PCMCIA 1 Memory                 */
 
 
-#define MCXX_SETUP_MASK     (0x7f)
-#define MCXX_ASST_MASK      (0x1f)
-#define MCXX_HOLD_MASK      (0x3f)
-#define MCXX_SETUP_SHIFT    (0)
-#define MCXX_ASST_SHIFT     (7)
-#define MCXX_HOLD_SHIFT     (14)
+#घोषणा MCXX_SETUP_MASK     (0x7f)
+#घोषणा MCXX_ASST_MASK      (0x1f)
+#घोषणा MCXX_HOLD_MASK      (0x3f)
+#घोषणा MCXX_SETUP_SHIFT    (0)
+#घोषणा MCXX_ASST_SHIFT     (7)
+#घोषणा MCXX_HOLD_SHIFT     (14)
 
-static inline u_int pxa2xx_mcxx_hold(u_int pcmcia_cycle_ns,
-				     u_int mem_clk_10khz)
-{
-	u_int code = pcmcia_cycle_ns * mem_clk_10khz;
-	return (code / 300000) + ((code % 300000) ? 1 : 0) - 1;
-}
+अटल अंतरभूत u_पूर्णांक pxa2xx_mcxx_hold(u_पूर्णांक pcmcia_cycle_ns,
+				     u_पूर्णांक mem_clk_10khz)
+अणु
+	u_पूर्णांक code = pcmcia_cycle_ns * mem_clk_10khz;
+	वापस (code / 300000) + ((code % 300000) ? 1 : 0) - 1;
+पूर्ण
 
-static inline u_int pxa2xx_mcxx_asst(u_int pcmcia_cycle_ns,
-				     u_int mem_clk_10khz)
-{
-	u_int code = pcmcia_cycle_ns * mem_clk_10khz;
-	return (code / 300000) + ((code % 300000) ? 1 : 0) + 1;
-}
+अटल अंतरभूत u_पूर्णांक pxa2xx_mcxx_asst(u_पूर्णांक pcmcia_cycle_ns,
+				     u_पूर्णांक mem_clk_10khz)
+अणु
+	u_पूर्णांक code = pcmcia_cycle_ns * mem_clk_10khz;
+	वापस (code / 300000) + ((code % 300000) ? 1 : 0) + 1;
+पूर्ण
 
-static inline u_int pxa2xx_mcxx_setup(u_int pcmcia_cycle_ns,
-				      u_int mem_clk_10khz)
-{
-	u_int code = pcmcia_cycle_ns * mem_clk_10khz;
-	return (code / 100000) + ((code % 100000) ? 1 : 0) - 1;
-}
+अटल अंतरभूत u_पूर्णांक pxa2xx_mcxx_setup(u_पूर्णांक pcmcia_cycle_ns,
+				      u_पूर्णांक mem_clk_10khz)
+अणु
+	u_पूर्णांक code = pcmcia_cycle_ns * mem_clk_10khz;
+	वापस (code / 100000) + ((code % 100000) ? 1 : 0) - 1;
+पूर्ण
 
-/* This function returns the (approximate) command assertion period, in
- * nanoseconds, for a given CPU clock frequency and MCXX_ASST value:
+/* This function वापसs the (approximate) command निश्चितion period, in
+ * nanoseconds, क्रम a given CPU घड़ी frequency and MCXX_ASST value:
  */
-static inline u_int pxa2xx_pcmcia_cmd_time(u_int mem_clk_10khz,
-					   u_int pcmcia_mcxx_asst)
-{
-	return (300000 * (pcmcia_mcxx_asst + 1) / mem_clk_10khz);
-}
+अटल अंतरभूत u_पूर्णांक pxa2xx_pcmcia_cmd_समय(u_पूर्णांक mem_clk_10khz,
+					   u_पूर्णांक pcmcia_mcxx_asst)
+अणु
+	वापस (300000 * (pcmcia_mcxx_asst + 1) / mem_clk_10khz);
+पूर्ण
 
-static int pxa2xx_pcmcia_set_mcmem( int sock, int speed, int clock )
-{
-	uint32_t val;
+अटल पूर्णांक pxa2xx_pcmcia_set_mcmem( पूर्णांक sock, पूर्णांक speed, पूर्णांक घड़ी )
+अणु
+	uपूर्णांक32_t val;
 
-	val = ((pxa2xx_mcxx_setup(speed, clock)
+	val = ((pxa2xx_mcxx_setup(speed, घड़ी)
 		& MCXX_SETUP_MASK) << MCXX_SETUP_SHIFT)
-		| ((pxa2xx_mcxx_asst(speed, clock)
+		| ((pxa2xx_mcxx_asst(speed, घड़ी)
 		& MCXX_ASST_MASK) << MCXX_ASST_SHIFT)
-		| ((pxa2xx_mcxx_hold(speed, clock)
+		| ((pxa2xx_mcxx_hold(speed, घड़ी)
 		& MCXX_HOLD_MASK) << MCXX_HOLD_SHIFT);
 
-	__raw_writel(val, MCMEM(sock));
+	__raw_ग_लिखोl(val, MCMEM(sock));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa2xx_pcmcia_set_mcio( int sock, int speed, int clock )
-{
-	uint32_t val;
+अटल पूर्णांक pxa2xx_pcmcia_set_mcio( पूर्णांक sock, पूर्णांक speed, पूर्णांक घड़ी )
+अणु
+	uपूर्णांक32_t val;
 
-	val = ((pxa2xx_mcxx_setup(speed, clock)
+	val = ((pxa2xx_mcxx_setup(speed, घड़ी)
 		& MCXX_SETUP_MASK) << MCXX_SETUP_SHIFT)
-		| ((pxa2xx_mcxx_asst(speed, clock)
+		| ((pxa2xx_mcxx_asst(speed, घड़ी)
 		& MCXX_ASST_MASK) << MCXX_ASST_SHIFT)
-		| ((pxa2xx_mcxx_hold(speed, clock)
+		| ((pxa2xx_mcxx_hold(speed, घड़ी)
 		& MCXX_HOLD_MASK) << MCXX_HOLD_SHIFT);
 
-	__raw_writel(val, MCIO(sock));
+	__raw_ग_लिखोl(val, MCIO(sock));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa2xx_pcmcia_set_mcatt( int sock, int speed, int clock )
-{
-	uint32_t val;
+अटल पूर्णांक pxa2xx_pcmcia_set_mcatt( पूर्णांक sock, पूर्णांक speed, पूर्णांक घड़ी )
+अणु
+	uपूर्णांक32_t val;
 
-	val = ((pxa2xx_mcxx_setup(speed, clock)
+	val = ((pxa2xx_mcxx_setup(speed, घड़ी)
 		& MCXX_SETUP_MASK) << MCXX_SETUP_SHIFT)
-		| ((pxa2xx_mcxx_asst(speed, clock)
+		| ((pxa2xx_mcxx_asst(speed, घड़ी)
 		& MCXX_ASST_MASK) << MCXX_ASST_SHIFT)
-		| ((pxa2xx_mcxx_hold(speed, clock)
+		| ((pxa2xx_mcxx_hold(speed, घड़ी)
 		& MCXX_HOLD_MASK) << MCXX_HOLD_SHIFT);
 
-	__raw_writel(val, MCATT(sock));
+	__raw_ग_लिखोl(val, MCATT(sock));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa2xx_pcmcia_set_mcxx(struct soc_pcmcia_socket *skt, unsigned int clk)
-{
-	struct soc_pcmcia_timing timing;
-	int sock = skt->nr;
+अटल पूर्णांक pxa2xx_pcmcia_set_mcxx(काष्ठा soc_pcmcia_socket *skt, अचिन्हित पूर्णांक clk)
+अणु
+	काष्ठा soc_pcmcia_timing timing;
+	पूर्णांक sock = skt->nr;
 
 	soc_common_pcmcia_get_timing(skt, &timing);
 
@@ -172,74 +173,74 @@ static int pxa2xx_pcmcia_set_mcxx(struct soc_pcmcia_socket *skt, unsigned int cl
 	pxa2xx_pcmcia_set_mcatt(sock, timing.attr, clk);
 	pxa2xx_pcmcia_set_mcio(sock, timing.io, clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa2xx_pcmcia_set_timing(struct soc_pcmcia_socket *skt)
-{
-	unsigned long clk = clk_get_rate(skt->clk);
-	return pxa2xx_pcmcia_set_mcxx(skt, clk / 10000);
-}
+अटल पूर्णांक pxa2xx_pcmcia_set_timing(काष्ठा soc_pcmcia_socket *skt)
+अणु
+	अचिन्हित दीर्घ clk = clk_get_rate(skt->clk);
+	वापस pxa2xx_pcmcia_set_mcxx(skt, clk / 10000);
+पूर्ण
 
-#ifdef CONFIG_CPU_FREQ
+#अगर_घोषित CONFIG_CPU_FREQ
 
-static int
-pxa2xx_pcmcia_frequency_change(struct soc_pcmcia_socket *skt,
-			       unsigned long val,
-			       struct cpufreq_freqs *freqs)
-{
-	switch (val) {
-	case CPUFREQ_PRECHANGE:
-		if (freqs->new > freqs->old) {
+अटल पूर्णांक
+pxa2xx_pcmcia_frequency_change(काष्ठा soc_pcmcia_socket *skt,
+			       अचिन्हित दीर्घ val,
+			       काष्ठा cpufreq_freqs *freqs)
+अणु
+	चयन (val) अणु
+	हाल CPUFREQ_PRECHANGE:
+		अगर (freqs->new > freqs->old) अणु
 			debug(skt, 2, "new frequency %u.%uMHz > %u.%uMHz, "
 			       "pre-updating\n",
 			       freqs->new / 1000, (freqs->new / 100) % 10,
 			       freqs->old / 1000, (freqs->old / 100) % 10);
 			pxa2xx_pcmcia_set_timing(skt);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case CPUFREQ_POSTCHANGE:
-		if (freqs->new < freqs->old) {
+	हाल CPUFREQ_POSTCHANGE:
+		अगर (freqs->new < freqs->old) अणु
 			debug(skt, 2, "new frequency %u.%uMHz < %u.%uMHz, "
 			       "post-updating\n",
 			       freqs->new / 1000, (freqs->new / 100) % 10,
 			       freqs->old / 1000, (freqs->old / 100) % 10);
 			pxa2xx_pcmcia_set_timing(skt);
-		}
-		break;
-	}
-	return 0;
-}
-#endif
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void pxa2xx_configure_sockets(struct device *dev, struct pcmcia_low_level *ops)
-{
+व्योम pxa2xx_configure_sockets(काष्ठा device *dev, काष्ठा pcmcia_low_level *ops)
+अणु
 	/*
 	 * We have at least one socket, so set MECR:CIT
 	 * (Card Is There)
 	 */
-	uint32_t mecr = MECR_CIT;
+	uपूर्णांक32_t mecr = MECR_CIT;
 
 	/* Set MECR:NOS (Number Of Sockets) */
-	if ((ops->first + ops->nr) > 1 ||
+	अगर ((ops->first + ops->nr) > 1 ||
 	    machine_is_viper() || machine_is_arcom_zeus())
 		mecr |= MECR_NOS;
 
-	__raw_writel(mecr, MECR);
-}
+	__raw_ग_लिखोl(mecr, MECR);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_configure_sockets);
 
-static const char *skt_names[] = {
+अटल स्थिर अक्षर *skt_names[] = अणु
 	"PCMCIA socket 0",
 	"PCMCIA socket 1",
-};
+पूर्ण;
 
-#define SKT_DEV_INFO_SIZE(n) \
-	(sizeof(struct skt_dev_info) + (n)*sizeof(struct soc_pcmcia_socket))
+#घोषणा SKT_DEV_INFO_SIZE(n) \
+	(माप(काष्ठा skt_dev_info) + (n)*माप(काष्ठा soc_pcmcia_socket))
 
-int pxa2xx_drv_pcmcia_add_one(struct soc_pcmcia_socket *skt)
-{
+पूर्णांक pxa2xx_drv_pcmcia_add_one(काष्ठा soc_pcmcia_socket *skt)
+अणु
 	skt->res_skt.start = _PCMCIA(skt->nr);
 	skt->res_skt.end = _PCMCIA(skt->nr) + PCMCIASp - 1;
 	skt->res_skt.name = skt_names[skt->nr];
@@ -260,55 +261,55 @@ int pxa2xx_drv_pcmcia_add_one(struct soc_pcmcia_socket *skt)
 	skt->res_attr.name = "attribute";
 	skt->res_attr.flags = IORESOURCE_MEM;
 
-	return soc_pcmcia_add_one(skt);
-}
+	वापस soc_pcmcia_add_one(skt);
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_drv_pcmcia_add_one);
 
-void pxa2xx_drv_pcmcia_ops(struct pcmcia_low_level *ops)
-{
-	/* Provide our PXA2xx specific timing routines. */
+व्योम pxa2xx_drv_pcmcia_ops(काष्ठा pcmcia_low_level *ops)
+अणु
+	/* Provide our PXA2xx specअगरic timing routines. */
 	ops->set_timing  = pxa2xx_pcmcia_set_timing;
-#ifdef CONFIG_CPU_FREQ
+#अगर_घोषित CONFIG_CPU_FREQ
 	ops->frequency_change = pxa2xx_pcmcia_frequency_change;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL(pxa2xx_drv_pcmcia_ops);
 
-static int pxa2xx_drv_pcmcia_probe(struct platform_device *dev)
-{
-	int i, ret = 0;
-	struct pcmcia_low_level *ops;
-	struct skt_dev_info *sinfo;
-	struct soc_pcmcia_socket *skt;
-	struct clk *clk;
+अटल पूर्णांक pxa2xx_drv_pcmcia_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक i, ret = 0;
+	काष्ठा pcmcia_low_level *ops;
+	काष्ठा skt_dev_info *sinfo;
+	काष्ठा soc_pcmcia_socket *skt;
+	काष्ठा clk *clk;
 
-	ops = (struct pcmcia_low_level *)dev->dev.platform_data;
-	if (!ops) {
+	ops = (काष्ठा pcmcia_low_level *)dev->dev.platक्रमm_data;
+	अगर (!ops) अणु
 		ret = -ENODEV;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	if (cpu_is_pxa320() && ops->nr > 1) {
+	अगर (cpu_is_pxa320() && ops->nr > 1) अणु
 		dev_err(&dev->dev, "pxa320 supports only one pcmcia slot");
 		ret = -EINVAL;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	clk = devm_clk_get(&dev->dev, NULL);
-	if (IS_ERR(clk))
-		return -ENODEV;
+	clk = devm_clk_get(&dev->dev, शून्य);
+	अगर (IS_ERR(clk))
+		वापस -ENODEV;
 
 	pxa2xx_drv_pcmcia_ops(ops);
 
 	sinfo = devm_kzalloc(&dev->dev, SKT_DEV_INFO_SIZE(ops->nr),
 			     GFP_KERNEL);
-	if (!sinfo)
-		return -ENOMEM;
+	अगर (!sinfo)
+		वापस -ENOMEM;
 
 	sinfo->nskt = ops->nr;
 
-	/* Initialize processor specific parameters */
-	for (i = 0; i < ops->nr; i++) {
+	/* Initialize processor specअगरic parameters */
+	क्रम (i = 0; i < ops->nr; i++) अणु
 		skt = &sinfo->skt[i];
 
 		skt->nr = ops->first + i;
@@ -316,67 +317,67 @@ static int pxa2xx_drv_pcmcia_probe(struct platform_device *dev)
 		soc_pcmcia_init_one(skt, ops, &dev->dev);
 
 		ret = pxa2xx_drv_pcmcia_add_one(skt);
-		if (ret)
-			goto err1;
-	}
+		अगर (ret)
+			जाओ err1;
+	पूर्ण
 
 	pxa2xx_configure_sockets(&dev->dev, ops);
 	dev_set_drvdata(&dev->dev, sinfo);
 
-	return 0;
+	वापस 0;
 
 err1:
-	while (--i >= 0)
-		soc_pcmcia_remove_one(&sinfo->skt[i]);
+	जबतक (--i >= 0)
+		soc_pcmcia_हटाओ_one(&sinfo->skt[i]);
 
 err0:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pxa2xx_drv_pcmcia_remove(struct platform_device *dev)
-{
-	struct skt_dev_info *sinfo = platform_get_drvdata(dev);
-	int i;
+अटल पूर्णांक pxa2xx_drv_pcmcia_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा skt_dev_info *sinfo = platक्रमm_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < sinfo->nskt; i++)
-		soc_pcmcia_remove_one(&sinfo->skt[i]);
+	क्रम (i = 0; i < sinfo->nskt; i++)
+		soc_pcmcia_हटाओ_one(&sinfo->skt[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pxa2xx_drv_pcmcia_resume(struct device *dev)
-{
-	struct pcmcia_low_level *ops = (struct pcmcia_low_level *)dev->platform_data;
+अटल पूर्णांक pxa2xx_drv_pcmcia_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pcmcia_low_level *ops = (काष्ठा pcmcia_low_level *)dev->platक्रमm_data;
 
 	pxa2xx_configure_sockets(dev, ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops pxa2xx_drv_pcmcia_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops pxa2xx_drv_pcmcia_pm_ops = अणु
 	.resume		= pxa2xx_drv_pcmcia_resume,
-};
+पूर्ण;
 
-static struct platform_driver pxa2xx_pcmcia_driver = {
+अटल काष्ठा platक्रमm_driver pxa2xx_pcmcia_driver = अणु
 	.probe		= pxa2xx_drv_pcmcia_probe,
-	.remove		= pxa2xx_drv_pcmcia_remove,
-	.driver		= {
+	.हटाओ		= pxa2xx_drv_pcmcia_हटाओ,
+	.driver		= अणु
 		.name	= "pxa2xx-pcmcia",
 		.pm	= &pxa2xx_drv_pcmcia_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init pxa2xx_pcmcia_init(void)
-{
-	return platform_driver_register(&pxa2xx_pcmcia_driver);
-}
+अटल पूर्णांक __init pxa2xx_pcmcia_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&pxa2xx_pcmcia_driver);
+पूर्ण
 
-static void __exit pxa2xx_pcmcia_exit(void)
-{
-	platform_driver_unregister(&pxa2xx_pcmcia_driver);
-}
+अटल व्योम __निकास pxa2xx_pcmcia_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&pxa2xx_pcmcia_driver);
+पूर्ण
 
 fs_initcall(pxa2xx_pcmcia_init);
-module_exit(pxa2xx_pcmcia_exit);
+module_निकास(pxa2xx_pcmcia_निकास);
 
 MODULE_AUTHOR("Stefan Eletzhofer <stefan.eletzhofer@inquant.de> and Ian Molton <spyro@f2s.com>");
 MODULE_DESCRIPTION("Linux PCMCIA Card Services: PXA2xx core socket driver");

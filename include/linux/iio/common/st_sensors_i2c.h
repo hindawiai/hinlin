@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * STMicroelectronics sensors i2c library driver
  *
@@ -7,13 +8,13 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#ifndef ST_SENSORS_I2C_H
-#define ST_SENSORS_I2C_H
+#अगर_अघोषित ST_SENSORS_I2C_H
+#घोषणा ST_SENSORS_I2C_H
 
-#include <linux/i2c.h>
-#include <linux/iio/common/st_sensors.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iio/common/st_sensors.h>
 
-int st_sensors_i2c_configure(struct iio_dev *indio_dev,
-			     struct i2c_client *client);
+पूर्णांक st_sensors_i2c_configure(काष्ठा iio_dev *indio_dev,
+			     काष्ठा i2c_client *client);
 
-#endif /* ST_SENSORS_I2C_H */
+#पूर्ण_अगर /* ST_SENSORS_I2C_H */

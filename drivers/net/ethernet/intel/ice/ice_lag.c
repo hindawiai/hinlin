@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) 2018-2021, Intel Corporation. */
 
 /* Link Aggregation code */
 
-#include "ice.h"
-#include "ice_lag.h"
+#समावेश "ice.h"
+#समावेश "ice_lag.h"
 
 /**
  * ice_lag_nop_handler - no-op Rx handler to disable LAG
- * @pskb: pointer to skb pointer
+ * @pskb: poपूर्णांकer to skb poपूर्णांकer
  */
-rx_handler_result_t ice_lag_nop_handler(struct sk_buff __always_unused **pskb)
-{
-	return RX_HANDLER_PASS;
-}
+rx_handler_result_t ice_lag_nop_handler(काष्ठा sk_buff __always_unused **pskb)
+अणु
+	वापस RX_HANDLER_PASS;
+पूर्ण
 
 /**
  * ice_lag_set_primary - set PF LAG state as Primary
- * @lag: LAG info struct
+ * @lag: LAG info काष्ठा
  */
-static void ice_lag_set_primary(struct ice_lag *lag)
-{
-	struct ice_pf *pf = lag->pf;
+अटल व्योम ice_lag_set_primary(काष्ठा ice_lag *lag)
+अणु
+	काष्ठा ice_pf *pf = lag->pf;
 
-	if (!pf)
-		return;
+	अगर (!pf)
+		वापस;
 
-	if (lag->role != ICE_LAG_UNSET && lag->role != ICE_LAG_BACKUP) {
+	अगर (lag->role != ICE_LAG_UNSET && lag->role != ICE_LAG_BACKUP) अणु
 		dev_warn(ice_pf_to_dev(pf), "%s: Attempt to be Primary, but incompatible state.\n",
 			 netdev_name(lag->netdev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lag->role = ICE_LAG_PRIMARY;
-}
+पूर्ण
 
 /**
  * ice_lag_set_backup - set PF LAG state to Backup
- * @lag: LAG info struct
+ * @lag: LAG info काष्ठा
  */
-static void ice_lag_set_backup(struct ice_lag *lag)
-{
-	struct ice_pf *pf = lag->pf;
+अटल व्योम ice_lag_set_backup(काष्ठा ice_lag *lag)
+अणु
+	काष्ठा ice_pf *pf = lag->pf;
 
-	if (!pf)
-		return;
+	अगर (!pf)
+		वापस;
 
-	if (lag->role != ICE_LAG_UNSET && lag->role != ICE_LAG_PRIMARY) {
+	अगर (lag->role != ICE_LAG_UNSET && lag->role != ICE_LAG_PRIMARY) अणु
 		dev_dbg(ice_pf_to_dev(pf), "%s: Attempt to be Backup, but incompatible state\n",
 			netdev_name(lag->netdev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lag->role = ICE_LAG_BACKUP;
-}
+पूर्ण
 
 /**
- * ice_display_lag_info - print LAG info
- * @lag: LAG info struct
+ * ice_display_lag_info - prपूर्णांक LAG info
+ * @lag: LAG info काष्ठा
  */
-static void ice_display_lag_info(struct ice_lag *lag)
-{
-	const char *name, *peer, *upper, *role, *bonded, *master;
-	struct device *dev = &lag->pf->pdev->dev;
+अटल व्योम ice_display_lag_info(काष्ठा ice_lag *lag)
+अणु
+	स्थिर अक्षर *name, *peer, *upper, *role, *bonded, *master;
+	काष्ठा device *dev = &lag->pf->pdev->dev;
 
 	name = lag->netdev ? netdev_name(lag->netdev) : "unset";
 	peer = lag->peer_netdev ? netdev_name(lag->peer_netdev) : "unset";
@@ -70,376 +71,376 @@ static void ice_display_lag_info(struct ice_lag *lag)
 	master = lag->master ? "TRUE" : "FALSE";
 	bonded = lag->bonded ? "BONDED" : "UNBONDED";
 
-	switch (lag->role) {
-	case ICE_LAG_NONE:
+	चयन (lag->role) अणु
+	हाल ICE_LAG_NONE:
 		role = "NONE";
-		break;
-	case ICE_LAG_PRIMARY:
+		अवरोध;
+	हाल ICE_LAG_PRIMARY:
 		role = "PRIMARY";
-		break;
-	case ICE_LAG_BACKUP:
+		अवरोध;
+	हाल ICE_LAG_BACKUP:
 		role = "BACKUP";
-		break;
-	case ICE_LAG_UNSET:
+		अवरोध;
+	हाल ICE_LAG_UNSET:
 		role = "UNSET";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		role = "ERROR";
-	}
+	पूर्ण
 
 	dev_dbg(dev, "%s %s, peer:%s, upper:%s, role:%s, master:%s\n", name,
 		bonded, peer, upper, role, master);
-}
+पूर्ण
 
 /**
  * ice_lag_info_event - handle NETDEV_BONDING_INFO event
- * @lag: LAG info struct
- * @ptr: opaque data pointer
+ * @lag: LAG info काष्ठा
+ * @ptr: opaque data poपूर्णांकer
  *
- * ptr is to be cast to (netdev_notifier_bonding_info *)
+ * ptr is to be cast to (netdev_notअगरier_bonding_info *)
  */
-static void ice_lag_info_event(struct ice_lag *lag, void *ptr)
-{
-	struct net_device *event_netdev, *netdev_tmp;
-	struct netdev_notifier_bonding_info *info;
-	struct netdev_bonding_info *bonding_info;
-	const char *lag_netdev_name;
+अटल व्योम ice_lag_info_event(काष्ठा ice_lag *lag, व्योम *ptr)
+अणु
+	काष्ठा net_device *event_netdev, *netdev_पंचांगp;
+	काष्ठा netdev_notअगरier_bonding_info *info;
+	काष्ठा netdev_bonding_info *bonding_info;
+	स्थिर अक्षर *lag_netdev_name;
 
-	event_netdev = netdev_notifier_info_to_dev(ptr);
+	event_netdev = netdev_notअगरier_info_to_dev(ptr);
 	info = ptr;
 	lag_netdev_name = netdev_name(lag->netdev);
 	bonding_info = &info->bonding_info;
 
-	if (event_netdev != lag->netdev || !lag->bonded || !lag->upper_netdev)
-		return;
+	अगर (event_netdev != lag->netdev || !lag->bonded || !lag->upper_netdev)
+		वापस;
 
-	if (bonding_info->master.bond_mode != BOND_MODE_ACTIVEBACKUP) {
+	अगर (bonding_info->master.bond_mode != BOND_MODE_ACTIVEBACKUP) अणु
 		netdev_dbg(lag->netdev, "Bonding event recv, but mode not active/backup\n");
-		goto lag_out;
-	}
+		जाओ lag_out;
+	पूर्ण
 
-	if (strcmp(bonding_info->slave.slave_name, lag_netdev_name)) {
+	अगर (म_भेद(bonding_info->slave.slave_name, lag_netdev_name)) अणु
 		netdev_dbg(lag->netdev, "Bonding event recv, but slave info not for us\n");
-		goto lag_out;
-	}
+		जाओ lag_out;
+	पूर्ण
 
-	rcu_read_lock();
-	for_each_netdev_in_bond_rcu(lag->upper_netdev, netdev_tmp) {
-		if (!netif_is_ice(netdev_tmp))
-			continue;
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_in_bond_rcu(lag->upper_netdev, netdev_पंचांगp) अणु
+		अगर (!netअगर_is_ice(netdev_पंचांगp))
+			जारी;
 
-		if (netdev_tmp && netdev_tmp != lag->netdev &&
-		    lag->peer_netdev != netdev_tmp) {
-			dev_hold(netdev_tmp);
-			lag->peer_netdev = netdev_tmp;
-		}
-	}
-	rcu_read_unlock();
+		अगर (netdev_पंचांगp && netdev_पंचांगp != lag->netdev &&
+		    lag->peer_netdev != netdev_पंचांगp) अणु
+			dev_hold(netdev_पंचांगp);
+			lag->peer_netdev = netdev_पंचांगp;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (bonding_info->slave.state)
+	अगर (bonding_info->slave.state)
 		ice_lag_set_backup(lag);
-	else
+	अन्यथा
 		ice_lag_set_primary(lag);
 
 lag_out:
 	ice_display_lag_info(lag);
-}
+पूर्ण
 
 /**
  * ice_lag_link - handle LAG link event
- * @lag: LAG info struct
- * @info: info from the netdev notifier
+ * @lag: LAG info काष्ठा
+ * @info: info from the netdev notअगरier
  */
-static void
-ice_lag_link(struct ice_lag *lag, struct netdev_notifier_changeupper_info *info)
-{
-	struct net_device *netdev_tmp, *upper = info->upper_dev;
-	struct ice_pf *pf = lag->pf;
-	int peers = 0;
+अटल व्योम
+ice_lag_link(काष्ठा ice_lag *lag, काष्ठा netdev_notअगरier_changeupper_info *info)
+अणु
+	काष्ठा net_device *netdev_पंचांगp, *upper = info->upper_dev;
+	काष्ठा ice_pf *pf = lag->pf;
+	पूर्णांक peers = 0;
 
-	if (lag->bonded)
+	अगर (lag->bonded)
 		dev_warn(ice_pf_to_dev(pf), "%s Already part of a bond\n",
 			 netdev_name(lag->netdev));
 
-	rcu_read_lock();
-	for_each_netdev_in_bond_rcu(upper, netdev_tmp)
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_in_bond_rcu(upper, netdev_पंचांगp)
 		peers++;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (lag->upper_netdev != upper) {
+	अगर (lag->upper_netdev != upper) अणु
 		dev_hold(upper);
 		lag->upper_netdev = upper;
-	}
+	पूर्ण
 
 	ice_clear_sriov_cap(pf);
 
 	lag->bonded = true;
 	lag->role = ICE_LAG_UNSET;
 
-	/* if this is the first element in an LAG mark as master */
+	/* अगर this is the first element in an LAG mark as master */
 	lag->master = !!(peers == 1);
-}
+पूर्ण
 
 /**
  * ice_lag_unlink - handle unlink event
- * @lag: LAG info struct
- * @info: info from netdev notification
+ * @lag: LAG info काष्ठा
+ * @info: info from netdev notअगरication
  */
-static void
-ice_lag_unlink(struct ice_lag *lag,
-	       struct netdev_notifier_changeupper_info *info)
-{
-	struct net_device *netdev_tmp, *upper = info->upper_dev;
-	struct ice_pf *pf = lag->pf;
+अटल व्योम
+ice_lag_unlink(काष्ठा ice_lag *lag,
+	       काष्ठा netdev_notअगरier_changeupper_info *info)
+अणु
+	काष्ठा net_device *netdev_पंचांगp, *upper = info->upper_dev;
+	काष्ठा ice_pf *pf = lag->pf;
 	bool found = false;
 
-	if (!lag->bonded) {
+	अगर (!lag->bonded) अणु
 		netdev_dbg(lag->netdev, "bonding unlink event on non-LAG netdev\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* determine if we are in the new LAG config or not */
-	rcu_read_lock();
-	for_each_netdev_in_bond_rcu(upper, netdev_tmp) {
-		if (netdev_tmp == lag->netdev) {
+	/* determine अगर we are in the new LAG config or not */
+	rcu_पढ़ो_lock();
+	क्रम_each_netdev_in_bond_rcu(upper, netdev_पंचांगp) अणु
+		अगर (netdev_पंचांगp == lag->netdev) अणु
 			found = true;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (found)
-		return;
+	अगर (found)
+		वापस;
 
-	if (lag->upper_netdev) {
+	अगर (lag->upper_netdev) अणु
 		dev_put(lag->upper_netdev);
-		lag->upper_netdev = NULL;
-	}
+		lag->upper_netdev = शून्य;
+	पूर्ण
 
-	if (lag->peer_netdev) {
+	अगर (lag->peer_netdev) अणु
 		dev_put(lag->peer_netdev);
-		lag->peer_netdev = NULL;
-	}
+		lag->peer_netdev = शून्य;
+	पूर्ण
 
 	ice_set_sriov_cap(pf);
 	lag->bonded = false;
 	lag->role = ICE_LAG_NONE;
-}
+पूर्ण
 
 /**
  * ice_lag_changeupper_event - handle LAG changeupper event
- * @lag: LAG info struct
- * @ptr: opaque pointer data
+ * @lag: LAG info काष्ठा
+ * @ptr: opaque poपूर्णांकer data
  *
- * ptr is to be cast into netdev_notifier_changeupper_info
+ * ptr is to be cast पूर्णांकo netdev_notअगरier_changeupper_info
  */
-static void ice_lag_changeupper_event(struct ice_lag *lag, void *ptr)
-{
-	struct netdev_notifier_changeupper_info *info;
-	struct net_device *netdev;
+अटल व्योम ice_lag_changeupper_event(काष्ठा ice_lag *lag, व्योम *ptr)
+अणु
+	काष्ठा netdev_notअगरier_changeupper_info *info;
+	काष्ठा net_device *netdev;
 
 	info = ptr;
-	netdev = netdev_notifier_info_to_dev(ptr);
+	netdev = netdev_notअगरier_info_to_dev(ptr);
 
-	/* not for this netdev */
-	if (netdev != lag->netdev)
-		return;
+	/* not क्रम this netdev */
+	अगर (netdev != lag->netdev)
+		वापस;
 
-	if (!info->upper_dev) {
+	अगर (!info->upper_dev) अणु
 		netdev_dbg(netdev, "changeupper rcvd, but no upper defined\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	netdev_dbg(netdev, "bonding %s\n", info->linking ? "LINK" : "UNLINK");
 
-	if (!netif_is_lag_master(info->upper_dev)) {
+	अगर (!netअगर_is_lag_master(info->upper_dev)) अणु
 		netdev_dbg(netdev, "changeupper rcvd, but not master. bail\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (info->linking)
+	अगर (info->linking)
 		ice_lag_link(lag, info);
-	else
+	अन्यथा
 		ice_lag_unlink(lag, info);
 
 	ice_display_lag_info(lag);
-}
+पूर्ण
 
 /**
  * ice_lag_changelower_event - handle LAG changelower event
- * @lag: LAG info struct
- * @ptr: opaque data pointer
+ * @lag: LAG info काष्ठा
+ * @ptr: opaque data poपूर्णांकer
  *
- * ptr to be cast to netdev_notifier_changelowerstate_info
+ * ptr to be cast to netdev_notअगरier_changelowerstate_info
  */
-static void ice_lag_changelower_event(struct ice_lag *lag, void *ptr)
-{
-	struct net_device *netdev = netdev_notifier_info_to_dev(ptr);
+अटल व्योम ice_lag_changelower_event(काष्ठा ice_lag *lag, व्योम *ptr)
+अणु
+	काष्ठा net_device *netdev = netdev_notअगरier_info_to_dev(ptr);
 
-	if (netdev != lag->netdev)
-		return;
+	अगर (netdev != lag->netdev)
+		वापस;
 
 	netdev_dbg(netdev, "bonding info\n");
 
-	if (!netif_is_lag_port(netdev))
+	अगर (!netअगर_is_lag_port(netdev))
 		netdev_dbg(netdev, "CHANGELOWER rcvd, but netdev not in LAG. Bail\n");
-}
+पूर्ण
 
 /**
  * ice_lag_event_handler - handle LAG events from netdev
- * @notif_blk: notifier block registered by this netdev
+ * @notअगर_blk: notअगरier block रेजिस्टरed by this netdev
  * @event: event type
- * @ptr: opaque data containing notifier event
+ * @ptr: opaque data containing notअगरier event
  */
-static int
-ice_lag_event_handler(struct notifier_block *notif_blk, unsigned long event,
-		      void *ptr)
-{
-	struct net_device *netdev = netdev_notifier_info_to_dev(ptr);
-	struct ice_lag *lag;
+अटल पूर्णांक
+ice_lag_event_handler(काष्ठा notअगरier_block *notअगर_blk, अचिन्हित दीर्घ event,
+		      व्योम *ptr)
+अणु
+	काष्ठा net_device *netdev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा ice_lag *lag;
 
-	lag = container_of(notif_blk, struct ice_lag, notif_block);
+	lag = container_of(notअगर_blk, काष्ठा ice_lag, notअगर_block);
 
-	if (!lag->netdev)
-		return NOTIFY_DONE;
+	अगर (!lag->netdev)
+		वापस NOTIFY_DONE;
 
 	/* Check that the netdev is in the working namespace */
-	if (!net_eq(dev_net(netdev), &init_net))
-		return NOTIFY_DONE;
+	अगर (!net_eq(dev_net(netdev), &init_net))
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_CHANGEUPPER:
+	चयन (event) अणु
+	हाल NETDEV_CHANGEUPPER:
 		ice_lag_changeupper_event(lag, ptr);
-		break;
-	case NETDEV_CHANGELOWERSTATE:
+		अवरोध;
+	हाल NETDEV_CHANGELOWERSTATE:
 		ice_lag_changelower_event(lag, ptr);
-		break;
-	case NETDEV_BONDING_INFO:
+		अवरोध;
+	हाल NETDEV_BONDING_INFO:
 		ice_lag_info_event(lag, ptr);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /**
- * ice_register_lag_handler - register LAG handler on netdev
- * @lag: LAG struct
+ * ice_रेजिस्टर_lag_handler - रेजिस्टर LAG handler on netdev
+ * @lag: LAG काष्ठा
  */
-static int ice_register_lag_handler(struct ice_lag *lag)
-{
-	struct device *dev = ice_pf_to_dev(lag->pf);
-	struct notifier_block *notif_blk;
+अटल पूर्णांक ice_रेजिस्टर_lag_handler(काष्ठा ice_lag *lag)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(lag->pf);
+	काष्ठा notअगरier_block *notअगर_blk;
 
-	notif_blk = &lag->notif_block;
+	notअगर_blk = &lag->notअगर_block;
 
-	if (!notif_blk->notifier_call) {
-		notif_blk->notifier_call = ice_lag_event_handler;
-		if (register_netdevice_notifier(notif_blk)) {
-			notif_blk->notifier_call = NULL;
+	अगर (!notअगर_blk->notअगरier_call) अणु
+		notअगर_blk->notअगरier_call = ice_lag_event_handler;
+		अगर (रेजिस्टर_netdevice_notअगरier(notअगर_blk)) अणु
+			notअगर_blk->notअगरier_call = शून्य;
 			dev_err(dev, "FAIL register LAG event handler!\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		dev_dbg(dev, "LAG event handler registered\n");
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * ice_unregister_lag_handler - unregister LAG handler on netdev
- * @lag: LAG struct
+ * ice_unरेजिस्टर_lag_handler - unरेजिस्टर LAG handler on netdev
+ * @lag: LAG काष्ठा
  */
-static void ice_unregister_lag_handler(struct ice_lag *lag)
-{
-	struct device *dev = ice_pf_to_dev(lag->pf);
-	struct notifier_block *notif_blk;
+अटल व्योम ice_unरेजिस्टर_lag_handler(काष्ठा ice_lag *lag)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(lag->pf);
+	काष्ठा notअगरier_block *notअगर_blk;
 
-	notif_blk = &lag->notif_block;
-	if (notif_blk->notifier_call) {
-		unregister_netdevice_notifier(notif_blk);
+	notअगर_blk = &lag->notअगर_block;
+	अगर (notअगर_blk->notअगरier_call) अणु
+		unरेजिस्टर_netdevice_notअगरier(notअगर_blk);
 		dev_dbg(dev, "LAG event handler unregistered\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ice_init_lag - initialize support for LAG
- * @pf: PF struct
+ * ice_init_lag - initialize support क्रम LAG
+ * @pf: PF काष्ठा
  *
- * Alloc memory for LAG structs and initialize the elements.
- * Memory will be freed in ice_deinit_lag
+ * Alloc memory क्रम LAG काष्ठाs and initialize the elements.
+ * Memory will be मुक्तd in ice_deinit_lag
  */
-int ice_init_lag(struct ice_pf *pf)
-{
-	struct device *dev = ice_pf_to_dev(pf);
-	struct ice_lag *lag;
-	struct ice_vsi *vsi;
-	int err;
+पूर्णांक ice_init_lag(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा device *dev = ice_pf_to_dev(pf);
+	काष्ठा ice_lag *lag;
+	काष्ठा ice_vsi *vsi;
+	पूर्णांक err;
 
-	pf->lag = kzalloc(sizeof(*lag), GFP_KERNEL);
-	if (!pf->lag)
-		return -ENOMEM;
+	pf->lag = kzalloc(माप(*lag), GFP_KERNEL);
+	अगर (!pf->lag)
+		वापस -ENOMEM;
 	lag = pf->lag;
 
-	vsi = ice_get_main_vsi(pf);
-	if (!vsi) {
+	vsi = ice_get_मुख्य_vsi(pf);
+	अगर (!vsi) अणु
 		dev_err(dev, "couldn't get main vsi, link aggregation init fail\n");
 		err = -EIO;
-		goto lag_error;
-	}
+		जाओ lag_error;
+	पूर्ण
 
 	lag->pf = pf;
 	lag->netdev = vsi->netdev;
 	lag->role = ICE_LAG_NONE;
 	lag->bonded = false;
-	lag->peer_netdev = NULL;
-	lag->upper_netdev = NULL;
-	lag->notif_block.notifier_call = NULL;
+	lag->peer_netdev = शून्य;
+	lag->upper_netdev = शून्य;
+	lag->notअगर_block.notअगरier_call = शून्य;
 
-	err = ice_register_lag_handler(lag);
-	if (err) {
+	err = ice_रेजिस्टर_lag_handler(lag);
+	अगर (err) अणु
 		dev_warn(dev, "INIT LAG: Failed to register event handler\n");
-		goto lag_error;
-	}
+		जाओ lag_error;
+	पूर्ण
 
 	ice_display_lag_info(lag);
 
 	dev_dbg(dev, "INIT LAG complete\n");
-	return 0;
+	वापस 0;
 
 lag_error:
-	kfree(lag);
-	pf->lag = NULL;
-	return err;
-}
+	kमुक्त(lag);
+	pf->lag = शून्य;
+	वापस err;
+पूर्ण
 
 /**
  * ice_deinit_lag - Clean up LAG
- * @pf: PF struct
+ * @pf: PF काष्ठा
  *
- * Clean up kernel LAG info and free memory
- * This function is meant to only be called on driver remove/shutdown
+ * Clean up kernel LAG info and मुक्त memory
+ * This function is meant to only be called on driver हटाओ/shutकरोwn
  */
-void ice_deinit_lag(struct ice_pf *pf)
-{
-	struct ice_lag *lag;
+व्योम ice_deinit_lag(काष्ठा ice_pf *pf)
+अणु
+	काष्ठा ice_lag *lag;
 
 	lag = pf->lag;
 
-	if (!lag)
-		return;
+	अगर (!lag)
+		वापस;
 
-	if (lag->pf)
-		ice_unregister_lag_handler(lag);
+	अगर (lag->pf)
+		ice_unरेजिस्टर_lag_handler(lag);
 
-	if (lag->upper_netdev)
+	अगर (lag->upper_netdev)
 		dev_put(lag->upper_netdev);
 
-	if (lag->peer_netdev)
+	अगर (lag->peer_netdev)
 		dev_put(lag->peer_netdev);
 
-	kfree(lag);
+	kमुक्त(lag);
 
-	pf->lag = NULL;
-}
+	pf->lag = शून्य;
+पूर्ण

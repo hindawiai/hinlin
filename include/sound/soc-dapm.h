@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  *
  * linux/sound/soc-dapm.h -- ALSA SoC Dynamic Audio Power Management
  *
@@ -7,547 +8,547 @@
  * Copyright:	Wolfson Microelectronics. PLC.
  */
 
-#ifndef __LINUX_SND_SOC_DAPM_H
-#define __LINUX_SND_SOC_DAPM_H
+#अगर_अघोषित __LINUX_SND_SOC_DAPM_H
+#घोषणा __LINUX_SND_SOC_DAPM_H
 
-#include <linux/types.h>
-#include <sound/control.h>
-#include <sound/soc-topology.h>
-#include <sound/asoc.h>
+#समावेश <linux/types.h>
+#समावेश <sound/control.h>
+#समावेश <sound/soc-topology.h>
+#समावेश <sound/asoc.h>
 
-struct device;
-struct snd_soc_pcm_runtime;
-struct soc_enum;
+काष्ठा device;
+काष्ठा snd_soc_pcm_runसमय;
+काष्ठा soc_क्रमागत;
 
-/* widget has no PM register bit */
-#define SND_SOC_NOPM	-1
+/* widget has no PM रेजिस्टर bit */
+#घोषणा SND_SOC_NOPM	-1
 
 /*
- * SoC dynamic audio power management
+ * SoC dynamic audio घातer management
  *
- * We can have up to 4 power domains
- *  1. Codec domain - VREF, VMID
- *     Usually controlled at codec probe/remove, although can be set
- *     at stream time if power is not needed for sidetone, etc.
- *  2. Platform/Machine domain - physically connected inputs and outputs
- *     Is platform/machine and user action specific, is set in the machine
+ * We can have up to 4 घातer करोमुख्यs
+ *  1. Codec करोमुख्य - VREF, VMID
+ *     Usually controlled at codec probe/हटाओ, although can be set
+ *     at stream समय अगर घातer is not needed क्रम sidetone, etc.
+ *  2. Platक्रमm/Machine करोमुख्य - physically connected inमाला_दो and outमाला_दो
+ *     Is platक्रमm/machine and user action specअगरic, is set in the machine
  *     driver and by userspace e.g when HP are inserted
- *  3. Path domain - Internal codec path mixers
- *     Are automatically set when mixer and mux settings are
+ *  3. Path करोमुख्य - Internal codec path mixers
+ *     Are स्वतःmatically set when mixer and mux settings are
  *     changed by the user.
- *  4. Stream domain - DAC's and ADC's.
+ *  4. Stream करोमुख्य - DAC's and ADC's.
  *     Enabled when stream playback/capture is started.
  */
 
-/* codec domain */
-#define SND_SOC_DAPM_VMID(wname) \
-{	.id = snd_soc_dapm_vmid, .name = wname, .kcontrol_news = NULL, \
-	.num_kcontrols = 0}
+/* codec करोमुख्य */
+#घोषणा SND_SOC_DAPM_VMID(wname) \
+अणु	.id = snd_soc_dapm_vmid, .name = wname, .kcontrol_news = शून्य, \
+	.num_kcontrols = 0पूर्ण
 
-/* platform domain */
-#define SND_SOC_DAPM_SIGGEN(wname) \
-{	.id = snd_soc_dapm_siggen, .name = wname, .kcontrol_news = NULL, \
-	.num_kcontrols = 0, .reg = SND_SOC_NOPM }
-#define SND_SOC_DAPM_SINK(wname) \
-{	.id = snd_soc_dapm_sink, .name = wname, .kcontrol_news = NULL, \
-	.num_kcontrols = 0, .reg = SND_SOC_NOPM }
-#define SND_SOC_DAPM_INPUT(wname) \
-{	.id = snd_soc_dapm_input, .name = wname, .kcontrol_news = NULL, \
-	.num_kcontrols = 0, .reg = SND_SOC_NOPM }
-#define SND_SOC_DAPM_OUTPUT(wname) \
-{	.id = snd_soc_dapm_output, .name = wname, .kcontrol_news = NULL, \
-	.num_kcontrols = 0, .reg = SND_SOC_NOPM }
-#define SND_SOC_DAPM_MIC(wname, wevent) \
-{	.id = snd_soc_dapm_mic, .name = wname, .kcontrol_news = NULL, \
+/* platक्रमm करोमुख्य */
+#घोषणा SND_SOC_DAPM_SIGGEN(wname) \
+अणु	.id = snd_soc_dapm_siggen, .name = wname, .kcontrol_news = शून्य, \
+	.num_kcontrols = 0, .reg = SND_SOC_NOPM पूर्ण
+#घोषणा SND_SOC_DAPM_SINK(wname) \
+अणु	.id = snd_soc_dapm_sink, .name = wname, .kcontrol_news = शून्य, \
+	.num_kcontrols = 0, .reg = SND_SOC_NOPM पूर्ण
+#घोषणा SND_SOC_DAPM_INPUT(wname) \
+अणु	.id = snd_soc_dapm_input, .name = wname, .kcontrol_news = शून्य, \
+	.num_kcontrols = 0, .reg = SND_SOC_NOPM पूर्ण
+#घोषणा SND_SOC_DAPM_OUTPUT(wname) \
+अणु	.id = snd_soc_dapm_output, .name = wname, .kcontrol_news = शून्य, \
+	.num_kcontrols = 0, .reg = SND_SOC_NOPM पूर्ण
+#घोषणा SND_SOC_DAPM_MIC(wname, wevent) \
+अणु	.id = snd_soc_dapm_mic, .name = wname, .kcontrol_news = शून्य, \
 	.num_kcontrols = 0, .reg = SND_SOC_NOPM, .event = wevent, \
-	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD}
-#define SND_SOC_DAPM_HP(wname, wevent) \
-{	.id = snd_soc_dapm_hp, .name = wname, .kcontrol_news = NULL, \
+	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMDपूर्ण
+#घोषणा SND_SOC_DAPM_HP(wname, wevent) \
+अणु	.id = snd_soc_dapm_hp, .name = wname, .kcontrol_news = शून्य, \
 	.num_kcontrols = 0, .reg = SND_SOC_NOPM, .event = wevent, \
-	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD}
-#define SND_SOC_DAPM_SPK(wname, wevent) \
-{	.id = snd_soc_dapm_spk, .name = wname, .kcontrol_news = NULL, \
+	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMDपूर्ण
+#घोषणा SND_SOC_DAPM_SPK(wname, wevent) \
+अणु	.id = snd_soc_dapm_spk, .name = wname, .kcontrol_news = शून्य, \
 	.num_kcontrols = 0, .reg = SND_SOC_NOPM, .event = wevent, \
-	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD}
-#define SND_SOC_DAPM_LINE(wname, wevent) \
-{	.id = snd_soc_dapm_line, .name = wname, .kcontrol_news = NULL, \
+	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMDपूर्ण
+#घोषणा SND_SOC_DAPM_LINE(wname, wevent) \
+अणु	.id = snd_soc_dapm_line, .name = wname, .kcontrol_news = शून्य, \
 	.num_kcontrols = 0, .reg = SND_SOC_NOPM, .event = wevent, \
-	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD}
+	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMDपूर्ण
 
-#define SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert) \
-	.reg = wreg, .mask = 1, .shift = wshift, \
+#घोषणा SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert) \
+	.reg = wreg, .mask = 1, .shअगरt = wshअगरt, \
 	.on_val = winvert ? 0 : 1, .off_val = winvert ? 1 : 0
 
-/* path domain */
-#define SND_SOC_DAPM_PGA(wname, wreg, wshift, winvert,\
+/* path करोमुख्य */
+#घोषणा SND_SOC_DAPM_PGA(wname, wreg, wshअगरt, winvert,\
 	 wcontrols, wncontrols) \
-{	.id = snd_soc_dapm_pga, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols}
-#define SND_SOC_DAPM_OUT_DRV(wname, wreg, wshift, winvert,\
+अणु	.id = snd_soc_dapm_pga, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = wncontrolsपूर्ण
+#घोषणा SND_SOC_DAPM_OUT_DRV(wname, wreg, wshअगरt, winvert,\
 	 wcontrols, wncontrols) \
-{	.id = snd_soc_dapm_out_drv, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols}
-#define SND_SOC_DAPM_MIXER(wname, wreg, wshift, winvert, \
+अणु	.id = snd_soc_dapm_out_drv, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = wncontrolsपूर्ण
+#घोषणा SND_SOC_DAPM_MIXER(wname, wreg, wshअगरt, winvert, \
 	 wcontrols, wncontrols)\
-{	.id = snd_soc_dapm_mixer, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols}
-#define SND_SOC_DAPM_MIXER_NAMED_CTL(wname, wreg, wshift, winvert, \
+अणु	.id = snd_soc_dapm_mixer, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = wncontrolsपूर्ण
+#घोषणा SND_SOC_DAPM_MIXER_NAMED_CTL(wname, wreg, wshअगरt, winvert, \
 	 wcontrols, wncontrols)\
-{       .id = snd_soc_dapm_mixer_named_ctl, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols}
+अणु       .id = snd_soc_dapm_mixer_named_ctl, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = wncontrolsपूर्ण
 /* DEPRECATED: use SND_SOC_DAPM_SUPPLY */
-#define SND_SOC_DAPM_MICBIAS(wname, wreg, wshift, winvert) \
-{	.id = snd_soc_dapm_micbias, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = NULL, .num_kcontrols = 0}
-#define SND_SOC_DAPM_SWITCH(wname, wreg, wshift, winvert, wcontrols) \
-{	.id = snd_soc_dapm_switch, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = 1}
-#define SND_SOC_DAPM_MUX(wname, wreg, wshift, winvert, wcontrols) \
-{	.id = snd_soc_dapm_mux, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = 1}
-#define SND_SOC_DAPM_DEMUX(wname, wreg, wshift, winvert, wcontrols) \
-{	.id = snd_soc_dapm_demux, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = 1}
+#घोषणा SND_SOC_DAPM_MICBIAS(wname, wreg, wshअगरt, winvert) \
+अणु	.id = snd_soc_dapm_micbias, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = शून्य, .num_kcontrols = 0पूर्ण
+#घोषणा SND_SOC_DAPM_SWITCH(wname, wreg, wshअगरt, winvert, wcontrols) \
+अणु	.id = snd_soc_dapm_चयन, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = 1पूर्ण
+#घोषणा SND_SOC_DAPM_MUX(wname, wreg, wshअगरt, winvert, wcontrols) \
+अणु	.id = snd_soc_dapm_mux, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = 1पूर्ण
+#घोषणा SND_SOC_DAPM_DEMUX(wname, wreg, wshअगरt, winvert, wcontrols) \
+अणु	.id = snd_soc_dapm_demux, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = 1पूर्ण
 
-/* Simplified versions of above macros, assuming wncontrols = ARRAY_SIZE(wcontrols) */
-#define SOC_PGA_ARRAY(wname, wreg, wshift, winvert,\
+/* Simplअगरied versions of above macros, assuming wncontrols = ARRAY_SIZE(wcontrols) */
+#घोषणा SOC_PGA_ARRAY(wname, wreg, wshअगरt, winvert,\
 	 wcontrols) \
-{	.id = snd_soc_dapm_pga, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols)}
-#define SOC_MIXER_ARRAY(wname, wreg, wshift, winvert, \
+अणु	.id = snd_soc_dapm_pga, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols)पूर्ण
+#घोषणा SOC_MIXER_ARRAY(wname, wreg, wshअगरt, winvert, \
 	 wcontrols)\
-{	.id = snd_soc_dapm_mixer, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols)}
-#define SOC_MIXER_NAMED_CTL_ARRAY(wname, wreg, wshift, winvert, \
+अणु	.id = snd_soc_dapm_mixer, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols)पूर्ण
+#घोषणा SOC_MIXER_NAMED_CTL_ARRAY(wname, wreg, wshअगरt, winvert, \
 	 wcontrols)\
-{       .id = snd_soc_dapm_mixer_named_ctl, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols)}
+अणु       .id = snd_soc_dapm_mixer_named_ctl, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols)पूर्ण
 
-/* path domain with event - event handler must return 0 for success */
-#define SND_SOC_DAPM_PGA_E(wname, wreg, wshift, winvert, wcontrols, \
+/* path करोमुख्य with event - event handler must वापस 0 क्रम success */
+#घोषणा SND_SOC_DAPM_PGA_E(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wncontrols, wevent, wflags) \
-{	.id = snd_soc_dapm_pga, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_pga, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols, \
-	.event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_OUT_DRV_E(wname, wreg, wshift, winvert, wcontrols, \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_OUT_DRV_E(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wncontrols, wevent, wflags) \
-{	.id = snd_soc_dapm_out_drv, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_out_drv, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols, \
-	.event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_MIXER_E(wname, wreg, wshift, winvert, wcontrols, \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_MIXER_E(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wncontrols, wevent, wflags) \
-{	.id = snd_soc_dapm_mixer, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_mixer, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = wncontrols, \
-	.event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_MIXER_NAMED_CTL_E(wname, wreg, wshift, winvert, \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_MIXER_NAMED_CTL_E(wname, wreg, wshअगरt, winvert, \
 	wcontrols, wncontrols, wevent, wflags) \
-{       .id = snd_soc_dapm_mixer, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु       .id = snd_soc_dapm_mixer, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, \
-	.num_kcontrols = wncontrols, .event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_SWITCH_E(wname, wreg, wshift, winvert, wcontrols, \
+	.num_kcontrols = wncontrols, .event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_SWITCH_E(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wevent, wflags) \
-{	.id = snd_soc_dapm_switch, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_चयन, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = 1, \
-	.event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_MUX_E(wname, wreg, wshift, winvert, wcontrols, \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_MUX_E(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wevent, wflags) \
-{	.id = snd_soc_dapm_mux, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_mux, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = 1, \
-	.event = wevent, .event_flags = wflags}
+	.event = wevent, .event_flags = wflagsपूर्ण
 
 /* additional sequencing control within an event type */
-#define SND_SOC_DAPM_PGA_S(wname, wsubseq, wreg, wshift, winvert, \
+#घोषणा SND_SOC_DAPM_PGA_S(wname, wsubseq, wreg, wshअगरt, winvert, \
 	wevent, wflags) \
-{	.id = snd_soc_dapm_pga, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_pga, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.event = wevent, .event_flags = wflags, \
-	.subseq = wsubseq}
-#define SND_SOC_DAPM_SUPPLY_S(wname, wsubseq, wreg, wshift, winvert, wevent, \
+	.subseq = wsubseqपूर्ण
+#घोषणा SND_SOC_DAPM_SUPPLY_S(wname, wsubseq, wreg, wshअगरt, winvert, wevent, \
 	wflags)	\
-{	.id = snd_soc_dapm_supply, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.event = wevent, .event_flags = wflags, .subseq = wsubseq}
+अणु	.id = snd_soc_dapm_supply, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.event = wevent, .event_flags = wflags, .subseq = wsubseqपूर्ण
 
-/* Simplified versions of above macros, assuming wncontrols = ARRAY_SIZE(wcontrols) */
-#define SOC_PGA_E_ARRAY(wname, wreg, wshift, winvert, wcontrols, \
+/* Simplअगरied versions of above macros, assuming wncontrols = ARRAY_SIZE(wcontrols) */
+#घोषणा SOC_PGA_E_ARRAY(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wevent, wflags) \
-{	.id = snd_soc_dapm_pga, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_pga, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols), \
-	.event = wevent, .event_flags = wflags}
-#define SOC_MIXER_E_ARRAY(wname, wreg, wshift, winvert, wcontrols, \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SOC_MIXER_E_ARRAY(wname, wreg, wshअगरt, winvert, wcontrols, \
 	wevent, wflags) \
-{	.id = snd_soc_dapm_mixer, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु	.id = snd_soc_dapm_mixer, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols), \
-	.event = wevent, .event_flags = wflags}
-#define SOC_MIXER_NAMED_CTL_E_ARRAY(wname, wreg, wshift, winvert, \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SOC_MIXER_NAMED_CTL_E_ARRAY(wname, wreg, wshअगरt, winvert, \
 	wcontrols, wevent, wflags) \
-{       .id = snd_soc_dapm_mixer, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
+अणु       .id = snd_soc_dapm_mixer, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
 	.kcontrol_news = wcontrols, .num_kcontrols = ARRAY_SIZE(wcontrols), \
-	.event = wevent, .event_flags = wflags}
+	.event = wevent, .event_flags = wflagsपूर्ण
 
 /* events that are pre and post DAPM */
-#define SND_SOC_DAPM_PRE(wname, wevent) \
-{	.id = snd_soc_dapm_pre, .name = wname, .kcontrol_news = NULL, \
+#घोषणा SND_SOC_DAPM_PRE(wname, wevent) \
+अणु	.id = snd_soc_dapm_pre, .name = wname, .kcontrol_news = शून्य, \
 	.num_kcontrols = 0, .reg = SND_SOC_NOPM, .event = wevent, \
-	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD}
-#define SND_SOC_DAPM_POST(wname, wevent) \
-{	.id = snd_soc_dapm_post, .name = wname, .kcontrol_news = NULL, \
+	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMDपूर्ण
+#घोषणा SND_SOC_DAPM_POST(wname, wevent) \
+अणु	.id = snd_soc_dapm_post, .name = wname, .kcontrol_news = शून्य, \
 	.num_kcontrols = 0, .reg = SND_SOC_NOPM, .event = wevent, \
-	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD}
+	.event_flags = SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMDपूर्ण
 
-/* stream domain */
-#define SND_SOC_DAPM_AIF_IN(wname, stname, wchan, wreg, wshift, winvert) \
-{	.id = snd_soc_dapm_aif_in, .name = wname, .sname = stname, \
-	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), }
-#define SND_SOC_DAPM_AIF_IN_E(wname, stname, wchan, wreg, wshift, winvert, \
+/* stream करोमुख्य */
+#घोषणा SND_SOC_DAPM_AIF_IN(wname, stname, wchan, wreg, wshअगरt, winvert) \
+अणु	.id = snd_soc_dapm_aअगर_in, .name = wname, .sname = stname, \
+	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), पूर्ण
+#घोषणा SND_SOC_DAPM_AIF_IN_E(wname, stname, wchan, wreg, wshअगरt, winvert, \
 			      wevent, wflags)				\
-{	.id = snd_soc_dapm_aif_in, .name = wname, .sname = stname, \
-	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.event = wevent, .event_flags = wflags }
-#define SND_SOC_DAPM_AIF_OUT(wname, stname, wchan, wreg, wshift, winvert) \
-{	.id = snd_soc_dapm_aif_out, .name = wname, .sname = stname, \
-	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), }
-#define SND_SOC_DAPM_AIF_OUT_E(wname, stname, wchan, wreg, wshift, winvert, \
+अणु	.id = snd_soc_dapm_aअगर_in, .name = wname, .sname = stname, \
+	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.event = wevent, .event_flags = wflags पूर्ण
+#घोषणा SND_SOC_DAPM_AIF_OUT(wname, stname, wchan, wreg, wshअगरt, winvert) \
+अणु	.id = snd_soc_dapm_aअगर_out, .name = wname, .sname = stname, \
+	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), पूर्ण
+#घोषणा SND_SOC_DAPM_AIF_OUT_E(wname, stname, wchan, wreg, wshअगरt, winvert, \
 			     wevent, wflags)				\
-{	.id = snd_soc_dapm_aif_out, .name = wname, .sname = stname, \
-	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.event = wevent, .event_flags = wflags }
-#define SND_SOC_DAPM_DAC(wname, stname, wreg, wshift, winvert) \
-{	.id = snd_soc_dapm_dac, .name = wname, .sname = stname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert) }
-#define SND_SOC_DAPM_DAC_E(wname, stname, wreg, wshift, winvert, \
+अणु	.id = snd_soc_dapm_aअगर_out, .name = wname, .sname = stname, \
+	.channel = wchan, SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.event = wevent, .event_flags = wflags पूर्ण
+#घोषणा SND_SOC_DAPM_DAC(wname, stname, wreg, wshअगरt, winvert) \
+अणु	.id = snd_soc_dapm_dac, .name = wname, .sname = stname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert) पूर्ण
+#घोषणा SND_SOC_DAPM_DAC_E(wname, stname, wreg, wshअगरt, winvert, \
 			   wevent, wflags)				\
-{	.id = snd_soc_dapm_dac, .name = wname, .sname = stname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.event = wevent, .event_flags = wflags}
+अणु	.id = snd_soc_dapm_dac, .name = wname, .sname = stname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.event = wevent, .event_flags = wflagsपूर्ण
 
-#define SND_SOC_DAPM_ADC(wname, stname, wreg, wshift, winvert) \
-{	.id = snd_soc_dapm_adc, .name = wname, .sname = stname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), }
-#define SND_SOC_DAPM_ADC_E(wname, stname, wreg, wshift, winvert, \
+#घोषणा SND_SOC_DAPM_ADC(wname, stname, wreg, wshअगरt, winvert) \
+अणु	.id = snd_soc_dapm_adc, .name = wname, .sname = stname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), पूर्ण
+#घोषणा SND_SOC_DAPM_ADC_E(wname, stname, wreg, wshअगरt, winvert, \
 			   wevent, wflags)				\
-{	.id = snd_soc_dapm_adc, .name = wname, .sname = stname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_CLOCK_SUPPLY(wname) \
-{	.id = snd_soc_dapm_clock_supply, .name = wname, \
-	.reg = SND_SOC_NOPM, .event = dapm_clock_event, \
-	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD }
+अणु	.id = snd_soc_dapm_adc, .name = wname, .sname = stname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_CLOCK_SUPPLY(wname) \
+अणु	.id = snd_soc_dapm_घड़ी_supply, .name = wname, \
+	.reg = SND_SOC_NOPM, .event = dapm_घड़ी_event, \
+	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD पूर्ण
 
-/* generic widgets */
-#define SND_SOC_DAPM_REG(wid, wname, wreg, wshift, wmask, won_val, woff_val) \
-{	.id = wid, .name = wname, .kcontrol_news = NULL, .num_kcontrols = 0, \
-	.reg = wreg, .shift = wshift, .mask = wmask, \
-	.on_val = won_val, .off_val = woff_val, }
-#define SND_SOC_DAPM_SUPPLY(wname, wreg, wshift, winvert, wevent, wflags) \
-{	.id = snd_soc_dapm_supply, .name = wname, \
-	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshift, winvert), \
-	.event = wevent, .event_flags = wflags}
-#define SND_SOC_DAPM_REGULATOR_SUPPLY(wname, wdelay, wflags)	    \
-{	.id = snd_soc_dapm_regulator_supply, .name = wname, \
-	.reg = SND_SOC_NOPM, .shift = wdelay, .event = dapm_regulator_event, \
+/* generic widमाला_लो */
+#घोषणा SND_SOC_DAPM_REG(wid, wname, wreg, wshअगरt, wmask, won_val, woff_val) \
+अणु	.id = wid, .name = wname, .kcontrol_news = शून्य, .num_kcontrols = 0, \
+	.reg = wreg, .shअगरt = wshअगरt, .mask = wmask, \
+	.on_val = won_val, .off_val = woff_val, पूर्ण
+#घोषणा SND_SOC_DAPM_SUPPLY(wname, wreg, wshअगरt, winvert, wevent, wflags) \
+अणु	.id = snd_soc_dapm_supply, .name = wname, \
+	SND_SOC_DAPM_INIT_REG_VAL(wreg, wshअगरt, winvert), \
+	.event = wevent, .event_flags = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_REGULATOR_SUPPLY(wname, wdelay, wflags)	    \
+अणु	.id = snd_soc_dapm_regulator_supply, .name = wname, \
+	.reg = SND_SOC_NOPM, .shअगरt = wdelay, .event = dapm_regulator_event, \
 	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD, \
-	.on_val = wflags}
-#define SND_SOC_DAPM_PINCTRL(wname, active, sleep) \
-{	.id = snd_soc_dapm_pinctrl, .name = wname, \
-	.priv = (&(struct snd_soc_dapm_pinctrl_priv) \
-		{ .active_state = active, .sleep_state = sleep,}), \
+	.on_val = wflagsपूर्ण
+#घोषणा SND_SOC_DAPM_PINCTRL(wname, active, sleep) \
+अणु	.id = snd_soc_dapm_pinctrl, .name = wname, \
+	.priv = (&(काष्ठा snd_soc_dapm_pinctrl_priv) \
+		अणु .active_state = active, .sleep_state = sleep,पूर्ण), \
 	.reg = SND_SOC_NOPM, .event = dapm_pinctrl_event, \
-	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD }
+	.event_flags = SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD पूर्ण
 
 
 
 /* dapm kcontrol types */
-#define SOC_DAPM_DOUBLE(xname, reg, lshift, rshift, max, invert) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+#घोषणा SOC_DAPM_DOUBLE(xname, reg, lshअगरt, rshअगरt, max, invert) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.get = snd_soc_dapm_get_volsw, .put = snd_soc_dapm_put_volsw, \
-	.private_value = SOC_DOUBLE_VALUE(reg, lshift, rshift, max, invert, 0) }
-#define SOC_DAPM_DOUBLE_R(xname, lreg, rreg, shift, max, invert) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.निजी_value = SOC_DOUBLE_VALUE(reg, lshअगरt, rshअगरt, max, invert, 0) पूर्ण
+#घोषणा SOC_DAPM_DOUBLE_R(xname, lreg, rreg, shअगरt, max, invert) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.get = snd_soc_dapm_get_volsw, .put = snd_soc_dapm_put_volsw, \
-	.private_value = SOC_DOUBLE_R_VALUE(lreg, rreg, shift, max, invert) }
-#define SOC_DAPM_SINGLE(xname, reg, shift, max, invert) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.निजी_value = SOC_DOUBLE_R_VALUE(lreg, rreg, shअगरt, max, invert) पूर्ण
+#घोषणा SOC_DAPM_SINGLE(xname, reg, shअगरt, max, invert) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.get = snd_soc_dapm_get_volsw, .put = snd_soc_dapm_put_volsw, \
-	.private_value = SOC_SINGLE_VALUE(reg, shift, max, invert, 0) }
-#define SOC_DAPM_SINGLE_AUTODISABLE(xname, reg, shift, max, invert) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.निजी_value = SOC_SINGLE_VALUE(reg, shअगरt, max, invert, 0) पूर्ण
+#घोषणा SOC_DAPM_SINGLE_AUTODISABLE(xname, reg, shअगरt, max, invert) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.get = snd_soc_dapm_get_volsw, .put = snd_soc_dapm_put_volsw, \
-	.private_value = SOC_SINGLE_VALUE(reg, shift, max, invert, 1) }
-#define SOC_DAPM_SINGLE_VIRT(xname, max) \
+	.निजी_value = SOC_SINGLE_VALUE(reg, shअगरt, max, invert, 1) पूर्ण
+#घोषणा SOC_DAPM_SINGLE_VIRT(xname, max) \
 	SOC_DAPM_SINGLE(xname, SND_SOC_NOPM, 0, max, 0)
-#define SOC_DAPM_SINGLE_TLV(xname, reg, shift, max, invert, tlv_array) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+#घोषणा SOC_DAPM_SINGLE_TLV(xname, reg, shअगरt, max, invert, tlv_array) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ | SNDRV_CTL_ELEM_ACCESS_READWRITE,\
 	.tlv.p = (tlv_array), \
 	.get = snd_soc_dapm_get_volsw, .put = snd_soc_dapm_put_volsw, \
-	.private_value = SOC_SINGLE_VALUE(reg, shift, max, invert, 0) }
-#define SOC_DAPM_SINGLE_TLV_AUTODISABLE(xname, reg, shift, max, invert, tlv_array) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.निजी_value = SOC_SINGLE_VALUE(reg, shअगरt, max, invert, 0) पूर्ण
+#घोषणा SOC_DAPM_SINGLE_TLV_AUTODISABLE(xname, reg, shअगरt, max, invert, tlv_array) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
 	.info = snd_soc_info_volsw, \
 	.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ | SNDRV_CTL_ELEM_ACCESS_READWRITE,\
 	.tlv.p = (tlv_array), \
 	.get = snd_soc_dapm_get_volsw, .put = snd_soc_dapm_put_volsw, \
-	.private_value = SOC_SINGLE_VALUE(reg, shift, max, invert, 1) }
-#define SOC_DAPM_SINGLE_TLV_VIRT(xname, max, tlv_array) \
+	.निजी_value = SOC_SINGLE_VALUE(reg, shअगरt, max, invert, 1) पूर्ण
+#घोषणा SOC_DAPM_SINGLE_TLV_VIRT(xname, max, tlv_array) \
 	SOC_DAPM_SINGLE(xname, SND_SOC_NOPM, 0, max, 0, tlv_array)
-#define SOC_DAPM_ENUM(xname, xenum) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
-	.info = snd_soc_info_enum_double, \
- 	.get = snd_soc_dapm_get_enum_double, \
- 	.put = snd_soc_dapm_put_enum_double, \
-  	.private_value = (unsigned long)&xenum }
-#define SOC_DAPM_ENUM_EXT(xname, xenum, xget, xput) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
-	.info = snd_soc_info_enum_double, \
+#घोषणा SOC_DAPM_ENUM(xname, xक्रमागत) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.info = snd_soc_info_क्रमागत_द्विगुन, \
+ 	.get = snd_soc_dapm_get_क्रमागत_द्विगुन, \
+ 	.put = snd_soc_dapm_put_क्रमागत_द्विगुन, \
+  	.निजी_value = (अचिन्हित दीर्घ)&xक्रमागत पूर्ण
+#घोषणा SOC_DAPM_ENUM_EXT(xname, xक्रमागत, xget, xput) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+	.info = snd_soc_info_क्रमागत_द्विगुन, \
 	.get = xget, \
 	.put = xput, \
-	.private_value = (unsigned long)&xenum }
-#define SOC_DAPM_PIN_SWITCH(xname) \
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname " Switch", \
-	.info = snd_soc_dapm_info_pin_switch, \
-	.get = snd_soc_dapm_get_pin_switch, \
-	.put = snd_soc_dapm_put_pin_switch, \
-	.private_value = (unsigned long)xname }
+	.निजी_value = (अचिन्हित दीर्घ)&xक्रमागत पूर्ण
+#घोषणा SOC_DAPM_PIN_SWITCH(xname) \
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname " Switch", \
+	.info = snd_soc_dapm_info_pin_चयन, \
+	.get = snd_soc_dapm_get_pin_चयन, \
+	.put = snd_soc_dapm_put_pin_चयन, \
+	.निजी_value = (अचिन्हित दीर्घ)xname पूर्ण
 
 /* dapm stream operations */
-#define SND_SOC_DAPM_STREAM_NOP			0x0
-#define SND_SOC_DAPM_STREAM_START		0x1
-#define SND_SOC_DAPM_STREAM_STOP		0x2
-#define SND_SOC_DAPM_STREAM_SUSPEND		0x4
-#define SND_SOC_DAPM_STREAM_RESUME		0x8
-#define SND_SOC_DAPM_STREAM_PAUSE_PUSH	0x10
-#define SND_SOC_DAPM_STREAM_PAUSE_RELEASE	0x20
+#घोषणा SND_SOC_DAPM_STREAM_NOP			0x0
+#घोषणा SND_SOC_DAPM_STREAM_START		0x1
+#घोषणा SND_SOC_DAPM_STREAM_STOP		0x2
+#घोषणा SND_SOC_DAPM_STREAM_SUSPEND		0x4
+#घोषणा SND_SOC_DAPM_STREAM_RESUME		0x8
+#घोषणा SND_SOC_DAPM_STREAM_PAUSE_PUSH	0x10
+#घोषणा SND_SOC_DAPM_STREAM_PAUSE_RELEASE	0x20
 
 /* dapm event types */
-#define SND_SOC_DAPM_PRE_PMU	0x1 	/* before widget power up */
-#define SND_SOC_DAPM_POST_PMU	0x2		/* after widget power up */
-#define SND_SOC_DAPM_PRE_PMD	0x4 	/* before widget power down */
-#define SND_SOC_DAPM_POST_PMD	0x8		/* after widget power down */
-#define SND_SOC_DAPM_PRE_REG	0x10	/* before audio path setup */
-#define SND_SOC_DAPM_POST_REG	0x20	/* after audio path setup */
-#define SND_SOC_DAPM_WILL_PMU   0x40    /* called at start of sequence */
-#define SND_SOC_DAPM_WILL_PMD   0x80    /* called at start of sequence */
-#define SND_SOC_DAPM_PRE_POST_PMD \
+#घोषणा SND_SOC_DAPM_PRE_PMU	0x1 	/* beक्रमe widget घातer up */
+#घोषणा SND_SOC_DAPM_POST_PMU	0x2		/* after widget घातer up */
+#घोषणा SND_SOC_DAPM_PRE_PMD	0x4 	/* beक्रमe widget घातer करोwn */
+#घोषणा SND_SOC_DAPM_POST_PMD	0x8		/* after widget घातer करोwn */
+#घोषणा SND_SOC_DAPM_PRE_REG	0x10	/* beक्रमe audio path setup */
+#घोषणा SND_SOC_DAPM_POST_REG	0x20	/* after audio path setup */
+#घोषणा SND_SOC_DAPM_WILL_PMU   0x40    /* called at start of sequence */
+#घोषणा SND_SOC_DAPM_WILL_PMD   0x80    /* called at start of sequence */
+#घोषणा SND_SOC_DAPM_PRE_POST_PMD \
 				(SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD)
-#define SND_SOC_DAPM_PRE_POST_PMU \
+#घोषणा SND_SOC_DAPM_PRE_POST_PMU \
 				(SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU)
 
 /* convenience event type detection */
-#define SND_SOC_DAPM_EVENT_ON(e)	\
+#घोषणा SND_SOC_DAPM_EVENT_ON(e)	\
 	(e & (SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU))
-#define SND_SOC_DAPM_EVENT_OFF(e)	\
+#घोषणा SND_SOC_DAPM_EVENT_OFF(e)	\
 	(e & (SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD))
 
 /* regulator widget flags */
-#define SND_SOC_DAPM_REGULATOR_BYPASS     0x1     /* bypass when disabled */
+#घोषणा SND_SOC_DAPM_REGULATOR_BYPASS     0x1     /* bypass when disabled */
 
-struct snd_soc_dapm_widget;
-enum snd_soc_dapm_type;
-struct snd_soc_dapm_path;
-struct snd_soc_dapm_pin;
-struct snd_soc_dapm_route;
-struct snd_soc_dapm_context;
-struct regulator;
-struct snd_soc_dapm_widget_list;
-struct snd_soc_dapm_update;
-enum snd_soc_dapm_direction;
+काष्ठा snd_soc_dapm_widget;
+क्रमागत snd_soc_dapm_type;
+काष्ठा snd_soc_dapm_path;
+काष्ठा snd_soc_dapm_pin;
+काष्ठा snd_soc_dapm_route;
+काष्ठा snd_soc_dapm_context;
+काष्ठा regulator;
+काष्ठा snd_soc_dapm_widget_list;
+काष्ठा snd_soc_dapm_update;
+क्रमागत snd_soc_dapm_direction;
 
 /*
  * Bias levels
  *
- * @ON:      Bias is fully on for audio playback and capture operations.
- * @PREPARE: Prepare for audio operations. Called before DAPM switching for
+ * @ON:      Bias is fully on क्रम audio playback and capture operations.
+ * @PREPARE: Prepare क्रम audio operations. Called beक्रमe DAPM चयनing क्रम
  *           stream start and stop operations.
- * @STANDBY: Low power standby state when no playback/capture operations are
- *           in progress. NOTE: The transition time between STANDBY and ON
- *           should be as fast as possible and no longer than 10ms.
- * @OFF:     Power Off. No restrictions on transition times.
+ * @STANDBY: Low घातer standby state when no playback/capture operations are
+ *           in progress. NOTE: The transition समय between STANDBY and ON
+ *           should be as fast as possible and no दीर्घer than 10ms.
+ * @OFF:     Power Off. No restrictions on transition बार.
  */
-enum snd_soc_bias_level {
+क्रमागत snd_soc_bias_level अणु
 	SND_SOC_BIAS_OFF = 0,
 	SND_SOC_BIAS_STANDBY = 1,
 	SND_SOC_BIAS_PREPARE = 2,
 	SND_SOC_BIAS_ON = 3,
-};
+पूर्ण;
 
-int dapm_regulator_event(struct snd_soc_dapm_widget *w,
-			 struct snd_kcontrol *kcontrol, int event);
-int dapm_clock_event(struct snd_soc_dapm_widget *w,
-			 struct snd_kcontrol *kcontrol, int event);
-int dapm_pinctrl_event(struct snd_soc_dapm_widget *w,
-			 struct snd_kcontrol *kcontrol, int event);
+पूर्णांक dapm_regulator_event(काष्ठा snd_soc_dapm_widget *w,
+			 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event);
+पूर्णांक dapm_घड़ी_event(काष्ठा snd_soc_dapm_widget *w,
+			 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event);
+पूर्णांक dapm_pinctrl_event(काष्ठा snd_soc_dapm_widget *w,
+			 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event);
 
 /* dapm controls */
-int snd_soc_dapm_put_volsw(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol);
-int snd_soc_dapm_get_volsw(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol);
-int snd_soc_dapm_get_enum_double(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol);
-int snd_soc_dapm_put_enum_double(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *ucontrol);
-int snd_soc_dapm_info_pin_switch(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_info *uinfo);
-int snd_soc_dapm_get_pin_switch(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *uncontrol);
-int snd_soc_dapm_put_pin_switch(struct snd_kcontrol *kcontrol,
-	struct snd_ctl_elem_value *uncontrol);
-int snd_soc_dapm_new_controls(struct snd_soc_dapm_context *dapm,
-	const struct snd_soc_dapm_widget *widget,
-	int num);
-struct snd_soc_dapm_widget *snd_soc_dapm_new_control(
-		struct snd_soc_dapm_context *dapm,
-		const struct snd_soc_dapm_widget *widget);
-struct snd_soc_dapm_widget *snd_soc_dapm_new_control_unlocked(
-		struct snd_soc_dapm_context *dapm,
-		const struct snd_soc_dapm_widget *widget);
-int snd_soc_dapm_new_dai_widgets(struct snd_soc_dapm_context *dapm,
-				 struct snd_soc_dai *dai);
-int snd_soc_dapm_link_dai_widgets(struct snd_soc_card *card);
-void snd_soc_dapm_connect_dai_link_widgets(struct snd_soc_card *card);
+पूर्णांक snd_soc_dapm_put_volsw(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol);
+पूर्णांक snd_soc_dapm_get_volsw(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol);
+पूर्णांक snd_soc_dapm_get_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol);
+पूर्णांक snd_soc_dapm_put_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *ucontrol);
+पूर्णांक snd_soc_dapm_info_pin_चयन(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_info *uinfo);
+पूर्णांक snd_soc_dapm_get_pin_चयन(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *uncontrol);
+पूर्णांक snd_soc_dapm_put_pin_चयन(काष्ठा snd_kcontrol *kcontrol,
+	काष्ठा snd_ctl_elem_value *uncontrol);
+पूर्णांक snd_soc_dapm_new_controls(काष्ठा snd_soc_dapm_context *dapm,
+	स्थिर काष्ठा snd_soc_dapm_widget *widget,
+	पूर्णांक num);
+काष्ठा snd_soc_dapm_widget *snd_soc_dapm_new_control(
+		काष्ठा snd_soc_dapm_context *dapm,
+		स्थिर काष्ठा snd_soc_dapm_widget *widget);
+काष्ठा snd_soc_dapm_widget *snd_soc_dapm_new_control_unlocked(
+		काष्ठा snd_soc_dapm_context *dapm,
+		स्थिर काष्ठा snd_soc_dapm_widget *widget);
+पूर्णांक snd_soc_dapm_new_dai_widमाला_लो(काष्ठा snd_soc_dapm_context *dapm,
+				 काष्ठा snd_soc_dai *dai);
+पूर्णांक snd_soc_dapm_link_dai_widमाला_लो(काष्ठा snd_soc_card *card);
+व्योम snd_soc_dapm_connect_dai_link_widमाला_लो(काष्ठा snd_soc_card *card);
 
-int snd_soc_dapm_update_dai(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params,
-			    struct snd_soc_dai *dai);
+पूर्णांक snd_soc_dapm_update_dai(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params,
+			    काष्ठा snd_soc_dai *dai);
 
 /* dapm path setup */
-int snd_soc_dapm_new_widgets(struct snd_soc_card *card);
-void snd_soc_dapm_free(struct snd_soc_dapm_context *dapm);
-void snd_soc_dapm_init(struct snd_soc_dapm_context *dapm,
-		       struct snd_soc_card *card,
-		       struct snd_soc_component *component);
-int snd_soc_dapm_add_routes(struct snd_soc_dapm_context *dapm,
-			    const struct snd_soc_dapm_route *route, int num);
-int snd_soc_dapm_del_routes(struct snd_soc_dapm_context *dapm,
-			    const struct snd_soc_dapm_route *route, int num);
-int snd_soc_dapm_weak_routes(struct snd_soc_dapm_context *dapm,
-			     const struct snd_soc_dapm_route *route, int num);
-void snd_soc_dapm_free_widget(struct snd_soc_dapm_widget *w);
-void snd_soc_dapm_reset_cache(struct snd_soc_dapm_context *dapm);
+पूर्णांक snd_soc_dapm_new_widमाला_लो(काष्ठा snd_soc_card *card);
+व्योम snd_soc_dapm_मुक्त(काष्ठा snd_soc_dapm_context *dapm);
+व्योम snd_soc_dapm_init(काष्ठा snd_soc_dapm_context *dapm,
+		       काष्ठा snd_soc_card *card,
+		       काष्ठा snd_soc_component *component);
+पूर्णांक snd_soc_dapm_add_routes(काष्ठा snd_soc_dapm_context *dapm,
+			    स्थिर काष्ठा snd_soc_dapm_route *route, पूर्णांक num);
+पूर्णांक snd_soc_dapm_del_routes(काष्ठा snd_soc_dapm_context *dapm,
+			    स्थिर काष्ठा snd_soc_dapm_route *route, पूर्णांक num);
+पूर्णांक snd_soc_dapm_weak_routes(काष्ठा snd_soc_dapm_context *dapm,
+			     स्थिर काष्ठा snd_soc_dapm_route *route, पूर्णांक num);
+व्योम snd_soc_dapm_मुक्त_widget(काष्ठा snd_soc_dapm_widget *w);
+व्योम snd_soc_dapm_reset_cache(काष्ठा snd_soc_dapm_context *dapm);
 
 /* dapm events */
-void snd_soc_dapm_stream_event(struct snd_soc_pcm_runtime *rtd, int stream,
-	int event);
-void snd_soc_dapm_stream_stop(struct snd_soc_pcm_runtime *rtd, int stream);
-void snd_soc_dapm_shutdown(struct snd_soc_card *card);
+व्योम snd_soc_dapm_stream_event(काष्ठा snd_soc_pcm_runसमय *rtd, पूर्णांक stream,
+	पूर्णांक event);
+व्योम snd_soc_dapm_stream_stop(काष्ठा snd_soc_pcm_runसमय *rtd, पूर्णांक stream);
+व्योम snd_soc_dapm_shutकरोwn(काष्ठा snd_soc_card *card);
 
-/* external DAPM widget events */
-int snd_soc_dapm_mixer_update_power(struct snd_soc_dapm_context *dapm,
-		struct snd_kcontrol *kcontrol, int connect,
-		struct snd_soc_dapm_update *update);
-int snd_soc_dapm_mux_update_power(struct snd_soc_dapm_context *dapm,
-		struct snd_kcontrol *kcontrol, int mux, struct soc_enum *e,
-		struct snd_soc_dapm_update *update);
+/* बाह्यal DAPM widget events */
+पूर्णांक snd_soc_dapm_mixer_update_घातer(काष्ठा snd_soc_dapm_context *dapm,
+		काष्ठा snd_kcontrol *kcontrol, पूर्णांक connect,
+		काष्ठा snd_soc_dapm_update *update);
+पूर्णांक snd_soc_dapm_mux_update_घातer(काष्ठा snd_soc_dapm_context *dapm,
+		काष्ठा snd_kcontrol *kcontrol, पूर्णांक mux, काष्ठा soc_क्रमागत *e,
+		काष्ठा snd_soc_dapm_update *update);
 
 /* dapm sys fs - used by the core */
-extern struct attribute *soc_dapm_dev_attrs[];
-void snd_soc_dapm_debugfs_init(struct snd_soc_dapm_context *dapm,
-				struct dentry *parent);
+बाह्य काष्ठा attribute *soc_dapm_dev_attrs[];
+व्योम snd_soc_dapm_debugfs_init(काष्ठा snd_soc_dapm_context *dapm,
+				काष्ठा dentry *parent);
 
 /* dapm audio pin control and status */
-int snd_soc_dapm_enable_pin(struct snd_soc_dapm_context *dapm,
-			    const char *pin);
-int snd_soc_dapm_enable_pin_unlocked(struct snd_soc_dapm_context *dapm,
-				     const char *pin);
-int snd_soc_dapm_disable_pin(struct snd_soc_dapm_context *dapm,
-			     const char *pin);
-int snd_soc_dapm_disable_pin_unlocked(struct snd_soc_dapm_context *dapm,
-				      const char *pin);
-int snd_soc_dapm_nc_pin(struct snd_soc_dapm_context *dapm, const char *pin);
-int snd_soc_dapm_nc_pin_unlocked(struct snd_soc_dapm_context *dapm,
-				 const char *pin);
-int snd_soc_dapm_get_pin_status(struct snd_soc_dapm_context *dapm,
-				const char *pin);
-int snd_soc_dapm_sync(struct snd_soc_dapm_context *dapm);
-int snd_soc_dapm_sync_unlocked(struct snd_soc_dapm_context *dapm);
-int snd_soc_dapm_force_enable_pin(struct snd_soc_dapm_context *dapm,
-				  const char *pin);
-int snd_soc_dapm_force_enable_pin_unlocked(struct snd_soc_dapm_context *dapm,
-					   const char *pin);
-int snd_soc_dapm_ignore_suspend(struct snd_soc_dapm_context *dapm,
-				const char *pin);
-unsigned int dapm_kcontrol_get_value(const struct snd_kcontrol *kcontrol);
+पूर्णांक snd_soc_dapm_enable_pin(काष्ठा snd_soc_dapm_context *dapm,
+			    स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_enable_pin_unlocked(काष्ठा snd_soc_dapm_context *dapm,
+				     स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_disable_pin(काष्ठा snd_soc_dapm_context *dapm,
+			     स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_disable_pin_unlocked(काष्ठा snd_soc_dapm_context *dapm,
+				      स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_nc_pin(काष्ठा snd_soc_dapm_context *dapm, स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_nc_pin_unlocked(काष्ठा snd_soc_dapm_context *dapm,
+				 स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_get_pin_status(काष्ठा snd_soc_dapm_context *dapm,
+				स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_sync(काष्ठा snd_soc_dapm_context *dapm);
+पूर्णांक snd_soc_dapm_sync_unlocked(काष्ठा snd_soc_dapm_context *dapm);
+पूर्णांक snd_soc_dapm_क्रमce_enable_pin(काष्ठा snd_soc_dapm_context *dapm,
+				  स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_क्रमce_enable_pin_unlocked(काष्ठा snd_soc_dapm_context *dapm,
+					   स्थिर अक्षर *pin);
+पूर्णांक snd_soc_dapm_ignore_suspend(काष्ठा snd_soc_dapm_context *dapm,
+				स्थिर अक्षर *pin);
+अचिन्हित पूर्णांक dapm_kcontrol_get_value(स्थिर काष्ठा snd_kcontrol *kcontrol);
 
-/* Mostly internal - should not normally be used */
-void dapm_mark_endpoints_dirty(struct snd_soc_card *card);
+/* Mostly पूर्णांकernal - should not normally be used */
+व्योम dapm_mark_endpoपूर्णांकs_dirty(काष्ठा snd_soc_card *card);
 
 /* dapm path query */
-int snd_soc_dapm_dai_get_connected_widgets(struct snd_soc_dai *dai, int stream,
-	struct snd_soc_dapm_widget_list **list,
-	bool (*custom_stop_condition)(struct snd_soc_dapm_widget *,
-				      enum snd_soc_dapm_direction));
-void snd_soc_dapm_dai_free_widgets(struct snd_soc_dapm_widget_list **list);
+पूर्णांक snd_soc_dapm_dai_get_connected_widमाला_लो(काष्ठा snd_soc_dai *dai, पूर्णांक stream,
+	काष्ठा snd_soc_dapm_widget_list **list,
+	bool (*custom_stop_condition)(काष्ठा snd_soc_dapm_widget *,
+				      क्रमागत snd_soc_dapm_direction));
+व्योम snd_soc_dapm_dai_मुक्त_widमाला_लो(काष्ठा snd_soc_dapm_widget_list **list);
 
-struct snd_soc_dapm_context *snd_soc_dapm_kcontrol_dapm(
-	struct snd_kcontrol *kcontrol);
+काष्ठा snd_soc_dapm_context *snd_soc_dapm_kcontrol_dapm(
+	काष्ठा snd_kcontrol *kcontrol);
 
-struct snd_soc_dapm_widget *snd_soc_dapm_kcontrol_widget(
-		struct snd_kcontrol *kcontrol);
+काष्ठा snd_soc_dapm_widget *snd_soc_dapm_kcontrol_widget(
+		काष्ठा snd_kcontrol *kcontrol);
 
-int snd_soc_dapm_force_bias_level(struct snd_soc_dapm_context *dapm,
-	enum snd_soc_bias_level level);
+पूर्णांक snd_soc_dapm_क्रमce_bias_level(काष्ठा snd_soc_dapm_context *dapm,
+	क्रमागत snd_soc_bias_level level);
 
 /* dapm widget types */
-enum snd_soc_dapm_type {
+क्रमागत snd_soc_dapm_type अणु
 	snd_soc_dapm_input = 0,		/* input pin */
 	snd_soc_dapm_output,		/* output pin */
-	snd_soc_dapm_mux,			/* selects 1 analog signal from many inputs */
-	snd_soc_dapm_demux,			/* connects the input to one of multiple outputs */
-	snd_soc_dapm_mixer,			/* mixes several analog signals together */
+	snd_soc_dapm_mux,			/* selects 1 analog संकेत from many inमाला_दो */
+	snd_soc_dapm_demux,			/* connects the input to one of multiple outमाला_दो */
+	snd_soc_dapm_mixer,			/* mixes several analog संकेतs together */
 	snd_soc_dapm_mixer_named_ctl,		/* mixer with named controls */
 	snd_soc_dapm_pga,			/* programmable gain/attenuation (volume) */
 	snd_soc_dapm_out_drv,			/* output driver */
 	snd_soc_dapm_adc,			/* analog to digital converter */
 	snd_soc_dapm_dac,			/* digital to analog converter */
-	snd_soc_dapm_micbias,		/* microphone bias (power) - DEPRECATED: use snd_soc_dapm_supply */
+	snd_soc_dapm_micbias,		/* microphone bias (घातer) - DEPRECATED: use snd_soc_dapm_supply */
 	snd_soc_dapm_mic,			/* microphone */
 	snd_soc_dapm_hp,			/* headphones */
 	snd_soc_dapm_spk,			/* speaker */
 	snd_soc_dapm_line,			/* line input/output */
-	snd_soc_dapm_switch,		/* analog switch */
+	snd_soc_dapm_चयन,		/* analog चयन */
 	snd_soc_dapm_vmid,			/* codec bias/vmid - to minimise pops */
-	snd_soc_dapm_pre,			/* machine specific pre widget - exec first */
-	snd_soc_dapm_post,			/* machine specific post widget - exec last */
-	snd_soc_dapm_supply,		/* power/clock supply */
+	snd_soc_dapm_pre,			/* machine specअगरic pre widget - exec first */
+	snd_soc_dapm_post,			/* machine specअगरic post widget - exec last */
+	snd_soc_dapm_supply,		/* घातer/घड़ी supply */
 	snd_soc_dapm_pinctrl,		/* pinctrl */
-	snd_soc_dapm_regulator_supply,	/* external regulator */
-	snd_soc_dapm_clock_supply,	/* external clock */
-	snd_soc_dapm_aif_in,		/* audio interface input */
-	snd_soc_dapm_aif_out,		/* audio interface output */
-	snd_soc_dapm_siggen,		/* signal generator */
+	snd_soc_dapm_regulator_supply,	/* बाह्यal regulator */
+	snd_soc_dapm_घड़ी_supply,	/* बाह्यal घड़ी */
+	snd_soc_dapm_aअगर_in,		/* audio पूर्णांकerface input */
+	snd_soc_dapm_aअगर_out,		/* audio पूर्णांकerface output */
+	snd_soc_dapm_siggen,		/* संकेत generator */
 	snd_soc_dapm_sink,
-	snd_soc_dapm_dai_in,		/* link to DAI structure */
+	snd_soc_dapm_dai_in,		/* link to DAI काष्ठाure */
 	snd_soc_dapm_dai_out,
-	snd_soc_dapm_dai_link,		/* link between two DAI structures */
+	snd_soc_dapm_dai_link,		/* link between two DAI काष्ठाures */
 	snd_soc_dapm_kcontrol,		/* Auto-disabled kcontrol */
-	snd_soc_dapm_buffer,		/* DSP/CODEC internal buffer */
-	snd_soc_dapm_scheduler,		/* DSP/CODEC internal scheduler */
+	snd_soc_dapm_buffer,		/* DSP/CODEC पूर्णांकernal buffer */
+	snd_soc_dapm_scheduler,		/* DSP/CODEC पूर्णांकernal scheduler */
 	snd_soc_dapm_effect,		/* DSP/CODEC effect component */
 	snd_soc_dapm_src,		/* DSP/CODEC SRC component */
 	snd_soc_dapm_asrc,		/* DSP/CODEC ASRC component */
@@ -556,12 +557,12 @@ enum snd_soc_dapm_type {
 
 	/* Don't edit below this line */
 	SND_SOC_DAPM_TYPE_COUNT
-};
+पूर्ण;
 
-enum snd_soc_dapm_subclass {
+क्रमागत snd_soc_dapm_subclass अणु
 	SND_SOC_DAPM_CLASS_INIT		= 0,
 	SND_SOC_DAPM_CLASS_RUNTIME	= 1,
-};
+पूर्ण;
 
 /*
  * DAPM audio route definition.
@@ -569,248 +570,248 @@ enum snd_soc_dapm_subclass {
  * Defines an audio route originating at source via control and finishing
  * at sink.
  */
-struct snd_soc_dapm_route {
-	const char *sink;
-	const char *control;
-	const char *source;
+काष्ठा snd_soc_dapm_route अणु
+	स्थिर अक्षर *sink;
+	स्थिर अक्षर *control;
+	स्थिर अक्षर *source;
 
-	/* Note: currently only supported for links where source is a supply */
-	int (*connected)(struct snd_soc_dapm_widget *source,
-			 struct snd_soc_dapm_widget *sink);
+	/* Note: currently only supported क्रम links where source is a supply */
+	पूर्णांक (*connected)(काष्ठा snd_soc_dapm_widget *source,
+			 काष्ठा snd_soc_dapm_widget *sink);
 
-	struct snd_soc_dobj dobj;
-};
+	काष्ठा snd_soc_करोbj करोbj;
+पूर्ण;
 
-/* dapm audio path between two widgets */
-struct snd_soc_dapm_path {
-	const char *name;
+/* dapm audio path between two widमाला_लो */
+काष्ठा snd_soc_dapm_path अणु
+	स्थिर अक्षर *name;
 
 	/*
-	 * source (input) and sink (output) widgets
-	 * The union is for convience, since it is a lot nicer to type
-	 * p->source, rather than p->node[SND_SOC_DAPM_DIR_IN]
+	 * source (input) and sink (output) widमाला_लो
+	 * The जोड़ is क्रम convience, since it is a lot nicer to type
+	 * p->source, rather than p->node[SND_SOC_DAPM_सूची_IN]
 	 */
-	union {
-		struct {
-			struct snd_soc_dapm_widget *source;
-			struct snd_soc_dapm_widget *sink;
-		};
-		struct snd_soc_dapm_widget *node[2];
-	};
+	जोड़ अणु
+		काष्ठा अणु
+			काष्ठा snd_soc_dapm_widget *source;
+			काष्ठा snd_soc_dapm_widget *sink;
+		पूर्ण;
+		काष्ठा snd_soc_dapm_widget *node[2];
+	पूर्ण;
 
 	/* status */
-	u32 connect:1;	/* source and sink widgets are connected */
+	u32 connect:1;	/* source and sink widमाला_लो are connected */
 	u32 walking:1;  /* path is in the process of being walked */
-	u32 weak:1;	/* path ignored for power management */
-	u32 is_supply:1;	/* At least one of the connected widgets is a supply */
+	u32 weak:1;	/* path ignored क्रम घातer management */
+	u32 is_supply:1;	/* At least one of the connected widमाला_लो is a supply */
 
-	int (*connected)(struct snd_soc_dapm_widget *source,
-			 struct snd_soc_dapm_widget *sink);
+	पूर्णांक (*connected)(काष्ठा snd_soc_dapm_widget *source,
+			 काष्ठा snd_soc_dapm_widget *sink);
 
-	struct list_head list_node[2];
-	struct list_head list_kcontrol;
-	struct list_head list;
-};
+	काष्ठा list_head list_node[2];
+	काष्ठा list_head list_kcontrol;
+	काष्ठा list_head list;
+पूर्ण;
 
 /* dapm widget */
-struct snd_soc_dapm_widget {
-	enum snd_soc_dapm_type id;
-	const char *name;		/* widget name */
-	const char *sname;	/* stream name */
-	struct list_head list;
-	struct snd_soc_dapm_context *dapm;
+काष्ठा snd_soc_dapm_widget अणु
+	क्रमागत snd_soc_dapm_type id;
+	स्थिर अक्षर *name;		/* widget name */
+	स्थिर अक्षर *sname;	/* stream name */
+	काष्ठा list_head list;
+	काष्ठा snd_soc_dapm_context *dapm;
 
-	void *priv;				/* widget specific data */
-	struct regulator *regulator;		/* attached regulator */
-	struct pinctrl *pinctrl;		/* attached pinctrl */
+	व्योम *priv;				/* widget specअगरic data */
+	काष्ठा regulator *regulator;		/* attached regulator */
+	काष्ठा pinctrl *pinctrl;		/* attached pinctrl */
 
 	/* dapm control */
-	int reg;				/* negative reg = no direct dapm */
-	unsigned char shift;			/* bits to shift */
-	unsigned int mask;			/* non-shifted mask */
-	unsigned int on_val;			/* on state value */
-	unsigned int off_val;			/* off state value */
-	unsigned char power:1;			/* block power status */
-	unsigned char active:1;			/* active stream on DAC, ADC's */
-	unsigned char connected:1;		/* connected codec pin */
-	unsigned char new:1;			/* cnew complete */
-	unsigned char force:1;			/* force state */
-	unsigned char ignore_suspend:1;         /* kept enabled over suspend */
-	unsigned char new_power:1;		/* power from this run */
-	unsigned char power_checked:1;		/* power checked this run */
-	unsigned char is_supply:1;		/* Widget is a supply type widget */
-	unsigned char is_ep:2;			/* Widget is a endpoint type widget */
-	int subseq;				/* sort within widget type */
+	पूर्णांक reg;				/* negative reg = no direct dapm */
+	अचिन्हित अक्षर shअगरt;			/* bits to shअगरt */
+	अचिन्हित पूर्णांक mask;			/* non-shअगरted mask */
+	अचिन्हित पूर्णांक on_val;			/* on state value */
+	अचिन्हित पूर्णांक off_val;			/* off state value */
+	अचिन्हित अक्षर घातer:1;			/* block घातer status */
+	अचिन्हित अक्षर active:1;			/* active stream on DAC, ADC's */
+	अचिन्हित अक्षर connected:1;		/* connected codec pin */
+	अचिन्हित अक्षर new:1;			/* cnew complete */
+	अचिन्हित अक्षर क्रमce:1;			/* क्रमce state */
+	अचिन्हित अक्षर ignore_suspend:1;         /* kept enabled over suspend */
+	अचिन्हित अक्षर new_घातer:1;		/* घातer from this run */
+	अचिन्हित अक्षर घातer_checked:1;		/* घातer checked this run */
+	अचिन्हित अक्षर is_supply:1;		/* Widget is a supply type widget */
+	अचिन्हित अक्षर is_ep:2;			/* Widget is a endpoपूर्णांक type widget */
+	पूर्णांक subseq;				/* sort within widget type */
 
-	int (*power_check)(struct snd_soc_dapm_widget *w);
+	पूर्णांक (*घातer_check)(काष्ठा snd_soc_dapm_widget *w);
 
-	/* external events */
-	unsigned short event_flags;		/* flags to specify event types */
-	int (*event)(struct snd_soc_dapm_widget*, struct snd_kcontrol *, int);
+	/* बाह्यal events */
+	अचिन्हित लघु event_flags;		/* flags to specअगरy event types */
+	पूर्णांक (*event)(काष्ठा snd_soc_dapm_widget*, काष्ठा snd_kcontrol *, पूर्णांक);
 
 	/* kcontrols that relate to this widget */
-	int num_kcontrols;
-	const struct snd_kcontrol_new *kcontrol_news;
-	struct snd_kcontrol **kcontrols;
-	struct snd_soc_dobj dobj;
+	पूर्णांक num_kcontrols;
+	स्थिर काष्ठा snd_kcontrol_new *kcontrol_news;
+	काष्ठा snd_kcontrol **kcontrols;
+	काष्ठा snd_soc_करोbj करोbj;
 
 	/* widget input and output edges */
-	struct list_head edges[2];
+	काष्ठा list_head edges[2];
 
 	/* used during DAPM updates */
-	struct list_head work_list;
-	struct list_head power_list;
-	struct list_head dirty;
-	int endpoints[2];
+	काष्ठा list_head work_list;
+	काष्ठा list_head घातer_list;
+	काष्ठा list_head dirty;
+	पूर्णांक endpoपूर्णांकs[2];
 
-	struct clk *clk;
+	काष्ठा clk *clk;
 
-	int channel;
-};
+	पूर्णांक channel;
+पूर्ण;
 
-struct snd_soc_dapm_update {
-	struct snd_kcontrol *kcontrol;
-	int reg;
-	int mask;
-	int val;
-	int reg2;
-	int mask2;
-	int val2;
+काष्ठा snd_soc_dapm_update अणु
+	काष्ठा snd_kcontrol *kcontrol;
+	पूर्णांक reg;
+	पूर्णांक mask;
+	पूर्णांक val;
+	पूर्णांक reg2;
+	पूर्णांक mask2;
+	पूर्णांक val2;
 	bool has_second_set;
-};
+पूर्ण;
 
-struct snd_soc_dapm_wcache {
-	struct snd_soc_dapm_widget *widget;
-};
+काष्ठा snd_soc_dapm_wcache अणु
+	काष्ठा snd_soc_dapm_widget *widget;
+पूर्ण;
 
 /* DAPM context */
-struct snd_soc_dapm_context {
-	enum snd_soc_bias_level bias_level;
-	unsigned int idle_bias_off:1; /* Use BIAS_OFF instead of STANDBY */
-	/* Go to BIAS_OFF in suspend if the DAPM context is idle */
-	unsigned int suspend_bias_off:1;
+काष्ठा snd_soc_dapm_context अणु
+	क्रमागत snd_soc_bias_level bias_level;
+	अचिन्हित पूर्णांक idle_bias_off:1; /* Use BIAS_OFF instead of STANDBY */
+	/* Go to BIAS_OFF in suspend अगर the DAPM context is idle */
+	अचिन्हित पूर्णांक suspend_bias_off:1;
 
-	struct device *dev; /* from parent - for debug */
-	struct snd_soc_component *component; /* parent component */
-	struct snd_soc_card *card; /* parent card */
+	काष्ठा device *dev; /* from parent - क्रम debug */
+	काष्ठा snd_soc_component *component; /* parent component */
+	काष्ठा snd_soc_card *card; /* parent card */
 
 	/* used during DAPM updates */
-	enum snd_soc_bias_level target_bias_level;
-	struct list_head list;
+	क्रमागत snd_soc_bias_level target_bias_level;
+	काष्ठा list_head list;
 
-	struct snd_soc_dapm_wcache path_sink_cache;
-	struct snd_soc_dapm_wcache path_source_cache;
+	काष्ठा snd_soc_dapm_wcache path_sink_cache;
+	काष्ठा snd_soc_dapm_wcache path_source_cache;
 
-#ifdef CONFIG_DEBUG_FS
-	struct dentry *debugfs_dapm;
-#endif
-};
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry *debugfs_dapm;
+#पूर्ण_अगर
+पूर्ण;
 
-/* A list of widgets associated with an object, typically a snd_kcontrol */
-struct snd_soc_dapm_widget_list {
-	int num_widgets;
-	struct snd_soc_dapm_widget *widgets[];
-};
+/* A list of widमाला_लो associated with an object, typically a snd_kcontrol */
+काष्ठा snd_soc_dapm_widget_list अणु
+	पूर्णांक num_widमाला_लो;
+	काष्ठा snd_soc_dapm_widget *widमाला_लो[];
+पूर्ण;
 
-#define for_each_dapm_widgets(list, i, widget)				\
-	for ((i) = 0;							\
-	     (i) < list->num_widgets && (widget = list->widgets[i]);	\
+#घोषणा क्रम_each_dapm_widमाला_लो(list, i, widget)				\
+	क्रम ((i) = 0;							\
+	     (i) < list->num_widमाला_लो && (widget = list->widमाला_लो[i]);	\
 	     (i)++)
 
-struct snd_soc_dapm_stats {
-	int power_checks;
-	int path_checks;
-	int neighbour_checks;
-};
+काष्ठा snd_soc_dapm_stats अणु
+	पूर्णांक घातer_checks;
+	पूर्णांक path_checks;
+	पूर्णांक neighbour_checks;
+पूर्ण;
 
-struct snd_soc_dapm_pinctrl_priv {
-	const char *active_state;
-	const char *sleep_state;
-};
+काष्ठा snd_soc_dapm_pinctrl_priv अणु
+	स्थिर अक्षर *active_state;
+	स्थिर अक्षर *sleep_state;
+पूर्ण;
 
 /**
  * snd_soc_dapm_init_bias_level() - Initialize DAPM bias level
  * @dapm: The DAPM context to initialize
  * @level: The DAPM level to initialize to
  *
- * This function only sets the driver internal state of the DAPM level and will
- * not modify the state of the device. Hence it should not be used during normal
- * operation, but only to synchronize the internal state to the device state.
+ * This function only sets the driver पूर्णांकernal state of the DAPM level and will
+ * not modअगरy the state of the device. Hence it should not be used during normal
+ * operation, but only to synchronize the पूर्णांकernal state to the device state.
  * E.g. during driver probe to set the DAPM level to the one corresponding with
- * the power-on reset state of the device.
+ * the घातer-on reset state of the device.
  *
  * To change the DAPM state of the device use snd_soc_dapm_set_bias_level().
  */
-static inline void snd_soc_dapm_init_bias_level(
-	struct snd_soc_dapm_context *dapm, enum snd_soc_bias_level level)
-{
+अटल अंतरभूत व्योम snd_soc_dapm_init_bias_level(
+	काष्ठा snd_soc_dapm_context *dapm, क्रमागत snd_soc_bias_level level)
+अणु
 	dapm->bias_level = level;
-}
+पूर्ण
 
 /**
  * snd_soc_dapm_get_bias_level() - Get current DAPM bias level
- * @dapm: The context for which to get the bias level
+ * @dapm: The context क्रम which to get the bias level
  *
  * Returns: The current bias level of the passed DAPM context.
  */
-static inline enum snd_soc_bias_level snd_soc_dapm_get_bias_level(
-	struct snd_soc_dapm_context *dapm)
-{
-	return dapm->bias_level;
-}
+अटल अंतरभूत क्रमागत snd_soc_bias_level snd_soc_dapm_get_bias_level(
+	काष्ठा snd_soc_dapm_context *dapm)
+अणु
+	वापस dapm->bias_level;
+पूर्ण
 
-enum snd_soc_dapm_direction {
-	SND_SOC_DAPM_DIR_IN,
-	SND_SOC_DAPM_DIR_OUT
-};
+क्रमागत snd_soc_dapm_direction अणु
+	SND_SOC_DAPM_सूची_IN,
+	SND_SOC_DAPM_सूची_OUT
+पूर्ण;
 
-#define SND_SOC_DAPM_DIR_TO_EP(x) BIT(x)
+#घोषणा SND_SOC_DAPM_सूची_TO_EP(x) BIT(x)
 
-#define SND_SOC_DAPM_EP_SOURCE SND_SOC_DAPM_DIR_TO_EP(SND_SOC_DAPM_DIR_IN)
-#define SND_SOC_DAPM_EP_SINK SND_SOC_DAPM_DIR_TO_EP(SND_SOC_DAPM_DIR_OUT)
+#घोषणा SND_SOC_DAPM_EP_SOURCE SND_SOC_DAPM_सूची_TO_EP(SND_SOC_DAPM_सूची_IN)
+#घोषणा SND_SOC_DAPM_EP_SINK SND_SOC_DAPM_सूची_TO_EP(SND_SOC_DAPM_सूची_OUT)
 
 /**
- * snd_soc_dapm_widget_for_each_sink_path - Iterates over all paths in the
- *   specified direction of a widget
+ * snd_soc_dapm_widget_क्रम_each_sink_path - Iterates over all paths in the
+ *   specअगरied direction of a widget
  * @w: The widget
- * @dir: Whether to iterate over the paths where the specified widget is the
- *       incoming or outgoing widgets
+ * @dir: Whether to iterate over the paths where the specअगरied widget is the
+ *       incoming or outgoing widमाला_लो
  * @p: The path iterator variable
  */
-#define snd_soc_dapm_widget_for_each_path(w, dir, p) \
-	list_for_each_entry(p, &w->edges[dir], list_node[dir])
+#घोषणा snd_soc_dapm_widget_क्रम_each_path(w, dir, p) \
+	list_क्रम_each_entry(p, &w->edges[dir], list_node[dir])
 
 /**
- * snd_soc_dapm_widget_for_each_sink_path_safe - Iterates over all paths in the
- *   specified direction of a widget
+ * snd_soc_dapm_widget_क्रम_each_sink_path_safe - Iterates over all paths in the
+ *   specअगरied direction of a widget
  * @w: The widget
- * @dir: Whether to iterate over the paths where the specified widget is the
- *       incoming or outgoing widgets
+ * @dir: Whether to iterate over the paths where the specअगरied widget is the
+ *       incoming or outgoing widमाला_लो
  * @p: The path iterator variable
- * @next_p: Temporary storage for the next path
+ * @next_p: Temporary storage क्रम the next path
  *
- *  This function works like snd_soc_dapm_widget_for_each_sink_path, expect that
- *  it is safe to remove the current path from the list while iterating
+ *  This function works like snd_soc_dapm_widget_क्रम_each_sink_path, expect that
+ *  it is safe to हटाओ the current path from the list जबतक iterating
  */
-#define snd_soc_dapm_widget_for_each_path_safe(w, dir, p, next_p) \
-	list_for_each_entry_safe(p, next_p, &w->edges[dir], list_node[dir])
+#घोषणा snd_soc_dapm_widget_क्रम_each_path_safe(w, dir, p, next_p) \
+	list_क्रम_each_entry_safe(p, next_p, &w->edges[dir], list_node[dir])
 
 /**
- * snd_soc_dapm_widget_for_each_sink_path - Iterates over all paths leaving a
+ * snd_soc_dapm_widget_क्रम_each_sink_path - Iterates over all paths leaving a
  *  widget
  * @w: The widget
  * @p: The path iterator variable
  */
-#define snd_soc_dapm_widget_for_each_sink_path(w, p) \
-	snd_soc_dapm_widget_for_each_path(w, SND_SOC_DAPM_DIR_IN, p)
+#घोषणा snd_soc_dapm_widget_क्रम_each_sink_path(w, p) \
+	snd_soc_dapm_widget_क्रम_each_path(w, SND_SOC_DAPM_सूची_IN, p)
 
 /**
- * snd_soc_dapm_widget_for_each_source_path - Iterates over all paths leading to
+ * snd_soc_dapm_widget_क्रम_each_source_path - Iterates over all paths leading to
  *  a widget
  * @w: The widget
  * @p: The path iterator variable
  */
-#define snd_soc_dapm_widget_for_each_source_path(w, p) \
-	snd_soc_dapm_widget_for_each_path(w, SND_SOC_DAPM_DIR_OUT, p)
+#घोषणा snd_soc_dapm_widget_क्रम_each_source_path(w, p) \
+	snd_soc_dapm_widget_क्रम_each_path(w, SND_SOC_DAPM_सूची_OUT, p)
 
-#endif
+#पूर्ण_अगर

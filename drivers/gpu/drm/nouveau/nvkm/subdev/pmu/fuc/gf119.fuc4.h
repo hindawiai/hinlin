@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: MIT */
-static uint32_t gf119_pmu_data[] = {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+अटल uपूर्णांक32_t gf119_pmu_data[] = अणु
 /* 0x0000: proc_kern */
 	0x52544e49,
 	0x00000000,
@@ -157,13 +158,11 @@ static uint32_t gf119_pmu_data[] = {
 	0x00000000,
 	0x00000000,
 /* 0x0268: proc_list_tail */
-/* 0x0268: time_prev */
+/* 0x0268: समय_prev */
 	0x00000000,
-/* 0x026c: time_next */
+/* 0x026c: समय_next */
 	0x00000000,
-/* 0x0270: fifo_queue */
-	0x00000000,
-	0x00000000,
+/* 0x0270: fअगरo_queue */
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -194,7 +193,9 @@ static uint32_t gf119_pmu_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-/* 0x02f0: rfifo_queue */
+	0x00000000,
+	0x00000000,
+/* 0x02f0: rfअगरo_queue */
 	0x00000000,
 	0x00000000,
 	0x00000000,
@@ -914,9 +915,9 @@ static uint32_t gf119_pmu_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-static uint32_t gf119_pmu_code[] = {
+अटल uपूर्णांक32_t gf119_pmu_code[] = अणु
 	0x03410ef5,
 /* 0x0004: rd32 */
 	0x07a007f1,
@@ -925,7 +926,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x01d3f000,
 	0x07ac07f1,
 	0xbd000dd0,
-/* 0x001d: rd32_wait */
+/* 0x001d: rd32_रुको */
 	0xacd7f104,
 	0x00ddcf07,
 	0x7000d4f1,
@@ -941,7 +942,7 @@ static uint32_t gf119_pmu_code[] = {
 	0xd3f000f2,
 	0xac07f101,
 	0x000dd007,
-/* 0x0056: wr32_wait */
+/* 0x0056: wr32_रुको */
 	0xd7f104bd,
 	0xddcf07ac,
 	0x00d4f100,
@@ -956,10 +957,10 @@ static uint32_t gf119_pmu_code[] = {
 	0x069eb802,
 	0xfcf41ef4,
 	0xf890fc80,
-/* 0x0085: wait */
+/* 0x0085: रुको */
 	0xf990f900,
 	0x2c87f080,
-/* 0x008f: wait_loop */
+/* 0x008f: रुको_loop */
 	0xb90088cf,
 	0x21f402ee,
 	0x02dab904,
@@ -969,9 +970,9 @@ static uint32_t gf119_pmu_code[] = {
 	0xbb0099cf,
 	0x9bb80298,
 	0xe21ef406,
-/* 0x00b0: wait_done */
+/* 0x00b0: रुको_करोne */
 	0x90fc80fc,
-/* 0x00b6: intr_watchdog */
+/* 0x00b6: पूर्णांकr_watchकरोg */
 	0xe99800f8,
 	0x0096b003,
 	0x982a0bf4,
@@ -980,18 +981,18 @@ static uint32_t gf119_pmu_code[] = {
 	0xf501d7f0,
 	0xbd028021,
 	0x150ef494,
-/* 0x00d4: intr_watchdog_next_time */
+/* 0x00d4: पूर्णांकr_watchकरोg_next_समय */
 	0xb09b0a98,
 	0x0bf400a6,
 	0x069ab809,
-/* 0x00e3: intr_watchdog_next_time_set */
+/* 0x00e3: पूर्णांकr_watchकरोg_next_समय_set */
 	0x80061cf4,
-/* 0x00e6: intr_watchdog_next_proc */
+/* 0x00e6: पूर्णांकr_watchकरोg_next_proc */
 	0xe9809b09,
 	0x58e0b603,
 	0x0268e6b1,
 	0xf8c61bf4,
-/* 0x00f5: intr */
+/* 0x00f5: पूर्णांकr */
 	0xbd00f900,
 	0xf980f904,
 	0xf9a0f990,
@@ -1014,7 +1015,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x07f00e0b,
 	0x0009d034,
 	0x098004bd,
-/* 0x014d: intr_skip_watchdog */
+/* 0x014d: पूर्णांकr_skip_watchकरोg */
 	0x0089e49a,
 	0x3c0bf408,
 	0x068897f1,
@@ -1029,10 +1030,10 @@ static uint32_t gf119_pmu_code[] = {
 	0xf1c0fc02,
 	0xd004c007,
 	0x04bd000c,
-/* 0x0184: intr_subintr_skip_fifo */
+/* 0x0184: पूर्णांकr_subपूर्णांकr_skip_fअगरo */
 	0x068807f1,
 	0xbd0009d0,
-/* 0x018d: intr_skip_subintr */
+/* 0x018d: पूर्णांकr_skip_subपूर्णांकr */
 	0xe097f104,
 	0xfd90bd00,
 	0x07f00489,
@@ -1072,7 +1073,7 @@ static uint32_t gf119_pmu_code[] = {
 	0xf100f8c0,
 	0xf00144d7,
 	0xedff00d3,
-/* 0x0217: timer */
+/* 0x0217: समयr */
 	0xf900f8ec,
 	0xf480f990,
 	0xf8981032,
@@ -1092,14 +1093,14 @@ static uint32_t gf119_pmu_code[] = {
 	0x06e0b800,
 	0xb8090bf4,
 	0x1cf406e8,
-/* 0x0261: timer_reset */
+/* 0x0261: समयr_reset */
 	0x3407f00e,
 	0xbd000ed0,
 	0x9a0e8004,
-/* 0x026c: timer_enable */
+/* 0x026c: समयr_enable */
 	0xf00187f0,
 	0x08d03807,
-/* 0x0277: timer_done */
+/* 0x0277: समयr_करोne */
 	0xf404bd00,
 	0x80fc1031,
 	0x00f890fc,
@@ -1118,7 +1119,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x90b6038b,
 	0x0794f001,
 	0xf404e980,
-/* 0x02ba: send_done */
+/* 0x02ba: send_करोne */
 	0x90fc0231,
 	0x00f880fc,
 /* 0x02c0: find */
@@ -1130,7 +1131,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x5880b610,
 	0x026886b1,
 	0xf4f01bf4,
-/* 0x02de: find_done */
+/* 0x02de: find_करोne */
 	0x8eb90132,
 	0xf880fc02,
 /* 0x02e5: send */
@@ -1156,7 +1157,7 @@ static uint32_t gf119_pmu_code[] = {
 	0xf900ee98,
 	0xfef0fca5,
 	0x31f400f8,
-/* 0x033b: recv_done */
+/* 0x033b: recv_करोne */
 	0xfcf0fc01,
 	0xf890fc80,
 /* 0x0341: init */
@@ -1226,13 +1227,13 @@ static uint32_t gf119_pmu_code[] = {
 	0x04b007f1,
 	0xbd000ed0,
 	0xc30ef404,
-/* 0x043c: host_send_done */
+/* 0x043c: host_send_करोne */
 /* 0x043e: host_recv */
 	0x17f100f8,
 	0x13f14e49,
 	0xe1b85254,
 	0xb30bf406,
-/* 0x044c: host_recv_wait */
+/* 0x044c: host_recv_रुको */
 	0x04cc17f1,
 	0xf10011cf,
 	0xcf04c827,
@@ -1293,7 +1294,7 @@ static uint32_t gf119_pmu_code[] = {
 	0xf10467f0,
 	0xd007e007,
 	0x04bd0006,
-/* 0x0534: memx_func_enter_wait */
+/* 0x0534: memx_func_enter_रुको */
 	0x07c067f1,
 	0xf00066cf,
 	0x0bf40464,
@@ -1306,7 +1307,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x0467f0f2,
 	0x07e407f1,
 	0xbd0006d0,
-/* 0x0561: memx_func_leave_wait */
+/* 0x0561: memx_func_leave_रुको */
 	0xc067f104,
 	0x0066cf07,
 	0xf40464f0,
@@ -1333,7 +1334,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x60f90587,
 	0xd0fc80f9,
 	0x21f4e0fc,
-/* 0x05cb: memx_func_wait_vblank */
+/* 0x05cb: memx_func_रुको_vblank */
 	0xb600f834,
 	0x00f80410,
 /* 0x05d0: memx_func_wr32 */
@@ -1344,7 +1345,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x3421f4e0,
 	0xf40242b6,
 	0x00f8e91b,
-/* 0x05ec: memx_func_wait */
+/* 0x05ec: memx_func_रुको */
 	0xcf2c87f0,
 	0x1e980088,
 	0x011d9800,
@@ -1420,26 +1421,26 @@ static uint32_t gf119_pmu_code[] = {
 	0xfd0033cf,
 	0x0bf40431,
 	0x0131f406,
-/* 0x06d4: i2c_sense_scl_done */
+/* 0x06d4: i2c_sense_scl_करोne */
 /* 0x06d6: i2c_sense_sda */
 	0x32f400f8,
 	0xc437f101,
 	0x0033cf07,
 	0xf40432fd,
 	0x31f4060b,
-/* 0x06e9: i2c_sense_sda_done */
-/* 0x06eb: i2c_raise_scl */
+/* 0x06e9: i2c_sense_sda_करोne */
+/* 0x06eb: i2c_उठाओ_scl */
 	0xf900f801,
 	0x9847f140,
 	0x0137f008,
 	0x068921f5,
-/* 0x06f8: i2c_raise_scl_wait */
+/* 0x06f8: i2c_उठाओ_scl_रुको */
 	0x03e8e7f1,
 	0xf56621f4,
 	0xf406c121,
 	0x42b60901,
 	0xef1bf401,
-/* 0x070c: i2c_raise_scl_done */
+/* 0x070c: i2c_उठाओ_scl_करोne */
 	0x00f840fc,
 /* 0x0710: i2c_start */
 	0x06c121f5,
@@ -1518,7 +1519,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x1388e7f1,
 	0xf06621f4,
 	0x31f4013c,
-/* 0x0825: i2c_bitr_done */
+/* 0x0825: i2c_bitr_करोne */
 /* 0x0827: i2c_get_byte */
 	0xf000f801,
 	0x47f00057,
@@ -1541,7 +1542,7 @@ static uint32_t gf119_pmu_code[] = {
 	0xfd50bd02,
 	0x50fc0475,
 	0x079f21f5,
-/* 0x0877: i2c_get_byte_done */
+/* 0x0877: i2c_get_byte_करोne */
 	0xf80464b6,
 /* 0x0879: i2c_put_byte */
 	0x0847f000,
@@ -1567,7 +1568,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x76bb0f11,
 	0x0136b000,
 	0xf4061bf4,
-/* 0x08d2: i2c_put_byte_done */
+/* 0x08d2: i2c_put_byte_करोne */
 	0x00f80132,
 /* 0x08d4: i2c_addr */
 	0xb60076bb,
@@ -1587,7 +1588,7 @@ static uint32_t gf119_pmu_code[] = {
 	0x0475fd50,
 	0x21f550fc,
 	0x64b60879,
-/* 0x0919: i2c_addr_done */
+/* 0x0919: i2c_addr_करोne */
 /* 0x091b: i2c_acquire_addr */
 	0xc700f804,
 	0xe4b6f8ce,
@@ -1686,14 +1687,14 @@ static uint32_t gf119_pmu_code[] = {
 	0x1bf408c5,
 	0x0232f409,
 /* 0x0a8b: i2c_recv_not_wr08 */
-/* 0x0a8b: i2c_recv_done */
+/* 0x0a8b: i2c_recv_करोne */
 	0xc7030ef4,
 	0x21f5f8ce,
 	0xe0fc0936,
 	0x12f4d0fc,
 	0x027cb90a,
 	0x02e521f5,
-/* 0x0aa0: i2c_recv_exit */
+/* 0x0aa0: i2c_recv_निकास */
 /* 0x0aa2: i2c_init */
 	0x00f800f8,
 /* 0x0aa4: test_recv */
@@ -1791,4 +1792,4 @@ static uint32_t gf119_pmu_code[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;

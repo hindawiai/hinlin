@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Allwinner sun8i deinterlacer with scaler driver
+ * Allwinner sun8i deपूर्णांकerlacer with scaler driver
  *
  * Copyright (C) 2019 Jernej Skrabec <jernej.skrabec@siol.net>
  *
  * Based on vim2m driver.
  */
 
-#include <linux/clk.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
 
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-mem2mem.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
 
-#include "sun8i-di.h"
+#समावेश "sun8i-di.h"
 
-#define FLAG_SIZE (DEINTERLACE_MAX_WIDTH * DEINTERLACE_MAX_HEIGHT / 4)
+#घोषणा FLAG_SIZE (DEINTERLACE_MAX_WIDTH * DEINTERLACE_MAX_HEIGHT / 4)
 
-static u32 deinterlace_formats[] = {
+अटल u32 deपूर्णांकerlace_क्रमmats[] = अणु
 	V4L2_PIX_FMT_NV12,
 	V4L2_PIX_FMT_NV21,
-};
+पूर्ण;
 
-static inline u32 deinterlace_read(struct deinterlace_dev *dev, u32 reg)
-{
-	return readl(dev->base + reg);
-}
+अटल अंतरभूत u32 deपूर्णांकerlace_पढ़ो(काष्ठा deपूर्णांकerlace_dev *dev, u32 reg)
+अणु
+	वापस पढ़ोl(dev->base + reg);
+पूर्ण
 
-static inline void deinterlace_write(struct deinterlace_dev *dev,
+अटल अंतरभूत व्योम deपूर्णांकerlace_ग_लिखो(काष्ठा deपूर्णांकerlace_dev *dev,
 				     u32 reg, u32 value)
-{
-	writel(value, dev->base + reg);
-}
+अणु
+	ग_लिखोl(value, dev->base + reg);
+पूर्ण
 
-static inline void deinterlace_set_bits(struct deinterlace_dev *dev,
+अटल अंतरभूत व्योम deपूर्णांकerlace_set_bits(काष्ठा deपूर्णांकerlace_dev *dev,
 					u32 reg, u32 bits)
-{
-	writel(readl(dev->base + reg) | bits, dev->base + reg);
-}
+अणु
+	ग_लिखोl(पढ़ोl(dev->base + reg) | bits, dev->base + reg);
+पूर्ण
 
-static inline void deinterlace_clr_set_bits(struct deinterlace_dev *dev,
+अटल अंतरभूत व्योम deपूर्णांकerlace_clr_set_bits(काष्ठा deपूर्णांकerlace_dev *dev,
 					    u32 reg, u32 clr, u32 set)
-{
-	u32 val = readl(dev->base + reg);
+अणु
+	u32 val = पढ़ोl(dev->base + reg);
 
 	val &= ~clr;
 	val |= set;
 
-	writel(val, dev->base + reg);
-}
+	ग_लिखोl(val, dev->base + reg);
+पूर्ण
 
-static void deinterlace_device_run(void *priv)
-{
-	struct deinterlace_ctx *ctx = priv;
-	struct deinterlace_dev *dev = ctx->dev;
+अटल व्योम deपूर्णांकerlace_device_run(व्योम *priv)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = priv;
+	काष्ठा deपूर्णांकerlace_dev *dev = ctx->dev;
 	u32 size, stride, width, height, val;
-	struct vb2_v4l2_buffer *src, *dst;
-	unsigned int hstep, vstep;
+	काष्ठा vb2_v4l2_buffer *src, *dst;
+	अचिन्हित पूर्णांक hstep, vstep;
 	dma_addr_t addr;
 
 	src = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
@@ -72,21 +73,21 @@ static void deinterlace_device_run(void *priv)
 
 	v4l2_m2m_buf_copy_metadata(src, dst, true);
 
-	deinterlace_write(dev, DEINTERLACE_MOD_ENABLE,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_MOD_ENABLE,
 			  DEINTERLACE_MOD_ENABLE_EN);
 
-	if (ctx->field) {
-		deinterlace_write(dev, DEINTERLACE_TILE_FLAG0,
+	अगर (ctx->field) अणु
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_TILE_FLAG0,
 				  ctx->flag1_buf_dma);
-		deinterlace_write(dev, DEINTERLACE_TILE_FLAG1,
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_TILE_FLAG1,
 				  ctx->flag2_buf_dma);
-	} else {
-		deinterlace_write(dev, DEINTERLACE_TILE_FLAG0,
+	पूर्ण अन्यथा अणु
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_TILE_FLAG0,
 				  ctx->flag2_buf_dma);
-		deinterlace_write(dev, DEINTERLACE_TILE_FLAG1,
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_TILE_FLAG1,
 				  ctx->flag1_buf_dma);
-	}
-	deinterlace_write(dev, DEINTERLACE_FLAG_LINE_STRIDE, 0x200);
+	पूर्ण
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_FLAG_LINE_STRIDE, 0x200);
 
 	width = ctx->src_fmt.width;
 	height = ctx->src_fmt.height;
@@ -94,241 +95,241 @@ static void deinterlace_device_run(void *priv)
 	size = stride * height;
 
 	addr = vb2_dma_contig_plane_dma_addr(&src->vb2_buf, 0);
-	deinterlace_write(dev, DEINTERLACE_BUF_ADDR0, addr);
-	deinterlace_write(dev, DEINTERLACE_BUF_ADDR1, addr + size);
-	deinterlace_write(dev, DEINTERLACE_BUF_ADDR2, 0);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_BUF_ADDR0, addr);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_BUF_ADDR1, addr + size);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_BUF_ADDR2, 0);
 
-	deinterlace_write(dev, DEINTERLACE_LINE_STRIDE0, stride);
-	deinterlace_write(dev, DEINTERLACE_LINE_STRIDE1, stride);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_LINE_STRIDE0, stride);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_LINE_STRIDE1, stride);
 
-	deinterlace_write(dev, DEINTERLACE_CH0_IN_SIZE,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH0_IN_SIZE,
 			  DEINTERLACE_SIZE(width, height));
-	deinterlace_write(dev, DEINTERLACE_CH1_IN_SIZE,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH1_IN_SIZE,
 			  DEINTERLACE_SIZE(width / 2, height / 2));
 
 	val = DEINTERLACE_IN_FMT_FMT(DEINTERLACE_IN_FMT_YUV420) |
 	      DEINTERLACE_IN_FMT_MOD(DEINTERLACE_MODE_UV_COMBINED);
-	switch (ctx->src_fmt.pixelformat) {
-	case V4L2_PIX_FMT_NV12:
+	चयन (ctx->src_fmt.pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_NV12:
 		val |= DEINTERLACE_IN_FMT_PS(DEINTERLACE_PS_UVUV);
-		break;
-	case V4L2_PIX_FMT_NV21:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV21:
 		val |= DEINTERLACE_IN_FMT_PS(DEINTERLACE_PS_VUVU);
-		break;
-	}
-	deinterlace_write(dev, DEINTERLACE_IN_FMT, val);
+		अवरोध;
+	पूर्ण
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_IN_FMT, val);
 
-	if (ctx->prev)
+	अगर (ctx->prev)
 		addr = vb2_dma_contig_plane_dma_addr(&ctx->prev->vb2_buf, 0);
 
-	deinterlace_write(dev, DEINTERLACE_PRELUMA, addr);
-	deinterlace_write(dev, DEINTERLACE_PRECHROMA, addr + size);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_PRELUMA, addr);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_PRECHROMA, addr + size);
 
 	val = DEINTERLACE_OUT_FMT_FMT(DEINTERLACE_OUT_FMT_YUV420SP);
-	switch (ctx->src_fmt.pixelformat) {
-	case V4L2_PIX_FMT_NV12:
+	चयन (ctx->src_fmt.pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_NV12:
 		val |= DEINTERLACE_OUT_FMT_PS(DEINTERLACE_PS_UVUV);
-		break;
-	case V4L2_PIX_FMT_NV21:
+		अवरोध;
+	हाल V4L2_PIX_FMT_NV21:
 		val |= DEINTERLACE_OUT_FMT_PS(DEINTERLACE_PS_VUVU);
-		break;
-	}
-	deinterlace_write(dev, DEINTERLACE_OUT_FMT, val);
+		अवरोध;
+	पूर्ण
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_OUT_FMT, val);
 
 	width = ctx->dst_fmt.width;
 	height = ctx->dst_fmt.height;
 	stride = ctx->dst_fmt.bytesperline;
 	size = stride * height;
 
-	deinterlace_write(dev, DEINTERLACE_CH0_OUT_SIZE,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH0_OUT_SIZE,
 			  DEINTERLACE_SIZE(width, height));
-	deinterlace_write(dev, DEINTERLACE_CH1_OUT_SIZE,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH1_OUT_SIZE,
 			  DEINTERLACE_SIZE(width / 2, height / 2));
 
-	deinterlace_write(dev, DEINTERLACE_WB_LINE_STRIDE0, stride);
-	deinterlace_write(dev, DEINTERLACE_WB_LINE_STRIDE1, stride);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_WB_LINE_STRIDE0, stride);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_WB_LINE_STRIDE1, stride);
 
 	addr = vb2_dma_contig_plane_dma_addr(&dst->vb2_buf, 0);
-	deinterlace_write(dev, DEINTERLACE_WB_ADDR0, addr);
-	deinterlace_write(dev, DEINTERLACE_WB_ADDR1, addr + size);
-	deinterlace_write(dev, DEINTERLACE_WB_ADDR2, 0);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_WB_ADDR0, addr);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_WB_ADDR1, addr + size);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_WB_ADDR2, 0);
 
 	hstep = (ctx->src_fmt.width << 16) / ctx->dst_fmt.width;
 	vstep = (ctx->src_fmt.height << 16) / ctx->dst_fmt.height;
-	deinterlace_write(dev, DEINTERLACE_CH0_HORZ_FACT, hstep);
-	deinterlace_write(dev, DEINTERLACE_CH0_VERT_FACT, vstep);
-	deinterlace_write(dev, DEINTERLACE_CH1_HORZ_FACT, hstep);
-	deinterlace_write(dev, DEINTERLACE_CH1_VERT_FACT, vstep);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH0_HORZ_FACT, hstep);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH0_VERT_FACT, vstep);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH1_HORZ_FACT, hstep);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH1_VERT_FACT, vstep);
 
-	deinterlace_clr_set_bits(dev, DEINTERLACE_FIELD_CTRL,
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_FIELD_CTRL,
 				 DEINTERLACE_FIELD_CTRL_FIELD_CNT_MSK,
 				 DEINTERLACE_FIELD_CTRL_FIELD_CNT(ctx->field));
 
-	deinterlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
 			     DEINTERLACE_FRM_CTRL_START);
 
-	deinterlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
 			     DEINTERLACE_FRM_CTRL_REG_READY);
 
-	deinterlace_set_bits(dev, DEINTERLACE_INT_ENABLE,
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_INT_ENABLE,
 			     DEINTERLACE_INT_ENABLE_WB_EN);
 
-	deinterlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
 			     DEINTERLACE_FRM_CTRL_WB_EN);
-}
+पूर्ण
 
-static int deinterlace_job_ready(void *priv)
-{
-	struct deinterlace_ctx *ctx = priv;
+अटल पूर्णांक deपूर्णांकerlace_job_पढ़ोy(व्योम *priv)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = priv;
 
-	return v4l2_m2m_num_src_bufs_ready(ctx->fh.m2m_ctx) >= 1 &&
-	       v4l2_m2m_num_dst_bufs_ready(ctx->fh.m2m_ctx) >= 2;
-}
+	वापस v4l2_m2m_num_src_bufs_पढ़ोy(ctx->fh.m2m_ctx) >= 1 &&
+	       v4l2_m2m_num_dst_bufs_पढ़ोy(ctx->fh.m2m_ctx) >= 2;
+पूर्ण
 
-static void deinterlace_job_abort(void *priv)
-{
-	struct deinterlace_ctx *ctx = priv;
+अटल व्योम deपूर्णांकerlace_job_पात(व्योम *priv)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = priv;
 
-	/* Will cancel the transaction in the next interrupt handler */
-	ctx->aborting = 1;
-}
+	/* Will cancel the transaction in the next पूर्णांकerrupt handler */
+	ctx->पातing = 1;
+पूर्ण
 
-static irqreturn_t deinterlace_irq(int irq, void *data)
-{
-	struct deinterlace_dev *dev = data;
-	struct vb2_v4l2_buffer *src, *dst;
-	enum vb2_buffer_state state;
-	struct deinterlace_ctx *ctx;
-	unsigned int val;
+अटल irqवापस_t deपूर्णांकerlace_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev = data;
+	काष्ठा vb2_v4l2_buffer *src, *dst;
+	क्रमागत vb2_buffer_state state;
+	काष्ठा deपूर्णांकerlace_ctx *ctx;
+	अचिन्हित पूर्णांक val;
 
 	ctx = v4l2_m2m_get_curr_priv(dev->m2m_dev);
-	if (!ctx) {
+	अगर (!ctx) अणु
 		v4l2_err(&dev->v4l2_dev,
 			 "Instance released before the end of transaction\n");
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	val = deinterlace_read(dev, DEINTERLACE_INT_STATUS);
-	if (!(val & DEINTERLACE_INT_STATUS_WRITEBACK))
-		return IRQ_NONE;
+	val = deपूर्णांकerlace_पढ़ो(dev, DEINTERLACE_INT_STATUS);
+	अगर (!(val & DEINTERLACE_INT_STATUS_WRITEBACK))
+		वापस IRQ_NONE;
 
-	deinterlace_write(dev, DEINTERLACE_INT_ENABLE, 0);
-	deinterlace_set_bits(dev, DEINTERLACE_INT_STATUS,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_INT_ENABLE, 0);
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_INT_STATUS,
 			     DEINTERLACE_INT_STATUS_WRITEBACK);
-	deinterlace_write(dev, DEINTERLACE_MOD_ENABLE, 0);
-	deinterlace_clr_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_MOD_ENABLE, 0);
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_FRM_CTRL,
 				 DEINTERLACE_FRM_CTRL_START, 0);
 
-	val = deinterlace_read(dev, DEINTERLACE_STATUS);
-	if (val & DEINTERLACE_STATUS_WB_ERROR)
+	val = deपूर्णांकerlace_पढ़ो(dev, DEINTERLACE_STATUS);
+	अगर (val & DEINTERLACE_STATUS_WB_ERROR)
 		state = VB2_BUF_STATE_ERROR;
-	else
+	अन्यथा
 		state = VB2_BUF_STATE_DONE;
 
-	dst = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
-	v4l2_m2m_buf_done(dst, state);
+	dst = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
+	v4l2_m2m_buf_करोne(dst, state);
 
-	if (ctx->field != ctx->first_field || ctx->aborting) {
+	अगर (ctx->field != ctx->first_field || ctx->पातing) अणु
 		ctx->field = ctx->first_field;
 
-		src = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-		if (ctx->prev)
-			v4l2_m2m_buf_done(ctx->prev, state);
+		src = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+		अगर (ctx->prev)
+			v4l2_m2m_buf_करोne(ctx->prev, state);
 		ctx->prev = src;
 
 		v4l2_m2m_job_finish(ctx->dev->m2m_dev, ctx->fh.m2m_ctx);
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx->field = !ctx->first_field;
-		deinterlace_device_run(ctx);
-	}
+		deपूर्णांकerlace_device_run(ctx);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void deinterlace_init(struct deinterlace_dev *dev)
-{
+अटल व्योम deपूर्णांकerlace_init(काष्ठा deपूर्णांकerlace_dev *dev)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	deinterlace_write(dev, DEINTERLACE_BYPASS,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_BYPASS,
 			  DEINTERLACE_BYPASS_CSC);
-	deinterlace_write(dev, DEINTERLACE_WB_LINE_STRIDE_CTRL,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_WB_LINE_STRIDE_CTRL,
 			  DEINTERLACE_WB_LINE_STRIDE_CTRL_EN);
-	deinterlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
 			     DEINTERLACE_FRM_CTRL_OUT_CTRL);
-	deinterlace_write(dev, DEINTERLACE_AGTH_SEL,
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_AGTH_SEL,
 			  DEINTERLACE_AGTH_SEL_LINEBUF);
 
 	val = DEINTERLACE_CTRL_EN |
 	      DEINTERLACE_CTRL_MODE_MIXED |
 	      DEINTERLACE_CTRL_DIAG_INTP_EN |
 	      DEINTERLACE_CTRL_TEMP_DIFF_EN;
-	deinterlace_write(dev, DEINTERLACE_CTRL, val);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CTRL, val);
 
-	deinterlace_clr_set_bits(dev, DEINTERLACE_LUMA_TH,
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_LUMA_TH,
 				 DEINTERLACE_LUMA_TH_MIN_LUMA_MSK,
 				 DEINTERLACE_LUMA_TH_MIN_LUMA(4));
 
-	deinterlace_clr_set_bits(dev, DEINTERLACE_SPAT_COMP,
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_SPAT_COMP,
 				 DEINTERLACE_SPAT_COMP_TH2_MSK,
 				 DEINTERLACE_SPAT_COMP_TH2(5));
 
-	deinterlace_clr_set_bits(dev, DEINTERLACE_TEMP_DIFF,
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_TEMP_DIFF,
 				 DEINTERLACE_TEMP_DIFF_AMBIGUITY_TH_MSK,
 				 DEINTERLACE_TEMP_DIFF_AMBIGUITY_TH(5));
 
 	val = DEINTERLACE_DIAG_INTP_TH0(60) |
 	      DEINTERLACE_DIAG_INTP_TH1(0) |
 	      DEINTERLACE_DIAG_INTP_TH3(30);
-	deinterlace_write(dev, DEINTERLACE_DIAG_INTP, val);
+	deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_DIAG_INTP, val);
 
-	deinterlace_clr_set_bits(dev, DEINTERLACE_CHROMA_DIFF,
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_CHROMA_DIFF,
 				 DEINTERLACE_CHROMA_DIFF_TH_MSK,
 				 DEINTERLACE_CHROMA_DIFF_TH(5));
 
 	/* neutral filter coefficients */
-	deinterlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_set_bits(dev, DEINTERLACE_FRM_CTRL,
 			     DEINTERLACE_FRM_CTRL_COEF_ACCESS);
-	readl_poll_timeout(dev->base + DEINTERLACE_STATUS, val,
+	पढ़ोl_poll_समयout(dev->base + DEINTERLACE_STATUS, val,
 			   val & DEINTERLACE_STATUS_COEF_STATUS, 2, 40);
 
-	for (i = 0; i < 32; i++) {
-		deinterlace_write(dev, DEINTERLACE_CH0_HORZ_COEF0 + i * 4,
+	क्रम (i = 0; i < 32; i++) अणु
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH0_HORZ_COEF0 + i * 4,
 				  DEINTERLACE_IDENTITY_COEF);
-		deinterlace_write(dev, DEINTERLACE_CH0_VERT_COEF + i * 4,
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH0_VERT_COEF + i * 4,
 				  DEINTERLACE_IDENTITY_COEF);
-		deinterlace_write(dev, DEINTERLACE_CH1_HORZ_COEF0 + i * 4,
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH1_HORZ_COEF0 + i * 4,
 				  DEINTERLACE_IDENTITY_COEF);
-		deinterlace_write(dev, DEINTERLACE_CH1_VERT_COEF + i * 4,
+		deपूर्णांकerlace_ग_लिखो(dev, DEINTERLACE_CH1_VERT_COEF + i * 4,
 				  DEINTERLACE_IDENTITY_COEF);
-	}
+	पूर्ण
 
-	deinterlace_clr_set_bits(dev, DEINTERLACE_FRM_CTRL,
+	deपूर्णांकerlace_clr_set_bits(dev, DEINTERLACE_FRM_CTRL,
 				 DEINTERLACE_FRM_CTRL_COEF_ACCESS, 0);
-}
+पूर्ण
 
-static inline struct deinterlace_ctx *deinterlace_file2ctx(struct file *file)
-{
-	return container_of(file->private_data, struct deinterlace_ctx, fh);
-}
+अटल अंतरभूत काष्ठा deपूर्णांकerlace_ctx *deपूर्णांकerlace_file2ctx(काष्ठा file *file)
+अणु
+	वापस container_of(file->निजी_data, काष्ठा deपूर्णांकerlace_ctx, fh);
+पूर्ण
 
-static bool deinterlace_check_format(u32 pixelformat)
-{
-	unsigned int i;
+अटल bool deपूर्णांकerlace_check_क्रमmat(u32 pixelक्रमmat)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(deinterlace_formats); i++)
-		if (deinterlace_formats[i] == pixelformat)
-			return true;
+	क्रम (i = 0; i < ARRAY_SIZE(deपूर्णांकerlace_क्रमmats); i++)
+		अगर (deपूर्णांकerlace_क्रमmats[i] == pixelक्रमmat)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void deinterlace_prepare_format(struct v4l2_pix_format *pix_fmt)
-{
-	unsigned int height = pix_fmt->height;
-	unsigned int width = pix_fmt->width;
-	unsigned int bytesperline;
-	unsigned int sizeimage;
+अटल व्योम deपूर्णांकerlace_prepare_क्रमmat(काष्ठा v4l2_pix_क्रमmat *pix_fmt)
+अणु
+	अचिन्हित पूर्णांक height = pix_fmt->height;
+	अचिन्हित पूर्णांक width = pix_fmt->width;
+	अचिन्हित पूर्णांक bytesperline;
+	अचिन्हित पूर्णांक sizeimage;
 
 	width = clamp(width, DEINTERLACE_MIN_WIDTH,
 		      DEINTERLACE_MAX_WIDTH);
@@ -345,39 +346,39 @@ static void deinterlace_prepare_format(struct v4l2_pix_format *pix_fmt)
 	pix_fmt->height = height;
 	pix_fmt->bytesperline = bytesperline;
 	pix_fmt->sizeimage = sizeimage;
-}
+पूर्ण
 
-static int deinterlace_querycap(struct file *file, void *priv,
-				struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, DEINTERLACE_NAME, sizeof(cap->driver));
-	strscpy(cap->card, DEINTERLACE_NAME, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+अटल पूर्णांक deपूर्णांकerlace_querycap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, DEINTERLACE_NAME, माप(cap->driver));
+	strscpy(cap->card, DEINTERLACE_NAME, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "platform:%s", DEINTERLACE_NAME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_enum_fmt(struct file *file, void *priv,
-				struct v4l2_fmtdesc *f)
-{
-	if (f->index < ARRAY_SIZE(deinterlace_formats)) {
-		f->pixelformat = deinterlace_formats[f->index];
+अटल पूर्णांक deपूर्णांकerlace_क्रमागत_fmt(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_fmtdesc *f)
+अणु
+	अगर (f->index < ARRAY_SIZE(deपूर्णांकerlace_क्रमmats)) अणु
+		f->pixelक्रमmat = deपूर्णांकerlace_क्रमmats[f->index];
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int deinterlace_enum_framesizes(struct file *file, void *priv,
-				       struct v4l2_frmsizeenum *fsize)
-{
-	if (fsize->index != 0)
-		return -EINVAL;
+अटल पूर्णांक deपूर्णांकerlace_क्रमागत_framesizes(काष्ठा file *file, व्योम *priv,
+				       काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	अगर (fsize->index != 0)
+		वापस -EINVAL;
 
-	if (!deinterlace_check_format(fsize->pixel_format))
-		return -EINVAL;
+	अगर (!deपूर्णांकerlace_check_क्रमmat(fsize->pixel_क्रमmat))
+		वापस -EINVAL;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
 	fsize->stepwise.min_width = DEINTERLACE_MIN_WIDTH;
@@ -387,119 +388,119 @@ static int deinterlace_enum_framesizes(struct file *file, void *priv,
 	fsize->stepwise.step_width = 2;
 	fsize->stepwise.step_height = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_g_fmt_vid_cap(struct file *file, void *priv,
-				     struct v4l2_format *f)
-{
-	struct deinterlace_ctx *ctx = deinterlace_file2ctx(file);
+अटल पूर्णांक deपूर्णांकerlace_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				     काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = deपूर्णांकerlace_file2ctx(file);
 
 	f->fmt.pix = ctx->dst_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_g_fmt_vid_out(struct file *file, void *priv,
-				     struct v4l2_format *f)
-{
-	struct deinterlace_ctx *ctx = deinterlace_file2ctx(file);
+अटल पूर्णांक deपूर्णांकerlace_g_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				     काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = deपूर्णांकerlace_file2ctx(file);
 
 	f->fmt.pix = ctx->src_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_try_fmt_vid_cap(struct file *file, void *priv,
-				       struct v4l2_format *f)
-{
-	if (!deinterlace_check_format(f->fmt.pix.pixelformat))
-		f->fmt.pix.pixelformat = deinterlace_formats[0];
+अटल पूर्णांक deपूर्णांकerlace_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				       काष्ठा v4l2_क्रमmat *f)
+अणु
+	अगर (!deपूर्णांकerlace_check_क्रमmat(f->fmt.pix.pixelक्रमmat))
+		f->fmt.pix.pixelक्रमmat = deपूर्णांकerlace_क्रमmats[0];
 
-	if (f->fmt.pix.field != V4L2_FIELD_NONE)
+	अगर (f->fmt.pix.field != V4L2_FIELD_NONE)
 		f->fmt.pix.field = V4L2_FIELD_NONE;
 
-	deinterlace_prepare_format(&f->fmt.pix);
+	deपूर्णांकerlace_prepare_क्रमmat(&f->fmt.pix);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_try_fmt_vid_out(struct file *file, void *priv,
-				       struct v4l2_format *f)
-{
-	if (!deinterlace_check_format(f->fmt.pix.pixelformat))
-		f->fmt.pix.pixelformat = deinterlace_formats[0];
+अटल पूर्णांक deपूर्णांकerlace_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				       काष्ठा v4l2_क्रमmat *f)
+अणु
+	अगर (!deपूर्णांकerlace_check_क्रमmat(f->fmt.pix.pixelक्रमmat))
+		f->fmt.pix.pixelक्रमmat = deपूर्णांकerlace_क्रमmats[0];
 
-	if (f->fmt.pix.field != V4L2_FIELD_INTERLACED_TB &&
+	अगर (f->fmt.pix.field != V4L2_FIELD_INTERLACED_TB &&
 	    f->fmt.pix.field != V4L2_FIELD_INTERLACED_BT &&
 	    f->fmt.pix.field != V4L2_FIELD_INTERLACED)
 		f->fmt.pix.field = V4L2_FIELD_INTERLACED;
 
-	deinterlace_prepare_format(&f->fmt.pix);
+	deपूर्णांकerlace_prepare_क्रमmat(&f->fmt.pix);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_s_fmt_vid_cap(struct file *file, void *priv,
-				     struct v4l2_format *f)
-{
-	struct deinterlace_ctx *ctx = deinterlace_file2ctx(file);
-	struct vb2_queue *vq;
-	int ret;
+अटल पूर्णांक deपूर्णांकerlace_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				     काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = deपूर्णांकerlace_file2ctx(file);
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
-	ret = deinterlace_try_fmt_vid_cap(file, priv, f);
-	if (ret)
-		return ret;
+	ret = deपूर्णांकerlace_try_fmt_vid_cap(file, priv, f);
+	अगर (ret)
+		वापस ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (vb2_is_busy(vq))
-		return -EBUSY;
+	अगर (vb2_is_busy(vq))
+		वापस -EBUSY;
 
 	ctx->dst_fmt = f->fmt.pix;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_s_fmt_vid_out(struct file *file, void *priv,
-				     struct v4l2_format *f)
-{
-	struct deinterlace_ctx *ctx = deinterlace_file2ctx(file);
-	struct vb2_queue *vq;
-	int ret;
+अटल पूर्णांक deपूर्णांकerlace_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				     काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = deपूर्णांकerlace_file2ctx(file);
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
-	ret = deinterlace_try_fmt_vid_out(file, priv, f);
-	if (ret)
-		return ret;
+	ret = deपूर्णांकerlace_try_fmt_vid_out(file, priv, f);
+	अगर (ret)
+		वापस ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (vb2_is_busy(vq))
-		return -EBUSY;
+	अगर (vb2_is_busy(vq))
+		वापस -EBUSY;
 
 	ctx->src_fmt = f->fmt.pix;
 
-	/* Propagate colorspace information to capture. */
+	/* Propagate colorspace inक्रमmation to capture. */
 	ctx->dst_fmt.colorspace = f->fmt.pix.colorspace;
 	ctx->dst_fmt.xfer_func = f->fmt.pix.xfer_func;
 	ctx->dst_fmt.ycbcr_enc = f->fmt.pix.ycbcr_enc;
 	ctx->dst_fmt.quantization = f->fmt.pix.quantization;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ioctl_ops deinterlace_ioctl_ops = {
-	.vidioc_querycap		= deinterlace_querycap,
+अटल स्थिर काष्ठा v4l2_ioctl_ops deपूर्णांकerlace_ioctl_ops = अणु
+	.vidioc_querycap		= deपूर्णांकerlace_querycap,
 
-	.vidioc_enum_framesizes		= deinterlace_enum_framesizes,
+	.vidioc_क्रमागत_framesizes		= deपूर्णांकerlace_क्रमागत_framesizes,
 
-	.vidioc_enum_fmt_vid_cap	= deinterlace_enum_fmt,
-	.vidioc_g_fmt_vid_cap		= deinterlace_g_fmt_vid_cap,
-	.vidioc_try_fmt_vid_cap		= deinterlace_try_fmt_vid_cap,
-	.vidioc_s_fmt_vid_cap		= deinterlace_s_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= deपूर्णांकerlace_क्रमागत_fmt,
+	.vidioc_g_fmt_vid_cap		= deपूर्णांकerlace_g_fmt_vid_cap,
+	.vidioc_try_fmt_vid_cap		= deपूर्णांकerlace_try_fmt_vid_cap,
+	.vidioc_s_fmt_vid_cap		= deपूर्णांकerlace_s_fmt_vid_cap,
 
-	.vidioc_enum_fmt_vid_out	= deinterlace_enum_fmt,
-	.vidioc_g_fmt_vid_out		= deinterlace_g_fmt_vid_out,
-	.vidioc_try_fmt_vid_out		= deinterlace_try_fmt_vid_out,
-	.vidioc_s_fmt_vid_out		= deinterlace_s_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_out	= deपूर्णांकerlace_क्रमागत_fmt,
+	.vidioc_g_fmt_vid_out		= deपूर्णांकerlace_g_fmt_vid_out,
+	.vidioc_try_fmt_vid_out		= deपूर्णांकerlace_try_fmt_vid_out,
+	.vidioc_s_fmt_vid_out		= deपूर्णांकerlace_s_fmt_vid_out,
 
 	.vidioc_reqbufs			= v4l2_m2m_ioctl_reqbufs,
 	.vidioc_querybuf		= v4l2_m2m_ioctl_querybuf,
@@ -511,459 +512,459 @@ static const struct v4l2_ioctl_ops deinterlace_ioctl_ops = {
 
 	.vidioc_streamon		= v4l2_m2m_ioctl_streamon,
 	.vidioc_streamoff		= v4l2_m2m_ioctl_streamoff,
-};
+पूर्ण;
 
-static int deinterlace_queue_setup(struct vb2_queue *vq, unsigned int *nbuffers,
-				   unsigned int *nplanes, unsigned int sizes[],
-				   struct device *alloc_devs[])
-{
-	struct deinterlace_ctx *ctx = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix_fmt;
+अटल पूर्णांक deपूर्णांकerlace_queue_setup(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक *nbuffers,
+				   अचिन्हित पूर्णांक *nplanes, अचिन्हित पूर्णांक sizes[],
+				   काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix_fmt;
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type))
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
 		pix_fmt = &ctx->src_fmt;
-	else
+	अन्यथा
 		pix_fmt = &ctx->dst_fmt;
 
-	if (*nplanes) {
-		if (sizes[0] < pix_fmt->sizeimage)
-			return -EINVAL;
-	} else {
+	अगर (*nplanes) अणु
+		अगर (sizes[0] < pix_fmt->sizeimage)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		sizes[0] = pix_fmt->sizeimage;
 		*nplanes = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_buf_prepare(struct vb2_buffer *vb)
-{
-	struct vb2_queue *vq = vb->vb2_queue;
-	struct deinterlace_ctx *ctx = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix_fmt;
+अटल पूर्णांक deपूर्णांकerlace_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *vq = vb->vb2_queue;
+	काष्ठा deपूर्णांकerlace_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix_fmt;
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type))
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
 		pix_fmt = &ctx->src_fmt;
-	else
+	अन्यथा
 		pix_fmt = &ctx->dst_fmt;
 
-	if (vb2_plane_size(vb, 0) < pix_fmt->sizeimage)
-		return -EINVAL;
+	अगर (vb2_plane_size(vb, 0) < pix_fmt->sizeimage)
+		वापस -EINVAL;
 
 	vb2_set_plane_payload(vb, 0, pix_fmt->sizeimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void deinterlace_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct deinterlace_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम deपूर्णांकerlace_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा deपूर्णांकerlace_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-}
+पूर्ण
 
-static void deinterlace_queue_cleanup(struct vb2_queue *vq, u32 state)
-{
-	struct deinterlace_ctx *ctx = vb2_get_drv_priv(vq);
-	struct vb2_v4l2_buffer *vbuf;
+अटल व्योम deपूर्णांकerlace_queue_cleanup(काष्ठा vb2_queue *vq, u32 state)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा vb2_v4l2_buffer *vbuf;
 
-	do {
-		if (V4L2_TYPE_IS_OUTPUT(vq->type))
-			vbuf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-		else
-			vbuf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
+	करो अणु
+		अगर (V4L2_TYPE_IS_OUTPUT(vq->type))
+			vbuf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+		अन्यथा
+			vbuf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
 
-		if (vbuf)
-			v4l2_m2m_buf_done(vbuf, state);
-	} while (vbuf);
+		अगर (vbuf)
+			v4l2_m2m_buf_करोne(vbuf, state);
+	पूर्ण जबतक (vbuf);
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type) && ctx->prev)
-		v4l2_m2m_buf_done(ctx->prev, state);
-}
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type) && ctx->prev)
+		v4l2_m2m_buf_करोne(ctx->prev, state);
+पूर्ण
 
-static int deinterlace_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct deinterlace_ctx *ctx = vb2_get_drv_priv(vq);
-	struct device *dev = ctx->dev->dev;
-	int ret;
+अटल पूर्णांक deपूर्णांकerlace_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा device *dev = ctx->dev->dev;
+	पूर्णांक ret;
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type)) {
-		ret = pm_runtime_resume_and_get(dev);
-		if (ret < 0) {
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type)) अणु
+		ret = pm_runसमय_resume_and_get(dev);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Failed to enable module\n");
 
-			goto err_runtime_get;
-		}
+			जाओ err_runसमय_get;
+		पूर्ण
 
 		ctx->first_field =
 			ctx->src_fmt.field == V4L2_FIELD_INTERLACED_BT;
 		ctx->field = ctx->first_field;
 
-		ctx->prev = NULL;
-		ctx->aborting = 0;
+		ctx->prev = शून्य;
+		ctx->पातing = 0;
 
 		ctx->flag1_buf = dma_alloc_coherent(dev, FLAG_SIZE,
 						    &ctx->flag1_buf_dma,
 						    GFP_KERNEL);
-		if (!ctx->flag1_buf) {
+		अगर (!ctx->flag1_buf) अणु
 			ret = -ENOMEM;
 
-			goto err_no_mem1;
-		}
+			जाओ err_no_mem1;
+		पूर्ण
 
 		ctx->flag2_buf = dma_alloc_coherent(dev, FLAG_SIZE,
 						    &ctx->flag2_buf_dma,
 						    GFP_KERNEL);
-		if (!ctx->flag2_buf) {
+		अगर (!ctx->flag2_buf) अणु
 			ret = -ENOMEM;
 
-			goto err_no_mem2;
-		}
-	}
+			जाओ err_no_mem2;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_no_mem2:
-	dma_free_coherent(dev, FLAG_SIZE, ctx->flag1_buf,
+	dma_मुक्त_coherent(dev, FLAG_SIZE, ctx->flag1_buf,
 			  ctx->flag1_buf_dma);
 err_no_mem1:
-	pm_runtime_put(dev);
-err_runtime_get:
-	deinterlace_queue_cleanup(vq, VB2_BUF_STATE_QUEUED);
+	pm_runसमय_put(dev);
+err_runसमय_get:
+	deपूर्णांकerlace_queue_cleanup(vq, VB2_BUF_STATE_QUEUED);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void deinterlace_stop_streaming(struct vb2_queue *vq)
-{
-	struct deinterlace_ctx *ctx = vb2_get_drv_priv(vq);
+अटल व्योम deपूर्णांकerlace_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = vb2_get_drv_priv(vq);
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type)) {
-		struct device *dev = ctx->dev->dev;
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type)) अणु
+		काष्ठा device *dev = ctx->dev->dev;
 
-		dma_free_coherent(dev, FLAG_SIZE, ctx->flag1_buf,
+		dma_मुक्त_coherent(dev, FLAG_SIZE, ctx->flag1_buf,
 				  ctx->flag1_buf_dma);
-		dma_free_coherent(dev, FLAG_SIZE, ctx->flag2_buf,
+		dma_मुक्त_coherent(dev, FLAG_SIZE, ctx->flag2_buf,
 				  ctx->flag2_buf_dma);
 
-		pm_runtime_put(dev);
-	}
+		pm_runसमय_put(dev);
+	पूर्ण
 
-	deinterlace_queue_cleanup(vq, VB2_BUF_STATE_ERROR);
-}
+	deपूर्णांकerlace_queue_cleanup(vq, VB2_BUF_STATE_ERROR);
+पूर्ण
 
-static const struct vb2_ops deinterlace_qops = {
-	.queue_setup		= deinterlace_queue_setup,
-	.buf_prepare		= deinterlace_buf_prepare,
-	.buf_queue		= deinterlace_buf_queue,
-	.start_streaming	= deinterlace_start_streaming,
-	.stop_streaming		= deinterlace_stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+अटल स्थिर काष्ठा vb2_ops deपूर्णांकerlace_qops = अणु
+	.queue_setup		= deपूर्णांकerlace_queue_setup,
+	.buf_prepare		= deपूर्णांकerlace_buf_prepare,
+	.buf_queue		= deपूर्णांकerlace_buf_queue,
+	.start_streaming	= deपूर्णांकerlace_start_streaming,
+	.stop_streaming		= deपूर्णांकerlace_stop_streaming,
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
-static int deinterlace_queue_init(void *priv, struct vb2_queue *src_vq,
-				  struct vb2_queue *dst_vq)
-{
-	struct deinterlace_ctx *ctx = priv;
-	int ret;
+अटल पूर्णांक deपूर्णांकerlace_queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+				  काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा deपूर्णांकerlace_ctx *ctx = priv;
+	पूर्णांक ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	src_vq->drv_priv = ctx;
-	src_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	src_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	src_vq->min_buffers_needed = 1;
-	src_vq->ops = &deinterlace_qops;
+	src_vq->ops = &deपूर्णांकerlace_qops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->lock = &ctx->dev->dev_mutex;
 	src_vq->dev = ctx->dev->dev;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	dst_vq->drv_priv = ctx;
-	dst_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	dst_vq->min_buffers_needed = 2;
-	dst_vq->ops = &deinterlace_qops;
+	dst_vq->ops = &deपूर्णांकerlace_qops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->lock = &ctx->dev->dev_mutex;
 	dst_vq->dev = ctx->dev->dev;
 
 	ret = vb2_queue_init(dst_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_open(struct file *file)
-{
-	struct deinterlace_dev *dev = video_drvdata(file);
-	struct deinterlace_ctx *ctx = NULL;
-	int ret;
+अटल पूर्णांक deपूर्णांकerlace_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev = video_drvdata(file);
+	काष्ठा deपूर्णांकerlace_ctx *ctx = शून्य;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&dev->dev_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->dev_mutex))
+		वापस -ERESTARTSYS;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx) {
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx) अणु
 		mutex_unlock(&dev->dev_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* default output format */
-	ctx->src_fmt.pixelformat = deinterlace_formats[0];
+	/* शेष output क्रमmat */
+	ctx->src_fmt.pixelक्रमmat = deपूर्णांकerlace_क्रमmats[0];
 	ctx->src_fmt.field = V4L2_FIELD_INTERLACED;
 	ctx->src_fmt.width = 640;
 	ctx->src_fmt.height = 480;
-	deinterlace_prepare_format(&ctx->src_fmt);
+	deपूर्णांकerlace_prepare_क्रमmat(&ctx->src_fmt);
 
-	/* default capture format */
-	ctx->dst_fmt.pixelformat = deinterlace_formats[0];
+	/* शेष capture क्रमmat */
+	ctx->dst_fmt.pixelक्रमmat = deपूर्णांकerlace_क्रमmats[0];
 	ctx->dst_fmt.field = V4L2_FIELD_NONE;
 	ctx->dst_fmt.width = 640;
 	ctx->dst_fmt.height = 480;
-	deinterlace_prepare_format(&ctx->dst_fmt);
+	deपूर्णांकerlace_prepare_क्रमmat(&ctx->dst_fmt);
 
 	v4l2_fh_init(&ctx->fh, video_devdata(file));
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	ctx->dev = dev;
 
 	ctx->fh.m2m_ctx = v4l2_m2m_ctx_init(dev->m2m_dev, ctx,
-					    &deinterlace_queue_init);
-	if (IS_ERR(ctx->fh.m2m_ctx)) {
+					    &deपूर्णांकerlace_queue_init);
+	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
 		ret = PTR_ERR(ctx->fh.m2m_ctx);
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	v4l2_fh_add(&ctx->fh);
 
 	mutex_unlock(&dev->dev_mutex);
 
-	return 0;
+	वापस 0;
 
-err_free:
-	kfree(ctx);
+err_मुक्त:
+	kमुक्त(ctx);
 	mutex_unlock(&dev->dev_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int deinterlace_release(struct file *file)
-{
-	struct deinterlace_dev *dev = video_drvdata(file);
-	struct deinterlace_ctx *ctx = container_of(file->private_data,
-						   struct deinterlace_ctx, fh);
+अटल पूर्णांक deपूर्णांकerlace_release(काष्ठा file *file)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev = video_drvdata(file);
+	काष्ठा deपूर्णांकerlace_ctx *ctx = container_of(file->निजी_data,
+						   काष्ठा deपूर्णांकerlace_ctx, fh);
 
 	mutex_lock(&dev->dev_mutex);
 
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
+	v4l2_fh_निकास(&ctx->fh);
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 
-	kfree(ctx);
+	kमुक्त(ctx);
 
 	mutex_unlock(&dev->dev_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations deinterlace_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations deपूर्णांकerlace_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= deinterlace_open,
-	.release	= deinterlace_release,
+	.खोलो		= deपूर्णांकerlace_खोलो,
+	.release	= deपूर्णांकerlace_release,
 	.poll		= v4l2_m2m_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= v4l2_m2m_fop_mmap,
-};
+पूर्ण;
 
-static const struct video_device deinterlace_video_device = {
+अटल स्थिर काष्ठा video_device deपूर्णांकerlace_video_device = अणु
 	.name		= DEINTERLACE_NAME,
-	.vfl_dir	= VFL_DIR_M2M,
-	.fops		= &deinterlace_fops,
-	.ioctl_ops	= &deinterlace_ioctl_ops,
+	.vfl_dir	= VFL_सूची_M2M,
+	.fops		= &deपूर्णांकerlace_fops,
+	.ioctl_ops	= &deपूर्णांकerlace_ioctl_ops,
 	.minor		= -1,
 	.release	= video_device_release_empty,
 	.device_caps	= V4L2_CAP_VIDEO_M2M | V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-static const struct v4l2_m2m_ops deinterlace_m2m_ops = {
-	.device_run	= deinterlace_device_run,
-	.job_ready	= deinterlace_job_ready,
-	.job_abort	= deinterlace_job_abort,
-};
+अटल स्थिर काष्ठा v4l2_m2m_ops deपूर्णांकerlace_m2m_ops = अणु
+	.device_run	= deपूर्णांकerlace_device_run,
+	.job_पढ़ोy	= deपूर्णांकerlace_job_पढ़ोy,
+	.job_पात	= deपूर्णांकerlace_job_पात,
+पूर्ण;
 
-static int deinterlace_probe(struct platform_device *pdev)
-{
-	struct deinterlace_dev *dev;
-	struct video_device *vfd;
-	struct resource *res;
-	int irq, ret;
+अटल पूर्णांक deपूर्णांकerlace_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev;
+	काष्ठा video_device *vfd;
+	काष्ठा resource *res;
+	पूर्णांक irq, ret;
 
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	dev->vfd = deinterlace_video_device;
+	dev->vfd = deपूर्णांकerlace_video_device;
 	dev->dev = &pdev->dev;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq <= 0)
+		वापस irq;
 
-	ret = devm_request_irq(dev->dev, irq, deinterlace_irq,
+	ret = devm_request_irq(dev->dev, irq, deपूर्णांकerlace_irq,
 			       0, dev_name(dev->dev), dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to request IRQ\n");
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	dev->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(dev->base))
-		return PTR_ERR(dev->base);
+	अगर (IS_ERR(dev->base))
+		वापस PTR_ERR(dev->base);
 
 	dev->bus_clk = devm_clk_get(dev->dev, "bus");
-	if (IS_ERR(dev->bus_clk)) {
+	अगर (IS_ERR(dev->bus_clk)) अणु
 		dev_err(dev->dev, "Failed to get bus clock\n");
 
-		return PTR_ERR(dev->bus_clk);
-	}
+		वापस PTR_ERR(dev->bus_clk);
+	पूर्ण
 
 	dev->mod_clk = devm_clk_get(dev->dev, "mod");
-	if (IS_ERR(dev->mod_clk)) {
+	अगर (IS_ERR(dev->mod_clk)) अणु
 		dev_err(dev->dev, "Failed to get mod clock\n");
 
-		return PTR_ERR(dev->mod_clk);
-	}
+		वापस PTR_ERR(dev->mod_clk);
+	पूर्ण
 
 	dev->ram_clk = devm_clk_get(dev->dev, "ram");
-	if (IS_ERR(dev->ram_clk)) {
+	अगर (IS_ERR(dev->ram_clk)) अणु
 		dev_err(dev->dev, "Failed to get ram clock\n");
 
-		return PTR_ERR(dev->ram_clk);
-	}
+		वापस PTR_ERR(dev->ram_clk);
+	पूर्ण
 
-	dev->rstc = devm_reset_control_get(dev->dev, NULL);
-	if (IS_ERR(dev->rstc)) {
+	dev->rstc = devm_reset_control_get(dev->dev, शून्य);
+	अगर (IS_ERR(dev->rstc)) अणु
 		dev_err(dev->dev, "Failed to get reset control\n");
 
-		return PTR_ERR(dev->rstc);
-	}
+		वापस PTR_ERR(dev->rstc);
+	पूर्ण
 
 	mutex_init(&dev->dev_mutex);
 
-	ret = v4l2_device_register(&pdev->dev, &dev->v4l2_dev);
-	if (ret) {
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &dev->v4l2_dev);
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to register V4L2 device\n");
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	vfd = &dev->vfd;
 	vfd->lock = &dev->dev_mutex;
 	vfd->v4l2_dev = &dev->v4l2_dev;
 
-	snprintf(vfd->name, sizeof(vfd->name), "%s",
-		 deinterlace_video_device.name);
+	snम_लिखो(vfd->name, माप(vfd->name), "%s",
+		 deपूर्णांकerlace_video_device.name);
 	video_set_drvdata(vfd, dev);
 
-	ret = video_register_device(vfd, VFL_TYPE_VIDEO, 0);
-	if (ret) {
+	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, 0);
+	अगर (ret) अणु
 		v4l2_err(&dev->v4l2_dev, "Failed to register video device\n");
 
-		goto err_v4l2;
-	}
+		जाओ err_v4l2;
+	पूर्ण
 
 	v4l2_info(&dev->v4l2_dev,
 		  "Device registered as /dev/video%d\n", vfd->num);
 
-	dev->m2m_dev = v4l2_m2m_init(&deinterlace_m2m_ops);
-	if (IS_ERR(dev->m2m_dev)) {
+	dev->m2m_dev = v4l2_m2m_init(&deपूर्णांकerlace_m2m_ops);
+	अगर (IS_ERR(dev->m2m_dev)) अणु
 		v4l2_err(&dev->v4l2_dev,
 			 "Failed to initialize V4L2 M2M device\n");
 		ret = PTR_ERR(dev->m2m_dev);
 
-		goto err_video;
-	}
+		जाओ err_video;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
-	pm_runtime_enable(dev->dev);
+	pm_runसमय_enable(dev->dev);
 
-	return 0;
+	वापस 0;
 
 err_video:
-	video_unregister_device(&dev->vfd);
+	video_unरेजिस्टर_device(&dev->vfd);
 err_v4l2:
-	v4l2_device_unregister(&dev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int deinterlace_remove(struct platform_device *pdev)
-{
-	struct deinterlace_dev *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक deपूर्णांकerlace_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev = platक्रमm_get_drvdata(pdev);
 
 	v4l2_m2m_release(dev->m2m_dev);
-	video_unregister_device(&dev->vfd);
-	v4l2_device_unregister(&dev->v4l2_dev);
+	video_unरेजिस्टर_device(&dev->vfd);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
 
-	pm_runtime_force_suspend(&pdev->dev);
+	pm_runसमय_क्रमce_suspend(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int deinterlace_runtime_resume(struct device *device)
-{
-	struct deinterlace_dev *dev = dev_get_drvdata(device);
-	int ret;
+अटल पूर्णांक deपूर्णांकerlace_runसमय_resume(काष्ठा device *device)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev = dev_get_drvdata(device);
+	पूर्णांक ret;
 
 	ret = clk_set_rate_exclusive(dev->mod_clk, 300000000);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to set exclusive mod clock rate\n");
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->bus_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to enable bus clock\n");
 
-		goto err_exclusive_rate;
-	}
+		जाओ err_exclusive_rate;
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->mod_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to enable mod clock\n");
 
-		goto err_bus_clk;
-	}
+		जाओ err_bus_clk;
+	पूर्ण
 
 	ret = clk_prepare_enable(dev->ram_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to enable ram clock\n");
 
-		goto err_mod_clk;
-	}
+		जाओ err_mod_clk;
+	पूर्ण
 
-	ret = reset_control_deassert(dev->rstc);
-	if (ret) {
+	ret = reset_control_deनिश्चित(dev->rstc);
+	अगर (ret) अणु
 		dev_err(dev->dev, "Failed to apply reset\n");
 
-		goto err_ram_clk;
-	}
+		जाओ err_ram_clk;
+	पूर्ण
 
-	deinterlace_init(dev);
+	deपूर्णांकerlace_init(dev);
 
-	return 0;
+	वापस 0;
 
 err_ram_clk:
 	clk_disable_unprepare(dev->ram_clk);
@@ -974,44 +975,44 @@ err_bus_clk:
 err_exclusive_rate:
 	clk_rate_exclusive_put(dev->mod_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int deinterlace_runtime_suspend(struct device *device)
-{
-	struct deinterlace_dev *dev = dev_get_drvdata(device);
+अटल पूर्णांक deपूर्णांकerlace_runसमय_suspend(काष्ठा device *device)
+अणु
+	काष्ठा deपूर्णांकerlace_dev *dev = dev_get_drvdata(device);
 
-	reset_control_assert(dev->rstc);
+	reset_control_निश्चित(dev->rstc);
 
 	clk_disable_unprepare(dev->ram_clk);
 	clk_disable_unprepare(dev->mod_clk);
 	clk_disable_unprepare(dev->bus_clk);
 	clk_rate_exclusive_put(dev->mod_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id deinterlace_dt_match[] = {
-	{ .compatible = "allwinner,sun8i-h3-deinterlace" },
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(of, deinterlace_dt_match);
+अटल स्थिर काष्ठा of_device_id deपूर्णांकerlace_dt_match[] = अणु
+	अणु .compatible = "allwinner,sun8i-h3-deinterlace" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, deपूर्णांकerlace_dt_match);
 
-static const struct dev_pm_ops deinterlace_pm_ops = {
-	.runtime_resume		= deinterlace_runtime_resume,
-	.runtime_suspend	= deinterlace_runtime_suspend,
-};
+अटल स्थिर काष्ठा dev_pm_ops deपूर्णांकerlace_pm_ops = अणु
+	.runसमय_resume		= deपूर्णांकerlace_runसमय_resume,
+	.runसमय_suspend	= deपूर्णांकerlace_runसमय_suspend,
+पूर्ण;
 
-static struct platform_driver deinterlace_driver = {
-	.probe		= deinterlace_probe,
-	.remove		= deinterlace_remove,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver deपूर्णांकerlace_driver = अणु
+	.probe		= deपूर्णांकerlace_probe,
+	.हटाओ		= deपूर्णांकerlace_हटाओ,
+	.driver		= अणु
 		.name		= DEINTERLACE_NAME,
-		.of_match_table	= deinterlace_dt_match,
-		.pm		= &deinterlace_pm_ops,
-	},
-};
-module_platform_driver(deinterlace_driver);
+		.of_match_table	= deपूर्णांकerlace_dt_match,
+		.pm		= &deपूर्णांकerlace_pm_ops,
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(deपूर्णांकerlace_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Jernej Skrabec <jernej.skrabec@siol.net>");

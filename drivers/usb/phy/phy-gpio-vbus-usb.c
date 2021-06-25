@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * gpio-vbus.c - simple GPIO VBUS sensing driver for B peripheral devices
+ * gpio-vbus.c - simple GPIO VBUS sensing driver क्रम B peripheral devices
  *
  * Copyright (c) 2008 Philipp Zabel <philipp.zabel@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/usb.h>
-#include <linux/workqueue.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/workqueue.h>
 
-#include <linux/regulator/consumer.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <linux/usb/gadget.h>
-#include <linux/usb/otg.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/otg.h>
 
 
 /*
- * A simple GPIO VBUS sensing driver for B peripheral only devices
- * with internal transceivers. It can control a D+ pullup GPIO and
+ * A simple GPIO VBUS sensing driver क्रम B peripheral only devices
+ * with पूर्णांकernal transceivers. It can control a D+ pullup GPIO and
  * a regulator to limit the current drawn from VBUS.
  *
- * Needs to be loaded before the UDC driver that will use it.
+ * Needs to be loaded beक्रमe the UDC driver that will use it.
  */
-struct gpio_vbus_data {
-	struct gpio_desc	*vbus_gpiod;
-	struct gpio_desc	*pullup_gpiod;
-	struct usb_phy		phy;
-	struct device          *dev;
-	struct regulator       *vbus_draw;
-	int			vbus_draw_enabled;
-	unsigned		mA;
-	struct delayed_work	work;
-	int			vbus;
-	int			irq;
-};
+काष्ठा gpio_vbus_data अणु
+	काष्ठा gpio_desc	*vbus_gpiod;
+	काष्ठा gpio_desc	*pullup_gpiod;
+	काष्ठा usb_phy		phy;
+	काष्ठा device          *dev;
+	काष्ठा regulator       *vbus_draw;
+	पूर्णांक			vbus_draw_enabled;
+	अचिन्हित		mA;
+	काष्ठा delayed_work	work;
+	पूर्णांक			vbus;
+	पूर्णांक			irq;
+पूर्ण;
 
 
 /*
  * This driver relies on "both edges" triggering.  VBUS has 100 msec to
  * stabilize, so the peripheral controller driver may need to cope with
- * some bouncing due to current surges (e.g. charging local capacitance)
+ * some bouncing due to current surges (e.g. अक्षरging local capacitance)
  * and contact chatter.
  *
  * REVISIT in desperate straits, toggling between rising and falling
  * edges might be workable.
  */
-#define VBUS_IRQ_FLAGS \
+#घोषणा VBUS_IRQ_FLAGS \
 	(IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)
 
 
-/* interface to regulator framework */
-static void set_vbus_draw(struct gpio_vbus_data *gpio_vbus, unsigned mA)
-{
-	struct regulator *vbus_draw = gpio_vbus->vbus_draw;
-	int enabled;
-	int ret;
+/* पूर्णांकerface to regulator framework */
+अटल व्योम set_vbus_draw(काष्ठा gpio_vbus_data *gpio_vbus, अचिन्हित mA)
+अणु
+	काष्ठा regulator *vbus_draw = gpio_vbus->vbus_draw;
+	पूर्णांक enabled;
+	पूर्णांक ret;
 
-	if (!vbus_draw)
-		return;
+	अगर (!vbus_draw)
+		वापस;
 
 	enabled = gpio_vbus->vbus_draw_enabled;
-	if (mA) {
+	अगर (mA) अणु
 		regulator_set_current_limit(vbus_draw, 0, 1000 * mA);
-		if (!enabled) {
+		अगर (!enabled) अणु
 			ret = regulator_enable(vbus_draw);
-			if (ret < 0)
-				return;
+			अगर (ret < 0)
+				वापस;
 			gpio_vbus->vbus_draw_enabled = 1;
-		}
-	} else {
-		if (enabled) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (enabled) अणु
 			ret = regulator_disable(vbus_draw);
-			if (ret < 0)
-				return;
+			अगर (ret < 0)
+				वापस;
 			gpio_vbus->vbus_draw_enabled = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	gpio_vbus->mA = mA;
-}
+पूर्ण
 
-static int is_vbus_powered(struct gpio_vbus_data *gpio_vbus)
-{
-	return gpiod_get_value(gpio_vbus->vbus_gpiod);
-}
+अटल पूर्णांक is_vbus_घातered(काष्ठा gpio_vbus_data *gpio_vbus)
+अणु
+	वापस gpiod_get_value(gpio_vbus->vbus_gpiod);
+पूर्ण
 
-static void gpio_vbus_work(struct work_struct *work)
-{
-	struct gpio_vbus_data *gpio_vbus =
-		container_of(work, struct gpio_vbus_data, work.work);
-	int status, vbus;
+अटल व्योम gpio_vbus_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus =
+		container_of(work, काष्ठा gpio_vbus_data, work.work);
+	पूर्णांक status, vbus;
 
-	if (!gpio_vbus->phy.otg->gadget)
-		return;
+	अगर (!gpio_vbus->phy.otg->gadget)
+		वापस;
 
-	vbus = is_vbus_powered(gpio_vbus);
-	if ((vbus ^ gpio_vbus->vbus) == 0)
-		return;
+	vbus = is_vbus_घातered(gpio_vbus);
+	अगर ((vbus ^ gpio_vbus->vbus) == 0)
+		वापस;
 	gpio_vbus->vbus = vbus;
 
 	/* Peripheral controllers which manage the pullup themselves won't have
-	 * a pullup GPIO configured here.  If it's configured here, we'll do
-	 * what isp1301_omap::b_peripheral() does and enable the pullup here...
-	 * although that may complicate usb_gadget_{,dis}connect() support.
+	 * a pullup GPIO configured here.  If it's configured here, we'll करो
+	 * what isp1301_omap::b_peripheral() करोes and enable the pullup here...
+	 * although that may complicate usb_gadget_अणु,disपूर्णconnect() support.
 	 */
 
-	if (vbus) {
+	अगर (vbus) अणु
 		status = USB_EVENT_VBUS;
 		gpio_vbus->phy.otg->state = OTG_STATE_B_PERIPHERAL;
 		gpio_vbus->phy.last_event = status;
 		usb_gadget_vbus_connect(gpio_vbus->phy.otg->gadget);
 
-		/* drawing a "unit load" is *always* OK, except for OTG */
+		/* drawing a "unit load" is *always* OK, except क्रम OTG */
 		set_vbus_draw(gpio_vbus, 100);
 
 		/* optionally enable D+ pullup */
-		if (gpio_vbus->pullup_gpiod)
+		अगर (gpio_vbus->pullup_gpiod)
 			gpiod_set_value(gpio_vbus->pullup_gpiod, 1);
 
-		atomic_notifier_call_chain(&gpio_vbus->phy.notifier,
+		atomic_notअगरier_call_chain(&gpio_vbus->phy.notअगरier,
 					   status, gpio_vbus->phy.otg->gadget);
 		usb_phy_set_event(&gpio_vbus->phy, USB_EVENT_ENUMERATED);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* optionally disable D+ pullup */
-		if (gpio_vbus->pullup_gpiod)
+		अगर (gpio_vbus->pullup_gpiod)
 			gpiod_set_value(gpio_vbus->pullup_gpiod, 0);
 
 		set_vbus_draw(gpio_vbus, 0);
@@ -137,47 +138,47 @@ static void gpio_vbus_work(struct work_struct *work)
 		gpio_vbus->phy.otg->state = OTG_STATE_B_IDLE;
 		gpio_vbus->phy.last_event = status;
 
-		atomic_notifier_call_chain(&gpio_vbus->phy.notifier,
+		atomic_notअगरier_call_chain(&gpio_vbus->phy.notअगरier,
 					   status, gpio_vbus->phy.otg->gadget);
 		usb_phy_set_event(&gpio_vbus->phy, USB_EVENT_NONE);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* VBUS change IRQ handler */
-static irqreturn_t gpio_vbus_irq(int irq, void *data)
-{
-	struct platform_device *pdev = data;
-	struct gpio_vbus_data *gpio_vbus = platform_get_drvdata(pdev);
-	struct usb_otg *otg = gpio_vbus->phy.otg;
+अटल irqवापस_t gpio_vbus_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = data;
+	काष्ठा gpio_vbus_data *gpio_vbus = platक्रमm_get_drvdata(pdev);
+	काष्ठा usb_otg *otg = gpio_vbus->phy.otg;
 
 	dev_dbg(&pdev->dev, "VBUS %s (gadget: %s)\n",
-		is_vbus_powered(gpio_vbus) ? "supplied" : "inactive",
+		is_vbus_घातered(gpio_vbus) ? "supplied" : "inactive",
 		otg->gadget ? otg->gadget->name : "none");
 
-	if (otg->gadget)
-		schedule_delayed_work(&gpio_vbus->work, msecs_to_jiffies(100));
+	अगर (otg->gadget)
+		schedule_delayed_work(&gpio_vbus->work, msecs_to_jअगरfies(100));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* OTG transceiver interface */
+/* OTG transceiver पूर्णांकerface */
 
 /* bind/unbind the peripheral controller */
-static int gpio_vbus_set_peripheral(struct usb_otg *otg,
-					struct usb_gadget *gadget)
-{
-	struct gpio_vbus_data *gpio_vbus;
-	struct platform_device *pdev;
+अटल पूर्णांक gpio_vbus_set_peripheral(काष्ठा usb_otg *otg,
+					काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus;
+	काष्ठा platक्रमm_device *pdev;
 
-	gpio_vbus = container_of(otg->usb_phy, struct gpio_vbus_data, phy);
-	pdev = to_platform_device(gpio_vbus->dev);
+	gpio_vbus = container_of(otg->usb_phy, काष्ठा gpio_vbus_data, phy);
+	pdev = to_platक्रमm_device(gpio_vbus->dev);
 
-	if (!gadget) {
+	अगर (!gadget) अणु
 		dev_dbg(&pdev->dev, "unregistering gadget '%s'\n",
 			otg->gadget->name);
 
 		/* optionally disable D+ pullup */
-		if (gpio_vbus->pullup_gpiod)
+		अगर (gpio_vbus->pullup_gpiod)
 			gpiod_set_value(gpio_vbus->pullup_gpiod, 0);
 
 		set_vbus_draw(gpio_vbus, 0);
@@ -185,9 +186,9 @@ static int gpio_vbus_set_peripheral(struct usb_otg *otg,
 		usb_gadget_vbus_disconnect(otg->gadget);
 		otg->state = OTG_STATE_UNDEFINED;
 
-		otg->gadget = NULL;
-		return 0;
-	}
+		otg->gadget = शून्य;
+		वापस 0;
+	पूर्ण
 
 	otg->gadget = gadget;
 	dev_dbg(&pdev->dev, "registered gadget '%s'\n", gadget->name);
@@ -195,62 +196,62 @@ static int gpio_vbus_set_peripheral(struct usb_otg *otg,
 	/* initialize connection state */
 	gpio_vbus->vbus = 0; /* start with disconnected */
 	gpio_vbus_irq(gpio_vbus->irq, pdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* effective for B devices, ignored for A-peripheral */
-static int gpio_vbus_set_power(struct usb_phy *phy, unsigned mA)
-{
-	struct gpio_vbus_data *gpio_vbus;
+/* effective क्रम B devices, ignored क्रम A-peripheral */
+अटल पूर्णांक gpio_vbus_set_घातer(काष्ठा usb_phy *phy, अचिन्हित mA)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus;
 
-	gpio_vbus = container_of(phy, struct gpio_vbus_data, phy);
+	gpio_vbus = container_of(phy, काष्ठा gpio_vbus_data, phy);
 
-	if (phy->otg->state == OTG_STATE_B_PERIPHERAL)
+	अगर (phy->otg->state == OTG_STATE_B_PERIPHERAL)
 		set_vbus_draw(gpio_vbus, mA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* for non-OTG B devices: set/clear transceiver suspend mode */
-static int gpio_vbus_set_suspend(struct usb_phy *phy, int suspend)
-{
-	struct gpio_vbus_data *gpio_vbus;
+/* क्रम non-OTG B devices: set/clear transceiver suspend mode */
+अटल पूर्णांक gpio_vbus_set_suspend(काष्ठा usb_phy *phy, पूर्णांक suspend)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus;
 
-	gpio_vbus = container_of(phy, struct gpio_vbus_data, phy);
+	gpio_vbus = container_of(phy, काष्ठा gpio_vbus_data, phy);
 
 	/* draw max 0 mA from vbus in suspend mode; or the previously
-	 * recorded amount of current if not suspended
+	 * recorded amount of current अगर not suspended
 	 *
-	 * NOTE: high powered configs (mA > 100) may draw up to 2.5 mA
-	 * if they're wake-enabled ... we don't handle that yet.
+	 * NOTE: high घातered configs (mA > 100) may draw up to 2.5 mA
+	 * अगर they're wake-enabled ... we don't handle that yet.
 	 */
-	return gpio_vbus_set_power(phy, suspend ? 0 : gpio_vbus->mA);
-}
+	वापस gpio_vbus_set_घातer(phy, suspend ? 0 : gpio_vbus->mA);
+पूर्ण
 
-/* platform driver interface */
+/* platक्रमm driver पूर्णांकerface */
 
-static int gpio_vbus_probe(struct platform_device *pdev)
-{
-	struct gpio_vbus_data *gpio_vbus;
-	struct resource *res;
-	struct device *dev = &pdev->dev;
-	int err, irq;
-	unsigned long irqflags;
+अटल पूर्णांक gpio_vbus_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus;
+	काष्ठा resource *res;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक err, irq;
+	अचिन्हित दीर्घ irqflags;
 
-	gpio_vbus = devm_kzalloc(&pdev->dev, sizeof(struct gpio_vbus_data),
+	gpio_vbus = devm_kzalloc(&pdev->dev, माप(काष्ठा gpio_vbus_data),
 				 GFP_KERNEL);
-	if (!gpio_vbus)
-		return -ENOMEM;
+	अगर (!gpio_vbus)
+		वापस -ENOMEM;
 
-	gpio_vbus->phy.otg = devm_kzalloc(&pdev->dev, sizeof(struct usb_otg),
+	gpio_vbus->phy.otg = devm_kzalloc(&pdev->dev, माप(काष्ठा usb_otg),
 					  GFP_KERNEL);
-	if (!gpio_vbus->phy.otg)
-		return -ENOMEM;
+	अगर (!gpio_vbus->phy.otg)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, gpio_vbus);
+	platक्रमm_set_drvdata(pdev, gpio_vbus);
 	gpio_vbus->dev = &pdev->dev;
 	gpio_vbus->phy.label = "gpio-vbus";
 	gpio_vbus->phy.dev = gpio_vbus->dev;
-	gpio_vbus->phy.set_power = gpio_vbus_set_power;
+	gpio_vbus->phy.set_घातer = gpio_vbus_set_घातer;
 	gpio_vbus->phy.set_suspend = gpio_vbus_set_suspend;
 
 	gpio_vbus->phy.otg->state = OTG_STATE_UNDEFINED;
@@ -259,125 +260,125 @@ static int gpio_vbus_probe(struct platform_device *pdev)
 
 	/* Look up the VBUS sensing GPIO */
 	gpio_vbus->vbus_gpiod = devm_gpiod_get(dev, "vbus", GPIOD_IN);
-	if (IS_ERR(gpio_vbus->vbus_gpiod)) {
+	अगर (IS_ERR(gpio_vbus->vbus_gpiod)) अणु
 		err = PTR_ERR(gpio_vbus->vbus_gpiod);
 		dev_err(&pdev->dev, "can't request vbus gpio, err: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	gpiod_set_consumer_name(gpio_vbus->vbus_gpiod, "vbus_detect");
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (res) अणु
 		irq = res->start;
 		irqflags = (res->flags & IRQF_TRIGGER_MASK) | IRQF_SHARED;
-	} else {
+	पूर्ण अन्यथा अणु
 		irq = gpiod_to_irq(gpio_vbus->vbus_gpiod);
 		irqflags = VBUS_IRQ_FLAGS;
-	}
+	पूर्ण
 
 	gpio_vbus->irq = irq;
 
 	/*
-	 * The VBUS sensing GPIO should have a pulldown, which will normally be
-	 * part of a resistor ladder turning a 4.0V-5.25V level on VBUS into a
-	 * value the GPIO detects as active. Some systems will use comparators.
+	 * The VBUS sensing GPIO should have a pullकरोwn, which will normally be
+	 * part of a resistor ladder turning a 4.0V-5.25V level on VBUS पूर्णांकo a
+	 * value the GPIO detects as active. Some प्रणालीs will use comparators.
 	 * Get the optional D+ or D- pullup GPIO. If the data line pullup is
 	 * in use, initialize it to "not pulling up"
 	 */
 	gpio_vbus->pullup_gpiod = devm_gpiod_get_optional(dev, "pullup",
 							  GPIOD_OUT_LOW);
-	if (IS_ERR(gpio_vbus->pullup_gpiod)) {
+	अगर (IS_ERR(gpio_vbus->pullup_gpiod)) अणु
 		err = PTR_ERR(gpio_vbus->pullup_gpiod);
 		dev_err(&pdev->dev, "can't request pullup gpio, err: %d\n",
 			err);
-		return err;
-	}
-	if (gpio_vbus->pullup_gpiod)
+		वापस err;
+	पूर्ण
+	अगर (gpio_vbus->pullup_gpiod)
 		gpiod_set_consumer_name(gpio_vbus->pullup_gpiod, "udc_pullup");
 
 	err = devm_request_irq(&pdev->dev, irq, gpio_vbus_irq, irqflags,
 			       "vbus_detect", pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "can't request irq %i, err: %d\n",
 			irq, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	INIT_DELAYED_WORK(&gpio_vbus->work, gpio_vbus_work);
 
 	gpio_vbus->vbus_draw = devm_regulator_get(&pdev->dev, "vbus_draw");
-	if (IS_ERR(gpio_vbus->vbus_draw)) {
+	अगर (IS_ERR(gpio_vbus->vbus_draw)) अणु
 		dev_dbg(&pdev->dev, "can't get vbus_draw regulator, err: %ld\n",
 			PTR_ERR(gpio_vbus->vbus_draw));
-		gpio_vbus->vbus_draw = NULL;
-	}
+		gpio_vbus->vbus_draw = शून्य;
+	पूर्ण
 
-	/* only active when a gadget is registered */
+	/* only active when a gadget is रेजिस्टरed */
 	err = usb_add_phy(&gpio_vbus->phy, USB_PHY_TYPE_USB2);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "can't register transceiver, err: %d\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* TODO: wakeup could be enabled here with device_init_wakeup(dev, 1) */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_vbus_remove(struct platform_device *pdev)
-{
-	struct gpio_vbus_data *gpio_vbus = platform_get_drvdata(pdev);
+अटल पूर्णांक gpio_vbus_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus = platक्रमm_get_drvdata(pdev);
 
 	device_init_wakeup(&pdev->dev, 0);
 	cancel_delayed_work_sync(&gpio_vbus->work);
 
-	usb_remove_phy(&gpio_vbus->phy);
+	usb_हटाओ_phy(&gpio_vbus->phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int gpio_vbus_pm_suspend(struct device *dev)
-{
-	struct gpio_vbus_data *gpio_vbus = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक gpio_vbus_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		enable_irq_wake(gpio_vbus->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_vbus_pm_resume(struct device *dev)
-{
-	struct gpio_vbus_data *gpio_vbus = dev_get_drvdata(dev);
+अटल पूर्णांक gpio_vbus_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा gpio_vbus_data *gpio_vbus = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
+	अगर (device_may_wakeup(dev))
 		disable_irq_wake(gpio_vbus->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops gpio_vbus_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops gpio_vbus_dev_pm_ops = अणु
 	.suspend	= gpio_vbus_pm_suspend,
 	.resume		= gpio_vbus_pm_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 MODULE_ALIAS("platform:gpio-vbus");
 
-static struct platform_driver gpio_vbus_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver gpio_vbus_driver = अणु
+	.driver = अणु
 		.name  = "gpio-vbus",
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		.pm = &gpio_vbus_dev_pm_ops,
-#endif
-	},
+#पूर्ण_अगर
+	पूर्ण,
 	.probe		= gpio_vbus_probe,
-	.remove		= gpio_vbus_remove,
-};
+	.हटाओ		= gpio_vbus_हटाओ,
+पूर्ण;
 
-module_platform_driver(gpio_vbus_driver);
+module_platक्रमm_driver(gpio_vbus_driver);
 
 MODULE_DESCRIPTION("simple GPIO controlled OTG transceiver driver");
 MODULE_AUTHOR("Philipp Zabel");

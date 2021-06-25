@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_NAT_REDIRECT_H_
-#define _NF_NAT_REDIRECT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_NAT_REसूचीECT_H_
+#घोषणा _NF_NAT_REसूचीECT_H_
 
-#include <linux/skbuff.h>
-#include <uapi/linux/netfilter/nf_nat.h>
+#समावेश <linux/skbuff.h>
+#समावेश <uapi/linux/netfilter/nf_nat.h>
 
-unsigned int
-nf_nat_redirect_ipv4(struct sk_buff *skb,
-		     const struct nf_nat_ipv4_multi_range_compat *mr,
-		     unsigned int hooknum);
-unsigned int
-nf_nat_redirect_ipv6(struct sk_buff *skb, const struct nf_nat_range2 *range,
-		     unsigned int hooknum);
+अचिन्हित पूर्णांक
+nf_nat_redirect_ipv4(काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_nat_ipv4_multi_range_compat *mr,
+		     अचिन्हित पूर्णांक hooknum);
+अचिन्हित पूर्णांक
+nf_nat_redirect_ipv6(काष्ठा sk_buff *skb, स्थिर काष्ठा nf_nat_range2 *range,
+		     अचिन्हित पूर्णांक hooknum);
 
-#endif /* _NF_NAT_REDIRECT_H_ */
+#पूर्ण_अगर /* _NF_NAT_REसूचीECT_H_ */

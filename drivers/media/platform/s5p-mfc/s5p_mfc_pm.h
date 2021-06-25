@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * linux/drivers/media/platform/s5p-mfc/s5p_mfc_pm.h
+ * linux/drivers/media/platक्रमm/s5p-mfc/s5p_mfc_pm.h
  *
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
  */
 
-#ifndef S5P_MFC_PM_H_
-#define S5P_MFC_PM_H_
+#अगर_अघोषित S5P_MFC_PM_H_
+#घोषणा S5P_MFC_PM_H_
 
-int s5p_mfc_init_pm(struct s5p_mfc_dev *dev);
-void s5p_mfc_final_pm(struct s5p_mfc_dev *dev);
+पूर्णांक s5p_mfc_init_pm(काष्ठा s5p_mfc_dev *dev);
+व्योम s5p_mfc_final_pm(काष्ठा s5p_mfc_dev *dev);
 
-int s5p_mfc_clock_on(void);
-void s5p_mfc_clock_off(void);
-int s5p_mfc_power_on(void);
-int s5p_mfc_power_off(void);
+पूर्णांक s5p_mfc_घड़ी_on(व्योम);
+व्योम s5p_mfc_घड़ी_off(व्योम);
+पूर्णांक s5p_mfc_घातer_on(व्योम);
+पूर्णांक s5p_mfc_घातer_off(व्योम);
 
-#endif /* S5P_MFC_PM_H_ */
+#पूर्ण_अगर /* S5P_MFC_PM_H_ */

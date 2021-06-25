@@ -1,74 +1,75 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_FB_RAM_PRIV_H__
-#define __NVKM_FB_RAM_PRIV_H__
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_FB_RAM_PRIV_H__
+#घोषणा __NVKM_FB_RAM_PRIV_H__
+#समावेश "priv.h"
 
-int  nvkm_ram_ctor(const struct nvkm_ram_func *, struct nvkm_fb *,
-		   enum nvkm_ram_type, u64 size, struct nvkm_ram *);
-int  nvkm_ram_new_(const struct nvkm_ram_func *, struct nvkm_fb *,
-		   enum nvkm_ram_type, u64 size, struct nvkm_ram **);
-void nvkm_ram_del(struct nvkm_ram **);
-int  nvkm_ram_init(struct nvkm_ram *);
+पूर्णांक  nvkm_ram_ctor(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_fb *,
+		   क्रमागत nvkm_ram_type, u64 size, काष्ठा nvkm_ram *);
+पूर्णांक  nvkm_ram_new_(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_fb *,
+		   क्रमागत nvkm_ram_type, u64 size, काष्ठा nvkm_ram **);
+व्योम nvkm_ram_del(काष्ठा nvkm_ram **);
+पूर्णांक  nvkm_ram_init(काष्ठा nvkm_ram *);
 
-extern const struct nvkm_ram_func nv04_ram_func;
+बाह्य स्थिर काष्ठा nvkm_ram_func nv04_ram_func;
 
-int  nv50_ram_ctor(const struct nvkm_ram_func *, struct nvkm_fb *,
-		   struct nvkm_ram *);
+पूर्णांक  nv50_ram_ctor(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_fb *,
+		   काष्ठा nvkm_ram *);
 
-int gf100_ram_new_(const struct nvkm_ram_func *, struct nvkm_fb *,
-		   struct nvkm_ram **);
-int  gf100_ram_ctor(const struct nvkm_ram_func *, struct nvkm_fb *,
-		    struct nvkm_ram *);
-u32  gf100_ram_probe_fbp(const struct nvkm_ram_func *,
-			 struct nvkm_device *, int, int *);
-u32  gf100_ram_probe_fbp_amount(const struct nvkm_ram_func *, u32,
-				struct nvkm_device *, int, int *);
-u32  gf100_ram_probe_fbpa_amount(struct nvkm_device *, int);
-int gf100_ram_init(struct nvkm_ram *);
-int gf100_ram_calc(struct nvkm_ram *, u32);
-int gf100_ram_prog(struct nvkm_ram *);
-void gf100_ram_tidy(struct nvkm_ram *);
+पूर्णांक gf100_ram_new_(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_fb *,
+		   काष्ठा nvkm_ram **);
+पूर्णांक  gf100_ram_ctor(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_fb *,
+		    काष्ठा nvkm_ram *);
+u32  gf100_ram_probe_fbp(स्थिर काष्ठा nvkm_ram_func *,
+			 काष्ठा nvkm_device *, पूर्णांक, पूर्णांक *);
+u32  gf100_ram_probe_fbp_amount(स्थिर काष्ठा nvkm_ram_func *, u32,
+				काष्ठा nvkm_device *, पूर्णांक, पूर्णांक *);
+u32  gf100_ram_probe_fbpa_amount(काष्ठा nvkm_device *, पूर्णांक);
+पूर्णांक gf100_ram_init(काष्ठा nvkm_ram *);
+पूर्णांक gf100_ram_calc(काष्ठा nvkm_ram *, u32);
+पूर्णांक gf100_ram_prog(काष्ठा nvkm_ram *);
+व्योम gf100_ram_tidy(काष्ठा nvkm_ram *);
 
-u32 gf108_ram_probe_fbp_amount(const struct nvkm_ram_func *, u32,
-			       struct nvkm_device *, int, int *);
+u32 gf108_ram_probe_fbp_amount(स्थिर काष्ठा nvkm_ram_func *, u32,
+			       काष्ठा nvkm_device *, पूर्णांक, पूर्णांक *);
 
-int gk104_ram_new_(const struct nvkm_ram_func *, struct nvkm_fb *,
-		   struct nvkm_ram **);
-void *gk104_ram_dtor(struct nvkm_ram *);
-int gk104_ram_init(struct nvkm_ram *);
-int gk104_ram_calc(struct nvkm_ram *, u32);
-int gk104_ram_prog(struct nvkm_ram *);
-void gk104_ram_tidy(struct nvkm_ram *);
+पूर्णांक gk104_ram_new_(स्थिर काष्ठा nvkm_ram_func *, काष्ठा nvkm_fb *,
+		   काष्ठा nvkm_ram **);
+व्योम *gk104_ram_dtor(काष्ठा nvkm_ram *);
+पूर्णांक gk104_ram_init(काष्ठा nvkm_ram *);
+पूर्णांक gk104_ram_calc(काष्ठा nvkm_ram *, u32);
+पूर्णांक gk104_ram_prog(काष्ठा nvkm_ram *);
+व्योम gk104_ram_tidy(काष्ठा nvkm_ram *);
 
-u32 gm107_ram_probe_fbp(const struct nvkm_ram_func *,
-			struct nvkm_device *, int, int *);
+u32 gm107_ram_probe_fbp(स्थिर काष्ठा nvkm_ram_func *,
+			काष्ठा nvkm_device *, पूर्णांक, पूर्णांक *);
 
-u32 gm200_ram_probe_fbp_amount(const struct nvkm_ram_func *, u32,
-			       struct nvkm_device *, int, int *);
+u32 gm200_ram_probe_fbp_amount(स्थिर काष्ठा nvkm_ram_func *, u32,
+			       काष्ठा nvkm_device *, पूर्णांक, पूर्णांक *);
 
-/* RAM type-specific MR calculation routines */
-int nvkm_sddr2_calc(struct nvkm_ram *);
-int nvkm_sddr3_calc(struct nvkm_ram *);
-int nvkm_gddr3_calc(struct nvkm_ram *);
-int nvkm_gddr5_calc(struct nvkm_ram *, bool nuts);
+/* RAM type-specअगरic MR calculation routines */
+पूर्णांक nvkm_sddr2_calc(काष्ठा nvkm_ram *);
+पूर्णांक nvkm_sddr3_calc(काष्ठा nvkm_ram *);
+पूर्णांक nvkm_gddr3_calc(काष्ठा nvkm_ram *);
+पूर्णांक nvkm_gddr5_calc(काष्ठा nvkm_ram *, bool nuts);
 
-int nv04_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv10_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv1a_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv20_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv40_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv41_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv44_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv49_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv4e_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int nv50_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gt215_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int mcp77_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gf100_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gf108_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gk104_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gm107_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gm200_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int gp100_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-int ga102_ram_new(struct nvkm_fb *, struct nvkm_ram **);
-#endif
+पूर्णांक nv04_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv10_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv1a_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv20_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv40_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv41_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv44_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv49_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv4e_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक nv50_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gt215_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक mcp77_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gf100_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gf108_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gk104_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gm107_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gm200_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक gp100_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+पूर्णांक ga102_ram_new(काष्ठा nvkm_fb *, काष्ठा nvkm_ram **);
+#पूर्ण_अगर

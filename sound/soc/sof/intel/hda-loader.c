@@ -1,177 +1,178 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may do so under either license.
+// redistributing this file, you may करो so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Authors: Liam Girdwood <liam.r.girdwood@linux.intel.com>
-//	    Ranjani Sridharan <ranjani.sridharan@linux.intel.com>
-//	    Rander Wang <rander.wang@intel.com>
-//          Keyon Jie <yang.jie@linux.intel.com>
+// Authors: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
+//	    Ranjani Sridharan <ranjani.sridharan@linux.पूर्णांकel.com>
+//	    Rander Wang <अक्रमer.wang@पूर्णांकel.com>
+//          Keyon Jie <yang.jie@linux.पूर्णांकel.com>
 //
 
 /*
- * Hardware interface for HDA DSP code loader
+ * Hardware पूर्णांकerface क्रम HDA DSP code loader
  */
 
-#include <linux/firmware.h>
-#include <sound/hdaudio_ext.h>
-#include <sound/hda_register.h>
-#include <sound/sof.h>
-#include "ext_manifest.h"
-#include "../ops.h"
-#include "hda.h"
+#समावेश <linux/firmware.h>
+#समावेश <sound/hdaudio_ext.h>
+#समावेश <sound/hda_रेजिस्टर.h>
+#समावेश <sound/sof.h>
+#समावेश "ext_manifest.h"
+#समावेश "../ops.h"
+#समावेश "hda.h"
 
-#define HDA_FW_BOOT_ATTEMPTS	3
-#define HDA_CL_STREAM_FORMAT 0x40
+#घोषणा HDA_FW_BOOT_ATTEMPTS	3
+#घोषणा HDA_CL_STREAM_FORMAT 0x40
 
-static struct hdac_ext_stream *cl_stream_prepare(struct snd_sof_dev *sdev, unsigned int format,
-						 unsigned int size, struct snd_dma_buffer *dmab,
-						 int direction)
-{
-	struct hdac_ext_stream *dsp_stream;
-	struct hdac_stream *hstream;
-	struct pci_dev *pci = to_pci_dev(sdev->dev);
-	int ret;
+अटल काष्ठा hdac_ext_stream *cl_stream_prepare(काष्ठा snd_sof_dev *sdev, अचिन्हित पूर्णांक क्रमmat,
+						 अचिन्हित पूर्णांक size, काष्ठा snd_dma_buffer *dmab,
+						 पूर्णांक direction)
+अणु
+	काष्ठा hdac_ext_stream *dsp_stream;
+	काष्ठा hdac_stream *hstream;
+	काष्ठा pci_dev *pci = to_pci_dev(sdev->dev);
+	पूर्णांक ret;
 
 	dsp_stream = hda_dsp_stream_get(sdev, direction, 0);
 
-	if (!dsp_stream) {
+	अगर (!dsp_stream) अणु
 		dev_err(sdev->dev, "error: no stream available\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 	hstream = &dsp_stream->hstream;
-	hstream->substream = NULL;
+	hstream->substream = शून्य;
 
 	/* allocate DMA buffer */
 	ret = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV_SG, &pci->dev, size, dmab);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(sdev->dev, "error: memory alloc failed: %d\n", ret);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	hstream->period_bytes = 0;/* initialize period_bytes */
-	hstream->format_val = format;
+	hstream->क्रमmat_val = क्रमmat;
 	hstream->bufsize = size;
 
-	if (direction == SNDRV_PCM_STREAM_CAPTURE) {
-		ret = hda_dsp_iccmax_stream_hw_params(sdev, dsp_stream, dmab, NULL);
-		if (ret < 0) {
+	अगर (direction == SNDRV_PCM_STREAM_CAPTURE) अणु
+		ret = hda_dsp_iccmax_stream_hw_params(sdev, dsp_stream, dmab, शून्य);
+		अगर (ret < 0) अणु
 			dev_err(sdev->dev, "error: iccmax stream prepare failed: %d\n", ret);
-			goto error;
-		}
-	} else {
-		ret = hda_dsp_stream_hw_params(sdev, dsp_stream, dmab, NULL);
-		if (ret < 0) {
+			जाओ error;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = hda_dsp_stream_hw_params(sdev, dsp_stream, dmab, शून्य);
+		अगर (ret < 0) अणु
 			dev_err(sdev->dev, "error: hdac prepare failed: %d\n", ret);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		hda_dsp_stream_spib_config(sdev, dsp_stream, HDA_DSP_SPIB_ENABLE, size);
-	}
+	पूर्ण
 
-	return dsp_stream;
+	वापस dsp_stream;
 
 error:
 	hda_dsp_stream_put(sdev, direction, hstream->stream_tag);
-	snd_dma_free_pages(dmab);
-	return ERR_PTR(ret);
-}
+	snd_dma_मुक्त_pages(dmab);
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * first boot sequence has some extra steps. core 0 waits for power
- * status on core 1, so power up core 1 also momentarily, keep it in
+ * first boot sequence has some extra steps. core 0 रुकोs क्रम घातer
+ * status on core 1, so घातer up core 1 also momentarily, keep it in
  * reset/stall and then turn it off
  */
-static int cl_dsp_init(struct snd_sof_dev *sdev, int stream_tag)
-{
-	struct sof_intel_hda_dev *hda = sdev->pdata->hw_pdata;
-	const struct sof_intel_dsp_desc *chip = hda->desc;
-	unsigned int status;
+अटल पूर्णांक cl_dsp_init(काष्ठा snd_sof_dev *sdev, पूर्णांक stream_tag)
+अणु
+	काष्ठा sof_पूर्णांकel_hda_dev *hda = sdev->pdata->hw_pdata;
+	स्थिर काष्ठा sof_पूर्णांकel_dsp_desc *chip = hda->desc;
+	अचिन्हित पूर्णांक status;
 	u32 flags;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* step 1: power up corex */
-	ret = snd_sof_dsp_core_power_up(sdev, chip->host_managed_cores_mask);
-	if (ret < 0) {
-		if (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
+	/* step 1: घातer up corex */
+	ret = snd_sof_dsp_core_घातer_up(sdev, chip->host_managed_cores_mask);
+	अगर (ret < 0) अणु
+		अगर (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
 			dev_err(sdev->dev, "error: dsp core 0/1 power up failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* DSP is powered up, set all SSPs to slave mode */
-	for (i = 0; i < chip->ssp_count; i++) {
+	/* DSP is घातered up, set all SSPs to slave mode */
+	क्रम (i = 0; i < chip->ssp_count; i++) अणु
 		snd_sof_dsp_update_bits_unlocked(sdev, HDA_DSP_BAR,
 						 chip->ssp_base_offset
 						 + i * SSP_DEV_MEM_SIZE
 						 + SSP_SSC1_OFFSET,
 						 SSP_SET_SLAVE,
 						 SSP_SET_SLAVE);
-	}
+	पूर्ण
 
 	/* step 2: purge FW request */
-	snd_sof_dsp_write(sdev, HDA_DSP_BAR, chip->ipc_req,
+	snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_BAR, chip->ipc_req,
 			  chip->ipc_req_mask | (HDA_DSP_IPC_PURGE_FW |
 			  ((stream_tag - 1) << 9)));
 
 	/* step 3: unset core 0 reset state & unstall/run core 0 */
 	ret = hda_dsp_core_run(sdev, BIT(0));
-	if (ret < 0) {
-		if (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
+	अगर (ret < 0) अणु
+		अगर (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
 			dev_err(sdev->dev,
 				"error: dsp core start failed %d\n", ret);
 		ret = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* step 4: wait for IPC DONE bit from ROM */
-	ret = snd_sof_dsp_read_poll_timeout(sdev, HDA_DSP_BAR,
+	/* step 4: रुको क्रम IPC DONE bit from ROM */
+	ret = snd_sof_dsp_पढ़ो_poll_समयout(sdev, HDA_DSP_BAR,
 					    chip->ipc_ack, status,
 					    ((status & chip->ipc_ack_mask)
 						    == chip->ipc_ack_mask),
 					    HDA_DSP_REG_POLL_INTERVAL_US,
 					    HDA_DSP_INIT_TIMEOUT_US);
 
-	if (ret < 0) {
-		if (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
+	अगर (ret < 0) अणु
+		अगर (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
 			dev_err(sdev->dev,
 				"error: %s: timeout for HIPCIE done\n",
 				__func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* set DONE bit to clear the reply IPC message */
-	snd_sof_dsp_update_bits_forced(sdev, HDA_DSP_BAR,
+	snd_sof_dsp_update_bits_क्रमced(sdev, HDA_DSP_BAR,
 				       chip->ipc_ack,
 				       chip->ipc_ack_mask,
 				       chip->ipc_ack_mask);
 
-	/* step 5: power down cores that are no longer needed */
-	ret = snd_sof_dsp_core_power_down(sdev, chip->host_managed_cores_mask &
+	/* step 5: घातer करोwn cores that are no दीर्घer needed */
+	ret = snd_sof_dsp_core_घातer_करोwn(sdev, chip->host_managed_cores_mask &
 					  ~(chip->init_core_mask));
-	if (ret < 0) {
-		if (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
+	अगर (ret < 0) अणु
+		अगर (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
 			dev_err(sdev->dev,
 				"error: dsp core x power down failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* step 6: enable IPC interrupts */
-	hda_dsp_ipc_int_enable(sdev);
+	/* step 6: enable IPC पूर्णांकerrupts */
+	hda_dsp_ipc_पूर्णांक_enable(sdev);
 
-	/* step 7: wait for ROM init */
-	ret = snd_sof_dsp_read_poll_timeout(sdev, HDA_DSP_BAR,
+	/* step 7: रुको क्रम ROM init */
+	ret = snd_sof_dsp_पढ़ो_poll_समयout(sdev, HDA_DSP_BAR,
 					HDA_DSP_SRAM_REG_ROM_STATUS, status,
 					((status & HDA_DSP_ROM_STS_MASK)
 						== HDA_DSP_ROM_INIT),
 					HDA_DSP_REG_POLL_INTERVAL_US,
-					chip->rom_init_timeout *
+					chip->rom_init_समयout *
 					USEC_PER_MSEC);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
-	if (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
+	अगर (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
 		dev_err(sdev->dev,
 			"error: %s: timeout HDA_DSP_SRAM_REG_ROM_STATUS read\n",
 			__func__);
@@ -179,25 +180,25 @@ static int cl_dsp_init(struct snd_sof_dev *sdev, int stream_tag)
 err:
 	flags = SOF_DBG_DUMP_REGS | SOF_DBG_DUMP_PCI | SOF_DBG_DUMP_MBOX;
 
-	/* force error log level after max boot attempts */
-	if (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
+	/* क्रमce error log level after max boot attempts */
+	अगर (hda->boot_iteration == HDA_FW_BOOT_ATTEMPTS)
 		flags |= SOF_DBG_DUMP_FORCE_ERR_LEVEL;
 
 	hda_dsp_dump(sdev, flags);
-	snd_sof_dsp_core_power_down(sdev, chip->host_managed_cores_mask);
+	snd_sof_dsp_core_घातer_करोwn(sdev, chip->host_managed_cores_mask);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cl_trigger(struct snd_sof_dev *sdev,
-		      struct hdac_ext_stream *stream, int cmd)
-{
-	struct hdac_stream *hstream = &stream->hstream;
-	int sd_offset = SOF_STREAM_SD_OFFSET(hstream);
+अटल पूर्णांक cl_trigger(काष्ठा snd_sof_dev *sdev,
+		      काष्ठा hdac_ext_stream *stream, पूर्णांक cmd)
+अणु
+	काष्ठा hdac_stream *hstream = &stream->hstream;
+	पूर्णांक sd_offset = SOF_STREAM_SD_OFFSET(hstream);
 
-	/* code loader is special case that reuses stream ops */
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	/* code loader is special हाल that reuses stream ops */
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		snd_sof_dsp_update_bits(sdev, HDA_DSP_HDA_BAR, SOF_HDA_INTCTL,
 					1 << hstream->index,
 					1 << hstream->index);
@@ -210,56 +211,56 @@ static int cl_trigger(struct snd_sof_dev *sdev,
 					SOF_HDA_CL_DMA_SD_INT_MASK);
 
 		hstream->running = true;
-		return 0;
-	default:
-		return hda_dsp_stream_trigger(sdev, stream, cmd);
-	}
-}
+		वापस 0;
+	शेष:
+		वापस hda_dsp_stream_trigger(sdev, stream, cmd);
+	पूर्ण
+पूर्ण
 
-static int cl_cleanup(struct snd_sof_dev *sdev, struct snd_dma_buffer *dmab,
-		      struct hdac_ext_stream *stream)
-{
-	struct hdac_stream *hstream = &stream->hstream;
-	int sd_offset = SOF_STREAM_SD_OFFSET(hstream);
-	int ret = 0;
+अटल पूर्णांक cl_cleanup(काष्ठा snd_sof_dev *sdev, काष्ठा snd_dma_buffer *dmab,
+		      काष्ठा hdac_ext_stream *stream)
+अणु
+	काष्ठा hdac_stream *hstream = &stream->hstream;
+	पूर्णांक sd_offset = SOF_STREAM_SD_OFFSET(hstream);
+	पूर्णांक ret = 0;
 
-	if (hstream->direction == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (hstream->direction == SNDRV_PCM_STREAM_PLAYBACK)
 		ret = hda_dsp_stream_spib_config(sdev, stream, HDA_DSP_SPIB_DISABLE, 0);
-	else
+	अन्यथा
 		snd_sof_dsp_update_bits(sdev, HDA_DSP_HDA_BAR, sd_offset,
 					SOF_HDA_SD_CTL_DMA_START, 0);
 
 	hda_dsp_stream_put(sdev, hstream->direction, hstream->stream_tag);
 	hstream->running = 0;
-	hstream->substream = NULL;
+	hstream->substream = शून्य;
 
 	/* reset BDL address */
-	snd_sof_dsp_write(sdev, HDA_DSP_HDA_BAR,
+	snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_HDA_BAR,
 			  sd_offset + SOF_HDA_ADSP_REG_CL_SD_BDLPL, 0);
-	snd_sof_dsp_write(sdev, HDA_DSP_HDA_BAR,
+	snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_HDA_BAR,
 			  sd_offset + SOF_HDA_ADSP_REG_CL_SD_BDLPU, 0);
 
-	snd_sof_dsp_write(sdev, HDA_DSP_HDA_BAR, sd_offset, 0);
-	snd_dma_free_pages(dmab);
-	dmab->area = NULL;
+	snd_sof_dsp_ग_लिखो(sdev, HDA_DSP_HDA_BAR, sd_offset, 0);
+	snd_dma_मुक्त_pages(dmab);
+	dmab->area = शून्य;
 	hstream->bufsize = 0;
-	hstream->format_val = 0;
+	hstream->क्रमmat_val = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cl_copy_fw(struct snd_sof_dev *sdev, struct hdac_ext_stream *stream)
-{
-	unsigned int reg;
-	int ret, status;
+अटल पूर्णांक cl_copy_fw(काष्ठा snd_sof_dev *sdev, काष्ठा hdac_ext_stream *stream)
+अणु
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret, status;
 
 	ret = cl_trigger(sdev, stream, SNDRV_PCM_TRIGGER_START);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(sdev->dev, "error: DMA trigger start failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	status = snd_sof_dsp_read_poll_timeout(sdev, HDA_DSP_BAR,
+	status = snd_sof_dsp_पढ़ो_poll_समयout(sdev, HDA_DSP_BAR,
 					HDA_DSP_SRAM_REG_ROM_STATUS, reg,
 					((reg & HDA_DSP_ROM_STS_MASK)
 						== HDA_DSP_ROM_FW_ENTERED),
@@ -267,308 +268,308 @@ static int cl_copy_fw(struct snd_sof_dev *sdev, struct hdac_ext_stream *stream)
 					HDA_DSP_BASEFW_TIMEOUT_US);
 
 	/*
-	 * even in case of errors we still need to stop the DMAs,
-	 * but we return the initial error should the DMA stop also fail
+	 * even in हाल of errors we still need to stop the DMAs,
+	 * but we वापस the initial error should the DMA stop also fail
 	 */
 
-	if (status < 0) {
+	अगर (status < 0) अणु
 		dev_err(sdev->dev,
 			"error: %s: timeout HDA_DSP_SRAM_REG_ROM_STATUS read\n",
 			__func__);
-	}
+	पूर्ण
 
 	ret = cl_trigger(sdev, stream, SNDRV_PCM_TRIGGER_STOP);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(sdev->dev, "error: DMA trigger stop failed\n");
-		if (!status)
+		अगर (!status)
 			status = ret;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int hda_dsp_cl_boot_firmware_iccmax(struct snd_sof_dev *sdev)
-{
-	struct snd_sof_pdata *plat_data = sdev->pdata;
-	struct hdac_ext_stream *iccmax_stream;
-	struct hdac_bus *bus = sof_to_bus(sdev);
-	struct firmware stripped_firmware;
-	int ret, ret1;
+पूर्णांक hda_dsp_cl_boot_firmware_iccmax(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा snd_sof_pdata *plat_data = sdev->pdata;
+	काष्ठा hdac_ext_stream *iccmax_stream;
+	काष्ठा hdac_bus *bus = sof_to_bus(sdev);
+	काष्ठा firmware stripped_firmware;
+	पूर्णांक ret, ret1;
 	u8 original_gb;
 
 	/* save the original LTRP guardband value */
-	original_gb = snd_hdac_chip_readb(bus, VS_LTRP) & HDA_VS_INTEL_LTRP_GB_MASK;
+	original_gb = snd_hdac_chip_पढ़ोb(bus, VS_LTRP) & HDA_VS_INTEL_LTRP_GB_MASK;
 
-	if (plat_data->fw->size <= plat_data->fw_offset) {
+	अगर (plat_data->fw->size <= plat_data->fw_offset) अणु
 		dev_err(sdev->dev, "error: firmware size must be greater than firmware offset\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stripped_firmware.size = plat_data->fw->size - plat_data->fw_offset;
 
-	/* prepare capture stream for ICCMAX */
+	/* prepare capture stream क्रम ICCMAX */
 	iccmax_stream = cl_stream_prepare(sdev, HDA_CL_STREAM_FORMAT, stripped_firmware.size,
 					  &sdev->dmab_bdl, SNDRV_PCM_STREAM_CAPTURE);
-	if (IS_ERR(iccmax_stream)) {
+	अगर (IS_ERR(iccmax_stream)) अणु
 		dev_err(sdev->dev, "error: dma prepare for ICCMAX stream failed\n");
-		return PTR_ERR(iccmax_stream);
-	}
+		वापस PTR_ERR(iccmax_stream);
+	पूर्ण
 
 	ret = hda_dsp_cl_boot_firmware(sdev);
 
 	/*
-	 * Perform iccmax stream cleanup. This should be done even if firmware loading fails.
-	 * If the cleanup also fails, we return the initial error
+	 * Perक्रमm iccmax stream cleanup. This should be करोne even अगर firmware loading fails.
+	 * If the cleanup also fails, we वापस the initial error
 	 */
 	ret1 = cl_cleanup(sdev, &sdev->dmab_bdl, iccmax_stream);
-	if (ret1 < 0) {
+	अगर (ret1 < 0) अणु
 		dev_err(sdev->dev, "error: ICCMAX stream cleanup failed\n");
 
-		/* set return value to indicate cleanup failure */
-		if (!ret)
+		/* set वापस value to indicate cleanup failure */
+		अगर (!ret)
 			ret = ret1;
-	}
+	पूर्ण
 
 	/* restore the original guardband value after FW boot */
 	snd_hdac_chip_updateb(bus, VS_LTRP, HDA_VS_INTEL_LTRP_GB_MASK, original_gb);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int hda_dsp_cl_boot_firmware(struct snd_sof_dev *sdev)
-{
-	struct sof_intel_hda_dev *hda = sdev->pdata->hw_pdata;
-	struct snd_sof_pdata *plat_data = sdev->pdata;
-	const struct sof_dev_desc *desc = plat_data->desc;
-	const struct sof_intel_dsp_desc *chip_info;
-	struct hdac_ext_stream *stream;
-	struct firmware stripped_firmware;
-	int ret, ret1, i;
+पूर्णांक hda_dsp_cl_boot_firmware(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा sof_पूर्णांकel_hda_dev *hda = sdev->pdata->hw_pdata;
+	काष्ठा snd_sof_pdata *plat_data = sdev->pdata;
+	स्थिर काष्ठा sof_dev_desc *desc = plat_data->desc;
+	स्थिर काष्ठा sof_पूर्णांकel_dsp_desc *chip_info;
+	काष्ठा hdac_ext_stream *stream;
+	काष्ठा firmware stripped_firmware;
+	पूर्णांक ret, ret1, i;
 
 	chip_info = desc->chip_info;
 
-	if (plat_data->fw->size <= plat_data->fw_offset) {
+	अगर (plat_data->fw->size <= plat_data->fw_offset) अणु
 		dev_err(sdev->dev, "error: firmware size must be greater than firmware offset\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stripped_firmware.data = plat_data->fw->data + plat_data->fw_offset;
 	stripped_firmware.size = plat_data->fw->size - plat_data->fw_offset;
 
-	/* init for booting wait */
-	init_waitqueue_head(&sdev->boot_wait);
+	/* init क्रम booting रुको */
+	init_रुकोqueue_head(&sdev->boot_रुको);
 
-	/* prepare DMA for code loader stream */
+	/* prepare DMA क्रम code loader stream */
 	stream = cl_stream_prepare(sdev, HDA_CL_STREAM_FORMAT, stripped_firmware.size,
 				   &sdev->dmab, SNDRV_PCM_STREAM_PLAYBACK);
-	if (IS_ERR(stream)) {
+	अगर (IS_ERR(stream)) अणु
 		dev_err(sdev->dev, "error: dma prepare for fw loading failed\n");
-		return PTR_ERR(stream);
-	}
+		वापस PTR_ERR(stream);
+	पूर्ण
 
-	memcpy(sdev->dmab.area, stripped_firmware.data,
+	स_नकल(sdev->dmab.area, stripped_firmware.data,
 	       stripped_firmware.size);
 
-	/* try ROM init a few times before giving up */
-	for (i = 0; i < HDA_FW_BOOT_ATTEMPTS; i++) {
+	/* try ROM init a few बार beक्रमe giving up */
+	क्रम (i = 0; i < HDA_FW_BOOT_ATTEMPTS; i++) अणु
 		dev_dbg(sdev->dev,
 			"Attempting iteration %d of Core En/ROM load...\n", i);
 
 		hda->boot_iteration = i + 1;
 		ret = cl_dsp_init(sdev, stream->hstream.stream_tag);
 
-		/* don't retry anymore if successful */
-		if (!ret)
-			break;
-	}
+		/* करोn't retry anymore अगर successful */
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
-	if (i == HDA_FW_BOOT_ATTEMPTS) {
+	अगर (i == HDA_FW_BOOT_ATTEMPTS) अणु
 		dev_err(sdev->dev, "error: dsp init failed after %d attempts with err: %d\n",
 			i, ret);
 		dev_err(sdev->dev, "ROM error=0x%x: FW status=0x%x\n",
-			snd_sof_dsp_read(sdev, HDA_DSP_BAR,
+			snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR,
 					 HDA_DSP_SRAM_REG_ROM_ERROR),
-			snd_sof_dsp_read(sdev, HDA_DSP_BAR,
+			snd_sof_dsp_पढ़ो(sdev, HDA_DSP_BAR,
 					 HDA_DSP_SRAM_REG_ROM_STATUS));
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/*
-	 * When a SoundWire link is in clock stop state, a Slave
-	 * device may trigger in-band wakes for events such as jack
+	 * When a SoundWire link is in घड़ी stop state, a Slave
+	 * device may trigger in-band wakes क्रम events such as jack
 	 * insertion or acoustic event detection. This event will lead
-	 * to a WAKEEN interrupt, handled by the PCI device and routed
-	 * to PME if the PCI device is in D3. The resume function in
-	 * audio PCI driver will be invoked by ACPI for PME event and
-	 * initialize the device and process WAKEEN interrupt.
+	 * to a WAKEEN पूर्णांकerrupt, handled by the PCI device and routed
+	 * to PME अगर the PCI device is in D3. The resume function in
+	 * audio PCI driver will be invoked by ACPI क्रम PME event and
+	 * initialize the device and process WAKEEN पूर्णांकerrupt.
 	 *
-	 * The WAKEEN interrupt should be processed ASAP to prevent an
-	 * interrupt flood, otherwise other interrupts, such IPC,
+	 * The WAKEEN पूर्णांकerrupt should be processed ASAP to prevent an
+	 * पूर्णांकerrupt flood, otherwise other पूर्णांकerrupts, such IPC,
 	 * cannot work normally.  The WAKEEN is handled after the ROM
-	 * is initialized successfully, which ensures power rails are
-	 * enabled before accessing the SoundWire SHIM registers
+	 * is initialized successfully, which ensures घातer rails are
+	 * enabled beक्रमe accessing the SoundWire SHIM रेजिस्टरs
 	 */
-	if (!sdev->first_boot)
+	अगर (!sdev->first_boot)
 		hda_sdw_process_wakeen(sdev);
 
 	/*
-	 * at this point DSP ROM has been initialized and
-	 * should be ready for code loading and firmware boot
+	 * at this poपूर्णांक DSP ROM has been initialized and
+	 * should be पढ़ोy क्रम code loading and firmware boot
 	 */
 	ret = cl_copy_fw(sdev, stream);
-	if (!ret) {
+	अगर (!ret) अणु
 		dev_dbg(sdev->dev, "Firmware download successful, booting...\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		hda_dsp_dump(sdev, SOF_DBG_DUMP_REGS | SOF_DBG_DUMP_PCI | SOF_DBG_DUMP_MBOX |
 			     SOF_DBG_DUMP_FORCE_ERR_LEVEL);
 		dev_err(sdev->dev, "error: load fw failed ret: %d\n", ret);
-	}
+	पूर्ण
 
 cleanup:
 	/*
-	 * Perform codeloader stream cleanup.
-	 * This should be done even if firmware loading fails.
-	 * If the cleanup also fails, we return the initial error
+	 * Perक्रमm codeloader stream cleanup.
+	 * This should be करोne even अगर firmware loading fails.
+	 * If the cleanup also fails, we वापस the initial error
 	 */
 	ret1 = cl_cleanup(sdev, &sdev->dmab, stream);
-	if (ret1 < 0) {
+	अगर (ret1 < 0) अणु
 		dev_err(sdev->dev, "error: Code loader DSP cleanup failed\n");
 
-		/* set return value to indicate cleanup failure */
-		if (!ret)
+		/* set वापस value to indicate cleanup failure */
+		अगर (!ret)
 			ret = ret1;
-	}
+	पूर्ण
 
 	/*
-	 * return primary core id if both fw copy
+	 * वापस primary core id अगर both fw copy
 	 * and stream clean up are successful
 	 */
-	if (!ret)
-		return chip_info->init_core_mask;
+	अगर (!ret)
+		वापस chip_info->init_core_mask;
 
 	/* disable DSP */
 	snd_sof_dsp_update_bits(sdev, HDA_DSP_PP_BAR,
 				SOF_HDA_REG_PP_PPCTL,
 				SOF_HDA_PPCTL_GPROCEN, 0);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* pre fw run operations */
-int hda_dsp_pre_fw_run(struct snd_sof_dev *sdev)
-{
-	/* disable clock gating and power gating */
-	return hda_dsp_ctrl_clock_power_gating(sdev, false);
-}
+पूर्णांक hda_dsp_pre_fw_run(काष्ठा snd_sof_dev *sdev)
+अणु
+	/* disable घड़ी gating and घातer gating */
+	वापस hda_dsp_ctrl_घड़ी_घातer_gating(sdev, false);
+पूर्ण
 
 /* post fw run operations */
-int hda_dsp_post_fw_run(struct snd_sof_dev *sdev)
-{
-	int ret;
+पूर्णांक hda_dsp_post_fw_run(काष्ठा snd_sof_dev *sdev)
+अणु
+	पूर्णांक ret;
 
-	if (sdev->first_boot) {
+	अगर (sdev->first_boot) अणु
 		ret = hda_sdw_startup(sdev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(sdev->dev,
 				"error: could not startup SoundWire links\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	hda_sdw_int_enable(sdev, true);
+	hda_sdw_पूर्णांक_enable(sdev, true);
 
-	/* re-enable clock gating and power gating */
-	return hda_dsp_ctrl_clock_power_gating(sdev, true);
-}
+	/* re-enable घड़ी gating and घातer gating */
+	वापस hda_dsp_ctrl_घड़ी_घातer_gating(sdev, true);
+पूर्ण
 
 /*
- * post fw run operations for ICL,
- * Core 3 will be powered up and in stall when HPRO is enabled
+ * post fw run operations क्रम ICL,
+ * Core 3 will be घातered up and in stall when HPRO is enabled
  */
-int hda_dsp_post_fw_run_icl(struct snd_sof_dev *sdev)
-{
-	struct sof_intel_hda_dev *hda = sdev->pdata->hw_pdata;
-	int ret;
+पूर्णांक hda_dsp_post_fw_run_icl(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा sof_पूर्णांकel_hda_dev *hda = sdev->pdata->hw_pdata;
+	पूर्णांक ret;
 
-	if (sdev->first_boot) {
+	अगर (sdev->first_boot) अणु
 		ret = hda_sdw_startup(sdev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(sdev->dev,
 				"error: could not startup SoundWire links\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	hda_sdw_int_enable(sdev, true);
+	hda_sdw_पूर्णांक_enable(sdev, true);
 
 	/*
-	 * The recommended HW programming sequence for ICL is to
-	 * power up core 3 and keep it in stall if HPRO is enabled.
-	 * Major difference between ICL and TGL, on ICL core 3 is managed by
+	 * The recommended HW programming sequence क्रम ICL is to
+	 * घातer up core 3 and keep it in stall अगर HPRO is enabled.
+	 * Major dअगरference between ICL and TGL, on ICL core 3 is managed by
 	 * the host whereas on TGL it is handled by the firmware.
 	 */
-	if (!hda->clk_config_lpro) {
-		ret = snd_sof_dsp_core_power_up(sdev, BIT(3));
-		if (ret < 0) {
+	अगर (!hda->clk_config_lpro) अणु
+		ret = snd_sof_dsp_core_घातer_up(sdev, BIT(3));
+		अगर (ret < 0) अणु
 			dev_err(sdev->dev, "error: dsp core power up failed on core 3\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		snd_sof_dsp_stall(sdev, BIT(3));
-	}
+	पूर्ण
 
-	/* re-enable clock gating and power gating */
-	return hda_dsp_ctrl_clock_power_gating(sdev, true);
-}
+	/* re-enable घड़ी gating and घातer gating */
+	वापस hda_dsp_ctrl_घड़ी_घातer_gating(sdev, true);
+पूर्ण
 
-int hda_dsp_ext_man_get_cavs_config_data(struct snd_sof_dev *sdev,
-					 const struct sof_ext_man_elem_header *hdr)
-{
-	const struct sof_ext_man_cavs_config_data *config_data =
-		container_of(hdr, struct sof_ext_man_cavs_config_data, hdr);
-	struct sof_intel_hda_dev *hda = sdev->pdata->hw_pdata;
-	int i, elem_num;
+पूर्णांक hda_dsp_ext_man_get_cavs_config_data(काष्ठा snd_sof_dev *sdev,
+					 स्थिर काष्ठा sof_ext_man_elem_header *hdr)
+अणु
+	स्थिर काष्ठा sof_ext_man_cavs_config_data *config_data =
+		container_of(hdr, काष्ठा sof_ext_man_cavs_config_data, hdr);
+	काष्ठा sof_पूर्णांकel_hda_dev *hda = sdev->pdata->hw_pdata;
+	पूर्णांक i, elem_num;
 
 	/* calculate total number of config data elements */
-	elem_num = (hdr->size - sizeof(struct sof_ext_man_elem_header))
-		   / sizeof(struct sof_config_elem);
-	if (elem_num <= 0) {
+	elem_num = (hdr->size - माप(काष्ठा sof_ext_man_elem_header))
+		   / माप(काष्ठा sof_config_elem);
+	अगर (elem_num <= 0) अणु
 		dev_err(sdev->dev, "cavs config data is inconsistent: %d\n", elem_num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < elem_num; i++)
-		switch (config_data->elems[i].token) {
-		case SOF_EXT_MAN_CAVS_CONFIG_EMPTY:
+	क्रम (i = 0; i < elem_num; i++)
+		चयन (config_data->elems[i].token) अणु
+		हाल SOF_EXT_MAN_CAVS_CONFIG_EMPTY:
 			/* skip empty token */
-			break;
-		case SOF_EXT_MAN_CAVS_CONFIG_CAVS_LPRO:
+			अवरोध;
+		हाल SOF_EXT_MAN_CAVS_CONFIG_CAVS_LPRO:
 			hda->clk_config_lpro = config_data->elems[i].value;
 			dev_dbg(sdev->dev, "FW clock config: %s\n",
 				hda->clk_config_lpro ? "LPRO" : "HPRO");
-			break;
-		case SOF_EXT_MAN_CAVS_CONFIG_OUTBOX_SIZE:
-		case SOF_EXT_MAN_CAVS_CONFIG_INBOX_SIZE:
+			अवरोध;
+		हाल SOF_EXT_MAN_CAVS_CONFIG_OUTBOX_SIZE:
+		हाल SOF_EXT_MAN_CAVS_CONFIG_INBOX_SIZE:
 			/* These elements are defined but not being used yet. No warn is required */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_info(sdev->dev, "unsupported token type: %d\n",
 				 config_data->elems[i].token);
-		}
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hda_dsp_core_stall_icl(struct snd_sof_dev *sdev, unsigned int core_mask)
-{
-	struct sof_intel_hda_dev *hda = sdev->pdata->hw_pdata;
-	const struct sof_intel_dsp_desc *chip = hda->desc;
+पूर्णांक hda_dsp_core_stall_icl(काष्ठा snd_sof_dev *sdev, अचिन्हित पूर्णांक core_mask)
+अणु
+	काष्ठा sof_पूर्णांकel_hda_dev *hda = sdev->pdata->hw_pdata;
+	स्थिर काष्ठा sof_पूर्णांकel_dsp_desc *chip = hda->desc;
 
 	/* make sure core_mask in host managed cores */
 	core_mask &= chip->host_managed_cores_mask;
-	if (!core_mask) {
+	अगर (!core_mask) अणु
 		dev_err(sdev->dev, "error: core_mask is not in host managed cores\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* stall core */
 	snd_sof_dsp_update_bits_unlocked(sdev, HDA_DSP_BAR,
@@ -576,5 +577,5 @@ int hda_dsp_core_stall_icl(struct snd_sof_dev *sdev, unsigned int core_mask)
 					 HDA_DSP_ADSPCS_CSTALL_MASK(core_mask),
 					 HDA_DSP_ADSPCS_CSTALL_MASK(core_mask));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,109 +1,110 @@
+<शैली गुरु>
 /*
- * debugfs ops for the L1 cache
+ * debugfs ops क्रम the L1 cache
  *
  *  Copyright (C) 2006  Paul Mundt
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <asm/processor.h>
-#include <linux/uaccess.h>
-#include <asm/cache.h>
-#include <asm/io.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/पन.स>
 
-enum cache_type {
+क्रमागत cache_type अणु
 	CACHE_TYPE_ICACHE,
 	CACHE_TYPE_DCACHE,
 	CACHE_TYPE_UNIFIED,
-};
+पूर्ण;
 
-static int cache_debugfs_show(struct seq_file *file, void *iter)
-{
-	unsigned int cache_type = (unsigned int)file->private;
-	struct cache_info *cache;
-	unsigned int waysize, way;
-	unsigned long ccr;
-	unsigned long addrstart = 0;
+अटल पूर्णांक cache_debugfs_show(काष्ठा seq_file *file, व्योम *iter)
+अणु
+	अचिन्हित पूर्णांक cache_type = (अचिन्हित पूर्णांक)file->निजी;
+	काष्ठा cache_info *cache;
+	अचिन्हित पूर्णांक waysize, way;
+	अचिन्हित दीर्घ ccr;
+	अचिन्हित दीर्घ addrstart = 0;
 
 	/*
-	 * Go uncached immediately so we don't skew the results any
-	 * more than we already are..
+	 * Go uncached immediately so we करोn't skew the results any
+	 * more than we alपढ़ोy are..
 	 */
 	jump_to_uncached();
 
-	ccr = __raw_readl(SH_CCR);
-	if ((ccr & CCR_CACHE_ENABLE) == 0) {
+	ccr = __raw_पढ़ोl(SH_CCR);
+	अगर ((ccr & CCR_CACHE_ENABLE) == 0) अणु
 		back_to_cached();
 
-		seq_printf(file, "disabled\n");
-		return 0;
-	}
+		seq_म_लिखो(file, "disabled\n");
+		वापस 0;
+	पूर्ण
 
-	if (cache_type == CACHE_TYPE_DCACHE) {
+	अगर (cache_type == CACHE_TYPE_DCACHE) अणु
 		addrstart = CACHE_OC_ADDRESS_ARRAY;
 		cache = &current_cpu_data.dcache;
-	} else {
+	पूर्ण अन्यथा अणु
 		addrstart = CACHE_IC_ADDRESS_ARRAY;
 		cache = &current_cpu_data.icache;
-	}
+	पूर्ण
 
 	waysize = cache->sets;
 
 	/*
-	 * If the OC is already in RAM mode, we only have
+	 * If the OC is alपढ़ोy in RAM mode, we only have
 	 * half of the entries to consider..
 	 */
-	if ((ccr & CCR_CACHE_ORA) && cache_type == CACHE_TYPE_DCACHE)
+	अगर ((ccr & CCR_CACHE_ORA) && cache_type == CACHE_TYPE_DCACHE)
 		waysize >>= 1;
 
-	waysize <<= cache->entry_shift;
+	waysize <<= cache->entry_shअगरt;
 
-	for (way = 0; way < cache->ways; way++) {
-		unsigned long addr;
-		unsigned int line;
+	क्रम (way = 0; way < cache->ways; way++) अणु
+		अचिन्हित दीर्घ addr;
+		अचिन्हित पूर्णांक line;
 
-		seq_printf(file, "-----------------------------------------\n");
-		seq_printf(file, "Way %d\n", way);
-		seq_printf(file, "-----------------------------------------\n");
+		seq_म_लिखो(file, "-----------------------------------------\n");
+		seq_म_लिखो(file, "Way %d\n", way);
+		seq_म_लिखो(file, "-----------------------------------------\n");
 
-		for (addr = addrstart, line = 0;
+		क्रम (addr = addrstart, line = 0;
 		     addr < addrstart + waysize;
-		     addr += cache->linesz, line++) {
-			unsigned long data = __raw_readl(addr);
+		     addr += cache->linesz, line++) अणु
+			अचिन्हित दीर्घ data = __raw_पढ़ोl(addr);
 
 			/* Check the V bit, ignore invalid cachelines */
-			if ((data & 1) == 0)
-				continue;
+			अगर ((data & 1) == 0)
+				जारी;
 
 			/* U: Dirty, cache tag is 10 bits up */
-			seq_printf(file, "%3d: %c 0x%lx\n",
+			seq_म_लिखो(file, "%3d: %c 0x%lx\n",
 				   line, data & 2 ? 'U' : ' ',
 				   data & 0x1ffffc00);
-		}
+		पूर्ण
 
 		addrstart += cache->way_incr;
-	}
+	पूर्ण
 
 	back_to_cached();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(cache_debugfs);
 
-static int __init cache_debugfs_init(void)
-{
+अटल पूर्णांक __init cache_debugfs_init(व्योम)
+अणु
 	debugfs_create_file("dcache", S_IRUSR, arch_debugfs_dir,
-			    (void *)CACHE_TYPE_DCACHE, &cache_debugfs_fops);
+			    (व्योम *)CACHE_TYPE_DCACHE, &cache_debugfs_fops);
 	debugfs_create_file("icache", S_IRUSR, arch_debugfs_dir,
-			    (void *)CACHE_TYPE_ICACHE, &cache_debugfs_fops);
-	return 0;
-}
+			    (व्योम *)CACHE_TYPE_ICACHE, &cache_debugfs_fops);
+	वापस 0;
+पूर्ण
 module_init(cache_debugfs_init);
 
 MODULE_LICENSE("GPL v2");

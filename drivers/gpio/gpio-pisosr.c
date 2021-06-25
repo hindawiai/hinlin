@@ -1,117 +1,118 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2015 Texas Instruments Incorporated - http://www.ti.com/
  *	Andrew F. Davis <afd@ti.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether expressed or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License version 2 for more details.
+ * GNU General Public License version 2 क्रम more details.
  */
 
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spi/spi.h>
 
-#define DEFAULT_NGPIO 8
+#घोषणा DEFAULT_NGPIO 8
 
 /**
- * struct pisosr_gpio - GPIO driver data
+ * काष्ठा pisosr_gpio - GPIO driver data
  * @chip: GPIO controller chip
- * @spi: SPI device pointer
- * @buffer: Buffer for device reads
+ * @spi: SPI device poपूर्णांकer
+ * @buffer: Buffer क्रम device पढ़ोs
  * @buffer_size: Size of buffer
- * @load_gpio: GPIO pin used to load input into device
- * @lock: Protects read sequences
+ * @load_gpio: GPIO pin used to load input पूर्णांकo device
+ * @lock: Protects पढ़ो sequences
  */
-struct pisosr_gpio {
-	struct gpio_chip chip;
-	struct spi_device *spi;
+काष्ठा pisosr_gpio अणु
+	काष्ठा gpio_chip chip;
+	काष्ठा spi_device *spi;
 	u8 *buffer;
-	size_t buffer_size;
-	struct gpio_desc *load_gpio;
-	struct mutex lock;
-};
+	माप_प्रकार buffer_size;
+	काष्ठा gpio_desc *load_gpio;
+	काष्ठा mutex lock;
+पूर्ण;
 
-static int pisosr_gpio_refresh(struct pisosr_gpio *gpio)
-{
-	int ret;
+अटल पूर्णांक pisosr_gpio_refresh(काष्ठा pisosr_gpio *gpio)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&gpio->lock);
 
-	if (gpio->load_gpio) {
+	अगर (gpio->load_gpio) अणु
 		gpiod_set_value_cansleep(gpio->load_gpio, 1);
-		udelay(1); /* registers load time (~10ns) */
+		udelay(1); /* रेजिस्टरs load समय (~10ns) */
 		gpiod_set_value_cansleep(gpio->load_gpio, 0);
-		udelay(1); /* registers recovery time (~5ns) */
-	}
+		udelay(1); /* रेजिस्टरs recovery समय (~5ns) */
+	पूर्ण
 
-	ret = spi_read(gpio->spi, gpio->buffer, gpio->buffer_size);
+	ret = spi_पढ़ो(gpio->spi, gpio->buffer, gpio->buffer_size);
 
 	mutex_unlock(&gpio->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pisosr_gpio_get_direction(struct gpio_chip *chip,
-				     unsigned offset)
-{
+अटल पूर्णांक pisosr_gpio_get_direction(काष्ठा gpio_chip *chip,
+				     अचिन्हित offset)
+अणु
 	/* This device always input */
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int pisosr_gpio_direction_input(struct gpio_chip *chip,
-				       unsigned offset)
-{
+अटल पूर्णांक pisosr_gpio_direction_input(काष्ठा gpio_chip *chip,
+				       अचिन्हित offset)
+अणु
 	/* This device always input */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pisosr_gpio_direction_output(struct gpio_chip *chip,
-					unsigned offset, int value)
-{
+अटल पूर्णांक pisosr_gpio_direction_output(काष्ठा gpio_chip *chip,
+					अचिन्हित offset, पूर्णांक value)
+अणु
 	/* This device is input only */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int pisosr_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct pisosr_gpio *gpio = gpiochip_get_data(chip);
+अटल पूर्णांक pisosr_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा pisosr_gpio *gpio = gpiochip_get_data(chip);
 
 	/* Refresh may not always be needed */
 	pisosr_gpio_refresh(gpio);
 
-	return (gpio->buffer[offset / 8] >> (offset % 8)) & 0x1;
-}
+	वापस (gpio->buffer[offset / 8] >> (offset % 8)) & 0x1;
+पूर्ण
 
-static int pisosr_gpio_get_multiple(struct gpio_chip *chip,
-				    unsigned long *mask, unsigned long *bits)
-{
-	struct pisosr_gpio *gpio = gpiochip_get_data(chip);
-	unsigned long offset;
-	unsigned long gpio_mask;
-	unsigned long buffer_state;
+अटल पूर्णांक pisosr_gpio_get_multiple(काष्ठा gpio_chip *chip,
+				    अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा pisosr_gpio *gpio = gpiochip_get_data(chip);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ gpio_mask;
+	अचिन्हित दीर्घ buffer_state;
 
 	pisosr_gpio_refresh(gpio);
 
-	bitmap_zero(bits, chip->ngpio);
-	for_each_set_clump8(offset, gpio_mask, mask, chip->ngpio) {
+	biपंचांगap_zero(bits, chip->ngpio);
+	क्रम_each_set_clump8(offset, gpio_mask, mask, chip->ngpio) अणु
 		buffer_state = gpio->buffer[offset / 8] & gpio_mask;
-		bitmap_set_value8(bits, buffer_state, offset);
-	}
+		biपंचांगap_set_value8(bits, buffer_state, offset);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct gpio_chip template_chip = {
+अटल स्थिर काष्ठा gpio_chip ढाँचा_chip = अणु
 	.label			= "pisosr-gpio",
 	.owner			= THIS_MODULE,
 	.get_direction		= pisosr_gpio_get_direction,
@@ -122,79 +123,79 @@ static const struct gpio_chip template_chip = {
 	.base			= -1,
 	.ngpio			= DEFAULT_NGPIO,
 	.can_sleep		= true,
-};
+पूर्ण;
 
-static int pisosr_gpio_probe(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct pisosr_gpio *gpio;
-	int ret;
+अटल पूर्णांक pisosr_gpio_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा pisosr_gpio *gpio;
+	पूर्णांक ret;
 
-	gpio = devm_kzalloc(dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
 	spi_set_drvdata(spi, gpio);
 
-	gpio->chip = template_chip;
+	gpio->chip = ढाँचा_chip;
 	gpio->chip.parent = dev;
-	of_property_read_u16(dev->of_node, "ngpios", &gpio->chip.ngpio);
+	of_property_पढ़ो_u16(dev->of_node, "ngpios", &gpio->chip.ngpio);
 
 	gpio->spi = spi;
 
 	gpio->buffer_size = DIV_ROUND_UP(gpio->chip.ngpio, 8);
 	gpio->buffer = devm_kzalloc(dev, gpio->buffer_size, GFP_KERNEL);
-	if (!gpio->buffer)
-		return -ENOMEM;
+	अगर (!gpio->buffer)
+		वापस -ENOMEM;
 
 	gpio->load_gpio = devm_gpiod_get_optional(dev, "load", GPIOD_OUT_LOW);
-	if (IS_ERR(gpio->load_gpio))
-		return dev_err_probe(dev, PTR_ERR(gpio->load_gpio),
+	अगर (IS_ERR(gpio->load_gpio))
+		वापस dev_err_probe(dev, PTR_ERR(gpio->load_gpio),
 				     "Unable to allocate load GPIO\n");
 
 	mutex_init(&gpio->lock);
 
 	ret = gpiochip_add_data(&gpio->chip, gpio);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Unable to register gpiochip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pisosr_gpio_remove(struct spi_device *spi)
-{
-	struct pisosr_gpio *gpio = spi_get_drvdata(spi);
+अटल पूर्णांक pisosr_gpio_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा pisosr_gpio *gpio = spi_get_drvdata(spi);
 
-	gpiochip_remove(&gpio->chip);
+	gpiochip_हटाओ(&gpio->chip);
 
 	mutex_destroy(&gpio->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id pisosr_gpio_id_table[] = {
-	{ "pisosr-gpio", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा spi_device_id pisosr_gpio_id_table[] = अणु
+	अणु "pisosr-gpio", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, pisosr_gpio_id_table);
 
-static const struct of_device_id pisosr_gpio_of_match_table[] = {
-	{ .compatible = "pisosr-gpio", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id pisosr_gpio_of_match_table[] = अणु
+	अणु .compatible = "pisosr-gpio", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pisosr_gpio_of_match_table);
 
-static struct spi_driver pisosr_gpio_driver = {
-	.driver = {
+अटल काष्ठा spi_driver pisosr_gpio_driver = अणु
+	.driver = अणु
 		.name = "pisosr-gpio",
 		.of_match_table = pisosr_gpio_of_match_table,
-	},
+	पूर्ण,
 	.probe = pisosr_gpio_probe,
-	.remove = pisosr_gpio_remove,
+	.हटाओ = pisosr_gpio_हटाओ,
 	.id_table = pisosr_gpio_id_table,
-};
+पूर्ण;
 module_spi_driver(pisosr_gpio_driver);
 
 MODULE_AUTHOR("Andrew F. Davis <afd@ti.com>");

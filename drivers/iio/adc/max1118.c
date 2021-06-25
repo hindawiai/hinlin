@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * MAX1117/MAX1118/MAX1119 8-bit, dual-channel ADCs driver
  *
  * Copyright (c) 2017 Akinobu Mita <akinobu.mita@gmail.com>
  *
- * Datasheet: https://datasheets.maximintegrated.com/en/ds/MAX1117-MAX1119.pdf
+ * Datasheet: https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX1117-MAX1119.pdf
  *
- * SPI interface connections
+ * SPI पूर्णांकerface connections
  *
  * SPI                MAXIM
  * Master  Direction  MAX1117/8/9
@@ -17,291 +18,291 @@
  * ------  ---------  -----------
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/spi/spi.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/regulator/consumer.h>
 
-enum max1118_id {
+क्रमागत max1118_id अणु
 	max1117,
 	max1118,
 	max1119,
-};
+पूर्ण;
 
-struct max1118 {
-	struct spi_device *spi;
-	struct mutex lock;
-	struct regulator *reg;
+काष्ठा max1118 अणु
+	काष्ठा spi_device *spi;
+	काष्ठा mutex lock;
+	काष्ठा regulator *reg;
 	/* Ensure natural alignment of buffer elements */
-	struct {
+	काष्ठा अणु
 		u8 channels[2];
 		s64 ts __aligned(8);
-	} scan;
+	पूर्ण scan;
 
 	u8 data ____cacheline_aligned;
-};
+पूर्ण;
 
-#define MAX1118_CHANNEL(ch)						\
-	{								\
+#घोषणा MAX1118_CHANNEL(ch)						\
+	अणु								\
 		.type = IIO_VOLTAGE,					\
 		.indexed = 1,						\
 		.channel = (ch),					\
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),		\
 		.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE),	\
 		.scan_index = ch,					\
-		.scan_type = {						\
+		.scan_type = अणु						\
 			.sign = 'u',					\
 			.realbits = 8,					\
 			.storagebits = 8,				\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-static const struct iio_chan_spec max1118_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec max1118_channels[] = अणु
 	MAX1118_CHANNEL(0),
 	MAX1118_CHANNEL(1),
 	IIO_CHAN_SOFT_TIMESTAMP(2),
-};
+पूर्ण;
 
-static int max1118_read(struct spi_device *spi, int channel)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct max1118 *adc = iio_priv(indio_dev);
-	struct spi_transfer xfers[] = {
+अटल पूर्णांक max1118_पढ़ो(काष्ठा spi_device *spi, पूर्णांक channel)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा max1118 *adc = iio_priv(indio_dev);
+	काष्ठा spi_transfer xfers[] = अणु
 		/*
-		 * To select CH1 for conversion, CNVST pin must be brought high
-		 * and low for a second time.
+		 * To select CH1 क्रम conversion, CNVST pin must be brought high
+		 * and low क्रम a second समय.
 		 */
-		{
+		अणु
 			.len = 0,
-			.delay = {	/* > CNVST Low Time 100 ns */
+			.delay = अणु	/* > CNVST Low Time 100 ns */
 				.value = 1,
 				.unit = SPI_DELAY_UNIT_USECS
-			},
+			पूर्ण,
 			.cs_change = 1,
-		},
+		पूर्ण,
 		/*
-		 * The acquisition interval begins with the falling edge of
+		 * The acquisition पूर्णांकerval begins with the falling edge of
 		 * CNVST.  The total acquisition and conversion process takes
 		 * <7.5us.
 		 */
-		{
+		अणु
 			.len = 0,
-			.delay = {
+			.delay = अणु
 				.value = 8,
 				.unit = SPI_DELAY_UNIT_USECS
-			},
-		},
-		{
+			पूर्ण,
+		पूर्ण,
+		अणु
 			.rx_buf = &adc->data,
 			.len = 1,
-		},
-	};
-	int ret;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (channel == 0)
+	अगर (channel == 0)
 		ret = spi_sync_transfer(spi, xfers + 1, 2);
-	else
+	अन्यथा
 		ret = spi_sync_transfer(spi, xfers, 3);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return adc->data;
-}
+	वापस adc->data;
+पूर्ण
 
-static int max1118_get_vref_mV(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct max1118 *adc = iio_priv(indio_dev);
-	const struct spi_device_id *id = spi_get_device_id(spi);
-	int vref_uV;
+अटल पूर्णांक max1118_get_vref_mV(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा max1118 *adc = iio_priv(indio_dev);
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+	पूर्णांक vref_uV;
 
-	switch (id->driver_data) {
-	case max1117:
-		return 2048;
-	case max1119:
-		return 4096;
-	case max1118:
+	चयन (id->driver_data) अणु
+	हाल max1117:
+		वापस 2048;
+	हाल max1119:
+		वापस 4096;
+	हाल max1118:
 		vref_uV = regulator_get_voltage(adc->reg);
-		if (vref_uV < 0)
-			return vref_uV;
-		return vref_uV / 1000;
-	}
+		अगर (vref_uV < 0)
+			वापस vref_uV;
+		वापस vref_uV / 1000;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int max1118_read_raw(struct iio_dev *indio_dev,
-			struct iio_chan_spec const *chan,
-			int *val, int *val2, long mask)
-{
-	struct max1118 *adc = iio_priv(indio_dev);
+अटल पूर्णांक max1118_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			काष्ठा iio_chan_spec स्थिर *chan,
+			पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा max1118 *adc = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		mutex_lock(&adc->lock);
-		*val = max1118_read(adc->spi, chan->channel);
+		*val = max1118_पढ़ो(adc->spi, chan->channel);
 		mutex_unlock(&adc->lock);
-		if (*val < 0)
-			return *val;
+		अगर (*val < 0)
+			वापस *val;
 
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = max1118_get_vref_mV(adc->spi);
-		if (*val < 0)
-			return *val;
+		अगर (*val < 0)
+			वापस *val;
 		*val2 = 8;
 
-		return IIO_VAL_FRACTIONAL_LOG2;
-	}
+		वापस IIO_VAL_FRACTIONAL_LOG2;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct iio_info max1118_info = {
-	.read_raw = max1118_read_raw,
-};
+अटल स्थिर काष्ठा iio_info max1118_info = अणु
+	.पढ़ो_raw = max1118_पढ़ो_raw,
+पूर्ण;
 
-static irqreturn_t max1118_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct max1118 *adc = iio_priv(indio_dev);
-	int scan_index;
-	int i = 0;
+अटल irqवापस_t max1118_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा max1118 *adc = iio_priv(indio_dev);
+	पूर्णांक scan_index;
+	पूर्णांक i = 0;
 
 	mutex_lock(&adc->lock);
 
-	for_each_set_bit(scan_index, indio_dev->active_scan_mask,
-			indio_dev->masklength) {
-		const struct iio_chan_spec *scan_chan =
+	क्रम_each_set_bit(scan_index, indio_dev->active_scan_mask,
+			indio_dev->masklength) अणु
+		स्थिर काष्ठा iio_chan_spec *scan_chan =
 				&indio_dev->channels[scan_index];
-		int ret = max1118_read(adc->spi, scan_chan->channel);
+		पूर्णांक ret = max1118_पढ़ो(adc->spi, scan_chan->channel);
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(&adc->spi->dev,
 				"failed to get conversion data\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		adc->scan.channels[i] = ret;
 		i++;
-	}
-	iio_push_to_buffers_with_timestamp(indio_dev, &adc->scan,
-					   iio_get_time_ns(indio_dev));
+	पूर्ण
+	iio_push_to_buffers_with_बारtamp(indio_dev, &adc->scan,
+					   iio_get_समय_ns(indio_dev));
 out:
 	mutex_unlock(&adc->lock);
 
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int max1118_probe(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev;
-	struct max1118 *adc;
-	const struct spi_device_id *id = spi_get_device_id(spi);
-	int ret;
+अटल पूर्णांक max1118_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा max1118 *adc;
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*adc));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*adc));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	adc = iio_priv(indio_dev);
 	adc->spi = spi;
 	mutex_init(&adc->lock);
 
-	if (id->driver_data == max1118) {
+	अगर (id->driver_data == max1118) अणु
 		adc->reg = devm_regulator_get(&spi->dev, "vref");
-		if (IS_ERR(adc->reg)) {
+		अगर (IS_ERR(adc->reg)) अणु
 			dev_err(&spi->dev, "failed to get vref regulator\n");
-			return PTR_ERR(adc->reg);
-		}
+			वापस PTR_ERR(adc->reg);
+		पूर्ण
 		ret = regulator_enable(adc->reg);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	spi_set_drvdata(spi, indio_dev);
 
 	indio_dev->name = spi_get_device_id(spi)->name;
 	indio_dev->info = &max1118_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = max1118_channels;
 	indio_dev->num_channels = ARRAY_SIZE(max1118_channels);
 
 	/*
-	 * To reinitiate a conversion on CH0, it is necessary to allow for a
-	 * conversion to be complete and all of the data to be read out.  Once
+	 * To reinitiate a conversion on CH0, it is necessary to allow क्रम a
+	 * conversion to be complete and all of the data to be पढ़ो out.  Once
 	 * a conversion has been completed, the MAX1117/MAX1118/MAX1119 will go
-	 * into AutoShutdown mode until the next conversion is initiated.
+	 * पूर्णांकo AutoShutकरोwn mode until the next conversion is initiated.
 	 */
-	max1118_read(spi, 0);
+	max1118_पढ़ो(spi, 0);
 
-	ret = iio_triggered_buffer_setup(indio_dev, NULL,
-					max1118_trigger_handler, NULL);
-	if (ret)
-		goto err_reg_disable;
+	ret = iio_triggered_buffer_setup(indio_dev, शून्य,
+					max1118_trigger_handler, शून्य);
+	अगर (ret)
+		जाओ err_reg_disable;
 
-	ret = iio_device_register(indio_dev);
-	if (ret)
-		goto err_buffer_cleanup;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret)
+		जाओ err_buffer_cleanup;
 
-	return 0;
+	वापस 0;
 
 err_buffer_cleanup:
 	iio_triggered_buffer_cleanup(indio_dev);
 err_reg_disable:
-	if (id->driver_data == max1118)
+	अगर (id->driver_data == max1118)
 		regulator_disable(adc->reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int max1118_remove(struct spi_device *spi)
-{
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct max1118 *adc = iio_priv(indio_dev);
-	const struct spi_device_id *id = spi_get_device_id(spi);
+अटल पूर्णांक max1118_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा max1118 *adc = iio_priv(indio_dev);
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	iio_triggered_buffer_cleanup(indio_dev);
-	if (id->driver_data == max1118)
-		return regulator_disable(adc->reg);
+	अगर (id->driver_data == max1118)
+		वापस regulator_disable(adc->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id max1118_id[] = {
-	{ "max1117", max1117 },
-	{ "max1118", max1118 },
-	{ "max1119", max1119 },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id max1118_id[] = अणु
+	अणु "max1117", max1117 पूर्ण,
+	अणु "max1118", max1118 पूर्ण,
+	अणु "max1119", max1119 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, max1118_id);
 
-static const struct of_device_id max1118_dt_ids[] = {
-	{ .compatible = "maxim,max1117" },
-	{ .compatible = "maxim,max1118" },
-	{ .compatible = "maxim,max1119" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id max1118_dt_ids[] = अणु
+	अणु .compatible = "maxim,max1117" पूर्ण,
+	अणु .compatible = "maxim,max1118" पूर्ण,
+	अणु .compatible = "maxim,max1119" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, max1118_dt_ids);
 
-static struct spi_driver max1118_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver max1118_spi_driver = अणु
+	.driver = अणु
 		.name = "max1118",
 		.of_match_table = max1118_dt_ids,
-	},
+	पूर्ण,
 	.probe = max1118_probe,
-	.remove = max1118_remove,
+	.हटाओ = max1118_हटाओ,
 	.id_table = max1118_id,
-};
+पूर्ण;
 module_spi_driver(max1118_spi_driver);
 
 MODULE_AUTHOR("Akinobu Mita <akinobu.mita@gmail.com>");

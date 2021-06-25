@@ -1,409 +1,410 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Test cases for SL[AOU]B/page initialization at alloc/free time.
+ * Test हालs क्रम SL[AOU]B/page initialization at alloc/मुक्त समय.
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/vदो_स्मृति.h>
 
-#define GARBAGE_INT (0x09A7BA9E)
-#define GARBAGE_BYTE (0x9E)
+#घोषणा GARBAGE_INT (0x09A7BA9E)
+#घोषणा GARBAGE_BYTE (0x9E)
 
-#define REPORT_FAILURES_IN_FN() \
-	do {	\
-		if (failures)	\
+#घोषणा REPORT_FAILURES_IN_FN() \
+	करो अणु	\
+		अगर (failures)	\
 			pr_info("%s failed %d out of %d times\n",	\
 				__func__, failures, num_tests);		\
-		else		\
+		अन्यथा		\
 			pr_info("all %d tests in %s passed\n",		\
 				num_tests, __func__);			\
-	} while (0)
+	पूर्ण जबतक (0)
 
 /* Calculate the number of uninitialized bytes in the buffer. */
-static int __init count_nonzero_bytes(void *ptr, size_t size)
-{
-	int i, ret = 0;
-	unsigned char *p = (unsigned char *)ptr;
+अटल पूर्णांक __init count_nonzero_bytes(व्योम *ptr, माप_प्रकार size)
+अणु
+	पूर्णांक i, ret = 0;
+	अचिन्हित अक्षर *p = (अचिन्हित अक्षर *)ptr;
 
-	for (i = 0; i < size; i++)
-		if (p[i])
+	क्रम (i = 0; i < size; i++)
+		अगर (p[i])
 			ret++;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Fill a buffer with garbage, skipping |skip| first bytes. */
-static void __init fill_with_garbage_skip(void *ptr, int size, size_t skip)
-{
-	unsigned int *p = (unsigned int *)((char *)ptr + skip);
-	int i = 0;
+अटल व्योम __init fill_with_garbage_skip(व्योम *ptr, पूर्णांक size, माप_प्रकार skip)
+अणु
+	अचिन्हित पूर्णांक *p = (अचिन्हित पूर्णांक *)((अक्षर *)ptr + skip);
+	पूर्णांक i = 0;
 
 	WARN_ON(skip > size);
 	size -= skip;
 
-	while (size >= sizeof(*p)) {
+	जबतक (size >= माप(*p)) अणु
 		p[i] = GARBAGE_INT;
 		i++;
-		size -= sizeof(*p);
-	}
-	if (size)
-		memset(&p[i], GARBAGE_BYTE, size);
-}
+		size -= माप(*p);
+	पूर्ण
+	अगर (size)
+		स_रखो(&p[i], GARBAGE_BYTE, size);
+पूर्ण
 
-static void __init fill_with_garbage(void *ptr, size_t size)
-{
+अटल व्योम __init fill_with_garbage(व्योम *ptr, माप_प्रकार size)
+अणु
 	fill_with_garbage_skip(ptr, size, 0);
-}
+पूर्ण
 
-static int __init do_alloc_pages_order(int order, int *total_failures)
-{
-	struct page *page;
-	void *buf;
-	size_t size = PAGE_SIZE << order;
+अटल पूर्णांक __init करो_alloc_pages_order(पूर्णांक order, पूर्णांक *total_failures)
+अणु
+	काष्ठा page *page;
+	व्योम *buf;
+	माप_प्रकार size = PAGE_SIZE << order;
 
 	page = alloc_pages(GFP_KERNEL, order);
 	buf = page_address(page);
 	fill_with_garbage(buf, size);
-	__free_pages(page, order);
+	__मुक्त_pages(page, order);
 
 	page = alloc_pages(GFP_KERNEL, order);
 	buf = page_address(page);
-	if (count_nonzero_bytes(buf, size))
+	अगर (count_nonzero_bytes(buf, size))
 		(*total_failures)++;
 	fill_with_garbage(buf, size);
-	__free_pages(page, order);
-	return 1;
-}
+	__मुक्त_pages(page, order);
+	वापस 1;
+पूर्ण
 
-/* Test the page allocator by calling alloc_pages with different orders. */
-static int __init test_pages(int *total_failures)
-{
-	int failures = 0, num_tests = 0;
-	int i;
+/* Test the page allocator by calling alloc_pages with dअगरferent orders. */
+अटल पूर्णांक __init test_pages(पूर्णांक *total_failures)
+अणु
+	पूर्णांक failures = 0, num_tests = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < 10; i++)
-		num_tests += do_alloc_pages_order(i, &failures);
+	क्रम (i = 0; i < 10; i++)
+		num_tests += करो_alloc_pages_order(i, &failures);
 
 	REPORT_FAILURES_IN_FN();
 	*total_failures += failures;
-	return num_tests;
-}
+	वापस num_tests;
+पूर्ण
 
-/* Test kmalloc() with given parameters. */
-static int __init do_kmalloc_size(size_t size, int *total_failures)
-{
-	void *buf;
+/* Test kदो_स्मृति() with given parameters. */
+अटल पूर्णांक __init करो_kदो_स्मृति_size(माप_प्रकार size, पूर्णांक *total_failures)
+अणु
+	व्योम *buf;
 
-	buf = kmalloc(size, GFP_KERNEL);
+	buf = kदो_स्मृति(size, GFP_KERNEL);
 	fill_with_garbage(buf, size);
-	kfree(buf);
+	kमुक्त(buf);
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (count_nonzero_bytes(buf, size))
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (count_nonzero_bytes(buf, size))
 		(*total_failures)++;
 	fill_with_garbage(buf, size);
-	kfree(buf);
-	return 1;
-}
+	kमुक्त(buf);
+	वापस 1;
+पूर्ण
 
-/* Test vmalloc() with given parameters. */
-static int __init do_vmalloc_size(size_t size, int *total_failures)
-{
-	void *buf;
+/* Test vदो_स्मृति() with given parameters. */
+अटल पूर्णांक __init करो_vदो_स्मृति_size(माप_प्रकार size, पूर्णांक *total_failures)
+अणु
+	व्योम *buf;
 
-	buf = vmalloc(size);
+	buf = vदो_स्मृति(size);
 	fill_with_garbage(buf, size);
-	vfree(buf);
+	vमुक्त(buf);
 
-	buf = vmalloc(size);
-	if (count_nonzero_bytes(buf, size))
+	buf = vदो_स्मृति(size);
+	अगर (count_nonzero_bytes(buf, size))
 		(*total_failures)++;
 	fill_with_garbage(buf, size);
-	vfree(buf);
-	return 1;
-}
+	vमुक्त(buf);
+	वापस 1;
+पूर्ण
 
-/* Test kmalloc()/vmalloc() by allocating objects of different sizes. */
-static int __init test_kvmalloc(int *total_failures)
-{
-	int failures = 0, num_tests = 0;
-	int i, size;
+/* Test kदो_स्मृति()/vदो_स्मृति() by allocating objects of dअगरferent sizes. */
+अटल पूर्णांक __init test_kvदो_स्मृति(पूर्णांक *total_failures)
+अणु
+	पूर्णांक failures = 0, num_tests = 0;
+	पूर्णांक i, size;
 
-	for (i = 0; i < 20; i++) {
+	क्रम (i = 0; i < 20; i++) अणु
 		size = 1 << i;
-		num_tests += do_kmalloc_size(size, &failures);
-		num_tests += do_vmalloc_size(size, &failures);
-	}
+		num_tests += करो_kदो_स्मृति_size(size, &failures);
+		num_tests += करो_vदो_स्मृति_size(size, &failures);
+	पूर्ण
 
 	REPORT_FAILURES_IN_FN();
 	*total_failures += failures;
-	return num_tests;
-}
+	वापस num_tests;
+पूर्ण
 
-#define CTOR_BYTES (sizeof(unsigned int))
-#define CTOR_PATTERN (0x41414141)
+#घोषणा CTOR_BYTES (माप(अचिन्हित पूर्णांक))
+#घोषणा CTOR_PATTERN (0x41414141)
 /* Initialize the first 4 bytes of the object. */
-static void test_ctor(void *obj)
-{
-	*(unsigned int *)obj = CTOR_PATTERN;
-}
+अटल व्योम test_ctor(व्योम *obj)
+अणु
+	*(अचिन्हित पूर्णांक *)obj = CTOR_PATTERN;
+पूर्ण
 
 /*
- * Check the invariants for the buffer allocated from a slab cache.
- * If the cache has a test constructor, the first 4 bytes of the object must
- * always remain equal to CTOR_PATTERN.
- * If the cache isn't an RCU-typesafe one, or if the allocation is done with
+ * Check the invariants क्रम the buffer allocated from a slab cache.
+ * If the cache has a test स्थिरructor, the first 4 bytes of the object must
+ * always reमुख्य equal to CTOR_PATTERN.
+ * If the cache isn't an RCU-typesafe one, or अगर the allocation is करोne with
  * __GFP_ZERO, then the object contents must be zeroed after allocation.
  * If the cache is an RCU-typesafe one, the object contents must never be
- * zeroed after the first use. This is checked by memcmp() in
- * do_kmem_cache_size().
+ * zeroed after the first use. This is checked by स_भेद() in
+ * करो_kmem_cache_size().
  */
-static bool __init check_buf(void *buf, int size, bool want_ctor,
+अटल bool __init check_buf(व्योम *buf, पूर्णांक size, bool want_ctor,
 			     bool want_rcu, bool want_zero)
-{
-	int bytes;
+अणु
+	पूर्णांक bytes;
 	bool fail = false;
 
 	bytes = count_nonzero_bytes(buf, size);
 	WARN_ON(want_ctor && want_zero);
-	if (want_zero)
-		return bytes;
-	if (want_ctor) {
-		if (*(unsigned int *)buf != CTOR_PATTERN)
+	अगर (want_zero)
+		वापस bytes;
+	अगर (want_ctor) अणु
+		अगर (*(अचिन्हित पूर्णांक *)buf != CTOR_PATTERN)
 			fail = 1;
-	} else {
-		if (bytes)
+	पूर्ण अन्यथा अणु
+		अगर (bytes)
 			fail = !want_rcu;
-	}
-	return fail;
-}
+	पूर्ण
+	वापस fail;
+पूर्ण
 
-#define BULK_SIZE 100
-static void *bulk_array[BULK_SIZE];
+#घोषणा BULK_SIZE 100
+अटल व्योम *bulk_array[BULK_SIZE];
 
 /*
  * Test kmem_cache with given parameters:
- *  want_ctor - use a constructor;
+ *  want_ctor - use a स्थिरructor;
  *  want_rcu - use SLAB_TYPESAFE_BY_RCU;
  *  want_zero - use __GFP_ZERO.
  */
-static int __init do_kmem_cache_size(size_t size, bool want_ctor,
+अटल पूर्णांक __init करो_kmem_cache_size(माप_प्रकार size, bool want_ctor,
 				     bool want_rcu, bool want_zero,
-				     int *total_failures)
-{
-	struct kmem_cache *c;
-	int iter;
+				     पूर्णांक *total_failures)
+अणु
+	काष्ठा kmem_cache *c;
+	पूर्णांक iter;
 	bool fail = false;
 	gfp_t alloc_mask = GFP_KERNEL | (want_zero ? __GFP_ZERO : 0);
-	void *buf, *buf_copy;
+	व्योम *buf, *buf_copy;
 
 	c = kmem_cache_create("test_cache", size, 1,
 			      want_rcu ? SLAB_TYPESAFE_BY_RCU : 0,
-			      want_ctor ? test_ctor : NULL);
-	for (iter = 0; iter < 10; iter++) {
+			      want_ctor ? test_ctor : शून्य);
+	क्रम (iter = 0; iter < 10; iter++) अणु
 		/* Do a test of bulk allocations */
-		if (!want_rcu && !want_ctor) {
-			int ret;
+		अगर (!want_rcu && !want_ctor) अणु
+			पूर्णांक ret;
 
 			ret = kmem_cache_alloc_bulk(c, alloc_mask, BULK_SIZE, bulk_array);
-			if (!ret) {
+			अगर (!ret) अणु
 				fail = true;
-			} else {
-				int i;
-				for (i = 0; i < ret; i++)
+			पूर्ण अन्यथा अणु
+				पूर्णांक i;
+				क्रम (i = 0; i < ret; i++)
 					fail |= check_buf(bulk_array[i], size, want_ctor, want_rcu, want_zero);
-				kmem_cache_free_bulk(c, ret, bulk_array);
-			}
-		}
+				kmem_cache_मुक्त_bulk(c, ret, bulk_array);
+			पूर्ण
+		पूर्ण
 
 		buf = kmem_cache_alloc(c, alloc_mask);
-		/* Check that buf is zeroed, if it must be. */
+		/* Check that buf is zeroed, अगर it must be. */
 		fail |= check_buf(buf, size, want_ctor, want_rcu, want_zero);
 		fill_with_garbage_skip(buf, size, want_ctor ? CTOR_BYTES : 0);
 
-		if (!want_rcu) {
-			kmem_cache_free(c, buf);
-			continue;
-		}
+		अगर (!want_rcu) अणु
+			kmem_cache_मुक्त(c, buf);
+			जारी;
+		पूर्ण
 
 		/*
 		 * If this is an RCU cache, use a critical section to ensure we
-		 * can touch objects after they're freed.
+		 * can touch objects after they're मुक्तd.
 		 */
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		/*
 		 * Copy the buffer to check that it's not wiped on
-		 * free().
+		 * मुक्त().
 		 */
-		buf_copy = kmalloc(size, GFP_ATOMIC);
-		if (buf_copy)
-			memcpy(buf_copy, buf, size);
+		buf_copy = kदो_स्मृति(size, GFP_ATOMIC);
+		अगर (buf_copy)
+			स_नकल(buf_copy, buf, size);
 
-		kmem_cache_free(c, buf);
+		kmem_cache_मुक्त(c, buf);
 		/*
-		 * Check that |buf| is intact after kmem_cache_free().
+		 * Check that |buf| is पूर्णांकact after kmem_cache_मुक्त().
 		 * |want_zero| is false, because we wrote garbage to
-		 * the buffer already.
+		 * the buffer alपढ़ोy.
 		 */
 		fail |= check_buf(buf, size, want_ctor, want_rcu,
 				  false);
-		if (buf_copy) {
-			fail |= (bool)memcmp(buf, buf_copy, size);
-			kfree(buf_copy);
-		}
-		rcu_read_unlock();
-	}
+		अगर (buf_copy) अणु
+			fail |= (bool)स_भेद(buf, buf_copy, size);
+			kमुक्त(buf_copy);
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 	kmem_cache_destroy(c);
 
 	*total_failures += fail;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * Check that the data written to an RCU-allocated object survives
- * reallocation.
+ * पुनः_स्मृतिation.
  */
-static int __init do_kmem_cache_rcu_persistent(int size, int *total_failures)
-{
-	struct kmem_cache *c;
-	void *buf, *buf_contents, *saved_ptr;
-	void **used_objects;
-	int i, iter, maxiter = 1024;
+अटल पूर्णांक __init करो_kmem_cache_rcu_persistent(पूर्णांक size, पूर्णांक *total_failures)
+अणु
+	काष्ठा kmem_cache *c;
+	व्योम *buf, *buf_contents, *saved_ptr;
+	व्योम **used_objects;
+	पूर्णांक i, iter, maxiter = 1024;
 	bool fail = false;
 
 	c = kmem_cache_create("test_cache", size, size, SLAB_TYPESAFE_BY_RCU,
-			      NULL);
+			      शून्य);
 	buf = kmem_cache_alloc(c, GFP_KERNEL);
 	saved_ptr = buf;
 	fill_with_garbage(buf, size);
-	buf_contents = kmalloc(size, GFP_KERNEL);
-	if (!buf_contents)
-		goto out;
-	used_objects = kmalloc_array(maxiter, sizeof(void *), GFP_KERNEL);
-	if (!used_objects) {
-		kfree(buf_contents);
-		goto out;
-	}
-	memcpy(buf_contents, buf, size);
-	kmem_cache_free(c, buf);
+	buf_contents = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf_contents)
+		जाओ out;
+	used_objects = kदो_स्मृति_array(maxiter, माप(व्योम *), GFP_KERNEL);
+	अगर (!used_objects) अणु
+		kमुक्त(buf_contents);
+		जाओ out;
+	पूर्ण
+	स_नकल(buf_contents, buf, size);
+	kmem_cache_मुक्त(c, buf);
 	/*
-	 * Run for a fixed number of iterations. If we never hit saved_ptr,
+	 * Run क्रम a fixed number of iterations. If we never hit saved_ptr,
 	 * assume the test passes.
 	 */
-	for (iter = 0; iter < maxiter; iter++) {
+	क्रम (iter = 0; iter < maxiter; iter++) अणु
 		buf = kmem_cache_alloc(c, GFP_KERNEL);
 		used_objects[iter] = buf;
-		if (buf == saved_ptr) {
-			fail = memcmp(buf_contents, buf, size);
-			for (i = 0; i <= iter; i++)
-				kmem_cache_free(c, used_objects[i]);
-			goto free_out;
-		}
-	}
+		अगर (buf == saved_ptr) अणु
+			fail = स_भेद(buf_contents, buf, size);
+			क्रम (i = 0; i <= iter; i++)
+				kmem_cache_मुक्त(c, used_objects[i]);
+			जाओ मुक्त_out;
+		पूर्ण
+	पूर्ण
 
-free_out:
+मुक्त_out:
 	kmem_cache_destroy(c);
-	kfree(buf_contents);
-	kfree(used_objects);
+	kमुक्त(buf_contents);
+	kमुक्त(used_objects);
 out:
 	*total_failures += fail;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __init do_kmem_cache_size_bulk(int size, int *total_failures)
-{
-	struct kmem_cache *c;
-	int i, iter, maxiter = 1024;
-	int num, bytes;
+अटल पूर्णांक __init करो_kmem_cache_size_bulk(पूर्णांक size, पूर्णांक *total_failures)
+अणु
+	काष्ठा kmem_cache *c;
+	पूर्णांक i, iter, maxiter = 1024;
+	पूर्णांक num, bytes;
 	bool fail = false;
-	void *objects[10];
+	व्योम *objects[10];
 
-	c = kmem_cache_create("test_cache", size, size, 0, NULL);
-	for (iter = 0; (iter < maxiter) && !fail; iter++) {
+	c = kmem_cache_create("test_cache", size, size, 0, शून्य);
+	क्रम (iter = 0; (iter < maxiter) && !fail; iter++) अणु
 		num = kmem_cache_alloc_bulk(c, GFP_KERNEL, ARRAY_SIZE(objects),
 					    objects);
-		for (i = 0; i < num; i++) {
+		क्रम (i = 0; i < num; i++) अणु
 			bytes = count_nonzero_bytes(objects[i], size);
-			if (bytes)
+			अगर (bytes)
 				fail = true;
 			fill_with_garbage(objects[i], size);
-		}
+		पूर्ण
 
-		if (num)
-			kmem_cache_free_bulk(c, num, objects);
-	}
+		अगर (num)
+			kmem_cache_मुक्त_bulk(c, num, objects);
+	पूर्ण
 	*total_failures += fail;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Test kmem_cache allocation by creating caches of different sizes, with and
- * without constructors, with and without SLAB_TYPESAFE_BY_RCU.
+ * Test kmem_cache allocation by creating caches of dअगरferent sizes, with and
+ * without स्थिरructors, with and without SLAB_TYPESAFE_BY_RCU.
  */
-static int __init test_kmemcache(int *total_failures)
-{
-	int failures = 0, num_tests = 0;
-	int i, flags, size;
+अटल पूर्णांक __init test_kmemcache(पूर्णांक *total_failures)
+अणु
+	पूर्णांक failures = 0, num_tests = 0;
+	पूर्णांक i, flags, size;
 	bool ctor, rcu, zero;
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		size = 8 << i;
-		for (flags = 0; flags < 8; flags++) {
+		क्रम (flags = 0; flags < 8; flags++) अणु
 			ctor = flags & 1;
 			rcu = flags & 2;
 			zero = flags & 4;
-			if (ctor & zero)
-				continue;
-			num_tests += do_kmem_cache_size(size, ctor, rcu, zero,
+			अगर (ctor & zero)
+				जारी;
+			num_tests += करो_kmem_cache_size(size, ctor, rcu, zero,
 							&failures);
-		}
-		num_tests += do_kmem_cache_size_bulk(size, &failures);
-	}
+		पूर्ण
+		num_tests += करो_kmem_cache_size_bulk(size, &failures);
+	पूर्ण
 	REPORT_FAILURES_IN_FN();
 	*total_failures += failures;
-	return num_tests;
-}
+	वापस num_tests;
+पूर्ण
 
-/* Test the behavior of SLAB_TYPESAFE_BY_RCU caches of different sizes. */
-static int __init test_rcu_persistent(int *total_failures)
-{
-	int failures = 0, num_tests = 0;
-	int i, size;
+/* Test the behavior of SLAB_TYPESAFE_BY_RCU caches of dअगरferent sizes. */
+अटल पूर्णांक __init test_rcu_persistent(पूर्णांक *total_failures)
+अणु
+	पूर्णांक failures = 0, num_tests = 0;
+	पूर्णांक i, size;
 
-	for (i = 0; i < 10; i++) {
+	क्रम (i = 0; i < 10; i++) अणु
 		size = 8 << i;
-		num_tests += do_kmem_cache_rcu_persistent(size, &failures);
-	}
+		num_tests += करो_kmem_cache_rcu_persistent(size, &failures);
+	पूर्ण
 	REPORT_FAILURES_IN_FN();
 	*total_failures += failures;
-	return num_tests;
-}
+	वापस num_tests;
+पूर्ण
 
 /*
- * Run the tests. Each test function returns the number of executed tests and
+ * Run the tests. Each test function वापसs the number of executed tests and
  * updates |failures| with the number of failed tests.
  */
-static int __init test_meminit_init(void)
-{
-	int failures = 0, num_tests = 0;
+अटल पूर्णांक __init test_meminit_init(व्योम)
+अणु
+	पूर्णांक failures = 0, num_tests = 0;
 
 	num_tests += test_pages(&failures);
-	num_tests += test_kvmalloc(&failures);
+	num_tests += test_kvदो_स्मृति(&failures);
 	num_tests += test_kmemcache(&failures);
 	num_tests += test_rcu_persistent(&failures);
 
-	if (failures == 0)
+	अगर (failures == 0)
 		pr_info("all %d tests passed!\n", num_tests);
-	else
+	अन्यथा
 		pr_info("failures: %d out of %d\n", failures, num_tests);
 
-	return failures ? -EINVAL : 0;
-}
+	वापस failures ? -EINVAL : 0;
+पूर्ण
 module_init(test_meminit_init);
 
 MODULE_LICENSE("GPL");

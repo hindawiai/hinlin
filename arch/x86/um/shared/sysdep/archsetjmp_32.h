@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * arch/um/include/sysdep-i386/archsetjmp.h
+ * arch/um/include/sysdep-i386/archसमलाँघ.स
  */
 
-#ifndef _KLIBC_ARCHSETJMP_H
-#define _KLIBC_ARCHSETJMP_H
+#अगर_अघोषित _KLIBC_ARCHSETJMP_H
+#घोषणा _KLIBC_ARCHSETJMP_H
 
-struct __jmp_buf {
-	unsigned int __ebx;
-	unsigned int __esp;
-	unsigned int __ebp;
-	unsigned int __esi;
-	unsigned int __edi;
-	unsigned int __eip;
-};
+काष्ठा __लाँघ_बफ अणु
+	अचिन्हित पूर्णांक __ebx;
+	अचिन्हित पूर्णांक __esp;
+	अचिन्हित पूर्णांक __ebp;
+	अचिन्हित पूर्णांक __esi;
+	अचिन्हित पूर्णांक __edi;
+	अचिन्हित पूर्णांक __eip;
+पूर्ण;
 
-typedef struct __jmp_buf jmp_buf[1];
+प्रकार काष्ठा __लाँघ_बफ लाँघ_बफ[1];
 
-#define JB_IP __eip
-#define JB_SP __esp
+#घोषणा JB_IP __eip
+#घोषणा JB_SP __esp
 
-#endif				/* _SETJMP_H */
+#पूर्ण_अगर				/* _SETJMP_H */

@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2012 ARM Ltd.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define __ARCH_WANT_RENAMEAT
-#define __ARCH_WANT_NEW_STAT
-#define __ARCH_WANT_SET_GET_RLIMIT
-#define __ARCH_WANT_TIME32_SYSCALLS
-#define __ARCH_WANT_SYS_CLONE3
+#घोषणा __ARCH_WANT_RENAMEAT
+#घोषणा __ARCH_WANT_NEW_STAT
+#घोषणा __ARCH_WANT_SET_GET_RLIMIT
+#घोषणा __ARCH_WANT_TIME32_SYSCALLS
+#घोषणा __ARCH_WANT_SYS_CLONE3
 
-#include <asm-generic/unistd.h>
+#समावेश <यंत्र-generic/unistd.h>

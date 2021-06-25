@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2008  by Andreas Eversberg <andreas@eversberg.eu>
  *
  * Quick API description:
  *
- * A clock source registers using mISDN_register_clock:
- *	name = text string to name clock source
- *	priority = value to priorize clock sources (0 = default)
- *	ctl = callback function to enable/disable clock source
- *	priv = private pointer of clock source
- *	return = pointer to clock source structure;
+ * A घड़ी source रेजिस्टरs using mISDN_रेजिस्टर_घड़ी:
+ *	name = text string to name घड़ी source
+ *	priority = value to priorize घड़ी sources (0 = शेष)
+ *	ctl = callback function to enable/disable घड़ी source
+ *	priv = निजी poपूर्णांकer of घड़ी source
+ *	वापस = poपूर्णांकer to घड़ी source काष्ठाure;
  *
- * Note: Callback 'ctl' can be called before mISDN_register_clock returns!
- *       Also it can be called during mISDN_unregister_clock.
+ * Note: Callback 'ctl' can be called beक्रमe mISDN_रेजिस्टर_घड़ी वापसs!
+ *       Also it can be called during mISDN_unरेजिस्टर_घड़ी.
  *
- * A clock source calls mISDN_clock_update with given samples elapsed, if
- * enabled. If function call is delayed, tv must be set with the timestamp
+ * A घड़ी source calls mISDN_घड़ी_update with given samples elapsed, अगर
+ * enabled. If function call is delayed, tv must be set with the बारtamp
  * of the actual event.
  *
- * A clock source unregisters using mISDN_unregister_clock.
+ * A घड़ी source unरेजिस्टरs using mISDN_unरेजिस्टर_घड़ी.
  *
- * To get current clock, call mISDN_clock_get. The signed short value
- * counts the number of samples since. Time since last clock event is added.
+ * To get current घड़ी, call mISDN_घड़ी_get. The चिन्हित लघु value
+ * counts the number of samples since. Time since last घड़ी event is added.
  */
 
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/stddef.h>
-#include <linux/spinlock.h>
-#include <linux/ktime.h>
-#include <linux/mISDNif.h>
-#include <linux/export.h>
-#include "core.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/mISDNअगर.h>
+#समावेश <linux/export.h>
+#समावेश "core.h"
 
-static u_int *debug;
-static LIST_HEAD(iclock_list);
-static DEFINE_RWLOCK(iclock_lock);
-static u16 iclock_count;		/* counter of last clock */
-static ktime_t iclock_timestamp;	/* time stamp of last clock */
-static int iclock_timestamp_valid;	/* already received one timestamp */
-static struct mISDNclock *iclock_current;
+अटल u_पूर्णांक *debug;
+अटल LIST_HEAD(iघड़ी_list);
+अटल DEFINE_RWLOCK(iघड़ी_lock);
+अटल u16 iघड़ी_count;		/* counter of last घड़ी */
+अटल kसमय_प्रकार iघड़ी_प्रकारimestamp;	/* समय stamp of last घड़ी */
+अटल पूर्णांक iघड़ी_प्रकारimestamp_valid;	/* alपढ़ोy received one बारtamp */
+अटल काष्ठा mISDNघड़ी *iघड़ी_current;
 
-void
-mISDN_init_clock(u_int *dp)
-{
+व्योम
+mISDN_init_घड़ी(u_पूर्णांक *dp)
+अणु
 	debug = dp;
-	iclock_timestamp = ktime_get();
-}
+	iघड़ी_प्रकारimestamp = kसमय_get();
+पूर्ण
 
-static void
-select_iclock(void)
-{
-	struct mISDNclock *iclock, *bestclock = NULL, *lastclock = NULL;
-	int pri = -128;
+अटल व्योम
+select_iघड़ी(व्योम)
+अणु
+	काष्ठा mISDNघड़ी *iघड़ी, *bestघड़ी = शून्य, *lastघड़ी = शून्य;
+	पूर्णांक pri = -128;
 
-	list_for_each_entry(iclock, &iclock_list, list) {
-		if (iclock->pri > pri) {
-			pri = iclock->pri;
-			bestclock = iclock;
-		}
-		if (iclock_current == iclock)
-			lastclock = iclock;
-	}
-	if (lastclock && bestclock != lastclock) {
-		/* last used clock source still exists but changes, disable */
-		if (*debug & DEBUG_CLOCK)
-			printk(KERN_DEBUG "Old clock source '%s' disable.\n",
-			       lastclock->name);
-		lastclock->ctl(lastclock->priv, 0);
-	}
-	if (bestclock && bestclock != iclock_current) {
-		/* new clock source selected, enable */
-		if (*debug & DEBUG_CLOCK)
-			printk(KERN_DEBUG "New clock source '%s' enable.\n",
-			       bestclock->name);
-		bestclock->ctl(bestclock->priv, 1);
-	}
-	if (bestclock != iclock_current) {
-		/* no clock received yet */
-		iclock_timestamp_valid = 0;
-	}
-	iclock_current = bestclock;
-}
+	list_क्रम_each_entry(iघड़ी, &iघड़ी_list, list) अणु
+		अगर (iघड़ी->pri > pri) अणु
+			pri = iघड़ी->pri;
+			bestघड़ी = iघड़ी;
+		पूर्ण
+		अगर (iघड़ी_current == iघड़ी)
+			lastघड़ी = iघड़ी;
+	पूर्ण
+	अगर (lastघड़ी && bestघड़ी != lastघड़ी) अणु
+		/* last used घड़ी source still exists but changes, disable */
+		अगर (*debug & DEBUG_CLOCK)
+			prपूर्णांकk(KERN_DEBUG "Old clock source '%s' disable.\n",
+			       lastघड़ी->name);
+		lastघड़ी->ctl(lastघड़ी->priv, 0);
+	पूर्ण
+	अगर (bestघड़ी && bestघड़ी != iघड़ी_current) अणु
+		/* new घड़ी source selected, enable */
+		अगर (*debug & DEBUG_CLOCK)
+			prपूर्णांकk(KERN_DEBUG "New clock source '%s' enable.\n",
+			       bestघड़ी->name);
+		bestघड़ी->ctl(bestघड़ी->priv, 1);
+	पूर्ण
+	अगर (bestघड़ी != iघड़ी_current) अणु
+		/* no घड़ी received yet */
+		iघड़ी_प्रकारimestamp_valid = 0;
+	पूर्ण
+	iघड़ी_current = bestघड़ी;
+पूर्ण
 
-struct mISDNclock
-*mISDN_register_clock(char *name, int pri, clockctl_func_t *ctl, void *priv)
-{
-	u_long			flags;
-	struct mISDNclock	*iclock;
+काष्ठा mISDNघड़ी
+*mISDN_रेजिस्टर_घड़ी(अक्षर *name, पूर्णांक pri, घड़ीctl_func_t *ctl, व्योम *priv)
+अणु
+	u_दीर्घ			flags;
+	काष्ठा mISDNघड़ी	*iघड़ी;
 
-	if (*debug & (DEBUG_CORE | DEBUG_CLOCK))
-		printk(KERN_DEBUG "%s: %s %d\n", __func__, name, pri);
-	iclock = kzalloc(sizeof(struct mISDNclock), GFP_ATOMIC);
-	if (!iclock) {
-		printk(KERN_ERR "%s: No memory for clock entry.\n", __func__);
-		return NULL;
-	}
-	strncpy(iclock->name, name, sizeof(iclock->name) - 1);
-	iclock->pri = pri;
-	iclock->priv = priv;
-	iclock->ctl = ctl;
-	write_lock_irqsave(&iclock_lock, flags);
-	list_add_tail(&iclock->list, &iclock_list);
-	select_iclock();
-	write_unlock_irqrestore(&iclock_lock, flags);
-	return iclock;
-}
-EXPORT_SYMBOL(mISDN_register_clock);
+	अगर (*debug & (DEBUG_CORE | DEBUG_CLOCK))
+		prपूर्णांकk(KERN_DEBUG "%s: %s %d\n", __func__, name, pri);
+	iघड़ी = kzalloc(माप(काष्ठा mISDNघड़ी), GFP_ATOMIC);
+	अगर (!iघड़ी) अणु
+		prपूर्णांकk(KERN_ERR "%s: No memory for clock entry.\n", __func__);
+		वापस शून्य;
+	पूर्ण
+	म_नकलन(iघड़ी->name, name, माप(iघड़ी->name) - 1);
+	iघड़ी->pri = pri;
+	iघड़ी->priv = priv;
+	iघड़ी->ctl = ctl;
+	ग_लिखो_lock_irqsave(&iघड़ी_lock, flags);
+	list_add_tail(&iघड़ी->list, &iघड़ी_list);
+	select_iघड़ी();
+	ग_लिखो_unlock_irqrestore(&iघड़ी_lock, flags);
+	वापस iघड़ी;
+पूर्ण
+EXPORT_SYMBOL(mISDN_रेजिस्टर_घड़ी);
 
-void
-mISDN_unregister_clock(struct mISDNclock *iclock)
-{
-	u_long	flags;
+व्योम
+mISDN_unरेजिस्टर_घड़ी(काष्ठा mISDNघड़ी *iघड़ी)
+अणु
+	u_दीर्घ	flags;
 
-	if (*debug & (DEBUG_CORE | DEBUG_CLOCK))
-		printk(KERN_DEBUG "%s: %s %d\n", __func__, iclock->name,
-		       iclock->pri);
-	write_lock_irqsave(&iclock_lock, flags);
-	if (iclock_current == iclock) {
-		if (*debug & DEBUG_CLOCK)
-			printk(KERN_DEBUG
+	अगर (*debug & (DEBUG_CORE | DEBUG_CLOCK))
+		prपूर्णांकk(KERN_DEBUG "%s: %s %d\n", __func__, iघड़ी->name,
+		       iघड़ी->pri);
+	ग_लिखो_lock_irqsave(&iघड़ी_lock, flags);
+	अगर (iघड़ी_current == iघड़ी) अणु
+		अगर (*debug & DEBUG_CLOCK)
+			prपूर्णांकk(KERN_DEBUG
 			       "Current clock source '%s' unregisters.\n",
-			       iclock->name);
-		iclock->ctl(iclock->priv, 0);
-	}
-	list_del(&iclock->list);
-	select_iclock();
-	write_unlock_irqrestore(&iclock_lock, flags);
-}
-EXPORT_SYMBOL(mISDN_unregister_clock);
+			       iघड़ी->name);
+		iघड़ी->ctl(iघड़ी->priv, 0);
+	पूर्ण
+	list_del(&iघड़ी->list);
+	select_iघड़ी();
+	ग_लिखो_unlock_irqrestore(&iघड़ी_lock, flags);
+पूर्ण
+EXPORT_SYMBOL(mISDN_unरेजिस्टर_घड़ी);
 
-void
-mISDN_clock_update(struct mISDNclock *iclock, int samples, ktime_t *timestamp)
-{
-	u_long		flags;
-	ktime_t		timestamp_now;
+व्योम
+mISDN_घड़ी_update(काष्ठा mISDNघड़ी *iघड़ी, पूर्णांक samples, kसमय_प्रकार *बारtamp)
+अणु
+	u_दीर्घ		flags;
+	kसमय_प्रकार		बारtamp_now;
 	u16		delta;
 
-	write_lock_irqsave(&iclock_lock, flags);
-	if (iclock_current != iclock) {
-		printk(KERN_ERR "%s: '%s' sends us clock updates, but we do "
+	ग_लिखो_lock_irqsave(&iघड़ी_lock, flags);
+	अगर (iघड़ी_current != iघड़ी) अणु
+		prपूर्णांकk(KERN_ERR "%s: '%s' sends us clock updates, but we do "
 		       "listen to '%s'. This is a bug!\n", __func__,
-		       iclock->name,
-		       iclock_current ? iclock_current->name : "nothing");
-		iclock->ctl(iclock->priv, 0);
-		write_unlock_irqrestore(&iclock_lock, flags);
-		return;
-	}
-	if (iclock_timestamp_valid) {
+		       iघड़ी->name,
+		       iघड़ी_current ? iघड़ी_current->name : "nothing");
+		iघड़ी->ctl(iघड़ी->priv, 0);
+		ग_लिखो_unlock_irqrestore(&iघड़ी_lock, flags);
+		वापस;
+	पूर्ण
+	अगर (iघड़ी_प्रकारimestamp_valid) अणु
 		/* increment sample counter by given samples */
-		iclock_count += samples;
-		if (timestamp) { /* timestamp must be set, if function call is delayed */
-			iclock_timestamp = *timestamp;
-		} else	{
-			iclock_timestamp = ktime_get();
-		}
-	} else {
-		/* calc elapsed time by system clock */
-		if (timestamp) { /* timestamp must be set, if function call is delayed */
-			timestamp_now = *timestamp;
-		} else {
-			timestamp_now = ktime_get();
-		}
-		delta = ktime_divns(ktime_sub(timestamp_now, iclock_timestamp),
+		iघड़ी_count += samples;
+		अगर (बारtamp) अणु /* बारtamp must be set, अगर function call is delayed */
+			iघड़ी_प्रकारimestamp = *बारtamp;
+		पूर्ण अन्यथा	अणु
+			iघड़ी_प्रकारimestamp = kसमय_get();
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* calc elapsed समय by प्रणाली घड़ी */
+		अगर (बारtamp) अणु /* बारtamp must be set, अगर function call is delayed */
+			बारtamp_now = *बारtamp;
+		पूर्ण अन्यथा अणु
+			बारtamp_now = kसमय_get();
+		पूर्ण
+		delta = kसमय_भागns(kसमय_sub(बारtamp_now, iघड़ी_प्रकारimestamp),
 				(NSEC_PER_SEC / 8000));
-		/* add elapsed time to counter and set new timestamp */
-		iclock_count += delta;
-		iclock_timestamp = timestamp_now;
-		iclock_timestamp_valid = 1;
-		if (*debug & DEBUG_CLOCK)
-			printk("Received first clock from source '%s'.\n",
-			       iclock_current ? iclock_current->name : "nothing");
-	}
-	write_unlock_irqrestore(&iclock_lock, flags);
-}
-EXPORT_SYMBOL(mISDN_clock_update);
+		/* add elapsed समय to counter and set new बारtamp */
+		iघड़ी_count += delta;
+		iघड़ी_प्रकारimestamp = बारtamp_now;
+		iघड़ी_प्रकारimestamp_valid = 1;
+		अगर (*debug & DEBUG_CLOCK)
+			prपूर्णांकk("Received first clock from source '%s'.\n",
+			       iघड़ी_current ? iघड़ी_current->name : "nothing");
+	पूर्ण
+	ग_लिखो_unlock_irqrestore(&iघड़ी_lock, flags);
+पूर्ण
+EXPORT_SYMBOL(mISDN_घड़ी_update);
 
-unsigned short
-mISDN_clock_get(void)
-{
-	u_long		flags;
-	ktime_t		timestamp_now;
+अचिन्हित लघु
+mISDN_घड़ी_get(व्योम)
+अणु
+	u_दीर्घ		flags;
+	kसमय_प्रकार		बारtamp_now;
 	u16		delta;
 	u16		count;
 
-	read_lock_irqsave(&iclock_lock, flags);
-	/* calc elapsed time by system clock */
-	timestamp_now = ktime_get();
-	delta = ktime_divns(ktime_sub(timestamp_now, iclock_timestamp),
+	पढ़ो_lock_irqsave(&iघड़ी_lock, flags);
+	/* calc elapsed समय by प्रणाली घड़ी */
+	बारtamp_now = kसमय_get();
+	delta = kसमय_भागns(kसमय_sub(बारtamp_now, iघड़ी_प्रकारimestamp),
 			(NSEC_PER_SEC / 8000));
-	/* add elapsed time to counter */
-	count =	iclock_count + delta;
-	read_unlock_irqrestore(&iclock_lock, flags);
-	return count;
-}
-EXPORT_SYMBOL(mISDN_clock_get);
+	/* add elapsed समय to counter */
+	count =	iघड़ी_count + delta;
+	पढ़ो_unlock_irqrestore(&iघड़ी_lock, flags);
+	वापस count;
+पूर्ण
+EXPORT_SYMBOL(mISDN_घड़ी_get);

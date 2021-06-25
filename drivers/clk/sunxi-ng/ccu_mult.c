@@ -1,164 +1,165 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Maxime Ripard
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/io.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
 
-#include "ccu_gate.h"
-#include "ccu_mult.h"
+#समावेश "ccu_gate.h"
+#समावेश "ccu_mult.h"
 
-struct _ccu_mult {
-	unsigned long	mult, min, max;
-};
+काष्ठा _ccu_mult अणु
+	अचिन्हित दीर्घ	mult, min, max;
+पूर्ण;
 
-static void ccu_mult_find_best(unsigned long parent, unsigned long rate,
-			       struct _ccu_mult *mult)
-{
-	int _mult;
+अटल व्योम ccu_mult_find_best(अचिन्हित दीर्घ parent, अचिन्हित दीर्घ rate,
+			       काष्ठा _ccu_mult *mult)
+अणु
+	पूर्णांक _mult;
 
 	_mult = rate / parent;
-	if (_mult < mult->min)
+	अगर (_mult < mult->min)
 		_mult = mult->min;
 
-	if (_mult > mult->max)
+	अगर (_mult > mult->max)
 		_mult = mult->max;
 
 	mult->mult = _mult;
-}
+पूर्ण
 
-static unsigned long ccu_mult_round_rate(struct ccu_mux_internal *mux,
-					 struct clk_hw *parent,
-					 unsigned long *parent_rate,
-					 unsigned long rate,
-					 void *data)
-{
-	struct ccu_mult *cm = data;
-	struct _ccu_mult _cm;
+अटल अचिन्हित दीर्घ ccu_mult_round_rate(काष्ठा ccu_mux_पूर्णांकernal *mux,
+					 काष्ठा clk_hw *parent,
+					 अचिन्हित दीर्घ *parent_rate,
+					 अचिन्हित दीर्घ rate,
+					 व्योम *data)
+अणु
+	काष्ठा ccu_mult *cm = data;
+	काष्ठा _ccu_mult _cm;
 
 	_cm.min = cm->mult.min;
 
-	if (cm->mult.max)
+	अगर (cm->mult.max)
 		_cm.max = cm->mult.max;
-	else
+	अन्यथा
 		_cm.max = (1 << cm->mult.width) + cm->mult.offset - 1;
 
 	ccu_mult_find_best(*parent_rate, rate, &_cm);
 
-	return *parent_rate * _cm.mult;
-}
+	वापस *parent_rate * _cm.mult;
+पूर्ण
 
-static void ccu_mult_disable(struct clk_hw *hw)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
+अटल व्योम ccu_mult_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
 
-	return ccu_gate_helper_disable(&cm->common, cm->enable);
-}
+	वापस ccu_gate_helper_disable(&cm->common, cm->enable);
+पूर्ण
 
-static int ccu_mult_enable(struct clk_hw *hw)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
+अटल पूर्णांक ccu_mult_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
 
-	return ccu_gate_helper_enable(&cm->common, cm->enable);
-}
+	वापस ccu_gate_helper_enable(&cm->common, cm->enable);
+पूर्ण
 
-static int ccu_mult_is_enabled(struct clk_hw *hw)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
+अटल पूर्णांक ccu_mult_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
 
-	return ccu_gate_helper_is_enabled(&cm->common, cm->enable);
-}
+	वापस ccu_gate_helper_is_enabled(&cm->common, cm->enable);
+पूर्ण
 
-static unsigned long ccu_mult_recalc_rate(struct clk_hw *hw,
-					unsigned long parent_rate)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
-	unsigned long val;
+अटल अचिन्हित दीर्घ ccu_mult_recalc_rate(काष्ठा clk_hw *hw,
+					अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
+	अचिन्हित दीर्घ val;
 	u32 reg;
 
-	if (ccu_frac_helper_is_enabled(&cm->common, &cm->frac))
-		return ccu_frac_helper_read_rate(&cm->common, &cm->frac);
+	अगर (ccu_frac_helper_is_enabled(&cm->common, &cm->frac))
+		वापस ccu_frac_helper_पढ़ो_rate(&cm->common, &cm->frac);
 
-	reg = readl(cm->common.base + cm->common.reg);
-	val = reg >> cm->mult.shift;
+	reg = पढ़ोl(cm->common.base + cm->common.reg);
+	val = reg >> cm->mult.shअगरt;
 	val &= (1 << cm->mult.width) - 1;
 
-	parent_rate = ccu_mux_helper_apply_prediv(&cm->common, &cm->mux, -1,
+	parent_rate = ccu_mux_helper_apply_preभाग(&cm->common, &cm->mux, -1,
 						  parent_rate);
 
-	return parent_rate * (val + cm->mult.offset);
-}
+	वापस parent_rate * (val + cm->mult.offset);
+पूर्ण
 
-static int ccu_mult_determine_rate(struct clk_hw *hw,
-				struct clk_rate_request *req)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
+अटल पूर्णांक ccu_mult_determine_rate(काष्ठा clk_hw *hw,
+				काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
 
-	return ccu_mux_helper_determine_rate(&cm->common, &cm->mux,
+	वापस ccu_mux_helper_determine_rate(&cm->common, &cm->mux,
 					     req, ccu_mult_round_rate, cm);
-}
+पूर्ण
 
-static int ccu_mult_set_rate(struct clk_hw *hw, unsigned long rate,
-			   unsigned long parent_rate)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
-	struct _ccu_mult _cm;
-	unsigned long flags;
+अटल पूर्णांक ccu_mult_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
+	काष्ठा _ccu_mult _cm;
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
-	if (ccu_frac_helper_has_rate(&cm->common, &cm->frac, rate)) {
+	अगर (ccu_frac_helper_has_rate(&cm->common, &cm->frac, rate)) अणु
 		ccu_frac_helper_enable(&cm->common, &cm->frac);
 
-		return ccu_frac_helper_set_rate(&cm->common, &cm->frac,
+		वापस ccu_frac_helper_set_rate(&cm->common, &cm->frac,
 						rate, cm->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		ccu_frac_helper_disable(&cm->common, &cm->frac);
-	}
+	पूर्ण
 
-	parent_rate = ccu_mux_helper_apply_prediv(&cm->common, &cm->mux, -1,
+	parent_rate = ccu_mux_helper_apply_preभाग(&cm->common, &cm->mux, -1,
 						  parent_rate);
 
 	_cm.min = cm->mult.min;
 
-	if (cm->mult.max)
+	अगर (cm->mult.max)
 		_cm.max = cm->mult.max;
-	else
+	अन्यथा
 		_cm.max = (1 << cm->mult.width) + cm->mult.offset - 1;
 
 	ccu_mult_find_best(parent_rate, rate, &_cm);
 
 	spin_lock_irqsave(cm->common.lock, flags);
 
-	reg = readl(cm->common.base + cm->common.reg);
-	reg &= ~GENMASK(cm->mult.width + cm->mult.shift - 1, cm->mult.shift);
-	reg |= ((_cm.mult - cm->mult.offset) << cm->mult.shift);
+	reg = पढ़ोl(cm->common.base + cm->common.reg);
+	reg &= ~GENMASK(cm->mult.width + cm->mult.shअगरt - 1, cm->mult.shअगरt);
+	reg |= ((_cm.mult - cm->mult.offset) << cm->mult.shअगरt);
 
-	writel(reg, cm->common.base + cm->common.reg);
+	ग_लिखोl(reg, cm->common.base + cm->common.reg);
 
 	spin_unlock_irqrestore(cm->common.lock, flags);
 
-	ccu_helper_wait_for_lock(&cm->common, cm->lock);
+	ccu_helper_रुको_क्रम_lock(&cm->common, cm->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 ccu_mult_get_parent(struct clk_hw *hw)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
+अटल u8 ccu_mult_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
 
-	return ccu_mux_helper_get_parent(&cm->common, &cm->mux);
-}
+	वापस ccu_mux_helper_get_parent(&cm->common, &cm->mux);
+पूर्ण
 
-static int ccu_mult_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct ccu_mult *cm = hw_to_ccu_mult(hw);
+अटल पूर्णांक ccu_mult_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा ccu_mult *cm = hw_to_ccu_mult(hw);
 
-	return ccu_mux_helper_set_parent(&cm->common, &cm->mux, index);
-}
+	वापस ccu_mux_helper_set_parent(&cm->common, &cm->mux, index);
+पूर्ण
 
-const struct clk_ops ccu_mult_ops = {
+स्थिर काष्ठा clk_ops ccu_mult_ops = अणु
 	.disable	= ccu_mult_disable,
 	.enable		= ccu_mult_enable,
 	.is_enabled	= ccu_mult_is_enabled,
@@ -169,4 +170,4 @@ const struct clk_ops ccu_mult_ops = {
 	.determine_rate	= ccu_mult_determine_rate,
 	.recalc_rate	= ccu_mult_recalc_rate,
 	.set_rate	= ccu_mult_set_rate,
-};
+पूर्ण;

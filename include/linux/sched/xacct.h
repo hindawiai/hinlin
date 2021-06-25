@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SCHED_XACCT_H
-#define _LINUX_SCHED_XACCT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SCHED_XACCT_H
+#घोषणा _LINUX_SCHED_XACCT_H
 
 /*
  * Extended task accounting methods:
  */
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
-#ifdef CONFIG_TASK_XACCT
-static inline void add_rchar(struct task_struct *tsk, ssize_t amt)
-{
-	tsk->ioac.rchar += amt;
-}
+#अगर_घोषित CONFIG_TASK_XACCT
+अटल अंतरभूत व्योम add_rअक्षर(काष्ठा task_काष्ठा *tsk, sमाप_प्रकार amt)
+अणु
+	tsk->ioac.rअक्षर += amt;
+पूर्ण
 
-static inline void add_wchar(struct task_struct *tsk, ssize_t amt)
-{
-	tsk->ioac.wchar += amt;
-}
+अटल अंतरभूत व्योम add_wअक्षर(काष्ठा task_काष्ठा *tsk, sमाप_प्रकार amt)
+अणु
+	tsk->ioac.wअक्षर += amt;
+पूर्ण
 
-static inline void inc_syscr(struct task_struct *tsk)
-{
+अटल अंतरभूत व्योम inc_syscr(काष्ठा task_काष्ठा *tsk)
+अणु
 	tsk->ioac.syscr++;
-}
+पूर्ण
 
-static inline void inc_syscw(struct task_struct *tsk)
-{
+अटल अंतरभूत व्योम inc_syscw(काष्ठा task_काष्ठा *tsk)
+अणु
 	tsk->ioac.syscw++;
-}
-#else
-static inline void add_rchar(struct task_struct *tsk, ssize_t amt)
-{
-}
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम add_rअक्षर(काष्ठा task_काष्ठा *tsk, sमाप_प्रकार amt)
+अणु
+पूर्ण
 
-static inline void add_wchar(struct task_struct *tsk, ssize_t amt)
-{
-}
+अटल अंतरभूत व्योम add_wअक्षर(काष्ठा task_काष्ठा *tsk, sमाप_प्रकार amt)
+अणु
+पूर्ण
 
-static inline void inc_syscr(struct task_struct *tsk)
-{
-}
+अटल अंतरभूत व्योम inc_syscr(काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
 
-static inline void inc_syscw(struct task_struct *tsk)
-{
-}
-#endif
+अटल अंतरभूत व्योम inc_syscw(काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_SCHED_XACCT_H */
+#पूर्ण_अगर /* _LINUX_SCHED_XACCT_H */

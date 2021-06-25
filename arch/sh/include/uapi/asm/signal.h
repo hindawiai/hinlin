@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_SH_SIGNAL_H
-#define __ASM_SH_SIGNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_SH_SIGNAL_H
+#घोषणा __ASM_SH_SIGNAL_H
 
-#define SA_RESTORER	0x04000000
+#घोषणा SA_RESTORER	0x04000000
 
-#include <asm-generic/signal.h>
+#समावेश <यंत्र-generic/संकेत.स>
 
-#ifndef __KERNEL__
-struct old_sigaction {
+#अगर_अघोषित __KERNEL__
+काष्ठा old_sigaction अणु
 	__sighandler_t sa_handler;
 	old_sigset_t sa_mask;
-	unsigned long sa_flags;
-	void (*sa_restorer)(void);
-};
-#endif
+	अचिन्हित दीर्घ sa_flags;
+	व्योम (*sa_restorer)(व्योम);
+पूर्ण;
+#पूर्ण_अगर
 
-#endif /* __ASM_SH_SIGNAL_H */
+#पूर्ण_अगर /* __ASM_SH_SIGNAL_H */

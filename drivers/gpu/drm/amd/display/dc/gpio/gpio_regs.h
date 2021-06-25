@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,23 +24,23 @@
  *
  */
 
-#ifndef DRIVERS_GPU_DRM_AMD_DC_DEV_DC_GPIO_GPIO_REGS_H_
-#define DRIVERS_GPU_DRM_AMD_DC_DEV_DC_GPIO_GPIO_REGS_H_
+#अगर_अघोषित DRIVERS_GPU_DRM_AMD_DC_DEV_DC_GPIO_GPIO_REGS_H_
+#घोषणा DRIVERS_GPU_DRM_AMD_DC_DEV_DC_GPIO_GPIO_REGS_H_
 
-struct gpio_registers {
-	uint32_t MASK_reg;
-	uint32_t MASK_mask;
-	uint32_t MASK_shift;
-	uint32_t A_reg;
-	uint32_t A_mask;
-	uint32_t A_shift;
-	uint32_t EN_reg;
-	uint32_t EN_mask;
-	uint32_t EN_shift;
-	uint32_t Y_reg;
-	uint32_t Y_mask;
-	uint32_t Y_shift;
-};
+काष्ठा gpio_रेजिस्टरs अणु
+	uपूर्णांक32_t MASK_reg;
+	uपूर्णांक32_t MASK_mask;
+	uपूर्णांक32_t MASK_shअगरt;
+	uपूर्णांक32_t A_reg;
+	uपूर्णांक32_t A_mask;
+	uपूर्णांक32_t A_shअगरt;
+	uपूर्णांक32_t EN_reg;
+	uपूर्णांक32_t EN_mask;
+	uपूर्णांक32_t EN_shअगरt;
+	uपूर्णांक32_t Y_reg;
+	uपूर्णांक32_t Y_mask;
+	uपूर्णांक32_t Y_shअगरt;
+पूर्ण;
 
 
-#endif /* DRIVERS_GPU_DRM_AMD_DC_DEV_DC_GPIO_GPIO_REGS_H_ */
+#पूर्ण_अगर /* DRIVERS_GPU_DRM_AMD_DC_DEV_DC_GPIO_GPIO_REGS_H_ */

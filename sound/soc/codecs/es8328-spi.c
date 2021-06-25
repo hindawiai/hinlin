@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * es8328.c  --  ES8328 ALSA SoC SPI Audio driver
  *
@@ -7,31 +8,31 @@
  * Author: Sean Cross <xobs@kosagi.com>
  */
 
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
-#include <sound/soc.h>
-#include "es8328.h"
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <sound/soc.h>
+#समावेश "es8328.h"
 
-static const struct of_device_id es8328_of_match[] = {
-	{ .compatible = "everest,es8328", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id es8328_of_match[] = अणु
+	अणु .compatible = "everest,es8328", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, es8328_of_match);
 
-static int es8328_spi_probe(struct spi_device *spi)
-{
-	return es8328_probe(&spi->dev,
+अटल पूर्णांक es8328_spi_probe(काष्ठा spi_device *spi)
+अणु
+	वापस es8328_probe(&spi->dev,
 			devm_regmap_init_spi(spi, &es8328_regmap_config));
-}
+पूर्ण
 
-static struct spi_driver es8328_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver es8328_spi_driver = अणु
+	.driver = अणु
 		.name		= "es8328",
 		.of_match_table	= es8328_of_match,
-	},
+	पूर्ण,
 	.probe	= es8328_spi_probe,
-};
+पूर्ण;
 
 module_spi_driver(es8328_spi_driver);
 MODULE_DESCRIPTION("ASoC ES8328 audio CODEC SPI driver");

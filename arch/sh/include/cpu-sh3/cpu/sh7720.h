@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH7720_H__
-#define __ASM_SH7720_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH7720_H__
+#घोषणा __ASM_SH7720_H__
 
-enum {
+क्रमागत अणु
 	/* PTA */
 	GPIO_PTA7, GPIO_PTA6, GPIO_PTA5, GPIO_PTA4,
 	GPIO_PTA3, GPIO_PTA2, GPIO_PTA1, GPIO_PTA0,
@@ -170,6 +171,6 @@ enum {
 
 	/* SYSC */
 	GPIO_FN_STATUS0, GPIO_FN_STATUS1,
-};
+पूर्ण;
 
-#endif /* __ASM_SH7720_H__ */
+#पूर्ण_अगर /* __ASM_SH7720_H__ */

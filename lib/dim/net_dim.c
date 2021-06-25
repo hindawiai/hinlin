@@ -1,246 +1,247 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2018, Mellanox Technologies inc.  All rights reserved.
  */
 
-#include <linux/dim.h>
+#समावेश <linux/dim.h>
 
 /*
  * Net DIM profiles:
- *        There are different set of profiles for each CQ period mode.
- *        There are different set of profiles for RX/TX CQs.
- *        Each profile size must be of NET_DIM_PARAMS_NUM_PROFILES
+ *        There are dअगरferent set of profiles क्रम each CQ period mode.
+ *        There are dअगरferent set of profiles क्रम RX/TX CQs.
+ *        Each profile size must be of NET_DIM_PARAMS_NUM_PROखाताS
  */
-#define NET_DIM_PARAMS_NUM_PROFILES 5
-#define NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE 256
-#define NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE 128
-#define NET_DIM_DEF_PROFILE_CQE 1
-#define NET_DIM_DEF_PROFILE_EQE 1
+#घोषणा NET_DIM_PARAMS_NUM_PROखाताS 5
+#घोषणा NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE 256
+#घोषणा NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE 128
+#घोषणा NET_DIM_DEF_PROखाता_CQE 1
+#घोषणा NET_DIM_DEF_PROखाता_EQE 1
 
-#define NET_DIM_RX_EQE_PROFILES { \
-	{1,   NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE}, \
-	{8,   NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE}, \
-	{64,  NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE}, \
-	{128, NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE}, \
-	{256, NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQE}, \
-}
+#घोषणा NET_DIM_RX_EQE_PROखाताS अणु \
+	अणु1,   NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण, \
+	अणु8,   NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण, \
+	अणु64,  NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण, \
+	अणु128, NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण, \
+	अणु256, NET_DIM_DEFAULT_RX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण, \
+पूर्ण
 
-#define NET_DIM_RX_CQE_PROFILES { \
-	{2,  256},             \
-	{8,  128},             \
-	{16, 64},              \
-	{32, 64},              \
-	{64, 64}               \
-}
+#घोषणा NET_DIM_RX_CQE_PROखाताS अणु \
+	अणु2,  256पूर्ण,             \
+	अणु8,  128पूर्ण,             \
+	अणु16, 64पूर्ण,              \
+	अणु32, 64पूर्ण,              \
+	अणु64, 64पूर्ण               \
+पूर्ण
 
-#define NET_DIM_TX_EQE_PROFILES { \
-	{1,   NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE},  \
-	{8,   NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE},  \
-	{32,  NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE},  \
-	{64,  NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE},  \
-	{128, NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQE}   \
-}
+#घोषणा NET_DIM_TX_EQE_PROखाताS अणु \
+	अणु1,   NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण,  \
+	अणु8,   NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण,  \
+	अणु32,  NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण,  \
+	अणु64,  NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण,  \
+	अणु128, NET_DIM_DEFAULT_TX_CQ_MODERATION_PKTS_FROM_EQEपूर्ण   \
+पूर्ण
 
-#define NET_DIM_TX_CQE_PROFILES { \
-	{5,  128},  \
-	{8,  64},  \
-	{16, 32},  \
-	{32, 32},  \
-	{64, 32}   \
-}
+#घोषणा NET_DIM_TX_CQE_PROखाताS अणु \
+	अणु5,  128पूर्ण,  \
+	अणु8,  64पूर्ण,  \
+	अणु16, 32पूर्ण,  \
+	अणु32, 32पूर्ण,  \
+	अणु64, 32पूर्ण   \
+पूर्ण
 
-static const struct dim_cq_moder
-rx_profile[DIM_CQ_PERIOD_NUM_MODES][NET_DIM_PARAMS_NUM_PROFILES] = {
-	NET_DIM_RX_EQE_PROFILES,
-	NET_DIM_RX_CQE_PROFILES,
-};
+अटल स्थिर काष्ठा dim_cq_moder
+rx_profile[DIM_CQ_PERIOD_NUM_MODES][NET_DIM_PARAMS_NUM_PROखाताS] = अणु
+	NET_DIM_RX_EQE_PROखाताS,
+	NET_DIM_RX_CQE_PROखाताS,
+पूर्ण;
 
-static const struct dim_cq_moder
-tx_profile[DIM_CQ_PERIOD_NUM_MODES][NET_DIM_PARAMS_NUM_PROFILES] = {
-	NET_DIM_TX_EQE_PROFILES,
-	NET_DIM_TX_CQE_PROFILES,
-};
+अटल स्थिर काष्ठा dim_cq_moder
+tx_profile[DIM_CQ_PERIOD_NUM_MODES][NET_DIM_PARAMS_NUM_PROखाताS] = अणु
+	NET_DIM_TX_EQE_PROखाताS,
+	NET_DIM_TX_CQE_PROखाताS,
+पूर्ण;
 
-struct dim_cq_moder
-net_dim_get_rx_moderation(u8 cq_period_mode, int ix)
-{
-	struct dim_cq_moder cq_moder = rx_profile[cq_period_mode][ix];
+काष्ठा dim_cq_moder
+net_dim_get_rx_moderation(u8 cq_period_mode, पूर्णांक ix)
+अणु
+	काष्ठा dim_cq_moder cq_moder = rx_profile[cq_period_mode][ix];
 
 	cq_moder.cq_period_mode = cq_period_mode;
-	return cq_moder;
-}
+	वापस cq_moder;
+पूर्ण
 EXPORT_SYMBOL(net_dim_get_rx_moderation);
 
-struct dim_cq_moder
+काष्ठा dim_cq_moder
 net_dim_get_def_rx_moderation(u8 cq_period_mode)
-{
+अणु
 	u8 profile_ix = cq_period_mode == DIM_CQ_PERIOD_MODE_START_FROM_CQE ?
-			NET_DIM_DEF_PROFILE_CQE : NET_DIM_DEF_PROFILE_EQE;
+			NET_DIM_DEF_PROखाता_CQE : NET_DIM_DEF_PROखाता_EQE;
 
-	return net_dim_get_rx_moderation(cq_period_mode, profile_ix);
-}
+	वापस net_dim_get_rx_moderation(cq_period_mode, profile_ix);
+पूर्ण
 EXPORT_SYMBOL(net_dim_get_def_rx_moderation);
 
-struct dim_cq_moder
-net_dim_get_tx_moderation(u8 cq_period_mode, int ix)
-{
-	struct dim_cq_moder cq_moder = tx_profile[cq_period_mode][ix];
+काष्ठा dim_cq_moder
+net_dim_get_tx_moderation(u8 cq_period_mode, पूर्णांक ix)
+अणु
+	काष्ठा dim_cq_moder cq_moder = tx_profile[cq_period_mode][ix];
 
 	cq_moder.cq_period_mode = cq_period_mode;
-	return cq_moder;
-}
+	वापस cq_moder;
+पूर्ण
 EXPORT_SYMBOL(net_dim_get_tx_moderation);
 
-struct dim_cq_moder
+काष्ठा dim_cq_moder
 net_dim_get_def_tx_moderation(u8 cq_period_mode)
-{
+अणु
 	u8 profile_ix = cq_period_mode == DIM_CQ_PERIOD_MODE_START_FROM_CQE ?
-			NET_DIM_DEF_PROFILE_CQE : NET_DIM_DEF_PROFILE_EQE;
+			NET_DIM_DEF_PROखाता_CQE : NET_DIM_DEF_PROखाता_EQE;
 
-	return net_dim_get_tx_moderation(cq_period_mode, profile_ix);
-}
+	वापस net_dim_get_tx_moderation(cq_period_mode, profile_ix);
+पूर्ण
 EXPORT_SYMBOL(net_dim_get_def_tx_moderation);
 
-static int net_dim_step(struct dim *dim)
-{
-	if (dim->tired == (NET_DIM_PARAMS_NUM_PROFILES * 2))
-		return DIM_TOO_TIRED;
+अटल पूर्णांक net_dim_step(काष्ठा dim *dim)
+अणु
+	अगर (dim->tired == (NET_DIM_PARAMS_NUM_PROखाताS * 2))
+		वापस DIM_TOO_TIRED;
 
-	switch (dim->tune_state) {
-	case DIM_PARKING_ON_TOP:
-	case DIM_PARKING_TIRED:
-		break;
-	case DIM_GOING_RIGHT:
-		if (dim->profile_ix == (NET_DIM_PARAMS_NUM_PROFILES - 1))
-			return DIM_ON_EDGE;
+	चयन (dim->tune_state) अणु
+	हाल DIM_PARKING_ON_TOP:
+	हाल DIM_PARKING_TIRED:
+		अवरोध;
+	हाल DIM_GOING_RIGHT:
+		अगर (dim->profile_ix == (NET_DIM_PARAMS_NUM_PROखाताS - 1))
+			वापस DIM_ON_EDGE;
 		dim->profile_ix++;
 		dim->steps_right++;
-		break;
-	case DIM_GOING_LEFT:
-		if (dim->profile_ix == 0)
-			return DIM_ON_EDGE;
+		अवरोध;
+	हाल DIM_GOING_LEFT:
+		अगर (dim->profile_ix == 0)
+			वापस DIM_ON_EDGE;
 		dim->profile_ix--;
 		dim->steps_left++;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dim->tired++;
-	return DIM_STEPPED;
-}
+	वापस DIM_STEPPED;
+पूर्ण
 
-static void net_dim_exit_parking(struct dim *dim)
-{
+अटल व्योम net_dim_निकास_parking(काष्ठा dim *dim)
+अणु
 	dim->tune_state = dim->profile_ix ? DIM_GOING_LEFT : DIM_GOING_RIGHT;
 	net_dim_step(dim);
-}
+पूर्ण
 
-static int net_dim_stats_compare(struct dim_stats *curr,
-				 struct dim_stats *prev)
-{
-	if (!prev->bpms)
-		return curr->bpms ? DIM_STATS_BETTER : DIM_STATS_SAME;
+अटल पूर्णांक net_dim_stats_compare(काष्ठा dim_stats *curr,
+				 काष्ठा dim_stats *prev)
+अणु
+	अगर (!prev->bpms)
+		वापस curr->bpms ? DIM_STATS_BETTER : DIM_STATS_SAME;
 
-	if (IS_SIGNIFICANT_DIFF(curr->bpms, prev->bpms))
-		return (curr->bpms > prev->bpms) ? DIM_STATS_BETTER :
+	अगर (IS_SIGNIFICANT_DIFF(curr->bpms, prev->bpms))
+		वापस (curr->bpms > prev->bpms) ? DIM_STATS_BETTER :
 						   DIM_STATS_WORSE;
 
-	if (!prev->ppms)
-		return curr->ppms ? DIM_STATS_BETTER :
+	अगर (!prev->ppms)
+		वापस curr->ppms ? DIM_STATS_BETTER :
 				    DIM_STATS_SAME;
 
-	if (IS_SIGNIFICANT_DIFF(curr->ppms, prev->ppms))
-		return (curr->ppms > prev->ppms) ? DIM_STATS_BETTER :
+	अगर (IS_SIGNIFICANT_DIFF(curr->ppms, prev->ppms))
+		वापस (curr->ppms > prev->ppms) ? DIM_STATS_BETTER :
 						   DIM_STATS_WORSE;
 
-	if (!prev->epms)
-		return DIM_STATS_SAME;
+	अगर (!prev->epms)
+		वापस DIM_STATS_SAME;
 
-	if (IS_SIGNIFICANT_DIFF(curr->epms, prev->epms))
-		return (curr->epms < prev->epms) ? DIM_STATS_BETTER :
+	अगर (IS_SIGNIFICANT_DIFF(curr->epms, prev->epms))
+		वापस (curr->epms < prev->epms) ? DIM_STATS_BETTER :
 						   DIM_STATS_WORSE;
 
-	return DIM_STATS_SAME;
-}
+	वापस DIM_STATS_SAME;
+पूर्ण
 
-static bool net_dim_decision(struct dim_stats *curr_stats, struct dim *dim)
-{
-	int prev_state = dim->tune_state;
-	int prev_ix = dim->profile_ix;
-	int stats_res;
-	int step_res;
+अटल bool net_dim_decision(काष्ठा dim_stats *curr_stats, काष्ठा dim *dim)
+अणु
+	पूर्णांक prev_state = dim->tune_state;
+	पूर्णांक prev_ix = dim->profile_ix;
+	पूर्णांक stats_res;
+	पूर्णांक step_res;
 
-	switch (dim->tune_state) {
-	case DIM_PARKING_ON_TOP:
+	चयन (dim->tune_state) अणु
+	हाल DIM_PARKING_ON_TOP:
 		stats_res = net_dim_stats_compare(curr_stats,
 						  &dim->prev_stats);
-		if (stats_res != DIM_STATS_SAME)
-			net_dim_exit_parking(dim);
-		break;
+		अगर (stats_res != DIM_STATS_SAME)
+			net_dim_निकास_parking(dim);
+		अवरोध;
 
-	case DIM_PARKING_TIRED:
+	हाल DIM_PARKING_TIRED:
 		dim->tired--;
-		if (!dim->tired)
-			net_dim_exit_parking(dim);
-		break;
+		अगर (!dim->tired)
+			net_dim_निकास_parking(dim);
+		अवरोध;
 
-	case DIM_GOING_RIGHT:
-	case DIM_GOING_LEFT:
+	हाल DIM_GOING_RIGHT:
+	हाल DIM_GOING_LEFT:
 		stats_res = net_dim_stats_compare(curr_stats,
 						  &dim->prev_stats);
-		if (stats_res != DIM_STATS_BETTER)
+		अगर (stats_res != DIM_STATS_BETTER)
 			dim_turn(dim);
 
-		if (dim_on_top(dim)) {
+		अगर (dim_on_top(dim)) अणु
 			dim_park_on_top(dim);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		step_res = net_dim_step(dim);
-		switch (step_res) {
-		case DIM_ON_EDGE:
+		चयन (step_res) अणु
+		हाल DIM_ON_EDGE:
 			dim_park_on_top(dim);
-			break;
-		case DIM_TOO_TIRED:
+			अवरोध;
+		हाल DIM_TOO_TIRED:
 			dim_park_tired(dim);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (prev_state != DIM_PARKING_ON_TOP ||
+	अगर (prev_state != DIM_PARKING_ON_TOP ||
 	    dim->tune_state != DIM_PARKING_ON_TOP)
 		dim->prev_stats = *curr_stats;
 
-	return dim->profile_ix != prev_ix;
-}
+	वापस dim->profile_ix != prev_ix;
+पूर्ण
 
-void net_dim(struct dim *dim, struct dim_sample end_sample)
-{
-	struct dim_stats curr_stats;
+व्योम net_dim(काष्ठा dim *dim, काष्ठा dim_sample end_sample)
+अणु
+	काष्ठा dim_stats curr_stats;
 	u16 nevents;
 
-	switch (dim->state) {
-	case DIM_MEASURE_IN_PROGRESS:
+	चयन (dim->state) अणु
+	हाल DIM_MEASURE_IN_PROGRESS:
 		nevents = BIT_GAP(BITS_PER_TYPE(u16),
 				  end_sample.event_ctr,
 				  dim->start_sample.event_ctr);
-		if (nevents < DIM_NEVENTS)
-			break;
+		अगर (nevents < DIM_NEVENTS)
+			अवरोध;
 		dim_calc_stats(&dim->start_sample, &end_sample, &curr_stats);
-		if (net_dim_decision(&curr_stats, dim)) {
-			dim->state = DIM_APPLY_NEW_PROFILE;
+		अगर (net_dim_decision(&curr_stats, dim)) अणु
+			dim->state = DIM_APPLY_NEW_PROखाता;
 			schedule_work(&dim->work);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case DIM_START_MEASURE:
+	हाल DIM_START_MEASURE:
 		dim_update_sample(end_sample.event_ctr, end_sample.pkt_ctr,
 				  end_sample.byte_ctr, &dim->start_sample);
 		dim->state = DIM_MEASURE_IN_PROGRESS;
-		break;
-	case DIM_APPLY_NEW_PROFILE:
-		break;
-	}
-}
+		अवरोध;
+	हाल DIM_APPLY_NEW_PROखाता:
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(net_dim);

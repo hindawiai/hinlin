@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2020 Invensense, Inc.
  */
 
-#ifndef INV_ICM42600_TIMESTAMP_H_
-#define INV_ICM42600_TIMESTAMP_H_
+#अगर_अघोषित INV_ICM42600_TIMESTAMP_H_
+#घोषणा INV_ICM42600_TIMESTAMP_H_
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-struct inv_icm42600_state;
+काष्ठा inv_icm42600_state;
 
 /**
- * struct inv_icm42600_timestamp_interval - timestamps interval
- * @lo:	interval lower bound
- * @up:	interval upper bound
+ * काष्ठा inv_icm42600_बारtamp_पूर्णांकerval - बारtamps पूर्णांकerval
+ * @lo:	पूर्णांकerval lower bound
+ * @up:	पूर्णांकerval upper bound
  */
-struct inv_icm42600_timestamp_interval {
-	int64_t lo;
-	int64_t up;
-};
+काष्ठा inv_icm42600_बारtamp_पूर्णांकerval अणु
+	पूर्णांक64_t lo;
+	पूर्णांक64_t up;
+पूर्ण;
 
 /**
- * struct inv_icm42600_timestamp_acc - accumulator for computing an estimation
+ * काष्ठा inv_icm42600_बारtamp_acc - accumulator क्रम computing an estimation
  * @val:	current estimation of the value, the mean of all values
- * @idx:	current index of the next free place in values table
- * @values:	table of all measured values, use for computing the mean
+ * @idx:	current index of the next मुक्त place in values table
+ * @values:	table of all measured values, use क्रम computing the mean
  */
-struct inv_icm42600_timestamp_acc {
-	uint32_t val;
-	size_t idx;
-	uint32_t values[32];
-};
+काष्ठा inv_icm42600_बारtamp_acc अणु
+	uपूर्णांक32_t val;
+	माप_प्रकार idx;
+	uपूर्णांक32_t values[32];
+पूर्ण;
 
 /**
- * struct inv_icm42600_timestamp - timestamp management states
- * @it:			interrupts interval timestamps
- * @timestamp:		store last timestamp for computing next data timestamp
- * @mult:		current internal period multiplier
- * @new_mult:		new set internal period multiplier (not yet effective)
+ * काष्ठा inv_icm42600_बारtamp - बारtamp management states
+ * @it:			पूर्णांकerrupts पूर्णांकerval बारtamps
+ * @बारtamp:		store last बारtamp क्रम computing next data बारtamp
+ * @mult:		current पूर्णांकernal period multiplier
+ * @new_mult:		new set पूर्णांकernal period multiplier (not yet effective)
  * @period:		measured current period of the sensor
- * @chip_period:	accumulator for computing internal chip period
+ * @chip_period:	accumulator क्रम computing पूर्णांकernal chip period
  */
-struct inv_icm42600_timestamp {
-	struct inv_icm42600_timestamp_interval it;
-	int64_t timestamp;
-	uint32_t mult;
-	uint32_t new_mult;
-	uint32_t period;
-	struct inv_icm42600_timestamp_acc chip_period;
-};
+काष्ठा inv_icm42600_बारtamp अणु
+	काष्ठा inv_icm42600_बारtamp_पूर्णांकerval it;
+	पूर्णांक64_t बारtamp;
+	uपूर्णांक32_t mult;
+	uपूर्णांक32_t new_mult;
+	uपूर्णांक32_t period;
+	काष्ठा inv_icm42600_बारtamp_acc chip_period;
+पूर्ण;
 
-void inv_icm42600_timestamp_init(struct inv_icm42600_timestamp *ts,
-				 uint32_t period);
+व्योम inv_icm42600_बारtamp_init(काष्ठा inv_icm42600_बारtamp *ts,
+				 uपूर्णांक32_t period);
 
-int inv_icm42600_timestamp_setup(struct inv_icm42600_state *st);
+पूर्णांक inv_icm42600_बारtamp_setup(काष्ठा inv_icm42600_state *st);
 
-int inv_icm42600_timestamp_update_odr(struct inv_icm42600_timestamp *ts,
-				      uint32_t period, bool fifo);
+पूर्णांक inv_icm42600_बारtamp_update_odr(काष्ठा inv_icm42600_बारtamp *ts,
+				      uपूर्णांक32_t period, bool fअगरo);
 
-void inv_icm42600_timestamp_interrupt(struct inv_icm42600_timestamp *ts,
-				      uint32_t fifo_period, size_t fifo_nb,
-				      size_t sensor_nb, int64_t timestamp);
+व्योम inv_icm42600_बारtamp_पूर्णांकerrupt(काष्ठा inv_icm42600_बारtamp *ts,
+				      uपूर्णांक32_t fअगरo_period, माप_प्रकार fअगरo_nb,
+				      माप_प्रकार sensor_nb, पूर्णांक64_t बारtamp);
 
-static inline int64_t
-inv_icm42600_timestamp_pop(struct inv_icm42600_timestamp *ts)
-{
-	ts->timestamp += ts->period;
-	return ts->timestamp;
-}
+अटल अंतरभूत पूर्णांक64_t
+inv_icm42600_बारtamp_pop(काष्ठा inv_icm42600_बारtamp *ts)
+अणु
+	ts->बारtamp += ts->period;
+	वापस ts->बारtamp;
+पूर्ण
 
-void inv_icm42600_timestamp_apply_odr(struct inv_icm42600_timestamp *ts,
-				      uint32_t fifo_period, size_t fifo_nb,
-				      unsigned int fifo_no);
+व्योम inv_icm42600_बारtamp_apply_odr(काष्ठा inv_icm42600_बारtamp *ts,
+				      uपूर्णांक32_t fअगरo_period, माप_प्रकार fअगरo_nb,
+				      अचिन्हित पूर्णांक fअगरo_no);
 
-static inline void
-inv_icm42600_timestamp_reset(struct inv_icm42600_timestamp *ts)
-{
-	const struct inv_icm42600_timestamp_interval interval_init = {0LL, 0LL};
+अटल अंतरभूत व्योम
+inv_icm42600_बारtamp_reset(काष्ठा inv_icm42600_बारtamp *ts)
+अणु
+	स्थिर काष्ठा inv_icm42600_बारtamp_पूर्णांकerval पूर्णांकerval_init = अणु0LL, 0LLपूर्ण;
 
-	ts->it = interval_init;
-	ts->timestamp = 0;
-}
+	ts->it = पूर्णांकerval_init;
+	ts->बारtamp = 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,564 +1,565 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Implementation of the extensible bitmap type.
+ * Implementation of the extensible biपंचांगap type.
  *
  * Author : Stephen Smalley, <sds@tycho.nsa.gov>
  */
 /*
  * Updated: Hewlett-Packard <paul@paul-moore.com>
  *
- *      Added support to import/export the NetLabel category bitmap
+ *      Added support to import/export the NetLabel category biपंचांगap
  *
  * (c) Copyright Hewlett-Packard Development Company, L.P., 2006
  */
 /*
  * Updated: KaiGai Kohei <kaigai@ak.jp.nec.com>
- *      Applied standard bit operations to improve bitmap scanning.
+ *      Applied standard bit operations to improve biपंचांगap scanning.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/jhash.h>
-#include <net/netlabel.h>
-#include "ebitmap.h"
-#include "policydb.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/jhash.h>
+#समावेश <net/netlabel.h>
+#समावेश "ebitmap.h"
+#समावेश "policydb.h"
 
-#define BITS_PER_U64	(sizeof(u64) * 8)
+#घोषणा BITS_PER_U64	(माप(u64) * 8)
 
-static struct kmem_cache *ebitmap_node_cachep __ro_after_init;
+अटल काष्ठा kmem_cache *ebiपंचांगap_node_cachep __ro_after_init;
 
-int ebitmap_cmp(struct ebitmap *e1, struct ebitmap *e2)
-{
-	struct ebitmap_node *n1, *n2;
+पूर्णांक ebiपंचांगap_cmp(काष्ठा ebiपंचांगap *e1, काष्ठा ebiपंचांगap *e2)
+अणु
+	काष्ठा ebiपंचांगap_node *n1, *n2;
 
-	if (e1->highbit != e2->highbit)
-		return 0;
+	अगर (e1->highbit != e2->highbit)
+		वापस 0;
 
 	n1 = e1->node;
 	n2 = e2->node;
-	while (n1 && n2 &&
+	जबतक (n1 && n2 &&
 	       (n1->startbit == n2->startbit) &&
-	       !memcmp(n1->maps, n2->maps, EBITMAP_SIZE / 8)) {
+	       !स_भेद(n1->maps, n2->maps, EBITMAP_SIZE / 8)) अणु
 		n1 = n1->next;
 		n2 = n2->next;
-	}
+	पूर्ण
 
-	if (n1 || n2)
-		return 0;
+	अगर (n1 || n2)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int ebitmap_cpy(struct ebitmap *dst, struct ebitmap *src)
-{
-	struct ebitmap_node *n, *new, *prev;
+पूर्णांक ebiपंचांगap_cpy(काष्ठा ebiपंचांगap *dst, काष्ठा ebiपंचांगap *src)
+अणु
+	काष्ठा ebiपंचांगap_node *n, *new, *prev;
 
-	ebitmap_init(dst);
+	ebiपंचांगap_init(dst);
 	n = src->node;
-	prev = NULL;
-	while (n) {
-		new = kmem_cache_zalloc(ebitmap_node_cachep, GFP_ATOMIC);
-		if (!new) {
-			ebitmap_destroy(dst);
-			return -ENOMEM;
-		}
+	prev = शून्य;
+	जबतक (n) अणु
+		new = kmem_cache_zalloc(ebiपंचांगap_node_cachep, GFP_ATOMIC);
+		अगर (!new) अणु
+			ebiपंचांगap_destroy(dst);
+			वापस -ENOMEM;
+		पूर्ण
 		new->startbit = n->startbit;
-		memcpy(new->maps, n->maps, EBITMAP_SIZE / 8);
-		new->next = NULL;
-		if (prev)
+		स_नकल(new->maps, n->maps, EBITMAP_SIZE / 8);
+		new->next = शून्य;
+		अगर (prev)
 			prev->next = new;
-		else
+		अन्यथा
 			dst->node = new;
 		prev = new;
 		n = n->next;
-	}
+	पूर्ण
 
 	dst->highbit = src->highbit;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ebitmap_and(struct ebitmap *dst, struct ebitmap *e1, struct ebitmap *e2)
-{
-	struct ebitmap_node *n;
-	int bit, rc;
+पूर्णांक ebiपंचांगap_and(काष्ठा ebiपंचांगap *dst, काष्ठा ebiपंचांगap *e1, काष्ठा ebiपंचांगap *e2)
+अणु
+	काष्ठा ebiपंचांगap_node *n;
+	पूर्णांक bit, rc;
 
-	ebitmap_init(dst);
+	ebiपंचांगap_init(dst);
 
-	ebitmap_for_each_positive_bit(e1, n, bit) {
-		if (ebitmap_get_bit(e2, bit)) {
-			rc = ebitmap_set_bit(dst, bit, 1);
-			if (rc < 0)
-				return rc;
-		}
-	}
-	return 0;
-}
+	ebiपंचांगap_क्रम_each_positive_bit(e1, n, bit) अणु
+		अगर (ebiपंचांगap_get_bit(e2, bit)) अणु
+			rc = ebiपंचांगap_set_bit(dst, bit, 1);
+			अगर (rc < 0)
+				वापस rc;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
-#ifdef CONFIG_NETLABEL
+#अगर_घोषित CONFIG_NETLABEL
 /**
- * ebitmap_netlbl_export - Export an ebitmap into a NetLabel category bitmap
- * @ebmap: the ebitmap to export
- * @catmap: the NetLabel category bitmap
+ * ebiपंचांगap_netlbl_export - Export an ebiपंचांगap पूर्णांकo a NetLabel category biपंचांगap
+ * @ebmap: the ebiपंचांगap to export
+ * @caपंचांगap: the NetLabel category biपंचांगap
  *
  * Description:
- * Export a SELinux extensibile bitmap into a NetLabel category bitmap.
+ * Export a SELinux extensibile biपंचांगap पूर्णांकo a NetLabel category biपंचांगap.
  * Returns zero on success, negative values on error.
  *
  */
-int ebitmap_netlbl_export(struct ebitmap *ebmap,
-			  struct netlbl_lsm_catmap **catmap)
-{
-	struct ebitmap_node *e_iter = ebmap->node;
-	unsigned long e_map;
+पूर्णांक ebiपंचांगap_netlbl_export(काष्ठा ebiपंचांगap *ebmap,
+			  काष्ठा netlbl_lsm_caपंचांगap **caपंचांगap)
+अणु
+	काष्ठा ebiपंचांगap_node *e_iter = ebmap->node;
+	अचिन्हित दीर्घ e_map;
 	u32 offset;
-	unsigned int iter;
-	int rc;
+	अचिन्हित पूर्णांक iter;
+	पूर्णांक rc;
 
-	if (e_iter == NULL) {
-		*catmap = NULL;
-		return 0;
-	}
+	अगर (e_iter == शून्य) अणु
+		*caपंचांगap = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (*catmap != NULL)
-		netlbl_catmap_free(*catmap);
-	*catmap = NULL;
+	अगर (*caपंचांगap != शून्य)
+		netlbl_caपंचांगap_मुक्त(*caपंचांगap);
+	*caपंचांगap = शून्य;
 
-	while (e_iter) {
+	जबतक (e_iter) अणु
 		offset = e_iter->startbit;
-		for (iter = 0; iter < EBITMAP_UNIT_NUMS; iter++) {
+		क्रम (iter = 0; iter < EBITMAP_UNIT_NUMS; iter++) अणु
 			e_map = e_iter->maps[iter];
-			if (e_map != 0) {
-				rc = netlbl_catmap_setlong(catmap,
+			अगर (e_map != 0) अणु
+				rc = netlbl_caपंचांगap_setदीर्घ(caपंचांगap,
 							   offset,
 							   e_map,
 							   GFP_ATOMIC);
-				if (rc != 0)
-					goto netlbl_export_failure;
-			}
+				अगर (rc != 0)
+					जाओ netlbl_export_failure;
+			पूर्ण
 			offset += EBITMAP_UNIT_SIZE;
-		}
+		पूर्ण
 		e_iter = e_iter->next;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 netlbl_export_failure:
-	netlbl_catmap_free(*catmap);
-	return -ENOMEM;
-}
+	netlbl_caपंचांगap_मुक्त(*caपंचांगap);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * ebitmap_netlbl_import - Import a NetLabel category bitmap into an ebitmap
- * @ebmap: the ebitmap to import
- * @catmap: the NetLabel category bitmap
+ * ebiपंचांगap_netlbl_import - Import a NetLabel category biपंचांगap पूर्णांकo an ebiपंचांगap
+ * @ebmap: the ebiपंचांगap to import
+ * @caपंचांगap: the NetLabel category biपंचांगap
  *
  * Description:
- * Import a NetLabel category bitmap into a SELinux extensibile bitmap.
+ * Import a NetLabel category biपंचांगap पूर्णांकo a SELinux extensibile biपंचांगap.
  * Returns zero on success, negative values on error.
  *
  */
-int ebitmap_netlbl_import(struct ebitmap *ebmap,
-			  struct netlbl_lsm_catmap *catmap)
-{
-	int rc;
-	struct ebitmap_node *e_iter = NULL;
-	struct ebitmap_node *e_prev = NULL;
+पूर्णांक ebiपंचांगap_netlbl_import(काष्ठा ebiपंचांगap *ebmap,
+			  काष्ठा netlbl_lsm_caपंचांगap *caपंचांगap)
+अणु
+	पूर्णांक rc;
+	काष्ठा ebiपंचांगap_node *e_iter = शून्य;
+	काष्ठा ebiपंचांगap_node *e_prev = शून्य;
 	u32 offset = 0, idx;
-	unsigned long bitmap;
+	अचिन्हित दीर्घ biपंचांगap;
 
-	for (;;) {
-		rc = netlbl_catmap_getlong(catmap, &offset, &bitmap);
-		if (rc < 0)
-			goto netlbl_import_failure;
-		if (offset == (u32)-1)
-			return 0;
+	क्रम (;;) अणु
+		rc = netlbl_caपंचांगap_getदीर्घ(caपंचांगap, &offset, &biपंचांगap);
+		अगर (rc < 0)
+			जाओ netlbl_import_failure;
+		अगर (offset == (u32)-1)
+			वापस 0;
 
-		/* don't waste ebitmap space if the netlabel bitmap is empty */
-		if (bitmap == 0) {
+		/* करोn't waste ebiपंचांगap space अगर the netlabel biपंचांगap is empty */
+		अगर (biपंचांगap == 0) अणु
 			offset += EBITMAP_UNIT_SIZE;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (e_iter == NULL ||
-		    offset >= e_iter->startbit + EBITMAP_SIZE) {
+		अगर (e_iter == शून्य ||
+		    offset >= e_iter->startbit + EBITMAP_SIZE) अणु
 			e_prev = e_iter;
-			e_iter = kmem_cache_zalloc(ebitmap_node_cachep, GFP_ATOMIC);
-			if (e_iter == NULL)
-				goto netlbl_import_failure;
+			e_iter = kmem_cache_zalloc(ebiपंचांगap_node_cachep, GFP_ATOMIC);
+			अगर (e_iter == शून्य)
+				जाओ netlbl_import_failure;
 			e_iter->startbit = offset - (offset % EBITMAP_SIZE);
-			if (e_prev == NULL)
+			अगर (e_prev == शून्य)
 				ebmap->node = e_iter;
-			else
+			अन्यथा
 				e_prev->next = e_iter;
 			ebmap->highbit = e_iter->startbit + EBITMAP_SIZE;
-		}
+		पूर्ण
 
-		/* offset will always be aligned to an unsigned long */
+		/* offset will always be aligned to an अचिन्हित दीर्घ */
 		idx = EBITMAP_NODE_INDEX(e_iter, offset);
-		e_iter->maps[idx] = bitmap;
+		e_iter->maps[idx] = biपंचांगap;
 
 		/* next */
 		offset += EBITMAP_UNIT_SIZE;
-	}
+	पूर्ण
 
-	/* NOTE: we should never reach this return */
-	return 0;
+	/* NOTE: we should never reach this वापस */
+	वापस 0;
 
 netlbl_import_failure:
-	ebitmap_destroy(ebmap);
-	return -ENOMEM;
-}
-#endif /* CONFIG_NETLABEL */
+	ebiपंचांगap_destroy(ebmap);
+	वापस -ENOMEM;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NETLABEL */
 
 /*
- * Check to see if all the bits set in e2 are also set in e1. Optionally,
- * if last_e2bit is non-zero, the highest set bit in e2 cannot exceed
+ * Check to see अगर all the bits set in e2 are also set in e1. Optionally,
+ * अगर last_e2bit is non-zero, the highest set bit in e2 cannot exceed
  * last_e2bit.
  */
-int ebitmap_contains(struct ebitmap *e1, struct ebitmap *e2, u32 last_e2bit)
-{
-	struct ebitmap_node *n1, *n2;
-	int i;
+पूर्णांक ebiपंचांगap_contains(काष्ठा ebiपंचांगap *e1, काष्ठा ebiपंचांगap *e2, u32 last_e2bit)
+अणु
+	काष्ठा ebiपंचांगap_node *n1, *n2;
+	पूर्णांक i;
 
-	if (e1->highbit < e2->highbit)
-		return 0;
+	अगर (e1->highbit < e2->highbit)
+		वापस 0;
 
 	n1 = e1->node;
 	n2 = e2->node;
 
-	while (n1 && n2 && (n1->startbit <= n2->startbit)) {
-		if (n1->startbit < n2->startbit) {
+	जबतक (n1 && n2 && (n1->startbit <= n2->startbit)) अणु
+		अगर (n1->startbit < n2->startbit) अणु
 			n1 = n1->next;
-			continue;
-		}
-		for (i = EBITMAP_UNIT_NUMS - 1; (i >= 0) && !n2->maps[i]; )
-			i--;	/* Skip trailing NULL map entries */
-		if (last_e2bit && (i >= 0)) {
+			जारी;
+		पूर्ण
+		क्रम (i = EBITMAP_UNIT_NUMS - 1; (i >= 0) && !n2->maps[i]; )
+			i--;	/* Skip trailing शून्य map entries */
+		अगर (last_e2bit && (i >= 0)) अणु
 			u32 lastsetbit = n2->startbit + i * EBITMAP_UNIT_SIZE +
 					 __fls(n2->maps[i]);
-			if (lastsetbit > last_e2bit)
-				return 0;
-		}
+			अगर (lastsetbit > last_e2bit)
+				वापस 0;
+		पूर्ण
 
-		while (i >= 0) {
-			if ((n1->maps[i] & n2->maps[i]) != n2->maps[i])
-				return 0;
+		जबतक (i >= 0) अणु
+			अगर ((n1->maps[i] & n2->maps[i]) != n2->maps[i])
+				वापस 0;
 			i--;
-		}
+		पूर्ण
 
 		n1 = n1->next;
 		n2 = n2->next;
-	}
+	पूर्ण
 
-	if (n2)
-		return 0;
+	अगर (n2)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int ebitmap_get_bit(struct ebitmap *e, unsigned long bit)
-{
-	struct ebitmap_node *n;
+पूर्णांक ebiपंचांगap_get_bit(काष्ठा ebiपंचांगap *e, अचिन्हित दीर्घ bit)
+अणु
+	काष्ठा ebiपंचांगap_node *n;
 
-	if (e->highbit < bit)
-		return 0;
+	अगर (e->highbit < bit)
+		वापस 0;
 
 	n = e->node;
-	while (n && (n->startbit <= bit)) {
-		if ((n->startbit + EBITMAP_SIZE) > bit)
-			return ebitmap_node_get_bit(n, bit);
+	जबतक (n && (n->startbit <= bit)) अणु
+		अगर ((n->startbit + EBITMAP_SIZE) > bit)
+			वापस ebiपंचांगap_node_get_bit(n, bit);
 		n = n->next;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ebitmap_set_bit(struct ebitmap *e, unsigned long bit, int value)
-{
-	struct ebitmap_node *n, *prev, *new;
+पूर्णांक ebiपंचांगap_set_bit(काष्ठा ebiपंचांगap *e, अचिन्हित दीर्घ bit, पूर्णांक value)
+अणु
+	काष्ठा ebiपंचांगap_node *n, *prev, *new;
 
-	prev = NULL;
+	prev = शून्य;
 	n = e->node;
-	while (n && n->startbit <= bit) {
-		if ((n->startbit + EBITMAP_SIZE) > bit) {
-			if (value) {
-				ebitmap_node_set_bit(n, bit);
-			} else {
-				unsigned int s;
+	जबतक (n && n->startbit <= bit) अणु
+		अगर ((n->startbit + EBITMAP_SIZE) > bit) अणु
+			अगर (value) अणु
+				ebiपंचांगap_node_set_bit(n, bit);
+			पूर्ण अन्यथा अणु
+				अचिन्हित पूर्णांक s;
 
-				ebitmap_node_clr_bit(n, bit);
+				ebiपंचांगap_node_clr_bit(n, bit);
 
 				s = find_first_bit(n->maps, EBITMAP_SIZE);
-				if (s < EBITMAP_SIZE)
-					return 0;
+				अगर (s < EBITMAP_SIZE)
+					वापस 0;
 
-				/* drop this node from the bitmap */
-				if (!n->next) {
+				/* drop this node from the biपंचांगap */
+				अगर (!n->next) अणु
 					/*
 					 * this was the highest map
-					 * within the bitmap
+					 * within the biपंचांगap
 					 */
-					if (prev)
+					अगर (prev)
 						e->highbit = prev->startbit
 							     + EBITMAP_SIZE;
-					else
+					अन्यथा
 						e->highbit = 0;
-				}
-				if (prev)
+				पूर्ण
+				अगर (prev)
 					prev->next = n->next;
-				else
+				अन्यथा
 					e->node = n->next;
-				kmem_cache_free(ebitmap_node_cachep, n);
-			}
-			return 0;
-		}
+				kmem_cache_मुक्त(ebiपंचांगap_node_cachep, n);
+			पूर्ण
+			वापस 0;
+		पूर्ण
 		prev = n;
 		n = n->next;
-	}
+	पूर्ण
 
-	if (!value)
-		return 0;
+	अगर (!value)
+		वापस 0;
 
-	new = kmem_cache_zalloc(ebitmap_node_cachep, GFP_ATOMIC);
-	if (!new)
-		return -ENOMEM;
+	new = kmem_cache_zalloc(ebiपंचांगap_node_cachep, GFP_ATOMIC);
+	अगर (!new)
+		वापस -ENOMEM;
 
 	new->startbit = bit - (bit % EBITMAP_SIZE);
-	ebitmap_node_set_bit(new, bit);
+	ebiपंचांगap_node_set_bit(new, bit);
 
-	if (!n)
-		/* this node will be the highest map within the bitmap */
+	अगर (!n)
+		/* this node will be the highest map within the biपंचांगap */
 		e->highbit = new->startbit + EBITMAP_SIZE;
 
-	if (prev) {
+	अगर (prev) अणु
 		new->next = prev->next;
 		prev->next = new;
-	} else {
+	पूर्ण अन्यथा अणु
 		new->next = e->node;
 		e->node = new;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ebitmap_destroy(struct ebitmap *e)
-{
-	struct ebitmap_node *n, *temp;
+व्योम ebiपंचांगap_destroy(काष्ठा ebiपंचांगap *e)
+अणु
+	काष्ठा ebiपंचांगap_node *n, *temp;
 
-	if (!e)
-		return;
+	अगर (!e)
+		वापस;
 
 	n = e->node;
-	while (n) {
+	जबतक (n) अणु
 		temp = n;
 		n = n->next;
-		kmem_cache_free(ebitmap_node_cachep, temp);
-	}
+		kmem_cache_मुक्त(ebiपंचांगap_node_cachep, temp);
+	पूर्ण
 
 	e->highbit = 0;
-	e->node = NULL;
-	return;
-}
+	e->node = शून्य;
+	वापस;
+पूर्ण
 
-int ebitmap_read(struct ebitmap *e, void *fp)
-{
-	struct ebitmap_node *n = NULL;
+पूर्णांक ebiपंचांगap_पढ़ो(काष्ठा ebiपंचांगap *e, व्योम *fp)
+अणु
+	काष्ठा ebiपंचांगap_node *n = शून्य;
 	u32 mapunit, count, startbit, index;
-	__le32 ebitmap_start;
+	__le32 ebiपंचांगap_start;
 	u64 map;
 	__le64 mapbits;
 	__le32 buf[3];
-	int rc, i;
+	पूर्णांक rc, i;
 
-	ebitmap_init(e);
+	ebiपंचांगap_init(e);
 
-	rc = next_entry(buf, fp, sizeof buf);
-	if (rc < 0)
-		goto out;
+	rc = next_entry(buf, fp, माप buf);
+	अगर (rc < 0)
+		जाओ out;
 
 	mapunit = le32_to_cpu(buf[0]);
 	e->highbit = le32_to_cpu(buf[1]);
 	count = le32_to_cpu(buf[2]);
 
-	if (mapunit != BITS_PER_U64) {
+	अगर (mapunit != BITS_PER_U64) अणु
 		pr_err("SELinux: ebitmap: map size %u does not "
 		       "match my size %zd (high bit was %d)\n",
 		       mapunit, BITS_PER_U64, e->highbit);
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	/* round up e->highbit */
 	e->highbit += EBITMAP_SIZE - 1;
 	e->highbit -= (e->highbit % EBITMAP_SIZE);
 
-	if (!e->highbit) {
-		e->node = NULL;
-		goto ok;
-	}
+	अगर (!e->highbit) अणु
+		e->node = शून्य;
+		जाओ ok;
+	पूर्ण
 
-	if (e->highbit && !count)
-		goto bad;
+	अगर (e->highbit && !count)
+		जाओ bad;
 
-	for (i = 0; i < count; i++) {
-		rc = next_entry(&ebitmap_start, fp, sizeof(u32));
-		if (rc < 0) {
+	क्रम (i = 0; i < count; i++) अणु
+		rc = next_entry(&ebiपंचांगap_start, fp, माप(u32));
+		अगर (rc < 0) अणु
 			pr_err("SELinux: ebitmap: truncated map\n");
-			goto bad;
-		}
-		startbit = le32_to_cpu(ebitmap_start);
+			जाओ bad;
+		पूर्ण
+		startbit = le32_to_cpu(ebiपंचांगap_start);
 
-		if (startbit & (mapunit - 1)) {
+		अगर (startbit & (mapunit - 1)) अणु
 			pr_err("SELinux: ebitmap start bit (%d) is "
 			       "not a multiple of the map unit size (%u)\n",
 			       startbit, mapunit);
-			goto bad;
-		}
-		if (startbit > e->highbit - mapunit) {
+			जाओ bad;
+		पूर्ण
+		अगर (startbit > e->highbit - mapunit) अणु
 			pr_err("SELinux: ebitmap start bit (%d) is "
 			       "beyond the end of the bitmap (%u)\n",
 			       startbit, (e->highbit - mapunit));
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
-		if (!n || startbit >= n->startbit + EBITMAP_SIZE) {
-			struct ebitmap_node *tmp;
-			tmp = kmem_cache_zalloc(ebitmap_node_cachep, GFP_KERNEL);
-			if (!tmp) {
+		अगर (!n || startbit >= n->startbit + EBITMAP_SIZE) अणु
+			काष्ठा ebiपंचांगap_node *पंचांगp;
+			पंचांगp = kmem_cache_zalloc(ebiपंचांगap_node_cachep, GFP_KERNEL);
+			अगर (!पंचांगp) अणु
 				pr_err("SELinux: ebitmap: out of memory\n");
 				rc = -ENOMEM;
-				goto bad;
-			}
-			/* round down */
-			tmp->startbit = startbit - (startbit % EBITMAP_SIZE);
-			if (n)
-				n->next = tmp;
-			else
-				e->node = tmp;
-			n = tmp;
-		} else if (startbit <= n->startbit) {
+				जाओ bad;
+			पूर्ण
+			/* round करोwn */
+			पंचांगp->startbit = startbit - (startbit % EBITMAP_SIZE);
+			अगर (n)
+				n->next = पंचांगp;
+			अन्यथा
+				e->node = पंचांगp;
+			n = पंचांगp;
+		पूर्ण अन्यथा अगर (startbit <= n->startbit) अणु
 			pr_err("SELinux: ebitmap: start bit %d"
 			       " comes after start bit %d\n",
 			       startbit, n->startbit);
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
-		rc = next_entry(&mapbits, fp, sizeof(u64));
-		if (rc < 0) {
+		rc = next_entry(&mapbits, fp, माप(u64));
+		अगर (rc < 0) अणु
 			pr_err("SELinux: ebitmap: truncated map\n");
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 		map = le64_to_cpu(mapbits);
 
 		index = (startbit - n->startbit) / EBITMAP_UNIT_SIZE;
-		while (map) {
+		जबतक (map) अणु
 			n->maps[index++] = map & (-1UL);
 			map = EBITMAP_SHIFT_UNIT_SIZE(map);
-		}
-	}
+		पूर्ण
+	पूर्ण
 ok:
 	rc = 0;
 out:
-	return rc;
+	वापस rc;
 bad:
-	if (!rc)
+	अगर (!rc)
 		rc = -EINVAL;
-	ebitmap_destroy(e);
-	goto out;
-}
+	ebiपंचांगap_destroy(e);
+	जाओ out;
+पूर्ण
 
-int ebitmap_write(struct ebitmap *e, void *fp)
-{
-	struct ebitmap_node *n;
+पूर्णांक ebiपंचांगap_ग_लिखो(काष्ठा ebiपंचांगap *e, व्योम *fp)
+अणु
+	काष्ठा ebiपंचांगap_node *n;
 	u32 count;
 	__le32 buf[3];
 	u64 map;
-	int bit, last_bit, last_startbit, rc;
+	पूर्णांक bit, last_bit, last_startbit, rc;
 
 	buf[0] = cpu_to_le32(BITS_PER_U64);
 
 	count = 0;
 	last_bit = 0;
 	last_startbit = -1;
-	ebitmap_for_each_positive_bit(e, n, bit) {
-		if (rounddown(bit, (int)BITS_PER_U64) > last_startbit) {
+	ebiपंचांगap_क्रम_each_positive_bit(e, n, bit) अणु
+		अगर (roundकरोwn(bit, (पूर्णांक)BITS_PER_U64) > last_startbit) अणु
 			count++;
-			last_startbit = rounddown(bit, BITS_PER_U64);
-		}
+			last_startbit = roundकरोwn(bit, BITS_PER_U64);
+		पूर्ण
 		last_bit = roundup(bit + 1, BITS_PER_U64);
-	}
+	पूर्ण
 	buf[1] = cpu_to_le32(last_bit);
 	buf[2] = cpu_to_le32(count);
 
-	rc = put_entry(buf, sizeof(u32), 3, fp);
-	if (rc)
-		return rc;
+	rc = put_entry(buf, माप(u32), 3, fp);
+	अगर (rc)
+		वापस rc;
 
 	map = 0;
-	last_startbit = INT_MIN;
-	ebitmap_for_each_positive_bit(e, n, bit) {
-		if (rounddown(bit, (int)BITS_PER_U64) > last_startbit) {
+	last_startbit = पूर्णांक_न्यून;
+	ebiपंचांगap_क्रम_each_positive_bit(e, n, bit) अणु
+		अगर (roundकरोwn(bit, (पूर्णांक)BITS_PER_U64) > last_startbit) अणु
 			__le64 buf64[1];
 
 			/* this is the very first bit */
-			if (!map) {
-				last_startbit = rounddown(bit, BITS_PER_U64);
+			अगर (!map) अणु
+				last_startbit = roundकरोwn(bit, BITS_PER_U64);
 				map = (u64)1 << (bit - last_startbit);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			/* write the last node */
+			/* ग_लिखो the last node */
 			buf[0] = cpu_to_le32(last_startbit);
-			rc = put_entry(buf, sizeof(u32), 1, fp);
-			if (rc)
-				return rc;
+			rc = put_entry(buf, माप(u32), 1, fp);
+			अगर (rc)
+				वापस rc;
 
 			buf64[0] = cpu_to_le64(map);
-			rc = put_entry(buf64, sizeof(u64), 1, fp);
-			if (rc)
-				return rc;
+			rc = put_entry(buf64, माप(u64), 1, fp);
+			अगर (rc)
+				वापस rc;
 
-			/* set up for the next node */
+			/* set up क्रम the next node */
 			map = 0;
-			last_startbit = rounddown(bit, BITS_PER_U64);
-		}
+			last_startbit = roundकरोwn(bit, BITS_PER_U64);
+		पूर्ण
 		map |= (u64)1 << (bit - last_startbit);
-	}
-	/* write the last node */
-	if (map) {
+	पूर्ण
+	/* ग_लिखो the last node */
+	अगर (map) अणु
 		__le64 buf64[1];
 
-		/* write the last node */
+		/* ग_लिखो the last node */
 		buf[0] = cpu_to_le32(last_startbit);
-		rc = put_entry(buf, sizeof(u32), 1, fp);
-		if (rc)
-			return rc;
+		rc = put_entry(buf, माप(u32), 1, fp);
+		अगर (rc)
+			वापस rc;
 
 		buf64[0] = cpu_to_le64(map);
-		rc = put_entry(buf64, sizeof(u64), 1, fp);
-		if (rc)
-			return rc;
-	}
-	return 0;
-}
+		rc = put_entry(buf64, माप(u64), 1, fp);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-u32 ebitmap_hash(const struct ebitmap *e, u32 hash)
-{
-	struct ebitmap_node *node;
+u32 ebiपंचांगap_hash(स्थिर काष्ठा ebiपंचांगap *e, u32 hash)
+अणु
+	काष्ठा ebiपंचांगap_node *node;
 
-	/* need to change hash even if ebitmap is empty */
+	/* need to change hash even अगर ebiपंचांगap is empty */
 	hash = jhash_1word(e->highbit, hash);
-	for (node = e->node; node; node = node->next) {
+	क्रम (node = e->node; node; node = node->next) अणु
 		hash = jhash_1word(node->startbit, hash);
-		hash = jhash(node->maps, sizeof(node->maps), hash);
-	}
-	return hash;
-}
+		hash = jhash(node->maps, माप(node->maps), hash);
+	पूर्ण
+	वापस hash;
+पूर्ण
 
-void __init ebitmap_cache_init(void)
-{
-	ebitmap_node_cachep = kmem_cache_create("ebitmap_node",
-							sizeof(struct ebitmap_node),
-							0, SLAB_PANIC, NULL);
-}
+व्योम __init ebiपंचांगap_cache_init(व्योम)
+अणु
+	ebiपंचांगap_node_cachep = kmem_cache_create("ebitmap_node",
+							माप(काष्ठा ebiपंचांगap_node),
+							0, SLAB_PANIC, शून्य);
+पूर्ण

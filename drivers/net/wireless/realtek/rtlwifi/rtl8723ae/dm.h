@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#ifndef	__RTL8723E_DM_H__
-#define __RTL8723E_DM_H__
+#अगर_अघोषित	__RTL8723E_DM_H__
+#घोषणा __RTL8723E_DM_H__
 
-#define HAL_DM_DIG_DISABLE			BIT(0)
-#define HAL_DM_HIPWR_DISABLE			BIT(1)
+#घोषणा HAL_DM_DIG_DISABLE			BIT(0)
+#घोषणा HAL_DM_HIPWR_DISABLE			BIT(1)
 
-#define OFDM_TABLE_LENGTH			37
-#define CCK_TABLE_LENGTH			33
+#घोषणा OFDM_TABLE_LENGTH			37
+#घोषणा CCK_TABLE_LENGTH			33
 
-#define OFDM_TABLE_SIZE				37
-#define CCK_TABLE_SIZE				33
+#घोषणा OFDM_TABLE_SIZE				37
+#घोषणा CCK_TABLE_SIZE				33
 
-#define BW_AUTO_SWITCH_HIGH_LOW			25
-#define BW_AUTO_SWITCH_LOW_HIGH			30
+#घोषणा BW_AUTO_SWITCH_HIGH_LOW			25
+#घोषणा BW_AUTO_SWITCH_LOW_HIGH			30
 
-#define DM_DIG_FA_UPPER				0x32
-#define DM_DIG_FA_LOWER				0x20
-#define DM_DIG_FA_TH0				0x20
-#define DM_DIG_FA_TH1				0x100
-#define DM_DIG_FA_TH2				0x200
+#घोषणा DM_DIG_FA_UPPER				0x32
+#घोषणा DM_DIG_FA_LOWER				0x20
+#घोषणा DM_DIG_FA_TH0				0x20
+#घोषणा DM_DIG_FA_TH1				0x100
+#घोषणा DM_DIG_FA_TH2				0x200
 
-#define RXPATHSELECTION_SS_TH_LOW		30
-#define RXPATHSELECTION_DIFF_TH			18
+#घोषणा RXPATHSELECTION_SS_TH_LOW		30
+#घोषणा RXPATHSELECTION_DIFF_TH			18
 
-#define DM_RATR_STA_INIT			0
-#define DM_RATR_STA_HIGH			1
-#define DM_RATR_STA_MIDDLE			2
-#define DM_RATR_STA_LOW				3
+#घोषणा DM_RATR_STA_INIT			0
+#घोषणा DM_RATR_STA_HIGH			1
+#घोषणा DM_RATR_STA_MIDDLE			2
+#घोषणा DM_RATR_STA_LOW				3
 
-#define CTS2SELF_THVAL				30
-#define REGC38_TH				20
+#घोषणा CTS2SELF_THVAL				30
+#घोषणा REGC38_TH				20
 
-#define WAIOTTHVAL				25
+#घोषणा WAIOTTHVAL				25
 
-#define TXHIGHPWRLEVEL_NORMAL			0
-#define TXHIGHPWRLEVEL_LEVEL1			1
-#define TXHIGHPWRLEVEL_LEVEL2			2
-#define TXHIGHPWRLEVEL_BT1			3
-#define TXHIGHPWRLEVEL_BT2			4
+#घोषणा TXHIGHPWRLEVEL_NORMAL			0
+#घोषणा TXHIGHPWRLEVEL_LEVEL1			1
+#घोषणा TXHIGHPWRLEVEL_LEVEL2			2
+#घोषणा TXHIGHPWRLEVEL_BT1			3
+#घोषणा TXHIGHPWRLEVEL_BT2			4
 
-#define DM_TYPE_BYFW				0
-#define DM_TYPE_BYDRIVER			1
+#घोषणा DM_TYPE_BYFW				0
+#घोषणा DM_TYPE_BYDRIVER			1
 
-#define TX_POWER_NEAR_FIELD_THRESH_LVL2		74
-#define TX_POWER_NEAR_FIELD_THRESH_LVL1		67
+#घोषणा TX_POWER_NEAR_FIELD_THRESH_LVL2		74
+#घोषणा TX_POWER_NEAR_FIELD_THRESH_LVL1		67
 
-struct swat_t {
+काष्ठा swat_t अणु
 	u8 failure_cnt;
 	u8 try_flag;
 	u8 stop_trying;
-	long pre_rssi;
-	long trying_threshold;
+	दीर्घ pre_rssi;
+	दीर्घ trying_threshold;
 	u8 cur_antenna;
 	u8 pre_antenna;
 
-};
+पूर्ण;
 
-enum tag_dynamic_init_gain_operation_type_definition {
+क्रमागत tag_dynamic_init_gain_operation_type_definition अणु
 	DIG_TYPE_THRESH_HIGH = 0,
 	DIG_TYPE_THRESH_LOW = 1,
 	DIG_TYPE_BACKOFF = 2,
@@ -67,44 +68,44 @@ enum tag_dynamic_init_gain_operation_type_definition {
 	DIG_TYPE_ENABLE = 5,
 	DIG_TYPE_DISABLE = 6,
 	DIG_OP_TYPE_MAX
-};
+पूर्ण;
 
-enum dm_1r_cca_e {
+क्रमागत dm_1r_cca_e अणु
 	CCA_1R = 0,
 	CCA_2R = 1,
 	CCA_MAX = 2,
-};
+पूर्ण;
 
-enum dm_rf_e {
+क्रमागत dm_rf_e अणु
 	RF_SAVE = 0,
 	RF_NORMAL = 1,
 	RF_MAX = 2,
-};
+पूर्ण;
 
-enum dm_sw_ant_switch_e {
+क्रमागत dm_sw_ant_चयन_e अणु
 	ANS_ANTENNA_B = 1,
 	ANS_ANTENNA_A = 2,
 	ANS_ANTENNA_MAX = 3,
-};
+पूर्ण;
 
-#define BT_RSSI_STATE_NORMAL_POWER      BIT_OFFSET_LEN_MASK_32(0, 1)
-#define BT_RSSI_STATE_AMDPU_OFF         BIT_OFFSET_LEN_MASK_32(1, 1)
-#define BT_RSSI_STATE_SPECIAL_LOW       BIT_OFFSET_LEN_MASK_32(2, 1)
-#define BT_RSSI_STATE_BG_EDCA_LOW       BIT_OFFSET_LEN_MASK_32(3, 1)
-#define BT_RSSI_STATE_TXPOWER_LOW       BIT_OFFSET_LEN_MASK_32(4, 1)
-#define GET_UNDECORATED_AVERAGE_RSSI(_priv)     \
+#घोषणा BT_RSSI_STATE_NORMAL_POWER      BIT_OFFSET_LEN_MASK_32(0, 1)
+#घोषणा BT_RSSI_STATE_AMDPU_OFF         BIT_OFFSET_LEN_MASK_32(1, 1)
+#घोषणा BT_RSSI_STATE_SPECIAL_LOW       BIT_OFFSET_LEN_MASK_32(2, 1)
+#घोषणा BT_RSSI_STATE_BG_EDCA_LOW       BIT_OFFSET_LEN_MASK_32(3, 1)
+#घोषणा BT_RSSI_STATE_TXPOWER_LOW       BIT_OFFSET_LEN_MASK_32(4, 1)
+#घोषणा GET_UNDECORATED_AVERAGE_RSSI(_priv)     \
 	( \
-	(((struct rtl_priv *)(_priv))->mac80211.opmode ==		\
+	(((काष्ठा rtl_priv *)(_priv))->mac80211.opmode ==		\
 			     NL80211_IFTYPE_ADHOC) ?			\
-	(((struct rtl_priv *)(_priv))->dm.entry_min_undec_sm_pwdb) :	\
-	(((struct rtl_priv *)(_priv))->dm.undec_sm_pwdb)		\
+	(((काष्ठा rtl_priv *)(_priv))->dm.entry_min_undec_sm_pwdb) :	\
+	(((काष्ठा rtl_priv *)(_priv))->dm.undec_sm_pwdb)		\
 	)
 
-void rtl8723e_dm_init(struct ieee80211_hw *hw);
-void rtl8723e_dm_watchdog(struct ieee80211_hw *hw);
-void rtl8723e_dm_write_dig(struct ieee80211_hw *hw);
-void rtl8723e_dm_check_txpower_tracking(struct ieee80211_hw *hw);
-void rtl8723e_dm_init_rate_adaptive_mask(struct ieee80211_hw *hw);
-void rtl8723e_dm_rf_saving(struct ieee80211_hw *hw, u8 bforce_in_normal);
-void rtl8723e_dm_bt_coexist(struct ieee80211_hw *hw);
-#endif
+व्योम rtl8723e_dm_init(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_watchकरोg(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_ग_लिखो_dig(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_check_txघातer_tracking(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_init_rate_adaptive_mask(काष्ठा ieee80211_hw *hw);
+व्योम rtl8723e_dm_rf_saving(काष्ठा ieee80211_hw *hw, u8 bक्रमce_in_normal);
+व्योम rtl8723e_dm_bt_coexist(काष्ठा ieee80211_hw *hw);
+#पूर्ण_अगर

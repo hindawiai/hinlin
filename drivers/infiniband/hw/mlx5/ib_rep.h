@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2018 Mellanox Technologies. All rights reserved.
  */
 
-#ifndef __MLX5_IB_REP_H__
-#define __MLX5_IB_REP_H__
+#अगर_अघोषित __MLX5_IB_REP_H__
+#घोषणा __MLX5_IB_REP_H__
 
-#include <linux/mlx5/eswitch.h>
-#include "mlx5_ib.h"
+#समावेश <linux/mlx5/eचयन.h>
+#समावेश "mlx5_ib.h"
 
-extern const struct mlx5_ib_profile raw_eth_profile;
+बाह्य स्थिर काष्ठा mlx5_ib_profile raw_eth_profile;
 
-#ifdef CONFIG_MLX5_ESWITCH
-int mlx5r_rep_init(void);
-void mlx5r_rep_cleanup(void);
-struct mlx5_flow_handle *create_flow_rule_vport_sq(struct mlx5_ib_dev *dev,
-						   struct mlx5_ib_sq *sq,
+#अगर_घोषित CONFIG_MLX5_ESWITCH
+पूर्णांक mlx5r_rep_init(व्योम);
+व्योम mlx5r_rep_cleanup(व्योम);
+काष्ठा mlx5_flow_handle *create_flow_rule_vport_sq(काष्ठा mlx5_ib_dev *dev,
+						   काष्ठा mlx5_ib_sq *sq,
 						   u32 port);
-struct net_device *mlx5_ib_get_rep_netdev(struct mlx5_eswitch *esw,
+काष्ठा net_device *mlx5_ib_get_rep_netdev(काष्ठा mlx5_eचयन *esw,
 					  u16 vport_num);
-#else /* CONFIG_MLX5_ESWITCH */
-static inline int mlx5r_rep_init(void) { return 0; }
-static inline void mlx5r_rep_cleanup(void) {}
-static inline
-struct mlx5_flow_handle *create_flow_rule_vport_sq(struct mlx5_ib_dev *dev,
-						   struct mlx5_ib_sq *sq,
+#अन्यथा /* CONFIG_MLX5_ESWITCH */
+अटल अंतरभूत पूर्णांक mlx5r_rep_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम mlx5r_rep_cleanup(व्योम) अणुपूर्ण
+अटल अंतरभूत
+काष्ठा mlx5_flow_handle *create_flow_rule_vport_sq(काष्ठा mlx5_ib_dev *dev,
+						   काष्ठा mlx5_ib_sq *sq,
 						   u32 port)
-{
-	return NULL;
-}
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline
-struct net_device *mlx5_ib_get_rep_netdev(struct mlx5_eswitch *esw,
+अटल अंतरभूत
+काष्ठा net_device *mlx5_ib_get_rep_netdev(काष्ठा mlx5_eचयन *esw,
 					  u16 vport_num)
-{
-	return NULL;
-}
-#endif
-#endif /* __MLX5_IB_REP_H__ */
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* __MLX5_IB_REP_H__ */

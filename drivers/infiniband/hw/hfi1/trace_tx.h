@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2015 - 2017 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -44,39 +45,39 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#if !defined(__HFI1_TRACE_TX_H) || defined(TRACE_HEADER_MULTI_READ)
-#define __HFI1_TRACE_TX_H
+#अगर !defined(__HFI1_TRACE_TX_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __HFI1_TRACE_TX_H
 
-#include <linux/tracepoint.h>
-#include <linux/trace_seq.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/trace_seq.h>
 
-#include "hfi.h"
-#include "mad.h"
-#include "sdma.h"
-#include "ipoib.h"
-#include "user_sdma.h"
+#समावेश "hfi.h"
+#समावेश "mad.h"
+#समावेश "sdma.h"
+#समावेश "ipoib.h"
+#समावेश "user_sdma.h"
 
-const char *parse_sdma_flags(struct trace_seq *p, u64 desc0, u64 desc1);
+स्थिर अक्षर *parse_sdma_flags(काष्ठा trace_seq *p, u64 desc0, u64 desc1);
 
-#define __parse_sdma_flags(desc0, desc1) parse_sdma_flags(p, desc0, desc1)
+#घोषणा __parse_sdma_flags(desc0, desc1) parse_sdma_flags(p, desc0, desc1)
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM hfi1_tx
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM hfi1_tx
 
-TRACE_EVENT(hfi1_piofree,
-	    TP_PROTO(struct send_context *sc, int extra),
+TRACE_EVENT(hfi1_pioमुक्त,
+	    TP_PROTO(काष्ठा send_context *sc, पूर्णांक extra),
 	    TP_ARGS(sc, extra),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(sc->dd)
 	    __field(u32, sw_index)
 	    __field(u32, hw_context)
-	    __field(int, extra)
+	    __field(पूर्णांक, extra)
 	    ),
 	    TP_fast_assign(DD_DEV_ASSIGN(sc->dd);
 	    __entry->sw_index = sc->sw_index;
 	    __entry->hw_context = sc->hw_context;
 	    __entry->extra = extra;
 	    ),
-	    TP_printk("[%s] ctxt %u(%u) extra %d",
+	    TP_prपूर्णांकk("[%s] ctxt %u(%u) extra %d",
 		      __get_str(dev),
 		      __entry->sw_index,
 		      __entry->hw_context,
@@ -84,32 +85,32 @@ TRACE_EVENT(hfi1_piofree,
 	    )
 );
 
-TRACE_EVENT(hfi1_wantpiointr,
-	    TP_PROTO(struct send_context *sc, u32 needint, u64 credit_ctrl),
-	    TP_ARGS(sc, needint, credit_ctrl),
+TRACE_EVENT(hfi1_wantpioपूर्णांकr,
+	    TP_PROTO(काष्ठा send_context *sc, u32 needपूर्णांक, u64 credit_ctrl),
+	    TP_ARGS(sc, needपूर्णांक, credit_ctrl),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(sc->dd)
 			__field(u32, sw_index)
 			__field(u32, hw_context)
-			__field(u32, needint)
+			__field(u32, needपूर्णांक)
 			__field(u64, credit_ctrl)
 			),
 	    TP_fast_assign(DD_DEV_ASSIGN(sc->dd);
 			__entry->sw_index = sc->sw_index;
 			__entry->hw_context = sc->hw_context;
-			__entry->needint = needint;
+			__entry->needपूर्णांक = needपूर्णांक;
 			__entry->credit_ctrl = credit_ctrl;
 			),
-	    TP_printk("[%s] ctxt %u(%u) on %d credit_ctrl 0x%llx",
+	    TP_prपूर्णांकk("[%s] ctxt %u(%u) on %d credit_ctrl 0x%llx",
 		      __get_str(dev),
 		      __entry->sw_index,
 		      __entry->hw_context,
-		      __entry->needint,
-		      (unsigned long long)__entry->credit_ctrl
+		      __entry->needपूर्णांक,
+		      (अचिन्हित दीर्घ दीर्घ)__entry->credit_ctrl
 		      )
 );
 
-DECLARE_EVENT_CLASS(hfi1_qpsleepwakeup_template,
-		    TP_PROTO(struct rvt_qp *qp, u32 flags),
+DECLARE_EVENT_CLASS(hfi1_qpsleepwakeup_ढाँचा,
+		    TP_PROTO(काष्ठा rvt_qp *qp, u32 flags),
 		    TP_ARGS(qp, flags),
 		    TP_STRUCT__entry(
 		    DD_DEV_ENTRY(dd_from_ibdev(qp->ibqp.device))
@@ -117,7 +118,7 @@ DECLARE_EVENT_CLASS(hfi1_qpsleepwakeup_template,
 		    __field(u32, flags)
 		    __field(u32, s_flags)
 		    __field(u32, ps_flags)
-		    __field(unsigned long, iow_flags)
+		    __field(अचिन्हित दीर्घ, iow_flags)
 		    ),
 		    TP_fast_assign(
 		    DD_DEV_ASSIGN(dd_from_ibdev(qp->ibqp.device))
@@ -125,11 +126,11 @@ DECLARE_EVENT_CLASS(hfi1_qpsleepwakeup_template,
 		    __entry->qpn = qp->ibqp.qp_num;
 		    __entry->s_flags = qp->s_flags;
 		    __entry->ps_flags =
-			((struct hfi1_qp_priv *)qp->priv)->s_flags;
+			((काष्ठा hfi1_qp_priv *)qp->priv)->s_flags;
 		    __entry->iow_flags =
-			((struct hfi1_qp_priv *)qp->priv)->s_iowait.flags;
+			((काष्ठा hfi1_qp_priv *)qp->priv)->s_ioरुको.flags;
 		    ),
-		    TP_printk(
+		    TP_prपूर्णांकk(
 		    "[%s] qpn 0x%x flags 0x%x s_flags 0x%x ps_flags 0x%x iow_flags 0x%lx",
 		    __get_str(dev),
 		    __entry->qpn,
@@ -140,23 +141,23 @@ DECLARE_EVENT_CLASS(hfi1_qpsleepwakeup_template,
 		    )
 );
 
-DEFINE_EVENT(hfi1_qpsleepwakeup_template, hfi1_qpwakeup,
-	     TP_PROTO(struct rvt_qp *qp, u32 flags),
+DEFINE_EVENT(hfi1_qpsleepwakeup_ढाँचा, hfi1_qpwakeup,
+	     TP_PROTO(काष्ठा rvt_qp *qp, u32 flags),
 	     TP_ARGS(qp, flags));
 
-DEFINE_EVENT(hfi1_qpsleepwakeup_template, hfi1_qpsleep,
-	     TP_PROTO(struct rvt_qp *qp, u32 flags),
+DEFINE_EVENT(hfi1_qpsleepwakeup_ढाँचा, hfi1_qpsleep,
+	     TP_PROTO(काष्ठा rvt_qp *qp, u32 flags),
 	     TP_ARGS(qp, flags));
 
 TRACE_EVENT(hfi1_sdma_descriptor,
-	    TP_PROTO(struct sdma_engine *sde,
+	    TP_PROTO(काष्ठा sdma_engine *sde,
 		     u64 desc0,
 		     u64 desc1,
 		     u16 e,
-		     void *descp),
+		     व्योम *descp),
 		     TP_ARGS(sde, desc0, desc1, e, descp),
 		     TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
-		     __field(void *, descp)
+		     __field(व्योम *, descp)
 		     __field(u64, desc0)
 		     __field(u64, desc1)
 		     __field(u16, e)
@@ -169,7 +170,7 @@ TRACE_EVENT(hfi1_sdma_descriptor,
 		     __entry->descp = descp;
 		     __entry->e = e;
 		     ),
-	    TP_printk(
+	    TP_prपूर्णांकk(
 	    "[%s] SDE(%u) flags:%s addr:0x%016llx gen:%u len:%u d0:%016llx d1:%016llx to %p,%u",
 	    __get_str(dev),
 	    __entry->idx,
@@ -188,7 +189,7 @@ TRACE_EVENT(hfi1_sdma_descriptor,
 );
 
 TRACE_EVENT(hfi1_sdma_engine_select,
-	    TP_PROTO(struct hfi1_devdata *dd, u32 sel, u8 vl, u8 idx),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u32 sel, u8 vl, u8 idx),
 	    TP_ARGS(dd, sel, vl, idx),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
 	    __field(u32, sel)
@@ -200,7 +201,7 @@ TRACE_EVENT(hfi1_sdma_engine_select,
 	    __entry->vl = vl;
 	    __entry->idx = idx;
 	    ),
-	    TP_printk("[%s] selecting SDE %u sel 0x%x vl %u",
+	    TP_prपूर्णांकk("[%s] selecting SDE %u sel 0x%x vl %u",
 		      __get_str(dev),
 		      __entry->idx,
 		      __entry->sel,
@@ -208,8 +209,8 @@ TRACE_EVENT(hfi1_sdma_engine_select,
 		      )
 );
 
-TRACE_EVENT(hfi1_sdma_user_free_queues,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt),
+TRACE_EVENT(hfi1_sdma_user_मुक्त_queues,
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt),
 	    TP_ARGS(dd, ctxt, subctxt),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
 			     __field(u16, ctxt)
@@ -219,7 +220,7 @@ TRACE_EVENT(hfi1_sdma_user_free_queues,
 			   __entry->ctxt = ctxt;
 			   __entry->subctxt = subctxt;
 			   ),
-	    TP_printk("[%s] SDMA [%u:%u] Freeing user SDMA queues",
+	    TP_prपूर्णांकk("[%s] SDMA [%u:%u] Freeing user SDMA queues",
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt
@@ -227,7 +228,7 @@ TRACE_EVENT(hfi1_sdma_user_free_queues,
 );
 
 TRACE_EVENT(hfi1_sdma_user_process_request,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt,
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt,
 		     u16 comp_idx),
 	    TP_ARGS(dd, ctxt, subctxt, comp_idx),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
@@ -240,7 +241,7 @@ TRACE_EVENT(hfi1_sdma_user_process_request,
 			   __entry->subctxt = subctxt;
 			   __entry->comp_idx = comp_idx;
 			   ),
-	    TP_printk("[%s] SDMA [%u:%u] Using req/comp entry: %u",
+	    TP_prपूर्णांकk("[%s] SDMA [%u:%u] Using req/comp entry: %u",
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt,
@@ -249,8 +250,8 @@ TRACE_EVENT(hfi1_sdma_user_process_request,
 );
 
 DECLARE_EVENT_CLASS(
-	hfi1_sdma_value_template,
-	TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt, u16 comp_idx,
+	hfi1_sdma_value_ढाँचा,
+	TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt, u16 comp_idx,
 		 u32 value),
 	TP_ARGS(dd, ctxt, subctxt, comp_idx, value),
 	TP_STRUCT__entry(DD_DEV_ENTRY(dd)
@@ -265,7 +266,7 @@ DECLARE_EVENT_CLASS(
 		       __entry->comp_idx = comp_idx;
 		       __entry->value = value;
 		),
-	TP_printk("[%s] SDMA [%u:%u:%u] value: %u",
+	TP_prपूर्णांकk("[%s] SDMA [%u:%u:%u] value: %u",
 		  __get_str(dev),
 		  __entry->ctxt,
 		  __entry->subctxt,
@@ -274,67 +275,67 @@ DECLARE_EVENT_CLASS(
 		)
 );
 
-DEFINE_EVENT(hfi1_sdma_value_template, hfi1_sdma_user_initial_tidoffset,
-	     TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt,
-		      u16 comp_idx, u32 tidoffset),
-	     TP_ARGS(dd, ctxt, subctxt, comp_idx, tidoffset));
+DEFINE_EVENT(hfi1_sdma_value_ढाँचा, hfi1_sdma_user_initial_tiकरोffset,
+	     TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt,
+		      u16 comp_idx, u32 tiकरोffset),
+	     TP_ARGS(dd, ctxt, subctxt, comp_idx, tiकरोffset));
 
-DEFINE_EVENT(hfi1_sdma_value_template, hfi1_sdma_user_data_length,
-	     TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt,
+DEFINE_EVENT(hfi1_sdma_value_ढाँचा, hfi1_sdma_user_data_length,
+	     TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt,
 		      u16 comp_idx, u32 data_len),
 	     TP_ARGS(dd, ctxt, subctxt, comp_idx, data_len));
 
-DEFINE_EVENT(hfi1_sdma_value_template, hfi1_sdma_user_compute_length,
-	     TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt,
+DEFINE_EVENT(hfi1_sdma_value_ढाँचा, hfi1_sdma_user_compute_length,
+	     TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt,
 		      u16 comp_idx, u32 data_len),
 	     TP_ARGS(dd, ctxt, subctxt, comp_idx, data_len));
 
 TRACE_EVENT(hfi1_sdma_user_tid_info,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt,
-		     u16 comp_idx, u32 tidoffset, u32 units, u8 shift),
-	    TP_ARGS(dd, ctxt, subctxt, comp_idx, tidoffset, units, shift),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt,
+		     u16 comp_idx, u32 tiकरोffset, u32 units, u8 shअगरt),
+	    TP_ARGS(dd, ctxt, subctxt, comp_idx, tiकरोffset, units, shअगरt),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
 			     __field(u16, ctxt)
 			     __field(u16, subctxt)
 			     __field(u16, comp_idx)
-			     __field(u32, tidoffset)
+			     __field(u32, tiकरोffset)
 			     __field(u32, units)
-			     __field(u8, shift)
+			     __field(u8, shअगरt)
 			     ),
 	    TP_fast_assign(DD_DEV_ASSIGN(dd);
 			   __entry->ctxt = ctxt;
 			   __entry->subctxt = subctxt;
 			   __entry->comp_idx = comp_idx;
-			   __entry->tidoffset = tidoffset;
+			   __entry->tiकरोffset = tiकरोffset;
 			   __entry->units = units;
-			   __entry->shift = shift;
+			   __entry->shअगरt = shअगरt;
 			   ),
-	    TP_printk("[%s] SDMA [%u:%u:%u] TID offset %ubytes %uunits om %u",
+	    TP_prपूर्णांकk("[%s] SDMA [%u:%u:%u] TID offset %ubytes %uunits om %u",
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt,
 		      __entry->comp_idx,
-		      __entry->tidoffset,
+		      __entry->tiकरोffset,
 		      __entry->units,
-		      __entry->shift
+		      __entry->shअगरt
 		      )
 );
 
 TRACE_EVENT(hfi1_sdma_request,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u16 subctxt,
-		     unsigned long dim),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u16 subctxt,
+		     अचिन्हित दीर्घ dim),
 	    TP_ARGS(dd, ctxt, subctxt, dim),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
 			     __field(u16, ctxt)
 			     __field(u16, subctxt)
-			     __field(unsigned long, dim)
+			     __field(अचिन्हित दीर्घ, dim)
 			     ),
 	    TP_fast_assign(DD_DEV_ASSIGN(dd);
 			   __entry->ctxt = ctxt;
 			   __entry->subctxt = subctxt;
 			   __entry->dim = dim;
 			   ),
-	    TP_printk("[%s] SDMA from %u:%u (%lu)",
+	    TP_prपूर्णांकk("[%s] SDMA from %u:%u (%lu)",
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt,
@@ -343,7 +344,7 @@ TRACE_EVENT(hfi1_sdma_request,
 );
 
 DECLARE_EVENT_CLASS(hfi1_sdma_engine_class,
-		    TP_PROTO(struct sdma_engine *sde, u64 status),
+		    TP_PROTO(काष्ठा sdma_engine *sde, u64 status),
 		    TP_ARGS(sde, status),
 		    TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
 		    __field(u64, status)
@@ -353,35 +354,35 @@ DECLARE_EVENT_CLASS(hfi1_sdma_engine_class,
 		    __entry->status = status;
 		    __entry->idx = sde->this_idx;
 		    ),
-		    TP_printk("[%s] SDE(%u) status %llx",
+		    TP_prपूर्णांकk("[%s] SDE(%u) status %llx",
 			      __get_str(dev),
 			      __entry->idx,
-			      (unsigned long long)__entry->status
+			      (अचिन्हित दीर्घ दीर्घ)__entry->status
 			      )
 );
 
-DEFINE_EVENT(hfi1_sdma_engine_class, hfi1_sdma_engine_interrupt,
-	     TP_PROTO(struct sdma_engine *sde, u64 status),
+DEFINE_EVENT(hfi1_sdma_engine_class, hfi1_sdma_engine_पूर्णांकerrupt,
+	     TP_PROTO(काष्ठा sdma_engine *sde, u64 status),
 	     TP_ARGS(sde, status)
 );
 
 DEFINE_EVENT(hfi1_sdma_engine_class, hfi1_sdma_engine_progress,
-	     TP_PROTO(struct sdma_engine *sde, u64 status),
+	     TP_PROTO(काष्ठा sdma_engine *sde, u64 status),
 	     TP_ARGS(sde, status)
 );
 
 DECLARE_EVENT_CLASS(hfi1_sdma_ahg_ad,
-		    TP_PROTO(struct sdma_engine *sde, int aidx),
+		    TP_PROTO(काष्ठा sdma_engine *sde, पूर्णांक aidx),
 		    TP_ARGS(sde, aidx),
 		    TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
-		    __field(int, aidx)
+		    __field(पूर्णांक, aidx)
 		    __field(u8, idx)
 		    ),
 		    TP_fast_assign(DD_DEV_ASSIGN(sde->dd);
 		    __entry->idx = sde->this_idx;
 		    __entry->aidx = aidx;
 		    ),
-		    TP_printk("[%s] SDE(%u) aidx %d",
+		    TP_prपूर्णांकk("[%s] SDE(%u) aidx %d",
 			      __get_str(dev),
 			      __entry->idx,
 			      __entry->aidx
@@ -389,19 +390,19 @@ DECLARE_EVENT_CLASS(hfi1_sdma_ahg_ad,
 );
 
 DEFINE_EVENT(hfi1_sdma_ahg_ad, hfi1_ahg_allocate,
-	     TP_PROTO(struct sdma_engine *sde, int aidx),
+	     TP_PROTO(काष्ठा sdma_engine *sde, पूर्णांक aidx),
 	     TP_ARGS(sde, aidx));
 
 DEFINE_EVENT(hfi1_sdma_ahg_ad, hfi1_ahg_deallocate,
-	     TP_PROTO(struct sdma_engine *sde, int aidx),
+	     TP_PROTO(काष्ठा sdma_engine *sde, पूर्णांक aidx),
 	     TP_ARGS(sde, aidx));
 
-#ifdef CONFIG_HFI1_DEBUG_SDMA_ORDER
+#अगर_घोषित CONFIG_HFI1_DEBUG_SDMA_ORDER
 TRACE_EVENT(hfi1_sdma_progress,
-	    TP_PROTO(struct sdma_engine *sde,
+	    TP_PROTO(काष्ठा sdma_engine *sde,
 		     u16 hwhead,
 		     u16 swhead,
-		     struct sdma_txreq *txp
+		     काष्ठा sdma_txreq *txp
 		     ),
 	    TP_ARGS(sde, hwhead, swhead, txp),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
@@ -422,7 +423,7 @@ TRACE_EVENT(hfi1_sdma_progress,
 	    __entry->idx = sde->this_idx;
 	    __entry->sn = txp ? txp->sn : ~0;
 	    ),
-	    TP_printk(
+	    TP_prपूर्णांकk(
 	    "[%s] SDE(%u) sn %llu hwhead %u swhead %u next_descq_idx %u tx_head %u tx_tail %u",
 	    __get_str(dev),
 	    __entry->idx,
@@ -434,11 +435,11 @@ TRACE_EVENT(hfi1_sdma_progress,
 	    __entry->tx_tail
 	    )
 );
-#else
+#अन्यथा
 TRACE_EVENT(hfi1_sdma_progress,
-	    TP_PROTO(struct sdma_engine *sde,
+	    TP_PROTO(काष्ठा sdma_engine *sde,
 		     u16 hwhead, u16 swhead,
-		     struct sdma_txreq *txp
+		     काष्ठा sdma_txreq *txp
 		     ),
 	    TP_ARGS(sde, hwhead, swhead, txp),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
@@ -457,7 +458,7 @@ TRACE_EVENT(hfi1_sdma_progress,
 		    __entry->txnext = txp ? txp->next_descq_idx : ~0;
 		    __entry->idx = sde->this_idx;
 		    ),
-	    TP_printk(
+	    TP_prपूर्णांकk(
 		    "[%s] SDE(%u) hwhead %u swhead %u next_descq_idx %u tx_head %u tx_tail %u",
 		    __get_str(dev),
 		    __entry->idx,
@@ -468,10 +469,10 @@ TRACE_EVENT(hfi1_sdma_progress,
 		    __entry->tx_tail
 	    )
 );
-#endif
+#पूर्ण_अगर
 
 DECLARE_EVENT_CLASS(hfi1_sdma_sn,
-		    TP_PROTO(struct sdma_engine *sde, u64 sn),
+		    TP_PROTO(काष्ठा sdma_engine *sde, u64 sn),
 		    TP_ARGS(sde, sn),
 		    TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
 		    __field(u64, sn)
@@ -481,7 +482,7 @@ DECLARE_EVENT_CLASS(hfi1_sdma_sn,
 		    __entry->sn = sn;
 		    __entry->idx = sde->this_idx;
 		    ),
-		    TP_printk("[%s] SDE(%u) sn %llu",
+		    TP_prपूर्णांकk("[%s] SDE(%u) sn %llu",
 			      __get_str(dev),
 			      __entry->idx,
 			      __entry->sn
@@ -490,23 +491,23 @@ DECLARE_EVENT_CLASS(hfi1_sdma_sn,
 
 DEFINE_EVENT(hfi1_sdma_sn, hfi1_sdma_out_sn,
 	     TP_PROTO(
-	     struct sdma_engine *sde,
+	     काष्ठा sdma_engine *sde,
 	     u64 sn
 	     ),
 	     TP_ARGS(sde, sn)
 );
 
 DEFINE_EVENT(hfi1_sdma_sn, hfi1_sdma_in_sn,
-	     TP_PROTO(struct sdma_engine *sde, u64 sn),
+	     TP_PROTO(काष्ठा sdma_engine *sde, u64 sn),
 	     TP_ARGS(sde, sn)
 );
 
-#define USDMA_HDR_FORMAT \
+#घोषणा USDMA_HDR_FORMAT \
 	"[%s:%u:%u:%u] PBC=(0x%x 0x%x) LRH=(0x%x 0x%x) BTH=(0x%x 0x%x 0x%x) KDETH=(0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x) TIDVal=0x%x"
 
 TRACE_EVENT(hfi1_sdma_user_header,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 req,
-		     struct hfi1_pkt_header *hdr, u32 tidval),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 req,
+		     काष्ठा hfi1_pkt_header *hdr, u32 tidval),
 	    TP_ARGS(dd, ctxt, subctxt, req, hdr, tidval),
 	    TP_STRUCT__entry(
 		    DD_DEV_ENTRY(dd)
@@ -559,7 +560,7 @@ TRACE_EVENT(hfi1_sdma_user_header,
 		    __entry->kdeth8 = le32_to_cpu(kdeth[8]);
 		    __entry->tidval = tidval;
 	    ),
-	    TP_printk(USDMA_HDR_FORMAT,
+	    TP_prपूर्णांकk(USDMA_HDR_FORMAT,
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt,
@@ -584,10 +585,10 @@ TRACE_EVENT(hfi1_sdma_user_header,
 	    )
 );
 
-#define SDMA_UREQ_FMT \
+#घोषणा SDMA_UREQ_FMT \
 	"[%s:%u:%u] ver/op=0x%x, iovcnt=%u, npkts=%u, frag=%u, idx=%u"
 TRACE_EVENT(hfi1_sdma_user_reqinfo,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 *i),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 *i),
 	    TP_ARGS(dd, ctxt, subctxt, i),
 	    TP_STRUCT__entry(
 		    DD_DEV_ENTRY(dd)
@@ -609,7 +610,7 @@ TRACE_EVENT(hfi1_sdma_user_reqinfo,
 		    __entry->fragsize = i[2];
 		    __entry->comp_idx = i[3];
 	    ),
-	    TP_printk(SDMA_UREQ_FMT,
+	    TP_prपूर्णांकk(SDMA_UREQ_FMT,
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt,
@@ -621,17 +622,17 @@ TRACE_EVENT(hfi1_sdma_user_reqinfo,
 		      )
 );
 
-#define usdma_complete_name(st) { st, #st }
-#define show_usdma_complete_state(st)			\
-	__print_symbolic(st,				\
+#घोषणा usdma_complete_name(st) अणु st, #st पूर्ण
+#घोषणा show_usdma_complete_state(st)			\
+	__prपूर्णांक_symbolic(st,				\
 			usdma_complete_name(FREE),	\
 			usdma_complete_name(QUEUED),	\
 			usdma_complete_name(COMPLETE), \
 			usdma_complete_name(ERROR))
 
 TRACE_EVENT(hfi1_sdma_user_completion,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 idx,
-		     u8 state, int code),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 idx,
+		     u8 state, पूर्णांक code),
 	    TP_ARGS(dd, ctxt, subctxt, idx, state, code),
 	    TP_STRUCT__entry(
 	    DD_DEV_ENTRY(dd)
@@ -639,7 +640,7 @@ TRACE_EVENT(hfi1_sdma_user_completion,
 	    __field(u8, subctxt)
 	    __field(u16, idx)
 	    __field(u8, state)
-	    __field(int, code)
+	    __field(पूर्णांक, code)
 	    ),
 	    TP_fast_assign(
 	    DD_DEV_ASSIGN(dd);
@@ -649,92 +650,92 @@ TRACE_EVENT(hfi1_sdma_user_completion,
 	    __entry->state = state;
 	    __entry->code = code;
 	    ),
-	    TP_printk("[%s:%u:%u:%u] SDMA completion state %s (%d)",
+	    TP_prपूर्णांकk("[%s:%u:%u:%u] SDMA completion state %s (%d)",
 		      __get_str(dev), __entry->ctxt, __entry->subctxt,
 		      __entry->idx, show_usdma_complete_state(__entry->state),
 		      __entry->code)
 );
 
 TRACE_EVENT(hfi1_usdma_defer,
-	    TP_PROTO(struct hfi1_user_sdma_pkt_q *pq,
-		     struct sdma_engine *sde,
-		     struct iowait *wait),
-	    TP_ARGS(pq, sde, wait),
+	    TP_PROTO(काष्ठा hfi1_user_sdma_pkt_q *pq,
+		     काष्ठा sdma_engine *sde,
+		     काष्ठा ioरुको *रुको),
+	    TP_ARGS(pq, sde, रुको),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(pq->dd)
-			     __field(struct hfi1_user_sdma_pkt_q *, pq)
-			     __field(struct sdma_engine *, sde)
-			     __field(struct iowait *, wait)
-			     __field(int, engine)
-			     __field(int, empty)
+			     __field(काष्ठा hfi1_user_sdma_pkt_q *, pq)
+			     __field(काष्ठा sdma_engine *, sde)
+			     __field(काष्ठा ioरुको *, रुको)
+			     __field(पूर्णांक, engine)
+			     __field(पूर्णांक, empty)
 			     ),
 	     TP_fast_assign(DD_DEV_ASSIGN(pq->dd);
 			    __entry->pq = pq;
 			    __entry->sde = sde;
-			    __entry->wait = wait;
+			    __entry->रुको = रुको;
 			    __entry->engine = sde->this_idx;
-			    __entry->empty = list_empty(&__entry->wait->list);
+			    __entry->empty = list_empty(&__entry->रुको->list);
 			    ),
-	     TP_printk("[%s] pq %llx sde %llx wait %llx engine %d empty %d",
+	     TP_prपूर्णांकk("[%s] pq %llx sde %llx wait %llx engine %d empty %d",
 		       __get_str(dev),
-		       (unsigned long long)__entry->pq,
-		       (unsigned long long)__entry->sde,
-		       (unsigned long long)__entry->wait,
+		       (अचिन्हित दीर्घ दीर्घ)__entry->pq,
+		       (अचिन्हित दीर्घ दीर्घ)__entry->sde,
+		       (अचिन्हित दीर्घ दीर्घ)__entry->रुको,
 		       __entry->engine,
 		       __entry->empty
 		)
 );
 
 TRACE_EVENT(hfi1_usdma_activate,
-	    TP_PROTO(struct hfi1_user_sdma_pkt_q *pq,
-		     struct iowait *wait,
-		     int reason),
-	    TP_ARGS(pq, wait, reason),
+	    TP_PROTO(काष्ठा hfi1_user_sdma_pkt_q *pq,
+		     काष्ठा ioरुको *रुको,
+		     पूर्णांक reason),
+	    TP_ARGS(pq, रुको, reason),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(pq->dd)
-			     __field(struct hfi1_user_sdma_pkt_q *, pq)
-			     __field(struct iowait *, wait)
-			     __field(int, reason)
+			     __field(काष्ठा hfi1_user_sdma_pkt_q *, pq)
+			     __field(काष्ठा ioरुको *, रुको)
+			     __field(पूर्णांक, reason)
 			     ),
 	     TP_fast_assign(DD_DEV_ASSIGN(pq->dd);
 			    __entry->pq = pq;
-			    __entry->wait = wait;
+			    __entry->रुको = रुको;
 			    __entry->reason = reason;
 			    ),
-	     TP_printk("[%s] pq %llx wait %llx reason %d",
+	     TP_prपूर्णांकk("[%s] pq %llx wait %llx reason %d",
 		       __get_str(dev),
-		       (unsigned long long)__entry->pq,
-		       (unsigned long long)__entry->wait,
+		       (अचिन्हित दीर्घ दीर्घ)__entry->pq,
+		       (अचिन्हित दीर्घ दीर्घ)__entry->रुको,
 		       __entry->reason
 		)
 );
 
 TRACE_EVENT(hfi1_usdma_we,
-	    TP_PROTO(struct hfi1_user_sdma_pkt_q *pq,
-		     int we_ret),
+	    TP_PROTO(काष्ठा hfi1_user_sdma_pkt_q *pq,
+		     पूर्णांक we_ret),
 	    TP_ARGS(pq, we_ret),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(pq->dd)
-			     __field(struct hfi1_user_sdma_pkt_q *, pq)
-			     __field(int, state)
-			     __field(int, we_ret)
+			     __field(काष्ठा hfi1_user_sdma_pkt_q *, pq)
+			     __field(पूर्णांक, state)
+			     __field(पूर्णांक, we_ret)
 			     ),
 	     TP_fast_assign(DD_DEV_ASSIGN(pq->dd);
 			    __entry->pq = pq;
 			    __entry->state = pq->state;
 			    __entry->we_ret = we_ret;
 			    ),
-	     TP_printk("[%s] pq %llx state %d we_ret %d",
+	     TP_prपूर्णांकk("[%s] pq %llx state %d we_ret %d",
 		       __get_str(dev),
-		       (unsigned long long)__entry->pq,
+		       (अचिन्हित दीर्घ दीर्घ)__entry->pq,
 		       __entry->state,
 		       __entry->we_ret
 		)
 );
 
-const char *print_u32_array(struct trace_seq *, u32 *, int);
-#define __print_u32_hex(arr, len) print_u32_array(p, arr, len)
+स्थिर अक्षर *prपूर्णांक_u32_array(काष्ठा trace_seq *, u32 *, पूर्णांक);
+#घोषणा __prपूर्णांक_u32_hex(arr, len) prपूर्णांक_u32_array(p, arr, len)
 
 TRACE_EVENT(hfi1_sdma_user_header_ahg,
-	    TP_PROTO(struct hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 req,
-		     u8 sde, u8 ahgidx, u32 *ahg, int len, u32 tidval),
+	    TP_PROTO(काष्ठा hfi1_devdata *dd, u16 ctxt, u8 subctxt, u16 req,
+		     u8 sde, u8 ahgidx, u32 *ahg, पूर्णांक len, u32 tidval),
 	    TP_ARGS(dd, ctxt, subctxt, req, sde, ahgidx, ahg, len, tidval),
 	    TP_STRUCT__entry(
 	    DD_DEV_ENTRY(dd)
@@ -743,7 +744,7 @@ TRACE_EVENT(hfi1_sdma_user_header_ahg,
 	    __field(u16, req)
 	    __field(u8, sde)
 	    __field(u8, idx)
-	    __field(int, len)
+	    __field(पूर्णांक, len)
 	    __field(u32, tidval)
 	    __array(u32, ahg, 10)
 	    ),
@@ -756,9 +757,9 @@ TRACE_EVENT(hfi1_sdma_user_header_ahg,
 	    __entry->idx = ahgidx;
 	    __entry->len = len;
 	    __entry->tidval = tidval;
-	    memcpy(__entry->ahg, ahg, len * sizeof(u32));
+	    स_नकल(__entry->ahg, ahg, len * माप(u32));
 	    ),
-	    TP_printk("[%s:%u:%u:%u] (SDE%u/AHG%u) ahg[0-%d]=(%s) TIDVal=0x%x",
+	    TP_prपूर्णांकk("[%s:%u:%u:%u] (SDE%u/AHG%u) ahg[0-%d]=(%s) TIDVal=0x%x",
 		      __get_str(dev),
 		      __entry->ctxt,
 		      __entry->subctxt,
@@ -766,15 +767,15 @@ TRACE_EVENT(hfi1_sdma_user_header_ahg,
 		      __entry->sde,
 		      __entry->idx,
 		      __entry->len - 1,
-		      __print_u32_hex(__entry->ahg, __entry->len),
+		      __prपूर्णांक_u32_hex(__entry->ahg, __entry->len),
 		      __entry->tidval
 		      )
 );
 
 TRACE_EVENT(hfi1_sdma_state,
-	    TP_PROTO(struct sdma_engine *sde,
-		     const char *cstate,
-		     const char *nstate
+	    TP_PROTO(काष्ठा sdma_engine *sde,
+		     स्थिर अक्षर *cstate,
+		     स्थिर अक्षर *nstate
 		     ),
 	    TP_ARGS(sde, cstate, nstate),
 	    TP_STRUCT__entry(DD_DEV_ENTRY(sde->dd)
@@ -785,33 +786,33 @@ TRACE_EVENT(hfi1_sdma_state,
 		__assign_str(curstate, cstate);
 		__assign_str(newstate, nstate);
 	    ),
-	    TP_printk("[%s] current state %s new state %s",
+	    TP_prपूर्णांकk("[%s] current state %s new state %s",
 		      __get_str(dev),
 		      __get_str(curstate),
 		      __get_str(newstate)
 	    )
 );
 
-#define BCT_FORMAT \
+#घोषणा BCT_FORMAT \
 	"shared_limit %x vls 0-7 [%x,%x][%x,%x][%x,%x][%x,%x][%x,%x][%x,%x][%x,%x][%x,%x] 15 [%x,%x]"
 
-#define BCT(field) \
+#घोषणा BCT(field) \
 	be16_to_cpu( \
-	((struct buffer_control *)__get_dynamic_array(bct))->field \
+	((काष्ठा buffer_control *)__get_dynamic_array(bct))->field \
 	)
 
-DECLARE_EVENT_CLASS(hfi1_bct_template,
-		    TP_PROTO(struct hfi1_devdata *dd,
-			     struct buffer_control *bc),
+DECLARE_EVENT_CLASS(hfi1_bct_ढाँचा,
+		    TP_PROTO(काष्ठा hfi1_devdata *dd,
+			     काष्ठा buffer_control *bc),
 		    TP_ARGS(dd, bc),
 		    TP_STRUCT__entry(DD_DEV_ENTRY(dd)
-		    __dynamic_array(u8, bct, sizeof(*bc))
+		    __dynamic_array(u8, bct, माप(*bc))
 		    ),
 		    TP_fast_assign(DD_DEV_ASSIGN(dd);
-				   memcpy(__get_dynamic_array(bct), bc,
-					  sizeof(*bc));
+				   स_नकल(__get_dynamic_array(bct), bc,
+					  माप(*bc));
 		    ),
-		    TP_printk(BCT_FORMAT,
+		    TP_prपूर्णांकk(BCT_FORMAT,
 			      BCT(overall_shared_limit),
 
 			      BCT(vl[0].dedicated),
@@ -843,29 +844,29 @@ DECLARE_EVENT_CLASS(hfi1_bct_template,
 		    )
 );
 
-DEFINE_EVENT(hfi1_bct_template, bct_set,
-	     TP_PROTO(struct hfi1_devdata *dd, struct buffer_control *bc),
+DEFINE_EVENT(hfi1_bct_ढाँचा, bct_set,
+	     TP_PROTO(काष्ठा hfi1_devdata *dd, काष्ठा buffer_control *bc),
 	     TP_ARGS(dd, bc));
 
-DEFINE_EVENT(hfi1_bct_template, bct_get,
-	     TP_PROTO(struct hfi1_devdata *dd, struct buffer_control *bc),
+DEFINE_EVENT(hfi1_bct_ढाँचा, bct_get,
+	     TP_PROTO(काष्ठा hfi1_devdata *dd, काष्ठा buffer_control *bc),
 	     TP_ARGS(dd, bc));
 
 TRACE_EVENT(
 	hfi1_qp_send_completion,
-	TP_PROTO(struct rvt_qp *qp, struct rvt_swqe *wqe, u32 idx),
+	TP_PROTO(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe, u32 idx),
 	TP_ARGS(qp, wqe, idx),
 	TP_STRUCT__entry(
 		DD_DEV_ENTRY(dd_from_ibdev(qp->ibqp.device))
-		__field(struct rvt_swqe *, wqe)
+		__field(काष्ठा rvt_swqe *, wqe)
 		__field(u64, wr_id)
 		__field(u32, qpn)
 		__field(u32, qpt)
 		__field(u32, length)
 		__field(u32, idx)
 		__field(u32, ssn)
-		__field(enum ib_wr_opcode, opcode)
-		__field(int, send_flags)
+		__field(क्रमागत ib_wr_opcode, opcode)
+		__field(पूर्णांक, send_flags)
 	),
 	TP_fast_assign(
 		DD_DEV_ASSIGN(dd_from_ibdev(qp->ibqp.device))
@@ -879,7 +880,7 @@ TRACE_EVENT(
 		__entry->opcode = wqe->wr.opcode;
 		__entry->send_flags = wqe->wr.send_flags;
 	),
-	TP_printk(
+	TP_prपूर्णांकk(
 		"[%s] qpn 0x%x qpt %u wqe %p idx %u wr_id %llx length %u ssn %u opcode %x send_flags %x",
 		__get_str(dev),
 		__entry->qpn,
@@ -895,8 +896,8 @@ TRACE_EVENT(
 );
 
 DECLARE_EVENT_CLASS(
-	hfi1_do_send_template,
-	TP_PROTO(struct rvt_qp *qp, bool flag),
+	hfi1_करो_send_ढाँचा,
+	TP_PROTO(काष्ठा rvt_qp *qp, bool flag),
 	TP_ARGS(qp, flag),
 	TP_STRUCT__entry(
 		DD_DEV_ENTRY(dd_from_ibdev(qp->ibqp.device))
@@ -908,7 +909,7 @@ DECLARE_EVENT_CLASS(
 		__entry->qpn = qp->ibqp.qp_num;
 		__entry->flag = flag;
 	),
-	TP_printk(
+	TP_prपूर्णांकk(
 		"[%s] qpn %x flag %d",
 		__get_str(dev),
 		__entry->qpn,
@@ -917,37 +918,37 @@ DECLARE_EVENT_CLASS(
 );
 
 DEFINE_EVENT(
-	hfi1_do_send_template, hfi1_rc_do_send,
-	TP_PROTO(struct rvt_qp *qp, bool flag),
+	hfi1_करो_send_ढाँचा, hfi1_rc_करो_send,
+	TP_PROTO(काष्ठा rvt_qp *qp, bool flag),
 	TP_ARGS(qp, flag)
 );
 
 DEFINE_EVENT(/* event */
-	hfi1_do_send_template, hfi1_rc_do_tid_send,
-	TP_PROTO(struct rvt_qp *qp, bool flag),
+	hfi1_करो_send_ढाँचा, hfi1_rc_करो_tid_send,
+	TP_PROTO(काष्ठा rvt_qp *qp, bool flag),
 	TP_ARGS(qp, flag)
 );
 
 DEFINE_EVENT(
-	hfi1_do_send_template, hfi1_rc_expired_time_slice,
-	TP_PROTO(struct rvt_qp *qp, bool flag),
+	hfi1_करो_send_ढाँचा, hfi1_rc_expired_समय_slice,
+	TP_PROTO(काष्ठा rvt_qp *qp, bool flag),
 	TP_ARGS(qp, flag)
 );
 
 DECLARE_EVENT_CLASS(/* AIP  */
-	hfi1_ipoib_txq_template,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq),
 	TP_STRUCT__entry(/* entry */
 		DD_DEV_ENTRY(txq->priv->dd)
-		__field(struct hfi1_ipoib_txq *, txq)
-		__field(struct sdma_engine *, sde)
-		__field(ulong, head)
-		__field(ulong, tail)
-		__field(uint, used)
-		__field(uint, flow)
-		__field(int, stops)
-		__field(int, no_desc)
+		__field(काष्ठा hfi1_ipoib_txq *, txq)
+		__field(काष्ठा sdma_engine *, sde)
+		__field(uदीर्घ, head)
+		__field(uदीर्घ, tail)
+		__field(uपूर्णांक, used)
+		__field(uपूर्णांक, flow)
+		__field(पूर्णांक, stops)
+		__field(पूर्णांक, no_desc)
 		__field(u8, idx)
 		__field(u8, stopped)
 	),
@@ -960,19 +961,19 @@ DECLARE_EVENT_CLASS(/* AIP  */
 		__entry->idx = txq->q_idx;
 		__entry->used =
 			txq->sent_txreqs -
-			atomic64_read(&txq->complete_txreqs);
-		__entry->flow = txq->flow.as_int;
-		__entry->stops = atomic_read(&txq->stops);
-		__entry->no_desc = atomic_read(&txq->no_desc);
+			atomic64_पढ़ो(&txq->complete_txreqs);
+		__entry->flow = txq->flow.as_पूर्णांक;
+		__entry->stops = atomic_पढ़ो(&txq->stops);
+		__entry->no_desc = atomic_पढ़ो(&txq->no_desc);
 		__entry->stopped =
-		 __netif_subqueue_stopped(txq->priv->netdev, txq->q_idx);
+		 __netअगर_subqueue_stopped(txq->priv->netdev, txq->q_idx);
 	),
-	TP_printk(/* print  */
+	TP_prपूर्णांकk(/* prपूर्णांक  */
 		"[%s] txq %llx idx %u sde %llx head %lx tail %lx flow %x used %u stops %d no_desc %d stopped %u",
 		__get_str(dev),
-		(unsigned long long)__entry->txq,
+		(अचिन्हित दीर्घ दीर्घ)__entry->txq,
 		__entry->idx,
-		(unsigned long long)__entry->sde,
+		(अचिन्हित दीर्घ दीर्घ)__entry->sde,
 		__entry->head,
 		__entry->tail,
 		__entry->flow,
@@ -984,63 +985,63 @@ DECLARE_EVENT_CLASS(/* AIP  */
 );
 
 DEFINE_EVENT(/* queue stop */
-	hfi1_ipoib_txq_template, hfi1_txq_stop,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_stop,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* queue wake */
-	hfi1_ipoib_txq_template, hfi1_txq_wake,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_wake,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* flow flush */
-	hfi1_ipoib_txq_template, hfi1_flow_flush,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_flow_flush,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
-DEFINE_EVENT(/* flow switch */
-	hfi1_ipoib_txq_template, hfi1_flow_switch,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+DEFINE_EVENT(/* flow चयन */
+	hfi1_ipoib_txq_ढाँचा, hfi1_flow_चयन,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* wakeup */
-	hfi1_ipoib_txq_template, hfi1_txq_wakeup,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_wakeup,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* full */
-	hfi1_ipoib_txq_template, hfi1_txq_full,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_full,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* queued */
-	hfi1_ipoib_txq_template, hfi1_txq_queued,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_queued,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* xmit_stopped */
-	hfi1_ipoib_txq_template, hfi1_txq_xmit_stopped,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_xmit_stopped,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
 DEFINE_EVENT(/* xmit_unstopped */
-	hfi1_ipoib_txq_template, hfi1_txq_xmit_unstopped,
-	TP_PROTO(struct hfi1_ipoib_txq *txq),
+	hfi1_ipoib_txq_ढाँचा, hfi1_txq_xmit_unstopped,
+	TP_PROTO(काष्ठा hfi1_ipoib_txq *txq),
 	TP_ARGS(txq)
 );
 
-#endif /* __HFI1_TRACE_TX_H */
+#पूर्ण_अगर /* __HFI1_TRACE_TX_H */
 
-#undef TRACE_INCLUDE_PATH
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE trace_tx
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता trace_tx
+#समावेश <trace/define_trace.h>

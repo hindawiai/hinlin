@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IIO accel I2C driver for Freescale MMA7455L 3-axis 10-bit accelerometer
+ * IIO accel I2C driver क्रम Freescale MMA7455L 3-axis 10-bit accelerometer
  * Copyright 2015 Joachim Eastwood <manabian@gmail.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
 
-#include "mma7455.h"
+#समावेश "mma7455.h"
 
-static int mma7455_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	struct regmap *regmap;
-	const char *name = NULL;
+अटल पूर्णांक mma7455_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap *regmap;
+	स्थिर अक्षर *name = शून्य;
 
 	regmap = devm_regmap_init_i2c(i2c, &mma7455_core_regmap);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	if (id)
+	अगर (id)
 		name = id->name;
 
-	return mma7455_core_probe(&i2c->dev, regmap, name);
-}
+	वापस mma7455_core_probe(&i2c->dev, regmap, name);
+पूर्ण
 
-static int mma7455_i2c_remove(struct i2c_client *i2c)
-{
-	return mma7455_core_remove(&i2c->dev);
-}
+अटल पूर्णांक mma7455_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	वापस mma7455_core_हटाओ(&i2c->dev);
+पूर्ण
 
-static const struct i2c_device_id mma7455_i2c_ids[] = {
-	{ "mma7455", 0 },
-	{ "mma7456", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id mma7455_i2c_ids[] = अणु
+	अणु "mma7455", 0 पूर्ण,
+	अणु "mma7456", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, mma7455_i2c_ids);
 
-static const struct of_device_id mma7455_of_match[] = {
-	{ .compatible = "fsl,mma7455" },
-	{ .compatible = "fsl,mma7456" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mma7455_of_match[] = अणु
+	अणु .compatible = "fsl,mma7455" पूर्ण,
+	अणु .compatible = "fsl,mma7456" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mma7455_of_match);
 
-static struct i2c_driver mma7455_i2c_driver = {
+अटल काष्ठा i2c_driver mma7455_i2c_driver = अणु
 	.probe = mma7455_i2c_probe,
-	.remove = mma7455_i2c_remove,
+	.हटाओ = mma7455_i2c_हटाओ,
 	.id_table = mma7455_i2c_ids,
-	.driver = {
+	.driver = अणु
 		.name	= "mma7455-i2c",
 		.of_match_table = mma7455_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_i2c_driver(mma7455_i2c_driver);
 
 MODULE_AUTHOR("Joachim Eastwood <manabian@gmail.com>");

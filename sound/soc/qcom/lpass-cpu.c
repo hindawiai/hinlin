@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2011,2013-2015 The Linux Foundation. All rights reserved.
  *
- * lpass-cpu.c -- ALSA SoC CPU DAI driver for QTi LPASS
+ * lpass-cpu.c -- ALSA SoC CPU DAI driver क्रम QTi LPASS
  */
 
-#include <linux/clk.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <linux/regmap.h>
-#include <sound/soc.h>
-#include <sound/soc-dai.h>
-#include "lpass-lpaif-reg.h"
-#include "lpass.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <linux/regmap.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dai.h>
+#समावेश "lpass-lpaif-reg.h"
+#समावेश "lpass.h"
 
-#define LPASS_CPU_MAX_MI2S_LINES	4
-#define LPASS_CPU_I2S_SD0_MASK		BIT(0)
-#define LPASS_CPU_I2S_SD1_MASK		BIT(1)
-#define LPASS_CPU_I2S_SD2_MASK		BIT(2)
-#define LPASS_CPU_I2S_SD3_MASK		BIT(3)
-#define LPASS_CPU_I2S_SD0_1_MASK	GENMASK(1, 0)
-#define LPASS_CPU_I2S_SD2_3_MASK	GENMASK(3, 2)
-#define LPASS_CPU_I2S_SD0_1_2_MASK	GENMASK(2, 0)
-#define LPASS_CPU_I2S_SD0_1_2_3_MASK	GENMASK(3, 0)
+#घोषणा LPASS_CPU_MAX_MI2S_LINES	4
+#घोषणा LPASS_CPU_I2S_SD0_MASK		BIT(0)
+#घोषणा LPASS_CPU_I2S_SD1_MASK		BIT(1)
+#घोषणा LPASS_CPU_I2S_SD2_MASK		BIT(2)
+#घोषणा LPASS_CPU_I2S_SD3_MASK		BIT(3)
+#घोषणा LPASS_CPU_I2S_SD0_1_MASK	GENMASK(1, 0)
+#घोषणा LPASS_CPU_I2S_SD2_3_MASK	GENMASK(3, 2)
+#घोषणा LPASS_CPU_I2S_SD0_1_2_MASK	GENMASK(2, 0)
+#घोषणा LPASS_CPU_I2S_SD0_1_2_3_MASK	GENMASK(3, 0)
 
-static int lpass_cpu_init_i2sctl_bitfields(struct device *dev,
-			struct lpaif_i2sctl *i2sctl, struct regmap *map)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
+अटल पूर्णांक lpass_cpu_init_i2sctl_bitfields(काष्ठा device *dev,
+			काष्ठा lpaअगर_i2sctl *i2sctl, काष्ठा regmap *map)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
 
 	i2sctl->loopback = devm_regmap_field_alloc(dev, map, v->loopback);
 	i2sctl->spken = devm_regmap_field_alloc(dev, map, v->spken);
@@ -45,555 +46,555 @@ static int lpass_cpu_init_i2sctl_bitfields(struct device *dev,
 	i2sctl->wssrc = devm_regmap_field_alloc(dev, map, v->wssrc);
 	i2sctl->bitwidth = devm_regmap_field_alloc(dev, map, v->bitwidth);
 
-	if (IS_ERR(i2sctl->loopback) || IS_ERR(i2sctl->spken) ||
+	अगर (IS_ERR(i2sctl->loopback) || IS_ERR(i2sctl->spken) ||
 	    IS_ERR(i2sctl->spkmode) || IS_ERR(i2sctl->spkmono) ||
 	    IS_ERR(i2sctl->micen) || IS_ERR(i2sctl->micmode) ||
 	    IS_ERR(i2sctl->micmono) || IS_ERR(i2sctl->wssrc) ||
 	    IS_ERR(i2sctl->bitwidth))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpass_cpu_daiops_set_sysclk(struct snd_soc_dai *dai, int clk_id,
-		unsigned int freq, int dir)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	int ret;
+अटल पूर्णांक lpass_cpu_daiops_set_sysclk(काष्ठा snd_soc_dai *dai, पूर्णांक clk_id,
+		अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक ret;
 
 	ret = clk_set_rate(drvdata->mi2s_osr_clk[dai->driver->id], freq);
-	if (ret)
+	अगर (ret)
 		dev_err(dai->dev, "error setting mi2s osrclk to %u: %d\n",
 			freq, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lpass_cpu_daiops_startup(struct snd_pcm_substream *substream,
-		struct snd_soc_dai *dai)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	int ret;
+अटल पूर्णांक lpass_cpu_daiops_startup(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(drvdata->mi2s_osr_clk[dai->driver->id]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error in enabling mi2s osr clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = clk_prepare(drvdata->mi2s_bit_clk[dai->driver->id]);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error in enabling mi2s bit clk: %d\n", ret);
 		clk_disable_unprepare(drvdata->mi2s_osr_clk[dai->driver->id]);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void lpass_cpu_daiops_shutdown(struct snd_pcm_substream *substream,
-		struct snd_soc_dai *dai)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	struct lpaif_i2sctl *i2sctl = drvdata->i2sctl;
-	unsigned int id = dai->driver->id;
+अटल व्योम lpass_cpu_daiops_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	काष्ठा lpaअगर_i2sctl *i2sctl = drvdata->i2sctl;
+	अचिन्हित पूर्णांक id = dai->driver->id;
 
 	clk_disable_unprepare(drvdata->mi2s_osr_clk[dai->driver->id]);
 	/*
 	 * Ensure LRCLK is disabled even in device node validation.
-	 * Will not impact if disabled in lpass_cpu_daiops_trigger()
+	 * Will not impact अगर disabled in lpass_cpu_daiops_trigger()
 	 * suspend.
 	 */
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		regmap_fields_write(i2sctl->spken, id, LPAIF_I2SCTL_SPKEN_DISABLE);
-	else
-		regmap_fields_write(i2sctl->micen, id, LPAIF_I2SCTL_MICEN_DISABLE);
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		regmap_fields_ग_लिखो(i2sctl->spken, id, LPAIF_I2SCTL_SPKEN_DISABLE);
+	अन्यथा
+		regmap_fields_ग_लिखो(i2sctl->micen, id, LPAIF_I2SCTL_MICEN_DISABLE);
 
 	/*
-	 * BCLK may not be enabled if lpass_cpu_daiops_prepare is called before
-	 * lpass_cpu_daiops_shutdown. It's paired with the clk_enable in
+	 * BCLK may not be enabled अगर lpass_cpu_daiops_prepare is called beक्रमe
+	 * lpass_cpu_daiops_shutकरोwn. It's paired with the clk_enable in
 	 * lpass_cpu_daiops_prepare.
 	 */
-	if (drvdata->mi2s_was_prepared[dai->driver->id]) {
+	अगर (drvdata->mi2s_was_prepared[dai->driver->id]) अणु
 		drvdata->mi2s_was_prepared[dai->driver->id] = false;
 		clk_disable(drvdata->mi2s_bit_clk[dai->driver->id]);
-	}
+	पूर्ण
 
 	clk_unprepare(drvdata->mi2s_bit_clk[dai->driver->id]);
-}
+पूर्ण
 
-static int lpass_cpu_daiops_hw_params(struct snd_pcm_substream *substream,
-		struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	struct lpaif_i2sctl *i2sctl = drvdata->i2sctl;
-	unsigned int id = dai->driver->id;
-	snd_pcm_format_t format = params_format(params);
-	unsigned int channels = params_channels(params);
-	unsigned int rate = params_rate(params);
-	unsigned int mode;
-	unsigned int regval;
-	int bitwidth, ret;
+अटल पूर्णांक lpass_cpu_daiops_hw_params(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	काष्ठा lpaअगर_i2sctl *i2sctl = drvdata->i2sctl;
+	अचिन्हित पूर्णांक id = dai->driver->id;
+	snd_pcm_क्रमmat_t क्रमmat = params_क्रमmat(params);
+	अचिन्हित पूर्णांक channels = params_channels(params);
+	अचिन्हित पूर्णांक rate = params_rate(params);
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक regval;
+	पूर्णांक bitwidth, ret;
 
-	bitwidth = snd_pcm_format_width(format);
-	if (bitwidth < 0) {
+	bitwidth = snd_pcm_क्रमmat_width(क्रमmat);
+	अगर (bitwidth < 0) अणु
 		dev_err(dai->dev, "invalid bit width given: %d\n", bitwidth);
-		return bitwidth;
-	}
+		वापस bitwidth;
+	पूर्ण
 
-	ret = regmap_fields_write(i2sctl->loopback, id,
+	ret = regmap_fields_ग_लिखो(i2sctl->loopback, id,
 				 LPAIF_I2SCTL_LOOPBACK_DISABLE);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error updating loopback field: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_fields_write(i2sctl->wssrc, id,
+	ret = regmap_fields_ग_लिखो(i2sctl->wssrc, id,
 				 LPAIF_I2SCTL_WSSRC_INTERNAL);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error updating wssrc field: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (bitwidth) {
-	case 16:
+	चयन (bitwidth) अणु
+	हाल 16:
 		regval = LPAIF_I2SCTL_BITWIDTH_16;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		regval = LPAIF_I2SCTL_BITWIDTH_24;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		regval = LPAIF_I2SCTL_BITWIDTH_32;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dai->dev, "invalid bitwidth given: %d\n", bitwidth);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = regmap_fields_write(i2sctl->bitwidth, id, regval);
-	if (ret) {
+	ret = regmap_fields_ग_लिखो(i2sctl->bitwidth, id, regval);
+	अगर (ret) अणु
 		dev_err(dai->dev, "error updating bitwidth field: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		mode = drvdata->mi2s_playback_sd_mode[id];
-	else
+	अन्यथा
 		mode = drvdata->mi2s_capture_sd_mode[id];
 
-	if (!mode) {
+	अगर (!mode) अणु
 		dev_err(dai->dev, "no line is assigned\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (channels) {
-	case 1:
-	case 2:
-		switch (mode) {
-		case LPAIF_I2SCTL_MODE_QUAD01:
-		case LPAIF_I2SCTL_MODE_6CH:
-		case LPAIF_I2SCTL_MODE_8CH:
+	चयन (channels) अणु
+	हाल 1:
+	हाल 2:
+		चयन (mode) अणु
+		हाल LPAIF_I2SCTL_MODE_QUAD01:
+		हाल LPAIF_I2SCTL_MODE_6CH:
+		हाल LPAIF_I2SCTL_MODE_8CH:
 			mode = LPAIF_I2SCTL_MODE_SD0;
-			break;
-		case LPAIF_I2SCTL_MODE_QUAD23:
+			अवरोध;
+		हाल LPAIF_I2SCTL_MODE_QUAD23:
 			mode = LPAIF_I2SCTL_MODE_SD2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		break;
-	case 4:
-		if (mode < LPAIF_I2SCTL_MODE_QUAD01) {
+		अवरोध;
+	हाल 4:
+		अगर (mode < LPAIF_I2SCTL_MODE_QUAD01) अणु
 			dev_err(dai->dev, "cannot configure 4 channels with mode %d\n",
 				mode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (mode) {
-		case LPAIF_I2SCTL_MODE_6CH:
-		case LPAIF_I2SCTL_MODE_8CH:
+		चयन (mode) अणु
+		हाल LPAIF_I2SCTL_MODE_6CH:
+		हाल LPAIF_I2SCTL_MODE_8CH:
 			mode = LPAIF_I2SCTL_MODE_QUAD01;
-			break;
-		}
-		break;
-	case 6:
-		if (mode < LPAIF_I2SCTL_MODE_6CH) {
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 6:
+		अगर (mode < LPAIF_I2SCTL_MODE_6CH) अणु
 			dev_err(dai->dev, "cannot configure 6 channels with mode %d\n",
 				mode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (mode) {
-		case LPAIF_I2SCTL_MODE_8CH:
+		चयन (mode) अणु
+		हाल LPAIF_I2SCTL_MODE_8CH:
 			mode = LPAIF_I2SCTL_MODE_6CH;
-			break;
-		}
-		break;
-	case 8:
-		if (mode < LPAIF_I2SCTL_MODE_8CH) {
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 8:
+		अगर (mode < LPAIF_I2SCTL_MODE_8CH) अणु
 			dev_err(dai->dev, "cannot configure 8 channels with mode %d\n",
 				mode);
-			return -EINVAL;
-		}
-		break;
-	default:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(dai->dev, "invalid channels given: %u\n", channels);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		ret = regmap_fields_write(i2sctl->spkmode, id,
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+		ret = regmap_fields_ग_लिखो(i2sctl->spkmode, id,
 					 LPAIF_I2SCTL_SPKMODE(mode));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dai->dev, "error writing to i2sctl spkr mode: %d\n",
 				ret);
-			return ret;
-		}
-		if (channels >= 2)
-			ret = regmap_fields_write(i2sctl->spkmono, id,
+			वापस ret;
+		पूर्ण
+		अगर (channels >= 2)
+			ret = regmap_fields_ग_लिखो(i2sctl->spkmono, id,
 						 LPAIF_I2SCTL_SPKMONO_STEREO);
-		else
-			ret = regmap_fields_write(i2sctl->spkmono, id,
+		अन्यथा
+			ret = regmap_fields_ग_लिखो(i2sctl->spkmono, id,
 						 LPAIF_I2SCTL_SPKMONO_MONO);
-	} else {
-		ret = regmap_fields_write(i2sctl->micmode, id,
+	पूर्ण अन्यथा अणु
+		ret = regmap_fields_ग_लिखो(i2sctl->micmode, id,
 					 LPAIF_I2SCTL_MICMODE(mode));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dai->dev, "error writing to i2sctl mic mode: %d\n",
 				ret);
-			return ret;
-		}
-		if (channels >= 2)
-			ret = regmap_fields_write(i2sctl->micmono, id,
+			वापस ret;
+		पूर्ण
+		अगर (channels >= 2)
+			ret = regmap_fields_ग_लिखो(i2sctl->micmono, id,
 						 LPAIF_I2SCTL_MICMONO_STEREO);
-		else
-			ret = regmap_fields_write(i2sctl->micmono, id,
+		अन्यथा
+			ret = regmap_fields_ग_लिखो(i2sctl->micmono, id,
 						 LPAIF_I2SCTL_MICMONO_MONO);
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error writing to i2sctl channels mode: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_set_rate(drvdata->mi2s_bit_clk[id],
 			   rate * bitwidth * 2);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error setting mi2s bitclk to %u: %d\n",
 			rate * bitwidth * 2, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpass_cpu_daiops_trigger(struct snd_pcm_substream *substream,
-		int cmd, struct snd_soc_dai *dai)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	struct lpaif_i2sctl *i2sctl = drvdata->i2sctl;
-	unsigned int id = dai->driver->id;
-	int ret = -EINVAL;
+अटल पूर्णांक lpass_cpu_daiops_trigger(काष्ठा snd_pcm_substream *substream,
+		पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	काष्ठा lpaअगर_i2sctl *i2sctl = drvdata->i2sctl;
+	अचिन्हित पूर्णांक id = dai->driver->id;
+	पूर्णांक ret = -EINVAL;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		/*
 		 * Ensure lpass BCLK/LRCLK is enabled during
 		 * device resume as lpass_cpu_daiops_prepare() is not called
-		 * after the device resumes. We don't check mi2s_was_prepared before
+		 * after the device resumes. We करोn't check mi2s_was_prepared beक्रमe
 		 * enable/disable BCLK in trigger events because:
 		 *  1. These trigger events are paired, so the BCLK
 		 *     enable_count is balanced.
 		 *  2. the BCLK can be shared (ex: headset and headset mic),
-		 *     we need to increase the enable_count so that we don't
-		 *     turn off the shared BCLK while other devices are using
+		 *     we need to increase the enable_count so that we करोn't
+		 *     turn off the shared BCLK जबतक other devices are using
 		 *     it.
 		 */
-		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-			ret = regmap_fields_write(i2sctl->spken, id,
+		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+			ret = regmap_fields_ग_लिखो(i2sctl->spken, id,
 						 LPAIF_I2SCTL_SPKEN_ENABLE);
-		} else  {
-			ret = regmap_fields_write(i2sctl->micen, id,
+		पूर्ण अन्यथा  अणु
+			ret = regmap_fields_ग_लिखो(i2sctl->micen, id,
 						 LPAIF_I2SCTL_MICEN_ENABLE);
-		}
-		if (ret)
+		पूर्ण
+		अगर (ret)
 			dev_err(dai->dev, "error writing to i2sctl reg: %d\n",
 				ret);
 
 		ret = clk_enable(drvdata->mi2s_bit_clk[id]);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dai->dev, "error in enabling mi2s bit clk: %d\n", ret);
 			clk_disable(drvdata->mi2s_osr_clk[id]);
-			return ret;
-		}
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		/*
 		 * To ensure lpass BCLK/LRCLK is disabled during
 		 * device suspend.
 		 */
-		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-			ret = regmap_fields_write(i2sctl->spken, id,
+		अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
+			ret = regmap_fields_ग_लिखो(i2sctl->spken, id,
 						 LPAIF_I2SCTL_SPKEN_DISABLE);
-		} else  {
-			ret = regmap_fields_write(i2sctl->micen, id,
+		पूर्ण अन्यथा  अणु
+			ret = regmap_fields_ग_लिखो(i2sctl->micen, id,
 						 LPAIF_I2SCTL_MICEN_DISABLE);
-		}
-		if (ret)
+		पूर्ण
+		अगर (ret)
 			dev_err(dai->dev, "error writing to i2sctl reg: %d\n",
 				ret);
 
 		clk_disable(drvdata->mi2s_bit_clk[dai->driver->id]);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lpass_cpu_daiops_prepare(struct snd_pcm_substream *substream,
-		struct snd_soc_dai *dai)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	struct lpaif_i2sctl *i2sctl = drvdata->i2sctl;
-	unsigned int id = dai->driver->id;
-	int ret;
+अटल पूर्णांक lpass_cpu_daiops_prepare(काष्ठा snd_pcm_substream *substream,
+		काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	काष्ठा lpaअगर_i2sctl *i2sctl = drvdata->i2sctl;
+	अचिन्हित पूर्णांक id = dai->driver->id;
+	पूर्णांक ret;
 
 	/*
-	 * Ensure lpass BCLK/LRCLK is enabled bit before playback/capture
-	 * data flow starts. This allows other codec to have some delay before
+	 * Ensure lpass BCLK/LRCLK is enabled bit beक्रमe playback/capture
+	 * data flow starts. This allows other codec to have some delay beक्रमe
 	 * the data flow.
-	 * (ex: to drop start up pop noise before capture starts).
+	 * (ex: to drop start up pop noise beक्रमe capture starts).
 	 */
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		ret = regmap_fields_write(i2sctl->spken, id, LPAIF_I2SCTL_SPKEN_ENABLE);
-	else
-		ret = regmap_fields_write(i2sctl->micen, id, LPAIF_I2SCTL_MICEN_ENABLE);
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		ret = regmap_fields_ग_लिखो(i2sctl->spken, id, LPAIF_I2SCTL_SPKEN_ENABLE);
+	अन्यथा
+		ret = regmap_fields_ग_लिखो(i2sctl->micen, id, LPAIF_I2SCTL_MICEN_ENABLE);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dai->dev, "error writing to i2sctl reg: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Check mi2s_was_prepared before enabling BCLK as lpass_cpu_daiops_prepare can
-	 * be called multiple times. It's paired with the clk_disable in
-	 * lpass_cpu_daiops_shutdown.
+	 * Check mi2s_was_prepared beक्रमe enabling BCLK as lpass_cpu_daiops_prepare can
+	 * be called multiple बार. It's paired with the clk_disable in
+	 * lpass_cpu_daiops_shutकरोwn.
 	 */
-	if (!drvdata->mi2s_was_prepared[dai->driver->id]) {
+	अगर (!drvdata->mi2s_was_prepared[dai->driver->id]) अणु
 		ret = clk_enable(drvdata->mi2s_bit_clk[id]);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dai->dev, "error in enabling mi2s bit clk: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		drvdata->mi2s_was_prepared[dai->driver->id] = true;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-const struct snd_soc_dai_ops asoc_qcom_lpass_cpu_dai_ops = {
+स्थिर काष्ठा snd_soc_dai_ops asoc_qcom_lpass_cpu_dai_ops = अणु
 	.set_sysclk	= lpass_cpu_daiops_set_sysclk,
 	.startup	= lpass_cpu_daiops_startup,
-	.shutdown	= lpass_cpu_daiops_shutdown,
+	.shutकरोwn	= lpass_cpu_daiops_shutकरोwn,
 	.hw_params	= lpass_cpu_daiops_hw_params,
 	.trigger	= lpass_cpu_daiops_trigger,
 	.prepare	= lpass_cpu_daiops_prepare,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_dai_ops);
 
-int asoc_qcom_lpass_cpu_dai_probe(struct snd_soc_dai *dai)
-{
-	struct lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
-	int ret;
+पूर्णांक asoc_qcom_lpass_cpu_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_dai_get_drvdata(dai);
+	पूर्णांक ret;
 
 	/* ensure audio hardware is disabled */
-	ret = regmap_write(drvdata->lpaif_map,
+	ret = regmap_ग_लिखो(drvdata->lpaअगर_map,
 			LPAIF_I2SCTL_REG(drvdata->variant, dai->driver->id), 0);
-	if (ret)
+	अगर (ret)
 		dev_err(dai->dev, "error writing to i2sctl reg: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_dai_probe);
 
-static int asoc_qcom_of_xlate_dai_name(struct snd_soc_component *component,
-				   const struct of_phandle_args *args,
-				   const char **dai_name)
-{
-	struct lpass_data *drvdata = snd_soc_component_get_drvdata(component);
-	struct lpass_variant *variant = drvdata->variant;
-	int id = args->args[0];
-	int ret = -EINVAL;
-	int i;
+अटल पूर्णांक asoc_qcom_of_xlate_dai_name(काष्ठा snd_soc_component *component,
+				   स्थिर काष्ठा of_phandle_args *args,
+				   स्थिर अक्षर **dai_name)
+अणु
+	काष्ठा lpass_data *drvdata = snd_soc_component_get_drvdata(component);
+	काष्ठा lpass_variant *variant = drvdata->variant;
+	पूर्णांक id = args->args[0];
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक i;
 
-	for (i = 0; i  < variant->num_dai; i++) {
-		if (variant->dai_driver[i].id == id) {
+	क्रम (i = 0; i  < variant->num_dai; i++) अणु
+		अगर (variant->dai_driver[i].id == id) अणु
 			*dai_name = variant->dai_driver[i].name;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_soc_component_driver lpass_cpu_comp_driver = {
+अटल स्थिर काष्ठा snd_soc_component_driver lpass_cpu_comp_driver = अणु
 	.name = "lpass-cpu",
 	.of_xlate_dai_name = asoc_qcom_of_xlate_dai_name,
-};
+पूर्ण;
 
-static bool lpass_cpu_regmap_writeable(struct device *dev, unsigned int reg)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	int i;
+अटल bool lpass_cpu_regmap_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	पूर्णांक i;
 
-	for (i = 0; i < v->i2s_ports; ++i)
-		if (reg == LPAIF_I2SCTL_REG(v, i))
-			return true;
+	क्रम (i = 0; i < v->i2s_ports; ++i)
+		अगर (reg == LPAIF_I2SCTL_REG(v, i))
+			वापस true;
 
-	for (i = 0; i < v->irq_ports; ++i) {
-		if (reg == LPAIF_IRQEN_REG(v, i))
-			return true;
-		if (reg == LPAIF_IRQCLEAR_REG(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->irq_ports; ++i) अणु
+		अगर (reg == LPAIF_IRQEN_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_IRQCLEAR_REG(v, i))
+			वापस true;
+	पूर्ण
 
-	for (i = 0; i < v->rdma_channels; ++i) {
-		if (reg == LPAIF_RDMACTL_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMABASE_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMABUFF_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMAPER_REG(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->rdma_channels; ++i) अणु
+		अगर (reg == LPAIF_RDMACTL_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMABASE_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMABUFF_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMAPER_REG(v, i))
+			वापस true;
+	पूर्ण
 
-	for (i = 0; i < v->wrdma_channels; ++i) {
-		if (reg == LPAIF_WRDMACTL_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMABASE_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMABUFF_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMAPER_REG(v, i + v->wrdma_channel_start))
-			return true;
-	}
+	क्रम (i = 0; i < v->wrdma_channels; ++i) अणु
+		अगर (reg == LPAIF_WRDMACTL_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMABASE_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMABUFF_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMAPER_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool lpass_cpu_regmap_readable(struct device *dev, unsigned int reg)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	int i;
+अटल bool lpass_cpu_regmap_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	पूर्णांक i;
 
-	for (i = 0; i < v->i2s_ports; ++i)
-		if (reg == LPAIF_I2SCTL_REG(v, i))
-			return true;
+	क्रम (i = 0; i < v->i2s_ports; ++i)
+		अगर (reg == LPAIF_I2SCTL_REG(v, i))
+			वापस true;
 
-	for (i = 0; i < v->irq_ports; ++i) {
-		if (reg == LPAIF_IRQEN_REG(v, i))
-			return true;
-		if (reg == LPAIF_IRQSTAT_REG(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->irq_ports; ++i) अणु
+		अगर (reg == LPAIF_IRQEN_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_IRQSTAT_REG(v, i))
+			वापस true;
+	पूर्ण
 
-	for (i = 0; i < v->rdma_channels; ++i) {
-		if (reg == LPAIF_RDMACTL_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMABASE_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMABUFF_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMACURR_REG(v, i))
-			return true;
-		if (reg == LPAIF_RDMAPER_REG(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->rdma_channels; ++i) अणु
+		अगर (reg == LPAIF_RDMACTL_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMABASE_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMABUFF_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMACURR_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_RDMAPER_REG(v, i))
+			वापस true;
+	पूर्ण
 
-	for (i = 0; i < v->wrdma_channels; ++i) {
-		if (reg == LPAIF_WRDMACTL_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMABASE_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMABUFF_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMACURR_REG(v, i + v->wrdma_channel_start))
-			return true;
-		if (reg == LPAIF_WRDMAPER_REG(v, i + v->wrdma_channel_start))
-			return true;
-	}
+	क्रम (i = 0; i < v->wrdma_channels; ++i) अणु
+		अगर (reg == LPAIF_WRDMACTL_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMABASE_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMABUFF_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMACURR_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+		अगर (reg == LPAIF_WRDMAPER_REG(v, i + v->wrdma_channel_start))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool lpass_cpu_regmap_volatile(struct device *dev, unsigned int reg)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	int i;
+अटल bool lpass_cpu_regmap_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	पूर्णांक i;
 
-	for (i = 0; i < v->irq_ports; ++i)
-		if (reg == LPAIF_IRQSTAT_REG(v, i))
-			return true;
+	क्रम (i = 0; i < v->irq_ports; ++i)
+		अगर (reg == LPAIF_IRQSTAT_REG(v, i))
+			वापस true;
 
-	for (i = 0; i < v->rdma_channels; ++i)
-		if (reg == LPAIF_RDMACURR_REG(v, i))
-			return true;
+	क्रम (i = 0; i < v->rdma_channels; ++i)
+		अगर (reg == LPAIF_RDMACURR_REG(v, i))
+			वापस true;
 
-	for (i = 0; i < v->wrdma_channels; ++i)
-		if (reg == LPAIF_WRDMACURR_REG(v, i + v->wrdma_channel_start))
-			return true;
+	क्रम (i = 0; i < v->wrdma_channels; ++i)
+		अगर (reg == LPAIF_WRDMACURR_REG(v, i + v->wrdma_channel_start))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static struct regmap_config lpass_cpu_regmap_config = {
+अटल काष्ठा regmap_config lpass_cpu_regmap_config = अणु
 	.name = "lpass_cpu",
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.writeable_reg = lpass_cpu_regmap_writeable,
-	.readable_reg = lpass_cpu_regmap_readable,
-	.volatile_reg = lpass_cpu_regmap_volatile,
+	.ग_लिखोable_reg = lpass_cpu_regmap_ग_लिखोable,
+	.पढ़ोable_reg = lpass_cpu_regmap_पढ़ोable,
+	.अस्थिर_reg = lpass_cpu_regmap_अस्थिर,
 	.cache_type = REGCACHE_FLAT,
-};
+पूर्ण;
 
-static int lpass_hdmi_init_bitfields(struct device *dev, struct regmap *map)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	unsigned int i;
-	struct lpass_hdmi_tx_ctl *tx_ctl;
-	struct regmap_field *legacy_en;
-	struct lpass_vbit_ctrl *vbit_ctl;
-	struct regmap_field *tx_parity;
-	struct lpass_dp_metadata_ctl *meta_ctl;
-	struct lpass_sstream_ctl *sstream_ctl;
-	struct regmap_field *ch_msb;
-	struct regmap_field *ch_lsb;
-	struct lpass_hdmitx_dmactl *tx_dmactl;
-	int rval;
+अटल पूर्णांक lpass_hdmi_init_bitfields(काष्ठा device *dev, काष्ठा regmap *map)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	अचिन्हित पूर्णांक i;
+	काष्ठा lpass_hdmi_tx_ctl *tx_ctl;
+	काष्ठा regmap_field *legacy_en;
+	काष्ठा lpass_vbit_ctrl *vbit_ctl;
+	काष्ठा regmap_field *tx_parity;
+	काष्ठा lpass_dp_metadata_ctl *meta_ctl;
+	काष्ठा lpass_sstream_ctl *sstream_ctl;
+	काष्ठा regmap_field *ch_msb;
+	काष्ठा regmap_field *ch_lsb;
+	काष्ठा lpass_hdmitx_dmactl *tx_dmactl;
+	पूर्णांक rval;
 
-	tx_ctl = devm_kzalloc(dev, sizeof(*tx_ctl), GFP_KERNEL);
-	if (!tx_ctl)
-		return -ENOMEM;
+	tx_ctl = devm_kzalloc(dev, माप(*tx_ctl), GFP_KERNEL);
+	अगर (!tx_ctl)
+		वापस -ENOMEM;
 
 	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->soft_reset, tx_ctl->soft_reset);
-	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->force_reset, tx_ctl->force_reset);
+	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->क्रमce_reset, tx_ctl->क्रमce_reset);
 	drvdata->tx_ctl = tx_ctl;
 
 	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->legacy_en, legacy_en);
 	drvdata->hdmitx_legacy_en = legacy_en;
 
-	vbit_ctl = devm_kzalloc(dev, sizeof(*vbit_ctl), GFP_KERNEL);
-	if (!vbit_ctl)
-		return -ENOMEM;
+	vbit_ctl = devm_kzalloc(dev, माप(*vbit_ctl), GFP_KERNEL);
+	अगर (!vbit_ctl)
+		वापस -ENOMEM;
 
 	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->replace_vbit, vbit_ctl->replace_vbit);
 	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->vbit_stream, vbit_ctl->vbit_stream);
@@ -603,390 +604,390 @@ static int lpass_hdmi_init_bitfields(struct device *dev, struct regmap *map)
 	QCOM_REGMAP_FIELD_ALLOC(dev, map, v->calc_en, tx_parity);
 	drvdata->hdmitx_parity_calc_en = tx_parity;
 
-	meta_ctl = devm_kzalloc(dev, sizeof(*meta_ctl), GFP_KERNEL);
-	if (!meta_ctl)
-		return -ENOMEM;
+	meta_ctl = devm_kzalloc(dev, माप(*meta_ctl), GFP_KERNEL);
+	अगर (!meta_ctl)
+		वापस -ENOMEM;
 
 	rval = devm_regmap_field_bulk_alloc(dev, map, &meta_ctl->mute, &v->mute, 7);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 	drvdata->meta_ctl = meta_ctl;
 
-	sstream_ctl = devm_kzalloc(dev, sizeof(*sstream_ctl), GFP_KERNEL);
-	if (!sstream_ctl)
-		return -ENOMEM;
+	sstream_ctl = devm_kzalloc(dev, माप(*sstream_ctl), GFP_KERNEL);
+	अगर (!sstream_ctl)
+		वापस -ENOMEM;
 
 	rval = devm_regmap_field_bulk_alloc(dev, map, &sstream_ctl->sstream_en, &v->sstream_en, 9);
-	if (rval)
-		return rval;
+	अगर (rval)
+		वापस rval;
 
 	drvdata->sstream_ctl = sstream_ctl;
 
-	for (i = 0; i < LPASS_MAX_HDMI_DMA_CHANNELS; i++) {
+	क्रम (i = 0; i < LPASS_MAX_HDMI_DMA_CHANNELS; i++) अणु
 		QCOM_REGMAP_FIELD_ALLOC(dev, map, v->msb_bits, ch_msb);
 		drvdata->hdmitx_ch_msb[i] = ch_msb;
 
 		QCOM_REGMAP_FIELD_ALLOC(dev, map, v->lsb_bits, ch_lsb);
 		drvdata->hdmitx_ch_lsb[i] = ch_lsb;
 
-		tx_dmactl = devm_kzalloc(dev, sizeof(*tx_dmactl), GFP_KERNEL);
-		if (!tx_dmactl)
-			return -ENOMEM;
+		tx_dmactl = devm_kzalloc(dev, माप(*tx_dmactl), GFP_KERNEL);
+		अगर (!tx_dmactl)
+			वापस -ENOMEM;
 
 		QCOM_REGMAP_FIELD_ALLOC(dev, map, v->use_hw_chs, tx_dmactl->use_hw_chs);
 		QCOM_REGMAP_FIELD_ALLOC(dev, map, v->use_hw_usr, tx_dmactl->use_hw_usr);
 		QCOM_REGMAP_FIELD_ALLOC(dev, map, v->hw_chs_sel, tx_dmactl->hw_chs_sel);
 		QCOM_REGMAP_FIELD_ALLOC(dev, map, v->hw_usr_sel, tx_dmactl->hw_usr_sel);
 		drvdata->hdmi_tx_dmactl[i] = tx_dmactl;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static bool lpass_hdmi_regmap_writeable(struct device *dev, unsigned int reg)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	int i;
+अटल bool lpass_hdmi_regmap_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	पूर्णांक i;
 
-	if (reg == LPASS_HDMI_TX_CTL_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_LEGACY_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_VBIT_CTL_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_PARITY_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_DP_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_SSTREAM_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMITX_APP_IRQEN_REG(v))
-		return true;
-	if (reg == LPASS_HDMITX_APP_IRQCLEAR_REG(v))
-		return true;
+	अगर (reg == LPASS_HDMI_TX_CTL_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_LEGACY_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_VBIT_CTL_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_PARITY_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_DP_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_SSTREAM_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMITX_APP_IRQEN_REG(v))
+		वापस true;
+	अगर (reg == LPASS_HDMITX_APP_IRQCLEAR_REG(v))
+		वापस true;
 
-	for (i = 0; i < v->hdmi_rdma_channels; i++) {
-		if (reg == LPASS_HDMI_TX_CH_LSB_ADDR(v, i))
-			return true;
-		if (reg == LPASS_HDMI_TX_CH_MSB_ADDR(v, i))
-			return true;
-		if (reg == LPASS_HDMI_TX_DMA_ADDR(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->hdmi_rdma_channels; i++) अणु
+		अगर (reg == LPASS_HDMI_TX_CH_LSB_ADDR(v, i))
+			वापस true;
+		अगर (reg == LPASS_HDMI_TX_CH_MSB_ADDR(v, i))
+			वापस true;
+		अगर (reg == LPASS_HDMI_TX_DMA_ADDR(v, i))
+			वापस true;
+	पूर्ण
 
-	for (i = 0; i < v->hdmi_rdma_channels; ++i) {
-		if (reg == LPAIF_HDMI_RDMACTL_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMABASE_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMABUFF_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMAPER_REG(v, i))
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < v->hdmi_rdma_channels; ++i) अणु
+		अगर (reg == LPAIF_HDMI_RDMACTL_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMABASE_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMABUFF_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMAPER_REG(v, i))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool lpass_hdmi_regmap_readable(struct device *dev, unsigned int reg)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	int i;
+अटल bool lpass_hdmi_regmap_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	पूर्णांक i;
 
-	if (reg == LPASS_HDMI_TX_CTL_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_LEGACY_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_VBIT_CTL_ADDR(v))
-		return true;
+	अगर (reg == LPASS_HDMI_TX_CTL_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_LEGACY_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_VBIT_CTL_ADDR(v))
+		वापस true;
 
-	for (i = 0; i < v->hdmi_rdma_channels; i++) {
-		if (reg == LPASS_HDMI_TX_CH_LSB_ADDR(v, i))
-			return true;
-		if (reg == LPASS_HDMI_TX_CH_MSB_ADDR(v, i))
-			return true;
-		if (reg == LPASS_HDMI_TX_DMA_ADDR(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->hdmi_rdma_channels; i++) अणु
+		अगर (reg == LPASS_HDMI_TX_CH_LSB_ADDR(v, i))
+			वापस true;
+		अगर (reg == LPASS_HDMI_TX_CH_MSB_ADDR(v, i))
+			वापस true;
+		अगर (reg == LPASS_HDMI_TX_DMA_ADDR(v, i))
+			वापस true;
+	पूर्ण
 
-	if (reg == LPASS_HDMI_TX_PARITY_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_DP_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_SSTREAM_ADDR(v))
-		return true;
-	if (reg == LPASS_HDMITX_APP_IRQEN_REG(v))
-		return true;
-	if (reg == LPASS_HDMITX_APP_IRQSTAT_REG(v))
-		return true;
+	अगर (reg == LPASS_HDMI_TX_PARITY_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_DP_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_SSTREAM_ADDR(v))
+		वापस true;
+	अगर (reg == LPASS_HDMITX_APP_IRQEN_REG(v))
+		वापस true;
+	अगर (reg == LPASS_HDMITX_APP_IRQSTAT_REG(v))
+		वापस true;
 
-	for (i = 0; i < v->hdmi_rdma_channels; ++i) {
-		if (reg == LPAIF_HDMI_RDMACTL_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMABASE_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMABUFF_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMAPER_REG(v, i))
-			return true;
-		if (reg == LPAIF_HDMI_RDMACURR_REG(v, i))
-			return true;
-	}
+	क्रम (i = 0; i < v->hdmi_rdma_channels; ++i) अणु
+		अगर (reg == LPAIF_HDMI_RDMACTL_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMABASE_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMABUFF_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMAPER_REG(v, i))
+			वापस true;
+		अगर (reg == LPAIF_HDMI_RDMACURR_REG(v, i))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool lpass_hdmi_regmap_volatile(struct device *dev, unsigned int reg)
-{
-	struct lpass_data *drvdata = dev_get_drvdata(dev);
-	struct lpass_variant *v = drvdata->variant;
-	int i;
+अटल bool lpass_hdmi_regmap_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा lpass_data *drvdata = dev_get_drvdata(dev);
+	काष्ठा lpass_variant *v = drvdata->variant;
+	पूर्णांक i;
 
-	if (reg == LPASS_HDMITX_APP_IRQSTAT_REG(v))
-		return true;
-	if (reg == LPASS_HDMI_TX_LEGACY_ADDR(v))
-		return true;
+	अगर (reg == LPASS_HDMITX_APP_IRQSTAT_REG(v))
+		वापस true;
+	अगर (reg == LPASS_HDMI_TX_LEGACY_ADDR(v))
+		वापस true;
 
-	for (i = 0; i < v->hdmi_rdma_channels; ++i) {
-		if (reg == LPAIF_HDMI_RDMACURR_REG(v, i))
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < v->hdmi_rdma_channels; ++i) अणु
+		अगर (reg == LPAIF_HDMI_RDMACURR_REG(v, i))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static struct regmap_config lpass_hdmi_regmap_config = {
+अटल काष्ठा regmap_config lpass_hdmi_regmap_config = अणु
 	.name = "lpass_hdmi",
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.writeable_reg = lpass_hdmi_regmap_writeable,
-	.readable_reg = lpass_hdmi_regmap_readable,
-	.volatile_reg = lpass_hdmi_regmap_volatile,
+	.ग_लिखोable_reg = lpass_hdmi_regmap_ग_लिखोable,
+	.पढ़ोable_reg = lpass_hdmi_regmap_पढ़ोable,
+	.अस्थिर_reg = lpass_hdmi_regmap_अस्थिर,
 	.cache_type = REGCACHE_FLAT,
-};
+पूर्ण;
 
-static unsigned int of_lpass_cpu_parse_sd_lines(struct device *dev,
-						struct device_node *node,
-						const char *name)
-{
-	unsigned int lines[LPASS_CPU_MAX_MI2S_LINES];
-	unsigned int sd_line_mask = 0;
-	int num_lines, i;
+अटल अचिन्हित पूर्णांक of_lpass_cpu_parse_sd_lines(काष्ठा device *dev,
+						काष्ठा device_node *node,
+						स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक lines[LPASS_CPU_MAX_MI2S_LINES];
+	अचिन्हित पूर्णांक sd_line_mask = 0;
+	पूर्णांक num_lines, i;
 
-	num_lines = of_property_read_variable_u32_array(node, name, lines, 0,
+	num_lines = of_property_पढ़ो_variable_u32_array(node, name, lines, 0,
 							LPASS_CPU_MAX_MI2S_LINES);
-	if (num_lines < 0)
-		return LPAIF_I2SCTL_MODE_NONE;
+	अगर (num_lines < 0)
+		वापस LPAIF_I2SCTL_MODE_NONE;
 
-	for (i = 0; i < num_lines; i++)
+	क्रम (i = 0; i < num_lines; i++)
 		sd_line_mask |= BIT(lines[i]);
 
-	switch (sd_line_mask) {
-	case LPASS_CPU_I2S_SD0_MASK:
-		return LPAIF_I2SCTL_MODE_SD0;
-	case LPASS_CPU_I2S_SD1_MASK:
-		return LPAIF_I2SCTL_MODE_SD1;
-	case LPASS_CPU_I2S_SD2_MASK:
-		return LPAIF_I2SCTL_MODE_SD2;
-	case LPASS_CPU_I2S_SD3_MASK:
-		return LPAIF_I2SCTL_MODE_SD3;
-	case LPASS_CPU_I2S_SD0_1_MASK:
-		return LPAIF_I2SCTL_MODE_QUAD01;
-	case LPASS_CPU_I2S_SD2_3_MASK:
-		return LPAIF_I2SCTL_MODE_QUAD23;
-	case LPASS_CPU_I2S_SD0_1_2_MASK:
-		return LPAIF_I2SCTL_MODE_6CH;
-	case LPASS_CPU_I2S_SD0_1_2_3_MASK:
-		return LPAIF_I2SCTL_MODE_8CH;
-	default:
+	चयन (sd_line_mask) अणु
+	हाल LPASS_CPU_I2S_SD0_MASK:
+		वापस LPAIF_I2SCTL_MODE_SD0;
+	हाल LPASS_CPU_I2S_SD1_MASK:
+		वापस LPAIF_I2SCTL_MODE_SD1;
+	हाल LPASS_CPU_I2S_SD2_MASK:
+		वापस LPAIF_I2SCTL_MODE_SD2;
+	हाल LPASS_CPU_I2S_SD3_MASK:
+		वापस LPAIF_I2SCTL_MODE_SD3;
+	हाल LPASS_CPU_I2S_SD0_1_MASK:
+		वापस LPAIF_I2SCTL_MODE_QUAD01;
+	हाल LPASS_CPU_I2S_SD2_3_MASK:
+		वापस LPAIF_I2SCTL_MODE_QUAD23;
+	हाल LPASS_CPU_I2S_SD0_1_2_MASK:
+		वापस LPAIF_I2SCTL_MODE_6CH;
+	हाल LPASS_CPU_I2S_SD0_1_2_3_MASK:
+		वापस LPAIF_I2SCTL_MODE_8CH;
+	शेष:
 		dev_err(dev, "Unsupported SD line mask: %#x\n", sd_line_mask);
-		return LPAIF_I2SCTL_MODE_NONE;
-	}
-}
+		वापस LPAIF_I2SCTL_MODE_NONE;
+	पूर्ण
+पूर्ण
 
-static void of_lpass_cpu_parse_dai_data(struct device *dev,
-					struct lpass_data *data)
-{
-	struct device_node *node;
-	int ret, id;
+अटल व्योम of_lpass_cpu_parse_dai_data(काष्ठा device *dev,
+					काष्ठा lpass_data *data)
+अणु
+	काष्ठा device_node *node;
+	पूर्णांक ret, id;
 
-	/* Allow all channels by default for backwards compatibility */
-	for (id = 0; id < data->variant->num_dai; id++) {
+	/* Allow all channels by शेष क्रम backwards compatibility */
+	क्रम (id = 0; id < data->variant->num_dai; id++) अणु
 		data->mi2s_playback_sd_mode[id] = LPAIF_I2SCTL_MODE_8CH;
 		data->mi2s_capture_sd_mode[id] = LPAIF_I2SCTL_MODE_8CH;
-	}
+	पूर्ण
 
-	for_each_child_of_node(dev->of_node, node) {
-		ret = of_property_read_u32(node, "reg", &id);
-		if (ret || id < 0) {
+	क्रम_each_child_of_node(dev->of_node, node) अणु
+		ret = of_property_पढ़ो_u32(node, "reg", &id);
+		अगर (ret || id < 0) अणु
 			dev_err(dev, "valid dai id not found: %d\n", ret);
-			continue;
-		}
-		if (id == LPASS_DP_RX) {
+			जारी;
+		पूर्ण
+		अगर (id == LPASS_DP_RX) अणु
 			data->hdmi_port_enable = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			data->mi2s_playback_sd_mode[id] =
 				of_lpass_cpu_parse_sd_lines(dev, node,
 							    "qcom,playback-sd-lines");
 			data->mi2s_capture_sd_mode[id] =
 				of_lpass_cpu_parse_sd_lines(dev, node,
 						    "qcom,capture-sd-lines");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int asoc_qcom_lpass_cpu_platform_probe(struct platform_device *pdev)
-{
-	struct lpass_data *drvdata;
-	struct device_node *dsp_of_node;
-	struct resource *res;
-	struct lpass_variant *variant;
-	struct device *dev = &pdev->dev;
-	const struct of_device_id *match;
-	int ret, i, dai_id;
+पूर्णांक asoc_qcom_lpass_cpu_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpass_data *drvdata;
+	काष्ठा device_node *dsp_of_node;
+	काष्ठा resource *res;
+	काष्ठा lpass_variant *variant;
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा of_device_id *match;
+	पूर्णांक ret, i, dai_id;
 
 	dsp_of_node = of_parse_phandle(pdev->dev.of_node, "qcom,adsp", 0);
-	if (dsp_of_node) {
+	अगर (dsp_of_node) अणु
 		dev_err(dev, "DSP exists and holds audio resources\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	drvdata = devm_kzalloc(dev, sizeof(struct lpass_data), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, drvdata);
+	drvdata = devm_kzalloc(dev, माप(काष्ठा lpass_data), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, drvdata);
 
 	match = of_match_device(dev->driver->of_match_table, dev);
-	if (!match || !match->data)
-		return -EINVAL;
+	अगर (!match || !match->data)
+		वापस -EINVAL;
 
-	drvdata->variant = (struct lpass_variant *)match->data;
+	drvdata->variant = (काष्ठा lpass_variant *)match->data;
 	variant = drvdata->variant;
 
 	of_lpass_cpu_parse_dai_data(dev, drvdata);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "lpass-lpaif");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "lpass-lpaif");
 
-	drvdata->lpaif = devm_ioremap_resource(dev, res);
-	if (IS_ERR(drvdata->lpaif))
-		return PTR_ERR(drvdata->lpaif);
+	drvdata->lpaअगर = devm_ioremap_resource(dev, res);
+	अगर (IS_ERR(drvdata->lpaअगर))
+		वापस PTR_ERR(drvdata->lpaअगर);
 
-	lpass_cpu_regmap_config.max_register = LPAIF_WRDMAPER_REG(variant,
+	lpass_cpu_regmap_config.max_रेजिस्टर = LPAIF_WRDMAPER_REG(variant,
 						variant->wrdma_channels +
 						variant->wrdma_channel_start);
 
-	drvdata->lpaif_map = devm_regmap_init_mmio(dev, drvdata->lpaif,
+	drvdata->lpaअगर_map = devm_regmap_init_mmio(dev, drvdata->lpaअगर,
 			&lpass_cpu_regmap_config);
-	if (IS_ERR(drvdata->lpaif_map)) {
+	अगर (IS_ERR(drvdata->lpaअगर_map)) अणु
 		dev_err(dev, "error initializing regmap: %ld\n",
-			PTR_ERR(drvdata->lpaif_map));
-		return PTR_ERR(drvdata->lpaif_map);
-	}
+			PTR_ERR(drvdata->lpaअगर_map));
+		वापस PTR_ERR(drvdata->lpaअगर_map);
+	पूर्ण
 
-	if (drvdata->hdmi_port_enable) {
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "lpass-hdmiif");
+	अगर (drvdata->hdmi_port_enable) अणु
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "lpass-hdmiif");
 
-		drvdata->hdmiif = devm_ioremap_resource(dev, res);
-		if (IS_ERR(drvdata->hdmiif))
-			return PTR_ERR(drvdata->hdmiif);
+		drvdata->hdmiअगर = devm_ioremap_resource(dev, res);
+		अगर (IS_ERR(drvdata->hdmiअगर))
+			वापस PTR_ERR(drvdata->hdmiअगर);
 
-		lpass_hdmi_regmap_config.max_register = LPAIF_HDMI_RDMAPER_REG(variant,
+		lpass_hdmi_regmap_config.max_रेजिस्टर = LPAIF_HDMI_RDMAPER_REG(variant,
 					variant->hdmi_rdma_channels - 1);
-		drvdata->hdmiif_map = devm_regmap_init_mmio(dev, drvdata->hdmiif,
+		drvdata->hdmiअगर_map = devm_regmap_init_mmio(dev, drvdata->hdmiअगर,
 					&lpass_hdmi_regmap_config);
-		if (IS_ERR(drvdata->hdmiif_map)) {
+		अगर (IS_ERR(drvdata->hdmiअगर_map)) अणु
 			dev_err(dev, "error initializing regmap: %ld\n",
-			PTR_ERR(drvdata->hdmiif_map));
-			return PTR_ERR(drvdata->hdmiif_map);
-		}
-	}
+			PTR_ERR(drvdata->hdmiअगर_map));
+			वापस PTR_ERR(drvdata->hdmiअगर_map);
+		पूर्ण
+	पूर्ण
 
-	if (variant->init) {
+	अगर (variant->init) अणु
 		ret = variant->init(pdev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "error initializing variant: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < variant->num_dai; i++) {
+	क्रम (i = 0; i < variant->num_dai; i++) अणु
 		dai_id = variant->dai_driver[i].id;
-		if (dai_id == LPASS_DP_RX)
-			continue;
+		अगर (dai_id == LPASS_DP_RX)
+			जारी;
 
 		drvdata->mi2s_osr_clk[dai_id] = devm_clk_get_optional(dev,
 					     variant->dai_osr_clk_names[i]);
 		drvdata->mi2s_bit_clk[dai_id] = devm_clk_get(dev,
 						variant->dai_bit_clk_names[i]);
-		if (IS_ERR(drvdata->mi2s_bit_clk[dai_id])) {
+		अगर (IS_ERR(drvdata->mi2s_bit_clk[dai_id])) अणु
 			dev_err(dev,
 				"error getting %s: %ld\n",
 				variant->dai_bit_clk_names[i],
 				PTR_ERR(drvdata->mi2s_bit_clk[dai_id]));
-			return PTR_ERR(drvdata->mi2s_bit_clk[dai_id]);
-		}
-	}
+			वापस PTR_ERR(drvdata->mi2s_bit_clk[dai_id]);
+		पूर्ण
+	पूर्ण
 
-	/* Allocation for i2sctl regmap fields */
-	drvdata->i2sctl = devm_kzalloc(&pdev->dev, sizeof(struct lpaif_i2sctl),
+	/* Allocation क्रम i2sctl regmap fields */
+	drvdata->i2sctl = devm_kzalloc(&pdev->dev, माप(काष्ठा lpaअगर_i2sctl),
 					GFP_KERNEL);
 
-	/* Initialize bitfields for dai I2SCTL register */
+	/* Initialize bitfields क्रम dai I2SCTL रेजिस्टर */
 	ret = lpass_cpu_init_i2sctl_bitfields(dev, drvdata->i2sctl,
-						drvdata->lpaif_map);
-	if (ret) {
+						drvdata->lpaअगर_map);
+	अगर (ret) अणु
 		dev_err(dev, "error init i2sctl field: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (drvdata->hdmi_port_enable) {
-		ret = lpass_hdmi_init_bitfields(dev, drvdata->hdmiif_map);
-		if (ret) {
+	अगर (drvdata->hdmi_port_enable) अणु
+		ret = lpass_hdmi_init_bitfields(dev, drvdata->hdmiअगर_map);
+		अगर (ret) अणु
 			dev_err(dev, "%s error  hdmi init failed\n", __func__);
-			return ret;
-		}
-	}
-	ret = devm_snd_soc_register_component(dev,
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	ret = devm_snd_soc_रेजिस्टर_component(dev,
 					      &lpass_cpu_comp_driver,
 					      variant->dai_driver,
 					      variant->num_dai);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "error registering cpu driver: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = asoc_qcom_lpass_platform_register(pdev);
-	if (ret) {
+	ret = asoc_qcom_lpass_platक्रमm_रेजिस्टर(pdev);
+	अगर (ret) अणु
 		dev_err(dev, "error registering platform driver: %d\n", ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 err:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_platform_probe);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_platक्रमm_probe);
 
-int asoc_qcom_lpass_cpu_platform_remove(struct platform_device *pdev)
-{
-	struct lpass_data *drvdata = platform_get_drvdata(pdev);
+पूर्णांक asoc_qcom_lpass_cpu_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpass_data *drvdata = platक्रमm_get_drvdata(pdev);
 
-	if (drvdata->variant->exit)
-		drvdata->variant->exit(pdev);
+	अगर (drvdata->variant->निकास)
+		drvdata->variant->निकास(pdev);
 
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_platform_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_platक्रमm_हटाओ);
 
-void asoc_qcom_lpass_cpu_platform_shutdown(struct platform_device *pdev)
-{
-	struct lpass_data *drvdata = platform_get_drvdata(pdev);
+व्योम asoc_qcom_lpass_cpu_platक्रमm_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpass_data *drvdata = platक्रमm_get_drvdata(pdev);
 
-	if (drvdata->variant->exit)
-		drvdata->variant->exit(pdev);
+	अगर (drvdata->variant->निकास)
+		drvdata->variant->निकास(pdev);
 
-}
-EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_platform_shutdown);
+पूर्ण
+EXPORT_SYMBOL_GPL(asoc_qcom_lpass_cpu_platक्रमm_shutकरोwn);
 
 MODULE_DESCRIPTION("QTi LPASS CPU Driver");
 MODULE_LICENSE("GPL v2");

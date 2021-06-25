@@ -1,354 +1,355 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 97, 2000, 2001 by Ralf Baechle
  * Copyright (C) 2001 MIPS Technologies, Inc.
  */
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/signal.h>
-#include <linux/export.h>
-#include <asm/branch.h>
-#include <asm/cpu.h>
-#include <asm/cpu-features.h>
-#include <asm/fpu.h>
-#include <asm/fpu_emulator.h>
-#include <asm/inst.h>
-#include <asm/mips-r2-to-r6-emul.h>
-#include <asm/ptrace.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/branch.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/fpu_emulator.h>
+#समावेश <यंत्र/inst.h>
+#समावेश <यंत्र/mips-r2-to-r6-emul.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <linux/uaccess.h>
 
-#include "probes-common.h"
+#समावेश "probes-common.h"
 
 /*
- * Calculate and return exception PC in case of branch delay slot
- * for microMIPS and MIPS16e. It does not clear the ISA mode bit.
+ * Calculate and वापस exception PC in हाल of branch delay slot
+ * क्रम microMIPS and MIPS16e. It करोes not clear the ISA mode bit.
  */
-int __isa_exception_epc(struct pt_regs *regs)
-{
-	unsigned short inst;
-	long epc = regs->cp0_epc;
+पूर्णांक __isa_exception_epc(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित लघु inst;
+	दीर्घ epc = regs->cp0_epc;
 
 	/* Calculate exception PC in branch delay slot. */
-	if (__get_user(inst, (u16 __user *) msk_isa16_mode(epc))) {
+	अगर (__get_user(inst, (u16 __user *) msk_isa16_mode(epc))) अणु
 		/* This should never happen because delay slot was checked. */
-		force_sig(SIGSEGV);
-		return epc;
-	}
-	if (cpu_has_mips16) {
-		union mips16e_instruction inst_mips16e;
+		क्रमce_sig(संक_अंश);
+		वापस epc;
+	पूर्ण
+	अगर (cpu_has_mips16) अणु
+		जोड़ mips16e_inकाष्ठाion inst_mips16e;
 
 		inst_mips16e.full = inst;
-		if (inst_mips16e.ri.opcode == MIPS16e_jal_op)
+		अगर (inst_mips16e.ri.opcode == MIPS16e_jal_op)
 			epc += 4;
-		else
+		अन्यथा
 			epc += 2;
-	} else if (mm_insn_16bit(inst))
+	पूर्ण अन्यथा अगर (mm_insn_16bit(inst))
 		epc += 2;
-	else
+	अन्यथा
 		epc += 4;
 
-	return epc;
-}
+	वापस epc;
+पूर्ण
 
-/* (microMIPS) Convert 16-bit register encoding to 32-bit register encoding. */
-static const unsigned int reg16to32map[8] = {16, 17, 2, 3, 4, 5, 6, 7};
+/* (microMIPS) Convert 16-bit रेजिस्टर encoding to 32-bit रेजिस्टर encoding. */
+अटल स्थिर अचिन्हित पूर्णांक reg16to32map[8] = अणु16, 17, 2, 3, 4, 5, 6, 7पूर्ण;
 
-int __mm_isBranchInstr(struct pt_regs *regs, struct mm_decoded_insn dec_insn,
-		       unsigned long *contpc)
-{
-	union mips_instruction insn = (union mips_instruction)dec_insn.insn;
-	int __maybe_unused bc_false = 0;
+पूर्णांक __mm_isBranchInstr(काष्ठा pt_regs *regs, काष्ठा mm_decoded_insn dec_insn,
+		       अचिन्हित दीर्घ *contpc)
+अणु
+	जोड़ mips_inकाष्ठाion insn = (जोड़ mips_inकाष्ठाion)dec_insn.insn;
+	पूर्णांक __maybe_unused bc_false = 0;
 
-	if (!cpu_has_mmips)
-		return 0;
+	अगर (!cpu_has_mmips)
+		वापस 0;
 
-	switch (insn.mm_i_format.opcode) {
-	case mm_pool32a_op:
-		if ((insn.mm_i_format.simmediate & MM_POOL32A_MINOR_MASK) ==
-		    mm_pool32axf_op) {
-			switch (insn.mm_i_format.simmediate >>
-				MM_POOL32A_MINOR_SHIFT) {
-			case mm_jalr_op:
-			case mm_jalrhb_op:
-			case mm_jalrs_op:
-			case mm_jalrshb_op:
-				if (insn.mm_i_format.rt != 0)	/* Not mm_jr */
-					regs->regs[insn.mm_i_format.rt] =
+	चयन (insn.mm_i_क्रमmat.opcode) अणु
+	हाल mm_pool32a_op:
+		अगर ((insn.mm_i_क्रमmat.simmediate & MM_POOL32A_MINOR_MASK) ==
+		    mm_pool32axf_op) अणु
+			चयन (insn.mm_i_क्रमmat.simmediate >>
+				MM_POOL32A_MINOR_SHIFT) अणु
+			हाल mm_jalr_op:
+			हाल mm_jalrhb_op:
+			हाल mm_jalrs_op:
+			हाल mm_jalrshb_op:
+				अगर (insn.mm_i_क्रमmat.rt != 0)	/* Not mm_jr */
+					regs->regs[insn.mm_i_क्रमmat.rt] =
 						regs->cp0_epc +
 						dec_insn.pc_inc +
 						dec_insn.next_pc_inc;
-				*contpc = regs->regs[insn.mm_i_format.rs];
-				return 1;
-			}
-		}
-		break;
-	case mm_pool32i_op:
-		switch (insn.mm_i_format.rt) {
-		case mm_bltzals_op:
-		case mm_bltzal_op:
+				*contpc = regs->regs[insn.mm_i_क्रमmat.rs];
+				वापस 1;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल mm_pool32i_op:
+		चयन (insn.mm_i_क्रमmat.rt) अणु
+		हाल mm_bltzals_op:
+		हाल mm_bltzal_op:
 			regs->regs[31] = regs->cp0_epc +
 				dec_insn.pc_inc +
 				dec_insn.next_pc_inc;
 			fallthrough;
-		case mm_bltz_op:
-			if ((long)regs->regs[insn.mm_i_format.rs] < 0)
+		हाल mm_bltz_op:
+			अगर ((दीर्घ)regs->regs[insn.mm_i_क्रमmat.rs] < 0)
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
-					(insn.mm_i_format.simmediate << 1);
-			else
+					(insn.mm_i_क्रमmat.simmediate << 1);
+			अन्यथा
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
 					dec_insn.next_pc_inc;
-			return 1;
-		case mm_bgezals_op:
-		case mm_bgezal_op:
+			वापस 1;
+		हाल mm_bgezals_op:
+		हाल mm_bgezal_op:
 			regs->regs[31] = regs->cp0_epc +
 					dec_insn.pc_inc +
 					dec_insn.next_pc_inc;
 			fallthrough;
-		case mm_bgez_op:
-			if ((long)regs->regs[insn.mm_i_format.rs] >= 0)
+		हाल mm_bgez_op:
+			अगर ((दीर्घ)regs->regs[insn.mm_i_क्रमmat.rs] >= 0)
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
-					(insn.mm_i_format.simmediate << 1);
-			else
-				*contpc = regs->cp0_epc +
-					dec_insn.pc_inc +
-					dec_insn.next_pc_inc;
-			return 1;
-		case mm_blez_op:
-			if ((long)regs->regs[insn.mm_i_format.rs] <= 0)
-				*contpc = regs->cp0_epc +
-					dec_insn.pc_inc +
-					(insn.mm_i_format.simmediate << 1);
-			else
+					(insn.mm_i_क्रमmat.simmediate << 1);
+			अन्यथा
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
 					dec_insn.next_pc_inc;
-			return 1;
-		case mm_bgtz_op:
-			if ((long)regs->regs[insn.mm_i_format.rs] <= 0)
+			वापस 1;
+		हाल mm_blez_op:
+			अगर ((दीर्घ)regs->regs[insn.mm_i_क्रमmat.rs] <= 0)
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
-					(insn.mm_i_format.simmediate << 1);
-			else
+					(insn.mm_i_क्रमmat.simmediate << 1);
+			अन्यथा
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
 					dec_insn.next_pc_inc;
-			return 1;
-#ifdef CONFIG_MIPS_FP_SUPPORT
-		case mm_bc2f_op:
-		case mm_bc1f_op: {
-			unsigned int fcr31;
-			unsigned int bit;
+			वापस 1;
+		हाल mm_bgtz_op:
+			अगर ((दीर्घ)regs->regs[insn.mm_i_क्रमmat.rs] <= 0)
+				*contpc = regs->cp0_epc +
+					dec_insn.pc_inc +
+					(insn.mm_i_क्रमmat.simmediate << 1);
+			अन्यथा
+				*contpc = regs->cp0_epc +
+					dec_insn.pc_inc +
+					dec_insn.next_pc_inc;
+			वापस 1;
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
+		हाल mm_bc2f_op:
+		हाल mm_bc1f_op: अणु
+			अचिन्हित पूर्णांक fcr31;
+			अचिन्हित पूर्णांक bit;
 
 			bc_false = 1;
 			fallthrough;
-		case mm_bc2t_op:
-		case mm_bc1t_op:
+		हाल mm_bc2t_op:
+		हाल mm_bc1t_op:
 			preempt_disable();
-			if (is_fpu_owner())
-			        fcr31 = read_32bit_cp1_register(CP1_STATUS);
-			else
-				fcr31 = current->thread.fpu.fcr31;
+			अगर (is_fpu_owner())
+			        fcr31 = पढ़ो_32bit_cp1_रेजिस्टर(CP1_STATUS);
+			अन्यथा
+				fcr31 = current->thपढ़ो.fpu.fcr31;
 			preempt_enable();
 
-			if (bc_false)
+			अगर (bc_false)
 				fcr31 = ~fcr31;
 
-			bit = (insn.mm_i_format.rs >> 2);
+			bit = (insn.mm_i_क्रमmat.rs >> 2);
 			bit += (bit != 0);
 			bit += 23;
-			if (fcr31 & (1 << bit))
+			अगर (fcr31 & (1 << bit))
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc +
-					(insn.mm_i_format.simmediate << 1);
-			else
+					(insn.mm_i_क्रमmat.simmediate << 1);
+			अन्यथा
 				*contpc = regs->cp0_epc +
 					dec_insn.pc_inc + dec_insn.next_pc_inc;
-			return 1;
-		}
-#endif /* CONFIG_MIPS_FP_SUPPORT */
-		}
-		break;
-	case mm_pool16c_op:
-		switch (insn.mm_i_format.rt) {
-		case mm_jalr16_op:
-		case mm_jalrs16_op:
+			वापस 1;
+		पूर्ण
+#पूर्ण_अगर /* CONFIG_MIPS_FP_SUPPORT */
+		पूर्ण
+		अवरोध;
+	हाल mm_pool16c_op:
+		चयन (insn.mm_i_क्रमmat.rt) अणु
+		हाल mm_jalr16_op:
+		हाल mm_jalrs16_op:
 			regs->regs[31] = regs->cp0_epc +
 				dec_insn.pc_inc + dec_insn.next_pc_inc;
 			fallthrough;
-		case mm_jr16_op:
-			*contpc = regs->regs[insn.mm_i_format.rs];
-			return 1;
-		}
-		break;
-	case mm_beqz16_op:
-		if ((long)regs->regs[reg16to32map[insn.mm_b1_format.rs]] == 0)
+		हाल mm_jr16_op:
+			*contpc = regs->regs[insn.mm_i_क्रमmat.rs];
+			वापस 1;
+		पूर्ण
+		अवरोध;
+	हाल mm_beqz16_op:
+		अगर ((दीर्घ)regs->regs[reg16to32map[insn.mm_b1_क्रमmat.rs]] == 0)
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc +
-				(insn.mm_b1_format.simmediate << 1);
-		else
+				(insn.mm_b1_क्रमmat.simmediate << 1);
+		अन्यथा
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc + dec_insn.next_pc_inc;
-		return 1;
-	case mm_bnez16_op:
-		if ((long)regs->regs[reg16to32map[insn.mm_b1_format.rs]] != 0)
+		वापस 1;
+	हाल mm_bnez16_op:
+		अगर ((दीर्घ)regs->regs[reg16to32map[insn.mm_b1_क्रमmat.rs]] != 0)
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc +
-				(insn.mm_b1_format.simmediate << 1);
-		else
+				(insn.mm_b1_क्रमmat.simmediate << 1);
+		अन्यथा
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc + dec_insn.next_pc_inc;
-		return 1;
-	case mm_b16_op:
+		वापस 1;
+	हाल mm_b16_op:
 		*contpc = regs->cp0_epc + dec_insn.pc_inc +
-			 (insn.mm_b0_format.simmediate << 1);
-		return 1;
-	case mm_beq32_op:
-		if (regs->regs[insn.mm_i_format.rs] ==
-		    regs->regs[insn.mm_i_format.rt])
+			 (insn.mm_b0_क्रमmat.simmediate << 1);
+		वापस 1;
+	हाल mm_beq32_op:
+		अगर (regs->regs[insn.mm_i_क्रमmat.rs] ==
+		    regs->regs[insn.mm_i_क्रमmat.rt])
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc +
-				(insn.mm_i_format.simmediate << 1);
-		else
+				(insn.mm_i_क्रमmat.simmediate << 1);
+		अन्यथा
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc +
 				dec_insn.next_pc_inc;
-		return 1;
-	case mm_bne32_op:
-		if (regs->regs[insn.mm_i_format.rs] !=
-		    regs->regs[insn.mm_i_format.rt])
+		वापस 1;
+	हाल mm_bne32_op:
+		अगर (regs->regs[insn.mm_i_क्रमmat.rs] !=
+		    regs->regs[insn.mm_i_क्रमmat.rt])
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc +
-				(insn.mm_i_format.simmediate << 1);
-		else
+				(insn.mm_i_क्रमmat.simmediate << 1);
+		अन्यथा
 			*contpc = regs->cp0_epc +
 				dec_insn.pc_inc + dec_insn.next_pc_inc;
-		return 1;
-	case mm_jalx32_op:
+		वापस 1;
+	हाल mm_jalx32_op:
 		regs->regs[31] = regs->cp0_epc +
 			dec_insn.pc_inc + dec_insn.next_pc_inc;
 		*contpc = regs->cp0_epc + dec_insn.pc_inc;
 		*contpc >>= 28;
 		*contpc <<= 28;
-		*contpc |= (insn.j_format.target << 2);
-		return 1;
-	case mm_jals32_op:
-	case mm_jal32_op:
+		*contpc |= (insn.j_क्रमmat.target << 2);
+		वापस 1;
+	हाल mm_jals32_op:
+	हाल mm_jal32_op:
 		regs->regs[31] = regs->cp0_epc +
 			dec_insn.pc_inc + dec_insn.next_pc_inc;
 		fallthrough;
-	case mm_j32_op:
+	हाल mm_j32_op:
 		*contpc = regs->cp0_epc + dec_insn.pc_inc;
 		*contpc >>= 27;
 		*contpc <<= 27;
-		*contpc |= (insn.j_format.target << 1);
+		*contpc |= (insn.j_क्रमmat.target << 1);
 		set_isa16_mode(*contpc);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Compute return address and emulate branch in microMIPS mode after an
- * exception only. It does not handle compact branches/jumps and cannot
- * be used in interrupt context. (Compact branches/jumps do not cause
+ * Compute वापस address and emulate branch in microMIPS mode after an
+ * exception only. It करोes not handle compact branches/jumps and cannot
+ * be used in पूर्णांकerrupt context. (Compact branches/jumps करो not cause
  * exceptions.)
  */
-int __microMIPS_compute_return_epc(struct pt_regs *regs)
-{
+पूर्णांक __microMIPS_compute_वापस_epc(काष्ठा pt_regs *regs)
+अणु
 	u16 __user *pc16;
 	u16 halfword;
-	unsigned int word;
-	unsigned long contpc;
-	struct mm_decoded_insn mminsn = { 0 };
+	अचिन्हित पूर्णांक word;
+	अचिन्हित दीर्घ contpc;
+	काष्ठा mm_decoded_insn mminsn = अणु 0 पूर्ण;
 
 	mminsn.micro_mips_mode = 1;
 
 	/* This load never faults. */
-	pc16 = (unsigned short __user *)msk_isa16_mode(regs->cp0_epc);
+	pc16 = (अचिन्हित लघु __user *)msk_isa16_mode(regs->cp0_epc);
 	__get_user(halfword, pc16);
 	pc16++;
 	contpc = regs->cp0_epc + 2;
-	word = ((unsigned int)halfword << 16);
+	word = ((अचिन्हित पूर्णांक)halfword << 16);
 	mminsn.pc_inc = 2;
 
-	if (!mm_insn_16bit(halfword)) {
+	अगर (!mm_insn_16bit(halfword)) अणु
 		__get_user(halfword, pc16);
 		pc16++;
 		contpc = regs->cp0_epc + 4;
 		mminsn.pc_inc = 4;
 		word |= halfword;
-	}
+	पूर्ण
 	mminsn.insn = word;
 
-	if (get_user(halfword, pc16))
-		goto sigsegv;
+	अगर (get_user(halfword, pc16))
+		जाओ sigsegv;
 	mminsn.next_pc_inc = 2;
-	word = ((unsigned int)halfword << 16);
+	word = ((अचिन्हित पूर्णांक)halfword << 16);
 
-	if (!mm_insn_16bit(halfword)) {
+	अगर (!mm_insn_16bit(halfword)) अणु
 		pc16++;
-		if (get_user(halfword, pc16))
-			goto sigsegv;
+		अगर (get_user(halfword, pc16))
+			जाओ sigsegv;
 		mminsn.next_pc_inc = 4;
 		word |= halfword;
-	}
+	पूर्ण
 	mminsn.next_insn = word;
 
 	mm_isBranchInstr(regs, mminsn, &contpc);
 
 	regs->cp0_epc = contpc;
 
-	return 0;
+	वापस 0;
 
 sigsegv:
-	force_sig(SIGSEGV);
-	return -EFAULT;
-}
+	क्रमce_sig(संक_अंश);
+	वापस -EFAULT;
+पूर्ण
 
 /*
- * Compute return address and emulate branch in MIPS16e mode after an
- * exception only. It does not handle compact branches/jumps and cannot
- * be used in interrupt context. (Compact branches/jumps do not cause
+ * Compute वापस address and emulate branch in MIPS16e mode after an
+ * exception only. It करोes not handle compact branches/jumps and cannot
+ * be used in पूर्णांकerrupt context. (Compact branches/jumps करो not cause
  * exceptions.)
  */
-int __MIPS16e_compute_return_epc(struct pt_regs *regs)
-{
+पूर्णांक __MIPS16e_compute_वापस_epc(काष्ठा pt_regs *regs)
+अणु
 	u16 __user *addr;
-	union mips16e_instruction inst;
+	जोड़ mips16e_inकाष्ठाion inst;
 	u16 inst2;
 	u32 fullinst;
-	long epc;
+	दीर्घ epc;
 
 	epc = regs->cp0_epc;
 
-	/* Read the instruction. */
+	/* Read the inकाष्ठाion. */
 	addr = (u16 __user *)msk_isa16_mode(epc);
-	if (__get_user(inst.full, addr)) {
-		force_sig(SIGSEGV);
-		return -EFAULT;
-	}
+	अगर (__get_user(inst.full, addr)) अणु
+		क्रमce_sig(संक_अंश);
+		वापस -EFAULT;
+	पूर्ण
 
-	switch (inst.ri.opcode) {
-	case MIPS16e_extend_op:
+	चयन (inst.ri.opcode) अणु
+	हाल MIPS16e_extend_op:
 		regs->cp0_epc += 4;
-		return 0;
+		वापस 0;
 
 		/*
 		 *  JAL and JALX in MIPS16e mode
 		 */
-	case MIPS16e_jal_op:
+	हाल MIPS16e_jal_op:
 		addr += 1;
-		if (__get_user(inst2, addr)) {
-			force_sig(SIGSEGV);
-			return -EFAULT;
-		}
-		fullinst = ((unsigned)inst.full << 16) | inst2;
+		अगर (__get_user(inst2, addr)) अणु
+			क्रमce_sig(संक_अंश);
+			वापस -EFAULT;
+		पूर्ण
+		fullinst = ((अचिन्हित)inst.full << 16) | inst2;
 		regs->regs[31] = epc + 6;
 		epc += 4;
 		epc >>= 28;
@@ -362,258 +363,258 @@ int __MIPS16e_compute_return_epc(struct pt_regs *regs)
 		epc |=
 		    ((fullinst & 0xffff) << 2) | ((fullinst & 0x3e00000) >> 3) |
 		    ((fullinst & 0x1f0000) << 7);
-		if (!inst.jal.x)
+		अगर (!inst.jal.x)
 			set_isa16_mode(epc);	/* Set ISA mode bit. */
 		regs->cp0_epc = epc;
-		return 0;
+		वापस 0;
 
 		/*
 		 *  J(AL)R(C)
 		 */
-	case MIPS16e_rr_op:
-		if (inst.rr.func == MIPS16e_jr_func) {
+	हाल MIPS16e_rr_op:
+		अगर (inst.rr.func == MIPS16e_jr_func) अणु
 
-			if (inst.rr.ra)
+			अगर (inst.rr.ra)
 				regs->cp0_epc = regs->regs[31];
-			else
+			अन्यथा
 				regs->cp0_epc =
 				    regs->regs[reg16to32[inst.rr.rx]];
 
-			if (inst.rr.l) {
-				if (inst.rr.nd)
+			अगर (inst.rr.l) अणु
+				अगर (inst.rr.nd)
 					regs->regs[31] = epc + 2;
-				else
+				अन्यथा
 					regs->regs[31] = epc + 4;
-			}
-			return 0;
-		}
-		break;
-	}
+			पूर्ण
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * All other cases have no branch delay slot and are 16-bits.
-	 * Branches do not cause an exception.
+	 * All other हालs have no branch delay slot and are 16-bits.
+	 * Branches करो not cause an exception.
 	 */
 	regs->cp0_epc += 2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * __compute_return_epc_for_insn - Computes the return address and do emulate
- *				    branch simulation, if required.
+ * __compute_वापस_epc_क्रम_insn - Computes the वापस address and करो emulate
+ *				    branch simulation, अगर required.
  *
- * @regs:	Pointer to pt_regs
- * @insn:	branch instruction to decode
- * Return:	-EFAULT on error and forces SIGILL, and on success
- *		returns 0 or BRANCH_LIKELY_TAKEN as appropriate after
+ * @regs:	Poपूर्णांकer to pt_regs
+ * @insn:	branch inकाष्ठाion to decode
+ * Return:	-EFAULT on error and क्रमces संक_अवैध, and on success
+ *		वापसs 0 or BRANCH_LIKELY_TAKEN as appropriate after
  *		evaluating the branch.
  *
- * MIPS R6 Compact branches and forbidden slots:
- *	Compact branches do not throw exceptions because they do
- *	not have delay slots. The forbidden slot instruction ($PC+4)
- *	is only executed if the branch was not taken. Otherwise the
- *	forbidden slot is skipped entirely. This means that the
+ * MIPS R6 Compact branches and क्रमbidden slots:
+ *	Compact branches करो not throw exceptions because they करो
+ *	not have delay slots. The क्रमbidden slot inकाष्ठाion ($PC+4)
+ *	is only executed अगर the branch was not taken. Otherwise the
+ *	क्रमbidden slot is skipped entirely. This means that the
  *	only possible reason to be here because of a MIPS R6 compact
- *	branch instruction is that the forbidden slot has thrown one.
- *	In that case the branch was not taken, so the EPC can be safely
+ *	branch inकाष्ठाion is that the क्रमbidden slot has thrown one.
+ *	In that हाल the branch was not taken, so the EPC can be safely
  *	set to EPC + 8.
  */
-int __compute_return_epc_for_insn(struct pt_regs *regs,
-				   union mips_instruction insn)
-{
-	long epc = regs->cp0_epc;
-	unsigned int dspcontrol;
-	int ret = 0;
+पूर्णांक __compute_वापस_epc_क्रम_insn(काष्ठा pt_regs *regs,
+				   जोड़ mips_inकाष्ठाion insn)
+अणु
+	दीर्घ epc = regs->cp0_epc;
+	अचिन्हित पूर्णांक dspcontrol;
+	पूर्णांक ret = 0;
 
-	switch (insn.i_format.opcode) {
+	चयन (insn.i_क्रमmat.opcode) अणु
 	/*
-	 * jr and jalr are in r_format format.
+	 * jr and jalr are in r_क्रमmat क्रमmat.
 	 */
-	case spec_op:
-		switch (insn.r_format.func) {
-		case jalr_op:
-			regs->regs[insn.r_format.rd] = epc + 8;
+	हाल spec_op:
+		चयन (insn.r_क्रमmat.func) अणु
+		हाल jalr_op:
+			regs->regs[insn.r_क्रमmat.rd] = epc + 8;
 			fallthrough;
-		case jr_op:
-			if (NO_R6EMU && insn.r_format.func == jr_op)
-				goto sigill_r2r6;
-			regs->cp0_epc = regs->regs[insn.r_format.rs];
-			break;
-		}
-		break;
+		हाल jr_op:
+			अगर (NO_R6EMU && insn.r_क्रमmat.func == jr_op)
+				जाओ sigill_r2r6;
+			regs->cp0_epc = regs->regs[insn.r_क्रमmat.rs];
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
 	/*
 	 * This group contains:
 	 * bltz_op, bgez_op, bltzl_op, bgezl_op,
 	 * bltzal_op, bgezal_op, bltzall_op, bgezall_op.
 	 */
-	case bcond_op:
-		switch (insn.i_format.rt) {
-		case bltzl_op:
-			if (NO_R6EMU)
-				goto sigill_r2r6;
+	हाल bcond_op:
+		चयन (insn.i_क्रमmat.rt) अणु
+		हाल bltzl_op:
+			अगर (NO_R6EMU)
+				जाओ sigill_r2r6;
 			fallthrough;
-		case bltz_op:
-			if ((long)regs->regs[insn.i_format.rs] < 0) {
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-				if (insn.i_format.rt == bltzl_op)
+		हाल bltz_op:
+			अगर ((दीर्घ)regs->regs[insn.i_क्रमmat.rs] < 0) अणु
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+				अगर (insn.i_क्रमmat.rt == bltzl_op)
 					ret = BRANCH_LIKELY_TAKEN;
-			} else
+			पूर्ण अन्यथा
 				epc += 8;
 			regs->cp0_epc = epc;
-			break;
+			अवरोध;
 
-		case bgezl_op:
-			if (NO_R6EMU)
-				goto sigill_r2r6;
+		हाल bgezl_op:
+			अगर (NO_R6EMU)
+				जाओ sigill_r2r6;
 			fallthrough;
-		case bgez_op:
-			if ((long)regs->regs[insn.i_format.rs] >= 0) {
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-				if (insn.i_format.rt == bgezl_op)
+		हाल bgez_op:
+			अगर ((दीर्घ)regs->regs[insn.i_क्रमmat.rs] >= 0) अणु
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+				अगर (insn.i_क्रमmat.rt == bgezl_op)
 					ret = BRANCH_LIKELY_TAKEN;
-			} else
+			पूर्ण अन्यथा
 				epc += 8;
 			regs->cp0_epc = epc;
-			break;
+			अवरोध;
 
-		case bltzal_op:
-		case bltzall_op:
-			if (NO_R6EMU && (insn.i_format.rs ||
-			    insn.i_format.rt == bltzall_op))
-				goto sigill_r2r6;
+		हाल bltzal_op:
+		हाल bltzall_op:
+			अगर (NO_R6EMU && (insn.i_क्रमmat.rs ||
+			    insn.i_क्रमmat.rt == bltzall_op))
+				जाओ sigill_r2r6;
 			regs->regs[31] = epc + 8;
 			/*
 			 * OK we are here either because we hit a NAL
-			 * instruction or because we are emulating an
-			 * old bltzal{,l} one. Let's figure out what the
-			 * case really is.
+			 * inकाष्ठाion or because we are emulating an
+			 * old bltzalअणु,lपूर्ण one. Let's figure out what the
+			 * हाल really is.
 			 */
-			if (!insn.i_format.rs) {
+			अगर (!insn.i_क्रमmat.rs) अणु
 				/*
 				 * NAL or BLTZAL with rs == 0
-				 * Doesn't matter if we are R6 or not. The
+				 * Doesn't matter अगर we are R6 or not. The
 				 * result is the same
 				 */
 				regs->cp0_epc += 4 +
-					(insn.i_format.simmediate << 2);
-				break;
-			}
-			/* Now do the real thing for non-R6 BLTZAL{,L} */
-			if ((long)regs->regs[insn.i_format.rs] < 0) {
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-				if (insn.i_format.rt == bltzall_op)
+					(insn.i_क्रमmat.simmediate << 2);
+				अवरोध;
+			पूर्ण
+			/* Now करो the real thing क्रम non-R6 BLTZALअणु,Lपूर्ण */
+			अगर ((दीर्घ)regs->regs[insn.i_क्रमmat.rs] < 0) अणु
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+				अगर (insn.i_क्रमmat.rt == bltzall_op)
 					ret = BRANCH_LIKELY_TAKEN;
-			} else
+			पूर्ण अन्यथा
 				epc += 8;
 			regs->cp0_epc = epc;
-			break;
+			अवरोध;
 
-		case bgezal_op:
-		case bgezall_op:
-			if (NO_R6EMU && (insn.i_format.rs ||
-			    insn.i_format.rt == bgezall_op))
-				goto sigill_r2r6;
+		हाल bgezal_op:
+		हाल bgezall_op:
+			अगर (NO_R6EMU && (insn.i_क्रमmat.rs ||
+			    insn.i_क्रमmat.rt == bgezall_op))
+				जाओ sigill_r2r6;
 			regs->regs[31] = epc + 8;
 			/*
 			 * OK we are here either because we hit a BAL
-			 * instruction or because we are emulating an
-			 * old bgezal{,l} one. Let's figure out what the
-			 * case really is.
+			 * inकाष्ठाion or because we are emulating an
+			 * old bgezalअणु,lपूर्ण one. Let's figure out what the
+			 * हाल really is.
 			 */
-			if (!insn.i_format.rs) {
+			अगर (!insn.i_क्रमmat.rs) अणु
 				/*
 				 * BAL or BGEZAL with rs == 0
-				 * Doesn't matter if we are R6 or not. The
+				 * Doesn't matter अगर we are R6 or not. The
 				 * result is the same
 				 */
 				regs->cp0_epc += 4 +
-					(insn.i_format.simmediate << 2);
-				break;
-			}
-			/* Now do the real thing for non-R6 BGEZAL{,L} */
-			if ((long)regs->regs[insn.i_format.rs] >= 0) {
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-				if (insn.i_format.rt == bgezall_op)
+					(insn.i_क्रमmat.simmediate << 2);
+				अवरोध;
+			पूर्ण
+			/* Now करो the real thing क्रम non-R6 BGEZALअणु,Lपूर्ण */
+			अगर ((दीर्घ)regs->regs[insn.i_क्रमmat.rs] >= 0) अणु
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+				अगर (insn.i_क्रमmat.rt == bgezall_op)
 					ret = BRANCH_LIKELY_TAKEN;
-			} else
+			पूर्ण अन्यथा
 				epc += 8;
 			regs->cp0_epc = epc;
-			break;
+			अवरोध;
 
-		case bposge32_op:
-			if (!cpu_has_dsp)
-				goto sigill_dsp;
+		हाल bposge32_op:
+			अगर (!cpu_has_dsp)
+				जाओ sigill_dsp;
 
 			dspcontrol = rddsp(0x01);
 
-			if (dspcontrol >= 32) {
-				epc = epc + 4 + (insn.i_format.simmediate << 2);
-			} else
+			अगर (dspcontrol >= 32) अणु
+				epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			पूर्ण अन्यथा
 				epc += 8;
 			regs->cp0_epc = epc;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
 	/*
-	 * These are unconditional and in j_format.
+	 * These are unconditional and in j_क्रमmat.
 	 */
-	case jalx_op:
-	case jal_op:
+	हाल jalx_op:
+	हाल jal_op:
 		regs->regs[31] = regs->cp0_epc + 8;
 		fallthrough;
-	case j_op:
+	हाल j_op:
 		epc += 4;
 		epc >>= 28;
 		epc <<= 28;
-		epc |= (insn.j_format.target << 2);
+		epc |= (insn.j_क्रमmat.target << 2);
 		regs->cp0_epc = epc;
-		if (insn.i_format.opcode == jalx_op)
+		अगर (insn.i_क्रमmat.opcode == jalx_op)
 			set_isa16_mode(regs->cp0_epc);
-		break;
+		अवरोध;
 
 	/*
-	 * These are conditional and in i_format.
+	 * These are conditional and in i_क्रमmat.
 	 */
-	case beql_op:
-		if (NO_R6EMU)
-			goto sigill_r2r6;
+	हाल beql_op:
+		अगर (NO_R6EMU)
+			जाओ sigill_r2r6;
 		fallthrough;
-	case beq_op:
-		if (regs->regs[insn.i_format.rs] ==
-		    regs->regs[insn.i_format.rt]) {
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-			if (insn.i_format.opcode == beql_op)
+	हाल beq_op:
+		अगर (regs->regs[insn.i_क्रमmat.rs] ==
+		    regs->regs[insn.i_क्रमmat.rt]) अणु
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अगर (insn.i_क्रमmat.opcode == beql_op)
 				ret = BRANCH_LIKELY_TAKEN;
-		} else
+		पूर्ण अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
+		अवरोध;
 
-	case bnel_op:
-		if (NO_R6EMU)
-			goto sigill_r2r6;
+	हाल bnel_op:
+		अगर (NO_R6EMU)
+			जाओ sigill_r2r6;
 		fallthrough;
-	case bne_op:
-		if (regs->regs[insn.i_format.rs] !=
-		    regs->regs[insn.i_format.rt]) {
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-			if (insn.i_format.opcode == bnel_op)
+	हाल bne_op:
+		अगर (regs->regs[insn.i_क्रमmat.rs] !=
+		    regs->regs[insn.i_क्रमmat.rt]) अणु
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अगर (insn.i_क्रमmat.opcode == bnel_op)
 				ret = BRANCH_LIKELY_TAKEN;
-		} else
+		पूर्ण अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
+		अवरोध;
 
-	case blezl_op: /* not really i_format */
-		if (!insn.i_format.rt && NO_R6EMU)
-			goto sigill_r2r6;
+	हाल blezl_op: /* not really i_क्रमmat */
+		अगर (!insn.i_क्रमmat.rt && NO_R6EMU)
+			जाओ sigill_r2r6;
 		fallthrough;
-	case blez_op:
+	हाल blez_op:
 		/*
-		 * Compact branches for R6 for the
+		 * Compact branches क्रम R6 क्रम the
 		 * blez and blezl opcodes.
 		 * BLEZ  | rs = 0 | rt != 0  == BLEZALC
 		 * BLEZ  | rs = rt != 0      == BGEZALC
@@ -622,34 +623,34 @@ int __compute_return_epc_for_insn(struct pt_regs *regs,
 		 * BLEZL | rs = rt != 0      == BGEZC
 		 * BLEZL | rs != 0 | rt != 0 == BGEC
 		 *
-		 * For real BLEZ{,L}, rt is always 0.
+		 * For real BLEZअणु,Lपूर्ण, rt is always 0.
 		 */
 
-		if (cpu_has_mips_r6 && insn.i_format.rt) {
-			if ((insn.i_format.opcode == blez_op) &&
-			    ((!insn.i_format.rs && insn.i_format.rt) ||
-			     (insn.i_format.rs == insn.i_format.rt)))
+		अगर (cpu_has_mips_r6 && insn.i_क्रमmat.rt) अणु
+			अगर ((insn.i_क्रमmat.opcode == blez_op) &&
+			    ((!insn.i_क्रमmat.rs && insn.i_क्रमmat.rt) ||
+			     (insn.i_क्रमmat.rs == insn.i_क्रमmat.rt)))
 				regs->regs[31] = epc + 4;
 			regs->cp0_epc += 8;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* rt field assumed to be zero */
-		if ((long)regs->regs[insn.i_format.rs] <= 0) {
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-			if (insn.i_format.opcode == blezl_op)
+		अगर ((दीर्घ)regs->regs[insn.i_क्रमmat.rs] <= 0) अणु
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अगर (insn.i_क्रमmat.opcode == blezl_op)
 				ret = BRANCH_LIKELY_TAKEN;
-		} else
+		पूर्ण अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
+		अवरोध;
 
-	case bgtzl_op:
-		if (!insn.i_format.rt && NO_R6EMU)
-			goto sigill_r2r6;
+	हाल bgtzl_op:
+		अगर (!insn.i_क्रमmat.rt && NO_R6EMU)
+			जाओ sigill_r2r6;
 		fallthrough;
-	case bgtz_op:
+	हाल bgtz_op:
 		/*
-		 * Compact branches for R6 for the
+		 * Compact branches क्रम R6 क्रम the
 		 * bgtz and bgtzl opcodes.
 		 * BGTZ  | rs = 0 | rt != 0  == BGTZALC
 		 * BGTZ  | rs = rt != 0      == BLTZALC
@@ -658,251 +659,251 @@ int __compute_return_epc_for_insn(struct pt_regs *regs,
 		 * BGTZL | rs = rt != 0      == BLTZC
 		 * BGTZL | rs != 0 | rt != 0 == BLTC
 		 *
-		 * *ZALC varint for BGTZ &&& rt != 0
-		 * For real GTZ{,L}, rt is always 0.
+		 * *ZALC varपूर्णांक क्रम BGTZ &&& rt != 0
+		 * For real GTZअणु,Lपूर्ण, rt is always 0.
 		 */
-		if (cpu_has_mips_r6 && insn.i_format.rt) {
-			if ((insn.i_format.opcode == blez_op) &&
-			    ((!insn.i_format.rs && insn.i_format.rt) ||
-			    (insn.i_format.rs == insn.i_format.rt)))
+		अगर (cpu_has_mips_r6 && insn.i_क्रमmat.rt) अणु
+			अगर ((insn.i_क्रमmat.opcode == blez_op) &&
+			    ((!insn.i_क्रमmat.rs && insn.i_क्रमmat.rt) ||
+			    (insn.i_क्रमmat.rs == insn.i_क्रमmat.rt)))
 				regs->regs[31] = epc + 4;
 			regs->cp0_epc += 8;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* rt field assumed to be zero */
-		if ((long)regs->regs[insn.i_format.rs] > 0) {
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-			if (insn.i_format.opcode == bgtzl_op)
+		अगर ((दीर्घ)regs->regs[insn.i_क्रमmat.rs] > 0) अणु
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+			अगर (insn.i_क्रमmat.opcode == bgtzl_op)
 				ret = BRANCH_LIKELY_TAKEN;
-		} else
+		पूर्ण अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
+		अवरोध;
 
-#ifdef CONFIG_MIPS_FP_SUPPORT
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
 	/*
-	 * And now the FPA/cp1 branch instructions.
+	 * And now the FPA/cp1 branch inकाष्ठाions.
 	 */
-	case cop1_op: {
-		unsigned int bit, fcr31, reg;
+	हाल cop1_op: अणु
+		अचिन्हित पूर्णांक bit, fcr31, reg;
 
-		if (cpu_has_mips_r6 &&
-		    ((insn.i_format.rs == bc1eqz_op) ||
-		     (insn.i_format.rs == bc1nez_op))) {
-			if (!init_fp_ctx(current))
+		अगर (cpu_has_mips_r6 &&
+		    ((insn.i_क्रमmat.rs == bc1eqz_op) ||
+		     (insn.i_क्रमmat.rs == bc1nez_op))) अणु
+			अगर (!init_fp_ctx(current))
 				lose_fpu(1);
-			reg = insn.i_format.rt;
-			bit = get_fpr32(&current->thread.fpu.fpr[reg], 0) & 0x1;
-			if (insn.i_format.rs == bc1eqz_op)
+			reg = insn.i_क्रमmat.rt;
+			bit = get_fpr32(&current->thपढ़ो.fpu.fpr[reg], 0) & 0x1;
+			अगर (insn.i_क्रमmat.rs == bc1eqz_op)
 				bit = !bit;
 			own_fpu(1);
-			if (bit)
+			अगर (bit)
 				epc = epc + 4 +
-					(insn.i_format.simmediate << 2);
-			else
+					(insn.i_क्रमmat.simmediate << 2);
+			अन्यथा
 				epc += 8;
 			regs->cp0_epc = epc;
 
-			break;
-		} else {
+			अवरोध;
+		पूर्ण अन्यथा अणु
 
 			preempt_disable();
-			if (is_fpu_owner())
-			        fcr31 = read_32bit_cp1_register(CP1_STATUS);
-			else
-				fcr31 = current->thread.fpu.fcr31;
+			अगर (is_fpu_owner())
+			        fcr31 = पढ़ो_32bit_cp1_रेजिस्टर(CP1_STATUS);
+			अन्यथा
+				fcr31 = current->thपढ़ो.fpu.fcr31;
 			preempt_enable();
 
-			bit = (insn.i_format.rt >> 2);
+			bit = (insn.i_क्रमmat.rt >> 2);
 			bit += (bit != 0);
 			bit += 23;
-			switch (insn.i_format.rt & 3) {
-			case 0: /* bc1f */
-			case 2: /* bc1fl */
-				if (~fcr31 & (1 << bit)) {
+			चयन (insn.i_क्रमmat.rt & 3) अणु
+			हाल 0: /* bc1f */
+			हाल 2: /* bc1fl */
+				अगर (~fcr31 & (1 << bit)) अणु
 					epc = epc + 4 +
-						(insn.i_format.simmediate << 2);
-					if (insn.i_format.rt == 2)
+						(insn.i_क्रमmat.simmediate << 2);
+					अगर (insn.i_क्रमmat.rt == 2)
 						ret = BRANCH_LIKELY_TAKEN;
-				} else
+				पूर्ण अन्यथा
 					epc += 8;
 				regs->cp0_epc = epc;
-				break;
+				अवरोध;
 
-			case 1: /* bc1t */
-			case 3: /* bc1tl */
-				if (fcr31 & (1 << bit)) {
+			हाल 1: /* bc1t */
+			हाल 3: /* bc1tl */
+				अगर (fcr31 & (1 << bit)) अणु
 					epc = epc + 4 +
-						(insn.i_format.simmediate << 2);
-					if (insn.i_format.rt == 3)
+						(insn.i_क्रमmat.simmediate << 2);
+					अगर (insn.i_क्रमmat.rt == 3)
 						ret = BRANCH_LIKELY_TAKEN;
-				} else
+				पूर्ण अन्यथा
 					epc += 8;
 				regs->cp0_epc = epc;
-				break;
-			}
-			break;
-		}
-	}
-#endif /* CONFIG_MIPS_FP_SUPPORT */
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_MIPS_FP_SUPPORT */
 
-#ifdef CONFIG_CPU_CAVIUM_OCTEON
-	case lwc2_op: /* This is bbit0 on Octeon */
-		if ((regs->regs[insn.i_format.rs] & (1ull<<insn.i_format.rt))
+#अगर_घोषित CONFIG_CPU_CAVIUM_OCTEON
+	हाल lwc2_op: /* This is bbit0 on Octeon */
+		अगर ((regs->regs[insn.i_क्रमmat.rs] & (1ull<<insn.i_क्रमmat.rt))
 		     == 0)
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
-	case ldc2_op: /* This is bbit032 on Octeon */
-		if ((regs->regs[insn.i_format.rs] &
-		    (1ull<<(insn.i_format.rt+32))) == 0)
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+		अवरोध;
+	हाल ldc2_op: /* This is bbit032 on Octeon */
+		अगर ((regs->regs[insn.i_क्रमmat.rs] &
+		    (1ull<<(insn.i_क्रमmat.rt+32))) == 0)
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
-	case swc2_op: /* This is bbit1 on Octeon */
-		if (regs->regs[insn.i_format.rs] & (1ull<<insn.i_format.rt))
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+		अवरोध;
+	हाल swc2_op: /* This is bbit1 on Octeon */
+		अगर (regs->regs[insn.i_क्रमmat.rs] & (1ull<<insn.i_क्रमmat.rt))
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
-	case sdc2_op: /* This is bbit132 on Octeon */
-		if (regs->regs[insn.i_format.rs] &
-		    (1ull<<(insn.i_format.rt+32)))
-			epc = epc + 4 + (insn.i_format.simmediate << 2);
-		else
+		अवरोध;
+	हाल sdc2_op: /* This is bbit132 on Octeon */
+		अगर (regs->regs[insn.i_क्रमmat.rs] &
+		    (1ull<<(insn.i_क्रमmat.rt+32)))
+			epc = epc + 4 + (insn.i_क्रमmat.simmediate << 2);
+		अन्यथा
 			epc += 8;
 		regs->cp0_epc = epc;
-		break;
-#else
-	case bc6_op:
-		/* Only valid for MIPS R6 */
-		if (!cpu_has_mips_r6)
-			goto sigill_r6;
+		अवरोध;
+#अन्यथा
+	हाल bc6_op:
+		/* Only valid क्रम MIPS R6 */
+		अगर (!cpu_has_mips_r6)
+			जाओ sigill_r6;
 		regs->cp0_epc += 8;
-		break;
-	case balc6_op:
-		if (!cpu_has_mips_r6)
-			goto sigill_r6;
+		अवरोध;
+	हाल balc6_op:
+		अगर (!cpu_has_mips_r6)
+			जाओ sigill_r6;
 		/* Compact branch: BALC */
 		regs->regs[31] = epc + 4;
-		epc += 4 + (insn.i_format.simmediate << 2);
+		epc += 4 + (insn.i_क्रमmat.simmediate << 2);
 		regs->cp0_epc = epc;
-		break;
-	case pop66_op:
-		if (!cpu_has_mips_r6)
-			goto sigill_r6;
+		अवरोध;
+	हाल pop66_op:
+		अगर (!cpu_has_mips_r6)
+			जाओ sigill_r6;
 		/* Compact branch: BEQZC || JIC */
 		regs->cp0_epc += 8;
-		break;
-	case pop76_op:
-		if (!cpu_has_mips_r6)
-			goto sigill_r6;
+		अवरोध;
+	हाल pop76_op:
+		अगर (!cpu_has_mips_r6)
+			जाओ sigill_r6;
 		/* Compact branch: BNEZC || JIALC */
-		if (!insn.i_format.rs) {
+		अगर (!insn.i_क्रमmat.rs) अणु
 			/* JIALC: set $31/ra */
 			regs->regs[31] = epc + 4;
-		}
+		पूर्ण
 		regs->cp0_epc += 8;
-		break;
-#endif
-	case pop10_op:
-	case pop30_op:
-		/* Only valid for MIPS R6 */
-		if (!cpu_has_mips_r6)
-			goto sigill_r6;
+		अवरोध;
+#पूर्ण_अगर
+	हाल pop10_op:
+	हाल pop30_op:
+		/* Only valid क्रम MIPS R6 */
+		अगर (!cpu_has_mips_r6)
+			जाओ sigill_r6;
 		/*
 		 * Compact branches:
 		 * bovc, beqc, beqzalc, bnvc, bnec, bnezlac
 		 */
-		if (insn.i_format.rt && !insn.i_format.rs)
+		अगर (insn.i_क्रमmat.rt && !insn.i_क्रमmat.rs)
 			regs->regs[31] = epc + 4;
 		regs->cp0_epc += 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 sigill_dsp:
 	pr_debug("%s: DSP branch but not DSP ASE - sending SIGILL.\n",
 		 current->comm);
-	force_sig(SIGILL);
-	return -EFAULT;
+	क्रमce_sig(संक_अवैध);
+	वापस -EFAULT;
 sigill_r2r6:
 	pr_debug("%s: R2 branch but r2-to-r6 emulator is not present - sending SIGILL.\n",
 		 current->comm);
-	force_sig(SIGILL);
-	return -EFAULT;
+	क्रमce_sig(संक_अवैध);
+	वापस -EFAULT;
 sigill_r6:
 	pr_debug("%s: R6 branch but no MIPSr6 ISA support - sending SIGILL.\n",
 		 current->comm);
-	force_sig(SIGILL);
-	return -EFAULT;
-}
-EXPORT_SYMBOL_GPL(__compute_return_epc_for_insn);
+	क्रमce_sig(संक_अवैध);
+	वापस -EFAULT;
+पूर्ण
+EXPORT_SYMBOL_GPL(__compute_वापस_epc_क्रम_insn);
 
-int __compute_return_epc(struct pt_regs *regs)
-{
-	unsigned int __user *addr;
-	long epc;
-	union mips_instruction insn;
+पूर्णांक __compute_वापस_epc(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित पूर्णांक __user *addr;
+	दीर्घ epc;
+	जोड़ mips_inकाष्ठाion insn;
 
 	epc = regs->cp0_epc;
-	if (epc & 3)
-		goto unaligned;
+	अगर (epc & 3)
+		जाओ unaligned;
 
 	/*
-	 * Read the instruction
+	 * Read the inकाष्ठाion
 	 */
-	addr = (unsigned int __user *) epc;
-	if (__get_user(insn.word, addr)) {
-		force_sig(SIGSEGV);
-		return -EFAULT;
-	}
+	addr = (अचिन्हित पूर्णांक __user *) epc;
+	अगर (__get_user(insn.word, addr)) अणु
+		क्रमce_sig(संक_अंश);
+		वापस -EFAULT;
+	पूर्ण
 
-	return __compute_return_epc_for_insn(regs, insn);
+	वापस __compute_वापस_epc_क्रम_insn(regs, insn);
 
 unaligned:
-	printk("%s: unaligned epc - sending SIGBUS.\n", current->comm);
-	force_sig(SIGBUS);
-	return -EFAULT;
-}
+	prपूर्णांकk("%s: unaligned epc - sending SIGBUS.\n", current->comm);
+	क्रमce_sig(SIGBUS);
+	वापस -EFAULT;
+पूर्ण
 
-#if (defined CONFIG_KPROBES) || (defined CONFIG_UPROBES)
+#अगर (defined CONFIG_KPROBES) || (defined CONFIG_UPROBES)
 
-int __insn_is_compact_branch(union mips_instruction insn)
-{
-	if (!cpu_has_mips_r6)
-		return 0;
+पूर्णांक __insn_is_compact_branch(जोड़ mips_inकाष्ठाion insn)
+अणु
+	अगर (!cpu_has_mips_r6)
+		वापस 0;
 
-	switch (insn.i_format.opcode) {
-	case blezl_op:
-	case bgtzl_op:
-	case blez_op:
-	case bgtz_op:
+	चयन (insn.i_क्रमmat.opcode) अणु
+	हाल blezl_op:
+	हाल bgtzl_op:
+	हाल blez_op:
+	हाल bgtz_op:
 		/*
 		 * blez[l] and bgtz[l] opcodes with non-zero rt
 		 * are MIPS R6 compact branches
 		 */
-		if (insn.i_format.rt)
-			return 1;
-		break;
-	case bc6_op:
-	case balc6_op:
-	case pop10_op:
-	case pop30_op:
-	case pop66_op:
-	case pop76_op:
-		return 1;
-	}
+		अगर (insn.i_क्रमmat.rt)
+			वापस 1;
+		अवरोध;
+	हाल bc6_op:
+	हाल balc6_op:
+	हाल pop10_op:
+	हाल pop30_op:
+	हाल pop66_op:
+	हाल pop76_op:
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__insn_is_compact_branch);
 
-#endif  /* CONFIG_KPROBES || CONFIG_UPROBES */
+#पूर्ण_अगर  /* CONFIG_KPROBES || CONFIG_UPROBES */

@@ -1,168 +1,169 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AD7785/AD7792/AD7793/AD7794/AD7795 SPI ADC driver
  *
  * Copyright 2011-2012 Analog Devices Inc.
  */
 
-#include <linux/interrupt.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/spi/spi.h>
-#include <linux/regulator/consumer.h>
-#include <linux/err.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/adc/ad_sigma_delta.h>
-#include <linux/platform_data/ad7793.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/adc/ad_sigma_delta.h>
+#समावेश <linux/platक्रमm_data/ad7793.h>
 
 /* Registers */
-#define AD7793_REG_COMM		0 /* Communications Register (WO, 8-bit) */
-#define AD7793_REG_STAT		0 /* Status Register	     (RO, 8-bit) */
-#define AD7793_REG_MODE		1 /* Mode Register	     (RW, 16-bit */
-#define AD7793_REG_CONF		2 /* Configuration Register  (RW, 16-bit) */
-#define AD7793_REG_DATA		3 /* Data Register	     (RO, 16-/24-bit) */
-#define AD7793_REG_ID		4 /* ID Register	     (RO, 8-bit) */
-#define AD7793_REG_IO		5 /* IO Register	     (RO, 8-bit) */
-#define AD7793_REG_OFFSET	6 /* Offset Register	     (RW, 16-bit
+#घोषणा AD7793_REG_COMM		0 /* Communications Register (WO, 8-bit) */
+#घोषणा AD7793_REG_STAT		0 /* Status Register	     (RO, 8-bit) */
+#घोषणा AD7793_REG_MODE		1 /* Mode Register	     (RW, 16-bit */
+#घोषणा AD7793_REG_CONF		2 /* Configuration Register  (RW, 16-bit) */
+#घोषणा AD7793_REG_DATA		3 /* Data Register	     (RO, 16-/24-bit) */
+#घोषणा AD7793_REG_ID		4 /* ID Register	     (RO, 8-bit) */
+#घोषणा AD7793_REG_IO		5 /* IO Register	     (RO, 8-bit) */
+#घोषणा AD7793_REG_OFFSET	6 /* Offset Register	     (RW, 16-bit
 				   * (AD7792)/24-bit (AD7793)) */
-#define AD7793_REG_FULLSALE	7 /* Full-Scale Register
+#घोषणा AD7793_REG_FULLSALE	7 /* Full-Scale Register
 				   * (RW, 16-bit (AD7792)/24-bit (AD7793)) */
 
 /* Communications Register Bit Designations (AD7793_REG_COMM) */
-#define AD7793_COMM_WEN		(1 << 7) /* Write Enable */
-#define AD7793_COMM_WRITE	(0 << 6) /* Write Operation */
-#define AD7793_COMM_READ	(1 << 6) /* Read Operation */
-#define AD7793_COMM_ADDR(x)	(((x) & 0x7) << 3) /* Register Address */
-#define AD7793_COMM_CREAD	(1 << 2) /* Continuous Read of Data Register */
+#घोषणा AD7793_COMM_WEN		(1 << 7) /* Write Enable */
+#घोषणा AD7793_COMM_WRITE	(0 << 6) /* Write Operation */
+#घोषणा AD7793_COMM_READ	(1 << 6) /* Read Operation */
+#घोषणा AD7793_COMM_ADDR(x)	(((x) & 0x7) << 3) /* Register Address */
+#घोषणा AD7793_COMM_CREAD	(1 << 2) /* Continuous Read of Data Register */
 
 /* Status Register Bit Designations (AD7793_REG_STAT) */
-#define AD7793_STAT_RDY		(1 << 7) /* Ready */
-#define AD7793_STAT_ERR		(1 << 6) /* Error (Overrange, Underrange) */
-#define AD7793_STAT_CH3		(1 << 2) /* Channel 3 */
-#define AD7793_STAT_CH2		(1 << 1) /* Channel 2 */
-#define AD7793_STAT_CH1		(1 << 0) /* Channel 1 */
+#घोषणा AD7793_STAT_RDY		(1 << 7) /* Ready */
+#घोषणा AD7793_STAT_ERR		(1 << 6) /* Error (Overrange, Underrange) */
+#घोषणा AD7793_STAT_CH3		(1 << 2) /* Channel 3 */
+#घोषणा AD7793_STAT_CH2		(1 << 1) /* Channel 2 */
+#घोषणा AD7793_STAT_CH1		(1 << 0) /* Channel 1 */
 
 /* Mode Register Bit Designations (AD7793_REG_MODE) */
-#define AD7793_MODE_SEL(x)	(((x) & 0x7) << 13) /* Operation Mode Select */
-#define AD7793_MODE_SEL_MASK	(0x7 << 13) /* Operation Mode Select mask */
-#define AD7793_MODE_CLKSRC(x)	(((x) & 0x3) << 6) /* ADC Clock Source Select */
-#define AD7793_MODE_RATE(x)	((x) & 0xF) /* Filter Update Rate Select */
+#घोषणा AD7793_MODE_SEL(x)	(((x) & 0x7) << 13) /* Operation Mode Select */
+#घोषणा AD7793_MODE_SEL_MASK	(0x7 << 13) /* Operation Mode Select mask */
+#घोषणा AD7793_MODE_CLKSRC(x)	(((x) & 0x3) << 6) /* ADC Clock Source Select */
+#घोषणा AD7793_MODE_RATE(x)	((x) & 0xF) /* Filter Update Rate Select */
 
-#define AD7793_MODE_CONT		0 /* Continuous Conversion Mode */
-#define AD7793_MODE_SINGLE		1 /* Single Conversion Mode */
-#define AD7793_MODE_IDLE		2 /* Idle Mode */
-#define AD7793_MODE_PWRDN		3 /* Power-Down Mode */
-#define AD7793_MODE_CAL_INT_ZERO	4 /* Internal Zero-Scale Calibration */
-#define AD7793_MODE_CAL_INT_FULL	5 /* Internal Full-Scale Calibration */
-#define AD7793_MODE_CAL_SYS_ZERO	6 /* System Zero-Scale Calibration */
-#define AD7793_MODE_CAL_SYS_FULL	7 /* System Full-Scale Calibration */
+#घोषणा AD7793_MODE_CONT		0 /* Continuous Conversion Mode */
+#घोषणा AD7793_MODE_SINGLE		1 /* Single Conversion Mode */
+#घोषणा AD7793_MODE_IDLE		2 /* Idle Mode */
+#घोषणा AD7793_MODE_PWRDN		3 /* Power-Down Mode */
+#घोषणा AD7793_MODE_CAL_INT_ZERO	4 /* Internal Zero-Scale Calibration */
+#घोषणा AD7793_MODE_CAL_INT_FULL	5 /* Internal Full-Scale Calibration */
+#घोषणा AD7793_MODE_CAL_SYS_ZERO	6 /* System Zero-Scale Calibration */
+#घोषणा AD7793_MODE_CAL_SYS_FULL	7 /* System Full-Scale Calibration */
 
-#define AD7793_CLK_INT		0 /* Internal 64 kHz Clock not
+#घोषणा AD7793_CLK_INT		0 /* Internal 64 kHz Clock not
 				   * available at the CLK pin */
-#define AD7793_CLK_INT_CO	1 /* Internal 64 kHz Clock available
+#घोषणा AD7793_CLK_INT_CO	1 /* Internal 64 kHz Clock available
 				   * at the CLK pin */
-#define AD7793_CLK_EXT		2 /* External 64 kHz Clock */
-#define AD7793_CLK_EXT_DIV2	3 /* External Clock divided by 2 */
+#घोषणा AD7793_CLK_EXT		2 /* External 64 kHz Clock */
+#घोषणा AD7793_CLK_EXT_DIV2	3 /* External Clock भागided by 2 */
 
 /* Configuration Register Bit Designations (AD7793_REG_CONF) */
-#define AD7793_CONF_VBIAS(x)	(((x) & 0x3) << 14) /* Bias Voltage
+#घोषणा AD7793_CONF_VBIAS(x)	(((x) & 0x3) << 14) /* Bias Voltage
 						     * Generator Enable */
-#define AD7793_CONF_BO_EN	(1 << 13) /* Burnout Current Enable */
-#define AD7793_CONF_UNIPOLAR	(1 << 12) /* Unipolar/Bipolar Enable */
-#define AD7793_CONF_BOOST	(1 << 11) /* Boost Enable */
-#define AD7793_CONF_GAIN(x)	(((x) & 0x7) << 8) /* Gain Select */
-#define AD7793_CONF_REFSEL(x)	((x) << 6) /* INT/EXT Reference Select */
-#define AD7793_CONF_BUF		(1 << 4) /* Buffered Mode Enable */
-#define AD7793_CONF_CHAN(x)	((x) & 0xf) /* Channel select */
-#define AD7793_CONF_CHAN_MASK	0xf /* Channel select mask */
+#घोषणा AD7793_CONF_BO_EN	(1 << 13) /* Burnout Current Enable */
+#घोषणा AD7793_CONF_UNIPOLAR	(1 << 12) /* Unipolar/Bipolar Enable */
+#घोषणा AD7793_CONF_BOOST	(1 << 11) /* Boost Enable */
+#घोषणा AD7793_CONF_GAIN(x)	(((x) & 0x7) << 8) /* Gain Select */
+#घोषणा AD7793_CONF_REFSEL(x)	((x) << 6) /* INT/EXT Reference Select */
+#घोषणा AD7793_CONF_BUF		(1 << 4) /* Buffered Mode Enable */
+#घोषणा AD7793_CONF_CHAN(x)	((x) & 0xf) /* Channel select */
+#घोषणा AD7793_CONF_CHAN_MASK	0xf /* Channel select mask */
 
-#define AD7793_CH_AIN1P_AIN1M	0 /* AIN1(+) - AIN1(-) */
-#define AD7793_CH_AIN2P_AIN2M	1 /* AIN2(+) - AIN2(-) */
-#define AD7793_CH_AIN3P_AIN3M	2 /* AIN3(+) - AIN3(-) */
-#define AD7793_CH_AIN1M_AIN1M	3 /* AIN1(-) - AIN1(-) */
-#define AD7793_CH_TEMP		6 /* Temp Sensor */
-#define AD7793_CH_AVDD_MONITOR	7 /* AVDD Monitor */
+#घोषणा AD7793_CH_AIN1P_AIN1M	0 /* AIN1(+) - AIN1(-) */
+#घोषणा AD7793_CH_AIN2P_AIN2M	1 /* AIN2(+) - AIN2(-) */
+#घोषणा AD7793_CH_AIN3P_AIN3M	2 /* AIN3(+) - AIN3(-) */
+#घोषणा AD7793_CH_AIN1M_AIN1M	3 /* AIN1(-) - AIN1(-) */
+#घोषणा AD7793_CH_TEMP		6 /* Temp Sensor */
+#घोषणा AD7793_CH_AVDD_MONITOR	7 /* AVDD Monitor */
 
-#define AD7795_CH_AIN4P_AIN4M	4 /* AIN4(+) - AIN4(-) */
-#define AD7795_CH_AIN5P_AIN5M	5 /* AIN5(+) - AIN5(-) */
-#define AD7795_CH_AIN6P_AIN6M	6 /* AIN6(+) - AIN6(-) */
-#define AD7795_CH_AIN1M_AIN1M	8 /* AIN1(-) - AIN1(-) */
+#घोषणा AD7795_CH_AIN4P_AIN4M	4 /* AIN4(+) - AIN4(-) */
+#घोषणा AD7795_CH_AIN5P_AIN5M	5 /* AIN5(+) - AIN5(-) */
+#घोषणा AD7795_CH_AIN6P_AIN6M	6 /* AIN6(+) - AIN6(-) */
+#घोषणा AD7795_CH_AIN1M_AIN1M	8 /* AIN1(-) - AIN1(-) */
 
 /* ID Register Bit Designations (AD7793_REG_ID) */
-#define AD7785_ID		0x3
-#define AD7792_ID		0xA
-#define AD7793_ID		0xB
-#define AD7794_ID		0xF
-#define AD7795_ID		0xF
-#define AD7796_ID		0xA
-#define AD7797_ID		0xB
-#define AD7798_ID		0x8
-#define AD7799_ID		0x9
-#define AD7793_ID_MASK		0xF
+#घोषणा AD7785_ID		0x3
+#घोषणा AD7792_ID		0xA
+#घोषणा AD7793_ID		0xB
+#घोषणा AD7794_ID		0xF
+#घोषणा AD7795_ID		0xF
+#घोषणा AD7796_ID		0xA
+#घोषणा AD7797_ID		0xB
+#घोषणा AD7798_ID		0x8
+#घोषणा AD7799_ID		0x9
+#घोषणा AD7793_ID_MASK		0xF
 
 /* IO (Excitation Current Sources) Register Bit Designations (AD7793_REG_IO) */
-#define AD7793_IO_IEXC1_IOUT1_IEXC2_IOUT2	0 /* IEXC1 connect to IOUT1,
+#घोषणा AD7793_IO_IEXC1_IOUT1_IEXC2_IOUT2	0 /* IEXC1 connect to IOUT1,
 						   * IEXC2 connect to IOUT2 */
-#define AD7793_IO_IEXC1_IOUT2_IEXC2_IOUT1	1 /* IEXC1 connect to IOUT2,
+#घोषणा AD7793_IO_IEXC1_IOUT2_IEXC2_IOUT1	1 /* IEXC1 connect to IOUT2,
 						   * IEXC2 connect to IOUT1 */
-#define AD7793_IO_IEXC1_IEXC2_IOUT1		2 /* Both current sources
+#घोषणा AD7793_IO_IEXC1_IEXC2_IOUT1		2 /* Both current sources
 						   * IEXC1,2 connect to IOUT1 */
-#define AD7793_IO_IEXC1_IEXC2_IOUT2		3 /* Both current sources
+#घोषणा AD7793_IO_IEXC1_IEXC2_IOUT2		3 /* Both current sources
 						   * IEXC1,2 connect to IOUT2 */
 
-#define AD7793_IO_IXCEN_10uA	(1 << 0) /* Excitation Current 10uA */
-#define AD7793_IO_IXCEN_210uA	(2 << 0) /* Excitation Current 210uA */
-#define AD7793_IO_IXCEN_1mA	(3 << 0) /* Excitation Current 1mA */
+#घोषणा AD7793_IO_IXCEN_10uA	(1 << 0) /* Excitation Current 10uA */
+#घोषणा AD7793_IO_IXCEN_210uA	(2 << 0) /* Excitation Current 210uA */
+#घोषणा AD7793_IO_IXCEN_1mA	(3 << 0) /* Excitation Current 1mA */
 
 /* NOTE:
- * The AD7792/AD7793 features a dual use data out ready DOUT/RDY output.
- * In order to avoid contentions on the SPI bus, it's therefore necessary
+ * The AD7792/AD7793 features a dual use data out पढ़ोy DOUT/RDY output.
+ * In order to aव्योम contentions on the SPI bus, it's thereक्रमe necessary
  * to use spi bus locking.
  *
- * The DOUT/RDY output must also be wired to an interrupt capable GPIO.
+ * The DOUT/RDY output must also be wired to an पूर्णांकerrupt capable GPIO.
  */
 
-#define AD7793_FLAG_HAS_CLKSEL		BIT(0)
-#define AD7793_FLAG_HAS_REFSEL		BIT(1)
-#define AD7793_FLAG_HAS_VBIAS		BIT(2)
-#define AD7793_HAS_EXITATION_CURRENT	BIT(3)
-#define AD7793_FLAG_HAS_GAIN		BIT(4)
-#define AD7793_FLAG_HAS_BUFFER		BIT(5)
+#घोषणा AD7793_FLAG_HAS_CLKSEL		BIT(0)
+#घोषणा AD7793_FLAG_HAS_REFSEL		BIT(1)
+#घोषणा AD7793_FLAG_HAS_VBIAS		BIT(2)
+#घोषणा AD7793_HAS_EXITATION_CURRENT	BIT(3)
+#घोषणा AD7793_FLAG_HAS_GAIN		BIT(4)
+#घोषणा AD7793_FLAG_HAS_BUFFER		BIT(5)
 
-struct ad7793_chip_info {
-	unsigned int id;
-	const struct iio_chan_spec *channels;
-	unsigned int num_channels;
-	unsigned int flags;
+काष्ठा ad7793_chip_info अणु
+	अचिन्हित पूर्णांक id;
+	स्थिर काष्ठा iio_chan_spec *channels;
+	अचिन्हित पूर्णांक num_channels;
+	अचिन्हित पूर्णांक flags;
 
-	const struct iio_info *iio_info;
-	const u16 *sample_freq_avail;
-};
+	स्थिर काष्ठा iio_info *iio_info;
+	स्थिर u16 *sample_freq_avail;
+पूर्ण;
 
-struct ad7793_state {
-	const struct ad7793_chip_info	*chip_info;
-	struct regulator		*reg;
-	u16				int_vref_mv;
+काष्ठा ad7793_state अणु
+	स्थिर काष्ठा ad7793_chip_info	*chip_info;
+	काष्ठा regulator		*reg;
+	u16				पूर्णांक_vref_mv;
 	u16				mode;
 	u16				conf;
 	u32				scale_avail[8][2];
 
-	struct ad_sigma_delta		sd;
+	काष्ठा ad_sigma_delta		sd;
 
-};
+पूर्ण;
 
-enum ad7793_supported_device_ids {
+क्रमागत ad7793_supported_device_ids अणु
 	ID_AD7785,
 	ID_AD7792,
 	ID_AD7793,
@@ -172,386 +173,386 @@ enum ad7793_supported_device_ids {
 	ID_AD7797,
 	ID_AD7798,
 	ID_AD7799,
-};
+पूर्ण;
 
-static struct ad7793_state *ad_sigma_delta_to_ad7793(struct ad_sigma_delta *sd)
-{
-	return container_of(sd, struct ad7793_state, sd);
-}
+अटल काष्ठा ad7793_state *ad_sigma_delta_to_ad7793(काष्ठा ad_sigma_delta *sd)
+अणु
+	वापस container_of(sd, काष्ठा ad7793_state, sd);
+पूर्ण
 
-static int ad7793_set_channel(struct ad_sigma_delta *sd, unsigned int channel)
-{
-	struct ad7793_state *st = ad_sigma_delta_to_ad7793(sd);
+अटल पूर्णांक ad7793_set_channel(काष्ठा ad_sigma_delta *sd, अचिन्हित पूर्णांक channel)
+अणु
+	काष्ठा ad7793_state *st = ad_sigma_delta_to_ad7793(sd);
 
 	st->conf &= ~AD7793_CONF_CHAN_MASK;
 	st->conf |= AD7793_CONF_CHAN(channel);
 
-	return ad_sd_write_reg(&st->sd, AD7793_REG_CONF, 2, st->conf);
-}
+	वापस ad_sd_ग_लिखो_reg(&st->sd, AD7793_REG_CONF, 2, st->conf);
+पूर्ण
 
-static int ad7793_set_mode(struct ad_sigma_delta *sd,
-			   enum ad_sigma_delta_mode mode)
-{
-	struct ad7793_state *st = ad_sigma_delta_to_ad7793(sd);
+अटल पूर्णांक ad7793_set_mode(काष्ठा ad_sigma_delta *sd,
+			   क्रमागत ad_sigma_delta_mode mode)
+अणु
+	काष्ठा ad7793_state *st = ad_sigma_delta_to_ad7793(sd);
 
 	st->mode &= ~AD7793_MODE_SEL_MASK;
 	st->mode |= AD7793_MODE_SEL(mode);
 
-	return ad_sd_write_reg(&st->sd, AD7793_REG_MODE, 2, st->mode);
-}
+	वापस ad_sd_ग_लिखो_reg(&st->sd, AD7793_REG_MODE, 2, st->mode);
+पूर्ण
 
-static const struct ad_sigma_delta_info ad7793_sigma_delta_info = {
+अटल स्थिर काष्ठा ad_sigma_delta_info ad7793_sigma_delta_info = अणु
 	.set_channel = ad7793_set_channel,
 	.set_mode = ad7793_set_mode,
-	.has_registers = true,
-	.addr_shift = 3,
-	.read_mask = BIT(6),
+	.has_रेजिस्टरs = true,
+	.addr_shअगरt = 3,
+	.पढ़ो_mask = BIT(6),
 	.irq_flags = IRQF_TRIGGER_LOW,
-};
+पूर्ण;
 
-static const struct ad_sd_calib_data ad7793_calib_arr[6] = {
-	{AD7793_MODE_CAL_INT_ZERO, AD7793_CH_AIN1P_AIN1M},
-	{AD7793_MODE_CAL_INT_FULL, AD7793_CH_AIN1P_AIN1M},
-	{AD7793_MODE_CAL_INT_ZERO, AD7793_CH_AIN2P_AIN2M},
-	{AD7793_MODE_CAL_INT_FULL, AD7793_CH_AIN2P_AIN2M},
-	{AD7793_MODE_CAL_INT_ZERO, AD7793_CH_AIN3P_AIN3M},
-	{AD7793_MODE_CAL_INT_FULL, AD7793_CH_AIN3P_AIN3M}
-};
+अटल स्थिर काष्ठा ad_sd_calib_data ad7793_calib_arr[6] = अणु
+	अणुAD7793_MODE_CAL_INT_ZERO, AD7793_CH_AIN1P_AIN1Mपूर्ण,
+	अणुAD7793_MODE_CAL_INT_FULL, AD7793_CH_AIN1P_AIN1Mपूर्ण,
+	अणुAD7793_MODE_CAL_INT_ZERO, AD7793_CH_AIN2P_AIN2Mपूर्ण,
+	अणुAD7793_MODE_CAL_INT_FULL, AD7793_CH_AIN2P_AIN2Mपूर्ण,
+	अणुAD7793_MODE_CAL_INT_ZERO, AD7793_CH_AIN3P_AIN3Mपूर्ण,
+	अणुAD7793_MODE_CAL_INT_FULL, AD7793_CH_AIN3P_AIN3Mपूर्ण
+पूर्ण;
 
-static int ad7793_calibrate_all(struct ad7793_state *st)
-{
-	return ad_sd_calibrate_all(&st->sd, ad7793_calib_arr,
+अटल पूर्णांक ad7793_calibrate_all(काष्ठा ad7793_state *st)
+अणु
+	वापस ad_sd_calibrate_all(&st->sd, ad7793_calib_arr,
 				   ARRAY_SIZE(ad7793_calib_arr));
-}
+पूर्ण
 
-static int ad7793_check_platform_data(struct ad7793_state *st,
-	const struct ad7793_platform_data *pdata)
-{
-	if ((pdata->current_source_direction == AD7793_IEXEC1_IEXEC2_IOUT1 ||
+अटल पूर्णांक ad7793_check_platक्रमm_data(काष्ठा ad7793_state *st,
+	स्थिर काष्ठा ad7793_platक्रमm_data *pdata)
+अणु
+	अगर ((pdata->current_source_direction == AD7793_IEXEC1_IEXEC2_IOUT1 ||
 		pdata->current_source_direction == AD7793_IEXEC1_IEXEC2_IOUT2) &&
-		((pdata->exitation_current != AD7793_IX_10uA) &&
-		(pdata->exitation_current != AD7793_IX_210uA)))
-		return -EINVAL;
+		((pdata->निकासation_current != AD7793_IX_10uA) &&
+		(pdata->निकासation_current != AD7793_IX_210uA)))
+		वापस -EINVAL;
 
-	if (!(st->chip_info->flags & AD7793_FLAG_HAS_CLKSEL) &&
-		pdata->clock_src != AD7793_CLK_SRC_INT)
-		return -EINVAL;
+	अगर (!(st->chip_info->flags & AD7793_FLAG_HAS_CLKSEL) &&
+		pdata->घड़ी_src != AD7793_CLK_SRC_INT)
+		वापस -EINVAL;
 
-	if (!(st->chip_info->flags & AD7793_FLAG_HAS_REFSEL) &&
+	अगर (!(st->chip_info->flags & AD7793_FLAG_HAS_REFSEL) &&
 		pdata->refsel != AD7793_REFSEL_REFIN1)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!(st->chip_info->flags & AD7793_FLAG_HAS_VBIAS) &&
+	अगर (!(st->chip_info->flags & AD7793_FLAG_HAS_VBIAS) &&
 		pdata->bias_voltage != AD7793_BIAS_VOLTAGE_DISABLED)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!(st->chip_info->flags & AD7793_HAS_EXITATION_CURRENT) &&
-		pdata->exitation_current != AD7793_IX_DISABLED)
-		return -EINVAL;
+	अगर (!(st->chip_info->flags & AD7793_HAS_EXITATION_CURRENT) &&
+		pdata->निकासation_current != AD7793_IX_DISABLED)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad7793_setup(struct iio_dev *indio_dev,
-	const struct ad7793_platform_data *pdata,
-	unsigned int vref_mv)
-{
-	struct ad7793_state *st = iio_priv(indio_dev);
-	int i, ret;
-	unsigned long long scale_uv;
+अटल पूर्णांक ad7793_setup(काष्ठा iio_dev *indio_dev,
+	स्थिर काष्ठा ad7793_platक्रमm_data *pdata,
+	अचिन्हित पूर्णांक vref_mv)
+अणु
+	काष्ठा ad7793_state *st = iio_priv(indio_dev);
+	पूर्णांक i, ret;
+	अचिन्हित दीर्घ दीर्घ scale_uv;
 	u32 id;
 
-	ret = ad7793_check_platform_data(st, pdata);
-	if (ret)
-		return ret;
+	ret = ad7793_check_platक्रमm_data(st, pdata);
+	अगर (ret)
+		वापस ret;
 
-	/* reset the serial interface */
+	/* reset the serial पूर्णांकerface */
 	ret = ad_sd_reset(&st->sd, 32);
-	if (ret < 0)
-		goto out;
-	usleep_range(500, 2000); /* Wait for at least 500us */
+	अगर (ret < 0)
+		जाओ out;
+	usleep_range(500, 2000); /* Wait क्रम at least 500us */
 
-	/* write/read test for device presence */
-	ret = ad_sd_read_reg(&st->sd, AD7793_REG_ID, 1, &id);
-	if (ret)
-		goto out;
+	/* ग_लिखो/पढ़ो test क्रम device presence */
+	ret = ad_sd_पढ़ो_reg(&st->sd, AD7793_REG_ID, 1, &id);
+	अगर (ret)
+		जाओ out;
 
 	id &= AD7793_ID_MASK;
 
-	if (id != st->chip_info->id) {
+	अगर (id != st->chip_info->id) अणु
 		ret = -ENODEV;
 		dev_err(&st->sd.spi->dev, "device ID query failed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	st->mode = AD7793_MODE_RATE(1);
 	st->conf = 0;
 
-	if (st->chip_info->flags & AD7793_FLAG_HAS_CLKSEL)
-		st->mode |= AD7793_MODE_CLKSRC(pdata->clock_src);
-	if (st->chip_info->flags & AD7793_FLAG_HAS_REFSEL)
+	अगर (st->chip_info->flags & AD7793_FLAG_HAS_CLKSEL)
+		st->mode |= AD7793_MODE_CLKSRC(pdata->घड़ी_src);
+	अगर (st->chip_info->flags & AD7793_FLAG_HAS_REFSEL)
 		st->conf |= AD7793_CONF_REFSEL(pdata->refsel);
-	if (st->chip_info->flags & AD7793_FLAG_HAS_VBIAS)
+	अगर (st->chip_info->flags & AD7793_FLAG_HAS_VBIAS)
 		st->conf |= AD7793_CONF_VBIAS(pdata->bias_voltage);
-	if (pdata->buffered || !(st->chip_info->flags & AD7793_FLAG_HAS_BUFFER))
+	अगर (pdata->buffered || !(st->chip_info->flags & AD7793_FLAG_HAS_BUFFER))
 		st->conf |= AD7793_CONF_BUF;
-	if (pdata->boost_enable &&
+	अगर (pdata->boost_enable &&
 		(st->chip_info->flags & AD7793_FLAG_HAS_VBIAS))
 		st->conf |= AD7793_CONF_BOOST;
-	if (pdata->burnout_current)
+	अगर (pdata->burnout_current)
 		st->conf |= AD7793_CONF_BO_EN;
-	if (pdata->unipolar)
+	अगर (pdata->unipolar)
 		st->conf |= AD7793_CONF_UNIPOLAR;
 
-	if (!(st->chip_info->flags & AD7793_FLAG_HAS_GAIN))
+	अगर (!(st->chip_info->flags & AD7793_FLAG_HAS_GAIN))
 		st->conf |= AD7793_CONF_GAIN(7);
 
 	ret = ad7793_set_mode(&st->sd, AD_SD_MODE_IDLE);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	ret = ad7793_set_channel(&st->sd, 0);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (st->chip_info->flags & AD7793_HAS_EXITATION_CURRENT) {
-		ret = ad_sd_write_reg(&st->sd, AD7793_REG_IO, 1,
-				pdata->exitation_current |
+	अगर (st->chip_info->flags & AD7793_HAS_EXITATION_CURRENT) अणु
+		ret = ad_sd_ग_लिखो_reg(&st->sd, AD7793_REG_IO, 1,
+				pdata->निकासation_current |
 				(pdata->current_source_direction << 2));
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = ad7793_calibrate_all(st);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Populate available ADC input ranges */
-	for (i = 0; i < ARRAY_SIZE(st->scale_avail); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(st->scale_avail); i++) अणु
 		scale_uv = ((u64)vref_mv * 100000000)
 			>> (st->chip_info->channels[0].scan_type.realbits -
 			(!!(st->conf & AD7793_CONF_UNIPOLAR) ? 0 : 1));
 		scale_uv >>= i;
 
-		st->scale_avail[i][1] = do_div(scale_uv, 100000000) * 10;
+		st->scale_avail[i][1] = करो_भाग(scale_uv, 100000000) * 10;
 		st->scale_avail[i][0] = scale_uv;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
 	dev_err(&st->sd.spi->dev, "setup failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const u16 ad7793_sample_freq_avail[16] = {0, 470, 242, 123, 62, 50, 39,
-					33, 19, 17, 16, 12, 10, 8, 6, 4};
+अटल स्थिर u16 ad7793_sample_freq_avail[16] = अणु0, 470, 242, 123, 62, 50, 39,
+					33, 19, 17, 16, 12, 10, 8, 6, 4पूर्ण;
 
-static const u16 ad7797_sample_freq_avail[16] = {0, 0, 0, 123, 62, 50, 0,
-					33, 0, 17, 16, 12, 10, 8, 6, 4};
+अटल स्थिर u16 ad7797_sample_freq_avail[16] = अणु0, 0, 0, 123, 62, 50, 0,
+					33, 0, 17, 16, 12, 10, 8, 6, 4पूर्ण;
 
-static IIO_CONST_ATTR_SAMP_FREQ_AVAIL(
+अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL(
 	"470 242 123 62 50 39 33 19 17 16 12 10 8 6 4");
 
-static IIO_CONST_ATTR_NAMED(sampling_frequency_available_ad7797,
+अटल IIO_CONST_ATTR_NAMED(sampling_frequency_available_ad7797,
 	sampling_frequency_available, "123 62 50 33 17 16 12 10 8 6 4");
 
-static int ad7793_read_avail(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     const int **vals, int *type, int *length,
-			     long mask)
-{
-	struct ad7793_state *st = iio_priv(indio_dev);
+अटल पूर्णांक ad7793_पढ़ो_avail(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     स्थिर पूर्णांक **vals, पूर्णांक *type, पूर्णांक *length,
+			     दीर्घ mask)
+अणु
+	काष्ठा ad7793_state *st = iio_priv(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
-		*vals = (int *)st->scale_avail;
-		*type = IIO_VAL_INT_PLUS_NANO;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
+		*vals = (पूर्णांक *)st->scale_avail;
+		*type = IIO_VAL_INT_PLUS_न_अंकO;
 		/* Values are stored in a 2D matrix  */
 		*length = ARRAY_SIZE(st->scale_avail) * 2;
 
-		return IIO_AVAIL_LIST;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_AVAIL_LIST;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static struct attribute *ad7793_attributes[] = {
-	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *ad7793_attributes[] = अणु
+	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group ad7793_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ad7793_attribute_group = अणु
 	.attrs = ad7793_attributes,
-};
+पूर्ण;
 
-static struct attribute *ad7797_attributes[] = {
-	&iio_const_attr_sampling_frequency_available_ad7797.dev_attr.attr,
-	NULL
-};
+अटल काष्ठा attribute *ad7797_attributes[] = अणु
+	&iio_स्थिर_attr_sampling_frequency_available_ad7797.dev_attr.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group ad7797_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ad7797_attribute_group = अणु
 	.attrs = ad7797_attributes,
-};
+पूर्ण;
 
-static int ad7793_read_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan,
-			   int *val,
-			   int *val2,
-			   long m)
-{
-	struct ad7793_state *st = iio_priv(indio_dev);
-	int ret;
-	unsigned long long scale_uv;
+अटल पूर्णांक ad7793_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan,
+			   पूर्णांक *val,
+			   पूर्णांक *val2,
+			   दीर्घ m)
+अणु
+	काष्ठा ad7793_state *st = iio_priv(indio_dev);
+	पूर्णांक ret;
+	अचिन्हित दीर्घ दीर्घ scale_uv;
 	bool unipolar = !!(st->conf & AD7793_CONF_UNIPOLAR);
 
-	switch (m) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (m) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		ret = ad_sigma_delta_single_conversion(indio_dev, chan, val);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		return IIO_VAL_INT;
+		वापस IIO_VAL_INT;
 
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_VOLTAGE:
-			if (chan->differential) {
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_VOLTAGE:
+			अगर (chan->dअगरferential) अणु
 				*val = st->
 					scale_avail[(st->conf >> 8) & 0x7][0];
 				*val2 = st->
 					scale_avail[(st->conf >> 8) & 0x7][1];
-				return IIO_VAL_INT_PLUS_NANO;
-			}
+				वापस IIO_VAL_INT_PLUS_न_अंकO;
+			पूर्ण
 			/* 1170mV / 2^23 * 6 */
 			scale_uv = (1170ULL * 1000000000ULL * 6ULL);
-			break;
-		case IIO_TEMP:
+			अवरोध;
+		हाल IIO_TEMP:
 				/* 1170mV / 0.81 mV/C / 2^23 */
 				scale_uv = 1444444444444444ULL;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
 		scale_uv >>= (chan->scan_type.realbits - (unipolar ? 0 : 1));
 		*val = 0;
 		*val2 = scale_uv;
-		return IIO_VAL_INT_PLUS_NANO;
-	case IIO_CHAN_INFO_OFFSET:
-		if (!unipolar)
+		वापस IIO_VAL_INT_PLUS_न_अंकO;
+	हाल IIO_CHAN_INFO_OFFSET:
+		अगर (!unipolar)
 			*val = -(1 << (chan->scan_type.realbits - 1));
-		else
+		अन्यथा
 			*val = 0;
 
 		/* Kelvin to Celsius */
-		if (chan->type == IIO_TEMP) {
-			unsigned long long offset;
-			unsigned int shift;
+		अगर (chan->type == IIO_TEMP) अणु
+			अचिन्हित दीर्घ दीर्घ offset;
+			अचिन्हित पूर्णांक shअगरt;
 
-			shift = chan->scan_type.realbits - (unipolar ? 0 : 1);
-			offset = 273ULL << shift;
-			do_div(offset, 1444);
+			shअगरt = chan->scan_type.realbits - (unipolar ? 0 : 1);
+			offset = 273ULL << shअगरt;
+			करो_भाग(offset, 1444);
 			*val -= offset;
-		}
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SAMP_FREQ:
+		पूर्ण
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		*val = st->chip_info
 			       ->sample_freq_avail[AD7793_MODE_RATE(st->mode)];
-		return IIO_VAL_INT;
-	}
-	return -EINVAL;
-}
+		वापस IIO_VAL_INT;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int ad7793_write_raw(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int val,
-			       int val2,
-			       long mask)
-{
-	struct ad7793_state *st = iio_priv(indio_dev);
-	int ret, i;
-	unsigned int tmp;
+अटल पूर्णांक ad7793_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक val,
+			       पूर्णांक val2,
+			       दीर्घ mask)
+अणु
+	काष्ठा ad7793_state *st = iio_priv(indio_dev);
+	पूर्णांक ret, i;
+	अचिन्हित पूर्णांक पंचांगp;
 
 	ret = iio_device_claim_direct_mode(indio_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SCALE:
 		ret = -EINVAL;
-		for (i = 0; i < ARRAY_SIZE(st->scale_avail); i++)
-			if (val2 == st->scale_avail[i][1]) {
+		क्रम (i = 0; i < ARRAY_SIZE(st->scale_avail); i++)
+			अगर (val2 == st->scale_avail[i][1]) अणु
 				ret = 0;
-				tmp = st->conf;
+				पंचांगp = st->conf;
 				st->conf &= ~AD7793_CONF_GAIN(-1);
 				st->conf |= AD7793_CONF_GAIN(i);
 
-				if (tmp == st->conf)
-					break;
+				अगर (पंचांगp == st->conf)
+					अवरोध;
 
-				ad_sd_write_reg(&st->sd, AD7793_REG_CONF,
-						sizeof(st->conf), st->conf);
+				ad_sd_ग_लिखो_reg(&st->sd, AD7793_REG_CONF,
+						माप(st->conf), st->conf);
 				ad7793_calibrate_all(st);
-				break;
-			}
-		break;
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		if (!val) {
+				अवरोध;
+			पूर्ण
+		अवरोध;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		अगर (!val) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (i = 0; i < 16; i++)
-			if (val == st->chip_info->sample_freq_avail[i])
-				break;
+		क्रम (i = 0; i < 16; i++)
+			अगर (val == st->chip_info->sample_freq_avail[i])
+				अवरोध;
 
-		if (i == 16) {
+		अगर (i == 16) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		st->mode &= ~AD7793_MODE_RATE(-1);
 		st->mode |= AD7793_MODE_RATE(i);
-		ad_sd_write_reg(&st->sd, AD7793_REG_MODE, sizeof(st->mode),
+		ad_sd_ग_लिखो_reg(&st->sd, AD7793_REG_MODE, माप(st->mode),
 				st->mode);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
 	iio_device_release_direct_mode(indio_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad7793_write_raw_get_fmt(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       long mask)
-{
-	return IIO_VAL_INT_PLUS_NANO;
-}
+अटल पूर्णांक ad7793_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       दीर्घ mask)
+अणु
+	वापस IIO_VAL_INT_PLUS_न_अंकO;
+पूर्ण
 
-static const struct iio_info ad7793_info = {
-	.read_raw = &ad7793_read_raw,
-	.write_raw = &ad7793_write_raw,
-	.write_raw_get_fmt = &ad7793_write_raw_get_fmt,
-	.read_avail = ad7793_read_avail,
+अटल स्थिर काष्ठा iio_info ad7793_info = अणु
+	.पढ़ो_raw = &ad7793_पढ़ो_raw,
+	.ग_लिखो_raw = &ad7793_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt = &ad7793_ग_लिखो_raw_get_fmt,
+	.पढ़ो_avail = ad7793_पढ़ो_avail,
 	.attrs = &ad7793_attribute_group,
 	.validate_trigger = ad_sd_validate_trigger,
-};
+पूर्ण;
 
-static const struct iio_info ad7797_info = {
-	.read_raw = &ad7793_read_raw,
-	.write_raw = &ad7793_write_raw,
-	.write_raw_get_fmt = &ad7793_write_raw_get_fmt,
+अटल स्थिर काष्ठा iio_info ad7797_info = अणु
+	.पढ़ो_raw = &ad7793_पढ़ो_raw,
+	.ग_लिखो_raw = &ad7793_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt = &ad7793_ग_लिखो_raw_get_fmt,
 	.attrs = &ad7797_attribute_group,
 	.validate_trigger = ad_sd_validate_trigger,
-};
+पूर्ण;
 
-#define __AD7793_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
-	_storagebits, _shift, _extend_name, _type, _mask_type_av, _mask_all) \
-	{ \
+#घोषणा __AD7793_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
+	_storagebits, _shअगरt, _extend_name, _type, _mask_type_av, _mask_all) \
+	अणु \
 		.type = (_type), \
-		.differential = (_channel2 == -1 ? 0 : 1), \
+		.dअगरferential = (_channel2 == -1 ? 0 : 1), \
 		.indexed = 1, \
 		.channel = (_channel1), \
 		.channel2 = (_channel2), \
@@ -563,58 +564,58 @@ static const struct iio_info ad7797_info = {
 		.info_mask_shared_by_type_available = (_mask_type_av), \
 		.info_mask_shared_by_all = _mask_all, \
 		.scan_index = (_si), \
-		.scan_type = { \
+		.scan_type = अणु \
 			.sign = 'u', \
 			.realbits = (_bits), \
 			.storagebits = (_storagebits), \
-			.shift = (_shift), \
+			.shअगरt = (_shअगरt), \
 			.endianness = IIO_BE, \
-		}, \
-	}
+		पूर्ण, \
+	पूर्ण
 
-#define AD7793_DIFF_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
-	_storagebits, _shift) \
+#घोषणा AD7793_DIFF_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
+	_storagebits, _shअगरt) \
 	__AD7793_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
-		_storagebits, _shift, NULL, IIO_VOLTAGE, \
+		_storagebits, _shअगरt, शून्य, IIO_VOLTAGE, \
 		BIT(IIO_CHAN_INFO_SCALE), \
 		BIT(IIO_CHAN_INFO_SAMP_FREQ))
 
-#define AD7793_SHORTED_CHANNEL(_si, _channel, _address, _bits, \
-	_storagebits, _shift) \
+#घोषणा AD7793_SHORTED_CHANNEL(_si, _channel, _address, _bits, \
+	_storagebits, _shअगरt) \
 	__AD7793_CHANNEL(_si, _channel, _channel, _address, _bits, \
-		_storagebits, _shift, "shorted", IIO_VOLTAGE, \
+		_storagebits, _shअगरt, "shorted", IIO_VOLTAGE, \
 		BIT(IIO_CHAN_INFO_SCALE), \
 		BIT(IIO_CHAN_INFO_SAMP_FREQ))
 
-#define AD7793_TEMP_CHANNEL(_si, _address, _bits, _storagebits, _shift) \
+#घोषणा AD7793_TEMP_CHANNEL(_si, _address, _bits, _storagebits, _shअगरt) \
 	__AD7793_CHANNEL(_si, 0, -1, _address, _bits, \
-		_storagebits, _shift, NULL, IIO_TEMP, \
+		_storagebits, _shअगरt, शून्य, IIO_TEMP, \
 		0, \
 		BIT(IIO_CHAN_INFO_SAMP_FREQ))
 
-#define AD7793_SUPPLY_CHANNEL(_si, _channel, _address, _bits, _storagebits, \
-	_shift) \
+#घोषणा AD7793_SUPPLY_CHANNEL(_si, _channel, _address, _bits, _storagebits, \
+	_shअगरt) \
 	__AD7793_CHANNEL(_si, _channel, -1, _address, _bits, \
-		_storagebits, _shift, "supply", IIO_VOLTAGE, \
+		_storagebits, _shअगरt, "supply", IIO_VOLTAGE, \
 		0, \
 		BIT(IIO_CHAN_INFO_SAMP_FREQ))
 
-#define AD7797_DIFF_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
-	_storagebits, _shift) \
+#घोषणा AD7797_DIFF_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
+	_storagebits, _shअगरt) \
 	__AD7793_CHANNEL(_si, _channel1, _channel2, _address, _bits, \
-		_storagebits, _shift, NULL, IIO_VOLTAGE, \
+		_storagebits, _shअगरt, शून्य, IIO_VOLTAGE, \
 		0, \
 		BIT(IIO_CHAN_INFO_SAMP_FREQ))
 
-#define AD7797_SHORTED_CHANNEL(_si, _channel, _address, _bits, \
-	_storagebits, _shift) \
+#घोषणा AD7797_SHORTED_CHANNEL(_si, _channel, _address, _bits, \
+	_storagebits, _shअगरt) \
 	__AD7793_CHANNEL(_si, _channel, _channel, _address, _bits, \
-		_storagebits, _shift, "shorted", IIO_VOLTAGE, \
+		_storagebits, _shअगरt, "shorted", IIO_VOLTAGE, \
 		0, \
 		BIT(IIO_CHAN_INFO_SAMP_FREQ))
 
-#define DECLARE_AD7793_CHANNELS(_name, _b, _sb, _s) \
-const struct iio_chan_spec _name##_channels[] = { \
+#घोषणा DECLARE_AD7793_CHANNELS(_name, _b, _sb, _s) \
+स्थिर काष्ठा iio_chan_spec _name##_channels[] = अणु \
 	AD7793_DIFF_CHANNEL(0, 0, 0, AD7793_CH_AIN1P_AIN1M, (_b), (_sb), (_s)), \
 	AD7793_DIFF_CHANNEL(1, 1, 1, AD7793_CH_AIN2P_AIN2M, (_b), (_sb), (_s)), \
 	AD7793_DIFF_CHANNEL(2, 2, 2, AD7793_CH_AIN3P_AIN3M, (_b), (_sb), (_s)), \
@@ -622,10 +623,10 @@ const struct iio_chan_spec _name##_channels[] = { \
 	AD7793_TEMP_CHANNEL(4, AD7793_CH_TEMP, (_b), (_sb), (_s)), \
 	AD7793_SUPPLY_CHANNEL(5, 3, AD7793_CH_AVDD_MONITOR, (_b), (_sb), (_s)), \
 	IIO_CHAN_SOFT_TIMESTAMP(6), \
-}
+पूर्ण
 
-#define DECLARE_AD7795_CHANNELS(_name, _b, _sb) \
-const struct iio_chan_spec _name##_channels[] = { \
+#घोषणा DECLARE_AD7795_CHANNELS(_name, _b, _sb) \
+स्थिर काष्ठा iio_chan_spec _name##_channels[] = अणु \
 	AD7793_DIFF_CHANNEL(0, 0, 0, AD7793_CH_AIN1P_AIN1M, (_b), (_sb), 0), \
 	AD7793_DIFF_CHANNEL(1, 1, 1, AD7793_CH_AIN2P_AIN2M, (_b), (_sb), 0), \
 	AD7793_DIFF_CHANNEL(2, 2, 2, AD7793_CH_AIN3P_AIN3M, (_b), (_sb), 0), \
@@ -636,39 +637,39 @@ const struct iio_chan_spec _name##_channels[] = { \
 	AD7793_TEMP_CHANNEL(7, AD7793_CH_TEMP, (_b), (_sb), 0), \
 	AD7793_SUPPLY_CHANNEL(8, 3, AD7793_CH_AVDD_MONITOR, (_b), (_sb), 0), \
 	IIO_CHAN_SOFT_TIMESTAMP(9), \
-}
+पूर्ण
 
-#define DECLARE_AD7797_CHANNELS(_name, _b, _sb) \
-const struct iio_chan_spec _name##_channels[] = { \
+#घोषणा DECLARE_AD7797_CHANNELS(_name, _b, _sb) \
+स्थिर काष्ठा iio_chan_spec _name##_channels[] = अणु \
 	AD7797_DIFF_CHANNEL(0, 0, 0, AD7793_CH_AIN1P_AIN1M, (_b), (_sb), 0), \
 	AD7797_SHORTED_CHANNEL(1, 0, AD7793_CH_AIN1M_AIN1M, (_b), (_sb), 0), \
 	AD7793_TEMP_CHANNEL(2, AD7793_CH_TEMP, (_b), (_sb), 0), \
 	AD7793_SUPPLY_CHANNEL(3, 3, AD7793_CH_AVDD_MONITOR, (_b), (_sb), 0), \
 	IIO_CHAN_SOFT_TIMESTAMP(4), \
-}
+पूर्ण
 
-#define DECLARE_AD7799_CHANNELS(_name, _b, _sb) \
-const struct iio_chan_spec _name##_channels[] = { \
+#घोषणा DECLARE_AD7799_CHANNELS(_name, _b, _sb) \
+स्थिर काष्ठा iio_chan_spec _name##_channels[] = अणु \
 	AD7793_DIFF_CHANNEL(0, 0, 0, AD7793_CH_AIN1P_AIN1M, (_b), (_sb), 0), \
 	AD7793_DIFF_CHANNEL(1, 1, 1, AD7793_CH_AIN2P_AIN2M, (_b), (_sb), 0), \
 	AD7793_DIFF_CHANNEL(2, 2, 2, AD7793_CH_AIN3P_AIN3M, (_b), (_sb), 0), \
 	AD7793_SHORTED_CHANNEL(3, 0, AD7793_CH_AIN1M_AIN1M, (_b), (_sb), 0), \
 	AD7793_SUPPLY_CHANNEL(4, 3, AD7793_CH_AVDD_MONITOR, (_b), (_sb), 0), \
 	IIO_CHAN_SOFT_TIMESTAMP(5), \
-}
+पूर्ण
 
-static DECLARE_AD7793_CHANNELS(ad7785, 20, 32, 4);
-static DECLARE_AD7793_CHANNELS(ad7792, 16, 32, 0);
-static DECLARE_AD7793_CHANNELS(ad7793, 24, 32, 0);
-static DECLARE_AD7795_CHANNELS(ad7794, 16, 32);
-static DECLARE_AD7795_CHANNELS(ad7795, 24, 32);
-static DECLARE_AD7797_CHANNELS(ad7796, 16, 16);
-static DECLARE_AD7797_CHANNELS(ad7797, 24, 32);
-static DECLARE_AD7799_CHANNELS(ad7798, 16, 16);
-static DECLARE_AD7799_CHANNELS(ad7799, 24, 32);
+अटल DECLARE_AD7793_CHANNELS(ad7785, 20, 32, 4);
+अटल DECLARE_AD7793_CHANNELS(ad7792, 16, 32, 0);
+अटल DECLARE_AD7793_CHANNELS(ad7793, 24, 32, 0);
+अटल DECLARE_AD7795_CHANNELS(ad7794, 16, 32);
+अटल DECLARE_AD7795_CHANNELS(ad7795, 24, 32);
+अटल DECLARE_AD7797_CHANNELS(ad7796, 16, 16);
+अटल DECLARE_AD7797_CHANNELS(ad7797, 24, 32);
+अटल DECLARE_AD7799_CHANNELS(ad7798, 16, 16);
+अटल DECLARE_AD7799_CHANNELS(ad7799, 24, 32);
 
-static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
-	[ID_AD7785] = {
+अटल स्थिर काष्ठा ad7793_chip_info ad7793_chip_info_tbl[] = अणु
+	[ID_AD7785] = अणु
 		.id = AD7785_ID,
 		.channels = ad7785_channels,
 		.num_channels = ARRAY_SIZE(ad7785_channels),
@@ -680,8 +681,8 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 			AD7793_HAS_EXITATION_CURRENT |
 			AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-	[ID_AD7792] = {
+	पूर्ण,
+	[ID_AD7792] = अणु
 		.id = AD7792_ID,
 		.channels = ad7792_channels,
 		.num_channels = ARRAY_SIZE(ad7792_channels),
@@ -693,8 +694,8 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 			AD7793_HAS_EXITATION_CURRENT |
 			AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-	[ID_AD7793] = {
+	पूर्ण,
+	[ID_AD7793] = अणु
 		.id = AD7793_ID,
 		.channels = ad7793_channels,
 		.num_channels = ARRAY_SIZE(ad7793_channels),
@@ -706,8 +707,8 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 			AD7793_HAS_EXITATION_CURRENT |
 			AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-	[ID_AD7794] = {
+	पूर्ण,
+	[ID_AD7794] = अणु
 		.id = AD7794_ID,
 		.channels = ad7794_channels,
 		.num_channels = ARRAY_SIZE(ad7794_channels),
@@ -719,8 +720,8 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 			AD7793_HAS_EXITATION_CURRENT |
 			AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-	[ID_AD7795] = {
+	पूर्ण,
+	[ID_AD7795] = अणु
 		.id = AD7795_ID,
 		.channels = ad7795_channels,
 		.num_channels = ARRAY_SIZE(ad7795_channels),
@@ -732,24 +733,24 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 			AD7793_HAS_EXITATION_CURRENT |
 			AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-	[ID_AD7796] = {
+	पूर्ण,
+	[ID_AD7796] = अणु
 		.id = AD7796_ID,
 		.channels = ad7796_channels,
 		.num_channels = ARRAY_SIZE(ad7796_channels),
 		.iio_info = &ad7797_info,
 		.sample_freq_avail = ad7797_sample_freq_avail,
 		.flags = AD7793_FLAG_HAS_CLKSEL,
-	},
-	[ID_AD7797] = {
+	पूर्ण,
+	[ID_AD7797] = अणु
 		.id = AD7797_ID,
 		.channels = ad7797_channels,
 		.num_channels = ARRAY_SIZE(ad7797_channels),
 		.iio_info = &ad7797_info,
 		.sample_freq_avail = ad7797_sample_freq_avail,
 		.flags = AD7793_FLAG_HAS_CLKSEL,
-	},
-	[ID_AD7798] = {
+	पूर्ण,
+	[ID_AD7798] = अणु
 		.id = AD7798_ID,
 		.channels = ad7798_channels,
 		.num_channels = ARRAY_SIZE(ad7798_channels),
@@ -757,8 +758,8 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 		.sample_freq_avail = ad7793_sample_freq_avail,
 		.flags = AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-	[ID_AD7799] = {
+	पूर्ण,
+	[ID_AD7799] = अणु
 		.id = AD7799_ID,
 		.channels = ad7799_channels,
 		.num_channels = ARRAY_SIZE(ad7799_channels),
@@ -766,53 +767,53 @@ static const struct ad7793_chip_info ad7793_chip_info_tbl[] = {
 		.sample_freq_avail = ad7793_sample_freq_avail,
 		.flags = AD7793_FLAG_HAS_GAIN |
 			AD7793_FLAG_HAS_BUFFER,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int ad7793_probe(struct spi_device *spi)
-{
-	const struct ad7793_platform_data *pdata = spi->dev.platform_data;
-	struct ad7793_state *st;
-	struct iio_dev *indio_dev;
-	int ret, vref_mv = 0;
+अटल पूर्णांक ad7793_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा ad7793_platक्रमm_data *pdata = spi->dev.platक्रमm_data;
+	काष्ठा ad7793_state *st;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret, vref_mv = 0;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&spi->dev, "no platform data?\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!spi->irq) {
+	अगर (!spi->irq) अणु
 		dev_err(&spi->dev, "no IRQ?\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	indio_dev = devm_iio_device_alloc(&spi->dev, sizeof(*st));
-	if (indio_dev == NULL)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi->dev, माप(*st));
+	अगर (indio_dev == शून्य)
+		वापस -ENOMEM;
 
 	st = iio_priv(indio_dev);
 
 	ad_sd_init(&st->sd, indio_dev, spi, &ad7793_sigma_delta_info);
 
-	if (pdata->refsel != AD7793_REFSEL_INTERNAL) {
+	अगर (pdata->refsel != AD7793_REFSEL_INTERNAL) अणु
 		st->reg = devm_regulator_get(&spi->dev, "refin");
-		if (IS_ERR(st->reg))
-			return PTR_ERR(st->reg);
+		अगर (IS_ERR(st->reg))
+			वापस PTR_ERR(st->reg);
 
 		ret = regulator_enable(st->reg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		vref_mv = regulator_get_voltage(st->reg);
-		if (vref_mv < 0) {
+		अगर (vref_mv < 0) अणु
 			ret = vref_mv;
-			goto error_disable_reg;
-		}
+			जाओ error_disable_reg;
+		पूर्ण
 
 		vref_mv /= 1000;
-	} else {
+	पूर्ण अन्यथा अणु
 		vref_mv = 1170; /* Build-in ref */
-	}
+	पूर्ण
 
 	st->chip_info =
 		&ad7793_chip_info_tbl[spi_get_device_id(spi)->driver_data];
@@ -820,71 +821,71 @@ static int ad7793_probe(struct spi_device *spi)
 	spi_set_drvdata(spi, indio_dev);
 
 	indio_dev->name = spi_get_device_id(spi)->name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->channels = st->chip_info->channels;
 	indio_dev->num_channels = st->chip_info->num_channels;
 	indio_dev->info = st->chip_info->iio_info;
 
 	ret = ad_sd_setup_buffer_and_trigger(indio_dev);
-	if (ret)
-		goto error_disable_reg;
+	अगर (ret)
+		जाओ error_disable_reg;
 
 	ret = ad7793_setup(indio_dev, pdata, vref_mv);
-	if (ret)
-		goto error_remove_trigger;
+	अगर (ret)
+		जाओ error_हटाओ_trigger;
 
-	ret = iio_device_register(indio_dev);
-	if (ret)
-		goto error_remove_trigger;
+	ret = iio_device_रेजिस्टर(indio_dev);
+	अगर (ret)
+		जाओ error_हटाओ_trigger;
 
-	return 0;
+	वापस 0;
 
-error_remove_trigger:
+error_हटाओ_trigger:
 	ad_sd_cleanup_buffer_and_trigger(indio_dev);
 error_disable_reg:
-	if (pdata->refsel != AD7793_REFSEL_INTERNAL)
+	अगर (pdata->refsel != AD7793_REFSEL_INTERNAL)
 		regulator_disable(st->reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad7793_remove(struct spi_device *spi)
-{
-	const struct ad7793_platform_data *pdata = spi->dev.platform_data;
-	struct iio_dev *indio_dev = spi_get_drvdata(spi);
-	struct ad7793_state *st = iio_priv(indio_dev);
+अटल पूर्णांक ad7793_हटाओ(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा ad7793_platक्रमm_data *pdata = spi->dev.platक्रमm_data;
+	काष्ठा iio_dev *indio_dev = spi_get_drvdata(spi);
+	काष्ठा ad7793_state *st = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
+	iio_device_unरेजिस्टर(indio_dev);
 	ad_sd_cleanup_buffer_and_trigger(indio_dev);
 
-	if (pdata->refsel != AD7793_REFSEL_INTERNAL)
+	अगर (pdata->refsel != AD7793_REFSEL_INTERNAL)
 		regulator_disable(st->reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct spi_device_id ad7793_id[] = {
-	{"ad7785", ID_AD7785},
-	{"ad7792", ID_AD7792},
-	{"ad7793", ID_AD7793},
-	{"ad7794", ID_AD7794},
-	{"ad7795", ID_AD7795},
-	{"ad7796", ID_AD7796},
-	{"ad7797", ID_AD7797},
-	{"ad7798", ID_AD7798},
-	{"ad7799", ID_AD7799},
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id ad7793_id[] = अणु
+	अणु"ad7785", ID_AD7785पूर्ण,
+	अणु"ad7792", ID_AD7792पूर्ण,
+	अणु"ad7793", ID_AD7793पूर्ण,
+	अणु"ad7794", ID_AD7794पूर्ण,
+	अणु"ad7795", ID_AD7795पूर्ण,
+	अणु"ad7796", ID_AD7796पूर्ण,
+	अणु"ad7797", ID_AD7797पूर्ण,
+	अणु"ad7798", ID_AD7798पूर्ण,
+	अणु"ad7799", ID_AD7799पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ad7793_id);
 
-static struct spi_driver ad7793_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ad7793_driver = अणु
+	.driver = अणु
 		.name	= "ad7793",
-	},
+	पूर्ण,
 	.probe		= ad7793_probe,
-	.remove		= ad7793_remove,
+	.हटाओ		= ad7793_हटाओ,
 	.id_table	= ad7793_id,
-};
+पूर्ण;
 module_spi_driver(ad7793_driver);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");

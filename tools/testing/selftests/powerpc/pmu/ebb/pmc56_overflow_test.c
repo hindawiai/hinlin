@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014, Michael Ellerman, IBM Corp.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
 
-#include "ebb.h"
+#समावेश "ebb.h"
 
 
 /*
- * Test that PMC5 & 6 are frozen (ie. don't overflow) when they are not being
+ * Test that PMC5 & 6 are frozen (ie. करोn't overflow) when they are not being
  * used. Tests the MMCR0_FC56 logic in the kernel.
  */
 
-static int pmc56_overflowed;
+अटल पूर्णांक pmc56_overflowed;
 
-static void ebb_callee(void)
-{
-	uint64_t val;
+अटल व्योम ebb_callee(व्योम)
+अणु
+	uपूर्णांक64_t val;
 
 	val = mfspr(SPRN_BESCR);
-	if (!(val & BESCR_PMEO)) {
+	अगर (!(val & BESCR_PMEO)) अणु
 		ebb_state.stats.spurious++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ebb_state.stats.ebb_count++;
 	count_pmc(2, sample_period);
 
 	val = mfspr(SPRN_PMC5);
-	if (val >= COUNTER_OVERFLOW)
+	अगर (val >= COUNTER_OVERFLOW)
 		pmc56_overflowed++;
 
 	count_pmc(5, COUNTER_OVERFLOW);
 
 	val = mfspr(SPRN_PMC6);
-	if (val >= COUNTER_OVERFLOW)
+	अगर (val >= COUNTER_OVERFLOW)
 		pmc56_overflowed++;
 
 	count_pmc(6, COUNTER_OVERFLOW);
 
 out:
 	reset_ebb();
-}
+पूर्ण
 
-int pmc56_overflow(void)
-{
-	struct event event;
+पूर्णांक pmc56_overflow(व्योम)
+अणु
+	काष्ठा event event;
 
 	SKIP_IF(!ebb_is_supported());
 
@@ -59,7 +60,7 @@ int pmc56_overflow(void)
 	event.attr.exclude_hv = 1;
 	event.attr.exclude_idle = 1;
 
-	FAIL_IF(event_open(&event));
+	FAIL_IF(event_खोलो(&event));
 
 	setup_ebb_handler(ebb_callee);
 	ebb_global_enable();
@@ -70,24 +71,24 @@ int pmc56_overflow(void)
 	mtspr(SPRN_PMC5, 0);
 	mtspr(SPRN_PMC6, 0);
 
-	while (ebb_state.stats.ebb_count < 10)
+	जबतक (ebb_state.stats.ebb_count < 10)
 		FAIL_IF(core_busy_loop());
 
 	ebb_global_disable();
-	ebb_freeze_pmcs();
+	ebb_मुक्तze_pmcs();
 
 	dump_ebb_state();
 
-	printf("PMC5/6 overflow %d\n", pmc56_overflowed);
+	म_लिखो("PMC5/6 overflow %d\n", pmc56_overflowed);
 
-	event_close(&event);
+	event_बंद(&event);
 
 	FAIL_IF(ebb_state.stats.ebb_count == 0 || pmc56_overflowed != 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(pmc56_overflow, "pmc56_overflow");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(pmc56_overflow, "pmc56_overflow");
+पूर्ण

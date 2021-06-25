@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 /*
  * Copyright (c) 2016 AmLogic, Inc.
  * Author: Michael Turquette <mturquette@baylibre.com>
  */
 
 /*
- * MultiPhase Locked Loops are outputs from a PLL with additional frequency
+ * MultiPhase Locked Loops are outमाला_दो from a PLL with additional frequency
  * scaling capabilities. MPLL rates are calculated as:
  *
- * f(N2_integer, SDM_IN ) = 2.0G/(N2_integer + SDM_IN/16384)
+ * f(N2_पूर्णांकeger, SDM_IN ) = 2.0G/(N2_पूर्णांकeger + SDM_IN/16384)
  */
 
-#include <linux/clk-provider.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
 
-#include "clk-regmap.h"
-#include "clk-mpll.h"
+#समावेश "clk-regmap.h"
+#समावेश "clk-mpll.h"
 
-#define SDM_DEN 16384
-#define N2_MIN	4
-#define N2_MAX	511
+#घोषणा SDM_DEN 16384
+#घोषणा N2_MIN	4
+#घोषणा N2_MAX	511
 
-static inline struct meson_clk_mpll_data *
-meson_clk_mpll_data(struct clk_regmap *clk)
-{
-	return (struct meson_clk_mpll_data *)clk->data;
-}
+अटल अंतरभूत काष्ठा meson_clk_mpll_data *
+meson_clk_mpll_data(काष्ठा clk_regmap *clk)
+अणु
+	वापस (काष्ठा meson_clk_mpll_data *)clk->data;
+पूर्ण
 
-static long rate_from_params(unsigned long parent_rate,
-			     unsigned int sdm,
-			     unsigned int n2)
-{
-	unsigned long divisor = (SDM_DEN * n2) + sdm;
+अटल दीर्घ rate_from_params(अचिन्हित दीर्घ parent_rate,
+			     अचिन्हित पूर्णांक sdm,
+			     अचिन्हित पूर्णांक n2)
+अणु
+	अचिन्हित दीर्घ भागisor = (SDM_DEN * n2) + sdm;
 
-	if (n2 < N2_MIN)
-		return -EINVAL;
+	अगर (n2 < N2_MIN)
+		वापस -EINVAL;
 
-	return DIV_ROUND_UP_ULL((u64)parent_rate * SDM_DEN, divisor);
-}
+	वापस DIV_ROUND_UP_ULL((u64)parent_rate * SDM_DEN, भागisor);
+पूर्ण
 
-static void params_from_rate(unsigned long requested_rate,
-			     unsigned long parent_rate,
-			     unsigned int *sdm,
-			     unsigned int *n2,
+अटल व्योम params_from_rate(अचिन्हित दीर्घ requested_rate,
+			     अचिन्हित दीर्घ parent_rate,
+			     अचिन्हित पूर्णांक *sdm,
+			     अचिन्हित पूर्णांक *n2,
 			     u8 flags)
-{
-	uint64_t div = parent_rate;
-	uint64_t frac = do_div(div, requested_rate);
+अणु
+	uपूर्णांक64_t भाग = parent_rate;
+	uपूर्णांक64_t frac = करो_भाग(भाग, requested_rate);
 
 	frac *= SDM_DEN;
 
-	if (flags & CLK_MESON_MPLL_ROUND_CLOSEST)
+	अगर (flags & CLK_MESON_MPLL_ROUND_CLOSEST)
 		*sdm = DIV_ROUND_CLOSEST_ULL(frac, requested_rate);
-	else
+	अन्यथा
 		*sdm = DIV_ROUND_UP_ULL(frac, requested_rate);
 
-	if (*sdm == SDM_DEN) {
+	अगर (*sdm == SDM_DEN) अणु
 		*sdm = 0;
-		div += 1;
-	}
+		भाग += 1;
+	पूर्ण
 
-	if (div < N2_MIN) {
+	अगर (भाग < N2_MIN) अणु
 		*n2 = N2_MIN;
 		*sdm = 0;
-	} else if (div > N2_MAX) {
+	पूर्ण अन्यथा अगर (भाग > N2_MAX) अणु
 		*n2 = N2_MAX;
 		*sdm = SDM_DEN - 1;
-	} else {
-		*n2 = div;
-	}
-}
+	पूर्ण अन्यथा अणु
+		*n2 = भाग;
+	पूर्ण
+पूर्ण
 
-static unsigned long mpll_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
-	unsigned int sdm, n2;
-	long rate;
+अटल अचिन्हित दीर्घ mpll_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
+	अचिन्हित पूर्णांक sdm, n2;
+	दीर्घ rate;
 
-	sdm = meson_parm_read(clk->map, &mpll->sdm);
-	n2 = meson_parm_read(clk->map, &mpll->n2);
+	sdm = meson_parm_पढ़ो(clk->map, &mpll->sdm);
+	n2 = meson_parm_पढ़ो(clk->map, &mpll->n2);
 
 	rate = rate_from_params(parent_rate, sdm, n2);
-	return rate < 0 ? 0 : rate;
-}
+	वापस rate < 0 ? 0 : rate;
+पूर्ण
 
-static long mpll_round_rate(struct clk_hw *hw,
-			    unsigned long rate,
-			    unsigned long *parent_rate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
-	unsigned int sdm, n2;
+अटल दीर्घ mpll_round_rate(काष्ठा clk_hw *hw,
+			    अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
+	अचिन्हित पूर्णांक sdm, n2;
 
 	params_from_rate(rate, *parent_rate, &sdm, &n2, mpll->flags);
-	return rate_from_params(*parent_rate, sdm, n2);
-}
+	वापस rate_from_params(*parent_rate, sdm, n2);
+पूर्ण
 
-static int mpll_set_rate(struct clk_hw *hw,
-			 unsigned long rate,
-			 unsigned long parent_rate)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
-	unsigned int sdm, n2;
-	unsigned long flags = 0;
+अटल पूर्णांक mpll_set_rate(काष्ठा clk_hw *hw,
+			 अचिन्हित दीर्घ rate,
+			 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
+	अचिन्हित पूर्णांक sdm, n2;
+	अचिन्हित दीर्घ flags = 0;
 
 	params_from_rate(rate, parent_rate, &sdm, &n2, mpll->flags);
 
-	if (mpll->lock)
+	अगर (mpll->lock)
 		spin_lock_irqsave(mpll->lock, flags);
-	else
+	अन्यथा
 		__acquire(mpll->lock);
 
 	/* Set the fractional part */
-	meson_parm_write(clk->map, &mpll->sdm, sdm);
+	meson_parm_ग_लिखो(clk->map, &mpll->sdm, sdm);
 
-	/* Set the integer divider part */
-	meson_parm_write(clk->map, &mpll->n2, n2);
+	/* Set the पूर्णांकeger भागider part */
+	meson_parm_ग_लिखो(clk->map, &mpll->n2, n2);
 
-	if (mpll->lock)
+	अगर (mpll->lock)
 		spin_unlock_irqrestore(mpll->lock, flags);
-	else
+	अन्यथा
 		__release(mpll->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mpll_init(struct clk_hw *hw)
-{
-	struct clk_regmap *clk = to_clk_regmap(hw);
-	struct meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
+अटल पूर्णांक mpll_init(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_regmap *clk = to_clk_regmap(hw);
+	काष्ठा meson_clk_mpll_data *mpll = meson_clk_mpll_data(clk);
 
-	if (mpll->init_count)
-		regmap_multi_reg_write(clk->map, mpll->init_regs,
+	अगर (mpll->init_count)
+		regmap_multi_reg_ग_लिखो(clk->map, mpll->init_regs,
 				       mpll->init_count);
 
 	/* Enable the fractional part */
-	meson_parm_write(clk->map, &mpll->sdm_en, 1);
+	meson_parm_ग_लिखो(clk->map, &mpll->sdm_en, 1);
 
-	/* Set spread spectrum if possible */
-	if (MESON_PARM_APPLICABLE(&mpll->ssen)) {
-		unsigned int ss =
+	/* Set spपढ़ो spectrum अगर possible */
+	अगर (MESON_PARM_APPLICABLE(&mpll->ssen)) अणु
+		अचिन्हित पूर्णांक ss =
 			mpll->flags & CLK_MESON_MPLL_SPREAD_SPECTRUM ? 1 : 0;
-		meson_parm_write(clk->map, &mpll->ssen, ss);
-	}
+		meson_parm_ग_लिखो(clk->map, &mpll->ssen, ss);
+	पूर्ण
 
-	/* Set the magic misc bit if required */
-	if (MESON_PARM_APPLICABLE(&mpll->misc))
-		meson_parm_write(clk->map, &mpll->misc, 1);
+	/* Set the magic misc bit अगर required */
+	अगर (MESON_PARM_APPLICABLE(&mpll->misc))
+		meson_parm_ग_लिखो(clk->map, &mpll->misc, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct clk_ops meson_clk_mpll_ro_ops = {
+स्थिर काष्ठा clk_ops meson_clk_mpll_ro_ops = अणु
 	.recalc_rate	= mpll_recalc_rate,
 	.round_rate	= mpll_round_rate,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(meson_clk_mpll_ro_ops);
 
-const struct clk_ops meson_clk_mpll_ops = {
+स्थिर काष्ठा clk_ops meson_clk_mpll_ops = अणु
 	.recalc_rate	= mpll_recalc_rate,
 	.round_rate	= mpll_round_rate,
 	.set_rate	= mpll_set_rate,
 	.init		= mpll_init,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(meson_clk_mpll_ops);
 
 MODULE_DESCRIPTION("Amlogic MPLL driver");

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Slabinfo: Tool to get reports about slabs
+ * Slabinfo: Tool to get reports about sद_असल
  *
  * (C) 2007 sgi, Christoph Lameter
  * (C) 2011 Linux Foundation, Christoph Lameter
@@ -9,108 +10,108 @@
  *
  * gcc -o slabinfo slabinfo.c
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <strings.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <getopt.h>
-#include <regex.h>
-#include <errno.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <sys/types.h>
+#समावेश <dirent.h>
+#समावेश <strings.h>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <मानकतर्क.स>
+#समावेश <getopt.h>
+#समावेश <regex.h>
+#समावेश <त्रुटिसं.स>
 
-#define MAX_SLABS 500
-#define MAX_ALIASES 500
-#define MAX_NODES 1024
+#घोषणा MAX_SLABS 500
+#घोषणा MAX_ALIASES 500
+#घोषणा MAX_NODES 1024
 
-struct slabinfo {
-	char *name;
-	int alias;
-	int refs;
-	int aliases, align, cache_dma, cpu_slabs, destroy_by_rcu;
-	unsigned int hwcache_align, object_size, objs_per_slab;
-	unsigned int sanity_checks, slab_size, store_user, trace;
-	int order, poison, reclaim_account, red_zone;
-	unsigned long partial, objects, slabs, objects_partial, objects_total;
-	unsigned long alloc_fastpath, alloc_slowpath;
-	unsigned long free_fastpath, free_slowpath;
-	unsigned long free_frozen, free_add_partial, free_remove_partial;
-	unsigned long alloc_from_partial, alloc_slab, free_slab, alloc_refill;
-	unsigned long cpuslab_flush, deactivate_full, deactivate_empty;
-	unsigned long deactivate_to_head, deactivate_to_tail;
-	unsigned long deactivate_remote_frees, order_fallback;
-	unsigned long cmpxchg_double_cpu_fail, cmpxchg_double_fail;
-	unsigned long alloc_node_mismatch, deactivate_bypass;
-	unsigned long cpu_partial_alloc, cpu_partial_free;
-	int numa[MAX_NODES];
-	int numa_partial[MAX_NODES];
-} slabinfo[MAX_SLABS];
+काष्ठा slabinfo अणु
+	अक्षर *name;
+	पूर्णांक alias;
+	पूर्णांक refs;
+	पूर्णांक aliases, align, cache_dma, cpu_sद_असल, destroy_by_rcu;
+	अचिन्हित पूर्णांक hwcache_align, object_size, objs_per_slab;
+	अचिन्हित पूर्णांक sanity_checks, slab_size, store_user, trace;
+	पूर्णांक order, poison, reclaim_account, red_zone;
+	अचिन्हित दीर्घ partial, objects, sद_असल, objects_partial, objects_total;
+	अचिन्हित दीर्घ alloc_fastpath, alloc_slowpath;
+	अचिन्हित दीर्घ मुक्त_fastpath, मुक्त_slowpath;
+	अचिन्हित दीर्घ मुक्त_frozen, मुक्त_add_partial, मुक्त_हटाओ_partial;
+	अचिन्हित दीर्घ alloc_from_partial, alloc_slab, मुक्त_slab, alloc_refill;
+	अचिन्हित दीर्घ cpuslab_flush, deactivate_full, deactivate_empty;
+	अचिन्हित दीर्घ deactivate_to_head, deactivate_to_tail;
+	अचिन्हित दीर्घ deactivate_remote_मुक्तs, order_fallback;
+	अचिन्हित दीर्घ cmpxchg_द्विगुन_cpu_fail, cmpxchg_द्विगुन_fail;
+	अचिन्हित दीर्घ alloc_node_mismatch, deactivate_bypass;
+	अचिन्हित दीर्घ cpu_partial_alloc, cpu_partial_मुक्त;
+	पूर्णांक numa[MAX_NODES];
+	पूर्णांक numa_partial[MAX_NODES];
+पूर्ण slabinfo[MAX_SLABS];
 
-struct aliasinfo {
-	char *name;
-	char *ref;
-	struct slabinfo *slab;
-} aliasinfo[MAX_ALIASES];
+काष्ठा aliasinfo अणु
+	अक्षर *name;
+	अक्षर *ref;
+	काष्ठा slabinfo *slab;
+पूर्ण aliasinfo[MAX_ALIASES];
 
-int slabs;
-int actual_slabs;
-int aliases;
-int alias_targets;
-int highest_node;
+पूर्णांक sद_असल;
+पूर्णांक actual_sद_असल;
+पूर्णांक aliases;
+पूर्णांक alias_tarमाला_लो;
+पूर्णांक highest_node;
 
-char buffer[4096];
+अक्षर buffer[4096];
 
-int show_empty;
-int show_report;
-int show_alias;
-int show_slab;
-int skip_zero = 1;
-int show_numa;
-int show_track;
-int show_first_alias;
-int validate;
-int shrink;
-int show_inverted;
-int show_single_ref;
-int show_totals;
-int sort_size;
-int sort_active;
-int set_debug;
-int show_ops;
-int sort_partial;
-int show_activity;
-int output_lines = -1;
-int sort_loss;
-int extended_totals;
-int show_bytes;
-int unreclaim_only;
+पूर्णांक show_empty;
+पूर्णांक show_report;
+पूर्णांक show_alias;
+पूर्णांक show_slab;
+पूर्णांक skip_zero = 1;
+पूर्णांक show_numa;
+पूर्णांक show_track;
+पूर्णांक show_first_alias;
+पूर्णांक validate;
+पूर्णांक shrink;
+पूर्णांक show_inverted;
+पूर्णांक show_single_ref;
+पूर्णांक show_totals;
+पूर्णांक sort_size;
+पूर्णांक sort_active;
+पूर्णांक set_debug;
+पूर्णांक show_ops;
+पूर्णांक sort_partial;
+पूर्णांक show_activity;
+पूर्णांक output_lines = -1;
+पूर्णांक sort_loss;
+पूर्णांक extended_totals;
+पूर्णांक show_bytes;
+पूर्णांक unreclaim_only;
 
 /* Debug options */
-int sanity;
-int redzone;
-int poison;
-int tracking;
-int tracing;
+पूर्णांक sanity;
+पूर्णांक redzone;
+पूर्णांक poison;
+पूर्णांक tracking;
+पूर्णांक tracing;
 
-int page_size;
+पूर्णांक page_size;
 
 regex_t pattern;
 
-static void fatal(const char *x, ...)
-{
-	va_list ap;
+अटल व्योम fatal(स्थिर अक्षर *x, ...)
+अणु
+	बहु_सूची ap;
 
-	va_start(ap, x);
-	vfprintf(stderr, x, ap);
-	va_end(ap);
-	exit(EXIT_FAILURE);
-}
+	बहु_शुरू(ap, x);
+	भख_लिखो(मानक_त्रुटि, x, ap);
+	बहु_पूर्ण(ap);
+	निकास(निकास_त्रुटि);
+पूर्ण
 
-static void usage(void)
-{
-	printf("slabinfo 4/15/2011. (c) 2007 sgi/(c) 2011 Linux Foundation.\n\n"
+अटल व्योम usage(व्योम)
+अणु
+	म_लिखो("slabinfo 4/15/2011. (c) 2007 sgi/(c) 2011 Linux Foundation.\n\n"
 		"slabinfo [-aABDefhilLnoPrsStTUvXz1] [N=K] [-dafzput] [slab-regexp]\n"
 		"-a|--aliases           Show aliases\n"
 		"-A|--activity          Most active slabs first\n"
@@ -151,798 +152,798 @@ static void usage(void)
 
 		"\nSorting options (--Loss, --Size, --Partial) are mutually exclusive\n"
 	);
-}
+पूर्ण
 
-static unsigned long read_obj(const char *name)
-{
-	FILE *f = fopen(name, "r");
+अटल अचिन्हित दीर्घ पढ़ो_obj(स्थिर अक्षर *name)
+अणु
+	खाता *f = ख_खोलो(name, "r");
 
-	if (!f)
+	अगर (!f)
 		buffer[0] = 0;
-	else {
-		if (!fgets(buffer, sizeof(buffer), f))
+	अन्यथा अणु
+		अगर (!ख_माला_लो(buffer, माप(buffer), f))
 			buffer[0] = 0;
-		fclose(f);
-		if (buffer[strlen(buffer)] == '\n')
-			buffer[strlen(buffer)] = 0;
-	}
-	return strlen(buffer);
-}
+		ख_बंद(f);
+		अगर (buffer[म_माप(buffer)] == '\n')
+			buffer[म_माप(buffer)] = 0;
+	पूर्ण
+	वापस म_माप(buffer);
+पूर्ण
 
 
 /*
  * Get the contents of an attribute
  */
-static unsigned long get_obj(const char *name)
-{
-	if (!read_obj(name))
-		return 0;
+अटल अचिन्हित दीर्घ get_obj(स्थिर अक्षर *name)
+अणु
+	अगर (!पढ़ो_obj(name))
+		वापस 0;
 
-	return atol(buffer);
-}
+	वापस म_से_द(buffer);
+पूर्ण
 
-static unsigned long get_obj_and_str(const char *name, char **x)
-{
-	unsigned long result = 0;
-	char *p;
+अटल अचिन्हित दीर्घ get_obj_and_str(स्थिर अक्षर *name, अक्षर **x)
+अणु
+	अचिन्हित दीर्घ result = 0;
+	अक्षर *p;
 
-	*x = NULL;
+	*x = शून्य;
 
-	if (!read_obj(name)) {
-		x = NULL;
-		return 0;
-	}
-	result = strtoul(buffer, &p, 10);
-	while (*p == ' ')
+	अगर (!पढ़ो_obj(name)) अणु
+		x = शून्य;
+		वापस 0;
+	पूर्ण
+	result = म_से_अदीर्घ(buffer, &p, 10);
+	जबतक (*p == ' ')
 		p++;
-	if (*p)
+	अगर (*p)
 		*x = strdup(p);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void set_obj(struct slabinfo *s, const char *name, int n)
-{
-	char x[100];
-	FILE *f;
+अटल व्योम set_obj(काष्ठा slabinfo *s, स्थिर अक्षर *name, पूर्णांक n)
+अणु
+	अक्षर x[100];
+	खाता *f;
 
-	snprintf(x, 100, "%s/%s", s->name, name);
-	f = fopen(x, "w");
-	if (!f)
+	snम_लिखो(x, 100, "%s/%s", s->name, name);
+	f = ख_खोलो(x, "w");
+	अगर (!f)
 		fatal("Cannot write to %s\n", x);
 
-	fprintf(f, "%d\n", n);
-	fclose(f);
-}
+	ख_लिखो(f, "%d\n", n);
+	ख_बंद(f);
+पूर्ण
 
-static unsigned long read_slab_obj(struct slabinfo *s, const char *name)
-{
-	char x[100];
-	FILE *f;
-	size_t l;
+अटल अचिन्हित दीर्घ पढ़ो_slab_obj(काष्ठा slabinfo *s, स्थिर अक्षर *name)
+अणु
+	अक्षर x[100];
+	खाता *f;
+	माप_प्रकार l;
 
-	snprintf(x, 100, "%s/%s", s->name, name);
-	f = fopen(x, "r");
-	if (!f) {
+	snम_लिखो(x, 100, "%s/%s", s->name, name);
+	f = ख_खोलो(x, "r");
+	अगर (!f) अणु
 		buffer[0] = 0;
 		l = 0;
-	} else {
-		l = fread(buffer, 1, sizeof(buffer), f);
+	पूर्ण अन्यथा अणु
+		l = ख_पढ़ो(buffer, 1, माप(buffer), f);
 		buffer[l] = 0;
-		fclose(f);
-	}
-	return l;
-}
+		ख_बंद(f);
+	पूर्ण
+	वापस l;
+पूर्ण
 
 
 /*
  * Put a size string together
  */
-static int store_size(char *buffer, unsigned long value)
-{
-	unsigned long divisor = 1;
-	char trailer = 0;
-	int n;
+अटल पूर्णांक store_size(अक्षर *buffer, अचिन्हित दीर्घ value)
+अणु
+	अचिन्हित दीर्घ भागisor = 1;
+	अक्षर trailer = 0;
+	पूर्णांक n;
 
-	if (!show_bytes) {
-		if (value > 1000000000UL) {
-			divisor = 100000000UL;
+	अगर (!show_bytes) अणु
+		अगर (value > 1000000000UL) अणु
+			भागisor = 100000000UL;
 			trailer = 'G';
-		} else if (value > 1000000UL) {
-			divisor = 100000UL;
+		पूर्ण अन्यथा अगर (value > 1000000UL) अणु
+			भागisor = 100000UL;
 			trailer = 'M';
-		} else if (value > 1000UL) {
-			divisor = 100;
+		पूर्ण अन्यथा अगर (value > 1000UL) अणु
+			भागisor = 100;
 			trailer = 'K';
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	value /= divisor;
-	n = sprintf(buffer, "%ld",value);
-	if (trailer) {
+	value /= भागisor;
+	n = प्र_लिखो(buffer, "%ld",value);
+	अगर (trailer) अणु
 		buffer[n] = trailer;
 		n++;
 		buffer[n] = 0;
-	}
-	if (divisor != 1) {
-		memmove(buffer + n - 2, buffer + n - 3, 4);
+	पूर्ण
+	अगर (भागisor != 1) अणु
+		स_हटाओ(buffer + n - 2, buffer + n - 3, 4);
 		buffer[n-2] = '.';
 		n++;
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static void decode_numa_list(int *numa, char *t)
-{
-	int node;
-	int nr;
+अटल व्योम decode_numa_list(पूर्णांक *numa, अक्षर *t)
+अणु
+	पूर्णांक node;
+	पूर्णांक nr;
 
-	memset(numa, 0, MAX_NODES * sizeof(int));
+	स_रखो(numa, 0, MAX_NODES * माप(पूर्णांक));
 
-	if (!t)
-		return;
+	अगर (!t)
+		वापस;
 
-	while (*t == 'N') {
+	जबतक (*t == 'N') अणु
 		t++;
-		node = strtoul(t, &t, 10);
-		if (*t == '=') {
+		node = म_से_अदीर्घ(t, &t, 10);
+		अगर (*t == '=') अणु
 			t++;
-			nr = strtoul(t, &t, 10);
+			nr = म_से_अदीर्घ(t, &t, 10);
 			numa[node] = nr;
-			if (node > highest_node)
+			अगर (node > highest_node)
 				highest_node = node;
-		}
-		while (*t == ' ')
+		पूर्ण
+		जबतक (*t == ' ')
 			t++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void slab_validate(struct slabinfo *s)
-{
-	if (strcmp(s->name, "*") == 0)
-		return;
+अटल व्योम slab_validate(काष्ठा slabinfo *s)
+अणु
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
 	set_obj(s, "validate", 1);
-}
+पूर्ण
 
-static void slab_shrink(struct slabinfo *s)
-{
-	if (strcmp(s->name, "*") == 0)
-		return;
+अटल व्योम slab_shrink(काष्ठा slabinfo *s)
+अणु
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
 	set_obj(s, "shrink", 1);
-}
+पूर्ण
 
-int line = 0;
+पूर्णांक line = 0;
 
-static void first_line(void)
-{
-	if (show_activity)
-		printf("Name                   Objects      Alloc       Free"
+अटल व्योम first_line(व्योम)
+अणु
+	अगर (show_activity)
+		म_लिखो("Name                   Objects      Alloc       Free"
 			"   %%Fast Fallb O CmpX   UL\n");
-	else
-		printf("Name                   Objects Objsize           %s "
+	अन्यथा
+		म_लिखो("Name                   Objects Objsize           %s "
 			"Slabs/Part/Cpu  O/S O %%Fr %%Ef Flg\n",
 			sort_loss ? " Loss" : "Space");
-}
+पूर्ण
 
 /*
- * Find the shortest alias of a slab
+ * Find the लघुest alias of a slab
  */
-static struct aliasinfo *find_one_alias(struct slabinfo *find)
-{
-	struct aliasinfo *a;
-	struct aliasinfo *best = NULL;
+अटल काष्ठा aliasinfo *find_one_alias(काष्ठा slabinfo *find)
+अणु
+	काष्ठा aliasinfo *a;
+	काष्ठा aliasinfo *best = शून्य;
 
-	for(a = aliasinfo;a < aliasinfo + aliases; a++) {
-		if (a->slab == find &&
-			(!best || strlen(best->name) < strlen(a->name))) {
+	क्रम(a = aliasinfo;a < aliasinfo + aliases; a++) अणु
+		अगर (a->slab == find &&
+			(!best || म_माप(best->name) < म_माप(a->name))) अणु
 				best = a;
-				if (strncmp(a->name,"kmall", 5) == 0)
-					return best;
-			}
-	}
-	return best;
-}
+				अगर (म_भेदन(a->name,"kmall", 5) == 0)
+					वापस best;
+			पूर्ण
+	पूर्ण
+	वापस best;
+पूर्ण
 
-static unsigned long slab_size(struct slabinfo *s)
-{
-	return 	s->slabs * (page_size << s->order);
-}
+अटल अचिन्हित दीर्घ slab_size(काष्ठा slabinfo *s)
+अणु
+	वापस 	s->sद_असल * (page_size << s->order);
+पूर्ण
 
-static unsigned long slab_activity(struct slabinfo *s)
-{
-	return 	s->alloc_fastpath + s->free_fastpath +
-		s->alloc_slowpath + s->free_slowpath;
-}
+अटल अचिन्हित दीर्घ slab_activity(काष्ठा slabinfo *s)
+अणु
+	वापस 	s->alloc_fastpath + s->मुक्त_fastpath +
+		s->alloc_slowpath + s->मुक्त_slowpath;
+पूर्ण
 
-static unsigned long slab_waste(struct slabinfo *s)
-{
-	return	slab_size(s) - s->objects * s->object_size;
-}
+अटल अचिन्हित दीर्घ slab_waste(काष्ठा slabinfo *s)
+अणु
+	वापस	slab_size(s) - s->objects * s->object_size;
+पूर्ण
 
-static void slab_numa(struct slabinfo *s, int mode)
-{
-	int node;
+अटल व्योम slab_numa(काष्ठा slabinfo *s, पूर्णांक mode)
+अणु
+	पूर्णांक node;
 
-	if (strcmp(s->name, "*") == 0)
-		return;
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
-	if (!highest_node) {
-		printf("\n%s: No NUMA information available.\n", s->name);
-		return;
-	}
+	अगर (!highest_node) अणु
+		म_लिखो("\n%s: No NUMA information available.\n", s->name);
+		वापस;
+	पूर्ण
 
-	if (skip_zero && !s->slabs)
-		return;
+	अगर (skip_zero && !s->sद_असल)
+		वापस;
 
-	if (!line) {
-		printf("\n%-21s:", mode ? "NUMA nodes" : "Slab");
-		for(node = 0; node <= highest_node; node++)
-			printf(" %4d", node);
-		printf("\n----------------------");
-		for(node = 0; node <= highest_node; node++)
-			printf("-----");
-		printf("\n");
-	}
-	printf("%-21s ", mode ? "All slabs" : s->name);
-	for(node = 0; node <= highest_node; node++) {
-		char b[20];
+	अगर (!line) अणु
+		म_लिखो("\n%-21s:", mode ? "NUMA nodes" : "Slab");
+		क्रम(node = 0; node <= highest_node; node++)
+			म_लिखो(" %4d", node);
+		म_लिखो("\n----------------------");
+		क्रम(node = 0; node <= highest_node; node++)
+			म_लिखो("-----");
+		म_लिखो("\n");
+	पूर्ण
+	म_लिखो("%-21s ", mode ? "All slabs" : s->name);
+	क्रम(node = 0; node <= highest_node; node++) अणु
+		अक्षर b[20];
 
 		store_size(b, s->numa[node]);
-		printf(" %4s", b);
-	}
-	printf("\n");
-	if (mode) {
-		printf("%-21s ", "Partial slabs");
-		for(node = 0; node <= highest_node; node++) {
-			char b[20];
+		म_लिखो(" %4s", b);
+	पूर्ण
+	म_लिखो("\n");
+	अगर (mode) अणु
+		म_लिखो("%-21s ", "Partial slabs");
+		क्रम(node = 0; node <= highest_node; node++) अणु
+			अक्षर b[20];
 
 			store_size(b, s->numa_partial[node]);
-			printf(" %4s", b);
-		}
-		printf("\n");
-	}
+			म_लिखो(" %4s", b);
+		पूर्ण
+		म_लिखो("\n");
+	पूर्ण
 	line++;
-}
+पूर्ण
 
-static void show_tracking(struct slabinfo *s)
-{
-	printf("\n%s: Kernel object allocation\n", s->name);
-	printf("-----------------------------------------------------------------------\n");
-	if (read_slab_obj(s, "alloc_calls"))
-		printf("%s", buffer);
-	else
-		printf("No Data\n");
+अटल व्योम show_tracking(काष्ठा slabinfo *s)
+अणु
+	म_लिखो("\n%s: Kernel object allocation\n", s->name);
+	म_लिखो("-----------------------------------------------------------------------\n");
+	अगर (पढ़ो_slab_obj(s, "alloc_calls"))
+		म_लिखो("%s", buffer);
+	अन्यथा
+		म_लिखो("No Data\n");
 
-	printf("\n%s: Kernel object freeing\n", s->name);
-	printf("------------------------------------------------------------------------\n");
-	if (read_slab_obj(s, "free_calls"))
-		printf("%s", buffer);
-	else
-		printf("No Data\n");
+	म_लिखो("\n%s: Kernel object freeing\n", s->name);
+	म_लिखो("------------------------------------------------------------------------\n");
+	अगर (पढ़ो_slab_obj(s, "free_calls"))
+		म_लिखो("%s", buffer);
+	अन्यथा
+		म_लिखो("No Data\n");
 
-}
+पूर्ण
 
-static void ops(struct slabinfo *s)
-{
-	if (strcmp(s->name, "*") == 0)
-		return;
+अटल व्योम ops(काष्ठा slabinfo *s)
+अणु
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
-	if (read_slab_obj(s, "ops")) {
-		printf("\n%s: kmem_cache operations\n", s->name);
-		printf("--------------------------------------------\n");
-		printf("%s", buffer);
-	} else
-		printf("\n%s has no kmem_cache operations\n", s->name);
-}
+	अगर (पढ़ो_slab_obj(s, "ops")) अणु
+		म_लिखो("\n%s: kmem_cache operations\n", s->name);
+		म_लिखो("--------------------------------------------\n");
+		म_लिखो("%s", buffer);
+	पूर्ण अन्यथा
+		म_लिखो("\n%s has no kmem_cache operations\n", s->name);
+पूर्ण
 
-static const char *onoff(int x)
-{
-	if (x)
-		return "On ";
-	return "Off";
-}
+अटल स्थिर अक्षर *onoff(पूर्णांक x)
+अणु
+	अगर (x)
+		वापस "On ";
+	वापस "Off";
+पूर्ण
 
-static void slab_stats(struct slabinfo *s)
-{
-	unsigned long total_alloc;
-	unsigned long total_free;
-	unsigned long total;
+अटल व्योम slab_stats(काष्ठा slabinfo *s)
+अणु
+	अचिन्हित दीर्घ total_alloc;
+	अचिन्हित दीर्घ total_मुक्त;
+	अचिन्हित दीर्घ total;
 
-	if (!s->alloc_slab)
-		return;
+	अगर (!s->alloc_slab)
+		वापस;
 
 	total_alloc = s->alloc_fastpath + s->alloc_slowpath;
-	total_free = s->free_fastpath + s->free_slowpath;
+	total_मुक्त = s->मुक्त_fastpath + s->मुक्त_slowpath;
 
-	if (!total_alloc)
-		return;
+	अगर (!total_alloc)
+		वापस;
 
-	printf("\n");
-	printf("Slab Perf Counter       Alloc     Free %%Al %%Fr\n");
-	printf("--------------------------------------------------\n");
-	printf("Fastpath             %8lu %8lu %3lu %3lu\n",
-		s->alloc_fastpath, s->free_fastpath,
+	म_लिखो("\n");
+	म_लिखो("Slab Perf Counter       Alloc     Free %%Al %%Fr\n");
+	म_लिखो("--------------------------------------------------\n");
+	म_लिखो("Fastpath             %8lu %8lu %3lu %3lu\n",
+		s->alloc_fastpath, s->मुक्त_fastpath,
 		s->alloc_fastpath * 100 / total_alloc,
-		total_free ? s->free_fastpath * 100 / total_free : 0);
-	printf("Slowpath             %8lu %8lu %3lu %3lu\n",
-		total_alloc - s->alloc_fastpath, s->free_slowpath,
+		total_मुक्त ? s->मुक्त_fastpath * 100 / total_मुक्त : 0);
+	म_लिखो("Slowpath             %8lu %8lu %3lu %3lu\n",
+		total_alloc - s->alloc_fastpath, s->मुक्त_slowpath,
 		(total_alloc - s->alloc_fastpath) * 100 / total_alloc,
-		total_free ? s->free_slowpath * 100 / total_free : 0);
-	printf("Page Alloc           %8lu %8lu %3lu %3lu\n",
-		s->alloc_slab, s->free_slab,
+		total_मुक्त ? s->मुक्त_slowpath * 100 / total_मुक्त : 0);
+	म_लिखो("Page Alloc           %8lu %8lu %3lu %3lu\n",
+		s->alloc_slab, s->मुक्त_slab,
 		s->alloc_slab * 100 / total_alloc,
-		total_free ? s->free_slab * 100 / total_free : 0);
-	printf("Add partial          %8lu %8lu %3lu %3lu\n",
+		total_मुक्त ? s->मुक्त_slab * 100 / total_मुक्त : 0);
+	म_लिखो("Add partial          %8lu %8lu %3lu %3lu\n",
 		s->deactivate_to_head + s->deactivate_to_tail,
-		s->free_add_partial,
+		s->मुक्त_add_partial,
 		(s->deactivate_to_head + s->deactivate_to_tail) * 100 / total_alloc,
-		total_free ? s->free_add_partial * 100 / total_free : 0);
-	printf("Remove partial       %8lu %8lu %3lu %3lu\n",
-		s->alloc_from_partial, s->free_remove_partial,
+		total_मुक्त ? s->मुक्त_add_partial * 100 / total_मुक्त : 0);
+	म_लिखो("Remove partial       %8lu %8lu %3lu %3lu\n",
+		s->alloc_from_partial, s->मुक्त_हटाओ_partial,
 		s->alloc_from_partial * 100 / total_alloc,
-		total_free ? s->free_remove_partial * 100 / total_free : 0);
+		total_मुक्त ? s->मुक्त_हटाओ_partial * 100 / total_मुक्त : 0);
 
-	printf("Cpu partial list     %8lu %8lu %3lu %3lu\n",
-		s->cpu_partial_alloc, s->cpu_partial_free,
+	म_लिखो("Cpu partial list     %8lu %8lu %3lu %3lu\n",
+		s->cpu_partial_alloc, s->cpu_partial_मुक्त,
 		s->cpu_partial_alloc * 100 / total_alloc,
-		total_free ? s->cpu_partial_free * 100 / total_free : 0);
+		total_मुक्त ? s->cpu_partial_मुक्त * 100 / total_मुक्त : 0);
 
-	printf("RemoteObj/SlabFrozen %8lu %8lu %3lu %3lu\n",
-		s->deactivate_remote_frees, s->free_frozen,
-		s->deactivate_remote_frees * 100 / total_alloc,
-		total_free ? s->free_frozen * 100 / total_free : 0);
+	म_लिखो("RemoteObj/SlabFrozen %8lu %8lu %3lu %3lu\n",
+		s->deactivate_remote_मुक्तs, s->मुक्त_frozen,
+		s->deactivate_remote_मुक्तs * 100 / total_alloc,
+		total_मुक्त ? s->मुक्त_frozen * 100 / total_मुक्त : 0);
 
-	printf("Total                %8lu %8lu\n\n", total_alloc, total_free);
+	म_लिखो("Total                %8lu %8lu\n\n", total_alloc, total_मुक्त);
 
-	if (s->cpuslab_flush)
-		printf("Flushes %8lu\n", s->cpuslab_flush);
+	अगर (s->cpuslab_flush)
+		म_लिखो("Flushes %8lu\n", s->cpuslab_flush);
 
 	total = s->deactivate_full + s->deactivate_empty +
 			s->deactivate_to_head + s->deactivate_to_tail + s->deactivate_bypass;
 
-	if (total) {
-		printf("\nSlab Deactivation             Occurrences %%\n");
-		printf("-------------------------------------------------\n");
-		printf("Slab full                     %7lu  %3lu%%\n",
+	अगर (total) अणु
+		म_लिखो("\nSlab Deactivation             Occurrences %%\n");
+		म_लिखो("-------------------------------------------------\n");
+		म_लिखो("Slab full                     %7lu  %3lu%%\n",
 			s->deactivate_full, (s->deactivate_full * 100) / total);
-		printf("Slab empty                    %7lu  %3lu%%\n",
+		म_लिखो("Slab empty                    %7lu  %3lu%%\n",
 			s->deactivate_empty, (s->deactivate_empty * 100) / total);
-		printf("Moved to head of partial list %7lu  %3lu%%\n",
+		म_लिखो("Moved to head of partial list %7lu  %3lu%%\n",
 			s->deactivate_to_head, (s->deactivate_to_head * 100) / total);
-		printf("Moved to tail of partial list %7lu  %3lu%%\n",
+		म_लिखो("Moved to tail of partial list %7lu  %3lu%%\n",
 			s->deactivate_to_tail, (s->deactivate_to_tail * 100) / total);
-		printf("Deactivation bypass           %7lu  %3lu%%\n",
+		म_लिखो("Deactivation bypass           %7lu  %3lu%%\n",
 			s->deactivate_bypass, (s->deactivate_bypass * 100) / total);
-		printf("Refilled from foreign frees   %7lu  %3lu%%\n",
+		म_लिखो("Refilled from foreign frees   %7lu  %3lu%%\n",
 			s->alloc_refill, (s->alloc_refill * 100) / total);
-		printf("Node mismatch                 %7lu  %3lu%%\n",
+		म_लिखो("Node mismatch                 %7lu  %3lu%%\n",
 			s->alloc_node_mismatch, (s->alloc_node_mismatch * 100) / total);
-	}
+	पूर्ण
 
-	if (s->cmpxchg_double_fail || s->cmpxchg_double_cpu_fail) {
-		printf("\nCmpxchg_double Looping\n------------------------\n");
-		printf("Locked Cmpxchg Double redos   %lu\nUnlocked Cmpxchg Double redos %lu\n",
-			s->cmpxchg_double_fail, s->cmpxchg_double_cpu_fail);
-	}
-}
+	अगर (s->cmpxchg_द्विगुन_fail || s->cmpxchg_द्विगुन_cpu_fail) अणु
+		म_लिखो("\nCmpxchg_double Looping\n------------------------\n");
+		म_लिखो("Locked Cmpxchg Double redos   %lu\nUnlocked Cmpxchg Double redos %lu\n",
+			s->cmpxchg_द्विगुन_fail, s->cmpxchg_द्विगुन_cpu_fail);
+	पूर्ण
+पूर्ण
 
-static void report(struct slabinfo *s)
-{
-	if (strcmp(s->name, "*") == 0)
-		return;
+अटल व्योम report(काष्ठा slabinfo *s)
+अणु
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
-	printf("\nSlabcache: %-15s  Aliases: %2d Order : %2d Objects: %lu\n",
+	म_लिखो("\nSlabcache: %-15s  Aliases: %2d Order : %2d Objects: %lu\n",
 		s->name, s->aliases, s->order, s->objects);
-	if (s->hwcache_align)
-		printf("** Hardware cacheline aligned\n");
-	if (s->cache_dma)
-		printf("** Memory is allocated in a special DMA zone\n");
-	if (s->destroy_by_rcu)
-		printf("** Slabs are destroyed via RCU\n");
-	if (s->reclaim_account)
-		printf("** Reclaim accounting active\n");
+	अगर (s->hwcache_align)
+		म_लिखो("** Hardware cacheline aligned\n");
+	अगर (s->cache_dma)
+		म_लिखो("** Memory is allocated in a special DMA zone\n");
+	अगर (s->destroy_by_rcu)
+		म_लिखो("** Slabs are destroyed via RCU\n");
+	अगर (s->reclaim_account)
+		म_लिखो("** Reclaim accounting active\n");
 
-	printf("\nSizes (bytes)     Slabs              Debug                Memory\n");
-	printf("------------------------------------------------------------------------\n");
-	printf("Object : %7d  Total  : %7ld   Sanity Checks : %s  Total: %7ld\n",
-			s->object_size, s->slabs, onoff(s->sanity_checks),
-			s->slabs * (page_size << s->order));
-	printf("SlabObj: %7d  Full   : %7ld   Redzoning     : %s  Used : %7ld\n",
-			s->slab_size, s->slabs - s->partial - s->cpu_slabs,
+	म_लिखो("\nSizes (bytes)     Slabs              Debug                Memory\n");
+	म_लिखो("------------------------------------------------------------------------\n");
+	म_लिखो("Object : %7d  Total  : %7ld   Sanity Checks : %s  Total: %7ld\n",
+			s->object_size, s->sद_असल, onoff(s->sanity_checks),
+			s->sद_असल * (page_size << s->order));
+	म_लिखो("SlabObj: %7d  Full   : %7ld   Redzoning     : %s  Used : %7ld\n",
+			s->slab_size, s->sद_असल - s->partial - s->cpu_sद_असल,
 			onoff(s->red_zone), s->objects * s->object_size);
-	printf("SlabSiz: %7d  Partial: %7ld   Poisoning     : %s  Loss : %7ld\n",
+	म_लिखो("SlabSiz: %7d  Partial: %7ld   Poisoning     : %s  Loss : %7ld\n",
 			page_size << s->order, s->partial, onoff(s->poison),
-			s->slabs * (page_size << s->order) - s->objects * s->object_size);
-	printf("Loss   : %7d  CpuSlab: %7d   Tracking      : %s  Lalig: %7ld\n",
-			s->slab_size - s->object_size, s->cpu_slabs, onoff(s->store_user),
+			s->sद_असल * (page_size << s->order) - s->objects * s->object_size);
+	म_लिखो("Loss   : %7d  CpuSlab: %7d   Tracking      : %s  Lalig: %7ld\n",
+			s->slab_size - s->object_size, s->cpu_sद_असल, onoff(s->store_user),
 			(s->slab_size - s->object_size) * s->objects);
-	printf("Align  : %7d  Objects: %7d   Tracing       : %s  Lpadd: %7ld\n",
+	म_लिखो("Align  : %7d  Objects: %7d   Tracing       : %s  Lpadd: %7ld\n",
 			s->align, s->objs_per_slab, onoff(s->trace),
 			((page_size << s->order) - s->objs_per_slab * s->slab_size) *
-			s->slabs);
+			s->sद_असल);
 
 	ops(s);
 	show_tracking(s);
 	slab_numa(s, 1);
 	slab_stats(s);
-}
+पूर्ण
 
-static void slabcache(struct slabinfo *s)
-{
-	char size_str[20];
-	char dist_str[40];
-	char flags[20];
-	char *p = flags;
+अटल व्योम slabcache(काष्ठा slabinfo *s)
+अणु
+	अक्षर size_str[20];
+	अक्षर dist_str[40];
+	अक्षर flags[20];
+	अक्षर *p = flags;
 
-	if (strcmp(s->name, "*") == 0)
-		return;
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
-	if (unreclaim_only && s->reclaim_account)
-		return;
+	अगर (unreclaim_only && s->reclaim_account)
+		वापस;
 
-	if (actual_slabs == 1) {
+	अगर (actual_sद_असल == 1) अणु
 		report(s);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (skip_zero && !show_empty && !s->slabs)
-		return;
+	अगर (skip_zero && !show_empty && !s->sद_असल)
+		वापस;
 
-	if (show_empty && s->slabs)
-		return;
+	अगर (show_empty && s->sद_असल)
+		वापस;
 
-	if (sort_loss == 0)
+	अगर (sort_loss == 0)
 		store_size(size_str, slab_size(s));
-	else
+	अन्यथा
 		store_size(size_str, slab_waste(s));
-	snprintf(dist_str, 40, "%lu/%lu/%d", s->slabs - s->cpu_slabs,
-						s->partial, s->cpu_slabs);
+	snम_लिखो(dist_str, 40, "%lu/%lu/%d", s->sद_असल - s->cpu_sद_असल,
+						s->partial, s->cpu_sद_असल);
 
-	if (!line++)
+	अगर (!line++)
 		first_line();
 
-	if (s->aliases)
+	अगर (s->aliases)
 		*p++ = '*';
-	if (s->cache_dma)
+	अगर (s->cache_dma)
 		*p++ = 'd';
-	if (s->hwcache_align)
+	अगर (s->hwcache_align)
 		*p++ = 'A';
-	if (s->poison)
+	अगर (s->poison)
 		*p++ = 'P';
-	if (s->reclaim_account)
+	अगर (s->reclaim_account)
 		*p++ = 'a';
-	if (s->red_zone)
+	अगर (s->red_zone)
 		*p++ = 'Z';
-	if (s->sanity_checks)
+	अगर (s->sanity_checks)
 		*p++ = 'F';
-	if (s->store_user)
+	अगर (s->store_user)
 		*p++ = 'U';
-	if (s->trace)
+	अगर (s->trace)
 		*p++ = 'T';
 
 	*p = 0;
-	if (show_activity) {
-		unsigned long total_alloc;
-		unsigned long total_free;
+	अगर (show_activity) अणु
+		अचिन्हित दीर्घ total_alloc;
+		अचिन्हित दीर्घ total_मुक्त;
 
 		total_alloc = s->alloc_fastpath + s->alloc_slowpath;
-		total_free = s->free_fastpath + s->free_slowpath;
+		total_मुक्त = s->मुक्त_fastpath + s->मुक्त_slowpath;
 
-		printf("%-21s %8ld %10ld %10ld %3ld %3ld %5ld %1d %4ld %4ld\n",
+		म_लिखो("%-21s %8ld %10ld %10ld %3ld %3ld %5ld %1d %4ld %4ld\n",
 			s->name, s->objects,
-			total_alloc, total_free,
+			total_alloc, total_मुक्त,
 			total_alloc ? (s->alloc_fastpath * 100 / total_alloc) : 0,
-			total_free ? (s->free_fastpath * 100 / total_free) : 0,
-			s->order_fallback, s->order, s->cmpxchg_double_fail,
-			s->cmpxchg_double_cpu_fail);
-	} else {
-		printf("%-21s %8ld %7d %15s %14s %4d %1d %3ld %3ld %s\n",
+			total_मुक्त ? (s->मुक्त_fastpath * 100 / total_मुक्त) : 0,
+			s->order_fallback, s->order, s->cmpxchg_द्विगुन_fail,
+			s->cmpxchg_द्विगुन_cpu_fail);
+	पूर्ण अन्यथा अणु
+		म_लिखो("%-21s %8ld %7d %15s %14s %4d %1d %3ld %3ld %s\n",
 			s->name, s->objects, s->object_size, size_str, dist_str,
 			s->objs_per_slab, s->order,
-			s->slabs ? (s->partial * 100) / s->slabs : 100,
-			s->slabs ? (s->objects * s->object_size * 100) /
-				(s->slabs * (page_size << s->order)) : 100,
+			s->sद_असल ? (s->partial * 100) / s->sद_असल : 100,
+			s->sद_असल ? (s->objects * s->object_size * 100) /
+				(s->sद_असल * (page_size << s->order)) : 100,
 			flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Analyze debug options. Return false if something is amiss.
+ * Analyze debug options. Return false अगर something is amiss.
  */
-static int debug_opt_scan(char *opt)
-{
-	if (!opt || !opt[0] || strcmp(opt, "-") == 0)
-		return 1;
+अटल पूर्णांक debug_opt_scan(अक्षर *opt)
+अणु
+	अगर (!opt || !opt[0] || म_भेद(opt, "-") == 0)
+		वापस 1;
 
-	if (strcasecmp(opt, "a") == 0) {
+	अगर (strहालcmp(opt, "a") == 0) अणु
 		sanity = 1;
 		poison = 1;
 		redzone = 1;
 		tracking = 1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	for ( ; *opt; opt++)
-		switch (*opt) {
-		case 'F' : case 'f':
-			if (sanity)
-				return 0;
+	क्रम ( ; *opt; opt++)
+		चयन (*opt) अणु
+		हाल 'F' : case 'f':
+			अगर (sanity)
+				वापस 0;
 			sanity = 1;
-			break;
-		case 'P' : case 'p':
-			if (poison)
-				return 0;
+			अवरोध;
+		हाल 'P' : case 'p':
+			अगर (poison)
+				वापस 0;
 			poison = 1;
-			break;
+			अवरोध;
 
-		case 'Z' : case 'z':
-			if (redzone)
-				return 0;
+		हाल 'Z' : case 'z':
+			अगर (redzone)
+				वापस 0;
 			redzone = 1;
-			break;
+			अवरोध;
 
-		case 'U' : case 'u':
-			if (tracking)
-				return 0;
+		हाल 'U' : case 'u':
+			अगर (tracking)
+				वापस 0;
 			tracking = 1;
-			break;
+			अवरोध;
 
-		case 'T' : case 't':
-			if (tracing)
-				return 0;
+		हाल 'T' : case 't':
+			अगर (tracing)
+				वापस 0;
 			tracing = 1;
-			break;
-		default:
-			return 0;
-		}
-	return 1;
-}
+			अवरोध;
+		शेष:
+			वापस 0;
+		पूर्ण
+	वापस 1;
+पूर्ण
 
-static int slab_empty(struct slabinfo *s)
-{
-	if (s->objects > 0)
-		return 0;
+अटल पूर्णांक slab_empty(काष्ठा slabinfo *s)
+अणु
+	अगर (s->objects > 0)
+		वापस 0;
 
 	/*
-	 * We may still have slabs even if there are no objects. Shrinking will
-	 * remove them.
+	 * We may still have sद_असल even अगर there are no objects. Shrinking will
+	 * हटाओ them.
 	 */
-	if (s->slabs != 0)
+	अगर (s->sद_असल != 0)
 		set_obj(s, "shrink", 1);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void slab_debug(struct slabinfo *s)
-{
-	if (strcmp(s->name, "*") == 0)
-		return;
+अटल व्योम slab_debug(काष्ठा slabinfo *s)
+अणु
+	अगर (म_भेद(s->name, "*") == 0)
+		वापस;
 
-	if (sanity && !s->sanity_checks) {
+	अगर (sanity && !s->sanity_checks) अणु
 		set_obj(s, "sanity_checks", 1);
-	}
-	if (!sanity && s->sanity_checks) {
-		if (slab_empty(s))
+	पूर्ण
+	अगर (!sanity && s->sanity_checks) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "sanity_checks", 0);
-		else
-			fprintf(stderr, "%s not empty cannot disable sanity checks\n", s->name);
-	}
-	if (redzone && !s->red_zone) {
-		if (slab_empty(s))
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot disable sanity checks\n", s->name);
+	पूर्ण
+	अगर (redzone && !s->red_zone) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "red_zone", 1);
-		else
-			fprintf(stderr, "%s not empty cannot enable redzoning\n", s->name);
-	}
-	if (!redzone && s->red_zone) {
-		if (slab_empty(s))
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot enable redzoning\n", s->name);
+	पूर्ण
+	अगर (!redzone && s->red_zone) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "red_zone", 0);
-		else
-			fprintf(stderr, "%s not empty cannot disable redzoning\n", s->name);
-	}
-	if (poison && !s->poison) {
-		if (slab_empty(s))
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot disable redzoning\n", s->name);
+	पूर्ण
+	अगर (poison && !s->poison) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "poison", 1);
-		else
-			fprintf(stderr, "%s not empty cannot enable poisoning\n", s->name);
-	}
-	if (!poison && s->poison) {
-		if (slab_empty(s))
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot enable poisoning\n", s->name);
+	पूर्ण
+	अगर (!poison && s->poison) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "poison", 0);
-		else
-			fprintf(stderr, "%s not empty cannot disable poisoning\n", s->name);
-	}
-	if (tracking && !s->store_user) {
-		if (slab_empty(s))
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot disable poisoning\n", s->name);
+	पूर्ण
+	अगर (tracking && !s->store_user) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "store_user", 1);
-		else
-			fprintf(stderr, "%s not empty cannot enable tracking\n", s->name);
-	}
-	if (!tracking && s->store_user) {
-		if (slab_empty(s))
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot enable tracking\n", s->name);
+	पूर्ण
+	अगर (!tracking && s->store_user) अणु
+		अगर (slab_empty(s))
 			set_obj(s, "store_user", 0);
-		else
-			fprintf(stderr, "%s not empty cannot disable tracking\n", s->name);
-	}
-	if (tracing && !s->trace) {
-		if (slabs == 1)
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s not empty cannot disable tracking\n", s->name);
+	पूर्ण
+	अगर (tracing && !s->trace) अणु
+		अगर (sद_असल == 1)
 			set_obj(s, "trace", 1);
-		else
-			fprintf(stderr, "%s can only enable trace for one slab at a time\n", s->name);
-	}
-	if (!tracing && s->trace)
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "%s can only enable trace for one slab at a time\n", s->name);
+	पूर्ण
+	अगर (!tracing && s->trace)
 		set_obj(s, "trace", 1);
-}
+पूर्ण
 
-static void totals(void)
-{
-	struct slabinfo *s;
+अटल व्योम totals(व्योम)
+अणु
+	काष्ठा slabinfo *s;
 
-	int used_slabs = 0;
-	char b1[20], b2[20], b3[20], b4[20];
-	unsigned long long max = 1ULL << 63;
+	पूर्णांक used_sद_असल = 0;
+	अक्षर b1[20], b2[20], b3[20], b4[20];
+	अचिन्हित दीर्घ दीर्घ max = 1ULL << 63;
 
 	/* Object size */
-	unsigned long long min_objsize = max, max_objsize = 0, avg_objsize;
+	अचिन्हित दीर्घ दीर्घ min_objsize = max, max_objsize = 0, avg_objsize;
 
-	/* Number of partial slabs in a slabcache */
-	unsigned long long min_partial = max, max_partial = 0,
+	/* Number of partial sद_असल in a slabcache */
+	अचिन्हित दीर्घ दीर्घ min_partial = max, max_partial = 0,
 				avg_partial, total_partial = 0;
 
-	/* Number of slabs in a slab cache */
-	unsigned long long min_slabs = max, max_slabs = 0,
-				avg_slabs, total_slabs = 0;
+	/* Number of sद_असल in a slab cache */
+	अचिन्हित दीर्घ दीर्घ min_sद_असल = max, max_sद_असल = 0,
+				avg_sद_असल, total_sद_असल = 0;
 
 	/* Size of the whole slab */
-	unsigned long long min_size = max, max_size = 0,
+	अचिन्हित दीर्घ दीर्घ min_size = max, max_size = 0,
 				avg_size, total_size = 0;
 
-	/* Bytes used for object storage in a slab */
-	unsigned long long min_used = max, max_used = 0,
+	/* Bytes used क्रम object storage in a slab */
+	अचिन्हित दीर्घ दीर्घ min_used = max, max_used = 0,
 				avg_used, total_used = 0;
 
-	/* Waste: Bytes used for alignment and padding */
-	unsigned long long min_waste = max, max_waste = 0,
+	/* Waste: Bytes used क्रम alignment and padding */
+	अचिन्हित दीर्घ दीर्घ min_waste = max, max_waste = 0,
 				avg_waste, total_waste = 0;
 	/* Number of objects in a slab */
-	unsigned long long min_objects = max, max_objects = 0,
+	अचिन्हित दीर्घ दीर्घ min_objects = max, max_objects = 0,
 				avg_objects, total_objects = 0;
 	/* Waste per object */
-	unsigned long long min_objwaste = max,
+	अचिन्हित दीर्घ दीर्घ min_objwaste = max,
 				max_objwaste = 0, avg_objwaste,
 				total_objwaste = 0;
 
 	/* Memory per object */
-	unsigned long long min_memobj = max,
+	अचिन्हित दीर्घ दीर्घ min_memobj = max,
 				max_memobj = 0, avg_memobj,
 				total_objsize = 0;
 
-	/* Percentage of partial slabs per slab */
-	unsigned long min_ppart = 100, max_ppart = 0,
+	/* Percentage of partial sद_असल per slab */
+	अचिन्हित दीर्घ min_ppart = 100, max_ppart = 0,
 				avg_ppart, total_ppart = 0;
 
-	/* Number of objects in partial slabs */
-	unsigned long min_partobj = max, max_partobj = 0,
+	/* Number of objects in partial sद_असल */
+	अचिन्हित दीर्घ min_partobj = max, max_partobj = 0,
 				avg_partobj, total_partobj = 0;
 
 	/* Percentage of partial objects of all objects in a slab */
-	unsigned long min_ppartobj = 100, max_ppartobj = 0,
+	अचिन्हित दीर्घ min_ppartobj = 100, max_ppartobj = 0,
 				avg_ppartobj, total_ppartobj = 0;
 
 
-	for (s = slabinfo; s < slabinfo + slabs; s++) {
-		unsigned long long size;
-		unsigned long used;
-		unsigned long long wasted;
-		unsigned long long objwaste;
-		unsigned long percentage_partial_slabs;
-		unsigned long percentage_partial_objs;
+	क्रम (s = slabinfo; s < slabinfo + sद_असल; s++) अणु
+		अचिन्हित दीर्घ दीर्घ size;
+		अचिन्हित दीर्घ used;
+		अचिन्हित दीर्घ दीर्घ wasted;
+		अचिन्हित दीर्घ दीर्घ objwaste;
+		अचिन्हित दीर्घ percentage_partial_sद_असल;
+		अचिन्हित दीर्घ percentage_partial_objs;
 
-		if (!s->slabs || !s->objects)
-			continue;
+		अगर (!s->sद_असल || !s->objects)
+			जारी;
 
-		used_slabs++;
+		used_sद_असल++;
 
 		size = slab_size(s);
 		used = s->objects * s->object_size;
 		wasted = size - used;
 		objwaste = s->slab_size - s->object_size;
 
-		percentage_partial_slabs = s->partial * 100 / s->slabs;
-		if (percentage_partial_slabs > 100)
-			percentage_partial_slabs = 100;
+		percentage_partial_sद_असल = s->partial * 100 / s->sद_असल;
+		अगर (percentage_partial_sद_असल > 100)
+			percentage_partial_sद_असल = 100;
 
 		percentage_partial_objs = s->objects_partial * 100
 							/ s->objects;
 
-		if (percentage_partial_objs > 100)
+		अगर (percentage_partial_objs > 100)
 			percentage_partial_objs = 100;
 
-		if (s->object_size < min_objsize)
+		अगर (s->object_size < min_objsize)
 			min_objsize = s->object_size;
-		if (s->partial < min_partial)
+		अगर (s->partial < min_partial)
 			min_partial = s->partial;
-		if (s->slabs < min_slabs)
-			min_slabs = s->slabs;
-		if (size < min_size)
+		अगर (s->sद_असल < min_sद_असल)
+			min_sद_असल = s->sद_असल;
+		अगर (size < min_size)
 			min_size = size;
-		if (wasted < min_waste)
+		अगर (wasted < min_waste)
 			min_waste = wasted;
-		if (objwaste < min_objwaste)
+		अगर (objwaste < min_objwaste)
 			min_objwaste = objwaste;
-		if (s->objects < min_objects)
+		अगर (s->objects < min_objects)
 			min_objects = s->objects;
-		if (used < min_used)
+		अगर (used < min_used)
 			min_used = used;
-		if (s->objects_partial < min_partobj)
+		अगर (s->objects_partial < min_partobj)
 			min_partobj = s->objects_partial;
-		if (percentage_partial_slabs < min_ppart)
-			min_ppart = percentage_partial_slabs;
-		if (percentage_partial_objs < min_ppartobj)
+		अगर (percentage_partial_sद_असल < min_ppart)
+			min_ppart = percentage_partial_sद_असल;
+		अगर (percentage_partial_objs < min_ppartobj)
 			min_ppartobj = percentage_partial_objs;
-		if (s->slab_size < min_memobj)
+		अगर (s->slab_size < min_memobj)
 			min_memobj = s->slab_size;
 
-		if (s->object_size > max_objsize)
+		अगर (s->object_size > max_objsize)
 			max_objsize = s->object_size;
-		if (s->partial > max_partial)
+		अगर (s->partial > max_partial)
 			max_partial = s->partial;
-		if (s->slabs > max_slabs)
-			max_slabs = s->slabs;
-		if (size > max_size)
+		अगर (s->sद_असल > max_sद_असल)
+			max_sद_असल = s->sद_असल;
+		अगर (size > max_size)
 			max_size = size;
-		if (wasted > max_waste)
+		अगर (wasted > max_waste)
 			max_waste = wasted;
-		if (objwaste > max_objwaste)
+		अगर (objwaste > max_objwaste)
 			max_objwaste = objwaste;
-		if (s->objects > max_objects)
+		अगर (s->objects > max_objects)
 			max_objects = s->objects;
-		if (used > max_used)
+		अगर (used > max_used)
 			max_used = used;
-		if (s->objects_partial > max_partobj)
+		अगर (s->objects_partial > max_partobj)
 			max_partobj = s->objects_partial;
-		if (percentage_partial_slabs > max_ppart)
-			max_ppart = percentage_partial_slabs;
-		if (percentage_partial_objs > max_ppartobj)
+		अगर (percentage_partial_sद_असल > max_ppart)
+			max_ppart = percentage_partial_sद_असल;
+		अगर (percentage_partial_objs > max_ppartobj)
 			max_ppartobj = percentage_partial_objs;
-		if (s->slab_size > max_memobj)
+		अगर (s->slab_size > max_memobj)
 			max_memobj = s->slab_size;
 
 		total_partial += s->partial;
-		total_slabs += s->slabs;
+		total_sद_असल += s->sद_असल;
 		total_size += size;
 		total_waste += wasted;
 
 		total_objects += s->objects;
 		total_used += used;
 		total_partobj += s->objects_partial;
-		total_ppart += percentage_partial_slabs;
+		total_ppart += percentage_partial_sद_असल;
 		total_ppartobj += percentage_partial_objs;
 
 		total_objwaste += s->objects * objwaste;
 		total_objsize += s->objects * s->slab_size;
-	}
+	पूर्ण
 
-	if (!total_objects) {
-		printf("No objects\n");
-		return;
-	}
-	if (!used_slabs) {
-		printf("No slabs\n");
-		return;
-	}
+	अगर (!total_objects) अणु
+		म_लिखो("No objects\n");
+		वापस;
+	पूर्ण
+	अगर (!used_sद_असल) अणु
+		म_लिखो("No slabs\n");
+		वापस;
+	पूर्ण
 
 	/* Per slab averages */
-	avg_partial = total_partial / used_slabs;
-	avg_slabs = total_slabs / used_slabs;
-	avg_size = total_size / used_slabs;
-	avg_waste = total_waste / used_slabs;
+	avg_partial = total_partial / used_sद_असल;
+	avg_sद_असल = total_sद_असल / used_sद_असल;
+	avg_size = total_size / used_sद_असल;
+	avg_waste = total_waste / used_sद_असल;
 
-	avg_objects = total_objects / used_slabs;
-	avg_used = total_used / used_slabs;
-	avg_partobj = total_partobj / used_slabs;
-	avg_ppart = total_ppart / used_slabs;
-	avg_ppartobj = total_ppartobj / used_slabs;
+	avg_objects = total_objects / used_sद_असल;
+	avg_used = total_used / used_sद_असल;
+	avg_partobj = total_partobj / used_sद_असल;
+	avg_ppart = total_ppart / used_sद_असल;
+	avg_ppartobj = total_ppartobj / used_sद_असल;
 
 	/* Per object object sizes */
 	avg_objsize = total_used / total_objects;
@@ -950,263 +951,263 @@ static void totals(void)
 	avg_partobj = total_partobj * 100 / total_objects;
 	avg_memobj = total_objsize / total_objects;
 
-	printf("Slabcache Totals\n");
-	printf("----------------\n");
-	printf("Slabcaches : %15d   Aliases  : %11d->%-3d  Active:    %3d\n",
-			slabs, aliases, alias_targets, used_slabs);
+	म_लिखो("Slabcache Totals\n");
+	म_लिखो("----------------\n");
+	म_लिखो("Slabcaches : %15d   Aliases  : %11d->%-3d  Active:    %3d\n",
+			sद_असल, aliases, alias_tarमाला_लो, used_sद_असल);
 
 	store_size(b1, total_size);store_size(b2, total_waste);
 	store_size(b3, total_waste * 100 / total_used);
-	printf("Memory used: %15s   # Loss   : %15s   MRatio:%6s%%\n", b1, b2, b3);
+	म_लिखो("Memory used: %15s   # Loss   : %15s   MRatio:%6s%%\n", b1, b2, b3);
 
 	store_size(b1, total_objects);store_size(b2, total_partobj);
 	store_size(b3, total_partobj * 100 / total_objects);
-	printf("# Objects  : %15s   # PartObj: %15s   ORatio:%6s%%\n", b1, b2, b3);
+	म_लिखो("# Objects  : %15s   # PartObj: %15s   ORatio:%6s%%\n", b1, b2, b3);
 
-	printf("\n");
-	printf("Per Cache         Average              "
+	म_लिखो("\n");
+	म_लिखो("Per Cache         Average              "
 		"Min              Max            Total\n");
-	printf("---------------------------------------"
+	म_लिखो("---------------------------------------"
 		"-------------------------------------\n");
 
 	store_size(b1, avg_objects);store_size(b2, min_objects);
 	store_size(b3, max_objects);store_size(b4, total_objects);
-	printf("#Objects  %15s  %15s  %15s  %15s\n",
+	म_लिखो("#Objects  %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 
-	store_size(b1, avg_slabs);store_size(b2, min_slabs);
-	store_size(b3, max_slabs);store_size(b4, total_slabs);
-	printf("#Slabs    %15s  %15s  %15s  %15s\n",
+	store_size(b1, avg_sद_असल);store_size(b2, min_sद_असल);
+	store_size(b3, max_sद_असल);store_size(b4, total_sद_असल);
+	म_लिखो("#Slabs    %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 
 	store_size(b1, avg_partial);store_size(b2, min_partial);
 	store_size(b3, max_partial);store_size(b4, total_partial);
-	printf("#PartSlab %15s  %15s  %15s  %15s\n",
+	म_लिखो("#PartSlab %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 	store_size(b1, avg_ppart);store_size(b2, min_ppart);
 	store_size(b3, max_ppart);
-	store_size(b4, total_partial * 100  / total_slabs);
-	printf("%%PartSlab%15s%% %15s%% %15s%% %15s%%\n",
+	store_size(b4, total_partial * 100  / total_sद_असल);
+	म_लिखो("%%PartSlab%15s%% %15s%% %15s%% %15s%%\n",
 			b1,	b2,	b3,	b4);
 
 	store_size(b1, avg_partobj);store_size(b2, min_partobj);
 	store_size(b3, max_partobj);
 	store_size(b4, total_partobj);
-	printf("PartObjs  %15s  %15s  %15s  %15s\n",
+	म_लिखो("PartObjs  %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 
 	store_size(b1, avg_ppartobj);store_size(b2, min_ppartobj);
 	store_size(b3, max_ppartobj);
 	store_size(b4, total_partobj * 100 / total_objects);
-	printf("%% PartObj%15s%% %15s%% %15s%% %15s%%\n",
+	म_लिखो("%% PartObj%15s%% %15s%% %15s%% %15s%%\n",
 			b1,	b2,	b3,	b4);
 
 	store_size(b1, avg_size);store_size(b2, min_size);
 	store_size(b3, max_size);store_size(b4, total_size);
-	printf("Memory    %15s  %15s  %15s  %15s\n",
+	म_लिखो("Memory    %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 
 	store_size(b1, avg_used);store_size(b2, min_used);
 	store_size(b3, max_used);store_size(b4, total_used);
-	printf("Used      %15s  %15s  %15s  %15s\n",
+	म_लिखो("Used      %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 
 	store_size(b1, avg_waste);store_size(b2, min_waste);
 	store_size(b3, max_waste);store_size(b4, total_waste);
-	printf("Loss      %15s  %15s  %15s  %15s\n",
+	म_लिखो("Loss      %15s  %15s  %15s  %15s\n",
 			b1,	b2,	b3,	b4);
 
-	printf("\n");
-	printf("Per Object        Average              "
+	म_लिखो("\n");
+	म_लिखो("Per Object        Average              "
 		"Min              Max\n");
-	printf("---------------------------------------"
+	म_लिखो("---------------------------------------"
 		"--------------------\n");
 
 	store_size(b1, avg_memobj);store_size(b2, min_memobj);
 	store_size(b3, max_memobj);
-	printf("Memory    %15s  %15s  %15s\n",
+	म_लिखो("Memory    %15s  %15s  %15s\n",
 			b1,	b2,	b3);
 	store_size(b1, avg_objsize);store_size(b2, min_objsize);
 	store_size(b3, max_objsize);
-	printf("User      %15s  %15s  %15s\n",
+	म_लिखो("User      %15s  %15s  %15s\n",
 			b1,	b2,	b3);
 
 	store_size(b1, avg_objwaste);store_size(b2, min_objwaste);
 	store_size(b3, max_objwaste);
-	printf("Loss      %15s  %15s  %15s\n",
+	म_लिखो("Loss      %15s  %15s  %15s\n",
 			b1,	b2,	b3);
-}
+पूर्ण
 
-static void sort_slabs(void)
-{
-	struct slabinfo *s1,*s2;
+अटल व्योम sort_sद_असल(व्योम)
+अणु
+	काष्ठा slabinfo *s1,*s2;
 
-	for (s1 = slabinfo; s1 < slabinfo + slabs; s1++) {
-		for (s2 = s1 + 1; s2 < slabinfo + slabs; s2++) {
-			int result;
+	क्रम (s1 = slabinfo; s1 < slabinfo + sद_असल; s1++) अणु
+		क्रम (s2 = s1 + 1; s2 < slabinfo + sद_असल; s2++) अणु
+			पूर्णांक result;
 
-			if (sort_size)
+			अगर (sort_size)
 				result = slab_size(s1) < slab_size(s2);
-			else if (sort_active)
+			अन्यथा अगर (sort_active)
 				result = slab_activity(s1) < slab_activity(s2);
-			else if (sort_loss)
+			अन्यथा अगर (sort_loss)
 				result = slab_waste(s1) < slab_waste(s2);
-			else if (sort_partial)
+			अन्यथा अगर (sort_partial)
 				result = s1->partial < s2->partial;
-			else
-				result = strcasecmp(s1->name, s2->name);
+			अन्यथा
+				result = strहालcmp(s1->name, s2->name);
 
-			if (show_inverted)
+			अगर (show_inverted)
 				result = -result;
 
-			if (result > 0) {
-				struct slabinfo t;
+			अगर (result > 0) अणु
+				काष्ठा slabinfo t;
 
-				memcpy(&t, s1, sizeof(struct slabinfo));
-				memcpy(s1, s2, sizeof(struct slabinfo));
-				memcpy(s2, &t, sizeof(struct slabinfo));
-			}
-		}
-	}
-}
+				स_नकल(&t, s1, माप(काष्ठा slabinfo));
+				स_नकल(s1, s2, माप(काष्ठा slabinfo));
+				स_नकल(s2, &t, माप(काष्ठा slabinfo));
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void sort_aliases(void)
-{
-	struct aliasinfo *a1,*a2;
+अटल व्योम sort_aliases(व्योम)
+अणु
+	काष्ठा aliasinfo *a1,*a2;
 
-	for (a1 = aliasinfo; a1 < aliasinfo + aliases; a1++) {
-		for (a2 = a1 + 1; a2 < aliasinfo + aliases; a2++) {
-			char *n1, *n2;
+	क्रम (a1 = aliasinfo; a1 < aliasinfo + aliases; a1++) अणु
+		क्रम (a2 = a1 + 1; a2 < aliasinfo + aliases; a2++) अणु
+			अक्षर *n1, *n2;
 
 			n1 = a1->name;
 			n2 = a2->name;
-			if (show_alias && !show_inverted) {
+			अगर (show_alias && !show_inverted) अणु
 				n1 = a1->ref;
 				n2 = a2->ref;
-			}
-			if (strcasecmp(n1, n2) > 0) {
-				struct aliasinfo t;
+			पूर्ण
+			अगर (strहालcmp(n1, n2) > 0) अणु
+				काष्ठा aliasinfo t;
 
-				memcpy(&t, a1, sizeof(struct aliasinfo));
-				memcpy(a1, a2, sizeof(struct aliasinfo));
-				memcpy(a2, &t, sizeof(struct aliasinfo));
-			}
-		}
-	}
-}
+				स_नकल(&t, a1, माप(काष्ठा aliasinfo));
+				स_नकल(a1, a2, माप(काष्ठा aliasinfo));
+				स_नकल(a2, &t, माप(काष्ठा aliasinfo));
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void link_slabs(void)
-{
-	struct aliasinfo *a;
-	struct slabinfo *s;
+अटल व्योम link_sद_असल(व्योम)
+अणु
+	काष्ठा aliasinfo *a;
+	काष्ठा slabinfo *s;
 
-	for (a = aliasinfo; a < aliasinfo + aliases; a++) {
+	क्रम (a = aliasinfo; a < aliasinfo + aliases; a++) अणु
 
-		for (s = slabinfo; s < slabinfo + slabs; s++)
-			if (strcmp(a->ref, s->name) == 0) {
+		क्रम (s = slabinfo; s < slabinfo + sद_असल; s++)
+			अगर (म_भेद(a->ref, s->name) == 0) अणु
 				a->slab = s;
 				s->refs++;
-				break;
-			}
-		if (s == slabinfo + slabs)
+				अवरोध;
+			पूर्ण
+		अगर (s == slabinfo + sद_असल)
 			fatal("Unresolved alias %s\n", a->ref);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void alias(void)
-{
-	struct aliasinfo *a;
-	char *active = NULL;
+अटल व्योम alias(व्योम)
+अणु
+	काष्ठा aliasinfo *a;
+	अक्षर *active = शून्य;
 
 	sort_aliases();
-	link_slabs();
+	link_sद_असल();
 
-	for(a = aliasinfo; a < aliasinfo + aliases; a++) {
+	क्रम(a = aliasinfo; a < aliasinfo + aliases; a++) अणु
 
-		if (!show_single_ref && a->slab->refs == 1)
-			continue;
+		अगर (!show_single_ref && a->slab->refs == 1)
+			जारी;
 
-		if (!show_inverted) {
-			if (active) {
-				if (strcmp(a->slab->name, active) == 0) {
-					printf(" %s", a->name);
-					continue;
-				}
-			}
-			printf("\n%-12s <- %s", a->slab->name, a->name);
+		अगर (!show_inverted) अणु
+			अगर (active) अणु
+				अगर (म_भेद(a->slab->name, active) == 0) अणु
+					म_लिखो(" %s", a->name);
+					जारी;
+				पूर्ण
+			पूर्ण
+			म_लिखो("\n%-12s <- %s", a->slab->name, a->name);
 			active = a->slab->name;
-		}
-		else
-			printf("%-15s -> %s\n", a->name, a->slab->name);
-	}
-	if (active)
-		printf("\n");
-}
+		पूर्ण
+		अन्यथा
+			म_लिखो("%-15s -> %s\n", a->name, a->slab->name);
+	पूर्ण
+	अगर (active)
+		म_लिखो("\n");
+पूर्ण
 
 
-static void rename_slabs(void)
-{
-	struct slabinfo *s;
-	struct aliasinfo *a;
+अटल व्योम नाम_sद_असल(व्योम)
+अणु
+	काष्ठा slabinfo *s;
+	काष्ठा aliasinfo *a;
 
-	for (s = slabinfo; s < slabinfo + slabs; s++) {
-		if (*s->name != ':')
-			continue;
+	क्रम (s = slabinfo; s < slabinfo + sद_असल; s++) अणु
+		अगर (*s->name != ':')
+			जारी;
 
-		if (s->refs > 1 && !show_first_alias)
-			continue;
+		अगर (s->refs > 1 && !show_first_alias)
+			जारी;
 
 		a = find_one_alias(s);
 
-		if (a)
+		अगर (a)
 			s->name = a->name;
-		else {
+		अन्यथा अणु
 			s->name = "*";
-			actual_slabs--;
-		}
-	}
-}
+			actual_sद_असल--;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int slab_mismatch(char *slab)
-{
-	return regexec(&pattern, slab, 0, NULL, 0);
-}
+अटल पूर्णांक slab_mismatch(अक्षर *slab)
+अणु
+	वापस regexec(&pattern, slab, 0, शून्य, 0);
+पूर्ण
 
-static void read_slab_dir(void)
-{
-	DIR *dir;
-	struct dirent *de;
-	struct slabinfo *slab = slabinfo;
-	struct aliasinfo *alias = aliasinfo;
-	char *p;
-	char *t;
-	int count;
+अटल व्योम पढ़ो_slab_dir(व्योम)
+अणु
+	सूची *dir;
+	काष्ठा dirent *de;
+	काष्ठा slabinfo *slab = slabinfo;
+	काष्ठा aliasinfo *alias = aliasinfo;
+	अक्षर *p;
+	अक्षर *t;
+	पूर्णांक count;
 
-	if (chdir("/sys/kernel/slab") && chdir("/sys/slab"))
+	अगर (स_बदलो("/sys/kernel/slab") && स_बदलो("/sys/slab"))
 		fatal("SYSFS support for SLUB not active\n");
 
-	dir = opendir(".");
-	while ((de = readdir(dir))) {
-		if (de->d_name[0] == '.' ||
+	dir = सूची_खोलो(".");
+	जबतक ((de = सूची_पढ़ो(dir))) अणु
+		अगर (de->d_name[0] == '.' ||
 			(de->d_name[0] != ':' && slab_mismatch(de->d_name)))
-				continue;
-		switch (de->d_type) {
-		   case DT_LNK:
+				जारी;
+		चयन (de->d_type) अणु
+		   हाल DT_LNK:
 			alias->name = strdup(de->d_name);
-			count = readlink(de->d_name, buffer, sizeof(buffer)-1);
+			count = पढ़ोlink(de->d_name, buffer, माप(buffer)-1);
 
-			if (count < 0)
+			अगर (count < 0)
 				fatal("Cannot read symlink %s\n", de->d_name);
 
 			buffer[count] = 0;
 			p = buffer + count;
-			while (p > buffer && p[-1] != '/')
+			जबतक (p > buffer && p[-1] != '/')
 				p--;
 			alias->ref = strdup(p);
 			alias++;
-			break;
-		   case DT_DIR:
-			if (chdir(de->d_name))
+			अवरोध;
+		   हाल DT_सूची:
+			अगर (स_बदलो(de->d_name))
 				fatal("Unable to access slab %s\n", slab->name);
 			slab->name = strdup(de->d_name);
 			slab->alias = 0;
@@ -1214,7 +1215,7 @@ static void read_slab_dir(void)
 			slab->aliases = get_obj("aliases");
 			slab->align = get_obj("align");
 			slab->cache_dma = get_obj("cache_dma");
-			slab->cpu_slabs = get_obj("cpu_slabs");
+			slab->cpu_sद_असल = get_obj("cpu_slabs");
 			slab->destroy_by_rcu = get_obj("destroy_by_rcu");
 			slab->hwcache_align = get_obj("hwcache_align");
 			slab->object_size = get_obj("object_size");
@@ -1226,113 +1227,113 @@ static void read_slab_dir(void)
 			slab->partial = get_obj("partial");
 			slab->partial = get_obj_and_str("partial", &t);
 			decode_numa_list(slab->numa_partial, t);
-			free(t);
+			मुक्त(t);
 			slab->poison = get_obj("poison");
 			slab->reclaim_account = get_obj("reclaim_account");
 			slab->red_zone = get_obj("red_zone");
 			slab->sanity_checks = get_obj("sanity_checks");
 			slab->slab_size = get_obj("slab_size");
-			slab->slabs = get_obj_and_str("slabs", &t);
+			slab->sद_असल = get_obj_and_str("slabs", &t);
 			decode_numa_list(slab->numa, t);
-			free(t);
+			मुक्त(t);
 			slab->store_user = get_obj("store_user");
 			slab->trace = get_obj("trace");
 			slab->alloc_fastpath = get_obj("alloc_fastpath");
 			slab->alloc_slowpath = get_obj("alloc_slowpath");
-			slab->free_fastpath = get_obj("free_fastpath");
-			slab->free_slowpath = get_obj("free_slowpath");
-			slab->free_frozen= get_obj("free_frozen");
-			slab->free_add_partial = get_obj("free_add_partial");
-			slab->free_remove_partial = get_obj("free_remove_partial");
+			slab->मुक्त_fastpath = get_obj("free_fastpath");
+			slab->मुक्त_slowpath = get_obj("free_slowpath");
+			slab->मुक्त_frozen= get_obj("free_frozen");
+			slab->मुक्त_add_partial = get_obj("free_add_partial");
+			slab->मुक्त_हटाओ_partial = get_obj("free_remove_partial");
 			slab->alloc_from_partial = get_obj("alloc_from_partial");
 			slab->alloc_slab = get_obj("alloc_slab");
 			slab->alloc_refill = get_obj("alloc_refill");
-			slab->free_slab = get_obj("free_slab");
+			slab->मुक्त_slab = get_obj("free_slab");
 			slab->cpuslab_flush = get_obj("cpuslab_flush");
 			slab->deactivate_full = get_obj("deactivate_full");
 			slab->deactivate_empty = get_obj("deactivate_empty");
 			slab->deactivate_to_head = get_obj("deactivate_to_head");
 			slab->deactivate_to_tail = get_obj("deactivate_to_tail");
-			slab->deactivate_remote_frees = get_obj("deactivate_remote_frees");
+			slab->deactivate_remote_मुक्तs = get_obj("deactivate_remote_frees");
 			slab->order_fallback = get_obj("order_fallback");
-			slab->cmpxchg_double_cpu_fail = get_obj("cmpxchg_double_cpu_fail");
-			slab->cmpxchg_double_fail = get_obj("cmpxchg_double_fail");
+			slab->cmpxchg_द्विगुन_cpu_fail = get_obj("cmpxchg_double_cpu_fail");
+			slab->cmpxchg_द्विगुन_fail = get_obj("cmpxchg_double_fail");
 			slab->cpu_partial_alloc = get_obj("cpu_partial_alloc");
-			slab->cpu_partial_free = get_obj("cpu_partial_free");
+			slab->cpu_partial_मुक्त = get_obj("cpu_partial_free");
 			slab->alloc_node_mismatch = get_obj("alloc_node_mismatch");
 			slab->deactivate_bypass = get_obj("deactivate_bypass");
-			chdir("..");
-			if (slab->name[0] == ':')
-				alias_targets++;
+			स_बदलो("..");
+			अगर (slab->name[0] == ':')
+				alias_tarमाला_लो++;
 			slab++;
-			break;
-		   default :
+			अवरोध;
+		   शेष :
 			fatal("Unknown file type %lx\n", de->d_type);
-		}
-	}
-	closedir(dir);
-	slabs = slab - slabinfo;
-	actual_slabs = slabs;
+		पूर्ण
+	पूर्ण
+	बंद_सूची(dir);
+	sद_असल = slab - slabinfo;
+	actual_sद_असल = sद_असल;
 	aliases = alias - aliasinfo;
-	if (slabs > MAX_SLABS)
+	अगर (sद_असल > MAX_SLABS)
 		fatal("Too many slabs\n");
-	if (aliases > MAX_ALIASES)
+	अगर (aliases > MAX_ALIASES)
 		fatal("Too many aliases\n");
-}
+पूर्ण
 
-static void output_slabs(void)
-{
-	struct slabinfo *slab;
-	int lines = output_lines;
+अटल व्योम output_sद_असल(व्योम)
+अणु
+	काष्ठा slabinfo *slab;
+	पूर्णांक lines = output_lines;
 
-	for (slab = slabinfo; (slab < slabinfo + slabs) &&
-			lines != 0; slab++) {
+	क्रम (slab = slabinfo; (slab < slabinfo + sद_असल) &&
+			lines != 0; slab++) अणु
 
-		if (slab->alias)
-			continue;
+		अगर (slab->alias)
+			जारी;
 
-		if (lines != -1)
+		अगर (lines != -1)
 			lines--;
 
-		if (show_numa)
+		अगर (show_numa)
 			slab_numa(slab, 0);
-		else if (show_track)
+		अन्यथा अगर (show_track)
 			show_tracking(slab);
-		else if (validate)
+		अन्यथा अगर (validate)
 			slab_validate(slab);
-		else if (shrink)
+		अन्यथा अगर (shrink)
 			slab_shrink(slab);
-		else if (set_debug)
+		अन्यथा अगर (set_debug)
 			slab_debug(slab);
-		else if (show_ops)
+		अन्यथा अगर (show_ops)
 			ops(slab);
-		else if (show_slab)
+		अन्यथा अगर (show_slab)
 			slabcache(slab);
-		else if (show_report)
+		अन्यथा अगर (show_report)
 			report(slab);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void _xtotals(char *heading, char *underline,
-		     int loss, int size, int partial)
-{
-	printf("%s%s", heading, underline);
+अटल व्योम _xtotals(अक्षर *heading, अक्षर *underline,
+		     पूर्णांक loss, पूर्णांक size, पूर्णांक partial)
+अणु
+	म_लिखो("%s%s", heading, underline);
 	line = 0;
 	sort_loss = loss;
 	sort_size = size;
 	sort_partial = partial;
-	sort_slabs();
-	output_slabs();
-}
+	sort_sद_असल();
+	output_sद_असल();
+पूर्ण
 
-static void xtotals(void)
-{
-	char *heading, *underline;
+अटल व्योम xtotals(व्योम)
+अणु
+	अक्षर *heading, *underline;
 
 	totals();
 
-	link_slabs();
-	rename_slabs();
+	link_sद_असल();
+	नाम_sद_असल();
 
 	heading = "\nSlabs sorted by size\n";
 	underline = "--------------------\n";
@@ -1346,163 +1347,163 @@ static void xtotals(void)
 	underline = "---------------------------------------\n";
 	_xtotals(heading, underline, 0, 0, 1);
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-struct option opts[] = {
-	{ "aliases", no_argument, NULL, 'a' },
-	{ "activity", no_argument, NULL, 'A' },
-	{ "Bytes", no_argument, NULL, 'B'},
-	{ "debug", optional_argument, NULL, 'd' },
-	{ "display-activity", no_argument, NULL, 'D' },
-	{ "empty", no_argument, NULL, 'e' },
-	{ "first-alias", no_argument, NULL, 'f' },
-	{ "help", no_argument, NULL, 'h' },
-	{ "inverted", no_argument, NULL, 'i'},
-	{ "slabs", no_argument, NULL, 'l' },
-	{ "Loss", no_argument, NULL, 'L'},
-	{ "numa", no_argument, NULL, 'n' },
-	{ "lines", required_argument, NULL, 'N'},
-	{ "ops", no_argument, NULL, 'o' },
-	{ "partial", no_argument, NULL, 'p'},
-	{ "report", no_argument, NULL, 'r' },
-	{ "shrink", no_argument, NULL, 's' },
-	{ "Size", no_argument, NULL, 'S'},
-	{ "tracking", no_argument, NULL, 't'},
-	{ "Totals", no_argument, NULL, 'T'},
-	{ "Unreclaim", no_argument, NULL, 'U'},
-	{ "validate", no_argument, NULL, 'v' },
-	{ "Xtotals", no_argument, NULL, 'X'},
-	{ "zero", no_argument, NULL, 'z' },
-	{ "1ref", no_argument, NULL, '1'},
-	{ NULL, 0, NULL, 0 }
-};
+काष्ठा option opts[] = अणु
+	अणु "aliases", no_argument, शून्य, 'a' पूर्ण,
+	अणु "activity", no_argument, शून्य, 'A' पूर्ण,
+	अणु "Bytes", no_argument, शून्य, 'B'पूर्ण,
+	अणु "debug", optional_argument, शून्य, 'd' पूर्ण,
+	अणु "display-activity", no_argument, शून्य, 'D' पूर्ण,
+	अणु "empty", no_argument, शून्य, 'e' पूर्ण,
+	अणु "first-alias", no_argument, शून्य, 'f' पूर्ण,
+	अणु "help", no_argument, शून्य, 'h' पूर्ण,
+	अणु "inverted", no_argument, शून्य, 'i'पूर्ण,
+	अणु "slabs", no_argument, शून्य, 'l' पूर्ण,
+	अणु "Loss", no_argument, शून्य, 'L'पूर्ण,
+	अणु "numa", no_argument, शून्य, 'n' पूर्ण,
+	अणु "lines", required_argument, शून्य, 'N'पूर्ण,
+	अणु "ops", no_argument, शून्य, 'o' पूर्ण,
+	अणु "partial", no_argument, शून्य, 'p'पूर्ण,
+	अणु "report", no_argument, शून्य, 'r' पूर्ण,
+	अणु "shrink", no_argument, शून्य, 's' पूर्ण,
+	अणु "Size", no_argument, शून्य, 'S'पूर्ण,
+	अणु "tracking", no_argument, शून्य, 't'पूर्ण,
+	अणु "Totals", no_argument, शून्य, 'T'पूर्ण,
+	अणु "Unreclaim", no_argument, शून्य, 'U'पूर्ण,
+	अणु "validate", no_argument, शून्य, 'v' पूर्ण,
+	अणु "Xtotals", no_argument, शून्य, 'X'पूर्ण,
+	अणु "zero", no_argument, शून्य, 'z' पूर्ण,
+	अणु "1ref", no_argument, शून्य, '1'पूर्ण,
+	अणु शून्य, 0, शून्य, 0 पूर्ण
+पूर्ण;
 
-int main(int argc, char *argv[])
-{
-	int c;
-	int err;
-	char *pattern_source;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक c;
+	पूर्णांक err;
+	अक्षर *pattern_source;
 
 	page_size = getpagesize();
 
-	while ((c = getopt_long(argc, argv, "aABd::DefhilLnN:oPrsStTUvXz1",
-						opts, NULL)) != -1)
-		switch (c) {
-		case 'a':
+	जबतक ((c = getopt_दीर्घ(argc, argv, "aABd::DefhilLnN:oPrsStTUvXz1",
+						opts, शून्य)) != -1)
+		चयन (c) अणु
+		हाल 'a':
 			show_alias = 1;
-			break;
-		case 'A':
+			अवरोध;
+		हाल 'A':
 			sort_active = 1;
-			break;
-		case 'B':
+			अवरोध;
+		हाल 'B':
 			show_bytes = 1;
-			break;
-		case 'd':
+			अवरोध;
+		हाल 'd':
 			set_debug = 1;
-			if (!debug_opt_scan(optarg))
+			अगर (!debug_opt_scan(optarg))
 				fatal("Invalid debug option '%s'\n", optarg);
-			break;
-		case 'D':
+			अवरोध;
+		हाल 'D':
 			show_activity = 1;
-			break;
-		case 'e':
+			अवरोध;
+		हाल 'e':
 			show_empty = 1;
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'f':
 			show_first_alias = 1;
-			break;
-		case 'h':
+			अवरोध;
+		हाल 'h':
 			usage();
-			return 0;
-		case 'i':
+			वापस 0;
+		हाल 'i':
 			show_inverted = 1;
-			break;
-		case 'l':
+			अवरोध;
+		हाल 'l':
 			show_slab = 1;
-			break;
-		case 'L':
+			अवरोध;
+		हाल 'L':
 			sort_loss = 1;
-			break;
-		case 'n':
+			अवरोध;
+		हाल 'n':
 			show_numa = 1;
-			break;
-		case 'N':
-			if (optarg) {
-				output_lines = atoi(optarg);
-				if (output_lines < 1)
+			अवरोध;
+		हाल 'N':
+			अगर (optarg) अणु
+				output_lines = म_से_प(optarg);
+				अगर (output_lines < 1)
 					output_lines = 1;
-			}
-			break;
-		case 'o':
+			पूर्ण
+			अवरोध;
+		हाल 'o':
 			show_ops = 1;
-			break;
-		case 'r':
+			अवरोध;
+		हाल 'r':
 			show_report = 1;
-			break;
-		case 'P':
+			अवरोध;
+		हाल 'P':
 			sort_partial = 1;
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			shrink = 1;
-			break;
-		case 'S':
+			अवरोध;
+		हाल 'S':
 			sort_size = 1;
-			break;
-		case 't':
+			अवरोध;
+		हाल 't':
 			show_track = 1;
-			break;
-		case 'T':
+			अवरोध;
+		हाल 'T':
 			show_totals = 1;
-			break;
-		case 'U':
+			अवरोध;
+		हाल 'U':
 			unreclaim_only = 1;
-			break;
-		case 'v':
+			अवरोध;
+		हाल 'v':
 			validate = 1;
-			break;
-		case 'X':
-			if (output_lines == -1)
+			अवरोध;
+		हाल 'X':
+			अगर (output_lines == -1)
 				output_lines = 1;
 			extended_totals = 1;
 			show_bytes = 1;
-			break;
-		case 'z':
+			अवरोध;
+		हाल 'z':
 			skip_zero = 0;
-			break;
-		case '1':
+			अवरोध;
+		हाल '1':
 			show_single_ref = 1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			fatal("%s: Invalid option '%c'\n", argv[0], optopt);
 
-	}
+	पूर्ण
 
-	if (!show_slab && !show_alias && !show_track && !show_report
+	अगर (!show_slab && !show_alias && !show_track && !show_report
 		&& !validate && !shrink && !set_debug && !show_ops)
 			show_slab = 1;
 
-	if (argc > optind)
+	अगर (argc > optind)
 		pattern_source = argv[optind];
-	else
+	अन्यथा
 		pattern_source = ".*";
 
 	err = regcomp(&pattern, pattern_source, REG_ICASE|REG_NOSUB);
-	if (err)
+	अगर (err)
 		fatal("%s: Invalid pattern '%s' code %d\n",
 			argv[0], pattern_source, err);
-	read_slab_dir();
-	if (show_alias) {
+	पढ़ो_slab_dir();
+	अगर (show_alias) अणु
 		alias();
-	} else if (extended_totals) {
+	पूर्ण अन्यथा अगर (extended_totals) अणु
 		xtotals();
-	} else if (show_totals) {
+	पूर्ण अन्यथा अगर (show_totals) अणु
 		totals();
-	} else {
-		link_slabs();
-		rename_slabs();
-		sort_slabs();
-		output_slabs();
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		link_sद_असल();
+		नाम_sद_असल();
+		sort_sद_असल();
+		output_sद_असल();
+	पूर्ण
+	वापस 0;
+पूर्ण

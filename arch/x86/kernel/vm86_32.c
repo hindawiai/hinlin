@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1994  Linus Torvalds
  *
  *  29 dec 2001 - Fixed oopses caused by unchecked access to the vm86
- *                stack - Manfred Spraul <manfred@colorfullife.com>
+ *                stack - Manfred Spraul <manfred@colorfullअगरe.com>
  *
  *  22 mar 2002 - Manfred detected the stackfaults, but didn't handle
  *                them correctly. Now the emulation will be in a
@@ -13,7 +14,7 @@
  *  22 mar 2002 - Added missing clear_IF in set_vflags_* Kasper Dupont
  *                <kasperd@daimi.au.dk>
  *
- *  ?? ??? 2002 - Fixed premature returns from handle_vm86_fault
+ *  ?? ??? 2002 - Fixed premature वापसs from handle_vm86_fault
  *                caused by Kasper Dupont's changes - Stas Sergeev
  *
  *   4 apr 2002 - Fixed CHECK_IF_IN_TRAP broken by Stas' changes.
@@ -23,100 +24,100 @@
  *                Kasper Dupont <kasperd@daimi.au.dk>
  *
  *   9 apr 2002 - Changed stack access macros to jump to a label
- *                instead of returning to userspace. This simplifies
- *                do_int, and is needed by handle_vm6_fault. Kasper
+ *                instead of वापसing to userspace. This simplअगरies
+ *                करो_पूर्णांक, and is needed by handle_vm6_fault. Kasper
  *                Dupont <kasperd@daimi.au.dk>
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/capability.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/syscalls.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/highmem.h>
-#include <linux/ptrace.h>
-#include <linux/audit.h>
-#include <linux/stddef.h>
-#include <linux/slab.h>
-#include <linux/security.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/security.h>
 
-#include <linux/uaccess.h>
-#include <asm/io.h>
-#include <asm/tlbflush.h>
-#include <asm/irq.h>
-#include <asm/traps.h>
-#include <asm/vm86.h>
-#include <asm/switch_to.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/vm86.h>
+#समावेश <यंत्र/चयन_to.h>
 
 /*
  * Known problems:
  *
  * Interrupt handling is not guaranteed:
- * - a real x86 will disable all interrupts for one instruction
+ * - a real x86 will disable all पूर्णांकerrupts क्रम one inकाष्ठाion
  *   after a "mov ss,xx" to make stack handling atomic even without
  *   the 'lss' instruction. We can't guarantee this in v86 mode,
- *   as the next instruction might result in a page fault or similar.
- * - a real x86 will have interrupts disabled for one instruction
+ *   as the next inकाष्ठाion might result in a page fault or similar.
+ * - a real x86 will have पूर्णांकerrupts disabled क्रम one inकाष्ठाion
  *   past the 'sti' that enables them. We don't bother with all the
  *   details yet.
  *
- * Let's hope these problems do not actually matter for anything.
+ * Let's hope these problems करो not actually matter क्रम anything.
  */
 
 
 /*
- * 8- and 16-bit register defines..
+ * 8- and 16-bit रेजिस्टर defines..
  */
-#define AL(regs)	(((unsigned char *)&((regs)->pt.ax))[0])
-#define AH(regs)	(((unsigned char *)&((regs)->pt.ax))[1])
-#define IP(regs)	(*(unsigned short *)&((regs)->pt.ip))
-#define SP(regs)	(*(unsigned short *)&((regs)->pt.sp))
+#घोषणा AL(regs)	(((अचिन्हित अक्षर *)&((regs)->pt.ax))[0])
+#घोषणा AH(regs)	(((अचिन्हित अक्षर *)&((regs)->pt.ax))[1])
+#घोषणा IP(regs)	(*(अचिन्हित लघु *)&((regs)->pt.ip))
+#घोषणा SP(regs)	(*(अचिन्हित लघु *)&((regs)->pt.sp))
 
 /*
- * virtual flags (16 and 32-bit versions)
+ * भव flags (16 and 32-bit versions)
  */
-#define VFLAGS	(*(unsigned short *)&(current->thread.vm86->veflags))
-#define VEFLAGS	(current->thread.vm86->veflags)
+#घोषणा VFLAGS	(*(अचिन्हित लघु *)&(current->thपढ़ो.vm86->veflags))
+#घोषणा VEFLAGS	(current->thपढ़ो.vm86->veflags)
 
-#define set_flags(X, new, mask) \
+#घोषणा set_flags(X, new, mask) \
 ((X) = ((X) & ~(mask)) | ((new) & (mask)))
 
-#define SAFE_MASK	(0xDD5)
-#define RETURN_MASK	(0xDFF)
+#घोषणा SAFE_MASK	(0xDD5)
+#घोषणा RETURN_MASK	(0xDFF)
 
-void save_v86_state(struct kernel_vm86_regs *regs, int retval)
-{
-	struct task_struct *tsk = current;
-	struct vm86plus_struct __user *user;
-	struct vm86 *vm86 = current->thread.vm86;
+व्योम save_v86_state(काष्ठा kernel_vm86_regs *regs, पूर्णांक retval)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	काष्ठा vm86plus_काष्ठा __user *user;
+	काष्ठा vm86 *vm86 = current->thपढ़ो.vm86;
 
 	/*
-	 * This gets called from entry.S with interrupts disabled, but
-	 * from process context. Enable interrupts here, before trying
+	 * This माला_लो called from entry.S with पूर्णांकerrupts disabled, but
+	 * from process context. Enable पूर्णांकerrupts here, beक्रमe trying
 	 * to access user space.
 	 */
 	local_irq_enable();
 
-	if (!vm86 || !vm86->user_vm86) {
+	अगर (!vm86 || !vm86->user_vm86) अणु
 		pr_alert("no user_vm86: BAD\n");
-		do_exit(SIGSEGV);
-	}
+		करो_निकास(संक_अंश);
+	पूर्ण
 	set_flags(regs->pt.flags, VEFLAGS, X86_EFLAGS_VIF | vm86->veflags_mask);
 	user = vm86->user_vm86;
 
-	if (!user_access_begin(user, vm86->vm86plus.is_vm86pus ?
-		       sizeof(struct vm86plus_struct) :
-		       sizeof(struct vm86_struct)))
-		goto Efault;
+	अगर (!user_access_begin(user, vm86->vm86plus.is_vm86pus ?
+		       माप(काष्ठा vm86plus_काष्ठा) :
+		       माप(काष्ठा vm86_काष्ठा)))
+		जाओ Efault;
 
 	unsafe_put_user(regs->pt.bx, &user->regs.ebx, Efault_end);
 	unsafe_put_user(regs->pt.cx, &user->regs.ecx, Efault_end);
@@ -136,123 +137,123 @@ void save_v86_state(struct kernel_vm86_regs *regs, int retval)
 	unsafe_put_user(regs->gs, &user->regs.gs, Efault_end);
 
 	/*
-	 * Don't write screen_bitmap in case some user had a value there
-	 * and expected it to remain unchanged.
+	 * Don't ग_लिखो screen_biपंचांगap in हाल some user had a value there
+	 * and expected it to reमुख्य unchanged.
 	 */
 
 	user_access_end();
 
 	preempt_disable();
-	tsk->thread.sp0 = vm86->saved_sp0;
-	tsk->thread.sysenter_cs = __KERNEL_CS;
+	tsk->thपढ़ो.sp0 = vm86->saved_sp0;
+	tsk->thपढ़ो.sysenter_cs = __KERNEL_CS;
 	update_task_stack(tsk);
-	refresh_sysenter_cs(&tsk->thread);
+	refresh_sysenter_cs(&tsk->thपढ़ो);
 	vm86->saved_sp0 = 0;
 	preempt_enable();
 
-	memcpy(&regs->pt, &vm86->regs32, sizeof(struct pt_regs));
+	स_नकल(&regs->pt, &vm86->regs32, माप(काष्ठा pt_regs));
 
 	lazy_load_gs(vm86->regs32.gs);
 
 	regs->pt.ax = retval;
-	return;
+	वापस;
 
 Efault_end:
 	user_access_end();
 Efault:
 	pr_alert("could not access userspace vm86 info\n");
-	do_exit(SIGSEGV);
-}
+	करो_निकास(संक_अंश);
+पूर्ण
 
-static int do_vm86_irq_handling(int subfunction, int irqnumber);
-static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus);
+अटल पूर्णांक करो_vm86_irq_handling(पूर्णांक subfunction, पूर्णांक irqnumber);
+अटल दीर्घ करो_sys_vm86(काष्ठा vm86plus_काष्ठा __user *user_vm86, bool plus);
 
-SYSCALL_DEFINE1(vm86old, struct vm86_struct __user *, user_vm86)
-{
-	return do_sys_vm86((struct vm86plus_struct __user *) user_vm86, false);
-}
+SYSCALL_DEFINE1(vm86old, काष्ठा vm86_काष्ठा __user *, user_vm86)
+अणु
+	वापस करो_sys_vm86((काष्ठा vm86plus_काष्ठा __user *) user_vm86, false);
+पूर्ण
 
 
-SYSCALL_DEFINE2(vm86, unsigned long, cmd, unsigned long, arg)
-{
-	switch (cmd) {
-	case VM86_REQUEST_IRQ:
-	case VM86_FREE_IRQ:
-	case VM86_GET_IRQ_BITS:
-	case VM86_GET_AND_RESET_IRQ:
-		return do_vm86_irq_handling(cmd, (int)arg);
-	case VM86_PLUS_INSTALL_CHECK:
+SYSCALL_DEFINE2(vm86, अचिन्हित दीर्घ, cmd, अचिन्हित दीर्घ, arg)
+अणु
+	चयन (cmd) अणु
+	हाल VM86_REQUEST_IRQ:
+	हाल VM86_FREE_IRQ:
+	हाल VM86_GET_IRQ_BITS:
+	हाल VM86_GET_AND_RESET_IRQ:
+		वापस करो_vm86_irq_handling(cmd, (पूर्णांक)arg);
+	हाल VM86_PLUS_INSTALL_CHECK:
 		/*
-		 * NOTE: on old vm86 stuff this will return the error
+		 * NOTE: on old vm86 stuff this will वापस the error
 		 *  from access_ok(), because the subfunction is
-		 *  interpreted as (invalid) address to vm86_struct.
+		 *  पूर्णांकerpreted as (invalid) address to vm86_काष्ठा.
 		 *  So the installation check works.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* we come here only for functions VM86_ENTER, VM86_ENTER_NO_BYPASS */
-	return do_sys_vm86((struct vm86plus_struct __user *) arg, true);
-}
+	/* we come here only क्रम functions VM86_ENTER, VM86_ENTER_NO_BYPASS */
+	वापस करो_sys_vm86((काष्ठा vm86plus_काष्ठा __user *) arg, true);
+पूर्ण
 
 
-static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
-{
-	struct task_struct *tsk = current;
-	struct vm86 *vm86 = tsk->thread.vm86;
-	struct kernel_vm86_regs vm86regs;
-	struct pt_regs *regs = current_pt_regs();
-	unsigned long err = 0;
-	struct vm86_struct v;
+अटल दीर्घ करो_sys_vm86(काष्ठा vm86plus_काष्ठा __user *user_vm86, bool plus)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	काष्ठा vm86 *vm86 = tsk->thपढ़ो.vm86;
+	काष्ठा kernel_vm86_regs vm86regs;
+	काष्ठा pt_regs *regs = current_pt_regs();
+	अचिन्हित दीर्घ err = 0;
+	काष्ठा vm86_काष्ठा v;
 
 	err = security_mmap_addr(0);
-	if (err) {
+	अगर (err) अणु
 		/*
-		 * vm86 cannot virtualize the address space, so vm86 users
+		 * vm86 cannot भवize the address space, so vm86 users
 		 * need to manage the low 1MB themselves using mmap.  Given
 		 * that BIOS places important data in the first page, vm86
-		 * is essentially useless if mmap_min_addr != 0.  DOSEMU,
-		 * for example, won't even bother trying to use vm86 if it
-		 * can't map a page at virtual address 0.
+		 * is essentially useless अगर mmap_min_addr != 0.  DOSEMU,
+		 * क्रम example, won't even bother trying to use vm86 अगर it
+		 * can't map a page at भव address 0.
 		 *
 		 * To reduce the available kernel attack surface, simply
-		 * disallow vm86(old) for users who cannot mmap at va 0.
+		 * disallow vm86(old) क्रम users who cannot mmap at va 0.
 		 *
 		 * The implementation of security_mmap_addr will allow
-		 * suitably privileged users to map va 0 even if
+		 * suitably privileged users to map va 0 even अगर
 		 * vm.mmap_min_addr is set above 0, and we want this
-		 * behavior for vm86 as well, as it ensures that legacy
+		 * behavior क्रम vm86 as well, as it ensures that legacy
 		 * tools like vbetool will not fail just because of
 		 * vm.mmap_min_addr.
 		 */
 		pr_info_once("Denied a call to vm86(old) from %s[%d] (uid: %d).  Set the vm.mmap_min_addr sysctl to 0 and/or adjust LSM mmap_min_addr policy to enable vm86 if you are using a vm86-based DOS emulator.\n",
 			     current->comm, task_pid_nr(current),
 			     from_kuid_munged(&init_user_ns, current_uid()));
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (!vm86) {
-		if (!(vm86 = kzalloc(sizeof(*vm86), GFP_KERNEL)))
-			return -ENOMEM;
-		tsk->thread.vm86 = vm86;
-	}
-	if (vm86->saved_sp0)
-		return -EPERM;
+	अगर (!vm86) अणु
+		अगर (!(vm86 = kzalloc(माप(*vm86), GFP_KERNEL)))
+			वापस -ENOMEM;
+		tsk->thपढ़ो.vm86 = vm86;
+	पूर्ण
+	अगर (vm86->saved_sp0)
+		वापस -EPERM;
 
-	if (copy_from_user(&v, user_vm86,
-			offsetof(struct vm86_struct, int_revectored)))
-		return -EFAULT;
+	अगर (copy_from_user(&v, user_vm86,
+			दुरत्व(काष्ठा vm86_काष्ठा, पूर्णांक_revectored)))
+		वापस -EFAULT;
 
 
 	/* VM86_SCREEN_BITMAP had numerous bugs and appears to have no users. */
-	if (v.flags & VM86_SCREEN_BITMAP) {
-		char comm[TASK_COMM_LEN];
+	अगर (v.flags & VM86_SCREEN_BITMAP) अणु
+		अक्षर comm[TASK_COMM_LEN];
 
 		pr_info_once("vm86: '%s' uses VM86_SCREEN_BITMAP, which is no longer supported\n", get_task_comm(comm, current));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&vm86regs, 0, sizeof(vm86regs));
+	स_रखो(&vm86regs, 0, माप(vm86regs));
 
 	vm86regs.pt.bx = v.regs.ebx;
 	vm86regs.pt.cx = v.regs.ecx;
@@ -274,30 +275,30 @@ static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
 	vm86->flags = v.flags;
 	vm86->cpu_type = v.cpu_type;
 
-	if (copy_from_user(&vm86->int_revectored,
-			   &user_vm86->int_revectored,
-			   sizeof(struct revectored_struct)))
-		return -EFAULT;
-	if (copy_from_user(&vm86->int21_revectored,
-			   &user_vm86->int21_revectored,
-			   sizeof(struct revectored_struct)))
-		return -EFAULT;
-	if (plus) {
-		if (copy_from_user(&vm86->vm86plus, &user_vm86->vm86plus,
-				   sizeof(struct vm86plus_info_struct)))
-			return -EFAULT;
+	अगर (copy_from_user(&vm86->पूर्णांक_revectored,
+			   &user_vm86->पूर्णांक_revectored,
+			   माप(काष्ठा revectored_काष्ठा)))
+		वापस -EFAULT;
+	अगर (copy_from_user(&vm86->पूर्णांक21_revectored,
+			   &user_vm86->पूर्णांक21_revectored,
+			   माप(काष्ठा revectored_काष्ठा)))
+		वापस -EFAULT;
+	अगर (plus) अणु
+		अगर (copy_from_user(&vm86->vm86plus, &user_vm86->vm86plus,
+				   माप(काष्ठा vm86plus_info_काष्ठा)))
+			वापस -EFAULT;
 		vm86->vm86plus.is_vm86pus = 1;
-	} else
-		memset(&vm86->vm86plus, 0,
-		       sizeof(struct vm86plus_info_struct));
+	पूर्ण अन्यथा
+		स_रखो(&vm86->vm86plus, 0,
+		       माप(काष्ठा vm86plus_info_काष्ठा));
 
-	memcpy(&vm86->regs32, regs, sizeof(struct pt_regs));
+	स_नकल(&vm86->regs32, regs, माप(काष्ठा pt_regs));
 	vm86->user_vm86 = user_vm86;
 
 /*
- * The flags register is also special: we cannot trust that the user
- * has set it up safely, so this makes sure interrupt etc flags are
- * inherited from protected mode.
+ * The flags रेजिस्टर is also special: we cannot trust that the user
+ * has set it up safely, so this makes sure पूर्णांकerrupt etc flags are
+ * inherited from रक्षित mode.
  */
 	VEFLAGS = vm86regs.pt.flags;
 	vm86regs.pt.flags &= SAFE_MASK;
@@ -306,210 +307,210 @@ static long do_sys_vm86(struct vm86plus_struct __user *user_vm86, bool plus)
 
 	vm86regs.pt.orig_ax = regs->orig_ax;
 
-	switch (vm86->cpu_type) {
-	case CPU_286:
+	चयन (vm86->cpu_type) अणु
+	हाल CPU_286:
 		vm86->veflags_mask = 0;
-		break;
-	case CPU_386:
+		अवरोध;
+	हाल CPU_386:
 		vm86->veflags_mask = X86_EFLAGS_NT | X86_EFLAGS_IOPL;
-		break;
-	case CPU_486:
+		अवरोध;
+	हाल CPU_486:
 		vm86->veflags_mask = X86_EFLAGS_AC | X86_EFLAGS_NT | X86_EFLAGS_IOPL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		vm86->veflags_mask = X86_EFLAGS_ID | X86_EFLAGS_AC | X86_EFLAGS_NT | X86_EFLAGS_IOPL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 /*
  * Save old state
  */
-	vm86->saved_sp0 = tsk->thread.sp0;
+	vm86->saved_sp0 = tsk->thपढ़ो.sp0;
 	lazy_save_gs(vm86->regs32.gs);
 
-	/* make room for real-mode segments */
+	/* make room क्रम real-mode segments */
 	preempt_disable();
-	tsk->thread.sp0 += 16;
+	tsk->thपढ़ो.sp0 += 16;
 
-	if (boot_cpu_has(X86_FEATURE_SEP)) {
-		tsk->thread.sysenter_cs = 0;
-		refresh_sysenter_cs(&tsk->thread);
-	}
+	अगर (boot_cpu_has(X86_FEATURE_SEP)) अणु
+		tsk->thपढ़ो.sysenter_cs = 0;
+		refresh_sysenter_cs(&tsk->thपढ़ो);
+	पूर्ण
 
 	update_task_stack(tsk);
 	preempt_enable();
 
-	memcpy((struct kernel_vm86_regs *)regs, &vm86regs, sizeof(vm86regs));
-	return regs->ax;
-}
+	स_नकल((काष्ठा kernel_vm86_regs *)regs, &vm86regs, माप(vm86regs));
+	वापस regs->ax;
+पूर्ण
 
-static inline void set_IF(struct kernel_vm86_regs *regs)
-{
+अटल अंतरभूत व्योम set_IF(काष्ठा kernel_vm86_regs *regs)
+अणु
 	VEFLAGS |= X86_EFLAGS_VIF;
-}
+पूर्ण
 
-static inline void clear_IF(struct kernel_vm86_regs *regs)
-{
+अटल अंतरभूत व्योम clear_IF(काष्ठा kernel_vm86_regs *regs)
+अणु
 	VEFLAGS &= ~X86_EFLAGS_VIF;
-}
+पूर्ण
 
-static inline void clear_TF(struct kernel_vm86_regs *regs)
-{
+अटल अंतरभूत व्योम clear_TF(काष्ठा kernel_vm86_regs *regs)
+अणु
 	regs->pt.flags &= ~X86_EFLAGS_TF;
-}
+पूर्ण
 
-static inline void clear_AC(struct kernel_vm86_regs *regs)
-{
+अटल अंतरभूत व्योम clear_AC(काष्ठा kernel_vm86_regs *regs)
+अणु
 	regs->pt.flags &= ~X86_EFLAGS_AC;
-}
+पूर्ण
 
 /*
  * It is correct to call set_IF(regs) from the set_vflags_*
- * functions. However someone forgot to call clear_IF(regs)
- * in the opposite case.
+ * functions. However someone क्रमgot to call clear_IF(regs)
+ * in the opposite हाल.
  * After the command sequence CLI PUSHF STI POPF you should
- * end up with interrupts disabled, but you ended up with
- * interrupts enabled.
+ * end up with पूर्णांकerrupts disabled, but you ended up with
+ * पूर्णांकerrupts enabled.
  *  ( I was testing my own changes, but the only bug I
  *    could find was in a function I had not changed. )
  * [KD]
  */
 
-static inline void set_vflags_long(unsigned long flags, struct kernel_vm86_regs *regs)
-{
-	set_flags(VEFLAGS, flags, current->thread.vm86->veflags_mask);
+अटल अंतरभूत व्योम set_vflags_दीर्घ(अचिन्हित दीर्घ flags, काष्ठा kernel_vm86_regs *regs)
+अणु
+	set_flags(VEFLAGS, flags, current->thपढ़ो.vm86->veflags_mask);
 	set_flags(regs->pt.flags, flags, SAFE_MASK);
-	if (flags & X86_EFLAGS_IF)
+	अगर (flags & X86_EFLAGS_IF)
 		set_IF(regs);
-	else
+	अन्यथा
 		clear_IF(regs);
-}
+पूर्ण
 
-static inline void set_vflags_short(unsigned short flags, struct kernel_vm86_regs *regs)
-{
-	set_flags(VFLAGS, flags, current->thread.vm86->veflags_mask);
+अटल अंतरभूत व्योम set_vflags_लघु(अचिन्हित लघु flags, काष्ठा kernel_vm86_regs *regs)
+अणु
+	set_flags(VFLAGS, flags, current->thपढ़ो.vm86->veflags_mask);
 	set_flags(regs->pt.flags, flags, SAFE_MASK);
-	if (flags & X86_EFLAGS_IF)
+	अगर (flags & X86_EFLAGS_IF)
 		set_IF(regs);
-	else
+	अन्यथा
 		clear_IF(regs);
-}
+पूर्ण
 
-static inline unsigned long get_vflags(struct kernel_vm86_regs *regs)
-{
-	unsigned long flags = regs->pt.flags & RETURN_MASK;
+अटल अंतरभूत अचिन्हित दीर्घ get_vflags(काष्ठा kernel_vm86_regs *regs)
+अणु
+	अचिन्हित दीर्घ flags = regs->pt.flags & RETURN_MASK;
 
-	if (VEFLAGS & X86_EFLAGS_VIF)
+	अगर (VEFLAGS & X86_EFLAGS_VIF)
 		flags |= X86_EFLAGS_IF;
 	flags |= X86_EFLAGS_IOPL;
-	return flags | (VEFLAGS & current->thread.vm86->veflags_mask);
-}
+	वापस flags | (VEFLAGS & current->thपढ़ो.vm86->veflags_mask);
+पूर्ण
 
-static inline int is_revectored(int nr, struct revectored_struct *bitmap)
-{
-	return test_bit(nr, bitmap->__map);
-}
+अटल अंतरभूत पूर्णांक is_revectored(पूर्णांक nr, काष्ठा revectored_काष्ठा *biपंचांगap)
+अणु
+	वापस test_bit(nr, biपंचांगap->__map);
+पूर्ण
 
-#define val_byte(val, n) (((__u8 *)&val)[n])
+#घोषणा val_byte(val, n) (((__u8 *)&val)[n])
 
-#define pushb(base, ptr, val, err_label) \
-	do { \
+#घोषणा pushb(base, ptr, val, err_label) \
+	करो अणु \
 		__u8 __val = val; \
 		ptr--; \
-		if (put_user(__val, base + ptr) < 0) \
-			goto err_label; \
-	} while (0)
+		अगर (put_user(__val, base + ptr) < 0) \
+			जाओ err_label; \
+	पूर्ण जबतक (0)
 
-#define pushw(base, ptr, val, err_label) \
-	do { \
+#घोषणा pushw(base, ptr, val, err_label) \
+	करो अणु \
 		__u16 __val = val; \
 		ptr--; \
-		if (put_user(val_byte(__val, 1), base + ptr) < 0) \
-			goto err_label; \
+		अगर (put_user(val_byte(__val, 1), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr--; \
-		if (put_user(val_byte(__val, 0), base + ptr) < 0) \
-			goto err_label; \
-	} while (0)
+		अगर (put_user(val_byte(__val, 0), base + ptr) < 0) \
+			जाओ err_label; \
+	पूर्ण जबतक (0)
 
-#define pushl(base, ptr, val, err_label) \
-	do { \
+#घोषणा pushl(base, ptr, val, err_label) \
+	करो अणु \
 		__u32 __val = val; \
 		ptr--; \
-		if (put_user(val_byte(__val, 3), base + ptr) < 0) \
-			goto err_label; \
+		अगर (put_user(val_byte(__val, 3), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr--; \
-		if (put_user(val_byte(__val, 2), base + ptr) < 0) \
-			goto err_label; \
+		अगर (put_user(val_byte(__val, 2), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr--; \
-		if (put_user(val_byte(__val, 1), base + ptr) < 0) \
-			goto err_label; \
+		अगर (put_user(val_byte(__val, 1), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr--; \
-		if (put_user(val_byte(__val, 0), base + ptr) < 0) \
-			goto err_label; \
-	} while (0)
+		अगर (put_user(val_byte(__val, 0), base + ptr) < 0) \
+			जाओ err_label; \
+	पूर्ण जबतक (0)
 
-#define popb(base, ptr, err_label) \
-	({ \
+#घोषणा popb(base, ptr, err_label) \
+	(अणु \
 		__u8 __res; \
-		if (get_user(__res, base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(__res, base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
 		__res; \
-	})
+	पूर्ण)
 
-#define popw(base, ptr, err_label) \
-	({ \
+#घोषणा popw(base, ptr, err_label) \
+	(अणु \
 		__u16 __res; \
-		if (get_user(val_byte(__res, 0), base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(val_byte(__res, 0), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
-		if (get_user(val_byte(__res, 1), base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(val_byte(__res, 1), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
 		__res; \
-	})
+	पूर्ण)
 
-#define popl(base, ptr, err_label) \
-	({ \
+#घोषणा popl(base, ptr, err_label) \
+	(अणु \
 		__u32 __res; \
-		if (get_user(val_byte(__res, 0), base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(val_byte(__res, 0), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
-		if (get_user(val_byte(__res, 1), base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(val_byte(__res, 1), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
-		if (get_user(val_byte(__res, 2), base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(val_byte(__res, 2), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
-		if (get_user(val_byte(__res, 3), base + ptr) < 0) \
-			goto err_label; \
+		अगर (get_user(val_byte(__res, 3), base + ptr) < 0) \
+			जाओ err_label; \
 		ptr++; \
 		__res; \
-	})
+	पूर्ण)
 
-/* There are so many possible reasons for this function to return
- * VM86_INTx, so adding another doesn't bother me. We can expect
+/* There are so many possible reasons क्रम this function to वापस
+ * VM86_INTx, so adding another करोesn't bother me. We can expect
  * userspace programs to be able to handle it. (Getting a problem
  * in userspace is always better than an Oops anyway.) [KD]
  */
-static void do_int(struct kernel_vm86_regs *regs, int i,
-    unsigned char __user *ssp, unsigned short sp)
-{
-	unsigned long __user *intr_ptr;
-	unsigned long segoffs;
-	struct vm86 *vm86 = current->thread.vm86;
+अटल व्योम करो_पूर्णांक(काष्ठा kernel_vm86_regs *regs, पूर्णांक i,
+    अचिन्हित अक्षर __user *ssp, अचिन्हित लघु sp)
+अणु
+	अचिन्हित दीर्घ __user *पूर्णांकr_ptr;
+	अचिन्हित दीर्घ segoffs;
+	काष्ठा vm86 *vm86 = current->thपढ़ो.vm86;
 
-	if (regs->pt.cs == BIOSSEG)
-		goto cannot_handle;
-	if (is_revectored(i, &vm86->int_revectored))
-		goto cannot_handle;
-	if (i == 0x21 && is_revectored(AH(regs), &vm86->int21_revectored))
-		goto cannot_handle;
-	intr_ptr = (unsigned long __user *) (i << 2);
-	if (get_user(segoffs, intr_ptr))
-		goto cannot_handle;
-	if ((segoffs >> 16) == BIOSSEG)
-		goto cannot_handle;
+	अगर (regs->pt.cs == BIOSSEG)
+		जाओ cannot_handle;
+	अगर (is_revectored(i, &vm86->पूर्णांक_revectored))
+		जाओ cannot_handle;
+	अगर (i == 0x21 && is_revectored(AH(regs), &vm86->पूर्णांक21_revectored))
+		जाओ cannot_handle;
+	पूर्णांकr_ptr = (अचिन्हित दीर्घ __user *) (i << 2);
+	अगर (get_user(segoffs, पूर्णांकr_ptr))
+		जाओ cannot_handle;
+	अगर ((segoffs >> 16) == BIOSSEG)
+		जाओ cannot_handle;
 	pushw(ssp, sp, get_vflags(regs), cannot_handle);
 	pushw(ssp, sp, regs->pt.cs, cannot_handle);
 	pushw(ssp, sp, IP(regs), cannot_handle);
@@ -519,314 +520,314 @@ static void do_int(struct kernel_vm86_regs *regs, int i,
 	clear_TF(regs);
 	clear_IF(regs);
 	clear_AC(regs);
-	return;
+	वापस;
 
 cannot_handle:
 	save_v86_state(regs, VM86_INTx + (i << 8));
-}
+पूर्ण
 
-int handle_vm86_trap(struct kernel_vm86_regs *regs, long error_code, int trapno)
-{
-	struct vm86 *vm86 = current->thread.vm86;
+पूर्णांक handle_vm86_trap(काष्ठा kernel_vm86_regs *regs, दीर्घ error_code, पूर्णांक trapno)
+अणु
+	काष्ठा vm86 *vm86 = current->thपढ़ो.vm86;
 
-	if (vm86->vm86plus.is_vm86pus) {
-		if ((trapno == 3) || (trapno == 1)) {
+	अगर (vm86->vm86plus.is_vm86pus) अणु
+		अगर ((trapno == 3) || (trapno == 1)) अणु
 			save_v86_state(regs, VM86_TRAP + (trapno << 8));
-			return 0;
-		}
-		do_int(regs, trapno, (unsigned char __user *) (regs->pt.ss << 4), SP(regs));
-		return 0;
-	}
-	if (trapno != 1)
-		return 1; /* we let this handle by the calling routine */
-	current->thread.trap_nr = trapno;
-	current->thread.error_code = error_code;
-	force_sig(SIGTRAP);
-	return 0;
-}
+			वापस 0;
+		पूर्ण
+		करो_पूर्णांक(regs, trapno, (अचिन्हित अक्षर __user *) (regs->pt.ss << 4), SP(regs));
+		वापस 0;
+	पूर्ण
+	अगर (trapno != 1)
+		वापस 1; /* we let this handle by the calling routine */
+	current->thपढ़ो.trap_nr = trapno;
+	current->thपढ़ो.error_code = error_code;
+	क्रमce_sig(SIGTRAP);
+	वापस 0;
+पूर्ण
 
-void handle_vm86_fault(struct kernel_vm86_regs *regs, long error_code)
-{
-	unsigned char opcode;
-	unsigned char __user *csp;
-	unsigned char __user *ssp;
-	unsigned short ip, sp, orig_flags;
-	int data32, pref_done;
-	struct vm86plus_info_struct *vmpi = &current->thread.vm86->vm86plus;
+व्योम handle_vm86_fault(काष्ठा kernel_vm86_regs *regs, दीर्घ error_code)
+अणु
+	अचिन्हित अक्षर opcode;
+	अचिन्हित अक्षर __user *csp;
+	अचिन्हित अक्षर __user *ssp;
+	अचिन्हित लघु ip, sp, orig_flags;
+	पूर्णांक data32, pref_करोne;
+	काष्ठा vm86plus_info_काष्ठा *vmpi = &current->thपढ़ो.vm86->vm86plus;
 
-#define CHECK_IF_IN_TRAP \
-	if (vmpi->vm86dbg_active && vmpi->vm86dbg_TFpendig) \
+#घोषणा CHECK_IF_IN_TRAP \
+	अगर (vmpi->vm86dbg_active && vmpi->vm86dbg_TFpendig) \
 		newflags |= X86_EFLAGS_TF
 
-	orig_flags = *(unsigned short *)&regs->pt.flags;
+	orig_flags = *(अचिन्हित लघु *)&regs->pt.flags;
 
-	csp = (unsigned char __user *) (regs->pt.cs << 4);
-	ssp = (unsigned char __user *) (regs->pt.ss << 4);
+	csp = (अचिन्हित अक्षर __user *) (regs->pt.cs << 4);
+	ssp = (अचिन्हित अक्षर __user *) (regs->pt.ss << 4);
 	sp = SP(regs);
 	ip = IP(regs);
 
 	data32 = 0;
-	pref_done = 0;
-	do {
-		switch (opcode = popb(csp, ip, simulate_sigsegv)) {
-		case 0x66:      /* 32-bit data */     data32 = 1; break;
-		case 0x67:      /* 32-bit address */  break;
-		case 0x2e:      /* CS */              break;
-		case 0x3e:      /* DS */              break;
-		case 0x26:      /* ES */              break;
-		case 0x36:      /* SS */              break;
-		case 0x65:      /* GS */              break;
-		case 0x64:      /* FS */              break;
-		case 0xf2:      /* repnz */       break;
-		case 0xf3:      /* rep */             break;
-		default: pref_done = 1;
-		}
-	} while (!pref_done);
+	pref_करोne = 0;
+	करो अणु
+		चयन (opcode = popb(csp, ip, simulate_sigsegv)) अणु
+		हाल 0x66:      /* 32-bit data */     data32 = 1; अवरोध;
+		हाल 0x67:      /* 32-bit address */  अवरोध;
+		हाल 0x2e:      /* CS */              अवरोध;
+		हाल 0x3e:      /* DS */              अवरोध;
+		हाल 0x26:      /* ES */              अवरोध;
+		हाल 0x36:      /* SS */              अवरोध;
+		हाल 0x65:      /* GS */              अवरोध;
+		हाल 0x64:      /* FS */              अवरोध;
+		हाल 0xf2:      /* repnz */       अवरोध;
+		हाल 0xf3:      /* rep */             अवरोध;
+		शेष: pref_करोne = 1;
+		पूर्ण
+	पूर्ण जबतक (!pref_करोne);
 
-	switch (opcode) {
+	चयन (opcode) अणु
 
 	/* pushf */
-	case 0x9c:
-		if (data32) {
+	हाल 0x9c:
+		अगर (data32) अणु
 			pushl(ssp, sp, get_vflags(regs), simulate_sigsegv);
 			SP(regs) -= 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			pushw(ssp, sp, get_vflags(regs), simulate_sigsegv);
 			SP(regs) -= 2;
-		}
+		पूर्ण
 		IP(regs) = ip;
-		goto vm86_fault_return;
+		जाओ vm86_fault_वापस;
 
 	/* popf */
-	case 0x9d:
-		{
-		unsigned long newflags;
-		if (data32) {
+	हाल 0x9d:
+		अणु
+		अचिन्हित दीर्घ newflags;
+		अगर (data32) अणु
 			newflags = popl(ssp, sp, simulate_sigsegv);
 			SP(regs) += 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			newflags = popw(ssp, sp, simulate_sigsegv);
 			SP(regs) += 2;
-		}
+		पूर्ण
 		IP(regs) = ip;
 		CHECK_IF_IN_TRAP;
-		if (data32)
-			set_vflags_long(newflags, regs);
-		else
-			set_vflags_short(newflags, regs);
+		अगर (data32)
+			set_vflags_दीर्घ(newflags, regs);
+		अन्यथा
+			set_vflags_लघु(newflags, regs);
 
-		goto check_vip;
-		}
+		जाओ check_vip;
+		पूर्ण
 
-	/* int xx */
-	case 0xcd: {
-		int intno = popb(csp, ip, simulate_sigsegv);
+	/* पूर्णांक xx */
+	हाल 0xcd: अणु
+		पूर्णांक पूर्णांकno = popb(csp, ip, simulate_sigsegv);
 		IP(regs) = ip;
-		if (vmpi->vm86dbg_active) {
-			if ((1 << (intno & 7)) & vmpi->vm86dbg_intxxtab[intno >> 3]) {
-				save_v86_state(regs, VM86_INTx + (intno << 8));
-				return;
-			}
-		}
-		do_int(regs, intno, ssp, sp);
-		return;
-	}
+		अगर (vmpi->vm86dbg_active) अणु
+			अगर ((1 << (पूर्णांकno & 7)) & vmpi->vm86dbg_पूर्णांकxxtab[पूर्णांकno >> 3]) अणु
+				save_v86_state(regs, VM86_INTx + (पूर्णांकno << 8));
+				वापस;
+			पूर्ण
+		पूर्ण
+		करो_पूर्णांक(regs, पूर्णांकno, ssp, sp);
+		वापस;
+	पूर्ण
 
 	/* iret */
-	case 0xcf:
-		{
-		unsigned long newip;
-		unsigned long newcs;
-		unsigned long newflags;
-		if (data32) {
+	हाल 0xcf:
+		अणु
+		अचिन्हित दीर्घ newip;
+		अचिन्हित दीर्घ newcs;
+		अचिन्हित दीर्घ newflags;
+		अगर (data32) अणु
 			newip = popl(ssp, sp, simulate_sigsegv);
 			newcs = popl(ssp, sp, simulate_sigsegv);
 			newflags = popl(ssp, sp, simulate_sigsegv);
 			SP(regs) += 12;
-		} else {
+		पूर्ण अन्यथा अणु
 			newip = popw(ssp, sp, simulate_sigsegv);
 			newcs = popw(ssp, sp, simulate_sigsegv);
 			newflags = popw(ssp, sp, simulate_sigsegv);
 			SP(regs) += 6;
-		}
+		पूर्ण
 		IP(regs) = newip;
 		regs->pt.cs = newcs;
 		CHECK_IF_IN_TRAP;
-		if (data32) {
-			set_vflags_long(newflags, regs);
-		} else {
-			set_vflags_short(newflags, regs);
-		}
-		goto check_vip;
-		}
+		अगर (data32) अणु
+			set_vflags_दीर्घ(newflags, regs);
+		पूर्ण अन्यथा अणु
+			set_vflags_लघु(newflags, regs);
+		पूर्ण
+		जाओ check_vip;
+		पूर्ण
 
 	/* cli */
-	case 0xfa:
+	हाल 0xfa:
 		IP(regs) = ip;
 		clear_IF(regs);
-		goto vm86_fault_return;
+		जाओ vm86_fault_वापस;
 
 	/* sti */
 	/*
-	 * Damn. This is incorrect: the 'sti' instruction should actually
-	 * enable interrupts after the /next/ instruction. Not good.
+	 * Damn. This is incorrect: the 'sti' inकाष्ठाion should actually
+	 * enable पूर्णांकerrupts after the /next/ inकाष्ठाion. Not good.
 	 *
 	 * Probably needs some horsing around with the TF flag. Aiee..
 	 */
-	case 0xfb:
+	हाल 0xfb:
 		IP(regs) = ip;
 		set_IF(regs);
-		goto check_vip;
+		जाओ check_vip;
 
-	default:
+	शेष:
 		save_v86_state(regs, VM86_UNKNOWN);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 check_vip:
-	if ((VEFLAGS & (X86_EFLAGS_VIP | X86_EFLAGS_VIF)) ==
-	    (X86_EFLAGS_VIP | X86_EFLAGS_VIF)) {
+	अगर ((VEFLAGS & (X86_EFLAGS_VIP | X86_EFLAGS_VIF)) ==
+	    (X86_EFLAGS_VIP | X86_EFLAGS_VIF)) अणु
 		save_v86_state(regs, VM86_STI);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-vm86_fault_return:
-	if (vmpi->force_return_for_pic  && (VEFLAGS & (X86_EFLAGS_IF | X86_EFLAGS_VIF))) {
+vm86_fault_वापस:
+	अगर (vmpi->क्रमce_वापस_क्रम_pic  && (VEFLAGS & (X86_EFLAGS_IF | X86_EFLAGS_VIF))) अणु
 		save_v86_state(regs, VM86_PICRETURN);
-		return;
-	}
-	if (orig_flags & X86_EFLAGS_TF)
+		वापस;
+	पूर्ण
+	अगर (orig_flags & X86_EFLAGS_TF)
 		handle_vm86_trap(regs, 0, X86_TRAP_DB);
-	return;
+	वापस;
 
 simulate_sigsegv:
-	/* FIXME: After a long discussion with Stas we finally
+	/* FIXME: After a दीर्घ discussion with Stas we finally
 	 *        agreed, that this is wrong. Here we should
-	 *        really send a SIGSEGV to the user program.
-	 *        But how do we create the correct context? We
+	 *        really send a संक_अंश to the user program.
+	 *        But how करो we create the correct context? We
 	 *        are inside a general protection fault handler
-	 *        and has just returned from a page fault handler.
-	 *        The correct context for the signal handler
-	 *        should be a mixture of the two, but how do we
-	 *        get the information? [KD]
+	 *        and has just वापसed from a page fault handler.
+	 *        The correct context क्रम the संकेत handler
+	 *        should be a mixture of the two, but how करो we
+	 *        get the inक्रमmation? [KD]
 	 */
 	save_v86_state(regs, VM86_UNKNOWN);
-}
+पूर्ण
 
 /* ---------------- vm86 special IRQ passing stuff ----------------- */
 
-#define VM86_IRQNAME		"vm86irq"
+#घोषणा VM86_IRQNAME		"vm86irq"
 
-static struct vm86_irqs {
-	struct task_struct *tsk;
-	int sig;
-} vm86_irqs[16];
+अटल काष्ठा vm86_irqs अणु
+	काष्ठा task_काष्ठा *tsk;
+	पूर्णांक sig;
+पूर्ण vm86_irqs[16];
 
-static DEFINE_SPINLOCK(irqbits_lock);
-static int irqbits;
+अटल DEFINE_SPINLOCK(irqbits_lock);
+अटल पूर्णांक irqbits;
 
-#define ALLOWED_SIGS (1 /* 0 = don't send a signal */ \
+#घोषणा ALLOWED_SIGS (1 /* 0 = करोn't send a संकेत */ \
 	| (1 << SIGUSR1) | (1 << SIGUSR2) | (1 << SIGIO)  | (1 << SIGURG) \
 	| (1 << SIGUNUSED))
 
-static irqreturn_t irq_handler(int intno, void *dev_id)
-{
-	int irq_bit;
-	unsigned long flags;
+अटल irqवापस_t irq_handler(पूर्णांक पूर्णांकno, व्योम *dev_id)
+अणु
+	पूर्णांक irq_bit;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&irqbits_lock, flags);
-	irq_bit = 1 << intno;
-	if ((irqbits & irq_bit) || !vm86_irqs[intno].tsk)
-		goto out;
+	irq_bit = 1 << पूर्णांकno;
+	अगर ((irqbits & irq_bit) || !vm86_irqs[पूर्णांकno].tsk)
+		जाओ out;
 	irqbits |= irq_bit;
-	if (vm86_irqs[intno].sig)
-		send_sig(vm86_irqs[intno].sig, vm86_irqs[intno].tsk, 1);
+	अगर (vm86_irqs[पूर्णांकno].sig)
+		send_sig(vm86_irqs[पूर्णांकno].sig, vm86_irqs[पूर्णांकno].tsk, 1);
 	/*
-	 * IRQ will be re-enabled when user asks for the irq (whether
-	 * polling or as a result of the signal)
+	 * IRQ will be re-enabled when user asks क्रम the irq (whether
+	 * polling or as a result of the संकेत)
 	 */
-	disable_irq_nosync(intno);
+	disable_irq_nosync(पूर्णांकno);
 	spin_unlock_irqrestore(&irqbits_lock, flags);
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 out:
 	spin_unlock_irqrestore(&irqbits_lock, flags);
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static inline void free_vm86_irq(int irqnumber)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम मुक्त_vm86_irq(पूर्णांक irqnumber)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	free_irq(irqnumber, NULL);
-	vm86_irqs[irqnumber].tsk = NULL;
+	मुक्त_irq(irqnumber, शून्य);
+	vm86_irqs[irqnumber].tsk = शून्य;
 
 	spin_lock_irqsave(&irqbits_lock, flags);
 	irqbits &= ~(1 << irqnumber);
 	spin_unlock_irqrestore(&irqbits_lock, flags);
-}
+पूर्ण
 
-void release_vm86_irqs(struct task_struct *task)
-{
-	int i;
-	for (i = FIRST_VM86_IRQ ; i <= LAST_VM86_IRQ; i++)
-	    if (vm86_irqs[i].tsk == task)
-		free_vm86_irq(i);
-}
+व्योम release_vm86_irqs(काष्ठा task_काष्ठा *task)
+अणु
+	पूर्णांक i;
+	क्रम (i = FIRST_VM86_IRQ ; i <= LAST_VM86_IRQ; i++)
+	    अगर (vm86_irqs[i].tsk == task)
+		मुक्त_vm86_irq(i);
+पूर्ण
 
-static inline int get_and_reset_irq(int irqnumber)
-{
-	int bit;
-	unsigned long flags;
-	int ret = 0;
+अटल अंतरभूत पूर्णांक get_and_reset_irq(पूर्णांक irqnumber)
+अणु
+	पूर्णांक bit;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (invalid_vm86_irq(irqnumber)) return 0;
-	if (vm86_irqs[irqnumber].tsk != current) return 0;
+	अगर (invalid_vm86_irq(irqnumber)) वापस 0;
+	अगर (vm86_irqs[irqnumber].tsk != current) वापस 0;
 	spin_lock_irqsave(&irqbits_lock, flags);
 	bit = irqbits & (1 << irqnumber);
 	irqbits &= ~bit;
-	if (bit) {
+	अगर (bit) अणु
 		enable_irq(irqnumber);
 		ret = 1;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&irqbits_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int do_vm86_irq_handling(int subfunction, int irqnumber)
-{
-	int ret;
-	switch (subfunction) {
-		case VM86_GET_AND_RESET_IRQ: {
-			return get_and_reset_irq(irqnumber);
-		}
-		case VM86_GET_IRQ_BITS: {
-			return irqbits;
-		}
-		case VM86_REQUEST_IRQ: {
-			int sig = irqnumber >> 8;
-			int irq = irqnumber & 255;
-			if (!capable(CAP_SYS_ADMIN)) return -EPERM;
-			if (!((1 << sig) & ALLOWED_SIGS)) return -EPERM;
-			if (invalid_vm86_irq(irq)) return -EPERM;
-			if (vm86_irqs[irq].tsk) return -EPERM;
-			ret = request_irq(irq, &irq_handler, 0, VM86_IRQNAME, NULL);
-			if (ret) return ret;
+अटल पूर्णांक करो_vm86_irq_handling(पूर्णांक subfunction, पूर्णांक irqnumber)
+अणु
+	पूर्णांक ret;
+	चयन (subfunction) अणु
+		हाल VM86_GET_AND_RESET_IRQ: अणु
+			वापस get_and_reset_irq(irqnumber);
+		पूर्ण
+		हाल VM86_GET_IRQ_BITS: अणु
+			वापस irqbits;
+		पूर्ण
+		हाल VM86_REQUEST_IRQ: अणु
+			पूर्णांक sig = irqnumber >> 8;
+			पूर्णांक irq = irqnumber & 255;
+			अगर (!capable(CAP_SYS_ADMIN)) वापस -EPERM;
+			अगर (!((1 << sig) & ALLOWED_SIGS)) वापस -EPERM;
+			अगर (invalid_vm86_irq(irq)) वापस -EPERM;
+			अगर (vm86_irqs[irq].tsk) वापस -EPERM;
+			ret = request_irq(irq, &irq_handler, 0, VM86_IRQNAME, शून्य);
+			अगर (ret) वापस ret;
 			vm86_irqs[irq].sig = sig;
 			vm86_irqs[irq].tsk = current;
-			return irq;
-		}
-		case  VM86_FREE_IRQ: {
-			if (invalid_vm86_irq(irqnumber)) return -EPERM;
-			if (!vm86_irqs[irqnumber].tsk) return 0;
-			if (vm86_irqs[irqnumber].tsk != current) return -EPERM;
-			free_vm86_irq(irqnumber);
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
+			वापस irq;
+		पूर्ण
+		हाल  VM86_FREE_IRQ: अणु
+			अगर (invalid_vm86_irq(irqnumber)) वापस -EPERM;
+			अगर (!vm86_irqs[irqnumber].tsk) वापस 0;
+			अगर (vm86_irqs[irqnumber].tsk != current) वापस -EPERM;
+			मुक्त_vm86_irq(irqnumber);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 

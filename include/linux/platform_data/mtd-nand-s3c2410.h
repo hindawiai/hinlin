@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2004 Simtec Electronics
  *	Ben Dooks <ben@simtec.co.uk>
  *
- * S3C2410 - NAND device controller platform_device info
+ * S3C2410 - न_अंकD device controller platक्रमm_device info
 */
 
-#ifndef __MTD_NAND_S3C2410_H
-#define __MTD_NAND_S3C2410_H
+#अगर_अघोषित __MTD_न_अंकD_S3C2410_H
+#घोषणा __MTD_न_अंकD_S3C2410_H
 
-#include <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/rawnand.h>
 
 /**
- * struct s3c2410_nand_set - define a set of one or more nand chips
+ * काष्ठा s3c2410_nand_set - define a set of one or more nand chips
  * @flash_bbt: 		Openmoko u-boot can create a Bad Block Table
  *			Setting this flag will allow the kernel to
- *			look for it at boot time and also skip the NAND
+ *			look क्रम it at boot समय and also skip the न_अंकD
  *			scan.
- * @options:		Default value to set into 'struct nand_chip' options.
+ * @options:		Default value to set पूर्णांकo 'struct nand_chip' options.
  * @nr_chips:		Number of chips in this set
- * @nr_partitions:	Number of partitions pointed to by @partitions
+ * @nr_partitions:	Number of partitions poपूर्णांकed to by @partitions
  * @name:		Name of set (optional)
- * @nr_map:		Map for low-layer logical to physical chip numbers (option)
+ * @nr_map:		Map क्रम low-layer logical to physical chip numbers (option)
  * @partitions:		The mtd partition list
  *
- * define a set of one or more nand chips registered with an unique mtd. Also
- * allows to pass flag to the underlying NAND layer. 'disable_ecc' will trigger
- * a warning at boot time.
+ * define a set of one or more nand chips रेजिस्टरed with an unique mtd. Also
+ * allows to pass flag to the underlying न_अंकD layer. 'disable_ecc' will trigger
+ * a warning at boot समय.
  */
-struct s3c2410_nand_set {
-	unsigned int		flash_bbt:1;
+काष्ठा s3c2410_nand_set अणु
+	अचिन्हित पूर्णांक		flash_bbt:1;
 
-	unsigned int		options;
-	int			nr_chips;
-	int			nr_partitions;
-	char			*name;
-	int			*nr_map;
-	struct mtd_partition	*partitions;
-	struct device_node	*of_node;
-};
+	अचिन्हित पूर्णांक		options;
+	पूर्णांक			nr_chips;
+	पूर्णांक			nr_partitions;
+	अक्षर			*name;
+	पूर्णांक			*nr_map;
+	काष्ठा mtd_partition	*partitions;
+	काष्ठा device_node	*of_node;
+पूर्ण;
 
-struct s3c2410_platform_nand {
-	/* timing information for controller, all times in nanoseconds */
+काष्ठा s3c2410_platक्रमm_nand अणु
+	/* timing inक्रमmation क्रम controller, all बार in nanoseconds */
 
-	int	tacls;	/* time for active CLE/ALE to nWE/nOE */
-	int	twrph0;	/* active time for nWE/nOE */
-	int	twrph1;	/* time for release CLE/ALE from nWE/nOE inactive */
+	पूर्णांक	tacls;	/* समय क्रम active CLE/ALE to nWE/nOE */
+	पूर्णांक	twrph0;	/* active समय क्रम nWE/nOE */
+	पूर्णांक	twrph1;	/* समय क्रम release CLE/ALE from nWE/nOE inactive */
 
-	unsigned int	ignore_unset_ecc:1;
+	अचिन्हित पूर्णांक	ignore_unset_ecc:1;
 
-	enum nand_ecc_engine_type engine_type;
+	क्रमागत nand_ecc_engine_type engine_type;
 
-	int			nr_sets;
-	struct s3c2410_nand_set *sets;
+	पूर्णांक			nr_sets;
+	काष्ठा s3c2410_nand_set *sets;
 
-	void			(*select_chip)(struct s3c2410_nand_set *,
-					       int chip);
-};
+	व्योम			(*select_chip)(काष्ठा s3c2410_nand_set *,
+					       पूर्णांक chip);
+पूर्ण;
 
 /**
- * s3c_nand_set_platdata() - register NAND platform data.
- * @nand: The NAND platform data to register with s3c_device_nand.
+ * s3c_nand_set_platdata() - रेजिस्टर न_अंकD platक्रमm data.
+ * @nand: The न_अंकD platक्रमm data to रेजिस्टर with s3c_device_nand.
  *
- * This function copies the given NAND platform data, @nand and registers
+ * This function copies the given न_अंकD platक्रमm data, @nand and रेजिस्टरs
  * it with the s3c_device_nand. This allows @nand to be __initdata.
 */
-extern void s3c_nand_set_platdata(struct s3c2410_platform_nand *nand);
+बाह्य व्योम s3c_nand_set_platdata(काष्ठा s3c2410_platक्रमm_nand *nand);
 
-#endif /*__MTD_NAND_S3C2410_H */
+#पूर्ण_अगर /*__MTD_न_अंकD_S3C2410_H */

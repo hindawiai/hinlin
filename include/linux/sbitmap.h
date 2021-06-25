@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Fast and scalable bitmaps.
+ * Fast and scalable biपंचांगaps.
  *
  * Copyright (C) 2016 Facebook
  * Copyright (C) 2013-2014 Jens Axboe
  */
 
-#ifndef __LINUX_SCALE_BITMAP_H
-#define __LINUX_SCALE_BITMAP_H
+#अगर_अघोषित __LINUX_SCALE_BITMAP_H
+#घोषणा __LINUX_SCALE_BITMAP_H
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-struct seq_file;
+काष्ठा seq_file;
 
 /**
- * struct sbitmap_word - Word in a &struct sbitmap.
+ * काष्ठा sbiपंचांगap_word - Word in a &काष्ठा sbiपंचांगap.
  */
-struct sbitmap_word {
+काष्ठा sbiपंचांगap_word अणु
 	/**
 	 * @depth: Number of bits being used in @word/@cleared
 	 */
-	unsigned long depth;
+	अचिन्हित दीर्घ depth;
 
 	/**
-	 * @word: word holding free bits
+	 * @word: word holding मुक्त bits
 	 */
-	unsigned long word ____cacheline_aligned_in_smp;
+	अचिन्हित दीर्घ word ____cacheline_aligned_in_smp;
 
 	/**
 	 * @cleared: word holding cleared bits
 	 */
-	unsigned long cleared ____cacheline_aligned_in_smp;
-} ____cacheline_aligned_in_smp;
+	अचिन्हित दीर्घ cleared ____cacheline_aligned_in_smp;
+पूर्ण ____cacheline_aligned_in_smp;
 
 /**
- * struct sbitmap - Scalable bitmap.
+ * काष्ठा sbiपंचांगap - Scalable biपंचांगap.
  *
- * A &struct sbitmap is spread over multiple cachelines to avoid ping-pong. This
- * trades off higher memory usage for better scalability.
+ * A &काष्ठा sbiपंचांगap is spपढ़ो over multiple cachelines to aव्योम ping-pong. This
+ * trades off higher memory usage क्रम better scalability.
  */
-struct sbitmap {
+काष्ठा sbiपंचांगap अणु
 	/**
-	 * @depth: Number of bits used in the whole bitmap.
+	 * @depth: Number of bits used in the whole biपंचांगap.
 	 */
-	unsigned int depth;
+	अचिन्हित पूर्णांक depth;
 
 	/**
-	 * @shift: log2(number of bits used per word)
+	 * @shअगरt: log2(number of bits used per word)
 	 */
-	unsigned int shift;
+	अचिन्हित पूर्णांक shअगरt;
 
 	/**
-	 * @map_nr: Number of words (cachelines) being used for the bitmap.
+	 * @map_nr: Number of words (cachelines) being used क्रम the biपंचांगap.
 	 */
-	unsigned int map_nr;
+	अचिन्हित पूर्णांक map_nr;
 
 	/**
 	 * @round_robin: Allocate bits in strict round-robin order.
@@ -62,550 +63,550 @@ struct sbitmap {
 	bool round_robin;
 
 	/**
-	 * @map: Allocated bitmap.
+	 * @map: Allocated biपंचांगap.
 	 */
-	struct sbitmap_word *map;
+	काष्ठा sbiपंचांगap_word *map;
 
 	/*
-	 * @alloc_hint: Cache of last successfully allocated or freed bit.
+	 * @alloc_hपूर्णांक: Cache of last successfully allocated or मुक्तd bit.
 	 *
-	 * This is per-cpu, which allows multiple users to stick to different
+	 * This is per-cpu, which allows multiple users to stick to dअगरferent
 	 * cachelines until the map is exhausted.
 	 */
-	unsigned int __percpu *alloc_hint;
-};
+	अचिन्हित पूर्णांक __percpu *alloc_hपूर्णांक;
+पूर्ण;
 
-#define SBQ_WAIT_QUEUES 8
-#define SBQ_WAKE_BATCH 8
+#घोषणा SBQ_WAIT_QUEUES 8
+#घोषणा SBQ_WAKE_BATCH 8
 
 /**
- * struct sbq_wait_state - Wait queue in a &struct sbitmap_queue.
+ * काष्ठा sbq_रुको_state - Wait queue in a &काष्ठा sbiपंचांगap_queue.
  */
-struct sbq_wait_state {
+काष्ठा sbq_रुको_state अणु
 	/**
-	 * @wait_cnt: Number of frees remaining before we wake up.
+	 * @रुको_cnt: Number of मुक्तs reमुख्यing beक्रमe we wake up.
 	 */
-	atomic_t wait_cnt;
+	atomic_t रुको_cnt;
 
 	/**
-	 * @wait: Wait queue.
+	 * @रुको: Wait queue.
 	 */
-	wait_queue_head_t wait;
-} ____cacheline_aligned_in_smp;
+	रुको_queue_head_t रुको;
+पूर्ण ____cacheline_aligned_in_smp;
 
 /**
- * struct sbitmap_queue - Scalable bitmap with the added ability to wait on free
+ * काष्ठा sbiपंचांगap_queue - Scalable biपंचांगap with the added ability to रुको on मुक्त
  * bits.
  *
- * A &struct sbitmap_queue uses multiple wait queues and rolling wakeups to
- * avoid contention on the wait queue spinlock. This ensures that we don't hit a
- * scalability wall when we run out of free bits and have to start putting tasks
+ * A &काष्ठा sbiपंचांगap_queue uses multiple रुको queues and rolling wakeups to
+ * aव्योम contention on the रुको queue spinlock. This ensures that we करोn't hit a
+ * scalability wall when we run out of मुक्त bits and have to start putting tasks
  * to sleep.
  */
-struct sbitmap_queue {
+काष्ठा sbiपंचांगap_queue अणु
 	/**
-	 * @sb: Scalable bitmap.
+	 * @sb: Scalable biपंचांगap.
 	 */
-	struct sbitmap sb;
+	काष्ठा sbiपंचांगap sb;
 
 	/**
-	 * @wake_batch: Number of bits which must be freed before we wake up any
-	 * waiters.
+	 * @wake_batch: Number of bits which must be मुक्तd beक्रमe we wake up any
+	 * रुकोers.
 	 */
-	unsigned int wake_batch;
+	अचिन्हित पूर्णांक wake_batch;
 
 	/**
-	 * @wake_index: Next wait queue in @ws to wake up.
+	 * @wake_index: Next रुको queue in @ws to wake up.
 	 */
 	atomic_t wake_index;
 
 	/**
 	 * @ws: Wait queues.
 	 */
-	struct sbq_wait_state *ws;
+	काष्ठा sbq_रुको_state *ws;
 
 	/*
-	 * @ws_active: count of currently active ws waitqueues
+	 * @ws_active: count of currently active ws रुकोqueues
 	 */
 	atomic_t ws_active;
 
 	/**
 	 * @min_shallow_depth: The minimum shallow depth which may be passed to
-	 * sbitmap_queue_get_shallow() or __sbitmap_queue_get_shallow().
+	 * sbiपंचांगap_queue_get_shallow() or __sbiपंचांगap_queue_get_shallow().
 	 */
-	unsigned int min_shallow_depth;
-};
+	अचिन्हित पूर्णांक min_shallow_depth;
+पूर्ण;
 
 /**
- * sbitmap_init_node() - Initialize a &struct sbitmap on a specific memory node.
- * @sb: Bitmap to initialize.
+ * sbiपंचांगap_init_node() - Initialize a &काष्ठा sbiपंचांगap on a specअगरic memory node.
+ * @sb: Biपंचांगap to initialize.
  * @depth: Number of bits to allocate.
- * @shift: Use 2^@shift bits per word in the bitmap; if a negative number if
- *         given, a good default is chosen.
+ * @shअगरt: Use 2^@shअगरt bits per word in the biपंचांगap; अगर a negative number अगर
+ *         given, a good शेष is chosen.
  * @flags: Allocation flags.
  * @node: Memory node to allocate on.
  * @round_robin: If true, be stricter about allocation order; always allocate
  *               starting from the last allocated bit. This is less efficient
- *               than the default behavior (false).
- * @alloc_hint: If true, apply percpu hint for where to start searching for
- *              a free bit.
+ *               than the शेष behavior (false).
+ * @alloc_hपूर्णांक: If true, apply percpu hपूर्णांक क्रम where to start searching क्रम
+ *              a मुक्त bit.
  *
- * Return: Zero on success or negative errno on failure.
+ * Return: Zero on success or negative त्रुटि_सं on failure.
  */
-int sbitmap_init_node(struct sbitmap *sb, unsigned int depth, int shift,
-		      gfp_t flags, int node, bool round_robin, bool alloc_hint);
+पूर्णांक sbiपंचांगap_init_node(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक depth, पूर्णांक shअगरt,
+		      gfp_t flags, पूर्णांक node, bool round_robin, bool alloc_hपूर्णांक);
 
 /**
- * sbitmap_free() - Free memory used by a &struct sbitmap.
- * @sb: Bitmap to free.
+ * sbiपंचांगap_मुक्त() - Free memory used by a &काष्ठा sbiपंचांगap.
+ * @sb: Biपंचांगap to मुक्त.
  */
-static inline void sbitmap_free(struct sbitmap *sb)
-{
-	free_percpu(sb->alloc_hint);
-	kfree(sb->map);
-	sb->map = NULL;
-}
+अटल अंतरभूत व्योम sbiपंचांगap_मुक्त(काष्ठा sbiपंचांगap *sb)
+अणु
+	मुक्त_percpu(sb->alloc_hपूर्णांक);
+	kमुक्त(sb->map);
+	sb->map = शून्य;
+पूर्ण
 
 /**
- * sbitmap_resize() - Resize a &struct sbitmap.
- * @sb: Bitmap to resize.
+ * sbiपंचांगap_resize() - Resize a &काष्ठा sbiपंचांगap.
+ * @sb: Biपंचांगap to resize.
  * @depth: New number of bits to resize to.
  *
  * Doesn't reallocate anything. It's up to the caller to ensure that the new
- * depth doesn't exceed the depth that the sb was initialized with.
+ * depth करोesn't exceed the depth that the sb was initialized with.
  */
-void sbitmap_resize(struct sbitmap *sb, unsigned int depth);
+व्योम sbiपंचांगap_resize(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक depth);
 
 /**
- * sbitmap_get() - Try to allocate a free bit from a &struct sbitmap.
- * @sb: Bitmap to allocate from.
+ * sbiपंचांगap_get() - Try to allocate a मुक्त bit from a &काष्ठा sbiपंचांगap.
+ * @sb: Biपंचांगap to allocate from.
  *
- * This operation provides acquire barrier semantics if it succeeds.
+ * This operation provides acquire barrier semantics अगर it succeeds.
  *
- * Return: Non-negative allocated bit number if successful, -1 otherwise.
+ * Return: Non-negative allocated bit number अगर successful, -1 otherwise.
  */
-int sbitmap_get(struct sbitmap *sb);
+पूर्णांक sbiपंचांगap_get(काष्ठा sbiपंचांगap *sb);
 
 /**
- * sbitmap_get_shallow() - Try to allocate a free bit from a &struct sbitmap,
+ * sbiपंचांगap_get_shallow() - Try to allocate a मुक्त bit from a &काष्ठा sbiपंचांगap,
  * limiting the depth used from each word.
- * @sb: Bitmap to allocate from.
+ * @sb: Biपंचांगap to allocate from.
  * @shallow_depth: The maximum number of bits to allocate from a single word.
  *
- * This rather specific operation allows for having multiple users with
- * different allocation limits. E.g., there can be a high-priority class that
- * uses sbitmap_get() and a low-priority class that uses sbitmap_get_shallow()
- * with a @shallow_depth of (1 << (@sb->shift - 1)). Then, the low-priority
- * class can only allocate half of the total bits in the bitmap, preventing it
+ * This rather specअगरic operation allows क्रम having multiple users with
+ * dअगरferent allocation limits. E.g., there can be a high-priority class that
+ * uses sbiपंचांगap_get() and a low-priority class that uses sbiपंचांगap_get_shallow()
+ * with a @shallow_depth of (1 << (@sb->shअगरt - 1)). Then, the low-priority
+ * class can only allocate half of the total bits in the biपंचांगap, preventing it
  * from starving out the high-priority class.
  *
- * Return: Non-negative allocated bit number if successful, -1 otherwise.
+ * Return: Non-negative allocated bit number अगर successful, -1 otherwise.
  */
-int sbitmap_get_shallow(struct sbitmap *sb, unsigned long shallow_depth);
+पूर्णांक sbiपंचांगap_get_shallow(काष्ठा sbiपंचांगap *sb, अचिन्हित दीर्घ shallow_depth);
 
 /**
- * sbitmap_any_bit_set() - Check for a set bit in a &struct sbitmap.
- * @sb: Bitmap to check.
+ * sbiपंचांगap_any_bit_set() - Check क्रम a set bit in a &काष्ठा sbiपंचांगap.
+ * @sb: Biपंचांगap to check.
  *
- * Return: true if any bit in the bitmap is set, false otherwise.
+ * Return: true अगर any bit in the biपंचांगap is set, false otherwise.
  */
-bool sbitmap_any_bit_set(const struct sbitmap *sb);
+bool sbiपंचांगap_any_bit_set(स्थिर काष्ठा sbiपंचांगap *sb);
 
-#define SB_NR_TO_INDEX(sb, bitnr) ((bitnr) >> (sb)->shift)
-#define SB_NR_TO_BIT(sb, bitnr) ((bitnr) & ((1U << (sb)->shift) - 1U))
+#घोषणा SB_NR_TO_INDEX(sb, bitnr) ((bitnr) >> (sb)->shअगरt)
+#घोषणा SB_NR_TO_BIT(sb, bitnr) ((bitnr) & ((1U << (sb)->shअगरt) - 1U))
 
-typedef bool (*sb_for_each_fn)(struct sbitmap *, unsigned int, void *);
+प्रकार bool (*sb_क्रम_each_fn)(काष्ठा sbiपंचांगap *, अचिन्हित पूर्णांक, व्योम *);
 
 /**
- * __sbitmap_for_each_set() - Iterate over each set bit in a &struct sbitmap.
+ * __sbiपंचांगap_क्रम_each_set() - Iterate over each set bit in a &काष्ठा sbiपंचांगap.
  * @start: Where to start the iteration.
- * @sb: Bitmap to iterate over.
- * @fn: Callback. Should return true to continue or false to break early.
- * @data: Pointer to pass to callback.
+ * @sb: Biपंचांगap to iterate over.
+ * @fn: Callback. Should वापस true to जारी or false to अवरोध early.
+ * @data: Poपूर्णांकer to pass to callback.
  *
- * This is inline even though it's non-trivial so that the function calls to the
+ * This is अंतरभूत even though it's non-trivial so that the function calls to the
  * callback will hopefully get optimized away.
  */
-static inline void __sbitmap_for_each_set(struct sbitmap *sb,
-					  unsigned int start,
-					  sb_for_each_fn fn, void *data)
-{
-	unsigned int index;
-	unsigned int nr;
-	unsigned int scanned = 0;
+अटल अंतरभूत व्योम __sbiपंचांगap_क्रम_each_set(काष्ठा sbiपंचांगap *sb,
+					  अचिन्हित पूर्णांक start,
+					  sb_क्रम_each_fn fn, व्योम *data)
+अणु
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक nr;
+	अचिन्हित पूर्णांक scanned = 0;
 
-	if (start >= sb->depth)
+	अगर (start >= sb->depth)
 		start = 0;
 	index = SB_NR_TO_INDEX(sb, start);
 	nr = SB_NR_TO_BIT(sb, start);
 
-	while (scanned < sb->depth) {
-		unsigned long word;
-		unsigned int depth = min_t(unsigned int,
+	जबतक (scanned < sb->depth) अणु
+		अचिन्हित दीर्घ word;
+		अचिन्हित पूर्णांक depth = min_t(अचिन्हित पूर्णांक,
 					   sb->map[index].depth - nr,
 					   sb->depth - scanned);
 
 		scanned += depth;
 		word = sb->map[index].word & ~sb->map[index].cleared;
-		if (!word)
-			goto next;
+		अगर (!word)
+			जाओ next;
 
 		/*
 		 * On the first iteration of the outer loop, we need to add the
-		 * bit offset back to the size of the word for find_next_bit().
+		 * bit offset back to the size of the word क्रम find_next_bit().
 		 * On all other iterations, nr is zero, so this is a noop.
 		 */
 		depth += nr;
-		while (1) {
+		जबतक (1) अणु
 			nr = find_next_bit(&word, depth, nr);
-			if (nr >= depth)
-				break;
-			if (!fn(sb, (index << sb->shift) + nr, data))
-				return;
+			अगर (nr >= depth)
+				अवरोध;
+			अगर (!fn(sb, (index << sb->shअगरt) + nr, data))
+				वापस;
 
 			nr++;
-		}
+		पूर्ण
 next:
 		nr = 0;
-		if (++index >= sb->map_nr)
+		अगर (++index >= sb->map_nr)
 			index = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * sbitmap_for_each_set() - Iterate over each set bit in a &struct sbitmap.
- * @sb: Bitmap to iterate over.
- * @fn: Callback. Should return true to continue or false to break early.
- * @data: Pointer to pass to callback.
+ * sbiपंचांगap_क्रम_each_set() - Iterate over each set bit in a &काष्ठा sbiपंचांगap.
+ * @sb: Biपंचांगap to iterate over.
+ * @fn: Callback. Should वापस true to जारी or false to अवरोध early.
+ * @data: Poपूर्णांकer to pass to callback.
  */
-static inline void sbitmap_for_each_set(struct sbitmap *sb, sb_for_each_fn fn,
-					void *data)
-{
-	__sbitmap_for_each_set(sb, 0, fn, data);
-}
+अटल अंतरभूत व्योम sbiपंचांगap_क्रम_each_set(काष्ठा sbiपंचांगap *sb, sb_क्रम_each_fn fn,
+					व्योम *data)
+अणु
+	__sbiपंचांगap_क्रम_each_set(sb, 0, fn, data);
+पूर्ण
 
-static inline unsigned long *__sbitmap_word(struct sbitmap *sb,
-					    unsigned int bitnr)
-{
-	return &sb->map[SB_NR_TO_INDEX(sb, bitnr)].word;
-}
+अटल अंतरभूत अचिन्हित दीर्घ *__sbiपंचांगap_word(काष्ठा sbiपंचांगap *sb,
+					    अचिन्हित पूर्णांक bitnr)
+अणु
+	वापस &sb->map[SB_NR_TO_INDEX(sb, bitnr)].word;
+पूर्ण
 
-/* Helpers equivalent to the operations in asm/bitops.h and linux/bitmap.h */
+/* Helpers equivalent to the operations in यंत्र/bitops.h and linux/biपंचांगap.h */
 
-static inline void sbitmap_set_bit(struct sbitmap *sb, unsigned int bitnr)
-{
-	set_bit(SB_NR_TO_BIT(sb, bitnr), __sbitmap_word(sb, bitnr));
-}
+अटल अंतरभूत व्योम sbiपंचांगap_set_bit(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक bitnr)
+अणु
+	set_bit(SB_NR_TO_BIT(sb, bitnr), __sbiपंचांगap_word(sb, bitnr));
+पूर्ण
 
-static inline void sbitmap_clear_bit(struct sbitmap *sb, unsigned int bitnr)
-{
-	clear_bit(SB_NR_TO_BIT(sb, bitnr), __sbitmap_word(sb, bitnr));
-}
+अटल अंतरभूत व्योम sbiपंचांगap_clear_bit(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक bitnr)
+अणु
+	clear_bit(SB_NR_TO_BIT(sb, bitnr), __sbiपंचांगap_word(sb, bitnr));
+पूर्ण
 
 /*
- * This one is special, since it doesn't actually clear the bit, rather it
+ * This one is special, since it करोesn't actually clear the bit, rather it
  * sets the corresponding bit in the ->cleared mask instead. Paired with
- * the caller doing sbitmap_deferred_clear() if a given index is full, which
- * will clear the previously freed entries in the corresponding ->word.
+ * the caller करोing sbiपंचांगap_deferred_clear() अगर a given index is full, which
+ * will clear the previously मुक्तd entries in the corresponding ->word.
  */
-static inline void sbitmap_deferred_clear_bit(struct sbitmap *sb, unsigned int bitnr)
-{
-	unsigned long *addr = &sb->map[SB_NR_TO_INDEX(sb, bitnr)].cleared;
+अटल अंतरभूत व्योम sbiपंचांगap_deferred_clear_bit(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक bitnr)
+अणु
+	अचिन्हित दीर्घ *addr = &sb->map[SB_NR_TO_INDEX(sb, bitnr)].cleared;
 
 	set_bit(SB_NR_TO_BIT(sb, bitnr), addr);
-}
+पूर्ण
 
 /*
- * Pair of sbitmap_get, and this one applies both cleared bit and
- * allocation hint.
+ * Pair of sbiपंचांगap_get, and this one applies both cleared bit and
+ * allocation hपूर्णांक.
  */
-static inline void sbitmap_put(struct sbitmap *sb, unsigned int bitnr)
-{
-	sbitmap_deferred_clear_bit(sb, bitnr);
+अटल अंतरभूत व्योम sbiपंचांगap_put(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक bitnr)
+अणु
+	sbiपंचांगap_deferred_clear_bit(sb, bitnr);
 
-	if (likely(sb->alloc_hint && !sb->round_robin && bitnr < sb->depth))
-		*raw_cpu_ptr(sb->alloc_hint) = bitnr;
-}
+	अगर (likely(sb->alloc_hपूर्णांक && !sb->round_robin && bitnr < sb->depth))
+		*raw_cpu_ptr(sb->alloc_hपूर्णांक) = bitnr;
+पूर्ण
 
-static inline int sbitmap_test_bit(struct sbitmap *sb, unsigned int bitnr)
-{
-	return test_bit(SB_NR_TO_BIT(sb, bitnr), __sbitmap_word(sb, bitnr));
-}
+अटल अंतरभूत पूर्णांक sbiपंचांगap_test_bit(काष्ठा sbiपंचांगap *sb, अचिन्हित पूर्णांक bitnr)
+अणु
+	वापस test_bit(SB_NR_TO_BIT(sb, bitnr), __sbiपंचांगap_word(sb, bitnr));
+पूर्ण
 
-static inline int sbitmap_calculate_shift(unsigned int depth)
-{
-	int	shift = ilog2(BITS_PER_LONG);
+अटल अंतरभूत पूर्णांक sbiपंचांगap_calculate_shअगरt(अचिन्हित पूर्णांक depth)
+अणु
+	पूर्णांक	shअगरt = ilog2(BITS_PER_LONG);
 
 	/*
-	 * If the bitmap is small, shrink the number of bits per word so
-	 * we spread over a few cachelines, at least. If less than 4
-	 * bits, just forget about it, it's not going to work optimally
+	 * If the biपंचांगap is small, shrink the number of bits per word so
+	 * we spपढ़ो over a few cachelines, at least. If less than 4
+	 * bits, just क्रमget about it, it's not going to work optimally
 	 * anyway.
 	 */
-	if (depth >= 4) {
-		while ((4U << shift) > depth)
-			shift--;
-	}
+	अगर (depth >= 4) अणु
+		जबतक ((4U << shअगरt) > depth)
+			shअगरt--;
+	पूर्ण
 
-	return shift;
-}
+	वापस shअगरt;
+पूर्ण
 
 /**
- * sbitmap_show() - Dump &struct sbitmap information to a &struct seq_file.
- * @sb: Bitmap to show.
- * @m: struct seq_file to write to.
+ * sbiपंचांगap_show() - Dump &काष्ठा sbiपंचांगap inक्रमmation to a &काष्ठा seq_file.
+ * @sb: Biपंचांगap to show.
+ * @m: काष्ठा seq_file to ग_लिखो to.
  *
- * This is intended for debugging. The format may change at any time.
+ * This is पूर्णांकended क्रम debugging. The क्रमmat may change at any समय.
  */
-void sbitmap_show(struct sbitmap *sb, struct seq_file *m);
+व्योम sbiपंचांगap_show(काष्ठा sbiपंचांगap *sb, काष्ठा seq_file *m);
 
 
 /**
- * sbitmap_weight() - Return how many set and not cleared bits in a &struct
- * sbitmap.
- * @sb: Bitmap to check.
+ * sbiपंचांगap_weight() - Return how many set and not cleared bits in a &काष्ठा
+ * sbiपंचांगap.
+ * @sb: Biपंचांगap to check.
  *
  * Return: How many set and not cleared bits set
  */
-unsigned int sbitmap_weight(const struct sbitmap *sb);
+अचिन्हित पूर्णांक sbiपंचांगap_weight(स्थिर काष्ठा sbiपंचांगap *sb);
 
 /**
- * sbitmap_bitmap_show() - Write a hex dump of a &struct sbitmap to a &struct
+ * sbiपंचांगap_biपंचांगap_show() - Write a hex dump of a &काष्ठा sbiपंचांगap to a &काष्ठा
  * seq_file.
- * @sb: Bitmap to show.
- * @m: struct seq_file to write to.
+ * @sb: Biपंचांगap to show.
+ * @m: काष्ठा seq_file to ग_लिखो to.
  *
- * This is intended for debugging. The output isn't guaranteed to be internally
+ * This is पूर्णांकended क्रम debugging. The output isn't guaranteed to be पूर्णांकernally
  * consistent.
  */
-void sbitmap_bitmap_show(struct sbitmap *sb, struct seq_file *m);
+व्योम sbiपंचांगap_biपंचांगap_show(काष्ठा sbiपंचांगap *sb, काष्ठा seq_file *m);
 
 /**
- * sbitmap_queue_init_node() - Initialize a &struct sbitmap_queue on a specific
+ * sbiपंचांगap_queue_init_node() - Initialize a &काष्ठा sbiपंचांगap_queue on a specअगरic
  * memory node.
- * @sbq: Bitmap queue to initialize.
- * @depth: See sbitmap_init_node().
- * @shift: See sbitmap_init_node().
- * @round_robin: See sbitmap_get().
+ * @sbq: Biपंचांगap queue to initialize.
+ * @depth: See sbiपंचांगap_init_node().
+ * @shअगरt: See sbiपंचांगap_init_node().
+ * @round_robin: See sbiपंचांगap_get().
  * @flags: Allocation flags.
  * @node: Memory node to allocate on.
  *
- * Return: Zero on success or negative errno on failure.
+ * Return: Zero on success or negative त्रुटि_सं on failure.
  */
-int sbitmap_queue_init_node(struct sbitmap_queue *sbq, unsigned int depth,
-			    int shift, bool round_robin, gfp_t flags, int node);
+पूर्णांक sbiपंचांगap_queue_init_node(काष्ठा sbiपंचांगap_queue *sbq, अचिन्हित पूर्णांक depth,
+			    पूर्णांक shअगरt, bool round_robin, gfp_t flags, पूर्णांक node);
 
 /**
- * sbitmap_queue_free() - Free memory used by a &struct sbitmap_queue.
+ * sbiपंचांगap_queue_मुक्त() - Free memory used by a &काष्ठा sbiपंचांगap_queue.
  *
- * @sbq: Bitmap queue to free.
+ * @sbq: Biपंचांगap queue to मुक्त.
  */
-static inline void sbitmap_queue_free(struct sbitmap_queue *sbq)
-{
-	kfree(sbq->ws);
-	sbitmap_free(&sbq->sb);
-}
+अटल अंतरभूत व्योम sbiपंचांगap_queue_मुक्त(काष्ठा sbiपंचांगap_queue *sbq)
+अणु
+	kमुक्त(sbq->ws);
+	sbiपंचांगap_मुक्त(&sbq->sb);
+पूर्ण
 
 /**
- * sbitmap_queue_resize() - Resize a &struct sbitmap_queue.
- * @sbq: Bitmap queue to resize.
+ * sbiपंचांगap_queue_resize() - Resize a &काष्ठा sbiपंचांगap_queue.
+ * @sbq: Biपंचांगap queue to resize.
  * @depth: New number of bits to resize to.
  *
- * Like sbitmap_resize(), this doesn't reallocate anything. It has to do
- * some extra work on the &struct sbitmap_queue, so it's not safe to just
- * resize the underlying &struct sbitmap.
+ * Like sbiपंचांगap_resize(), this करोesn't पुनः_स्मृतिate anything. It has to करो
+ * some extra work on the &काष्ठा sbiपंचांगap_queue, so it's not safe to just
+ * resize the underlying &काष्ठा sbiपंचांगap.
  */
-void sbitmap_queue_resize(struct sbitmap_queue *sbq, unsigned int depth);
+व्योम sbiपंचांगap_queue_resize(काष्ठा sbiपंचांगap_queue *sbq, अचिन्हित पूर्णांक depth);
 
 /**
- * __sbitmap_queue_get() - Try to allocate a free bit from a &struct
- * sbitmap_queue with preemption already disabled.
- * @sbq: Bitmap queue to allocate from.
+ * __sbiपंचांगap_queue_get() - Try to allocate a मुक्त bit from a &काष्ठा
+ * sbiपंचांगap_queue with preemption alपढ़ोy disabled.
+ * @sbq: Biपंचांगap queue to allocate from.
  *
- * Return: Non-negative allocated bit number if successful, -1 otherwise.
+ * Return: Non-negative allocated bit number अगर successful, -1 otherwise.
  */
-int __sbitmap_queue_get(struct sbitmap_queue *sbq);
+पूर्णांक __sbiपंचांगap_queue_get(काष्ठा sbiपंचांगap_queue *sbq);
 
 /**
- * __sbitmap_queue_get_shallow() - Try to allocate a free bit from a &struct
- * sbitmap_queue, limiting the depth used from each word, with preemption
- * already disabled.
- * @sbq: Bitmap queue to allocate from.
+ * __sbiपंचांगap_queue_get_shallow() - Try to allocate a मुक्त bit from a &काष्ठा
+ * sbiपंचांगap_queue, limiting the depth used from each word, with preemption
+ * alपढ़ोy disabled.
+ * @sbq: Biपंचांगap queue to allocate from.
  * @shallow_depth: The maximum number of bits to allocate from a single word.
- * See sbitmap_get_shallow().
+ * See sbiपंचांगap_get_shallow().
  *
- * If you call this, make sure to call sbitmap_queue_min_shallow_depth() after
+ * If you call this, make sure to call sbiपंचांगap_queue_min_shallow_depth() after
  * initializing @sbq.
  *
- * Return: Non-negative allocated bit number if successful, -1 otherwise.
+ * Return: Non-negative allocated bit number अगर successful, -1 otherwise.
  */
-int __sbitmap_queue_get_shallow(struct sbitmap_queue *sbq,
-				unsigned int shallow_depth);
+पूर्णांक __sbiपंचांगap_queue_get_shallow(काष्ठा sbiपंचांगap_queue *sbq,
+				अचिन्हित पूर्णांक shallow_depth);
 
 /**
- * sbitmap_queue_get() - Try to allocate a free bit from a &struct
- * sbitmap_queue.
- * @sbq: Bitmap queue to allocate from.
+ * sbiपंचांगap_queue_get() - Try to allocate a मुक्त bit from a &काष्ठा
+ * sbiपंचांगap_queue.
+ * @sbq: Biपंचांगap queue to allocate from.
  * @cpu: Output parameter; will contain the CPU we ran on (e.g., to be passed to
- *       sbitmap_queue_clear()).
+ *       sbiपंचांगap_queue_clear()).
  *
- * Return: Non-negative allocated bit number if successful, -1 otherwise.
+ * Return: Non-negative allocated bit number अगर successful, -1 otherwise.
  */
-static inline int sbitmap_queue_get(struct sbitmap_queue *sbq,
-				    unsigned int *cpu)
-{
-	int nr;
+अटल अंतरभूत पूर्णांक sbiपंचांगap_queue_get(काष्ठा sbiपंचांगap_queue *sbq,
+				    अचिन्हित पूर्णांक *cpu)
+अणु
+	पूर्णांक nr;
 
 	*cpu = get_cpu();
-	nr = __sbitmap_queue_get(sbq);
+	nr = __sbiपंचांगap_queue_get(sbq);
 	put_cpu();
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
 /**
- * sbitmap_queue_get_shallow() - Try to allocate a free bit from a &struct
- * sbitmap_queue, limiting the depth used from each word.
- * @sbq: Bitmap queue to allocate from.
+ * sbiपंचांगap_queue_get_shallow() - Try to allocate a मुक्त bit from a &काष्ठा
+ * sbiपंचांगap_queue, limiting the depth used from each word.
+ * @sbq: Biपंचांगap queue to allocate from.
  * @cpu: Output parameter; will contain the CPU we ran on (e.g., to be passed to
- *       sbitmap_queue_clear()).
+ *       sbiपंचांगap_queue_clear()).
  * @shallow_depth: The maximum number of bits to allocate from a single word.
- * See sbitmap_get_shallow().
+ * See sbiपंचांगap_get_shallow().
  *
- * If you call this, make sure to call sbitmap_queue_min_shallow_depth() after
+ * If you call this, make sure to call sbiपंचांगap_queue_min_shallow_depth() after
  * initializing @sbq.
  *
- * Return: Non-negative allocated bit number if successful, -1 otherwise.
+ * Return: Non-negative allocated bit number अगर successful, -1 otherwise.
  */
-static inline int sbitmap_queue_get_shallow(struct sbitmap_queue *sbq,
-					    unsigned int *cpu,
-					    unsigned int shallow_depth)
-{
-	int nr;
+अटल अंतरभूत पूर्णांक sbiपंचांगap_queue_get_shallow(काष्ठा sbiपंचांगap_queue *sbq,
+					    अचिन्हित पूर्णांक *cpu,
+					    अचिन्हित पूर्णांक shallow_depth)
+अणु
+	पूर्णांक nr;
 
 	*cpu = get_cpu();
-	nr = __sbitmap_queue_get_shallow(sbq, shallow_depth);
+	nr = __sbiपंचांगap_queue_get_shallow(sbq, shallow_depth);
 	put_cpu();
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
 /**
- * sbitmap_queue_min_shallow_depth() - Inform a &struct sbitmap_queue of the
+ * sbiपंचांगap_queue_min_shallow_depth() - Inक्रमm a &काष्ठा sbiपंचांगap_queue of the
  * minimum shallow depth that will be used.
- * @sbq: Bitmap queue in question.
+ * @sbq: Biपंचांगap queue in question.
  * @min_shallow_depth: The minimum shallow depth that will be passed to
- * sbitmap_queue_get_shallow() or __sbitmap_queue_get_shallow().
+ * sbiपंचांगap_queue_get_shallow() or __sbiपंचांगap_queue_get_shallow().
  *
- * sbitmap_queue_clear() batches wakeups as an optimization. The batch size
- * depends on the depth of the bitmap. Since the shallow allocation functions
- * effectively operate with a different depth, the shallow depth must be taken
- * into account when calculating the batch size. This function must be called
- * with the minimum shallow depth that will be used. Failure to do so can result
+ * sbiपंचांगap_queue_clear() batches wakeups as an optimization. The batch size
+ * depends on the depth of the biपंचांगap. Since the shallow allocation functions
+ * effectively operate with a dअगरferent depth, the shallow depth must be taken
+ * पूर्णांकo account when calculating the batch size. This function must be called
+ * with the minimum shallow depth that will be used. Failure to करो so can result
  * in missed wakeups.
  */
-void sbitmap_queue_min_shallow_depth(struct sbitmap_queue *sbq,
-				     unsigned int min_shallow_depth);
+व्योम sbiपंचांगap_queue_min_shallow_depth(काष्ठा sbiपंचांगap_queue *sbq,
+				     अचिन्हित पूर्णांक min_shallow_depth);
 
 /**
- * sbitmap_queue_clear() - Free an allocated bit and wake up waiters on a
- * &struct sbitmap_queue.
- * @sbq: Bitmap to free from.
- * @nr: Bit number to free.
+ * sbiपंचांगap_queue_clear() - Free an allocated bit and wake up रुकोers on a
+ * &काष्ठा sbiपंचांगap_queue.
+ * @sbq: Biपंचांगap to मुक्त from.
+ * @nr: Bit number to मुक्त.
  * @cpu: CPU the bit was allocated on.
  */
-void sbitmap_queue_clear(struct sbitmap_queue *sbq, unsigned int nr,
-			 unsigned int cpu);
+व्योम sbiपंचांगap_queue_clear(काष्ठा sbiपंचांगap_queue *sbq, अचिन्हित पूर्णांक nr,
+			 अचिन्हित पूर्णांक cpu);
 
-static inline int sbq_index_inc(int index)
-{
-	return (index + 1) & (SBQ_WAIT_QUEUES - 1);
-}
+अटल अंतरभूत पूर्णांक sbq_index_inc(पूर्णांक index)
+अणु
+	वापस (index + 1) & (SBQ_WAIT_QUEUES - 1);
+पूर्ण
 
-static inline void sbq_index_atomic_inc(atomic_t *index)
-{
-	int old = atomic_read(index);
-	int new = sbq_index_inc(old);
+अटल अंतरभूत व्योम sbq_index_atomic_inc(atomic_t *index)
+अणु
+	पूर्णांक old = atomic_पढ़ो(index);
+	पूर्णांक new = sbq_index_inc(old);
 	atomic_cmpxchg(index, old, new);
-}
+पूर्ण
 
 /**
- * sbq_wait_ptr() - Get the next wait queue to use for a &struct
- * sbitmap_queue.
- * @sbq: Bitmap queue to wait on.
- * @wait_index: A counter per "user" of @sbq.
+ * sbq_रुको_ptr() - Get the next रुको queue to use क्रम a &काष्ठा
+ * sbiपंचांगap_queue.
+ * @sbq: Biपंचांगap queue to रुको on.
+ * @रुको_index: A counter per "user" of @sbq.
  */
-static inline struct sbq_wait_state *sbq_wait_ptr(struct sbitmap_queue *sbq,
-						  atomic_t *wait_index)
-{
-	struct sbq_wait_state *ws;
+अटल अंतरभूत काष्ठा sbq_रुको_state *sbq_रुको_ptr(काष्ठा sbiपंचांगap_queue *sbq,
+						  atomic_t *रुको_index)
+अणु
+	काष्ठा sbq_रुको_state *ws;
 
-	ws = &sbq->ws[atomic_read(wait_index)];
-	sbq_index_atomic_inc(wait_index);
-	return ws;
-}
+	ws = &sbq->ws[atomic_पढ़ो(रुको_index)];
+	sbq_index_atomic_inc(रुको_index);
+	वापस ws;
+पूर्ण
 
 /**
- * sbitmap_queue_wake_all() - Wake up everything waiting on a &struct
- * sbitmap_queue.
- * @sbq: Bitmap queue to wake up.
+ * sbiपंचांगap_queue_wake_all() - Wake up everything रुकोing on a &काष्ठा
+ * sbiपंचांगap_queue.
+ * @sbq: Biपंचांगap queue to wake up.
  */
-void sbitmap_queue_wake_all(struct sbitmap_queue *sbq);
+व्योम sbiपंचांगap_queue_wake_all(काष्ठा sbiपंचांगap_queue *sbq);
 
 /**
- * sbitmap_queue_wake_up() - Wake up some of waiters in one waitqueue
- * on a &struct sbitmap_queue.
- * @sbq: Bitmap queue to wake up.
+ * sbiपंचांगap_queue_wake_up() - Wake up some of रुकोers in one रुकोqueue
+ * on a &काष्ठा sbiपंचांगap_queue.
+ * @sbq: Biपंचांगap queue to wake up.
  */
-void sbitmap_queue_wake_up(struct sbitmap_queue *sbq);
+व्योम sbiपंचांगap_queue_wake_up(काष्ठा sbiपंचांगap_queue *sbq);
 
 /**
- * sbitmap_queue_show() - Dump &struct sbitmap_queue information to a &struct
+ * sbiपंचांगap_queue_show() - Dump &काष्ठा sbiपंचांगap_queue inक्रमmation to a &काष्ठा
  * seq_file.
- * @sbq: Bitmap queue to show.
- * @m: struct seq_file to write to.
+ * @sbq: Biपंचांगap queue to show.
+ * @m: काष्ठा seq_file to ग_लिखो to.
  *
- * This is intended for debugging. The format may change at any time.
+ * This is पूर्णांकended क्रम debugging. The क्रमmat may change at any समय.
  */
-void sbitmap_queue_show(struct sbitmap_queue *sbq, struct seq_file *m);
+व्योम sbiपंचांगap_queue_show(काष्ठा sbiपंचांगap_queue *sbq, काष्ठा seq_file *m);
 
-struct sbq_wait {
-	struct sbitmap_queue *sbq;	/* if set, sbq_wait is accounted */
-	struct wait_queue_entry wait;
-};
+काष्ठा sbq_रुको अणु
+	काष्ठा sbiपंचांगap_queue *sbq;	/* अगर set, sbq_रुको is accounted */
+	काष्ठा रुको_queue_entry रुको;
+पूर्ण;
 
-#define DEFINE_SBQ_WAIT(name)							\
-	struct sbq_wait name = {						\
-		.sbq = NULL,							\
-		.wait = {							\
-			.private	= current,				\
-			.func		= autoremove_wake_function,		\
-			.entry		= LIST_HEAD_INIT((name).wait.entry),	\
-		}								\
-	}
+#घोषणा DEFINE_SBQ_WAIT(name)							\
+	काष्ठा sbq_रुको name = अणु						\
+		.sbq = शून्य,							\
+		.रुको = अणु							\
+			.निजी	= current,				\
+			.func		= स्वतःहटाओ_wake_function,		\
+			.entry		= LIST_HEAD_INIT((name).रुको.entry),	\
+		पूर्ण								\
+	पूर्ण
 
 /*
- * Wrapper around prepare_to_wait_exclusive(), which maintains some extra
- * internal state.
+ * Wrapper around prepare_to_रुको_exclusive(), which मुख्यtains some extra
+ * पूर्णांकernal state.
  */
-void sbitmap_prepare_to_wait(struct sbitmap_queue *sbq,
-				struct sbq_wait_state *ws,
-				struct sbq_wait *sbq_wait, int state);
+व्योम sbiपंचांगap_prepare_to_रुको(काष्ठा sbiपंचांगap_queue *sbq,
+				काष्ठा sbq_रुको_state *ws,
+				काष्ठा sbq_रुको *sbq_रुको, पूर्णांक state);
 
 /*
- * Must be paired with sbitmap_prepare_to_wait().
+ * Must be paired with sbiपंचांगap_prepare_to_रुको().
  */
-void sbitmap_finish_wait(struct sbitmap_queue *sbq, struct sbq_wait_state *ws,
-				struct sbq_wait *sbq_wait);
+व्योम sbiपंचांगap_finish_रुको(काष्ठा sbiपंचांगap_queue *sbq, काष्ठा sbq_रुको_state *ws,
+				काष्ठा sbq_रुको *sbq_रुको);
 
 /*
- * Wrapper around add_wait_queue(), which maintains some extra internal state
+ * Wrapper around add_रुको_queue(), which मुख्यtains some extra पूर्णांकernal state
  */
-void sbitmap_add_wait_queue(struct sbitmap_queue *sbq,
-			    struct sbq_wait_state *ws,
-			    struct sbq_wait *sbq_wait);
+व्योम sbiपंचांगap_add_रुको_queue(काष्ठा sbiपंचांगap_queue *sbq,
+			    काष्ठा sbq_रुको_state *ws,
+			    काष्ठा sbq_रुको *sbq_रुको);
 
 /*
- * Must be paired with sbitmap_add_wait_queue()
+ * Must be paired with sbiपंचांगap_add_रुको_queue()
  */
-void sbitmap_del_wait_queue(struct sbq_wait *sbq_wait);
+व्योम sbiपंचांगap_del_रुको_queue(काष्ठा sbq_रुको *sbq_रुको);
 
-#endif /* __LINUX_SCALE_BITMAP_H */
+#पूर्ण_अगर /* __LINUX_SCALE_BITMAP_H */

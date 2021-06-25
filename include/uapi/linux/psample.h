@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __UAPI_PSAMPLE_H
-#define __UAPI_PSAMPLE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __UAPI_PSAMPLE_H
+#घोषणा __UAPI_PSAMPLE_H
 
-enum {
+क्रमागत अणु
 	PSAMPLE_ATTR_IIFINDEX,
 	PSAMPLE_ATTR_OIFINDEX,
 	PSAMPLE_ATTR_ORIGSIZE,
@@ -21,16 +22,16 @@ enum {
 	PSAMPLE_ATTR_PROTO,		/* u16 */
 
 	__PSAMPLE_ATTR_MAX
-};
+पूर्ण;
 
-enum psample_command {
+क्रमागत psample_command अणु
 	PSAMPLE_CMD_SAMPLE,
 	PSAMPLE_CMD_GET_GROUP,
 	PSAMPLE_CMD_NEW_GROUP,
 	PSAMPLE_CMD_DEL_GROUP,
-};
+पूर्ण;
 
-enum psample_tunnel_key_attr {
+क्रमागत psample_tunnel_key_attr अणु
 	PSAMPLE_TUNNEL_KEY_ATTR_ID,                 /* be64 Tunnel ID */
 	PSAMPLE_TUNNEL_KEY_ATTR_IPV4_SRC,           /* be32 src IP address. */
 	PSAMPLE_TUNNEL_KEY_ATTR_IPV4_DST,           /* be32 dst IP address. */
@@ -43,20 +44,20 @@ enum psample_tunnel_key_attr {
 	PSAMPLE_TUNNEL_KEY_ATTR_TP_SRC,	            /* be16 src Transport Port. */
 	PSAMPLE_TUNNEL_KEY_ATTR_TP_DST,		    /* be16 dst Transport Port. */
 	PSAMPLE_TUNNEL_KEY_ATTR_VXLAN_OPTS,	    /* Nested VXLAN opts* */
-	PSAMPLE_TUNNEL_KEY_ATTR_IPV6_SRC,           /* struct in6_addr src IPv6 address. */
-	PSAMPLE_TUNNEL_KEY_ATTR_IPV6_DST,           /* struct in6_addr dst IPv6 address. */
+	PSAMPLE_TUNNEL_KEY_ATTR_IPV6_SRC,           /* काष्ठा in6_addr src IPv6 address. */
+	PSAMPLE_TUNNEL_KEY_ATTR_IPV6_DST,           /* काष्ठा in6_addr dst IPv6 address. */
 	PSAMPLE_TUNNEL_KEY_ATTR_PAD,
-	PSAMPLE_TUNNEL_KEY_ATTR_ERSPAN_OPTS,        /* struct erspan_metadata */
+	PSAMPLE_TUNNEL_KEY_ATTR_ERSPAN_OPTS,        /* काष्ठा erspan_metadata */
 	PSAMPLE_TUNNEL_KEY_ATTR_IPV4_INFO_BRIDGE,   /* No argument. IPV4_INFO_BRIDGE mode.*/
 	__PSAMPLE_TUNNEL_KEY_ATTR_MAX
-};
+पूर्ण;
 
-/* Can be overridden at runtime by module option */
-#define PSAMPLE_ATTR_MAX (__PSAMPLE_ATTR_MAX - 1)
+/* Can be overridden at runसमय by module option */
+#घोषणा PSAMPLE_ATTR_MAX (__PSAMPLE_ATTR_MAX - 1)
 
-#define PSAMPLE_NL_MCGRP_CONFIG_NAME "config"
-#define PSAMPLE_NL_MCGRP_SAMPLE_NAME "packets"
-#define PSAMPLE_GENL_NAME "psample"
-#define PSAMPLE_GENL_VERSION 1
+#घोषणा PSAMPLE_NL_MCGRP_CONFIG_NAME "config"
+#घोषणा PSAMPLE_NL_MCGRP_SAMPLE_NAME "packets"
+#घोषणा PSAMPLE_GENL_NAME "psample"
+#घोषणा PSAMPLE_GENL_VERSION 1
 
-#endif
+#पूर्ण_अगर

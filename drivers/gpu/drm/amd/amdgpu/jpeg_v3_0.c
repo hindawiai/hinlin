@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,204 +22,204 @@
  *
  */
 
-#include "amdgpu.h"
-#include "amdgpu_jpeg.h"
-#include "amdgpu_pm.h"
-#include "soc15.h"
-#include "soc15d.h"
-#include "jpeg_v2_0.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_jpeg.h"
+#समावेश "amdgpu_pm.h"
+#समावेश "soc15.h"
+#समावेश "soc15d.h"
+#समावेश "jpeg_v2_0.h"
 
-#include "vcn/vcn_3_0_0_offset.h"
-#include "vcn/vcn_3_0_0_sh_mask.h"
-#include "ivsrcid/vcn/irqsrcs_vcn_2_0.h"
+#समावेश "vcn/vcn_3_0_0_offset.h"
+#समावेश "vcn/vcn_3_0_0_sh_mask.h"
+#समावेश "ivsrcid/vcn/irqsrcs_vcn_2_0.h"
 
-#define mmUVD_JPEG_PITCH_INTERNAL_OFFSET	0x401f
+#घोषणा mmUVD_JPEG_PITCH_INTERNAL_OFFSET	0x401f
 
-static void jpeg_v3_0_set_dec_ring_funcs(struct amdgpu_device *adev);
-static void jpeg_v3_0_set_irq_funcs(struct amdgpu_device *adev);
-static int jpeg_v3_0_set_powergating_state(void *handle,
-				enum amd_powergating_state state);
+अटल व्योम jpeg_v3_0_set_dec_ring_funcs(काष्ठा amdgpu_device *adev);
+अटल व्योम jpeg_v3_0_set_irq_funcs(काष्ठा amdgpu_device *adev);
+अटल पूर्णांक jpeg_v3_0_set_घातergating_state(व्योम *handle,
+				क्रमागत amd_घातergating_state state);
 
 /**
- * jpeg_v3_0_early_init - set function pointers
+ * jpeg_v3_0_early_init - set function poपूर्णांकers
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
- * Set ring and irq function pointers
+ * Set ring and irq function poपूर्णांकers
  */
-static int jpeg_v3_0_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक jpeg_v3_0_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	u32 harvest = RREG32_SOC15(JPEG, 0, mmCC_UVD_HARVESTING);
 
-	if (harvest & CC_UVD_HARVESTING__UVD_DISABLE_MASK)
-		return -ENOENT;
+	अगर (harvest & CC_UVD_HARVESTING__UVD_DISABLE_MASK)
+		वापस -ENOENT;
 
 	adev->jpeg.num_jpeg_inst = 1;
 
 	jpeg_v3_0_set_dec_ring_funcs(adev);
 	jpeg_v3_0_set_irq_funcs(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * jpeg_v3_0_sw_init - sw init for JPEG block
+ * jpeg_v3_0_sw_init - sw init क्रम JPEG block
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
  * Load firmware and sw initialization
  */
-static int jpeg_v3_0_sw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct amdgpu_ring *ring;
-	int r;
+अटल पूर्णांक jpeg_v3_0_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा amdgpu_ring *ring;
+	पूर्णांक r;
 
 	/* JPEG TRAP */
 	r = amdgpu_irq_add_id(adev, SOC15_IH_CLIENTID_VCN,
 		VCN_2_0__SRCID__JPEG_DECODE, &adev->jpeg.inst->irq);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_jpeg_sw_init(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_jpeg_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	ring = &adev->jpeg.inst->ring_dec;
-	ring->use_doorbell = true;
-	ring->doorbell_index = (adev->doorbell_index.vcn.vcn_ring0_1 << 1) + 1;
-	sprintf(ring->name, "jpeg_dec");
+	ring->use_करोorbell = true;
+	ring->करोorbell_index = (adev->करोorbell_index.vcn.vcn_ring0_1 << 1) + 1;
+	प्र_लिखो(ring->name, "jpeg_dec");
 	r = amdgpu_ring_init(adev, ring, 512, &adev->jpeg.inst->irq, 0,
-			     AMDGPU_RING_PRIO_DEFAULT, NULL);
-	if (r)
-		return r;
+			     AMDGPU_RING_PRIO_DEFAULT, शून्य);
+	अगर (r)
+		वापस r;
 
-	adev->jpeg.internal.jpeg_pitch = mmUVD_JPEG_PITCH_INTERNAL_OFFSET;
-	adev->jpeg.inst->external.jpeg_pitch = SOC15_REG_OFFSET(JPEG, 0, mmUVD_JPEG_PITCH);
+	adev->jpeg.पूर्णांकernal.jpeg_pitch = mmUVD_JPEG_PITCH_INTERNAL_OFFSET;
+	adev->jpeg.inst->बाह्यal.jpeg_pitch = SOC15_REG_OFFSET(JPEG, 0, mmUVD_JPEG_PITCH);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * jpeg_v3_0_sw_fini - sw fini for JPEG block
+ * jpeg_v3_0_sw_fini - sw fini क्रम JPEG block
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
- * JPEG suspend and free up sw allocation
+ * JPEG suspend and मुक्त up sw allocation
  */
-static int jpeg_v3_0_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक jpeg_v3_0_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
 	r = amdgpu_jpeg_suspend(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_jpeg_sw_fini(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * jpeg_v3_0_hw_init - start and test JPEG block
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
  */
-static int jpeg_v3_0_hw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	struct amdgpu_ring *ring = &adev->jpeg.inst->ring_dec;
-	int r;
+अटल पूर्णांक jpeg_v3_0_hw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	काष्ठा amdgpu_ring *ring = &adev->jpeg.inst->ring_dec;
+	पूर्णांक r;
 
-	adev->nbio.funcs->vcn_doorbell_range(adev, ring->use_doorbell,
-		(adev->doorbell_index.vcn.vcn_ring0_1 << 1), 0);
+	adev->nbio.funcs->vcn_करोorbell_range(adev, ring->use_करोorbell,
+		(adev->करोorbell_index.vcn.vcn_ring0_1 << 1), 0);
 
 	r = amdgpu_ring_test_helper(ring);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	DRM_INFO("JPEG decode initialized successfully.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * jpeg_v3_0_hw_fini - stop the hardware block
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
- * Stop the JPEG block, mark ring as not ready any more
+ * Stop the JPEG block, mark ring as not पढ़ोy any more
  */
-static int jpeg_v3_0_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक jpeg_v3_0_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	cancel_delayed_work_sync(&adev->vcn.idle_work);
 
-	if (adev->jpeg.cur_state != AMD_PG_STATE_GATE &&
+	अगर (adev->jpeg.cur_state != AMD_PG_STATE_GATE &&
 	      RREG32_SOC15(JPEG, 0, mmUVD_JRBC_STATUS))
-		jpeg_v3_0_set_powergating_state(adev, AMD_PG_STATE_GATE);
+		jpeg_v3_0_set_घातergating_state(adev, AMD_PG_STATE_GATE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * jpeg_v3_0_suspend - suspend JPEG block
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
  * HW fini and suspend JPEG block
  */
-static int jpeg_v3_0_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक jpeg_v3_0_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
 	r = jpeg_v3_0_hw_fini(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = amdgpu_jpeg_suspend(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * jpeg_v3_0_resume - resume JPEG block
  *
- * @handle: amdgpu_device pointer
+ * @handle: amdgpu_device poपूर्णांकer
  *
  * Resume firmware and hw init JPEG block
  */
-static int jpeg_v3_0_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int r;
+अटल पूर्णांक jpeg_v3_0_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक r;
 
 	r = amdgpu_jpeg_resume(adev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = jpeg_v3_0_hw_init(adev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void jpeg_v3_0_disable_clock_gating(struct amdgpu_device *adev)
-{
-	uint32_t data = 0;
+अटल व्योम jpeg_v3_0_disable_घड़ी_gating(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t data = 0;
 
 	data = RREG32_SOC15(JPEG, 0, mmJPEG_CGC_CTRL);
-	if (adev->cg_flags & AMD_CG_SUPPORT_JPEG_MGCG)
+	अगर (adev->cg_flags & AMD_CG_SUPPORT_JPEG_MGCG)
 		data |= 1 << JPEG_CGC_CTRL__DYN_CLOCK_MODE__SHIFT;
-	else
+	अन्यथा
 		data &= ~JPEG_CGC_CTRL__DYN_CLOCK_MODE__SHIFT;
 
 	data |= 1 << JPEG_CGC_CTRL__CLK_GATE_DLY_TIMER__SHIFT;
@@ -239,11 +240,11 @@ static void jpeg_v3_0_disable_clock_gating(struct amdgpu_device *adev)
 		| JPEG_CGC_CTRL__JMCIF_MODE_MASK
 		| JPEG_CGC_CTRL__JRBBM_MODE_MASK);
 	WREG32_SOC15(JPEG, 0, mmJPEG_CGC_CTRL, data);
-}
+पूर्ण
 
-static void jpeg_v3_0_enable_clock_gating(struct amdgpu_device *adev)
-{
-	uint32_t data = 0;
+अटल व्योम jpeg_v3_0_enable_घड़ी_gating(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t data = 0;
 
 	data = RREG32_SOC15(JPEG, 0, mmJPEG_CGC_GATE);
 	data |= (JPEG_CGC_GATE__JPEG_DEC_MASK
@@ -252,13 +253,13 @@ static void jpeg_v3_0_enable_clock_gating(struct amdgpu_device *adev)
 		|JPEG_CGC_GATE__JMCIF_MASK
 		|JPEG_CGC_GATE__JRBBM_MASK);
 	WREG32_SOC15(JPEG, 0, mmJPEG_CGC_GATE, data);
-}
+पूर्ण
 
-static int jpeg_v3_0_disable_static_power_gating(struct amdgpu_device *adev)
-{
-	if (adev->pg_flags & AMD_PG_SUPPORT_JPEG) {
-		uint32_t data = 0;
-		int r = 0;
+अटल पूर्णांक jpeg_v3_0_disable_अटल_घातer_gating(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->pg_flags & AMD_PG_SUPPORT_JPEG) अणु
+		uपूर्णांक32_t data = 0;
+		पूर्णांक r = 0;
 
 		data = 1 << UVD_PGFSM_CONFIG__UVDJ_PWR_CONFIG__SHIFT;
 		WREG32(SOC15_REG_OFFSET(JPEG, 0, mmUVD_PGFSM_CONFIG), data);
@@ -267,33 +268,33 @@ static int jpeg_v3_0_disable_static_power_gating(struct amdgpu_device *adev)
 			mmUVD_PGFSM_STATUS, UVD_PGFSM_STATUS_UVDJ_PWR_ON,
 			UVD_PGFSM_STATUS__UVDJ_PWR_STATUS_MASK);
 
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("amdgpu: JPEG disable power gating failed\n");
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	/* disable anti hang mechanism */
 	WREG32_P(SOC15_REG_OFFSET(JPEG, 0, mmUVD_JPEG_POWER_STATUS), 0,
 		~UVD_JPEG_POWER_STATUS__JPEG_POWER_STATUS_MASK);
 
-	/* keep the JPEG in static PG mode */
+	/* keep the JPEG in अटल PG mode */
 	WREG32_P(SOC15_REG_OFFSET(JPEG, 0, mmUVD_JPEG_POWER_STATUS), 0,
 		~UVD_JPEG_POWER_STATUS__JPEG_PG_MODE_MASK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jpeg_v3_0_enable_static_power_gating(struct amdgpu_device *adev)
-{
+अटल पूर्णांक jpeg_v3_0_enable_अटल_घातer_gating(काष्ठा amdgpu_device *adev)
+अणु
 	/* enable anti hang mechanism */
 	WREG32_P(SOC15_REG_OFFSET(JPEG, 0, mmUVD_JPEG_POWER_STATUS),
 		UVD_JPEG_POWER_STATUS__JPEG_POWER_STATUS_MASK,
 		~UVD_JPEG_POWER_STATUS__JPEG_POWER_STATUS_MASK);
 
-	if (adev->pg_flags & AMD_PG_SUPPORT_JPEG) {
-		uint32_t data = 0;
-		int r = 0;
+	अगर (adev->pg_flags & AMD_PG_SUPPORT_JPEG) अणु
+		uपूर्णांक32_t data = 0;
+		पूर्णांक r = 0;
 
 		data = 2 << UVD_PGFSM_CONFIG__UVDJ_PWR_CONFIG__SHIFT;
 		WREG32(SOC15_REG_OFFSET(JPEG, 0, mmUVD_PGFSM_CONFIG), data);
@@ -302,39 +303,39 @@ static int jpeg_v3_0_enable_static_power_gating(struct amdgpu_device *adev)
 			(2 << UVD_PGFSM_STATUS__UVDJ_PWR_STATUS__SHIFT),
 			UVD_PGFSM_STATUS__UVDJ_PWR_STATUS_MASK);
 
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("amdgpu: JPEG enable power gating failed\n");
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * jpeg_v3_0_start - start JPEG block
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * Setup and start the JPEG block
  */
-static int jpeg_v3_0_start(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring = &adev->jpeg.inst->ring_dec;
-	int r;
+अटल पूर्णांक jpeg_v3_0_start(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring = &adev->jpeg.inst->ring_dec;
+	पूर्णांक r;
 
-	if (adev->pm.dpm_enabled)
+	अगर (adev->pm.dpm_enabled)
 		amdgpu_dpm_enable_jpeg(adev, true);
 
-	/* disable power gating */
-	r = jpeg_v3_0_disable_static_power_gating(adev);
-	if (r)
-		return r;
+	/* disable घातer gating */
+	r = jpeg_v3_0_disable_अटल_घातer_gating(adev);
+	अगर (r)
+		वापस r;
 
 	/* JPEG disable CGC */
-	jpeg_v3_0_disable_clock_gating(adev);
+	jpeg_v3_0_disable_घड़ी_gating(adev);
 
-	/* MJPEG global tiling registers */
+	/* MJPEG global tiling रेजिस्टरs */
 	WREG32_SOC15(JPEG, 0, mmJPEG_DEC_GFX10_ADDR_CONFIG,
 		adev->gfx.config.gb_addr_config);
 	WREG32_SOC15(JPEG, 0, mmJPEG_ENC_GFX10_ADDR_CONFIG,
@@ -344,7 +345,7 @@ static int jpeg_v3_0_start(struct amdgpu_device *adev)
 	WREG32_P(SOC15_REG_OFFSET(JPEG, 0, mmUVD_JMI_CNTL), 0,
 		~UVD_JMI_CNTL__SOFT_RESET_MASK);
 
-	/* enable System Interrupt for JRBC */
+	/* enable System Interrupt क्रम JRBC */
 	WREG32_P(SOC15_REG_OFFSET(JPEG, 0, mmJPEG_SYS_INT_EN),
 		JPEG_SYS_INT_EN__DJRBC_MASK,
 		~JPEG_SYS_INT_EN__DJRBC_MASK);
@@ -361,177 +362,177 @@ static int jpeg_v3_0_start(struct amdgpu_device *adev)
 	WREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_SIZE, ring->ring_size / 4);
 	ring->wptr = RREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_WPTR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * jpeg_v3_0_stop - stop JPEG block
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
  * stop the JPEG block
  */
-static int jpeg_v3_0_stop(struct amdgpu_device *adev)
-{
-	int r;
+अटल पूर्णांक jpeg_v3_0_stop(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक r;
 
 	/* reset JMI */
 	WREG32_P(SOC15_REG_OFFSET(JPEG, 0, mmUVD_JMI_CNTL),
 		UVD_JMI_CNTL__SOFT_RESET_MASK,
 		~UVD_JMI_CNTL__SOFT_RESET_MASK);
 
-	jpeg_v3_0_enable_clock_gating(adev);
+	jpeg_v3_0_enable_घड़ी_gating(adev);
 
-	/* enable power gating */
-	r = jpeg_v3_0_enable_static_power_gating(adev);
-	if (r)
-		return r;
+	/* enable घातer gating */
+	r = jpeg_v3_0_enable_अटल_घातer_gating(adev);
+	अगर (r)
+		वापस r;
 
-	if (adev->pm.dpm_enabled)
+	अगर (adev->pm.dpm_enabled)
 		amdgpu_dpm_enable_jpeg(adev, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * jpeg_v3_0_dec_ring_get_rptr - get read pointer
+ * jpeg_v3_0_dec_ring_get_rptr - get पढ़ो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Returns the current hardware read pointer
+ * Returns the current hardware पढ़ो poपूर्णांकer
  */
-static uint64_t jpeg_v3_0_dec_ring_get_rptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t jpeg_v3_0_dec_ring_get_rptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	return RREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_RPTR);
-}
+	वापस RREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_RPTR);
+पूर्ण
 
 /**
- * jpeg_v3_0_dec_ring_get_wptr - get write pointer
+ * jpeg_v3_0_dec_ring_get_wptr - get ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Returns the current hardware write pointer
+ * Returns the current hardware ग_लिखो poपूर्णांकer
  */
-static uint64_t jpeg_v3_0_dec_ring_get_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल uपूर्णांक64_t jpeg_v3_0_dec_ring_get_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	if (ring->use_doorbell)
-		return adev->wb.wb[ring->wptr_offs];
-	else
-		return RREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_WPTR);
-}
+	अगर (ring->use_करोorbell)
+		वापस adev->wb.wb[ring->wptr_offs];
+	अन्यथा
+		वापस RREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_WPTR);
+पूर्ण
 
 /**
- * jpeg_v3_0_dec_ring_set_wptr - set write pointer
+ * jpeg_v3_0_dec_ring_set_wptr - set ग_लिखो poपूर्णांकer
  *
- * @ring: amdgpu_ring pointer
+ * @ring: amdgpu_ring poपूर्णांकer
  *
- * Commits the write pointer to the hardware
+ * Commits the ग_लिखो poपूर्णांकer to the hardware
  */
-static void jpeg_v3_0_dec_ring_set_wptr(struct amdgpu_ring *ring)
-{
-	struct amdgpu_device *adev = ring->adev;
+अटल व्योम jpeg_v3_0_dec_ring_set_wptr(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
 
-	if (ring->use_doorbell) {
+	अगर (ring->use_करोorbell) अणु
 		adev->wb.wb[ring->wptr_offs] = lower_32_bits(ring->wptr);
-		WDOORBELL32(ring->doorbell_index, lower_32_bits(ring->wptr));
-	} else {
+		WDOORBELL32(ring->करोorbell_index, lower_32_bits(ring->wptr));
+	पूर्ण अन्यथा अणु
 		WREG32_SOC15(JPEG, 0, mmUVD_JRBC_RB_WPTR, lower_32_bits(ring->wptr));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool jpeg_v3_0_is_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int ret = 1;
+अटल bool jpeg_v3_0_is_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक ret = 1;
 
 	ret &= (((RREG32_SOC15(JPEG, 0, mmUVD_JRBC_STATUS) &
 		UVD_JRBC_STATUS__RB_JOB_DONE_MASK) ==
 		UVD_JRBC_STATUS__RB_JOB_DONE_MASK));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jpeg_v3_0_wait_for_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक jpeg_v3_0_रुको_क्रम_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return SOC15_WAIT_ON_RREG(JPEG, 0, mmUVD_JRBC_STATUS,
+	वापस SOC15_WAIT_ON_RREG(JPEG, 0, mmUVD_JRBC_STATUS,
 		UVD_JRBC_STATUS__RB_JOB_DONE_MASK,
 		UVD_JRBC_STATUS__RB_JOB_DONE_MASK);
-}
+पूर्ण
 
-static int jpeg_v3_0_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक jpeg_v3_0_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	bool enable = (state == AMD_CG_STATE_GATE) ? true : false;
 
-	if (enable) {
-		if (!jpeg_v3_0_is_idle(handle))
-			return -EBUSY;
-		jpeg_v3_0_enable_clock_gating(adev);
-	} else {
-		jpeg_v3_0_disable_clock_gating(adev);
-	}
+	अगर (enable) अणु
+		अगर (!jpeg_v3_0_is_idle(handle))
+			वापस -EBUSY;
+		jpeg_v3_0_enable_घड़ी_gating(adev);
+	पूर्ण अन्यथा अणु
+		jpeg_v3_0_disable_घड़ी_gating(adev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jpeg_v3_0_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	int ret;
+अटल पूर्णांक jpeg_v3_0_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	पूर्णांक ret;
 
-	if(state == adev->jpeg.cur_state)
-		return 0;
+	अगर(state == adev->jpeg.cur_state)
+		वापस 0;
 
-	if (state == AMD_PG_STATE_GATE)
+	अगर (state == AMD_PG_STATE_GATE)
 		ret = jpeg_v3_0_stop(adev);
-	else
+	अन्यथा
 		ret = jpeg_v3_0_start(adev);
 
-	if(!ret)
+	अगर(!ret)
 		adev->jpeg.cur_state = state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jpeg_v3_0_set_interrupt_state(struct amdgpu_device *adev,
-					struct amdgpu_irq_src *source,
-					unsigned type,
-					enum amdgpu_interrupt_state state)
-{
-	return 0;
-}
+अटल पूर्णांक jpeg_v3_0_set_पूर्णांकerrupt_state(काष्ठा amdgpu_device *adev,
+					काष्ठा amdgpu_irq_src *source,
+					अचिन्हित type,
+					क्रमागत amdgpu_पूर्णांकerrupt_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int jpeg_v3_0_process_interrupt(struct amdgpu_device *adev,
-				      struct amdgpu_irq_src *source,
-				      struct amdgpu_iv_entry *entry)
-{
+अटल पूर्णांक jpeg_v3_0_process_पूर्णांकerrupt(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_irq_src *source,
+				      काष्ठा amdgpu_iv_entry *entry)
+अणु
 	DRM_DEBUG("IH: JPEG TRAP\n");
 
-	switch (entry->src_id) {
-	case VCN_2_0__SRCID__JPEG_DECODE:
+	चयन (entry->src_id) अणु
+	हाल VCN_2_0__SRCID__JPEG_DECODE:
 		amdgpu_fence_process(&adev->jpeg.inst->ring_dec);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Unhandled interrupt: %d %d\n",
 			  entry->src_id, entry->src_data[0]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct amd_ip_funcs jpeg_v3_0_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs jpeg_v3_0_ip_funcs = अणु
 	.name = "jpeg_v3_0",
 	.early_init = jpeg_v3_0_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = jpeg_v3_0_sw_init,
 	.sw_fini = jpeg_v3_0_sw_fini,
 	.hw_init = jpeg_v3_0_hw_init,
@@ -539,16 +540,16 @@ static const struct amd_ip_funcs jpeg_v3_0_ip_funcs = {
 	.suspend = jpeg_v3_0_suspend,
 	.resume = jpeg_v3_0_resume,
 	.is_idle = jpeg_v3_0_is_idle,
-	.wait_for_idle = jpeg_v3_0_wait_for_idle,
-	.check_soft_reset = NULL,
-	.pre_soft_reset = NULL,
-	.soft_reset = NULL,
-	.post_soft_reset = NULL,
-	.set_clockgating_state = jpeg_v3_0_set_clockgating_state,
-	.set_powergating_state = jpeg_v3_0_set_powergating_state,
-};
+	.रुको_क्रम_idle = jpeg_v3_0_रुको_क्रम_idle,
+	.check_soft_reset = शून्य,
+	.pre_soft_reset = शून्य,
+	.soft_reset = शून्य,
+	.post_soft_reset = शून्य,
+	.set_घड़ीgating_state = jpeg_v3_0_set_घड़ीgating_state,
+	.set_घातergating_state = jpeg_v3_0_set_घातergating_state,
+पूर्ण;
 
-static const struct amdgpu_ring_funcs jpeg_v3_0_dec_ring_vm_funcs = {
+अटल स्थिर काष्ठा amdgpu_ring_funcs jpeg_v3_0_dec_ring_vm_funcs = अणु
 	.type = AMDGPU_RING_TYPE_VCN_JPEG,
 	.align_mask = 0xf,
 	.vmhub = AMDGPU_MMHUB_0,
@@ -574,32 +575,32 @@ static const struct amdgpu_ring_funcs jpeg_v3_0_dec_ring_vm_funcs = {
 	.begin_use = amdgpu_jpeg_ring_begin_use,
 	.end_use = amdgpu_jpeg_ring_end_use,
 	.emit_wreg = jpeg_v2_0_dec_ring_emit_wreg,
-	.emit_reg_wait = jpeg_v2_0_dec_ring_emit_reg_wait,
-	.emit_reg_write_reg_wait = amdgpu_ring_emit_reg_write_reg_wait_helper,
-};
+	.emit_reg_रुको = jpeg_v2_0_dec_ring_emit_reg_रुको,
+	.emit_reg_ग_लिखो_reg_रुको = amdgpu_ring_emit_reg_ग_लिखो_reg_रुको_helper,
+पूर्ण;
 
-static void jpeg_v3_0_set_dec_ring_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम jpeg_v3_0_set_dec_ring_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->jpeg.inst->ring_dec.funcs = &jpeg_v3_0_dec_ring_vm_funcs;
 	DRM_INFO("JPEG decode is enabled in VM mode\n");
-}
+पूर्ण
 
-static const struct amdgpu_irq_src_funcs jpeg_v3_0_irq_funcs = {
-	.set = jpeg_v3_0_set_interrupt_state,
-	.process = jpeg_v3_0_process_interrupt,
-};
+अटल स्थिर काष्ठा amdgpu_irq_src_funcs jpeg_v3_0_irq_funcs = अणु
+	.set = jpeg_v3_0_set_पूर्णांकerrupt_state,
+	.process = jpeg_v3_0_process_पूर्णांकerrupt,
+पूर्ण;
 
-static void jpeg_v3_0_set_irq_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम jpeg_v3_0_set_irq_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->jpeg.inst->irq.num_types = 1;
 	adev->jpeg.inst->irq.funcs = &jpeg_v3_0_irq_funcs;
-}
+पूर्ण
 
-const struct amdgpu_ip_block_version jpeg_v3_0_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version jpeg_v3_0_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_JPEG,
 	.major = 3,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &jpeg_v3_0_ip_funcs,
-};
+पूर्ण;

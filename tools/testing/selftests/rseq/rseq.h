@@ -1,165 +1,166 @@
-/* SPDX-License-Identifier: LGPL-2.1 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: LGPL-2.1 OR MIT */
 /*
  * rseq.h
  *
  * (C) Copyright 2016-2018 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  */
 
-#ifndef RSEQ_H
-#define RSEQ_H
+#अगर_अघोषित RSEQ_H
+#घोषणा RSEQ_H
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include <signal.h>
-#include <sched.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/rseq.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <stdbool.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <संकेत.स>
+#समावेश <sched.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/rseq.h>
 
 /*
  * Empty code injection macros, override when testing.
  * It is important to consider that the ASM injection macros need to be
- * fully reentrant (e.g. do not modify the stack).
+ * fully reentrant (e.g. करो not modअगरy the stack).
  */
-#ifndef RSEQ_INJECT_ASM
-#define RSEQ_INJECT_ASM(n)
-#endif
+#अगर_अघोषित RSEQ_INJECT_ASM
+#घोषणा RSEQ_INJECT_ASM(n)
+#पूर्ण_अगर
 
-#ifndef RSEQ_INJECT_C
-#define RSEQ_INJECT_C(n)
-#endif
+#अगर_अघोषित RSEQ_INJECT_C
+#घोषणा RSEQ_INJECT_C(n)
+#पूर्ण_अगर
 
-#ifndef RSEQ_INJECT_INPUT
-#define RSEQ_INJECT_INPUT
-#endif
+#अगर_अघोषित RSEQ_INJECT_INPUT
+#घोषणा RSEQ_INJECT_INPUT
+#पूर्ण_अगर
 
-#ifndef RSEQ_INJECT_CLOBBER
-#define RSEQ_INJECT_CLOBBER
-#endif
+#अगर_अघोषित RSEQ_INJECT_CLOBBER
+#घोषणा RSEQ_INJECT_CLOBBER
+#पूर्ण_अगर
 
-#ifndef RSEQ_INJECT_FAILED
-#define RSEQ_INJECT_FAILED
-#endif
+#अगर_अघोषित RSEQ_INJECT_FAILED
+#घोषणा RSEQ_INJECT_FAILED
+#पूर्ण_अगर
 
-extern __thread volatile struct rseq __rseq_abi;
-extern int __rseq_handled;
+बाह्य __thपढ़ो अस्थिर काष्ठा rseq __rseq_abi;
+बाह्य पूर्णांक __rseq_handled;
 
-#define rseq_likely(x)		__builtin_expect(!!(x), 1)
-#define rseq_unlikely(x)	__builtin_expect(!!(x), 0)
-#define rseq_barrier()		__asm__ __volatile__("" : : : "memory")
+#घोषणा rseq_likely(x)		__builtin_expect(!!(x), 1)
+#घोषणा rseq_unlikely(x)	__builtin_expect(!!(x), 0)
+#घोषणा rseq_barrier()		__यंत्र__ __अस्थिर__("" : : : "memory")
 
-#define RSEQ_ACCESS_ONCE(x)	(*(__volatile__  __typeof__(x) *)&(x))
-#define RSEQ_WRITE_ONCE(x, v)	__extension__ ({ RSEQ_ACCESS_ONCE(x) = (v); })
-#define RSEQ_READ_ONCE(x)	RSEQ_ACCESS_ONCE(x)
+#घोषणा RSEQ_ACCESS_ONCE(x)	(*(__अस्थिर__  __typeof__(x) *)&(x))
+#घोषणा RSEQ_WRITE_ONCE(x, v)	__extension__ (अणु RSEQ_ACCESS_ONCE(x) = (v); पूर्ण)
+#घोषणा RSEQ_READ_ONCE(x)	RSEQ_ACCESS_ONCE(x)
 
-#define __rseq_str_1(x)	#x
-#define __rseq_str(x)		__rseq_str_1(x)
+#घोषणा __rseq_str_1(x)	#x
+#घोषणा __rseq_str(x)		__rseq_str_1(x)
 
-#define rseq_log(fmt, args...)						       \
-	fprintf(stderr, fmt "(in %s() at " __FILE__ ":" __rseq_str(__LINE__)"\n", \
+#घोषणा rseq_log(fmt, args...)						       \
+	ख_लिखो(मानक_त्रुटि, fmt "(in %s() at " __खाता__ ":" __rseq_str(__LINE__)"\n", \
 		## args, __func__)
 
-#define rseq_bug(fmt, args...)		\
-	do {				\
+#घोषणा rseq_bug(fmt, args...)		\
+	करो अणु				\
 		rseq_log(fmt, ##args);	\
-		abort();		\
-	} while (0)
+		पात();		\
+	पूर्ण जबतक (0)
 
-#if defined(__x86_64__) || defined(__i386__)
-#include <rseq-x86.h>
-#elif defined(__ARMEL__)
-#include <rseq-arm.h>
-#elif defined (__AARCH64EL__)
-#include <rseq-arm64.h>
-#elif defined(__PPC__)
-#include <rseq-ppc.h>
-#elif defined(__mips__)
-#include <rseq-mips.h>
-#elif defined(__s390__)
-#include <rseq-s390.h>
-#else
-#error unsupported target
-#endif
+#अगर defined(__x86_64__) || defined(__i386__)
+#समावेश <rseq-x86.h>
+#या_अगर defined(__ARMEL__)
+#समावेश <rseq-arm.h>
+#या_अगर defined (__AARCH64EL__)
+#समावेश <rseq-arm64.h>
+#या_अगर defined(__PPC__)
+#समावेश <rseq-ppc.h>
+#या_अगर defined(__mips__)
+#समावेश <rseq-mips.h>
+#या_अगर defined(__s390__)
+#समावेश <rseq-s390.h>
+#अन्यथा
+#त्रुटि unsupported target
+#पूर्ण_अगर
 
 /*
- * Register rseq for the current thread. This needs to be called once
- * by any thread which uses restartable sequences, before they start
+ * Register rseq क्रम the current thपढ़ो. This needs to be called once
+ * by any thपढ़ो which uses restartable sequences, beक्रमe they start
  * using restartable sequences, to ensure restartable sequences
- * succeed. A restartable sequence executed from a non-registered
- * thread will always fail.
+ * succeed. A restartable sequence executed from a non-रेजिस्टरed
+ * thपढ़ो will always fail.
  */
-int rseq_register_current_thread(void);
+पूर्णांक rseq_रेजिस्टर_current_thपढ़ो(व्योम);
 
 /*
- * Unregister rseq for current thread.
+ * Unरेजिस्टर rseq क्रम current thपढ़ो.
  */
-int rseq_unregister_current_thread(void);
+पूर्णांक rseq_unरेजिस्टर_current_thपढ़ो(व्योम);
 
 /*
- * Restartable sequence fallback for reading the current CPU number.
+ * Restartable sequence fallback क्रम पढ़ोing the current CPU number.
  */
-int32_t rseq_fallback_current_cpu(void);
+पूर्णांक32_t rseq_fallback_current_cpu(व्योम);
 
 /*
- * Values returned can be either the current CPU number, -1 (rseq is
+ * Values वापसed can be either the current CPU number, -1 (rseq is
  * uninitialized), or -2 (rseq initialization has failed).
  */
-static inline int32_t rseq_current_cpu_raw(void)
-{
-	return RSEQ_ACCESS_ONCE(__rseq_abi.cpu_id);
-}
+अटल अंतरभूत पूर्णांक32_t rseq_current_cpu_raw(व्योम)
+अणु
+	वापस RSEQ_ACCESS_ONCE(__rseq_abi.cpu_id);
+पूर्ण
 
 /*
  * Returns a possible CPU number, which is typically the current CPU.
- * The returned CPU number can be used to prepare for an rseq critical
+ * The वापसed CPU number can be used to prepare क्रम an rseq critical
  * section, which will confirm whether the cpu number is indeed the
  * current one, and whether rseq is initialized.
  *
- * The CPU number returned by rseq_cpu_start should always be validated
- * by passing it to a rseq asm sequence, or by comparing it to the
- * return value of rseq_current_cpu_raw() if the rseq asm sequence
- * does not need to be invoked.
+ * The CPU number वापसed by rseq_cpu_start should always be validated
+ * by passing it to a rseq यंत्र sequence, or by comparing it to the
+ * वापस value of rseq_current_cpu_raw() अगर the rseq यंत्र sequence
+ * करोes not need to be invoked.
  */
-static inline uint32_t rseq_cpu_start(void)
-{
-	return RSEQ_ACCESS_ONCE(__rseq_abi.cpu_id_start);
-}
+अटल अंतरभूत uपूर्णांक32_t rseq_cpu_start(व्योम)
+अणु
+	वापस RSEQ_ACCESS_ONCE(__rseq_abi.cpu_id_start);
+पूर्ण
 
-static inline uint32_t rseq_current_cpu(void)
-{
-	int32_t cpu;
+अटल अंतरभूत uपूर्णांक32_t rseq_current_cpu(व्योम)
+अणु
+	पूर्णांक32_t cpu;
 
 	cpu = rseq_current_cpu_raw();
-	if (rseq_unlikely(cpu < 0))
+	अगर (rseq_unlikely(cpu < 0))
 		cpu = rseq_fallback_current_cpu();
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-static inline void rseq_clear_rseq_cs(void)
-{
-#ifdef __LP64__
+अटल अंतरभूत व्योम rseq_clear_rseq_cs(व्योम)
+अणु
+#अगर_घोषित __LP64__
 	__rseq_abi.rseq_cs.ptr = 0;
-#else
+#अन्यथा
 	__rseq_abi.rseq_cs.ptr.ptr32 = 0;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * rseq_prepare_unload() should be invoked by each thread executing a rseq
+ * rseq_prepare_unload() should be invoked by each thपढ़ो executing a rseq
  * critical section at least once between their last critical section and
- * library unload of the library defining the rseq critical section (struct
- * rseq_cs) or the code referred to by the struct rseq_cs start_ip and
+ * library unload of the library defining the rseq critical section (काष्ठा
+ * rseq_cs) or the code referred to by the काष्ठा rseq_cs start_ip and
  * post_commit_offset fields. This also applies to use of rseq in code
  * generated by JIT: rseq_prepare_unload() should be invoked at least once by
- * each thread executing a rseq critical section before reclaim of the memory
- * holding the struct rseq_cs or reclaim of the code pointed to by struct
+ * each thपढ़ो executing a rseq critical section beक्रमe reclaim of the memory
+ * holding the काष्ठा rseq_cs or reclaim of the code poपूर्णांकed to by काष्ठा
  * rseq_cs start_ip and post_commit_offset fields.
  */
-static inline void rseq_prepare_unload(void)
-{
+अटल अंतरभूत व्योम rseq_prepare_unload(व्योम)
+अणु
 	rseq_clear_rseq_cs();
-}
+पूर्ण
 
-#endif  /* RSEQ_H_ */
+#पूर्ण_अगर  /* RSEQ_H_ */

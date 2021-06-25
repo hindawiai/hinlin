@@ -1,276 +1,277 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
-#include "gt/intel_gpu_commands.h"
-#include "gt/intel_gt.h"
+#समावेश "gt/intel_gpu_commands.h"
+#समावेश "gt/intel_gt.h"
 
-#include "gem/selftests/igt_gem_utils.h"
+#समावेश "gem/selftests/igt_gem_utils.h"
 
-#include "igt_spinner.h"
+#समावेश "igt_spinner.h"
 
-int igt_spinner_init(struct igt_spinner *spin, struct intel_gt *gt)
-{
-	int err;
+पूर्णांक igt_spinner_init(काष्ठा igt_spinner *spin, काष्ठा पूर्णांकel_gt *gt)
+अणु
+	पूर्णांक err;
 
-	memset(spin, 0, sizeof(*spin));
+	स_रखो(spin, 0, माप(*spin));
 	spin->gt = gt;
 
-	spin->hws = i915_gem_object_create_internal(gt->i915, PAGE_SIZE);
-	if (IS_ERR(spin->hws)) {
+	spin->hws = i915_gem_object_create_पूर्णांकernal(gt->i915, PAGE_SIZE);
+	अगर (IS_ERR(spin->hws)) अणु
 		err = PTR_ERR(spin->hws);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	i915_gem_object_set_cache_coherency(spin->hws, I915_CACHE_LLC);
 
-	spin->obj = i915_gem_object_create_internal(gt->i915, PAGE_SIZE);
-	if (IS_ERR(spin->obj)) {
+	spin->obj = i915_gem_object_create_पूर्णांकernal(gt->i915, PAGE_SIZE);
+	अगर (IS_ERR(spin->obj)) अणु
 		err = PTR_ERR(spin->obj);
-		goto err_hws;
-	}
+		जाओ err_hws;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_hws:
 	i915_gem_object_put(spin->hws);
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void *igt_spinner_pin_obj(struct intel_context *ce,
-				 struct i915_gem_ww_ctx *ww,
-				 struct drm_i915_gem_object *obj,
-				 unsigned int mode, struct i915_vma **vma)
-{
-	void *vaddr;
-	int ret;
+अटल व्योम *igt_spinner_pin_obj(काष्ठा पूर्णांकel_context *ce,
+				 काष्ठा i915_gem_ww_ctx *ww,
+				 काष्ठा drm_i915_gem_object *obj,
+				 अचिन्हित पूर्णांक mode, काष्ठा i915_vma **vma)
+अणु
+	व्योम *vaddr;
+	पूर्णांक ret;
 
-	*vma = i915_vma_instance(obj, ce->vm, NULL);
-	if (IS_ERR(*vma))
-		return ERR_CAST(*vma);
+	*vma = i915_vma_instance(obj, ce->vm, शून्य);
+	अगर (IS_ERR(*vma))
+		वापस ERR_CAST(*vma);
 
 	ret = i915_gem_object_lock(obj, ww);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	vaddr = i915_gem_object_pin_map(obj, mode);
 
-	if (!ww)
+	अगर (!ww)
 		i915_gem_object_unlock(obj);
 
-	if (IS_ERR(vaddr))
-		return vaddr;
+	अगर (IS_ERR(vaddr))
+		वापस vaddr;
 
-	if (ww)
+	अगर (ww)
 		ret = i915_vma_pin_ww(*vma, ww, 0, 0, PIN_USER);
-	else
+	अन्यथा
 		ret = i915_vma_pin(*vma, 0, 0, PIN_USER);
 
-	if (ret) {
+	अगर (ret) अणु
 		i915_gem_object_unpin_map(obj);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return vaddr;
-}
+	वापस vaddr;
+पूर्ण
 
-int igt_spinner_pin(struct igt_spinner *spin,
-		    struct intel_context *ce,
-		    struct i915_gem_ww_ctx *ww)
-{
-	void *vaddr;
+पूर्णांक igt_spinner_pin(काष्ठा igt_spinner *spin,
+		    काष्ठा पूर्णांकel_context *ce,
+		    काष्ठा i915_gem_ww_ctx *ww)
+अणु
+	व्योम *vaddr;
 
-	if (spin->ce && WARN_ON(spin->ce != ce))
-		return -ENODEV;
+	अगर (spin->ce && WARN_ON(spin->ce != ce))
+		वापस -ENODEV;
 	spin->ce = ce;
 
-	if (!spin->seqno) {
+	अगर (!spin->seqno) अणु
 		vaddr = igt_spinner_pin_obj(ce, ww, spin->hws, I915_MAP_WB, &spin->hws_vma);
-		if (IS_ERR(vaddr))
-			return PTR_ERR(vaddr);
+		अगर (IS_ERR(vaddr))
+			वापस PTR_ERR(vaddr);
 
-		spin->seqno = memset(vaddr, 0xff, PAGE_SIZE);
-	}
+		spin->seqno = स_रखो(vaddr, 0xff, PAGE_SIZE);
+	पूर्ण
 
-	if (!spin->batch) {
-		unsigned int mode =
+	अगर (!spin->batch) अणु
+		अचिन्हित पूर्णांक mode =
 			i915_coherent_map_type(spin->gt->i915);
 
 		vaddr = igt_spinner_pin_obj(ce, ww, spin->obj, mode, &spin->batch_vma);
-		if (IS_ERR(vaddr))
-			return PTR_ERR(vaddr);
+		अगर (IS_ERR(vaddr))
+			वापस PTR_ERR(vaddr);
 
 		spin->batch = vaddr;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int seqno_offset(u64 fence)
-{
-	return offset_in_page(sizeof(u32) * fence);
-}
+अटल अचिन्हित पूर्णांक seqno_offset(u64 fence)
+अणु
+	वापस offset_in_page(माप(u32) * fence);
+पूर्ण
 
-static u64 hws_address(const struct i915_vma *hws,
-		       const struct i915_request *rq)
-{
-	return hws->node.start + seqno_offset(rq->fence.context);
-}
+अटल u64 hws_address(स्थिर काष्ठा i915_vma *hws,
+		       स्थिर काष्ठा i915_request *rq)
+अणु
+	वापस hws->node.start + seqno_offset(rq->fence.context);
+पूर्ण
 
-static int move_to_active(struct i915_vma *vma,
-			  struct i915_request *rq,
-			  unsigned int flags)
-{
-	int err;
+अटल पूर्णांक move_to_active(काष्ठा i915_vma *vma,
+			  काष्ठा i915_request *rq,
+			  अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक err;
 
 	i915_vma_lock(vma);
-	err = i915_request_await_object(rq, vma->obj,
+	err = i915_request_aरुको_object(rq, vma->obj,
 					flags & EXEC_OBJECT_WRITE);
-	if (err == 0)
+	अगर (err == 0)
 		err = i915_vma_move_to_active(vma, rq, flags);
 	i915_vma_unlock(vma);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct i915_request *
-igt_spinner_create_request(struct igt_spinner *spin,
-			   struct intel_context *ce,
+काष्ठा i915_request *
+igt_spinner_create_request(काष्ठा igt_spinner *spin,
+			   काष्ठा पूर्णांकel_context *ce,
 			   u32 arbitration_command)
-{
-	struct intel_engine_cs *engine = ce->engine;
-	struct i915_request *rq = NULL;
-	struct i915_vma *hws, *vma;
-	unsigned int flags;
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine = ce->engine;
+	काष्ठा i915_request *rq = शून्य;
+	काष्ठा i915_vma *hws, *vma;
+	अचिन्हित पूर्णांक flags;
 	u32 *batch;
-	int err;
+	पूर्णांक err;
 
 	GEM_BUG_ON(spin->gt != ce->vm->gt);
 
-	if (!intel_engine_can_store_dword(ce->engine))
-		return ERR_PTR(-ENODEV);
+	अगर (!पूर्णांकel_engine_can_store_dword(ce->engine))
+		वापस ERR_PTR(-ENODEV);
 
-	if (!spin->batch) {
-		err = igt_spinner_pin(spin, ce, NULL);
-		if (err)
-			return ERR_PTR(err);
-	}
+	अगर (!spin->batch) अणु
+		err = igt_spinner_pin(spin, ce, शून्य);
+		अगर (err)
+			वापस ERR_PTR(err);
+	पूर्ण
 
 	hws = spin->hws_vma;
 	vma = spin->batch_vma;
 
-	rq = intel_context_create_request(ce);
-	if (IS_ERR(rq))
-		return ERR_CAST(rq);
+	rq = पूर्णांकel_context_create_request(ce);
+	अगर (IS_ERR(rq))
+		वापस ERR_CAST(rq);
 
 	err = move_to_active(vma, rq, 0);
-	if (err)
-		goto cancel_rq;
+	अगर (err)
+		जाओ cancel_rq;
 
 	err = move_to_active(hws, rq, 0);
-	if (err)
-		goto cancel_rq;
+	अगर (err)
+		जाओ cancel_rq;
 
 	batch = spin->batch;
 
-	if (INTEL_GEN(rq->engine->i915) >= 8) {
+	अगर (INTEL_GEN(rq->engine->i915) >= 8) अणु
 		*batch++ = MI_STORE_DWORD_IMM_GEN4;
 		*batch++ = lower_32_bits(hws_address(hws, rq));
 		*batch++ = upper_32_bits(hws_address(hws, rq));
-	} else if (INTEL_GEN(rq->engine->i915) >= 6) {
+	पूर्ण अन्यथा अगर (INTEL_GEN(rq->engine->i915) >= 6) अणु
 		*batch++ = MI_STORE_DWORD_IMM_GEN4;
 		*batch++ = 0;
 		*batch++ = hws_address(hws, rq);
-	} else if (INTEL_GEN(rq->engine->i915) >= 4) {
+	पूर्ण अन्यथा अगर (INTEL_GEN(rq->engine->i915) >= 4) अणु
 		*batch++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*batch++ = 0;
 		*batch++ = hws_address(hws, rq);
-	} else {
+	पूर्ण अन्यथा अणु
 		*batch++ = MI_STORE_DWORD_IMM | MI_MEM_VIRTUAL;
 		*batch++ = hws_address(hws, rq);
-	}
+	पूर्ण
 	*batch++ = rq->fence.seqno;
 
 	*batch++ = arbitration_command;
 
-	if (INTEL_GEN(rq->engine->i915) >= 8)
+	अगर (INTEL_GEN(rq->engine->i915) >= 8)
 		*batch++ = MI_BATCH_BUFFER_START | BIT(8) | 1;
-	else if (IS_HASWELL(rq->engine->i915))
+	अन्यथा अगर (IS_HASWELL(rq->engine->i915))
 		*batch++ = MI_BATCH_BUFFER_START | MI_BATCH_PPGTT_HSW;
-	else if (INTEL_GEN(rq->engine->i915) >= 6)
+	अन्यथा अगर (INTEL_GEN(rq->engine->i915) >= 6)
 		*batch++ = MI_BATCH_BUFFER_START;
-	else
+	अन्यथा
 		*batch++ = MI_BATCH_BUFFER_START | MI_BATCH_GTT;
 	*batch++ = lower_32_bits(vma->node.start);
 	*batch++ = upper_32_bits(vma->node.start);
 
 	*batch++ = MI_BATCH_BUFFER_END; /* not reached */
 
-	intel_gt_chipset_flush(engine->gt);
+	पूर्णांकel_gt_chipset_flush(engine->gt);
 
-	if (engine->emit_init_breadcrumb) {
-		err = engine->emit_init_breadcrumb(rq);
-		if (err)
-			goto cancel_rq;
-	}
+	अगर (engine->emit_init_bपढ़ोcrumb) अणु
+		err = engine->emit_init_bपढ़ोcrumb(rq);
+		अगर (err)
+			जाओ cancel_rq;
+	पूर्ण
 
 	flags = 0;
-	if (INTEL_GEN(rq->engine->i915) <= 5)
+	अगर (INTEL_GEN(rq->engine->i915) <= 5)
 		flags |= I915_DISPATCH_SECURE;
 	err = engine->emit_bb_start(rq, vma->node.start, PAGE_SIZE, flags);
 
 cancel_rq:
-	if (err) {
+	अगर (err) अणु
 		i915_request_set_error_once(rq, err);
 		i915_request_add(rq);
-	}
-	return err ? ERR_PTR(err) : rq;
-}
+	पूर्ण
+	वापस err ? ERR_PTR(err) : rq;
+पूर्ण
 
-static u32
-hws_seqno(const struct igt_spinner *spin, const struct i915_request *rq)
-{
+अटल u32
+hws_seqno(स्थिर काष्ठा igt_spinner *spin, स्थिर काष्ठा i915_request *rq)
+अणु
 	u32 *seqno = spin->seqno + seqno_offset(rq->fence.context);
 
-	return READ_ONCE(*seqno);
-}
+	वापस READ_ONCE(*seqno);
+पूर्ण
 
-void igt_spinner_end(struct igt_spinner *spin)
-{
-	if (!spin->batch)
-		return;
+व्योम igt_spinner_end(काष्ठा igt_spinner *spin)
+अणु
+	अगर (!spin->batch)
+		वापस;
 
 	*spin->batch = MI_BATCH_BUFFER_END;
-	intel_gt_chipset_flush(spin->gt);
-}
+	पूर्णांकel_gt_chipset_flush(spin->gt);
+पूर्ण
 
-void igt_spinner_fini(struct igt_spinner *spin)
-{
+व्योम igt_spinner_fini(काष्ठा igt_spinner *spin)
+अणु
 	igt_spinner_end(spin);
 
-	if (spin->batch) {
+	अगर (spin->batch) अणु
 		i915_vma_unpin(spin->batch_vma);
 		i915_gem_object_unpin_map(spin->obj);
-	}
+	पूर्ण
 	i915_gem_object_put(spin->obj);
 
-	if (spin->seqno) {
+	अगर (spin->seqno) अणु
 		i915_vma_unpin(spin->hws_vma);
 		i915_gem_object_unpin_map(spin->hws);
-	}
+	पूर्ण
 	i915_gem_object_put(spin->hws);
-}
+पूर्ण
 
-bool igt_wait_for_spinner(struct igt_spinner *spin, struct i915_request *rq)
-{
-	if (i915_request_is_ready(rq))
-		intel_engine_flush_submission(rq->engine);
+bool igt_रुको_क्रम_spinner(काष्ठा igt_spinner *spin, काष्ठा i915_request *rq)
+अणु
+	अगर (i915_request_is_पढ़ोy(rq))
+		पूर्णांकel_engine_flush_submission(rq->engine);
 
-	return !(wait_for_us(i915_seqno_passed(hws_seqno(spin, rq),
+	वापस !(रुको_क्रम_us(i915_seqno_passed(hws_seqno(spin, rq),
 					       rq->fence.seqno),
 			     100) &&
-		 wait_for(i915_seqno_passed(hws_seqno(spin, rq),
+		 रुको_क्रम(i915_seqno_passed(hws_seqno(spin, rq),
 					    rq->fence.seqno),
 			  50));
-}
+पूर्ण

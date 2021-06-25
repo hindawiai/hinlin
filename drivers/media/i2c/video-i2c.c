@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * video-i2c.c - Support for I2C transport video devices
+ * video-i2c.c - Support क्रम I2C transport video devices
  *
  * Copyright (C) 2018 Matt Ranostay <matt.ranostay@konsulko.com>
  *
@@ -9,722 +10,722 @@
  * - Melexis MLX90640 Thermal Cameras
  */
 
-#include <linux/delay.h>
-#include <linux/freezer.h>
-#include <linux/hwmon.h>
-#include <linux/kthread.h>
-#include <linux/i2c.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/nvmem-provider.h>
-#include <linux/regmap.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/videodev2.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-ioctl.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-vmalloc.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
 
-#define VIDEO_I2C_DRIVER	"video-i2c"
+#घोषणा VIDEO_I2C_DRIVER	"video-i2c"
 
-struct video_i2c_chip;
+काष्ठा video_i2c_chip;
 
-struct video_i2c_buffer {
-	struct vb2_v4l2_buffer vb;
-	struct list_head list;
-};
+काष्ठा video_i2c_buffer अणु
+	काष्ठा vb2_v4l2_buffer vb;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct video_i2c_data {
-	struct regmap *regmap;
-	const struct video_i2c_chip *chip;
-	struct mutex lock;
+काष्ठा video_i2c_data अणु
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा video_i2c_chip *chip;
+	काष्ठा mutex lock;
 	spinlock_t slock;
-	unsigned int sequence;
-	struct mutex queue_lock;
+	अचिन्हित पूर्णांक sequence;
+	काष्ठा mutex queue_lock;
 
-	struct v4l2_device v4l2_dev;
-	struct video_device vdev;
-	struct vb2_queue vb_vidq;
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा video_device vdev;
+	काष्ठा vb2_queue vb_vidq;
 
-	struct task_struct *kthread_vid_cap;
-	struct list_head vid_cap_active;
+	काष्ठा task_काष्ठा *kthपढ़ो_vid_cap;
+	काष्ठा list_head vid_cap_active;
 
-	struct v4l2_fract frame_interval;
-};
+	काष्ठा v4l2_fract frame_पूर्णांकerval;
+पूर्ण;
 
-static const struct v4l2_fmtdesc amg88xx_format = {
-	.pixelformat = V4L2_PIX_FMT_Y12,
-};
+अटल स्थिर काष्ठा v4l2_fmtdesc amg88xx_क्रमmat = अणु
+	.pixelक्रमmat = V4L2_PIX_FMT_Y12,
+पूर्ण;
 
-static const struct v4l2_frmsize_discrete amg88xx_size = {
+अटल स्थिर काष्ठा v4l2_frmsize_discrete amg88xx_size = अणु
 	.width = 8,
 	.height = 8,
-};
+पूर्ण;
 
-static const struct v4l2_fmtdesc mlx90640_format = {
-	.pixelformat = V4L2_PIX_FMT_Y16_BE,
-};
+अटल स्थिर काष्ठा v4l2_fmtdesc mlx90640_क्रमmat = अणु
+	.pixelक्रमmat = V4L2_PIX_FMT_Y16_BE,
+पूर्ण;
 
-static const struct v4l2_frmsize_discrete mlx90640_size = {
+अटल स्थिर काष्ठा v4l2_frmsize_discrete mlx90640_size = अणु
 	.width = 32,
 	.height = 26, /* 24 lines of pixel data + 2 lines of processing data */
-};
+पूर्ण;
 
-static const struct regmap_config amg88xx_regmap_config = {
+अटल स्थिर काष्ठा regmap_config amg88xx_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = 0xff
-};
+	.max_रेजिस्टर = 0xff
+पूर्ण;
 
-static const struct regmap_config mlx90640_regmap_config = {
+अटल स्थिर काष्ठा regmap_config mlx90640_regmap_config = अणु
 	.reg_bits = 16,
 	.val_bits = 16,
-};
+पूर्ण;
 
-struct video_i2c_chip {
+काष्ठा video_i2c_chip अणु
 	/* video dimensions */
-	const struct v4l2_fmtdesc *format;
-	const struct v4l2_frmsize_discrete *size;
+	स्थिर काष्ठा v4l2_fmtdesc *क्रमmat;
+	स्थिर काष्ठा v4l2_frmsize_discrete *size;
 
-	/* available frame intervals */
-	const struct v4l2_fract *frame_intervals;
-	unsigned int num_frame_intervals;
+	/* available frame पूर्णांकervals */
+	स्थिर काष्ठा v4l2_fract *frame_पूर्णांकervals;
+	अचिन्हित पूर्णांक num_frame_पूर्णांकervals;
 
 	/* pixel buffer size */
-	unsigned int buffer_size;
+	अचिन्हित पूर्णांक buffer_size;
 
 	/* pixel size in bits */
-	unsigned int bpp;
+	अचिन्हित पूर्णांक bpp;
 
-	const struct regmap_config *regmap_config;
-	struct nvmem_config *nvmem_config;
+	स्थिर काष्ठा regmap_config *regmap_config;
+	काष्ठा nvmem_config *nvmem_config;
 
 	/* setup function */
-	int (*setup)(struct video_i2c_data *data);
+	पूर्णांक (*setup)(काष्ठा video_i2c_data *data);
 
 	/* xfer function */
-	int (*xfer)(struct video_i2c_data *data, char *buf);
+	पूर्णांक (*xfer)(काष्ठा video_i2c_data *data, अक्षर *buf);
 
-	/* power control function */
-	int (*set_power)(struct video_i2c_data *data, bool on);
+	/* घातer control function */
+	पूर्णांक (*set_घातer)(काष्ठा video_i2c_data *data, bool on);
 
 	/* hwmon init function */
-	int (*hwmon_init)(struct video_i2c_data *data);
-};
+	पूर्णांक (*hwmon_init)(काष्ठा video_i2c_data *data);
+पूर्ण;
 
-static int mlx90640_nvram_read(void *priv, unsigned int offset, void *val,
-			     size_t bytes)
-{
-	struct video_i2c_data *data = priv;
+अटल पूर्णांक mlx90640_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			     माप_प्रकार bytes)
+अणु
+	काष्ठा video_i2c_data *data = priv;
 
-	return regmap_bulk_read(data->regmap, 0x2400 + offset, val, bytes);
-}
+	वापस regmap_bulk_पढ़ो(data->regmap, 0x2400 + offset, val, bytes);
+पूर्ण
 
-static struct nvmem_config mlx90640_nvram_config = {
+अटल काष्ठा nvmem_config mlx90640_nvram_config = अणु
 	.name = "mlx90640_nvram",
 	.word_size = 2,
 	.stride = 1,
 	.size = 1664,
-	.reg_read = mlx90640_nvram_read,
-};
+	.reg_पढ़ो = mlx90640_nvram_पढ़ो,
+पूर्ण;
 
-/* Power control register */
-#define AMG88XX_REG_PCTL	0x00
-#define AMG88XX_PCTL_NORMAL		0x00
-#define AMG88XX_PCTL_SLEEP		0x10
+/* Power control रेजिस्टर */
+#घोषणा AMG88XX_REG_PCTL	0x00
+#घोषणा AMG88XX_PCTL_NORMAL		0x00
+#घोषणा AMG88XX_PCTL_SLEEP		0x10
 
-/* Reset register */
-#define AMG88XX_REG_RST		0x01
-#define AMG88XX_RST_FLAG		0x30
-#define AMG88XX_RST_INIT		0x3f
+/* Reset रेजिस्टर */
+#घोषणा AMG88XX_REG_RST		0x01
+#घोषणा AMG88XX_RST_FLAG		0x30
+#घोषणा AMG88XX_RST_INIT		0x3f
 
-/* Frame rate register */
-#define AMG88XX_REG_FPSC	0x02
-#define AMG88XX_FPSC_1FPS		BIT(0)
+/* Frame rate रेजिस्टर */
+#घोषणा AMG88XX_REG_FPSC	0x02
+#घोषणा AMG88XX_FPSC_1FPS		BIT(0)
 
-/* Thermistor register */
-#define AMG88XX_REG_TTHL	0x0e
+/* Thermistor रेजिस्टर */
+#घोषणा AMG88XX_REG_TTHL	0x0e
 
-/* Temperature register */
-#define AMG88XX_REG_T01L	0x80
+/* Temperature रेजिस्टर */
+#घोषणा AMG88XX_REG_T01L	0x80
 
-/* Control register */
-#define MLX90640_REG_CTL1		0x800d
-#define MLX90640_REG_CTL1_MASK		0x0380
-#define MLX90640_REG_CTL1_MASK_SHIFT	7
+/* Control रेजिस्टर */
+#घोषणा MLX90640_REG_CTL1		0x800d
+#घोषणा MLX90640_REG_CTL1_MASK		0x0380
+#घोषणा MLX90640_REG_CTL1_MASK_SHIFT	7
 
-static int amg88xx_xfer(struct video_i2c_data *data, char *buf)
-{
-	return regmap_bulk_read(data->regmap, AMG88XX_REG_T01L, buf,
+अटल पूर्णांक amg88xx_xfer(काष्ठा video_i2c_data *data, अक्षर *buf)
+अणु
+	वापस regmap_bulk_पढ़ो(data->regmap, AMG88XX_REG_T01L, buf,
 				data->chip->buffer_size);
-}
+पूर्ण
 
-static int mlx90640_xfer(struct video_i2c_data *data, char *buf)
-{
-	return regmap_bulk_read(data->regmap, 0x400, buf,
+अटल पूर्णांक mlx90640_xfer(काष्ठा video_i2c_data *data, अक्षर *buf)
+अणु
+	वापस regmap_bulk_पढ़ो(data->regmap, 0x400, buf,
 				data->chip->buffer_size);
-}
+पूर्ण
 
-static int amg88xx_setup(struct video_i2c_data *data)
-{
-	unsigned int mask = AMG88XX_FPSC_1FPS;
-	unsigned int val;
+अटल पूर्णांक amg88xx_setup(काष्ठा video_i2c_data *data)
+अणु
+	अचिन्हित पूर्णांक mask = AMG88XX_FPSC_1FPS;
+	अचिन्हित पूर्णांक val;
 
-	if (data->frame_interval.numerator == data->frame_interval.denominator)
+	अगर (data->frame_पूर्णांकerval.numerator == data->frame_पूर्णांकerval.denominator)
 		val = mask;
-	else
+	अन्यथा
 		val = 0;
 
-	return regmap_update_bits(data->regmap, AMG88XX_REG_FPSC, mask, val);
-}
+	वापस regmap_update_bits(data->regmap, AMG88XX_REG_FPSC, mask, val);
+पूर्ण
 
-static int mlx90640_setup(struct video_i2c_data *data)
-{
-	unsigned int n, idx;
+अटल पूर्णांक mlx90640_setup(काष्ठा video_i2c_data *data)
+अणु
+	अचिन्हित पूर्णांक n, idx;
 
-	for (n = 0; n < data->chip->num_frame_intervals - 1; n++) {
-		if (V4L2_FRACT_COMPARE(data->frame_interval, ==,
-				       data->chip->frame_intervals[n]))
-			break;
-	}
+	क्रम (n = 0; n < data->chip->num_frame_पूर्णांकervals - 1; n++) अणु
+		अगर (V4L2_FRACT_COMPARE(data->frame_पूर्णांकerval, ==,
+				       data->chip->frame_पूर्णांकervals[n]))
+			अवरोध;
+	पूर्ण
 
-	idx = data->chip->num_frame_intervals - n - 1;
+	idx = data->chip->num_frame_पूर्णांकervals - n - 1;
 
-	return regmap_update_bits(data->regmap, MLX90640_REG_CTL1,
+	वापस regmap_update_bits(data->regmap, MLX90640_REG_CTL1,
 				  MLX90640_REG_CTL1_MASK,
 				  idx << MLX90640_REG_CTL1_MASK_SHIFT);
-}
+पूर्ण
 
-static int amg88xx_set_power_on(struct video_i2c_data *data)
-{
-	int ret;
+अटल पूर्णांक amg88xx_set_घातer_on(काष्ठा video_i2c_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(data->regmap, AMG88XX_REG_PCTL, AMG88XX_PCTL_NORMAL);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(data->regmap, AMG88XX_REG_PCTL, AMG88XX_PCTL_NORMAL);
+	अगर (ret)
+		वापस ret;
 
 	msleep(50);
 
-	ret = regmap_write(data->regmap, AMG88XX_REG_RST, AMG88XX_RST_INIT);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(data->regmap, AMG88XX_REG_RST, AMG88XX_RST_INIT);
+	अगर (ret)
+		वापस ret;
 
 	usleep_range(2000, 3000);
 
-	ret = regmap_write(data->regmap, AMG88XX_REG_RST, AMG88XX_RST_FLAG);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(data->regmap, AMG88XX_REG_RST, AMG88XX_RST_FLAG);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Wait two frames before reading thermistor and temperature registers
+	 * Wait two frames beक्रमe पढ़ोing thermistor and temperature रेजिस्टरs
 	 */
 	msleep(200);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amg88xx_set_power_off(struct video_i2c_data *data)
-{
-	int ret;
+अटल पूर्णांक amg88xx_set_घातer_off(काष्ठा video_i2c_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(data->regmap, AMG88XX_REG_PCTL, AMG88XX_PCTL_SLEEP);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(data->regmap, AMG88XX_REG_PCTL, AMG88XX_PCTL_SLEEP);
+	अगर (ret)
+		वापस ret;
 	/*
-	 * Wait for a while to avoid resuming normal mode immediately after
+	 * Wait क्रम a जबतक to aव्योम resuming normal mode immediately after
 	 * entering sleep mode, otherwise the device occasionally goes wrong
-	 * (thermistor and temperature registers are not updated at all)
+	 * (thermistor and temperature रेजिस्टरs are not updated at all)
 	 */
 	msleep(100);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int amg88xx_set_power(struct video_i2c_data *data, bool on)
-{
-	if (on)
-		return amg88xx_set_power_on(data);
+अटल पूर्णांक amg88xx_set_घातer(काष्ठा video_i2c_data *data, bool on)
+अणु
+	अगर (on)
+		वापस amg88xx_set_घातer_on(data);
 
-	return amg88xx_set_power_off(data);
-}
+	वापस amg88xx_set_घातer_off(data);
+पूर्ण
 
-#if IS_REACHABLE(CONFIG_HWMON)
+#अगर IS_REACHABLE(CONFIG_HWMON)
 
-static const u32 amg88xx_temp_config[] = {
+अटल स्थिर u32 amg88xx_temp_config[] = अणु
 	HWMON_T_INPUT,
 	0
-};
+पूर्ण;
 
-static const struct hwmon_channel_info amg88xx_temp = {
+अटल स्थिर काष्ठा hwmon_channel_info amg88xx_temp = अणु
 	.type = hwmon_temp,
 	.config = amg88xx_temp_config,
-};
+पूर्ण;
 
-static const struct hwmon_channel_info *amg88xx_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *amg88xx_info[] = अणु
 	&amg88xx_temp,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t amg88xx_is_visible(const void *drvdata,
-				  enum hwmon_sensor_types type,
-				  u32 attr, int channel)
-{
-	return 0444;
-}
+अटल umode_t amg88xx_is_visible(स्थिर व्योम *drvdata,
+				  क्रमागत hwmon_sensor_types type,
+				  u32 attr, पूर्णांक channel)
+अणु
+	वापस 0444;
+पूर्ण
 
-static int amg88xx_read(struct device *dev, enum hwmon_sensor_types type,
-			u32 attr, int channel, long *val)
-{
-	struct video_i2c_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक amg88xx_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+			u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	काष्ठा video_i2c_data *data = dev_get_drvdata(dev);
 	__le16 buf;
-	int tmp;
+	पूर्णांक पंचांगp;
 
-	tmp = pm_runtime_get_sync(regmap_get_device(data->regmap));
-	if (tmp < 0) {
-		pm_runtime_put_noidle(regmap_get_device(data->regmap));
-		return tmp;
-	}
+	पंचांगp = pm_runसमय_get_sync(regmap_get_device(data->regmap));
+	अगर (पंचांगp < 0) अणु
+		pm_runसमय_put_noidle(regmap_get_device(data->regmap));
+		वापस पंचांगp;
+	पूर्ण
 
-	tmp = regmap_bulk_read(data->regmap, AMG88XX_REG_TTHL, &buf, 2);
-	pm_runtime_mark_last_busy(regmap_get_device(data->regmap));
-	pm_runtime_put_autosuspend(regmap_get_device(data->regmap));
-	if (tmp)
-		return tmp;
+	पंचांगp = regmap_bulk_पढ़ो(data->regmap, AMG88XX_REG_TTHL, &buf, 2);
+	pm_runसमय_mark_last_busy(regmap_get_device(data->regmap));
+	pm_runसमय_put_स्वतःsuspend(regmap_get_device(data->regmap));
+	अगर (पंचांगp)
+		वापस पंचांगp;
 
-	tmp = le16_to_cpu(buf);
+	पंचांगp = le16_to_cpu(buf);
 
 	/*
-	 * Check for sign bit, this isn't a two's complement value but an
-	 * absolute temperature that needs to be inverted in the case of being
+	 * Check क्रम sign bit, this isn't a two's complement value but an
+	 * असलolute temperature that needs to be inverted in the हाल of being
 	 * negative.
 	 */
-	if (tmp & BIT(11))
-		tmp = -(tmp & 0x7ff);
+	अगर (पंचांगp & BIT(11))
+		पंचांगp = -(पंचांगp & 0x7ff);
 
-	*val = (tmp * 625) / 10;
+	*val = (पंचांगp * 625) / 10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hwmon_ops amg88xx_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops amg88xx_hwmon_ops = अणु
 	.is_visible = amg88xx_is_visible,
-	.read = amg88xx_read,
-};
+	.पढ़ो = amg88xx_पढ़ो,
+पूर्ण;
 
-static const struct hwmon_chip_info amg88xx_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info amg88xx_chip_info = अणु
 	.ops = &amg88xx_hwmon_ops,
 	.info = amg88xx_info,
-};
+पूर्ण;
 
-static int amg88xx_hwmon_init(struct video_i2c_data *data)
-{
-	struct device *dev = regmap_get_device(data->regmap);
-	void *hwmon = devm_hwmon_device_register_with_info(dev, "amg88xx", data,
-						&amg88xx_chip_info, NULL);
+अटल पूर्णांक amg88xx_hwmon_init(काष्ठा video_i2c_data *data)
+अणु
+	काष्ठा device *dev = regmap_get_device(data->regmap);
+	व्योम *hwmon = devm_hwmon_device_रेजिस्टर_with_info(dev, "amg88xx", data,
+						&amg88xx_chip_info, शून्य);
 
-	return PTR_ERR_OR_ZERO(hwmon);
-}
-#else
-#define	amg88xx_hwmon_init	NULL
-#endif
+	वापस PTR_ERR_OR_ZERO(hwmon);
+पूर्ण
+#अन्यथा
+#घोषणा	amg88xx_hwmon_init	शून्य
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	AMG88XX,
 	MLX90640,
-};
+पूर्ण;
 
-static const struct v4l2_fract amg88xx_frame_intervals[] = {
-	{ 1, 10 },
-	{ 1, 1 },
-};
+अटल स्थिर काष्ठा v4l2_fract amg88xx_frame_पूर्णांकervals[] = अणु
+	अणु 1, 10 पूर्ण,
+	अणु 1, 1 पूर्ण,
+पूर्ण;
 
-static const struct v4l2_fract mlx90640_frame_intervals[] = {
-	{ 1, 64 },
-	{ 1, 32 },
-	{ 1, 16 },
-	{ 1, 8 },
-	{ 1, 4 },
-	{ 1, 2 },
-	{ 1, 1 },
-	{ 2, 1 },
-};
+अटल स्थिर काष्ठा v4l2_fract mlx90640_frame_पूर्णांकervals[] = अणु
+	अणु 1, 64 पूर्ण,
+	अणु 1, 32 पूर्ण,
+	अणु 1, 16 पूर्ण,
+	अणु 1, 8 पूर्ण,
+	अणु 1, 4 पूर्ण,
+	अणु 1, 2 पूर्ण,
+	अणु 1, 1 पूर्ण,
+	अणु 2, 1 पूर्ण,
+पूर्ण;
 
-static const struct video_i2c_chip video_i2c_chip[] = {
-	[AMG88XX] = {
+अटल स्थिर काष्ठा video_i2c_chip video_i2c_chip[] = अणु
+	[AMG88XX] = अणु
 		.size		= &amg88xx_size,
-		.format		= &amg88xx_format,
-		.frame_intervals	= amg88xx_frame_intervals,
-		.num_frame_intervals	= ARRAY_SIZE(amg88xx_frame_intervals),
+		.क्रमmat		= &amg88xx_क्रमmat,
+		.frame_पूर्णांकervals	= amg88xx_frame_पूर्णांकervals,
+		.num_frame_पूर्णांकervals	= ARRAY_SIZE(amg88xx_frame_पूर्णांकervals),
 		.buffer_size	= 128,
 		.bpp		= 16,
 		.regmap_config	= &amg88xx_regmap_config,
 		.setup		= &amg88xx_setup,
 		.xfer		= &amg88xx_xfer,
-		.set_power	= amg88xx_set_power,
+		.set_घातer	= amg88xx_set_घातer,
 		.hwmon_init	= amg88xx_hwmon_init,
-	},
-	[MLX90640] = {
+	पूर्ण,
+	[MLX90640] = अणु
 		.size		= &mlx90640_size,
-		.format		= &mlx90640_format,
-		.frame_intervals	= mlx90640_frame_intervals,
-		.num_frame_intervals	= ARRAY_SIZE(mlx90640_frame_intervals),
+		.क्रमmat		= &mlx90640_क्रमmat,
+		.frame_पूर्णांकervals	= mlx90640_frame_पूर्णांकervals,
+		.num_frame_पूर्णांकervals	= ARRAY_SIZE(mlx90640_frame_पूर्णांकervals),
 		.buffer_size	= 1664,
 		.bpp		= 16,
 		.regmap_config	= &mlx90640_regmap_config,
 		.nvmem_config	= &mlx90640_nvram_config,
 		.setup		= mlx90640_setup,
 		.xfer		= mlx90640_xfer,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct v4l2_file_operations video_i2c_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations video_i2c_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= v4l2_fh_open,
+	.खोलो		= v4l2_fh_खोलो,
 	.release	= vb2_fop_release,
 	.poll		= vb2_fop_poll,
-	.read		= vb2_fop_read,
+	.पढ़ो		= vb2_fop_पढ़ो,
 	.mmap		= vb2_fop_mmap,
 	.unlocked_ioctl = video_ioctl2,
-};
+पूर्ण;
 
-static int queue_setup(struct vb2_queue *vq,
-		       unsigned int *nbuffers, unsigned int *nplanes,
-		       unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct video_i2c_data *data = vb2_get_drv_priv(vq);
-	unsigned int size = data->chip->buffer_size;
+अटल पूर्णांक queue_setup(काष्ठा vb2_queue *vq,
+		       अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+		       अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा video_i2c_data *data = vb2_get_drv_priv(vq);
+	अचिन्हित पूर्णांक size = data->chip->buffer_size;
 
-	if (vq->num_buffers + *nbuffers < 2)
+	अगर (vq->num_buffers + *nbuffers < 2)
 		*nbuffers = 2;
 
-	if (*nplanes)
-		return sizes[0] < size ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < size ? -EINVAL : 0;
 
 	*nplanes = 1;
 	sizes[0] = size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int buffer_prepare(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct video_i2c_data *data = vb2_get_drv_priv(vb->vb2_queue);
-	unsigned int size = data->chip->buffer_size;
+अटल पूर्णांक buffer_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा video_i2c_data *data = vb2_get_drv_priv(vb->vb2_queue);
+	अचिन्हित पूर्णांक size = data->chip->buffer_size;
 
-	if (vb2_plane_size(vb, 0) < size)
-		return -EINVAL;
+	अगर (vb2_plane_size(vb, 0) < size)
+		वापस -EINVAL;
 
 	vbuf->field = V4L2_FIELD_NONE;
 	vb2_set_plane_payload(vb, 0, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void buffer_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct video_i2c_data *data = vb2_get_drv_priv(vb->vb2_queue);
-	struct video_i2c_buffer *buf =
-			container_of(vbuf, struct video_i2c_buffer, vb);
+अटल व्योम buffer_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा video_i2c_data *data = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा video_i2c_buffer *buf =
+			container_of(vbuf, काष्ठा video_i2c_buffer, vb);
 
 	spin_lock(&data->slock);
 	list_add_tail(&buf->list, &data->vid_cap_active);
 	spin_unlock(&data->slock);
-}
+पूर्ण
 
-static int video_i2c_thread_vid_cap(void *priv)
-{
-	struct video_i2c_data *data = priv;
-	unsigned int delay = mult_frac(HZ, data->frame_interval.numerator,
-				       data->frame_interval.denominator);
+अटल पूर्णांक video_i2c_thपढ़ो_vid_cap(व्योम *priv)
+अणु
+	काष्ठा video_i2c_data *data = priv;
+	अचिन्हित पूर्णांक delay = mult_frac(HZ, data->frame_पूर्णांकerval.numerator,
+				       data->frame_पूर्णांकerval.denominator);
 
-	set_freezable();
+	set_मुक्तzable();
 
-	do {
-		unsigned long start_jiffies = jiffies;
-		struct video_i2c_buffer *vid_cap_buf = NULL;
-		int schedule_delay;
+	करो अणु
+		अचिन्हित दीर्घ start_jअगरfies = jअगरfies;
+		काष्ठा video_i2c_buffer *vid_cap_buf = शून्य;
+		पूर्णांक schedule_delay;
 
-		try_to_freeze();
+		try_to_मुक्तze();
 
 		spin_lock(&data->slock);
 
-		if (!list_empty(&data->vid_cap_active)) {
+		अगर (!list_empty(&data->vid_cap_active)) अणु
 			vid_cap_buf = list_last_entry(&data->vid_cap_active,
-						 struct video_i2c_buffer, list);
+						 काष्ठा video_i2c_buffer, list);
 			list_del(&vid_cap_buf->list);
-		}
+		पूर्ण
 
 		spin_unlock(&data->slock);
 
-		if (vid_cap_buf) {
-			struct vb2_buffer *vb2_buf = &vid_cap_buf->vb.vb2_buf;
-			void *vbuf = vb2_plane_vaddr(vb2_buf, 0);
-			int ret;
+		अगर (vid_cap_buf) अणु
+			काष्ठा vb2_buffer *vb2_buf = &vid_cap_buf->vb.vb2_buf;
+			व्योम *vbuf = vb2_plane_vaddr(vb2_buf, 0);
+			पूर्णांक ret;
 
 			ret = data->chip->xfer(data, vbuf);
-			vb2_buf->timestamp = ktime_get_ns();
+			vb2_buf->बारtamp = kसमय_get_ns();
 			vid_cap_buf->vb.sequence = data->sequence++;
-			vb2_buffer_done(vb2_buf, ret ?
+			vb2_buffer_करोne(vb2_buf, ret ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-		}
+		पूर्ण
 
-		schedule_delay = delay - (jiffies - start_jiffies);
+		schedule_delay = delay - (jअगरfies - start_jअगरfies);
 
-		if (time_after(jiffies, start_jiffies + delay))
+		अगर (समय_after(jअगरfies, start_jअगरfies + delay))
 			schedule_delay = delay;
 
-		schedule_timeout_interruptible(schedule_delay);
-	} while (!kthread_should_stop());
+		schedule_समयout_पूर्णांकerruptible(schedule_delay);
+	पूर्ण जबतक (!kthपढ़ो_should_stop());
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void video_i2c_del_list(struct vb2_queue *vq, enum vb2_buffer_state state)
-{
-	struct video_i2c_data *data = vb2_get_drv_priv(vq);
-	struct video_i2c_buffer *buf, *tmp;
+अटल व्योम video_i2c_del_list(काष्ठा vb2_queue *vq, क्रमागत vb2_buffer_state state)
+अणु
+	काष्ठा video_i2c_data *data = vb2_get_drv_priv(vq);
+	काष्ठा video_i2c_buffer *buf, *पंचांगp;
 
 	spin_lock(&data->slock);
 
-	list_for_each_entry_safe(buf, tmp, &data->vid_cap_active, list) {
+	list_क्रम_each_entry_safe(buf, पंचांगp, &data->vid_cap_active, list) अणु
 		list_del(&buf->list);
-		vb2_buffer_done(&buf->vb.vb2_buf, state);
-	}
+		vb2_buffer_करोne(&buf->vb.vb2_buf, state);
+	पूर्ण
 
 	spin_unlock(&data->slock);
-}
+पूर्ण
 
-static int start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct video_i2c_data *data = vb2_get_drv_priv(vq);
-	struct device *dev = regmap_get_device(data->regmap);
-	int ret;
+अटल पूर्णांक start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा video_i2c_data *data = vb2_get_drv_priv(vq);
+	काष्ठा device *dev = regmap_get_device(data->regmap);
+	पूर्णांक ret;
 
-	if (data->kthread_vid_cap)
-		return 0;
+	अगर (data->kthपढ़ो_vid_cap)
+		वापस 0;
 
-	ret = pm_runtime_get_sync(dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(dev);
-		goto error_del_list;
-	}
+	ret = pm_runसमय_get_sync(dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(dev);
+		जाओ error_del_list;
+	पूर्ण
 
 	ret = data->chip->setup(data);
-	if (ret)
-		goto error_rpm_put;
+	अगर (ret)
+		जाओ error_rpm_put;
 
 	data->sequence = 0;
-	data->kthread_vid_cap = kthread_run(video_i2c_thread_vid_cap, data,
+	data->kthपढ़ो_vid_cap = kthपढ़ो_run(video_i2c_thपढ़ो_vid_cap, data,
 					    "%s-vid-cap", data->v4l2_dev.name);
-	ret = PTR_ERR_OR_ZERO(data->kthread_vid_cap);
-	if (!ret)
-		return 0;
+	ret = PTR_ERR_OR_ZERO(data->kthपढ़ो_vid_cap);
+	अगर (!ret)
+		वापस 0;
 
 error_rpm_put:
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_put_autosuspend(dev);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_put_स्वतःsuspend(dev);
 error_del_list:
 	video_i2c_del_list(vq, VB2_BUF_STATE_QUEUED);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stop_streaming(struct vb2_queue *vq)
-{
-	struct video_i2c_data *data = vb2_get_drv_priv(vq);
+अटल व्योम stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा video_i2c_data *data = vb2_get_drv_priv(vq);
 
-	if (data->kthread_vid_cap == NULL)
-		return;
+	अगर (data->kthपढ़ो_vid_cap == शून्य)
+		वापस;
 
-	kthread_stop(data->kthread_vid_cap);
-	data->kthread_vid_cap = NULL;
-	pm_runtime_mark_last_busy(regmap_get_device(data->regmap));
-	pm_runtime_put_autosuspend(regmap_get_device(data->regmap));
+	kthपढ़ो_stop(data->kthपढ़ो_vid_cap);
+	data->kthपढ़ो_vid_cap = शून्य;
+	pm_runसमय_mark_last_busy(regmap_get_device(data->regmap));
+	pm_runसमय_put_स्वतःsuspend(regmap_get_device(data->regmap));
 
 	video_i2c_del_list(vq, VB2_BUF_STATE_ERROR);
-}
+पूर्ण
 
-static const struct vb2_ops video_i2c_video_qops = {
+अटल स्थिर काष्ठा vb2_ops video_i2c_video_qops = अणु
 	.queue_setup		= queue_setup,
 	.buf_prepare		= buffer_prepare,
 	.buf_queue		= buffer_queue,
 	.start_streaming	= start_streaming,
 	.stop_streaming		= stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
-static int video_i2c_querycap(struct file *file, void  *priv,
-				struct v4l2_capability *vcap)
-{
-	struct video_i2c_data *data = video_drvdata(file);
-	struct device *dev = regmap_get_device(data->regmap);
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक video_i2c_querycap(काष्ठा file *file, व्योम  *priv,
+				काष्ठा v4l2_capability *vcap)
+अणु
+	काष्ठा video_i2c_data *data = video_drvdata(file);
+	काष्ठा device *dev = regmap_get_device(data->regmap);
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	strscpy(vcap->driver, data->v4l2_dev.name, sizeof(vcap->driver));
-	strscpy(vcap->card, data->vdev.name, sizeof(vcap->card));
+	strscpy(vcap->driver, data->v4l2_dev.name, माप(vcap->driver));
+	strscpy(vcap->card, data->vdev.name, माप(vcap->card));
 
-	sprintf(vcap->bus_info, "I2C:%d-%d", client->adapter->nr, client->addr);
+	प्र_लिखो(vcap->bus_info, "I2C:%d-%d", client->adapter->nr, client->addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_g_input(struct file *file, void *fh, unsigned int *inp)
-{
+अटल पूर्णांक video_i2c_g_input(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक *inp)
+अणु
 	*inp = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_s_input(struct file *file, void *fh, unsigned int inp)
-{
-	return (inp > 0) ? -EINVAL : 0;
-}
+अटल पूर्णांक video_i2c_s_input(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक inp)
+अणु
+	वापस (inp > 0) ? -EINVAL : 0;
+पूर्ण
 
-static int video_i2c_enum_input(struct file *file, void *fh,
-				  struct v4l2_input *vin)
-{
-	if (vin->index > 0)
-		return -EINVAL;
+अटल पूर्णांक video_i2c_क्रमागत_input(काष्ठा file *file, व्योम *fh,
+				  काष्ठा v4l2_input *vin)
+अणु
+	अगर (vin->index > 0)
+		वापस -EINVAL;
 
-	strscpy(vin->name, "Camera", sizeof(vin->name));
+	strscpy(vin->name, "Camera", माप(vin->name));
 
 	vin->type = V4L2_INPUT_TYPE_CAMERA;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_enum_fmt_vid_cap(struct file *file, void *fh,
-					struct v4l2_fmtdesc *fmt)
-{
-	struct video_i2c_data *data = video_drvdata(file);
-	enum v4l2_buf_type type = fmt->type;
+अटल पूर्णांक video_i2c_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+					काष्ठा v4l2_fmtdesc *fmt)
+अणु
+	काष्ठा video_i2c_data *data = video_drvdata(file);
+	क्रमागत v4l2_buf_type type = fmt->type;
 
-	if (fmt->index > 0)
-		return -EINVAL;
+	अगर (fmt->index > 0)
+		वापस -EINVAL;
 
-	*fmt = *data->chip->format;
+	*fmt = *data->chip->क्रमmat;
 	fmt->type = type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_enum_framesizes(struct file *file, void *fh,
-				       struct v4l2_frmsizeenum *fsize)
-{
-	const struct video_i2c_data *data = video_drvdata(file);
-	const struct v4l2_frmsize_discrete *size = data->chip->size;
+अटल पूर्णांक video_i2c_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
+				       काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	स्थिर काष्ठा video_i2c_data *data = video_drvdata(file);
+	स्थिर काष्ठा v4l2_frmsize_discrete *size = data->chip->size;
 
 	/* currently only one frame size is allowed */
-	if (fsize->index > 0)
-		return -EINVAL;
+	अगर (fsize->index > 0)
+		वापस -EINVAL;
 
-	if (fsize->pixel_format != data->chip->format->pixelformat)
-		return -EINVAL;
+	अगर (fsize->pixel_क्रमmat != data->chip->क्रमmat->pixelक्रमmat)
+		वापस -EINVAL;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	fsize->discrete.width = size->width;
 	fsize->discrete.height = size->height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_enum_frameintervals(struct file *file, void *priv,
-					   struct v4l2_frmivalenum *fe)
-{
-	const struct video_i2c_data *data = video_drvdata(file);
-	const struct v4l2_frmsize_discrete *size = data->chip->size;
+अटल पूर्णांक video_i2c_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *priv,
+					   काष्ठा v4l2_frmivalक्रमागत *fe)
+अणु
+	स्थिर काष्ठा video_i2c_data *data = video_drvdata(file);
+	स्थिर काष्ठा v4l2_frmsize_discrete *size = data->chip->size;
 
-	if (fe->index >= data->chip->num_frame_intervals)
-		return -EINVAL;
+	अगर (fe->index >= data->chip->num_frame_पूर्णांकervals)
+		वापस -EINVAL;
 
-	if (fe->width != size->width || fe->height != size->height)
-		return -EINVAL;
+	अगर (fe->width != size->width || fe->height != size->height)
+		वापस -EINVAL;
 
 	fe->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	fe->discrete = data->chip->frame_intervals[fe->index];
+	fe->discrete = data->chip->frame_पूर्णांकervals[fe->index];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_try_fmt_vid_cap(struct file *file, void *fh,
-				       struct v4l2_format *fmt)
-{
-	const struct video_i2c_data *data = video_drvdata(file);
-	const struct v4l2_frmsize_discrete *size = data->chip->size;
-	struct v4l2_pix_format *pix = &fmt->fmt.pix;
-	unsigned int bpp = data->chip->bpp / 8;
+अटल पूर्णांक video_i2c_try_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+				       काष्ठा v4l2_क्रमmat *fmt)
+अणु
+	स्थिर काष्ठा video_i2c_data *data = video_drvdata(file);
+	स्थिर काष्ठा v4l2_frmsize_discrete *size = data->chip->size;
+	काष्ठा v4l2_pix_क्रमmat *pix = &fmt->fmt.pix;
+	अचिन्हित पूर्णांक bpp = data->chip->bpp / 8;
 
 	pix->width = size->width;
 	pix->height = size->height;
-	pix->pixelformat = data->chip->format->pixelformat;
+	pix->pixelक्रमmat = data->chip->क्रमmat->pixelक्रमmat;
 	pix->field = V4L2_FIELD_NONE;
 	pix->bytesperline = pix->width * bpp;
 	pix->sizeimage = pix->bytesperline * pix->height;
 	pix->colorspace = V4L2_COLORSPACE_RAW;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_s_fmt_vid_cap(struct file *file, void *fh,
-				     struct v4l2_format *fmt)
-{
-	struct video_i2c_data *data = video_drvdata(file);
+अटल पूर्णांक video_i2c_s_fmt_vid_cap(काष्ठा file *file, व्योम *fh,
+				     काष्ठा v4l2_क्रमmat *fmt)
+अणु
+	काष्ठा video_i2c_data *data = video_drvdata(file);
 
-	if (vb2_is_busy(&data->vb_vidq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&data->vb_vidq))
+		वापस -EBUSY;
 
-	return video_i2c_try_fmt_vid_cap(file, fh, fmt);
-}
+	वापस video_i2c_try_fmt_vid_cap(file, fh, fmt);
+पूर्ण
 
-static int video_i2c_g_parm(struct file *filp, void *priv,
-			      struct v4l2_streamparm *parm)
-{
-	struct video_i2c_data *data = video_drvdata(filp);
+अटल पूर्णांक video_i2c_g_parm(काष्ठा file *filp, व्योम *priv,
+			      काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा video_i2c_data *data = video_drvdata(filp);
 
-	if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	parm->parm.capture.readbuffers = 1;
+	parm->parm.capture.पढ़ोbuffers = 1;
 	parm->parm.capture.capability = V4L2_CAP_TIMEPERFRAME;
-	parm->parm.capture.timeperframe = data->frame_interval;
+	parm->parm.capture.समयperframe = data->frame_पूर्णांकerval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int video_i2c_s_parm(struct file *filp, void *priv,
-			      struct v4l2_streamparm *parm)
-{
-	struct video_i2c_data *data = video_drvdata(filp);
-	int i;
+अटल पूर्णांक video_i2c_s_parm(काष्ठा file *filp, व्योम *priv,
+			      काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा video_i2c_data *data = video_drvdata(filp);
+	पूर्णांक i;
 
-	for (i = 0; i < data->chip->num_frame_intervals - 1; i++) {
-		if (V4L2_FRACT_COMPARE(parm->parm.capture.timeperframe, <=,
-				       data->chip->frame_intervals[i]))
-			break;
-	}
-	data->frame_interval = data->chip->frame_intervals[i];
+	क्रम (i = 0; i < data->chip->num_frame_पूर्णांकervals - 1; i++) अणु
+		अगर (V4L2_FRACT_COMPARE(parm->parm.capture.समयperframe, <=,
+				       data->chip->frame_पूर्णांकervals[i]))
+			अवरोध;
+	पूर्ण
+	data->frame_पूर्णांकerval = data->chip->frame_पूर्णांकervals[i];
 
-	return video_i2c_g_parm(filp, priv, parm);
-}
+	वापस video_i2c_g_parm(filp, priv, parm);
+पूर्ण
 
-static const struct v4l2_ioctl_ops video_i2c_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops video_i2c_ioctl_ops = अणु
 	.vidioc_querycap		= video_i2c_querycap,
 	.vidioc_g_input			= video_i2c_g_input,
 	.vidioc_s_input			= video_i2c_s_input,
-	.vidioc_enum_input		= video_i2c_enum_input,
-	.vidioc_enum_fmt_vid_cap	= video_i2c_enum_fmt_vid_cap,
-	.vidioc_enum_framesizes		= video_i2c_enum_framesizes,
-	.vidioc_enum_frameintervals	= video_i2c_enum_frameintervals,
+	.vidioc_क्रमागत_input		= video_i2c_क्रमागत_input,
+	.vidioc_क्रमागत_fmt_vid_cap	= video_i2c_क्रमागत_fmt_vid_cap,
+	.vidioc_क्रमागत_framesizes		= video_i2c_क्रमागत_framesizes,
+	.vidioc_क्रमागत_frameपूर्णांकervals	= video_i2c_क्रमागत_frameपूर्णांकervals,
 	.vidioc_g_fmt_vid_cap		= video_i2c_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		= video_i2c_s_fmt_vid_cap,
 	.vidioc_g_parm			= video_i2c_g_parm,
@@ -738,50 +739,50 @@ static const struct v4l2_ioctl_ops video_i2c_ioctl_ops = {
 	.vidioc_dqbuf			= vb2_ioctl_dqbuf,
 	.vidioc_streamon		= vb2_ioctl_streamon,
 	.vidioc_streamoff		= vb2_ioctl_streamoff,
-};
+पूर्ण;
 
-static void video_i2c_release(struct video_device *vdev)
-{
-	struct video_i2c_data *data = video_get_drvdata(vdev);
+अटल व्योम video_i2c_release(काष्ठा video_device *vdev)
+अणु
+	काष्ठा video_i2c_data *data = video_get_drvdata(vdev);
 
-	v4l2_device_unregister(&data->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&data->v4l2_dev);
 	mutex_destroy(&data->lock);
 	mutex_destroy(&data->queue_lock);
-	regmap_exit(data->regmap);
-	kfree(data);
-}
+	regmap_निकास(data->regmap);
+	kमुक्त(data);
+पूर्ण
 
-static int video_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	struct video_i2c_data *data;
-	struct v4l2_device *v4l2_dev;
-	struct vb2_queue *queue;
-	int ret = -ENODEV;
+अटल पूर्णांक video_i2c_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा video_i2c_data *data;
+	काष्ठा v4l2_device *v4l2_dev;
+	काष्ठा vb2_queue *queue;
+	पूर्णांक ret = -ENODEV;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	if (dev_fwnode(&client->dev))
+	अगर (dev_fwnode(&client->dev))
 		data->chip = device_get_match_data(&client->dev);
-	else if (id)
+	अन्यथा अगर (id)
 		data->chip = &video_i2c_chip[id->driver_data];
-	else
-		goto error_free_device;
+	अन्यथा
+		जाओ error_मुक्त_device;
 
 	data->regmap = regmap_init_i2c(client, data->chip->regmap_config);
-	if (IS_ERR(data->regmap)) {
+	अगर (IS_ERR(data->regmap)) अणु
 		ret = PTR_ERR(data->regmap);
-		goto error_free_device;
-	}
+		जाओ error_मुक्त_device;
+	पूर्ण
 
 	v4l2_dev = &data->v4l2_dev;
-	strscpy(v4l2_dev->name, VIDEO_I2C_DRIVER, sizeof(v4l2_dev->name));
+	strscpy(v4l2_dev->name, VIDEO_I2C_DRIVER, माप(v4l2_dev->name));
 
-	ret = v4l2_device_register(&client->dev, v4l2_dev);
-	if (ret < 0)
-		goto error_regmap_exit;
+	ret = v4l2_device_रेजिस्टर(&client->dev, v4l2_dev);
+	अगर (ret < 0)
+		जाओ error_regmap_निकास;
 
 	mutex_init(&data->lock);
 	mutex_init(&data->queue_lock);
@@ -789,21 +790,21 @@ static int video_i2c_probe(struct i2c_client *client,
 	queue = &data->vb_vidq;
 	queue->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	queue->io_modes = VB2_DMABUF | VB2_MMAP | VB2_USERPTR | VB2_READ;
-	queue->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	queue->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	queue->drv_priv = data;
-	queue->buf_struct_size = sizeof(struct video_i2c_buffer);
+	queue->buf_काष्ठा_size = माप(काष्ठा video_i2c_buffer);
 	queue->min_buffers_needed = 1;
 	queue->ops = &video_i2c_video_qops;
-	queue->mem_ops = &vb2_vmalloc_memops;
+	queue->mem_ops = &vb2_vदो_स्मृति_memops;
 
 	ret = vb2_queue_init(queue);
-	if (ret < 0)
-		goto error_unregister_device;
+	अगर (ret < 0)
+		जाओ error_unरेजिस्टर_device;
 
 	data->vdev.queue = queue;
 	data->vdev.queue->lock = &data->queue_lock;
 
-	snprintf(data->vdev.name, sizeof(data->vdev.name),
+	snम_लिखो(data->vdev.name, माप(data->vdev.name),
 				 "I2C %d-%d Transport Video",
 				 client->adapter->nr, client->addr);
 
@@ -818,147 +819,147 @@ static int video_i2c_probe(struct i2c_client *client,
 	spin_lock_init(&data->slock);
 	INIT_LIST_HEAD(&data->vid_cap_active);
 
-	data->frame_interval = data->chip->frame_intervals[0];
+	data->frame_पूर्णांकerval = data->chip->frame_पूर्णांकervals[0];
 
 	video_set_drvdata(&data->vdev, data);
 	i2c_set_clientdata(client, data);
 
-	if (data->chip->set_power) {
-		ret = data->chip->set_power(data, true);
-		if (ret)
-			goto error_unregister_device;
-	}
+	अगर (data->chip->set_घातer) अणु
+		ret = data->chip->set_घातer(data, true);
+		अगर (ret)
+			जाओ error_unरेजिस्टर_device;
+	पूर्ण
 
-	pm_runtime_get_noresume(&client->dev);
-	pm_runtime_set_active(&client->dev);
-	pm_runtime_enable(&client->dev);
-	pm_runtime_set_autosuspend_delay(&client->dev, 2000);
-	pm_runtime_use_autosuspend(&client->dev);
+	pm_runसमय_get_noresume(&client->dev);
+	pm_runसमय_set_active(&client->dev);
+	pm_runसमय_enable(&client->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&client->dev, 2000);
+	pm_runसमय_use_स्वतःsuspend(&client->dev);
 
-	if (data->chip->hwmon_init) {
+	अगर (data->chip->hwmon_init) अणु
 		ret = data->chip->hwmon_init(data);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(&client->dev,
 				 "failed to register hwmon device\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (data->chip->nvmem_config) {
-		struct nvmem_config *config = data->chip->nvmem_config;
-		struct nvmem_device *device;
+	अगर (data->chip->nvmem_config) अणु
+		काष्ठा nvmem_config *config = data->chip->nvmem_config;
+		काष्ठा nvmem_device *device;
 
 		config->priv = data;
 		config->dev = &client->dev;
 
-		device = devm_nvmem_register(&client->dev, config);
+		device = devm_nvmem_रेजिस्टर(&client->dev, config);
 
-		if (IS_ERR(device)) {
+		अगर (IS_ERR(device)) अणु
 			dev_warn(&client->dev,
 				 "failed to register nvmem device\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ret = video_register_device(&data->vdev, VFL_TYPE_VIDEO, -1);
-	if (ret < 0)
-		goto error_pm_disable;
+	ret = video_रेजिस्टर_device(&data->vdev, VFL_TYPE_VIDEO, -1);
+	अगर (ret < 0)
+		जाओ error_pm_disable;
 
-	pm_runtime_mark_last_busy(&client->dev);
-	pm_runtime_put_autosuspend(&client->dev);
+	pm_runसमय_mark_last_busy(&client->dev);
+	pm_runसमय_put_स्वतःsuspend(&client->dev);
 
-	return 0;
+	वापस 0;
 
 error_pm_disable:
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
 
-	if (data->chip->set_power)
-		data->chip->set_power(data, false);
+	अगर (data->chip->set_घातer)
+		data->chip->set_घातer(data, false);
 
-error_unregister_device:
-	v4l2_device_unregister(v4l2_dev);
+error_unरेजिस्टर_device:
+	v4l2_device_unरेजिस्टर(v4l2_dev);
 	mutex_destroy(&data->lock);
 	mutex_destroy(&data->queue_lock);
 
-error_regmap_exit:
-	regmap_exit(data->regmap);
+error_regmap_निकास:
+	regmap_निकास(data->regmap);
 
-error_free_device:
-	kfree(data);
+error_मुक्त_device:
+	kमुक्त(data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int video_i2c_remove(struct i2c_client *client)
-{
-	struct video_i2c_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक video_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा video_i2c_data *data = i2c_get_clientdata(client);
 
-	pm_runtime_get_sync(&client->dev);
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
+	pm_runसमय_get_sync(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
 
-	if (data->chip->set_power)
-		data->chip->set_power(data, false);
+	अगर (data->chip->set_घातer)
+		data->chip->set_घातer(data, false);
 
-	video_unregister_device(&data->vdev);
+	video_unरेजिस्टर_device(&data->vdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int video_i2c_pm_runtime_suspend(struct device *dev)
-{
-	struct video_i2c_data *data = i2c_get_clientdata(to_i2c_client(dev));
+अटल पूर्णांक video_i2c_pm_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा video_i2c_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
-	if (!data->chip->set_power)
-		return 0;
+	अगर (!data->chip->set_घातer)
+		वापस 0;
 
-	return data->chip->set_power(data, false);
-}
+	वापस data->chip->set_घातer(data, false);
+पूर्ण
 
-static int video_i2c_pm_runtime_resume(struct device *dev)
-{
-	struct video_i2c_data *data = i2c_get_clientdata(to_i2c_client(dev));
+अटल पूर्णांक video_i2c_pm_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा video_i2c_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
-	if (!data->chip->set_power)
-		return 0;
+	अगर (!data->chip->set_घातer)
+		वापस 0;
 
-	return data->chip->set_power(data, true);
-}
+	वापस data->chip->set_घातer(data, true);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static const struct dev_pm_ops video_i2c_pm_ops = {
-	SET_RUNTIME_PM_OPS(video_i2c_pm_runtime_suspend,
-			   video_i2c_pm_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops video_i2c_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(video_i2c_pm_runसमय_suspend,
+			   video_i2c_pm_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct i2c_device_id video_i2c_id_table[] = {
-	{ "amg88xx", AMG88XX },
-	{ "mlx90640", MLX90640 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id video_i2c_id_table[] = अणु
+	अणु "amg88xx", AMG88XX पूर्ण,
+	अणु "mlx90640", MLX90640 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, video_i2c_id_table);
 
-static const struct of_device_id video_i2c_of_match[] = {
-	{ .compatible = "panasonic,amg88xx", .data = &video_i2c_chip[AMG88XX] },
-	{ .compatible = "melexis,mlx90640", .data = &video_i2c_chip[MLX90640] },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id video_i2c_of_match[] = अणु
+	अणु .compatible = "panasonic,amg88xx", .data = &video_i2c_chip[AMG88XX] पूर्ण,
+	अणु .compatible = "melexis,mlx90640", .data = &video_i2c_chip[MLX90640] पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, video_i2c_of_match);
 
-static struct i2c_driver video_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver video_i2c_driver = अणु
+	.driver = अणु
 		.name	= VIDEO_I2C_DRIVER,
 		.of_match_table = video_i2c_of_match,
 		.pm	= &video_i2c_pm_ops,
-	},
+	पूर्ण,
 	.probe		= video_i2c_probe,
-	.remove		= video_i2c_remove,
+	.हटाओ		= video_i2c_हटाओ,
 	.id_table	= video_i2c_id_table,
-};
+पूर्ण;
 
 module_i2c_driver(video_i2c_driver);
 

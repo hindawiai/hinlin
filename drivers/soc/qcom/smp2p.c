@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015, Sony Mobile Communications AB.
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/mailbox_client.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/soc/qcom/smem.h>
-#include <linux/soc/qcom/smem_state.h>
-#include <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/soc/qcom/sस्मृति.स>
+#समावेश <linux/soc/qcom/smem_state.h>
+#समावेश <linux/spinlock.h>
 
 /*
- * The Shared Memory Point to Point (SMP2P) protocol facilitates communication
+ * The Shared Memory Poपूर्णांक to Poपूर्णांक (SMP2P) protocol facilitates communication
  * of a single 32-bit value between two processors.  Each value has a single
- * writer (the local side) and a single reader (the remote side). Values are
- * uniquely identified in the system by the directed edge (local processor ID
- * to remote processor ID) and a string identifier.
+ * ग_लिखोr (the local side) and a single पढ़ोer (the remote side). Values are
+ * uniquely identअगरied in the प्रणाली by the directed edge (local processor ID
+ * to remote processor ID) and a string identअगरier.
  *
- * Each processor is responsible for creating the outgoing SMEM items and each
- * item is writable by the local processor and readable by the remote
- * processor.  By using two separate SMEM items that are single-reader and
- * single-writer, SMP2P does not require any remote locking mechanisms.
+ * Each processor is responsible क्रम creating the outgoing SMEM items and each
+ * item is writable by the local processor and पढ़ोable by the remote
+ * processor.  By using two separate SMEM items that are single-पढ़ोer and
+ * single-ग_लिखोr, SMP2P करोes not require any remote locking mechanisms.
  *
- * The driver uses the Linux GPIO and interrupt framework to expose a virtual
- * GPIO for each outbound entry and a virtual interrupt controller for each
+ * The driver uses the Linux GPIO and पूर्णांकerrupt framework to expose a भव
+ * GPIO क्रम each outbound entry and a भव पूर्णांकerrupt controller क्रम each
  * inbound entry.
  */
 
-#define SMP2P_MAX_ENTRY 16
-#define SMP2P_MAX_ENTRY_NAME 16
+#घोषणा SMP2P_MAX_ENTRY 16
+#घोषणा SMP2P_MAX_ENTRY_NAME 16
 
-#define SMP2P_FEATURE_SSR_ACK 0x1
+#घोषणा SMP2P_FEATURE_SSR_ACK 0x1
 
-#define SMP2P_MAGIC 0x504d5324
+#घोषणा SMP2P_MAGIC 0x504d5324
 
 /**
- * struct smp2p_smem_item - in memory communication structure
+ * काष्ठा smp2p_smem_item - in memory communication काष्ठाure
  * @magic:		magic number
  * @version:		version - must be 1
  * @features:		features flag - currently unused
@@ -53,340 +54,340 @@
  * @total_entries:	number of entries - always SMP2P_MAX_ENTRY
  * @valid_entries:	number of allocated entries
  * @flags:
- * @entries:		individual communication entries
+ * @entries:		inभागidual communication entries
  *     @name:		name of the entry
  *     @value:		content of the entry
  */
-struct smp2p_smem_item {
+काष्ठा smp2p_smem_item अणु
 	u32 magic;
 	u8 version;
-	unsigned features:24;
+	अचिन्हित features:24;
 	u16 local_pid;
 	u16 remote_pid;
 	u16 total_entries;
 	u16 valid_entries;
 	u32 flags;
 
-	struct {
+	काष्ठा अणु
 		u8 name[SMP2P_MAX_ENTRY_NAME];
 		u32 value;
-	} entries[SMP2P_MAX_ENTRY];
-} __packed;
+	पूर्ण entries[SMP2P_MAX_ENTRY];
+पूर्ण __packed;
 
 /**
- * struct smp2p_entry - driver context matching one entry
+ * काष्ठा smp2p_entry - driver context matching one entry
  * @node:	list entry to keep track of allocated entries
  * @smp2p:	reference to the device driver context
  * @name:	name of the entry, to match against smp2p_smem_item
- * @value:	pointer to smp2p_smem_item entry value
+ * @value:	poपूर्णांकer to smp2p_smem_item entry value
  * @last_value:	last handled value
- * @domain:	irq_domain for inbound entries
- * @irq_enabled:bitmap to track enabled irq bits
- * @irq_rising:	bitmap to mark irq bits for rising detection
- * @irq_falling:bitmap to mark irq bits for falling detection
+ * @करोमुख्य:	irq_करोमुख्य क्रम inbound entries
+ * @irq_enabled:biपंचांगap to track enabled irq bits
+ * @irq_rising:	biपंचांगap to mark irq bits क्रम rising detection
+ * @irq_falling:biपंचांगap to mark irq bits क्रम falling detection
  * @state:	smem state handle
- * @lock:	spinlock to protect read-modify-write of the value
+ * @lock:	spinlock to protect पढ़ो-modअगरy-ग_लिखो of the value
  */
-struct smp2p_entry {
-	struct list_head node;
-	struct qcom_smp2p *smp2p;
+काष्ठा smp2p_entry अणु
+	काष्ठा list_head node;
+	काष्ठा qcom_smp2p *smp2p;
 
-	const char *name;
+	स्थिर अक्षर *name;
 	u32 *value;
 	u32 last_value;
 
-	struct irq_domain *domain;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 	DECLARE_BITMAP(irq_enabled, 32);
 	DECLARE_BITMAP(irq_rising, 32);
 	DECLARE_BITMAP(irq_falling, 32);
 
-	struct qcom_smem_state *state;
+	काष्ठा qcom_smem_state *state;
 
 	spinlock_t lock;
-};
+पूर्ण;
 
-#define SMP2P_INBOUND	0
-#define SMP2P_OUTBOUND	1
+#घोषणा SMP2P_INBOUND	0
+#घोषणा SMP2P_OUTBOUND	1
 
 /**
- * struct qcom_smp2p - device driver context
+ * काष्ठा qcom_smp2p - device driver context
  * @dev:	device driver handle
- * @in:		pointer to the inbound smem item
- * @out:	pointer to the outbound smem item
+ * @in:		poपूर्णांकer to the inbound smem item
+ * @out:	poपूर्णांकer to the outbound smem item
  * @smem_items:	ids of the two smem items
- * @valid_entries: already scanned inbound entries
+ * @valid_entries: alपढ़ोy scanned inbound entries
  * @local_pid:	processor id of the inbound edge
  * @remote_pid:	processor id of the outbound edge
- * @ipc_regmap:	regmap for the outbound ipc
+ * @ipc_regmap:	regmap क्रम the outbound ipc
  * @ipc_offset:	offset within the regmap
- * @ipc_bit:	bit in regmap@offset to kick to signal remote processor
+ * @ipc_bit:	bit in regmap@offset to kick to संकेत remote processor
  * @mbox_client: mailbox client handle
  * @mbox_chan:	apcs ipc mailbox channel handle
  * @inbound:	list of inbound entries
  * @outbound:	list of outbound entries
  */
-struct qcom_smp2p {
-	struct device *dev;
+काष्ठा qcom_smp2p अणु
+	काष्ठा device *dev;
 
-	struct smp2p_smem_item *in;
-	struct smp2p_smem_item *out;
+	काष्ठा smp2p_smem_item *in;
+	काष्ठा smp2p_smem_item *out;
 
-	unsigned smem_items[SMP2P_OUTBOUND + 1];
+	अचिन्हित smem_items[SMP2P_OUTBOUND + 1];
 
-	unsigned valid_entries;
+	अचिन्हित valid_entries;
 
-	unsigned local_pid;
-	unsigned remote_pid;
+	अचिन्हित local_pid;
+	अचिन्हित remote_pid;
 
-	struct regmap *ipc_regmap;
-	int ipc_offset;
-	int ipc_bit;
+	काष्ठा regmap *ipc_regmap;
+	पूर्णांक ipc_offset;
+	पूर्णांक ipc_bit;
 
-	struct mbox_client mbox_client;
-	struct mbox_chan *mbox_chan;
+	काष्ठा mbox_client mbox_client;
+	काष्ठा mbox_chan *mbox_chan;
 
-	struct list_head inbound;
-	struct list_head outbound;
-};
+	काष्ठा list_head inbound;
+	काष्ठा list_head outbound;
+पूर्ण;
 
-static void qcom_smp2p_kick(struct qcom_smp2p *smp2p)
-{
-	/* Make sure any updated data is written before the kick */
+अटल व्योम qcom_smp2p_kick(काष्ठा qcom_smp2p *smp2p)
+अणु
+	/* Make sure any updated data is written beक्रमe the kick */
 	wmb();
 
-	if (smp2p->mbox_chan) {
-		mbox_send_message(smp2p->mbox_chan, NULL);
-		mbox_client_txdone(smp2p->mbox_chan, 0);
-	} else {
-		regmap_write(smp2p->ipc_regmap, smp2p->ipc_offset, BIT(smp2p->ipc_bit));
-	}
-}
+	अगर (smp2p->mbox_chan) अणु
+		mbox_send_message(smp2p->mbox_chan, शून्य);
+		mbox_client_txकरोne(smp2p->mbox_chan, 0);
+	पूर्ण अन्यथा अणु
+		regmap_ग_लिखो(smp2p->ipc_regmap, smp2p->ipc_offset, BIT(smp2p->ipc_bit));
+	पूर्ण
+पूर्ण
 
 /**
- * qcom_smp2p_intr() - interrupt handler for incoming notifications
+ * qcom_smp2p_पूर्णांकr() - पूर्णांकerrupt handler क्रम incoming notअगरications
  * @irq:	unused
  * @data:	smp2p driver context
  *
- * Handle notifications from the remote side to handle newly allocated entries
+ * Handle notअगरications from the remote side to handle newly allocated entries
  * or any changes to the state bits of existing entries.
  */
-static irqreturn_t qcom_smp2p_intr(int irq, void *data)
-{
-	struct smp2p_smem_item *in;
-	struct smp2p_entry *entry;
-	struct qcom_smp2p *smp2p = data;
-	unsigned smem_id = smp2p->smem_items[SMP2P_INBOUND];
-	unsigned pid = smp2p->remote_pid;
-	size_t size;
-	int irq_pin;
+अटल irqवापस_t qcom_smp2p_पूर्णांकr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा smp2p_smem_item *in;
+	काष्ठा smp2p_entry *entry;
+	काष्ठा qcom_smp2p *smp2p = data;
+	अचिन्हित smem_id = smp2p->smem_items[SMP2P_INBOUND];
+	अचिन्हित pid = smp2p->remote_pid;
+	माप_प्रकार size;
+	पूर्णांक irq_pin;
 	u32 status;
-	char buf[SMP2P_MAX_ENTRY_NAME];
+	अक्षर buf[SMP2P_MAX_ENTRY_NAME];
 	u32 val;
-	int i;
+	पूर्णांक i;
 
 	in = smp2p->in;
 
-	/* Acquire smem item, if not already found */
-	if (!in) {
+	/* Acquire smem item, अगर not alपढ़ोy found */
+	अगर (!in) अणु
 		in = qcom_smem_get(pid, smem_id, &size);
-		if (IS_ERR(in)) {
+		अगर (IS_ERR(in)) अणु
 			dev_err(smp2p->dev,
 				"Unable to acquire remote smp2p item\n");
-			return IRQ_HANDLED;
-		}
+			वापस IRQ_HANDLED;
+		पूर्ण
 
 		smp2p->in = in;
-	}
+	पूर्ण
 
 	/* Match newly created entries */
-	for (i = smp2p->valid_entries; i < in->valid_entries; i++) {
-		list_for_each_entry(entry, &smp2p->inbound, node) {
-			memcpy(buf, in->entries[i].name, sizeof(buf));
-			if (!strcmp(buf, entry->name)) {
+	क्रम (i = smp2p->valid_entries; i < in->valid_entries; i++) अणु
+		list_क्रम_each_entry(entry, &smp2p->inbound, node) अणु
+			स_नकल(buf, in->entries[i].name, माप(buf));
+			अगर (!म_भेद(buf, entry->name)) अणु
 				entry->value = &in->entries[i].value;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	smp2p->valid_entries = i;
 
-	/* Fire interrupts based on any value changes */
-	list_for_each_entry(entry, &smp2p->inbound, node) {
+	/* Fire पूर्णांकerrupts based on any value changes */
+	list_क्रम_each_entry(entry, &smp2p->inbound, node) अणु
 		/* Ignore entries not yet allocated by the remote side */
-		if (!entry->value)
-			continue;
+		अगर (!entry->value)
+			जारी;
 
-		val = readl(entry->value);
+		val = पढ़ोl(entry->value);
 
 		status = val ^ entry->last_value;
 		entry->last_value = val;
 
 		/* No changes of this entry? */
-		if (!status)
-			continue;
+		अगर (!status)
+			जारी;
 
-		for_each_set_bit(i, entry->irq_enabled, 32) {
-			if (!(status & BIT(i)))
-				continue;
+		क्रम_each_set_bit(i, entry->irq_enabled, 32) अणु
+			अगर (!(status & BIT(i)))
+				जारी;
 
-			if ((val & BIT(i) && test_bit(i, entry->irq_rising)) ||
-			    (!(val & BIT(i)) && test_bit(i, entry->irq_falling))) {
-				irq_pin = irq_find_mapping(entry->domain, i);
+			अगर ((val & BIT(i) && test_bit(i, entry->irq_rising)) ||
+			    (!(val & BIT(i)) && test_bit(i, entry->irq_falling))) अणु
+				irq_pin = irq_find_mapping(entry->करोमुख्य, i);
 				handle_nested_irq(irq_pin);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void smp2p_mask_irq(struct irq_data *irqd)
-{
-	struct smp2p_entry *entry = irq_data_get_irq_chip_data(irqd);
+अटल व्योम smp2p_mask_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा smp2p_entry *entry = irq_data_get_irq_chip_data(irqd);
 	irq_hw_number_t irq = irqd_to_hwirq(irqd);
 
 	clear_bit(irq, entry->irq_enabled);
-}
+पूर्ण
 
-static void smp2p_unmask_irq(struct irq_data *irqd)
-{
-	struct smp2p_entry *entry = irq_data_get_irq_chip_data(irqd);
+अटल व्योम smp2p_unmask_irq(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा smp2p_entry *entry = irq_data_get_irq_chip_data(irqd);
 	irq_hw_number_t irq = irqd_to_hwirq(irqd);
 
 	set_bit(irq, entry->irq_enabled);
-}
+पूर्ण
 
-static int smp2p_set_irq_type(struct irq_data *irqd, unsigned int type)
-{
-	struct smp2p_entry *entry = irq_data_get_irq_chip_data(irqd);
+अटल पूर्णांक smp2p_set_irq_type(काष्ठा irq_data *irqd, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा smp2p_entry *entry = irq_data_get_irq_chip_data(irqd);
 	irq_hw_number_t irq = irqd_to_hwirq(irqd);
 
-	if (!(type & IRQ_TYPE_EDGE_BOTH))
-		return -EINVAL;
+	अगर (!(type & IRQ_TYPE_EDGE_BOTH))
+		वापस -EINVAL;
 
-	if (type & IRQ_TYPE_EDGE_RISING)
+	अगर (type & IRQ_TYPE_EDGE_RISING)
 		set_bit(irq, entry->irq_rising);
-	else
+	अन्यथा
 		clear_bit(irq, entry->irq_rising);
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
 		set_bit(irq, entry->irq_falling);
-	else
+	अन्यथा
 		clear_bit(irq, entry->irq_falling);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip smp2p_irq_chip = {
+अटल काष्ठा irq_chip smp2p_irq_chip = अणु
 	.name           = "smp2p",
 	.irq_mask       = smp2p_mask_irq,
 	.irq_unmask     = smp2p_unmask_irq,
 	.irq_set_type	= smp2p_set_irq_type,
-};
+पूर्ण;
 
-static int smp2p_irq_map(struct irq_domain *d,
-			 unsigned int irq,
+अटल पूर्णांक smp2p_irq_map(काष्ठा irq_करोमुख्य *d,
+			 अचिन्हित पूर्णांक irq,
 			 irq_hw_number_t hw)
-{
-	struct smp2p_entry *entry = d->host_data;
+अणु
+	काष्ठा smp2p_entry *entry = d->host_data;
 
 	irq_set_chip_and_handler(irq, &smp2p_irq_chip, handle_level_irq);
 	irq_set_chip_data(irq, entry);
-	irq_set_nested_thread(irq, 1);
+	irq_set_nested_thपढ़ो(irq, 1);
 	irq_set_noprobe(irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops smp2p_irq_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops smp2p_irq_ops = अणु
 	.map = smp2p_irq_map,
-	.xlate = irq_domain_xlate_twocell,
-};
+	.xlate = irq_करोमुख्य_xlate_twocell,
+पूर्ण;
 
-static int qcom_smp2p_inbound_entry(struct qcom_smp2p *smp2p,
-				    struct smp2p_entry *entry,
-				    struct device_node *node)
-{
-	entry->domain = irq_domain_add_linear(node, 32, &smp2p_irq_ops, entry);
-	if (!entry->domain) {
+अटल पूर्णांक qcom_smp2p_inbound_entry(काष्ठा qcom_smp2p *smp2p,
+				    काष्ठा smp2p_entry *entry,
+				    काष्ठा device_node *node)
+अणु
+	entry->करोमुख्य = irq_करोमुख्य_add_linear(node, 32, &smp2p_irq_ops, entry);
+	अगर (!entry->करोमुख्य) अणु
 		dev_err(smp2p->dev, "failed to add irq_domain\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smp2p_update_bits(void *data, u32 mask, u32 value)
-{
-	struct smp2p_entry *entry = data;
-	unsigned long flags;
+अटल पूर्णांक smp2p_update_bits(व्योम *data, u32 mask, u32 value)
+अणु
+	काष्ठा smp2p_entry *entry = data;
+	अचिन्हित दीर्घ flags;
 	u32 orig;
 	u32 val;
 
 	spin_lock_irqsave(&entry->lock, flags);
-	val = orig = readl(entry->value);
+	val = orig = पढ़ोl(entry->value);
 	val &= ~mask;
 	val |= value;
-	writel(val, entry->value);
+	ग_लिखोl(val, entry->value);
 	spin_unlock_irqrestore(&entry->lock, flags);
 
-	if (val != orig)
+	अगर (val != orig)
 		qcom_smp2p_kick(entry->smp2p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct qcom_smem_state_ops smp2p_state_ops = {
+अटल स्थिर काष्ठा qcom_smem_state_ops smp2p_state_ops = अणु
 	.update_bits = smp2p_update_bits,
-};
+पूर्ण;
 
-static int qcom_smp2p_outbound_entry(struct qcom_smp2p *smp2p,
-				     struct smp2p_entry *entry,
-				     struct device_node *node)
-{
-	struct smp2p_smem_item *out = smp2p->out;
-	char buf[SMP2P_MAX_ENTRY_NAME] = {};
+अटल पूर्णांक qcom_smp2p_outbound_entry(काष्ठा qcom_smp2p *smp2p,
+				     काष्ठा smp2p_entry *entry,
+				     काष्ठा device_node *node)
+अणु
+	काष्ठा smp2p_smem_item *out = smp2p->out;
+	अक्षर buf[SMP2P_MAX_ENTRY_NAME] = अणुपूर्ण;
 
 	/* Allocate an entry from the smem item */
 	strlcpy(buf, entry->name, SMP2P_MAX_ENTRY_NAME);
-	memcpy(out->entries[out->valid_entries].name, buf, SMP2P_MAX_ENTRY_NAME);
+	स_नकल(out->entries[out->valid_entries].name, buf, SMP2P_MAX_ENTRY_NAME);
 
 	/* Make the logical entry reference the physical value */
 	entry->value = &out->entries[out->valid_entries].value;
 
 	out->valid_entries++;
 
-	entry->state = qcom_smem_state_register(node, &smp2p_state_ops, entry);
-	if (IS_ERR(entry->state)) {
+	entry->state = qcom_smem_state_रेजिस्टर(node, &smp2p_state_ops, entry);
+	अगर (IS_ERR(entry->state)) अणु
 		dev_err(smp2p->dev, "failed to register qcom_smem_state\n");
-		return PTR_ERR(entry->state);
-	}
+		वापस PTR_ERR(entry->state);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_smp2p_alloc_outbound_item(struct qcom_smp2p *smp2p)
-{
-	struct smp2p_smem_item *out;
-	unsigned smem_id = smp2p->smem_items[SMP2P_OUTBOUND];
-	unsigned pid = smp2p->remote_pid;
-	int ret;
+अटल पूर्णांक qcom_smp2p_alloc_outbound_item(काष्ठा qcom_smp2p *smp2p)
+अणु
+	काष्ठा smp2p_smem_item *out;
+	अचिन्हित smem_id = smp2p->smem_items[SMP2P_OUTBOUND];
+	अचिन्हित pid = smp2p->remote_pid;
+	पूर्णांक ret;
 
-	ret = qcom_smem_alloc(pid, smem_id, sizeof(*out));
-	if (ret < 0 && ret != -EEXIST) {
-		if (ret != -EPROBE_DEFER)
+	ret = qcom_smem_alloc(pid, smem_id, माप(*out));
+	अगर (ret < 0 && ret != -EEXIST) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(smp2p->dev,
 				"unable to allocate local smp2p item\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	out = qcom_smem_get(pid, smem_id, NULL);
-	if (IS_ERR(out)) {
+	out = qcom_smem_get(pid, smem_id, शून्य);
+	अगर (IS_ERR(out)) अणु
 		dev_err(smp2p->dev, "Unable to acquire local smp2p item\n");
-		return PTR_ERR(out);
-	}
+		वापस PTR_ERR(out);
+	पूर्ण
 
-	memset(out, 0, sizeof(*out));
+	स_रखो(out, 0, माप(*out));
 	out->magic = SMP2P_MAGIC;
 	out->local_pid = smp2p->local_pid;
 	out->remote_pid = smp2p->remote_pid;
@@ -394,7 +395,7 @@ static int qcom_smp2p_alloc_outbound_item(struct qcom_smp2p *smp2p)
 	out->valid_entries = 0;
 
 	/*
-	 * Make sure the rest of the header is written before we validate the
+	 * Make sure the rest of the header is written beक्रमe we validate the
 	 * item by writing a valid version number.
 	 */
 	wmb();
@@ -404,195 +405,195 @@ static int qcom_smp2p_alloc_outbound_item(struct qcom_smp2p *smp2p)
 
 	smp2p->out = out;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smp2p_parse_ipc(struct qcom_smp2p *smp2p)
-{
-	struct device_node *syscon;
-	struct device *dev = smp2p->dev;
-	const char *key;
-	int ret;
+अटल पूर्णांक smp2p_parse_ipc(काष्ठा qcom_smp2p *smp2p)
+अणु
+	काष्ठा device_node *syscon;
+	काष्ठा device *dev = smp2p->dev;
+	स्थिर अक्षर *key;
+	पूर्णांक ret;
 
 	syscon = of_parse_phandle(dev->of_node, "qcom,ipc", 0);
-	if (!syscon) {
+	अगर (!syscon) अणु
 		dev_err(dev, "no qcom,ipc node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	smp2p->ipc_regmap = syscon_node_to_regmap(syscon);
-	if (IS_ERR(smp2p->ipc_regmap))
-		return PTR_ERR(smp2p->ipc_regmap);
+	अगर (IS_ERR(smp2p->ipc_regmap))
+		वापस PTR_ERR(smp2p->ipc_regmap);
 
 	key = "qcom,ipc";
-	ret = of_property_read_u32_index(dev->of_node, key, 1, &smp2p->ipc_offset);
-	if (ret < 0) {
+	ret = of_property_पढ़ो_u32_index(dev->of_node, key, 1, &smp2p->ipc_offset);
+	अगर (ret < 0) अणु
 		dev_err(dev, "no offset in %s\n", key);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = of_property_read_u32_index(dev->of_node, key, 2, &smp2p->ipc_bit);
-	if (ret < 0) {
+	ret = of_property_पढ़ो_u32_index(dev->of_node, key, 2, &smp2p->ipc_bit);
+	अगर (ret < 0) अणु
 		dev_err(dev, "no bit in %s\n", key);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_smp2p_probe(struct platform_device *pdev)
-{
-	struct smp2p_entry *entry;
-	struct device_node *node;
-	struct qcom_smp2p *smp2p;
-	const char *key;
-	int irq;
-	int ret;
+अटल पूर्णांक qcom_smp2p_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा smp2p_entry *entry;
+	काष्ठा device_node *node;
+	काष्ठा qcom_smp2p *smp2p;
+	स्थिर अक्षर *key;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
-	smp2p = devm_kzalloc(&pdev->dev, sizeof(*smp2p), GFP_KERNEL);
-	if (!smp2p)
-		return -ENOMEM;
+	smp2p = devm_kzalloc(&pdev->dev, माप(*smp2p), GFP_KERNEL);
+	अगर (!smp2p)
+		वापस -ENOMEM;
 
 	smp2p->dev = &pdev->dev;
 	INIT_LIST_HEAD(&smp2p->inbound);
 	INIT_LIST_HEAD(&smp2p->outbound);
 
-	platform_set_drvdata(pdev, smp2p);
+	platक्रमm_set_drvdata(pdev, smp2p);
 
 	key = "qcom,smem";
-	ret = of_property_read_u32_array(pdev->dev.of_node, key,
+	ret = of_property_पढ़ो_u32_array(pdev->dev.of_node, key,
 					 smp2p->smem_items, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	key = "qcom,local-pid";
-	ret = of_property_read_u32(pdev->dev.of_node, key, &smp2p->local_pid);
-	if (ret)
-		goto report_read_failure;
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, key, &smp2p->local_pid);
+	अगर (ret)
+		जाओ report_पढ़ो_failure;
 
 	key = "qcom,remote-pid";
-	ret = of_property_read_u32(pdev->dev.of_node, key, &smp2p->remote_pid);
-	if (ret)
-		goto report_read_failure;
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node, key, &smp2p->remote_pid);
+	अगर (ret)
+		जाओ report_पढ़ो_failure;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	smp2p->mbox_client.dev = &pdev->dev;
-	smp2p->mbox_client.knows_txdone = true;
+	smp2p->mbox_client.knows_txकरोne = true;
 	smp2p->mbox_chan = mbox_request_channel(&smp2p->mbox_client, 0);
-	if (IS_ERR(smp2p->mbox_chan)) {
-		if (PTR_ERR(smp2p->mbox_chan) != -ENODEV)
-			return PTR_ERR(smp2p->mbox_chan);
+	अगर (IS_ERR(smp2p->mbox_chan)) अणु
+		अगर (PTR_ERR(smp2p->mbox_chan) != -ENODEV)
+			वापस PTR_ERR(smp2p->mbox_chan);
 
-		smp2p->mbox_chan = NULL;
+		smp2p->mbox_chan = शून्य;
 
 		ret = smp2p_parse_ipc(smp2p);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = qcom_smp2p_alloc_outbound_item(smp2p);
-	if (ret < 0)
-		goto release_mbox;
+	अगर (ret < 0)
+		जाओ release_mbox;
 
-	for_each_available_child_of_node(pdev->dev.of_node, node) {
-		entry = devm_kzalloc(&pdev->dev, sizeof(*entry), GFP_KERNEL);
-		if (!entry) {
+	क्रम_each_available_child_of_node(pdev->dev.of_node, node) अणु
+		entry = devm_kzalloc(&pdev->dev, माप(*entry), GFP_KERNEL);
+		अगर (!entry) अणु
 			ret = -ENOMEM;
-			goto unwind_interfaces;
-		}
+			जाओ unwind_पूर्णांकerfaces;
+		पूर्ण
 
 		entry->smp2p = smp2p;
 		spin_lock_init(&entry->lock);
 
-		ret = of_property_read_string(node, "qcom,entry-name", &entry->name);
-		if (ret < 0)
-			goto unwind_interfaces;
+		ret = of_property_पढ़ो_string(node, "qcom,entry-name", &entry->name);
+		अगर (ret < 0)
+			जाओ unwind_पूर्णांकerfaces;
 
-		if (of_property_read_bool(node, "interrupt-controller")) {
+		अगर (of_property_पढ़ो_bool(node, "interrupt-controller")) अणु
 			ret = qcom_smp2p_inbound_entry(smp2p, entry, node);
-			if (ret < 0)
-				goto unwind_interfaces;
+			अगर (ret < 0)
+				जाओ unwind_पूर्णांकerfaces;
 
 			list_add(&entry->node, &smp2p->inbound);
-		} else  {
+		पूर्ण अन्यथा  अणु
 			ret = qcom_smp2p_outbound_entry(smp2p, entry, node);
-			if (ret < 0)
-				goto unwind_interfaces;
+			अगर (ret < 0)
+				जाओ unwind_पूर्णांकerfaces;
 
 			list_add(&entry->node, &smp2p->outbound);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Kick the outgoing edge after allocating entries */
 	qcom_smp2p_kick(smp2p);
 
-	ret = devm_request_threaded_irq(&pdev->dev, irq,
-					NULL, qcom_smp2p_intr,
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
+					शून्य, qcom_smp2p_पूर्णांकr,
 					IRQF_ONESHOT,
-					"smp2p", (void *)smp2p);
-	if (ret) {
+					"smp2p", (व्योम *)smp2p);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request interrupt\n");
-		goto unwind_interfaces;
-	}
+		जाओ unwind_पूर्णांकerfaces;
+	पूर्ण
 
 
-	return 0;
+	वापस 0;
 
-unwind_interfaces:
-	list_for_each_entry(entry, &smp2p->inbound, node)
-		irq_domain_remove(entry->domain);
+unwind_पूर्णांकerfaces:
+	list_क्रम_each_entry(entry, &smp2p->inbound, node)
+		irq_करोमुख्य_हटाओ(entry->करोमुख्य);
 
-	list_for_each_entry(entry, &smp2p->outbound, node)
-		qcom_smem_state_unregister(entry->state);
+	list_क्रम_each_entry(entry, &smp2p->outbound, node)
+		qcom_smem_state_unरेजिस्टर(entry->state);
 
 	smp2p->out->valid_entries = 0;
 
 release_mbox:
-	mbox_free_channel(smp2p->mbox_chan);
+	mbox_मुक्त_channel(smp2p->mbox_chan);
 
-	return ret;
+	वापस ret;
 
-report_read_failure:
+report_पढ़ो_failure:
 	dev_err(&pdev->dev, "failed to read %s\n", key);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int qcom_smp2p_remove(struct platform_device *pdev)
-{
-	struct qcom_smp2p *smp2p = platform_get_drvdata(pdev);
-	struct smp2p_entry *entry;
+अटल पूर्णांक qcom_smp2p_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_smp2p *smp2p = platक्रमm_get_drvdata(pdev);
+	काष्ठा smp2p_entry *entry;
 
-	list_for_each_entry(entry, &smp2p->inbound, node)
-		irq_domain_remove(entry->domain);
+	list_क्रम_each_entry(entry, &smp2p->inbound, node)
+		irq_करोमुख्य_हटाओ(entry->करोमुख्य);
 
-	list_for_each_entry(entry, &smp2p->outbound, node)
-		qcom_smem_state_unregister(entry->state);
+	list_क्रम_each_entry(entry, &smp2p->outbound, node)
+		qcom_smem_state_unरेजिस्टर(entry->state);
 
-	mbox_free_channel(smp2p->mbox_chan);
+	mbox_मुक्त_channel(smp2p->mbox_chan);
 
 	smp2p->out->valid_entries = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id qcom_smp2p_of_match[] = {
-	{ .compatible = "qcom,smp2p" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id qcom_smp2p_of_match[] = अणु
+	अणु .compatible = "qcom,smp2p" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcom_smp2p_of_match);
 
-static struct platform_driver qcom_smp2p_driver = {
+अटल काष्ठा platक्रमm_driver qcom_smp2p_driver = अणु
 	.probe = qcom_smp2p_probe,
-	.remove = qcom_smp2p_remove,
-	.driver  = {
+	.हटाओ = qcom_smp2p_हटाओ,
+	.driver  = अणु
 		.name  = "qcom_smp2p",
 		.of_match_table = qcom_smp2p_of_match,
-	},
-};
-module_platform_driver(qcom_smp2p_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qcom_smp2p_driver);
 
 MODULE_DESCRIPTION("Qualcomm Shared Memory Point to Point driver");
 MODULE_LICENSE("GPL v2");

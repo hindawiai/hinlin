@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Request key authorisation token key definition.
  *
  * Copyright (C) 2005 Red Hat, Inc. All Rights Reserved.
@@ -7,277 +8,277 @@
  * See Documentation/security/keys/request-key.rst
  */
 
-#include <linux/sched.h>
-#include <linux/err.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include "internal.h"
-#include <keys/request_key_auth-type.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/err.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश "internal.h"
+#समावेश <keys/request_key_auth-type.h>
 
-static int request_key_auth_preparse(struct key_preparsed_payload *);
-static void request_key_auth_free_preparse(struct key_preparsed_payload *);
-static int request_key_auth_instantiate(struct key *,
-					struct key_preparsed_payload *);
-static void request_key_auth_describe(const struct key *, struct seq_file *);
-static void request_key_auth_revoke(struct key *);
-static void request_key_auth_destroy(struct key *);
-static long request_key_auth_read(const struct key *, char *, size_t);
+अटल पूर्णांक request_key_auth_preparse(काष्ठा key_preparsed_payload *);
+अटल व्योम request_key_auth_मुक्त_preparse(काष्ठा key_preparsed_payload *);
+अटल पूर्णांक request_key_auth_instantiate(काष्ठा key *,
+					काष्ठा key_preparsed_payload *);
+अटल व्योम request_key_auth_describe(स्थिर काष्ठा key *, काष्ठा seq_file *);
+अटल व्योम request_key_auth_revoke(काष्ठा key *);
+अटल व्योम request_key_auth_destroy(काष्ठा key *);
+अटल दीर्घ request_key_auth_पढ़ो(स्थिर काष्ठा key *, अक्षर *, माप_प्रकार);
 
 /*
  * The request-key authorisation key type definition.
  */
-struct key_type key_type_request_key_auth = {
+काष्ठा key_type key_type_request_key_auth = अणु
 	.name		= ".request_key_auth",
-	.def_datalen	= sizeof(struct request_key_auth),
+	.def_datalen	= माप(काष्ठा request_key_auth),
 	.preparse	= request_key_auth_preparse,
-	.free_preparse	= request_key_auth_free_preparse,
+	.मुक्त_preparse	= request_key_auth_मुक्त_preparse,
 	.instantiate	= request_key_auth_instantiate,
 	.describe	= request_key_auth_describe,
 	.revoke		= request_key_auth_revoke,
 	.destroy	= request_key_auth_destroy,
-	.read		= request_key_auth_read,
-};
+	.पढ़ो		= request_key_auth_पढ़ो,
+पूर्ण;
 
-static int request_key_auth_preparse(struct key_preparsed_payload *prep)
-{
-	return 0;
-}
+अटल पूर्णांक request_key_auth_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	वापस 0;
+पूर्ण
 
-static void request_key_auth_free_preparse(struct key_preparsed_payload *prep)
-{
-}
+अटल व्योम request_key_auth_मुक्त_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+पूर्ण
 
 /*
  * Instantiate a request-key authorisation key.
  */
-static int request_key_auth_instantiate(struct key *key,
-					struct key_preparsed_payload *prep)
-{
-	rcu_assign_keypointer(key, (struct request_key_auth *)prep->data);
-	return 0;
-}
+अटल पूर्णांक request_key_auth_instantiate(काष्ठा key *key,
+					काष्ठा key_preparsed_payload *prep)
+अणु
+	rcu_assign_keypoपूर्णांकer(key, (काष्ठा request_key_auth *)prep->data);
+	वापस 0;
+पूर्ण
 
 /*
  * Describe an authorisation token.
  */
-static void request_key_auth_describe(const struct key *key,
-				      struct seq_file *m)
-{
-	struct request_key_auth *rka = dereference_key_rcu(key);
+अटल व्योम request_key_auth_describe(स्थिर काष्ठा key *key,
+				      काष्ठा seq_file *m)
+अणु
+	काष्ठा request_key_auth *rka = dereference_key_rcu(key);
 
-	if (!rka)
-		return;
+	अगर (!rka)
+		वापस;
 
-	seq_puts(m, "key:");
-	seq_puts(m, key->description);
-	if (key_is_positive(key))
-		seq_printf(m, " pid:%d ci:%zu", rka->pid, rka->callout_len);
-}
+	seq_माला_दो(m, "key:");
+	seq_माला_दो(m, key->description);
+	अगर (key_is_positive(key))
+		seq_म_लिखो(m, " pid:%d ci:%zu", rka->pid, rka->callout_len);
+पूर्ण
 
 /*
- * Read the callout_info data (retrieves the callout information).
- * - the key's semaphore is read-locked
+ * Read the callout_info data (retrieves the callout inक्रमmation).
+ * - the key's semaphore is पढ़ो-locked
  */
-static long request_key_auth_read(const struct key *key,
-				  char *buffer, size_t buflen)
-{
-	struct request_key_auth *rka = dereference_key_locked(key);
-	size_t datalen;
-	long ret;
+अटल दीर्घ request_key_auth_पढ़ो(स्थिर काष्ठा key *key,
+				  अक्षर *buffer, माप_प्रकार buflen)
+अणु
+	काष्ठा request_key_auth *rka = dereference_key_locked(key);
+	माप_प्रकार datalen;
+	दीर्घ ret;
 
-	if (!rka)
-		return -EKEYREVOKED;
+	अगर (!rka)
+		वापस -EKEYREVOKED;
 
 	datalen = rka->callout_len;
 	ret = datalen;
 
-	/* we can return the data as is */
-	if (buffer && buflen > 0) {
-		if (buflen > datalen)
+	/* we can वापस the data as is */
+	अगर (buffer && buflen > 0) अणु
+		अगर (buflen > datalen)
 			buflen = datalen;
 
-		memcpy(buffer, rka->callout_info, buflen);
-	}
+		स_नकल(buffer, rka->callout_info, buflen);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void free_request_key_auth(struct request_key_auth *rka)
-{
-	if (!rka)
-		return;
+अटल व्योम मुक्त_request_key_auth(काष्ठा request_key_auth *rka)
+अणु
+	अगर (!rka)
+		वापस;
 	key_put(rka->target_key);
 	key_put(rka->dest_keyring);
-	if (rka->cred)
+	अगर (rka->cred)
 		put_cred(rka->cred);
-	kfree(rka->callout_info);
-	kfree(rka);
-}
+	kमुक्त(rka->callout_info);
+	kमुक्त(rka);
+पूर्ण
 
 /*
  * Dispose of the request_key_auth record under RCU conditions
  */
-static void request_key_auth_rcu_disposal(struct rcu_head *rcu)
-{
-	struct request_key_auth *rka =
-		container_of(rcu, struct request_key_auth, rcu);
+अटल व्योम request_key_auth_rcu_disposal(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा request_key_auth *rka =
+		container_of(rcu, काष्ठा request_key_auth, rcu);
 
-	free_request_key_auth(rka);
-}
+	मुक्त_request_key_auth(rka);
+पूर्ण
 
 /*
  * Handle revocation of an authorisation token key.
  *
- * Called with the key sem write-locked.
+ * Called with the key sem ग_लिखो-locked.
  */
-static void request_key_auth_revoke(struct key *key)
-{
-	struct request_key_auth *rka = dereference_key_locked(key);
+अटल व्योम request_key_auth_revoke(काष्ठा key *key)
+अणु
+	काष्ठा request_key_auth *rka = dereference_key_locked(key);
 
 	kenter("{%d}", key->serial);
-	rcu_assign_keypointer(key, NULL);
+	rcu_assign_keypoपूर्णांकer(key, शून्य);
 	call_rcu(&rka->rcu, request_key_auth_rcu_disposal);
-}
+पूर्ण
 
 /*
  * Destroy an instantiation authorisation token key.
  */
-static void request_key_auth_destroy(struct key *key)
-{
-	struct request_key_auth *rka = rcu_access_pointer(key->payload.rcu_data0);
+अटल व्योम request_key_auth_destroy(काष्ठा key *key)
+अणु
+	काष्ठा request_key_auth *rka = rcu_access_poपूर्णांकer(key->payload.rcu_data0);
 
 	kenter("{%d}", key->serial);
-	if (rka) {
-		rcu_assign_keypointer(key, NULL);
+	अगर (rka) अणु
+		rcu_assign_keypoपूर्णांकer(key, शून्य);
 		call_rcu(&rka->rcu, request_key_auth_rcu_disposal);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Create an authorisation token for /sbin/request-key or whoever to gain
+ * Create an authorisation token क्रम /sbin/request-key or whoever to gain
  * access to the caller's security data.
  */
-struct key *request_key_auth_new(struct key *target, const char *op,
-				 const void *callout_info, size_t callout_len,
-				 struct key *dest_keyring)
-{
-	struct request_key_auth *rka, *irka;
-	const struct cred *cred = current_cred();
-	struct key *authkey = NULL;
-	char desc[20];
-	int ret = -ENOMEM;
+काष्ठा key *request_key_auth_new(काष्ठा key *target, स्थिर अक्षर *op,
+				 स्थिर व्योम *callout_info, माप_प्रकार callout_len,
+				 काष्ठा key *dest_keyring)
+अणु
+	काष्ठा request_key_auth *rka, *irka;
+	स्थिर काष्ठा cred *cred = current_cred();
+	काष्ठा key *authkey = शून्य;
+	अक्षर desc[20];
+	पूर्णांक ret = -ENOMEM;
 
 	kenter("%d,", target->serial);
 
 	/* allocate a auth record */
-	rka = kzalloc(sizeof(*rka), GFP_KERNEL);
-	if (!rka)
-		goto error;
+	rka = kzalloc(माप(*rka), GFP_KERNEL);
+	अगर (!rka)
+		जाओ error;
 	rka->callout_info = kmemdup(callout_info, callout_len, GFP_KERNEL);
-	if (!rka->callout_info)
-		goto error_free_rka;
+	अगर (!rka->callout_info)
+		जाओ error_मुक्त_rka;
 	rka->callout_len = callout_len;
-	strlcpy(rka->op, op, sizeof(rka->op));
+	strlcpy(rka->op, op, माप(rka->op));
 
-	/* see if the calling process is already servicing the key request of
+	/* see अगर the calling process is alपढ़ोy servicing the key request of
 	 * another process */
-	if (cred->request_key_auth) {
+	अगर (cred->request_key_auth) अणु
 		/* it is - use that instantiation context here too */
-		down_read(&cred->request_key_auth->sem);
+		करोwn_पढ़ो(&cred->request_key_auth->sem);
 
-		/* if the auth key has been revoked, then the key we're
-		 * servicing is already instantiated */
-		if (test_bit(KEY_FLAG_REVOKED,
-			     &cred->request_key_auth->flags)) {
-			up_read(&cred->request_key_auth->sem);
+		/* अगर the auth key has been revoked, then the key we're
+		 * servicing is alपढ़ोy instantiated */
+		अगर (test_bit(KEY_FLAG_REVOKED,
+			     &cred->request_key_auth->flags)) अणु
+			up_पढ़ो(&cred->request_key_auth->sem);
 			ret = -EKEYREVOKED;
-			goto error_free_rka;
-		}
+			जाओ error_मुक्त_rka;
+		पूर्ण
 
 		irka = cred->request_key_auth->payload.data[0];
 		rka->cred = get_cred(irka->cred);
 		rka->pid = irka->pid;
 
-		up_read(&cred->request_key_auth->sem);
-	}
-	else {
+		up_पढ़ो(&cred->request_key_auth->sem);
+	पूर्ण
+	अन्यथा अणु
 		/* it isn't - use this process as the context */
 		rka->cred = get_cred(cred);
 		rka->pid = current->pid;
-	}
+	पूर्ण
 
 	rka->target_key = key_get(target);
 	rka->dest_keyring = key_get(dest_keyring);
 
 	/* allocate the auth key */
-	sprintf(desc, "%x", target->serial);
+	प्र_लिखो(desc, "%x", target->serial);
 
 	authkey = key_alloc(&key_type_request_key_auth, desc,
 			    cred->fsuid, cred->fsgid, cred,
 			    KEY_POS_VIEW | KEY_POS_READ | KEY_POS_SEARCH | KEY_POS_LINK |
-			    KEY_USR_VIEW, KEY_ALLOC_NOT_IN_QUOTA, NULL);
-	if (IS_ERR(authkey)) {
+			    KEY_USR_VIEW, KEY_ALLOC_NOT_IN_QUOTA, शून्य);
+	अगर (IS_ERR(authkey)) अणु
 		ret = PTR_ERR(authkey);
-		goto error_free_rka;
-	}
+		जाओ error_मुक्त_rka;
+	पूर्ण
 
-	/* construct the auth key */
-	ret = key_instantiate_and_link(authkey, rka, 0, NULL, NULL);
-	if (ret < 0)
-		goto error_put_authkey;
+	/* स्थिरruct the auth key */
+	ret = key_instantiate_and_link(authkey, rka, 0, शून्य, शून्य);
+	अगर (ret < 0)
+		जाओ error_put_authkey;
 
-	kleave(" = {%d,%d}", authkey->serial, refcount_read(&authkey->usage));
-	return authkey;
+	kleave(" = {%d,%d}", authkey->serial, refcount_पढ़ो(&authkey->usage));
+	वापस authkey;
 
 error_put_authkey:
 	key_put(authkey);
-error_free_rka:
-	free_request_key_auth(rka);
+error_मुक्त_rka:
+	मुक्त_request_key_auth(rka);
 error:
 	kleave("= %d", ret);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
 /*
- * Search the current process's keyrings for the authorisation key for
+ * Search the current process's keyrings क्रम the authorisation key क्रम
  * instantiation of a key.
  */
-struct key *key_get_instantiation_authkey(key_serial_t target_id)
-{
-	char description[16];
-	struct keyring_search_context ctx = {
+काष्ठा key *key_get_instantiation_authkey(key_serial_t target_id)
+अणु
+	अक्षर description[16];
+	काष्ठा keyring_search_context ctx = अणु
 		.index_key.type		= &key_type_request_key_auth,
 		.index_key.description	= description,
 		.cred			= current_cred(),
-		.match_data.cmp		= key_default_cmp,
+		.match_data.cmp		= key_शेष_cmp,
 		.match_data.raw_data	= description,
-		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_DIRECT,
+		.match_data.lookup_type	= KEYRING_SEARCH_LOOKUP_सूचीECT,
 		.flags			= (KEYRING_SEARCH_DO_STATE_CHECK |
 					   KEYRING_SEARCH_RECURSE),
-	};
-	struct key *authkey;
+	पूर्ण;
+	काष्ठा key *authkey;
 	key_ref_t authkey_ref;
 
-	ctx.index_key.desc_len = sprintf(description, "%x", target_id);
+	ctx.index_key.desc_len = प्र_लिखो(description, "%x", target_id);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	authkey_ref = search_process_keyrings_rcu(&ctx);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (IS_ERR(authkey_ref)) {
+	अगर (IS_ERR(authkey_ref)) अणु
 		authkey = ERR_CAST(authkey_ref);
-		if (authkey == ERR_PTR(-EAGAIN))
+		अगर (authkey == ERR_PTR(-EAGAIN))
 			authkey = ERR_PTR(-ENOKEY);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	authkey = key_ref_to_ptr(authkey_ref);
-	if (test_bit(KEY_FLAG_REVOKED, &authkey->flags)) {
+	अगर (test_bit(KEY_FLAG_REVOKED, &authkey->flags)) अणु
 		key_put(authkey);
 		authkey = ERR_PTR(-EKEYREVOKED);
-	}
+	पूर्ण
 
 error:
-	return authkey;
-}
+	वापस authkey;
+पूर्ण

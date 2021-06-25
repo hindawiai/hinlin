@@ -1,182 +1,183 @@
+<शैली गुरु>
 /*
- * omap3-rom-rng.c - RNG driver for TI OMAP3 CPU family
+ * omap3-rom-rng.c - RNG driver क्रम TI OMAP3 CPU family
  *
  * Copyright (C) 2009 Nokia Corporation
  * Author: Juha Yrjola <juha.yrjola@solidboot.com>
  *
- * Copyright (C) 2013 Pali Rohár <pali@kernel.org>
+ * Copyright (C) 2013 Pali Rohथँr <pali@kernel.org>
  *
  * This file is licensed under  the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/random.h>
-#include <linux/hw_random.h>
-#include <linux/workqueue.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#define RNG_RESET			0x01
-#define RNG_GEN_PRNG_HW_INIT		0x02
-#define RNG_GEN_HW			0x08
+#घोषणा RNG_RESET			0x01
+#घोषणा RNG_GEN_PRNG_HW_INIT		0x02
+#घोषणा RNG_GEN_HW			0x08
 
-struct omap_rom_rng {
-	struct clk *clk;
-	struct device *dev;
-	struct hwrng ops;
+काष्ठा omap_rom_rng अणु
+	काष्ठा clk *clk;
+	काष्ठा device *dev;
+	काष्ठा hwrng ops;
 	u32 (*rom_rng_call)(u32 ptr, u32 count, u32 flag);
-};
+पूर्ण;
 
-static int omap3_rom_rng_read(struct hwrng *rng, void *data, size_t max, bool w)
-{
-	struct omap_rom_rng *ddata;
+अटल पूर्णांक omap3_rom_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool w)
+अणु
+	काष्ठा omap_rom_rng *ddata;
 	u32 ptr;
-	int r;
+	पूर्णांक r;
 
-	ddata = (struct omap_rom_rng *)rng->priv;
+	ddata = (काष्ठा omap_rom_rng *)rng->priv;
 
-	r = pm_runtime_get_sync(ddata->dev);
-	if (r < 0) {
-		pm_runtime_put_noidle(ddata->dev);
+	r = pm_runसमय_get_sync(ddata->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_noidle(ddata->dev);
 
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	ptr = virt_to_phys(data);
 	r = ddata->rom_rng_call(ptr, 4, RNG_GEN_HW);
-	if (r != 0)
+	अगर (r != 0)
 		r = -EINVAL;
-	else
+	अन्यथा
 		r = 4;
 
-	pm_runtime_mark_last_busy(ddata->dev);
-	pm_runtime_put_autosuspend(ddata->dev);
+	pm_runसमय_mark_last_busy(ddata->dev);
+	pm_runसमय_put_स्वतःsuspend(ddata->dev);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int __maybe_unused omap_rom_rng_runtime_suspend(struct device *dev)
-{
-	struct omap_rom_rng *ddata;
-	int r;
+अटल पूर्णांक __maybe_unused omap_rom_rng_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा omap_rom_rng *ddata;
+	पूर्णांक r;
 
 	ddata = dev_get_drvdata(dev);
 
 	r = ddata->rom_rng_call(0, 0, RNG_RESET);
-	if (r != 0)
+	अगर (r != 0)
 		dev_err(dev, "reset failed: %d\n", r);
 
 	clk_disable_unprepare(ddata->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused omap_rom_rng_runtime_resume(struct device *dev)
-{
-	struct omap_rom_rng *ddata;
-	int r;
+अटल पूर्णांक __maybe_unused omap_rom_rng_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा omap_rom_rng *ddata;
+	पूर्णांक r;
 
 	ddata = dev_get_drvdata(dev);
 
 	r = clk_prepare_enable(ddata->clk);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	r = ddata->rom_rng_call(0, 0, RNG_GEN_PRNG_HW_INIT);
-	if (r != 0) {
+	अगर (r != 0) अणु
 		clk_disable(ddata->clk);
 		dev_err(dev, "HW init failed: %d\n", r);
 
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_rom_rng_finish(void *data)
-{
-	struct omap_rom_rng *ddata = data;
+अटल व्योम omap_rom_rng_finish(व्योम *data)
+अणु
+	काष्ठा omap_rom_rng *ddata = data;
 
-	pm_runtime_dont_use_autosuspend(ddata->dev);
-	pm_runtime_disable(ddata->dev);
-}
+	pm_runसमय_करोnt_use_स्वतःsuspend(ddata->dev);
+	pm_runसमय_disable(ddata->dev);
+पूर्ण
 
-static int omap3_rom_rng_probe(struct platform_device *pdev)
-{
-	struct omap_rom_rng *ddata;
-	int ret = 0;
+अटल पूर्णांक omap3_rom_rng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_rom_rng *ddata;
+	पूर्णांक ret = 0;
 
-	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
-	if (!ddata)
-		return -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
+	अगर (!ddata)
+		वापस -ENOMEM;
 
 	ddata->dev = &pdev->dev;
-	ddata->ops.priv = (unsigned long)ddata;
+	ddata->ops.priv = (अचिन्हित दीर्घ)ddata;
 	ddata->ops.name = "omap3-rom";
-	ddata->ops.read = of_device_get_match_data(&pdev->dev);
+	ddata->ops.पढ़ो = of_device_get_match_data(&pdev->dev);
 	ddata->ops.quality = 900;
-	if (!ddata->ops.read) {
+	अगर (!ddata->ops.पढ़ो) अणु
 		dev_err(&pdev->dev, "missing rom code handler\n");
 
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	dev_set_drvdata(ddata->dev, ddata);
 
-	ddata->rom_rng_call = pdev->dev.platform_data;
-	if (!ddata->rom_rng_call) {
+	ddata->rom_rng_call = pdev->dev.platक्रमm_data;
+	अगर (!ddata->rom_rng_call) अणु
 		dev_err(ddata->dev, "rom_rng_call is NULL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ddata->clk = devm_clk_get(ddata->dev, "ick");
-	if (IS_ERR(ddata->clk)) {
+	अगर (IS_ERR(ddata->clk)) अणु
 		dev_err(ddata->dev, "unable to get RNG clock\n");
-		return PTR_ERR(ddata->clk);
-	}
+		वापस PTR_ERR(ddata->clk);
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, 500);
-	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, 500);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
 
 	ret = devm_add_action_or_reset(ddata->dev, omap_rom_rng_finish,
 				       ddata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_hwrng_register(ddata->dev, &ddata->ops);
-}
+	वापस devm_hwrng_रेजिस्टर(ddata->dev, &ddata->ops);
+पूर्ण
 
-static const struct of_device_id omap_rom_rng_match[] = {
-	{ .compatible = "nokia,n900-rom-rng", .data = omap3_rom_rng_read, },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id omap_rom_rng_match[] = अणु
+	अणु .compatible = "nokia,n900-rom-rng", .data = omap3_rom_rng_पढ़ो, पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, omap_rom_rng_match);
 
-static const struct dev_pm_ops omap_rom_rng_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(omap_rom_rng_runtime_suspend,
-				omap_rom_rng_runtime_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops omap_rom_rng_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(omap_rom_rng_runसमय_suspend,
+				omap_rom_rng_runसमय_resume)
+पूर्ण;
 
-static struct platform_driver omap3_rom_rng_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver omap3_rom_rng_driver = अणु
+	.driver = अणु
 		.name		= "omap3-rom-rng",
 		.of_match_table = omap_rom_rng_match,
 		.pm = &omap_rom_rng_pm_ops,
-	},
+	पूर्ण,
 	.probe		= omap3_rom_rng_probe,
-};
+पूर्ण;
 
-module_platform_driver(omap3_rom_rng_driver);
+module_platक्रमm_driver(omap3_rom_rng_driver);
 
 MODULE_ALIAS("platform:omap3-rom-rng");
 MODULE_AUTHOR("Juha Yrjola");
-MODULE_AUTHOR("Pali Rohár <pali@kernel.org>");
+MODULE_AUTHOR("Pali Rohथँr <pali@kernel.org>");
 MODULE_LICENSE("GPL");

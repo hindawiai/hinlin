@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2021 Sifive.
+ * Copyright (C) 2021 Sअगरive.
  */
 
-#ifndef __ASM_ALTERNATIVE_H
-#define __ASM_ALTERNATIVE_H
+#अगर_अघोषित __ASM_ALTERNATIVE_H
+#घोषणा __ASM_ALTERNATIVE_H
 
-#define ERRATA_STRING_LENGTH_MAX 32
+#घोषणा ERRATA_STRING_LENGTH_MAX 32
 
-#include <asm/alternative-macros.h>
+#समावेश <यंत्र/alternative-macros.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/stddef.h>
-#include <asm/hwcap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <यंत्र/hwcap.h>
 
-void __init apply_boot_alternatives(void);
+व्योम __init apply_boot_alternatives(व्योम);
 
-struct alt_entry {
-	void *old_ptr;		 /* address of original instruciton or data  */
-	void *alt_ptr;		 /* address of replacement instruction or data */
-	unsigned long vendor_id; /* cpu vendor id */
-	unsigned long alt_len;   /* The replacement size */
-	unsigned int errata_id;  /* The errata id */
-} __packed;
+काष्ठा alt_entry अणु
+	व्योम *old_ptr;		 /* address of original instruciton or data  */
+	व्योम *alt_ptr;		 /* address of replacement inकाष्ठाion or data */
+	अचिन्हित दीर्घ venकरोr_id; /* cpu venकरोr id */
+	अचिन्हित दीर्घ alt_len;   /* The replacement size */
+	अचिन्हित पूर्णांक errata_id;  /* The errata id */
+पूर्ण __packed;
 
-struct errata_checkfunc_id {
-	unsigned long vendor_id;
-	bool (*func)(struct alt_entry *alt);
-};
+काष्ठा errata_checkfunc_id अणु
+	अचिन्हित दीर्घ venकरोr_id;
+	bool (*func)(काष्ठा alt_entry *alt);
+पूर्ण;
 
-void sifive_errata_patch_func(struct alt_entry *begin, struct alt_entry *end,
-			      unsigned long archid, unsigned long impid);
+व्योम sअगरive_errata_patch_func(काष्ठा alt_entry *begin, काष्ठा alt_entry *end,
+			      अचिन्हित दीर्घ archid, अचिन्हित दीर्घ impid);
 
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर

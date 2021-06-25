@@ -1,74 +1,75 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#if !defined(_DRM_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
-#define _DRM_TRACE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर !defined(_DRM_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _DRM_TRACE_H_
 
-#include <linux/stringify.h>
-#include <linux/types.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/types.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-struct drm_file;
+काष्ठा drm_file;
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM drm
-#define TRACE_INCLUDE_FILE drm_trace
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM drm
+#घोषणा TRACE_INCLUDE_खाता drm_trace
 
 TRACE_EVENT(drm_vblank_event,
-	    TP_PROTO(int crtc, unsigned int seq, ktime_t time, bool high_prec),
-	    TP_ARGS(crtc, seq, time, high_prec),
+	    TP_PROTO(पूर्णांक crtc, अचिन्हित पूर्णांक seq, kसमय_प्रकार समय, bool high_prec),
+	    TP_ARGS(crtc, seq, समय, high_prec),
 	    TP_STRUCT__entry(
-		    __field(int, crtc)
-		    __field(unsigned int, seq)
-		    __field(ktime_t, time)
+		    __field(पूर्णांक, crtc)
+		    __field(अचिन्हित पूर्णांक, seq)
+		    __field(kसमय_प्रकार, समय)
 		    __field(bool, high_prec)
 		    ),
 	    TP_fast_assign(
 		    __entry->crtc = crtc;
 		    __entry->seq = seq;
-		    __entry->time = time;
+		    __entry->समय = समय;
 		    __entry->high_prec = high_prec;
 			),
-	    TP_printk("crtc=%d, seq=%u, time=%lld, high-prec=%s",
-			__entry->crtc, __entry->seq, __entry->time,
+	    TP_prपूर्णांकk("crtc=%d, seq=%u, time=%lld, high-prec=%s",
+			__entry->crtc, __entry->seq, __entry->समय,
 			__entry->high_prec ? "true" : "false")
 );
 
 TRACE_EVENT(drm_vblank_event_queued,
-	    TP_PROTO(struct drm_file *file, int crtc, unsigned int seq),
+	    TP_PROTO(काष्ठा drm_file *file, पूर्णांक crtc, अचिन्हित पूर्णांक seq),
 	    TP_ARGS(file, crtc, seq),
 	    TP_STRUCT__entry(
-		    __field(struct drm_file *, file)
-		    __field(int, crtc)
-		    __field(unsigned int, seq)
+		    __field(काष्ठा drm_file *, file)
+		    __field(पूर्णांक, crtc)
+		    __field(अचिन्हित पूर्णांक, seq)
 		    ),
 	    TP_fast_assign(
 		    __entry->file = file;
 		    __entry->crtc = crtc;
 		    __entry->seq = seq;
 		    ),
-	    TP_printk("file=%p, crtc=%d, seq=%u", __entry->file, __entry->crtc, \
+	    TP_prपूर्णांकk("file=%p, crtc=%d, seq=%u", __entry->file, __entry->crtc, \
 		      __entry->seq)
 );
 
 TRACE_EVENT(drm_vblank_event_delivered,
-	    TP_PROTO(struct drm_file *file, int crtc, unsigned int seq),
+	    TP_PROTO(काष्ठा drm_file *file, पूर्णांक crtc, अचिन्हित पूर्णांक seq),
 	    TP_ARGS(file, crtc, seq),
 	    TP_STRUCT__entry(
-		    __field(struct drm_file *, file)
-		    __field(int, crtc)
-		    __field(unsigned int, seq)
+		    __field(काष्ठा drm_file *, file)
+		    __field(पूर्णांक, crtc)
+		    __field(अचिन्हित पूर्णांक, seq)
 		    ),
 	    TP_fast_assign(
 		    __entry->file = file;
 		    __entry->crtc = crtc;
 		    __entry->seq = seq;
 		    ),
-	    TP_printk("file=%p, crtc=%d, seq=%u", __entry->file, __entry->crtc, \
+	    TP_prपूर्णांकk("file=%p, crtc=%d, seq=%u", __entry->file, __entry->crtc, \
 		      __entry->seq)
 );
 
-#endif /* _DRM_TRACE_H_ */
+#पूर्ण_अगर /* _DRM_TRACE_H_ */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH ../../drivers/gpu/drm
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH ../../drivers/gpu/drm
+#समावेश <trace/define_trace.h>

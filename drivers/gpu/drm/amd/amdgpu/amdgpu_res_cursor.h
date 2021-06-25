@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,22 +21,22 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian König
+ * Authors: Christian Kथघnig
  */
 
-#ifndef __AMDGPU_RES_CURSOR_H__
-#define __AMDGPU_RES_CURSOR_H__
+#अगर_अघोषित __AMDGPU_RES_CURSOR_H__
+#घोषणा __AMDGPU_RES_CURSOR_H__
 
-#include <drm/drm_mm.h>
-#include <drm/ttm/ttm_resource.h>
+#समावेश <drm/drm_mm.h>
+#समावेश <drm/tपंचांग/tपंचांग_resource.h>
 
-/* state back for walking over vram_mgr and gtt_mgr allocations */
-struct amdgpu_res_cursor {
-	uint64_t		start;
-	uint64_t		size;
-	uint64_t		remaining;
-	struct drm_mm_node	*node;
-};
+/* state back क्रम walking over vram_mgr and gtt_mgr allocations */
+काष्ठा amdgpu_res_cursor अणु
+	uपूर्णांक64_t		start;
+	uपूर्णांक64_t		size;
+	uपूर्णांक64_t		reमुख्यing;
+	काष्ठा drm_mm_node	*node;
+पूर्ण;
 
 /**
  * amdgpu_res_first - initialize a amdgpu_res_cursor
@@ -47,59 +48,59 @@ struct amdgpu_res_cursor {
  *
  * Start walking over the range of allocations between @start and @size.
  */
-static inline void amdgpu_res_first(struct ttm_resource *res,
-				    uint64_t start, uint64_t size,
-				    struct amdgpu_res_cursor *cur)
-{
-	struct drm_mm_node *node;
+अटल अंतरभूत व्योम amdgpu_res_first(काष्ठा tपंचांग_resource *res,
+				    uपूर्णांक64_t start, uपूर्णांक64_t size,
+				    काष्ठा amdgpu_res_cursor *cur)
+अणु
+	काष्ठा drm_mm_node *node;
 
-	if (!res || !res->mm_node) {
+	अगर (!res || !res->mm_node) अणु
 		cur->start = start;
 		cur->size = size;
-		cur->remaining = size;
-		cur->node = NULL;
-		return;
-	}
+		cur->reमुख्यing = size;
+		cur->node = शून्य;
+		वापस;
+	पूर्ण
 
 	BUG_ON(start + size > res->num_pages << PAGE_SHIFT);
 
 	node = res->mm_node;
-	while (start >= node->size << PAGE_SHIFT)
+	जबतक (start >= node->size << PAGE_SHIFT)
 		start -= node++->size << PAGE_SHIFT;
 
 	cur->start = (node->start << PAGE_SHIFT) + start;
 	cur->size = min((node->size << PAGE_SHIFT) - start, size);
-	cur->remaining = size;
+	cur->reमुख्यing = size;
 	cur->node = node;
-}
+पूर्ण
 
 /**
  * amdgpu_res_next - advance the cursor
  *
  * @cur: the cursor to advance
- * @size: number of bytes to move forward
+ * @size: number of bytes to move क्रमward
  *
- * Move the cursor @size bytes forwrad, walking to the next node if necessary.
+ * Move the cursor @size bytes क्रमwrad, walking to the next node अगर necessary.
  */
-static inline void amdgpu_res_next(struct amdgpu_res_cursor *cur, uint64_t size)
-{
-	struct drm_mm_node *node = cur->node;
+अटल अंतरभूत व्योम amdgpu_res_next(काष्ठा amdgpu_res_cursor *cur, uपूर्णांक64_t size)
+अणु
+	काष्ठा drm_mm_node *node = cur->node;
 
-	BUG_ON(size > cur->remaining);
+	BUG_ON(size > cur->reमुख्यing);
 
-	cur->remaining -= size;
-	if (!cur->remaining)
-		return;
+	cur->reमुख्यing -= size;
+	अगर (!cur->reमुख्यing)
+		वापस;
 
 	cur->size -= size;
-	if (cur->size) {
+	अगर (cur->size) अणु
 		cur->start += size;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cur->node = ++node;
 	cur->start = node->start << PAGE_SHIFT;
-	cur->size = min(node->size << PAGE_SHIFT, cur->remaining);
-}
+	cur->size = min(node->size << PAGE_SHIFT, cur->reमुख्यing);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

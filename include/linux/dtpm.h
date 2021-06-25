@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 Linaro Ltd
  *
  * Author: Daniel Lezcano <daniel.lezcano@linaro.org>
  */
-#ifndef ___DTPM_H__
-#define ___DTPM_H__
+#अगर_अघोषित ___DTPM_H__
+#घोषणा ___DTPM_H__
 
-#include <linux/powercap.h>
+#समावेश <linux/घातercap.h>
 
-#define MAX_DTPM_DESCR 8
-#define MAX_DTPM_CONSTRAINTS 1
+#घोषणा MAX_DTPM_DESCR 8
+#घोषणा MAX_DTPM_CONSTRAINTS 1
 
-struct dtpm {
-	struct powercap_zone zone;
-	struct dtpm *parent;
-	struct list_head sibling;
-	struct list_head children;
-	struct dtpm_ops *ops;
-	unsigned long flags;
-	u64 power_limit;
-	u64 power_max;
-	u64 power_min;
-	int weight;
-	void *private;
-};
+काष्ठा dtpm अणु
+	काष्ठा घातercap_zone zone;
+	काष्ठा dtpm *parent;
+	काष्ठा list_head sibling;
+	काष्ठा list_head children;
+	काष्ठा dtpm_ops *ops;
+	अचिन्हित दीर्घ flags;
+	u64 घातer_limit;
+	u64 घातer_max;
+	u64 घातer_min;
+	पूर्णांक weight;
+	व्योम *निजी;
+पूर्ण;
 
-struct dtpm_ops {
-	u64 (*set_power_uw)(struct dtpm *, u64);
-	u64 (*get_power_uw)(struct dtpm *);
-	void (*release)(struct dtpm *);
-};
+काष्ठा dtpm_ops अणु
+	u64 (*set_घातer_uw)(काष्ठा dtpm *, u64);
+	u64 (*get_घातer_uw)(काष्ठा dtpm *);
+	व्योम (*release)(काष्ठा dtpm *);
+पूर्ण;
 
-struct dtpm_descr;
+काष्ठा dtpm_descr;
 
-typedef int (*dtpm_init_t)(struct dtpm_descr *);
+प्रकार पूर्णांक (*dtpm_init_t)(काष्ठा dtpm_descr *);
 
-struct dtpm_descr {
-	struct dtpm *parent;
-	const char *name;
+काष्ठा dtpm_descr अणु
+	काष्ठा dtpm *parent;
+	स्थिर अक्षर *name;
 	dtpm_init_t init;
-};
+पूर्ण;
 
 /* Init section thermal table */
-extern struct dtpm_descr *__dtpm_table[];
-extern struct dtpm_descr *__dtpm_table_end[];
+बाह्य काष्ठा dtpm_descr *__dtpm_table[];
+बाह्य काष्ठा dtpm_descr *__dtpm_table_end[];
 
-#define DTPM_TABLE_ENTRY(name)			\
-	static typeof(name) *__dtpm_table_entry_##name	\
+#घोषणा DTPM_TABLE_ENTRY(name)			\
+	अटल typeof(name) *__dtpm_table_entry_##name	\
 	__used __section("__dtpm_table") = &name
 
-#define DTPM_DECLARE(name)	DTPM_TABLE_ENTRY(name)
+#घोषणा DTPM_DECLARE(name)	DTPM_TABLE_ENTRY(name)
 
-#define for_each_dtpm_table(__dtpm)	\
-	for (__dtpm = __dtpm_table;	\
+#घोषणा क्रम_each_dtpm_table(__dtpm)	\
+	क्रम (__dtpm = __dtpm_table;	\
 	     __dtpm < __dtpm_table_end;	\
 	     __dtpm++)
 
-static inline struct dtpm *to_dtpm(struct powercap_zone *zone)
-{
-	return container_of(zone, struct dtpm, zone);
-}
+अटल अंतरभूत काष्ठा dtpm *to_dtpm(काष्ठा घातercap_zone *zone)
+अणु
+	वापस container_of(zone, काष्ठा dtpm, zone);
+पूर्ण
 
-int dtpm_update_power(struct dtpm *dtpm, u64 power_min, u64 power_max);
+पूर्णांक dtpm_update_घातer(काष्ठा dtpm *dtpm, u64 घातer_min, u64 घातer_max);
 
-int dtpm_release_zone(struct powercap_zone *pcz);
+पूर्णांक dtpm_release_zone(काष्ठा घातercap_zone *pcz);
 
-struct dtpm *dtpm_alloc(struct dtpm_ops *ops);
+काष्ठा dtpm *dtpm_alloc(काष्ठा dtpm_ops *ops);
 
-void dtpm_unregister(struct dtpm *dtpm);
+व्योम dtpm_unरेजिस्टर(काष्ठा dtpm *dtpm);
 
-int dtpm_register(const char *name, struct dtpm *dtpm, struct dtpm *parent);
+पूर्णांक dtpm_रेजिस्टर(स्थिर अक्षर *name, काष्ठा dtpm *dtpm, काष्ठा dtpm *parent);
 
-int dtpm_register_cpu(struct dtpm *parent);
+पूर्णांक dtpm_रेजिस्टर_cpu(काष्ठा dtpm *parent);
 
-#endif
+#पूर्ण_अगर

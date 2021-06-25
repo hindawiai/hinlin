@@ -1,12 +1,13 @@
-#ifndef _ASM_X86_UMIP_H
-#define _ASM_X86_UMIP_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_X86_UMIP_H
+#घोषणा _ASM_X86_UMIP_H
 
-#include <linux/types.h>
-#include <asm/ptrace.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/ptrace.h>
 
-#ifdef CONFIG_X86_UMIP
-bool fixup_umip_exception(struct pt_regs *regs);
-#else
-static inline bool fixup_umip_exception(struct pt_regs *regs) { return false; }
-#endif  /* CONFIG_X86_UMIP */
-#endif  /* _ASM_X86_UMIP_H */
+#अगर_घोषित CONFIG_X86_UMIP
+bool fixup_umip_exception(काष्ठा pt_regs *regs);
+#अन्यथा
+अटल अंतरभूत bool fixup_umip_exception(काष्ठा pt_regs *regs) अणु वापस false; पूर्ण
+#पूर्ण_अगर  /* CONFIG_X86_UMIP */
+#पूर्ण_अगर  /* _ASM_X86_UMIP_H */

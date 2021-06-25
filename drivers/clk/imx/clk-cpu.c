@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 Lucas Stach <l.stach@pengutronix.de>, Pengutronix
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include "clk.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश "clk.h"
 
-struct clk_cpu {
-	struct clk_hw	hw;
-	struct clk	*div;
-	struct clk	*mux;
-	struct clk	*pll;
-	struct clk	*step;
-};
+काष्ठा clk_cpu अणु
+	काष्ठा clk_hw	hw;
+	काष्ठा clk	*भाग;
+	काष्ठा clk	*mux;
+	काष्ठा clk	*pll;
+	काष्ठा clk	*step;
+पूर्ण;
 
-static inline struct clk_cpu *to_clk_cpu(struct clk_hw *hw)
-{
-	return container_of(hw, struct clk_cpu, hw);
-}
+अटल अंतरभूत काष्ठा clk_cpu *to_clk_cpu(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा clk_cpu, hw);
+पूर्ण
 
-static unsigned long clk_cpu_recalc_rate(struct clk_hw *hw,
-					 unsigned long parent_rate)
-{
-	struct clk_cpu *cpu = to_clk_cpu(hw);
+अटल अचिन्हित दीर्घ clk_cpu_recalc_rate(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_cpu *cpu = to_clk_cpu(hw);
 
-	return clk_get_rate(cpu->div);
-}
+	वापस clk_get_rate(cpu->भाग);
+पूर्ण
 
-static long clk_cpu_round_rate(struct clk_hw *hw, unsigned long rate,
-			       unsigned long *prate)
-{
-	struct clk_cpu *cpu = to_clk_cpu(hw);
+अटल दीर्घ clk_cpu_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			       अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा clk_cpu *cpu = to_clk_cpu(hw);
 
-	return clk_round_rate(cpu->pll, rate);
-}
+	वापस clk_round_rate(cpu->pll, rate);
+पूर्ण
 
-static int clk_cpu_set_rate(struct clk_hw *hw, unsigned long rate,
-			    unsigned long parent_rate)
-{
-	struct clk_cpu *cpu = to_clk_cpu(hw);
-	int ret;
+अटल पूर्णांक clk_cpu_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_cpu *cpu = to_clk_cpu(hw);
+	पूर्णांक ret;
 
-	/* switch to PLL bypass clock */
+	/* चयन to PLL bypass घड़ी */
 	ret = clk_set_parent(cpu->mux, cpu->step);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* reprogram PLL */
 	ret = clk_set_rate(cpu->pll, rate);
-	if (ret) {
+	अगर (ret) अणु
 		clk_set_parent(cpu->mux, cpu->pll);
-		return ret;
-	}
-	/* switch back to PLL clock */
+		वापस ret;
+	पूर्ण
+	/* चयन back to PLL घड़ी */
 	clk_set_parent(cpu->mux, cpu->pll);
 
-	/* Ensure the divider is what we expect */
-	clk_set_rate(cpu->div, rate);
+	/* Ensure the भागider is what we expect */
+	clk_set_rate(cpu->भाग, rate);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_cpu_ops = {
+अटल स्थिर काष्ठा clk_ops clk_cpu_ops = अणु
 	.recalc_rate	= clk_cpu_recalc_rate,
 	.round_rate	= clk_cpu_round_rate,
 	.set_rate	= clk_cpu_set_rate,
-};
+पूर्ण;
 
-struct clk_hw *imx_clk_hw_cpu(const char *name, const char *parent_name,
-		struct clk *div, struct clk *mux, struct clk *pll,
-		struct clk *step)
-{
-	struct clk_cpu *cpu;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw *imx_clk_hw_cpu(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		काष्ठा clk *भाग, काष्ठा clk *mux, काष्ठा clk *pll,
+		काष्ठा clk *step)
+अणु
+	काष्ठा clk_cpu *cpu;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	cpu = kzalloc(sizeof(*cpu), GFP_KERNEL);
-	if (!cpu)
-		return ERR_PTR(-ENOMEM);
+	cpu = kzalloc(माप(*cpu), GFP_KERNEL);
+	अगर (!cpu)
+		वापस ERR_PTR(-ENOMEM);
 
-	cpu->div = div;
+	cpu->भाग = भाग;
 	cpu->mux = mux;
 	cpu->pll = pll;
 	cpu->step = step;
@@ -97,12 +98,12 @@ struct clk_hw *imx_clk_hw_cpu(const char *name, const char *parent_name,
 	cpu->hw.init = &init;
 	hw = &cpu->hw;
 
-	ret = clk_hw_register(NULL, hw);
-	if (ret) {
-		kfree(cpu);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (ret) अणु
+		kमुक्त(cpu);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_clk_hw_cpu);

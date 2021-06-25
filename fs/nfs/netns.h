@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * NFS-private data for each "struct net".  Accessed with net_generic().
+ * NFS-निजी data क्रम each "struct net".  Accessed with net_generic().
  */
 
-#ifndef __NFS_NETNS_H__
-#define __NFS_NETNS_H__
+#अगर_अघोषित __NFS_NETNS_H__
+#घोषणा __NFS_NETNS_H__
 
-#include <linux/nfs4.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
+#समावेश <linux/nfs4.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
 
-struct bl_dev_msg {
-	int32_t status;
-	uint32_t major, minor;
-};
+काष्ठा bl_dev_msg अणु
+	पूर्णांक32_t status;
+	uपूर्णांक32_t major, minor;
+पूर्ण;
 
-struct nfs_netns_client;
+काष्ठा nfs_netns_client;
 
-struct nfs_net {
-	struct cache_detail *nfs_dns_resolve;
-	struct rpc_pipe *bl_device_pipe;
-	struct bl_dev_msg bl_mount_reply;
-	wait_queue_head_t bl_wq;
-	struct mutex bl_mutex;
-	struct list_head nfs_client_list;
-	struct list_head nfs_volume_list;
-#if IS_ENABLED(CONFIG_NFS_V4)
-	struct idr cb_ident_idr; /* Protected by nfs_client_lock */
-	unsigned short nfs_callback_tcpport;
-	unsigned short nfs_callback_tcpport6;
-	int cb_users[NFS4_MAX_MINOR_VERSION + 1];
-#endif
-	struct nfs_netns_client *nfs_client;
+काष्ठा nfs_net अणु
+	काष्ठा cache_detail *nfs_dns_resolve;
+	काष्ठा rpc_pipe *bl_device_pipe;
+	काष्ठा bl_dev_msg bl_mount_reply;
+	रुको_queue_head_t bl_wq;
+	काष्ठा mutex bl_mutex;
+	काष्ठा list_head nfs_client_list;
+	काष्ठा list_head nfs_volume_list;
+#अगर IS_ENABLED(CONFIG_NFS_V4)
+	काष्ठा idr cb_ident_idr; /* Protected by nfs_client_lock */
+	अचिन्हित लघु nfs_callback_tcpport;
+	अचिन्हित लघु nfs_callback_tcpport6;
+	पूर्णांक cb_users[NFS4_MAX_MINOR_VERSION + 1];
+#पूर्ण_अगर
+	काष्ठा nfs_netns_client *nfs_client;
 	spinlock_t nfs_client_lock;
-	ktime_t boot_time;
-#ifdef CONFIG_PROC_FS
-	struct proc_dir_entry *proc_nfsfs;
-#endif
-};
+	kसमय_प्रकार boot_समय;
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा proc_dir_entry *proc_nfsfs;
+#पूर्ण_अगर
+पूर्ण;
 
-extern unsigned int nfs_net_id;
+बाह्य अचिन्हित पूर्णांक nfs_net_id;
 
-#endif
+#पूर्ण_अगर

@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/ext4/xattr_hurd.c
- * Handler for extended gnu attributes for the Hurd.
+ * Handler क्रम extended gnu attributes क्रम the Hurd.
  *
  * Copyright (C) 2001 by Andreas Gruenbacher, <a.gruenbacher@computer.org>
  * Copyright (C) 2020 by Jan (janneke) Nieuwenhuizen, <janneke@gnu.org>
  */
 
-#include <linux/init.h>
-#include <linux/string.h>
-#include "ext4.h"
-#include "xattr.h"
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश "ext4.h"
+#समावेश "xattr.h"
 
-static bool
-ext4_xattr_hurd_list(struct dentry *dentry)
-{
-	return test_opt(dentry->d_sb, XATTR_USER);
-}
+अटल bool
+ext4_xattr_hurd_list(काष्ठा dentry *dentry)
+अणु
+	वापस test_opt(dentry->d_sb, XATTR_USER);
+पूर्ण
 
-static int
-ext4_xattr_hurd_get(const struct xattr_handler *handler,
-		    struct dentry *unused, struct inode *inode,
-		    const char *name, void *buffer, size_t size)
-{
-	if (!test_opt(inode->i_sb, XATTR_USER))
-		return -EOPNOTSUPP;
+अटल पूर्णांक
+ext4_xattr_hurd_get(स्थिर काष्ठा xattr_handler *handler,
+		    काष्ठा dentry *unused, काष्ठा inode *inode,
+		    स्थिर अक्षर *name, व्योम *buffer, माप_प्रकार size)
+अणु
+	अगर (!test_opt(inode->i_sb, XATTR_USER))
+		वापस -EOPNOTSUPP;
 
-	return ext4_xattr_get(inode, EXT4_XATTR_INDEX_HURD,
+	वापस ext4_xattr_get(inode, EXT4_XATTR_INDEX_HURD,
 			      name, buffer, size);
-}
+पूर्ण
 
-static int
-ext4_xattr_hurd_set(const struct xattr_handler *handler,
-		    struct user_namespace *mnt_userns,
-		    struct dentry *unused, struct inode *inode,
-		    const char *name, const void *value,
-		    size_t size, int flags)
-{
-	if (!test_opt(inode->i_sb, XATTR_USER))
-		return -EOPNOTSUPP;
+अटल पूर्णांक
+ext4_xattr_hurd_set(स्थिर काष्ठा xattr_handler *handler,
+		    काष्ठा user_namespace *mnt_userns,
+		    काष्ठा dentry *unused, काष्ठा inode *inode,
+		    स्थिर अक्षर *name, स्थिर व्योम *value,
+		    माप_प्रकार size, पूर्णांक flags)
+अणु
+	अगर (!test_opt(inode->i_sb, XATTR_USER))
+		वापस -EOPNOTSUPP;
 
-	return ext4_xattr_set(inode, EXT4_XATTR_INDEX_HURD,
+	वापस ext4_xattr_set(inode, EXT4_XATTR_INDEX_HURD,
 			      name, value, size, flags);
-}
+पूर्ण
 
-const struct xattr_handler ext4_xattr_hurd_handler = {
+स्थिर काष्ठा xattr_handler ext4_xattr_hurd_handler = अणु
 	.prefix	= XATTR_HURD_PREFIX,
 	.list	= ext4_xattr_hurd_list,
 	.get	= ext4_xattr_hurd_get,
 	.set	= ext4_xattr_hurd_set,
-};
+पूर्ण;

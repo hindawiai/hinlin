@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_FB_H_
-#define __ASM_FB_H_
+#अगर_अघोषित __ASM_FB_H_
+#घोषणा __ASM_FB_H_
 
-#include <linux/fb.h>
-#include <linux/fs.h>
-#include <asm/page.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/fs.h>
+#समावेश <यंत्र/page.h>
 
-static inline void fb_pgprotect(struct file *file, struct vm_area_struct *vma,
-				unsigned long off)
-{
-	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
-}
+अटल अंतरभूत व्योम fb_pgprotect(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ off)
+अणु
+	vma->vm_page_prot = pgprot_ग_लिखोcombine(vma->vm_page_prot);
+पूर्ण
 
-static inline int fb_is_primary_device(struct fb_info *info)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक fb_is_primary_device(काष्ठा fb_info *info)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* __ASM_FB_H_ */
+#पूर्ण_अगर /* __ASM_FB_H_ */

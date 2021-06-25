@@ -1,249 +1,250 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * This file contains NUMA specific variables and functions which can
+ * This file contains NUMA specअगरic variables and functions which can
  * be split away from DISCONTIGMEM and are used on NUMA machines with
  * contiguous memory.
  * 		2002/08/07 Erich Focht <efocht@ess.nec.de>
- * Populate cpu entries in sysfs for non-numa systems as well
+ * Populate cpu entries in sysfs क्रम non-numa प्रणालीs as well
  *  	Intel Corporation - Ashok Raj
  * 02/27/2006 Zhang, Yanmin
- *	Populate cpu cache entries in sysfs for cpu cache info
+ *	Populate cpu cache entries in sysfs क्रम cpu cache info
  */
 
-#include <linux/cpu.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/node.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/nodemask.h>
-#include <linux/notifier.h>
-#include <linux/export.h>
-#include <asm/mmzone.h>
-#include <asm/numa.h>
-#include <asm/cpu.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/node.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/mmzone.h>
+#समावेश <यंत्र/numa.h>
+#समावेश <यंत्र/cpu.h>
 
-static struct ia64_cpu *sysfs_cpus;
+अटल काष्ठा ia64_cpu *sysfs_cpus;
 
-void arch_fix_phys_package_id(int num, u32 slot)
-{
-#ifdef CONFIG_SMP
-	if (cpu_data(num)->socket_id == -1)
+व्योम arch_fix_phys_package_id(पूर्णांक num, u32 slot)
+अणु
+#अगर_घोषित CONFIG_SMP
+	अगर (cpu_data(num)->socket_id == -1)
 		cpu_data(num)->socket_id = slot;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL_GPL(arch_fix_phys_package_id);
 
 
-#ifdef CONFIG_HOTPLUG_CPU
-int __ref arch_register_cpu(int num)
-{
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+पूर्णांक __ref arch_रेजिस्टर_cpu(पूर्णांक num)
+अणु
 	/*
-	 * If CPEI can be re-targeted or if this is not
+	 * If CPEI can be re-targeted or अगर this is not
 	 * CPEI target, then it is hotpluggable
 	 */
-	if (can_cpei_retarget() || !is_cpu_cpei_target(num))
+	अगर (can_cpei_retarget() || !is_cpu_cpei_target(num))
 		sysfs_cpus[num].cpu.hotpluggable = 1;
 	map_cpu_to_node(num, node_cpuid[num].nid);
-	return register_cpu(&sysfs_cpus[num].cpu, num);
-}
-EXPORT_SYMBOL(arch_register_cpu);
+	वापस रेजिस्टर_cpu(&sysfs_cpus[num].cpu, num);
+पूर्ण
+EXPORT_SYMBOL(arch_रेजिस्टर_cpu);
 
-void __ref arch_unregister_cpu(int num)
-{
-	unregister_cpu(&sysfs_cpus[num].cpu);
+व्योम __ref arch_unरेजिस्टर_cpu(पूर्णांक num)
+अणु
+	unरेजिस्टर_cpu(&sysfs_cpus[num].cpu);
 	unmap_cpu_from_node(num, cpu_to_node(num));
-}
-EXPORT_SYMBOL(arch_unregister_cpu);
-#else
-static int __init arch_register_cpu(int num)
-{
-	return register_cpu(&sysfs_cpus[num].cpu, num);
-}
-#endif /*CONFIG_HOTPLUG_CPU*/
+पूर्ण
+EXPORT_SYMBOL(arch_unरेजिस्टर_cpu);
+#अन्यथा
+अटल पूर्णांक __init arch_रेजिस्टर_cpu(पूर्णांक num)
+अणु
+	वापस रेजिस्टर_cpu(&sysfs_cpus[num].cpu, num);
+पूर्ण
+#पूर्ण_अगर /*CONFIG_HOTPLUG_CPU*/
 
 
-static int __init topology_init(void)
-{
-	int i, err = 0;
+अटल पूर्णांक __init topology_init(व्योम)
+अणु
+	पूर्णांक i, err = 0;
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 	/*
-	 * MCD - Do we want to register all ONLINE nodes, or all POSSIBLE nodes?
+	 * MCD - Do we want to रेजिस्टर all ONLINE nodes, or all POSSIBLE nodes?
 	 */
-	for_each_online_node(i) {
-		if ((err = register_one_node(i)))
-			goto out;
-	}
-#endif
+	क्रम_each_online_node(i) अणु
+		अगर ((err = रेजिस्टर_one_node(i)))
+			जाओ out;
+	पूर्ण
+#पूर्ण_अगर
 
-	sysfs_cpus = kcalloc(NR_CPUS, sizeof(struct ia64_cpu), GFP_KERNEL);
-	if (!sysfs_cpus)
+	sysfs_cpus = kसुस्मृति(NR_CPUS, माप(काष्ठा ia64_cpu), GFP_KERNEL);
+	अगर (!sysfs_cpus)
 		panic("kzalloc in topology_init failed - NR_CPUS too big?");
 
-	for_each_present_cpu(i) {
-		if((err = arch_register_cpu(i)))
-			goto out;
-	}
+	क्रम_each_present_cpu(i) अणु
+		अगर((err = arch_रेजिस्टर_cpu(i)))
+			जाओ out;
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 subsys_initcall(topology_init);
 
 
 /*
- * Export cpu cache information through sysfs
+ * Export cpu cache inक्रमmation through sysfs
  */
 
 /*
- *  A bunch of string array to get pretty printing
+ *  A bunch of string array to get pretty prपूर्णांकing
  */
-static const char *cache_types[] = {
+अटल स्थिर अक्षर *cache_types[] = अणु
 	"",			/* not used */
 	"Instruction",
 	"Data",
-	"Unified"	/* unified */
-};
+	"Unified"	/* unअगरied */
+पूर्ण;
 
-static const char *cache_mattrib[]={
+अटल स्थिर अक्षर *cache_mattrib[]=अणु
 	"WriteThrough",
 	"WriteBack",
 	"",		/* reserved */
 	""		/* reserved */
-};
+पूर्ण;
 
-struct cache_info {
+काष्ठा cache_info अणु
 	pal_cache_config_info_t	cci;
 	cpumask_t shared_cpu_map;
-	int level;
-	int type;
-	struct kobject kobj;
-};
+	पूर्णांक level;
+	पूर्णांक type;
+	काष्ठा kobject kobj;
+पूर्ण;
 
-struct cpu_cache_info {
-	struct cache_info *cache_leaves;
-	int	num_cache_leaves;
-	struct kobject kobj;
-};
+काष्ठा cpu_cache_info अणु
+	काष्ठा cache_info *cache_leaves;
+	पूर्णांक	num_cache_leaves;
+	काष्ठा kobject kobj;
+पूर्ण;
 
-static struct cpu_cache_info	all_cpu_cache_info[NR_CPUS];
-#define LEAF_KOBJECT_PTR(x,y)    (&all_cpu_cache_info[x].cache_leaves[y])
+अटल काष्ठा cpu_cache_info	all_cpu_cache_info[NR_CPUS];
+#घोषणा LEAF_KOBJECT_PTR(x,y)    (&all_cpu_cache_info[x].cache_leaves[y])
 
-#ifdef CONFIG_SMP
-static void cache_shared_cpu_map_setup(unsigned int cpu,
-		struct cache_info * this_leaf)
-{
+#अगर_घोषित CONFIG_SMP
+अटल व्योम cache_shared_cpu_map_setup(अचिन्हित पूर्णांक cpu,
+		काष्ठा cache_info * this_leaf)
+अणु
 	pal_cache_shared_info_t	csi;
-	int num_shared, i = 0;
-	unsigned int j;
+	पूर्णांक num_shared, i = 0;
+	अचिन्हित पूर्णांक j;
 
-	if (cpu_data(cpu)->threads_per_core <= 1 &&
-		cpu_data(cpu)->cores_per_socket <= 1) {
+	अगर (cpu_data(cpu)->thपढ़ोs_per_core <= 1 &&
+		cpu_data(cpu)->cores_per_socket <= 1) अणु
 		cpumask_set_cpu(cpu, &this_leaf->shared_cpu_map);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ia64_pal_cache_shared_info(this_leaf->level,
+	अगर (ia64_pal_cache_shared_info(this_leaf->level,
 					this_leaf->type,
 					0,
 					&csi) != PAL_STATUS_SUCCESS)
-		return;
+		वापस;
 
-	num_shared = (int) csi.num_shared;
-	do {
-		for_each_possible_cpu(j)
-			if (cpu_data(cpu)->socket_id == cpu_data(j)->socket_id
+	num_shared = (पूर्णांक) csi.num_shared;
+	करो अणु
+		क्रम_each_possible_cpu(j)
+			अगर (cpu_data(cpu)->socket_id == cpu_data(j)->socket_id
 				&& cpu_data(j)->core_id == csi.log1_cid
-				&& cpu_data(j)->thread_id == csi.log1_tid)
+				&& cpu_data(j)->thपढ़ो_id == csi.log1_tid)
 				cpumask_set_cpu(j, &this_leaf->shared_cpu_map);
 
 		i++;
-	} while (i < num_shared &&
+	पूर्ण जबतक (i < num_shared &&
 		ia64_pal_cache_shared_info(this_leaf->level,
 				this_leaf->type,
 				i,
 				&csi) == PAL_STATUS_SUCCESS);
-}
-#else
-static void cache_shared_cpu_map_setup(unsigned int cpu,
-		struct cache_info * this_leaf)
-{
+पूर्ण
+#अन्यथा
+अटल व्योम cache_shared_cpu_map_setup(अचिन्हित पूर्णांक cpu,
+		काष्ठा cache_info * this_leaf)
+अणु
 	cpumask_set_cpu(cpu, &this_leaf->shared_cpu_map);
-	return;
-}
-#endif
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-static ssize_t show_coherency_line_size(struct cache_info *this_leaf,
-					char *buf)
-{
-	return sprintf(buf, "%u\n", 1 << this_leaf->cci.pcci_line_size);
-}
+अटल sमाप_प्रकार show_coherency_line_size(काष्ठा cache_info *this_leaf,
+					अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", 1 << this_leaf->cci.pcci_line_size);
+पूर्ण
 
-static ssize_t show_ways_of_associativity(struct cache_info *this_leaf,
-					char *buf)
-{
-	return sprintf(buf, "%u\n", this_leaf->cci.pcci_assoc);
-}
+अटल sमाप_प्रकार show_ways_of_associativity(काष्ठा cache_info *this_leaf,
+					अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", this_leaf->cci.pcci_assoc);
+पूर्ण
 
-static ssize_t show_attributes(struct cache_info *this_leaf, char *buf)
-{
-	return sprintf(buf,
+अटल sमाप_प्रकार show_attributes(काष्ठा cache_info *this_leaf, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf,
 			"%s\n",
 			cache_mattrib[this_leaf->cci.pcci_cache_attr]);
-}
+पूर्ण
 
-static ssize_t show_size(struct cache_info *this_leaf, char *buf)
-{
-	return sprintf(buf, "%uK\n", this_leaf->cci.pcci_cache_size / 1024);
-}
+अटल sमाप_प्रकार show_size(काष्ठा cache_info *this_leaf, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%uK\n", this_leaf->cci.pcci_cache_size / 1024);
+पूर्ण
 
-static ssize_t show_number_of_sets(struct cache_info *this_leaf, char *buf)
-{
-	unsigned number_of_sets = this_leaf->cci.pcci_cache_size;
+अटल sमाप_प्रकार show_number_of_sets(काष्ठा cache_info *this_leaf, अक्षर *buf)
+अणु
+	अचिन्हित number_of_sets = this_leaf->cci.pcci_cache_size;
 	number_of_sets /= this_leaf->cci.pcci_assoc;
 	number_of_sets /= 1 << this_leaf->cci.pcci_line_size;
 
-	return sprintf(buf, "%u\n", number_of_sets);
-}
+	वापस प्र_लिखो(buf, "%u\n", number_of_sets);
+पूर्ण
 
-static ssize_t show_shared_cpu_map(struct cache_info *this_leaf, char *buf)
-{
+अटल sमाप_प्रकार show_shared_cpu_map(काष्ठा cache_info *this_leaf, अक्षर *buf)
+अणु
 	cpumask_t shared_cpu_map;
 
 	cpumask_and(&shared_cpu_map,
 				&this_leaf->shared_cpu_map, cpu_online_mask);
-	return scnprintf(buf, PAGE_SIZE, "%*pb\n",
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%*pb\n",
 			 cpumask_pr_args(&shared_cpu_map));
-}
+पूर्ण
 
-static ssize_t show_type(struct cache_info *this_leaf, char *buf)
-{
-	int type = this_leaf->type + this_leaf->cci.pcci_unified;
-	return sprintf(buf, "%s\n", cache_types[type]);
-}
+अटल sमाप_प्रकार show_type(काष्ठा cache_info *this_leaf, अक्षर *buf)
+अणु
+	पूर्णांक type = this_leaf->type + this_leaf->cci.pcci_unअगरied;
+	वापस प्र_लिखो(buf, "%s\n", cache_types[type]);
+पूर्ण
 
-static ssize_t show_level(struct cache_info *this_leaf, char *buf)
-{
-	return sprintf(buf, "%u\n", this_leaf->level);
-}
+अटल sमाप_प्रकार show_level(काष्ठा cache_info *this_leaf, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", this_leaf->level);
+पूर्ण
 
-struct cache_attr {
-	struct attribute attr;
-	ssize_t (*show)(struct cache_info *, char *);
-	ssize_t (*store)(struct cache_info *, const char *, size_t count);
-};
+काष्ठा cache_attr अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा cache_info *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा cache_info *, स्थिर अक्षर *, माप_प्रकार count);
+पूर्ण;
 
-#ifdef define_one_ro
-	#undef define_one_ro
-#endif
-#define define_one_ro(_name) \
-	static struct cache_attr _name = \
-__ATTR(_name, 0444, show_##_name, NULL)
+#अगर_घोषित define_one_ro
+	#अघोषित define_one_ro
+#पूर्ण_अगर
+#घोषणा define_one_ro(_name) \
+	अटल काष्ठा cache_attr _name = \
+__ATTR(_name, 0444, show_##_name, शून्य)
 
 define_one_ro(level);
 define_one_ro(type);
@@ -254,7 +255,7 @@ define_one_ro(number_of_sets);
 define_one_ro(shared_cpu_map);
 define_one_ro(attributes);
 
-static struct attribute * cache_default_attrs[] = {
+अटल काष्ठा attribute * cache_शेष_attrs[] = अणु
 	&type.attr,
 	&level.attr,
 	&coherency_line_size.attr,
@@ -263,68 +264,68 @@ static struct attribute * cache_default_attrs[] = {
 	&size.attr,
 	&number_of_sets.attr,
 	&shared_cpu_map.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-#define to_object(k) container_of(k, struct cache_info, kobj)
-#define to_attr(a) container_of(a, struct cache_attr, attr)
+#घोषणा to_object(k) container_of(k, काष्ठा cache_info, kobj)
+#घोषणा to_attr(a) container_of(a, काष्ठा cache_attr, attr)
 
-static ssize_t ia64_cache_show(struct kobject * kobj, struct attribute * attr, char * buf)
-{
-	struct cache_attr *fattr = to_attr(attr);
-	struct cache_info *this_leaf = to_object(kobj);
-	ssize_t ret;
+अटल sमाप_प्रकार ia64_cache_show(काष्ठा kobject * kobj, काष्ठा attribute * attr, अक्षर * buf)
+अणु
+	काष्ठा cache_attr *fattr = to_attr(attr);
+	काष्ठा cache_info *this_leaf = to_object(kobj);
+	sमाप_प्रकार ret;
 
 	ret = fattr->show ? fattr->show(this_leaf, buf) : 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops cache_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops cache_sysfs_ops = अणु
 	.show   = ia64_cache_show
-};
+पूर्ण;
 
-static struct kobj_type cache_ktype = {
+अटल काष्ठा kobj_type cache_ktype = अणु
 	.sysfs_ops	= &cache_sysfs_ops,
-	.default_attrs	= cache_default_attrs,
-};
+	.शेष_attrs	= cache_शेष_attrs,
+पूर्ण;
 
-static struct kobj_type cache_ktype_percpu_entry = {
+अटल काष्ठा kobj_type cache_ktype_percpu_entry = अणु
 	.sysfs_ops	= &cache_sysfs_ops,
-};
+पूर्ण;
 
-static void cpu_cache_sysfs_exit(unsigned int cpu)
-{
-	kfree(all_cpu_cache_info[cpu].cache_leaves);
-	all_cpu_cache_info[cpu].cache_leaves = NULL;
+अटल व्योम cpu_cache_sysfs_निकास(अचिन्हित पूर्णांक cpu)
+अणु
+	kमुक्त(all_cpu_cache_info[cpu].cache_leaves);
+	all_cpu_cache_info[cpu].cache_leaves = शून्य;
 	all_cpu_cache_info[cpu].num_cache_leaves = 0;
-	memset(&all_cpu_cache_info[cpu].kobj, 0, sizeof(struct kobject));
-	return;
-}
+	स_रखो(&all_cpu_cache_info[cpu].kobj, 0, माप(काष्ठा kobject));
+	वापस;
+पूर्ण
 
-static int cpu_cache_sysfs_init(unsigned int cpu)
-{
-	unsigned long i, levels, unique_caches;
+अटल पूर्णांक cpu_cache_sysfs_init(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ i, levels, unique_caches;
 	pal_cache_config_info_t cci;
-	int j;
-	long status;
-	struct cache_info *this_cache;
-	int num_cache_leaves = 0;
+	पूर्णांक j;
+	दीर्घ status;
+	काष्ठा cache_info *this_cache;
+	पूर्णांक num_cache_leaves = 0;
 
-	if ((status = ia64_pal_cache_summary(&levels, &unique_caches)) != 0) {
-		printk(KERN_ERR "ia64_pal_cache_summary=%ld\n", status);
-		return -1;
-	}
+	अगर ((status = ia64_pal_cache_summary(&levels, &unique_caches)) != 0) अणु
+		prपूर्णांकk(KERN_ERR "ia64_pal_cache_summary=%ld\n", status);
+		वापस -1;
+	पूर्ण
 
-	this_cache=kcalloc(unique_caches, sizeof(struct cache_info),
+	this_cache=kसुस्मृति(unique_caches, माप(काष्ठा cache_info),
 			   GFP_KERNEL);
-	if (this_cache == NULL)
-		return -ENOMEM;
+	अगर (this_cache == शून्य)
+		वापस -ENOMEM;
 
-	for (i=0; i < levels; i++) {
-		for (j=2; j >0 ; j--) {
-			if ((status=ia64_pal_cache_config_info(i,j, &cci)) !=
+	क्रम (i=0; i < levels; i++) अणु
+		क्रम (j=2; j >0 ; j--) अणु
+			अगर ((status=ia64_pal_cache_config_info(i,j, &cci)) !=
 					PAL_STATUS_SUCCESS)
-				continue;
+				जारी;
 
 			this_cache[num_cache_leaves].cci = cci;
 			this_cache[num_cache_leaves].level = i + 1;
@@ -333,88 +334,88 @@ static int cpu_cache_sysfs_init(unsigned int cpu)
 			cache_shared_cpu_map_setup(cpu,
 					&this_cache[num_cache_leaves]);
 			num_cache_leaves ++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	all_cpu_cache_info[cpu].cache_leaves = this_cache;
 	all_cpu_cache_info[cpu].num_cache_leaves = num_cache_leaves;
 
-	memset(&all_cpu_cache_info[cpu].kobj, 0, sizeof(struct kobject));
+	स_रखो(&all_cpu_cache_info[cpu].kobj, 0, माप(काष्ठा kobject));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Add cache interface for CPU device */
-static int cache_add_dev(unsigned int cpu)
-{
-	struct device *sys_dev = get_cpu_device(cpu);
-	unsigned long i, j;
-	struct cache_info *this_object;
-	int retval = 0;
+/* Add cache पूर्णांकerface क्रम CPU device */
+अटल पूर्णांक cache_add_dev(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा device *sys_dev = get_cpu_device(cpu);
+	अचिन्हित दीर्घ i, j;
+	काष्ठा cache_info *this_object;
+	पूर्णांक retval = 0;
 
-	if (all_cpu_cache_info[cpu].kobj.parent)
-		return 0;
+	अगर (all_cpu_cache_info[cpu].kobj.parent)
+		वापस 0;
 
 
 	retval = cpu_cache_sysfs_init(cpu);
-	if (unlikely(retval < 0))
-		return retval;
+	अगर (unlikely(retval < 0))
+		वापस retval;
 
 	retval = kobject_init_and_add(&all_cpu_cache_info[cpu].kobj,
 				      &cache_ktype_percpu_entry, &sys_dev->kobj,
 				      "%s", "cache");
-	if (unlikely(retval < 0)) {
-		cpu_cache_sysfs_exit(cpu);
-		return retval;
-	}
+	अगर (unlikely(retval < 0)) अणु
+		cpu_cache_sysfs_निकास(cpu);
+		वापस retval;
+	पूर्ण
 
-	for (i = 0; i < all_cpu_cache_info[cpu].num_cache_leaves; i++) {
+	क्रम (i = 0; i < all_cpu_cache_info[cpu].num_cache_leaves; i++) अणु
 		this_object = LEAF_KOBJECT_PTR(cpu,i);
 		retval = kobject_init_and_add(&(this_object->kobj),
 					      &cache_ktype,
 					      &all_cpu_cache_info[cpu].kobj,
 					      "index%1lu", i);
-		if (unlikely(retval)) {
-			for (j = 0; j < i; j++) {
+		अगर (unlikely(retval)) अणु
+			क्रम (j = 0; j < i; j++) अणु
 				kobject_put(&(LEAF_KOBJECT_PTR(cpu,j)->kobj));
-			}
+			पूर्ण
 			kobject_put(&all_cpu_cache_info[cpu].kobj);
-			cpu_cache_sysfs_exit(cpu);
-			return retval;
-		}
+			cpu_cache_sysfs_निकास(cpu);
+			वापस retval;
+		पूर्ण
 		kobject_uevent(&(this_object->kobj), KOBJ_ADD);
-	}
+	पूर्ण
 	kobject_uevent(&all_cpu_cache_info[cpu].kobj, KOBJ_ADD);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* Remove cache interface for CPU device */
-static int cache_remove_dev(unsigned int cpu)
-{
-	unsigned long i;
+/* Remove cache पूर्णांकerface क्रम CPU device */
+अटल पूर्णांक cache_हटाओ_dev(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ i;
 
-	for (i = 0; i < all_cpu_cache_info[cpu].num_cache_leaves; i++)
+	क्रम (i = 0; i < all_cpu_cache_info[cpu].num_cache_leaves; i++)
 		kobject_put(&(LEAF_KOBJECT_PTR(cpu,i)->kobj));
 
-	if (all_cpu_cache_info[cpu].kobj.parent) {
+	अगर (all_cpu_cache_info[cpu].kobj.parent) अणु
 		kobject_put(&all_cpu_cache_info[cpu].kobj);
-		memset(&all_cpu_cache_info[cpu].kobj,
+		स_रखो(&all_cpu_cache_info[cpu].kobj,
 			0,
-			sizeof(struct kobject));
-	}
+			माप(काष्ठा kobject));
+	पूर्ण
 
-	cpu_cache_sysfs_exit(cpu);
+	cpu_cache_sysfs_निकास(cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init cache_sysfs_init(void)
-{
-	int ret;
+अटल पूर्णांक __init cache_sysfs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "ia64/topology:online",
-				cache_add_dev, cache_remove_dev);
+				cache_add_dev, cache_हटाओ_dev);
 	WARN_ON(ret < 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(cache_sysfs_init);

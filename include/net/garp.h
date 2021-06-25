@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NET_GARP_H
-#define _NET_GARP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NET_GARP_H
+#घोषणा _NET_GARP_H
 
-#include <net/stp.h>
+#समावेश <net/stp.h>
 
-#define GARP_PROTOCOL_ID	0x1
-#define GARP_END_MARK		0x0
+#घोषणा GARP_PROTOCOL_ID	0x1
+#घोषणा GARP_END_MARK		0x0
 
-struct garp_pdu_hdr {
+काष्ठा garp_pdu_hdr अणु
 	__be16	protocol;
-};
+पूर्ण;
 
-struct garp_msg_hdr {
+काष्ठा garp_msg_hdr अणु
 	u8	attrtype;
-};
+पूर्ण;
 
-enum garp_attr_event {
+क्रमागत garp_attr_event अणु
 	GARP_LEAVE_ALL,
 	GARP_JOIN_EMPTY,
 	GARP_JOIN_IN,
 	GARP_LEAVE_EMPTY,
 	GARP_LEAVE_IN,
 	GARP_EMPTY,
-};
+पूर्ण;
 
-struct garp_attr_hdr {
+काष्ठा garp_attr_hdr अणु
 	u8	len;
 	u8	event;
 	u8	data[];
-};
+पूर्ण;
 
-struct garp_skb_cb {
+काष्ठा garp_skb_cb अणु
 	u8	cur_type;
-};
+पूर्ण;
 
-static inline struct garp_skb_cb *garp_cb(struct sk_buff *skb)
-{
-	BUILD_BUG_ON(sizeof(struct garp_skb_cb) >
-		     sizeof_field(struct sk_buff, cb));
-	return (struct garp_skb_cb *)skb->cb;
-}
+अटल अंतरभूत काष्ठा garp_skb_cb *garp_cb(काष्ठा sk_buff *skb)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा garp_skb_cb) >
+		     माप_field(काष्ठा sk_buff, cb));
+	वापस (काष्ठा garp_skb_cb *)skb->cb;
+पूर्ण
 
-enum garp_applicant_state {
+क्रमागत garp_applicant_state अणु
 	GARP_APPLICANT_INVALID,
 	GARP_APPLICANT_VA,
 	GARP_APPLICANT_AA,
@@ -54,10 +55,10 @@ enum garp_applicant_state {
 	GARP_APPLICANT_AO,
 	GARP_APPLICANT_QO,
 	__GARP_APPLICANT_MAX
-};
-#define GARP_APPLICANT_MAX	(__GARP_APPLICANT_MAX - 1)
+पूर्ण;
+#घोषणा GARP_APPLICANT_MAX	(__GARP_APPLICANT_MAX - 1)
 
-enum garp_event {
+क्रमागत garp_event अणु
 	GARP_EVENT_REQ_JOIN,
 	GARP_EVENT_REQ_LEAVE,
 	GARP_EVENT_R_JOIN_IN,
@@ -67,64 +68,64 @@ enum garp_event {
 	GARP_EVENT_R_LEAVE_EMPTY,
 	GARP_EVENT_TRANSMIT_PDU,
 	__GARP_EVENT_MAX
-};
-#define GARP_EVENT_MAX		(__GARP_EVENT_MAX - 1)
+पूर्ण;
+#घोषणा GARP_EVENT_MAX		(__GARP_EVENT_MAX - 1)
 
-enum garp_action {
+क्रमागत garp_action अणु
 	GARP_ACTION_NONE,
 	GARP_ACTION_S_JOIN_IN,
 	GARP_ACTION_S_LEAVE_EMPTY,
-};
+पूर्ण;
 
-struct garp_attr {
-	struct rb_node			node;
-	enum garp_applicant_state	state;
+काष्ठा garp_attr अणु
+	काष्ठा rb_node			node;
+	क्रमागत garp_applicant_state	state;
 	u8				type;
 	u8				dlen;
-	unsigned char			data[];
-};
+	अचिन्हित अक्षर			data[];
+पूर्ण;
 
-enum garp_applications {
+क्रमागत garp_applications अणु
 	GARP_APPLICATION_GVRP,
 	__GARP_APPLICATION_MAX
-};
-#define GARP_APPLICATION_MAX	(__GARP_APPLICATION_MAX - 1)
+पूर्ण;
+#घोषणा GARP_APPLICATION_MAX	(__GARP_APPLICATION_MAX - 1)
 
-struct garp_application {
-	enum garp_applications	type;
-	unsigned int		maxattr;
-	struct stp_proto	proto;
-};
+काष्ठा garp_application अणु
+	क्रमागत garp_applications	type;
+	अचिन्हित पूर्णांक		maxattr;
+	काष्ठा stp_proto	proto;
+पूर्ण;
 
-struct garp_applicant {
-	struct garp_application	*app;
-	struct net_device	*dev;
-	struct timer_list	join_timer;
+काष्ठा garp_applicant अणु
+	काष्ठा garp_application	*app;
+	काष्ठा net_device	*dev;
+	काष्ठा समयr_list	join_समयr;
 
 	spinlock_t		lock;
-	struct sk_buff_head	queue;
-	struct sk_buff		*pdu;
-	struct rb_root		gid;
-	struct rcu_head		rcu;
-};
+	काष्ठा sk_buff_head	queue;
+	काष्ठा sk_buff		*pdu;
+	काष्ठा rb_root		gid;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-struct garp_port {
-	struct garp_applicant __rcu	*applicants[GARP_APPLICATION_MAX + 1];
-	struct rcu_head			rcu;
-};
+काष्ठा garp_port अणु
+	काष्ठा garp_applicant __rcu	*applicants[GARP_APPLICATION_MAX + 1];
+	काष्ठा rcu_head			rcu;
+पूर्ण;
 
-int garp_register_application(struct garp_application *app);
-void garp_unregister_application(struct garp_application *app);
+पूर्णांक garp_रेजिस्टर_application(काष्ठा garp_application *app);
+व्योम garp_unरेजिस्टर_application(काष्ठा garp_application *app);
 
-int garp_init_applicant(struct net_device *dev, struct garp_application *app);
-void garp_uninit_applicant(struct net_device *dev,
-			   struct garp_application *app);
+पूर्णांक garp_init_applicant(काष्ठा net_device *dev, काष्ठा garp_application *app);
+व्योम garp_uninit_applicant(काष्ठा net_device *dev,
+			   काष्ठा garp_application *app);
 
-int garp_request_join(const struct net_device *dev,
-		      const struct garp_application *app, const void *data,
+पूर्णांक garp_request_join(स्थिर काष्ठा net_device *dev,
+		      स्थिर काष्ठा garp_application *app, स्थिर व्योम *data,
 		      u8 len, u8 type);
-void garp_request_leave(const struct net_device *dev,
-			const struct garp_application *app,
-			const void *data, u8 len, u8 type);
+व्योम garp_request_leave(स्थिर काष्ठा net_device *dev,
+			स्थिर काष्ठा garp_application *app,
+			स्थिर व्योम *data, u8 len, u8 type);
 
-#endif /* _NET_GARP_H */
+#पूर्ण_अगर /* _NET_GARP_H */

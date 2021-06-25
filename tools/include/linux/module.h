@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LIBLOCKDEP_LINUX_MODULE_H_
-#define _LIBLOCKDEP_LINUX_MODULE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LIBLOCKDEP_LINUX_MODULE_H_
+#घोषणा _LIBLOCKDEP_LINUX_MODULE_H_
 
-#define module_param(name, type, perm)
+#घोषणा module_param(name, type, perm)
 
-static inline bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
-{
-	return false;
-}
+अटल अंतरभूत bool __is_module_percpu_address(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ *can_addr)
+अणु
+	वापस false;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

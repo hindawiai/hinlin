@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#include "odm_precomp.h"
+#समावेश "odm_precomp.h"
 
-static void odm_SetCrystalCap(void *pDM_VOID, u8 CrystalCap)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
+अटल व्योम odm_SetCrystalCap(व्योम *pDM_VOID, u8 CrystalCap)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
 
-	if (pCfoTrack->CrystalCap == CrystalCap)
-		return;
+	अगर (pCfoTrack->CrystalCap == CrystalCap)
+		वापस;
 
 	pCfoTrack->CrystalCap = CrystalCap;
 
@@ -35,25 +36,25 @@ static void odm_SetCrystalCap(void *pDM_VOID, u8 CrystalCap)
 			CrystalCap
 		)
 	);
-}
+पूर्ण
 
-static u8 odm_GetDefaultCrytaltalCap(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+अटल u8 odm_GetDefaultCrytaltalCap(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
-	struct adapter *Adapter = pDM_Odm->Adapter;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा adapter *Adapter = pDM_Odm->Adapter;
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
-	return pHalData->CrystalCap & 0x3f;
-}
+	वापस pHalData->CrystalCap & 0x3f;
+पूर्ण
 
-static void odm_SetATCStatus(void *pDM_VOID, bool ATCStatus)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
+अटल व्योम odm_SetATCStatus(व्योम *pDM_VOID, bool ATCStatus)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
 
-	if (pCfoTrack->bATCStatus == ATCStatus)
-		return;
+	अगर (pCfoTrack->bATCStatus == ATCStatus)
+		वापस;
 
 	PHY_SetBBReg(
 		pDM_Odm->Adapter,
@@ -62,37 +63,37 @@ static void odm_SetATCStatus(void *pDM_VOID, bool ATCStatus)
 		ATCStatus
 	);
 	pCfoTrack->bATCStatus = ATCStatus;
-}
+पूर्ण
 
-static bool odm_GetATCStatus(void *pDM_VOID)
-{
+अटल bool odm_GetATCStatus(व्योम *pDM_VOID)
+अणु
 	bool ATCStatus;
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
 
 	ATCStatus = (bool)PHY_QueryBBReg(
 		pDM_Odm->Adapter,
 		ODM_REG(BB_ATC, pDM_Odm),
 		ODM_BIT(BB_ATC, pDM_Odm)
 	);
-	return ATCStatus;
-}
+	वापस ATCStatus;
+पूर्ण
 
-void ODM_CfoTrackingReset(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
+व्योम ODM_CfoTrackingReset(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
 
 	pCfoTrack->DefXCap = odm_GetDefaultCrytaltalCap(pDM_Odm);
 	pCfoTrack->bAdjust = true;
 
 	odm_SetCrystalCap(pDM_Odm, pCfoTrack->DefXCap);
 	odm_SetATCStatus(pDM_Odm, true);
-}
+पूर्ण
 
-void ODM_CfoTrackingInit(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
+व्योम ODM_CfoTrackingInit(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
 
 	pCfoTrack->DefXCap =
 		pCfoTrack->CrystalCap = odm_GetDefaultCrytaltalCap(pDM_Odm);
@@ -114,27 +115,27 @@ void ODM_CfoTrackingInit(void *pDM_VOID)
 			pCfoTrack->DefXCap
 		)
 	);
-}
+पूर्ण
 
-void ODM_CfoTracking(void *pDM_VOID)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
-	int CFO_kHz_A, CFO_kHz_B, CFO_ave = 0;
-	int CFO_ave_diff;
-	int CrystalCap = (int)pCfoTrack->CrystalCap;
+व्योम ODM_CfoTracking(व्योम *pDM_VOID)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
+	पूर्णांक CFO_kHz_A, CFO_kHz_B, CFO_ave = 0;
+	पूर्णांक CFO_ave_dअगरf;
+	पूर्णांक CrystalCap = (पूर्णांक)pCfoTrack->CrystalCap;
 	u8 Adjust_Xtal = 1;
 
 	/* 4 Support ability */
-	if (!(pDM_Odm->SupportAbility & ODM_BB_CFO_TRACKING)) {
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_CFO_TRACKING)) अणु
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_CFO_TRACKING,
 			ODM_DBG_LOUD,
 			("ODM_CfoTracking(): Return: SupportAbility ODM_BB_CFO_TRACKING is disabled\n")
 		);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ODM_RT_TRACE(
 		pDM_Odm,
@@ -143,7 +144,7 @@ void ODM_CfoTracking(void *pDM_VOID)
 		("ODM_CfoTracking() =========>\n")
 	);
 
-	if (!pDM_Odm->bLinked || !pDM_Odm->bOneEntryOnly) {
+	अगर (!pDM_Odm->bLinked || !pDM_Odm->bOneEntryOnly) अणु
 		/* 4 No link or more than one entry */
 		ODM_CfoTrackingReset(pDM_Odm);
 		ODM_RT_TRACE(
@@ -156,10 +157,10 @@ void ODM_CfoTracking(void *pDM_VOID)
 				pDM_Odm->bOneEntryOnly
 			)
 		);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* 3 1. CFO Tracking */
 		/* 4 1.1 No new packet */
-		if (pCfoTrack->packetCount == pCfoTrack->packetCount_pre) {
+		अगर (pCfoTrack->packetCount == pCfoTrack->packetCount_pre) अणु
 			ODM_RT_TRACE(
 				pDM_Odm,
 				ODM_COMP_CFO_TRACKING,
@@ -168,18 +169,18 @@ void ODM_CfoTracking(void *pDM_VOID)
 					"ODM_CfoTracking(): packet counter doesn't change\n"
 				)
 			);
-			return;
-		}
+			वापस;
+		पूर्ण
 		pCfoTrack->packetCount_pre = pCfoTrack->packetCount;
 
 		/* 4 1.2 Calculate CFO */
-		CFO_kHz_A =  (int)(pCfoTrack->CFO_tail[0] * 3125)  / 1280;
-		CFO_kHz_B =  (int)(pCfoTrack->CFO_tail[1] * 3125)  / 1280;
+		CFO_kHz_A =  (पूर्णांक)(pCfoTrack->CFO_tail[0] * 3125)  / 1280;
+		CFO_kHz_B =  (पूर्णांक)(pCfoTrack->CFO_tail[1] * 3125)  / 1280;
 
-		if (pDM_Odm->RFType < ODM_2T2R)
+		अगर (pDM_Odm->RFType < ODM_2T2R)
 			CFO_ave = CFO_kHz_A;
-		else
-			CFO_ave = (int)(CFO_kHz_A + CFO_kHz_B) >> 1;
+		अन्यथा
+			CFO_ave = (पूर्णांक)(CFO_kHz_A + CFO_kHz_B) >> 1;
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_CFO_TRACKING,
@@ -192,35 +193,35 @@ void ODM_CfoTracking(void *pDM_VOID)
 			)
 		);
 
-		/* 4 1.3 Avoid abnormal large CFO */
-		CFO_ave_diff =
+		/* 4 1.3 Aव्योम abnormal large CFO */
+		CFO_ave_dअगरf =
 			(pCfoTrack->CFO_ave_pre >= CFO_ave) ?
 			(pCfoTrack->CFO_ave_pre-CFO_ave) :
 			(CFO_ave-pCfoTrack->CFO_ave_pre);
 
-		if (
-			CFO_ave_diff > 20 &&
+		अगर (
+			CFO_ave_dअगरf > 20 &&
 			pCfoTrack->largeCFOHit == 0 &&
 			!pCfoTrack->bAdjust
-		) {
+		) अणु
 			ODM_RT_TRACE(pDM_Odm, ODM_COMP_CFO_TRACKING, ODM_DBG_LOUD, ("ODM_CfoTracking(): first large CFO hit\n"));
 			pCfoTrack->largeCFOHit = 1;
-			return;
-		} else
+			वापस;
+		पूर्ण अन्यथा
 			pCfoTrack->largeCFOHit = 0;
 		pCfoTrack->CFO_ave_pre = CFO_ave;
 
 		/* 4 1.4 Dynamic Xtal threshold */
-		if (pCfoTrack->bAdjust == false) {
-			if (CFO_ave > CFO_TH_XTAL_HIGH || CFO_ave < (-CFO_TH_XTAL_HIGH))
+		अगर (pCfoTrack->bAdjust == false) अणु
+			अगर (CFO_ave > CFO_TH_XTAL_HIGH || CFO_ave < (-CFO_TH_XTAL_HIGH))
 				pCfoTrack->bAdjust = true;
-		} else {
-			if (CFO_ave < CFO_TH_XTAL_LOW && CFO_ave > (-CFO_TH_XTAL_LOW))
+		पूर्ण अन्यथा अणु
+			अगर (CFO_ave < CFO_TH_XTAL_LOW && CFO_ave > (-CFO_TH_XTAL_LOW))
 				pCfoTrack->bAdjust = false;
-		}
+		पूर्ण
 
-		/* 4 1.5 BT case: Disable CFO tracking */
-		if (pDM_Odm->bBtEnabled) {
+		/* 4 1.5 BT हाल: Disable CFO tracking */
+		अगर (pDM_Odm->bBtEnabled) अणु
 			pCfoTrack->bAdjust = false;
 			odm_SetCrystalCap(pDM_Odm, pCfoTrack->DefXCap);
 			ODM_RT_TRACE(
@@ -229,13 +230,13 @@ void ODM_CfoTracking(void *pDM_VOID)
 				ODM_DBG_LOUD,
 				("ODM_CfoTracking(): Disable CFO tracking for BT!!\n")
 			);
-		}
+		पूर्ण
 
 		/* 4 1.6 Big jump */
-		if (pCfoTrack->bAdjust) {
-			if (CFO_ave > CFO_TH_XTAL_LOW)
+		अगर (pCfoTrack->bAdjust) अणु
+			अगर (CFO_ave > CFO_TH_XTAL_LOW)
 				Adjust_Xtal = Adjust_Xtal+((CFO_ave-CFO_TH_XTAL_LOW)>>2);
-			else if (CFO_ave < (-CFO_TH_XTAL_LOW))
+			अन्यथा अगर (CFO_ave < (-CFO_TH_XTAL_LOW))
 				Adjust_Xtal = Adjust_Xtal+((CFO_TH_XTAL_LOW-CFO_ave)>>2);
 
 			ODM_RT_TRACE(
@@ -247,22 +248,22 @@ void ODM_CfoTracking(void *pDM_VOID)
 					Adjust_Xtal
 				)
 			);
-		}
+		पूर्ण
 
 		/* 4 1.7 Adjust Crystal Cap. */
-		if (pCfoTrack->bAdjust) {
-			if (CFO_ave > CFO_TH_XTAL_LOW)
+		अगर (pCfoTrack->bAdjust) अणु
+			अगर (CFO_ave > CFO_TH_XTAL_LOW)
 				CrystalCap = CrystalCap + Adjust_Xtal;
-			else if (CFO_ave < (-CFO_TH_XTAL_LOW))
+			अन्यथा अगर (CFO_ave < (-CFO_TH_XTAL_LOW))
 				CrystalCap = CrystalCap - Adjust_Xtal;
 
-			if (CrystalCap > 0x3f)
+			अगर (CrystalCap > 0x3f)
 				CrystalCap = 0x3f;
-			else if (CrystalCap < 0)
+			अन्यथा अगर (CrystalCap < 0)
 				CrystalCap = 0;
 
 			odm_SetCrystalCap(pDM_Odm, (u8)CrystalCap);
-		}
+		पूर्ण
 		ODM_RT_TRACE(
 			pDM_Odm,
 			ODM_COMP_CFO_TRACKING,
@@ -274,8 +275,8 @@ void ODM_CfoTracking(void *pDM_VOID)
 			)
 		);
 
-		/* 3 2. Dynamic ATC switch */
-		if (CFO_ave < CFO_TH_ATC && CFO_ave > -CFO_TH_ATC) {
+		/* 3 2. Dynamic ATC चयन */
+		अगर (CFO_ave < CFO_TH_ATC && CFO_ave > -CFO_TH_ATC) अणु
 			odm_SetATCStatus(pDM_Odm, false);
 			ODM_RT_TRACE(
 				pDM_Odm,
@@ -283,7 +284,7 @@ void ODM_CfoTracking(void *pDM_VOID)
 				ODM_DBG_LOUD,
 				("ODM_CfoTracking(): Disable ATC!!\n")
 			);
-		} else {
+		पूर्ण अन्यथा अणु
 			odm_SetATCStatus(pDM_Odm, true);
 			ODM_RT_TRACE(
 				pDM_Odm,
@@ -291,30 +292,30 @@ void ODM_CfoTracking(void *pDM_VOID)
 				ODM_DBG_LOUD,
 				("ODM_CfoTracking(): Enable ATC!!\n")
 			);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ODM_ParsingCFO(void *pDM_VOID, void *pPktinfo_VOID, s8 *pcfotail)
-{
-	struct dm_odm_t *pDM_Odm = (struct dm_odm_t *)pDM_VOID;
-	struct odm_packet_info *pPktinfo = pPktinfo_VOID;
-	struct cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
+व्योम ODM_ParsingCFO(व्योम *pDM_VOID, व्योम *pPktinfo_VOID, s8 *pcfotail)
+अणु
+	काष्ठा dm_odm_t *pDM_Odm = (काष्ठा dm_odm_t *)pDM_VOID;
+	काष्ठा odm_packet_info *pPktinfo = pPktinfo_VOID;
+	काष्ठा cfo_tracking *pCfoTrack = &pDM_Odm->DM_CfoTrack;
 	u8 i;
 
-	if (!(pDM_Odm->SupportAbility & ODM_BB_CFO_TRACKING))
-		return;
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_CFO_TRACKING))
+		वापस;
 
-	if (pPktinfo->station_id != 0) {
-		/* 3 Update CFO report for path-A & path-B */
-		/*  Only paht-A and path-B have CFO tail and short CFO */
-		for (i = ODM_RF_PATH_A; i <= ODM_RF_PATH_B; i++)
-			pCfoTrack->CFO_tail[i] = (int)pcfotail[i];
+	अगर (pPktinfo->station_id != 0) अणु
+		/* 3 Update CFO report क्रम path-A & path-B */
+		/*  Only paht-A and path-B have CFO tail and लघु CFO */
+		क्रम (i = ODM_RF_PATH_A; i <= ODM_RF_PATH_B; i++)
+			pCfoTrack->CFO_tail[i] = (पूर्णांक)pcfotail[i];
 
 		/* 3 Update packet counter */
-		if (pCfoTrack->packetCount == 0xffffffff)
+		अगर (pCfoTrack->packetCount == 0xffffffff)
 			pCfoTrack->packetCount = 0;
-		else
+		अन्यथा
 			pCfoTrack->packetCount++;
-	}
-}
+	पूर्ण
+पूर्ण

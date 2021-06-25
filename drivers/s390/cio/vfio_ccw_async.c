@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Async I/O region for vfio_ccw
+ * Async I/O region क्रम vfio_ccw
  *
  * Copyright Red Hat, Inc. 2019
  *
  * Author(s): Cornelia Huck <cohuck@redhat.com>
  */
 
-#include <linux/vfio.h>
-#include <linux/mdev.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/mdev.h>
 
-#include "vfio_ccw_private.h"
+#समावेश "vfio_ccw_private.h"
 
-static ssize_t vfio_ccw_async_region_read(struct vfio_ccw_private *private,
-					  char __user *buf, size_t count,
+अटल sमाप_प्रकार vfio_ccw_async_region_पढ़ो(काष्ठा vfio_ccw_निजी *निजी,
+					  अक्षर __user *buf, माप_प्रकार count,
 					  loff_t *ppos)
-{
-	unsigned int i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
+अणु
+	अचिन्हित पूर्णांक i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
 	loff_t pos = *ppos & VFIO_CCW_OFFSET_MASK;
-	struct ccw_cmd_region *region;
-	int ret;
+	काष्ठा ccw_cmd_region *region;
+	पूर्णांक ret;
 
-	if (pos + count > sizeof(*region))
-		return -EINVAL;
+	अगर (pos + count > माप(*region))
+		वापस -EINVAL;
 
-	mutex_lock(&private->io_mutex);
-	region = private->region[i].data;
-	if (copy_to_user(buf, (void *)region + pos, count))
+	mutex_lock(&निजी->io_mutex);
+	region = निजी->region[i].data;
+	अगर (copy_to_user(buf, (व्योम *)region + pos, count))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = count;
-	mutex_unlock(&private->io_mutex);
-	return ret;
-}
+	mutex_unlock(&निजी->io_mutex);
+	वापस ret;
+पूर्ण
 
-static ssize_t vfio_ccw_async_region_write(struct vfio_ccw_private *private,
-					   const char __user *buf, size_t count,
+अटल sमाप_प्रकार vfio_ccw_async_region_ग_लिखो(काष्ठा vfio_ccw_निजी *निजी,
+					   स्थिर अक्षर __user *buf, माप_प्रकार count,
 					   loff_t *ppos)
-{
-	unsigned int i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
+अणु
+	अचिन्हित पूर्णांक i = VFIO_CCW_OFFSET_TO_INDEX(*ppos) - VFIO_CCW_NUM_REGIONS;
 	loff_t pos = *ppos & VFIO_CCW_OFFSET_MASK;
-	struct ccw_cmd_region *region;
-	int ret;
+	काष्ठा ccw_cmd_region *region;
+	पूर्णांक ret;
 
-	if (pos + count > sizeof(*region))
-		return -EINVAL;
+	अगर (pos + count > माप(*region))
+		वापस -EINVAL;
 
-	if (!mutex_trylock(&private->io_mutex))
-		return -EAGAIN;
+	अगर (!mutex_trylock(&निजी->io_mutex))
+		वापस -EAGAIN;
 
-	region = private->region[i].data;
-	if (copy_from_user((void *)region + pos, buf, count)) {
+	region = निजी->region[i].data;
+	अगर (copy_from_user((व्योम *)region + pos, buf, count)) अणु
 		ret = -EFAULT;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	vfio_ccw_fsm_event(private, VFIO_CCW_EVENT_ASYNC_REQ);
+	vfio_ccw_fsm_event(निजी, VFIO_CCW_EVENT_ASYNC_REQ);
 
 	ret = region->ret_code ? region->ret_code : count;
 
 out_unlock:
-	mutex_unlock(&private->io_mutex);
-	return ret;
-}
+	mutex_unlock(&निजी->io_mutex);
+	वापस ret;
+पूर्ण
 
-static void vfio_ccw_async_region_release(struct vfio_ccw_private *private,
-					  struct vfio_ccw_region *region)
-{
+अटल व्योम vfio_ccw_async_region_release(काष्ठा vfio_ccw_निजी *निजी,
+					  काष्ठा vfio_ccw_region *region)
+अणु
 
-}
+पूर्ण
 
-static const struct vfio_ccw_regops vfio_ccw_async_region_ops = {
-	.read = vfio_ccw_async_region_read,
-	.write = vfio_ccw_async_region_write,
+अटल स्थिर काष्ठा vfio_ccw_regops vfio_ccw_async_region_ops = अणु
+	.पढ़ो = vfio_ccw_async_region_पढ़ो,
+	.ग_लिखो = vfio_ccw_async_region_ग_लिखो,
 	.release = vfio_ccw_async_region_release,
-};
+पूर्ण;
 
-int vfio_ccw_register_async_dev_regions(struct vfio_ccw_private *private)
-{
-	return vfio_ccw_register_dev_region(private,
+पूर्णांक vfio_ccw_रेजिस्टर_async_dev_regions(काष्ठा vfio_ccw_निजी *निजी)
+अणु
+	वापस vfio_ccw_रेजिस्टर_dev_region(निजी,
 					    VFIO_REGION_SUBTYPE_CCW_ASYNC_CMD,
 					    &vfio_ccw_async_region_ops,
-					    sizeof(struct ccw_cmd_region),
+					    माप(काष्ठा ccw_cmd_region),
 					    VFIO_REGION_INFO_FLAG_READ |
 					    VFIO_REGION_INFO_FLAG_WRITE,
-					    private->cmd_region);
-}
+					    निजी->cmd_region);
+पूर्ण

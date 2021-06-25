@@ -1,5 +1,6 @@
-#ifndef _LINUX_GENERIC_RADIX_TREE_H
-#define _LINUX_GENERIC_RADIX_TREE_H
+<शैली गुरु>
+#अगर_अघोषित _LINUX_GENERIC_RADIX_TREE_H
+#घोषणा _LINUX_GENERIC_RADIX_TREE_H
 
 /**
  * DOC: Generic radix trees/sparse arrays
@@ -9,70 +10,70 @@
  *
  * A genradix is defined with the type it will store, like so:
  *
- * static GENRADIX(struct foo) foo_genradix;
+ * अटल GENRADIX(काष्ठा foo) foo_genradix;
  *
- * The main operations are:
+ * The मुख्य operations are:
  *
  * - genradix_init(radix) - initialize an empty genradix
  *
- * - genradix_free(radix) - free all memory owned by the genradix and
+ * - genradix_मुक्त(radix) - मुक्त all memory owned by the genradix and
  *   reinitialize it
  *
- * - genradix_ptr(radix, idx) - gets a pointer to the entry at idx, returning
- *   NULL if that entry does not exist
+ * - genradix_ptr(radix, idx) - माला_लो a poपूर्णांकer to the entry at idx, वापसing
+ *   शून्य अगर that entry करोes not exist
  *
- * - genradix_ptr_alloc(radix, idx, gfp) - gets a pointer to an entry,
- *   allocating it if necessary
+ * - genradix_ptr_alloc(radix, idx, gfp) - माला_लो a poपूर्णांकer to an entry,
+ *   allocating it अगर necessary
  *
- * - genradix_for_each(radix, iter, p) - iterate over each entry in a genradix
+ * - genradix_क्रम_each(radix, iter, p) - iterate over each entry in a genradix
  *
- * The radix tree allocates one page of entries at a time, so entries may exist
+ * The radix tree allocates one page of entries at a समय, so entries may exist
  * that were never explicitly allocated - they will be initialized to all
  * zeroes.
  *
  * Internally, a genradix is just a radix tree of pages, and indexing works in
- * terms of byte offsets. The wrappers in this header file use sizeof on the
+ * terms of byte offsets. The wrappers in this header file use माप on the
  * type the radix contains to calculate a byte offset from the index - see
  * __idx_to_offset.
  */
 
-#include <asm/page.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/log2.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/log2.h>
 
-struct genradix_root;
+काष्ठा genradix_root;
 
-struct __genradix {
-	struct genradix_root		*root;
-};
+काष्ठा __genradix अणु
+	काष्ठा genradix_root		*root;
+पूर्ण;
 
 /*
- * NOTE: currently, sizeof(_type) must not be larger than PAGE_SIZE:
+ * NOTE: currently, माप(_type) must not be larger than PAGE_SIZE:
  */
 
-#define __GENRADIX_INITIALIZER					\
-	{							\
-		.tree = {					\
-			.root = NULL,				\
-		}						\
-	}
+#घोषणा __GENRADIX_INITIALIZER					\
+	अणु							\
+		.tree = अणु					\
+			.root = शून्य,				\
+		पूर्ण						\
+	पूर्ण
 
 /*
  * We use a 0 size array to stash the type we're storing without taking any
- * space at runtime - then the various accessor macros can use typeof() to get
- * to it for casts/sizeof - we also force the alignment so that storing a type
- * with a ridiculous alignment doesn't blow up the alignment or size of the
+ * space at runसमय - then the various accessor macros can use typeof() to get
+ * to it क्रम casts/माप - we also क्रमce the alignment so that storing a type
+ * with a ridiculous alignment करोesn't blow up the alignment or size of the
  * genradix.
  */
 
-#define GENRADIX(_type)						\
-struct {							\
-	struct __genradix	tree;				\
+#घोषणा GENRADIX(_type)						\
+काष्ठा अणु							\
+	काष्ठा __genradix	tree;				\
 	_type			type[0] __aligned(1);		\
-}
+पूर्ण
 
-#define DEFINE_GENRADIX(_name, _type)				\
+#घोषणा DEFINE_GENRADIX(_name, _type)				\
 	GENRADIX(_type) _name = __GENRADIX_INITIALIZER
 
 /**
@@ -81,91 +82,91 @@ struct {							\
  *
  * Does not fail
  */
-#define genradix_init(_radix)					\
-do {								\
+#घोषणा genradix_init(_radix)					\
+करो अणु								\
 	*(_radix) = (typeof(*_radix)) __GENRADIX_INITIALIZER;	\
-} while (0)
+पूर्ण जबतक (0)
 
-void __genradix_free(struct __genradix *);
+व्योम __genradix_मुक्त(काष्ठा __genradix *);
 
 /**
- * genradix_free: free all memory owned by a genradix
- * @_radix: the genradix to free
+ * genradix_मुक्त: मुक्त all memory owned by a genradix
+ * @_radix: the genradix to मुक्त
  *
- * After freeing, @_radix will be reinitialized and empty
+ * After मुक्तing, @_radix will be reinitialized and empty
  */
-#define genradix_free(_radix)	__genradix_free(&(_radix)->tree)
+#घोषणा genradix_मुक्त(_radix)	__genradix_मुक्त(&(_radix)->tree)
 
-static inline size_t __idx_to_offset(size_t idx, size_t obj_size)
-{
-	if (__builtin_constant_p(obj_size))
+अटल अंतरभूत माप_प्रकार __idx_to_offset(माप_प्रकार idx, माप_प्रकार obj_size)
+अणु
+	अगर (__builtin_स्थिरant_p(obj_size))
 		BUILD_BUG_ON(obj_size > PAGE_SIZE);
-	else
+	अन्यथा
 		BUG_ON(obj_size > PAGE_SIZE);
 
-	if (!is_power_of_2(obj_size)) {
-		size_t objs_per_page = PAGE_SIZE / obj_size;
+	अगर (!is_घातer_of_2(obj_size)) अणु
+		माप_प्रकार objs_per_page = PAGE_SIZE / obj_size;
 
-		return (idx / objs_per_page) * PAGE_SIZE +
+		वापस (idx / objs_per_page) * PAGE_SIZE +
 			(idx % objs_per_page) * obj_size;
-	} else {
-		return idx * obj_size;
-	}
-}
+	पूर्ण अन्यथा अणु
+		वापस idx * obj_size;
+	पूर्ण
+पूर्ण
 
-#define __genradix_cast(_radix)		(typeof((_radix)->type[0]) *)
-#define __genradix_obj_size(_radix)	sizeof((_radix)->type[0])
-#define __genradix_idx_to_offset(_radix, _idx)			\
+#घोषणा __genradix_cast(_radix)		(typeof((_radix)->type[0]) *)
+#घोषणा __genradix_obj_size(_radix)	माप((_radix)->type[0])
+#घोषणा __genradix_idx_to_offset(_radix, _idx)			\
 	__idx_to_offset(_idx, __genradix_obj_size(_radix))
 
-void *__genradix_ptr(struct __genradix *, size_t);
+व्योम *__genradix_ptr(काष्ठा __genradix *, माप_प्रकार);
 
 /**
- * genradix_ptr - get a pointer to a genradix entry
+ * genradix_ptr - get a poपूर्णांकer to a genradix entry
  * @_radix:	genradix to access
  * @_idx:	index to fetch
  *
- * Returns a pointer to entry at @_idx, or NULL if that entry does not exist.
+ * Returns a poपूर्णांकer to entry at @_idx, or शून्य अगर that entry करोes not exist.
  */
-#define genradix_ptr(_radix, _idx)				\
+#घोषणा genradix_ptr(_radix, _idx)				\
 	(__genradix_cast(_radix)				\
 	 __genradix_ptr(&(_radix)->tree,			\
 			__genradix_idx_to_offset(_radix, _idx)))
 
-void *__genradix_ptr_alloc(struct __genradix *, size_t, gfp_t);
+व्योम *__genradix_ptr_alloc(काष्ठा __genradix *, माप_प्रकार, gfp_t);
 
 /**
- * genradix_ptr_alloc - get a pointer to a genradix entry, allocating it
- *			if necessary
+ * genradix_ptr_alloc - get a poपूर्णांकer to a genradix entry, allocating it
+ *			अगर necessary
  * @_radix:	genradix to access
  * @_idx:	index to fetch
  * @_gfp:	gfp mask
  *
- * Returns a pointer to entry at @_idx, or NULL on allocation failure
+ * Returns a poपूर्णांकer to entry at @_idx, or शून्य on allocation failure
  */
-#define genradix_ptr_alloc(_radix, _idx, _gfp)			\
+#घोषणा genradix_ptr_alloc(_radix, _idx, _gfp)			\
 	(__genradix_cast(_radix)				\
 	 __genradix_ptr_alloc(&(_radix)->tree,			\
 			__genradix_idx_to_offset(_radix, _idx),	\
 			_gfp))
 
-struct genradix_iter {
-	size_t			offset;
-	size_t			pos;
-};
+काष्ठा genradix_iter अणु
+	माप_प्रकार			offset;
+	माप_प्रकार			pos;
+पूर्ण;
 
 /**
  * genradix_iter_init - initialize a genradix_iter
  * @_radix:	genradix that will be iterated over
  * @_idx:	index to start iterating from
  */
-#define genradix_iter_init(_radix, _idx)			\
-	((struct genradix_iter) {				\
+#घोषणा genradix_iter_init(_radix, _idx)			\
+	((काष्ठा genradix_iter) अणु				\
 		.pos	= (_idx),				\
 		.offset	= __genradix_idx_to_offset((_radix), (_idx)),\
-	})
+	पूर्ण)
 
-void *__genradix_iter_peek(struct genradix_iter *, struct __genradix *, size_t);
+व्योम *__genradix_iter_peek(काष्ठा genradix_iter *, काष्ठा __genradix *, माप_प्रकार);
 
 /**
  * genradix_iter_peek - get first entry at or above iterator's current
@@ -173,59 +174,59 @@ void *__genradix_iter_peek(struct genradix_iter *, struct __genradix *, size_t);
  * @_iter:	a genradix_iter
  * @_radix:	genradix being iterated over
  *
- * If no more entries exist at or above @_iter's current position, returns NULL
+ * If no more entries exist at or above @_iter's current position, वापसs शून्य
  */
-#define genradix_iter_peek(_iter, _radix)			\
+#घोषणा genradix_iter_peek(_iter, _radix)			\
 	(__genradix_cast(_radix)				\
 	 __genradix_iter_peek(_iter, &(_radix)->tree,		\
 			      PAGE_SIZE / __genradix_obj_size(_radix)))
 
-static inline void __genradix_iter_advance(struct genradix_iter *iter,
-					   size_t obj_size)
-{
+अटल अंतरभूत व्योम __genradix_iter_advance(काष्ठा genradix_iter *iter,
+					   माप_प्रकार obj_size)
+अणु
 	iter->offset += obj_size;
 
-	if (!is_power_of_2(obj_size) &&
+	अगर (!is_घातer_of_2(obj_size) &&
 	    (iter->offset & (PAGE_SIZE - 1)) + obj_size > PAGE_SIZE)
 		iter->offset = round_up(iter->offset, PAGE_SIZE);
 
 	iter->pos++;
-}
+पूर्ण
 
-#define genradix_iter_advance(_iter, _radix)			\
+#घोषणा genradix_iter_advance(_iter, _radix)			\
 	__genradix_iter_advance(_iter, __genradix_obj_size(_radix))
 
-#define genradix_for_each_from(_radix, _iter, _p, _start)	\
-	for (_iter = genradix_iter_init(_radix, _start);	\
-	     (_p = genradix_iter_peek(&_iter, _radix)) != NULL;	\
+#घोषणा genradix_क्रम_each_from(_radix, _iter, _p, _start)	\
+	क्रम (_iter = genradix_iter_init(_radix, _start);	\
+	     (_p = genradix_iter_peek(&_iter, _radix)) != शून्य;	\
 	     genradix_iter_advance(&_iter, _radix))
 
 /**
- * genradix_for_each - iterate over entry in a genradix
+ * genradix_क्रम_each - iterate over entry in a genradix
  * @_radix:	genradix to iterate over
  * @_iter:	a genradix_iter to track current position
- * @_p:		pointer to genradix entry type
+ * @_p:		poपूर्णांकer to genradix entry type
  *
- * On every iteration, @_p will point to the current entry, and @_iter.pos
+ * On every iteration, @_p will poपूर्णांक to the current entry, and @_iter.pos
  * will be the current entry's index.
  */
-#define genradix_for_each(_radix, _iter, _p)			\
-	genradix_for_each_from(_radix, _iter, _p, 0)
+#घोषणा genradix_क्रम_each(_radix, _iter, _p)			\
+	genradix_क्रम_each_from(_radix, _iter, _p, 0)
 
-int __genradix_prealloc(struct __genradix *, size_t, gfp_t);
+पूर्णांक __genradix_pपुनः_स्मृति(काष्ठा __genradix *, माप_प्रकार, gfp_t);
 
 /**
- * genradix_prealloc - preallocate entries in a generic radix tree
- * @_radix:	genradix to preallocate
- * @_nr:	number of entries to preallocate
+ * genradix_pपुनः_स्मृति - pपुनः_स्मृतिate entries in a generic radix tree
+ * @_radix:	genradix to pपुनः_स्मृतिate
+ * @_nr:	number of entries to pपुनः_स्मृतिate
  * @_gfp:	gfp mask
  *
  * Returns 0 on success, -ENOMEM on failure
  */
-#define genradix_prealloc(_radix, _nr, _gfp)			\
-	 __genradix_prealloc(&(_radix)->tree,			\
+#घोषणा genradix_pपुनः_स्मृति(_radix, _nr, _gfp)			\
+	 __genradix_pपुनः_स्मृति(&(_radix)->tree,			\
 			__genradix_idx_to_offset(_radix, _nr + 1),\
 			_gfp)
 
 
-#endif /* _LINUX_GENERIC_RADIX_TREE_H */
+#पूर्ण_अगर /* _LINUX_GENERIC_RADIX_TREE_H */

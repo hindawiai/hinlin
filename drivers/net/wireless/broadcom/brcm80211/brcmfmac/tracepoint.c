@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (c) 2012 Broadcom Corporation
  */
 
-#include <linux/device.h>
-#include <linux/module.h> /* bug in tracepoint.h, it should include this */
+#समावेश <linux/device.h>
+#समावेश <linux/module.h> /* bug in tracepoपूर्णांक.h, it should include this */
 
-#ifndef __CHECKER__
-#define CREATE_TRACE_POINTS
-#include "bus.h"
-#include "tracepoint.h"
-#include "debug.h"
+#अगर_अघोषित __CHECKER__
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "bus.h"
+#समावेश "tracepoint.h"
+#समावेश "debug.h"
 
-void __brcmf_err(struct brcmf_bus *bus, const char *func, const char *fmt, ...)
-{
-	struct va_format vaf = {
+व्योम __brcmf_err(काष्ठा brcmf_bus *bus, स्थिर अक्षर *func, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf = अणु
 		.fmt = fmt,
-	};
-	va_list args;
+	पूर्ण;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.va = &args;
-	if (bus)
+	अगर (bus)
 		dev_err(bus->dev, "%s: %pV", func, &vaf);
-	else
+	अन्यथा
 		pr_err("%s: %pV", func, &vaf);
 	trace_brcmf_err(func, &vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

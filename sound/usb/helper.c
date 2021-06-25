@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
 
-#include "usbaudio.h"
-#include "helper.h"
-#include "quirks.h"
+#समावेश "usbaudio.h"
+#समावेश "helper.h"
+#समावेश "quirks.h"
 
 /*
- * combine bytes and get an integer value
+ * combine bytes and get an पूर्णांकeger value
  */
-unsigned int snd_usb_combine_bytes(unsigned char *bytes, int size)
-{
-	switch (size) {
-	case 1:  return *bytes;
-	case 2:  return combine_word(bytes);
-	case 3:  return combine_triple(bytes);
-	case 4:  return combine_quad(bytes);
-	default: return 0;
-	}
-}
+अचिन्हित पूर्णांक snd_usb_combine_bytes(अचिन्हित अक्षर *bytes, पूर्णांक size)
+अणु
+	चयन (size) अणु
+	हाल 1:  वापस *bytes;
+	हाल 2:  वापस combine_word(bytes);
+	हाल 3:  वापस combine_triple(bytes);
+	हाल 4:  वापस combine_quad(bytes);
+	शेष: वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
- * parse descriptor buffer and return the pointer starting the given
+ * parse descriptor buffer and वापस the poपूर्णांकer starting the given
  * descriptor type.
  */
-void *snd_usb_find_desc(void *descstart, int desclen, void *after, u8 dtype)
-{
+व्योम *snd_usb_find_desc(व्योम *descstart, पूर्णांक desclen, व्योम *after, u8 dtype)
+अणु
 	u8 *p, *end, *next;
 
 	p = descstart;
 	end = p + desclen;
-	for (; p < end;) {
-		if (p[0] < 2)
-			return NULL;
+	क्रम (; p < end;) अणु
+		अगर (p[0] < 2)
+			वापस शून्य;
 		next = p + p[0];
-		if (next > end)
-			return NULL;
-		if (p[1] == dtype && (!after || (void *)p > after)) {
-			return p;
-		}
+		अगर (next > end)
+			वापस शून्य;
+		अगर (p[1] == dtype && (!after || (व्योम *)p > after)) अणु
+			वापस p;
+		पूर्ण
 		p = next;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * find a class-specified interface descriptor with the given subtype.
+ * find a class-specअगरied पूर्णांकerface descriptor with the given subtype.
  */
-void *snd_usb_find_csint_desc(void *buffer, int buflen, void *after, u8 dsubtype)
-{
-	unsigned char *p = after;
+व्योम *snd_usb_find_csपूर्णांक_desc(व्योम *buffer, पूर्णांक buflen, व्योम *after, u8 dsubtype)
+अणु
+	अचिन्हित अक्षर *p = after;
 
-	while ((p = snd_usb_find_desc(buffer, buflen, p,
-				      USB_DT_CS_INTERFACE)) != NULL) {
-		if (p[0] >= 3 && p[2] == dsubtype)
-			return p;
-	}
-	return NULL;
-}
+	जबतक ((p = snd_usb_find_desc(buffer, buflen, p,
+				      USB_DT_CS_INTERFACE)) != शून्य) अणु
+		अगर (p[0] >= 3 && p[2] == dsubtype)
+			वापस p;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * Wrapper for usb_control_msg().
- * Allocates a temp buffer to prevent dmaing from/to the stack.
+ * Wrapper क्रम usb_control_msg().
+ * Allocates a temp buffer to prevent dमुख्यg from/to the stack.
  */
-int snd_usb_ctl_msg(struct usb_device *dev, unsigned int pipe, __u8 request,
-		    __u8 requesttype, __u16 value, __u16 index, void *data,
+पूर्णांक snd_usb_ctl_msg(काष्ठा usb_device *dev, अचिन्हित पूर्णांक pipe, __u8 request,
+		    __u8 requesttype, __u16 value, __u16 index, व्योम *data,
 		    __u16 size)
-{
-	int err;
-	void *buf = NULL;
-	int timeout;
+अणु
+	पूर्णांक err;
+	व्योम *buf = शून्य;
+	पूर्णांक समयout;
 
-	if (usb_pipe_type_check(dev, pipe))
-		return -EINVAL;
+	अगर (usb_pipe_type_check(dev, pipe))
+		वापस -EINVAL;
 
-	if (size > 0) {
+	अगर (size > 0) अणु
 		buf = kmemdup(data, size, GFP_KERNEL);
-		if (!buf)
-			return -ENOMEM;
-	}
+		अगर (!buf)
+			वापस -ENOMEM;
+	पूर्ण
 
-	if (requesttype & USB_DIR_IN)
-		timeout = USB_CTRL_GET_TIMEOUT;
-	else
-		timeout = USB_CTRL_SET_TIMEOUT;
+	अगर (requesttype & USB_सूची_IN)
+		समयout = USB_CTRL_GET_TIMEOUT;
+	अन्यथा
+		समयout = USB_CTRL_SET_TIMEOUT;
 
 	err = usb_control_msg(dev, pipe, request, requesttype,
-			      value, index, buf, size, timeout);
+			      value, index, buf, size, समयout);
 
-	if (size > 0) {
-		memcpy(data, buf, size);
-		kfree(buf);
-	}
+	अगर (size > 0) अणु
+		स_नकल(data, buf, size);
+		kमुक्त(buf);
+	पूर्ण
 
 	snd_usb_ctl_msg_quirk(dev, pipe, request, requesttype,
 			      value, index, data, size);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-unsigned char snd_usb_parse_datainterval(struct snd_usb_audio *chip,
-					 struct usb_host_interface *alts)
-{
-	switch (snd_usb_get_speed(chip->dev)) {
-	case USB_SPEED_HIGH:
-	case USB_SPEED_WIRELESS:
-	case USB_SPEED_SUPER:
-	case USB_SPEED_SUPER_PLUS:
-		if (get_endpoint(alts, 0)->bInterval >= 1 &&
-		    get_endpoint(alts, 0)->bInterval <= 4)
-			return get_endpoint(alts, 0)->bInterval - 1;
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
+अचिन्हित अक्षर snd_usb_parse_dataपूर्णांकerval(काष्ठा snd_usb_audio *chip,
+					 काष्ठा usb_host_पूर्णांकerface *alts)
+अणु
+	चयन (snd_usb_get_speed(chip->dev)) अणु
+	हाल USB_SPEED_HIGH:
+	हाल USB_SPEED_WIRELESS:
+	हाल USB_SPEED_SUPER:
+	हाल USB_SPEED_SUPER_PLUS:
+		अगर (get_endpoपूर्णांक(alts, 0)->bInterval >= 1 &&
+		    get_endpoपूर्णांक(alts, 0)->bInterval <= 4)
+			वापस get_endpoपूर्णांक(alts, 0)->bInterval - 1;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct usb_host_interface *
-snd_usb_get_host_interface(struct snd_usb_audio *chip, int ifnum, int altsetting)
-{
-	struct usb_interface *iface;
+काष्ठा usb_host_पूर्णांकerface *
+snd_usb_get_host_पूर्णांकerface(काष्ठा snd_usb_audio *chip, पूर्णांक अगरnum, पूर्णांक altsetting)
+अणु
+	काष्ठा usb_पूर्णांकerface *अगरace;
 
-	iface = usb_ifnum_to_if(chip->dev, ifnum);
-	if (!iface)
-		return NULL;
-	return usb_altnum_to_altsetting(iface, altsetting);
-}
+	अगरace = usb_अगरnum_to_अगर(chip->dev, अगरnum);
+	अगर (!अगरace)
+		वापस शून्य;
+	वापस usb_altnum_to_altsetting(अगरace, altsetting);
+पूर्ण

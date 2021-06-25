@@ -1,235 +1,236 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Pinctrl data for the NVIDIA Tegra124 pinmux
+ * Pinctrl data क्रम the NVIDIA Tegra124 pinmux
  *
  * Author: Ashwini Ghuge <aghuge@nvidia.com>
  *
  * Copyright (c) 2013-2014, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
 
-#include "pinctrl-tegra.h"
+#समावेश "pinctrl-tegra.h"
 
 /*
  * Most pins affected by the pinmux can also be GPIOs. Define these first.
  * These must match how the GPIO driver names/numbers its pins.
  */
-#define _GPIO(offset)				(offset)
+#घोषणा _GPIO(offset)				(offset)
 
-#define TEGRA_PIN_CLK_32K_OUT_PA0		_GPIO(0)
-#define TEGRA_PIN_UART3_CTS_N_PA1		_GPIO(1)
-#define TEGRA_PIN_DAP2_FS_PA2			_GPIO(2)
-#define TEGRA_PIN_DAP2_SCLK_PA3			_GPIO(3)
-#define TEGRA_PIN_DAP2_DIN_PA4			_GPIO(4)
-#define TEGRA_PIN_DAP2_DOUT_PA5			_GPIO(5)
-#define TEGRA_PIN_SDMMC3_CLK_PA6		_GPIO(6)
-#define TEGRA_PIN_SDMMC3_CMD_PA7		_GPIO(7)
-#define TEGRA_PIN_PB0				_GPIO(8)
-#define TEGRA_PIN_PB1				_GPIO(9)
-#define TEGRA_PIN_SDMMC3_DAT3_PB4		_GPIO(12)
-#define TEGRA_PIN_SDMMC3_DAT2_PB5		_GPIO(13)
-#define TEGRA_PIN_SDMMC3_DAT1_PB6		_GPIO(14)
-#define TEGRA_PIN_SDMMC3_DAT0_PB7		_GPIO(15)
-#define TEGRA_PIN_UART3_RTS_N_PC0		_GPIO(16)
-#define TEGRA_PIN_UART2_TXD_PC2			_GPIO(18)
-#define TEGRA_PIN_UART2_RXD_PC3			_GPIO(19)
-#define TEGRA_PIN_GEN1_I2C_SCL_PC4		_GPIO(20)
-#define TEGRA_PIN_GEN1_I2C_SDA_PC5		_GPIO(21)
-#define TEGRA_PIN_PC7				_GPIO(23)
-#define TEGRA_PIN_PG0				_GPIO(48)
-#define TEGRA_PIN_PG1				_GPIO(49)
-#define TEGRA_PIN_PG2				_GPIO(50)
-#define TEGRA_PIN_PG3				_GPIO(51)
-#define TEGRA_PIN_PG4				_GPIO(52)
-#define TEGRA_PIN_PG5				_GPIO(53)
-#define TEGRA_PIN_PG6				_GPIO(54)
-#define TEGRA_PIN_PG7				_GPIO(55)
-#define TEGRA_PIN_PH0				_GPIO(56)
-#define TEGRA_PIN_PH1				_GPIO(57)
-#define TEGRA_PIN_PH2				_GPIO(58)
-#define TEGRA_PIN_PH3				_GPIO(59)
-#define TEGRA_PIN_PH4				_GPIO(60)
-#define TEGRA_PIN_PH5				_GPIO(61)
-#define TEGRA_PIN_PH6				_GPIO(62)
-#define TEGRA_PIN_PH7				_GPIO(63)
-#define TEGRA_PIN_PI0				_GPIO(64)
-#define TEGRA_PIN_PI1				_GPIO(65)
-#define TEGRA_PIN_PI2				_GPIO(66)
-#define TEGRA_PIN_PI3				_GPIO(67)
-#define TEGRA_PIN_PI4				_GPIO(68)
-#define TEGRA_PIN_PI5				_GPIO(69)
-#define TEGRA_PIN_PI6				_GPIO(70)
-#define TEGRA_PIN_PI7				_GPIO(71)
-#define TEGRA_PIN_PJ0				_GPIO(72)
-#define TEGRA_PIN_PJ2				_GPIO(74)
-#define TEGRA_PIN_UART2_CTS_N_PJ5		_GPIO(77)
-#define TEGRA_PIN_UART2_RTS_N_PJ6		_GPIO(78)
-#define TEGRA_PIN_PJ7				_GPIO(79)
-#define TEGRA_PIN_PK0				_GPIO(80)
-#define TEGRA_PIN_PK1				_GPIO(81)
-#define TEGRA_PIN_PK2				_GPIO(82)
-#define TEGRA_PIN_PK3				_GPIO(83)
-#define TEGRA_PIN_PK4				_GPIO(84)
-#define TEGRA_PIN_SPDIF_OUT_PK5			_GPIO(85)
-#define TEGRA_PIN_SPDIF_IN_PK6			_GPIO(86)
-#define TEGRA_PIN_PK7				_GPIO(87)
-#define TEGRA_PIN_DAP1_FS_PN0			_GPIO(104)
-#define TEGRA_PIN_DAP1_DIN_PN1			_GPIO(105)
-#define TEGRA_PIN_DAP1_DOUT_PN2			_GPIO(106)
-#define TEGRA_PIN_DAP1_SCLK_PN3			_GPIO(107)
-#define TEGRA_PIN_USB_VBUS_EN0_PN4		_GPIO(108)
-#define TEGRA_PIN_USB_VBUS_EN1_PN5		_GPIO(109)
-#define TEGRA_PIN_HDMI_INT_PN7			_GPIO(111)
-#define TEGRA_PIN_ULPI_DATA7_PO0		_GPIO(112)
-#define TEGRA_PIN_ULPI_DATA0_PO1		_GPIO(113)
-#define TEGRA_PIN_ULPI_DATA1_PO2		_GPIO(114)
-#define TEGRA_PIN_ULPI_DATA2_PO3		_GPIO(115)
-#define TEGRA_PIN_ULPI_DATA3_PO4		_GPIO(116)
-#define TEGRA_PIN_ULPI_DATA4_PO5		_GPIO(117)
-#define TEGRA_PIN_ULPI_DATA5_PO6		_GPIO(118)
-#define TEGRA_PIN_ULPI_DATA6_PO7		_GPIO(119)
-#define TEGRA_PIN_DAP3_FS_PP0			_GPIO(120)
-#define TEGRA_PIN_DAP3_DIN_PP1			_GPIO(121)
-#define TEGRA_PIN_DAP3_DOUT_PP2			_GPIO(122)
-#define TEGRA_PIN_DAP3_SCLK_PP3			_GPIO(123)
-#define TEGRA_PIN_DAP4_FS_PP4			_GPIO(124)
-#define TEGRA_PIN_DAP4_DIN_PP5			_GPIO(125)
-#define TEGRA_PIN_DAP4_DOUT_PP6			_GPIO(126)
-#define TEGRA_PIN_DAP4_SCLK_PP7			_GPIO(127)
-#define TEGRA_PIN_KB_COL0_PQ0			_GPIO(128)
-#define TEGRA_PIN_KB_COL1_PQ1			_GPIO(129)
-#define TEGRA_PIN_KB_COL2_PQ2			_GPIO(130)
-#define TEGRA_PIN_KB_COL3_PQ3			_GPIO(131)
-#define TEGRA_PIN_KB_COL4_PQ4			_GPIO(132)
-#define TEGRA_PIN_KB_COL5_PQ5			_GPIO(133)
-#define TEGRA_PIN_KB_COL6_PQ6			_GPIO(134)
-#define TEGRA_PIN_KB_COL7_PQ7			_GPIO(135)
-#define TEGRA_PIN_KB_ROW0_PR0			_GPIO(136)
-#define TEGRA_PIN_KB_ROW1_PR1			_GPIO(137)
-#define TEGRA_PIN_KB_ROW2_PR2			_GPIO(138)
-#define TEGRA_PIN_KB_ROW3_PR3			_GPIO(139)
-#define TEGRA_PIN_KB_ROW4_PR4			_GPIO(140)
-#define TEGRA_PIN_KB_ROW5_PR5			_GPIO(141)
-#define TEGRA_PIN_KB_ROW6_PR6			_GPIO(142)
-#define TEGRA_PIN_KB_ROW7_PR7			_GPIO(143)
-#define TEGRA_PIN_KB_ROW8_PS0			_GPIO(144)
-#define TEGRA_PIN_KB_ROW9_PS1			_GPIO(145)
-#define TEGRA_PIN_KB_ROW10_PS2			_GPIO(146)
-#define TEGRA_PIN_KB_ROW11_PS3			_GPIO(147)
-#define TEGRA_PIN_KB_ROW12_PS4			_GPIO(148)
-#define TEGRA_PIN_KB_ROW13_PS5			_GPIO(149)
-#define TEGRA_PIN_KB_ROW14_PS6			_GPIO(150)
-#define TEGRA_PIN_KB_ROW15_PS7			_GPIO(151)
-#define TEGRA_PIN_KB_ROW16_PT0			_GPIO(152)
-#define TEGRA_PIN_KB_ROW17_PT1			_GPIO(153)
-#define TEGRA_PIN_GEN2_I2C_SCL_PT5		_GPIO(157)
-#define TEGRA_PIN_GEN2_I2C_SDA_PT6		_GPIO(158)
-#define TEGRA_PIN_SDMMC4_CMD_PT7		_GPIO(159)
-#define TEGRA_PIN_PU0				_GPIO(160)
-#define TEGRA_PIN_PU1				_GPIO(161)
-#define TEGRA_PIN_PU2				_GPIO(162)
-#define TEGRA_PIN_PU3				_GPIO(163)
-#define TEGRA_PIN_PU4				_GPIO(164)
-#define TEGRA_PIN_PU5				_GPIO(165)
-#define TEGRA_PIN_PU6				_GPIO(166)
-#define TEGRA_PIN_PV0				_GPIO(168)
-#define TEGRA_PIN_PV1				_GPIO(169)
-#define TEGRA_PIN_SDMMC3_CD_N_PV2		_GPIO(170)
-#define TEGRA_PIN_SDMMC1_WP_N_PV3		_GPIO(171)
-#define TEGRA_PIN_DDC_SCL_PV4			_GPIO(172)
-#define TEGRA_PIN_DDC_SDA_PV5			_GPIO(173)
-#define TEGRA_PIN_GPIO_W2_AUD_PW2		_GPIO(178)
-#define TEGRA_PIN_GPIO_W3_AUD_PW3		_GPIO(179)
-#define TEGRA_PIN_DAP_MCLK1_PW4			_GPIO(180)
-#define TEGRA_PIN_CLK2_OUT_PW5			_GPIO(181)
-#define TEGRA_PIN_UART3_TXD_PW6			_GPIO(182)
-#define TEGRA_PIN_UART3_RXD_PW7			_GPIO(183)
-#define TEGRA_PIN_DVFS_PWM_PX0			_GPIO(184)
-#define TEGRA_PIN_GPIO_X1_AUD_PX1		_GPIO(185)
-#define TEGRA_PIN_DVFS_CLK_PX2			_GPIO(186)
-#define TEGRA_PIN_GPIO_X3_AUD_PX3		_GPIO(187)
-#define TEGRA_PIN_GPIO_X4_AUD_PX4		_GPIO(188)
-#define TEGRA_PIN_GPIO_X5_AUD_PX5		_GPIO(189)
-#define TEGRA_PIN_GPIO_X6_AUD_PX6		_GPIO(190)
-#define TEGRA_PIN_GPIO_X7_AUD_PX7		_GPIO(191)
-#define TEGRA_PIN_ULPI_CLK_PY0			_GPIO(192)
-#define TEGRA_PIN_ULPI_DIR_PY1			_GPIO(193)
-#define TEGRA_PIN_ULPI_NXT_PY2			_GPIO(194)
-#define TEGRA_PIN_ULPI_STP_PY3			_GPIO(195)
-#define TEGRA_PIN_SDMMC1_DAT3_PY4		_GPIO(196)
-#define TEGRA_PIN_SDMMC1_DAT2_PY5		_GPIO(197)
-#define TEGRA_PIN_SDMMC1_DAT1_PY6		_GPIO(198)
-#define TEGRA_PIN_SDMMC1_DAT0_PY7		_GPIO(199)
-#define TEGRA_PIN_SDMMC1_CLK_PZ0		_GPIO(200)
-#define TEGRA_PIN_SDMMC1_CMD_PZ1		_GPIO(201)
-#define TEGRA_PIN_PWR_I2C_SCL_PZ6		_GPIO(206)
-#define TEGRA_PIN_PWR_I2C_SDA_PZ7		_GPIO(207)
-#define TEGRA_PIN_SDMMC4_DAT0_PAA0		_GPIO(208)
-#define TEGRA_PIN_SDMMC4_DAT1_PAA1		_GPIO(209)
-#define TEGRA_PIN_SDMMC4_DAT2_PAA2		_GPIO(210)
-#define TEGRA_PIN_SDMMC4_DAT3_PAA3		_GPIO(211)
-#define TEGRA_PIN_SDMMC4_DAT4_PAA4		_GPIO(212)
-#define TEGRA_PIN_SDMMC4_DAT5_PAA5		_GPIO(213)
-#define TEGRA_PIN_SDMMC4_DAT6_PAA6		_GPIO(214)
-#define TEGRA_PIN_SDMMC4_DAT7_PAA7		_GPIO(215)
-#define TEGRA_PIN_PBB0				_GPIO(216)
-#define TEGRA_PIN_CAM_I2C_SCL_PBB1		_GPIO(217)
-#define TEGRA_PIN_CAM_I2C_SDA_PBB2		_GPIO(218)
-#define TEGRA_PIN_PBB3				_GPIO(219)
-#define TEGRA_PIN_PBB4				_GPIO(220)
-#define TEGRA_PIN_PBB5				_GPIO(221)
-#define TEGRA_PIN_PBB6				_GPIO(222)
-#define TEGRA_PIN_PBB7				_GPIO(223)
-#define TEGRA_PIN_CAM_MCLK_PCC0			_GPIO(224)
-#define TEGRA_PIN_PCC1				_GPIO(225)
-#define TEGRA_PIN_PCC2				_GPIO(226)
-#define TEGRA_PIN_SDMMC4_CLK_PCC4		_GPIO(228)
-#define TEGRA_PIN_CLK2_REQ_PCC5			_GPIO(229)
-#define TEGRA_PIN_PEX_L0_RST_N_PDD1		_GPIO(233)
-#define TEGRA_PIN_PEX_L0_CLKREQ_N_PDD2		_GPIO(234)
-#define TEGRA_PIN_PEX_WAKE_N_PDD3		_GPIO(235)
-#define TEGRA_PIN_PEX_L1_RST_N_PDD5		_GPIO(237)
-#define TEGRA_PIN_PEX_L1_CLKREQ_N_PDD6		_GPIO(238)
-#define TEGRA_PIN_CLK3_OUT_PEE0			_GPIO(240)
-#define TEGRA_PIN_CLK3_REQ_PEE1			_GPIO(241)
-#define TEGRA_PIN_DAP_MCLK1_REQ_PEE2		_GPIO(242)
-#define TEGRA_PIN_HDMI_CEC_PEE3			_GPIO(243)
-#define TEGRA_PIN_SDMMC3_CLK_LB_OUT_PEE4	_GPIO(244)
-#define TEGRA_PIN_SDMMC3_CLK_LB_IN_PEE5		_GPIO(245)
-#define TEGRA_PIN_DP_HPD_PFF0			_GPIO(248)
-#define TEGRA_PIN_USB_VBUS_EN2_PFF1		_GPIO(249)
-#define TEGRA_PIN_PFF2				_GPIO(250)
+#घोषणा TEGRA_PIN_CLK_32K_OUT_PA0		_GPIO(0)
+#घोषणा TEGRA_PIN_UART3_CTS_N_PA1		_GPIO(1)
+#घोषणा TEGRA_PIN_DAP2_FS_PA2			_GPIO(2)
+#घोषणा TEGRA_PIN_DAP2_SCLK_PA3			_GPIO(3)
+#घोषणा TEGRA_PIN_DAP2_DIN_PA4			_GPIO(4)
+#घोषणा TEGRA_PIN_DAP2_DOUT_PA5			_GPIO(5)
+#घोषणा TEGRA_PIN_SDMMC3_CLK_PA6		_GPIO(6)
+#घोषणा TEGRA_PIN_SDMMC3_CMD_PA7		_GPIO(7)
+#घोषणा TEGRA_PIN_PB0				_GPIO(8)
+#घोषणा TEGRA_PIN_PB1				_GPIO(9)
+#घोषणा TEGRA_PIN_SDMMC3_DAT3_PB4		_GPIO(12)
+#घोषणा TEGRA_PIN_SDMMC3_DAT2_PB5		_GPIO(13)
+#घोषणा TEGRA_PIN_SDMMC3_DAT1_PB6		_GPIO(14)
+#घोषणा TEGRA_PIN_SDMMC3_DAT0_PB7		_GPIO(15)
+#घोषणा TEGRA_PIN_UART3_RTS_N_PC0		_GPIO(16)
+#घोषणा TEGRA_PIN_UART2_TXD_PC2			_GPIO(18)
+#घोषणा TEGRA_PIN_UART2_RXD_PC3			_GPIO(19)
+#घोषणा TEGRA_PIN_GEN1_I2C_SCL_PC4		_GPIO(20)
+#घोषणा TEGRA_PIN_GEN1_I2C_SDA_PC5		_GPIO(21)
+#घोषणा TEGRA_PIN_PC7				_GPIO(23)
+#घोषणा TEGRA_PIN_PG0				_GPIO(48)
+#घोषणा TEGRA_PIN_PG1				_GPIO(49)
+#घोषणा TEGRA_PIN_PG2				_GPIO(50)
+#घोषणा TEGRA_PIN_PG3				_GPIO(51)
+#घोषणा TEGRA_PIN_PG4				_GPIO(52)
+#घोषणा TEGRA_PIN_PG5				_GPIO(53)
+#घोषणा TEGRA_PIN_PG6				_GPIO(54)
+#घोषणा TEGRA_PIN_PG7				_GPIO(55)
+#घोषणा TEGRA_PIN_PH0				_GPIO(56)
+#घोषणा TEGRA_PIN_PH1				_GPIO(57)
+#घोषणा TEGRA_PIN_PH2				_GPIO(58)
+#घोषणा TEGRA_PIN_PH3				_GPIO(59)
+#घोषणा TEGRA_PIN_PH4				_GPIO(60)
+#घोषणा TEGRA_PIN_PH5				_GPIO(61)
+#घोषणा TEGRA_PIN_PH6				_GPIO(62)
+#घोषणा TEGRA_PIN_PH7				_GPIO(63)
+#घोषणा TEGRA_PIN_PI0				_GPIO(64)
+#घोषणा TEGRA_PIN_PI1				_GPIO(65)
+#घोषणा TEGRA_PIN_PI2				_GPIO(66)
+#घोषणा TEGRA_PIN_PI3				_GPIO(67)
+#घोषणा TEGRA_PIN_PI4				_GPIO(68)
+#घोषणा TEGRA_PIN_PI5				_GPIO(69)
+#घोषणा TEGRA_PIN_PI6				_GPIO(70)
+#घोषणा TEGRA_PIN_PI7				_GPIO(71)
+#घोषणा TEGRA_PIN_PJ0				_GPIO(72)
+#घोषणा TEGRA_PIN_PJ2				_GPIO(74)
+#घोषणा TEGRA_PIN_UART2_CTS_N_PJ5		_GPIO(77)
+#घोषणा TEGRA_PIN_UART2_RTS_N_PJ6		_GPIO(78)
+#घोषणा TEGRA_PIN_PJ7				_GPIO(79)
+#घोषणा TEGRA_PIN_PK0				_GPIO(80)
+#घोषणा TEGRA_PIN_PK1				_GPIO(81)
+#घोषणा TEGRA_PIN_PK2				_GPIO(82)
+#घोषणा TEGRA_PIN_PK3				_GPIO(83)
+#घोषणा TEGRA_PIN_PK4				_GPIO(84)
+#घोषणा TEGRA_PIN_SPDIF_OUT_PK5			_GPIO(85)
+#घोषणा TEGRA_PIN_SPDIF_IN_PK6			_GPIO(86)
+#घोषणा TEGRA_PIN_PK7				_GPIO(87)
+#घोषणा TEGRA_PIN_DAP1_FS_PN0			_GPIO(104)
+#घोषणा TEGRA_PIN_DAP1_DIN_PN1			_GPIO(105)
+#घोषणा TEGRA_PIN_DAP1_DOUT_PN2			_GPIO(106)
+#घोषणा TEGRA_PIN_DAP1_SCLK_PN3			_GPIO(107)
+#घोषणा TEGRA_PIN_USB_VBUS_EN0_PN4		_GPIO(108)
+#घोषणा TEGRA_PIN_USB_VBUS_EN1_PN5		_GPIO(109)
+#घोषणा TEGRA_PIN_HDMI_INT_PN7			_GPIO(111)
+#घोषणा TEGRA_PIN_ULPI_DATA7_PO0		_GPIO(112)
+#घोषणा TEGRA_PIN_ULPI_DATA0_PO1		_GPIO(113)
+#घोषणा TEGRA_PIN_ULPI_DATA1_PO2		_GPIO(114)
+#घोषणा TEGRA_PIN_ULPI_DATA2_PO3		_GPIO(115)
+#घोषणा TEGRA_PIN_ULPI_DATA3_PO4		_GPIO(116)
+#घोषणा TEGRA_PIN_ULPI_DATA4_PO5		_GPIO(117)
+#घोषणा TEGRA_PIN_ULPI_DATA5_PO6		_GPIO(118)
+#घोषणा TEGRA_PIN_ULPI_DATA6_PO7		_GPIO(119)
+#घोषणा TEGRA_PIN_DAP3_FS_PP0			_GPIO(120)
+#घोषणा TEGRA_PIN_DAP3_DIN_PP1			_GPIO(121)
+#घोषणा TEGRA_PIN_DAP3_DOUT_PP2			_GPIO(122)
+#घोषणा TEGRA_PIN_DAP3_SCLK_PP3			_GPIO(123)
+#घोषणा TEGRA_PIN_DAP4_FS_PP4			_GPIO(124)
+#घोषणा TEGRA_PIN_DAP4_DIN_PP5			_GPIO(125)
+#घोषणा TEGRA_PIN_DAP4_DOUT_PP6			_GPIO(126)
+#घोषणा TEGRA_PIN_DAP4_SCLK_PP7			_GPIO(127)
+#घोषणा TEGRA_PIN_KB_COL0_PQ0			_GPIO(128)
+#घोषणा TEGRA_PIN_KB_COL1_PQ1			_GPIO(129)
+#घोषणा TEGRA_PIN_KB_COL2_PQ2			_GPIO(130)
+#घोषणा TEGRA_PIN_KB_COL3_PQ3			_GPIO(131)
+#घोषणा TEGRA_PIN_KB_COL4_PQ4			_GPIO(132)
+#घोषणा TEGRA_PIN_KB_COL5_PQ5			_GPIO(133)
+#घोषणा TEGRA_PIN_KB_COL6_PQ6			_GPIO(134)
+#घोषणा TEGRA_PIN_KB_COL7_PQ7			_GPIO(135)
+#घोषणा TEGRA_PIN_KB_ROW0_PR0			_GPIO(136)
+#घोषणा TEGRA_PIN_KB_ROW1_PR1			_GPIO(137)
+#घोषणा TEGRA_PIN_KB_ROW2_PR2			_GPIO(138)
+#घोषणा TEGRA_PIN_KB_ROW3_PR3			_GPIO(139)
+#घोषणा TEGRA_PIN_KB_ROW4_PR4			_GPIO(140)
+#घोषणा TEGRA_PIN_KB_ROW5_PR5			_GPIO(141)
+#घोषणा TEGRA_PIN_KB_ROW6_PR6			_GPIO(142)
+#घोषणा TEGRA_PIN_KB_ROW7_PR7			_GPIO(143)
+#घोषणा TEGRA_PIN_KB_ROW8_PS0			_GPIO(144)
+#घोषणा TEGRA_PIN_KB_ROW9_PS1			_GPIO(145)
+#घोषणा TEGRA_PIN_KB_ROW10_PS2			_GPIO(146)
+#घोषणा TEGRA_PIN_KB_ROW11_PS3			_GPIO(147)
+#घोषणा TEGRA_PIN_KB_ROW12_PS4			_GPIO(148)
+#घोषणा TEGRA_PIN_KB_ROW13_PS5			_GPIO(149)
+#घोषणा TEGRA_PIN_KB_ROW14_PS6			_GPIO(150)
+#घोषणा TEGRA_PIN_KB_ROW15_PS7			_GPIO(151)
+#घोषणा TEGRA_PIN_KB_ROW16_PT0			_GPIO(152)
+#घोषणा TEGRA_PIN_KB_ROW17_PT1			_GPIO(153)
+#घोषणा TEGRA_PIN_GEN2_I2C_SCL_PT5		_GPIO(157)
+#घोषणा TEGRA_PIN_GEN2_I2C_SDA_PT6		_GPIO(158)
+#घोषणा TEGRA_PIN_SDMMC4_CMD_PT7		_GPIO(159)
+#घोषणा TEGRA_PIN_PU0				_GPIO(160)
+#घोषणा TEGRA_PIN_PU1				_GPIO(161)
+#घोषणा TEGRA_PIN_PU2				_GPIO(162)
+#घोषणा TEGRA_PIN_PU3				_GPIO(163)
+#घोषणा TEGRA_PIN_PU4				_GPIO(164)
+#घोषणा TEGRA_PIN_PU5				_GPIO(165)
+#घोषणा TEGRA_PIN_PU6				_GPIO(166)
+#घोषणा TEGRA_PIN_PV0				_GPIO(168)
+#घोषणा TEGRA_PIN_PV1				_GPIO(169)
+#घोषणा TEGRA_PIN_SDMMC3_CD_N_PV2		_GPIO(170)
+#घोषणा TEGRA_PIN_SDMMC1_WP_N_PV3		_GPIO(171)
+#घोषणा TEGRA_PIN_DDC_SCL_PV4			_GPIO(172)
+#घोषणा TEGRA_PIN_DDC_SDA_PV5			_GPIO(173)
+#घोषणा TEGRA_PIN_GPIO_W2_AUD_PW2		_GPIO(178)
+#घोषणा TEGRA_PIN_GPIO_W3_AUD_PW3		_GPIO(179)
+#घोषणा TEGRA_PIN_DAP_MCLK1_PW4			_GPIO(180)
+#घोषणा TEGRA_PIN_CLK2_OUT_PW5			_GPIO(181)
+#घोषणा TEGRA_PIN_UART3_TXD_PW6			_GPIO(182)
+#घोषणा TEGRA_PIN_UART3_RXD_PW7			_GPIO(183)
+#घोषणा TEGRA_PIN_DVFS_PWM_PX0			_GPIO(184)
+#घोषणा TEGRA_PIN_GPIO_X1_AUD_PX1		_GPIO(185)
+#घोषणा TEGRA_PIN_DVFS_CLK_PX2			_GPIO(186)
+#घोषणा TEGRA_PIN_GPIO_X3_AUD_PX3		_GPIO(187)
+#घोषणा TEGRA_PIN_GPIO_X4_AUD_PX4		_GPIO(188)
+#घोषणा TEGRA_PIN_GPIO_X5_AUD_PX5		_GPIO(189)
+#घोषणा TEGRA_PIN_GPIO_X6_AUD_PX6		_GPIO(190)
+#घोषणा TEGRA_PIN_GPIO_X7_AUD_PX7		_GPIO(191)
+#घोषणा TEGRA_PIN_ULPI_CLK_PY0			_GPIO(192)
+#घोषणा TEGRA_PIN_ULPI_सूची_PY1			_GPIO(193)
+#घोषणा TEGRA_PIN_ULPI_NXT_PY2			_GPIO(194)
+#घोषणा TEGRA_PIN_ULPI_STP_PY3			_GPIO(195)
+#घोषणा TEGRA_PIN_SDMMC1_DAT3_PY4		_GPIO(196)
+#घोषणा TEGRA_PIN_SDMMC1_DAT2_PY5		_GPIO(197)
+#घोषणा TEGRA_PIN_SDMMC1_DAT1_PY6		_GPIO(198)
+#घोषणा TEGRA_PIN_SDMMC1_DAT0_PY7		_GPIO(199)
+#घोषणा TEGRA_PIN_SDMMC1_CLK_PZ0		_GPIO(200)
+#घोषणा TEGRA_PIN_SDMMC1_CMD_PZ1		_GPIO(201)
+#घोषणा TEGRA_PIN_PWR_I2C_SCL_PZ6		_GPIO(206)
+#घोषणा TEGRA_PIN_PWR_I2C_SDA_PZ7		_GPIO(207)
+#घोषणा TEGRA_PIN_SDMMC4_DAT0_PAA0		_GPIO(208)
+#घोषणा TEGRA_PIN_SDMMC4_DAT1_PAA1		_GPIO(209)
+#घोषणा TEGRA_PIN_SDMMC4_DAT2_PAA2		_GPIO(210)
+#घोषणा TEGRA_PIN_SDMMC4_DAT3_PAA3		_GPIO(211)
+#घोषणा TEGRA_PIN_SDMMC4_DAT4_PAA4		_GPIO(212)
+#घोषणा TEGRA_PIN_SDMMC4_DAT5_PAA5		_GPIO(213)
+#घोषणा TEGRA_PIN_SDMMC4_DAT6_PAA6		_GPIO(214)
+#घोषणा TEGRA_PIN_SDMMC4_DAT7_PAA7		_GPIO(215)
+#घोषणा TEGRA_PIN_PBB0				_GPIO(216)
+#घोषणा TEGRA_PIN_CAM_I2C_SCL_PBB1		_GPIO(217)
+#घोषणा TEGRA_PIN_CAM_I2C_SDA_PBB2		_GPIO(218)
+#घोषणा TEGRA_PIN_PBB3				_GPIO(219)
+#घोषणा TEGRA_PIN_PBB4				_GPIO(220)
+#घोषणा TEGRA_PIN_PBB5				_GPIO(221)
+#घोषणा TEGRA_PIN_PBB6				_GPIO(222)
+#घोषणा TEGRA_PIN_PBB7				_GPIO(223)
+#घोषणा TEGRA_PIN_CAM_MCLK_PCC0			_GPIO(224)
+#घोषणा TEGRA_PIN_PCC1				_GPIO(225)
+#घोषणा TEGRA_PIN_PCC2				_GPIO(226)
+#घोषणा TEGRA_PIN_SDMMC4_CLK_PCC4		_GPIO(228)
+#घोषणा TEGRA_PIN_CLK2_REQ_PCC5			_GPIO(229)
+#घोषणा TEGRA_PIN_PEX_L0_RST_N_PDD1		_GPIO(233)
+#घोषणा TEGRA_PIN_PEX_L0_CLKREQ_N_PDD2		_GPIO(234)
+#घोषणा TEGRA_PIN_PEX_WAKE_N_PDD3		_GPIO(235)
+#घोषणा TEGRA_PIN_PEX_L1_RST_N_PDD5		_GPIO(237)
+#घोषणा TEGRA_PIN_PEX_L1_CLKREQ_N_PDD6		_GPIO(238)
+#घोषणा TEGRA_PIN_CLK3_OUT_PEE0			_GPIO(240)
+#घोषणा TEGRA_PIN_CLK3_REQ_PEE1			_GPIO(241)
+#घोषणा TEGRA_PIN_DAP_MCLK1_REQ_PEE2		_GPIO(242)
+#घोषणा TEGRA_PIN_HDMI_CEC_PEE3			_GPIO(243)
+#घोषणा TEGRA_PIN_SDMMC3_CLK_LB_OUT_PEE4	_GPIO(244)
+#घोषणा TEGRA_PIN_SDMMC3_CLK_LB_IN_PEE5		_GPIO(245)
+#घोषणा TEGRA_PIN_DP_HPD_PFF0			_GPIO(248)
+#घोषणा TEGRA_PIN_USB_VBUS_EN2_PFF1		_GPIO(249)
+#घोषणा TEGRA_PIN_PFF2				_GPIO(250)
 
 /* All non-GPIO pins follow */
-#define NUM_GPIOS				(TEGRA_PIN_PFF2 + 1)
-#define _PIN(offset)				(NUM_GPIOS + (offset))
+#घोषणा NUM_GPIOS				(TEGRA_PIN_PFF2 + 1)
+#घोषणा _PIN(offset)				(NUM_GPIOS + (offset))
 
 /* Non-GPIO pins */
-#define TEGRA_PIN_CORE_PWR_REQ			_PIN(0)
-#define TEGRA_PIN_CPU_PWR_REQ			_PIN(1)
-#define TEGRA_PIN_PWR_INT_N			_PIN(2)
-#define TEGRA_PIN_GMI_CLK_LB			_PIN(3)
-#define TEGRA_PIN_RESET_OUT_N			_PIN(4)
-#define TEGRA_PIN_OWR				_PIN(5)
-#define TEGRA_PIN_CLK_32K_IN			_PIN(6)
-#define TEGRA_PIN_JTAG_RTCK			_PIN(7)
-#define TEGRA_PIN_DSI_B_CLK_P			_PIN(8)
-#define TEGRA_PIN_DSI_B_CLK_N			_PIN(9)
-#define TEGRA_PIN_DSI_B_D0_P			_PIN(10)
-#define TEGRA_PIN_DSI_B_D0_N			_PIN(11)
-#define TEGRA_PIN_DSI_B_D1_P			_PIN(12)
-#define TEGRA_PIN_DSI_B_D1_N			_PIN(13)
-#define TEGRA_PIN_DSI_B_D2_P			_PIN(14)
-#define TEGRA_PIN_DSI_B_D2_N			_PIN(15)
-#define TEGRA_PIN_DSI_B_D3_P			_PIN(16)
-#define TEGRA_PIN_DSI_B_D3_N			_PIN(17)
+#घोषणा TEGRA_PIN_CORE_PWR_REQ			_PIN(0)
+#घोषणा TEGRA_PIN_CPU_PWR_REQ			_PIN(1)
+#घोषणा TEGRA_PIN_PWR_INT_N			_PIN(2)
+#घोषणा TEGRA_PIN_GMI_CLK_LB			_PIN(3)
+#घोषणा TEGRA_PIN_RESET_OUT_N			_PIN(4)
+#घोषणा TEGRA_PIN_OWR				_PIN(5)
+#घोषणा TEGRA_PIN_CLK_32K_IN			_PIN(6)
+#घोषणा TEGRA_PIN_JTAG_RTCK			_PIN(7)
+#घोषणा TEGRA_PIN_DSI_B_CLK_P			_PIN(8)
+#घोषणा TEGRA_PIN_DSI_B_CLK_N			_PIN(9)
+#घोषणा TEGRA_PIN_DSI_B_D0_P			_PIN(10)
+#घोषणा TEGRA_PIN_DSI_B_D0_N			_PIN(11)
+#घोषणा TEGRA_PIN_DSI_B_D1_P			_PIN(12)
+#घोषणा TEGRA_PIN_DSI_B_D1_N			_PIN(13)
+#घोषणा TEGRA_PIN_DSI_B_D2_P			_PIN(14)
+#घोषणा TEGRA_PIN_DSI_B_D2_N			_PIN(15)
+#घोषणा TEGRA_PIN_DSI_B_D3_P			_PIN(16)
+#घोषणा TEGRA_PIN_DSI_B_D3_N			_PIN(17)
 
-static const struct pinctrl_pin_desc tegra124_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc tegra124_pins[] = अणु
 	PINCTRL_PIN(TEGRA_PIN_CLK_32K_OUT_PA0, "CLK_32K_OUT PA0"),
 	PINCTRL_PIN(TEGRA_PIN_UART3_CTS_N_PA1, "UART3_CTS_N PA1"),
 	PINCTRL_PIN(TEGRA_PIN_DAP2_FS_PA2, "DAP2_FS PA2"),
@@ -367,7 +368,7 @@ static const struct pinctrl_pin_desc tegra124_pins[] = {
 	PINCTRL_PIN(TEGRA_PIN_GPIO_X6_AUD_PX6, "GPIO_X6_AUD PX6"),
 	PINCTRL_PIN(TEGRA_PIN_GPIO_X7_AUD_PX7, "GPIO_X7_AUD PX7"),
 	PINCTRL_PIN(TEGRA_PIN_ULPI_CLK_PY0, "ULPI_CLK PY0"),
-	PINCTRL_PIN(TEGRA_PIN_ULPI_DIR_PY1, "ULPI_DIR PY1"),
+	PINCTRL_PIN(TEGRA_PIN_ULPI_सूची_PY1, "ULPI_DIR PY1"),
 	PINCTRL_PIN(TEGRA_PIN_ULPI_NXT_PY2, "ULPI_NXT PY2"),
 	PINCTRL_PIN(TEGRA_PIN_ULPI_STP_PY3, "ULPI_STP PY3"),
 	PINCTRL_PIN(TEGRA_PIN_SDMMC1_DAT3_PY4, "SDMMC1_DAT3 PY4"),
@@ -431,773 +432,773 @@ static const struct pinctrl_pin_desc tegra124_pins[] = {
 	PINCTRL_PIN(TEGRA_PIN_DSI_B_D2_N, "DSI_B_D2_N"),
 	PINCTRL_PIN(TEGRA_PIN_DSI_B_D3_P, "DSI_B_D3_P"),
 	PINCTRL_PIN(TEGRA_PIN_DSI_B_D3_N, "DSI_B_D3_N"),
-};
+पूर्ण;
 
-static const unsigned clk_32k_out_pa0_pins[] = {
+अटल स्थिर अचिन्हित clk_32k_out_pa0_pins[] = अणु
 	TEGRA_PIN_CLK_32K_OUT_PA0,
-};
+पूर्ण;
 
-static const unsigned uart3_cts_n_pa1_pins[] = {
+अटल स्थिर अचिन्हित uart3_cts_n_pa1_pins[] = अणु
 	TEGRA_PIN_UART3_CTS_N_PA1,
-};
+पूर्ण;
 
-static const unsigned dap2_fs_pa2_pins[] = {
+अटल स्थिर अचिन्हित dap2_fs_pa2_pins[] = अणु
 	TEGRA_PIN_DAP2_FS_PA2,
-};
+पूर्ण;
 
-static const unsigned dap2_sclk_pa3_pins[] = {
+अटल स्थिर अचिन्हित dap2_sclk_pa3_pins[] = अणु
 	TEGRA_PIN_DAP2_SCLK_PA3,
-};
+पूर्ण;
 
-static const unsigned dap2_din_pa4_pins[] = {
+अटल स्थिर अचिन्हित dap2_din_pa4_pins[] = अणु
 	TEGRA_PIN_DAP2_DIN_PA4,
-};
+पूर्ण;
 
-static const unsigned dap2_dout_pa5_pins[] = {
+अटल स्थिर अचिन्हित dap2_करोut_pa5_pins[] = अणु
 	TEGRA_PIN_DAP2_DOUT_PA5,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_clk_pa6_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_clk_pa6_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CLK_PA6,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_cmd_pa7_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_cmd_pa7_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CMD_PA7,
-};
+पूर्ण;
 
-static const unsigned pb0_pins[] = {
+अटल स्थिर अचिन्हित pb0_pins[] = अणु
 	TEGRA_PIN_PB0,
-};
+पूर्ण;
 
-static const unsigned pb1_pins[] = {
+अटल स्थिर अचिन्हित pb1_pins[] = अणु
 	TEGRA_PIN_PB1,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_dat3_pb4_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_dat3_pb4_pins[] = अणु
 	TEGRA_PIN_SDMMC3_DAT3_PB4,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_dat2_pb5_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_dat2_pb5_pins[] = अणु
 	TEGRA_PIN_SDMMC3_DAT2_PB5,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_dat1_pb6_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_dat1_pb6_pins[] = अणु
 	TEGRA_PIN_SDMMC3_DAT1_PB6,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_dat0_pb7_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_dat0_pb7_pins[] = अणु
 	TEGRA_PIN_SDMMC3_DAT0_PB7,
-};
+पूर्ण;
 
-static const unsigned uart3_rts_n_pc0_pins[] = {
+अटल स्थिर अचिन्हित uart3_rts_n_pc0_pins[] = अणु
 	TEGRA_PIN_UART3_RTS_N_PC0,
-};
+पूर्ण;
 
-static const unsigned uart2_txd_pc2_pins[] = {
+अटल स्थिर अचिन्हित uart2_txd_pc2_pins[] = अणु
 	TEGRA_PIN_UART2_TXD_PC2,
-};
+पूर्ण;
 
-static const unsigned uart2_rxd_pc3_pins[] = {
+अटल स्थिर अचिन्हित uart2_rxd_pc3_pins[] = अणु
 	TEGRA_PIN_UART2_RXD_PC3,
-};
+पूर्ण;
 
-static const unsigned gen1_i2c_scl_pc4_pins[] = {
+अटल स्थिर अचिन्हित gen1_i2c_scl_pc4_pins[] = अणु
 	TEGRA_PIN_GEN1_I2C_SCL_PC4,
-};
+पूर्ण;
 
-static const unsigned gen1_i2c_sda_pc5_pins[] = {
+अटल स्थिर अचिन्हित gen1_i2c_sda_pc5_pins[] = अणु
 	TEGRA_PIN_GEN1_I2C_SDA_PC5,
-};
+पूर्ण;
 
-static const unsigned pc7_pins[] = {
+अटल स्थिर अचिन्हित pc7_pins[] = अणु
 	TEGRA_PIN_PC7,
-};
+पूर्ण;
 
-static const unsigned pg0_pins[] = {
+अटल स्थिर अचिन्हित pg0_pins[] = अणु
 	TEGRA_PIN_PG0,
-};
+पूर्ण;
 
-static const unsigned pg1_pins[] = {
+अटल स्थिर अचिन्हित pg1_pins[] = अणु
 	TEGRA_PIN_PG1,
-};
+पूर्ण;
 
-static const unsigned pg2_pins[] = {
+अटल स्थिर अचिन्हित pg2_pins[] = अणु
 	TEGRA_PIN_PG2,
-};
+पूर्ण;
 
-static const unsigned pg3_pins[] = {
+अटल स्थिर अचिन्हित pg3_pins[] = अणु
 	TEGRA_PIN_PG3,
-};
+पूर्ण;
 
-static const unsigned pg4_pins[] = {
+अटल स्थिर अचिन्हित pg4_pins[] = अणु
 	TEGRA_PIN_PG4,
-};
+पूर्ण;
 
-static const unsigned pg5_pins[] = {
+अटल स्थिर अचिन्हित pg5_pins[] = अणु
 	TEGRA_PIN_PG5,
-};
+पूर्ण;
 
-static const unsigned pg6_pins[] = {
+अटल स्थिर अचिन्हित pg6_pins[] = अणु
 	TEGRA_PIN_PG6,
-};
+पूर्ण;
 
-static const unsigned pg7_pins[] = {
+अटल स्थिर अचिन्हित pg7_pins[] = अणु
 	TEGRA_PIN_PG7,
-};
+पूर्ण;
 
-static const unsigned ph0_pins[] = {
+अटल स्थिर अचिन्हित ph0_pins[] = अणु
 	TEGRA_PIN_PH0,
-};
+पूर्ण;
 
-static const unsigned ph1_pins[] = {
+अटल स्थिर अचिन्हित ph1_pins[] = अणु
 	TEGRA_PIN_PH1,
-};
+पूर्ण;
 
-static const unsigned ph2_pins[] = {
+अटल स्थिर अचिन्हित ph2_pins[] = अणु
 	TEGRA_PIN_PH2,
-};
+पूर्ण;
 
-static const unsigned ph3_pins[] = {
+अटल स्थिर अचिन्हित ph3_pins[] = अणु
 	TEGRA_PIN_PH3,
-};
+पूर्ण;
 
-static const unsigned ph4_pins[] = {
+अटल स्थिर अचिन्हित ph4_pins[] = अणु
 	TEGRA_PIN_PH4,
-};
+पूर्ण;
 
-static const unsigned ph5_pins[] = {
+अटल स्थिर अचिन्हित ph5_pins[] = अणु
 	TEGRA_PIN_PH5,
-};
+पूर्ण;
 
-static const unsigned ph6_pins[] = {
+अटल स्थिर अचिन्हित ph6_pins[] = अणु
 	TEGRA_PIN_PH6,
-};
+पूर्ण;
 
-static const unsigned ph7_pins[] = {
+अटल स्थिर अचिन्हित ph7_pins[] = अणु
 	TEGRA_PIN_PH7,
-};
+पूर्ण;
 
-static const unsigned pi0_pins[] = {
+अटल स्थिर अचिन्हित pi0_pins[] = अणु
 	TEGRA_PIN_PI0,
-};
+पूर्ण;
 
-static const unsigned pi1_pins[] = {
+अटल स्थिर अचिन्हित pi1_pins[] = अणु
 	TEGRA_PIN_PI1,
-};
+पूर्ण;
 
-static const unsigned pi2_pins[] = {
+अटल स्थिर अचिन्हित pi2_pins[] = अणु
 	TEGRA_PIN_PI2,
-};
+पूर्ण;
 
-static const unsigned pi3_pins[] = {
+अटल स्थिर अचिन्हित pi3_pins[] = अणु
 	TEGRA_PIN_PI3,
-};
+पूर्ण;
 
-static const unsigned pi4_pins[] = {
+अटल स्थिर अचिन्हित pi4_pins[] = अणु
 	TEGRA_PIN_PI4,
-};
+पूर्ण;
 
-static const unsigned pi5_pins[] = {
+अटल स्थिर अचिन्हित pi5_pins[] = अणु
 	TEGRA_PIN_PI5,
-};
+पूर्ण;
 
-static const unsigned pi6_pins[] = {
+अटल स्थिर अचिन्हित pi6_pins[] = अणु
 	TEGRA_PIN_PI6,
-};
+पूर्ण;
 
-static const unsigned pi7_pins[] = {
+अटल स्थिर अचिन्हित pi7_pins[] = अणु
 	TEGRA_PIN_PI7,
-};
+पूर्ण;
 
-static const unsigned pj0_pins[] = {
+अटल स्थिर अचिन्हित pj0_pins[] = अणु
 	TEGRA_PIN_PJ0,
-};
+पूर्ण;
 
-static const unsigned pj2_pins[] = {
+अटल स्थिर अचिन्हित pj2_pins[] = अणु
 	TEGRA_PIN_PJ2,
-};
+पूर्ण;
 
-static const unsigned uart2_cts_n_pj5_pins[] = {
+अटल स्थिर अचिन्हित uart2_cts_n_pj5_pins[] = अणु
 	TEGRA_PIN_UART2_CTS_N_PJ5,
-};
+पूर्ण;
 
-static const unsigned uart2_rts_n_pj6_pins[] = {
+अटल स्थिर अचिन्हित uart2_rts_n_pj6_pins[] = अणु
 	TEGRA_PIN_UART2_RTS_N_PJ6,
-};
+पूर्ण;
 
-static const unsigned pj7_pins[] = {
+अटल स्थिर अचिन्हित pj7_pins[] = अणु
 	TEGRA_PIN_PJ7,
-};
+पूर्ण;
 
-static const unsigned pk0_pins[] = {
+अटल स्थिर अचिन्हित pk0_pins[] = अणु
 	TEGRA_PIN_PK0,
-};
+पूर्ण;
 
-static const unsigned pk1_pins[] = {
+अटल स्थिर अचिन्हित pk1_pins[] = अणु
 	TEGRA_PIN_PK1,
-};
+पूर्ण;
 
-static const unsigned pk2_pins[] = {
+अटल स्थिर अचिन्हित pk2_pins[] = अणु
 	TEGRA_PIN_PK2,
-};
+पूर्ण;
 
-static const unsigned pk3_pins[] = {
+अटल स्थिर अचिन्हित pk3_pins[] = अणु
 	TEGRA_PIN_PK3,
-};
+पूर्ण;
 
-static const unsigned pk4_pins[] = {
+अटल स्थिर अचिन्हित pk4_pins[] = अणु
 	TEGRA_PIN_PK4,
-};
+पूर्ण;
 
-static const unsigned spdif_out_pk5_pins[] = {
+अटल स्थिर अचिन्हित spdअगर_out_pk5_pins[] = अणु
 	TEGRA_PIN_SPDIF_OUT_PK5,
-};
+पूर्ण;
 
-static const unsigned spdif_in_pk6_pins[] = {
+अटल स्थिर अचिन्हित spdअगर_in_pk6_pins[] = अणु
 	TEGRA_PIN_SPDIF_IN_PK6,
-};
+पूर्ण;
 
-static const unsigned pk7_pins[] = {
+अटल स्थिर अचिन्हित pk7_pins[] = अणु
 	TEGRA_PIN_PK7,
-};
+पूर्ण;
 
-static const unsigned dap1_fs_pn0_pins[] = {
+अटल स्थिर अचिन्हित dap1_fs_pn0_pins[] = अणु
 	TEGRA_PIN_DAP1_FS_PN0,
-};
+पूर्ण;
 
-static const unsigned dap1_din_pn1_pins[] = {
+अटल स्थिर अचिन्हित dap1_din_pn1_pins[] = अणु
 	TEGRA_PIN_DAP1_DIN_PN1,
-};
+पूर्ण;
 
-static const unsigned dap1_dout_pn2_pins[] = {
+अटल स्थिर अचिन्हित dap1_करोut_pn2_pins[] = अणु
 	TEGRA_PIN_DAP1_DOUT_PN2,
-};
+पूर्ण;
 
-static const unsigned dap1_sclk_pn3_pins[] = {
+अटल स्थिर अचिन्हित dap1_sclk_pn3_pins[] = अणु
 	TEGRA_PIN_DAP1_SCLK_PN3,
-};
+पूर्ण;
 
-static const unsigned usb_vbus_en0_pn4_pins[] = {
+अटल स्थिर अचिन्हित usb_vbus_en0_pn4_pins[] = अणु
 	TEGRA_PIN_USB_VBUS_EN0_PN4,
-};
+पूर्ण;
 
-static const unsigned usb_vbus_en1_pn5_pins[] = {
+अटल स्थिर अचिन्हित usb_vbus_en1_pn5_pins[] = अणु
 	TEGRA_PIN_USB_VBUS_EN1_PN5,
-};
+पूर्ण;
 
-static const unsigned hdmi_int_pn7_pins[] = {
+अटल स्थिर अचिन्हित hdmi_पूर्णांक_pn7_pins[] = अणु
 	TEGRA_PIN_HDMI_INT_PN7,
-};
+पूर्ण;
 
-static const unsigned ulpi_data7_po0_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data7_po0_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA7_PO0,
-};
+पूर्ण;
 
-static const unsigned ulpi_data0_po1_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data0_po1_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA0_PO1,
-};
+पूर्ण;
 
-static const unsigned ulpi_data1_po2_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data1_po2_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA1_PO2,
-};
+पूर्ण;
 
-static const unsigned ulpi_data2_po3_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data2_po3_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA2_PO3,
-};
+पूर्ण;
 
-static const unsigned ulpi_data3_po4_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data3_po4_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA3_PO4,
-};
+पूर्ण;
 
-static const unsigned ulpi_data4_po5_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data4_po5_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA4_PO5,
-};
+पूर्ण;
 
-static const unsigned ulpi_data5_po6_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data5_po6_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA5_PO6,
-};
+पूर्ण;
 
-static const unsigned ulpi_data6_po7_pins[] = {
+अटल स्थिर अचिन्हित ulpi_data6_po7_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA6_PO7,
-};
+पूर्ण;
 
-static const unsigned dap3_fs_pp0_pins[] = {
+अटल स्थिर अचिन्हित dap3_fs_pp0_pins[] = अणु
 	TEGRA_PIN_DAP3_FS_PP0,
-};
+पूर्ण;
 
-static const unsigned dap3_din_pp1_pins[] = {
+अटल स्थिर अचिन्हित dap3_din_pp1_pins[] = अणु
 	TEGRA_PIN_DAP3_DIN_PP1,
-};
+पूर्ण;
 
-static const unsigned dap3_dout_pp2_pins[] = {
+अटल स्थिर अचिन्हित dap3_करोut_pp2_pins[] = अणु
 	TEGRA_PIN_DAP3_DOUT_PP2,
-};
+पूर्ण;
 
-static const unsigned dap3_sclk_pp3_pins[] = {
+अटल स्थिर अचिन्हित dap3_sclk_pp3_pins[] = अणु
 	TEGRA_PIN_DAP3_SCLK_PP3,
-};
+पूर्ण;
 
-static const unsigned dap4_fs_pp4_pins[] = {
+अटल स्थिर अचिन्हित dap4_fs_pp4_pins[] = अणु
 	TEGRA_PIN_DAP4_FS_PP4,
-};
+पूर्ण;
 
-static const unsigned dap4_din_pp5_pins[] = {
+अटल स्थिर अचिन्हित dap4_din_pp5_pins[] = अणु
 	TEGRA_PIN_DAP4_DIN_PP5,
-};
+पूर्ण;
 
-static const unsigned dap4_dout_pp6_pins[] = {
+अटल स्थिर अचिन्हित dap4_करोut_pp6_pins[] = अणु
 	TEGRA_PIN_DAP4_DOUT_PP6,
-};
+पूर्ण;
 
-static const unsigned dap4_sclk_pp7_pins[] = {
+अटल स्थिर अचिन्हित dap4_sclk_pp7_pins[] = अणु
 	TEGRA_PIN_DAP4_SCLK_PP7,
-};
+पूर्ण;
 
-static const unsigned kb_col0_pq0_pins[] = {
+अटल स्थिर अचिन्हित kb_col0_pq0_pins[] = अणु
 	TEGRA_PIN_KB_COL0_PQ0,
-};
+पूर्ण;
 
-static const unsigned kb_col1_pq1_pins[] = {
+अटल स्थिर अचिन्हित kb_col1_pq1_pins[] = अणु
 	TEGRA_PIN_KB_COL1_PQ1,
-};
+पूर्ण;
 
-static const unsigned kb_col2_pq2_pins[] = {
+अटल स्थिर अचिन्हित kb_col2_pq2_pins[] = अणु
 	TEGRA_PIN_KB_COL2_PQ2,
-};
+पूर्ण;
 
-static const unsigned kb_col3_pq3_pins[] = {
+अटल स्थिर अचिन्हित kb_col3_pq3_pins[] = अणु
 	TEGRA_PIN_KB_COL3_PQ3,
-};
+पूर्ण;
 
-static const unsigned kb_col4_pq4_pins[] = {
+अटल स्थिर अचिन्हित kb_col4_pq4_pins[] = अणु
 	TEGRA_PIN_KB_COL4_PQ4,
-};
+पूर्ण;
 
-static const unsigned kb_col5_pq5_pins[] = {
+अटल स्थिर अचिन्हित kb_col5_pq5_pins[] = अणु
 	TEGRA_PIN_KB_COL5_PQ5,
-};
+पूर्ण;
 
-static const unsigned kb_col6_pq6_pins[] = {
+अटल स्थिर अचिन्हित kb_col6_pq6_pins[] = अणु
 	TEGRA_PIN_KB_COL6_PQ6,
-};
+पूर्ण;
 
-static const unsigned kb_col7_pq7_pins[] = {
+अटल स्थिर अचिन्हित kb_col7_pq7_pins[] = अणु
 	TEGRA_PIN_KB_COL7_PQ7,
-};
+पूर्ण;
 
-static const unsigned kb_row0_pr0_pins[] = {
+अटल स्थिर अचिन्हित kb_row0_pr0_pins[] = अणु
 	TEGRA_PIN_KB_ROW0_PR0,
-};
+पूर्ण;
 
-static const unsigned kb_row1_pr1_pins[] = {
+अटल स्थिर अचिन्हित kb_row1_pr1_pins[] = अणु
 	TEGRA_PIN_KB_ROW1_PR1,
-};
+पूर्ण;
 
-static const unsigned kb_row2_pr2_pins[] = {
+अटल स्थिर अचिन्हित kb_row2_pr2_pins[] = अणु
 	TEGRA_PIN_KB_ROW2_PR2,
-};
+पूर्ण;
 
-static const unsigned kb_row3_pr3_pins[] = {
+अटल स्थिर अचिन्हित kb_row3_pr3_pins[] = अणु
 	TEGRA_PIN_KB_ROW3_PR3,
-};
+पूर्ण;
 
-static const unsigned kb_row4_pr4_pins[] = {
+अटल स्थिर अचिन्हित kb_row4_pr4_pins[] = अणु
 	TEGRA_PIN_KB_ROW4_PR4,
-};
+पूर्ण;
 
-static const unsigned kb_row5_pr5_pins[] = {
+अटल स्थिर अचिन्हित kb_row5_pr5_pins[] = अणु
 	TEGRA_PIN_KB_ROW5_PR5,
-};
+पूर्ण;
 
-static const unsigned kb_row6_pr6_pins[] = {
+अटल स्थिर अचिन्हित kb_row6_pr6_pins[] = अणु
 	TEGRA_PIN_KB_ROW6_PR6,
-};
+पूर्ण;
 
-static const unsigned kb_row7_pr7_pins[] = {
+अटल स्थिर अचिन्हित kb_row7_pr7_pins[] = अणु
 	TEGRA_PIN_KB_ROW7_PR7,
-};
+पूर्ण;
 
-static const unsigned kb_row8_ps0_pins[] = {
+अटल स्थिर अचिन्हित kb_row8_ps0_pins[] = अणु
 	TEGRA_PIN_KB_ROW8_PS0,
-};
+पूर्ण;
 
-static const unsigned kb_row9_ps1_pins[] = {
+अटल स्थिर अचिन्हित kb_row9_ps1_pins[] = अणु
 	TEGRA_PIN_KB_ROW9_PS1,
-};
+पूर्ण;
 
-static const unsigned kb_row10_ps2_pins[] = {
+अटल स्थिर अचिन्हित kb_row10_ps2_pins[] = अणु
 	TEGRA_PIN_KB_ROW10_PS2,
-};
+पूर्ण;
 
-static const unsigned kb_row11_ps3_pins[] = {
+अटल स्थिर अचिन्हित kb_row11_ps3_pins[] = अणु
 	TEGRA_PIN_KB_ROW11_PS3,
-};
+पूर्ण;
 
-static const unsigned kb_row12_ps4_pins[] = {
+अटल स्थिर अचिन्हित kb_row12_ps4_pins[] = अणु
 	TEGRA_PIN_KB_ROW12_PS4,
-};
+पूर्ण;
 
-static const unsigned kb_row13_ps5_pins[] = {
+अटल स्थिर अचिन्हित kb_row13_ps5_pins[] = अणु
 	TEGRA_PIN_KB_ROW13_PS5,
-};
+पूर्ण;
 
-static const unsigned kb_row14_ps6_pins[] = {
+अटल स्थिर अचिन्हित kb_row14_ps6_pins[] = अणु
 	TEGRA_PIN_KB_ROW14_PS6,
-};
+पूर्ण;
 
-static const unsigned kb_row15_ps7_pins[] = {
+अटल स्थिर अचिन्हित kb_row15_ps7_pins[] = अणु
 	TEGRA_PIN_KB_ROW15_PS7,
-};
+पूर्ण;
 
-static const unsigned kb_row16_pt0_pins[] = {
+अटल स्थिर अचिन्हित kb_row16_pt0_pins[] = अणु
 	TEGRA_PIN_KB_ROW16_PT0,
-};
+पूर्ण;
 
-static const unsigned kb_row17_pt1_pins[] = {
+अटल स्थिर अचिन्हित kb_row17_pt1_pins[] = अणु
 	TEGRA_PIN_KB_ROW17_PT1,
-};
+पूर्ण;
 
-static const unsigned gen2_i2c_scl_pt5_pins[] = {
+अटल स्थिर अचिन्हित gen2_i2c_scl_pt5_pins[] = अणु
 	TEGRA_PIN_GEN2_I2C_SCL_PT5,
-};
+पूर्ण;
 
-static const unsigned gen2_i2c_sda_pt6_pins[] = {
+अटल स्थिर अचिन्हित gen2_i2c_sda_pt6_pins[] = अणु
 	TEGRA_PIN_GEN2_I2C_SDA_PT6,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_cmd_pt7_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_cmd_pt7_pins[] = अणु
 	TEGRA_PIN_SDMMC4_CMD_PT7,
-};
+पूर्ण;
 
-static const unsigned pu0_pins[] = {
+अटल स्थिर अचिन्हित pu0_pins[] = अणु
 	TEGRA_PIN_PU0,
-};
+पूर्ण;
 
-static const unsigned pu1_pins[] = {
+अटल स्थिर अचिन्हित pu1_pins[] = अणु
 	TEGRA_PIN_PU1,
-};
+पूर्ण;
 
-static const unsigned pu2_pins[] = {
+अटल स्थिर अचिन्हित pu2_pins[] = अणु
 	TEGRA_PIN_PU2,
-};
+पूर्ण;
 
-static const unsigned pu3_pins[] = {
+अटल स्थिर अचिन्हित pu3_pins[] = अणु
 	TEGRA_PIN_PU3,
-};
+पूर्ण;
 
-static const unsigned pu4_pins[] = {
+अटल स्थिर अचिन्हित pu4_pins[] = अणु
 	TEGRA_PIN_PU4,
-};
+पूर्ण;
 
-static const unsigned pu5_pins[] = {
+अटल स्थिर अचिन्हित pu5_pins[] = अणु
 	TEGRA_PIN_PU5,
-};
+पूर्ण;
 
-static const unsigned pu6_pins[] = {
+अटल स्थिर अचिन्हित pu6_pins[] = अणु
 	TEGRA_PIN_PU6,
-};
+पूर्ण;
 
-static const unsigned pv0_pins[] = {
+अटल स्थिर अचिन्हित pv0_pins[] = अणु
 	TEGRA_PIN_PV0,
-};
+पूर्ण;
 
-static const unsigned pv1_pins[] = {
+अटल स्थिर अचिन्हित pv1_pins[] = अणु
 	TEGRA_PIN_PV1,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_cd_n_pv2_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_cd_n_pv2_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CD_N_PV2,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_wp_n_pv3_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_wp_n_pv3_pins[] = अणु
 	TEGRA_PIN_SDMMC1_WP_N_PV3,
-};
+पूर्ण;
 
-static const unsigned ddc_scl_pv4_pins[] = {
+अटल स्थिर अचिन्हित ddc_scl_pv4_pins[] = अणु
 	TEGRA_PIN_DDC_SCL_PV4,
-};
+पूर्ण;
 
-static const unsigned ddc_sda_pv5_pins[] = {
+अटल स्थिर अचिन्हित ddc_sda_pv5_pins[] = अणु
 	TEGRA_PIN_DDC_SDA_PV5,
-};
+पूर्ण;
 
-static const unsigned gpio_w2_aud_pw2_pins[] = {
+अटल स्थिर अचिन्हित gpio_w2_aud_pw2_pins[] = अणु
 	TEGRA_PIN_GPIO_W2_AUD_PW2,
-};
+पूर्ण;
 
-static const unsigned gpio_w3_aud_pw3_pins[] = {
+अटल स्थिर अचिन्हित gpio_w3_aud_pw3_pins[] = अणु
 	TEGRA_PIN_GPIO_W3_AUD_PW3,
-};
+पूर्ण;
 
-static const unsigned dap_mclk1_pw4_pins[] = {
+अटल स्थिर अचिन्हित dap_mclk1_pw4_pins[] = अणु
 	TEGRA_PIN_DAP_MCLK1_PW4,
-};
+पूर्ण;
 
-static const unsigned clk2_out_pw5_pins[] = {
+अटल स्थिर अचिन्हित clk2_out_pw5_pins[] = अणु
 	TEGRA_PIN_CLK2_OUT_PW5,
-};
+पूर्ण;
 
-static const unsigned uart3_txd_pw6_pins[] = {
+अटल स्थिर अचिन्हित uart3_txd_pw6_pins[] = अणु
 	TEGRA_PIN_UART3_TXD_PW6,
-};
+पूर्ण;
 
-static const unsigned uart3_rxd_pw7_pins[] = {
+अटल स्थिर अचिन्हित uart3_rxd_pw7_pins[] = अणु
 	TEGRA_PIN_UART3_RXD_PW7,
-};
+पूर्ण;
 
-static const unsigned dvfs_pwm_px0_pins[] = {
+अटल स्थिर अचिन्हित dvfs_pwm_px0_pins[] = अणु
 	TEGRA_PIN_DVFS_PWM_PX0,
-};
+पूर्ण;
 
-static const unsigned gpio_x1_aud_px1_pins[] = {
+अटल स्थिर अचिन्हित gpio_x1_aud_px1_pins[] = अणु
 	TEGRA_PIN_GPIO_X1_AUD_PX1,
-};
+पूर्ण;
 
-static const unsigned dvfs_clk_px2_pins[] = {
+अटल स्थिर अचिन्हित dvfs_clk_px2_pins[] = अणु
 	TEGRA_PIN_DVFS_CLK_PX2,
-};
+पूर्ण;
 
-static const unsigned gpio_x3_aud_px3_pins[] = {
+अटल स्थिर अचिन्हित gpio_x3_aud_px3_pins[] = अणु
 	TEGRA_PIN_GPIO_X3_AUD_PX3,
-};
+पूर्ण;
 
-static const unsigned gpio_x4_aud_px4_pins[] = {
+अटल स्थिर अचिन्हित gpio_x4_aud_px4_pins[] = अणु
 	TEGRA_PIN_GPIO_X4_AUD_PX4,
-};
+पूर्ण;
 
-static const unsigned gpio_x5_aud_px5_pins[] = {
+अटल स्थिर अचिन्हित gpio_x5_aud_px5_pins[] = अणु
 	TEGRA_PIN_GPIO_X5_AUD_PX5,
-};
+पूर्ण;
 
-static const unsigned gpio_x6_aud_px6_pins[] = {
+अटल स्थिर अचिन्हित gpio_x6_aud_px6_pins[] = अणु
 	TEGRA_PIN_GPIO_X6_AUD_PX6,
-};
+पूर्ण;
 
-static const unsigned gpio_x7_aud_px7_pins[] = {
+अटल स्थिर अचिन्हित gpio_x7_aud_px7_pins[] = अणु
 	TEGRA_PIN_GPIO_X7_AUD_PX7,
-};
+पूर्ण;
 
-static const unsigned ulpi_clk_py0_pins[] = {
+अटल स्थिर अचिन्हित ulpi_clk_py0_pins[] = अणु
 	TEGRA_PIN_ULPI_CLK_PY0,
-};
+पूर्ण;
 
-static const unsigned ulpi_dir_py1_pins[] = {
-	TEGRA_PIN_ULPI_DIR_PY1,
-};
+अटल स्थिर अचिन्हित ulpi_dir_py1_pins[] = अणु
+	TEGRA_PIN_ULPI_सूची_PY1,
+पूर्ण;
 
-static const unsigned ulpi_nxt_py2_pins[] = {
+अटल स्थिर अचिन्हित ulpi_nxt_py2_pins[] = अणु
 	TEGRA_PIN_ULPI_NXT_PY2,
-};
+पूर्ण;
 
-static const unsigned ulpi_stp_py3_pins[] = {
+अटल स्थिर अचिन्हित ulpi_stp_py3_pins[] = अणु
 	TEGRA_PIN_ULPI_STP_PY3,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_dat3_py4_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_dat3_py4_pins[] = अणु
 	TEGRA_PIN_SDMMC1_DAT3_PY4,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_dat2_py5_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_dat2_py5_pins[] = अणु
 	TEGRA_PIN_SDMMC1_DAT2_PY5,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_dat1_py6_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_dat1_py6_pins[] = अणु
 	TEGRA_PIN_SDMMC1_DAT1_PY6,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_dat0_py7_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_dat0_py7_pins[] = अणु
 	TEGRA_PIN_SDMMC1_DAT0_PY7,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_clk_pz0_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_clk_pz0_pins[] = अणु
 	TEGRA_PIN_SDMMC1_CLK_PZ0,
-};
+पूर्ण;
 
-static const unsigned sdmmc1_cmd_pz1_pins[] = {
+अटल स्थिर अचिन्हित sdmmc1_cmd_pz1_pins[] = अणु
 	TEGRA_PIN_SDMMC1_CMD_PZ1,
-};
+पूर्ण;
 
-static const unsigned pwr_i2c_scl_pz6_pins[] = {
+अटल स्थिर अचिन्हित pwr_i2c_scl_pz6_pins[] = अणु
 	TEGRA_PIN_PWR_I2C_SCL_PZ6,
-};
+पूर्ण;
 
-static const unsigned pwr_i2c_sda_pz7_pins[] = {
+अटल स्थिर अचिन्हित pwr_i2c_sda_pz7_pins[] = अणु
 	TEGRA_PIN_PWR_I2C_SDA_PZ7,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat0_paa0_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat0_paa0_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT0_PAA0,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat1_paa1_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat1_paa1_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT1_PAA1,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat2_paa2_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat2_paa2_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT2_PAA2,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat3_paa3_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat3_paa3_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT3_PAA3,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat4_paa4_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat4_paa4_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT4_PAA4,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat5_paa5_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat5_paa5_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT5_PAA5,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat6_paa6_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat6_paa6_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT6_PAA6,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_dat7_paa7_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_dat7_paa7_pins[] = अणु
 	TEGRA_PIN_SDMMC4_DAT7_PAA7,
-};
+पूर्ण;
 
-static const unsigned pbb0_pins[] = {
+अटल स्थिर अचिन्हित pbb0_pins[] = अणु
 	TEGRA_PIN_PBB0,
-};
+पूर्ण;
 
-static const unsigned cam_i2c_scl_pbb1_pins[] = {
+अटल स्थिर अचिन्हित cam_i2c_scl_pbb1_pins[] = अणु
 	TEGRA_PIN_CAM_I2C_SCL_PBB1,
-};
+पूर्ण;
 
-static const unsigned cam_i2c_sda_pbb2_pins[] = {
+अटल स्थिर अचिन्हित cam_i2c_sda_pbb2_pins[] = अणु
 	TEGRA_PIN_CAM_I2C_SDA_PBB2,
-};
+पूर्ण;
 
-static const unsigned pbb3_pins[] = {
+अटल स्थिर अचिन्हित pbb3_pins[] = अणु
 	TEGRA_PIN_PBB3,
-};
+पूर्ण;
 
-static const unsigned pbb4_pins[] = {
+अटल स्थिर अचिन्हित pbb4_pins[] = अणु
 	TEGRA_PIN_PBB4,
-};
+पूर्ण;
 
-static const unsigned pbb5_pins[] = {
+अटल स्थिर अचिन्हित pbb5_pins[] = अणु
 	TEGRA_PIN_PBB5,
-};
+पूर्ण;
 
-static const unsigned pbb6_pins[] = {
+अटल स्थिर अचिन्हित pbb6_pins[] = अणु
 	TEGRA_PIN_PBB6,
-};
+पूर्ण;
 
-static const unsigned pbb7_pins[] = {
+अटल स्थिर अचिन्हित pbb7_pins[] = अणु
 	TEGRA_PIN_PBB7,
-};
+पूर्ण;
 
-static const unsigned cam_mclk_pcc0_pins[] = {
+अटल स्थिर अचिन्हित cam_mclk_pcc0_pins[] = अणु
 	TEGRA_PIN_CAM_MCLK_PCC0,
-};
+पूर्ण;
 
-static const unsigned pcc1_pins[] = {
+अटल स्थिर अचिन्हित pcc1_pins[] = अणु
 	TEGRA_PIN_PCC1,
-};
+पूर्ण;
 
-static const unsigned pcc2_pins[] = {
+अटल स्थिर अचिन्हित pcc2_pins[] = अणु
 	TEGRA_PIN_PCC2,
-};
+पूर्ण;
 
-static const unsigned sdmmc4_clk_pcc4_pins[] = {
+अटल स्थिर अचिन्हित sdmmc4_clk_pcc4_pins[] = अणु
 	TEGRA_PIN_SDMMC4_CLK_PCC4,
-};
+पूर्ण;
 
-static const unsigned clk2_req_pcc5_pins[] = {
+अटल स्थिर अचिन्हित clk2_req_pcc5_pins[] = अणु
 	TEGRA_PIN_CLK2_REQ_PCC5,
-};
+पूर्ण;
 
-static const unsigned pex_l0_rst_n_pdd1_pins[] = {
+अटल स्थिर अचिन्हित pex_l0_rst_n_pdd1_pins[] = अणु
 	TEGRA_PIN_PEX_L0_RST_N_PDD1,
-};
+पूर्ण;
 
-static const unsigned pex_l0_clkreq_n_pdd2_pins[] = {
+अटल स्थिर अचिन्हित pex_l0_clkreq_n_pdd2_pins[] = अणु
 	TEGRA_PIN_PEX_L0_CLKREQ_N_PDD2,
-};
+पूर्ण;
 
-static const unsigned pex_wake_n_pdd3_pins[] = {
+अटल स्थिर अचिन्हित pex_wake_n_pdd3_pins[] = अणु
 	TEGRA_PIN_PEX_WAKE_N_PDD3,
-};
+पूर्ण;
 
-static const unsigned pex_l1_rst_n_pdd5_pins[] = {
+अटल स्थिर अचिन्हित pex_l1_rst_n_pdd5_pins[] = अणु
 	TEGRA_PIN_PEX_L1_RST_N_PDD5,
-};
+पूर्ण;
 
-static const unsigned pex_l1_clkreq_n_pdd6_pins[] = {
+अटल स्थिर अचिन्हित pex_l1_clkreq_n_pdd6_pins[] = अणु
 	TEGRA_PIN_PEX_L1_CLKREQ_N_PDD6,
-};
+पूर्ण;
 
-static const unsigned clk3_out_pee0_pins[] = {
+अटल स्थिर अचिन्हित clk3_out_pee0_pins[] = अणु
 	TEGRA_PIN_CLK3_OUT_PEE0,
-};
+पूर्ण;
 
-static const unsigned clk3_req_pee1_pins[] = {
+अटल स्थिर अचिन्हित clk3_req_pee1_pins[] = अणु
 	TEGRA_PIN_CLK3_REQ_PEE1,
-};
+पूर्ण;
 
-static const unsigned dap_mclk1_req_pee2_pins[] = {
+अटल स्थिर अचिन्हित dap_mclk1_req_pee2_pins[] = अणु
 	TEGRA_PIN_DAP_MCLK1_REQ_PEE2,
-};
+पूर्ण;
 
-static const unsigned hdmi_cec_pee3_pins[] = {
+अटल स्थिर अचिन्हित hdmi_cec_pee3_pins[] = अणु
 	TEGRA_PIN_HDMI_CEC_PEE3,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_clk_lb_out_pee4_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_clk_lb_out_pee4_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CLK_LB_OUT_PEE4,
-};
+पूर्ण;
 
-static const unsigned sdmmc3_clk_lb_in_pee5_pins[] = {
+अटल स्थिर अचिन्हित sdmmc3_clk_lb_in_pee5_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CLK_LB_IN_PEE5,
-};
+पूर्ण;
 
-static const unsigned dp_hpd_pff0_pins[] = {
+अटल स्थिर अचिन्हित dp_hpd_pff0_pins[] = अणु
 	TEGRA_PIN_DP_HPD_PFF0,
-};
+पूर्ण;
 
-static const unsigned usb_vbus_en2_pff1_pins[] = {
+अटल स्थिर अचिन्हित usb_vbus_en2_pff1_pins[] = अणु
 	TEGRA_PIN_USB_VBUS_EN2_PFF1,
-};
+पूर्ण;
 
-static const unsigned pff2_pins[] = {
+अटल स्थिर अचिन्हित pff2_pins[] = अणु
 	TEGRA_PIN_PFF2,
-};
+पूर्ण;
 
-static const unsigned core_pwr_req_pins[] = {
+अटल स्थिर अचिन्हित core_pwr_req_pins[] = अणु
 	TEGRA_PIN_CORE_PWR_REQ,
-};
+पूर्ण;
 
-static const unsigned cpu_pwr_req_pins[] = {
+अटल स्थिर अचिन्हित cpu_pwr_req_pins[] = अणु
 	TEGRA_PIN_CPU_PWR_REQ,
-};
+पूर्ण;
 
-static const unsigned pwr_int_n_pins[] = {
+अटल स्थिर अचिन्हित pwr_पूर्णांक_n_pins[] = अणु
 	TEGRA_PIN_PWR_INT_N,
-};
+पूर्ण;
 
-static const unsigned gmi_clk_lb_pins[] = {
+अटल स्थिर अचिन्हित gmi_clk_lb_pins[] = अणु
 	TEGRA_PIN_GMI_CLK_LB,
-};
+पूर्ण;
 
-static const unsigned reset_out_n_pins[] = {
+अटल स्थिर अचिन्हित reset_out_n_pins[] = अणु
 	TEGRA_PIN_RESET_OUT_N,
-};
+पूर्ण;
 
-static const unsigned owr_pins[] = {
+अटल स्थिर अचिन्हित owr_pins[] = अणु
 	TEGRA_PIN_OWR,
-};
+पूर्ण;
 
-static const unsigned clk_32k_in_pins[] = {
+अटल स्थिर अचिन्हित clk_32k_in_pins[] = अणु
 	TEGRA_PIN_CLK_32K_IN,
-};
+पूर्ण;
 
-static const unsigned jtag_rtck_pins[] = {
+अटल स्थिर अचिन्हित jtag_rtck_pins[] = अणु
 	TEGRA_PIN_JTAG_RTCK,
-};
+पूर्ण;
 
-static const unsigned drive_ao1_pins[] = {
+अटल स्थिर अचिन्हित drive_ao1_pins[] = अणु
 	TEGRA_PIN_KB_ROW0_PR0,
 	TEGRA_PIN_KB_ROW1_PR1,
 	TEGRA_PIN_KB_ROW2_PR2,
@@ -1208,9 +1209,9 @@ static const unsigned drive_ao1_pins[] = {
 	TEGRA_PIN_KB_ROW7_PR7,
 	TEGRA_PIN_PWR_I2C_SCL_PZ6,
 	TEGRA_PIN_PWR_I2C_SDA_PZ7,
-};
+पूर्ण;
 
-static const unsigned drive_ao2_pins[] = {
+अटल स्थिर अचिन्हित drive_ao2_pins[] = अणु
 	TEGRA_PIN_CLK_32K_OUT_PA0,
 	TEGRA_PIN_CLK_32K_IN,
 	TEGRA_PIN_KB_COL0_PQ0,
@@ -1235,16 +1236,16 @@ static const unsigned drive_ao2_pins[] = {
 	TEGRA_PIN_CORE_PWR_REQ,
 	TEGRA_PIN_CPU_PWR_REQ,
 	TEGRA_PIN_PWR_INT_N,
-};
+पूर्ण;
 
-static const unsigned drive_at1_pins[] = {
+अटल स्थिर अचिन्हित drive_at1_pins[] = अणु
 	TEGRA_PIN_PH0,
 	TEGRA_PIN_PH1,
 	TEGRA_PIN_PH2,
 	TEGRA_PIN_PH3,
-};
+पूर्ण;
 
-static const unsigned drive_at2_pins[] = {
+अटल स्थिर अचिन्हित drive_at2_pins[] = अणु
 	TEGRA_PIN_PG0,
 	TEGRA_PIN_PG1,
 	TEGRA_PIN_PG2,
@@ -1260,65 +1261,65 @@ static const unsigned drive_at2_pins[] = {
 	TEGRA_PIN_PI7,
 	TEGRA_PIN_PK0,
 	TEGRA_PIN_PK2,
-};
+पूर्ण;
 
-static const unsigned drive_at3_pins[] = {
+अटल स्थिर अचिन्हित drive_at3_pins[] = अणु
 	TEGRA_PIN_PC7,
 	TEGRA_PIN_PJ0,
-};
+पूर्ण;
 
-static const unsigned drive_at4_pins[] = {
+अटल स्थिर अचिन्हित drive_at4_pins[] = अणु
 	TEGRA_PIN_PB0,
 	TEGRA_PIN_PB1,
 	TEGRA_PIN_PJ0,
 	TEGRA_PIN_PJ7,
 	TEGRA_PIN_PK7,
-};
+पूर्ण;
 
-static const unsigned drive_at5_pins[] = {
+अटल स्थिर अचिन्हित drive_at5_pins[] = अणु
 	TEGRA_PIN_GEN2_I2C_SCL_PT5,
 	TEGRA_PIN_GEN2_I2C_SDA_PT6,
-};
+पूर्ण;
 
-static const unsigned drive_cdev1_pins[] = {
+अटल स्थिर अचिन्हित drive_cdev1_pins[] = अणु
 	TEGRA_PIN_DAP_MCLK1_PW4,
 	TEGRA_PIN_DAP_MCLK1_REQ_PEE2,
-};
+पूर्ण;
 
-static const unsigned drive_cdev2_pins[] = {
+अटल स्थिर अचिन्हित drive_cdev2_pins[] = अणु
 	TEGRA_PIN_CLK2_OUT_PW5,
 	TEGRA_PIN_CLK2_REQ_PCC5,
-};
+पूर्ण;
 
-static const unsigned drive_dap1_pins[] = {
+अटल स्थिर अचिन्हित drive_dap1_pins[] = अणु
 	TEGRA_PIN_DAP1_FS_PN0,
 	TEGRA_PIN_DAP1_DIN_PN1,
 	TEGRA_PIN_DAP1_DOUT_PN2,
 	TEGRA_PIN_DAP1_SCLK_PN3,
-};
+पूर्ण;
 
-static const unsigned drive_dap2_pins[] = {
+अटल स्थिर अचिन्हित drive_dap2_pins[] = अणु
 	TEGRA_PIN_DAP2_FS_PA2,
 	TEGRA_PIN_DAP2_SCLK_PA3,
 	TEGRA_PIN_DAP2_DIN_PA4,
 	TEGRA_PIN_DAP2_DOUT_PA5,
-};
+पूर्ण;
 
-static const unsigned drive_dap3_pins[] = {
+अटल स्थिर अचिन्हित drive_dap3_pins[] = अणु
 	TEGRA_PIN_DAP3_FS_PP0,
 	TEGRA_PIN_DAP3_DIN_PP1,
 	TEGRA_PIN_DAP3_DOUT_PP2,
 	TEGRA_PIN_DAP3_SCLK_PP3,
-};
+पूर्ण;
 
-static const unsigned drive_dap4_pins[] = {
+अटल स्थिर अचिन्हित drive_dap4_pins[] = अणु
 	TEGRA_PIN_DAP4_FS_PP4,
 	TEGRA_PIN_DAP4_DIN_PP5,
 	TEGRA_PIN_DAP4_DOUT_PP6,
 	TEGRA_PIN_DAP4_SCLK_PP7,
-};
+पूर्ण;
 
-static const unsigned drive_dbg_pins[] = {
+अटल स्थिर अचिन्हित drive_dbg_pins[] = अणु
 	TEGRA_PIN_GEN1_I2C_SCL_PC4,
 	TEGRA_PIN_GEN1_I2C_SDA_PC5,
 	TEGRA_PIN_PU0,
@@ -1328,9 +1329,9 @@ static const unsigned drive_dbg_pins[] = {
 	TEGRA_PIN_PU4,
 	TEGRA_PIN_PU5,
 	TEGRA_PIN_PU6,
-};
+पूर्ण;
 
-static const unsigned drive_sdio3_pins[] = {
+अटल स्थिर अचिन्हित drive_sdio3_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CLK_PA6,
 	TEGRA_PIN_SDMMC3_CMD_PA7,
 	TEGRA_PIN_SDMMC3_DAT3_PB4,
@@ -1339,9 +1340,9 @@ static const unsigned drive_sdio3_pins[] = {
 	TEGRA_PIN_SDMMC3_DAT0_PB7,
 	TEGRA_PIN_SDMMC3_CLK_LB_OUT_PEE4,
 	TEGRA_PIN_SDMMC3_CLK_LB_IN_PEE5,
-};
+पूर्ण;
 
-static const unsigned drive_spi_pins[] = {
+अटल स्थिर अचिन्हित drive_spi_pins[] = अणु
 	TEGRA_PIN_DVFS_PWM_PX0,
 	TEGRA_PIN_GPIO_X1_AUD_PX1,
 	TEGRA_PIN_DVFS_CLK_PX2,
@@ -1352,53 +1353,53 @@ static const unsigned drive_spi_pins[] = {
 	TEGRA_PIN_GPIO_X7_AUD_PX7,
 	TEGRA_PIN_GPIO_W2_AUD_PW2,
 	TEGRA_PIN_GPIO_W3_AUD_PW3,
-};
+पूर्ण;
 
-static const unsigned drive_uaa_pins[] = {
+अटल स्थिर अचिन्हित drive_uaa_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA0_PO1,
 	TEGRA_PIN_ULPI_DATA1_PO2,
 	TEGRA_PIN_ULPI_DATA2_PO3,
 	TEGRA_PIN_ULPI_DATA3_PO4,
-};
+पूर्ण;
 
-static const unsigned drive_uab_pins[] = {
+अटल स्थिर अचिन्हित drive_uab_pins[] = अणु
 	TEGRA_PIN_ULPI_DATA7_PO0,
 	TEGRA_PIN_ULPI_DATA4_PO5,
 	TEGRA_PIN_ULPI_DATA5_PO6,
 	TEGRA_PIN_ULPI_DATA6_PO7,
 	TEGRA_PIN_PV0,
 	TEGRA_PIN_PV1,
-};
+पूर्ण;
 
-static const unsigned drive_uart2_pins[] = {
+अटल स्थिर अचिन्हित drive_uart2_pins[] = अणु
 	TEGRA_PIN_UART2_TXD_PC2,
 	TEGRA_PIN_UART2_RXD_PC3,
 	TEGRA_PIN_UART2_CTS_N_PJ5,
 	TEGRA_PIN_UART2_RTS_N_PJ6,
-};
+पूर्ण;
 
-static const unsigned drive_uart3_pins[] = {
+अटल स्थिर अचिन्हित drive_uart3_pins[] = अणु
 	TEGRA_PIN_UART3_CTS_N_PA1,
 	TEGRA_PIN_UART3_RTS_N_PC0,
 	TEGRA_PIN_UART3_TXD_PW6,
 	TEGRA_PIN_UART3_RXD_PW7,
-};
+पूर्ण;
 
-static const unsigned drive_sdio1_pins[] = {
+अटल स्थिर अचिन्हित drive_sdio1_pins[] = अणु
 	TEGRA_PIN_SDMMC1_DAT3_PY4,
 	TEGRA_PIN_SDMMC1_DAT2_PY5,
 	TEGRA_PIN_SDMMC1_DAT1_PY6,
 	TEGRA_PIN_SDMMC1_DAT0_PY7,
 	TEGRA_PIN_SDMMC1_CLK_PZ0,
 	TEGRA_PIN_SDMMC1_CMD_PZ1,
-};
+पूर्ण;
 
-static const unsigned drive_ddc_pins[] = {
+अटल स्थिर अचिन्हित drive_ddc_pins[] = अणु
 	TEGRA_PIN_DDC_SCL_PV4,
 	TEGRA_PIN_DDC_SDA_PV5,
-};
+पूर्ण;
 
-static const unsigned drive_gma_pins[] = {
+अटल स्थिर अचिन्हित drive_gma_pins[] = अणु
 	TEGRA_PIN_SDMMC4_CLK_PCC4,
 	TEGRA_PIN_SDMMC4_CMD_PT7,
 	TEGRA_PIN_SDMMC4_DAT0_PAA0,
@@ -1409,44 +1410,44 @@ static const unsigned drive_gma_pins[] = {
 	TEGRA_PIN_SDMMC4_DAT5_PAA5,
 	TEGRA_PIN_SDMMC4_DAT6_PAA6,
 	TEGRA_PIN_SDMMC4_DAT7_PAA7,
-};
+पूर्ण;
 
-static const unsigned drive_gme_pins[] = {
+अटल स्थिर अचिन्हित drive_gme_pins[] = अणु
 	TEGRA_PIN_PBB0,
 	TEGRA_PIN_CAM_I2C_SCL_PBB1,
 	TEGRA_PIN_CAM_I2C_SDA_PBB2,
 	TEGRA_PIN_PBB3,
 	TEGRA_PIN_PCC2,
-};
+पूर्ण;
 
-static const unsigned drive_gmf_pins[] = {
+अटल स्थिर अचिन्हित drive_gmf_pins[] = अणु
 	TEGRA_PIN_PBB4,
 	TEGRA_PIN_PBB5,
 	TEGRA_PIN_PBB6,
 	TEGRA_PIN_PBB7,
-};
+पूर्ण;
 
-static const unsigned drive_gmg_pins[] = {
+अटल स्थिर अचिन्हित drive_gmg_pins[] = अणु
 	TEGRA_PIN_CAM_MCLK_PCC0,
-};
+पूर्ण;
 
-static const unsigned drive_gmh_pins[] = {
+अटल स्थिर अचिन्हित drive_gmh_pins[] = अणु
 	TEGRA_PIN_PCC1,
-};
+पूर्ण;
 
-static const unsigned drive_owr_pins[] = {
+अटल स्थिर अचिन्हित drive_owr_pins[] = अणु
 	TEGRA_PIN_SDMMC3_CD_N_PV2,
 	TEGRA_PIN_OWR,
-};
+पूर्ण;
 
-static const unsigned drive_uda_pins[] = {
+अटल स्थिर अचिन्हित drive_uda_pins[] = अणु
 	TEGRA_PIN_ULPI_CLK_PY0,
-	TEGRA_PIN_ULPI_DIR_PY1,
+	TEGRA_PIN_ULPI_सूची_PY1,
 	TEGRA_PIN_ULPI_NXT_PY2,
 	TEGRA_PIN_ULPI_STP_PY3,
-};
+पूर्ण;
 
-static const unsigned drive_gpv_pins[] = {
+अटल स्थिर अचिन्हित drive_gpv_pins[] = अणु
 	TEGRA_PIN_PEX_L0_RST_N_PDD1,
 	TEGRA_PIN_PEX_L0_CLKREQ_N_PDD2,
 	TEGRA_PIN_PEX_WAKE_N_PDD3,
@@ -1454,18 +1455,18 @@ static const unsigned drive_gpv_pins[] = {
 	TEGRA_PIN_PEX_L1_CLKREQ_N_PDD6,
 	TEGRA_PIN_USB_VBUS_EN2_PFF1,
 	TEGRA_PIN_PFF2,
-};
+पूर्ण;
 
-static const unsigned drive_dev3_pins[] = {
+अटल स्थिर अचिन्हित drive_dev3_pins[] = अणु
 	TEGRA_PIN_CLK3_OUT_PEE0,
 	TEGRA_PIN_CLK3_REQ_PEE1,
-};
+पूर्ण;
 
-static const unsigned drive_cec_pins[] = {
+अटल स्थिर अचिन्हित drive_cec_pins[] = अणु
 	TEGRA_PIN_HDMI_CEC_PEE3,
-};
+पूर्ण;
 
-static const unsigned drive_at6_pins[] = {
+अटल स्थिर अचिन्हित drive_at6_pins[] = अणु
 	TEGRA_PIN_PK1,
 	TEGRA_PIN_PK3,
 	TEGRA_PIN_PK4,
@@ -1476,40 +1477,40 @@ static const unsigned drive_at6_pins[] = {
 	TEGRA_PIN_PH5,
 	TEGRA_PIN_PH6,
 	TEGRA_PIN_PH7,
-};
+पूर्ण;
 
-static const unsigned drive_dap5_pins[] = {
+अटल स्थिर अचिन्हित drive_dap5_pins[] = अणु
 	TEGRA_PIN_SPDIF_IN_PK6,
 	TEGRA_PIN_SPDIF_OUT_PK5,
 	TEGRA_PIN_DP_HPD_PFF0,
-};
+पूर्ण;
 
-static const unsigned drive_usb_vbus_en_pins[] = {
+अटल स्थिर अचिन्हित drive_usb_vbus_en_pins[] = अणु
 	TEGRA_PIN_USB_VBUS_EN0_PN4,
 	TEGRA_PIN_USB_VBUS_EN1_PN5,
-};
+पूर्ण;
 
-static const unsigned drive_ao3_pins[] = {
+अटल स्थिर अचिन्हित drive_ao3_pins[] = अणु
 	TEGRA_PIN_RESET_OUT_N,
-};
+पूर्ण;
 
-static const unsigned drive_ao0_pins[] = {
+अटल स्थिर अचिन्हित drive_ao0_pins[] = अणु
 	TEGRA_PIN_JTAG_RTCK,
-};
+पूर्ण;
 
-static const unsigned drive_hv0_pins[] = {
+अटल स्थिर अचिन्हित drive_hv0_pins[] = अणु
 	TEGRA_PIN_HDMI_INT_PN7,
-};
+पूर्ण;
 
-static const unsigned drive_sdio4_pins[] = {
+अटल स्थिर अचिन्हित drive_sdio4_pins[] = अणु
 	TEGRA_PIN_SDMMC1_WP_N_PV3,
-};
+पूर्ण;
 
-static const unsigned drive_ao4_pins[] = {
+अटल स्थिर अचिन्हित drive_ao4_pins[] = अणु
 	TEGRA_PIN_JTAG_RTCK,
-};
+पूर्ण;
 
-static const unsigned mipi_pad_ctrl_dsi_b_pins[] = {
+अटल स्थिर अचिन्हित mipi_pad_ctrl_dsi_b_pins[] = अणु
 	TEGRA_PIN_DSI_B_CLK_P,
 	TEGRA_PIN_DSI_B_CLK_N,
 	TEGRA_PIN_DSI_B_D0_P,
@@ -1520,9 +1521,9 @@ static const unsigned mipi_pad_ctrl_dsi_b_pins[] = {
 	TEGRA_PIN_DSI_B_D2_N,
 	TEGRA_PIN_DSI_B_D3_P,
 	TEGRA_PIN_DSI_B_D3_N,
-};
+पूर्ण;
 
-enum tegra_mux {
+क्रमागत tegra_mux अणु
 	TEGRA_MUX_BLINK,
 	TEGRA_MUX_CCLA,
 	TEGRA_MUX_CEC,
@@ -1609,14 +1610,14 @@ enum tegra_mux {
 	TEGRA_MUX_VI_ALT3,
 	TEGRA_MUX_VIMCLK2,
 	TEGRA_MUX_VIMCLK2_ALT,
-};
+पूर्ण;
 
-#define FUNCTION(fname)					\
-	{						\
+#घोषणा FUNCTION(fname)					\
+	अणु						\
 		.name = #fname,				\
-	}
+	पूर्ण
 
-static struct tegra_function tegra124_functions[] = {
+अटल काष्ठा tegra_function tegra124_functions[] = अणु
 	FUNCTION(blink),
 	FUNCTION(ccla),
 	FUNCTION(cec),
@@ -1676,7 +1677,7 @@ static struct tegra_function tegra124_functions[] = {
 	FUNCTION(sdmmc3),
 	FUNCTION(sdmmc4),
 	FUNCTION(soc),
-	FUNCTION(spdif),
+	FUNCTION(spdअगर),
 	FUNCTION(spi1),
 	FUNCTION(spi2),
 	FUNCTION(spi3),
@@ -1684,7 +1685,7 @@ static struct tegra_function tegra124_functions[] = {
 	FUNCTION(spi5),
 	FUNCTION(spi6),
 	FUNCTION(sys),
-	FUNCTION(tmds),
+	FUNCTION(पंचांगds),
 	FUNCTION(trace),
 	FUNCTION(uarta),
 	FUNCTION(uartb),
@@ -1703,30 +1704,30 @@ static struct tegra_function tegra124_functions[] = {
 	FUNCTION(vi_alt3),
 	FUNCTION(vimclk2),
 	FUNCTION(vimclk2_alt),
-};
+पूर्ण;
 
-#define DRV_PINGROUP_REG_A		0x868	/* bank 0 */
-#define PINGROUP_REG_A			0x3000	/* bank 1 */
-#define MIPI_PAD_CTRL_PINGROUP_REG_A	0x820	/* bank 2 */
+#घोषणा DRV_PINGROUP_REG_A		0x868	/* bank 0 */
+#घोषणा PINGROUP_REG_A			0x3000	/* bank 1 */
+#घोषणा MIPI_PAD_CTRL_PINGROUP_REG_A	0x820	/* bank 2 */
 
-#define DRV_PINGROUP_REG(r)		((r) - DRV_PINGROUP_REG_A)
-#define PINGROUP_REG(r)			((r) - PINGROUP_REG_A)
-#define MIPI_PAD_CTRL_PINGROUP_REG_Y(r)	((r) - MIPI_PAD_CTRL_PINGROUP_REG_A)
+#घोषणा DRV_PINGROUP_REG(r)		((r) - DRV_PINGROUP_REG_A)
+#घोषणा PINGROUP_REG(r)			((r) - PINGROUP_REG_A)
+#घोषणा MIPI_PAD_CTRL_PINGROUP_REG_Y(r)	((r) - MIPI_PAD_CTRL_PINGROUP_REG_A)
 
-#define PINGROUP_BIT_Y(b)		(b)
-#define PINGROUP_BIT_N(b)		(-1)
+#घोषणा PINGROUP_BIT_Y(b)		(b)
+#घोषणा PINGROUP_BIT_N(b)		(-1)
 
-#define PINGROUP(pg_name, f0, f1, f2, f3, r, od, ior, rcv_sel)		\
-	{								\
+#घोषणा PINGROUP(pg_name, f0, f1, f2, f3, r, od, ior, rcv_sel)		\
+	अणु								\
 		.name = #pg_name,					\
 		.pins = pg_name##_pins,					\
 		.npins = ARRAY_SIZE(pg_name##_pins),			\
-		.funcs = {						\
+		.funcs = अणु						\
 			TEGRA_MUX_##f0,					\
 			TEGRA_MUX_##f1,					\
 			TEGRA_MUX_##f2,					\
 			TEGRA_MUX_##f3,					\
-		},							\
+		पूर्ण,							\
 		.mux_reg = PINGROUP_REG(r),				\
 		.mux_bank = 1,						\
 		.mux_bit = 0,						\
@@ -1742,13 +1743,13 @@ static struct tegra_function tegra124_functions[] = {
 		.ioreset_bit = PINGROUP_BIT_##ior(8),			\
 		.rcv_sel_bit = PINGROUP_BIT_##rcv_sel(9),		\
 		.drv_reg = -1,						\
-		.parked_bitmask = 0,					\
-	}
+		.parked_biपंचांगask = 0,					\
+	पूर्ण
 
-#define DRV_PINGROUP(pg_name, r, hsm_b, schmitt_b, lpmd_b, drvdn_b,	\
+#घोषणा DRV_PINGROUP(pg_name, r, hsm_b, schmitt_b, lpmd_b, drvdn_b,	\
 		     drvdn_w, drvup_b, drvup_w, slwr_b, slwr_w,		\
 		     slwf_b, slwf_w, drvtype)				\
-	{								\
+	अणु								\
 		.name = "drive_" #pg_name,				\
 		.pins = drive_##pg_name##_pins,				\
 		.npins = ARRAY_SIZE(drive_##pg_name##_pins),		\
@@ -1774,20 +1775,20 @@ static struct tegra_function tegra124_functions[] = {
 		.slwf_bit = slwf_b,					\
 		.slwf_width = slwf_w,					\
 		.drvtype_bit = PINGROUP_BIT_##drvtype(6),		\
-		.parked_bitmask = 0,					\
-	}
+		.parked_biपंचांगask = 0,					\
+	पूर्ण
 
-#define MIPI_PAD_CTRL_PINGROUP(pg_name, r, b, f0, f1)			\
-	{								\
+#घोषणा MIPI_PAD_CTRL_PINGROUP(pg_name, r, b, f0, f1)			\
+	अणु								\
 		.name = "mipi_pad_ctrl_" #pg_name,			\
 		.pins = mipi_pad_ctrl_##pg_name##_pins,			\
 		.npins = ARRAY_SIZE(mipi_pad_ctrl_##pg_name##_pins),	\
-		.funcs = {						\
+		.funcs = अणु						\
 			TEGRA_MUX_ ## f0,				\
 			TEGRA_MUX_ ## f1,				\
 			TEGRA_MUX_RSVD3,				\
 			TEGRA_MUX_RSVD4,				\
-		},							\
+		पूर्ण,							\
 		.mux_reg = MIPI_PAD_CTRL_PINGROUP_REG_Y(r),		\
 		.mux_bank = 2,						\
 		.mux_bit = b,						\
@@ -1799,9 +1800,9 @@ static struct tegra_function tegra124_functions[] = {
 		.ioreset_bit = -1,					\
 		.rcv_sel_bit = -1,					\
 		.drv_reg = -1,						\
-	}
+	पूर्ण
 
-static const struct tegra_pingroup tegra124_groups[] = {
+अटल स्थिर काष्ठा tegra_pingroup tegra124_groups[] = अणु
 	/*       pg_name,                f0,         f1,         f2,           f3,          r,      od, ior, rcv_sel */
 	PINGROUP(ulpi_data0_po1,         SPI3,       HSI,        UARTA,        ULPI,        0x3000, N,   N,  N),
 	PINGROUP(ulpi_data1_po2,         SPI3,       HSI,        UARTA,        ULPI,        0x3004, N,   N,  N),
@@ -1817,7 +1818,7 @@ static const struct tegra_pingroup tegra124_groups[] = {
 	PINGROUP(ulpi_stp_py3,           SPI1,       SPI5,       UARTD,        ULPI,        0x302c, N,   N,  N),
 	PINGROUP(dap3_fs_pp0,            I2S2,       SPI5,       DISPLAYA,     DISPLAYB,    0x3030, N,   N,  N),
 	PINGROUP(dap3_din_pp1,           I2S2,       SPI5,       DISPLAYA,     DISPLAYB,    0x3034, N,   N,  N),
-	PINGROUP(dap3_dout_pp2,          I2S2,       SPI5,       DISPLAYA,     RSVD4,       0x3038, N,   N,  N),
+	PINGROUP(dap3_करोut_pp2,          I2S2,       SPI5,       DISPLAYA,     RSVD4,       0x3038, N,   N,  N),
 	PINGROUP(dap3_sclk_pp3,          I2S2,       SPI5,       RSVD3,        DISPLAYB,    0x303c, N,   N,  N),
 	PINGROUP(pv0,                    RSVD1,      RSVD2,      RSVD3,        RSVD4,       0x3040, N,   N,  N),
 	PINGROUP(pv1,                    RSVD1,      RSVD2,      RSVD3,        RSVD4,       0x3044, N,   N,  N),
@@ -1829,7 +1830,7 @@ static const struct tegra_pingroup tegra124_groups[] = {
 	PINGROUP(sdmmc1_dat0_py7,        SDMMC1,     RSVD2,      SPI4,         UARTA,       0x305c, N,   N,  N),
 	PINGROUP(clk2_out_pw5,           EXTPERIPH2, RSVD2,      RSVD3,        RSVD4,       0x3068, N,   N,  N),
 	PINGROUP(clk2_req_pcc5,          DAP,        RSVD2,      RSVD3,        RSVD4,       0x306c, N,   N,  N),
-	PINGROUP(hdmi_int_pn7,           RSVD1,      RSVD2,      RSVD3,        RSVD4,       0x3110, N,   N,  Y),
+	PINGROUP(hdmi_पूर्णांक_pn7,           RSVD1,      RSVD2,      RSVD3,        RSVD4,       0x3110, N,   N,  Y),
 	PINGROUP(ddc_scl_pv4,            I2C4,       RSVD2,      RSVD3,        RSVD4,       0x3114, N,   N,  Y),
 	PINGROUP(ddc_sda_pv5,            I2C4,       RSVD2,      RSVD3,        RSVD4,       0x3118, N,   N,  Y),
 	PINGROUP(uart2_rxd_pc3,          IRDA,       SPDIF,      UARTA,        SPI4,        0x3164, N,   N,  N),
@@ -1851,7 +1852,7 @@ static const struct tegra_pingroup tegra124_groups[] = {
 	PINGROUP(gen1_i2c_scl_pc4,       I2C1,       RSVD2,      RSVD3,        RSVD4,       0x31a4, Y,   N,  N),
 	PINGROUP(dap4_fs_pp4,            I2S3,       GMI,        DTV,          RSVD4,       0x31a8, N,   N,  N),
 	PINGROUP(dap4_din_pp5,           I2S3,       GMI,        RSVD3,        RSVD4,       0x31ac, N,   N,  N),
-	PINGROUP(dap4_dout_pp6,          I2S3,       GMI,        DTV,          RSVD4,       0x31b0, N,   N,  N),
+	PINGROUP(dap4_करोut_pp6,          I2S3,       GMI,        DTV,          RSVD4,       0x31b0, N,   N,  N),
 	PINGROUP(dap4_sclk_pp7,          I2S3,       GMI,        RSVD3,        RSVD4,       0x31b4, N,   N,  N),
 	PINGROUP(clk3_out_pee0,          EXTPERIPH3, RSVD2,      RSVD3,        RSVD4,       0x31b8, N,   N,  N),
 	PINGROUP(clk3_req_pee1,          DEV3,       RSVD2,      RSVD3,        RSVD4,       0x31bc, N,   N,  N),
@@ -1944,20 +1945,20 @@ static const struct tegra_pingroup tegra124_groups[] = {
 	PINGROUP(clk_32k_out_pa0,        BLINK,      SOC,        RSVD3,        RSVD4,       0x331c, N,   N,  N),
 	PINGROUP(core_pwr_req,           PWRON,      RSVD2,      RSVD3,        RSVD4,       0x3324, N,   N,  N),
 	PINGROUP(cpu_pwr_req,            CPU,        RSVD2,      RSVD3,        RSVD4,       0x3328, N,   N,  N),
-	PINGROUP(pwr_int_n,              PMI,        RSVD2,      RSVD3,        RSVD4,       0x332c, N,   N,  N),
+	PINGROUP(pwr_पूर्णांक_n,              PMI,        RSVD2,      RSVD3,        RSVD4,       0x332c, N,   N,  N),
 	PINGROUP(clk_32k_in,             CLK,        RSVD2,      RSVD3,        RSVD4,       0x3330, N,   N,  N),
 	PINGROUP(owr,                    OWR,        RSVD2,      RSVD3,        RSVD4,       0x3334, N,   N,  Y),
 	PINGROUP(dap1_fs_pn0,            I2S0,       HDA,        GMI,          RSVD4,       0x3338, N,   N,  N),
 	PINGROUP(dap1_din_pn1,           I2S0,       HDA,        GMI,          RSVD4,       0x333c, N,   N,  N),
-	PINGROUP(dap1_dout_pn2,          I2S0,       HDA,        GMI,          SATA,        0x3340, N,   N,  N),
+	PINGROUP(dap1_करोut_pn2,          I2S0,       HDA,        GMI,          SATA,        0x3340, N,   N,  N),
 	PINGROUP(dap1_sclk_pn3,          I2S0,       HDA,        GMI,          RSVD4,       0x3344, N,   N,  N),
 	PINGROUP(dap_mclk1_req_pee2,     DAP,        DAP1,       SATA,         RSVD4,       0x3348, N,   N,  N),
 	PINGROUP(dap_mclk1_pw4,          EXTPERIPH1, DAP2,       RSVD3,        RSVD4,       0x334c, N,   N,  N),
-	PINGROUP(spdif_in_pk6,           SPDIF,      RSVD2,      RSVD3,        I2C3,        0x3350, N,   N,  N),
-	PINGROUP(spdif_out_pk5,          SPDIF,      RSVD2,      RSVD3,        I2C3,        0x3354, N,   N,  N),
+	PINGROUP(spdअगर_in_pk6,           SPDIF,      RSVD2,      RSVD3,        I2C3,        0x3350, N,   N,  N),
+	PINGROUP(spdअगर_out_pk5,          SPDIF,      RSVD2,      RSVD3,        I2C3,        0x3354, N,   N,  N),
 	PINGROUP(dap2_fs_pa2,            I2S1,       HDA,        GMI,          RSVD4,       0x3358, N,   N,  N),
 	PINGROUP(dap2_din_pa4,           I2S1,       HDA,        GMI,          RSVD4,       0x335c, N,   N,  N),
-	PINGROUP(dap2_dout_pa5,          I2S1,       HDA,        GMI,          RSVD4,       0x3360, N,   N,  N),
+	PINGROUP(dap2_करोut_pa5,          I2S1,       HDA,        GMI,          RSVD4,       0x3360, N,   N,  N),
 	PINGROUP(dap2_sclk_pa3,          I2S1,       HDA,        GMI,          RSVD4,       0x3364, N,   N,  N),
 	PINGROUP(dvfs_pwm_px0,           SPI6,       CLDVFS,     GMI,          RSVD4,       0x3368, N,   N,  N),
 	PINGROUP(gpio_x1_aud_px1,        SPI6,       RSVD2,      GMI,          RSVD4,       0x336c, N,   N,  N),
@@ -2039,9 +2040,9 @@ static const struct tegra_pingroup tegra124_groups[] = {
 
 	/*                     pg_name, r,     b, f0,  f1 */
 	MIPI_PAD_CTRL_PINGROUP(dsi_b,   0x820, 1, CSI, DSI_B),
-};
+पूर्ण;
 
-static const struct tegra_pinctrl_soc_data tegra124_pinctrl = {
+अटल स्थिर काष्ठा tegra_pinctrl_soc_data tegra124_pinctrl = अणु
 	.ngpios = NUM_GPIOS,
 	.gpio_compatible = "nvidia,tegra124-gpio",
 	.pins = tegra124_pins,
@@ -2053,28 +2054,28 @@ static const struct tegra_pinctrl_soc_data tegra124_pinctrl = {
 	.hsm_in_mux = false,
 	.schmitt_in_mux = false,
 	.drvtype_in_mux = false,
-};
+पूर्ण;
 
-static int tegra124_pinctrl_probe(struct platform_device *pdev)
-{
-	return tegra_pinctrl_probe(pdev, &tegra124_pinctrl);
-}
+अटल पूर्णांक tegra124_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस tegra_pinctrl_probe(pdev, &tegra124_pinctrl);
+पूर्ण
 
-static const struct of_device_id tegra124_pinctrl_of_match[] = {
-	{ .compatible = "nvidia,tegra124-pinmux", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id tegra124_pinctrl_of_match[] = अणु
+	अणु .compatible = "nvidia,tegra124-pinmux", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver tegra124_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tegra124_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "tegra124-pinctrl",
 		.of_match_table = tegra124_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = tegra124_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init tegra124_pinctrl_init(void)
-{
-	return platform_driver_register(&tegra124_pinctrl_driver);
-}
+अटल पूर्णांक __init tegra124_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&tegra124_pinctrl_driver);
+पूर्ण
 arch_initcall(tegra124_pinctrl_init);

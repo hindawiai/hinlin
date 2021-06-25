@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DRM driver for Sitronix ST7586 panels
+ * DRM driver क्रम Sitronix ST7586 panels
  *
  * Copyright 2017 David Lechner <david@lechnology.com>
  */
 
-#include <linux/delay.h>
-#include <linux/dma-buf.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/property.h>
-#include <linux/spi/spi.h>
-#include <video/mipi_display.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_damage_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_format_helper.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_mipi_dbi.h>
-#include <drm/drm_rect.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_damage_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_क्रमmat_helper.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_mipi_dbi.h>
+#समावेश <drm/drm_rect.h>
 
-/* controller-specific commands */
-#define ST7586_DISP_MODE_GRAY	0x38
-#define ST7586_DISP_MODE_MONO	0x39
-#define ST7586_ENABLE_DDRAM	0x3a
-#define ST7586_SET_DISP_DUTY	0xb0
-#define ST7586_SET_PART_DISP	0xb4
-#define ST7586_SET_NLINE_INV	0xb5
-#define ST7586_SET_VOP		0xc0
-#define ST7586_SET_BIAS_SYSTEM	0xc3
-#define ST7586_SET_BOOST_LEVEL	0xc4
-#define ST7586_SET_VOP_OFFSET	0xc7
-#define ST7586_ENABLE_ANALOG	0xd0
-#define ST7586_AUTO_READ_CTRL	0xd7
-#define ST7586_OTP_RW_CTRL	0xe0
-#define ST7586_OTP_CTRL_OUT	0xe1
-#define ST7586_OTP_READ		0xe3
+/* controller-specअगरic commands */
+#घोषणा ST7586_DISP_MODE_GRAY	0x38
+#घोषणा ST7586_DISP_MODE_MONO	0x39
+#घोषणा ST7586_ENABLE_DDRAM	0x3a
+#घोषणा ST7586_SET_DISP_DUTY	0xb0
+#घोषणा ST7586_SET_PART_DISP	0xb4
+#घोषणा ST7586_SET_NLINE_INV	0xb5
+#घोषणा ST7586_SET_VOP		0xc0
+#घोषणा ST7586_SET_BIAS_SYSTEM	0xc3
+#घोषणा ST7586_SET_BOOST_LEVEL	0xc4
+#घोषणा ST7586_SET_VOP_OFFSET	0xc7
+#घोषणा ST7586_ENABLE_ANALOG	0xd0
+#घोषणा ST7586_AUTO_READ_CTRL	0xd7
+#घोषणा ST7586_OTP_RW_CTRL	0xe0
+#घोषणा ST7586_OTP_CTRL_OUT	0xe1
+#घोषणा ST7586_OTP_READ		0xe3
 
-#define ST7586_DISP_CTRL_MX	BIT(6)
-#define ST7586_DISP_CTRL_MY	BIT(7)
+#घोषणा ST7586_DISP_CTRL_MX	BIT(6)
+#घोषणा ST7586_DISP_CTRL_MY	BIT(7)
 
 /*
- * The ST7586 controller has an unusual pixel format where 2bpp grayscale is
+ * The ST7586 controller has an unusual pixel क्रमmat where 2bpp grayscale is
  * packed 3 pixels per byte with the first two pixels using 3 bits and the 3rd
  * pixel using only 2 bits.
  *
@@ -59,77 +60,77 @@
  * |  0   |  0   |  0   ||  0   |  0   || 1  1 | white
  */
 
-static const u8 st7586_lookup[] = { 0x7, 0x4, 0x2, 0x0 };
+अटल स्थिर u8 st7586_lookup[] = अणु 0x7, 0x4, 0x2, 0x0 पूर्ण;
 
-static void st7586_xrgb8888_to_gray332(u8 *dst, void *vaddr,
-				       struct drm_framebuffer *fb,
-				       struct drm_rect *clip)
-{
-	size_t len = (clip->x2 - clip->x1) * (clip->y2 - clip->y1);
-	unsigned int x, y;
+अटल व्योम st7586_xrgb8888_to_gray332(u8 *dst, व्योम *vaddr,
+				       काष्ठा drm_framebuffer *fb,
+				       काष्ठा drm_rect *clip)
+अणु
+	माप_प्रकार len = (clip->x2 - clip->x1) * (clip->y2 - clip->y1);
+	अचिन्हित पूर्णांक x, y;
 	u8 *src, *buf, val;
 
-	buf = kmalloc(len, GFP_KERNEL);
-	if (!buf)
-		return;
+	buf = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!buf)
+		वापस;
 
 	drm_fb_xrgb8888_to_gray8(buf, vaddr, fb, clip);
 	src = buf;
 
-	for (y = clip->y1; y < clip->y2; y++) {
-		for (x = clip->x1; x < clip->x2; x += 3) {
+	क्रम (y = clip->y1; y < clip->y2; y++) अणु
+		क्रम (x = clip->x1; x < clip->x2; x += 3) अणु
 			val = st7586_lookup[*src++ >> 6] << 5;
 			val |= st7586_lookup[*src++ >> 6] << 2;
 			val |= st7586_lookup[*src++ >> 6] >> 1;
 			*dst++ = val;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static int st7586_buf_copy(void *dst, struct drm_framebuffer *fb,
-			   struct drm_rect *clip)
-{
-	struct drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
-	struct dma_buf_attachment *import_attach = cma_obj->base.import_attach;
-	void *src = cma_obj->vaddr;
-	int ret = 0;
+अटल पूर्णांक st7586_buf_copy(व्योम *dst, काष्ठा drm_framebuffer *fb,
+			   काष्ठा drm_rect *clip)
+अणु
+	काष्ठा drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
+	काष्ठा dma_buf_attachment *import_attach = cma_obj->base.import_attach;
+	व्योम *src = cma_obj->vaddr;
+	पूर्णांक ret = 0;
 
-	if (import_attach) {
+	अगर (import_attach) अणु
 		ret = dma_buf_begin_cpu_access(import_attach->dmabuf,
 					       DMA_FROM_DEVICE);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	st7586_xrgb8888_to_gray332(dst, src, fb, clip);
 
-	if (import_attach)
+	अगर (import_attach)
 		ret = dma_buf_end_cpu_access(import_attach->dmabuf,
 					     DMA_FROM_DEVICE);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void st7586_fb_dirty(struct drm_framebuffer *fb, struct drm_rect *rect)
-{
-	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(fb->dev);
-	struct mipi_dbi *dbi = &dbidev->dbi;
-	int start, end, idx, ret = 0;
+अटल व्योम st7586_fb_dirty(काष्ठा drm_framebuffer *fb, काष्ठा drm_rect *rect)
+अणु
+	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(fb->dev);
+	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
+	पूर्णांक start, end, idx, ret = 0;
 
-	if (!drm_dev_enter(fb->dev, &idx))
-		return;
+	अगर (!drm_dev_enter(fb->dev, &idx))
+		वापस;
 
 	/* 3 pixels per byte, so grow clip to nearest multiple of 3 */
-	rect->x1 = rounddown(rect->x1, 3);
+	rect->x1 = roundकरोwn(rect->x1, 3);
 	rect->x2 = roundup(rect->x2, 3);
 
 	DRM_DEBUG_KMS("Flushing [FB:%d] " DRM_RECT_FMT "\n", fb->base.id, DRM_RECT_ARG(rect));
 
 	ret = st7586_buf_copy(dbidev->tx_buf, fb, rect);
-	if (ret)
-		goto err_msg;
+	अगर (ret)
+		जाओ err_msg;
 
 	/* Pixels are packed 3 per byte */
 	start = rect->x1 / 3;
@@ -146,49 +147,49 @@ static void st7586_fb_dirty(struct drm_framebuffer *fb, struct drm_rect *rect)
 				   (u8 *)dbidev->tx_buf,
 				   (end - start) * (rect->y2 - rect->y1));
 err_msg:
-	if (ret)
+	अगर (ret)
 		dev_err_once(fb->dev->dev, "Failed to update display %d\n", ret);
 
-	drm_dev_exit(idx);
-}
+	drm_dev_निकास(idx);
+पूर्ण
 
-static void st7586_pipe_update(struct drm_simple_display_pipe *pipe,
-			       struct drm_plane_state *old_state)
-{
-	struct drm_plane_state *state = pipe->plane.state;
-	struct drm_rect rect;
+अटल व्योम st7586_pipe_update(काष्ठा drm_simple_display_pipe *pipe,
+			       काष्ठा drm_plane_state *old_state)
+अणु
+	काष्ठा drm_plane_state *state = pipe->plane.state;
+	काष्ठा drm_rect rect;
 
-	if (!pipe->crtc.state->active)
-		return;
+	अगर (!pipe->crtc.state->active)
+		वापस;
 
-	if (drm_atomic_helper_damage_merged(old_state, state, &rect))
+	अगर (drm_atomic_helper_damage_merged(old_state, state, &rect))
 		st7586_fb_dirty(state->fb, &rect);
-}
+पूर्ण
 
-static void st7586_pipe_enable(struct drm_simple_display_pipe *pipe,
-			       struct drm_crtc_state *crtc_state,
-			       struct drm_plane_state *plane_state)
-{
-	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
-	struct drm_framebuffer *fb = plane_state->fb;
-	struct mipi_dbi *dbi = &dbidev->dbi;
-	struct drm_rect rect = {
+अटल व्योम st7586_pipe_enable(काष्ठा drm_simple_display_pipe *pipe,
+			       काष्ठा drm_crtc_state *crtc_state,
+			       काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
+	काष्ठा drm_framebuffer *fb = plane_state->fb;
+	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
+	काष्ठा drm_rect rect = अणु
 		.x1 = 0,
 		.x2 = fb->width,
 		.y1 = 0,
 		.y2 = fb->height,
-	};
-	int idx, ret;
+	पूर्ण;
+	पूर्णांक idx, ret;
 	u8 addr_mode;
 
-	if (!drm_dev_enter(pipe->crtc.dev, &idx))
-		return;
+	अगर (!drm_dev_enter(pipe->crtc.dev, &idx))
+		वापस;
 
 	DRM_DEBUG_KMS("\n");
 
-	ret = mipi_dbi_poweron_reset(dbidev);
-	if (ret)
-		goto out_exit;
+	ret = mipi_dbi_घातeron_reset(dbidev);
+	अगर (ret)
+		जाओ out_निकास;
 
 	mipi_dbi_command(dbi, ST7586_AUTO_READ_CTRL, 0x9f);
 	mipi_dbi_command(dbi, ST7586_OTP_RW_CTRL, 0x00);
@@ -214,20 +215,20 @@ static void st7586_pipe_enable(struct drm_simple_display_pipe *pipe,
 	mipi_dbi_command(dbi, ST7586_DISP_MODE_GRAY);
 	mipi_dbi_command(dbi, ST7586_ENABLE_DDRAM, 0x02);
 
-	switch (dbidev->rotation) {
-	default:
+	चयन (dbidev->rotation) अणु
+	शेष:
 		addr_mode = 0x00;
-		break;
-	case 90:
+		अवरोध;
+	हाल 90:
 		addr_mode = ST7586_DISP_CTRL_MY;
-		break;
-	case 180:
+		अवरोध;
+	हाल 180:
 		addr_mode = ST7586_DISP_CTRL_MX | ST7586_DISP_CTRL_MY;
-		break;
-	case 270:
+		अवरोध;
+	हाल 270:
 		addr_mode = ST7586_DISP_CTRL_MX;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mipi_dbi_command(dbi, MIPI_DCS_SET_ADDRESS_MODE, addr_mode);
 
 	mipi_dbi_command(dbi, ST7586_SET_DISP_DUTY, 0x7f);
@@ -240,16 +241,16 @@ static void st7586_pipe_enable(struct drm_simple_display_pipe *pipe,
 	st7586_fb_dirty(fb, &rect);
 
 	mipi_dbi_command(dbi, MIPI_DCS_SET_DISPLAY_ON);
-out_exit:
-	drm_dev_exit(idx);
-}
+out_निकास:
+	drm_dev_निकास(idx);
+पूर्ण
 
-static void st7586_pipe_disable(struct drm_simple_display_pipe *pipe)
-{
-	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
+अटल व्योम st7586_pipe_disable(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
 
 	/*
-	 * This callback is not protected by drm_dev_enter/exit since we want to
+	 * This callback is not रक्षित by drm_dev_enter/निकास since we want to
 	 * turn off the display on regular driver unload. It's highly unlikely
 	 * that the underlying SPI controller is gone should this be called after
 	 * unplug.
@@ -258,26 +259,26 @@ static void st7586_pipe_disable(struct drm_simple_display_pipe *pipe)
 	DRM_DEBUG_KMS("\n");
 
 	mipi_dbi_command(&dbidev->dbi, MIPI_DCS_SET_DISPLAY_OFF);
-}
+पूर्ण
 
-static const u32 st7586_formats[] = {
+अटल स्थिर u32 st7586_क्रमmats[] = अणु
 	DRM_FORMAT_XRGB8888,
-};
+पूर्ण;
 
-static const struct drm_simple_display_pipe_funcs st7586_pipe_funcs = {
+अटल स्थिर काष्ठा drm_simple_display_pipe_funcs st7586_pipe_funcs = अणु
 	.enable		= st7586_pipe_enable,
 	.disable	= st7586_pipe_disable,
 	.update		= st7586_pipe_update,
 	.prepare_fb	= drm_gem_simple_display_pipe_prepare_fb,
-};
+पूर्ण;
 
-static const struct drm_display_mode st7586_mode = {
+अटल स्थिर काष्ठा drm_display_mode st7586_mode = अणु
 	DRM_SIMPLE_MODE(178, 128, 37, 27),
-};
+पूर्ण;
 
 DEFINE_DRM_GEM_CMA_FOPS(st7586_fops);
 
-static const struct drm_driver st7586_driver = {
+अटल स्थिर काष्ठा drm_driver st7586_driver = अणु
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &st7586_fops,
 	DRM_GEM_CMA_DRIVER_OPS_VMAP,
@@ -287,35 +288,35 @@ static const struct drm_driver st7586_driver = {
 	.date			= "20170801",
 	.major			= 1,
 	.minor			= 0,
-};
+पूर्ण;
 
-static const struct of_device_id st7586_of_match[] = {
-	{ .compatible = "lego,ev3-lcd" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id st7586_of_match[] = अणु
+	अणु .compatible = "lego,ev3-lcd" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st7586_of_match);
 
-static const struct spi_device_id st7586_id[] = {
-	{ "ev3-lcd", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id st7586_id[] = अणु
+	अणु "ev3-lcd", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, st7586_id);
 
-static int st7586_probe(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct mipi_dbi_dev *dbidev;
-	struct drm_device *drm;
-	struct mipi_dbi *dbi;
-	struct gpio_desc *a0;
+अटल पूर्णांक st7586_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा mipi_dbi_dev *dbidev;
+	काष्ठा drm_device *drm;
+	काष्ठा mipi_dbi *dbi;
+	काष्ठा gpio_desc *a0;
 	u32 rotation = 0;
-	size_t bufsize;
-	int ret;
+	माप_प्रकार bufsize;
+	पूर्णांक ret;
 
 	dbidev = devm_drm_dev_alloc(dev, &st7586_driver,
-				    struct mipi_dbi_dev, drm);
-	if (IS_ERR(dbidev))
-		return PTR_ERR(dbidev);
+				    काष्ठा mipi_dbi_dev, drm);
+	अगर (IS_ERR(dbidev))
+		वापस PTR_ERR(dbidev);
 
 	dbi = &dbidev->dbi;
 	drm = &dbidev->drm;
@@ -323,80 +324,80 @@ static int st7586_probe(struct spi_device *spi)
 	bufsize = (st7586_mode.vdisplay + 2) / 3 * st7586_mode.hdisplay;
 
 	dbi->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	if (IS_ERR(dbi->reset)) {
+	अगर (IS_ERR(dbi->reset)) अणु
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'reset'\n");
-		return PTR_ERR(dbi->reset);
-	}
+		वापस PTR_ERR(dbi->reset);
+	पूर्ण
 
 	a0 = devm_gpiod_get(dev, "a0", GPIOD_OUT_LOW);
-	if (IS_ERR(a0)) {
+	अगर (IS_ERR(a0)) अणु
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'a0'\n");
-		return PTR_ERR(a0);
-	}
+		वापस PTR_ERR(a0);
+	पूर्ण
 
-	device_property_read_u32(dev, "rotation", &rotation);
+	device_property_पढ़ो_u32(dev, "rotation", &rotation);
 
 	ret = mipi_dbi_spi_init(spi, dbi, a0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Cannot read from this controller via SPI */
-	dbi->read_commands = NULL;
+	/* Cannot पढ़ो from this controller via SPI */
+	dbi->पढ़ो_commands = शून्य;
 
-	ret = mipi_dbi_dev_init_with_formats(dbidev, &st7586_pipe_funcs,
-					     st7586_formats, ARRAY_SIZE(st7586_formats),
+	ret = mipi_dbi_dev_init_with_क्रमmats(dbidev, &st7586_pipe_funcs,
+					     st7586_क्रमmats, ARRAY_SIZE(st7586_क्रमmats),
 					     &st7586_mode, rotation, bufsize);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * we are using 8-bit data, so we are not actually swapping anything,
-	 * but setting mipi->swap_bytes makes mipi_dbi_typec3_command() do the
+	 * but setting mipi->swap_bytes makes mipi_dbi_typec3_command() करो the
 	 * right thing and not use 16-bit transfers (which results in swapped
-	 * bytes on little-endian systems and causes out of order data to be
+	 * bytes on little-endian प्रणालीs and causes out of order data to be
 	 * sent to the display).
 	 */
 	dbi->swap_bytes = true;
 
 	drm_mode_config_reset(drm);
 
-	ret = drm_dev_register(drm, 0);
-	if (ret)
-		return ret;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret)
+		वापस ret;
 
 	spi_set_drvdata(spi, drm);
 
 	drm_fbdev_generic_setup(drm, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st7586_remove(struct spi_device *spi)
-{
-	struct drm_device *drm = spi_get_drvdata(spi);
+अटल पूर्णांक st7586_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा drm_device *drm = spi_get_drvdata(spi);
 
 	drm_dev_unplug(drm);
-	drm_atomic_helper_shutdown(drm);
+	drm_atomic_helper_shutकरोwn(drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void st7586_shutdown(struct spi_device *spi)
-{
-	drm_atomic_helper_shutdown(spi_get_drvdata(spi));
-}
+अटल व्योम st7586_shutकरोwn(काष्ठा spi_device *spi)
+अणु
+	drm_atomic_helper_shutकरोwn(spi_get_drvdata(spi));
+पूर्ण
 
-static struct spi_driver st7586_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver st7586_spi_driver = अणु
+	.driver = अणु
 		.name = "st7586",
 		.owner = THIS_MODULE,
 		.of_match_table = st7586_of_match,
-	},
+	पूर्ण,
 	.id_table = st7586_id,
 	.probe = st7586_probe,
-	.remove = st7586_remove,
-	.shutdown = st7586_shutdown,
-};
+	.हटाओ = st7586_हटाओ,
+	.shutकरोwn = st7586_shutकरोwn,
+पूर्ण;
 module_spi_driver(st7586_spi_driver);
 
 MODULE_DESCRIPTION("Sitronix ST7586 DRM driver");

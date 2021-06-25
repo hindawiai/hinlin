@@ -1,134 +1,135 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  ALSA sequencer Timer
  *  Copyright (c) 1998-1999 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
-#ifndef __SND_SEQ_TIMER_H
-#define __SND_SEQ_TIMER_H
+#अगर_अघोषित __SND_SEQ_TIMER_H
+#घोषणा __SND_SEQ_TIMER_H
 
-#include <sound/timer.h>
-#include <sound/seq_kernel.h>
+#समावेश <sound/समयr.h>
+#समावेश <sound/seq_kernel.h>
 
-struct snd_seq_timer_tick {
-	snd_seq_tick_time_t	cur_tick;	/* current tick */
-	unsigned long		resolution;	/* time per tick in nsec */
-	unsigned long		fraction;	/* current time per tick in nsec */
-};
+काष्ठा snd_seq_समयr_tick अणु
+	snd_seq_tick_समय_प्रकार	cur_tick;	/* current tick */
+	अचिन्हित दीर्घ		resolution;	/* समय per tick in nsec */
+	अचिन्हित दीर्घ		fraction;	/* current समय per tick in nsec */
+पूर्ण;
 
-struct snd_seq_timer {
+काष्ठा snd_seq_समयr अणु
 	/* ... tempo / offset / running state */
 
-	unsigned int		running:1,	/* running state of queue */	
-				initialized:1;	/* timer is initialized */
+	अचिन्हित पूर्णांक		running:1,	/* running state of queue */	
+				initialized:1;	/* समयr is initialized */
 
-	unsigned int		tempo;		/* current tempo, us/tick */
-	int			ppq;		/* time resolution, ticks/quarter */
+	अचिन्हित पूर्णांक		tempo;		/* current tempo, us/tick */
+	पूर्णांक			ppq;		/* समय resolution, ticks/quarter */
 
-	snd_seq_real_time_t	cur_time;	/* current time */
-	struct snd_seq_timer_tick	tick;	/* current tick */
-	int tick_updated;
+	snd_seq_real_समय_प्रकार	cur_समय;	/* current समय */
+	काष्ठा snd_seq_समयr_tick	tick;	/* current tick */
+	पूर्णांक tick_updated;
 	
-	int			type;		/* timer type */
-	struct snd_timer_id	alsa_id;	/* ALSA's timer ID */
-	struct snd_timer_instance	*timeri;	/* timer instance */
-	unsigned int		ticks;
-	unsigned long		preferred_resolution; /* timer resolution, ticks/sec */
+	पूर्णांक			type;		/* समयr type */
+	काष्ठा snd_समयr_id	alsa_id;	/* ALSA's समयr ID */
+	काष्ठा snd_समयr_instance	*समयri;	/* समयr instance */
+	अचिन्हित पूर्णांक		ticks;
+	अचिन्हित दीर्घ		preferred_resolution; /* समयr resolution, ticks/sec */
 
-	unsigned int skew;
-	unsigned int skew_base;
+	अचिन्हित पूर्णांक skew;
+	अचिन्हित पूर्णांक skew_base;
 
-	struct timespec64	last_update;	 /* time of last clock update, used for interpolation */
+	काष्ठा बारpec64	last_update;	 /* समय of last घड़ी update, used क्रम पूर्णांकerpolation */
 
 	spinlock_t lock;
-};
+पूर्ण;
 
 
-/* create new timer (constructor) */
-struct snd_seq_timer *snd_seq_timer_new(void);
+/* create new समयr (स्थिरructor) */
+काष्ठा snd_seq_समयr *snd_seq_समयr_new(व्योम);
 
-/* delete timer (destructor) */
-void snd_seq_timer_delete(struct snd_seq_timer **tmr);
+/* delete समयr (deकाष्ठाor) */
+व्योम snd_seq_समयr_delete(काष्ठा snd_seq_समयr **पंचांगr);
 
 /* */
-static inline void snd_seq_timer_update_tick(struct snd_seq_timer_tick *tick,
-					     unsigned long resolution)
-{
-	if (tick->resolution > 0) {
+अटल अंतरभूत व्योम snd_seq_समयr_update_tick(काष्ठा snd_seq_समयr_tick *tick,
+					     अचिन्हित दीर्घ resolution)
+अणु
+	अगर (tick->resolution > 0) अणु
 		tick->fraction += resolution;
-		tick->cur_tick += (unsigned int)(tick->fraction / tick->resolution);
+		tick->cur_tick += (अचिन्हित पूर्णांक)(tick->fraction / tick->resolution);
 		tick->fraction %= tick->resolution;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-/* compare timestamp between events */
-/* return 1 if a >= b; otherwise return 0 */
-static inline int snd_seq_compare_tick_time(snd_seq_tick_time_t *a, snd_seq_tick_time_t *b)
-{
+/* compare बारtamp between events */
+/* वापस 1 अगर a >= b; otherwise वापस 0 */
+अटल अंतरभूत पूर्णांक snd_seq_compare_tick_समय(snd_seq_tick_समय_प्रकार *a, snd_seq_tick_समय_प्रकार *b)
+अणु
 	/* compare ticks */
-	return (*a >= *b);
-}
+	वापस (*a >= *b);
+पूर्ण
 
-static inline int snd_seq_compare_real_time(snd_seq_real_time_t *a, snd_seq_real_time_t *b)
-{
-	/* compare real time */
-	if (a->tv_sec > b->tv_sec)
-		return 1;
-	if ((a->tv_sec == b->tv_sec) && (a->tv_nsec >= b->tv_nsec))
-		return 1;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक snd_seq_compare_real_समय(snd_seq_real_समय_प्रकार *a, snd_seq_real_समय_प्रकार *b)
+अणु
+	/* compare real समय */
+	अगर (a->tv_sec > b->tv_sec)
+		वापस 1;
+	अगर ((a->tv_sec == b->tv_sec) && (a->tv_nsec >= b->tv_nsec))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 
-static inline void snd_seq_sanity_real_time(snd_seq_real_time_t *tm)
-{
-	while (tm->tv_nsec >= 1000000000) {
+अटल अंतरभूत व्योम snd_seq_sanity_real_समय(snd_seq_real_समय_प्रकार *पंचांग)
+अणु
+	जबतक (पंचांग->tv_nsec >= 1000000000) अणु
 		/* roll-over */
-		tm->tv_nsec -= 1000000000;
-                tm->tv_sec++;
-        }
-}
+		पंचांग->tv_nsec -= 1000000000;
+                पंचांग->tv_sec++;
+        पूर्ण
+पूर्ण
 
 
-/* increment timestamp */
-static inline void snd_seq_inc_real_time(snd_seq_real_time_t *tm, snd_seq_real_time_t *inc)
-{
-	tm->tv_sec  += inc->tv_sec;
-	tm->tv_nsec += inc->tv_nsec;
-	snd_seq_sanity_real_time(tm);
-}
+/* increment बारtamp */
+अटल अंतरभूत व्योम snd_seq_inc_real_समय(snd_seq_real_समय_प्रकार *पंचांग, snd_seq_real_समय_प्रकार *inc)
+अणु
+	पंचांग->tv_sec  += inc->tv_sec;
+	पंचांग->tv_nsec += inc->tv_nsec;
+	snd_seq_sanity_real_समय(पंचांग);
+पूर्ण
 
-static inline void snd_seq_inc_time_nsec(snd_seq_real_time_t *tm, unsigned long nsec)
-{
-	tm->tv_nsec  += nsec;
-	snd_seq_sanity_real_time(tm);
-}
+अटल अंतरभूत व्योम snd_seq_inc_समय_nsec(snd_seq_real_समय_प्रकार *पंचांग, अचिन्हित दीर्घ nsec)
+अणु
+	पंचांग->tv_nsec  += nsec;
+	snd_seq_sanity_real_समय(पंचांग);
+पूर्ण
 
-/* called by timer isr */
-struct snd_seq_queue;
-int snd_seq_timer_open(struct snd_seq_queue *q);
-int snd_seq_timer_close(struct snd_seq_queue *q);
-int snd_seq_timer_midi_open(struct snd_seq_queue *q);
-int snd_seq_timer_midi_close(struct snd_seq_queue *q);
-void snd_seq_timer_defaults(struct snd_seq_timer *tmr);
-void snd_seq_timer_reset(struct snd_seq_timer *tmr);
-int snd_seq_timer_stop(struct snd_seq_timer *tmr);
-int snd_seq_timer_start(struct snd_seq_timer *tmr);
-int snd_seq_timer_continue(struct snd_seq_timer *tmr);
-int snd_seq_timer_set_tempo(struct snd_seq_timer *tmr, int tempo);
-int snd_seq_timer_set_tempo_ppq(struct snd_seq_timer *tmr, int tempo, int ppq);
-int snd_seq_timer_set_position_tick(struct snd_seq_timer *tmr, snd_seq_tick_time_t position);
-int snd_seq_timer_set_position_time(struct snd_seq_timer *tmr, snd_seq_real_time_t position);
-int snd_seq_timer_set_skew(struct snd_seq_timer *tmr, unsigned int skew, unsigned int base);
-snd_seq_real_time_t snd_seq_timer_get_cur_time(struct snd_seq_timer *tmr,
-					       bool adjust_ktime);
-snd_seq_tick_time_t snd_seq_timer_get_cur_tick(struct snd_seq_timer *tmr);
+/* called by समयr isr */
+काष्ठा snd_seq_queue;
+पूर्णांक snd_seq_समयr_खोलो(काष्ठा snd_seq_queue *q);
+पूर्णांक snd_seq_समयr_बंद(काष्ठा snd_seq_queue *q);
+पूर्णांक snd_seq_समयr_midi_खोलो(काष्ठा snd_seq_queue *q);
+पूर्णांक snd_seq_समयr_midi_बंद(काष्ठा snd_seq_queue *q);
+व्योम snd_seq_समयr_शेषs(काष्ठा snd_seq_समयr *पंचांगr);
+व्योम snd_seq_समयr_reset(काष्ठा snd_seq_समयr *पंचांगr);
+पूर्णांक snd_seq_समयr_stop(काष्ठा snd_seq_समयr *पंचांगr);
+पूर्णांक snd_seq_समयr_start(काष्ठा snd_seq_समयr *पंचांगr);
+पूर्णांक snd_seq_समयr_जारी(काष्ठा snd_seq_समयr *पंचांगr);
+पूर्णांक snd_seq_समयr_set_tempo(काष्ठा snd_seq_समयr *पंचांगr, पूर्णांक tempo);
+पूर्णांक snd_seq_समयr_set_tempo_ppq(काष्ठा snd_seq_समयr *पंचांगr, पूर्णांक tempo, पूर्णांक ppq);
+पूर्णांक snd_seq_समयr_set_position_tick(काष्ठा snd_seq_समयr *पंचांगr, snd_seq_tick_समय_प्रकार position);
+पूर्णांक snd_seq_समयr_set_position_समय(काष्ठा snd_seq_समयr *पंचांगr, snd_seq_real_समय_प्रकार position);
+पूर्णांक snd_seq_समयr_set_skew(काष्ठा snd_seq_समयr *पंचांगr, अचिन्हित पूर्णांक skew, अचिन्हित पूर्णांक base);
+snd_seq_real_समय_प्रकार snd_seq_समयr_get_cur_समय(काष्ठा snd_seq_समयr *पंचांगr,
+					       bool adjust_kसमय);
+snd_seq_tick_समय_प्रकार snd_seq_समयr_get_cur_tick(काष्ठा snd_seq_समयr *पंचांगr);
 
-extern int seq_default_timer_class;
-extern int seq_default_timer_sclass;
-extern int seq_default_timer_card;
-extern int seq_default_timer_device;
-extern int seq_default_timer_subdevice;
-extern int seq_default_timer_resolution;
+बाह्य पूर्णांक seq_शेष_समयr_class;
+बाह्य पूर्णांक seq_शेष_समयr_sclass;
+बाह्य पूर्णांक seq_शेष_समयr_card;
+बाह्य पूर्णांक seq_शेष_समयr_device;
+बाह्य पूर्णांक seq_शेष_समयr_subdevice;
+बाह्य पूर्णांक seq_शेष_समयr_resolution;
 
-#endif
+#पूर्ण_अगर

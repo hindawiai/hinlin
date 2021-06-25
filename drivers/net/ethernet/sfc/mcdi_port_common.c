@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2018 Solarflare Communications Inc.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License version 2 as published
  * by the Free Software Foundation, incorporated herein by reference.
  */
 
-#include "mcdi_port_common.h"
-#include "efx_common.h"
-#include "nic.h"
+#समावेश "mcdi_port_common.h"
+#समावेश "efx_common.h"
+#समावेश "nic.h"
 
-int efx_mcdi_get_phy_cfg(struct efx_nic *efx, struct efx_mcdi_phy_data *cfg)
-{
+पूर्णांक efx_mcdi_get_phy_cfg(काष्ठा efx_nic *efx, काष्ठा efx_mcdi_phy_data *cfg)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_PHY_CFG_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_GET_PHY_CFG_IN_LEN != 0);
-	BUILD_BUG_ON(MC_CMD_GET_PHY_CFG_OUT_NAME_LEN != sizeof(cfg->name));
+	BUILD_BUG_ON(MC_CMD_GET_PHY_CFG_OUT_NAME_LEN != माप(cfg->name));
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_PHY_CFG, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_PHY_CFG, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
 
-	if (outlen < MC_CMD_GET_PHY_CFG_OUT_LEN) {
+	अगर (outlen < MC_CMD_GET_PHY_CFG_OUT_LEN) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	cfg->flags = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_FLAGS);
 	cfg->type = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_TYPE);
@@ -38,40 +39,40 @@ int efx_mcdi_get_phy_cfg(struct efx_nic *efx, struct efx_mcdi_phy_data *cfg)
 	cfg->channel = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_CHANNEL);
 	cfg->port = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_PRT);
 	cfg->stats_mask = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_STATS_MASK);
-	memcpy(cfg->name, MCDI_PTR(outbuf, GET_PHY_CFG_OUT_NAME),
-	       sizeof(cfg->name));
+	स_नकल(cfg->name, MCDI_PTR(outbuf, GET_PHY_CFG_OUT_NAME),
+	       माप(cfg->name));
 	cfg->media = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_MEDIA_TYPE);
 	cfg->mmd_mask = MCDI_DWORD(outbuf, GET_PHY_CFG_OUT_MMD_MASK);
-	memcpy(cfg->revision, MCDI_PTR(outbuf, GET_PHY_CFG_OUT_REVISION),
-	       sizeof(cfg->revision));
+	स_नकल(cfg->revision, MCDI_PTR(outbuf, GET_PHY_CFG_OUT_REVISION),
+	       माप(cfg->revision));
 
-	return 0;
+	वापस 0;
 
 fail:
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
+पूर्ण
 
-void efx_link_set_advertising(struct efx_nic *efx,
-			      const unsigned long *advertising)
-{
-	memcpy(efx->link_advertising, advertising,
-	       sizeof(__ETHTOOL_DECLARE_LINK_MODE_MASK()));
+व्योम efx_link_set_advertising(काष्ठा efx_nic *efx,
+			      स्थिर अचिन्हित दीर्घ *advertising)
+अणु
+	स_नकल(efx->link_advertising, advertising,
+	       माप(__ETHTOOL_DECLARE_LINK_MODE_MASK()));
 
 	efx->link_advertising[0] |= ADVERTISED_Autoneg;
-	if (advertising[0] & ADVERTISED_Pause)
+	अगर (advertising[0] & ADVERTISED_Pause)
 		efx->wanted_fc |= (EFX_FC_TX | EFX_FC_RX);
-	else
+	अन्यथा
 		efx->wanted_fc &= ~(EFX_FC_TX | EFX_FC_RX);
-	if (advertising[0] & ADVERTISED_Asym_Pause)
+	अगर (advertising[0] & ADVERTISED_Asym_Pause)
 		efx->wanted_fc ^= EFX_FC_TX;
-}
+पूर्ण
 
-int efx_mcdi_set_link(struct efx_nic *efx, u32 capabilities,
+पूर्णांक efx_mcdi_set_link(काष्ठा efx_nic *efx, u32 capabilities,
 		      u32 flags, u32 loopback_mode, u32 loopback_speed)
-{
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_SET_LINK_IN_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_SET_LINK_OUT_LEN != 0);
 
@@ -80,259 +81,259 @@ int efx_mcdi_set_link(struct efx_nic *efx, u32 capabilities,
 	MCDI_SET_DWORD(inbuf, SET_LINK_IN_LOOPBACK_MODE, loopback_mode);
 	MCDI_SET_DWORD(inbuf, SET_LINK_IN_LOOPBACK_SPEED, loopback_speed);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_SET_LINK, inbuf, sizeof(inbuf),
-			  NULL, 0, NULL);
-	return rc;
-}
+	rc = efx_mcdi_rpc(efx, MC_CMD_SET_LINK, inbuf, माप(inbuf),
+			  शून्य, 0, शून्य);
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_loopback_modes(struct efx_nic *efx, u64 *loopback_modes)
-{
+पूर्णांक efx_mcdi_loopback_modes(काष्ठा efx_nic *efx, u64 *loopback_modes)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_LOOPBACK_MODES_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LOOPBACK_MODES, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LOOPBACK_MODES, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		जाओ fail;
 
-	if (outlen < (MC_CMD_GET_LOOPBACK_MODES_OUT_SUGGESTED_OFST +
-		      MC_CMD_GET_LOOPBACK_MODES_OUT_SUGGESTED_LEN)) {
+	अगर (outlen < (MC_CMD_GET_LOOPBACK_MODES_OUT_SUGGESTED_OFST +
+		      MC_CMD_GET_LOOPBACK_MODES_OUT_SUGGESTED_LEN)) अणु
 		rc = -EIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	*loopback_modes = MCDI_QWORD(outbuf, GET_LOOPBACK_MODES_OUT_SUGGESTED);
 
-	return 0;
+	वापस 0;
 
 fail:
-	netif_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
-	return rc;
-}
+	netअगर_err(efx, hw, efx->net_dev, "%s: failed rc=%d\n", __func__, rc);
+	वापस rc;
+पूर्ण
 
-void mcdi_to_ethtool_linkset(u32 media, u32 cap, unsigned long *linkset)
-{
-	#define SET_BIT(name)	__set_bit(ETHTOOL_LINK_MODE_ ## name ## _BIT, \
+व्योम mcdi_to_ethtool_linkset(u32 media, u32 cap, अचिन्हित दीर्घ *linkset)
+अणु
+	#घोषणा SET_BIT(name)	__set_bit(ETHTOOL_LINK_MODE_ ## name ## _BIT, \
 					  linkset)
 
-	bitmap_zero(linkset, __ETHTOOL_LINK_MODE_MASK_NBITS);
-	switch (media) {
-	case MC_CMD_MEDIA_KX4:
+	biपंचांगap_zero(linkset, __ETHTOOL_LINK_MODE_MASK_NBITS);
+	चयन (media) अणु
+	हाल MC_CMD_MEDIA_KX4:
 		SET_BIT(Backplane);
-		if (cap & (1 << MC_CMD_PHY_CAP_1000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_1000FDX_LBN))
 			SET_BIT(1000baseKX_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_10000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_10000FDX_LBN))
 			SET_BIT(10000baseKX4_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_40000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_40000FDX_LBN))
 			SET_BIT(40000baseKR4_Full);
-		break;
+		अवरोध;
 
-	case MC_CMD_MEDIA_XFP:
-	case MC_CMD_MEDIA_SFP_PLUS:
-	case MC_CMD_MEDIA_QSFP_PLUS:
+	हाल MC_CMD_MEDIA_XFP:
+	हाल MC_CMD_MEDIA_SFP_PLUS:
+	हाल MC_CMD_MEDIA_QSFP_PLUS:
 		SET_BIT(FIBRE);
-		if (cap & (1 << MC_CMD_PHY_CAP_1000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_1000FDX_LBN))
 			SET_BIT(1000baseT_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_10000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_10000FDX_LBN))
 			SET_BIT(10000baseT_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_40000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_40000FDX_LBN))
 			SET_BIT(40000baseCR4_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_100000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_100000FDX_LBN))
 			SET_BIT(100000baseCR4_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_25000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_25000FDX_LBN))
 			SET_BIT(25000baseCR_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_50000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_50000FDX_LBN))
 			SET_BIT(50000baseCR2_Full);
-		break;
+		अवरोध;
 
-	case MC_CMD_MEDIA_BASE_T:
+	हाल MC_CMD_MEDIA_BASE_T:
 		SET_BIT(TP);
-		if (cap & (1 << MC_CMD_PHY_CAP_10HDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_10HDX_LBN))
 			SET_BIT(10baseT_Half);
-		if (cap & (1 << MC_CMD_PHY_CAP_10FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_10FDX_LBN))
 			SET_BIT(10baseT_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_100HDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_100HDX_LBN))
 			SET_BIT(100baseT_Half);
-		if (cap & (1 << MC_CMD_PHY_CAP_100FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_100FDX_LBN))
 			SET_BIT(100baseT_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_1000HDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_1000HDX_LBN))
 			SET_BIT(1000baseT_Half);
-		if (cap & (1 << MC_CMD_PHY_CAP_1000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_1000FDX_LBN))
 			SET_BIT(1000baseT_Full);
-		if (cap & (1 << MC_CMD_PHY_CAP_10000FDX_LBN))
+		अगर (cap & (1 << MC_CMD_PHY_CAP_10000FDX_LBN))
 			SET_BIT(10000baseT_Full);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (cap & (1 << MC_CMD_PHY_CAP_PAUSE_LBN))
+	अगर (cap & (1 << MC_CMD_PHY_CAP_PAUSE_LBN))
 		SET_BIT(Pause);
-	if (cap & (1 << MC_CMD_PHY_CAP_ASYM_LBN))
+	अगर (cap & (1 << MC_CMD_PHY_CAP_ASYM_LBN))
 		SET_BIT(Asym_Pause);
-	if (cap & (1 << MC_CMD_PHY_CAP_AN_LBN))
+	अगर (cap & (1 << MC_CMD_PHY_CAP_AN_LBN))
 		SET_BIT(Autoneg);
 
-	#undef SET_BIT
-}
+	#अघोषित SET_BIT
+पूर्ण
 
-u32 ethtool_linkset_to_mcdi_cap(const unsigned long *linkset)
-{
+u32 ethtool_linkset_to_mcdi_cap(स्थिर अचिन्हित दीर्घ *linkset)
+अणु
 	u32 result = 0;
 
-	#define TEST_BIT(name)	test_bit(ETHTOOL_LINK_MODE_ ## name ## _BIT, \
+	#घोषणा TEST_BIT(name)	test_bit(ETHTOOL_LINK_MODE_ ## name ## _BIT, \
 					 linkset)
 
-	if (TEST_BIT(10baseT_Half))
+	अगर (TEST_BIT(10baseT_Half))
 		result |= (1 << MC_CMD_PHY_CAP_10HDX_LBN);
-	if (TEST_BIT(10baseT_Full))
+	अगर (TEST_BIT(10baseT_Full))
 		result |= (1 << MC_CMD_PHY_CAP_10FDX_LBN);
-	if (TEST_BIT(100baseT_Half))
+	अगर (TEST_BIT(100baseT_Half))
 		result |= (1 << MC_CMD_PHY_CAP_100HDX_LBN);
-	if (TEST_BIT(100baseT_Full))
+	अगर (TEST_BIT(100baseT_Full))
 		result |= (1 << MC_CMD_PHY_CAP_100FDX_LBN);
-	if (TEST_BIT(1000baseT_Half))
+	अगर (TEST_BIT(1000baseT_Half))
 		result |= (1 << MC_CMD_PHY_CAP_1000HDX_LBN);
-	if (TEST_BIT(1000baseT_Full) || TEST_BIT(1000baseKX_Full))
+	अगर (TEST_BIT(1000baseT_Full) || TEST_BIT(1000baseKX_Full))
 		result |= (1 << MC_CMD_PHY_CAP_1000FDX_LBN);
-	if (TEST_BIT(10000baseT_Full) || TEST_BIT(10000baseKX4_Full))
+	अगर (TEST_BIT(10000baseT_Full) || TEST_BIT(10000baseKX4_Full))
 		result |= (1 << MC_CMD_PHY_CAP_10000FDX_LBN);
-	if (TEST_BIT(40000baseCR4_Full) || TEST_BIT(40000baseKR4_Full))
+	अगर (TEST_BIT(40000baseCR4_Full) || TEST_BIT(40000baseKR4_Full))
 		result |= (1 << MC_CMD_PHY_CAP_40000FDX_LBN);
-	if (TEST_BIT(100000baseCR4_Full))
+	अगर (TEST_BIT(100000baseCR4_Full))
 		result |= (1 << MC_CMD_PHY_CAP_100000FDX_LBN);
-	if (TEST_BIT(25000baseCR_Full))
+	अगर (TEST_BIT(25000baseCR_Full))
 		result |= (1 << MC_CMD_PHY_CAP_25000FDX_LBN);
-	if (TEST_BIT(50000baseCR2_Full))
+	अगर (TEST_BIT(50000baseCR2_Full))
 		result |= (1 << MC_CMD_PHY_CAP_50000FDX_LBN);
-	if (TEST_BIT(Pause))
+	अगर (TEST_BIT(Pause))
 		result |= (1 << MC_CMD_PHY_CAP_PAUSE_LBN);
-	if (TEST_BIT(Asym_Pause))
+	अगर (TEST_BIT(Asym_Pause))
 		result |= (1 << MC_CMD_PHY_CAP_ASYM_LBN);
-	if (TEST_BIT(Autoneg))
+	अगर (TEST_BIT(Autoneg))
 		result |= (1 << MC_CMD_PHY_CAP_AN_LBN);
 
-	#undef TEST_BIT
+	#अघोषित TEST_BIT
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-u32 efx_get_mcdi_phy_flags(struct efx_nic *efx)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
-	enum efx_phy_mode mode, supported;
+u32 efx_get_mcdi_phy_flags(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+	क्रमागत efx_phy_mode mode, supported;
 	u32 flags;
 
 	/* TODO: Advertise the capabilities supported by this PHY */
 	supported = 0;
-	if (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_TXDIS_LBN))
+	अगर (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_TXDIS_LBN))
 		supported |= PHY_MODE_TX_DISABLED;
-	if (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_LOWPOWER_LBN))
+	अगर (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_LOWPOWER_LBN))
 		supported |= PHY_MODE_LOW_POWER;
-	if (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_POWEROFF_LBN))
+	अगर (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_POWEROFF_LBN))
 		supported |= PHY_MODE_OFF;
 
 	mode = efx->phy_mode & supported;
 
 	flags = 0;
-	if (mode & PHY_MODE_TX_DISABLED)
+	अगर (mode & PHY_MODE_TX_DISABLED)
 		flags |= (1 << MC_CMD_SET_LINK_IN_TXDIS_LBN);
-	if (mode & PHY_MODE_LOW_POWER)
+	अगर (mode & PHY_MODE_LOW_POWER)
 		flags |= (1 << MC_CMD_SET_LINK_IN_LOWPOWER_LBN);
-	if (mode & PHY_MODE_OFF)
+	अगर (mode & PHY_MODE_OFF)
 		flags |= (1 << MC_CMD_SET_LINK_IN_POWEROFF_LBN);
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 u8 mcdi_to_ethtool_media(u32 media)
-{
-	switch (media) {
-	case MC_CMD_MEDIA_XAUI:
-	case MC_CMD_MEDIA_CX4:
-	case MC_CMD_MEDIA_KX4:
-		return PORT_OTHER;
+अणु
+	चयन (media) अणु
+	हाल MC_CMD_MEDIA_XAUI:
+	हाल MC_CMD_MEDIA_CX4:
+	हाल MC_CMD_MEDIA_KX4:
+		वापस PORT_OTHER;
 
-	case MC_CMD_MEDIA_XFP:
-	case MC_CMD_MEDIA_SFP_PLUS:
-	case MC_CMD_MEDIA_QSFP_PLUS:
-		return PORT_FIBRE;
+	हाल MC_CMD_MEDIA_XFP:
+	हाल MC_CMD_MEDIA_SFP_PLUS:
+	हाल MC_CMD_MEDIA_QSFP_PLUS:
+		वापस PORT_FIBRE;
 
-	case MC_CMD_MEDIA_BASE_T:
-		return PORT_TP;
+	हाल MC_CMD_MEDIA_BASE_T:
+		वापस PORT_TP;
 
-	default:
-		return PORT_OTHER;
-	}
-}
+	शेष:
+		वापस PORT_OTHER;
+	पूर्ण
+पूर्ण
 
-void efx_mcdi_phy_decode_link(struct efx_nic *efx,
-			      struct efx_link_state *link_state,
+व्योम efx_mcdi_phy_decode_link(काष्ठा efx_nic *efx,
+			      काष्ठा efx_link_state *link_state,
 			      u32 speed, u32 flags, u32 fcntl)
-{
-	switch (fcntl) {
-	case MC_CMD_FCNTL_AUTO:
+अणु
+	चयन (fcntl) अणु
+	हाल MC_CMD_FCNTL_AUTO:
 		WARN_ON(1);	/* This is not a link mode */
 		link_state->fc = EFX_FC_AUTO | EFX_FC_TX | EFX_FC_RX;
-		break;
-	case MC_CMD_FCNTL_BIDIR:
+		अवरोध;
+	हाल MC_CMD_FCNTL_BIसूची:
 		link_state->fc = EFX_FC_TX | EFX_FC_RX;
-		break;
-	case MC_CMD_FCNTL_RESPOND:
+		अवरोध;
+	हाल MC_CMD_FCNTL_RESPOND:
 		link_state->fc = EFX_FC_RX;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
 		fallthrough;
-	case MC_CMD_FCNTL_OFF:
+	हाल MC_CMD_FCNTL_OFF:
 		link_state->fc = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	link_state->up = !!(flags & (1 << MC_CMD_GET_LINK_OUT_LINK_UP_LBN));
 	link_state->fd = !!(flags & (1 << MC_CMD_GET_LINK_OUT_FULL_DUPLEX_LBN));
 	link_state->speed = speed;
-}
+पूर्ण
 
-/* The semantics of the ethtool FEC mode bitmask are not well defined,
+/* The semantics of the ethtool FEC mode biपंचांगask are not well defined,
  * particularly the meaning of combinations of bits.  Which means we get to
  * define our own semantics, as follows:
  * OFF overrides any other bits, and means "disable all FEC" (with the
- * exception of 25G KR4/CR4, where it is not possible to reject it if AN
+ * exception of 25G KR4/CR4, where it is not possible to reject it अगर AN
  * partner requests it).
- * AUTO on its own means use cable requirements and link partner autoneg with
- * fw-default preferences for the cable type.
- * AUTO and either RS or BASER means use the specified FEC type if cable and
- * link partner support it, otherwise autoneg/fw-default.
- * RS or BASER alone means use the specified FEC type if cable and link partner
+ * AUTO on its own means use cable requirements and link partner स्वतःneg with
+ * fw-शेष preferences क्रम the cable type.
+ * AUTO and either RS or BASER means use the specअगरied FEC type अगर cable and
+ * link partner support it, otherwise स्वतःneg/fw-शेष.
+ * RS or BASER alone means use the specअगरied FEC type अगर cable and link partner
  * support it and either requests it, otherwise no FEC.
- * Both RS and BASER (whether AUTO or not) means use FEC if cable and link
+ * Both RS and BASER (whether AUTO or not) means use FEC अगर cable and link
  * partner support it, preferring RS to BASER.
  */
 u32 ethtool_fec_caps_to_mcdi(u32 supported_cap, u32 ethtool_cap)
-{
+अणु
 	u32 ret = 0;
 
-	if (ethtool_cap & ETHTOOL_FEC_OFF)
-		return 0;
+	अगर (ethtool_cap & ETHTOOL_FEC_OFF)
+		वापस 0;
 
-	if (ethtool_cap & ETHTOOL_FEC_AUTO)
+	अगर (ethtool_cap & ETHTOOL_FEC_AUTO)
 		ret |= ((1 << MC_CMD_PHY_CAP_BASER_FEC_LBN) |
 			(1 << MC_CMD_PHY_CAP_25G_BASER_FEC_LBN) |
 			(1 << MC_CMD_PHY_CAP_RS_FEC_LBN)) & supported_cap;
-	if (ethtool_cap & ETHTOOL_FEC_RS &&
+	अगर (ethtool_cap & ETHTOOL_FEC_RS &&
 	    supported_cap & (1 << MC_CMD_PHY_CAP_RS_FEC_LBN))
 		ret |= (1 << MC_CMD_PHY_CAP_RS_FEC_LBN) |
 		       (1 << MC_CMD_PHY_CAP_RS_FEC_REQUESTED_LBN);
-	if (ethtool_cap & ETHTOOL_FEC_BASER) {
-		if (supported_cap & (1 << MC_CMD_PHY_CAP_BASER_FEC_LBN))
+	अगर (ethtool_cap & ETHTOOL_FEC_BASER) अणु
+		अगर (supported_cap & (1 << MC_CMD_PHY_CAP_BASER_FEC_LBN))
 			ret |= (1 << MC_CMD_PHY_CAP_BASER_FEC_LBN) |
 			       (1 << MC_CMD_PHY_CAP_BASER_FEC_REQUESTED_LBN);
-		if (supported_cap & (1 << MC_CMD_PHY_CAP_25G_BASER_FEC_LBN))
+		अगर (supported_cap & (1 << MC_CMD_PHY_CAP_25G_BASER_FEC_LBN))
 			ret |= (1 << MC_CMD_PHY_CAP_25G_BASER_FEC_LBN) |
 			       (1 << MC_CMD_PHY_CAP_25G_BASER_FEC_REQUESTED_LBN);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Invert ethtool_fec_caps_to_mcdi.  There are two combinations that function
  * can never produce, (baser xor rs) and neither req; the implementation below
@@ -340,7 +341,7 @@ u32 ethtool_fec_caps_to_mcdi(u32 supported_cap, u32 ethtool_cap)
  * what a better mapping would be anyway.
  */
 u32 mcdi_fec_caps_to_ethtool(u32 caps, bool is_25g)
-{
+अणु
 	bool rs = caps & (1 << MC_CMD_PHY_CAP_RS_FEC_LBN),
 	     rs_req = caps & (1 << MC_CMD_PHY_CAP_RS_FEC_REQUESTED_LBN),
 	     baser = is_25g ? caps & (1 << MC_CMD_PHY_CAP_25G_BASER_FEC_LBN)
@@ -348,88 +349,88 @@ u32 mcdi_fec_caps_to_ethtool(u32 caps, bool is_25g)
 	     baser_req = is_25g ? caps & (1 << MC_CMD_PHY_CAP_25G_BASER_FEC_REQUESTED_LBN)
 				: caps & (1 << MC_CMD_PHY_CAP_BASER_FEC_REQUESTED_LBN);
 
-	if (!baser && !rs)
-		return ETHTOOL_FEC_OFF;
-	return (rs_req ? ETHTOOL_FEC_RS : 0) |
+	अगर (!baser && !rs)
+		वापस ETHTOOL_FEC_OFF;
+	वापस (rs_req ? ETHTOOL_FEC_RS : 0) |
 	       (baser_req ? ETHTOOL_FEC_BASER : 0) |
 	       (baser == baser_req && rs == rs_req ? 0 : ETHTOOL_FEC_AUTO);
-}
+पूर्ण
 
-/* Verify that the forced flow control settings (!EFX_FC_AUTO) are
- * supported by the link partner. Warn the user if this isn't the case
+/* Verअगरy that the क्रमced flow control settings (!EFX_FC_AUTO) are
+ * supported by the link partner. Warn the user अगर this isn't the हाल
  */
-void efx_mcdi_phy_check_fcntl(struct efx_nic *efx, u32 lpa)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+व्योम efx_mcdi_phy_check_fcntl(काष्ठा efx_nic *efx, u32 lpa)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 	u32 rmtadv;
 
-	/* The link partner capabilities are only relevant if the
-	 * link supports flow control autonegotiation
+	/* The link partner capabilities are only relevant अगर the
+	 * link supports flow control स्वतःnegotiation
 	 */
-	if (~phy_cfg->supported_cap & (1 << MC_CMD_PHY_CAP_AN_LBN))
-		return;
+	अगर (~phy_cfg->supported_cap & (1 << MC_CMD_PHY_CAP_AN_LBN))
+		वापस;
 
-	/* If flow control autoneg is supported and enabled, then fine */
-	if (efx->wanted_fc & EFX_FC_AUTO)
-		return;
+	/* If flow control स्वतःneg is supported and enabled, then fine */
+	अगर (efx->wanted_fc & EFX_FC_AUTO)
+		वापस;
 
 	rmtadv = 0;
-	if (lpa & (1 << MC_CMD_PHY_CAP_PAUSE_LBN))
+	अगर (lpa & (1 << MC_CMD_PHY_CAP_PAUSE_LBN))
 		rmtadv |= ADVERTISED_Pause;
-	if (lpa & (1 << MC_CMD_PHY_CAP_ASYM_LBN))
+	अगर (lpa & (1 << MC_CMD_PHY_CAP_ASYM_LBN))
 		rmtadv |=  ADVERTISED_Asym_Pause;
 
-	if ((efx->wanted_fc & EFX_FC_TX) && rmtadv == ADVERTISED_Asym_Pause)
-		netif_err(efx, link, efx->net_dev,
+	अगर ((efx->wanted_fc & EFX_FC_TX) && rmtadv == ADVERTISED_Asym_Pause)
+		netअगर_err(efx, link, efx->net_dev,
 			  "warning: link partner doesn't support pause frames");
-}
+पूर्ण
 
-bool efx_mcdi_phy_poll(struct efx_nic *efx)
-{
-	struct efx_link_state old_state = efx->link_state;
+bool efx_mcdi_phy_poll(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_link_state old_state = efx->link_state;
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_LINK_OUT_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	WARN_ON(!mutex_is_locked(&efx->mac_lock));
 
 	BUILD_BUG_ON(MC_CMD_GET_LINK_IN_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, NULL, 0,
-			  outbuf, sizeof(outbuf), NULL);
-	if (rc)
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, शून्य, 0,
+			  outbuf, माप(outbuf), शून्य);
+	अगर (rc)
 		efx->link_state.up = false;
-	else
+	अन्यथा
 		efx_mcdi_phy_decode_link(
 			efx, &efx->link_state,
 			MCDI_DWORD(outbuf, GET_LINK_OUT_LINK_SPEED),
 			MCDI_DWORD(outbuf, GET_LINK_OUT_FLAGS),
 			MCDI_DWORD(outbuf, GET_LINK_OUT_FCNTL));
 
-	return !efx_link_state_equal(&efx->link_state, &old_state);
-}
+	वापस !efx_link_state_equal(&efx->link_state, &old_state);
+पूर्ण
 
-int efx_mcdi_phy_probe(struct efx_nic *efx)
-{
-	struct efx_mcdi_phy_data *phy_data;
+पूर्णांक efx_mcdi_phy_probe(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_data;
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_LINK_OUT_LEN);
 	u32 caps;
-	int rc;
+	पूर्णांक rc;
 
 	/* Initialise and populate phy_data */
-	phy_data = kzalloc(sizeof(*phy_data), GFP_KERNEL);
-	if (phy_data == NULL)
-		return -ENOMEM;
+	phy_data = kzalloc(माप(*phy_data), GFP_KERNEL);
+	अगर (phy_data == शून्य)
+		वापस -ENOMEM;
 
 	rc = efx_mcdi_get_phy_cfg(efx, phy_data);
-	if (rc != 0)
-		goto fail;
+	अगर (rc != 0)
+		जाओ fail;
 
 	/* Read initial link advertisement */
 	BUILD_BUG_ON(MC_CMD_GET_LINK_IN_LEN != 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, NULL, 0,
-			  outbuf, sizeof(outbuf), NULL);
-	if (rc)
-		goto fail;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, शून्य, 0,
+			  outbuf, माप(outbuf), शून्य);
+	अगर (rc)
+		जाओ fail;
 
 	/* Fill out nic state */
 	efx->phy_data = phy_data;
@@ -439,17 +440,17 @@ int efx_mcdi_phy_probe(struct efx_nic *efx)
 	efx->mdio.prtad = phy_data->port;
 	efx->mdio.mmds = phy_data->mmd_mask & ~(1 << MC_CMD_MMD_CLAUSE22);
 	efx->mdio.mode_support = 0;
-	if (phy_data->mmd_mask & (1 << MC_CMD_MMD_CLAUSE22))
+	अगर (phy_data->mmd_mask & (1 << MC_CMD_MMD_CLAUSE22))
 		efx->mdio.mode_support |= MDIO_SUPPORTS_C22;
-	if (phy_data->mmd_mask & ~(1 << MC_CMD_MMD_CLAUSE22))
+	अगर (phy_data->mmd_mask & ~(1 << MC_CMD_MMD_CLAUSE22))
 		efx->mdio.mode_support |= MDIO_SUPPORTS_C45 | MDIO_EMULATE_C22;
 
 	caps = MCDI_DWORD(outbuf, GET_LINK_OUT_CAP);
-	if (caps & (1 << MC_CMD_PHY_CAP_AN_LBN))
+	अगर (caps & (1 << MC_CMD_PHY_CAP_AN_LBN))
 		mcdi_to_ethtool_linkset(phy_data->media, caps,
 					efx->link_advertising);
-	else
-		phy_data->forced_cap = caps;
+	अन्यथा
+		phy_data->क्रमced_cap = caps;
 
 	/* Assert that we can map efx -> mcdi loopback modes */
 	BUILD_BUG_ON(LOOPBACK_NONE != MC_CMD_LOOPBACK_NONE);
@@ -481,10 +482,10 @@ int efx_mcdi_phy_probe(struct efx_nic *efx)
 	BUILD_BUG_ON(LOOPBACK_PHYXS_WS != MC_CMD_LOOPBACK_PHYXS_WS);
 
 	rc = efx_mcdi_loopback_modes(efx, &efx->loopback_modes);
-	if (rc != 0)
-		goto fail;
+	अगर (rc != 0)
+		जाओ fail;
 	/* The MC indicates that LOOPBACK_NONE is a valid loopback mode,
-	 * but by convention we don't
+	 * but by convention we करोn't
 	 */
 	efx->loopback_modes &= ~(1 << LOOPBACK_NONE);
 
@@ -501,233 +502,233 @@ int efx_mcdi_phy_probe(struct efx_nic *efx)
 						   efx->link_state.speed == 25000 ||
 						   efx->link_state.speed == 50000);
 
-	/* Default to Autonegotiated flow control if the PHY supports it */
+	/* Default to Autonegotiated flow control अगर the PHY supports it */
 	efx->wanted_fc = EFX_FC_RX | EFX_FC_TX;
-	if (phy_data->supported_cap & (1 << MC_CMD_PHY_CAP_AN_LBN))
+	अगर (phy_data->supported_cap & (1 << MC_CMD_PHY_CAP_AN_LBN))
 		efx->wanted_fc |= EFX_FC_AUTO;
 	efx_link_set_wanted_fc(efx, efx->wanted_fc);
 
-	return 0;
+	वापस 0;
 
 fail:
-	kfree(phy_data);
-	return rc;
-}
+	kमुक्त(phy_data);
+	वापस rc;
+पूर्ण
 
-void efx_mcdi_phy_remove(struct efx_nic *efx)
-{
-	struct efx_mcdi_phy_data *phy_data = efx->phy_data;
+व्योम efx_mcdi_phy_हटाओ(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_data = efx->phy_data;
 
-	efx->phy_data = NULL;
-	kfree(phy_data);
-}
+	efx->phy_data = शून्य;
+	kमुक्त(phy_data);
+पूर्ण
 
-void efx_mcdi_phy_get_link_ksettings(struct efx_nic *efx, struct ethtool_link_ksettings *cmd)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+व्योम efx_mcdi_phy_get_link_ksettings(काष्ठा efx_nic *efx, काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_LINK_OUT_LEN);
-	int rc;
+	पूर्णांक rc;
 
 	cmd->base.speed = efx->link_state.speed;
 	cmd->base.duplex = efx->link_state.fd;
 	cmd->base.port = mcdi_to_ethtool_media(phy_cfg->media);
 	cmd->base.phy_address = phy_cfg->port;
-	cmd->base.autoneg = !!(efx->link_advertising[0] & ADVERTISED_Autoneg);
+	cmd->base.स्वतःneg = !!(efx->link_advertising[0] & ADVERTISED_Autoneg);
 	cmd->base.mdio_support = (efx->mdio.mode_support &
 			      (MDIO_SUPPORTS_C45 | MDIO_SUPPORTS_C22));
 
 	mcdi_to_ethtool_linkset(phy_cfg->media, phy_cfg->supported_cap,
 				cmd->link_modes.supported);
-	memcpy(cmd->link_modes.advertising, efx->link_advertising,
-	       sizeof(__ETHTOOL_DECLARE_LINK_MODE_MASK()));
+	स_नकल(cmd->link_modes.advertising, efx->link_advertising,
+	       माप(__ETHTOOL_DECLARE_LINK_MODE_MASK()));
 
 	BUILD_BUG_ON(MC_CMD_GET_LINK_IN_LEN != 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, NULL, 0,
-			  outbuf, sizeof(outbuf), NULL);
-	if (rc)
-		return;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, शून्य, 0,
+			  outbuf, माप(outbuf), शून्य);
+	अगर (rc)
+		वापस;
 	mcdi_to_ethtool_linkset(phy_cfg->media,
 				MCDI_DWORD(outbuf, GET_LINK_OUT_LP_CAP),
 				cmd->link_modes.lp_advertising);
-}
+पूर्ण
 
-int efx_mcdi_phy_set_link_ksettings(struct efx_nic *efx, const struct ethtool_link_ksettings *cmd)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+पूर्णांक efx_mcdi_phy_set_link_ksettings(काष्ठा efx_nic *efx, स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 	u32 caps;
-	int rc;
+	पूर्णांक rc;
 
-	if (cmd->base.autoneg) {
+	अगर (cmd->base.स्वतःneg) अणु
 		caps = (ethtool_linkset_to_mcdi_cap(cmd->link_modes.advertising) |
 			1 << MC_CMD_PHY_CAP_AN_LBN);
-	} else if (cmd->base.duplex) {
-		switch (cmd->base.speed) {
-		case 10:     caps = 1 << MC_CMD_PHY_CAP_10FDX_LBN;     break;
-		case 100:    caps = 1 << MC_CMD_PHY_CAP_100FDX_LBN;    break;
-		case 1000:   caps = 1 << MC_CMD_PHY_CAP_1000FDX_LBN;   break;
-		case 10000:  caps = 1 << MC_CMD_PHY_CAP_10000FDX_LBN;  break;
-		case 40000:  caps = 1 << MC_CMD_PHY_CAP_40000FDX_LBN;  break;
-		case 100000: caps = 1 << MC_CMD_PHY_CAP_100000FDX_LBN; break;
-		case 25000:  caps = 1 << MC_CMD_PHY_CAP_25000FDX_LBN;  break;
-		case 50000:  caps = 1 << MC_CMD_PHY_CAP_50000FDX_LBN;  break;
-		default:     return -EINVAL;
-		}
-	} else {
-		switch (cmd->base.speed) {
-		case 10:     caps = 1 << MC_CMD_PHY_CAP_10HDX_LBN;     break;
-		case 100:    caps = 1 << MC_CMD_PHY_CAP_100HDX_LBN;    break;
-		case 1000:   caps = 1 << MC_CMD_PHY_CAP_1000HDX_LBN;   break;
-		default:     return -EINVAL;
-		}
-	}
+	पूर्ण अन्यथा अगर (cmd->base.duplex) अणु
+		चयन (cmd->base.speed) अणु
+		हाल 10:     caps = 1 << MC_CMD_PHY_CAP_10FDX_LBN;     अवरोध;
+		हाल 100:    caps = 1 << MC_CMD_PHY_CAP_100FDX_LBN;    अवरोध;
+		हाल 1000:   caps = 1 << MC_CMD_PHY_CAP_1000FDX_LBN;   अवरोध;
+		हाल 10000:  caps = 1 << MC_CMD_PHY_CAP_10000FDX_LBN;  अवरोध;
+		हाल 40000:  caps = 1 << MC_CMD_PHY_CAP_40000FDX_LBN;  अवरोध;
+		हाल 100000: caps = 1 << MC_CMD_PHY_CAP_100000FDX_LBN; अवरोध;
+		हाल 25000:  caps = 1 << MC_CMD_PHY_CAP_25000FDX_LBN;  अवरोध;
+		हाल 50000:  caps = 1 << MC_CMD_PHY_CAP_50000FDX_LBN;  अवरोध;
+		शेष:     वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (cmd->base.speed) अणु
+		हाल 10:     caps = 1 << MC_CMD_PHY_CAP_10HDX_LBN;     अवरोध;
+		हाल 100:    caps = 1 << MC_CMD_PHY_CAP_100HDX_LBN;    अवरोध;
+		हाल 1000:   caps = 1 << MC_CMD_PHY_CAP_1000HDX_LBN;   अवरोध;
+		शेष:     वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	caps |= ethtool_fec_caps_to_mcdi(phy_cfg->supported_cap, efx->fec_config);
 
 	rc = efx_mcdi_set_link(efx, caps, efx_get_mcdi_phy_flags(efx),
 			       efx->loopback_mode, 0);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (cmd->base.autoneg) {
+	अगर (cmd->base.स्वतःneg) अणु
 		efx_link_set_advertising(efx, cmd->link_modes.advertising);
-		phy_cfg->forced_cap = 0;
-	} else {
+		phy_cfg->क्रमced_cap = 0;
+	पूर्ण अन्यथा अणु
 		efx_link_clear_advertising(efx);
-		phy_cfg->forced_cap = caps;
-	}
-	return 0;
-}
+		phy_cfg->क्रमced_cap = caps;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_phy_get_fecparam(struct efx_nic *efx, struct ethtool_fecparam *fec)
-{
+पूर्णांक efx_mcdi_phy_get_fecparam(काष्ठा efx_nic *efx, काष्ठा ethtool_fecparam *fec)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_LINK_OUT_V2_LEN);
-	u32 caps, active, speed; /* MCDI format */
+	u32 caps, active, speed; /* MCDI क्रमmat */
 	bool is_25g = false;
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_GET_LINK_IN_LEN != 0);
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		return rc;
-	if (outlen < MC_CMD_GET_LINK_OUT_V2_LEN)
-		return -EOPNOTSUPP;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_LINK, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		वापस rc;
+	अगर (outlen < MC_CMD_GET_LINK_OUT_V2_LEN)
+		वापस -EOPNOTSUPP;
 
-	/* behaviour for 25G/50G links depends on 25G BASER bit */
+	/* behaviour क्रम 25G/50G links depends on 25G BASER bit */
 	speed = MCDI_DWORD(outbuf, GET_LINK_OUT_V2_LINK_SPEED);
 	is_25g = speed == 25000 || speed == 50000;
 
 	caps = MCDI_DWORD(outbuf, GET_LINK_OUT_V2_CAP);
 	fec->fec = mcdi_fec_caps_to_ethtool(caps, is_25g);
 	/* BASER is never supported on 100G */
-	if (speed == 100000)
+	अगर (speed == 100000)
 		fec->fec &= ~ETHTOOL_FEC_BASER;
 
 	active = MCDI_DWORD(outbuf, GET_LINK_OUT_V2_FEC_TYPE);
-	switch (active) {
-	case MC_CMD_FEC_NONE:
+	चयन (active) अणु
+	हाल MC_CMD_FEC_NONE:
 		fec->active_fec = ETHTOOL_FEC_OFF;
-		break;
-	case MC_CMD_FEC_BASER:
+		अवरोध;
+	हाल MC_CMD_FEC_BASER:
 		fec->active_fec = ETHTOOL_FEC_BASER;
-		break;
-	case MC_CMD_FEC_RS:
+		अवरोध;
+	हाल MC_CMD_FEC_RS:
 		fec->active_fec = ETHTOOL_FEC_RS;
-		break;
-	default:
-		netif_warn(efx, hw, efx->net_dev,
+		अवरोध;
+	शेष:
+		netअगर_warn(efx, hw, efx->net_dev,
 			   "Firmware reports unrecognised FEC_TYPE %u\n",
 			   active);
-		/* We don't know what firmware has picked.  AUTO is as good a
+		/* We करोn't know what firmware has picked.  AUTO is as good a
 		 * "can't happen" value as any other.
 		 */
 		fec->active_fec = ETHTOOL_FEC_AUTO;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Basic validation to ensure that the caps we are going to attempt to set are
  * in fact supported by the adapter.  Note that 'no FEC' is always supported.
  */
-static int ethtool_fec_supported(u32 supported_cap, u32 ethtool_cap)
-{
-	if (ethtool_cap & ETHTOOL_FEC_OFF)
-		return 0;
+अटल पूर्णांक ethtool_fec_supported(u32 supported_cap, u32 ethtool_cap)
+अणु
+	अगर (ethtool_cap & ETHTOOL_FEC_OFF)
+		वापस 0;
 
-	if (ethtool_cap &&
+	अगर (ethtool_cap &&
 	    !ethtool_fec_caps_to_mcdi(supported_cap, ethtool_cap))
-		return -EINVAL;
-	return 0;
-}
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_phy_set_fecparam(struct efx_nic *efx, const struct ethtool_fecparam *fec)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+पूर्णांक efx_mcdi_phy_set_fecparam(काष्ठा efx_nic *efx, स्थिर काष्ठा ethtool_fecparam *fec)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 	u32 caps;
-	int rc;
+	पूर्णांक rc;
 
 	rc = ethtool_fec_supported(phy_cfg->supported_cap, fec->fec);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* Work out what efx_mcdi_phy_set_link_ksettings() would produce from
 	 * saved advertising bits
 	 */
-	if (test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT, efx->link_advertising))
+	अगर (test_bit(ETHTOOL_LINK_MODE_Autoneg_BIT, efx->link_advertising))
 		caps = (ethtool_linkset_to_mcdi_cap(efx->link_advertising) |
 			1 << MC_CMD_PHY_CAP_AN_LBN);
-	else
-		caps = phy_cfg->forced_cap;
+	अन्यथा
+		caps = phy_cfg->क्रमced_cap;
 
 	caps |= ethtool_fec_caps_to_mcdi(phy_cfg->supported_cap, fec->fec);
 	rc = efx_mcdi_set_link(efx, caps, efx_get_mcdi_phy_flags(efx),
 			       efx->loopback_mode, 0);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Record the new FEC setting for subsequent set_link calls */
+	/* Record the new FEC setting क्रम subsequent set_link calls */
 	efx->fec_config = fec->fec;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_phy_test_alive(struct efx_nic *efx)
-{
+पूर्णांक efx_mcdi_phy_test_alive(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_PHY_STATE_OUT_LEN);
-	size_t outlen;
-	int rc;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_GET_PHY_STATE_IN_LEN != 0);
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_PHY_STATE, NULL, 0,
-			  outbuf, sizeof(outbuf), &outlen);
-	if (rc)
-		return rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_PHY_STATE, शून्य, 0,
+			  outbuf, माप(outbuf), &outlen);
+	अगर (rc)
+		वापस rc;
 
-	if (outlen < MC_CMD_GET_PHY_STATE_OUT_LEN)
-		return -EIO;
-	if (MCDI_DWORD(outbuf, GET_PHY_STATE_OUT_STATE) != MC_CMD_PHY_STATE_OK)
-		return -EINVAL;
+	अगर (outlen < MC_CMD_GET_PHY_STATE_OUT_LEN)
+		वापस -EIO;
+	अगर (MCDI_DWORD(outbuf, GET_PHY_STATE_OUT_STATE) != MC_CMD_PHY_STATE_OK)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_port_reconfigure(struct efx_nic *efx)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+पूर्णांक efx_mcdi_port_reconfigure(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 	u32 caps = (efx->link_advertising[0] ?
 		    ethtool_linkset_to_mcdi_cap(efx->link_advertising) :
-		    phy_cfg->forced_cap);
+		    phy_cfg->क्रमced_cap);
 
 	caps |= ethtool_fec_caps_to_mcdi(phy_cfg->supported_cap, efx->fec_config);
 
-	return efx_mcdi_set_link(efx, caps, efx_get_mcdi_phy_flags(efx),
+	वापस efx_mcdi_set_link(efx, caps, efx_get_mcdi_phy_flags(efx),
 				 efx->loopback_mode, 0);
-}
+पूर्ण
 
-static const char *const mcdi_sft9001_cable_diag_names[] = {
+अटल स्थिर अक्षर *स्थिर mcdi_sft9001_cable_diag_names[] = अणु
 	"cable.pairA.length",
 	"cable.pairB.length",
 	"cable.pairC.length",
@@ -736,145 +737,145 @@ static const char *const mcdi_sft9001_cable_diag_names[] = {
 	"cable.pairB.status",
 	"cable.pairC.status",
 	"cable.pairD.status",
-};
+पूर्ण;
 
-static int efx_mcdi_bist(struct efx_nic *efx, unsigned int bist_mode,
-			 int *results)
-{
-	unsigned int retry, i, count = 0;
-	size_t outlen;
+अटल पूर्णांक efx_mcdi_bist(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक bist_mode,
+			 पूर्णांक *results)
+अणु
+	अचिन्हित पूर्णांक retry, i, count = 0;
+	माप_प्रकार outlen;
 	u32 status;
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_START_BIST_IN_LEN);
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_POLL_BIST_OUT_SFT9001_LEN);
 	u8 *ptr;
-	int rc;
+	पूर्णांक rc;
 
 	BUILD_BUG_ON(MC_CMD_START_BIST_OUT_LEN != 0);
 	MCDI_SET_DWORD(inbuf, START_BIST_IN_TYPE, bist_mode);
 	rc = efx_mcdi_rpc(efx, MC_CMD_START_BIST,
-			  inbuf, MC_CMD_START_BIST_IN_LEN, NULL, 0, NULL);
-	if (rc)
-		goto out;
+			  inbuf, MC_CMD_START_BIST_IN_LEN, शून्य, 0, शून्य);
+	अगर (rc)
+		जाओ out;
 
-	/* Wait up to 10s for BIST to finish */
-	for (retry = 0; retry < 100; ++retry) {
+	/* Wait up to 10s क्रम BIST to finish */
+	क्रम (retry = 0; retry < 100; ++retry) अणु
 		BUILD_BUG_ON(MC_CMD_POLL_BIST_IN_LEN != 0);
-		rc = efx_mcdi_rpc(efx, MC_CMD_POLL_BIST, NULL, 0,
-				  outbuf, sizeof(outbuf), &outlen);
-		if (rc)
-			goto out;
+		rc = efx_mcdi_rpc(efx, MC_CMD_POLL_BIST, शून्य, 0,
+				  outbuf, माप(outbuf), &outlen);
+		अगर (rc)
+			जाओ out;
 
 		status = MCDI_DWORD(outbuf, POLL_BIST_OUT_RESULT);
-		if (status != MC_CMD_POLL_BIST_RUNNING)
-			goto finished;
+		अगर (status != MC_CMD_POLL_BIST_RUNNING)
+			जाओ finished;
 
 		msleep(100);
-	}
+	पूर्ण
 
 	rc = -ETIMEDOUT;
-	goto out;
+	जाओ out;
 
 finished:
 	results[count++] = (status == MC_CMD_POLL_BIST_PASSED) ? 1 : -1;
 
-	/* SFT9001 specific cable diagnostics output */
-	if (efx->phy_type == PHY_TYPE_SFT9001B &&
+	/* SFT9001 specअगरic cable diagnostics output */
+	अगर (efx->phy_type == PHY_TYPE_SFT9001B &&
 	    (bist_mode == MC_CMD_PHY_BIST_CABLE_SHORT ||
-	     bist_mode == MC_CMD_PHY_BIST_CABLE_LONG)) {
+	     bist_mode == MC_CMD_PHY_BIST_CABLE_LONG)) अणु
 		ptr = MCDI_PTR(outbuf, POLL_BIST_OUT_SFT9001_CABLE_LENGTH_A);
-		if (status == MC_CMD_POLL_BIST_PASSED &&
-		    outlen >= MC_CMD_POLL_BIST_OUT_SFT9001_LEN) {
-			for (i = 0; i < 8; i++) {
+		अगर (status == MC_CMD_POLL_BIST_PASSED &&
+		    outlen >= MC_CMD_POLL_BIST_OUT_SFT9001_LEN) अणु
+			क्रम (i = 0; i < 8; i++) अणु
 				results[count + i] =
 					EFX_DWORD_FIELD(((efx_dword_t *)ptr)[i],
 							EFX_DWORD_0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		count += 8;
-	}
+	पूर्ण
 	rc = count;
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int efx_mcdi_phy_run_tests(struct efx_nic *efx, int *results, unsigned int flags)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+पूर्णांक efx_mcdi_phy_run_tests(काष्ठा efx_nic *efx, पूर्णांक *results, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 	u32 mode;
-	int rc;
+	पूर्णांक rc;
 
-	if (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_LBN)) {
+	अगर (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_LBN)) अणु
 		rc = efx_mcdi_bist(efx, MC_CMD_PHY_BIST, results);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
 		results += rc;
-	}
+	पूर्ण
 
 	/* If we support both LONG and SHORT, then run each in response to
-	 * break or not. Otherwise, run the one we support
+	 * अवरोध or not. Otherwise, run the one we support
 	 */
 	mode = 0;
-	if (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_SHORT_LBN)) {
-		if ((flags & ETH_TEST_FL_OFFLINE) &&
+	अगर (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_SHORT_LBN)) अणु
+		अगर ((flags & ETH_TEST_FL_OFFLINE) &&
 		    (phy_cfg->flags &
 		     (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_LONG_LBN)))
 			mode = MC_CMD_PHY_BIST_CABLE_LONG;
-		else
+		अन्यथा
 			mode = MC_CMD_PHY_BIST_CABLE_SHORT;
-	} else if (phy_cfg->flags &
+	पूर्ण अन्यथा अगर (phy_cfg->flags &
 		   (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_LONG_LBN))
 		mode = MC_CMD_PHY_BIST_CABLE_LONG;
 
-	if (mode != 0) {
+	अगर (mode != 0) अणु
 		rc = efx_mcdi_bist(efx, mode, results);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		results += rc;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const char *efx_mcdi_phy_test_name(struct efx_nic *efx, unsigned int index)
-{
-	struct efx_mcdi_phy_data *phy_cfg = efx->phy_data;
+स्थिर अक्षर *efx_mcdi_phy_test_name(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_cfg = efx->phy_data;
 
-	if (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_LBN)) {
-		if (index == 0)
-			return "bist";
+	अगर (phy_cfg->flags & (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_LBN)) अणु
+		अगर (index == 0)
+			वापस "bist";
 		--index;
-	}
+	पूर्ण
 
-	if (phy_cfg->flags & ((1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_SHORT_LBN) |
-			      (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_LONG_LBN))) {
-		if (index == 0)
-			return "cable";
+	अगर (phy_cfg->flags & ((1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_SHORT_LBN) |
+			      (1 << MC_CMD_GET_PHY_CFG_OUT_BIST_CABLE_LONG_LBN))) अणु
+		अगर (index == 0)
+			वापस "cable";
 		--index;
 
-		if (efx->phy_type == PHY_TYPE_SFT9001B) {
-			if (index < ARRAY_SIZE(mcdi_sft9001_cable_diag_names))
-				return mcdi_sft9001_cable_diag_names[index];
+		अगर (efx->phy_type == PHY_TYPE_SFT9001B) अणु
+			अगर (index < ARRAY_SIZE(mcdi_sft9001_cable_diag_names))
+				वापस mcdi_sft9001_cable_diag_names[index];
 			index -= ARRAY_SIZE(mcdi_sft9001_cable_diag_names);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#define SFP_PAGE_SIZE		128
-#define SFF_DIAG_TYPE_OFFSET	92
-#define SFF_DIAG_ADDR_CHANGE	BIT(2)
-#define SFF_8079_NUM_PAGES	2
-#define SFF_8472_NUM_PAGES	4
-#define SFF_8436_NUM_PAGES	5
-#define SFF_DMT_LEVEL_OFFSET	94
+#घोषणा SFP_PAGE_SIZE		128
+#घोषणा SFF_DIAG_TYPE_OFFSET	92
+#घोषणा SFF_DIAG_ADDR_CHANGE	BIT(2)
+#घोषणा SFF_8079_NUM_PAGES	2
+#घोषणा SFF_8472_NUM_PAGES	4
+#घोषणा SFF_8436_NUM_PAGES	5
+#घोषणा SFF_DMT_LEVEL_OFFSET	94
 
 /** efx_mcdi_phy_get_module_eeprom_page() - Get a single page of module eeprom
  * @efx:	NIC context
  * @page:	EEPROM page number
- * @data:	Destination data pointer
+ * @data:	Destination data poपूर्णांकer
  * @offset:	Offset in page to copy from in to data
  * @space:	Space available in data
  *
@@ -882,203 +883,203 @@ const char *efx_mcdi_phy_test_name(struct efx_nic *efx, unsigned int index)
  *   >=0 - amount of data copied
  *   <0  - error
  */
-static int efx_mcdi_phy_get_module_eeprom_page(struct efx_nic *efx,
-					       unsigned int page,
-					       u8 *data, ssize_t offset,
-					       ssize_t space)
-{
+अटल पूर्णांक efx_mcdi_phy_get_module_eeprom_page(काष्ठा efx_nic *efx,
+					       अचिन्हित पूर्णांक page,
+					       u8 *data, sमाप_प्रकार offset,
+					       sमाप_प्रकार space)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_PHY_MEDIA_INFO_OUT_LENMAX);
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_GET_PHY_MEDIA_INFO_IN_LEN);
-	unsigned int payload_len;
-	unsigned int to_copy;
-	size_t outlen;
-	int rc;
+	अचिन्हित पूर्णांक payload_len;
+	अचिन्हित पूर्णांक to_copy;
+	माप_प्रकार outlen;
+	पूर्णांक rc;
 
-	if (offset > SFP_PAGE_SIZE)
-		return -EINVAL;
+	अगर (offset > SFP_PAGE_SIZE)
+		वापस -EINVAL;
 
 	to_copy = min(space, SFP_PAGE_SIZE - offset);
 
 	MCDI_SET_DWORD(inbuf, GET_PHY_MEDIA_INFO_IN_PAGE, page);
 	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_GET_PHY_MEDIA_INFO,
-				inbuf, sizeof(inbuf),
-				outbuf, sizeof(outbuf),
+				inbuf, माप(inbuf),
+				outbuf, माप(outbuf),
 				&outlen);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (outlen < (MC_CMD_GET_PHY_MEDIA_INFO_OUT_DATA_OFST +
+	अगर (outlen < (MC_CMD_GET_PHY_MEDIA_INFO_OUT_DATA_OFST +
 			SFP_PAGE_SIZE))
-		return -EIO;
+		वापस -EIO;
 
 	payload_len = MCDI_DWORD(outbuf, GET_PHY_MEDIA_INFO_OUT_DATALEN);
-	if (payload_len != SFP_PAGE_SIZE)
-		return -EIO;
+	अगर (payload_len != SFP_PAGE_SIZE)
+		वापस -EIO;
 
-	memcpy(data, MCDI_PTR(outbuf, GET_PHY_MEDIA_INFO_OUT_DATA) + offset,
+	स_नकल(data, MCDI_PTR(outbuf, GET_PHY_MEDIA_INFO_OUT_DATA) + offset,
 	       to_copy);
 
-	return to_copy;
-}
+	वापस to_copy;
+पूर्ण
 
-static int efx_mcdi_phy_get_module_eeprom_byte(struct efx_nic *efx,
-					       unsigned int page,
+अटल पूर्णांक efx_mcdi_phy_get_module_eeprom_byte(काष्ठा efx_nic *efx,
+					       अचिन्हित पूर्णांक page,
 					       u8 byte)
-{
+अणु
 	u8 data;
-	int rc;
+	पूर्णांक rc;
 
 	rc = efx_mcdi_phy_get_module_eeprom_page(efx, page, &data, byte, 1);
-	if (rc == 1)
-		return data;
+	अगर (rc == 1)
+		वापस data;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int efx_mcdi_phy_diag_type(struct efx_nic *efx)
-{
+अटल पूर्णांक efx_mcdi_phy_diag_type(काष्ठा efx_nic *efx)
+अणु
 	/* Page zero of the EEPROM includes the diagnostic type at byte 92. */
-	return efx_mcdi_phy_get_module_eeprom_byte(efx, 0,
+	वापस efx_mcdi_phy_get_module_eeprom_byte(efx, 0,
 						   SFF_DIAG_TYPE_OFFSET);
-}
+पूर्ण
 
-static int efx_mcdi_phy_sff_8472_level(struct efx_nic *efx)
-{
+अटल पूर्णांक efx_mcdi_phy_sff_8472_level(काष्ठा efx_nic *efx)
+अणु
 	/* Page zero of the EEPROM includes the DMT level at byte 94. */
-	return efx_mcdi_phy_get_module_eeprom_byte(efx, 0,
+	वापस efx_mcdi_phy_get_module_eeprom_byte(efx, 0,
 						   SFF_DMT_LEVEL_OFFSET);
-}
+पूर्ण
 
-static u32 efx_mcdi_phy_module_type(struct efx_nic *efx)
-{
-	struct efx_mcdi_phy_data *phy_data = efx->phy_data;
+अटल u32 efx_mcdi_phy_module_type(काष्ठा efx_nic *efx)
+अणु
+	काष्ठा efx_mcdi_phy_data *phy_data = efx->phy_data;
 
-	if (phy_data->media != MC_CMD_MEDIA_QSFP_PLUS)
-		return phy_data->media;
+	अगर (phy_data->media != MC_CMD_MEDIA_QSFP_PLUS)
+		वापस phy_data->media;
 
 	/* A QSFP+ NIC may actually have an SFP+ module attached.
 	 * The ID is page 0, byte 0.
 	 */
-	switch (efx_mcdi_phy_get_module_eeprom_byte(efx, 0, 0)) {
-	case 0x3:
-		return MC_CMD_MEDIA_SFP_PLUS;
-	case 0xc:
-	case 0xd:
-		return MC_CMD_MEDIA_QSFP_PLUS;
-	default:
-		return 0;
-	}
-}
+	चयन (efx_mcdi_phy_get_module_eeprom_byte(efx, 0, 0)) अणु
+	हाल 0x3:
+		वापस MC_CMD_MEDIA_SFP_PLUS;
+	हाल 0xc:
+	हाल 0xd:
+		वापस MC_CMD_MEDIA_QSFP_PLUS;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int efx_mcdi_phy_get_module_eeprom(struct efx_nic *efx, struct ethtool_eeprom *ee, u8 *data)
-{
-	int rc;
-	ssize_t space_remaining = ee->len;
-	unsigned int page_off;
+पूर्णांक efx_mcdi_phy_get_module_eeprom(काष्ठा efx_nic *efx, काष्ठा ethtool_eeprom *ee, u8 *data)
+अणु
+	पूर्णांक rc;
+	sमाप_प्रकार space_reमुख्यing = ee->len;
+	अचिन्हित पूर्णांक page_off;
 	bool ignore_missing;
-	int num_pages;
-	int page;
+	पूर्णांक num_pages;
+	पूर्णांक page;
 
-	switch (efx_mcdi_phy_module_type(efx)) {
-	case MC_CMD_MEDIA_SFP_PLUS:
+	चयन (efx_mcdi_phy_module_type(efx)) अणु
+	हाल MC_CMD_MEDIA_SFP_PLUS:
 		num_pages = efx_mcdi_phy_sff_8472_level(efx) > 0 ?
 				SFF_8472_NUM_PAGES : SFF_8079_NUM_PAGES;
 		page = 0;
 		ignore_missing = false;
-		break;
-	case MC_CMD_MEDIA_QSFP_PLUS:
+		अवरोध;
+	हाल MC_CMD_MEDIA_QSFP_PLUS:
 		num_pages = SFF_8436_NUM_PAGES;
-		page = -1; /* We obtain the lower page by asking for -1. */
+		page = -1; /* We obtain the lower page by asking क्रम -1. */
 		ignore_missing = true; /* Ignore missing pages after page 0. */
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	page_off = ee->offset % SFP_PAGE_SIZE;
 	page += ee->offset / SFP_PAGE_SIZE;
 
-	while (space_remaining && (page < num_pages)) {
+	जबतक (space_reमुख्यing && (page < num_pages)) अणु
 		rc = efx_mcdi_phy_get_module_eeprom_page(efx, page,
 							 data, page_off,
-							 space_remaining);
+							 space_reमुख्यing);
 
-		if (rc > 0) {
-			space_remaining -= rc;
+		अगर (rc > 0) अणु
+			space_reमुख्यing -= rc;
 			data += rc;
 			page_off = 0;
 			page++;
-		} else if (rc == 0) {
-			space_remaining = 0;
-		} else if (ignore_missing && (page > 0)) {
-			int intended_size = SFP_PAGE_SIZE - page_off;
+		पूर्ण अन्यथा अगर (rc == 0) अणु
+			space_reमुख्यing = 0;
+		पूर्ण अन्यथा अगर (ignore_missing && (page > 0)) अणु
+			पूर्णांक पूर्णांकended_size = SFP_PAGE_SIZE - page_off;
 
-			space_remaining -= intended_size;
-			if (space_remaining < 0) {
-				space_remaining = 0;
-			} else {
-				memset(data, 0, intended_size);
-				data += intended_size;
+			space_reमुख्यing -= पूर्णांकended_size;
+			अगर (space_reमुख्यing < 0) अणु
+				space_reमुख्यing = 0;
+			पूर्ण अन्यथा अणु
+				स_रखो(data, 0, पूर्णांकended_size);
+				data += पूर्णांकended_size;
 				page_off = 0;
 				page++;
 				rc = 0;
-			}
-		} else {
-			return rc;
-		}
-	}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int efx_mcdi_phy_get_module_info(struct efx_nic *efx, struct ethtool_modinfo *modinfo)
-{
-	int sff_8472_level;
-	int diag_type;
+पूर्णांक efx_mcdi_phy_get_module_info(काष्ठा efx_nic *efx, काष्ठा ethtool_modinfo *modinfo)
+अणु
+	पूर्णांक sff_8472_level;
+	पूर्णांक diag_type;
 
-	switch (efx_mcdi_phy_module_type(efx)) {
-	case MC_CMD_MEDIA_SFP_PLUS:
+	चयन (efx_mcdi_phy_module_type(efx)) अणु
+	हाल MC_CMD_MEDIA_SFP_PLUS:
 		sff_8472_level = efx_mcdi_phy_sff_8472_level(efx);
 
-		/* If we can't read the diagnostics level we have none. */
-		if (sff_8472_level < 0)
-			return -EOPNOTSUPP;
+		/* If we can't पढ़ो the diagnostics level we have none. */
+		अगर (sff_8472_level < 0)
+			वापस -EOPNOTSUPP;
 
-		/* Check if this module requires the (unsupported) address
+		/* Check अगर this module requires the (unsupported) address
 		 * change operation.
 		 */
 		diag_type = efx_mcdi_phy_diag_type(efx);
 
-		if (sff_8472_level == 0 ||
-		    (diag_type & SFF_DIAG_ADDR_CHANGE)) {
+		अगर (sff_8472_level == 0 ||
+		    (diag_type & SFF_DIAG_ADDR_CHANGE)) अणु
 			modinfo->type = ETH_MODULE_SFF_8079;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8079_LEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			modinfo->type = ETH_MODULE_SFF_8472;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8472_LEN;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case MC_CMD_MEDIA_QSFP_PLUS:
+	हाल MC_CMD_MEDIA_QSFP_PLUS:
 		modinfo->type = ETH_MODULE_SFF_8436;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8436_LEN;
-		break;
+		अवरोध;
 
-	default:
-		return -EOPNOTSUPP;
-	}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int efx_calc_mac_mtu(struct efx_nic *efx)
-{
-	return EFX_MAX_FRAME_LEN(efx->net_dev->mtu);
-}
+अटल अचिन्हित पूर्णांक efx_calc_mac_mtu(काष्ठा efx_nic *efx)
+अणु
+	वापस EFX_MAX_FRAME_LEN(efx->net_dev->mtu);
+पूर्ण
 
-int efx_mcdi_set_mac(struct efx_nic *efx)
-{
+पूर्णांक efx_mcdi_set_mac(काष्ठा efx_nic *efx)
+अणु
 	u32 fcntl;
 	MCDI_DECLARE_BUF(cmdbytes, MC_CMD_SET_MAC_IN_LEN);
 
@@ -1091,7 +1092,7 @@ int efx_mcdi_set_mac(struct efx_nic *efx)
 	MCDI_SET_DWORD(cmdbytes, SET_MAC_IN_MTU, efx_calc_mac_mtu(efx));
 	MCDI_SET_DWORD(cmdbytes, SET_MAC_IN_DRAIN, 0);
 
-	/* Set simple MAC filter for Siena */
+	/* Set simple MAC filter क्रम Siena */
 	MCDI_POPULATE_DWORD_1(cmdbytes, SET_MAC_IN_REJECT,
 			      SET_MAC_IN_REJECT_UNCST, efx->unicast_filter);
 
@@ -1099,30 +1100,30 @@ int efx_mcdi_set_mac(struct efx_nic *efx)
 			      SET_MAC_IN_FLAG_INCLUDE_FCS,
 			      !!(efx->net_dev->features & NETIF_F_RXFCS));
 
-	switch (efx->wanted_fc) {
-	case EFX_FC_RX | EFX_FC_TX:
-		fcntl = MC_CMD_FCNTL_BIDIR;
-		break;
-	case EFX_FC_RX:
+	चयन (efx->wanted_fc) अणु
+	हाल EFX_FC_RX | EFX_FC_TX:
+		fcntl = MC_CMD_FCNTL_BIसूची;
+		अवरोध;
+	हाल EFX_FC_RX:
 		fcntl = MC_CMD_FCNTL_RESPOND;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fcntl = MC_CMD_FCNTL_OFF;
-		break;
-	}
-	if (efx->wanted_fc & EFX_FC_AUTO)
+		अवरोध;
+	पूर्ण
+	अगर (efx->wanted_fc & EFX_FC_AUTO)
 		fcntl = MC_CMD_FCNTL_AUTO;
-	if (efx->fc_disable)
+	अगर (efx->fc_disable)
 		fcntl = MC_CMD_FCNTL_OFF;
 
 	MCDI_SET_DWORD(cmdbytes, SET_MAC_IN_FCNTL, fcntl);
 
-	return efx_mcdi_rpc(efx, MC_CMD_SET_MAC, cmdbytes, sizeof(cmdbytes),
-			    NULL, 0, NULL);
-}
+	वापस efx_mcdi_rpc(efx, MC_CMD_SET_MAC, cmdbytes, माप(cmdbytes),
+			    शून्य, 0, शून्य);
+पूर्ण
 
-int efx_mcdi_set_mtu(struct efx_nic *efx)
-{
+पूर्णांक efx_mcdi_set_mtu(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_SET_MAC_EXT_IN_LEN);
 
 	BUILD_BUG_ON(MC_CMD_SET_MAC_OUT_LEN != 0);
@@ -1132,27 +1133,27 @@ int efx_mcdi_set_mtu(struct efx_nic *efx)
 	MCDI_POPULATE_DWORD_1(inbuf, SET_MAC_EXT_IN_CONTROL,
 			      SET_MAC_EXT_IN_CFG_MTU, 1);
 
-	return efx_mcdi_rpc(efx, MC_CMD_SET_MAC, inbuf, sizeof(inbuf),
-			    NULL, 0, NULL);
-}
+	वापस efx_mcdi_rpc(efx, MC_CMD_SET_MAC, inbuf, माप(inbuf),
+			    शून्य, 0, शून्य);
+पूर्ण
 
-enum efx_stats_action {
+क्रमागत efx_stats_action अणु
 	EFX_STATS_ENABLE,
 	EFX_STATS_DISABLE,
 	EFX_STATS_PULL,
-};
+पूर्ण;
 
-static int efx_mcdi_mac_stats(struct efx_nic *efx,
-			      enum efx_stats_action action, int clear)
-{
+अटल पूर्णांक efx_mcdi_mac_stats(काष्ठा efx_nic *efx,
+			      क्रमागत efx_stats_action action, पूर्णांक clear)
+अणु
 	MCDI_DECLARE_BUF(inbuf, MC_CMD_MAC_STATS_IN_LEN);
-	int rc;
-	int change = action == EFX_STATS_PULL ? 0 : 1;
-	int enable = action == EFX_STATS_ENABLE ? 1 : 0;
-	int period = action == EFX_STATS_ENABLE ? 1000 : 0;
+	पूर्णांक rc;
+	पूर्णांक change = action == EFX_STATS_PULL ? 0 : 1;
+	पूर्णांक enable = action == EFX_STATS_ENABLE ? 1 : 0;
+	पूर्णांक period = action == EFX_STATS_ENABLE ? 1000 : 0;
 	dma_addr_t dma_addr = efx->stats_buffer.dma_addr;
 	u32 dma_len = action != EFX_STATS_DISABLE ?
-		efx->num_mac_stats * sizeof(u64) : 0;
+		efx->num_mac_stats * माप(u64) : 0;
 
 	BUILD_BUG_ON(MC_CMD_MAC_STATS_OUT_DMA_LEN != 0);
 
@@ -1167,94 +1168,94 @@ static int efx_mcdi_mac_stats(struct efx_nic *efx,
 			      MAC_STATS_IN_PERIOD_MS, period);
 	MCDI_SET_DWORD(inbuf, MAC_STATS_IN_DMA_LEN, dma_len);
 
-	if (efx_nic_rev(efx) >= EFX_REV_HUNT_A0)
+	अगर (efx_nic_rev(efx) >= EFX_REV_HUNT_A0)
 		MCDI_SET_DWORD(inbuf, MAC_STATS_IN_PORT_ID, efx->vport_id);
 
-	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_MAC_STATS, inbuf, sizeof(inbuf),
-				NULL, 0, NULL);
-	/* Expect ENOENT if DMA queues have not been set up */
-	if (rc && (rc != -ENOENT || atomic_read(&efx->active_queues)))
-		efx_mcdi_display_error(efx, MC_CMD_MAC_STATS, sizeof(inbuf),
-				       NULL, 0, rc);
-	return rc;
-}
+	rc = efx_mcdi_rpc_quiet(efx, MC_CMD_MAC_STATS, inbuf, माप(inbuf),
+				शून्य, 0, शून्य);
+	/* Expect ENOENT अगर DMA queues have not been set up */
+	अगर (rc && (rc != -ENOENT || atomic_पढ़ो(&efx->active_queues)))
+		efx_mcdi_display_error(efx, MC_CMD_MAC_STATS, माप(inbuf),
+				       शून्य, 0, rc);
+	वापस rc;
+पूर्ण
 
-void efx_mcdi_mac_start_stats(struct efx_nic *efx)
-{
+व्योम efx_mcdi_mac_start_stats(काष्ठा efx_nic *efx)
+अणु
 	__le64 *dma_stats = efx->stats_buffer.addr;
 
 	dma_stats[efx->num_mac_stats - 1] = EFX_MC_STATS_GENERATION_INVALID;
 
 	efx_mcdi_mac_stats(efx, EFX_STATS_ENABLE, 0);
-}
+पूर्ण
 
-void efx_mcdi_mac_stop_stats(struct efx_nic *efx)
-{
+व्योम efx_mcdi_mac_stop_stats(काष्ठा efx_nic *efx)
+अणु
 	efx_mcdi_mac_stats(efx, EFX_STATS_DISABLE, 0);
-}
+पूर्ण
 
-#define EFX_MAC_STATS_WAIT_US 100
-#define EFX_MAC_STATS_WAIT_ATTEMPTS 10
+#घोषणा EFX_MAC_STATS_WAIT_US 100
+#घोषणा EFX_MAC_STATS_WAIT_ATTEMPTS 10
 
-void efx_mcdi_mac_pull_stats(struct efx_nic *efx)
-{
+व्योम efx_mcdi_mac_pull_stats(काष्ठा efx_nic *efx)
+अणु
 	__le64 *dma_stats = efx->stats_buffer.addr;
-	int attempts = EFX_MAC_STATS_WAIT_ATTEMPTS;
+	पूर्णांक attempts = EFX_MAC_STATS_WAIT_ATTEMPTS;
 
 	dma_stats[efx->num_mac_stats - 1] = EFX_MC_STATS_GENERATION_INVALID;
 	efx_mcdi_mac_stats(efx, EFX_STATS_PULL, 0);
 
-	while (dma_stats[efx->num_mac_stats - 1] ==
+	जबतक (dma_stats[efx->num_mac_stats - 1] ==
 				EFX_MC_STATS_GENERATION_INVALID &&
 			attempts-- != 0)
 		udelay(EFX_MAC_STATS_WAIT_US);
-}
+पूर्ण
 
-int efx_mcdi_mac_init_stats(struct efx_nic *efx)
-{
-	int rc;
+पूर्णांक efx_mcdi_mac_init_stats(काष्ठा efx_nic *efx)
+अणु
+	पूर्णांक rc;
 
-	if (!efx->num_mac_stats)
-		return 0;
+	अगर (!efx->num_mac_stats)
+		वापस 0;
 
-	/* Allocate buffer for stats */
+	/* Allocate buffer क्रम stats */
 	rc = efx_nic_alloc_buffer(efx, &efx->stats_buffer,
-				  efx->num_mac_stats * sizeof(u64), GFP_KERNEL);
-	if (rc) {
-		netif_warn(efx, probe, efx->net_dev,
+				  efx->num_mac_stats * माप(u64), GFP_KERNEL);
+	अगर (rc) अणु
+		netअगर_warn(efx, probe, efx->net_dev,
 			   "failed to allocate DMA buffer: %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	netif_dbg(efx, probe, efx->net_dev,
+	netअगर_dbg(efx, probe, efx->net_dev,
 		  "stats buffer at %llx (virt %p phys %llx)\n",
 		  (u64) efx->stats_buffer.dma_addr,
 		  efx->stats_buffer.addr,
 		  (u64) virt_to_phys(efx->stats_buffer.addr));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void efx_mcdi_mac_fini_stats(struct efx_nic *efx)
-{
-	efx_nic_free_buffer(efx, &efx->stats_buffer);
-}
+व्योम efx_mcdi_mac_fini_stats(काष्ठा efx_nic *efx)
+अणु
+	efx_nic_मुक्त_buffer(efx, &efx->stats_buffer);
+पूर्ण
 
 /* Get physical port number (EF10 only; on Siena it is same as PF number) */
-int efx_mcdi_port_get_number(struct efx_nic *efx)
-{
+पूर्णांक efx_mcdi_port_get_number(काष्ठा efx_nic *efx)
+अणु
 	MCDI_DECLARE_BUF(outbuf, MC_CMD_GET_PORT_ASSIGNMENT_OUT_LEN);
-	int rc;
+	पूर्णांक rc;
 
-	rc = efx_mcdi_rpc(efx, MC_CMD_GET_PORT_ASSIGNMENT, NULL, 0,
-			  outbuf, sizeof(outbuf), NULL);
-	if (rc)
-		return rc;
+	rc = efx_mcdi_rpc(efx, MC_CMD_GET_PORT_ASSIGNMENT, शून्य, 0,
+			  outbuf, माप(outbuf), शून्य);
+	अगर (rc)
+		वापस rc;
 
-	return MCDI_DWORD(outbuf, GET_PORT_ASSIGNMENT_OUT_PORT);
-}
+	वापस MCDI_DWORD(outbuf, GET_PORT_ASSIGNMENT_OUT_PORT);
+पूर्ण
 
-static unsigned int efx_mcdi_event_link_speed[] = {
+अटल अचिन्हित पूर्णांक efx_mcdi_event_link_speed[] = अणु
 	[MCDI_EVENT_LINKCHANGE_SPEED_100M] = 100,
 	[MCDI_EVENT_LINKCHANGE_SPEED_1G] = 1000,
 	[MCDI_EVENT_LINKCHANGE_SPEED_10G] = 10000,
@@ -1262,10 +1263,10 @@ static unsigned int efx_mcdi_event_link_speed[] = {
 	[MCDI_EVENT_LINKCHANGE_SPEED_25G] = 25000,
 	[MCDI_EVENT_LINKCHANGE_SPEED_50G] = 50000,
 	[MCDI_EVENT_LINKCHANGE_SPEED_100G] = 100000,
-};
+पूर्ण;
 
-void efx_mcdi_process_link_change(struct efx_nic *efx, efx_qword_t *ev)
-{
+व्योम efx_mcdi_process_link_change(काष्ठा efx_nic *efx, efx_qword_t *ev)
+अणु
 	u32 flags, fcntl, speed, lpa;
 
 	speed = EFX_QWORD_FIELD(*ev, MCDI_EVENT_LINKCHANGE_SPEED);
@@ -1276,13 +1277,13 @@ void efx_mcdi_process_link_change(struct efx_nic *efx, efx_qword_t *ev)
 	fcntl = EFX_QWORD_FIELD(*ev, MCDI_EVENT_LINKCHANGE_FCNTL);
 	lpa = EFX_QWORD_FIELD(*ev, MCDI_EVENT_LINKCHANGE_LP_CAP);
 
-	/* efx->link_state is only modified by efx_mcdi_phy_get_link(),
-	 * which is only run after flushing the event queues. Therefore, it
-	 * is safe to modify the link state outside of the mac_lock here.
+	/* efx->link_state is only modअगरied by efx_mcdi_phy_get_link(),
+	 * which is only run after flushing the event queues. Thereक्रमe, it
+	 * is safe to modअगरy the link state outside of the mac_lock here.
 	 */
 	efx_mcdi_phy_decode_link(efx, &efx->link_state, speed, flags, fcntl);
 
 	efx_mcdi_phy_check_fcntl(efx, lpa);
 
 	efx_link_status_changed(efx);
-}
+पूर्ण

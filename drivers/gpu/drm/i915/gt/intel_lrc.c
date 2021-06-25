@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  */
 
-#include "gem/i915_gem_lmem.h"
+#समावेश "gem/i915_gem_lmem.h"
 
-#include "gen8_engine_cs.h"
-#include "i915_drv.h"
-#include "i915_perf.h"
-#include "intel_engine.h"
-#include "intel_gpu_commands.h"
-#include "intel_gt.h"
-#include "intel_lrc.h"
-#include "intel_lrc_reg.h"
-#include "intel_ring.h"
-#include "shmem_utils.h"
+#समावेश "gen8_engine_cs.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_perf.h"
+#समावेश "intel_engine.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_lrc.h"
+#समावेश "intel_lrc_reg.h"
+#समावेश "intel_ring.h"
+#समावेश "shmem_utils.h"
 
-static void set_offsets(u32 *regs,
-			const u8 *data,
-			const struct intel_engine_cs *engine,
-			bool close)
-#define NOP(x) (BIT(7) | (x))
-#define LRI(count, flags) ((flags) << 6 | (count) | BUILD_BUG_ON_ZERO(count >= BIT(6)))
-#define POSTED BIT(0)
-#define REG(x) (((x) >> 2) | BUILD_BUG_ON_ZERO(x >= 0x200))
-#define REG16(x) \
+अटल व्योम set_offsets(u32 *regs,
+			स्थिर u8 *data,
+			स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+			bool बंद)
+#घोषणा NOP(x) (BIT(7) | (x))
+#घोषणा LRI(count, flags) ((flags) << 6 | (count) | BUILD_BUG_ON_ZERO(count >= BIT(6)))
+#घोषणा POSTED BIT(0)
+#घोषणा REG(x) (((x) >> 2) | BUILD_BUG_ON_ZERO(x >= 0x200))
+#घोषणा REG16(x) \
 	(((x) >> 9) | BIT(7) | BUILD_BUG_ON_ZERO(x >= 0x10000)), \
 	(((x) >> 2) & 0x7f)
-#define END 0
-{
-	const u32 base = engine->mmio_base;
+#घोषणा END 0
+अणु
+	स्थिर u32 base = engine->mmio_base;
 
-	while (*data) {
+	जबतक (*data) अणु
 		u8 count, flags;
 
-		if (*data & BIT(7)) { /* skip */
+		अगर (*data & BIT(7)) अणु /* skip */
 			count = *data++ & ~BIT(7);
 			regs += count;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		count = *data & 0x3f;
 		flags = *data >> 6;
 		data++;
 
 		*regs = MI_LOAD_REGISTER_IMM(count);
-		if (flags & POSTED)
+		अगर (flags & POSTED)
 			*regs |= MI_LRI_FORCE_POSTED;
-		if (INTEL_GEN(engine->i915) >= 11)
+		अगर (INTEL_GEN(engine->i915) >= 11)
 			*regs |= MI_LRI_LRM_CS_MMIO;
 		regs++;
 
 		GEM_BUG_ON(!count);
-		do {
+		करो अणु
 			u32 offset = 0;
 			u8 v;
 
-			do {
+			करो अणु
 				v = *data++;
 				offset <<= 7;
 				offset |= v & ~BIT(7);
-			} while (v & BIT(7));
+			पूर्ण जबतक (v & BIT(7));
 
 			regs[0] = base + (offset << 2);
 			regs += 2;
-		} while (--count);
-	}
+		पूर्ण जबतक (--count);
+	पूर्ण
 
-	if (close) {
-		/* Close the batch; used mainly by live_lrc_layout() */
+	अगर (बंद) अणु
+		/* Close the batch; used मुख्यly by live_lrc_layout() */
 		*regs = MI_BATCH_BUFFER_END;
-		if (INTEL_GEN(engine->i915) >= 10)
+		अगर (INTEL_GEN(engine->i915) >= 10)
 			*regs |= BIT(0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const u8 gen8_xcs_offsets[] = {
+अटल स्थिर u8 gen8_xcs_offsets[] = अणु
 	NOP(1),
 	LRI(11, 0),
 	REG16(0x244),
@@ -108,9 +109,9 @@ static const u8 gen8_xcs_offsets[] = {
 	REG(0x028),
 
 	END
-};
+पूर्ण;
 
-static const u8 gen9_xcs_offsets[] = {
+अटल स्थिर u8 gen9_xcs_offsets[] = अणु
 	NOP(1),
 	LRI(14, POSTED),
 	REG16(0x244),
@@ -192,9 +193,9 @@ static const u8 gen9_xcs_offsets[] = {
 	REG(0x068),
 
 	END
-};
+पूर्ण;
 
-static const u8 gen12_xcs_offsets[] = {
+अटल स्थिर u8 gen12_xcs_offsets[] = अणु
 	NOP(1),
 	LRI(13, POSTED),
 	REG16(0x244),
@@ -224,9 +225,9 @@ static const u8 gen12_xcs_offsets[] = {
 	REG16(0x270),
 
 	END
-};
+पूर्ण;
 
-static const u8 gen8_rcs_offsets[] = {
+अटल स्थिर u8 gen8_rcs_offsets[] = अणु
 	NOP(1),
 	LRI(14, POSTED),
 	REG16(0x244),
@@ -261,9 +262,9 @@ static const u8 gen8_rcs_offsets[] = {
 	REG(0x0c8),
 
 	END
-};
+पूर्ण;
 
-static const u8 gen9_rcs_offsets[] = {
+अटल स्थिर u8 gen9_rcs_offsets[] = अणु
 	NOP(1),
 	LRI(14, POSTED),
 	REG16(0x244),
@@ -345,9 +346,9 @@ static const u8 gen9_rcs_offsets[] = {
 	REG(0x68),
 
 	END
-};
+पूर्ण;
 
-static const u8 gen11_rcs_offsets[] = {
+अटल स्थिर u8 gen11_rcs_offsets[] = अणु
 	NOP(1),
 	LRI(15, POSTED),
 	REG16(0x244),
@@ -386,9 +387,9 @@ static const u8 gen11_rcs_offsets[] = {
 	REG(0x0c8),
 
 	END
-};
+पूर्ण;
 
-static const u8 gen12_rcs_offsets[] = {
+अटल स्थिर u8 gen12_rcs_offsets[] = अणु
 	NOP(1),
 	LRI(13, POSTED),
 	REG16(0x244),
@@ -482,139 +483,139 @@ static const u8 gen12_rcs_offsets[] = {
 	NOP(1),
 
 	END
-};
+पूर्ण;
 
-#undef END
-#undef REG16
-#undef REG
-#undef LRI
-#undef NOP
+#अघोषित END
+#अघोषित REG16
+#अघोषित REG
+#अघोषित LRI
+#अघोषित NOP
 
-static const u8 *reg_offsets(const struct intel_engine_cs *engine)
-{
+अटल स्थिर u8 *reg_offsets(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	/*
-	 * The gen12+ lists only have the registers we program in the basic
-	 * default state. We rely on the context image using relative
-	 * addressing to automatic fixup the register state between the
-	 * physical engines for virtual engine.
+	 * The gen12+ lists only have the रेजिस्टरs we program in the basic
+	 * शेष state. We rely on the context image using relative
+	 * addressing to स्वतःmatic fixup the रेजिस्टर state between the
+	 * physical engines क्रम भव engine.
 	 */
 	GEM_BUG_ON(INTEL_GEN(engine->i915) >= 12 &&
-		   !intel_engine_has_relative_mmio(engine));
+		   !पूर्णांकel_engine_has_relative_mmio(engine));
 
-	if (engine->class == RENDER_CLASS) {
-		if (INTEL_GEN(engine->i915) >= 12)
-			return gen12_rcs_offsets;
-		else if (INTEL_GEN(engine->i915) >= 11)
-			return gen11_rcs_offsets;
-		else if (INTEL_GEN(engine->i915) >= 9)
-			return gen9_rcs_offsets;
-		else
-			return gen8_rcs_offsets;
-	} else {
-		if (INTEL_GEN(engine->i915) >= 12)
-			return gen12_xcs_offsets;
-		else if (INTEL_GEN(engine->i915) >= 9)
-			return gen9_xcs_offsets;
-		else
-			return gen8_xcs_offsets;
-	}
-}
+	अगर (engine->class == RENDER_CLASS) अणु
+		अगर (INTEL_GEN(engine->i915) >= 12)
+			वापस gen12_rcs_offsets;
+		अन्यथा अगर (INTEL_GEN(engine->i915) >= 11)
+			वापस gen11_rcs_offsets;
+		अन्यथा अगर (INTEL_GEN(engine->i915) >= 9)
+			वापस gen9_rcs_offsets;
+		अन्यथा
+			वापस gen8_rcs_offsets;
+	पूर्ण अन्यथा अणु
+		अगर (INTEL_GEN(engine->i915) >= 12)
+			वापस gen12_xcs_offsets;
+		अन्यथा अगर (INTEL_GEN(engine->i915) >= 9)
+			वापस gen9_xcs_offsets;
+		अन्यथा
+			वापस gen8_xcs_offsets;
+	पूर्ण
+पूर्ण
 
-static int lrc_ring_mi_mode(const struct intel_engine_cs *engine)
-{
-	if (INTEL_GEN(engine->i915) >= 12)
-		return 0x60;
-	else if (INTEL_GEN(engine->i915) >= 9)
-		return 0x54;
-	else if (engine->class == RENDER_CLASS)
-		return 0x58;
-	else
-		return -1;
-}
+अटल पूर्णांक lrc_ring_mi_mode(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (INTEL_GEN(engine->i915) >= 12)
+		वापस 0x60;
+	अन्यथा अगर (INTEL_GEN(engine->i915) >= 9)
+		वापस 0x54;
+	अन्यथा अगर (engine->class == RENDER_CLASS)
+		वापस 0x58;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static int lrc_ring_gpr0(const struct intel_engine_cs *engine)
-{
-	if (INTEL_GEN(engine->i915) >= 12)
-		return 0x74;
-	else if (INTEL_GEN(engine->i915) >= 9)
-		return 0x68;
-	else if (engine->class == RENDER_CLASS)
-		return 0xd8;
-	else
-		return -1;
-}
+अटल पूर्णांक lrc_ring_gpr0(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (INTEL_GEN(engine->i915) >= 12)
+		वापस 0x74;
+	अन्यथा अगर (INTEL_GEN(engine->i915) >= 9)
+		वापस 0x68;
+	अन्यथा अगर (engine->class == RENDER_CLASS)
+		वापस 0xd8;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static int lrc_ring_wa_bb_per_ctx(const struct intel_engine_cs *engine)
-{
-	if (INTEL_GEN(engine->i915) >= 12)
-		return 0x12;
-	else if (INTEL_GEN(engine->i915) >= 9 || engine->class == RENDER_CLASS)
-		return 0x18;
-	else
-		return -1;
-}
+अटल पूर्णांक lrc_ring_wa_bb_per_ctx(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (INTEL_GEN(engine->i915) >= 12)
+		वापस 0x12;
+	अन्यथा अगर (INTEL_GEN(engine->i915) >= 9 || engine->class == RENDER_CLASS)
+		वापस 0x18;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static int lrc_ring_indirect_ptr(const struct intel_engine_cs *engine)
-{
-	int x;
+अटल पूर्णांक lrc_ring_indirect_ptr(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांक x;
 
 	x = lrc_ring_wa_bb_per_ctx(engine);
-	if (x < 0)
-		return x;
+	अगर (x < 0)
+		वापस x;
 
-	return x + 2;
-}
+	वापस x + 2;
+पूर्ण
 
-static int lrc_ring_indirect_offset(const struct intel_engine_cs *engine)
-{
-	int x;
+अटल पूर्णांक lrc_ring_indirect_offset(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांक x;
 
 	x = lrc_ring_indirect_ptr(engine);
-	if (x < 0)
-		return x;
+	अगर (x < 0)
+		वापस x;
 
-	return x + 2;
-}
+	वापस x + 2;
+पूर्ण
 
-static int lrc_ring_cmd_buf_cctl(const struct intel_engine_cs *engine)
-{
-	if (engine->class != RENDER_CLASS)
-		return -1;
+अटल पूर्णांक lrc_ring_cmd_buf_cctl(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (engine->class != RENDER_CLASS)
+		वापस -1;
 
-	if (INTEL_GEN(engine->i915) >= 12)
-		return 0xb6;
-	else if (INTEL_GEN(engine->i915) >= 11)
-		return 0xaa;
-	else
-		return -1;
-}
+	अगर (INTEL_GEN(engine->i915) >= 12)
+		वापस 0xb6;
+	अन्यथा अगर (INTEL_GEN(engine->i915) >= 11)
+		वापस 0xaa;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static u32
-lrc_ring_indirect_offset_default(const struct intel_engine_cs *engine)
-{
-	switch (INTEL_GEN(engine->i915)) {
-	default:
+अटल u32
+lrc_ring_indirect_offset_शेष(स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	चयन (INTEL_GEN(engine->i915)) अणु
+	शेष:
 		MISSING_CASE(INTEL_GEN(engine->i915));
 		fallthrough;
-	case 12:
-		return GEN12_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 11:
-		return GEN11_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 10:
-		return GEN10_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 9:
-		return GEN9_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	case 8:
-		return GEN8_CTX_RCS_INDIRECT_CTX_OFFSET_DEFAULT;
-	}
-}
+	हाल 12:
+		वापस GEN12_CTX_RCS_INसूचीECT_CTX_OFFSET_DEFAULT;
+	हाल 11:
+		वापस GEN11_CTX_RCS_INसूचीECT_CTX_OFFSET_DEFAULT;
+	हाल 10:
+		वापस GEN10_CTX_RCS_INसूचीECT_CTX_OFFSET_DEFAULT;
+	हाल 9:
+		वापस GEN9_CTX_RCS_INसूचीECT_CTX_OFFSET_DEFAULT;
+	हाल 8:
+		वापस GEN8_CTX_RCS_INसूचीECT_CTX_OFFSET_DEFAULT;
+	पूर्ण
+पूर्ण
 
-static void
+अटल व्योम
 lrc_setup_indirect_ctx(u32 *regs,
-		       const struct intel_engine_cs *engine,
+		       स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 		       u32 ctx_bb_ggtt_addr,
 		       u32 size)
-{
+अणु
 	GEM_BUG_ON(!size);
 	GEM_BUG_ON(!IS_ALIGNED(size, CACHELINE_BYTES));
 	GEM_BUG_ON(lrc_ring_indirect_ptr(engine) == -1);
@@ -623,102 +624,102 @@ lrc_setup_indirect_ctx(u32 *regs,
 
 	GEM_BUG_ON(lrc_ring_indirect_offset(engine) == -1);
 	regs[lrc_ring_indirect_offset(engine) + 1] =
-		lrc_ring_indirect_offset_default(engine) << 6;
-}
+		lrc_ring_indirect_offset_शेष(engine) << 6;
+पूर्ण
 
-static void init_common_regs(u32 * const regs,
-			     const struct intel_context *ce,
-			     const struct intel_engine_cs *engine,
+अटल व्योम init_common_regs(u32 * स्थिर regs,
+			     स्थिर काष्ठा पूर्णांकel_context *ce,
+			     स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 			     bool inhibit)
-{
+अणु
 	u32 ctl;
 
 	ctl = _MASKED_BIT_ENABLE(CTX_CTRL_INHIBIT_SYN_CTX_SWITCH);
 	ctl |= _MASKED_BIT_DISABLE(CTX_CTRL_ENGINE_CTX_RESTORE_INHIBIT);
-	if (inhibit)
+	अगर (inhibit)
 		ctl |= CTX_CTRL_ENGINE_CTX_RESTORE_INHIBIT;
-	if (INTEL_GEN(engine->i915) < 11)
+	अगर (INTEL_GEN(engine->i915) < 11)
 		ctl |= _MASKED_BIT_DISABLE(CTX_CTRL_ENGINE_CTX_SAVE_INHIBIT |
 					   CTX_CTRL_RS_CTX_ENABLE);
 	regs[CTX_CONTEXT_CONTROL] = ctl;
 
-	regs[CTX_TIMESTAMP] = ce->runtime.last;
-}
+	regs[CTX_TIMESTAMP] = ce->runसमय.last;
+पूर्ण
 
-static void init_wa_bb_regs(u32 * const regs,
-			    const struct intel_engine_cs *engine)
-{
-	const struct i915_ctx_workarounds * const wa_ctx = &engine->wa_ctx;
+अटल व्योम init_wa_bb_regs(u32 * स्थिर regs,
+			    स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	स्थिर काष्ठा i915_ctx_workarounds * स्थिर wa_ctx = &engine->wa_ctx;
 
-	if (wa_ctx->per_ctx.size) {
-		const u32 ggtt_offset = i915_ggtt_offset(wa_ctx->vma);
+	अगर (wa_ctx->per_ctx.size) अणु
+		स्थिर u32 ggtt_offset = i915_ggtt_offset(wa_ctx->vma);
 
 		GEM_BUG_ON(lrc_ring_wa_bb_per_ctx(engine) == -1);
 		regs[lrc_ring_wa_bb_per_ctx(engine) + 1] =
 			(ggtt_offset + wa_ctx->per_ctx.offset) | 0x01;
-	}
+	पूर्ण
 
-	if (wa_ctx->indirect_ctx.size) {
+	अगर (wa_ctx->indirect_ctx.size) अणु
 		lrc_setup_indirect_ctx(regs, engine,
 				       i915_ggtt_offset(wa_ctx->vma) +
 				       wa_ctx->indirect_ctx.offset,
 				       wa_ctx->indirect_ctx.size);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void init_ppgtt_regs(u32 *regs, const struct i915_ppgtt *ppgtt)
-{
-	if (i915_vm_is_4lvl(&ppgtt->vm)) {
+अटल व्योम init_ppgtt_regs(u32 *regs, स्थिर काष्ठा i915_ppgtt *ppgtt)
+अणु
+	अगर (i915_vm_is_4lvl(&ppgtt->vm)) अणु
 		/* 64b PPGTT (48bit canonical)
 		 * PDP0_DESCRIPTOR contains the base address to PML4 and
 		 * other PDP Descriptors are ignored.
 		 */
 		ASSIGN_CTX_PML4(ppgtt, regs);
-	} else {
+	पूर्ण अन्यथा अणु
 		ASSIGN_CTX_PDP(ppgtt, regs, 3);
 		ASSIGN_CTX_PDP(ppgtt, regs, 2);
 		ASSIGN_CTX_PDP(ppgtt, regs, 1);
 		ASSIGN_CTX_PDP(ppgtt, regs, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct i915_ppgtt *vm_alias(struct i915_address_space *vm)
-{
-	if (i915_is_ggtt(vm))
-		return i915_vm_to_ggtt(vm)->alias;
-	else
-		return i915_vm_to_ppgtt(vm);
-}
+अटल काष्ठा i915_ppgtt *vm_alias(काष्ठा i915_address_space *vm)
+अणु
+	अगर (i915_is_ggtt(vm))
+		वापस i915_vm_to_ggtt(vm)->alias;
+	अन्यथा
+		वापस i915_vm_to_ppgtt(vm);
+पूर्ण
 
-static void __reset_stop_ring(u32 *regs, const struct intel_engine_cs *engine)
-{
-	int x;
+अटल व्योम __reset_stop_ring(u32 *regs, स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	पूर्णांक x;
 
 	x = lrc_ring_mi_mode(engine);
-	if (x != -1) {
+	अगर (x != -1) अणु
 		regs[x + 1] &= ~STOP_RING;
 		regs[x + 1] |= STOP_RING << 16;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __lrc_init_regs(u32 *regs,
-			    const struct intel_context *ce,
-			    const struct intel_engine_cs *engine,
+अटल व्योम __lrc_init_regs(u32 *regs,
+			    स्थिर काष्ठा पूर्णांकel_context *ce,
+			    स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 			    bool inhibit)
-{
+अणु
 	/*
 	 * A context is actually a big batch buffer with several
 	 * MI_LOAD_REGISTER_IMM commands followed by (reg, value) pairs. The
-	 * values we are setting here are only for the first context restore:
+	 * values we are setting here are only क्रम the first context restore:
 	 * on a subsequent save, the GPU will recreate this batchbuffer with new
 	 * values (including all the missing MI_LOAD_REGISTER_IMM commands that
 	 * we are not initializing here).
 	 *
-	 * Must keep consistent with virtual_update_register_offsets().
+	 * Must keep consistent with भव_update_रेजिस्टर_offsets().
 	 */
 
-	if (inhibit)
-		memset(regs, 0, PAGE_SIZE);
+	अगर (inhibit)
+		स_रखो(regs, 0, PAGE_SIZE);
 
 	set_offsets(regs, reg_offsets(engine), engine, inhibit);
 
@@ -728,177 +729,177 @@ static void __lrc_init_regs(u32 *regs,
 	init_wa_bb_regs(regs, engine);
 
 	__reset_stop_ring(regs, engine);
-}
+पूर्ण
 
-void lrc_init_regs(const struct intel_context *ce,
-		   const struct intel_engine_cs *engine,
+व्योम lrc_init_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		   स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 		   bool inhibit)
-{
+अणु
 	__lrc_init_regs(ce->lrc_reg_state, ce, engine, inhibit);
-}
+पूर्ण
 
-void lrc_reset_regs(const struct intel_context *ce,
-		    const struct intel_engine_cs *engine)
-{
+व्योम lrc_reset_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		    स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	__reset_stop_ring(ce->lrc_reg_state, engine);
-}
+पूर्ण
 
-static void
-set_redzone(void *vaddr, const struct intel_engine_cs *engine)
-{
-	if (!IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
-		return;
-
-	vaddr += engine->context_size;
-
-	memset(vaddr, CONTEXT_REDZONE, I915_GTT_PAGE_SIZE);
-}
-
-static void
-check_redzone(const void *vaddr, const struct intel_engine_cs *engine)
-{
-	if (!IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
-		return;
+अटल व्योम
+set_redzone(व्योम *vaddr, स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (!IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+		वापस;
 
 	vaddr += engine->context_size;
 
-	if (memchr_inv(vaddr, CONTEXT_REDZONE, I915_GTT_PAGE_SIZE))
+	स_रखो(vaddr, CONTEXT_REDZONE, I915_GTT_PAGE_SIZE);
+पूर्ण
+
+अटल व्योम
+check_redzone(स्थिर व्योम *vaddr, स्थिर काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	अगर (!IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+		वापस;
+
+	vaddr += engine->context_size;
+
+	अगर (स_प्रथम_inv(vaddr, CONTEXT_REDZONE, I915_GTT_PAGE_SIZE))
 		drm_err_once(&engine->i915->drm,
 			     "%s context redzone overwritten!\n",
 			     engine->name);
-}
+पूर्ण
 
-void lrc_init_state(struct intel_context *ce,
-		    struct intel_engine_cs *engine,
-		    void *state)
-{
+व्योम lrc_init_state(काष्ठा पूर्णांकel_context *ce,
+		    काष्ठा पूर्णांकel_engine_cs *engine,
+		    व्योम *state)
+अणु
 	bool inhibit = true;
 
 	set_redzone(state, engine);
 
-	if (engine->default_state) {
-		shmem_read(engine->default_state, 0,
+	अगर (engine->शेष_state) अणु
+		shmem_पढ़ो(engine->शेष_state, 0,
 			   state, engine->context_size);
 		__set_bit(CONTEXT_VALID_BIT, &ce->flags);
 		inhibit = false;
-	}
+	पूर्ण
 
 	/* Clear the ppHWSP (inc. per-context counters) */
-	memset(state, 0, PAGE_SIZE);
+	स_रखो(state, 0, PAGE_SIZE);
 
 	/*
-	 * The second page of the context object contains some registers which
+	 * The second page of the context object contains some रेजिस्टरs which
 	 * must be set up prior to the first execution.
 	 */
 	__lrc_init_regs(state + LRC_STATE_OFFSET, ce, engine, inhibit);
-}
+पूर्ण
 
-static struct i915_vma *
-__lrc_alloc_state(struct intel_context *ce, struct intel_engine_cs *engine)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+अटल काष्ठा i915_vma *
+__lrc_alloc_state(काष्ठा पूर्णांकel_context *ce, काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 	u32 context_size;
 
 	context_size = round_up(engine->context_size, I915_GTT_PAGE_SIZE);
 
-	if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
-		context_size += I915_GTT_PAGE_SIZE; /* for redzone */
+	अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+		context_size += I915_GTT_PAGE_SIZE; /* क्रम redzone */
 
-	if (INTEL_GEN(engine->i915) == 12) {
+	अगर (INTEL_GEN(engine->i915) == 12) अणु
 		ce->wa_bb_page = context_size / PAGE_SIZE;
 		context_size += PAGE_SIZE;
-	}
+	पूर्ण
 
 	obj = i915_gem_object_create_lmem(engine->i915, context_size, 0);
-	if (IS_ERR(obj))
+	अगर (IS_ERR(obj))
 		obj = i915_gem_object_create_shmem(engine->i915, context_size);
-	if (IS_ERR(obj))
-		return ERR_CAST(obj);
+	अगर (IS_ERR(obj))
+		वापस ERR_CAST(obj);
 
-	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		i915_gem_object_put(obj);
-		return vma;
-	}
+		वापस vma;
+	पूर्ण
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-static struct intel_timeline *
-pinned_timeline(struct intel_context *ce, struct intel_engine_cs *engine)
-{
-	struct intel_timeline *tl = fetch_and_zero(&ce->timeline);
+अटल काष्ठा पूर्णांकel_समयline *
+pinned_समयline(काष्ठा पूर्णांकel_context *ce, काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_समयline *tl = fetch_and_zero(&ce->समयline);
 
-	return intel_timeline_create_from_engine(engine, page_unmask_bits(tl));
-}
+	वापस पूर्णांकel_समयline_create_from_engine(engine, page_unmask_bits(tl));
+पूर्ण
 
-int lrc_alloc(struct intel_context *ce, struct intel_engine_cs *engine)
-{
-	struct intel_ring *ring;
-	struct i915_vma *vma;
-	int err;
+पूर्णांक lrc_alloc(काष्ठा पूर्णांकel_context *ce, काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_ring *ring;
+	काष्ठा i915_vma *vma;
+	पूर्णांक err;
 
 	GEM_BUG_ON(ce->state);
 
 	vma = __lrc_alloc_state(ce, engine);
-	if (IS_ERR(vma))
-		return PTR_ERR(vma);
+	अगर (IS_ERR(vma))
+		वापस PTR_ERR(vma);
 
-	ring = intel_engine_create_ring(engine, (unsigned long)ce->ring);
-	if (IS_ERR(ring)) {
+	ring = पूर्णांकel_engine_create_ring(engine, (अचिन्हित दीर्घ)ce->ring);
+	अगर (IS_ERR(ring)) अणु
 		err = PTR_ERR(ring);
-		goto err_vma;
-	}
+		जाओ err_vma;
+	पूर्ण
 
-	if (!page_mask_bits(ce->timeline)) {
-		struct intel_timeline *tl;
+	अगर (!page_mask_bits(ce->समयline)) अणु
+		काष्ठा पूर्णांकel_समयline *tl;
 
 		/*
-		 * Use the static global HWSP for the kernel context, and
-		 * a dynamically allocated cacheline for everyone else.
+		 * Use the अटल global HWSP क्रम the kernel context, and
+		 * a dynamically allocated cacheline क्रम everyone अन्यथा.
 		 */
-		if (unlikely(ce->timeline))
-			tl = pinned_timeline(ce, engine);
-		else
-			tl = intel_timeline_create(engine->gt);
-		if (IS_ERR(tl)) {
+		अगर (unlikely(ce->समयline))
+			tl = pinned_समयline(ce, engine);
+		अन्यथा
+			tl = पूर्णांकel_समयline_create(engine->gt);
+		अगर (IS_ERR(tl)) अणु
 			err = PTR_ERR(tl);
-			goto err_ring;
-		}
+			जाओ err_ring;
+		पूर्ण
 
-		ce->timeline = tl;
-	}
+		ce->समयline = tl;
+	पूर्ण
 
 	ce->ring = ring;
 	ce->state = vma;
 
-	return 0;
+	वापस 0;
 
 err_ring:
-	intel_ring_put(ring);
+	पूर्णांकel_ring_put(ring);
 err_vma:
 	i915_vma_put(vma);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void lrc_reset(struct intel_context *ce)
-{
-	GEM_BUG_ON(!intel_context_is_pinned(ce));
+व्योम lrc_reset(काष्ठा पूर्णांकel_context *ce)
+अणु
+	GEM_BUG_ON(!पूर्णांकel_context_is_pinned(ce));
 
-	intel_ring_reset(ce->ring, ce->ring->emit);
+	पूर्णांकel_ring_reset(ce->ring, ce->ring->emit);
 
 	/* Scrub away the garbage */
 	lrc_init_regs(ce, ce->engine, true);
 	ce->lrc.lrca = lrc_update_regs(ce, ce->engine, ce->ring->tail);
-}
+पूर्ण
 
-int
-lrc_pre_pin(struct intel_context *ce,
-	    struct intel_engine_cs *engine,
-	    struct i915_gem_ww_ctx *ww,
-	    void **vaddr)
-{
+पूर्णांक
+lrc_pre_pin(काष्ठा पूर्णांकel_context *ce,
+	    काष्ठा पूर्णांकel_engine_cs *engine,
+	    काष्ठा i915_gem_ww_ctx *ww,
+	    व्योम **vaddr)
+अणु
 	GEM_BUG_ON(!ce->state);
 	GEM_BUG_ON(!i915_vma_is_pinned(ce->state));
 
@@ -906,65 +907,65 @@ lrc_pre_pin(struct intel_context *ce,
 					 i915_coherent_map_type(ce->engine->i915) |
 					 I915_MAP_OVERRIDE);
 
-	return PTR_ERR_OR_ZERO(*vaddr);
-}
+	वापस PTR_ERR_OR_ZERO(*vaddr);
+पूर्ण
 
-int
-lrc_pin(struct intel_context *ce,
-	struct intel_engine_cs *engine,
-	void *vaddr)
-{
+पूर्णांक
+lrc_pin(काष्ठा पूर्णांकel_context *ce,
+	काष्ठा पूर्णांकel_engine_cs *engine,
+	व्योम *vaddr)
+अणु
 	ce->lrc_reg_state = vaddr + LRC_STATE_OFFSET;
 
-	if (!__test_and_set_bit(CONTEXT_INIT_BIT, &ce->flags))
+	अगर (!__test_and_set_bit(CONTEXT_INIT_BIT, &ce->flags))
 		lrc_init_state(ce, engine, vaddr);
 
 	ce->lrc.lrca = lrc_update_regs(ce, engine, ce->ring->tail);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void lrc_unpin(struct intel_context *ce)
-{
-	check_redzone((void *)ce->lrc_reg_state - LRC_STATE_OFFSET,
+व्योम lrc_unpin(काष्ठा पूर्णांकel_context *ce)
+अणु
+	check_redzone((व्योम *)ce->lrc_reg_state - LRC_STATE_OFFSET,
 		      ce->engine);
-}
+पूर्ण
 
-void lrc_post_unpin(struct intel_context *ce)
-{
+व्योम lrc_post_unpin(काष्ठा पूर्णांकel_context *ce)
+अणु
 	i915_gem_object_unpin_map(ce->state->obj);
-}
+पूर्ण
 
-void lrc_fini(struct intel_context *ce)
-{
-	if (!ce->state)
-		return;
+व्योम lrc_fini(काष्ठा पूर्णांकel_context *ce)
+अणु
+	अगर (!ce->state)
+		वापस;
 
-	intel_ring_put(fetch_and_zero(&ce->ring));
+	पूर्णांकel_ring_put(fetch_and_zero(&ce->ring));
 	i915_vma_put(fetch_and_zero(&ce->state));
-}
+पूर्ण
 
-void lrc_destroy(struct kref *kref)
-{
-	struct intel_context *ce = container_of(kref, typeof(*ce), ref);
+व्योम lrc_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा पूर्णांकel_context *ce = container_of(kref, typeof(*ce), ref);
 
 	GEM_BUG_ON(!i915_active_is_idle(&ce->active));
-	GEM_BUG_ON(intel_context_is_pinned(ce));
+	GEM_BUG_ON(पूर्णांकel_context_is_pinned(ce));
 
 	lrc_fini(ce);
 
-	intel_context_fini(ce);
-	intel_context_free(ce);
-}
+	पूर्णांकel_context_fini(ce);
+	पूर्णांकel_context_मुक्त(ce);
+पूर्ण
 
-static u32 *
-gen12_emit_timestamp_wa(const struct intel_context *ce, u32 *cs)
-{
+अटल u32 *
+gen12_emit_बारtamp_wa(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *cs)
+अणु
 	*cs++ = MI_LOAD_REGISTER_MEM_GEN8 |
 		MI_SRM_LRM_GLOBAL_GTT |
 		MI_LRI_LRM_CS_MMIO;
 	*cs++ = i915_mmio_reg_offset(GEN8_RING_CS_GPR(0, 0));
 	*cs++ = i915_ggtt_offset(ce->state) + LRC_STATE_OFFSET +
-		CTX_TIMESTAMP * sizeof(u32);
+		CTX_TIMESTAMP * माप(u32);
 	*cs++ = 0;
 
 	*cs++ = MI_LOAD_REGISTER_REG |
@@ -979,12 +980,12 @@ gen12_emit_timestamp_wa(const struct intel_context *ce, u32 *cs)
 	*cs++ = i915_mmio_reg_offset(GEN8_RING_CS_GPR(0, 0));
 	*cs++ = i915_mmio_reg_offset(RING_CTX_TIMESTAMP(0));
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static u32 *
-gen12_emit_restore_scratch(const struct intel_context *ce, u32 *cs)
-{
+अटल u32 *
+gen12_emit_restore_scratch(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *cs)
+अणु
 	GEM_BUG_ON(lrc_ring_gpr0(ce->engine) == -1);
 
 	*cs++ = MI_LOAD_REGISTER_MEM_GEN8 |
@@ -992,15 +993,15 @@ gen12_emit_restore_scratch(const struct intel_context *ce, u32 *cs)
 		MI_LRI_LRM_CS_MMIO;
 	*cs++ = i915_mmio_reg_offset(GEN8_RING_CS_GPR(0, 0));
 	*cs++ = i915_ggtt_offset(ce->state) + LRC_STATE_OFFSET +
-		(lrc_ring_gpr0(ce->engine) + 1) * sizeof(u32);
+		(lrc_ring_gpr0(ce->engine) + 1) * माप(u32);
 	*cs++ = 0;
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static u32 *
-gen12_emit_cmd_buf_wa(const struct intel_context *ce, u32 *cs)
-{
+अटल u32 *
+gen12_emit_cmd_buf_wa(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *cs)
+अणु
 	GEM_BUG_ON(lrc_ring_cmd_buf_cctl(ce->engine) == -1);
 
 	*cs++ = MI_LOAD_REGISTER_MEM_GEN8 |
@@ -1008,7 +1009,7 @@ gen12_emit_cmd_buf_wa(const struct intel_context *ce, u32 *cs)
 		MI_LRI_LRM_CS_MMIO;
 	*cs++ = i915_mmio_reg_offset(GEN8_RING_CS_GPR(0, 0));
 	*cs++ = i915_ggtt_offset(ce->state) + LRC_STATE_OFFSET +
-		(lrc_ring_cmd_buf_cctl(ce->engine) + 1) * sizeof(u32);
+		(lrc_ring_cmd_buf_cctl(ce->engine) + 1) * माप(u32);
 	*cs++ = 0;
 
 	*cs++ = MI_LOAD_REGISTER_REG |
@@ -1017,36 +1018,36 @@ gen12_emit_cmd_buf_wa(const struct intel_context *ce, u32 *cs)
 	*cs++ = i915_mmio_reg_offset(GEN8_RING_CS_GPR(0, 0));
 	*cs++ = i915_mmio_reg_offset(RING_CMD_BUF_CCTL(0));
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static u32 *
-gen12_emit_indirect_ctx_rcs(const struct intel_context *ce, u32 *cs)
-{
-	cs = gen12_emit_timestamp_wa(ce, cs);
+अटल u32 *
+gen12_emit_indirect_ctx_rcs(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *cs)
+अणु
+	cs = gen12_emit_बारtamp_wa(ce, cs);
 	cs = gen12_emit_cmd_buf_wa(ce, cs);
 	cs = gen12_emit_restore_scratch(ce, cs);
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static u32 *
-gen12_emit_indirect_ctx_xcs(const struct intel_context *ce, u32 *cs)
-{
-	cs = gen12_emit_timestamp_wa(ce, cs);
+अटल u32 *
+gen12_emit_indirect_ctx_xcs(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *cs)
+अणु
+	cs = gen12_emit_बारtamp_wa(ce, cs);
 	cs = gen12_emit_restore_scratch(ce, cs);
 
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static u32 context_wa_bb_offset(const struct intel_context *ce)
-{
-	return PAGE_SIZE * ce->wa_bb_page;
-}
+अटल u32 context_wa_bb_offset(स्थिर काष्ठा पूर्णांकel_context *ce)
+अणु
+	वापस PAGE_SIZE * ce->wa_bb_page;
+पूर्ण
 
-static u32 *context_indirect_bb(const struct intel_context *ce)
-{
-	void *ptr;
+अटल u32 *context_indirect_bb(स्थिर काष्ठा पूर्णांकel_context *ce)
+अणु
+	व्योम *ptr;
 
 	GEM_BUG_ON(!ce->wa_bb_page);
 
@@ -1054,79 +1055,79 @@ static u32 *context_indirect_bb(const struct intel_context *ce)
 	ptr -= LRC_STATE_OFFSET; /* back to start of context image */
 	ptr += context_wa_bb_offset(ce);
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static void
-setup_indirect_ctx_bb(const struct intel_context *ce,
-		      const struct intel_engine_cs *engine,
-		      u32 *(*emit)(const struct intel_context *, u32 *))
-{
-	u32 * const start = context_indirect_bb(ce);
+अटल व्योम
+setup_indirect_ctx_bb(स्थिर काष्ठा पूर्णांकel_context *ce,
+		      स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+		      u32 *(*emit)(स्थिर काष्ठा पूर्णांकel_context *, u32 *))
+अणु
+	u32 * स्थिर start = context_indirect_bb(ce);
 	u32 *cs;
 
 	cs = emit(ce, start);
-	GEM_BUG_ON(cs - start > I915_GTT_PAGE_SIZE / sizeof(*cs));
-	while ((unsigned long)cs % CACHELINE_BYTES)
+	GEM_BUG_ON(cs - start > I915_GTT_PAGE_SIZE / माप(*cs));
+	जबतक ((अचिन्हित दीर्घ)cs % CACHELINE_BYTES)
 		*cs++ = MI_NOOP;
 
 	lrc_setup_indirect_ctx(ce->lrc_reg_state, engine,
 			       i915_ggtt_offset(ce->state) +
 			       context_wa_bb_offset(ce),
-			       (cs - start) * sizeof(*cs));
-}
+			       (cs - start) * माप(*cs));
+पूर्ण
 
 /*
  * The context descriptor encodes various attributes of a context,
  * including its GTT address and some flags. Because it's fairly
- * expensive to calculate, we'll just do it once and cache the result,
- * which remains valid until the context is unpinned.
+ * expensive to calculate, we'll just करो it once and cache the result,
+ * which reमुख्यs valid until the context is unpinned.
  *
  * This is what a descriptor looks like, from LSB to MSB::
  *
- *      bits  0-11:    flags, GEN8_CTX_* (cached in ctx->desc_template)
+ *      bits  0-11:    flags, GEN8_CTX_* (cached in ctx->desc_ढाँचा)
  *      bits 12-31:    LRCA, GTT address of (the HWSP of) this context
  *      bits 32-52:    ctx ID, a globally unique tag (highest bit used by GuC)
- *      bits 53-54:    mbz, reserved for use by hardware
+ *      bits 53-54:    mbz, reserved क्रम use by hardware
  *      bits 55-63:    group ID, currently unused and set to 0
  *
- * Starting from Gen11, the upper dword of the descriptor has a new format:
+ * Starting from Gen11, the upper dword of the descriptor has a new क्रमmat:
  *
  *      bits 32-36:    reserved
  *      bits 37-47:    SW context ID
  *      bits 48:53:    engine instance
- *      bit 54:        mbz, reserved for use by hardware
+ *      bit 54:        mbz, reserved क्रम use by hardware
  *      bits 55-60:    SW counter
  *      bits 61-63:    engine class
  *
- * engine info, SW context ID and SW counter need to form a unique number
+ * engine info, SW context ID and SW counter need to क्रमm a unique number
  * (Context ID) per lrc.
  */
-static u32 lrc_descriptor(const struct intel_context *ce)
-{
+अटल u32 lrc_descriptor(स्थिर काष्ठा पूर्णांकel_context *ce)
+अणु
 	u32 desc;
 
 	desc = INTEL_LEGACY_32B_CONTEXT;
-	if (i915_vm_is_4lvl(ce->vm))
+	अगर (i915_vm_is_4lvl(ce->vm))
 		desc = INTEL_LEGACY_64B_CONTEXT;
 	desc <<= GEN8_CTX_ADDRESSING_MODE_SHIFT;
 
 	desc |= GEN8_CTX_VALID | GEN8_CTX_PRIVILEGE;
-	if (IS_GEN(ce->vm->i915, 8))
+	अगर (IS_GEN(ce->vm->i915, 8))
 		desc |= GEN8_CTX_L3LLC_COHERENT;
 
-	return i915_ggtt_offset(ce->state) | desc;
-}
+	वापस i915_ggtt_offset(ce->state) | desc;
+पूर्ण
 
-u32 lrc_update_regs(const struct intel_context *ce,
-		    const struct intel_engine_cs *engine,
+u32 lrc_update_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		    स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
 		    u32 head)
-{
-	struct intel_ring *ring = ce->ring;
+अणु
+	काष्ठा पूर्णांकel_ring *ring = ce->ring;
 	u32 *regs = ce->lrc_reg_state;
 
-	GEM_BUG_ON(!intel_ring_offset_valid(ring, head));
-	GEM_BUG_ON(!intel_ring_offset_valid(ring, ring->tail));
+	GEM_BUG_ON(!पूर्णांकel_ring_offset_valid(ring, head));
+	GEM_BUG_ON(!पूर्णांकel_ring_offset_valid(ring, ring->tail));
 
 	regs[CTX_RING_START] = i915_ggtt_offset(ring->vma);
 	regs[CTX_RING_HEAD] = head;
@@ -1134,97 +1135,97 @@ u32 lrc_update_regs(const struct intel_context *ce,
 	regs[CTX_RING_CTL] = RING_CTL_SIZE(ring->size) | RING_VALID;
 
 	/* RPCS */
-	if (engine->class == RENDER_CLASS) {
+	अगर (engine->class == RENDER_CLASS) अणु
 		regs[CTX_R_PWR_CLK_STATE] =
-			intel_sseu_make_rpcs(engine->gt, &ce->sseu);
+			पूर्णांकel_sseu_make_rpcs(engine->gt, &ce->sseu);
 
 		i915_oa_init_reg_state(ce, engine);
-	}
+	पूर्ण
 
-	if (ce->wa_bb_page) {
-		u32 *(*fn)(const struct intel_context *ce, u32 *cs);
+	अगर (ce->wa_bb_page) अणु
+		u32 *(*fn)(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *cs);
 
 		fn = gen12_emit_indirect_ctx_xcs;
-		if (ce->engine->class == RENDER_CLASS)
+		अगर (ce->engine->class == RENDER_CLASS)
 			fn = gen12_emit_indirect_ctx_rcs;
 
 		/* Mutually exclusive wrt to global indirect bb */
 		GEM_BUG_ON(engine->wa_ctx.indirect_ctx.size);
 		setup_indirect_ctx_bb(ce, engine, fn);
-	}
+	पूर्ण
 
-	return lrc_descriptor(ce) | CTX_DESC_FORCE_RESTORE;
-}
+	वापस lrc_descriptor(ce) | CTX_DESC_FORCE_RESTORE;
+पूर्ण
 
-void lrc_update_offsets(struct intel_context *ce,
-			struct intel_engine_cs *engine)
-{
+व्योम lrc_update_offsets(काष्ठा पूर्णांकel_context *ce,
+			काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	set_offsets(ce->lrc_reg_state, reg_offsets(engine), engine, false);
-}
+पूर्ण
 
-void lrc_check_regs(const struct intel_context *ce,
-		    const struct intel_engine_cs *engine,
-		    const char *when)
-{
-	const struct intel_ring *ring = ce->ring;
+व्योम lrc_check_regs(स्थिर काष्ठा पूर्णांकel_context *ce,
+		    स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+		    स्थिर अक्षर *when)
+अणु
+	स्थिर काष्ठा पूर्णांकel_ring *ring = ce->ring;
 	u32 *regs = ce->lrc_reg_state;
 	bool valid = true;
-	int x;
+	पूर्णांक x;
 
-	if (regs[CTX_RING_START] != i915_ggtt_offset(ring->vma)) {
+	अगर (regs[CTX_RING_START] != i915_ggtt_offset(ring->vma)) अणु
 		pr_err("%s: context submitted with incorrect RING_START [%08x], expected %08x\n",
 		       engine->name,
 		       regs[CTX_RING_START],
 		       i915_ggtt_offset(ring->vma));
 		regs[CTX_RING_START] = i915_ggtt_offset(ring->vma);
 		valid = false;
-	}
+	पूर्ण
 
-	if ((regs[CTX_RING_CTL] & ~(RING_WAIT | RING_WAIT_SEMAPHORE)) !=
-	    (RING_CTL_SIZE(ring->size) | RING_VALID)) {
+	अगर ((regs[CTX_RING_CTL] & ~(RING_WAIT | RING_WAIT_SEMAPHORE)) !=
+	    (RING_CTL_SIZE(ring->size) | RING_VALID)) अणु
 		pr_err("%s: context submitted with incorrect RING_CTL [%08x], expected %08x\n",
 		       engine->name,
 		       regs[CTX_RING_CTL],
 		       (u32)(RING_CTL_SIZE(ring->size) | RING_VALID));
 		regs[CTX_RING_CTL] = RING_CTL_SIZE(ring->size) | RING_VALID;
 		valid = false;
-	}
+	पूर्ण
 
 	x = lrc_ring_mi_mode(engine);
-	if (x != -1 && regs[x + 1] & (regs[x + 1] >> 16) & STOP_RING) {
+	अगर (x != -1 && regs[x + 1] & (regs[x + 1] >> 16) & STOP_RING) अणु
 		pr_err("%s: context submitted with STOP_RING [%08x] in RING_MI_MODE\n",
 		       engine->name, regs[x + 1]);
 		regs[x + 1] &= ~STOP_RING;
 		regs[x + 1] |= STOP_RING << 16;
 		valid = false;
-	}
+	पूर्ण
 
 	WARN_ONCE(!valid, "Invalid lrc state found %s submission\n", when);
-}
+पूर्ण
 
 /*
  * In this WA we need to set GEN8_L3SQCREG4[21:21] and reset it after
- * PIPE_CONTROL instruction. This is required for the flush to happen correctly
+ * PIPE_CONTROL inकाष्ठाion. This is required क्रम the flush to happen correctly
  * but there is a slight complication as this is applied in WA batch where the
- * values are only initialized once so we cannot take register value at the
+ * values are only initialized once so we cannot take रेजिस्टर value at the
  * beginning and reuse it further; hence we save its value to memory, upload a
- * constant value with bit21 set and then we restore it back with the saved value.
- * To simplify the WA, a constant value is formed by using the default value
- * of this register. This shouldn't be a problem because we are only modifying
- * it for a short period and this batch in non-premptible. We can ofcourse
- * use additional instructions that read the actual value of the register
- * at that time and set our bit of interest but it makes the WA complicated.
+ * स्थिरant value with bit21 set and then we restore it back with the saved value.
+ * To simplअगरy the WA, a स्थिरant value is क्रमmed by using the शेष value
+ * of this रेजिस्टर. This shouldn't be a problem because we are only modअगरying
+ * it क्रम a लघु period and this batch in non-premptible. We can ofcourse
+ * use additional inकाष्ठाions that पढ़ो the actual value of the रेजिस्टर
+ * at that समय and set our bit of पूर्णांकerest but it makes the WA complicated.
  *
- * This WA is also required for Gen9 so extracting as a function avoids
+ * This WA is also required क्रम Gen9 so extracting as a function aव्योमs
  * code duplication.
  */
-static u32 *
-gen8_emit_flush_coherentl3_wa(struct intel_engine_cs *engine, u32 *batch)
-{
-	/* NB no one else is allowed to scribble over scratch + 256! */
+अटल u32 *
+gen8_emit_flush_coherentl3_wa(काष्ठा पूर्णांकel_engine_cs *engine, u32 *batch)
+अणु
+	/* NB no one अन्यथा is allowed to scribble over scratch + 256! */
 	*batch++ = MI_STORE_REGISTER_MEM_GEN8 | MI_SRM_LRM_GLOBAL_GTT;
 	*batch++ = i915_mmio_reg_offset(GEN8_L3SQCREG4);
-	*batch++ = intel_gt_scratch_offset(engine->gt,
+	*batch++ = पूर्णांकel_gt_scratch_offset(engine->gt,
 					   INTEL_GT_SCRATCH_FIELD_COHERENTL3_WA);
 	*batch++ = 0;
 
@@ -1239,35 +1240,35 @@ gen8_emit_flush_coherentl3_wa(struct intel_engine_cs *engine, u32 *batch)
 
 	*batch++ = MI_LOAD_REGISTER_MEM_GEN8 | MI_SRM_LRM_GLOBAL_GTT;
 	*batch++ = i915_mmio_reg_offset(GEN8_L3SQCREG4);
-	*batch++ = intel_gt_scratch_offset(engine->gt,
+	*batch++ = पूर्णांकel_gt_scratch_offset(engine->gt,
 					   INTEL_GT_SCRATCH_FIELD_COHERENTL3_WA);
 	*batch++ = 0;
 
-	return batch;
-}
+	वापस batch;
+पूर्ण
 
 /*
  * Typically we only have one indirect_ctx and per_ctx batch buffer which are
  * initialized at the beginning and shared across all contexts but this field
- * helps us to have multiple batches at different offsets and select them based
+ * helps us to have multiple batches at dअगरferent offsets and select them based
  * on a criteria. At the moment this batch always start at the beginning of the page
- * and at this point we don't have multiple wa_ctx batch buffers.
+ * and at this poपूर्णांक we करोn't have multiple wa_ctx batch buffers.
  *
  * The number of WA applied are not known at the beginning; we use this field
- * to return the no of DWORDS written.
+ * to वापस the no of DWORDS written.
  *
- * It is to be noted that this batch does not contain MI_BATCH_BUFFER_END
+ * It is to be noted that this batch करोes not contain MI_BATCH_BUFFER_END
  * so it adds NOOPs as padding to make it cacheline aligned.
  * MI_BATCH_BUFFER_END will be added to perctx batch and both of them together
  * makes a complete batch buffer.
  */
-static u32 *gen8_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
-{
+अटल u32 *gen8_init_indirectctx_bb(काष्ठा पूर्णांकel_engine_cs *engine, u32 *batch)
+अणु
 	/* WaDisableCtxRestoreArbitration:bdw,chv */
 	*batch++ = MI_ARB_ON_OFF | MI_ARB_DISABLE;
 
 	/* WaFlushCoherentL3CacheLinesAtContextSwitch:bdw */
-	if (IS_BROADWELL(engine->i915))
+	अगर (IS_BROADWELL(engine->i915))
 		batch = gen8_emit_flush_coherentl3_wa(engine, batch);
 
 	/* WaClearSlmSpaceAtContextSwitch:bdw,chv */
@@ -1282,61 +1283,61 @@ static u32 *gen8_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
 	*batch++ = MI_ARB_ON_OFF | MI_ARB_ENABLE;
 
 	/* Pad to end of cacheline */
-	while ((unsigned long)batch % CACHELINE_BYTES)
+	जबतक ((अचिन्हित दीर्घ)batch % CACHELINE_BYTES)
 		*batch++ = MI_NOOP;
 
 	/*
 	 * MI_BATCH_BUFFER_END is not required in Indirect ctx BB because
-	 * execution depends on the length specified in terms of cache lines
-	 * in the register CTX_RCS_INDIRECT_CTX
+	 * execution depends on the length specअगरied in terms of cache lines
+	 * in the रेजिस्टर CTX_RCS_INसूचीECT_CTX
 	 */
 
-	return batch;
-}
+	वापस batch;
+पूर्ण
 
-struct lri {
+काष्ठा lri अणु
 	i915_reg_t reg;
 	u32 value;
-};
+पूर्ण;
 
-static u32 *emit_lri(u32 *batch, const struct lri *lri, unsigned int count)
-{
+अटल u32 *emit_lri(u32 *batch, स्थिर काष्ठा lri *lri, अचिन्हित पूर्णांक count)
+अणु
 	GEM_BUG_ON(!count || count > 63);
 
 	*batch++ = MI_LOAD_REGISTER_IMM(count);
-	do {
+	करो अणु
 		*batch++ = i915_mmio_reg_offset(lri->reg);
 		*batch++ = lri->value;
-	} while (lri++, --count);
+	पूर्ण जबतक (lri++, --count);
 	*batch++ = MI_NOOP;
 
-	return batch;
-}
+	वापस batch;
+पूर्ण
 
-static u32 *gen9_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
-{
-	static const struct lri lri[] = {
+अटल u32 *gen9_init_indirectctx_bb(काष्ठा पूर्णांकel_engine_cs *engine, u32 *batch)
+अणु
+	अटल स्थिर काष्ठा lri lri[] = अणु
 		/* WaDisableGatherAtSetShaderCommonSlice:skl,bxt,kbl,glk */
-		{
+		अणु
 			COMMON_SLICE_CHICKEN2,
 			__MASKED_FIELD(GEN9_DISABLE_GATHER_AT_SET_SHADER_COMMON_SLICE,
 				       0),
-		},
+		पूर्ण,
 
 		/* BSpec: 11391 */
-		{
+		अणु
 			FF_SLICE_CHICKEN,
 			__MASKED_FIELD(FF_SLICE_CHICKEN_CL_PROVOKING_VERTEX_FIX,
 				       FF_SLICE_CHICKEN_CL_PROVOKING_VERTEX_FIX),
-		},
+		पूर्ण,
 
 		/* BSpec: 11299 */
-		{
+		अणु
 			_3D_CHICKEN3,
 			__MASKED_FIELD(_3D_CHICKEN_SF_PROVOKING_VERTEX_FIX,
 				       _3D_CHICKEN_SF_PROVOKING_VERTEX_FIX),
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	*batch++ = MI_ARB_ON_OFF | MI_ARB_DISABLE;
 
@@ -1354,18 +1355,18 @@ static u32 *gen9_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
 	batch = emit_lri(batch, lri, ARRAY_SIZE(lri));
 
 	/* WaMediaPoolStateCmdInWABB:bxt,glk */
-	if (HAS_POOLED_EU(engine->i915)) {
+	अगर (HAS_POOLED_EU(engine->i915)) अणु
 		/*
-		 * EU pool configuration is setup along with golden context
+		 * EU pool configuration is setup aदीर्घ with golden context
 		 * during context initialization. This value depends on
 		 * device type (2x6 or 3x6) and needs to be updated based
-		 * on which subslice is disabled especially for 2x6
-		 * devices, however it is safe to load default
+		 * on which subslice is disabled especially क्रम 2x6
+		 * devices, however it is safe to load शेष
 		 * configuration of 3x6 device instead of masking off
 		 * corresponding bits because HW ignores bits of a disabled
-		 * subslice and drops down to appropriate config. Please
-		 * see render_state_setup() in i915_gem_render_state.c for
-		 * possible configurations, to avoid duplication they are
+		 * subslice and drops करोwn to appropriate config. Please
+		 * see render_state_setup() in i915_gem_render_state.c क्रम
+		 * possible configurations, to aव्योम duplication they are
 		 * not shown here again.
 		 */
 		*batch++ = GEN9_MEDIA_POOL_STATE;
@@ -1374,24 +1375,24 @@ static u32 *gen9_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
 		*batch++ = 0;
 		*batch++ = 0;
 		*batch++ = 0;
-	}
+	पूर्ण
 
 	*batch++ = MI_ARB_ON_OFF | MI_ARB_ENABLE;
 
 	/* Pad to end of cacheline */
-	while ((unsigned long)batch % CACHELINE_BYTES)
+	जबतक ((अचिन्हित दीर्घ)batch % CACHELINE_BYTES)
 		*batch++ = MI_NOOP;
 
-	return batch;
-}
+	वापस batch;
+पूर्ण
 
-static u32 *
-gen10_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
-{
-	int i;
+अटल u32 *
+gen10_init_indirectctx_bb(काष्ठा पूर्णांकel_engine_cs *engine, u32 *batch)
+अणु
+	पूर्णांक i;
 
 	/*
-	 * WaPipeControlBefore3DStateSamplePattern: cnl
+	 * WaPipeControlBeक्रमe3DStateSamplePattern: cnl
 	 *
 	 * Ensure the engine is idle prior to programming a
 	 * 3DSTATE_SAMPLE_PATTERN during a context restore.
@@ -1400,200 +1401,200 @@ gen10_init_indirectctx_bb(struct intel_engine_cs *engine, u32 *batch)
 				       PIPE_CONTROL_CS_STALL,
 				       0);
 	/*
-	 * WaPipeControlBefore3DStateSamplePattern says we need 4 dwords for
+	 * WaPipeControlBeक्रमe3DStateSamplePattern says we need 4 dwords क्रम
 	 * the PIPE_CONTROL followed by 12 dwords of 0x0, so 16 dwords in
-	 * total. However, a PIPE_CONTROL is 6 dwords long, not 4, which is
-	 * confusing. Since gen8_emit_pipe_control() already advances the
+	 * total. However, a PIPE_CONTROL is 6 dwords दीर्घ, not 4, which is
+	 * confusing. Since gen8_emit_pipe_control() alपढ़ोy advances the
 	 * batch by 6 dwords, we advance the other 10 here, completing a
-	 * cacheline. It's not clear if the workaround requires this padding
-	 * before other commands, or if it's just the regular padding we would
-	 * already have for the workaround bb, so leave it here for now.
+	 * cacheline. It's not clear अगर the workaround requires this padding
+	 * beक्रमe other commands, or अगर it's just the regular padding we would
+	 * alपढ़ोy have क्रम the workaround bb, so leave it here क्रम now.
 	 */
-	for (i = 0; i < 10; i++)
+	क्रम (i = 0; i < 10; i++)
 		*batch++ = MI_NOOP;
 
 	/* Pad to end of cacheline */
-	while ((unsigned long)batch % CACHELINE_BYTES)
+	जबतक ((अचिन्हित दीर्घ)batch % CACHELINE_BYTES)
 		*batch++ = MI_NOOP;
 
-	return batch;
-}
+	वापस batch;
+पूर्ण
 
-#define CTX_WA_BB_SIZE (PAGE_SIZE)
+#घोषणा CTX_WA_BB_SIZE (PAGE_SIZE)
 
-static int lrc_create_wa_ctx(struct intel_engine_cs *engine)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
-	int err;
+अटल पूर्णांक lrc_create_wa_ctx(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
+	पूर्णांक err;
 
 	obj = i915_gem_object_create_shmem(engine->i915, CTX_WA_BB_SIZE);
-	if (IS_ERR(obj))
-		return PTR_ERR(obj);
+	अगर (IS_ERR(obj))
+		वापस PTR_ERR(obj);
 
-	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, &engine->gt->ggtt->vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		err = PTR_ERR(vma);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	engine->wa_ctx.vma = vma;
-	return 0;
+	वापस 0;
 
 err:
 	i915_gem_object_put(obj);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void lrc_fini_wa_ctx(struct intel_engine_cs *engine)
-{
+व्योम lrc_fini_wa_ctx(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
 	i915_vma_unpin_and_release(&engine->wa_ctx.vma, 0);
-}
+पूर्ण
 
-typedef u32 *(*wa_bb_func_t)(struct intel_engine_cs *engine, u32 *batch);
+प्रकार u32 *(*wa_bb_func_t)(काष्ठा पूर्णांकel_engine_cs *engine, u32 *batch);
 
-void lrc_init_wa_ctx(struct intel_engine_cs *engine)
-{
-	struct i915_ctx_workarounds *wa_ctx = &engine->wa_ctx;
-	struct i915_wa_ctx_bb *wa_bb[] = {
+व्योम lrc_init_wa_ctx(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_ctx_workarounds *wa_ctx = &engine->wa_ctx;
+	काष्ठा i915_wa_ctx_bb *wa_bb[] = अणु
 		&wa_ctx->indirect_ctx, &wa_ctx->per_ctx
-	};
+	पूर्ण;
 	wa_bb_func_t wa_bb_fn[ARRAY_SIZE(wa_bb)];
-	struct i915_gem_ww_ctx ww;
-	void *batch, *batch_ptr;
-	unsigned int i;
-	int err;
+	काष्ठा i915_gem_ww_ctx ww;
+	व्योम *batch, *batch_ptr;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (engine->class != RENDER_CLASS)
-		return;
+	अगर (engine->class != RENDER_CLASS)
+		वापस;
 
-	switch (INTEL_GEN(engine->i915)) {
-	case 12:
-	case 11:
-		return;
-	case 10:
+	चयन (INTEL_GEN(engine->i915)) अणु
+	हाल 12:
+	हाल 11:
+		वापस;
+	हाल 10:
 		wa_bb_fn[0] = gen10_init_indirectctx_bb;
-		wa_bb_fn[1] = NULL;
-		break;
-	case 9:
+		wa_bb_fn[1] = शून्य;
+		अवरोध;
+	हाल 9:
 		wa_bb_fn[0] = gen9_init_indirectctx_bb;
-		wa_bb_fn[1] = NULL;
-		break;
-	case 8:
+		wa_bb_fn[1] = शून्य;
+		अवरोध;
+	हाल 8:
 		wa_bb_fn[0] = gen8_init_indirectctx_bb;
-		wa_bb_fn[1] = NULL;
-		break;
-	default:
+		wa_bb_fn[1] = शून्य;
+		अवरोध;
+	शेष:
 		MISSING_CASE(INTEL_GEN(engine->i915));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = lrc_create_wa_ctx(engine);
-	if (err) {
+	अगर (err) अणु
 		/*
-		 * We continue even if we fail to initialize WA batch
+		 * We जारी even अगर we fail to initialize WA batch
 		 * because we only expect rare glitches but nothing
 		 * critical to prevent us from using GPU
 		 */
 		drm_err(&engine->i915->drm,
 			"Ignoring context switch w/a allocation error:%d\n",
 			err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!engine->wa_ctx.vma)
-		return;
+	अगर (!engine->wa_ctx.vma)
+		वापस;
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	err = i915_gem_object_lock(wa_ctx->vma->obj, &ww);
-	if (!err)
+	अगर (!err)
 		err = i915_ggtt_pin(wa_ctx->vma, &ww, 0, PIN_HIGH);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 
 	batch = i915_gem_object_pin_map(wa_ctx->vma->obj, I915_MAP_WB);
-	if (IS_ERR(batch)) {
+	अगर (IS_ERR(batch)) अणु
 		err = PTR_ERR(batch);
-		goto err_unpin;
-	}
+		जाओ err_unpin;
+	पूर्ण
 
 	/*
 	 * Emit the two workaround batch buffers, recording the offset from the
-	 * start of the workaround batch buffer object for each and their
+	 * start of the workaround batch buffer object क्रम each and their
 	 * respective sizes.
 	 */
 	batch_ptr = batch;
-	for (i = 0; i < ARRAY_SIZE(wa_bb_fn); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(wa_bb_fn); i++) अणु
 		wa_bb[i]->offset = batch_ptr - batch;
-		if (GEM_DEBUG_WARN_ON(!IS_ALIGNED(wa_bb[i]->offset,
-						  CACHELINE_BYTES))) {
+		अगर (GEM_DEBUG_WARN_ON(!IS_ALIGNED(wa_bb[i]->offset,
+						  CACHELINE_BYTES))) अणु
 			err = -EINVAL;
-			break;
-		}
-		if (wa_bb_fn[i])
+			अवरोध;
+		पूर्ण
+		अगर (wa_bb_fn[i])
 			batch_ptr = wa_bb_fn[i](engine, batch_ptr);
 		wa_bb[i]->size = batch_ptr - (batch + wa_bb[i]->offset);
-	}
+	पूर्ण
 	GEM_BUG_ON(batch_ptr - batch > CTX_WA_BB_SIZE);
 
 	__i915_gem_object_flush_map(wa_ctx->vma->obj, 0, batch_ptr - batch);
 	__i915_gem_object_release_map(wa_ctx->vma->obj);
 
-	/* Verify that we can handle failure to setup the wa_ctx */
-	if (!err)
+	/* Verअगरy that we can handle failure to setup the wa_ctx */
+	अगर (!err)
 		err = i915_inject_probe_error(engine->i915, -ENODEV);
 
 err_unpin:
-	if (err)
+	अगर (err)
 		i915_vma_unpin(wa_ctx->vma);
 err:
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
 
-	if (err) {
+	अगर (err) अणु
 		i915_vma_put(engine->wa_ctx.vma);
 
 		/* Clear all flags to prevent further use */
-		memset(wa_ctx, 0, sizeof(*wa_ctx));
-	}
-}
+		स_रखो(wa_ctx, 0, माप(*wa_ctx));
+	पूर्ण
+पूर्ण
 
-static void st_update_runtime_underflow(struct intel_context *ce, s32 dt)
-{
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-	ce->runtime.num_underflow++;
-	ce->runtime.max_underflow = max_t(u32, ce->runtime.max_underflow, -dt);
-#endif
-}
+अटल व्योम st_update_runसमय_underflow(काष्ठा पूर्णांकel_context *ce, s32 dt)
+अणु
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+	ce->runसमय.num_underflow++;
+	ce->runसमय.max_underflow = max_t(u32, ce->runसमय.max_underflow, -dt);
+#पूर्ण_अगर
+पूर्ण
 
-void lrc_update_runtime(struct intel_context *ce)
-{
+व्योम lrc_update_runसमय(काष्ठा पूर्णांकel_context *ce)
+अणु
 	u32 old;
 	s32 dt;
 
-	if (intel_context_is_barrier(ce))
-		return;
+	अगर (पूर्णांकel_context_is_barrier(ce))
+		वापस;
 
-	old = ce->runtime.last;
-	ce->runtime.last = lrc_get_runtime(ce);
-	dt = ce->runtime.last - old;
+	old = ce->runसमय.last;
+	ce->runसमय.last = lrc_get_runसमय(ce);
+	dt = ce->runसमय.last - old;
 
-	if (unlikely(dt < 0)) {
+	अगर (unlikely(dt < 0)) अणु
 		CE_TRACE(ce, "runtime underflow: last=%u, new=%u, delta=%d\n",
-			 old, ce->runtime.last, dt);
-		st_update_runtime_underflow(ce, dt);
-		return;
-	}
+			 old, ce->runसमय.last, dt);
+		st_update_runसमय_underflow(ce, dt);
+		वापस;
+	पूर्ण
 
-	ewma_runtime_add(&ce->runtime.avg, dt);
-	ce->runtime.total += dt;
-}
+	ewma_runसमय_add(&ce->runसमय.avg, dt);
+	ce->runसमय.total += dt;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include "selftest_lrc.c"
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश "selftest_lrc.c"
+#पूर्ण_अगर

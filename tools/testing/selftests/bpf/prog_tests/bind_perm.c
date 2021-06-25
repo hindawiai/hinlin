@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "bind_perm.skel.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "bind_perm.skel.h"
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/capability.h>
+#समावेश <sys/types.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/capability.h>
 
-static int duration;
+अटल पूर्णांक duration;
 
-void try_bind(int family, int port, int expected_errno)
-{
-	struct sockaddr_storage addr = {};
-	struct sockaddr_in6 *sin6;
-	struct sockaddr_in *sin;
-	int fd = -1;
+व्योम try_bind(पूर्णांक family, पूर्णांक port, पूर्णांक expected_त्रुटि_सं)
+अणु
+	काष्ठा sockaddr_storage addr = अणुपूर्ण;
+	काष्ठा sockaddr_in6 *sin6;
+	काष्ठा sockaddr_in *sin;
+	पूर्णांक fd = -1;
 
 	fd = socket(family, SOCK_STREAM, 0);
-	if (CHECK(fd < 0, "fd", "errno %d", errno))
-		goto close_socket;
+	अगर (CHECK(fd < 0, "fd", "errno %d", त्रुटि_सं))
+		जाओ बंद_socket;
 
-	if (family == AF_INET) {
-		sin = (struct sockaddr_in *)&addr;
+	अगर (family == AF_INET) अणु
+		sin = (काष्ठा sockaddr_in *)&addr;
 		sin->sin_family = family;
 		sin->sin_port = htons(port);
-	} else {
-		sin6 = (struct sockaddr_in6 *)&addr;
+	पूर्ण अन्यथा अणु
+		sin6 = (काष्ठा sockaddr_in6 *)&addr;
 		sin6->sin6_family = family;
 		sin6->sin6_port = htons(port);
-	}
+	पूर्ण
 
-	errno = 0;
-	bind(fd, (struct sockaddr *)&addr, sizeof(addr));
-	ASSERT_EQ(errno, expected_errno, "bind");
+	त्रुटि_सं = 0;
+	bind(fd, (काष्ठा sockaddr *)&addr, माप(addr));
+	ASSERT_EQ(त्रुटि_सं, expected_त्रुटि_सं, "bind");
 
-close_socket:
-	if (fd >= 0)
-		close(fd);
-}
+बंद_socket:
+	अगर (fd >= 0)
+		बंद(fd);
+पूर्ण
 
 bool cap_net_bind_service(cap_flag_value_t flag)
-{
-	const cap_value_t cap_net_bind_service = CAP_NET_BIND_SERVICE;
+अणु
+	स्थिर cap_value_t cap_net_bind_service = CAP_NET_BIND_SERVICE;
 	cap_flag_value_t original_value;
 	bool was_effective = false;
 	cap_t caps;
 
 	caps = cap_get_proc();
-	if (CHECK(!caps, "cap_get_proc", "errno %d", errno))
-		goto free_caps;
+	अगर (CHECK(!caps, "cap_get_proc", "errno %d", त्रुटि_सं))
+		जाओ मुक्त_caps;
 
-	if (CHECK(cap_get_flag(caps, CAP_NET_BIND_SERVICE, CAP_EFFECTIVE,
+	अगर (CHECK(cap_get_flag(caps, CAP_NET_BIND_SERVICE, CAP_EFFECTIVE,
 			       &original_value),
-		  "cap_get_flag", "errno %d", errno))
-		goto free_caps;
+		  "cap_get_flag", "errno %d", त्रुटि_सं))
+		जाओ मुक्त_caps;
 
 	was_effective = (original_value == CAP_SET);
 
-	if (CHECK(cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_net_bind_service,
+	अगर (CHECK(cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_net_bind_service,
 			       flag),
-		  "cap_set_flag", "errno %d", errno))
-		goto free_caps;
+		  "cap_set_flag", "errno %d", त्रुटि_सं))
+		जाओ मुक्त_caps;
 
-	if (CHECK(cap_set_proc(caps), "cap_set_proc", "errno %d", errno))
-		goto free_caps;
+	अगर (CHECK(cap_set_proc(caps), "cap_set_proc", "errno %d", त्रुटि_सं))
+		जाओ मुक्त_caps;
 
-free_caps:
-	CHECK(cap_free(caps), "cap_free", "errno %d", errno);
-	return was_effective;
-}
+मुक्त_caps:
+	CHECK(cap_मुक्त(caps), "cap_free", "errno %d", त्रुटि_सं);
+	वापस was_effective;
+पूर्ण
 
-void test_bind_perm(void)
-{
+व्योम test_bind_perm(व्योम)
+अणु
 	bool cap_was_effective;
-	struct bind_perm *skel;
-	int cgroup_fd;
+	काष्ठा bind_perm *skel;
+	पूर्णांक cgroup_fd;
 
 	cgroup_fd = test__join_cgroup("/bind_perm");
-	if (CHECK(cgroup_fd < 0, "cg-join", "errno %d", errno))
-		return;
+	अगर (CHECK(cgroup_fd < 0, "cg-join", "errno %d", त्रुटि_सं))
+		वापस;
 
-	skel = bind_perm__open_and_load();
-	if (!ASSERT_OK_PTR(skel, "skel"))
-		goto close_cgroup_fd;
+	skel = bind_perm__खोलो_and_load();
+	अगर (!ASSERT_OK_PTR(skel, "skel"))
+		जाओ बंद_cgroup_fd;
 
 	skel->links.bind_v4_prog = bpf_program__attach_cgroup(skel->progs.bind_v4_prog, cgroup_fd);
-	if (!ASSERT_OK_PTR(skel, "bind_v4_prog"))
-		goto close_skeleton;
+	अगर (!ASSERT_OK_PTR(skel, "bind_v4_prog"))
+		जाओ बंद_skeleton;
 
 	skel->links.bind_v6_prog = bpf_program__attach_cgroup(skel->progs.bind_v6_prog, cgroup_fd);
-	if (!ASSERT_OK_PTR(skel, "bind_v6_prog"))
-		goto close_skeleton;
+	अगर (!ASSERT_OK_PTR(skel, "bind_v6_prog"))
+		जाओ बंद_skeleton;
 
 	cap_was_effective = cap_net_bind_service(CAP_CLEAR);
 
@@ -99,11 +100,11 @@ void test_bind_perm(void)
 	try_bind(AF_INET, 111, 0);
 	try_bind(AF_INET6, 111, 0);
 
-	if (cap_was_effective)
+	अगर (cap_was_effective)
 		cap_net_bind_service(CAP_SET);
 
-close_skeleton:
+बंद_skeleton:
 	bind_perm__destroy(skel);
-close_cgroup_fd:
-	close(cgroup_fd);
-}
+बंद_cgroup_fd:
+	बंद(cgroup_fd);
+पूर्ण

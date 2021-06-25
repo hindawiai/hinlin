@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * TI DaVinci DM355 chip specific setup
+ * TI DaVinci DM355 chip specअगरic setup
  *
  * Author: Kevin Hilman, Deep Root Systems, LLC
  *
@@ -9,107 +10,107 @@
  * or implied.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clk/davinci.h>
-#include <linux/clkdev.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irqchip/irq-davinci-aintc.h>
-#include <linux/platform_data/edma.h>
-#include <linux/platform_data/gpio-davinci.h>
-#include <linux/platform_data/spi-davinci.h>
-#include <linux/platform_device.h>
-#include <linux/serial_8250.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clk/davinci.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip/irq-davinci-aपूर्णांकc.h>
+#समावेश <linux/platक्रमm_data/edma.h>
+#समावेश <linux/platक्रमm_data/gpio-davinci.h>
+#समावेश <linux/platक्रमm_data/spi-davinci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/serial_8250.h>
+#समावेश <linux/spi/spi.h>
 
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <mach/common.h>
-#include <mach/cputype.h>
-#include <mach/mux.h>
-#include <mach/serial.h>
+#समावेश <mach/common.h>
+#समावेश <mach/cputype.h>
+#समावेश <mach/mux.h>
+#समावेश <mach/serial.h>
 
-#include <clocksource/timer-davinci.h>
+#समावेश <घड़ीsource/समयr-davinci.h>
 
-#include "asp.h"
-#include "davinci.h"
-#include "irqs.h"
-#include "mux.h"
+#समावेश "asp.h"
+#समावेश "davinci.h"
+#समावेश "irqs.h"
+#समावेश "mux.h"
 
-#define DM355_UART2_BASE	(IO_PHYS + 0x206000)
-#define DM355_OSD_BASE		(IO_PHYS + 0x70200)
-#define DM355_VENC_BASE		(IO_PHYS + 0x70400)
+#घोषणा DM355_UART2_BASE	(IO_PHYS + 0x206000)
+#घोषणा DM355_OSD_BASE		(IO_PHYS + 0x70200)
+#घोषणा DM355_VENC_BASE		(IO_PHYS + 0x70400)
 
 /*
- * Device specific clocks
+ * Device specअगरic घड़ीs
  */
-#define DM355_REF_FREQ		24000000	/* 24 or 36 MHz */
+#घोषणा DM355_REF_FREQ		24000000	/* 24 or 36 MHz */
 
-static u64 dm355_spi0_dma_mask = DMA_BIT_MASK(32);
+अटल u64 dm355_spi0_dma_mask = DMA_BIT_MASK(32);
 
-static struct resource dm355_spi0_resources[] = {
-	{
+अटल काष्ठा resource dm355_spi0_resources[] = अणु
+	अणु
 		.start = 0x01c66000,
 		.end   = 0x01c667ff,
 		.flags = IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start = DAVINCI_INTC_IRQ(IRQ_DM355_SPINT0_0),
 		.flags = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct davinci_spi_platform_data dm355_spi0_pdata = {
+अटल काष्ठा davinci_spi_platक्रमm_data dm355_spi0_pdata = अणु
 	.version 	= SPI_VERSION_1,
 	.num_chipselect = 2,
 	.cshold_bug	= true,
 	.dma_event_q	= EVENTQ_1,
 	.prescaler_limit = 1,
-};
-static struct platform_device dm355_spi0_device = {
+पूर्ण;
+अटल काष्ठा platक्रमm_device dm355_spi0_device = अणु
 	.name = "spi_davinci",
 	.id = 0,
-	.dev = {
+	.dev = अणु
 		.dma_mask = &dm355_spi0_dma_mask,
 		.coherent_dma_mask = DMA_BIT_MASK(32),
-		.platform_data = &dm355_spi0_pdata,
-	},
+		.platक्रमm_data = &dm355_spi0_pdata,
+	पूर्ण,
 	.num_resources = ARRAY_SIZE(dm355_spi0_resources),
 	.resource = dm355_spi0_resources,
-};
+पूर्ण;
 
-void __init dm355_init_spi0(unsigned chipselect_mask,
-		const struct spi_board_info *info, unsigned len)
-{
-	/* for now, assume we need MISO */
+व्योम __init dm355_init_spi0(अचिन्हित chipselect_mask,
+		स्थिर काष्ठा spi_board_info *info, अचिन्हित len)
+अणु
+	/* क्रम now, assume we need MISO */
 	davinci_cfg_reg(DM355_SPI0_SDI);
 
 	/* not all slaves will be wired up */
-	if (chipselect_mask & BIT(0))
+	अगर (chipselect_mask & BIT(0))
 		davinci_cfg_reg(DM355_SPI0_SDENA0);
-	if (chipselect_mask & BIT(1))
+	अगर (chipselect_mask & BIT(1))
 		davinci_cfg_reg(DM355_SPI0_SDENA1);
 
-	spi_register_board_info(info, len);
+	spi_रेजिस्टर_board_info(info, len);
 
-	platform_device_register(&dm355_spi0_device);
-}
+	platक्रमm_device_रेजिस्टर(&dm355_spi0_device);
+पूर्ण
 
 /*----------------------------------------------------------------------*/
 
-#define INTMUX		0x18
-#define EVTMUX		0x1c
+#घोषणा INTMUX		0x18
+#घोषणा EVTMUX		0x1c
 
 /*
- * Device specific mux setup
+ * Device specअगरic mux setup
  *
  *	soc	description	mux  mode   mode  mux	 dbg
  *				reg  offset mask  mode
  */
-static const struct mux_config dm355_pins[] = {
-#ifdef CONFIG_DAVINCI_MUX
+अटल स्थिर काष्ठा mux_config dm355_pins[] = अणु
+#अगर_घोषित CONFIG_DAVINCI_MUX
 MUX_CFG(DM355,	MMCSD0,		4,   2,     1,	  0,	 false)
 
 MUX_CFG(DM355,	SD1_CLK,	3,   6,     1,	  1,	 false)
@@ -154,10 +155,10 @@ MUX_CFG(DM355,	VIN_CAM_HD,	0,   11,    1,    1,	 false)
 MUX_CFG(DM355,	VIN_YIN_EN,	0,   10,    1,    1,	 false)
 MUX_CFG(DM355,	VIN_CINL_EN,	0,   0,   0xff, 0x55,	 false)
 MUX_CFG(DM355,	VIN_CINH_EN,	0,   8,     3,    3,	 false)
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static u8 dm355_default_priorities[DAVINCI_N_AINTC_IRQ] = {
+अटल u8 dm355_शेष_priorities[DAVINCI_N_AINTC_IRQ] = अणु
 	[IRQ_DM355_CCDC_VDINT0]		= 2,
 	[IRQ_DM355_CCDC_VDINT1]		= 6,
 	[IRQ_DM355_CCDC_VDINT2]		= 6,
@@ -188,10 +189,10 @@ static u8 dm355_default_priorities[DAVINCI_N_AINTC_IRQ] = {
 	[IRQ_DDRINT]			= 7,
 	[IRQ_AEMIFINT]			= 7,
 	[IRQ_DM355_SDIOINT1]		= 4,
-	[IRQ_TINT0_TINT12]		= 2,	/* clockevent */
-	[IRQ_TINT0_TINT34]		= 2,	/* clocksource */
-	[IRQ_TINT1_TINT12]		= 7,	/* DSP timer */
-	[IRQ_TINT1_TINT34]		= 7,	/* system tick */
+	[IRQ_TINT0_TINT12]		= 2,	/* घड़ीevent */
+	[IRQ_TINT0_TINT34]		= 2,	/* घड़ीsource */
+	[IRQ_TINT1_TINT12]		= 7,	/* DSP समयr */
+	[IRQ_TINT1_TINT34]		= 7,	/* प्रणाली tick */
 	[IRQ_PWMINT0]			= 7,
 	[IRQ_PWMINT1]			= 7,
 	[IRQ_PWMINT2]			= 7,
@@ -220,111 +221,111 @@ static u8 dm355_default_priorities[DAVINCI_N_AINTC_IRQ] = {
 	[IRQ_COMMTX]			= 7,
 	[IRQ_COMMRX]			= 7,
 	[IRQ_EMUINT]			= 7,
-};
+पूर्ण;
 
 /*----------------------------------------------------------------------*/
 
-static s8 queue_priority_mapping[][2] = {
-	/* {event queue no, Priority} */
-	{0, 3},
-	{1, 7},
-	{-1, -1},
-};
+अटल s8 queue_priority_mapping[][2] = अणु
+	/* अणुevent queue no, Priorityपूर्ण */
+	अणु0, 3पूर्ण,
+	अणु1, 7पूर्ण,
+	अणु-1, -1पूर्ण,
+पूर्ण;
 
-static const struct dma_slave_map dm355_edma_map[] = {
-	{ "davinci-mcbsp.0", "tx", EDMA_FILTER_PARAM(0, 2) },
-	{ "davinci-mcbsp.0", "rx", EDMA_FILTER_PARAM(0, 3) },
-	{ "davinci-mcbsp.1", "tx", EDMA_FILTER_PARAM(0, 8) },
-	{ "davinci-mcbsp.1", "rx", EDMA_FILTER_PARAM(0, 9) },
-	{ "spi_davinci.2", "tx", EDMA_FILTER_PARAM(0, 10) },
-	{ "spi_davinci.2", "rx", EDMA_FILTER_PARAM(0, 11) },
-	{ "spi_davinci.1", "tx", EDMA_FILTER_PARAM(0, 14) },
-	{ "spi_davinci.1", "rx", EDMA_FILTER_PARAM(0, 15) },
-	{ "spi_davinci.0", "tx", EDMA_FILTER_PARAM(0, 16) },
-	{ "spi_davinci.0", "rx", EDMA_FILTER_PARAM(0, 17) },
-	{ "dm6441-mmc.0", "rx", EDMA_FILTER_PARAM(0, 26) },
-	{ "dm6441-mmc.0", "tx", EDMA_FILTER_PARAM(0, 27) },
-	{ "dm6441-mmc.1", "rx", EDMA_FILTER_PARAM(0, 30) },
-	{ "dm6441-mmc.1", "tx", EDMA_FILTER_PARAM(0, 31) },
-};
+अटल स्थिर काष्ठा dma_slave_map dm355_edma_map[] = अणु
+	अणु "davinci-mcbsp.0", "tx", EDMA_FILTER_PARAM(0, 2) पूर्ण,
+	अणु "davinci-mcbsp.0", "rx", EDMA_FILTER_PARAM(0, 3) पूर्ण,
+	अणु "davinci-mcbsp.1", "tx", EDMA_FILTER_PARAM(0, 8) पूर्ण,
+	अणु "davinci-mcbsp.1", "rx", EDMA_FILTER_PARAM(0, 9) पूर्ण,
+	अणु "spi_davinci.2", "tx", EDMA_FILTER_PARAM(0, 10) पूर्ण,
+	अणु "spi_davinci.2", "rx", EDMA_FILTER_PARAM(0, 11) पूर्ण,
+	अणु "spi_davinci.1", "tx", EDMA_FILTER_PARAM(0, 14) पूर्ण,
+	अणु "spi_davinci.1", "rx", EDMA_FILTER_PARAM(0, 15) पूर्ण,
+	अणु "spi_davinci.0", "tx", EDMA_FILTER_PARAM(0, 16) पूर्ण,
+	अणु "spi_davinci.0", "rx", EDMA_FILTER_PARAM(0, 17) पूर्ण,
+	अणु "dm6441-mmc.0", "rx", EDMA_FILTER_PARAM(0, 26) पूर्ण,
+	अणु "dm6441-mmc.0", "tx", EDMA_FILTER_PARAM(0, 27) पूर्ण,
+	अणु "dm6441-mmc.1", "rx", EDMA_FILTER_PARAM(0, 30) पूर्ण,
+	अणु "dm6441-mmc.1", "tx", EDMA_FILTER_PARAM(0, 31) पूर्ण,
+पूर्ण;
 
-static struct edma_soc_info dm355_edma_pdata = {
+अटल काष्ठा edma_soc_info dm355_edma_pdata = अणु
 	.queue_priority_mapping	= queue_priority_mapping,
-	.default_queue		= EVENTQ_1,
+	.शेष_queue		= EVENTQ_1,
 	.slave_map		= dm355_edma_map,
 	.slavecnt		= ARRAY_SIZE(dm355_edma_map),
-};
+पूर्ण;
 
-static struct resource edma_resources[] = {
-	{
+अटल काष्ठा resource edma_resources[] = अणु
+	अणु
 		.name	= "edma3_cc",
 		.start	= 0x01c00000,
 		.end	= 0x01c00000 + SZ_64K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_tc0",
 		.start	= 0x01c10000,
 		.end	= 0x01c10000 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_tc1",
 		.start	= 0x01c10400,
 		.end	= 0x01c10400 + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_ccint",
 		.start	= DAVINCI_INTC_IRQ(IRQ_CCINT0),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name	= "edma3_ccerrint",
 		.start	= DAVINCI_INTC_IRQ(IRQ_CCERRINT),
 		.flags	= IORESOURCE_IRQ,
-	},
+	पूर्ण,
 	/* not using (or muxing) TC*_ERR */
-};
+पूर्ण;
 
-static const struct platform_device_info dm355_edma_device __initconst = {
+अटल स्थिर काष्ठा platक्रमm_device_info dm355_edma_device __initस्थिर = अणु
 	.name		= "edma",
 	.id		= 0,
 	.dma_mask	= DMA_BIT_MASK(32),
 	.res		= edma_resources,
 	.num_res	= ARRAY_SIZE(edma_resources),
 	.data		= &dm355_edma_pdata,
-	.size_data	= sizeof(dm355_edma_pdata),
-};
+	.size_data	= माप(dm355_edma_pdata),
+पूर्ण;
 
-static struct resource dm355_asp1_resources[] = {
-	{
+अटल काष्ठा resource dm355_asp1_resources[] = अणु
+	अणु
 		.name	= "mpu",
 		.start	= DAVINCI_ASP1_BASE,
 		.end	= DAVINCI_ASP1_BASE + SZ_8K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_DMA_ASP1_TX,
 		.end	= DAVINCI_DMA_ASP1_TX,
 		.flags	= IORESOURCE_DMA,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_DMA_ASP1_RX,
 		.end	= DAVINCI_DMA_ASP1_RX,
 		.flags	= IORESOURCE_DMA,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm355_asp1_device = {
+अटल काष्ठा platक्रमm_device dm355_asp1_device = अणु
 	.name		= "davinci-mcbsp",
 	.id		= 1,
 	.num_resources	= ARRAY_SIZE(dm355_asp1_resources),
 	.resource	= dm355_asp1_resources,
-};
+पूर्ण;
 
-static void dm355_ccdc_setup_pinmux(void)
-{
+अटल व्योम dm355_ccdc_setup_pinmux(व्योम)
+अणु
 	davinci_cfg_reg(DM355_VIN_PCLK);
 	davinci_cfg_reg(DM355_VIN_CAM_WEN);
 	davinci_cfg_reg(DM355_VIN_CAM_VD);
@@ -332,373 +333,373 @@ static void dm355_ccdc_setup_pinmux(void)
 	davinci_cfg_reg(DM355_VIN_YIN_EN);
 	davinci_cfg_reg(DM355_VIN_CINL_EN);
 	davinci_cfg_reg(DM355_VIN_CINH_EN);
-}
+पूर्ण
 
-static struct resource dm355_vpss_resources[] = {
-	{
+अटल काष्ठा resource dm355_vpss_resources[] = अणु
+	अणु
 		/* VPSS BL Base address */
 		.name		= "vpss",
 		.start          = 0x01c70800,
 		.end            = 0x01c70800 + 0xff,
 		.flags          = IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		/* VPSS CLK Base address */
 		.name		= "vpss",
 		.start          = 0x01c70000,
 		.end            = 0x01c70000 + 0xf,
 		.flags          = IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm355_vpss_device = {
+अटल काष्ठा platक्रमm_device dm355_vpss_device = अणु
 	.name			= "vpss",
 	.id			= -1,
-	.dev.platform_data	= "dm355_vpss",
+	.dev.platक्रमm_data	= "dm355_vpss",
 	.num_resources		= ARRAY_SIZE(dm355_vpss_resources),
 	.resource		= dm355_vpss_resources,
-};
+पूर्ण;
 
-static struct resource vpfe_resources[] = {
-	{
+अटल काष्ठा resource vpfe_resources[] = अणु
+	अणु
 		.start          = DAVINCI_INTC_IRQ(IRQ_VDINT0),
 		.end            = DAVINCI_INTC_IRQ(IRQ_VDINT0),
 		.flags          = IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start          = DAVINCI_INTC_IRQ(IRQ_VDINT1),
 		.end            = DAVINCI_INTC_IRQ(IRQ_VDINT1),
 		.flags          = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u64 vpfe_capture_dma_mask = DMA_BIT_MASK(32);
-static struct resource dm355_ccdc_resource[] = {
+अटल u64 vpfe_capture_dma_mask = DMA_BIT_MASK(32);
+अटल काष्ठा resource dm355_ccdc_resource[] = अणु
 	/* CCDC Base address */
-	{
+	अणु
 		.flags          = IORESOURCE_MEM,
 		.start          = 0x01c70600,
 		.end            = 0x01c70600 + 0x1ff,
-	},
-};
-static struct platform_device dm355_ccdc_dev = {
+	पूर्ण,
+पूर्ण;
+अटल काष्ठा platक्रमm_device dm355_ccdc_dev = अणु
 	.name           = "dm355_ccdc",
 	.id             = -1,
 	.num_resources  = ARRAY_SIZE(dm355_ccdc_resource),
 	.resource       = dm355_ccdc_resource,
-	.dev = {
+	.dev = अणु
 		.dma_mask               = &vpfe_capture_dma_mask,
 		.coherent_dma_mask      = DMA_BIT_MASK(32),
-		.platform_data		= dm355_ccdc_setup_pinmux,
-	},
-};
+		.platक्रमm_data		= dm355_ccdc_setup_pinmux,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device vpfe_capture_dev = {
+अटल काष्ठा platक्रमm_device vpfe_capture_dev = अणु
 	.name		= CAPTURE_DRV_NAME,
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(vpfe_resources),
 	.resource	= vpfe_resources,
-	.dev = {
+	.dev = अणु
 		.dma_mask		= &vpfe_capture_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource dm355_osd_resources[] = {
-	{
+अटल काष्ठा resource dm355_osd_resources[] = अणु
+	अणु
 		.start	= DM355_OSD_BASE,
 		.end	= DM355_OSD_BASE + 0x17f,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm355_osd_dev = {
+अटल काष्ठा platक्रमm_device dm355_osd_dev = अणु
 	.name		= DM355_VPBE_OSD_SUBDEV_NAME,
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm355_osd_resources),
 	.resource	= dm355_osd_resources,
-	.dev		= {
+	.dev		= अणु
 		.dma_mask		= &vpfe_capture_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource dm355_venc_resources[] = {
-	{
+अटल काष्ठा resource dm355_venc_resources[] = अणु
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.end	= DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-	/* venc registers io space */
-	{
+	पूर्ण,
+	/* venc रेजिस्टरs io space */
+	अणु
 		.start	= DM355_VENC_BASE,
 		.end	= DM355_VENC_BASE + 0x17f,
 		.flags	= IORESOURCE_MEM,
-	},
-	/* VDAC config register io space */
-	{
+	पूर्ण,
+	/* VDAC config रेजिस्टर io space */
+	अणु
 		.start	= DAVINCI_SYSTEM_MODULE_BASE + SYSMOD_VDAC_CONFIG,
 		.end	= DAVINCI_SYSTEM_MODULE_BASE + SYSMOD_VDAC_CONFIG + 3,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource dm355_v4l2_disp_resources[] = {
-	{
+अटल काष्ठा resource dm355_v4l2_disp_resources[] = अणु
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.end	= DAVINCI_INTC_IRQ(IRQ_VENCINT),
 		.flags	= IORESOURCE_IRQ,
-	},
-	/* venc registers io space */
-	{
+	पूर्ण,
+	/* venc रेजिस्टरs io space */
+	अणु
 		.start	= DM355_VENC_BASE,
 		.end	= DM355_VENC_BASE + 0x17f,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int dm355_vpbe_setup_pinmux(u32 if_type, int field)
-{
-	switch (if_type) {
-	case MEDIA_BUS_FMT_SGRBG8_1X8:
+अटल पूर्णांक dm355_vpbe_setup_pinmux(u32 अगर_type, पूर्णांक field)
+अणु
+	चयन (अगर_type) अणु
+	हाल MEDIA_BUS_FMT_SGRBG8_1X8:
 		davinci_cfg_reg(DM355_VOUT_FIELD_G70);
-		break;
-	case MEDIA_BUS_FMT_YUYV10_1X20:
-		if (field)
+		अवरोध;
+	हाल MEDIA_BUS_FMT_YUYV10_1X20:
+		अगर (field)
 			davinci_cfg_reg(DM355_VOUT_FIELD);
-		else
+		अन्यथा
 			davinci_cfg_reg(DM355_VOUT_FIELD_G70);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	davinci_cfg_reg(DM355_VOUT_COUTL_EN);
 	davinci_cfg_reg(DM355_VOUT_COUTH_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dm355_venc_setup_clock(enum vpbe_enc_timings_type type,
-				   unsigned int pclock)
-{
-	void __iomem *vpss_clk_ctrl_reg;
+अटल पूर्णांक dm355_venc_setup_घड़ी(क्रमागत vpbe_enc_timings_type type,
+				   अचिन्हित पूर्णांक pघड़ी)
+अणु
+	व्योम __iomem *vpss_clk_ctrl_reg;
 
 	vpss_clk_ctrl_reg = DAVINCI_SYSMOD_VIRT(SYSMOD_VPSS_CLKCTL);
 
-	switch (type) {
-	case VPBE_ENC_STD:
-		writel(VPSS_DACCLKEN_ENABLE | VPSS_VENCCLKEN_ENABLE,
+	चयन (type) अणु
+	हाल VPBE_ENC_STD:
+		ग_लिखोl(VPSS_DACCLKEN_ENABLE | VPSS_VENCCLKEN_ENABLE,
 		       vpss_clk_ctrl_reg);
-		break;
-	case VPBE_ENC_DV_TIMINGS:
-		if (pclock > 27000000)
+		अवरोध;
+	हाल VPBE_ENC_DV_TIMINGS:
+		अगर (pघड़ी > 27000000)
 			/*
-			 * For HD, use external clock source since we cannot
-			 * support HD mode with internal clocks.
+			 * For HD, use बाह्यal घड़ी source since we cannot
+			 * support HD mode with पूर्णांकernal घड़ीs.
 			 */
-			writel(VPSS_MUXSEL_EXTCLK_ENABLE, vpss_clk_ctrl_reg);
-		break;
-	default:
-		return -EINVAL;
-	}
+			ग_लिखोl(VPSS_MUXSEL_EXTCLK_ENABLE, vpss_clk_ctrl_reg);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_device dm355_vpbe_display = {
+अटल काष्ठा platक्रमm_device dm355_vpbe_display = अणु
 	.name		= "vpbe-v4l2",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm355_v4l2_disp_resources),
 	.resource	= dm355_v4l2_disp_resources,
-	.dev		= {
+	.dev		= अणु
 		.dma_mask		= &vpfe_capture_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct venc_platform_data dm355_venc_pdata = {
+अटल काष्ठा venc_platक्रमm_data dm355_venc_pdata = अणु
 	.setup_pinmux	= dm355_vpbe_setup_pinmux,
-	.setup_clock	= dm355_venc_setup_clock,
-};
+	.setup_घड़ी	= dm355_venc_setup_घड़ी,
+पूर्ण;
 
-static struct platform_device dm355_venc_dev = {
+अटल काष्ठा platक्रमm_device dm355_venc_dev = अणु
 	.name		= DM355_VPBE_VENC_SUBDEV_NAME,
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(dm355_venc_resources),
 	.resource	= dm355_venc_resources,
-	.dev		= {
+	.dev		= अणु
 		.dma_mask		= &vpfe_capture_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-		.platform_data		= (void *)&dm355_venc_pdata,
-	},
-};
+		.platक्रमm_data		= (व्योम *)&dm355_venc_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm355_vpbe_dev = {
+अटल काष्ठा platक्रमm_device dm355_vpbe_dev = अणु
 	.name		= "vpbe_controller",
 	.id		= -1,
-	.dev		= {
+	.dev		= अणु
 		.dma_mask		= &vpfe_capture_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct resource dm355_gpio_resources[] = {
-	{	/* registers */
+अटल काष्ठा resource dm355_gpio_resources[] = अणु
+	अणु	/* रेजिस्टरs */
 		.start	= DAVINCI_GPIO_BASE,
 		.end	= DAVINCI_GPIO_BASE + SZ_4K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	{	/* interrupt */
+	पूर्ण,
+	अणु	/* पूर्णांकerrupt */
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK0),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK0),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK1),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK1),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK2),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK2),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK3),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK3),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK4),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK4),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK5),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK5),
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK6),
 		.end	= DAVINCI_INTC_IRQ(IRQ_DM355_GPIOBNK6),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct davinci_gpio_platform_data dm355_gpio_platform_data = {
-	.no_auto_base	= true,
+अटल काष्ठा davinci_gpio_platक्रमm_data dm355_gpio_platक्रमm_data = अणु
+	.no_स्वतः_base	= true,
 	.base		= 0,
 	.ngpio		= 104,
-};
+पूर्ण;
 
-int __init dm355_gpio_register(void)
-{
-	return davinci_gpio_register(dm355_gpio_resources,
+पूर्णांक __init dm355_gpio_रेजिस्टर(व्योम)
+अणु
+	वापस davinci_gpio_रेजिस्टर(dm355_gpio_resources,
 				     ARRAY_SIZE(dm355_gpio_resources),
-				     &dm355_gpio_platform_data);
-}
+				     &dm355_gpio_platक्रमm_data);
+पूर्ण
 /*----------------------------------------------------------------------*/
 
-static struct map_desc dm355_io_desc[] = {
-	{
-		.virtual	= IO_VIRT,
+अटल काष्ठा map_desc dm355_io_desc[] = अणु
+	अणु
+		.भव	= IO_VIRT,
 		.pfn		= __phys_to_pfn(IO_PHYS),
 		.length		= IO_SIZE,
 		.type		= MT_DEVICE
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Contents of JTAG ID register used to identify exact cpu type */
-static struct davinci_id dm355_ids[] = {
-	{
+/* Contents of JTAG ID रेजिस्टर used to identअगरy exact cpu type */
+अटल काष्ठा davinci_id dm355_ids[] = अणु
+	अणु
 		.variant	= 0x0,
 		.part_no	= 0xb73b,
 		.manufacturer	= 0x00f,
 		.cpu_id		= DAVINCI_CPU_ID_DM355,
 		.name		= "dm355",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Bottom half of timer0 is used for clockevent, top half is used for
- * clocksource.
+ * Bottom half of समयr0 is used क्रम घड़ीevent, top half is used क्रम
+ * घड़ीsource.
  */
-static const struct davinci_timer_cfg dm355_timer_cfg = {
+अटल स्थिर काष्ठा davinci_समयr_cfg dm355_समयr_cfg = अणु
 	.reg = DEFINE_RES_IO(DAVINCI_TIMER0_BASE, SZ_4K),
-	.irq = {
+	.irq = अणु
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_TINT0_TINT12)),
 		DEFINE_RES_IRQ(DAVINCI_INTC_IRQ(IRQ_TINT0_TINT34)),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct plat_serial8250_port dm355_serial0_platform_data[] = {
-	{
+अटल काष्ठा plat_serial8250_port dm355_serial0_platक्रमm_data[] = अणु
+	अणु
 		.mapbase	= DAVINCI_UART0_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_UARTINT0),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
-	},
-	{
+		.regshअगरt	= 2,
+	पूर्ण,
+	अणु
 		.flags	= 0,
-	}
-};
-static struct plat_serial8250_port dm355_serial1_platform_data[] = {
-	{
+	पूर्ण
+पूर्ण;
+अटल काष्ठा plat_serial8250_port dm355_serial1_platक्रमm_data[] = अणु
+	अणु
 		.mapbase	= DAVINCI_UART1_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_UARTINT1),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
-	},
-	{
+		.regshअगरt	= 2,
+	पूर्ण,
+	अणु
 		.flags	= 0,
-	}
-};
-static struct plat_serial8250_port dm355_serial2_platform_data[] = {
-	{
+	पूर्ण
+पूर्ण;
+अटल काष्ठा plat_serial8250_port dm355_serial2_platक्रमm_data[] = अणु
+	अणु
 		.mapbase	= DM355_UART2_BASE,
 		.irq		= DAVINCI_INTC_IRQ(IRQ_DM355_UARTINT2),
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST |
 				  UPF_IOREMAP,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
-	},
-	{
+		.regshअगरt	= 2,
+	पूर्ण,
+	अणु
 		.flags	= 0,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-struct platform_device dm355_serial_device[] = {
-	{
+काष्ठा platक्रमm_device dm355_serial_device[] = अणु
+	अणु
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM,
-		.dev			= {
-			.platform_data	= dm355_serial0_platform_data,
-		}
-	},
-	{
+		.dev			= अणु
+			.platक्रमm_data	= dm355_serial0_platक्रमm_data,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM1,
-		.dev			= {
-			.platform_data	= dm355_serial1_platform_data,
-		}
-	},
-	{
+		.dev			= अणु
+			.platक्रमm_data	= dm355_serial1_platक्रमm_data,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.name			= "serial8250",
 		.id			= PLAT8250_DEV_PLATFORM2,
-		.dev			= {
-			.platform_data	= dm355_serial2_platform_data,
-		}
-	},
-	{
-	}
-};
+		.dev			= अणु
+			.platक्रमm_data	= dm355_serial2_platक्रमm_data,
+		पूर्ण
+	पूर्ण,
+	अणु
+	पूर्ण
+पूर्ण;
 
-static const struct davinci_soc_info davinci_soc_info_dm355 = {
+अटल स्थिर काष्ठा davinci_soc_info davinci_soc_info_dm355 = अणु
 	.io_desc		= dm355_io_desc,
 	.io_desc_num		= ARRAY_SIZE(dm355_io_desc),
 	.jtag_id_reg		= 0x01c40028,
@@ -709,128 +710,128 @@ static const struct davinci_soc_info davinci_soc_info_dm355 = {
 	.pinmux_pins_num	= ARRAY_SIZE(dm355_pins),
 	.sram_dma		= 0x00010000,
 	.sram_len		= SZ_32K,
-};
+पूर्ण;
 
-void __init dm355_init_asp1(u32 evt_enable)
-{
-	/* we don't use ASP1 IRQs, or we'd need to mux them ... */
-	if (evt_enable & ASP1_TX_EVT_EN)
+व्योम __init dm355_init_asp1(u32 evt_enable)
+अणु
+	/* we करोn't use ASP1 IRQs, or we'd need to mux them ... */
+	अगर (evt_enable & ASP1_TX_EVT_EN)
 		davinci_cfg_reg(DM355_EVT8_ASP1_TX);
 
-	if (evt_enable & ASP1_RX_EVT_EN)
+	अगर (evt_enable & ASP1_RX_EVT_EN)
 		davinci_cfg_reg(DM355_EVT9_ASP1_RX);
 
-	platform_device_register(&dm355_asp1_device);
-}
+	platक्रमm_device_रेजिस्टर(&dm355_asp1_device);
+पूर्ण
 
-void __init dm355_init(void)
-{
+व्योम __init dm355_init(व्योम)
+अणु
 	davinci_common_init(&davinci_soc_info_dm355);
 	davinci_map_sysmod();
-}
+पूर्ण
 
-void __init dm355_init_time(void)
-{
-	void __iomem *pll1, *psc;
-	struct clk *clk;
-	int rv;
+व्योम __init dm355_init_समय(व्योम)
+अणु
+	व्योम __iomem *pll1, *psc;
+	काष्ठा clk *clk;
+	पूर्णांक rv;
 
-	clk_register_fixed_rate(NULL, "ref_clk", NULL, 0, DM355_REF_FREQ);
+	clk_रेजिस्टर_fixed_rate(शून्य, "ref_clk", शून्य, 0, DM355_REF_FREQ);
 
 	pll1 = ioremap(DAVINCI_PLL1_BASE, SZ_1K);
-	dm355_pll1_init(NULL, pll1, NULL);
+	dm355_pll1_init(शून्य, pll1, शून्य);
 
 	psc = ioremap(DAVINCI_PWR_SLEEP_CNTRL_BASE, SZ_4K);
-	dm355_psc_init(NULL, psc);
+	dm355_psc_init(शून्य, psc);
 
-	clk = clk_get(NULL, "timer0");
-	if (WARN_ON(IS_ERR(clk))) {
+	clk = clk_get(शून्य, "timer0");
+	अगर (WARN_ON(IS_ERR(clk))) अणु
 		pr_err("Unable to get the timer clock\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	rv = davinci_timer_register(clk, &dm355_timer_cfg);
+	rv = davinci_समयr_रेजिस्टर(clk, &dm355_समयr_cfg);
 	WARN(rv, "Unable to register the timer: %d\n", rv);
-}
+पूर्ण
 
-static struct resource dm355_pll2_resources[] = {
-	{
+अटल काष्ठा resource dm355_pll2_resources[] = अणु
+	अणु
 		.start	= DAVINCI_PLL2_BASE,
 		.end	= DAVINCI_PLL2_BASE + SZ_1K - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device dm355_pll2_device = {
+अटल काष्ठा platक्रमm_device dm355_pll2_device = अणु
 	.name		= "dm355-pll2",
 	.id		= -1,
 	.resource	= dm355_pll2_resources,
 	.num_resources	= ARRAY_SIZE(dm355_pll2_resources),
-};
+पूर्ण;
 
-void __init dm355_register_clocks(void)
-{
-	/* PLL1 and PSC are registered in dm355_init_time() */
-	platform_device_register(&dm355_pll2_device);
-}
+व्योम __init dm355_रेजिस्टर_घड़ीs(व्योम)
+अणु
+	/* PLL1 and PSC are रेजिस्टरed in dm355_init_समय() */
+	platक्रमm_device_रेजिस्टर(&dm355_pll2_device);
+पूर्ण
 
-int __init dm355_init_video(struct vpfe_config *vpfe_cfg,
-				struct vpbe_config *vpbe_cfg)
-{
-	if (vpfe_cfg || vpbe_cfg)
-		platform_device_register(&dm355_vpss_device);
+पूर्णांक __init dm355_init_video(काष्ठा vpfe_config *vpfe_cfg,
+				काष्ठा vpbe_config *vpbe_cfg)
+अणु
+	अगर (vpfe_cfg || vpbe_cfg)
+		platक्रमm_device_रेजिस्टर(&dm355_vpss_device);
 
-	if (vpfe_cfg) {
-		vpfe_capture_dev.dev.platform_data = vpfe_cfg;
-		platform_device_register(&dm355_ccdc_dev);
-		platform_device_register(&vpfe_capture_dev);
-	}
+	अगर (vpfe_cfg) अणु
+		vpfe_capture_dev.dev.platक्रमm_data = vpfe_cfg;
+		platक्रमm_device_रेजिस्टर(&dm355_ccdc_dev);
+		platक्रमm_device_रेजिस्टर(&vpfe_capture_dev);
+	पूर्ण
 
-	if (vpbe_cfg) {
-		dm355_vpbe_dev.dev.platform_data = vpbe_cfg;
-		platform_device_register(&dm355_osd_dev);
-		platform_device_register(&dm355_venc_dev);
-		platform_device_register(&dm355_vpbe_dev);
-		platform_device_register(&dm355_vpbe_display);
-	}
+	अगर (vpbe_cfg) अणु
+		dm355_vpbe_dev.dev.platक्रमm_data = vpbe_cfg;
+		platक्रमm_device_रेजिस्टर(&dm355_osd_dev);
+		platक्रमm_device_रेजिस्टर(&dm355_venc_dev);
+		platक्रमm_device_रेजिस्टर(&dm355_vpbe_dev);
+		platक्रमm_device_रेजिस्टर(&dm355_vpbe_display);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct davinci_aintc_config dm355_aintc_config = {
-	.reg = {
+अटल स्थिर काष्ठा davinci_aपूर्णांकc_config dm355_aपूर्णांकc_config = अणु
+	.reg = अणु
 		.start		= DAVINCI_ARM_INTC_BASE,
 		.end		= DAVINCI_ARM_INTC_BASE + SZ_4K - 1,
 		.flags		= IORESOURCE_MEM,
-	},
+	पूर्ण,
 	.num_irqs		= 64,
-	.prios			= dm355_default_priorities,
-};
+	.prios			= dm355_शेष_priorities,
+पूर्ण;
 
-void __init dm355_init_irq(void)
-{
-	davinci_aintc_init(&dm355_aintc_config);
-}
+व्योम __init dm355_init_irq(व्योम)
+अणु
+	davinci_aपूर्णांकc_init(&dm355_aपूर्णांकc_config);
+पूर्ण
 
-static int __init dm355_init_devices(void)
-{
-	struct platform_device *edma_pdev;
-	int ret = 0;
+अटल पूर्णांक __init dm355_init_devices(व्योम)
+अणु
+	काष्ठा platक्रमm_device *edma_pdev;
+	पूर्णांक ret = 0;
 
-	if (!cpu_is_davinci_dm355())
-		return 0;
+	अगर (!cpu_is_davinci_dm355())
+		वापस 0;
 
 	davinci_cfg_reg(DM355_INT_EDMA_CC);
-	edma_pdev = platform_device_register_full(&dm355_edma_device);
-	if (IS_ERR(edma_pdev)) {
+	edma_pdev = platक्रमm_device_रेजिस्टर_full(&dm355_edma_device);
+	अगर (IS_ERR(edma_pdev)) अणु
 		pr_warn("%s: Failed to register eDMA\n", __func__);
-		return PTR_ERR(edma_pdev);
-	}
+		वापस PTR_ERR(edma_pdev);
+	पूर्ण
 
 	ret = davinci_init_wdt();
-	if (ret)
+	अगर (ret)
 		pr_warn("%s: watchdog init failed: %d\n", __func__, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 postcore_initcall(dm355_init_devices);

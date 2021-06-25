@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * linux/arch/arm/mach-omap2/devices.c
  *
- * OMAP2 platform device setup/initialization
+ * OMAP2 platक्रमm device setup/initialization
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/pinctrl/machine.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/machine.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <linux/omap-dma.h>
+#समावेश <linux/omap-dma.h>
 
-#include "iomap.h"
-#include "omap_hwmod.h"
-#include "omap_device.h"
+#समावेश "iomap.h"
+#समावेश "omap_hwmod.h"
+#समावेश "omap_device.h"
 
-#include "soc.h"
-#include "common.h"
-#include "control.h"
-#include "display.h"
+#समावेश "soc.h"
+#समावेश "common.h"
+#समावेश "control.h"
+#समावेश "display.h"
 
-#define L3_MODULES_MAX_LEN 12
-#define L3_MODULES 3
+#घोषणा L3_MODULES_MAX_LEN 12
+#घोषणा L3_MODULES 3
 
 /*-------------------------------------------------------------------------*/
 
-#if IS_ENABLED(CONFIG_VIDEO_OMAP2_VOUT)
-#if IS_ENABLED(CONFIG_FB_OMAP2)
-static struct resource omap_vout_resource[3 - CONFIG_FB_OMAP2_NUM_FBS] = {
-};
-#else
-static struct resource omap_vout_resource[2] = {
-};
-#endif
+#अगर IS_ENABLED(CONFIG_VIDEO_OMAP2_VOUT)
+#अगर IS_ENABLED(CONFIG_FB_OMAP2)
+अटल काष्ठा resource omap_vout_resource[3 - CONFIG_FB_OMAP2_NUM_FBS] = अणु
+पूर्ण;
+#अन्यथा
+अटल काष्ठा resource omap_vout_resource[2] = अणु
+पूर्ण;
+#पूर्ण_अगर
 
-static u64 omap_vout_dma_mask = DMA_BIT_MASK(32);
+अटल u64 omap_vout_dma_mask = DMA_BIT_MASK(32);
 
-static struct platform_device omap_vout_device = {
+अटल काष्ठा platक्रमm_device omap_vout_device = अणु
 	.name		= "omap_vout",
 	.num_resources	= ARRAY_SIZE(omap_vout_resource),
 	.resource 	= &omap_vout_resource[0],
 	.id		= -1,
-	.dev		= {
+	.dev		= अणु
 		.dma_mask		= &omap_vout_dma_mask,
 		.coherent_dma_mask	= DMA_BIT_MASK(32),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init omap_init_vout(void)
-{
-	return platform_device_register(&omap_vout_device);
-}
-#else
-int __init omap_init_vout(void) { return 0; }
-#endif
+पूर्णांक __init omap_init_vout(व्योम)
+अणु
+	वापस platक्रमm_device_रेजिस्टर(&omap_vout_device);
+पूर्ण
+#अन्यथा
+पूर्णांक __init omap_init_vout(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर

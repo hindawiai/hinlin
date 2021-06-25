@@ -1,15 +1,16 @@
+<शैली गुरु>
 /* linux/drivers/cdrom/cdrom.c
    Copyright (c) 1996, 1997 David A. van Leeuwen.
    Copyright (c) 1997, 1998 Erik Andersen <andersee@debian.org>
    Copyright (c) 1998, 1999 Jens Axboe <axboe@image.dk>
 
-   May be copied or modified under the terms of the GNU General Public
-   License.  See linux/COPYING for more information.
+   May be copied or modअगरied under the terms of the GNU General Public
+   License.  See linux/COPYING क्रम more inक्रमmation.
 
-   Uniform CD-ROM driver for Linux.
-   See Documentation/cdrom/cdrom-standard.rst for usage information.
+   Unअगरorm CD-ROM driver क्रम Linux.
+   See Documentation/cdrom/cdrom-standard.rst क्रम usage inक्रमmation.
 
-   The routines in the file provide a uniform interface between the
+   The routines in the file provide a unअगरorm पूर्णांकerface between the
    software that uses CD-ROMs and the various low-level drivers that
    actually talk to the hardware. Suggestions are welcome.
    Patches that work are more welcome though.  ;-)
@@ -17,95 +18,95 @@
  To Do List:
  ----------------------------------
 
- -- Modify sysctl/proc interface. I plan on having one directory per
- drive, with entries for outputing general drive information, and sysctl
- based tunable parameters such as whether the tray should auto-close for
- that drive. Suggestions (or patches) for this welcome!
+ -- Modअगरy sysctl/proc पूर्णांकerface. I plan on having one directory per
+ drive, with entries क्रम outputing general drive inक्रमmation, and sysctl
+ based tunable parameters such as whether the tray should स्वतः-बंद क्रम
+ that drive. Suggestions (or patches) क्रम this welcome!
 
 
  Revision History
  ----------------------------------
- 1.00  Date Unknown -- David van Leeuwen <david@tm.tno.nl>
- -- Initial version by David A. van Leeuwen. I don't have a detailed
-  changelog for the 1.x series, David?
+ 1.00  Date Unknown -- David van Leeuwen <david@पंचांग.tno.nl>
+ -- Initial version by David A. van Leeuwen. I करोn't have a detailed
+  changelog क्रम the 1.x series, David?
 
 2.00  Dec  2, 1997 -- Erik Andersen <andersee@debian.org>
-  -- New maintainer! As David A. van Leeuwen has been too busy to actively
-  maintain and improve this driver, I am now carrying on the torch. If
-  you have a problem with this driver, please feel free to contact me.
+  -- New मुख्यtainer! As David A. van Leeuwen has been too busy to actively
+  मुख्यtain and improve this driver, I am now carrying on the torch. If
+  you have a problem with this driver, please feel मुक्त to contact me.
 
-  -- Added (rudimentary) sysctl interface. I realize this is really weak
+  -- Added (rudimentary) sysctl पूर्णांकerface. I realize this is really weak
   right now, and is _very_ badly implemented. It will be improved...
 
-  -- Modified CDROM_DISC_STATUS so that it is now incorporated into
-  the Uniform CD-ROM driver via the cdrom_count_tracks function.
+  -- Modअगरied CDROM_DISC_STATUS so that it is now incorporated पूर्णांकo
+  the Unअगरorm CD-ROM driver via the cdrom_count_tracks function.
   The cdrom_count_tracks function helps resolve some of the false
   assumptions of the CDROM_DISC_STATUS ioctl, and is also used to check
-  for the correct media type when mounting or playing audio from a CD.
+  क्रम the correct media type when mounting or playing audio from a CD.
 
-  -- Remove the calls to verify_area and only use the copy_from_user and
+  -- Remove the calls to verअगरy_area and only use the copy_from_user and
   copy_to_user stuff, since these calls now provide their own memory
   checking with the 2.1.x kernels.
 
-  -- Major update to return codes so that errors from low-level drivers
-  are passed on through (thanks to Gerd Knorr for pointing out this
+  -- Major update to वापस codes so that errors from low-level drivers
+  are passed on through (thanks to Gerd Knorr क्रम poपूर्णांकing out this
   problem).
 
-  -- Made it so if a function isn't implemented in a low-level driver,
-  ENOSYS is now returned instead of EINVAL.
+  -- Made it so अगर a function isn't implemented in a low-level driver,
+  ENOSYS is now वापसed instead of EINVAL.
 
-  -- Simplified some complex logic so that the source code is easier to read.
+  -- Simplअगरied some complex logic so that the source code is easier to पढ़ो.
 
-  -- Other stuff I probably forgot to mention (lots of changes).
+  -- Other stuff I probably क्रमgot to mention (lots of changes).
 
 2.01 to 2.11 Dec 1997-Jan 1998
-  -- TO-DO!  Write changelogs for 2.01 to 2.12.
+  -- TO-DO!  Write changelogs क्रम 2.01 to 2.12.
 
 2.12  Jan  24, 1998 -- Erik Andersen <andersee@debian.org>
   -- Fixed a bug in the IOCTL_IN and IOCTL_OUT macros.  It turns out that
-  copy_*_user does not return EFAULT on error, but instead returns the number 
-  of bytes not copied.  I was returning whatever non-zero stuff came back from 
+  copy_*_user करोes not वापस EFAULT on error, but instead वापसs the number 
+  of bytes not copied.  I was वापसing whatever non-zero stuff came back from 
   the copy_*_user functions directly, which would result in strange errors.
 
 2.13  July 17, 1998 -- Erik Andersen <andersee@debian.org>
   -- Fixed a bug in CDROM_SELECT_SPEED where you couldn't lower the speed
-  of the drive.  Thanks to Tobias Ringstr|m <tori@prosolvia.se> for pointing
+  of the drive.  Thanks to Tobias Ringstr|m <tori@prosolvia.se> क्रम poपूर्णांकing
   this out and providing a simple fix.
   -- Fixed the procfs-unload-module bug with the fill_inode procfs callback.
   thanks to Andrea Arcangeli
   -- Fixed it so that the /proc entry now also shows up when cdrom is
-  compiled into the kernel.  Before it only worked when loaded as a module.
+  compiled पूर्णांकo the kernel.  Beक्रमe it only worked when loaded as a module.
 
   2.14 August 17, 1998 -- Erik Andersen <andersee@debian.org>
   -- Fixed a bug in cdrom_media_changed and handling of reporting that
-  the media had changed for devices that _don't_ implement media_changed.  
-  Thanks to Grant R. Guenther <grant@torque.net> for spotting this bug.
+  the media had changed क्रम devices that _करोn't_ implement media_changed.  
+  Thanks to Grant R. Guenther <grant@torque.net> क्रम spotting this bug.
   -- Made a few things more pedanticly correct.
 
 2.50 Oct 19, 1998 - Jens Axboe <axboe@image.dk>
-  -- New maintainers! Erik was too busy to continue the work on the driver,
+  -- New मुख्यtainers! Erik was too busy to जारी the work on the driver,
   so now Chris Zwilling <chris@cloudnet.com> and Jens Axboe <axboe@image.dk>
-  will do their best to follow in his footsteps
+  will करो their best to follow in his footsteps
   
   2.51 Dec 20, 1998 - Jens Axboe <axboe@image.dk>
-  -- Check if drive is capable of doing what we ask before blindly changing
+  -- Check अगर drive is capable of करोing what we ask beक्रमe blindly changing
   cdi->options in various ioctl.
   -- Added version to proc entry.
   
   2.52 Jan 16, 1999 - Jens Axboe <axboe@image.dk>
-  -- Fixed an error in open_for_data where we would sometimes not return
+  -- Fixed an error in खोलो_क्रम_data where we would someबार not वापस
   the correct error value. Thanks Huba Gaspar <huba@softcell.hu>.
   -- Fixed module usage count - usage was based on /proc/sys/dev
   instead of /proc/sys/dev/cdrom. This could lead to an oops when other
   modules had entries in dev. Feb 02 - real bug was in sysctl.c where
-  dev would be removed even though it was used. cdrom.c just illuminated
+  dev would be हटाओd even though it was used. cdrom.c just illuminated
   that bug.
   
   2.53 Feb 22, 1999 - Jens Axboe <axboe@image.dk>
   -- Fixup of several ioctl calls, in particular CDROM_SET_OPTIONS has
   been "rewritten" because capabilities and options aren't in sync. They
   should be...
-  -- Added CDROM_LOCKDOOR ioctl. Locks the door and keeps it that way.
+  -- Added CDROM_LOCKDOOR ioctl. Locks the करोor and keeps it that way.
   -- Added CDROM_RESET ioctl.
   -- Added CDROM_DEBUG ioctl. Enable debug messages on-the-fly.
   -- Added CDROM_GET_CAPABILITY ioctl. This relieves userspace programs
@@ -116,42 +117,42 @@
   per suggestion from Corey J. Scotts <cstotts@blue.weeg.uiowa.edu>.
   
   2.55 Apr 25, 1999 - Jens Axboe <axboe@image.dk>
-  -- autoclose was mistakenly checked against CDC_OPEN_TRAY instead of
+  -- स्वतःबंद was mistakenly checked against CDC_OPEN_TRAY instead of
   CDC_CLOSE_TRAY.
   -- proc info didn't mask against capabilities mask.
   
   3.00 Aug 5, 1999 - Jens Axboe <axboe@image.dk>
-  -- Unified audio ioctl handling across CD-ROM drivers. A lot of the
-  code was duplicated before. Drives that support the generic packet
-  interface are now being fed packets from here instead.
-  -- First attempt at adding support for MMC2 commands - for DVD and
-  CD-R(W) drives. Only the DVD parts are in now - the interface used is
-  the same as for the audio ioctls.
-  -- ioctl cleanups. if a drive couldn't play audio, it didn't get
-  a change to perform device specific ioctls as well.
-  -- Defined CDROM_CAN(CDC_XXX) for checking the capabilities.
-  -- Put in sysctl files for autoclose, autoeject, check_media, debug,
+  -- Unअगरied audio ioctl handling across CD-ROM drivers. A lot of the
+  code was duplicated beक्रमe. Drives that support the generic packet
+  पूर्णांकerface are now being fed packets from here instead.
+  -- First attempt at adding support क्रम MMC2 commands - क्रम DVD and
+  CD-R(W) drives. Only the DVD parts are in now - the पूर्णांकerface used is
+  the same as क्रम the audio ioctls.
+  -- ioctl cleanups. अगर a drive couldn't play audio, it didn't get
+  a change to perक्रमm device specअगरic ioctls as well.
+  -- Defined CDROM_CAN(CDC_XXX) क्रम checking the capabilities.
+  -- Put in sysctl files क्रम स्वतःबंद, स्वतःeject, check_media, debug,
   and lock.
   -- /proc/sys/dev/cdrom/info has been updated to also contain info about
   CD-Rx and DVD capabilities.
-  -- Now default to checking media type.
-  -- CDROM_SEND_PACKET ioctl added. The infrastructure was in place for
-  doing this anyway, with the generic_packet addition.
+  -- Now शेष to checking media type.
+  -- CDROM_SEND_PACKET ioctl added. The infraकाष्ठाure was in place क्रम
+  करोing this anyway, with the generic_packet addition.
   
   3.01 Aug 6, 1999 - Jens Axboe <axboe@image.dk>
   -- Fix up the sysctl handling so that the option flags get set
   correctly.
-  -- Fix up ioctl handling so the device specific ones actually get
+  -- Fix up ioctl handling so the device specअगरic ones actually get
   called :).
   
   3.02 Aug 8, 1999 - Jens Axboe <axboe@image.dk>
-  -- Fixed volume control on SCSI drives (or others with longer audio
+  -- Fixed volume control on SCSI drives (or others with दीर्घer audio
   page).
   -- Fixed a couple of DVD minors. Thanks to Andrew T. Veliath
-  <andrewtv@usa.net> for telling me and for having defined the various
-  DVD structures and ioctls in the first place! He designed the original
-  DVD patches for ide-cd and while I rearranged and unified them, the
-  interface is still the same.
+  <andrewtv@usa.net> क्रम telling me and क्रम having defined the various
+  DVD काष्ठाures and ioctls in the first place! He deचिन्हित the original
+  DVD patches क्रम ide-cd and जबतक I rearranged and unअगरied them, the
+  पूर्णांकerface is still the same.
   
   3.03 Sep 1, 1999 - Jens Axboe <axboe@image.dk>
   -- Moved the rest of the audio ioctls from the CD-ROM drivers here. Only
@@ -159,67 +160,67 @@
   -- Moved the CDROMREADxxx ioctls in here.
   -- Defined the cdrom_get_last_written and cdrom_get_next_block as ioctls
   and exported functions.
-  -- Erik Andersen <andersen@xmission.com> modified all SCMD_ commands
-  to now read GPCMD_ for the new generic packet interface. All low level
+  -- Erik Andersen <andersen@xmission.com> modअगरied all SCMD_ commands
+  to now पढ़ो GPCMD_ क्रम the new generic packet पूर्णांकerface. All low level
   drivers are updated as well.
   -- Various other cleanups.
 
   3.04 Sep 12, 1999 - Jens Axboe <axboe@image.dk>
-  -- Fixed a couple of possible memory leaks (if an operation failed and
-  we didn't free the buffer before returning the error).
-  -- Integrated Uniform CD Changer handling from Richard Sharman
+  -- Fixed a couple of possible memory leaks (अगर an operation failed and
+  we didn't मुक्त the buffer beक्रमe वापसing the error).
+  -- Integrated Unअगरorm CD Changer handling from Riअक्षरd Sharman
   <rsharman@pobox.com>.
   -- Defined CD_DVD and CD_CHANGER log levels.
   -- Fixed the CDROMREADxxx ioctls.
   -- CDROMPLAYTRKIND uses the GPCMD_PLAY_AUDIO_MSF command - too few
   drives supported it. We lose the index part, however.
-  -- Small modifications to accommodate opens of /dev/hdc1, required
-  for ide-cd to handle multisession discs.
+  -- Small modअगरications to accommodate खोलोs of /dev/hdc1, required
+  क्रम ide-cd to handle multisession discs.
   -- Export cdrom_mode_sense and cdrom_mode_select.
-  -- init_cdrom_command() for setting up a cgc command.
+  -- init_cdrom_command() क्रम setting up a cgc command.
   
   3.05 Oct 24, 1999 - Jens Axboe <axboe@image.dk>
-  -- Changed the interface for CDROM_SEND_PACKET. Before it was virtually
+  -- Changed the पूर्णांकerface क्रम CDROM_SEND_PACKET. Beक्रमe it was भवly
   impossible to send the drive data in a sensible way.
-  -- Lowered stack usage in mmc_ioctl(), dvd_read_disckey(), and
-  dvd_read_manufact.
-  -- Added setup of write mode for packet writing.
+  -- Lowered stack usage in mmc_ioctl(), dvd_पढ़ो_disckey(), and
+  dvd_पढ़ो_manufact.
+  -- Added setup of ग_लिखो mode क्रम packet writing.
   -- Fixed CDDA ripping with cdda2wav - accept much larger requests of
-  number of frames and split the reads in blocks of 8.
+  number of frames and split the पढ़ोs in blocks of 8.
 
   3.06 Dec 13, 1999 - Jens Axboe <axboe@image.dk>
-  -- Added support for changing the region of DVD drives.
+  -- Added support क्रम changing the region of DVD drives.
   -- Added sense data to generic command.
 
   3.07 Feb 2, 2000 - Jens Axboe <axboe@suse.de>
   -- Do same "read header length" trick in cdrom_get_disc_info() as
-  we do in cdrom_get_track_info() -- some drive don't obey specs and
-  fail if they can't supply the full Mt Fuji size table.
-  -- Deleted stuff related to setting up write modes. It has a different
+  we करो in cdrom_get_track_info() -- some drive करोn't obey specs and
+  fail अगर they can't supply the full Mt Fuji size table.
+  -- Deleted stuff related to setting up ग_लिखो modes. It has a dअगरferent
   home now.
   -- Clear header length in mode_select unconditionally.
-  -- Removed the register_disk() that was added, not needed here.
+  -- Removed the रेजिस्टर_disk() that was added, not needed here.
 
   3.08 May 1, 2000 - Jens Axboe <axboe@suse.de>
   -- Fix direction flag in setup_send_key and setup_report_key. This
   gave some SCSI adapters problems.
-  -- Always return -EROFS for write opens
-  -- Convert to module_init/module_exit style init and remove some
-  of the #ifdef MODULE stuff
+  -- Always वापस -EROFS क्रम ग_लिखो खोलोs
+  -- Convert to module_init/module_निकास style init and हटाओ some
+  of the #अगर_घोषित MODULE stuff
   -- Fix several dvd errors - DVD_LU_SEND_ASF should pass agid,
   DVD_HOST_SEND_RPC_STATE did not set buffer size in cdb, and
-  dvd_do_auth passed uninitialized data to drive because init_cdrom_command
+  dvd_करो_auth passed uninitialized data to drive because init_cdrom_command
   did not clear a 0 sized buffer.
   
   3.09 May 12, 2000 - Jens Axboe <axboe@suse.de>
-  -- Fix Video-CD on SCSI drives that don't support READ_CD command. In
-  that case switch block size and issue plain READ_10 again, then switch
+  -- Fix Video-CD on SCSI drives that करोn't support READ_CD command. In
+  that हाल चयन block size and issue plain READ_10 again, then चयन
   back.
 
   3.10 Jun 10, 2000 - Jens Axboe <axboe@suse.de>
   -- Fix volume control on CD's - old SCSI-II drives now use their own
-  code, as doing MODE6 stuff in here is really not my intention.
-  -- Use READ_DISC_INFO for more reliable end-of-disc.
+  code, as करोing MODE6 stuff in here is really not my पूर्णांकention.
+  -- Use READ_DISC_INFO क्रम more reliable end-of-disc.
 
   3.11 Jun 12, 2000 - Jens Axboe <axboe@suse.de>
   -- Fix bug in getting rpc phase 2 region info.
@@ -232,267 +233,267 @@
   -- Various fixes and lots of cleanups not listed :-)
   -- Locking fixes
   -- Mt Rainier support
-  -- DVD-RAM write open fixes
+  -- DVD-RAM ग_लिखो खोलो fixes
 
-  Nov 5 2001, Aug 8 2002. Modified by Andy Polyakov
+  Nov 5 2001, Aug 8 2002. Modअगरied by Andy Polyakov
   <appro@fy.chalmers.se> to support MMC-3 compliant DVD+RW units.
 
-  Modified by Nigel Kukard <nkukard@lbsd.net> - support DVD+RW
+  Modअगरied by Nigel Kukard <nkukard@lbsd.net> - support DVD+RW
   2.4.x patch by Andy Polyakov <appro@fy.chalmers.se>
 
 -------------------------------------------------------------------------*/
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define REVISION "Revision: 3.20"
-#define VERSION "Id: cdrom.c 3.20 2003/12/17"
+#घोषणा REVISION "Revision: 3.20"
+#घोषणा VERSION "Id: cdrom.c 3.20 2003/12/17"
 
 /* I use an error-log mask to give fine grain control over the type of
-   messages dumped to the system logs.  The available masks include: */
-#define CD_NOTHING      0x0
-#define CD_WARNING	0x1
-#define CD_REG_UNREG	0x2
-#define CD_DO_IOCTL	0x4
-#define CD_OPEN		0x8
-#define CD_CLOSE	0x10
-#define CD_COUNT_TRACKS 0x20
-#define CD_CHANGER	0x40
-#define CD_DVD		0x80
+   messages dumped to the प्रणाली logs.  The available masks include: */
+#घोषणा CD_NOTHING      0x0
+#घोषणा CD_WARNING	0x1
+#घोषणा CD_REG_UNREG	0x2
+#घोषणा CD_DO_IOCTL	0x4
+#घोषणा CD_OPEN		0x8
+#घोषणा CD_CLOSE	0x10
+#घोषणा CD_COUNT_TRACKS 0x20
+#घोषणा CD_CHANGER	0x40
+#घोषणा CD_DVD		0x80
 
-/* Define this to remove _all_ the debugging messages */
-/* #define ERRLOGMASK CD_NOTHING */
-#define ERRLOGMASK CD_WARNING
-/* #define ERRLOGMASK (CD_WARNING|CD_OPEN|CD_COUNT_TRACKS|CD_CLOSE) */
-/* #define ERRLOGMASK (CD_WARNING|CD_REG_UNREG|CD_DO_IOCTL|CD_OPEN|CD_CLOSE|CD_COUNT_TRACKS) */
+/* Define this to हटाओ _all_ the debugging messages */
+/* #घोषणा ERRLOGMASK CD_NOTHING */
+#घोषणा ERRLOGMASK CD_WARNING
+/* #घोषणा ERRLOGMASK (CD_WARNING|CD_OPEN|CD_COUNT_TRACKS|CD_CLOSE) */
+/* #घोषणा ERRLOGMASK (CD_WARNING|CD_REG_UNREG|CD_DO_IOCTL|CD_OPEN|CD_CLOSE|CD_COUNT_TRACKS) */
 
-#include <linux/atomic.h>
-#include <linux/module.h>
-#include <linux/fs.h>
-#include <linux/major.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/slab.h> 
-#include <linux/cdrom.h>
-#include <linux/sysctl.h>
-#include <linux/proc_fs.h>
-#include <linux/blkpg.h>
-#include <linux/init.h>
-#include <linux/fcntl.h>
-#include <linux/blkdev.h>
-#include <linux/times.h>
-#include <linux/uaccess.h>
-#include <scsi/scsi_common.h>
-#include <scsi/scsi_request.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/major.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h> 
+#समावेश <linux/cdrom.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/बार.h>
+#समावेश <linux/uaccess.h>
+#समावेश <scsi/scsi_common.h>
+#समावेश <scsi/scsi_request.h>
 
 /* used to tell the module to turn on full debugging messages */
-static bool debug;
-/* default compatibility mode */
-static bool autoclose=1;
-static bool autoeject;
-static bool lockdoor = 1;
+अटल bool debug;
+/* शेष compatibility mode */
+अटल bool स्वतःबंद=1;
+अटल bool स्वतःeject;
+अटल bool lockकरोor = 1;
 /* will we ever get to use this... sigh. */
-static bool check_media_type;
-/* automatically restart mrw format */
-static bool mrw_format_restart = 1;
+अटल bool check_media_type;
+/* स्वतःmatically restart mrw क्रमmat */
+अटल bool mrw_क्रमmat_restart = 1;
 module_param(debug, bool, 0);
-module_param(autoclose, bool, 0);
-module_param(autoeject, bool, 0);
-module_param(lockdoor, bool, 0);
+module_param(स्वतःबंद, bool, 0);
+module_param(स्वतःeject, bool, 0);
+module_param(lockकरोor, bool, 0);
 module_param(check_media_type, bool, 0);
-module_param(mrw_format_restart, bool, 0);
+module_param(mrw_क्रमmat_restart, bool, 0);
 
-static DEFINE_MUTEX(cdrom_mutex);
+अटल DEFINE_MUTEX(cdrom_mutex);
 
-static const char *mrw_format_status[] = {
+अटल स्थिर अक्षर *mrw_क्रमmat_status[] = अणु
 	"not mrw",
 	"bgformat inactive",
 	"bgformat active",
 	"mrw complete",
-};
+पूर्ण;
 
-static const char *mrw_address_space[] = { "DMA", "GAA" };
+अटल स्थिर अक्षर *mrw_address_space[] = अणु "DMA", "GAA" पूर्ण;
 
-#if (ERRLOGMASK != CD_NOTHING)
-#define cd_dbg(type, fmt, ...)				\
-do {							\
-	if ((ERRLOGMASK & type) || debug == 1)		\
+#अगर (ERRLOGMASK != CD_NOTHING)
+#घोषणा cd_dbg(type, fmt, ...)				\
+करो अणु							\
+	अगर ((ERRLOGMASK & type) || debug == 1)		\
 		pr_debug(fmt, ##__VA_ARGS__);		\
-} while (0)
-#else
-#define cd_dbg(type, fmt, ...)				\
-do {							\
-	if (0 && (ERRLOGMASK & type) || debug == 1)	\
+पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा cd_dbg(type, fmt, ...)				\
+करो अणु							\
+	अगर (0 && (ERRLOGMASK & type) || debug == 1)	\
 		pr_debug(fmt, ##__VA_ARGS__);		\
-} while (0)
-#endif
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-/* The (cdo->capability & ~cdi->mask & CDC_XXX) construct was used in
+/* The (cकरो->capability & ~cdi->mask & CDC_XXX) स्थिरruct was used in
    a lot of places. This macro makes the code more clear. */
-#define CDROM_CAN(type) (cdi->ops->capability & ~cdi->mask & (type))
+#घोषणा CDROM_CAN(type) (cdi->ops->capability & ~cdi->mask & (type))
 
 /*
- * Another popular OS uses 7 seconds as the hard timeout for default
- * commands, so it is a good choice for us as well.
+ * Another popular OS uses 7 seconds as the hard समयout क्रम शेष
+ * commands, so it is a good choice क्रम us as well.
  */
-#define CDROM_DEF_TIMEOUT	(7 * HZ)
+#घोषणा CDROM_DEF_TIMEOUT	(7 * HZ)
 
 /* Not-exported routines. */
 
-static void cdrom_sysctl_register(void);
+अटल व्योम cdrom_sysctl_रेजिस्टर(व्योम);
 
-static LIST_HEAD(cdrom_list);
+अटल LIST_HEAD(cdrom_list);
 
-int cdrom_dummy_generic_packet(struct cdrom_device_info *cdi,
-			       struct packet_command *cgc)
-{
-	if (cgc->sshdr) {
+पूर्णांक cdrom_dummy_generic_packet(काष्ठा cdrom_device_info *cdi,
+			       काष्ठा packet_command *cgc)
+अणु
+	अगर (cgc->sshdr) अणु
 		cgc->sshdr->sense_key = 0x05;
 		cgc->sshdr->asc = 0x20;
 		cgc->sshdr->ascq = 0x00;
-	}
+	पूर्ण
 
 	cgc->stat = -EIO;
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 EXPORT_SYMBOL(cdrom_dummy_generic_packet);
 
-static int cdrom_flush_cache(struct cdrom_device_info *cdi)
-{
-	struct packet_command cgc;
+अटल पूर्णांक cdrom_flush_cache(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा packet_command cgc;
 
-	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_FLUSH_CACHE;
 
-	cgc.timeout = 5 * 60 * HZ;
+	cgc.समयout = 5 * 60 * HZ;
 
-	return cdi->ops->generic_packet(cdi, &cgc);
-}
+	वापस cdi->ops->generic_packet(cdi, &cgc);
+पूर्ण
 
 /* requires CD R/RW */
-static int cdrom_get_disc_info(struct cdrom_device_info *cdi,
-			       disc_information *di)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	struct packet_command cgc;
-	int ret, buflen;
+अटल पूर्णांक cdrom_get_disc_info(काष्ठा cdrom_device_info *cdi,
+			       disc_inक्रमmation *di)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	काष्ठा packet_command cgc;
+	पूर्णांक ret, buflen;
 
 	/* set up command and get the disc info */
-	init_cdrom_command(&cgc, di, sizeof(*di), CGC_DATA_READ);
+	init_cdrom_command(&cgc, di, माप(*di), CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_READ_DISC_INFO;
 	cgc.cmd[8] = cgc.buflen = 2;
 	cgc.quiet = 1;
 
-	ret = cdo->generic_packet(cdi, &cgc);
-	if (ret)
-		return ret;
+	ret = cकरो->generic_packet(cdi, &cgc);
+	अगर (ret)
+		वापस ret;
 
 	/* not all drives have the same disc_info length, so requeue
 	 * packet with the length the drive tells us it can supply
 	 */
-	buflen = be16_to_cpu(di->disc_information_length) +
-		sizeof(di->disc_information_length);
+	buflen = be16_to_cpu(di->disc_inक्रमmation_length) +
+		माप(di->disc_inक्रमmation_length);
 
-	if (buflen > sizeof(disc_information))
-		buflen = sizeof(disc_information);
+	अगर (buflen > माप(disc_inक्रमmation))
+		buflen = माप(disc_inक्रमmation);
 
 	cgc.cmd[8] = cgc.buflen = buflen;
-	ret = cdo->generic_packet(cdi, &cgc);
-	if (ret)
-		return ret;
+	ret = cकरो->generic_packet(cdi, &cgc);
+	अगर (ret)
+		वापस ret;
 
-	/* return actual fill size */
-	return buflen;
-}
+	/* वापस actual fill size */
+	वापस buflen;
+पूर्ण
 
-/* This macro makes sure we don't have to check on cdrom_device_ops
- * existence in the run-time routines below. Change_capability is a
- * hack to have the capability flags defined const, while we can still
+/* This macro makes sure we करोn't have to check on cdrom_device_ops
+ * existence in the run-समय routines below. Change_capability is a
+ * hack to have the capability flags defined स्थिर, जबतक we can still
  * change it here without gcc complaining at every line.
  */
-#define ENSURE(cdo, call, bits)					\
-do {								\
-	if (cdo->call == NULL)					\
-		WARN_ON_ONCE((cdo)->capability & (bits));	\
-} while (0)
+#घोषणा ENSURE(cकरो, call, bits)					\
+करो अणु								\
+	अगर (cकरो->call == शून्य)					\
+		WARN_ON_ONCE((cकरो)->capability & (bits));	\
+पूर्ण जबतक (0)
 
 /*
- * the first prototypes used 0x2c as the page code for the mrw mode page,
+ * the first prototypes used 0x2c as the page code क्रम the mrw mode page,
  * subsequently this was changed to 0x03. probe the one used by this drive
  */
-static int cdrom_mrw_probe_pc(struct cdrom_device_info *cdi)
-{
-	struct packet_command cgc;
-	char buffer[16];
+अटल पूर्णांक cdrom_mrw_probe_pc(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[16];
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 
-	cgc.timeout = HZ;
+	cgc.समयout = HZ;
 	cgc.quiet = 1;
 
-	if (!cdrom_mode_sense(cdi, &cgc, MRW_MODE_PC, 0)) {
+	अगर (!cdrom_mode_sense(cdi, &cgc, MRW_MODE_PC, 0)) अणु
 		cdi->mrw_mode_page = MRW_MODE_PC;
-		return 0;
-	} else if (!cdrom_mode_sense(cdi, &cgc, MRW_MODE_PC_PRE1, 0)) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (!cdrom_mode_sense(cdi, &cgc, MRW_MODE_PC_PRE1, 0)) अणु
 		cdi->mrw_mode_page = MRW_MODE_PC_PRE1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int cdrom_is_mrw(struct cdrom_device_info *cdi, int *write)
-{
-	struct packet_command cgc;
-	struct mrw_feature_desc *mfd;
-	unsigned char buffer[16];
-	int ret;
+अटल पूर्णांक cdrom_is_mrw(काष्ठा cdrom_device_info *cdi, पूर्णांक *ग_लिखो)
+अणु
+	काष्ठा packet_command cgc;
+	काष्ठा mrw_feature_desc *mfd;
+	अचिन्हित अक्षर buffer[16];
+	पूर्णांक ret;
 
-	*write = 0;
+	*ग_लिखो = 0;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 
 	cgc.cmd[0] = GPCMD_GET_CONFIGURATION;
 	cgc.cmd[3] = CDF_MRW;
-	cgc.cmd[8] = sizeof(buffer);
+	cgc.cmd[8] = माप(buffer);
 	cgc.quiet = 1;
 
-	if ((ret = cdi->ops->generic_packet(cdi, &cgc)))
-		return ret;
+	अगर ((ret = cdi->ops->generic_packet(cdi, &cgc)))
+		वापस ret;
 
-	mfd = (struct mrw_feature_desc *)&buffer[sizeof(struct feature_header)];
-	if (be16_to_cpu(mfd->feature_code) != CDF_MRW)
-		return 1;
-	*write = mfd->write;
+	mfd = (काष्ठा mrw_feature_desc *)&buffer[माप(काष्ठा feature_header)];
+	अगर (be16_to_cpu(mfd->feature_code) != CDF_MRW)
+		वापस 1;
+	*ग_लिखो = mfd->ग_लिखो;
 
-	if ((ret = cdrom_mrw_probe_pc(cdi))) {
-		*write = 0;
-		return ret;
-	}
+	अगर ((ret = cdrom_mrw_probe_pc(cdi))) अणु
+		*ग_लिखो = 0;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_mrw_bgformat(struct cdrom_device_info *cdi, int cont)
-{
-	struct packet_command cgc;
-	unsigned char buffer[12];
-	int ret;
+अटल पूर्णांक cdrom_mrw_bgक्रमmat(काष्ठा cdrom_device_info *cdi, पूर्णांक cont)
+अणु
+	काष्ठा packet_command cgc;
+	अचिन्हित अक्षर buffer[12];
+	पूर्णांक ret;
 
 	pr_info("%sstarting format\n", cont ? "Re" : "");
 
 	/*
-	 * FmtData bit set (bit 4), format type is 1
+	 * FmtData bit set (bit 4), क्रमmat type is 1
 	 */
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_WRITE);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_WRITE);
 	cgc.cmd[0] = GPCMD_FORMAT_UNIT;
 	cgc.cmd[1] = (1 << 4) | 1;
 
-	cgc.timeout = 5 * 60 * HZ;
+	cgc.समयout = 5 * 60 * HZ;
 
 	/*
-	 * 4 byte format list header, 8 byte format list descriptor
+	 * 4 byte क्रमmat list header, 8 byte क्रमmat list descriptor
 	 */
 	buffer[1] = 1 << 1;
 	buffer[3] = 8;
@@ -509,17 +510,17 @@ static int cdrom_mrw_bgformat(struct cdrom_device_info *cdi, int cont)
 	buffer[11] = cont;
 
 	ret = cdi->ops->generic_packet(cdi, &cgc);
-	if (ret)
+	अगर (ret)
 		pr_info("bgformat failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdrom_mrw_bgformat_susp(struct cdrom_device_info *cdi, int immed)
-{
-	struct packet_command cgc;
+अटल पूर्णांक cdrom_mrw_bgक्रमmat_susp(काष्ठा cdrom_device_info *cdi, पूर्णांक immed)
+अणु
+	काष्ठा packet_command cgc;
 
-	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_CLOSE_TRACK;
 
 	/*
@@ -528,49 +529,49 @@ static int cdrom_mrw_bgformat_susp(struct cdrom_device_info *cdi, int immed)
 	cgc.cmd[1] = !!immed;
 	cgc.cmd[2] = 1 << 1;
 
-	cgc.timeout = 5 * 60 * HZ;
+	cgc.समयout = 5 * 60 * HZ;
 
-	return cdi->ops->generic_packet(cdi, &cgc);
-}
+	वापस cdi->ops->generic_packet(cdi, &cgc);
+पूर्ण
 
-static int cdrom_mrw_exit(struct cdrom_device_info *cdi)
-{
-	disc_information di;
-	int ret;
+अटल पूर्णांक cdrom_mrw_निकास(काष्ठा cdrom_device_info *cdi)
+अणु
+	disc_inक्रमmation di;
+	पूर्णांक ret;
 
 	ret = cdrom_get_disc_info(cdi, &di);
-	if (ret < 0 || ret < (int)offsetof(typeof(di),disc_type))
-		return 1;
+	अगर (ret < 0 || ret < (पूर्णांक)दुरत्व(typeof(di),disc_type))
+		वापस 1;
 
 	ret = 0;
-	if (di.mrw_status == CDM_MRW_BGFORMAT_ACTIVE) {
+	अगर (di.mrw_status == CDM_MRW_BGFORMAT_ACTIVE) अणु
 		pr_info("issuing MRW background format suspend\n");
-		ret = cdrom_mrw_bgformat_susp(cdi, 0);
-	}
+		ret = cdrom_mrw_bgक्रमmat_susp(cdi, 0);
+	पूर्ण
 
-	if (!ret && cdi->media_written)
+	अगर (!ret && cdi->media_written)
 		ret = cdrom_flush_cache(cdi);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdrom_mrw_set_lba_space(struct cdrom_device_info *cdi, int space)
-{
-	struct packet_command cgc;
-	struct mode_page_header *mph;
-	char buffer[16];
-	int ret, offset, size;
+अटल पूर्णांक cdrom_mrw_set_lba_space(काष्ठा cdrom_device_info *cdi, पूर्णांक space)
+अणु
+	काष्ठा packet_command cgc;
+	काष्ठा mode_page_header *mph;
+	अक्षर buffer[16];
+	पूर्णांक ret, offset, size;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 
 	cgc.buffer = buffer;
-	cgc.buflen = sizeof(buffer);
+	cgc.buflen = माप(buffer);
 
 	ret = cdrom_mode_sense(cdi, &cgc, cdi->mrw_mode_page, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	mph = (struct mode_page_header *)buffer;
+	mph = (काष्ठा mode_page_header *)buffer;
 	offset = be16_to_cpu(mph->desc_length);
 	size = be16_to_cpu(mph->mode_data_length) + 2;
 
@@ -578,421 +579,421 @@ static int cdrom_mrw_set_lba_space(struct cdrom_device_info *cdi, int space)
 	cgc.buflen = size;
 
 	ret = cdrom_mode_select(cdi, &cgc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pr_info("%s: mrw address space %s selected\n",
 		cdi->name, mrw_address_space[space]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int register_cdrom(struct gendisk *disk, struct cdrom_device_info *cdi)
-{
-	static char banner_printed;
-	const struct cdrom_device_ops *cdo = cdi->ops;
+पूर्णांक रेजिस्टर_cdrom(काष्ठा gendisk *disk, काष्ठा cdrom_device_info *cdi)
+अणु
+	अटल अक्षर banner_prपूर्णांकed;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
 	cd_dbg(CD_OPEN, "entering register_cdrom\n");
 
-	if (cdo->open == NULL || cdo->release == NULL)
-		return -EINVAL;
-	if (!banner_printed) {
+	अगर (cकरो->खोलो == शून्य || cकरो->release == शून्य)
+		वापस -EINVAL;
+	अगर (!banner_prपूर्णांकed) अणु
 		pr_info("Uniform CD-ROM driver " REVISION "\n");
-		banner_printed = 1;
-		cdrom_sysctl_register();
-	}
+		banner_prपूर्णांकed = 1;
+		cdrom_sysctl_रेजिस्टर();
+	पूर्ण
 
 	cdi->disk = disk;
 	disk->cdi = cdi;
 
-	ENSURE(cdo, drive_status, CDC_DRIVE_STATUS);
-	if (cdo->check_events == NULL)
-		WARN_ON_ONCE(cdo->capability & (CDC_MEDIA_CHANGED | CDC_SELECT_DISC));
-	ENSURE(cdo, tray_move, CDC_CLOSE_TRAY | CDC_OPEN_TRAY);
-	ENSURE(cdo, lock_door, CDC_LOCK);
-	ENSURE(cdo, select_speed, CDC_SELECT_SPEED);
-	ENSURE(cdo, get_last_session, CDC_MULTI_SESSION);
-	ENSURE(cdo, get_mcn, CDC_MCN);
-	ENSURE(cdo, reset, CDC_RESET);
-	ENSURE(cdo, generic_packet, CDC_GENERIC_PACKET);
+	ENSURE(cकरो, drive_status, CDC_DRIVE_STATUS);
+	अगर (cकरो->check_events == शून्य)
+		WARN_ON_ONCE(cकरो->capability & (CDC_MEDIA_CHANGED | CDC_SELECT_DISC));
+	ENSURE(cकरो, tray_move, CDC_CLOSE_TRAY | CDC_OPEN_TRAY);
+	ENSURE(cकरो, lock_करोor, CDC_LOCK);
+	ENSURE(cकरो, select_speed, CDC_SELECT_SPEED);
+	ENSURE(cकरो, get_last_session, CDC_MULTI_SESSION);
+	ENSURE(cकरो, get_mcn, CDC_MCN);
+	ENSURE(cकरो, reset, CDC_RESET);
+	ENSURE(cकरो, generic_packet, CDC_GENERIC_PACKET);
 	cdi->mc_flags = 0;
 	cdi->options = CDO_USE_FFLAGS;
 
-	if (autoclose == 1 && CDROM_CAN(CDC_CLOSE_TRAY))
-		cdi->options |= (int) CDO_AUTO_CLOSE;
-	if (autoeject == 1 && CDROM_CAN(CDC_OPEN_TRAY))
-		cdi->options |= (int) CDO_AUTO_EJECT;
-	if (lockdoor == 1)
-		cdi->options |= (int) CDO_LOCK;
-	if (check_media_type == 1)
-		cdi->options |= (int) CDO_CHECK_TYPE;
+	अगर (स्वतःबंद == 1 && CDROM_CAN(CDC_CLOSE_TRAY))
+		cdi->options |= (पूर्णांक) CDO_AUTO_CLOSE;
+	अगर (स्वतःeject == 1 && CDROM_CAN(CDC_OPEN_TRAY))
+		cdi->options |= (पूर्णांक) CDO_AUTO_EJECT;
+	अगर (lockकरोor == 1)
+		cdi->options |= (पूर्णांक) CDO_LOCK;
+	अगर (check_media_type == 1)
+		cdi->options |= (पूर्णांक) CDO_CHECK_TYPE;
 
-	if (CDROM_CAN(CDC_MRW_W))
-		cdi->exit = cdrom_mrw_exit;
+	अगर (CDROM_CAN(CDC_MRW_W))
+		cdi->निकास = cdrom_mrw_निकास;
 
-	if (cdi->disk)
+	अगर (cdi->disk)
 		cdi->cdda_method = CDDA_BPC_FULL;
-	else
+	अन्यथा
 		cdi->cdda_method = CDDA_OLD;
 
-	WARN_ON(!cdo->generic_packet);
+	WARN_ON(!cकरो->generic_packet);
 
 	cd_dbg(CD_REG_UNREG, "drive \"/dev/%s\" registered\n", cdi->name);
 	mutex_lock(&cdrom_mutex);
 	list_add(&cdi->list, &cdrom_list);
 	mutex_unlock(&cdrom_mutex);
-	return 0;
-}
-#undef ENSURE
+	वापस 0;
+पूर्ण
+#अघोषित ENSURE
 
-void unregister_cdrom(struct cdrom_device_info *cdi)
-{
+व्योम unरेजिस्टर_cdrom(काष्ठा cdrom_device_info *cdi)
+अणु
 	cd_dbg(CD_OPEN, "entering unregister_cdrom\n");
 
 	mutex_lock(&cdrom_mutex);
 	list_del(&cdi->list);
 	mutex_unlock(&cdrom_mutex);
 
-	if (cdi->exit)
-		cdi->exit(cdi);
+	अगर (cdi->निकास)
+		cdi->निकास(cdi);
 
 	cd_dbg(CD_REG_UNREG, "drive \"/dev/%s\" unregistered\n", cdi->name);
-}
+पूर्ण
 
-int cdrom_get_media_event(struct cdrom_device_info *cdi,
-			  struct media_event_desc *med)
-{
-	struct packet_command cgc;
-	unsigned char buffer[8];
-	struct event_header *eh = (struct event_header *)buffer;
+पूर्णांक cdrom_get_media_event(काष्ठा cdrom_device_info *cdi,
+			  काष्ठा media_event_desc *med)
+अणु
+	काष्ठा packet_command cgc;
+	अचिन्हित अक्षर buffer[8];
+	काष्ठा event_header *eh = (काष्ठा event_header *)buffer;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_GET_EVENT_STATUS_NOTIFICATION;
 	cgc.cmd[1] = 1;		/* IMMED */
 	cgc.cmd[4] = 1 << 4;	/* media event */
-	cgc.cmd[8] = sizeof(buffer);
+	cgc.cmd[8] = माप(buffer);
 	cgc.quiet = 1;
 
-	if (cdi->ops->generic_packet(cdi, &cgc))
-		return 1;
+	अगर (cdi->ops->generic_packet(cdi, &cgc))
+		वापस 1;
 
-	if (be16_to_cpu(eh->data_len) < sizeof(*med))
-		return 1;
+	अगर (be16_to_cpu(eh->data_len) < माप(*med))
+		वापस 1;
 
-	if (eh->nea || eh->notification_class != 0x4)
-		return 1;
+	अगर (eh->nea || eh->notअगरication_class != 0x4)
+		वापस 1;
 
-	memcpy(med, &buffer[sizeof(*eh)], sizeof(*med));
-	return 0;
-}
+	स_नकल(med, &buffer[माप(*eh)], माप(*med));
+	वापस 0;
+पूर्ण
 
-static int cdrom_get_random_writable(struct cdrom_device_info *cdi,
-			      struct rwrt_feature_desc *rfd)
-{
-	struct packet_command cgc;
-	char buffer[24];
-	int ret;
+अटल पूर्णांक cdrom_get_अक्रमom_writable(काष्ठा cdrom_device_info *cdi,
+			      काष्ठा rwrt_feature_desc *rfd)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[24];
+	पूर्णांक ret;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 
 	cgc.cmd[0] = GPCMD_GET_CONFIGURATION;	/* often 0x46 */
 	cgc.cmd[3] = CDF_RWRT;			/* often 0x0020 */
-	cgc.cmd[8] = sizeof(buffer);		/* often 0x18 */
+	cgc.cmd[8] = माप(buffer);		/* often 0x18 */
 	cgc.quiet = 1;
 
-	if ((ret = cdi->ops->generic_packet(cdi, &cgc)))
-		return ret;
+	अगर ((ret = cdi->ops->generic_packet(cdi, &cgc)))
+		वापस ret;
 
-	memcpy(rfd, &buffer[sizeof(struct feature_header)], sizeof (*rfd));
-	return 0;
-}
+	स_नकल(rfd, &buffer[माप(काष्ठा feature_header)], माप (*rfd));
+	वापस 0;
+पूर्ण
 
-static int cdrom_has_defect_mgt(struct cdrom_device_info *cdi)
-{
-	struct packet_command cgc;
-	char buffer[16];
+अटल पूर्णांक cdrom_has_defect_mgt(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[16];
 	__be16 *feature_code;
-	int ret;
+	पूर्णांक ret;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 
 	cgc.cmd[0] = GPCMD_GET_CONFIGURATION;
 	cgc.cmd[3] = CDF_HWDM;
-	cgc.cmd[8] = sizeof(buffer);
+	cgc.cmd[8] = माप(buffer);
 	cgc.quiet = 1;
 
-	if ((ret = cdi->ops->generic_packet(cdi, &cgc)))
-		return ret;
+	अगर ((ret = cdi->ops->generic_packet(cdi, &cgc)))
+		वापस ret;
 
-	feature_code = (__be16 *) &buffer[sizeof(struct feature_header)];
-	if (be16_to_cpu(*feature_code) == CDF_HWDM)
-		return 0;
+	feature_code = (__be16 *) &buffer[माप(काष्ठा feature_header)];
+	अगर (be16_to_cpu(*feature_code) == CDF_HWDM)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-static int cdrom_is_random_writable(struct cdrom_device_info *cdi, int *write)
-{
-	struct rwrt_feature_desc rfd;
-	int ret;
+अटल पूर्णांक cdrom_is_अक्रमom_writable(काष्ठा cdrom_device_info *cdi, पूर्णांक *ग_लिखो)
+अणु
+	काष्ठा rwrt_feature_desc rfd;
+	पूर्णांक ret;
 
-	*write = 0;
+	*ग_लिखो = 0;
 
-	if ((ret = cdrom_get_random_writable(cdi, &rfd)))
-		return ret;
+	अगर ((ret = cdrom_get_अक्रमom_writable(cdi, &rfd)))
+		वापस ret;
 
-	if (CDF_RWRT == be16_to_cpu(rfd.feature_code))
-		*write = 1;
+	अगर (CDF_RWRT == be16_to_cpu(rfd.feature_code))
+		*ग_लिखो = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_media_erasable(struct cdrom_device_info *cdi)
-{
-	disc_information di;
-	int ret;
+अटल पूर्णांक cdrom_media_erasable(काष्ठा cdrom_device_info *cdi)
+अणु
+	disc_inक्रमmation di;
+	पूर्णांक ret;
 
 	ret = cdrom_get_disc_info(cdi, &di);
-	if (ret < 0 || ret < offsetof(typeof(di), n_first_track))
-		return -1;
+	अगर (ret < 0 || ret < दुरत्व(typeof(di), n_first_track))
+		वापस -1;
 
-	return di.erasable;
-}
+	वापस di.erasable;
+पूर्ण
 
 /*
  * FIXME: check RO bit
  */
-static int cdrom_dvdram_open_write(struct cdrom_device_info *cdi)
-{
-	int ret = cdrom_media_erasable(cdi);
+अटल पूर्णांक cdrom_dvdram_खोलो_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+	पूर्णांक ret = cdrom_media_erasable(cdi);
 
 	/*
-	 * allow writable open if media info read worked and media is
-	 * erasable, _or_ if it fails since not all drives support it
+	 * allow writable खोलो अगर media info पढ़ो worked and media is
+	 * erasable, _or_ अगर it fails since not all drives support it
 	 */
-	if (!ret)
-		return 1;
+	अगर (!ret)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_mrw_open_write(struct cdrom_device_info *cdi)
-{
-	disc_information di;
-	int ret;
+अटल पूर्णांक cdrom_mrw_खोलो_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+	disc_inक्रमmation di;
+	पूर्णांक ret;
 
 	/*
-	 * always reset to DMA lba space on open
+	 * always reset to DMA lba space on खोलो
 	 */
-	if (cdrom_mrw_set_lba_space(cdi, MRW_LBA_DMA)) {
+	अगर (cdrom_mrw_set_lba_space(cdi, MRW_LBA_DMA)) अणु
 		pr_err("failed setting lba address space\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	ret = cdrom_get_disc_info(cdi, &di);
-	if (ret < 0 || ret < offsetof(typeof(di),disc_type))
-		return 1;
+	अगर (ret < 0 || ret < दुरत्व(typeof(di),disc_type))
+		वापस 1;
 
-	if (!di.erasable)
-		return 1;
+	अगर (!di.erasable)
+		वापस 1;
 
 	/*
 	 * mrw_status
-	 * 0	-	not MRW formatted
-	 * 1	-	MRW bgformat started, but not running or complete
-	 * 2	-	MRW bgformat in progress
-	 * 3	-	MRW formatting complete
+	 * 0	-	not MRW क्रमmatted
+	 * 1	-	MRW bgक्रमmat started, but not running or complete
+	 * 2	-	MRW bgक्रमmat in progress
+	 * 3	-	MRW क्रमmatting complete
 	 */
 	ret = 0;
-	pr_info("open: mrw_status '%s'\n", mrw_format_status[di.mrw_status]);
-	if (!di.mrw_status)
+	pr_info("open: mrw_status '%s'\n", mrw_क्रमmat_status[di.mrw_status]);
+	अगर (!di.mrw_status)
 		ret = 1;
-	else if (di.mrw_status == CDM_MRW_BGFORMAT_INACTIVE &&
-			mrw_format_restart)
-		ret = cdrom_mrw_bgformat(cdi, 1);
+	अन्यथा अगर (di.mrw_status == CDM_MRW_BGFORMAT_INACTIVE &&
+			mrw_क्रमmat_restart)
+		ret = cdrom_mrw_bgक्रमmat(cdi, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mo_open_write(struct cdrom_device_info *cdi)
-{
-	struct packet_command cgc;
-	char buffer[255];
-	int ret;
+अटल पूर्णांक mo_खोलो_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[255];
+	पूर्णांक ret;
 
 	init_cdrom_command(&cgc, &buffer, 4, CGC_DATA_READ);
 	cgc.quiet = 1;
 
 	/*
-	 * obtain write protect information as per
-	 * drivers/scsi/sd.c:sd_read_write_protect_flag
+	 * obtain ग_लिखो protect inक्रमmation as per
+	 * drivers/scsi/sd.c:sd_पढ़ो_ग_लिखो_protect_flag
 	 */
 
 	ret = cdrom_mode_sense(cdi, &cgc, GPMODE_ALL_PAGES, 0);
-	if (ret)
+	अगर (ret)
 		ret = cdrom_mode_sense(cdi, &cgc, GPMODE_VENDOR_PAGE, 0);
-	if (ret) {
+	अगर (ret) अणु
 		cgc.buflen = 255;
 		ret = cdrom_mode_sense(cdi, &cgc, GPMODE_ALL_PAGES, 0);
-	}
+	पूर्ण
 
 	/* drive gave us no info, let the user go ahead */
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	return buffer[3] & 0x80;
-}
+	वापस buffer[3] & 0x80;
+पूर्ण
 
-static int cdrom_ram_open_write(struct cdrom_device_info *cdi)
-{
-	struct rwrt_feature_desc rfd;
-	int ret;
+अटल पूर्णांक cdrom_ram_खोलो_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा rwrt_feature_desc rfd;
+	पूर्णांक ret;
 
-	if ((ret = cdrom_has_defect_mgt(cdi)))
-		return ret;
+	अगर ((ret = cdrom_has_defect_mgt(cdi)))
+		वापस ret;
 
-	if ((ret = cdrom_get_random_writable(cdi, &rfd)))
-		return ret;
-	else if (CDF_RWRT == be16_to_cpu(rfd.feature_code))
+	अगर ((ret = cdrom_get_अक्रमom_writable(cdi, &rfd)))
+		वापस ret;
+	अन्यथा अगर (CDF_RWRT == be16_to_cpu(rfd.feature_code))
 		ret = !rfd.curr;
 
 	cd_dbg(CD_OPEN, "can open for random write\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cdrom_mmc3_profile(struct cdrom_device_info *cdi)
-{
-	struct packet_command cgc;
-	char buffer[32];
-	int ret, mmc3_profile;
+अटल व्योम cdrom_mmc3_profile(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा packet_command cgc;
+	अक्षर buffer[32];
+	पूर्णांक ret, mmc3_profile;
 
-	init_cdrom_command(&cgc, buffer, sizeof(buffer), CGC_DATA_READ);
+	init_cdrom_command(&cgc, buffer, माप(buffer), CGC_DATA_READ);
 
 	cgc.cmd[0] = GPCMD_GET_CONFIGURATION;
 	cgc.cmd[1] = 0;
 	cgc.cmd[2] = cgc.cmd[3] = 0;		/* Starting Feature Number */
-	cgc.cmd[8] = sizeof(buffer);		/* Allocation Length */
+	cgc.cmd[8] = माप(buffer);		/* Allocation Length */
 	cgc.quiet = 1;
 
-	if ((ret = cdi->ops->generic_packet(cdi, &cgc)))
+	अगर ((ret = cdi->ops->generic_packet(cdi, &cgc)))
 		mmc3_profile = 0xffff;
-	else
+	अन्यथा
 		mmc3_profile = (buffer[6] << 8) | buffer[7];
 
 	cdi->mmc3_profile = mmc3_profile;
-}
+पूर्ण
 
-static int cdrom_is_dvd_rw(struct cdrom_device_info *cdi)
-{
-	switch (cdi->mmc3_profile) {
-	case 0x12:	/* DVD-RAM	*/
-	case 0x1A:	/* DVD+RW	*/
-	case 0x43:	/* BD-RE	*/
-		return 0;
-	default:
-		return 1;
-	}
-}
+अटल पूर्णांक cdrom_is_dvd_rw(काष्ठा cdrom_device_info *cdi)
+अणु
+	चयन (cdi->mmc3_profile) अणु
+	हाल 0x12:	/* DVD-RAM	*/
+	हाल 0x1A:	/* DVD+RW	*/
+	हाल 0x43:	/* BD-RE	*/
+		वापस 0;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
 /*
- * returns 0 for ok to open write, non-0 to disallow
+ * वापसs 0 क्रम ok to खोलो ग_लिखो, non-0 to disallow
  */
-static int cdrom_open_write(struct cdrom_device_info *cdi)
-{
-	int mrw, mrw_write, ram_write;
-	int ret = 1;
+अटल पूर्णांक cdrom_खोलो_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+	पूर्णांक mrw, mrw_ग_लिखो, ram_ग_लिखो;
+	पूर्णांक ret = 1;
 
 	mrw = 0;
-	if (!cdrom_is_mrw(cdi, &mrw_write))
+	अगर (!cdrom_is_mrw(cdi, &mrw_ग_लिखो))
 		mrw = 1;
 
-	if (CDROM_CAN(CDC_MO_DRIVE))
-		ram_write = 1;
-	else
-		(void) cdrom_is_random_writable(cdi, &ram_write);
+	अगर (CDROM_CAN(CDC_MO_DRIVE))
+		ram_ग_लिखो = 1;
+	अन्यथा
+		(व्योम) cdrom_is_अक्रमom_writable(cdi, &ram_ग_लिखो);
 	
-	if (mrw)
+	अगर (mrw)
 		cdi->mask &= ~CDC_MRW;
-	else
+	अन्यथा
 		cdi->mask |= CDC_MRW;
 
-	if (mrw_write)
+	अगर (mrw_ग_लिखो)
 		cdi->mask &= ~CDC_MRW_W;
-	else
+	अन्यथा
 		cdi->mask |= CDC_MRW_W;
 
-	if (ram_write)
+	अगर (ram_ग_लिखो)
 		cdi->mask &= ~CDC_RAM;
-	else
+	अन्यथा
 		cdi->mask |= CDC_RAM;
 
-	if (CDROM_CAN(CDC_MRW_W))
-		ret = cdrom_mrw_open_write(cdi);
-	else if (CDROM_CAN(CDC_DVD_RAM))
-		ret = cdrom_dvdram_open_write(cdi);
- 	else if (CDROM_CAN(CDC_RAM) &&
+	अगर (CDROM_CAN(CDC_MRW_W))
+		ret = cdrom_mrw_खोलो_ग_लिखो(cdi);
+	अन्यथा अगर (CDROM_CAN(CDC_DVD_RAM))
+		ret = cdrom_dvdram_खोलो_ग_लिखो(cdi);
+ 	अन्यथा अगर (CDROM_CAN(CDC_RAM) &&
  		 !CDROM_CAN(CDC_CD_R|CDC_CD_RW|CDC_DVD|CDC_DVD_R|CDC_MRW|CDC_MO_DRIVE))
- 		ret = cdrom_ram_open_write(cdi);
-	else if (CDROM_CAN(CDC_MO_DRIVE))
-		ret = mo_open_write(cdi);
-	else if (!cdrom_is_dvd_rw(cdi))
+ 		ret = cdrom_ram_खोलो_ग_लिखो(cdi);
+	अन्यथा अगर (CDROM_CAN(CDC_MO_DRIVE))
+		ret = mo_खोलो_ग_लिखो(cdi);
+	अन्यथा अगर (!cdrom_is_dvd_rw(cdi))
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cdrom_dvd_rw_close_write(struct cdrom_device_info *cdi)
-{
-	struct packet_command cgc;
+अटल व्योम cdrom_dvd_rw_बंद_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+	काष्ठा packet_command cgc;
 
-	if (cdi->mmc3_profile != 0x1a) {
+	अगर (cdi->mmc3_profile != 0x1a) अणु
 		cd_dbg(CD_CLOSE, "%s: No DVD+RW\n", cdi->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!cdi->media_written) {
+	अगर (!cdi->media_written) अणु
 		cd_dbg(CD_CLOSE, "%s: DVD+RW media clean\n", cdi->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_info("%s: dirty DVD+RW media, \"finalizing\"\n", cdi->name);
 
-	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_FLUSH_CACHE;
-	cgc.timeout = 30*HZ;
+	cgc.समयout = 30*HZ;
 	cdi->ops->generic_packet(cdi, &cgc);
 
-	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_CLOSE_TRACK;
-	cgc.timeout = 3000*HZ;
+	cgc.समयout = 3000*HZ;
 	cgc.quiet = 1;
 	cdi->ops->generic_packet(cdi, &cgc);
 
-	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_CLOSE_TRACK;
 	cgc.cmd[2] = 2;	 /* Close session */
 	cgc.quiet = 1;
-	cgc.timeout = 3000*HZ;
+	cgc.समयout = 3000*HZ;
 	cdi->ops->generic_packet(cdi, &cgc);
 
 	cdi->media_written = 0;
-}
+पूर्ण
 
-static int cdrom_close_write(struct cdrom_device_info *cdi)
-{
-#if 0
-	return cdrom_flush_cache(cdi);
-#else
-	return 0;
-#endif
-}
+अटल पूर्णांक cdrom_बंद_ग_लिखो(काष्ठा cdrom_device_info *cdi)
+अणु
+#अगर 0
+	वापस cdrom_flush_cache(cdi);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-/* badly broken, I know. Is due for a fixup anytime. */
-static void cdrom_count_tracks(struct cdrom_device_info *cdi, tracktype *tracks)
-{
-	struct cdrom_tochdr header;
-	struct cdrom_tocentry entry;
-	int ret, i;
+/* badly broken, I know. Is due क्रम a fixup anyसमय. */
+अटल व्योम cdrom_count_tracks(काष्ठा cdrom_device_info *cdi, tracktype *tracks)
+अणु
+	काष्ठा cdrom_tochdr header;
+	काष्ठा cdrom_tocentry entry;
+	पूर्णांक ret, i;
 	tracks->data = 0;
 	tracks->audio = 0;
 	tracks->cdi = 0;
@@ -1000,519 +1001,519 @@ static void cdrom_count_tracks(struct cdrom_device_info *cdi, tracktype *tracks)
 	tracks->error = 0;
 	cd_dbg(CD_COUNT_TRACKS, "entering cdrom_count_tracks\n");
 
-	if (!CDROM_CAN(CDC_PLAY_AUDIO)) {
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO)) अणु
 		tracks->error = CDS_NO_INFO;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Grab the TOC header so we can see how many tracks there are */
 	ret = cdi->ops->audio_ioctl(cdi, CDROMREADTOCHDR, &header);
-	if (ret) {
-		if (ret == -ENOMEDIUM)
+	अगर (ret) अणु
+		अगर (ret == -ENOMEDIUM)
 			tracks->error = CDS_NO_DISC;
-		else
+		अन्यथा
 			tracks->error = CDS_NO_INFO;
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* check what type of tracks are on this disc */
-	entry.cdte_format = CDROM_MSF;
-	for (i = header.cdth_trk0; i <= header.cdth_trk1; i++) {
+	entry.cdte_क्रमmat = CDROM_MSF;
+	क्रम (i = header.cdth_trk0; i <= header.cdth_trk1; i++) अणु
 		entry.cdte_track = i;
-		if (cdi->ops->audio_ioctl(cdi, CDROMREADTOCENTRY, &entry)) {
+		अगर (cdi->ops->audio_ioctl(cdi, CDROMREADTOCENTRY, &entry)) अणु
 			tracks->error = CDS_NO_INFO;
-			return;
-		}
-		if (entry.cdte_ctrl & CDROM_DATA_TRACK) {
-			if (entry.cdte_format == 0x10)
+			वापस;
+		पूर्ण
+		अगर (entry.cdte_ctrl & CDROM_DATA_TRACK) अणु
+			अगर (entry.cdte_क्रमmat == 0x10)
 				tracks->cdi++;
-			else if (entry.cdte_format == 0x20)
+			अन्यथा अगर (entry.cdte_क्रमmat == 0x20)
 				tracks->xa++;
-			else
+			अन्यथा
 				tracks->data++;
-		} else {
+		पूर्ण अन्यथा अणु
 			tracks->audio++;
-		}
+		पूर्ण
 		cd_dbg(CD_COUNT_TRACKS, "track %d: format=%d, ctrl=%d\n",
-		       i, entry.cdte_format, entry.cdte_ctrl);
-	}
+		       i, entry.cdte_क्रमmat, entry.cdte_ctrl);
+	पूर्ण
 	cd_dbg(CD_COUNT_TRACKS, "disc has %d tracks: %d=audio %d=data %d=Cd-I %d=XA\n",
 	       header.cdth_trk1, tracks->audio, tracks->data,
 	       tracks->cdi, tracks->xa);
-}
+पूर्ण
 
-static
-int open_for_data(struct cdrom_device_info *cdi)
-{
-	int ret;
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल
+पूर्णांक खोलो_क्रम_data(काष्ठा cdrom_device_info *cdi)
+अणु
+	पूर्णांक ret;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 	tracktype tracks;
 	cd_dbg(CD_OPEN, "entering open_for_data\n");
-	/* Check if the driver can report drive status.  If it can, we
-	   can do clever things.  If it can't, well, we at least tried! */
-	if (cdo->drive_status != NULL) {
-		ret = cdo->drive_status(cdi, CDSL_CURRENT);
+	/* Check अगर the driver can report drive status.  If it can, we
+	   can करो clever things.  If it can't, well, we at least tried! */
+	अगर (cकरो->drive_status != शून्य) अणु
+		ret = cकरो->drive_status(cdi, CDSL_CURRENT);
 		cd_dbg(CD_OPEN, "drive_status=%d\n", ret);
-		if (ret == CDS_TRAY_OPEN) {
+		अगर (ret == CDS_TRAY_OPEN) अणु
 			cd_dbg(CD_OPEN, "the tray is open...\n");
-			/* can/may i close it? */
-			if (CDROM_CAN(CDC_CLOSE_TRAY) &&
-			    cdi->options & CDO_AUTO_CLOSE) {
+			/* can/may i बंद it? */
+			अगर (CDROM_CAN(CDC_CLOSE_TRAY) &&
+			    cdi->options & CDO_AUTO_CLOSE) अणु
 				cd_dbg(CD_OPEN, "trying to close the tray\n");
-				ret=cdo->tray_move(cdi,0);
-				if (ret) {
+				ret=cकरो->tray_move(cdi,0);
+				अगर (ret) अणु
 					cd_dbg(CD_OPEN, "bummer. tried to close the tray but failed.\n");
 					/* Ignore the error from the low
-					level driver.  We don't care why it
-					couldn't close the tray.  We only care 
+					level driver.  We करोn't care why it
+					couldn't बंद the tray.  We only care 
 					that there is no disc in the drive, 
 					since that is the _REAL_ problem here.*/
 					ret=-ENOMEDIUM;
-					goto clean_up_and_return;
-				}
-			} else {
+					जाओ clean_up_and_वापस;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				cd_dbg(CD_OPEN, "bummer. this drive can't close the tray.\n");
 				ret=-ENOMEDIUM;
-				goto clean_up_and_return;
-			}
-			/* Ok, the door should be closed now.. Check again */
-			ret = cdo->drive_status(cdi, CDSL_CURRENT);
-			if ((ret == CDS_NO_DISC) || (ret==CDS_TRAY_OPEN)) {
+				जाओ clean_up_and_वापस;
+			पूर्ण
+			/* Ok, the करोor should be बंदd now.. Check again */
+			ret = cकरो->drive_status(cdi, CDSL_CURRENT);
+			अगर ((ret == CDS_NO_DISC) || (ret==CDS_TRAY_OPEN)) अणु
 				cd_dbg(CD_OPEN, "bummer. the tray is still not closed.\n");
 				cd_dbg(CD_OPEN, "tray might not contain a medium\n");
 				ret=-ENOMEDIUM;
-				goto clean_up_and_return;
-			}
+				जाओ clean_up_and_वापस;
+			पूर्ण
 			cd_dbg(CD_OPEN, "the tray is now closed\n");
-		}
-		/* the door should be closed now, check for the disc */
-		ret = cdo->drive_status(cdi, CDSL_CURRENT);
-		if (ret!=CDS_DISC_OK) {
+		पूर्ण
+		/* the करोor should be बंदd now, check क्रम the disc */
+		ret = cकरो->drive_status(cdi, CDSL_CURRENT);
+		अगर (ret!=CDS_DISC_OK) अणु
 			ret = -ENOMEDIUM;
-			goto clean_up_and_return;
-		}
-	}
+			जाओ clean_up_and_वापस;
+		पूर्ण
+	पूर्ण
 	cdrom_count_tracks(cdi, &tracks);
-	if (tracks.error == CDS_NO_DISC) {
+	अगर (tracks.error == CDS_NO_DISC) अणु
 		cd_dbg(CD_OPEN, "bummer. no disc.\n");
 		ret=-ENOMEDIUM;
-		goto clean_up_and_return;
-	}
-	/* CD-Players which don't use O_NONBLOCK, workman
-	 * for example, need bit CDO_CHECK_TYPE cleared! */
-	if (tracks.data==0) {
-		if (cdi->options & CDO_CHECK_TYPE) {
+		जाओ clean_up_and_वापस;
+	पूर्ण
+	/* CD-Players which करोn't use O_NONBLOCK, workman
+	 * क्रम example, need bit CDO_CHECK_TYPE cleared! */
+	अगर (tracks.data==0) अणु
+		अगर (cdi->options & CDO_CHECK_TYPE) अणु
 		    /* give people a warning shot, now that CDO_CHECK_TYPE
-		       is the default case! */
+		       is the शेष हाल! */
 		    cd_dbg(CD_OPEN, "bummer. wrong media type.\n");
 		    cd_dbg(CD_WARNING, "pid %d must open device O_NONBLOCK!\n",
-			   (unsigned int)task_pid_nr(current));
+			   (अचिन्हित पूर्णांक)task_pid_nr(current));
 		    ret=-EMEDIUMTYPE;
-		    goto clean_up_and_return;
-		}
-		else {
+		    जाओ clean_up_and_वापस;
+		पूर्ण
+		अन्यथा अणु
 		    cd_dbg(CD_OPEN, "wrong media type, but CDO_CHECK_TYPE not set\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	cd_dbg(CD_OPEN, "all seems well, opening the devicen");
 
-	/* all seems well, we can open the device */
-	ret = cdo->open(cdi, 0); /* open for data */
+	/* all seems well, we can खोलो the device */
+	ret = cकरो->खोलो(cdi, 0); /* खोलो क्रम data */
 	cd_dbg(CD_OPEN, "opening the device gave me %d\n", ret);
 	/* After all this careful checking, we shouldn't have problems
-	   opening the device, but we don't want the device locked if 
+	   खोलोing the device, but we करोn't want the device locked अगर 
 	   this somehow fails... */
-	if (ret) {
+	अगर (ret) अणु
 		cd_dbg(CD_OPEN, "open device failed\n");
-		goto clean_up_and_return;
-	}
-	if (CDROM_CAN(CDC_LOCK) && (cdi->options & CDO_LOCK)) {
-			cdo->lock_door(cdi, 1);
+		जाओ clean_up_and_वापस;
+	पूर्ण
+	अगर (CDROM_CAN(CDC_LOCK) && (cdi->options & CDO_LOCK)) अणु
+			cकरो->lock_करोor(cdi, 1);
 			cd_dbg(CD_OPEN, "door locked\n");
-	}
+	पूर्ण
 	cd_dbg(CD_OPEN, "device opened successfully\n");
-	return ret;
+	वापस ret;
 
 	/* Something failed.  Try to unlock the drive, because some drivers
 	(notably ide-cd) lock the drive after every command.  This produced
-	a nasty bug where after mount failed, the drive would remain locked!  
-	This ensures that the drive gets unlocked after a mount fails.  This 
-	is a goto to avoid bloating the driver with redundant code. */ 
-clean_up_and_return:
+	a nasty bug where after mount failed, the drive would reमुख्य locked!  
+	This ensures that the drive माला_लो unlocked after a mount fails.  This 
+	is a जाओ to aव्योम bloating the driver with redundant code. */ 
+clean_up_and_वापस:
 	cd_dbg(CD_OPEN, "open failed\n");
-	if (CDROM_CAN(CDC_LOCK) && cdi->options & CDO_LOCK) {
-			cdo->lock_door(cdi, 0);
+	अगर (CDROM_CAN(CDC_LOCK) && cdi->options & CDO_LOCK) अणु
+			cकरो->lock_करोor(cdi, 0);
 			cd_dbg(CD_OPEN, "door unlocked\n");
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-/* We use the open-option O_NONBLOCK to indicate that the
- * purpose of opening is only for subsequent ioctl() calls; no device
- * integrity checks are performed.
+/* We use the खोलो-option O_NONBLOCK to indicate that the
+ * purpose of खोलोing is only क्रम subsequent ioctl() calls; no device
+ * पूर्णांकegrity checks are perक्रमmed.
  *
- * We hope that all cd-player programs will adopt this convention. It
- * is in their own interest: device control becomes a lot easier
+ * We hope that all cd-player programs will aकरोpt this convention. It
+ * is in their own पूर्णांकerest: device control becomes a lot easier
  * this way.
  */
-int cdrom_open(struct cdrom_device_info *cdi, struct block_device *bdev,
-	       fmode_t mode)
-{
-	int ret;
+पूर्णांक cdrom_खोलो(काष्ठा cdrom_device_info *cdi, काष्ठा block_device *bdev,
+	       भ_शेषe_t mode)
+अणु
+	पूर्णांक ret;
 
 	cd_dbg(CD_OPEN, "entering cdrom_open\n");
 
-	/* if this was a O_NONBLOCK open and we should honor the flags,
-	 * do a quick open without drive/disc integrity checks. */
+	/* अगर this was a O_NONBLOCK खोलो and we should honor the flags,
+	 * करो a quick खोलो without drive/disc पूर्णांकegrity checks. */
 	cdi->use_count++;
-	if ((mode & FMODE_NDELAY) && (cdi->options & CDO_USE_FFLAGS)) {
-		ret = cdi->ops->open(cdi, 1);
-	} else {
-		ret = open_for_data(cdi);
-		if (ret)
-			goto err;
-		if (CDROM_CAN(CDC_GENERIC_PACKET))
+	अगर ((mode & FMODE_NDELAY) && (cdi->options & CDO_USE_FFLAGS)) अणु
+		ret = cdi->ops->खोलो(cdi, 1);
+	पूर्ण अन्यथा अणु
+		ret = खोलो_क्रम_data(cdi);
+		अगर (ret)
+			जाओ err;
+		अगर (CDROM_CAN(CDC_GENERIC_PACKET))
 			cdrom_mmc3_profile(cdi);
-		if (mode & FMODE_WRITE) {
+		अगर (mode & FMODE_WRITE) अणु
 			ret = -EROFS;
-			if (cdrom_open_write(cdi))
-				goto err_release;
-			if (!CDROM_CAN(CDC_RAM))
-				goto err_release;
+			अगर (cdrom_खोलो_ग_लिखो(cdi))
+				जाओ err_release;
+			अगर (!CDROM_CAN(CDC_RAM))
+				जाओ err_release;
 			ret = 0;
 			cdi->media_written = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	cd_dbg(CD_OPEN, "Use count for \"/dev/%s\" now %d\n",
 	       cdi->name, cdi->use_count);
-	return 0;
+	वापस 0;
 err_release:
-	if (CDROM_CAN(CDC_LOCK) && cdi->options & CDO_LOCK) {
-		cdi->ops->lock_door(cdi, 0);
+	अगर (CDROM_CAN(CDC_LOCK) && cdi->options & CDO_LOCK) अणु
+		cdi->ops->lock_करोor(cdi, 0);
 		cd_dbg(CD_OPEN, "door unlocked\n");
-	}
+	पूर्ण
 	cdi->ops->release(cdi);
 err:
 	cdi->use_count--;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* This code is similar to that in open_for_data. The routine is called
+/* This code is similar to that in खोलो_क्रम_data. The routine is called
    whenever an audio play operation is requested.
 */
-static int check_for_audio_disc(struct cdrom_device_info *cdi,
-				const struct cdrom_device_ops *cdo)
-{
-        int ret;
+अटल पूर्णांक check_क्रम_audio_disc(काष्ठा cdrom_device_info *cdi,
+				स्थिर काष्ठा cdrom_device_ops *cकरो)
+अणु
+        पूर्णांक ret;
 	tracktype tracks;
 	cd_dbg(CD_OPEN, "entering check_for_audio_disc\n");
-	if (!(cdi->options & CDO_CHECK_TYPE))
-		return 0;
-	if (cdo->drive_status != NULL) {
-		ret = cdo->drive_status(cdi, CDSL_CURRENT);
+	अगर (!(cdi->options & CDO_CHECK_TYPE))
+		वापस 0;
+	अगर (cकरो->drive_status != शून्य) अणु
+		ret = cकरो->drive_status(cdi, CDSL_CURRENT);
 		cd_dbg(CD_OPEN, "drive_status=%d\n", ret);
-		if (ret == CDS_TRAY_OPEN) {
+		अगर (ret == CDS_TRAY_OPEN) अणु
 			cd_dbg(CD_OPEN, "the tray is open...\n");
-			/* can/may i close it? */
-			if (CDROM_CAN(CDC_CLOSE_TRAY) &&
-			    cdi->options & CDO_AUTO_CLOSE) {
+			/* can/may i बंद it? */
+			अगर (CDROM_CAN(CDC_CLOSE_TRAY) &&
+			    cdi->options & CDO_AUTO_CLOSE) अणु
 				cd_dbg(CD_OPEN, "trying to close the tray\n");
-				ret=cdo->tray_move(cdi,0);
-				if (ret) {
+				ret=cकरो->tray_move(cdi,0);
+				अगर (ret) अणु
 					cd_dbg(CD_OPEN, "bummer. tried to close tray but failed.\n");
 					/* Ignore the error from the low
-					level driver.  We don't care why it
-					couldn't close the tray.  We only care 
+					level driver.  We करोn't care why it
+					couldn't बंद the tray.  We only care 
 					that there is no disc in the drive, 
 					since that is the _REAL_ problem here.*/
-					return -ENOMEDIUM;
-				}
-			} else {
+					वापस -ENOMEDIUM;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				cd_dbg(CD_OPEN, "bummer. this driver can't close the tray.\n");
-				return -ENOMEDIUM;
-			}
-			/* Ok, the door should be closed now.. Check again */
-			ret = cdo->drive_status(cdi, CDSL_CURRENT);
-			if ((ret == CDS_NO_DISC) || (ret==CDS_TRAY_OPEN)) {
+				वापस -ENOMEDIUM;
+			पूर्ण
+			/* Ok, the करोor should be बंदd now.. Check again */
+			ret = cकरो->drive_status(cdi, CDSL_CURRENT);
+			अगर ((ret == CDS_NO_DISC) || (ret==CDS_TRAY_OPEN)) अणु
 				cd_dbg(CD_OPEN, "bummer. the tray is still not closed.\n");
-				return -ENOMEDIUM;
-			}	
-			if (ret!=CDS_DISC_OK) {
+				वापस -ENOMEDIUM;
+			पूर्ण	
+			अगर (ret!=CDS_DISC_OK) अणु
 				cd_dbg(CD_OPEN, "bummer. disc isn't ready.\n");
-				return -EIO;
-			}	
+				वापस -EIO;
+			पूर्ण	
 			cd_dbg(CD_OPEN, "the tray is now closed\n");
-		}	
-	}
+		पूर्ण	
+	पूर्ण
 	cdrom_count_tracks(cdi, &tracks);
-	if (tracks.error) 
-		return(tracks.error);
+	अगर (tracks.error) 
+		वापस(tracks.error);
 
-	if (tracks.audio==0)
-		return -EMEDIUMTYPE;
+	अगर (tracks.audio==0)
+		वापस -EMEDIUMTYPE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void cdrom_release(struct cdrom_device_info *cdi, fmode_t mode)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	int opened_for_data;
+व्योम cdrom_release(काष्ठा cdrom_device_info *cdi, भ_शेषe_t mode)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	पूर्णांक खोलोed_क्रम_data;
 
 	cd_dbg(CD_CLOSE, "entering cdrom_release\n");
 
-	if (cdi->use_count > 0)
+	अगर (cdi->use_count > 0)
 		cdi->use_count--;
 
-	if (cdi->use_count == 0) {
+	अगर (cdi->use_count == 0) अणु
 		cd_dbg(CD_CLOSE, "Use count for \"/dev/%s\" now zero\n",
 		       cdi->name);
-		cdrom_dvd_rw_close_write(cdi);
+		cdrom_dvd_rw_बंद_ग_लिखो(cdi);
 
-		if ((cdo->capability & CDC_LOCK) && !cdi->keeplocked) {
+		अगर ((cकरो->capability & CDC_LOCK) && !cdi->keeplocked) अणु
 			cd_dbg(CD_CLOSE, "Unlocking door!\n");
-			cdo->lock_door(cdi, 0);
-		}
-	}
+			cकरो->lock_करोor(cdi, 0);
+		पूर्ण
+	पूर्ण
 
-	opened_for_data = !(cdi->options & CDO_USE_FFLAGS) ||
+	खोलोed_क्रम_data = !(cdi->options & CDO_USE_FFLAGS) ||
 		!(mode & FMODE_NDELAY);
 
 	/*
-	 * flush cache on last write release
+	 * flush cache on last ग_लिखो release
 	 */
-	if (CDROM_CAN(CDC_RAM) && !cdi->use_count && cdi->for_data)
-		cdrom_close_write(cdi);
+	अगर (CDROM_CAN(CDC_RAM) && !cdi->use_count && cdi->क्रम_data)
+		cdrom_बंद_ग_लिखो(cdi);
 
-	cdo->release(cdi);
-	if (cdi->use_count == 0) {      /* last process that closes dev*/
-		if (opened_for_data &&
+	cकरो->release(cdi);
+	अगर (cdi->use_count == 0) अणु      /* last process that बंदs dev*/
+		अगर (खोलोed_क्रम_data &&
 		    cdi->options & CDO_AUTO_EJECT && CDROM_CAN(CDC_OPEN_TRAY))
-			cdo->tray_move(cdi, 1);
-	}
-}
+			cकरो->tray_move(cdi, 1);
+	पूर्ण
+पूर्ण
 
-static int cdrom_read_mech_status(struct cdrom_device_info *cdi, 
-				  struct cdrom_changer_info *buf)
-{
-	struct packet_command cgc;
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	int length;
+अटल पूर्णांक cdrom_पढ़ो_mech_status(काष्ठा cdrom_device_info *cdi, 
+				  काष्ठा cdrom_changer_info *buf)
+अणु
+	काष्ठा packet_command cgc;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	पूर्णांक length;
 
 	/*
 	 * Sanyo changer isn't spec compliant (doesn't use regular change
-	 * LOAD_UNLOAD command, and it doesn't implement the mech status
+	 * LOAD_UNLOAD command, and it करोesn't implement the mech status
 	 * command below
 	 */
-	if (cdi->sanyo_slot) {
+	अगर (cdi->sanyo_slot) अणु
 		buf->hdr.nslots = 3;
 		buf->hdr.curslot = cdi->sanyo_slot == 3 ? 0 : cdi->sanyo_slot;
-		for (length = 0; length < 3; length++) {
+		क्रम (length = 0; length < 3; length++) अणु
 			buf->slots[length].disc_present = 1;
 			buf->slots[length].change = 0;
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	length = sizeof(struct cdrom_mechstat_header) +
-		 cdi->capacity * sizeof(struct cdrom_slot);
+	length = माप(काष्ठा cdrom_mechstat_header) +
+		 cdi->capacity * माप(काष्ठा cdrom_slot);
 
 	init_cdrom_command(&cgc, buf, length, CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_MECHANISM_STATUS;
 	cgc.cmd[8] = (length >> 8) & 0xff;
 	cgc.cmd[9] = length & 0xff;
-	return cdo->generic_packet(cdi, &cgc);
-}
+	वापस cकरो->generic_packet(cdi, &cgc);
+पूर्ण
 
-static int cdrom_slot_status(struct cdrom_device_info *cdi, int slot)
-{
-	struct cdrom_changer_info *info;
-	int ret;
+अटल पूर्णांक cdrom_slot_status(काष्ठा cdrom_device_info *cdi, पूर्णांक slot)
+अणु
+	काष्ठा cdrom_changer_info *info;
+	पूर्णांक ret;
 
 	cd_dbg(CD_CHANGER, "entering cdrom_slot_status()\n");
-	if (cdi->sanyo_slot)
-		return CDS_NO_INFO;
+	अगर (cdi->sanyo_slot)
+		वापस CDS_NO_INFO;
 	
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	if ((ret = cdrom_read_mech_status(cdi, info)))
-		goto out_free;
+	अगर ((ret = cdrom_पढ़ो_mech_status(cdi, info)))
+		जाओ out_मुक्त;
 
-	if (info->slots[slot].disc_present)
+	अगर (info->slots[slot].disc_present)
 		ret = CDS_DISC_OK;
-	else
+	अन्यथा
 		ret = CDS_NO_DISC;
 
-out_free:
-	kfree(info);
-	return ret;
-}
+out_मुक्त:
+	kमुक्त(info);
+	वापस ret;
+पूर्ण
 
-/* Return the number of slots for an ATAPI/SCSI cdrom, 
- * return 1 if not a changer. 
+/* Return the number of slots क्रम an ATAPI/SCSI cdrom, 
+ * वापस 1 अगर not a changer. 
  */
-int cdrom_number_of_slots(struct cdrom_device_info *cdi) 
-{
-	int status;
-	int nslots = 1;
-	struct cdrom_changer_info *info;
+पूर्णांक cdrom_number_of_slots(काष्ठा cdrom_device_info *cdi) 
+अणु
+	पूर्णांक status;
+	पूर्णांक nslots = 1;
+	काष्ठा cdrom_changer_info *info;
 
 	cd_dbg(CD_CHANGER, "entering cdrom_number_of_slots()\n");
-	/* cdrom_read_mech_status requires a valid value for capacity: */
+	/* cdrom_पढ़ो_mech_status requires a valid value क्रम capacity: */
 	cdi->capacity = 0; 
 
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	if ((status = cdrom_read_mech_status(cdi, info)) == 0)
+	अगर ((status = cdrom_पढ़ो_mech_status(cdi, info)) == 0)
 		nslots = info->hdr.nslots;
 
-	kfree(info);
-	return nslots;
-}
+	kमुक्त(info);
+	वापस nslots;
+पूर्ण
 
 
 /* If SLOT < 0, unload the current slot.  Otherwise, try to load SLOT. */
-static int cdrom_load_unload(struct cdrom_device_info *cdi, int slot) 
-{
-	struct packet_command cgc;
+अटल पूर्णांक cdrom_load_unload(काष्ठा cdrom_device_info *cdi, पूर्णांक slot) 
+अणु
+	काष्ठा packet_command cgc;
 
 	cd_dbg(CD_CHANGER, "entering cdrom_load_unload()\n");
-	if (cdi->sanyo_slot && slot < 0)
-		return 0;
+	अगर (cdi->sanyo_slot && slot < 0)
+		वापस 0;
 
-	init_cdrom_command(&cgc, NULL, 0, CGC_DATA_NONE);
+	init_cdrom_command(&cgc, शून्य, 0, CGC_DATA_NONE);
 	cgc.cmd[0] = GPCMD_LOAD_UNLOAD;
 	cgc.cmd[4] = 2 + (slot >= 0);
 	cgc.cmd[8] = slot;
-	cgc.timeout = 60 * HZ;
+	cgc.समयout = 60 * HZ;
 
 	/* The Sanyo 3 CD changer uses byte 7 of the 
-	GPCMD_TEST_UNIT_READY to command to switch CDs instead of
+	GPCMD_TEST_UNIT_READY to command to चयन CDs instead of
 	using the GPCMD_LOAD_UNLOAD opcode. */
-	if (cdi->sanyo_slot && -1 < slot) {
+	अगर (cdi->sanyo_slot && -1 < slot) अणु
 		cgc.cmd[0] = GPCMD_TEST_UNIT_READY;
 		cgc.cmd[7] = slot;
 		cgc.cmd[4] = cgc.cmd[8] = 0;
 		cdi->sanyo_slot = slot ? slot : 3;
-	}
+	पूर्ण
 
-	return cdi->ops->generic_packet(cdi, &cgc);
-}
+	वापस cdi->ops->generic_packet(cdi, &cgc);
+पूर्ण
 
-static int cdrom_select_disc(struct cdrom_device_info *cdi, int slot)
-{
-	struct cdrom_changer_info *info;
-	int curslot;
-	int ret;
+अटल पूर्णांक cdrom_select_disc(काष्ठा cdrom_device_info *cdi, पूर्णांक slot)
+अणु
+	काष्ठा cdrom_changer_info *info;
+	पूर्णांक curslot;
+	पूर्णांक ret;
 
 	cd_dbg(CD_CHANGER, "entering cdrom_select_disc()\n");
-	if (!CDROM_CAN(CDC_SELECT_DISC))
-		return -EDRIVE_CANT_DO_THIS;
+	अगर (!CDROM_CAN(CDC_SELECT_DISC))
+		वापस -EDRIVE_CANT_DO_THIS;
 
-	if (cdi->ops->check_events)
+	अगर (cdi->ops->check_events)
 		cdi->ops->check_events(cdi, 0, slot);
 
-	if (slot == CDSL_NONE) {
+	अगर (slot == CDSL_NONE) अणु
 		/* set media changed bits, on both queues */
 		cdi->mc_flags = 0x3;
-		return cdrom_load_unload(cdi, -1);
-	}
+		वापस cdrom_load_unload(cdi, -1);
+	पूर्ण
 
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	if ((ret = cdrom_read_mech_status(cdi, info))) {
-		kfree(info);
-		return ret;
-	}
+	अगर ((ret = cdrom_पढ़ो_mech_status(cdi, info))) अणु
+		kमुक्त(info);
+		वापस ret;
+	पूर्ण
 
 	curslot = info->hdr.curslot;
-	kfree(info);
+	kमुक्त(info);
 
-	if (cdi->use_count > 1 || cdi->keeplocked) {
-		if (slot == CDSL_CURRENT) {
-	    		return curslot;
-		} else {
-			return -EBUSY;
-		}
-	}
+	अगर (cdi->use_count > 1 || cdi->keeplocked) अणु
+		अगर (slot == CDSL_CURRENT) अणु
+	    		वापस curslot;
+		पूर्ण अन्यथा अणु
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 
-	/* Specifying CDSL_CURRENT will attempt to load the currnet slot,
-	which is useful if it had been previously unloaded.
-	Whether it can or not, it returns the current slot. 
-	Similarly,  if slot happens to be the current one, we still
+	/* Specअगरying CDSL_CURRENT will attempt to load the currnet slot,
+	which is useful अगर it had been previously unloaded.
+	Whether it can or not, it वापसs the current slot. 
+	Similarly,  अगर slot happens to be the current one, we still
 	try and load it. */
-	if (slot == CDSL_CURRENT)
+	अगर (slot == CDSL_CURRENT)
 		slot = curslot;
 
 	/* set media changed bits on both queues */
 	cdi->mc_flags = 0x3;
-	if ((ret = cdrom_load_unload(cdi, slot)))
-		return ret;
+	अगर ((ret = cdrom_load_unload(cdi, slot)))
+		वापस ret;
 
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
 /*
- * As cdrom implements an extra ioctl consumer for media changed
+ * As cdrom implements an extra ioctl consumer क्रम media changed
  * event, it needs to buffer ->check_events() output, such that event
- * is not lost for both the usual VFS and ioctl paths.
- * cdi->{vfs|ioctl}_events are used to buffer pending events for each
+ * is not lost क्रम both the usual VFS and ioctl paths.
+ * cdi->अणुvfs|ioctlपूर्ण_events are used to buffer pending events क्रम each
  * path.
  *
  * XXX: Locking is non-existent.  cdi->ops->check_events() can be
  * called in parallel and buffering fields are accessed without any
  * exclusion.  The original media_changed code had the same problem.
  * It might be better to simply deprecate CDROM_MEDIA_CHANGED ioctl
- * and remove this cruft altogether.  It doesn't have much usefulness
- * at this point.
+ * and हटाओ this cruft altogether.  It करोesn't have much usefulness
+ * at this poपूर्णांक.
  */
-static void cdrom_update_events(struct cdrom_device_info *cdi,
-				unsigned int clearing)
-{
-	unsigned int events;
+अटल व्योम cdrom_update_events(काष्ठा cdrom_device_info *cdi,
+				अचिन्हित पूर्णांक clearing)
+अणु
+	अचिन्हित पूर्णांक events;
 
 	events = cdi->ops->check_events(cdi, clearing, CDSL_CURRENT);
 	cdi->vfs_events |= events;
 	cdi->ioctl_events |= events;
-}
+पूर्ण
 
-unsigned int cdrom_check_events(struct cdrom_device_info *cdi,
-				unsigned int clearing)
-{
-	unsigned int events;
+अचिन्हित पूर्णांक cdrom_check_events(काष्ठा cdrom_device_info *cdi,
+				अचिन्हित पूर्णांक clearing)
+अणु
+	अचिन्हित पूर्णांक events;
 
 	cdrom_update_events(cdi, clearing);
 	events = cdi->vfs_events;
 	cdi->vfs_events = 0;
-	return events;
-}
+	वापस events;
+पूर्ण
 EXPORT_SYMBOL(cdrom_check_events);
 
 /* We want to make media_changed accessible to the user through an
- * ioctl. The main problem now is that we must double-buffer the
+ * ioctl. The मुख्य problem now is that we must द्विगुन-buffer the
  * low-level implementation, to assure that the VFS and the user both
  * see a medium change once.
  */
 
-static
-int media_changed(struct cdrom_device_info *cdi, int queue)
-{
-	unsigned int mask = (1 << (queue & 1));
-	int ret = !!(cdi->mc_flags & mask);
+अटल
+पूर्णांक media_changed(काष्ठा cdrom_device_info *cdi, पूर्णांक queue)
+अणु
+	अचिन्हित पूर्णांक mask = (1 << (queue & 1));
+	पूर्णांक ret = !!(cdi->mc_flags & mask);
 	bool changed;
 
-	if (!CDROM_CAN(CDC_MEDIA_CHANGED))
-		return ret;
+	अगर (!CDROM_CAN(CDC_MEDIA_CHANGED))
+		वापस ret;
 
 	/* changed since last call? */
 	BUG_ON(!queue);	/* shouldn't be called from VFS path */
@@ -1520,162 +1521,162 @@ int media_changed(struct cdrom_device_info *cdi, int queue)
 	changed = cdi->ioctl_events & DISK_EVENT_MEDIA_CHANGE;
 	cdi->ioctl_events = 0;
 
-	if (changed) {
+	अगर (changed) अणु
 		cdi->mc_flags = 0x3;    /* set bit on both queues */
 		ret |= 1;
 		cdi->media_written = 0;
-	}
+	पूर्ण
 
 	cdi->mc_flags &= ~mask;         /* clear bit */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Requests to the low-level drivers will /always/ be done in the
-   following format convention:
+/* Requests to the low-level drivers will /always/ be करोne in the
+   following क्रमmat convention:
 
    CDROM_LBA: all data-related requests.
    CDROM_MSF: all audio-related requests.
 
    However, a low-level implementation is allowed to refuse this
-   request, and return information in its own favorite format.
+   request, and वापस inक्रमmation in its own favorite क्रमmat.
 
-   It doesn't make sense /at all/ to ask for a play_audio in LBA
-   format, or ask for multi-session info in MSF format. However, for
-   backward compatibility these format requests will be satisfied, but
+   It करोesn't make sense /at all/ to ask क्रम a play_audio in LBA
+   क्रमmat, or ask क्रम multi-session info in MSF क्रमmat. However, क्रम
+   backward compatibility these क्रमmat requests will be satisfied, but
    the requests to the low-level drivers will be sanitized in the more
-   meaningful format indicated above.
+   meaningful क्रमmat indicated above.
  */
 
-static
-void sanitize_format(union cdrom_addr *addr,
-		     u_char * curr, u_char requested)
-{
-	if (*curr == requested)
-		return;                 /* nothing to be done! */
-	if (requested == CDROM_LBA) {
-		addr->lba = (int) addr->msf.frame +
+अटल
+व्योम sanitize_क्रमmat(जोड़ cdrom_addr *addr,
+		     u_अक्षर * curr, u_अक्षर requested)
+अणु
+	अगर (*curr == requested)
+		वापस;                 /* nothing to be करोne! */
+	अगर (requested == CDROM_LBA) अणु
+		addr->lba = (पूर्णांक) addr->msf.frame +
 			75 * (addr->msf.second - 2 + 60 * addr->msf.minute);
-	} else {                        /* CDROM_MSF */
-		int lba = addr->lba;
+	पूर्ण अन्यथा अणु                        /* CDROM_MSF */
+		पूर्णांक lba = addr->lba;
 		addr->msf.frame = lba % 75;
 		lba /= 75;
 		lba += 2;
 		addr->msf.second = lba % 60;
 		addr->msf.minute = lba / 60;
-	}
+	पूर्ण
 	*curr = requested;
-}
+पूर्ण
 
-void init_cdrom_command(struct packet_command *cgc, void *buf, int len,
-			int type)
-{
-	memset(cgc, 0, sizeof(struct packet_command));
-	if (buf)
-		memset(buf, 0, len);
-	cgc->buffer = (char *) buf;
+व्योम init_cdrom_command(काष्ठा packet_command *cgc, व्योम *buf, पूर्णांक len,
+			पूर्णांक type)
+अणु
+	स_रखो(cgc, 0, माप(काष्ठा packet_command));
+	अगर (buf)
+		स_रखो(buf, 0, len);
+	cgc->buffer = (अक्षर *) buf;
 	cgc->buflen = len;
 	cgc->data_direction = type;
-	cgc->timeout = CDROM_DEF_TIMEOUT;
-}
+	cgc->समयout = CDROM_DEF_TIMEOUT;
+पूर्ण
 
 /* DVD handling */
 
-#define copy_key(dest,src)	memcpy((dest), (src), sizeof(dvd_key))
-#define copy_chal(dest,src)	memcpy((dest), (src), sizeof(dvd_challenge))
+#घोषणा copy_key(dest,src)	स_नकल((dest), (src), माप(dvd_key))
+#घोषणा copy_chal(dest,src)	स_नकल((dest), (src), माप(dvd_challenge))
 
-static void setup_report_key(struct packet_command *cgc, unsigned agid, unsigned type)
-{
+अटल व्योम setup_report_key(काष्ठा packet_command *cgc, अचिन्हित agid, अचिन्हित type)
+अणु
 	cgc->cmd[0] = GPCMD_REPORT_KEY;
 	cgc->cmd[10] = type | (agid << 6);
-	switch (type) {
-		case 0: case 8: case 5: {
+	चयन (type) अणु
+		हाल 0: हाल 8: हाल 5: अणु
 			cgc->buflen = 8;
-			break;
-		}
-		case 1: {
+			अवरोध;
+		पूर्ण
+		हाल 1: अणु
 			cgc->buflen = 16;
-			break;
-		}
-		case 2: case 4: {
+			अवरोध;
+		पूर्ण
+		हाल 2: हाल 4: अणु
 			cgc->buflen = 12;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	cgc->cmd[9] = cgc->buflen;
 	cgc->data_direction = CGC_DATA_READ;
-}
+पूर्ण
 
-static void setup_send_key(struct packet_command *cgc, unsigned agid, unsigned type)
-{
+अटल व्योम setup_send_key(काष्ठा packet_command *cgc, अचिन्हित agid, अचिन्हित type)
+अणु
 	cgc->cmd[0] = GPCMD_SEND_KEY;
 	cgc->cmd[10] = type | (agid << 6);
-	switch (type) {
-		case 1: {
+	चयन (type) अणु
+		हाल 1: अणु
 			cgc->buflen = 16;
-			break;
-		}
-		case 3: {
+			अवरोध;
+		पूर्ण
+		हाल 3: अणु
 			cgc->buflen = 12;
-			break;
-		}
-		case 6: {
+			अवरोध;
+		पूर्ण
+		हाल 6: अणु
 			cgc->buflen = 8;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	cgc->cmd[9] = cgc->buflen;
 	cgc->data_direction = CGC_DATA_WRITE;
-}
+पूर्ण
 
-static int dvd_do_auth(struct cdrom_device_info *cdi, dvd_authinfo *ai)
-{
-	int ret;
-	u_char buf[20];
-	struct packet_command cgc;
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल पूर्णांक dvd_करो_auth(काष्ठा cdrom_device_info *cdi, dvd_authinfo *ai)
+अणु
+	पूर्णांक ret;
+	u_अक्षर buf[20];
+	काष्ठा packet_command cgc;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 	rpc_state_t rpc_state;
 
-	memset(buf, 0, sizeof(buf));
+	स_रखो(buf, 0, माप(buf));
 	init_cdrom_command(&cgc, buf, 0, CGC_DATA_READ);
 
-	switch (ai->type) {
+	चयन (ai->type) अणु
 	/* LU data send */
-	case DVD_LU_SEND_AGID:
+	हाल DVD_LU_SEND_AGID:
 		cd_dbg(CD_DVD, "entering DVD_LU_SEND_AGID\n");
 		cgc.quiet = 1;
 		setup_report_key(&cgc, ai->lsa.agid, 0);
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		ai->lsa.agid = buf[7] >> 6;
 		/* Returning data, let host change state */
-		break;
+		अवरोध;
 
-	case DVD_LU_SEND_KEY1:
+	हाल DVD_LU_SEND_KEY1:
 		cd_dbg(CD_DVD, "entering DVD_LU_SEND_KEY1\n");
 		setup_report_key(&cgc, ai->lsk.agid, 2);
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		copy_key(ai->lsk.key, &buf[4]);
 		/* Returning data, let host change state */
-		break;
+		अवरोध;
 
-	case DVD_LU_SEND_CHALLENGE:
+	हाल DVD_LU_SEND_CHALLENGE:
 		cd_dbg(CD_DVD, "entering DVD_LU_SEND_CHALLENGE\n");
 		setup_report_key(&cgc, ai->lsc.agid, 1);
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		copy_chal(ai->lsc.chal, &buf[4]);
 		/* Returning data, let host change state */
-		break;
+		अवरोध;
 
 	/* Post-auth key */
-	case DVD_LU_SEND_TITLE_KEY:
+	हाल DVD_LU_SEND_TITLE_KEY:
 		cd_dbg(CD_DVD, "entering DVD_LU_SEND_TITLE_KEY\n");
 		cgc.quiet = 1;
 		setup_report_key(&cgc, ai->lstk.agid, 4);
@@ -1684,122 +1685,122 @@ static int dvd_do_auth(struct cdrom_device_info *cdi, dvd_authinfo *ai)
 		cgc.cmd[3] = ai->lstk.lba >> 16;
 		cgc.cmd[2] = ai->lstk.lba >> 24;
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		ai->lstk.cpm = (buf[4] >> 7) & 1;
 		ai->lstk.cp_sec = (buf[4] >> 6) & 1;
 		ai->lstk.cgms = (buf[4] >> 4) & 3;
 		copy_key(ai->lstk.title_key, &buf[5]);
 		/* Returning data, let host change state */
-		break;
+		अवरोध;
 
-	case DVD_LU_SEND_ASF:
+	हाल DVD_LU_SEND_ASF:
 		cd_dbg(CD_DVD, "entering DVD_LU_SEND_ASF\n");
 		setup_report_key(&cgc, ai->lsasf.agid, 5);
 		
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		ai->lsasf.asf = buf[7] & 1;
-		break;
+		अवरोध;
 
 	/* LU data receive (LU changes state) */
-	case DVD_HOST_SEND_CHALLENGE:
+	हाल DVD_HOST_SEND_CHALLENGE:
 		cd_dbg(CD_DVD, "entering DVD_HOST_SEND_CHALLENGE\n");
 		setup_send_key(&cgc, ai->hsc.agid, 1);
 		buf[1] = 0xe;
 		copy_chal(&buf[4], ai->hsc.chal);
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		ai->type = DVD_LU_SEND_KEY1;
-		break;
+		अवरोध;
 
-	case DVD_HOST_SEND_KEY2:
+	हाल DVD_HOST_SEND_KEY2:
 		cd_dbg(CD_DVD, "entering DVD_HOST_SEND_KEY2\n");
 		setup_send_key(&cgc, ai->hsk.agid, 3);
 		buf[1] = 0xa;
 		copy_key(&buf[4], ai->hsk.key);
 
-		if ((ret = cdo->generic_packet(cdi, &cgc))) {
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc))) अणु
 			ai->type = DVD_AUTH_FAILURE;
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ai->type = DVD_AUTH_ESTABLISHED;
-		break;
+		अवरोध;
 
 	/* Misc */
-	case DVD_INVALIDATE_AGID:
+	हाल DVD_INVALIDATE_AGID:
 		cgc.quiet = 1;
 		cd_dbg(CD_DVD, "entering DVD_INVALIDATE_AGID\n");
 		setup_report_key(&cgc, ai->lsa.agid, 0x3f);
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
-		break;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
+		अवरोध;
 
 	/* Get region settings */
-	case DVD_LU_SEND_RPC_STATE:
+	हाल DVD_LU_SEND_RPC_STATE:
 		cd_dbg(CD_DVD, "entering DVD_LU_SEND_RPC_STATE\n");
 		setup_report_key(&cgc, 0, 8);
-		memset(&rpc_state, 0, sizeof(rpc_state_t));
-		cgc.buffer = (char *) &rpc_state;
+		स_रखो(&rpc_state, 0, माप(rpc_state_t));
+		cgc.buffer = (अक्षर *) &rpc_state;
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
 
 		ai->lrpcs.type = rpc_state.type_code;
 		ai->lrpcs.vra = rpc_state.vra;
 		ai->lrpcs.ucca = rpc_state.ucca;
 		ai->lrpcs.region_mask = rpc_state.region_mask;
 		ai->lrpcs.rpc_scheme = rpc_state.rpc_scheme;
-		break;
+		अवरोध;
 
 	/* Set region settings */
-	case DVD_HOST_SEND_RPC_STATE:
+	हाल DVD_HOST_SEND_RPC_STATE:
 		cd_dbg(CD_DVD, "entering DVD_HOST_SEND_RPC_STATE\n");
 		setup_send_key(&cgc, 0, 6);
 		buf[1] = 6;
 		buf[4] = ai->hrpcs.pdrc;
 
-		if ((ret = cdo->generic_packet(cdi, &cgc)))
-			return ret;
-		break;
+		अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+			वापस ret;
+		अवरोध;
 
-	default:
+	शेष:
 		cd_dbg(CD_WARNING, "Invalid DVD key ioctl (%d)\n", ai->type);
-		return -ENOTTY;
-	}
+		वापस -ENOTTY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvd_read_physical(struct cdrom_device_info *cdi, dvd_struct *s,
-				struct packet_command *cgc)
-{
-	unsigned char buf[21], *base;
-	struct dvd_layer *layer;
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	int ret, layer_num = s->physical.layer_num;
+अटल पूर्णांक dvd_पढ़ो_physical(काष्ठा cdrom_device_info *cdi, dvd_काष्ठा *s,
+				काष्ठा packet_command *cgc)
+अणु
+	अचिन्हित अक्षर buf[21], *base;
+	काष्ठा dvd_layer *layer;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	पूर्णांक ret, layer_num = s->physical.layer_num;
 
-	if (layer_num >= DVD_LAYERS)
-		return -EINVAL;
+	अगर (layer_num >= DVD_LAYERS)
+		वापस -EINVAL;
 
-	init_cdrom_command(cgc, buf, sizeof(buf), CGC_DATA_READ);
+	init_cdrom_command(cgc, buf, माप(buf), CGC_DATA_READ);
 	cgc->cmd[0] = GPCMD_READ_DVD_STRUCTURE;
 	cgc->cmd[6] = layer_num;
 	cgc->cmd[7] = s->type;
 	cgc->cmd[9] = cgc->buflen & 0xff;
 
 	/*
-	 * refrain from reporting errors on non-existing layers (mainly)
+	 * refrain from reporting errors on non-existing layers (मुख्यly)
 	 */
 	cgc->quiet = 1;
 
-	ret = cdo->generic_packet(cdi, cgc);
-	if (ret)
-		return ret;
+	ret = cकरो->generic_packet(cdi, cgc);
+	अगर (ret)
+		वापस ret;
 
 	base = &buf[4];
 	layer = &s->physical.layer[layer_num];
@@ -1808,7 +1809,7 @@ static int dvd_read_physical(struct cdrom_device_info *cdi, dvd_struct *s,
 	 * place the data... really ugly, but at least we won't have to
 	 * worry about endianess in userspace.
 	 */
-	memset(layer, 0, sizeof(*layer));
+	स_रखो(layer, 0, माप(*layer));
 	layer->book_version = base[0] & 0xf;
 	layer->book_type = base[0] >> 4;
 	layer->min_rate = base[1] & 0xf;
@@ -1823,45 +1824,45 @@ static int dvd_read_physical(struct cdrom_device_info *cdi, dvd_struct *s,
 	layer->end_sector_l0 = base[13] << 16 | base[14] << 8 | base[15];
 	layer->bca = base[16] >> 7;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvd_read_copyright(struct cdrom_device_info *cdi, dvd_struct *s,
-				struct packet_command *cgc)
-{
-	int ret;
-	u_char buf[8];
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल पूर्णांक dvd_पढ़ो_copyright(काष्ठा cdrom_device_info *cdi, dvd_काष्ठा *s,
+				काष्ठा packet_command *cgc)
+अणु
+	पूर्णांक ret;
+	u_अक्षर buf[8];
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	init_cdrom_command(cgc, buf, sizeof(buf), CGC_DATA_READ);
+	init_cdrom_command(cgc, buf, माप(buf), CGC_DATA_READ);
 	cgc->cmd[0] = GPCMD_READ_DVD_STRUCTURE;
 	cgc->cmd[6] = s->copyright.layer_num;
 	cgc->cmd[7] = s->type;
 	cgc->cmd[8] = cgc->buflen >> 8;
 	cgc->cmd[9] = cgc->buflen & 0xff;
 
-	ret = cdo->generic_packet(cdi, cgc);
-	if (ret)
-		return ret;
+	ret = cकरो->generic_packet(cdi, cgc);
+	अगर (ret)
+		वापस ret;
 
 	s->copyright.cpst = buf[4];
 	s->copyright.rmi = buf[5];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvd_read_disckey(struct cdrom_device_info *cdi, dvd_struct *s,
-				struct packet_command *cgc)
-{
-	int ret, size;
-	u_char *buf;
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल पूर्णांक dvd_पढ़ो_disckey(काष्ठा cdrom_device_info *cdi, dvd_काष्ठा *s,
+				काष्ठा packet_command *cgc)
+अणु
+	पूर्णांक ret, size;
+	u_अक्षर *buf;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	size = sizeof(s->disckey.value) + 4;
+	size = माप(s->disckey.value) + 4;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	init_cdrom_command(cgc, buf, size, CGC_DATA_READ);
 	cgc->cmd[0] = GPCMD_READ_DVD_STRUCTURE;
@@ -1870,60 +1871,60 @@ static int dvd_read_disckey(struct cdrom_device_info *cdi, dvd_struct *s,
 	cgc->cmd[9] = size & 0xff;
 	cgc->cmd[10] = s->disckey.agid << 6;
 
-	ret = cdo->generic_packet(cdi, cgc);
-	if (!ret)
-		memcpy(s->disckey.value, &buf[4], sizeof(s->disckey.value));
+	ret = cकरो->generic_packet(cdi, cgc);
+	अगर (!ret)
+		स_नकल(s->disckey.value, &buf[4], माप(s->disckey.value));
 
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int dvd_read_bca(struct cdrom_device_info *cdi, dvd_struct *s,
-			struct packet_command *cgc)
-{
-	int ret, size = 4 + 188;
-	u_char *buf;
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल पूर्णांक dvd_पढ़ो_bca(काष्ठा cdrom_device_info *cdi, dvd_काष्ठा *s,
+			काष्ठा packet_command *cgc)
+अणु
+	पूर्णांक ret, size = 4 + 188;
+	u_अक्षर *buf;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	init_cdrom_command(cgc, buf, size, CGC_DATA_READ);
 	cgc->cmd[0] = GPCMD_READ_DVD_STRUCTURE;
 	cgc->cmd[7] = s->type;
 	cgc->cmd[9] = cgc->buflen & 0xff;
 
-	ret = cdo->generic_packet(cdi, cgc);
-	if (ret)
-		goto out;
+	ret = cकरो->generic_packet(cdi, cgc);
+	अगर (ret)
+		जाओ out;
 
 	s->bca.len = buf[0] << 8 | buf[1];
-	if (s->bca.len < 12 || s->bca.len > 188) {
+	अगर (s->bca.len < 12 || s->bca.len > 188) अणु
 		cd_dbg(CD_WARNING, "Received invalid BCA length (%d)\n",
 		       s->bca.len);
 		ret = -EIO;
-		goto out;
-	}
-	memcpy(s->bca.value, &buf[4], s->bca.len);
+		जाओ out;
+	पूर्ण
+	स_नकल(s->bca.value, &buf[4], s->bca.len);
 	ret = 0;
 out:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int dvd_read_manufact(struct cdrom_device_info *cdi, dvd_struct *s,
-				struct packet_command *cgc)
-{
-	int ret = 0, size;
-	u_char *buf;
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल पूर्णांक dvd_पढ़ो_manufact(काष्ठा cdrom_device_info *cdi, dvd_काष्ठा *s,
+				काष्ठा packet_command *cgc)
+अणु
+	पूर्णांक ret = 0, size;
+	u_अक्षर *buf;
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	size = sizeof(s->manufact.value) + 4;
+	size = माप(s->manufact.value) + 4;
 
-	buf = kmalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	init_cdrom_command(cgc, buf, size, CGC_DATA_READ);
 	cgc->cmd[0] = GPCMD_READ_DVD_STRUCTURE;
@@ -1931,111 +1932,111 @@ static int dvd_read_manufact(struct cdrom_device_info *cdi, dvd_struct *s,
 	cgc->cmd[8] = size >> 8;
 	cgc->cmd[9] = size & 0xff;
 
-	ret = cdo->generic_packet(cdi, cgc);
-	if (ret)
-		goto out;
+	ret = cकरो->generic_packet(cdi, cgc);
+	अगर (ret)
+		जाओ out;
 
 	s->manufact.len = buf[0] << 8 | buf[1];
-	if (s->manufact.len < 0) {
+	अगर (s->manufact.len < 0) अणु
 		cd_dbg(CD_WARNING, "Received invalid manufacture info length (%d)\n",
 		       s->manufact.len);
 		ret = -EIO;
-	} else {
-		if (s->manufact.len > 2048) {
+	पूर्ण अन्यथा अणु
+		अगर (s->manufact.len > 2048) अणु
 			cd_dbg(CD_WARNING, "Received invalid manufacture info length (%d): truncating to 2048\n",
 			       s->manufact.len);
 			s->manufact.len = 2048;
-		}
-		memcpy(s->manufact.value, &buf[4], s->manufact.len);
-	}
+		पूर्ण
+		स_नकल(s->manufact.value, &buf[4], s->manufact.len);
+	पूर्ण
 
 out:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int dvd_read_struct(struct cdrom_device_info *cdi, dvd_struct *s,
-				struct packet_command *cgc)
-{
-	switch (s->type) {
-	case DVD_STRUCT_PHYSICAL:
-		return dvd_read_physical(cdi, s, cgc);
+अटल पूर्णांक dvd_पढ़ो_काष्ठा(काष्ठा cdrom_device_info *cdi, dvd_काष्ठा *s,
+				काष्ठा packet_command *cgc)
+अणु
+	चयन (s->type) अणु
+	हाल DVD_STRUCT_PHYSICAL:
+		वापस dvd_पढ़ो_physical(cdi, s, cgc);
 
-	case DVD_STRUCT_COPYRIGHT:
-		return dvd_read_copyright(cdi, s, cgc);
+	हाल DVD_STRUCT_COPYRIGHT:
+		वापस dvd_पढ़ो_copyright(cdi, s, cgc);
 
-	case DVD_STRUCT_DISCKEY:
-		return dvd_read_disckey(cdi, s, cgc);
+	हाल DVD_STRUCT_DISCKEY:
+		वापस dvd_पढ़ो_disckey(cdi, s, cgc);
 
-	case DVD_STRUCT_BCA:
-		return dvd_read_bca(cdi, s, cgc);
+	हाल DVD_STRUCT_BCA:
+		वापस dvd_पढ़ो_bca(cdi, s, cgc);
 
-	case DVD_STRUCT_MANUFACT:
-		return dvd_read_manufact(cdi, s, cgc);
+	हाल DVD_STRUCT_MANUFACT:
+		वापस dvd_पढ़ो_manufact(cdi, s, cgc);
 		
-	default:
+	शेष:
 		cd_dbg(CD_WARNING, ": Invalid DVD structure read requested (%d)\n",
 		       s->type);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int cdrom_mode_sense(struct cdrom_device_info *cdi,
-		     struct packet_command *cgc,
-		     int page_code, int page_control)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
+पूर्णांक cdrom_mode_sense(काष्ठा cdrom_device_info *cdi,
+		     काष्ठा packet_command *cgc,
+		     पूर्णांक page_code, पूर्णांक page_control)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	memset(cgc->cmd, 0, sizeof(cgc->cmd));
+	स_रखो(cgc->cmd, 0, माप(cgc->cmd));
 
 	cgc->cmd[0] = GPCMD_MODE_SENSE_10;
 	cgc->cmd[2] = page_code | (page_control << 6);
 	cgc->cmd[7] = cgc->buflen >> 8;
 	cgc->cmd[8] = cgc->buflen & 0xff;
 	cgc->data_direction = CGC_DATA_READ;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-int cdrom_mode_select(struct cdrom_device_info *cdi,
-		      struct packet_command *cgc)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
+पूर्णांक cdrom_mode_select(काष्ठा cdrom_device_info *cdi,
+		      काष्ठा packet_command *cgc)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	memset(cgc->cmd, 0, sizeof(cgc->cmd));
-	memset(cgc->buffer, 0, 2);
+	स_रखो(cgc->cmd, 0, माप(cgc->cmd));
+	स_रखो(cgc->buffer, 0, 2);
 	cgc->cmd[0] = GPCMD_MODE_SELECT_10;
 	cgc->cmd[1] = 0x10;		/* PF */
 	cgc->cmd[7] = cgc->buflen >> 8;
 	cgc->cmd[8] = cgc->buflen & 0xff;
 	cgc->data_direction = CGC_DATA_WRITE;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-static int cdrom_read_subchannel(struct cdrom_device_info *cdi,
-				 struct cdrom_subchnl *subchnl, int mcn)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	struct packet_command cgc;
-	char buffer[32];
-	int ret;
+अटल पूर्णांक cdrom_पढ़ो_subchannel(काष्ठा cdrom_device_info *cdi,
+				 काष्ठा cdrom_subchnl *subchnl, पूर्णांक mcn)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	काष्ठा packet_command cgc;
+	अक्षर buffer[32];
+	पूर्णांक ret;
 
 	init_cdrom_command(&cgc, buffer, 16, CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_READ_SUBCHANNEL;
-	cgc.cmd[1] = subchnl->cdsc_format;/* MSF or LBA addressing */
+	cgc.cmd[1] = subchnl->cdsc_क्रमmat;/* MSF or LBA addressing */
 	cgc.cmd[2] = 0x40;  /* request subQ data */
 	cgc.cmd[3] = mcn ? 2 : 1;
 	cgc.cmd[8] = 16;
 
-	if ((ret = cdo->generic_packet(cdi, &cgc)))
-		return ret;
+	अगर ((ret = cकरो->generic_packet(cdi, &cgc)))
+		वापस ret;
 
 	subchnl->cdsc_audiostatus = cgc.buffer[1];
 	subchnl->cdsc_ctrl = cgc.buffer[5] & 0xf;
 	subchnl->cdsc_trk = cgc.buffer[6];
 	subchnl->cdsc_ind = cgc.buffer[7];
 
-	if (subchnl->cdsc_format == CDROM_LBA) {
-		subchnl->cdsc_absaddr.lba = ((cgc.buffer[8] << 24) |
+	अगर (subchnl->cdsc_क्रमmat == CDROM_LBA) अणु
+		subchnl->cdsc_असलaddr.lba = ((cgc.buffer[8] << 24) |
 						(cgc.buffer[9] << 16) |
 						(cgc.buffer[10] << 8) |
 						(cgc.buffer[11]));
@@ -2043,28 +2044,28 @@ static int cdrom_read_subchannel(struct cdrom_device_info *cdi,
 						(cgc.buffer[13] << 16) |
 						(cgc.buffer[14] << 8) |
 						(cgc.buffer[15]));
-	} else {
+	पूर्ण अन्यथा अणु
 		subchnl->cdsc_reladdr.msf.minute = cgc.buffer[13];
 		subchnl->cdsc_reladdr.msf.second = cgc.buffer[14];
 		subchnl->cdsc_reladdr.msf.frame = cgc.buffer[15];
-		subchnl->cdsc_absaddr.msf.minute = cgc.buffer[9];
-		subchnl->cdsc_absaddr.msf.second = cgc.buffer[10];
-		subchnl->cdsc_absaddr.msf.frame = cgc.buffer[11];
-	}
+		subchnl->cdsc_असलaddr.msf.minute = cgc.buffer[9];
+		subchnl->cdsc_असलaddr.msf.second = cgc.buffer[10];
+		subchnl->cdsc_असलaddr.msf.frame = cgc.buffer[11];
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Specific READ_10 interface
+ * Specअगरic READ_10 पूर्णांकerface
  */
-static int cdrom_read_cd(struct cdrom_device_info *cdi,
-			 struct packet_command *cgc, int lba,
-			 int blocksize, int nblocks)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल पूर्णांक cdrom_पढ़ो_cd(काष्ठा cdrom_device_info *cdi,
+			 काष्ठा packet_command *cgc, पूर्णांक lba,
+			 पूर्णांक blocksize, पूर्णांक nblocks)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	memset(&cgc->cmd, 0, sizeof(cgc->cmd));
+	स_रखो(&cgc->cmd, 0, माप(cgc->cmd));
 	cgc->cmd[0] = GPCMD_READ_10;
 	cgc->cmd[2] = (lba >> 24) & 0xff;
 	cgc->cmd[3] = (lba >> 16) & 0xff;
@@ -2074,20 +2075,20 @@ static int cdrom_read_cd(struct cdrom_device_info *cdi,
 	cgc->cmd[7] = (nblocks >>  8) & 0xff;
 	cgc->cmd[8] = nblocks & 0xff;
 	cgc->buflen = blocksize * nblocks;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-/* very generic interface for reading the various types of blocks */
-static int cdrom_read_block(struct cdrom_device_info *cdi,
-			    struct packet_command *cgc,
-			    int lba, int nblocks, int format, int blksize)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
+/* very generic पूर्णांकerface क्रम पढ़ोing the various types of blocks */
+अटल पूर्णांक cdrom_पढ़ो_block(काष्ठा cdrom_device_info *cdi,
+			    काष्ठा packet_command *cgc,
+			    पूर्णांक lba, पूर्णांक nblocks, पूर्णांक क्रमmat, पूर्णांक blksize)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 
-	memset(&cgc->cmd, 0, sizeof(cgc->cmd));
+	स_रखो(&cgc->cmd, 0, माप(cgc->cmd));
 	cgc->cmd[0] = GPCMD_READ_CD;
 	/* expected sector size - cdda,mode1,etc. */
-	cgc->cmd[1] = format << 2;
+	cgc->cmd[1] = क्रमmat << 2;
 	/* starting address */
 	cgc->cmd[2] = (lba >> 24) & 0xff;
 	cgc->cmd[3] = (lba >> 16) & 0xff;
@@ -2099,105 +2100,105 @@ static int cdrom_read_block(struct cdrom_device_info *cdi,
 	cgc->cmd[8] = nblocks & 0xff;
 	cgc->buflen = blksize * nblocks;
 	
-	/* set the header info returned */
-	switch (blksize) {
-	case CD_FRAMESIZE_RAW0	: cgc->cmd[9] = 0x58; break;
-	case CD_FRAMESIZE_RAW1	: cgc->cmd[9] = 0x78; break;
-	case CD_FRAMESIZE_RAW	: cgc->cmd[9] = 0xf8; break;
-	default			: cgc->cmd[9] = 0x10;
-	}
+	/* set the header info वापसed */
+	चयन (blksize) अणु
+	हाल CD_FRAMESIZE_RAW0	: cgc->cmd[9] = 0x58; अवरोध;
+	हाल CD_FRAMESIZE_RAW1	: cgc->cmd[9] = 0x78; अवरोध;
+	हाल CD_FRAMESIZE_RAW	: cgc->cmd[9] = 0xf8; अवरोध;
+	शेष			: cgc->cmd[9] = 0x10;
+	पूर्ण
 	
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-static int cdrom_read_cdda_old(struct cdrom_device_info *cdi, __u8 __user *ubuf,
-			       int lba, int nframes)
-{
-	struct packet_command cgc;
-	int ret = 0;
-	int nr;
+अटल पूर्णांक cdrom_पढ़ो_cdda_old(काष्ठा cdrom_device_info *cdi, __u8 __user *ubuf,
+			       पूर्णांक lba, पूर्णांक nframes)
+अणु
+	काष्ठा packet_command cgc;
+	पूर्णांक ret = 0;
+	पूर्णांक nr;
 
 	cdi->last_sense = 0;
 
-	memset(&cgc, 0, sizeof(cgc));
+	स_रखो(&cgc, 0, माप(cgc));
 
 	/*
-	 * start with will ra.nframes size, back down if alloc fails
+	 * start with will ra.nframes size, back करोwn अगर alloc fails
 	 */
 	nr = nframes;
-	do {
-		cgc.buffer = kmalloc_array(nr, CD_FRAMESIZE_RAW, GFP_KERNEL);
-		if (cgc.buffer)
-			break;
+	करो अणु
+		cgc.buffer = kदो_स्मृति_array(nr, CD_FRAMESIZE_RAW, GFP_KERNEL);
+		अगर (cgc.buffer)
+			अवरोध;
 
 		nr >>= 1;
-	} while (nr);
+	पूर्ण जबतक (nr);
 
-	if (!nr)
-		return -ENOMEM;
+	अगर (!nr)
+		वापस -ENOMEM;
 
 	cgc.data_direction = CGC_DATA_READ;
-	while (nframes > 0) {
-		if (nr > nframes)
+	जबतक (nframes > 0) अणु
+		अगर (nr > nframes)
 			nr = nframes;
 
-		ret = cdrom_read_block(cdi, &cgc, lba, nr, 1, CD_FRAMESIZE_RAW);
-		if (ret)
-			break;
-		if (copy_to_user(ubuf, cgc.buffer, CD_FRAMESIZE_RAW * nr)) {
+		ret = cdrom_पढ़ो_block(cdi, &cgc, lba, nr, 1, CD_FRAMESIZE_RAW);
+		अगर (ret)
+			अवरोध;
+		अगर (copy_to_user(ubuf, cgc.buffer, CD_FRAMESIZE_RAW * nr)) अणु
 			ret = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ubuf += CD_FRAMESIZE_RAW * nr;
 		nframes -= nr;
 		lba += nr;
-	}
-	kfree(cgc.buffer);
-	return ret;
-}
+	पूर्ण
+	kमुक्त(cgc.buffer);
+	वापस ret;
+पूर्ण
 
-static int cdrom_read_cdda_bpc(struct cdrom_device_info *cdi, __u8 __user *ubuf,
-			       int lba, int nframes)
-{
-	struct request_queue *q = cdi->disk->queue;
-	struct request *rq;
-	struct scsi_request *req;
-	struct bio *bio;
-	unsigned int len;
-	int nr, ret = 0;
+अटल पूर्णांक cdrom_पढ़ो_cdda_bpc(काष्ठा cdrom_device_info *cdi, __u8 __user *ubuf,
+			       पूर्णांक lba, पूर्णांक nframes)
+अणु
+	काष्ठा request_queue *q = cdi->disk->queue;
+	काष्ठा request *rq;
+	काष्ठा scsi_request *req;
+	काष्ठा bio *bio;
+	अचिन्हित पूर्णांक len;
+	पूर्णांक nr, ret = 0;
 
-	if (!q)
-		return -ENXIO;
+	अगर (!q)
+		वापस -ENXIO;
 
-	if (!blk_queue_scsi_passthrough(q)) {
+	अगर (!blk_queue_scsi_passthrough(q)) अणु
 		WARN_ONCE(true,
 			  "Attempt read CDDA info through a non-SCSI queue\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cdi->last_sense = 0;
 
-	while (nframes) {
+	जबतक (nframes) अणु
 		nr = nframes;
-		if (cdi->cdda_method == CDDA_BPC_SINGLE)
+		अगर (cdi->cdda_method == CDDA_BPC_SINGLE)
 			nr = 1;
-		if (nr * CD_FRAMESIZE_RAW > (queue_max_sectors(q) << 9))
+		अगर (nr * CD_FRAMESIZE_RAW > (queue_max_sectors(q) << 9))
 			nr = (queue_max_sectors(q) << 9) / CD_FRAMESIZE_RAW;
 
 		len = nr * CD_FRAMESIZE_RAW;
 
 		rq = blk_get_request(q, REQ_OP_SCSI_IN, 0);
-		if (IS_ERR(rq)) {
+		अगर (IS_ERR(rq)) अणु
 			ret = PTR_ERR(rq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		req = scsi_req(rq);
 
-		ret = blk_rq_map_user(q, rq, NULL, ubuf, len, GFP_KERNEL);
-		if (ret) {
+		ret = blk_rq_map_user(q, rq, शून्य, ubuf, len, GFP_KERNEL);
+		अगर (ret) अणु
 			blk_put_request(rq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		req->cmd[0] = GPCMD_READ_CD;
 		req->cmd[1] = 1 << 2;
@@ -2211,602 +2212,602 @@ static int cdrom_read_cdda_bpc(struct cdrom_device_info *cdi, __u8 __user *ubuf,
 		req->cmd[9] = 0xf8;
 
 		req->cmd_len = 12;
-		rq->timeout = 60 * HZ;
+		rq->समयout = 60 * HZ;
 		bio = rq->bio;
 
 		blk_execute_rq(cdi->disk, rq, 0);
-		if (scsi_req(rq)->result) {
-			struct scsi_sense_hdr sshdr;
+		अगर (scsi_req(rq)->result) अणु
+			काष्ठा scsi_sense_hdr sshdr;
 
 			ret = -EIO;
 			scsi_normalize_sense(req->sense, req->sense_len,
 					     &sshdr);
 			cdi->last_sense = sshdr.sense_key;
-		}
+		पूर्ण
 
-		if (blk_rq_unmap_user(bio))
+		अगर (blk_rq_unmap_user(bio))
 			ret = -EFAULT;
 		blk_put_request(rq);
 
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		nframes -= nr;
 		lba += nr;
 		ubuf += len;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdrom_read_cdda(struct cdrom_device_info *cdi, __u8 __user *ubuf,
-			   int lba, int nframes)
-{
-	int ret;
+अटल पूर्णांक cdrom_पढ़ो_cdda(काष्ठा cdrom_device_info *cdi, __u8 __user *ubuf,
+			   पूर्णांक lba, पूर्णांक nframes)
+अणु
+	पूर्णांक ret;
 
-	if (cdi->cdda_method == CDDA_OLD)
-		return cdrom_read_cdda_old(cdi, ubuf, lba, nframes);
+	अगर (cdi->cdda_method == CDDA_OLD)
+		वापस cdrom_पढ़ो_cdda_old(cdi, ubuf, lba, nframes);
 
 retry:
 	/*
-	 * for anything else than success and io error, we need to retry
+	 * क्रम anything अन्यथा than success and io error, we need to retry
 	 */
-	ret = cdrom_read_cdda_bpc(cdi, ubuf, lba, nframes);
-	if (!ret || ret != -EIO)
-		return ret;
+	ret = cdrom_पढ़ो_cdda_bpc(cdi, ubuf, lba, nframes);
+	अगर (!ret || ret != -EIO)
+		वापस ret;
 
 	/*
 	 * I've seen drives get sense 4/8/3 udma crc errors on multi
-	 * frame dma, so drop to single frame dma if we need to
+	 * frame dma, so drop to single frame dma अगर we need to
 	 */
-	if (cdi->cdda_method == CDDA_BPC_FULL && nframes > 1) {
+	अगर (cdi->cdda_method == CDDA_BPC_FULL && nframes > 1) अणु
 		pr_info("dropping to single frame dma\n");
 		cdi->cdda_method = CDDA_BPC_SINGLE;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	/*
-	 * so we have an io error of some sort with multi frame dma. if the
+	 * so we have an io error of some sort with multi frame dma. अगर the
 	 * condition wasn't a hardware error
-	 * problems, not for any error
+	 * problems, not क्रम any error
 	 */
-	if (cdi->last_sense != 0x04 && cdi->last_sense != 0x0b)
-		return ret;
+	अगर (cdi->last_sense != 0x04 && cdi->last_sense != 0x0b)
+		वापस ret;
 
 	pr_info("dropping to old style cdda (sense=%x)\n", cdi->last_sense);
 	cdi->cdda_method = CDDA_OLD;
-	return cdrom_read_cdda_old(cdi, ubuf, lba, nframes);	
-}
+	वापस cdrom_पढ़ो_cdda_old(cdi, ubuf, lba, nframes);	
+पूर्ण
 
-int cdrom_multisession(struct cdrom_device_info *cdi,
-		struct cdrom_multisession *info)
-{
-	u8 requested_format;
-	int ret;
+पूर्णांक cdrom_multisession(काष्ठा cdrom_device_info *cdi,
+		काष्ठा cdrom_multisession *info)
+अणु
+	u8 requested_क्रमmat;
+	पूर्णांक ret;
 
-	if (!(cdi->ops->capability & CDC_MULTI_SESSION))
-		return -ENOSYS;
+	अगर (!(cdi->ops->capability & CDC_MULTI_SESSION))
+		वापस -ENOSYS;
 
-	requested_format = info->addr_format;
-	if (requested_format != CDROM_MSF && requested_format != CDROM_LBA)
-		return -EINVAL;
-	info->addr_format = CDROM_LBA;
+	requested_क्रमmat = info->addr_क्रमmat;
+	अगर (requested_क्रमmat != CDROM_MSF && requested_क्रमmat != CDROM_LBA)
+		वापस -EINVAL;
+	info->addr_क्रमmat = CDROM_LBA;
 
 	ret = cdi->ops->get_last_session(cdi, info);
-	if (!ret)
-		sanitize_format(&info->addr, &info->addr_format,
-				requested_format);
-	return ret;
-}
+	अगर (!ret)
+		sanitize_क्रमmat(&info->addr, &info->addr_क्रमmat,
+				requested_क्रमmat);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdrom_multisession);
 
-static int cdrom_ioctl_multisession(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_multisession info;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_multisession(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_multisession info;
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROMMULTISESSION\n");
 
-	if (copy_from_user(&info, argp, sizeof(info)))
-		return -EFAULT;
+	अगर (copy_from_user(&info, argp, माप(info)))
+		वापस -EFAULT;
 	ret = cdrom_multisession(cdi, &info);
-	if (ret)
-		return ret;
-	if (copy_to_user(argp, &info, sizeof(info)))
-		return -EFAULT;
+	अगर (ret)
+		वापस ret;
+	अगर (copy_to_user(argp, &info, माप(info)))
+		वापस -EFAULT;
 
 	cd_dbg(CD_DO_IOCTL, "CDROMMULTISESSION successful\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdrom_ioctl_eject(struct cdrom_device_info *cdi)
-{
+अटल पूर्णांक cdrom_ioctl_eject(काष्ठा cdrom_device_info *cdi)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROMEJECT\n");
 
-	if (!CDROM_CAN(CDC_OPEN_TRAY))
-		return -ENOSYS;
-	if (cdi->use_count != 1 || cdi->keeplocked)
-		return -EBUSY;
-	if (CDROM_CAN(CDC_LOCK)) {
-		int ret = cdi->ops->lock_door(cdi, 0);
-		if (ret)
-			return ret;
-	}
+	अगर (!CDROM_CAN(CDC_OPEN_TRAY))
+		वापस -ENOSYS;
+	अगर (cdi->use_count != 1 || cdi->keeplocked)
+		वापस -EBUSY;
+	अगर (CDROM_CAN(CDC_LOCK)) अणु
+		पूर्णांक ret = cdi->ops->lock_करोor(cdi, 0);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return cdi->ops->tray_move(cdi, 1);
-}
+	वापस cdi->ops->tray_move(cdi, 1);
+पूर्ण
 
-static int cdrom_ioctl_closetray(struct cdrom_device_info *cdi)
-{
+अटल पूर्णांक cdrom_ioctl_बंदtray(काष्ठा cdrom_device_info *cdi)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROMCLOSETRAY\n");
 
-	if (!CDROM_CAN(CDC_CLOSE_TRAY))
-		return -ENOSYS;
-	return cdi->ops->tray_move(cdi, 0);
-}
+	अगर (!CDROM_CAN(CDC_CLOSE_TRAY))
+		वापस -ENOSYS;
+	वापस cdi->ops->tray_move(cdi, 0);
+पूर्ण
 
-static int cdrom_ioctl_eject_sw(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_eject_sw(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROMEJECT_SW\n");
 
-	if (!CDROM_CAN(CDC_OPEN_TRAY))
-		return -ENOSYS;
-	if (cdi->keeplocked)
-		return -EBUSY;
+	अगर (!CDROM_CAN(CDC_OPEN_TRAY))
+		वापस -ENOSYS;
+	अगर (cdi->keeplocked)
+		वापस -EBUSY;
 
 	cdi->options &= ~(CDO_AUTO_CLOSE | CDO_AUTO_EJECT);
-	if (arg)
+	अगर (arg)
 		cdi->options |= CDO_AUTO_CLOSE | CDO_AUTO_EJECT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_ioctl_media_changed(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
-	struct cdrom_changer_info *info;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_media_changed(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा cdrom_changer_info *info;
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_MEDIA_CHANGED\n");
 
-	if (!CDROM_CAN(CDC_MEDIA_CHANGED))
-		return -ENOSYS;
+	अगर (!CDROM_CAN(CDC_MEDIA_CHANGED))
+		वापस -ENOSYS;
 
 	/* cannot select disc or select current disc */
-	if (!CDROM_CAN(CDC_SELECT_DISC) || arg == CDSL_CURRENT)
-		return media_changed(cdi, 1);
+	अगर (!CDROM_CAN(CDC_SELECT_DISC) || arg == CDSL_CURRENT)
+		वापस media_changed(cdi, 1);
 
-	if (arg >= cdi->capacity)
-		return -EINVAL;
+	अगर (arg >= cdi->capacity)
+		वापस -EINVAL;
 
-	info = kmalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kदो_स्मृति(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	ret = cdrom_read_mech_status(cdi, info);
-	if (!ret)
+	ret = cdrom_पढ़ो_mech_status(cdi, info);
+	अगर (!ret)
 		ret = info->slots[arg].change;
-	kfree(info);
-	return ret;
-}
+	kमुक्त(info);
+	वापस ret;
+पूर्ण
 
-static int cdrom_ioctl_set_options(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_set_options(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_SET_OPTIONS\n");
 
 	/*
 	 * Options need to be in sync with capability.
-	 * Too late for that, so we have to check each one separately.
+	 * Too late क्रम that, so we have to check each one separately.
 	 */
-	switch (arg) {
-	case CDO_USE_FFLAGS:
-	case CDO_CHECK_TYPE:
-		break;
-	case CDO_LOCK:
-		if (!CDROM_CAN(CDC_LOCK))
-			return -ENOSYS;
-		break;
-	case 0:
-		return cdi->options;
-	/* default is basically CDO_[AUTO_CLOSE|AUTO_EJECT] */
-	default:
-		if (!CDROM_CAN(arg))
-			return -ENOSYS;
-	}
-	cdi->options |= (int) arg;
-	return cdi->options;
-}
+	चयन (arg) अणु
+	हाल CDO_USE_FFLAGS:
+	हाल CDO_CHECK_TYPE:
+		अवरोध;
+	हाल CDO_LOCK:
+		अगर (!CDROM_CAN(CDC_LOCK))
+			वापस -ENOSYS;
+		अवरोध;
+	हाल 0:
+		वापस cdi->options;
+	/* शेष is basically CDO_[AUTO_CLOSE|AUTO_EJECT] */
+	शेष:
+		अगर (!CDROM_CAN(arg))
+			वापस -ENOSYS;
+	पूर्ण
+	cdi->options |= (पूर्णांक) arg;
+	वापस cdi->options;
+पूर्ण
 
-static int cdrom_ioctl_clear_options(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_clear_options(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_CLEAR_OPTIONS\n");
 
-	cdi->options &= ~(int) arg;
-	return cdi->options;
-}
+	cdi->options &= ~(पूर्णांक) arg;
+	वापस cdi->options;
+पूर्ण
 
-static int cdrom_ioctl_select_speed(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_select_speed(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_SELECT_SPEED\n");
 
-	if (!CDROM_CAN(CDC_SELECT_SPEED))
-		return -ENOSYS;
-	return cdi->ops->select_speed(cdi, arg);
-}
+	अगर (!CDROM_CAN(CDC_SELECT_SPEED))
+		वापस -ENOSYS;
+	वापस cdi->ops->select_speed(cdi, arg);
+पूर्ण
 
-static int cdrom_ioctl_select_disc(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_select_disc(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_SELECT_DISC\n");
 
-	if (!CDROM_CAN(CDC_SELECT_DISC))
-		return -ENOSYS;
+	अगर (!CDROM_CAN(CDC_SELECT_DISC))
+		वापस -ENOSYS;
 
-	if (arg != CDSL_CURRENT && arg != CDSL_NONE) {
-		if (arg >= cdi->capacity)
-			return -EINVAL;
-	}
+	अगर (arg != CDSL_CURRENT && arg != CDSL_NONE) अणु
+		अगर (arg >= cdi->capacity)
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * ->select_disc is a hook to allow a driver-specific way of
-	 * seleting disc.  However, since there is no equivalent hook for
+	 * ->select_disc is a hook to allow a driver-specअगरic way of
+	 * seleting disc.  However, since there is no equivalent hook क्रम
 	 * cdrom_slot_status this may not actually be useful...
 	 */
-	if (cdi->ops->select_disc)
-		return cdi->ops->select_disc(cdi, arg);
+	अगर (cdi->ops->select_disc)
+		वापस cdi->ops->select_disc(cdi, arg);
 
 	cd_dbg(CD_CHANGER, "Using generic cdrom_select_disc()\n");
-	return cdrom_select_disc(cdi, arg);
-}
+	वापस cdrom_select_disc(cdi, arg);
+पूर्ण
 
-static int cdrom_ioctl_reset(struct cdrom_device_info *cdi,
-		struct block_device *bdev)
-{
+अटल पूर्णांक cdrom_ioctl_reset(काष्ठा cdrom_device_info *cdi,
+		काष्ठा block_device *bdev)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_RESET\n");
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
-	if (!CDROM_CAN(CDC_RESET))
-		return -ENOSYS;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
+	अगर (!CDROM_CAN(CDC_RESET))
+		वापस -ENOSYS;
 	invalidate_bdev(bdev);
-	return cdi->ops->reset(cdi);
-}
+	वापस cdi->ops->reset(cdi);
+पूर्ण
 
-static int cdrom_ioctl_lock_door(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_lock_करोor(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "%socking door\n", arg ? "L" : "Unl");
 
-	if (!CDROM_CAN(CDC_LOCK))
-		return -EDRIVE_CANT_DO_THIS;
+	अगर (!CDROM_CAN(CDC_LOCK))
+		वापस -EDRIVE_CANT_DO_THIS;
 
 	cdi->keeplocked = arg ? 1 : 0;
 
 	/*
-	 * Don't unlock the door on multiple opens by default, but allow
-	 * root to do so.
+	 * Don't unlock the करोor on multiple खोलोs by शेष, but allow
+	 * root to करो so.
 	 */
-	if (cdi->use_count != 1 && !arg && !capable(CAP_SYS_ADMIN))
-		return -EBUSY;
-	return cdi->ops->lock_door(cdi, arg);
-}
+	अगर (cdi->use_count != 1 && !arg && !capable(CAP_SYS_ADMIN))
+		वापस -EBUSY;
+	वापस cdi->ops->lock_करोor(cdi, arg);
+पूर्ण
 
-static int cdrom_ioctl_debug(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_debug(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "%sabling debug\n", arg ? "En" : "Dis");
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 	debug = arg ? 1 : 0;
-	return debug;
-}
+	वापस debug;
+पूर्ण
 
-static int cdrom_ioctl_get_capability(struct cdrom_device_info *cdi)
-{
+अटल पूर्णांक cdrom_ioctl_get_capability(काष्ठा cdrom_device_info *cdi)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_GET_CAPABILITY\n");
-	return (cdi->ops->capability & ~cdi->mask);
-}
+	वापस (cdi->ops->capability & ~cdi->mask);
+पूर्ण
 
 /*
  * The following function is implemented, although very few audio
- * discs give Universal Product Code information, which should just be
+ * discs give Universal Product Code inक्रमmation, which should just be
  * the Medium Catalog Number on the box.  Note, that the way the code
- * is written on the CD is /not/ uniform across all discs!
+ * is written on the CD is /not/ unअगरorm across all discs!
  */
-static int cdrom_ioctl_get_mcn(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_mcn mcn;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_get_mcn(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_mcn mcn;
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_GET_MCN\n");
 
-	if (!(cdi->ops->capability & CDC_MCN))
-		return -ENOSYS;
+	अगर (!(cdi->ops->capability & CDC_MCN))
+		वापस -ENOSYS;
 	ret = cdi->ops->get_mcn(cdi, &mcn);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (copy_to_user(argp, &mcn, sizeof(mcn)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &mcn, माप(mcn)))
+		वापस -EFAULT;
 	cd_dbg(CD_DO_IOCTL, "CDROM_GET_MCN successful\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_ioctl_drive_status(struct cdrom_device_info *cdi,
-		unsigned long arg)
-{
+अटल पूर्णांक cdrom_ioctl_drive_status(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित दीर्घ arg)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_DRIVE_STATUS\n");
 
-	if (!(cdi->ops->capability & CDC_DRIVE_STATUS))
-		return -ENOSYS;
-	if (!CDROM_CAN(CDC_SELECT_DISC) ||
+	अगर (!(cdi->ops->capability & CDC_DRIVE_STATUS))
+		वापस -ENOSYS;
+	अगर (!CDROM_CAN(CDC_SELECT_DISC) ||
 	    (arg == CDSL_CURRENT || arg == CDSL_NONE))
-		return cdi->ops->drive_status(cdi, CDSL_CURRENT);
-	if (arg >= cdi->capacity)
-		return -EINVAL;
-	return cdrom_slot_status(cdi, arg);
-}
+		वापस cdi->ops->drive_status(cdi, CDSL_CURRENT);
+	अगर (arg >= cdi->capacity)
+		वापस -EINVAL;
+	वापस cdrom_slot_status(cdi, arg);
+पूर्ण
 
 /*
- * Ok, this is where problems start.  The current interface for the
+ * Ok, this is where problems start.  The current पूर्णांकerface क्रम the
  * CDROM_DISC_STATUS ioctl is flawed.  It makes the false assumption that
- * CDs are all CDS_DATA_1 or all CDS_AUDIO, etc.  Unfortunately, while this
- * is often the case, it is also very common for CDs to have some tracks
+ * CDs are all CDS_DATA_1 or all CDS_AUDIO, etc.  Unक्रमtunately, जबतक this
+ * is often the हाल, it is also very common क्रम CDs to have some tracks
  * with data, and some tracks with audio.  Just because I feel like it,
  * I declare the following to be the best way to cope.  If the CD has ANY
- * data tracks on it, it will be returned as a data CD.  If it has any XA
- * tracks, I will return it as that.  Now I could simplify this interface
- * by combining these  returns with the above, but this more clearly
- * demonstrates the problem with the current interface.  Too bad this
- * wasn't designed to use bitmasks...         -Erik
+ * data tracks on it, it will be वापसed as a data CD.  If it has any XA
+ * tracks, I will वापस it as that.  Now I could simplअगरy this पूर्णांकerface
+ * by combining these  वापसs with the above, but this more clearly
+ * demonstrates the problem with the current पूर्णांकerface.  Too bad this
+ * wasn't deचिन्हित to use biपंचांगasks...         -Erik
  *
  * Well, now we have the option CDS_MIXED: a mixed-type CD.
  * User level programmers might feel the ioctl is not very useful.
  *					---david
  */
-static int cdrom_ioctl_disc_status(struct cdrom_device_info *cdi)
-{
+अटल पूर्णांक cdrom_ioctl_disc_status(काष्ठा cdrom_device_info *cdi)
+अणु
 	tracktype tracks;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_DISC_STATUS\n");
 
 	cdrom_count_tracks(cdi, &tracks);
-	if (tracks.error)
-		return tracks.error;
+	अगर (tracks.error)
+		वापस tracks.error;
 
 	/* Policy mode on */
-	if (tracks.audio > 0) {
-		if (!tracks.data && !tracks.cdi && !tracks.xa)
-			return CDS_AUDIO;
-		else
-			return CDS_MIXED;
-	}
+	अगर (tracks.audio > 0) अणु
+		अगर (!tracks.data && !tracks.cdi && !tracks.xa)
+			वापस CDS_AUDIO;
+		अन्यथा
+			वापस CDS_MIXED;
+	पूर्ण
 
-	if (tracks.cdi > 0)
-		return CDS_XA_2_2;
-	if (tracks.xa > 0)
-		return CDS_XA_2_1;
-	if (tracks.data > 0)
-		return CDS_DATA_1;
+	अगर (tracks.cdi > 0)
+		वापस CDS_XA_2_2;
+	अगर (tracks.xa > 0)
+		वापस CDS_XA_2_1;
+	अगर (tracks.data > 0)
+		वापस CDS_DATA_1;
 	/* Policy mode off */
 
 	cd_dbg(CD_WARNING, "This disc doesn't have any tracks I recognize!\n");
-	return CDS_NO_INFO;
-}
+	वापस CDS_NO_INFO;
+पूर्ण
 
-static int cdrom_ioctl_changer_nslots(struct cdrom_device_info *cdi)
-{
+अटल पूर्णांक cdrom_ioctl_changer_nslots(काष्ठा cdrom_device_info *cdi)
+अणु
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_CHANGER_NSLOTS\n");
-	return cdi->capacity;
-}
+	वापस cdi->capacity;
+पूर्ण
 
-static int cdrom_ioctl_get_subchnl(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_subchnl q;
+अटल पूर्णांक cdrom_ioctl_get_subchnl(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_subchnl q;
 	u8 requested, back;
-	int ret;
+	पूर्णांक ret;
 
 	/* cd_dbg(CD_DO_IOCTL,"entering CDROMSUBCHNL\n");*/
 
-	if (copy_from_user(&q, argp, sizeof(q)))
-		return -EFAULT;
+	अगर (copy_from_user(&q, argp, माप(q)))
+		वापस -EFAULT;
 
-	requested = q.cdsc_format;
-	if (requested != CDROM_MSF && requested != CDROM_LBA)
-		return -EINVAL;
-	q.cdsc_format = CDROM_MSF;
+	requested = q.cdsc_क्रमmat;
+	अगर (requested != CDROM_MSF && requested != CDROM_LBA)
+		वापस -EINVAL;
+	q.cdsc_क्रमmat = CDROM_MSF;
 
 	ret = cdi->ops->audio_ioctl(cdi, CDROMSUBCHNL, &q);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	back = q.cdsc_format; /* local copy */
-	sanitize_format(&q.cdsc_absaddr, &back, requested);
-	sanitize_format(&q.cdsc_reladdr, &q.cdsc_format, requested);
+	back = q.cdsc_क्रमmat; /* local copy */
+	sanitize_क्रमmat(&q.cdsc_असलaddr, &back, requested);
+	sanitize_क्रमmat(&q.cdsc_reladdr, &q.cdsc_क्रमmat, requested);
 
-	if (copy_to_user(argp, &q, sizeof(q)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &q, माप(q)))
+		वापस -EFAULT;
 	/* cd_dbg(CD_DO_IOCTL, "CDROMSUBCHNL successful\n"); */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_ioctl_read_tochdr(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_tochdr header;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_पढ़ो_tochdr(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_tochdr header;
+	पूर्णांक ret;
 
 	/* cd_dbg(CD_DO_IOCTL, "entering CDROMREADTOCHDR\n"); */
 
-	if (copy_from_user(&header, argp, sizeof(header)))
-		return -EFAULT;
+	अगर (copy_from_user(&header, argp, माप(header)))
+		वापस -EFAULT;
 
 	ret = cdi->ops->audio_ioctl(cdi, CDROMREADTOCHDR, &header);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (copy_to_user(argp, &header, sizeof(header)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &header, माप(header)))
+		वापस -EFAULT;
 	/* cd_dbg(CD_DO_IOCTL, "CDROMREADTOCHDR successful\n"); */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cdrom_read_tocentry(struct cdrom_device_info *cdi,
-		struct cdrom_tocentry *entry)
-{
-	u8 requested_format = entry->cdte_format;
-	int ret;
+पूर्णांक cdrom_पढ़ो_tocentry(काष्ठा cdrom_device_info *cdi,
+		काष्ठा cdrom_tocentry *entry)
+अणु
+	u8 requested_क्रमmat = entry->cdte_क्रमmat;
+	पूर्णांक ret;
 
-	if (requested_format != CDROM_MSF && requested_format != CDROM_LBA)
-		return -EINVAL;
+	अगर (requested_क्रमmat != CDROM_MSF && requested_क्रमmat != CDROM_LBA)
+		वापस -EINVAL;
 
-	/* make interface to low-level uniform */
-	entry->cdte_format = CDROM_MSF;
+	/* make पूर्णांकerface to low-level unअगरorm */
+	entry->cdte_क्रमmat = CDROM_MSF;
 	ret = cdi->ops->audio_ioctl(cdi, CDROMREADTOCENTRY, entry);
-	if (!ret)
-		sanitize_format(&entry->cdte_addr, &entry->cdte_format,
-				requested_format);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(cdrom_read_tocentry);
+	अगर (!ret)
+		sanitize_क्रमmat(&entry->cdte_addr, &entry->cdte_क्रमmat,
+				requested_क्रमmat);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdrom_पढ़ो_tocentry);
 
-static int cdrom_ioctl_read_tocentry(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_tocentry entry;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_पढ़ो_tocentry(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_tocentry entry;
+	पूर्णांक ret;
 
-	if (copy_from_user(&entry, argp, sizeof(entry)))
-		return -EFAULT;
-	ret = cdrom_read_tocentry(cdi, &entry);
-	if (!ret && copy_to_user(argp, &entry, sizeof(entry)))
-		return -EFAULT;
-	return ret;
-}
+	अगर (copy_from_user(&entry, argp, माप(entry)))
+		वापस -EFAULT;
+	ret = cdrom_पढ़ो_tocentry(cdi, &entry);
+	अगर (!ret && copy_to_user(argp, &entry, माप(entry)))
+		वापस -EFAULT;
+	वापस ret;
+पूर्ण
 
-static int cdrom_ioctl_play_msf(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_msf msf;
+अटल पूर्णांक cdrom_ioctl_play_msf(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_msf msf;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROMPLAYMSF\n");
 
-	if (!CDROM_CAN(CDC_PLAY_AUDIO))
-		return -ENOSYS;
-	if (copy_from_user(&msf, argp, sizeof(msf)))
-		return -EFAULT;
-	return cdi->ops->audio_ioctl(cdi, CDROMPLAYMSF, &msf);
-}
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO))
+		वापस -ENOSYS;
+	अगर (copy_from_user(&msf, argp, माप(msf)))
+		वापस -EFAULT;
+	वापस cdi->ops->audio_ioctl(cdi, CDROMPLAYMSF, &msf);
+पूर्ण
 
-static int cdrom_ioctl_play_trkind(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_ti ti;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_play_trkind(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_ti ti;
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROMPLAYTRKIND\n");
 
-	if (!CDROM_CAN(CDC_PLAY_AUDIO))
-		return -ENOSYS;
-	if (copy_from_user(&ti, argp, sizeof(ti)))
-		return -EFAULT;
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO))
+		वापस -ENOSYS;
+	अगर (copy_from_user(&ti, argp, माप(ti)))
+		वापस -EFAULT;
 
-	ret = check_for_audio_disc(cdi, cdi->ops);
-	if (ret)
-		return ret;
-	return cdi->ops->audio_ioctl(cdi, CDROMPLAYTRKIND, &ti);
-}
-static int cdrom_ioctl_volctrl(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_volctrl volume;
+	ret = check_क्रम_audio_disc(cdi, cdi->ops);
+	अगर (ret)
+		वापस ret;
+	वापस cdi->ops->audio_ioctl(cdi, CDROMPLAYTRKIND, &ti);
+पूर्ण
+अटल पूर्णांक cdrom_ioctl_volctrl(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_volctrl volume;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROMVOLCTRL\n");
 
-	if (!CDROM_CAN(CDC_PLAY_AUDIO))
-		return -ENOSYS;
-	if (copy_from_user(&volume, argp, sizeof(volume)))
-		return -EFAULT;
-	return cdi->ops->audio_ioctl(cdi, CDROMVOLCTRL, &volume);
-}
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO))
+		वापस -ENOSYS;
+	अगर (copy_from_user(&volume, argp, माप(volume)))
+		वापस -EFAULT;
+	वापस cdi->ops->audio_ioctl(cdi, CDROMVOLCTRL, &volume);
+पूर्ण
 
-static int cdrom_ioctl_volread(struct cdrom_device_info *cdi,
-		void __user *argp)
-{
-	struct cdrom_volctrl volume;
-	int ret;
+अटल पूर्णांक cdrom_ioctl_volपढ़ो(काष्ठा cdrom_device_info *cdi,
+		व्योम __user *argp)
+अणु
+	काष्ठा cdrom_volctrl volume;
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROMVOLREAD\n");
 
-	if (!CDROM_CAN(CDC_PLAY_AUDIO))
-		return -ENOSYS;
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO))
+		वापस -ENOSYS;
 
 	ret = cdi->ops->audio_ioctl(cdi, CDROMVOLREAD, &volume);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (copy_to_user(argp, &volume, sizeof(volume)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(argp, &volume, माप(volume)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int cdrom_ioctl_audioctl(struct cdrom_device_info *cdi,
-		unsigned int cmd)
-{
-	int ret;
+अटल पूर्णांक cdrom_ioctl_audioctl(काष्ठा cdrom_device_info *cdi,
+		अचिन्हित पूर्णांक cmd)
+अणु
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "doing audio ioctl (start/stop/pause/resume)\n");
 
-	if (!CDROM_CAN(CDC_PLAY_AUDIO))
-		return -ENOSYS;
-	ret = check_for_audio_disc(cdi, cdi->ops);
-	if (ret)
-		return ret;
-	return cdi->ops->audio_ioctl(cdi, cmd, NULL);
-}
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO))
+		वापस -ENOSYS;
+	ret = check_क्रम_audio_disc(cdi, cdi->ops);
+	अगर (ret)
+		वापस ret;
+	वापस cdi->ops->audio_ioctl(cdi, cmd, शून्य);
+पूर्ण
 
 /*
  * Required when we need to use READ_10 to issue other than 2048 block
- * reads
+ * पढ़ोs
  */
-static int cdrom_switch_blocksize(struct cdrom_device_info *cdi, int size)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	struct packet_command cgc;
-	struct modesel_head mh;
+अटल पूर्णांक cdrom_चयन_blocksize(काष्ठा cdrom_device_info *cdi, पूर्णांक size)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	काष्ठा packet_command cgc;
+	काष्ठा modesel_head mh;
 
-	memset(&mh, 0, sizeof(mh));
+	स_रखो(&mh, 0, माप(mh));
 	mh.block_desc_length = 0x08;
 	mh.block_length_med = (size >> 8) & 0xff;
 	mh.block_length_lo = size & 0xff;
 
-	memset(&cgc, 0, sizeof(cgc));
+	स_रखो(&cgc, 0, माप(cgc));
 	cgc.cmd[0] = 0x15;
 	cgc.cmd[1] = 1 << 4;
 	cgc.cmd[4] = 12;
-	cgc.buflen = sizeof(mh);
-	cgc.buffer = (char *) &mh;
+	cgc.buflen = माप(mh);
+	cgc.buffer = (अक्षर *) &mh;
 	cgc.data_direction = CGC_DATA_WRITE;
 	mh.block_desc_length = 0x08;
 	mh.block_length_med = (size >> 8) & 0xff;
 	mh.block_length_lo = size & 0xff;
 
-	return cdo->generic_packet(cdi, &cgc);
-}
+	वापस cकरो->generic_packet(cdi, &cgc);
+पूर्ण
 
-static int cdrom_get_track_info(struct cdrom_device_info *cdi,
-				__u16 track, __u8 type, track_information *ti)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	struct packet_command cgc;
-	int ret, buflen;
+अटल पूर्णांक cdrom_get_track_info(काष्ठा cdrom_device_info *cdi,
+				__u16 track, __u8 type, track_inक्रमmation *ti)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	काष्ठा packet_command cgc;
+	पूर्णांक ret, buflen;
 
 	init_cdrom_command(&cgc, ti, 8, CGC_DATA_READ);
 	cgc.cmd[0] = GPCMD_READ_TRACK_RZONE_INFO;
@@ -2816,285 +2817,285 @@ static int cdrom_get_track_info(struct cdrom_device_info *cdi,
 	cgc.cmd[8] = 8;
 	cgc.quiet = 1;
 
-	ret = cdo->generic_packet(cdi, &cgc);
-	if (ret)
-		return ret;
+	ret = cकरो->generic_packet(cdi, &cgc);
+	अगर (ret)
+		वापस ret;
 
-	buflen = be16_to_cpu(ti->track_information_length) +
-		sizeof(ti->track_information_length);
+	buflen = be16_to_cpu(ti->track_inक्रमmation_length) +
+		माप(ti->track_inक्रमmation_length);
 
-	if (buflen > sizeof(track_information))
-		buflen = sizeof(track_information);
+	अगर (buflen > माप(track_inक्रमmation))
+		buflen = माप(track_inक्रमmation);
 
 	cgc.cmd[8] = cgc.buflen = buflen;
-	ret = cdo->generic_packet(cdi, &cgc);
-	if (ret)
-		return ret;
+	ret = cकरो->generic_packet(cdi, &cgc);
+	अगर (ret)
+		वापस ret;
 
-	/* return actual fill size */
-	return buflen;
-}
+	/* वापस actual fill size */
+	वापस buflen;
+पूर्ण
 
-/* return the last written block on the CD-R media. this is for the udf
-   file system. */
-int cdrom_get_last_written(struct cdrom_device_info *cdi, long *last_written)
-{
-	struct cdrom_tocentry toc;
-	disc_information di;
-	track_information ti;
+/* वापस the last written block on the CD-R media. this is क्रम the udf
+   file प्रणाली. */
+पूर्णांक cdrom_get_last_written(काष्ठा cdrom_device_info *cdi, दीर्घ *last_written)
+अणु
+	काष्ठा cdrom_tocentry toc;
+	disc_inक्रमmation di;
+	track_inक्रमmation ti;
 	__u32 last_track;
-	int ret = -1, ti_size;
+	पूर्णांक ret = -1, ti_size;
 
-	if (!CDROM_CAN(CDC_GENERIC_PACKET))
-		goto use_toc;
+	अगर (!CDROM_CAN(CDC_GENERIC_PACKET))
+		जाओ use_toc;
 
 	ret = cdrom_get_disc_info(cdi, &di);
-	if (ret < (int)(offsetof(typeof(di), last_track_lsb)
-			+ sizeof(di.last_track_lsb)))
-		goto use_toc;
+	अगर (ret < (पूर्णांक)(दुरत्व(typeof(di), last_track_lsb)
+			+ माप(di.last_track_lsb)))
+		जाओ use_toc;
 
-	/* if unit didn't return msb, it's zeroed by cdrom_get_disc_info */
+	/* अगर unit didn't return msb, it's zeroed by cdrom_get_disc_info */
 	last_track = (di.last_track_msb << 8) | di.last_track_lsb;
 	ti_size = cdrom_get_track_info(cdi, last_track, 1, &ti);
-	if (ti_size < (int)offsetof(typeof(ti), track_start))
-		goto use_toc;
+	अगर (ti_size < (पूर्णांक)दुरत्व(typeof(ti), track_start))
+		जाओ use_toc;
 
-	/* if this track is blank, try the previous. */
-	if (ti.blank) {
-		if (last_track == 1)
-			goto use_toc;
+	/* अगर this track is blank, try the previous. */
+	अगर (ti.blank) अणु
+		अगर (last_track == 1)
+			जाओ use_toc;
 		last_track--;
 		ti_size = cdrom_get_track_info(cdi, last_track, 1, &ti);
-	}
+	पूर्ण
 
-	if (ti_size < (int)(offsetof(typeof(ti), track_size)
-				+ sizeof(ti.track_size)))
-		goto use_toc;
+	अगर (ti_size < (पूर्णांक)(दुरत्व(typeof(ti), track_size)
+				+ माप(ti.track_size)))
+		जाओ use_toc;
 
-	/* if last recorded field is valid, return it. */
-	if (ti.lra_v && ti_size >= (int)(offsetof(typeof(ti), last_rec_address)
-				+ sizeof(ti.last_rec_address))) {
+	/* अगर last recorded field is valid, वापस it. */
+	अगर (ti.lra_v && ti_size >= (पूर्णांक)(दुरत्व(typeof(ti), last_rec_address)
+				+ माप(ti.last_rec_address))) अणु
 		*last_written = be32_to_cpu(ti.last_rec_address);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* make it up instead */
 		*last_written = be32_to_cpu(ti.track_start) +
 				be32_to_cpu(ti.track_size);
-		if (ti.free_blocks)
-			*last_written -= (be32_to_cpu(ti.free_blocks) + 7);
-	}
-	return 0;
+		अगर (ti.मुक्त_blocks)
+			*last_written -= (be32_to_cpu(ti.मुक्त_blocks) + 7);
+	पूर्ण
+	वापस 0;
 
-	/* this is where we end up if the drive either can't do a
-	   GPCMD_READ_DISC_INFO or GPCMD_READ_TRACK_RZONE_INFO or if
-	   it doesn't give enough information or fails. then we return
+	/* this is where we end up अगर the drive either can't करो a
+	   GPCMD_READ_DISC_INFO or GPCMD_READ_TRACK_RZONE_INFO or अगर
+	   it करोesn't give enough inक्रमmation or fails. then we वापस
 	   the toc contents. */
 use_toc:
-	if (!CDROM_CAN(CDC_PLAY_AUDIO))
-		return -ENOSYS;
+	अगर (!CDROM_CAN(CDC_PLAY_AUDIO))
+		वापस -ENOSYS;
 
-	toc.cdte_format = CDROM_MSF;
+	toc.cdte_क्रमmat = CDROM_MSF;
 	toc.cdte_track = CDROM_LEADOUT;
-	if ((ret = cdi->ops->audio_ioctl(cdi, CDROMREADTOCENTRY, &toc)))
-		return ret;
-	sanitize_format(&toc.cdte_addr, &toc.cdte_format, CDROM_LBA);
+	अगर ((ret = cdi->ops->audio_ioctl(cdi, CDROMREADTOCENTRY, &toc)))
+		वापस ret;
+	sanitize_क्रमmat(&toc.cdte_addr, &toc.cdte_क्रमmat, CDROM_LBA);
 	*last_written = toc.cdte_addr.lba;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* return the next writable block. also for udf file system. */
-static int cdrom_get_next_writable(struct cdrom_device_info *cdi,
-				   long *next_writable)
-{
-	disc_information di;
-	track_information ti;
+/* वापस the next writable block. also क्रम udf file प्रणाली. */
+अटल पूर्णांक cdrom_get_next_writable(काष्ठा cdrom_device_info *cdi,
+				   दीर्घ *next_writable)
+अणु
+	disc_inक्रमmation di;
+	track_inक्रमmation ti;
 	__u16 last_track;
-	int ret, ti_size;
+	पूर्णांक ret, ti_size;
 
-	if (!CDROM_CAN(CDC_GENERIC_PACKET))
-		goto use_last_written;
+	अगर (!CDROM_CAN(CDC_GENERIC_PACKET))
+		जाओ use_last_written;
 
 	ret = cdrom_get_disc_info(cdi, &di);
-	if (ret < 0 || ret < offsetof(typeof(di), last_track_lsb)
-				+ sizeof(di.last_track_lsb))
-		goto use_last_written;
+	अगर (ret < 0 || ret < दुरत्व(typeof(di), last_track_lsb)
+				+ माप(di.last_track_lsb))
+		जाओ use_last_written;
 
-	/* if unit didn't return msb, it's zeroed by cdrom_get_disc_info */
+	/* अगर unit didn't return msb, it's zeroed by cdrom_get_disc_info */
 	last_track = (di.last_track_msb << 8) | di.last_track_lsb;
 	ti_size = cdrom_get_track_info(cdi, last_track, 1, &ti);
-	if (ti_size < 0 || ti_size < offsetof(typeof(ti), track_start))
-		goto use_last_written;
+	अगर (ti_size < 0 || ti_size < दुरत्व(typeof(ti), track_start))
+		जाओ use_last_written;
 
-	/* if this track is blank, try the previous. */
-	if (ti.blank) {
-		if (last_track == 1)
-			goto use_last_written;
+	/* अगर this track is blank, try the previous. */
+	अगर (ti.blank) अणु
+		अगर (last_track == 1)
+			जाओ use_last_written;
 		last_track--;
 		ti_size = cdrom_get_track_info(cdi, last_track, 1, &ti);
-		if (ti_size < 0)
-			goto use_last_written;
-	}
+		अगर (ti_size < 0)
+			जाओ use_last_written;
+	पूर्ण
 
-	/* if next recordable address field is valid, use it. */
-	if (ti.nwa_v && ti_size >= offsetof(typeof(ti), next_writable)
-				+ sizeof(ti.next_writable)) {
+	/* अगर next recordable address field is valid, use it. */
+	अगर (ti.nwa_v && ti_size >= दुरत्व(typeof(ti), next_writable)
+				+ माप(ti.next_writable)) अणु
 		*next_writable = be32_to_cpu(ti.next_writable);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 use_last_written:
 	ret = cdrom_get_last_written(cdi, next_writable);
-	if (ret) {
+	अगर (ret) अणु
 		*next_writable = 0;
-		return ret;
-	} else {
+		वापस ret;
+	पूर्ण अन्यथा अणु
 		*next_writable += 7;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_read_data(struct cdrom_device_info *cdi,
-					      void __user *arg,
-					      struct packet_command *cgc,
-					      int cmd)
-{
-	struct scsi_sense_hdr sshdr;
-	struct cdrom_msf msf;
-	int blocksize = 0, format = 0, lba;
-	int ret;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_पढ़ो_data(काष्ठा cdrom_device_info *cdi,
+					      व्योम __user *arg,
+					      काष्ठा packet_command *cgc,
+					      पूर्णांक cmd)
+अणु
+	काष्ठा scsi_sense_hdr sshdr;
+	काष्ठा cdrom_msf msf;
+	पूर्णांक blocksize = 0, क्रमmat = 0, lba;
+	पूर्णांक ret;
 
-	switch (cmd) {
-	case CDROMREADRAW:
+	चयन (cmd) अणु
+	हाल CDROMREADRAW:
 		blocksize = CD_FRAMESIZE_RAW;
-		break;
-	case CDROMREADMODE1:
+		अवरोध;
+	हाल CDROMREADMODE1:
 		blocksize = CD_FRAMESIZE;
-		format = 2;
-		break;
-	case CDROMREADMODE2:
+		क्रमmat = 2;
+		अवरोध;
+	हाल CDROMREADMODE2:
 		blocksize = CD_FRAMESIZE_RAW0;
-		break;
-	}
-	if (copy_from_user(&msf, (struct cdrom_msf __user *)arg, sizeof(msf)))
-		return -EFAULT;
+		अवरोध;
+	पूर्ण
+	अगर (copy_from_user(&msf, (काष्ठा cdrom_msf __user *)arg, माप(msf)))
+		वापस -EFAULT;
 	lba = msf_to_lba(msf.cdmsf_min0, msf.cdmsf_sec0, msf.cdmsf_frame0);
 	/* FIXME: we need upper bound checking, too!! */
-	if (lba < 0)
-		return -EINVAL;
+	अगर (lba < 0)
+		वापस -EINVAL;
 
 	cgc->buffer = kzalloc(blocksize, GFP_KERNEL);
-	if (cgc->buffer == NULL)
-		return -ENOMEM;
+	अगर (cgc->buffer == शून्य)
+		वापस -ENOMEM;
 
-	memset(&sshdr, 0, sizeof(sshdr));
+	स_रखो(&sshdr, 0, माप(sshdr));
 	cgc->sshdr = &sshdr;
 	cgc->data_direction = CGC_DATA_READ;
-	ret = cdrom_read_block(cdi, cgc, lba, 1, format, blocksize);
-	if (ret && sshdr.sense_key == 0x05 &&
+	ret = cdrom_पढ़ो_block(cdi, cgc, lba, 1, क्रमmat, blocksize);
+	अगर (ret && sshdr.sense_key == 0x05 &&
 	    sshdr.asc == 0x20 &&
-	    sshdr.ascq == 0x00) {
+	    sshdr.ascq == 0x00) अणु
 		/*
 		 * SCSI-II devices are not required to support
-		 * READ_CD, so let's try switching block size
+		 * READ_CD, so let's try चयनing block size
 		 */
-		if (blocksize != CD_FRAMESIZE) {
-			ret = cdrom_switch_blocksize(cdi, blocksize);
-			if (ret)
-				goto out;
-		}
-		cgc->sshdr = NULL;
-		ret = cdrom_read_cd(cdi, cgc, lba, blocksize, 1);
-		if (blocksize != CD_FRAMESIZE)
-			ret |= cdrom_switch_blocksize(cdi, CD_FRAMESIZE);
-	}
-	if (!ret && copy_to_user(arg, cgc->buffer, blocksize))
+		अगर (blocksize != CD_FRAMESIZE) अणु
+			ret = cdrom_चयन_blocksize(cdi, blocksize);
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+		cgc->sshdr = शून्य;
+		ret = cdrom_पढ़ो_cd(cdi, cgc, lba, blocksize, 1);
+		अगर (blocksize != CD_FRAMESIZE)
+			ret |= cdrom_चयन_blocksize(cdi, CD_FRAMESIZE);
+	पूर्ण
+	अगर (!ret && copy_to_user(arg, cgc->buffer, blocksize))
 		ret = -EFAULT;
 out:
-	kfree(cgc->buffer);
-	return ret;
-}
+	kमुक्त(cgc->buffer);
+	वापस ret;
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_read_audio(struct cdrom_device_info *cdi,
-					       void __user *arg)
-{
-	struct cdrom_read_audio ra;
-	int lba;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_पढ़ो_audio(काष्ठा cdrom_device_info *cdi,
+					       व्योम __user *arg)
+अणु
+	काष्ठा cdrom_पढ़ो_audio ra;
+	पूर्णांक lba;
 
-#ifdef CONFIG_COMPAT
-	if (in_compat_syscall()) {
-		struct compat_cdrom_read_audio {
-			union cdrom_addr	addr;
-			u8			addr_format;
-			compat_int_t		nframes;
+#अगर_घोषित CONFIG_COMPAT
+	अगर (in_compat_syscall()) अणु
+		काष्ठा compat_cdrom_पढ़ो_audio अणु
+			जोड़ cdrom_addr	addr;
+			u8			addr_क्रमmat;
+			compat_पूर्णांक_t		nframes;
 			compat_caddr_t		buf;
-		} ra32;
+		पूर्ण ra32;
 
-		if (copy_from_user(&ra32, arg, sizeof(ra32)))
-			return -EFAULT;
+		अगर (copy_from_user(&ra32, arg, माप(ra32)))
+			वापस -EFAULT;
 
-		ra = (struct cdrom_read_audio) {
+		ra = (काष्ठा cdrom_पढ़ो_audio) अणु
 			.addr		= ra32.addr,
-			.addr_format	= ra32.addr_format,
+			.addr_क्रमmat	= ra32.addr_क्रमmat,
 			.nframes	= ra32.nframes,
 			.buf		= compat_ptr(ra32.buf),
-		};
-	} else
-#endif
-	{
-		if (copy_from_user(&ra, (struct cdrom_read_audio __user *)arg,
-				   sizeof(ra)))
-			return -EFAULT;
-	}
+		पूर्ण;
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		अगर (copy_from_user(&ra, (काष्ठा cdrom_पढ़ो_audio __user *)arg,
+				   माप(ra)))
+			वापस -EFAULT;
+	पूर्ण
 
-	if (ra.addr_format == CDROM_MSF)
+	अगर (ra.addr_क्रमmat == CDROM_MSF)
 		lba = msf_to_lba(ra.addr.msf.minute,
 				 ra.addr.msf.second,
 				 ra.addr.msf.frame);
-	else if (ra.addr_format == CDROM_LBA)
+	अन्यथा अगर (ra.addr_क्रमmat == CDROM_LBA)
 		lba = ra.addr.lba;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	/* FIXME: we need upper bound checking, too!! */
-	if (lba < 0 || ra.nframes <= 0 || ra.nframes > CD_FRAMES)
-		return -EINVAL;
+	अगर (lba < 0 || ra.nframes <= 0 || ra.nframes > CD_FRAMES)
+		वापस -EINVAL;
 
-	return cdrom_read_cdda(cdi, ra.buf, lba, ra.nframes);
-}
+	वापस cdrom_पढ़ो_cdda(cdi, ra.buf, lba, ra.nframes);
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_subchannel(struct cdrom_device_info *cdi,
-					       void __user *arg)
-{
-	int ret;
-	struct cdrom_subchnl q;
-	u_char requested, back;
-	if (copy_from_user(&q, (struct cdrom_subchnl __user *)arg, sizeof(q)))
-		return -EFAULT;
-	requested = q.cdsc_format;
-	if (!((requested == CDROM_MSF) ||
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_subchannel(काष्ठा cdrom_device_info *cdi,
+					       व्योम __user *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा cdrom_subchnl q;
+	u_अक्षर requested, back;
+	अगर (copy_from_user(&q, (काष्ठा cdrom_subchnl __user *)arg, माप(q)))
+		वापस -EFAULT;
+	requested = q.cdsc_क्रमmat;
+	अगर (!((requested == CDROM_MSF) ||
 	      (requested == CDROM_LBA)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	ret = cdrom_read_subchannel(cdi, &q, 0);
-	if (ret)
-		return ret;
-	back = q.cdsc_format; /* local copy */
-	sanitize_format(&q.cdsc_absaddr, &back, requested);
-	sanitize_format(&q.cdsc_reladdr, &q.cdsc_format, requested);
-	if (copy_to_user((struct cdrom_subchnl __user *)arg, &q, sizeof(q)))
-		return -EFAULT;
+	ret = cdrom_पढ़ो_subchannel(cdi, &q, 0);
+	अगर (ret)
+		वापस ret;
+	back = q.cdsc_क्रमmat; /* local copy */
+	sanitize_क्रमmat(&q.cdsc_असलaddr, &back, requested);
+	sanitize_क्रमmat(&q.cdsc_reladdr, &q.cdsc_क्रमmat, requested);
+	अगर (copy_to_user((काष्ठा cdrom_subchnl __user *)arg, &q, माप(q)))
+		वापस -EFAULT;
 	/* cd_dbg(CD_DO_IOCTL, "CDROMSUBCHNL successful\n"); */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_play_msf(struct cdrom_device_info *cdi,
-					     void __user *arg,
-					     struct packet_command *cgc)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	struct cdrom_msf msf;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_play_msf(काष्ठा cdrom_device_info *cdi,
+					     व्योम __user *arg,
+					     काष्ठा packet_command *cgc)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	काष्ठा cdrom_msf msf;
 	cd_dbg(CD_DO_IOCTL, "entering CDROMPLAYMSF\n");
-	if (copy_from_user(&msf, (struct cdrom_msf __user *)arg, sizeof(msf)))
-		return -EFAULT;
+	अगर (copy_from_user(&msf, (काष्ठा cdrom_msf __user *)arg, माप(msf)))
+		वापस -EFAULT;
 	cgc->cmd[0] = GPCMD_PLAY_AUDIO_MSF;
 	cgc->cmd[3] = msf.cdmsf_min0;
 	cgc->cmd[4] = msf.cdmsf_sec0;
@@ -3103,18 +3104,18 @@ static noinline int mmc_ioctl_cdrom_play_msf(struct cdrom_device_info *cdi,
 	cgc->cmd[7] = msf.cdmsf_sec1;
 	cgc->cmd[8] = msf.cdmsf_frame1;
 	cgc->data_direction = CGC_DATA_NONE;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_play_blk(struct cdrom_device_info *cdi,
-					     void __user *arg,
-					     struct packet_command *cgc)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
-	struct cdrom_blk blk;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_play_blk(काष्ठा cdrom_device_info *cdi,
+					     व्योम __user *arg,
+					     काष्ठा packet_command *cgc)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
+	काष्ठा cdrom_blk blk;
 	cd_dbg(CD_DO_IOCTL, "entering CDROMPLAYBLK\n");
-	if (copy_from_user(&blk, (struct cdrom_blk __user *)arg, sizeof(blk)))
-		return -EFAULT;
+	अगर (copy_from_user(&blk, (काष्ठा cdrom_blk __user *)arg, माप(blk)))
+		वापस -EFAULT;
 	cgc->cmd[0] = GPCMD_PLAY_AUDIO_10;
 	cgc->cmd[2] = (blk.from >> 24) & 0xff;
 	cgc->cmd[3] = (blk.from >> 16) & 0xff;
@@ -3123,72 +3124,72 @@ static noinline int mmc_ioctl_cdrom_play_blk(struct cdrom_device_info *cdi,
 	cgc->cmd[7] = (blk.len >> 8) & 0xff;
 	cgc->cmd[8] = blk.len & 0xff;
 	cgc->data_direction = CGC_DATA_NONE;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_volume(struct cdrom_device_info *cdi,
-					   void __user *arg,
-					   struct packet_command *cgc,
-					   unsigned int cmd)
-{
-	struct cdrom_volctrl volctrl;
-	unsigned char buffer[32];
-	char mask[sizeof(buffer)];
-	unsigned short offset;
-	int ret;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_volume(काष्ठा cdrom_device_info *cdi,
+					   व्योम __user *arg,
+					   काष्ठा packet_command *cgc,
+					   अचिन्हित पूर्णांक cmd)
+अणु
+	काष्ठा cdrom_volctrl volctrl;
+	अचिन्हित अक्षर buffer[32];
+	अक्षर mask[माप(buffer)];
+	अचिन्हित लघु offset;
+	पूर्णांक ret;
 
 	cd_dbg(CD_DO_IOCTL, "entering CDROMVOLUME\n");
 
-	if (copy_from_user(&volctrl, (struct cdrom_volctrl __user *)arg,
-			   sizeof(volctrl)))
-		return -EFAULT;
+	अगर (copy_from_user(&volctrl, (काष्ठा cdrom_volctrl __user *)arg,
+			   माप(volctrl)))
+		वापस -EFAULT;
 
 	cgc->buffer = buffer;
 	cgc->buflen = 24;
 	ret = cdrom_mode_sense(cdi, cgc, GPMODE_AUDIO_CTL_PAGE, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 		
 	/* originally the code depended on buffer[1] to determine
-	   how much data is available for transfer. buffer[1] is
-	   unfortunately ambigious and the only reliable way seem
+	   how much data is available क्रम transfer. buffer[1] is
+	   unक्रमtunately ambigious and the only reliable way seem
 	   to be to simply skip over the block descriptor... */
 	offset = 8 + be16_to_cpu(*(__be16 *)(buffer + 6));
 
-	if (offset + 16 > sizeof(buffer))
-		return -E2BIG;
+	अगर (offset + 16 > माप(buffer))
+		वापस -E2BIG;
 
-	if (offset + 16 > cgc->buflen) {
+	अगर (offset + 16 > cgc->buflen) अणु
 		cgc->buflen = offset + 16;
 		ret = cdrom_mode_sense(cdi, cgc,
 				       GPMODE_AUDIO_CTL_PAGE, 0);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* sanity check */
-	if ((buffer[offset] & 0x3f) != GPMODE_AUDIO_CTL_PAGE ||
+	अगर ((buffer[offset] & 0x3f) != GPMODE_AUDIO_CTL_PAGE ||
 	    buffer[offset + 1] < 14)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* now we have the current volume settings. if it was only
-	   a CDROMVOLREAD, return these values */
-	if (cmd == CDROMVOLREAD) {
+	/* now we have the current volume settings. अगर it was only
+	   a CDROMVOLREAD, वापस these values */
+	अगर (cmd == CDROMVOLREAD) अणु
 		volctrl.channel0 = buffer[offset+9];
 		volctrl.channel1 = buffer[offset+11];
 		volctrl.channel2 = buffer[offset+13];
 		volctrl.channel3 = buffer[offset+15];
-		if (copy_to_user((struct cdrom_volctrl __user *)arg, &volctrl,
-				 sizeof(volctrl)))
-			return -EFAULT;
-		return 0;
-	}
+		अगर (copy_to_user((काष्ठा cdrom_volctrl __user *)arg, &volctrl,
+				 माप(volctrl)))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
 		
 	/* get the volume mask */
 	cgc->buffer = mask;
 	ret = cdrom_mode_sense(cdi, cgc, GPMODE_AUDIO_CTL_PAGE, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	buffer[offset + 9]  = volctrl.channel0 & mask[offset + 9];
 	buffer[offset + 11] = volctrl.channel1 & mask[offset + 11];
@@ -3197,256 +3198,256 @@ static noinline int mmc_ioctl_cdrom_volume(struct cdrom_device_info *cdi,
 
 	/* set volume */
 	cgc->buffer = buffer + offset - 8;
-	memset(cgc->buffer, 0, 8);
-	return cdrom_mode_select(cdi, cgc);
-}
+	स_रखो(cgc->buffer, 0, 8);
+	वापस cdrom_mode_select(cdi, cgc);
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_start_stop(struct cdrom_device_info *cdi,
-					       struct packet_command *cgc,
-					       int cmd)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_start_stop(काष्ठा cdrom_device_info *cdi,
+					       काष्ठा packet_command *cgc,
+					       पूर्णांक cmd)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 	cd_dbg(CD_DO_IOCTL, "entering CDROMSTART/CDROMSTOP\n");
 	cgc->cmd[0] = GPCMD_START_STOP_UNIT;
 	cgc->cmd[1] = 1;
 	cgc->cmd[4] = (cmd == CDROMSTART) ? 1 : 0;
 	cgc->data_direction = CGC_DATA_NONE;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_pause_resume(struct cdrom_device_info *cdi,
-						 struct packet_command *cgc,
-						 int cmd)
-{
-	const struct cdrom_device_ops *cdo = cdi->ops;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_छोड़ो_resume(काष्ठा cdrom_device_info *cdi,
+						 काष्ठा packet_command *cgc,
+						 पूर्णांक cmd)
+अणु
+	स्थिर काष्ठा cdrom_device_ops *cकरो = cdi->ops;
 	cd_dbg(CD_DO_IOCTL, "entering CDROMPAUSE/CDROMRESUME\n");
 	cgc->cmd[0] = GPCMD_PAUSE_RESUME;
 	cgc->cmd[8] = (cmd == CDROMRESUME) ? 1 : 0;
 	cgc->data_direction = CGC_DATA_NONE;
-	return cdo->generic_packet(cdi, cgc);
-}
+	वापस cकरो->generic_packet(cdi, cgc);
+पूर्ण
 
-static noinline int mmc_ioctl_dvd_read_struct(struct cdrom_device_info *cdi,
-					      void __user *arg,
-					      struct packet_command *cgc)
-{
-	int ret;
-	dvd_struct *s;
-	int size = sizeof(dvd_struct);
+अटल noअंतरभूत पूर्णांक mmc_ioctl_dvd_पढ़ो_काष्ठा(काष्ठा cdrom_device_info *cdi,
+					      व्योम __user *arg,
+					      काष्ठा packet_command *cgc)
+अणु
+	पूर्णांक ret;
+	dvd_काष्ठा *s;
+	पूर्णांक size = माप(dvd_काष्ठा);
 
-	if (!CDROM_CAN(CDC_DVD))
-		return -ENOSYS;
+	अगर (!CDROM_CAN(CDC_DVD))
+		वापस -ENOSYS;
 
 	s = memdup_user(arg, size);
-	if (IS_ERR(s))
-		return PTR_ERR(s);
+	अगर (IS_ERR(s))
+		वापस PTR_ERR(s);
 
 	cd_dbg(CD_DO_IOCTL, "entering DVD_READ_STRUCT\n");
 
-	ret = dvd_read_struct(cdi, s, cgc);
-	if (ret)
-		goto out;
+	ret = dvd_पढ़ो_काष्ठा(cdi, s, cgc);
+	अगर (ret)
+		जाओ out;
 
-	if (copy_to_user(arg, s, size))
+	अगर (copy_to_user(arg, s, size))
 		ret = -EFAULT;
 out:
-	kfree(s);
-	return ret;
-}
+	kमुक्त(s);
+	वापस ret;
+पूर्ण
 
-static noinline int mmc_ioctl_dvd_auth(struct cdrom_device_info *cdi,
-				       void __user *arg)
-{
-	int ret;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_dvd_auth(काष्ठा cdrom_device_info *cdi,
+				       व्योम __user *arg)
+अणु
+	पूर्णांक ret;
 	dvd_authinfo ai;
-	if (!CDROM_CAN(CDC_DVD))
-		return -ENOSYS;
+	अगर (!CDROM_CAN(CDC_DVD))
+		वापस -ENOSYS;
 	cd_dbg(CD_DO_IOCTL, "entering DVD_AUTH\n");
-	if (copy_from_user(&ai, (dvd_authinfo __user *)arg, sizeof(ai)))
-		return -EFAULT;
-	ret = dvd_do_auth(cdi, &ai);
-	if (ret)
-		return ret;
-	if (copy_to_user((dvd_authinfo __user *)arg, &ai, sizeof(ai)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_from_user(&ai, (dvd_authinfo __user *)arg, माप(ai)))
+		वापस -EFAULT;
+	ret = dvd_करो_auth(cdi, &ai);
+	अगर (ret)
+		वापस ret;
+	अगर (copy_to_user((dvd_authinfo __user *)arg, &ai, माप(ai)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_next_writable(struct cdrom_device_info *cdi,
-						  void __user *arg)
-{
-	int ret;
-	long next = 0;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_next_writable(काष्ठा cdrom_device_info *cdi,
+						  व्योम __user *arg)
+अणु
+	पूर्णांक ret;
+	दीर्घ next = 0;
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_NEXT_WRITABLE\n");
 	ret = cdrom_get_next_writable(cdi, &next);
-	if (ret)
-		return ret;
-	if (copy_to_user((long __user *)arg, &next, sizeof(next)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (ret)
+		वापस ret;
+	अगर (copy_to_user((दीर्घ __user *)arg, &next, माप(next)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static noinline int mmc_ioctl_cdrom_last_written(struct cdrom_device_info *cdi,
-						 void __user *arg)
-{
-	int ret;
-	long last = 0;
+अटल noअंतरभूत पूर्णांक mmc_ioctl_cdrom_last_written(काष्ठा cdrom_device_info *cdi,
+						 व्योम __user *arg)
+अणु
+	पूर्णांक ret;
+	दीर्घ last = 0;
 	cd_dbg(CD_DO_IOCTL, "entering CDROM_LAST_WRITTEN\n");
 	ret = cdrom_get_last_written(cdi, &last);
-	if (ret)
-		return ret;
-	if (in_compat_syscall())
-		return put_user(last, (__s32 __user *)arg);
+	अगर (ret)
+		वापस ret;
+	अगर (in_compat_syscall())
+		वापस put_user(last, (__s32 __user *)arg);
 
-	return put_user(last, (long __user *)arg);
-}
+	वापस put_user(last, (दीर्घ __user *)arg);
+पूर्ण
 
-static int mmc_ioctl(struct cdrom_device_info *cdi, unsigned int cmd,
-		     unsigned long arg)
-{
-	struct packet_command cgc;
-	void __user *userptr = (void __user *)arg;
+अटल पूर्णांक mmc_ioctl(काष्ठा cdrom_device_info *cdi, अचिन्हित पूर्णांक cmd,
+		     अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा packet_command cgc;
+	व्योम __user *userptr = (व्योम __user *)arg;
 
-	memset(&cgc, 0, sizeof(cgc));
+	स_रखो(&cgc, 0, माप(cgc));
 
-	/* build a unified command and queue it through
-	   cdo->generic_packet() */
-	switch (cmd) {
-	case CDROMREADRAW:
-	case CDROMREADMODE1:
-	case CDROMREADMODE2:
-		return mmc_ioctl_cdrom_read_data(cdi, userptr, &cgc, cmd);
-	case CDROMREADAUDIO:
-		return mmc_ioctl_cdrom_read_audio(cdi, userptr);
-	case CDROMSUBCHNL:
-		return mmc_ioctl_cdrom_subchannel(cdi, userptr);
-	case CDROMPLAYMSF:
-		return mmc_ioctl_cdrom_play_msf(cdi, userptr, &cgc);
-	case CDROMPLAYBLK:
-		return mmc_ioctl_cdrom_play_blk(cdi, userptr, &cgc);
-	case CDROMVOLCTRL:
-	case CDROMVOLREAD:
-		return mmc_ioctl_cdrom_volume(cdi, userptr, &cgc, cmd);
-	case CDROMSTART:
-	case CDROMSTOP:
-		return mmc_ioctl_cdrom_start_stop(cdi, &cgc, cmd);
-	case CDROMPAUSE:
-	case CDROMRESUME:
-		return mmc_ioctl_cdrom_pause_resume(cdi, &cgc, cmd);
-	case DVD_READ_STRUCT:
-		return mmc_ioctl_dvd_read_struct(cdi, userptr, &cgc);
-	case DVD_AUTH:
-		return mmc_ioctl_dvd_auth(cdi, userptr);
-	case CDROM_NEXT_WRITABLE:
-		return mmc_ioctl_cdrom_next_writable(cdi, userptr);
-	case CDROM_LAST_WRITTEN:
-		return mmc_ioctl_cdrom_last_written(cdi, userptr);
-	}
+	/* build a unअगरied command and queue it through
+	   cकरो->generic_packet() */
+	चयन (cmd) अणु
+	हाल CDROMREADRAW:
+	हाल CDROMREADMODE1:
+	हाल CDROMREADMODE2:
+		वापस mmc_ioctl_cdrom_पढ़ो_data(cdi, userptr, &cgc, cmd);
+	हाल CDROMREADAUDIO:
+		वापस mmc_ioctl_cdrom_पढ़ो_audio(cdi, userptr);
+	हाल CDROMSUBCHNL:
+		वापस mmc_ioctl_cdrom_subchannel(cdi, userptr);
+	हाल CDROMPLAYMSF:
+		वापस mmc_ioctl_cdrom_play_msf(cdi, userptr, &cgc);
+	हाल CDROMPLAYBLK:
+		वापस mmc_ioctl_cdrom_play_blk(cdi, userptr, &cgc);
+	हाल CDROMVOLCTRL:
+	हाल CDROMVOLREAD:
+		वापस mmc_ioctl_cdrom_volume(cdi, userptr, &cgc, cmd);
+	हाल CDROMSTART:
+	हाल CDROMSTOP:
+		वापस mmc_ioctl_cdrom_start_stop(cdi, &cgc, cmd);
+	हाल CDROMPAUSE:
+	हाल CDROMRESUME:
+		वापस mmc_ioctl_cdrom_छोड़ो_resume(cdi, &cgc, cmd);
+	हाल DVD_READ_STRUCT:
+		वापस mmc_ioctl_dvd_पढ़ो_काष्ठा(cdi, userptr, &cgc);
+	हाल DVD_AUTH:
+		वापस mmc_ioctl_dvd_auth(cdi, userptr);
+	हाल CDROM_NEXT_WRITABLE:
+		वापस mmc_ioctl_cdrom_next_writable(cdi, userptr);
+	हाल CDROM_LAST_WRITTEN:
+		वापस mmc_ioctl_cdrom_last_written(cdi, userptr);
+	पूर्ण
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
 /*
- * Just about every imaginable ioctl is supported in the Uniform layer
+ * Just about every imaginable ioctl is supported in the Unअगरorm layer
  * these days.
- * ATAPI / SCSI specific code now mainly resides in mmc_ioctl().
+ * ATAPI / SCSI specअगरic code now मुख्यly resides in mmc_ioctl().
  */
-int cdrom_ioctl(struct cdrom_device_info *cdi, struct block_device *bdev,
-		fmode_t mode, unsigned int cmd, unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int ret;
+पूर्णांक cdrom_ioctl(काष्ठा cdrom_device_info *cdi, काष्ठा block_device *bdev,
+		भ_शेषe_t mode, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक ret;
 
 	/*
 	 * Try the generic SCSI command ioctl's first.
 	 */
 	ret = scsi_cmd_blk_ioctl(bdev, mode, cmd, argp);
-	if (ret != -ENOTTY)
-		return ret;
+	अगर (ret != -ENOTTY)
+		वापस ret;
 
-	switch (cmd) {
-	case CDROMMULTISESSION:
-		return cdrom_ioctl_multisession(cdi, argp);
-	case CDROMEJECT:
-		return cdrom_ioctl_eject(cdi);
-	case CDROMCLOSETRAY:
-		return cdrom_ioctl_closetray(cdi);
-	case CDROMEJECT_SW:
-		return cdrom_ioctl_eject_sw(cdi, arg);
-	case CDROM_MEDIA_CHANGED:
-		return cdrom_ioctl_media_changed(cdi, arg);
-	case CDROM_SET_OPTIONS:
-		return cdrom_ioctl_set_options(cdi, arg);
-	case CDROM_CLEAR_OPTIONS:
-		return cdrom_ioctl_clear_options(cdi, arg);
-	case CDROM_SELECT_SPEED:
-		return cdrom_ioctl_select_speed(cdi, arg);
-	case CDROM_SELECT_DISC:
-		return cdrom_ioctl_select_disc(cdi, arg);
-	case CDROMRESET:
-		return cdrom_ioctl_reset(cdi, bdev);
-	case CDROM_LOCKDOOR:
-		return cdrom_ioctl_lock_door(cdi, arg);
-	case CDROM_DEBUG:
-		return cdrom_ioctl_debug(cdi, arg);
-	case CDROM_GET_CAPABILITY:
-		return cdrom_ioctl_get_capability(cdi);
-	case CDROM_GET_MCN:
-		return cdrom_ioctl_get_mcn(cdi, argp);
-	case CDROM_DRIVE_STATUS:
-		return cdrom_ioctl_drive_status(cdi, arg);
-	case CDROM_DISC_STATUS:
-		return cdrom_ioctl_disc_status(cdi);
-	case CDROM_CHANGER_NSLOTS:
-		return cdrom_ioctl_changer_nslots(cdi);
-	}
+	चयन (cmd) अणु
+	हाल CDROMMULTISESSION:
+		वापस cdrom_ioctl_multisession(cdi, argp);
+	हाल CDROMEJECT:
+		वापस cdrom_ioctl_eject(cdi);
+	हाल CDROMCLOSETRAY:
+		वापस cdrom_ioctl_बंदtray(cdi);
+	हाल CDROMEJECT_SW:
+		वापस cdrom_ioctl_eject_sw(cdi, arg);
+	हाल CDROM_MEDIA_CHANGED:
+		वापस cdrom_ioctl_media_changed(cdi, arg);
+	हाल CDROM_SET_OPTIONS:
+		वापस cdrom_ioctl_set_options(cdi, arg);
+	हाल CDROM_CLEAR_OPTIONS:
+		वापस cdrom_ioctl_clear_options(cdi, arg);
+	हाल CDROM_SELECT_SPEED:
+		वापस cdrom_ioctl_select_speed(cdi, arg);
+	हाल CDROM_SELECT_DISC:
+		वापस cdrom_ioctl_select_disc(cdi, arg);
+	हाल CDROMRESET:
+		वापस cdrom_ioctl_reset(cdi, bdev);
+	हाल CDROM_LOCKDOOR:
+		वापस cdrom_ioctl_lock_करोor(cdi, arg);
+	हाल CDROM_DEBUG:
+		वापस cdrom_ioctl_debug(cdi, arg);
+	हाल CDROM_GET_CAPABILITY:
+		वापस cdrom_ioctl_get_capability(cdi);
+	हाल CDROM_GET_MCN:
+		वापस cdrom_ioctl_get_mcn(cdi, argp);
+	हाल CDROM_DRIVE_STATUS:
+		वापस cdrom_ioctl_drive_status(cdi, arg);
+	हाल CDROM_DISC_STATUS:
+		वापस cdrom_ioctl_disc_status(cdi);
+	हाल CDROM_CHANGER_NSLOTS:
+		वापस cdrom_ioctl_changer_nslots(cdi);
+	पूर्ण
 
 	/*
 	 * Use the ioctls that are implemented through the generic_packet()
-	 * interface. this may look at bit funny, but if -ENOTTY is
-	 * returned that particular ioctl is not implemented and we
-	 * let it go through the device specific ones.
+	 * पूर्णांकerface. this may look at bit funny, but अगर -ENOTTY is
+	 * वापसed that particular ioctl is not implemented and we
+	 * let it go through the device specअगरic ones.
 	 */
-	if (CDROM_CAN(CDC_GENERIC_PACKET)) {
+	अगर (CDROM_CAN(CDC_GENERIC_PACKET)) अणु
 		ret = mmc_ioctl(cdi, cmd, arg);
-		if (ret != -ENOTTY)
-			return ret;
-	}
+		अगर (ret != -ENOTTY)
+			वापस ret;
+	पूर्ण
 
 	/*
 	 * Note: most of the cd_dbg() calls are commented out here,
 	 * because they fill up the sys log when CD players poll
 	 * the drive.
 	 */
-	switch (cmd) {
-	case CDROMSUBCHNL:
-		return cdrom_ioctl_get_subchnl(cdi, argp);
-	case CDROMREADTOCHDR:
-		return cdrom_ioctl_read_tochdr(cdi, argp);
-	case CDROMREADTOCENTRY:
-		return cdrom_ioctl_read_tocentry(cdi, argp);
-	case CDROMPLAYMSF:
-		return cdrom_ioctl_play_msf(cdi, argp);
-	case CDROMPLAYTRKIND:
-		return cdrom_ioctl_play_trkind(cdi, argp);
-	case CDROMVOLCTRL:
-		return cdrom_ioctl_volctrl(cdi, argp);
-	case CDROMVOLREAD:
-		return cdrom_ioctl_volread(cdi, argp);
-	case CDROMSTART:
-	case CDROMSTOP:
-	case CDROMPAUSE:
-	case CDROMRESUME:
-		return cdrom_ioctl_audioctl(cdi, cmd);
-	}
+	चयन (cmd) अणु
+	हाल CDROMSUBCHNL:
+		वापस cdrom_ioctl_get_subchnl(cdi, argp);
+	हाल CDROMREADTOCHDR:
+		वापस cdrom_ioctl_पढ़ो_tochdr(cdi, argp);
+	हाल CDROMREADTOCENTRY:
+		वापस cdrom_ioctl_पढ़ो_tocentry(cdi, argp);
+	हाल CDROMPLAYMSF:
+		वापस cdrom_ioctl_play_msf(cdi, argp);
+	हाल CDROMPLAYTRKIND:
+		वापस cdrom_ioctl_play_trkind(cdi, argp);
+	हाल CDROMVOLCTRL:
+		वापस cdrom_ioctl_volctrl(cdi, argp);
+	हाल CDROMVOLREAD:
+		वापस cdrom_ioctl_volपढ़ो(cdi, argp);
+	हाल CDROMSTART:
+	हाल CDROMSTOP:
+	हाल CDROMPAUSE:
+	हाल CDROMRESUME:
+		वापस cdrom_ioctl_audioctl(cdi, cmd);
+	पूर्ण
 
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
 EXPORT_SYMBOL(cdrom_get_last_written);
-EXPORT_SYMBOL(register_cdrom);
-EXPORT_SYMBOL(unregister_cdrom);
-EXPORT_SYMBOL(cdrom_open);
+EXPORT_SYMBOL(रेजिस्टर_cdrom);
+EXPORT_SYMBOL(unरेजिस्टर_cdrom);
+EXPORT_SYMBOL(cdrom_खोलो);
 EXPORT_SYMBOL(cdrom_release);
 EXPORT_SYMBOL(cdrom_ioctl);
 EXPORT_SYMBOL(cdrom_number_of_slots);
@@ -3455,324 +3456,324 @@ EXPORT_SYMBOL(cdrom_mode_sense);
 EXPORT_SYMBOL(init_cdrom_command);
 EXPORT_SYMBOL(cdrom_get_media_event);
 
-#ifdef CONFIG_SYSCTL
+#अगर_घोषित CONFIG_SYSCTL
 
-#define CDROM_STR_SIZE 1000
+#घोषणा CDROM_STR_SIZE 1000
 
-static struct cdrom_sysctl_settings {
-	char	info[CDROM_STR_SIZE];	/* general info */
-	int	autoclose;		/* close tray upon mount, etc */
-	int	autoeject;		/* eject on umount */
-	int	debug;			/* turn on debugging messages */
-	int	lock;			/* lock the door on device open */
-	int	check;			/* check media type */
-} cdrom_sysctl_settings;
+अटल काष्ठा cdrom_sysctl_settings अणु
+	अक्षर	info[CDROM_STR_SIZE];	/* general info */
+	पूर्णांक	स्वतःबंद;		/* बंद tray upon mount, etc */
+	पूर्णांक	स्वतःeject;		/* eject on umount */
+	पूर्णांक	debug;			/* turn on debugging messages */
+	पूर्णांक	lock;			/* lock the करोor on device खोलो */
+	पूर्णांक	check;			/* check media type */
+पूर्ण cdrom_sysctl_settings;
 
-enum cdrom_print_option {
+क्रमागत cdrom_prपूर्णांक_option अणु
 	CTL_NAME,
 	CTL_SPEED,
 	CTL_SLOTS,
 	CTL_CAPABILITY
-};
+पूर्ण;
 
-static int cdrom_print_info(const char *header, int val, char *info,
-				int *pos, enum cdrom_print_option option)
-{
-	const int max_size = sizeof(cdrom_sysctl_settings.info);
-	struct cdrom_device_info *cdi;
-	int ret;
+अटल पूर्णांक cdrom_prपूर्णांक_info(स्थिर अक्षर *header, पूर्णांक val, अक्षर *info,
+				पूर्णांक *pos, क्रमागत cdrom_prपूर्णांक_option option)
+अणु
+	स्थिर पूर्णांक max_size = माप(cdrom_sysctl_settings.info);
+	काष्ठा cdrom_device_info *cdi;
+	पूर्णांक ret;
 
-	ret = scnprintf(info + *pos, max_size - *pos, header);
-	if (!ret)
-		return 1;
+	ret = scnम_लिखो(info + *pos, max_size - *pos, header);
+	अगर (!ret)
+		वापस 1;
 
 	*pos += ret;
 
-	list_for_each_entry(cdi, &cdrom_list, list) {
-		switch (option) {
-		case CTL_NAME:
-			ret = scnprintf(info + *pos, max_size - *pos,
+	list_क्रम_each_entry(cdi, &cdrom_list, list) अणु
+		चयन (option) अणु
+		हाल CTL_NAME:
+			ret = scnम_लिखो(info + *pos, max_size - *pos,
 					"\t%s", cdi->name);
-			break;
-		case CTL_SPEED:
-			ret = scnprintf(info + *pos, max_size - *pos,
+			अवरोध;
+		हाल CTL_SPEED:
+			ret = scnम_लिखो(info + *pos, max_size - *pos,
 					"\t%d", cdi->speed);
-			break;
-		case CTL_SLOTS:
-			ret = scnprintf(info + *pos, max_size - *pos,
+			अवरोध;
+		हाल CTL_SLOTS:
+			ret = scnम_लिखो(info + *pos, max_size - *pos,
 					"\t%d", cdi->capacity);
-			break;
-		case CTL_CAPABILITY:
-			ret = scnprintf(info + *pos, max_size - *pos,
+			अवरोध;
+		हाल CTL_CAPABILITY:
+			ret = scnम_लिखो(info + *pos, max_size - *pos,
 					"\t%d", CDROM_CAN(val) != 0);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_info("invalid option%d\n", option);
-			return 1;
-		}
-		if (!ret)
-			return 1;
+			वापस 1;
+		पूर्ण
+		अगर (!ret)
+			वापस 1;
 		*pos += ret;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdrom_sysctl_info(struct ctl_table *ctl, int write,
-                           void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int pos;
-	char *info = cdrom_sysctl_settings.info;
-	const int max_size = sizeof(cdrom_sysctl_settings.info);
+अटल पूर्णांक cdrom_sysctl_info(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+                           व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक pos;
+	अक्षर *info = cdrom_sysctl_settings.info;
+	स्थिर पूर्णांक max_size = माप(cdrom_sysctl_settings.info);
 	
-	if (!*lenp || (*ppos && !write)) {
+	अगर (!*lenp || (*ppos && !ग_लिखो)) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_lock(&cdrom_mutex);
 
-	pos = sprintf(info, "CD-ROM information, " VERSION "\n");
+	pos = प्र_लिखो(info, "CD-ROM information, " VERSION "\n");
 	
-	if (cdrom_print_info("\ndrive name:\t", 0, info, &pos, CTL_NAME))
-		goto done;
-	if (cdrom_print_info("\ndrive speed:\t", 0, info, &pos, CTL_SPEED))
-		goto done;
-	if (cdrom_print_info("\ndrive # of slots:", 0, info, &pos, CTL_SLOTS))
-		goto done;
-	if (cdrom_print_info("\nCan close tray:\t",
+	अगर (cdrom_prपूर्णांक_info("\ndrive name:\t", 0, info, &pos, CTL_NAME))
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\ndrive speed:\t", 0, info, &pos, CTL_SPEED))
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\ndrive # of slots:", 0, info, &pos, CTL_SLOTS))
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan close tray:\t",
 				CDC_CLOSE_TRAY, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan open tray:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan open tray:\t",
 				CDC_OPEN_TRAY, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan lock tray:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan lock tray:\t",
 				CDC_LOCK, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan change speed:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan change speed:",
 				CDC_SELECT_SPEED, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan select disk:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan select disk:",
 				CDC_SELECT_DISC, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan read multisession:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan read multisession:",
 				CDC_MULTI_SESSION, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan read MCN:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan read MCN:\t",
 				CDC_MCN, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nReports media changed:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nReports media changed:",
 				CDC_MEDIA_CHANGED, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan play audio:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan play audio:\t",
 				CDC_PLAY_AUDIO, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan write CD-R:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan write CD-R:\t",
 				CDC_CD_R, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan write CD-RW:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan write CD-RW:",
 				CDC_CD_RW, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan read DVD:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan read DVD:\t",
 				CDC_DVD, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan write DVD-R:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan write DVD-R:",
 				CDC_DVD_R, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan write DVD-RAM:",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan write DVD-RAM:",
 				CDC_DVD_RAM, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan read MRW:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan read MRW:\t",
 				CDC_MRW, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan write MRW:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan write MRW:\t",
 				CDC_MRW_W, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (cdrom_print_info("\nCan write RAM:\t",
+		जाओ करोne;
+	अगर (cdrom_prपूर्णांक_info("\nCan write RAM:\t",
 				CDC_RAM, info, &pos, CTL_CAPABILITY))
-		goto done;
-	if (!scnprintf(info + pos, max_size - pos, "\n\n"))
-		goto done;
-doit:
+		जाओ करोne;
+	अगर (!scnम_लिखो(info + pos, max_size - pos, "\n\n"))
+		जाओ करोne;
+करोit:
 	mutex_unlock(&cdrom_mutex);
-	return proc_dostring(ctl, write, buffer, lenp, ppos);
-done:
+	वापस proc_करोstring(ctl, ग_लिखो, buffer, lenp, ppos);
+करोne:
 	pr_info("info buffer too small\n");
-	goto doit;
-}
+	जाओ करोit;
+पूर्ण
 
-/* Unfortunately, per device settings are not implemented through
+/* Unक्रमtunately, per device settings are not implemented through
    procfs/sysctl yet. When they are, this will naturally disappear. For now
-   just update all drives. Later this will become the template on which
-   new registered drives will be based. */
-static void cdrom_update_settings(void)
-{
-	struct cdrom_device_info *cdi;
+   just update all drives. Later this will become the ढाँचा on which
+   new रेजिस्टरed drives will be based. */
+अटल व्योम cdrom_update_settings(व्योम)
+अणु
+	काष्ठा cdrom_device_info *cdi;
 
 	mutex_lock(&cdrom_mutex);
-	list_for_each_entry(cdi, &cdrom_list, list) {
-		if (autoclose && CDROM_CAN(CDC_CLOSE_TRAY))
+	list_क्रम_each_entry(cdi, &cdrom_list, list) अणु
+		अगर (स्वतःबंद && CDROM_CAN(CDC_CLOSE_TRAY))
 			cdi->options |= CDO_AUTO_CLOSE;
-		else if (!autoclose)
+		अन्यथा अगर (!स्वतःबंद)
 			cdi->options &= ~CDO_AUTO_CLOSE;
-		if (autoeject && CDROM_CAN(CDC_OPEN_TRAY))
+		अगर (स्वतःeject && CDROM_CAN(CDC_OPEN_TRAY))
 			cdi->options |= CDO_AUTO_EJECT;
-		else if (!autoeject)
+		अन्यथा अगर (!स्वतःeject)
 			cdi->options &= ~CDO_AUTO_EJECT;
-		if (lockdoor && CDROM_CAN(CDC_LOCK))
+		अगर (lockकरोor && CDROM_CAN(CDC_LOCK))
 			cdi->options |= CDO_LOCK;
-		else if (!lockdoor)
+		अन्यथा अगर (!lockकरोor)
 			cdi->options &= ~CDO_LOCK;
-		if (check_media_type)
+		अगर (check_media_type)
 			cdi->options |= CDO_CHECK_TYPE;
-		else
+		अन्यथा
 			cdi->options &= ~CDO_CHECK_TYPE;
-	}
+	पूर्ण
 	mutex_unlock(&cdrom_mutex);
-}
+पूर्ण
 
-static int cdrom_sysctl_handler(struct ctl_table *ctl, int write,
-				void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret;
+अटल पूर्णांक cdrom_sysctl_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+				व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 	
-	ret = proc_dointvec(ctl, write, buffer, lenp, ppos);
+	ret = proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	if (write) {
+	अगर (ग_लिखो) अणु
 	
-		/* we only care for 1 or 0. */
-		autoclose        = !!cdrom_sysctl_settings.autoclose;
-		autoeject        = !!cdrom_sysctl_settings.autoeject;
+		/* we only care क्रम 1 or 0. */
+		स्वतःबंद        = !!cdrom_sysctl_settings.स्वतःबंद;
+		स्वतःeject        = !!cdrom_sysctl_settings.स्वतःeject;
 		debug	         = !!cdrom_sysctl_settings.debug;
-		lockdoor         = !!cdrom_sysctl_settings.lock;
+		lockकरोor         = !!cdrom_sysctl_settings.lock;
 		check_media_type = !!cdrom_sysctl_settings.check;
 
 		/* update the option flags according to the changes. we
-		   don't have per device options through sysctl yet,
+		   करोn't have per device options through sysctl yet,
 		   but we will have and then this will disappear. */
 		cdrom_update_settings();
-	}
+	पूर्ण
 
-        return ret;
-}
+        वापस ret;
+पूर्ण
 
 /* Place files in /proc/sys/dev/cdrom */
-static struct ctl_table cdrom_table[] = {
-	{
+अटल काष्ठा ctl_table cdrom_table[] = अणु
+	अणु
 		.procname	= "info",
 		.data		= &cdrom_sysctl_settings.info, 
 		.maxlen		= CDROM_STR_SIZE,
 		.mode		= 0444,
 		.proc_handler	= cdrom_sysctl_info,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "autoclose",
-		.data		= &cdrom_sysctl_settings.autoclose,
-		.maxlen		= sizeof(int),
+		.data		= &cdrom_sysctl_settings.स्वतःबंद,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= cdrom_sysctl_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "autoeject",
-		.data		= &cdrom_sysctl_settings.autoeject,
-		.maxlen		= sizeof(int),
+		.data		= &cdrom_sysctl_settings.स्वतःeject,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= cdrom_sysctl_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "debug",
 		.data		= &cdrom_sysctl_settings.debug,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= cdrom_sysctl_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "lock",
 		.data		= &cdrom_sysctl_settings.lock,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= cdrom_sysctl_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "check_media",
 		.data		= &cdrom_sysctl_settings.check,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.proc_handler	= cdrom_sysctl_handler
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table cdrom_cdrom_table[] = {
-	{
+अटल काष्ठा ctl_table cdrom_cdrom_table[] = अणु
+	अणु
 		.procname	= "cdrom",
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= cdrom_table,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 /* Make sure that /proc/sys/dev is there */
-static struct ctl_table cdrom_root_table[] = {
-	{
+अटल काष्ठा ctl_table cdrom_root_table[] = अणु
+	अणु
 		.procname	= "dev",
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= cdrom_cdrom_table,
-	},
-	{ }
-};
-static struct ctl_table_header *cdrom_sysctl_header;
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+अटल काष्ठा ctl_table_header *cdrom_sysctl_header;
 
-static void cdrom_sysctl_register(void)
-{
-	static atomic_t initialized = ATOMIC_INIT(0);
+अटल व्योम cdrom_sysctl_रेजिस्टर(व्योम)
+अणु
+	अटल atomic_t initialized = ATOMIC_INIT(0);
 
-	if (!atomic_add_unless(&initialized, 1, 1))
-		return;
+	अगर (!atomic_add_unless(&initialized, 1, 1))
+		वापस;
 
-	cdrom_sysctl_header = register_sysctl_table(cdrom_root_table);
+	cdrom_sysctl_header = रेजिस्टर_sysctl_table(cdrom_root_table);
 
-	/* set the defaults */
-	cdrom_sysctl_settings.autoclose = autoclose;
-	cdrom_sysctl_settings.autoeject = autoeject;
+	/* set the शेषs */
+	cdrom_sysctl_settings.स्वतःबंद = स्वतःबंद;
+	cdrom_sysctl_settings.स्वतःeject = स्वतःeject;
 	cdrom_sysctl_settings.debug = debug;
-	cdrom_sysctl_settings.lock = lockdoor;
+	cdrom_sysctl_settings.lock = lockकरोor;
 	cdrom_sysctl_settings.check = check_media_type;
-}
+पूर्ण
 
-static void cdrom_sysctl_unregister(void)
-{
-	if (cdrom_sysctl_header)
-		unregister_sysctl_table(cdrom_sysctl_header);
-}
+अटल व्योम cdrom_sysctl_unरेजिस्टर(व्योम)
+अणु
+	अगर (cdrom_sysctl_header)
+		unरेजिस्टर_sysctl_table(cdrom_sysctl_header);
+पूर्ण
 
-#else /* CONFIG_SYSCTL */
+#अन्यथा /* CONFIG_SYSCTL */
 
-static void cdrom_sysctl_register(void)
-{
-}
+अटल व्योम cdrom_sysctl_रेजिस्टर(व्योम)
+अणु
+पूर्ण
 
-static void cdrom_sysctl_unregister(void)
-{
-}
+अटल व्योम cdrom_sysctl_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
 
-#endif /* CONFIG_SYSCTL */
+#पूर्ण_अगर /* CONFIG_SYSCTL */
 
-static int __init cdrom_init(void)
-{
-	cdrom_sysctl_register();
+अटल पूर्णांक __init cdrom_init(व्योम)
+अणु
+	cdrom_sysctl_रेजिस्टर();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit cdrom_exit(void)
-{
+अटल व्योम __निकास cdrom_निकास(व्योम)
+अणु
 	pr_info("Uniform CD-ROM driver unloaded\n");
-	cdrom_sysctl_unregister();
-}
+	cdrom_sysctl_unरेजिस्टर();
+पूर्ण
 
 module_init(cdrom_init);
-module_exit(cdrom_exit);
+module_निकास(cdrom_निकास);
 MODULE_LICENSE("GPL");

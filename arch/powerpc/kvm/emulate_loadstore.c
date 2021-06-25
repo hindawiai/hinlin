@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright IBM Corp. 2007
  * Copyright 2011 Freescale Semiconductor, Inc.
  *
- * Authors: Hollis Blanchard <hollisb@us.ibm.com>
+ * Authors: Hollis Blanअक्षरd <hollisb@us.ibm.com>
  */
 
-#include <linux/jiffies.h>
-#include <linux/hrtimer.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/kvm_host.h>
-#include <linux/clockchips.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/घड़ीchips.h>
 
-#include <asm/reg.h>
-#include <asm/time.h>
-#include <asm/byteorder.h>
-#include <asm/kvm_ppc.h>
-#include <asm/disassemble.h>
-#include <asm/ppc-opcode.h>
-#include <asm/sstep.h>
-#include "timing.h"
-#include "trace.h"
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/kvm_ppc.h>
+#समावेश <यंत्र/disassemble.h>
+#समावेश <यंत्र/ppc-opcode.h>
+#समावेश <यंत्र/sstep.h>
+#समावेश "timing.h"
+#समावेश "trace.h"
 
-#ifdef CONFIG_PPC_FPU
-static bool kvmppc_check_fp_disabled(struct kvm_vcpu *vcpu)
-{
-	if (!(kvmppc_get_msr(vcpu) & MSR_FP)) {
+#अगर_घोषित CONFIG_PPC_FPU
+अटल bool kvmppc_check_fp_disabled(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (!(kvmppc_get_msr(vcpu) & MSR_FP)) अणु
 		kvmppc_core_queue_fpunavail(vcpu);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
-#endif /* CONFIG_PPC_FPU */
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_FPU */
 
-#ifdef CONFIG_VSX
-static bool kvmppc_check_vsx_disabled(struct kvm_vcpu *vcpu)
-{
-	if (!(kvmppc_get_msr(vcpu) & MSR_VSX)) {
+#अगर_घोषित CONFIG_VSX
+अटल bool kvmppc_check_vsx_disabled(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (!(kvmppc_get_msr(vcpu) & MSR_VSX)) अणु
 		kvmppc_core_queue_vsx_unavail(vcpu);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
-#endif /* CONFIG_VSX */
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_VSX */
 
-#ifdef CONFIG_ALTIVEC
-static bool kvmppc_check_altivec_disabled(struct kvm_vcpu *vcpu)
-{
-	if (!(kvmppc_get_msr(vcpu) & MSR_VEC)) {
+#अगर_घोषित CONFIG_ALTIVEC
+अटल bool kvmppc_check_altivec_disabled(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अगर (!(kvmppc_get_msr(vcpu) & MSR_VEC)) अणु
 		kvmppc_core_queue_vec_unavail(vcpu);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
-#endif /* CONFIG_ALTIVEC */
+	वापस false;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ALTIVEC */
 
 /*
- * XXX to do:
+ * XXX to करो:
  * lfiwax, lfiwzx
  * vector loads and stores
  *
- * Instructions that trap when used on cache-inhibited mappings
- * are not emulated here: multiple and string instructions,
- * lq/stq, and the load-reserve/store-conditional instructions.
+ * Inकाष्ठाions that trap when used on cache-inhibited mappings
+ * are not emulated here: multiple and string inकाष्ठाions,
+ * lq/stq, and the load-reserve/store-conditional inकाष्ठाions.
  */
-int kvmppc_emulate_loadstore(struct kvm_vcpu *vcpu)
-{
+पूर्णांक kvmppc_emulate_loadstore(काष्ठा kvm_vcpu *vcpu)
+अणु
 	u32 inst;
-	enum emulation_result emulated = EMULATE_FAIL;
-	int advance = 1;
-	struct instruction_op op;
+	क्रमागत emulation_result emulated = EMULATE_FAIL;
+	पूर्णांक advance = 1;
+	काष्ठा inकाष्ठाion_op op;
 
-	/* this default type might be overwritten by subcategories */
-	kvmppc_set_exit_type(vcpu, EMULATED_INST_EXITS);
+	/* this शेष type might be overwritten by subcategories */
+	kvmppc_set_निकास_type(vcpu, EMULATED_INST_EXITS);
 
 	emulated = kvmppc_get_last_inst(vcpu, INST_GENERIC, &inst);
-	if (emulated != EMULATE_DONE)
-		return emulated;
+	अगर (emulated != EMULATE_DONE)
+		वापस emulated;
 
 	vcpu->arch.mmio_vsx_copy_nums = 0;
 	vcpu->arch.mmio_vsx_offset = 0;
@@ -94,277 +95,277 @@ int kvmppc_emulate_loadstore(struct kvm_vcpu *vcpu)
 
 	emulated = EMULATE_FAIL;
 	vcpu->arch.regs.msr = vcpu->arch.shared->msr;
-	if (analyse_instr(&op, &vcpu->arch.regs, ppc_inst(inst)) == 0) {
-		int type = op.type & INSTR_TYPE_MASK;
-		int size = GETSIZE(op.type);
+	अगर (analyse_instr(&op, &vcpu->arch.regs, ppc_inst(inst)) == 0) अणु
+		पूर्णांक type = op.type & INSTR_TYPE_MASK;
+		पूर्णांक size = GETSIZE(op.type);
 
-		switch (type) {
-		case LOAD:  {
-			int instr_byte_swap = op.type & BYTEREV;
+		चयन (type) अणु
+		हाल LOAD:  अणु
+			पूर्णांक instr_byte_swap = op.type & BYTEREV;
 
-			if (op.type & SIGNEXT)
+			अगर (op.type & SIGNEXT)
 				emulated = kvmppc_handle_loads(vcpu,
 						op.reg, size, !instr_byte_swap);
-			else
+			अन्यथा
 				emulated = kvmppc_handle_load(vcpu,
 						op.reg, size, !instr_byte_swap);
 
-			if ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
+			अगर ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
 				kvmppc_set_gpr(vcpu, op.update_reg, op.ea);
 
-			break;
-		}
-#ifdef CONFIG_PPC_FPU
-		case LOAD_FP:
-			if (kvmppc_check_fp_disabled(vcpu))
-				return EMULATE_DONE;
+			अवरोध;
+		पूर्ण
+#अगर_घोषित CONFIG_PPC_FPU
+		हाल LOAD_FP:
+			अगर (kvmppc_check_fp_disabled(vcpu))
+				वापस EMULATE_DONE;
 
-			if (op.type & FPCONV)
+			अगर (op.type & FPCONV)
 				vcpu->arch.mmio_sp64_extend = 1;
 
-			if (op.type & SIGNEXT)
+			अगर (op.type & SIGNEXT)
 				emulated = kvmppc_handle_loads(vcpu,
 					     KVM_MMIO_REG_FPR|op.reg, size, 1);
-			else
+			अन्यथा
 				emulated = kvmppc_handle_load(vcpu,
 					     KVM_MMIO_REG_FPR|op.reg, size, 1);
 
-			if ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
+			अगर ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
 				kvmppc_set_gpr(vcpu, op.update_reg, op.ea);
 
-			break;
-#endif
-#ifdef CONFIG_ALTIVEC
-		case LOAD_VMX:
-			if (kvmppc_check_altivec_disabled(vcpu))
-				return EMULATE_DONE;
+			अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALTIVEC
+		हाल LOAD_VMX:
+			अगर (kvmppc_check_altivec_disabled(vcpu))
+				वापस EMULATE_DONE;
 
-			/* Hardware enforces alignment of VMX accesses */
-			vcpu->arch.vaddr_accessed &= ~((unsigned long)size - 1);
-			vcpu->arch.paddr_accessed &= ~((unsigned long)size - 1);
+			/* Hardware enक्रमces alignment of VMX accesses */
+			vcpu->arch.vaddr_accessed &= ~((अचिन्हित दीर्घ)size - 1);
+			vcpu->arch.paddr_accessed &= ~((अचिन्हित दीर्घ)size - 1);
 
-			if (size == 16) { /* lvx */
+			अगर (size == 16) अणु /* lvx */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_DWORD;
-			} else if (size == 4) { /* lvewx  */
+			पूर्ण अन्यथा अगर (size == 4) अणु /* lvewx  */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_WORD;
-			} else if (size == 2) { /* lvehx  */
+			पूर्ण अन्यथा अगर (size == 2) अणु /* lvehx  */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_HWORD;
-			} else if (size == 1) { /* lvebx  */
+			पूर्ण अन्यथा अगर (size == 1) अणु /* lvebx  */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_BYTE;
-			} else
-				break;
+			पूर्ण अन्यथा
+				अवरोध;
 
 			vcpu->arch.mmio_vmx_offset =
 				(vcpu->arch.vaddr_accessed & 0xf)/size;
 
-			if (size == 16) {
+			अगर (size == 16) अणु
 				vcpu->arch.mmio_vmx_copy_nums = 2;
 				emulated = kvmppc_handle_vmx_load(vcpu,
 						KVM_MMIO_REG_VMX|op.reg,
 						8, 1);
-			} else {
+			पूर्ण अन्यथा अणु
 				vcpu->arch.mmio_vmx_copy_nums = 1;
 				emulated = kvmppc_handle_vmx_load(vcpu,
 						KVM_MMIO_REG_VMX|op.reg,
 						size, 1);
-			}
-			break;
-#endif
-#ifdef CONFIG_VSX
-		case LOAD_VSX: {
-			int io_size_each;
+			पूर्ण
+			अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VSX
+		हाल LOAD_VSX: अणु
+			पूर्णांक io_size_each;
 
-			if (op.vsx_flags & VSX_CHECK_VEC) {
-				if (kvmppc_check_altivec_disabled(vcpu))
-					return EMULATE_DONE;
-			} else {
-				if (kvmppc_check_vsx_disabled(vcpu))
-					return EMULATE_DONE;
-			}
+			अगर (op.vsx_flags & VSX_CHECK_VEC) अणु
+				अगर (kvmppc_check_altivec_disabled(vcpu))
+					वापस EMULATE_DONE;
+			पूर्ण अन्यथा अणु
+				अगर (kvmppc_check_vsx_disabled(vcpu))
+					वापस EMULATE_DONE;
+			पूर्ण
 
-			if (op.vsx_flags & VSX_FPCONV)
+			अगर (op.vsx_flags & VSX_FPCONV)
 				vcpu->arch.mmio_sp64_extend = 1;
 
-			if (op.element_size == 8)  {
-				if (op.vsx_flags & VSX_SPLAT)
+			अगर (op.element_size == 8)  अणु
+				अगर (op.vsx_flags & VSX_SPLAT)
 					vcpu->arch.mmio_copy_type =
 						KVMPPC_VSX_COPY_DWORD_LOAD_DUMP;
-				else
+				अन्यथा
 					vcpu->arch.mmio_copy_type =
 						KVMPPC_VSX_COPY_DWORD;
-			} else if (op.element_size == 4) {
-				if (op.vsx_flags & VSX_SPLAT)
+			पूर्ण अन्यथा अगर (op.element_size == 4) अणु
+				अगर (op.vsx_flags & VSX_SPLAT)
 					vcpu->arch.mmio_copy_type =
 						KVMPPC_VSX_COPY_WORD_LOAD_DUMP;
-				else
+				अन्यथा
 					vcpu->arch.mmio_copy_type =
 						KVMPPC_VSX_COPY_WORD;
-			} else
-				break;
+			पूर्ण अन्यथा
+				अवरोध;
 
-			if (size < op.element_size) {
-				/* precision convert case: lxsspx, etc */
+			अगर (size < op.element_size) अणु
+				/* precision convert हाल: lxsspx, etc */
 				vcpu->arch.mmio_vsx_copy_nums = 1;
 				io_size_each = size;
-			} else { /* lxvw4x, lxvd2x, etc */
+			पूर्ण अन्यथा अणु /* lxvw4x, lxvd2x, etc */
 				vcpu->arch.mmio_vsx_copy_nums =
 					size/op.element_size;
 				io_size_each = op.element_size;
-			}
+			पूर्ण
 
 			emulated = kvmppc_handle_vsx_load(vcpu,
 					KVM_MMIO_REG_VSX|op.reg, io_size_each,
 					1, op.type & SIGNEXT);
-			break;
-		}
-#endif
-		case STORE:
-			/* if need byte reverse, op.val has been reversed by
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		हाल STORE:
+			/* अगर need byte reverse, op.val has been reversed by
 			 * analyse_instr().
 			 */
 			emulated = kvmppc_handle_store(vcpu, op.val, size, 1);
 
-			if ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
+			अगर ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
 				kvmppc_set_gpr(vcpu, op.update_reg, op.ea);
 
-			break;
-#ifdef CONFIG_PPC_FPU
-		case STORE_FP:
-			if (kvmppc_check_fp_disabled(vcpu))
-				return EMULATE_DONE;
+			अवरोध;
+#अगर_घोषित CONFIG_PPC_FPU
+		हाल STORE_FP:
+			अगर (kvmppc_check_fp_disabled(vcpu))
+				वापस EMULATE_DONE;
 
-			/* The FP registers need to be flushed so that
-			 * kvmppc_handle_store() can read actual FP vals
+			/* The FP रेजिस्टरs need to be flushed so that
+			 * kvmppc_handle_store() can पढ़ो actual FP vals
 			 * from vcpu->arch.
 			 */
-			if (vcpu->kvm->arch.kvm_ops->giveup_ext)
+			अगर (vcpu->kvm->arch.kvm_ops->giveup_ext)
 				vcpu->kvm->arch.kvm_ops->giveup_ext(vcpu,
 						MSR_FP);
 
-			if (op.type & FPCONV)
+			अगर (op.type & FPCONV)
 				vcpu->arch.mmio_sp64_extend = 1;
 
 			emulated = kvmppc_handle_store(vcpu,
 					VCPU_FPR(vcpu, op.reg), size, 1);
 
-			if ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
+			अगर ((op.type & UPDATE) && (emulated != EMULATE_FAIL))
 				kvmppc_set_gpr(vcpu, op.update_reg, op.ea);
 
-			break;
-#endif
-#ifdef CONFIG_ALTIVEC
-		case STORE_VMX:
-			if (kvmppc_check_altivec_disabled(vcpu))
-				return EMULATE_DONE;
+			अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALTIVEC
+		हाल STORE_VMX:
+			अगर (kvmppc_check_altivec_disabled(vcpu))
+				वापस EMULATE_DONE;
 
-			/* Hardware enforces alignment of VMX accesses. */
-			vcpu->arch.vaddr_accessed &= ~((unsigned long)size - 1);
-			vcpu->arch.paddr_accessed &= ~((unsigned long)size - 1);
+			/* Hardware enक्रमces alignment of VMX accesses. */
+			vcpu->arch.vaddr_accessed &= ~((अचिन्हित दीर्घ)size - 1);
+			vcpu->arch.paddr_accessed &= ~((अचिन्हित दीर्घ)size - 1);
 
-			if (vcpu->kvm->arch.kvm_ops->giveup_ext)
+			अगर (vcpu->kvm->arch.kvm_ops->giveup_ext)
 				vcpu->kvm->arch.kvm_ops->giveup_ext(vcpu,
 						MSR_VEC);
-			if (size == 16) { /* stvx */
+			अगर (size == 16) अणु /* stvx */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_DWORD;
-			} else if (size == 4) { /* stvewx  */
+			पूर्ण अन्यथा अगर (size == 4) अणु /* stvewx  */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_WORD;
-			} else if (size == 2) { /* stvehx  */
+			पूर्ण अन्यथा अगर (size == 2) अणु /* stvehx  */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_HWORD;
-			} else if (size == 1) { /* stvebx  */
+			पूर्ण अन्यथा अगर (size == 1) अणु /* stvebx  */
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VMX_COPY_BYTE;
-			} else
-				break;
+			पूर्ण अन्यथा
+				अवरोध;
 
 			vcpu->arch.mmio_vmx_offset =
 				(vcpu->arch.vaddr_accessed & 0xf)/size;
 
-			if (size == 16) {
+			अगर (size == 16) अणु
 				vcpu->arch.mmio_vmx_copy_nums = 2;
 				emulated = kvmppc_handle_vmx_store(vcpu,
 						op.reg, 8, 1);
-			} else {
+			पूर्ण अन्यथा अणु
 				vcpu->arch.mmio_vmx_copy_nums = 1;
 				emulated = kvmppc_handle_vmx_store(vcpu,
 						op.reg, size, 1);
-			}
+			पूर्ण
 
-			break;
-#endif
-#ifdef CONFIG_VSX
-		case STORE_VSX: {
-			int io_size_each;
+			अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VSX
+		हाल STORE_VSX: अणु
+			पूर्णांक io_size_each;
 
-			if (op.vsx_flags & VSX_CHECK_VEC) {
-				if (kvmppc_check_altivec_disabled(vcpu))
-					return EMULATE_DONE;
-			} else {
-				if (kvmppc_check_vsx_disabled(vcpu))
-					return EMULATE_DONE;
-			}
+			अगर (op.vsx_flags & VSX_CHECK_VEC) अणु
+				अगर (kvmppc_check_altivec_disabled(vcpu))
+					वापस EMULATE_DONE;
+			पूर्ण अन्यथा अणु
+				अगर (kvmppc_check_vsx_disabled(vcpu))
+					वापस EMULATE_DONE;
+			पूर्ण
 
-			if (vcpu->kvm->arch.kvm_ops->giveup_ext)
+			अगर (vcpu->kvm->arch.kvm_ops->giveup_ext)
 				vcpu->kvm->arch.kvm_ops->giveup_ext(vcpu,
 						MSR_VSX);
 
-			if (op.vsx_flags & VSX_FPCONV)
+			अगर (op.vsx_flags & VSX_FPCONV)
 				vcpu->arch.mmio_sp64_extend = 1;
 
-			if (op.element_size == 8)
+			अगर (op.element_size == 8)
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VSX_COPY_DWORD;
-			else if (op.element_size == 4)
+			अन्यथा अगर (op.element_size == 4)
 				vcpu->arch.mmio_copy_type =
 						KVMPPC_VSX_COPY_WORD;
-			else
-				break;
+			अन्यथा
+				अवरोध;
 
-			if (size < op.element_size) {
-				/* precise conversion case, like stxsspx */
+			अगर (size < op.element_size) अणु
+				/* precise conversion हाल, like stxsspx */
 				vcpu->arch.mmio_vsx_copy_nums = 1;
 				io_size_each = size;
-			} else { /* stxvw4x, stxvd2x, etc */
+			पूर्ण अन्यथा अणु /* stxvw4x, stxvd2x, etc */
 				vcpu->arch.mmio_vsx_copy_nums =
 						size/op.element_size;
 				io_size_each = op.element_size;
-			}
+			पूर्ण
 
 			emulated = kvmppc_handle_vsx_store(vcpu,
 					op.reg, io_size_each, 1);
-			break;
-		}
-#endif
-		case CACHEOP:
-			/* Do nothing. The guest is performing dcbi because
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		हाल CACHEOP:
+			/* Do nothing. The guest is perक्रमming dcbi because
 			 * hardware DMA is not snooped by the dcache, but
 			 * emulated DMA either goes through the dcache as
-			 * normal writes, or the host kernel has handled dcache
+			 * normal ग_लिखोs, or the host kernel has handled dcache
 			 * coherence.
 			 */
 			emulated = EMULATE_DONE;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (emulated == EMULATE_FAIL) {
+	अगर (emulated == EMULATE_FAIL) अणु
 		advance = 0;
 		kvmppc_core_queue_program(vcpu, 0);
-	}
+	पूर्ण
 
 	trace_kvm_ppc_instr(inst, kvmppc_get_pc(vcpu), emulated);
 
-	/* Advance past emulated instruction. */
-	if (advance)
+	/* Advance past emulated inकाष्ठाion. */
+	अगर (advance)
 		kvmppc_set_pc(vcpu, kvmppc_get_pc(vcpu) + 4);
 
-	return emulated;
-}
+	वापस emulated;
+पूर्ण

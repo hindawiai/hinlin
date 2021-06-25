@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 BayLibre, SAS
  */
-#ifndef __SOC_MESON_CANVAS_H
-#define __SOC_MESON_CANVAS_H
+#अगर_अघोषित __SOC_MESON_CANVAS_H
+#घोषणा __SOC_MESON_CANVAS_H
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#define MESON_CANVAS_WRAP_NONE	0x00
-#define MESON_CANVAS_WRAP_X	0x01
-#define MESON_CANVAS_WRAP_Y	0x02
+#घोषणा MESON_CANVAS_WRAP_NONE	0x00
+#घोषणा MESON_CANVAS_WRAP_X	0x01
+#घोषणा MESON_CANVAS_WRAP_Y	0x02
 
-#define MESON_CANVAS_BLKMODE_LINEAR	0x00
-#define MESON_CANVAS_BLKMODE_32x32	0x01
-#define MESON_CANVAS_BLKMODE_64x64	0x02
+#घोषणा MESON_CANVAS_BLKMODE_LINEAR	0x00
+#घोषणा MESON_CANVAS_BLKMODE_32x32	0x01
+#घोषणा MESON_CANVAS_BLKMODE_64x64	0x02
 
-#define MESON_CANVAS_ENDIAN_SWAP16	0x1
-#define MESON_CANVAS_ENDIAN_SWAP32	0x3
-#define MESON_CANVAS_ENDIAN_SWAP64	0x7
-#define MESON_CANVAS_ENDIAN_SWAP128	0xf
+#घोषणा MESON_CANVAS_ENDIAN_SWAP16	0x1
+#घोषणा MESON_CANVAS_ENDIAN_SWAP32	0x3
+#घोषणा MESON_CANVAS_ENDIAN_SWAP64	0x7
+#घोषणा MESON_CANVAS_ENDIAN_SWAP128	0xf
 
-struct device;
-struct meson_canvas;
+काष्ठा device;
+काष्ठा meson_canvas;
 
 /**
  * meson_canvas_get() - get a canvas provider instance
  *
- * @dev: consumer device pointer
+ * @dev: consumer device poपूर्णांकer
  */
-struct meson_canvas *meson_canvas_get(struct device *dev);
+काष्ठा meson_canvas *meson_canvas_get(काष्ठा device *dev);
 
 /**
  * meson_canvas_alloc() - take ownership of a canvas
@@ -36,15 +37,15 @@ struct meson_canvas *meson_canvas_get(struct device *dev);
  * @canvas: canvas provider instance retrieved from meson_canvas_get()
  * @canvas_index: will be filled with the canvas ID
  */
-int meson_canvas_alloc(struct meson_canvas *canvas, u8 *canvas_index);
+पूर्णांक meson_canvas_alloc(काष्ठा meson_canvas *canvas, u8 *canvas_index);
 
 /**
- * meson_canvas_free() - remove ownership from a canvas
+ * meson_canvas_मुक्त() - हटाओ ownership from a canvas
  *
  * @canvas: canvas provider instance retrieved from meson_canvas_get()
  * @canvas_index: canvas ID that was obtained via meson_canvas_alloc()
  */
-int meson_canvas_free(struct meson_canvas *canvas, u8 canvas_index);
+पूर्णांक meson_canvas_मुक्त(काष्ठा meson_canvas *canvas, u8 canvas_index);
 
 /**
  * meson_canvas_config() - configure a canvas
@@ -54,13 +55,13 @@ int meson_canvas_free(struct meson_canvas *canvas, u8 canvas_index);
  * @addr: physical address to the pixel buffer
  * @stride: width of the buffer
  * @height: height of the buffer
- * @wrap: undocumented
+ * @wrap: unकरोcumented
  * @blkmode: block mode (linear, 32x32, 64x64)
  * @endian: byte swapping (swap16, swap32, swap64, swap128)
  */
-int meson_canvas_config(struct meson_canvas *canvas, u8 canvas_index,
+पूर्णांक meson_canvas_config(काष्ठा meson_canvas *canvas, u8 canvas_index,
 			u32 addr, u32 stride, u32 height,
-			unsigned int wrap, unsigned int blkmode,
-			unsigned int endian);
+			अचिन्हित पूर्णांक wrap, अचिन्हित पूर्णांक blkmode,
+			अचिन्हित पूर्णांक endian);
 
-#endif
+#पूर्ण_अगर

@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_GT_PM_IRQ_H
-#define INTEL_GT_PM_IRQ_H
+#अगर_अघोषित INTEL_GT_PM_IRQ_H
+#घोषणा INTEL_GT_PM_IRQ_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct intel_gt;
+काष्ठा पूर्णांकel_gt;
 
-void gen6_gt_pm_unmask_irq(struct intel_gt *gt, u32 mask);
-void gen6_gt_pm_mask_irq(struct intel_gt *gt, u32 mask);
+व्योम gen6_gt_pm_unmask_irq(काष्ठा पूर्णांकel_gt *gt, u32 mask);
+व्योम gen6_gt_pm_mask_irq(काष्ठा पूर्णांकel_gt *gt, u32 mask);
 
-void gen6_gt_pm_enable_irq(struct intel_gt *gt, u32 enable_mask);
-void gen6_gt_pm_disable_irq(struct intel_gt *gt, u32 disable_mask);
+व्योम gen6_gt_pm_enable_irq(काष्ठा पूर्णांकel_gt *gt, u32 enable_mask);
+व्योम gen6_gt_pm_disable_irq(काष्ठा पूर्णांकel_gt *gt, u32 disable_mask);
 
-void gen6_gt_pm_reset_iir(struct intel_gt *gt, u32 reset_mask);
+व्योम gen6_gt_pm_reset_iir(काष्ठा पूर्णांकel_gt *gt, u32 reset_mask);
 
-#endif /* INTEL_GT_PM_IRQ_H */
+#पूर्ण_अगर /* INTEL_GT_PM_IRQ_H */

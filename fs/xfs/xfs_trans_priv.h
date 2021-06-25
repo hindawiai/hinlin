@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000,2002,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_TRANS_PRIV_H__
-#define	__XFS_TRANS_PRIV_H__
+#अगर_अघोषित __XFS_TRANS_PRIV_H__
+#घोषणा	__XFS_TRANS_PRIV_H__
 
-struct xfs_log_item;
-struct xfs_mount;
-struct xfs_trans;
-struct xfs_ail;
-struct xfs_log_vec;
+काष्ठा xfs_log_item;
+काष्ठा xfs_mount;
+काष्ठा xfs_trans;
+काष्ठा xfs_ail;
+काष्ठा xfs_log_vec;
 
 
-void	xfs_trans_init(struct xfs_mount *);
-void	xfs_trans_add_item(struct xfs_trans *, struct xfs_log_item *);
-void	xfs_trans_del_item(struct xfs_log_item *);
-void	xfs_trans_unreserve_and_mod_sb(struct xfs_trans *tp);
+व्योम	xfs_trans_init(काष्ठा xfs_mount *);
+व्योम	xfs_trans_add_item(काष्ठा xfs_trans *, काष्ठा xfs_log_item *);
+व्योम	xfs_trans_del_item(काष्ठा xfs_log_item *);
+व्योम	xfs_trans_unreserve_and_mod_sb(काष्ठा xfs_trans *tp);
 
-void	xfs_trans_committed_bulk(struct xfs_ail *ailp, struct xfs_log_vec *lv,
-				xfs_lsn_t commit_lsn, bool aborted);
+व्योम	xfs_trans_committed_bulk(काष्ठा xfs_ail *ailp, काष्ठा xfs_log_vec *lv,
+				xfs_lsn_t commit_lsn, bool पातed);
 /*
  * AIL traversal cursor.
  *
- * Rather than using a generation number for detecting changes in the ail, use
- * a cursor that is protected by the ail lock. The aild cursor exists in the
- * struct xfs_ail, but other traversals can declare it on the stack and link it
+ * Rather than using a generation number क्रम detecting changes in the ail, use
+ * a cursor that is रक्षित by the ail lock. The aild cursor exists in the
+ * काष्ठा xfs_ail, but other traversals can declare it on the stack and link it
  * to the ail list.
  *
- * When an object is deleted from or moved int the AIL, the cursor list is
- * searched to see if the object is a designated cursor item. If it is, it is
- * deleted from the cursor so that the next time the cursor is used traversal
- * will return to the start.
+ * When an object is deleted from or moved पूर्णांक the AIL, the cursor list is
+ * searched to see अगर the object is a designated cursor item. If it is, it is
+ * deleted from the cursor so that the next समय the cursor is used traversal
+ * will वापस to the start.
  *
  * This means a traversal colliding with a removal will cause a restart of the
  * list scan, rather than any insertion or deletion anywhere in the list. The
- * low bit of the item pointer is set if the cursor has been invalidated so
- * that we can tell the difference between invalidation and reaching the end
+ * low bit of the item poपूर्णांकer is set अगर the cursor has been invalidated so
+ * that we can tell the dअगरference between invalidation and reaching the end
  * of the list to trigger traversal restarts.
  */
-struct xfs_ail_cursor {
-	struct list_head	list;
-	struct xfs_log_item	*item;
-};
+काष्ठा xfs_ail_cursor अणु
+	काष्ठा list_head	list;
+	काष्ठा xfs_log_item	*item;
+पूर्ण;
 
 /*
- * Private AIL structures.
+ * Private AIL काष्ठाures.
  *
  * Eventually we need to drive the locking in here as well.
  */
-struct xfs_ail {
-	struct xfs_mount	*ail_mount;
-	struct task_struct	*ail_task;
-	struct list_head	ail_head;
+काष्ठा xfs_ail अणु
+	काष्ठा xfs_mount	*ail_mount;
+	काष्ठा task_काष्ठा	*ail_task;
+	काष्ठा list_head	ail_head;
 	xfs_lsn_t		ail_target;
 	xfs_lsn_t		ail_target_prev;
-	struct list_head	ail_cursors;
+	काष्ठा list_head	ail_cursors;
 	spinlock_t		ail_lock;
 	xfs_lsn_t		ail_last_pushed_lsn;
-	int			ail_log_flush;
-	struct list_head	ail_buf_list;
-	wait_queue_head_t	ail_empty;
-};
+	पूर्णांक			ail_log_flush;
+	काष्ठा list_head	ail_buf_list;
+	रुको_queue_head_t	ail_empty;
+पूर्ण;
 
 /*
  * From xfs_trans_ail.c
  */
-void	xfs_trans_ail_update_bulk(struct xfs_ail *ailp,
-				struct xfs_ail_cursor *cur,
-				struct xfs_log_item **log_items, int nr_items,
+व्योम	xfs_trans_ail_update_bulk(काष्ठा xfs_ail *ailp,
+				काष्ठा xfs_ail_cursor *cur,
+				काष्ठा xfs_log_item **log_items, पूर्णांक nr_items,
 				xfs_lsn_t lsn) __releases(ailp->ail_lock);
 /*
- * Return a pointer to the first item in the AIL.  If the AIL is empty, then
- * return NULL.
+ * Return a poपूर्णांकer to the first item in the AIL.  If the AIL is empty, then
+ * वापस शून्य.
  */
-static inline struct xfs_log_item *
+अटल अंतरभूत काष्ठा xfs_log_item *
 xfs_ail_min(
-	struct xfs_ail  *ailp)
-{
-	return list_first_entry_or_null(&ailp->ail_head, struct xfs_log_item,
+	काष्ठा xfs_ail  *ailp)
+अणु
+	वापस list_first_entry_or_null(&ailp->ail_head, काष्ठा xfs_log_item,
 					li_ail);
-}
+पूर्ण
 
-static inline void
+अटल अंतरभूत व्योम
 xfs_trans_ail_update(
-	struct xfs_ail		*ailp,
-	struct xfs_log_item	*lip,
+	काष्ठा xfs_ail		*ailp,
+	काष्ठा xfs_log_item	*lip,
 	xfs_lsn_t		lsn) __releases(ailp->ail_lock)
-{
-	xfs_trans_ail_update_bulk(ailp, NULL, &lip, 1, lsn);
-}
+अणु
+	xfs_trans_ail_update_bulk(ailp, शून्य, &lip, 1, lsn);
+पूर्ण
 
-void xfs_trans_ail_insert(struct xfs_ail *ailp, struct xfs_log_item *lip,
+व्योम xfs_trans_ail_insert(काष्ठा xfs_ail *ailp, काष्ठा xfs_log_item *lip,
 		xfs_lsn_t lsn);
 
-xfs_lsn_t xfs_ail_delete_one(struct xfs_ail *ailp, struct xfs_log_item *lip);
-void xfs_ail_update_finish(struct xfs_ail *ailp, xfs_lsn_t old_lsn)
+xfs_lsn_t xfs_ail_delete_one(काष्ठा xfs_ail *ailp, काष्ठा xfs_log_item *lip);
+व्योम xfs_ail_update_finish(काष्ठा xfs_ail *ailp, xfs_lsn_t old_lsn)
 			__releases(ailp->ail_lock);
-void xfs_trans_ail_delete(struct xfs_log_item *lip, int shutdown_type);
+व्योम xfs_trans_ail_delete(काष्ठा xfs_log_item *lip, पूर्णांक shutकरोwn_type);
 
-void			xfs_ail_push(struct xfs_ail *, xfs_lsn_t);
-void			xfs_ail_push_all(struct xfs_ail *);
-void			xfs_ail_push_all_sync(struct xfs_ail *);
-struct xfs_log_item	*xfs_ail_min(struct xfs_ail  *ailp);
-xfs_lsn_t		xfs_ail_min_lsn(struct xfs_ail *ailp);
+व्योम			xfs_ail_push(काष्ठा xfs_ail *, xfs_lsn_t);
+व्योम			xfs_ail_push_all(काष्ठा xfs_ail *);
+व्योम			xfs_ail_push_all_sync(काष्ठा xfs_ail *);
+काष्ठा xfs_log_item	*xfs_ail_min(काष्ठा xfs_ail  *ailp);
+xfs_lsn_t		xfs_ail_min_lsn(काष्ठा xfs_ail *ailp);
 
-struct xfs_log_item *	xfs_trans_ail_cursor_first(struct xfs_ail *ailp,
-					struct xfs_ail_cursor *cur,
+काष्ठा xfs_log_item *	xfs_trans_ail_cursor_first(काष्ठा xfs_ail *ailp,
+					काष्ठा xfs_ail_cursor *cur,
 					xfs_lsn_t lsn);
-struct xfs_log_item *	xfs_trans_ail_cursor_last(struct xfs_ail *ailp,
-					struct xfs_ail_cursor *cur,
+काष्ठा xfs_log_item *	xfs_trans_ail_cursor_last(काष्ठा xfs_ail *ailp,
+					काष्ठा xfs_ail_cursor *cur,
 					xfs_lsn_t lsn);
-struct xfs_log_item *	xfs_trans_ail_cursor_next(struct xfs_ail *ailp,
-					struct xfs_ail_cursor *cur);
-void			xfs_trans_ail_cursor_done(struct xfs_ail_cursor *cur);
+काष्ठा xfs_log_item *	xfs_trans_ail_cursor_next(काष्ठा xfs_ail *ailp,
+					काष्ठा xfs_ail_cursor *cur);
+व्योम			xfs_trans_ail_cursor_करोne(काष्ठा xfs_ail_cursor *cur);
 
-#if BITS_PER_LONG != 64
-static inline void
+#अगर BITS_PER_LONG != 64
+अटल अंतरभूत व्योम
 xfs_trans_ail_copy_lsn(
-	struct xfs_ail	*ailp,
+	काष्ठा xfs_ail	*ailp,
 	xfs_lsn_t	*dst,
 	xfs_lsn_t	*src)
-{
-	ASSERT(sizeof(xfs_lsn_t) == 8);	/* don't lock if it shrinks */
+अणु
+	ASSERT(माप(xfs_lsn_t) == 8);	/* करोn't lock अगर it shrinks */
 	spin_lock(&ailp->ail_lock);
 	*dst = *src;
 	spin_unlock(&ailp->ail_lock);
-}
-#else
-static inline void
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम
 xfs_trans_ail_copy_lsn(
-	struct xfs_ail	*ailp,
+	काष्ठा xfs_ail	*ailp,
 	xfs_lsn_t	*dst,
 	xfs_lsn_t	*src)
-{
-	ASSERT(sizeof(xfs_lsn_t) == 8);
+अणु
+	ASSERT(माप(xfs_lsn_t) == 8);
 	*dst = *src;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static inline void
+अटल अंतरभूत व्योम
 xfs_clear_li_failed(
-	struct xfs_log_item	*lip)
-{
-	struct xfs_buf	*bp = lip->li_buf;
+	काष्ठा xfs_log_item	*lip)
+अणु
+	काष्ठा xfs_buf	*bp = lip->li_buf;
 
 	ASSERT(test_bit(XFS_LI_IN_AIL, &lip->li_flags));
-	lockdep_assert_held(&lip->li_ailp->ail_lock);
+	lockdep_निश्चित_held(&lip->li_ailp->ail_lock);
 
-	if (test_and_clear_bit(XFS_LI_FAILED, &lip->li_flags)) {
-		lip->li_buf = NULL;
+	अगर (test_and_clear_bit(XFS_LI_FAILED, &lip->li_flags)) अणु
+		lip->li_buf = शून्य;
 		xfs_buf_rele(bp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void
+अटल अंतरभूत व्योम
 xfs_set_li_failed(
-	struct xfs_log_item	*lip,
-	struct xfs_buf		*bp)
-{
-	lockdep_assert_held(&lip->li_ailp->ail_lock);
+	काष्ठा xfs_log_item	*lip,
+	काष्ठा xfs_buf		*bp)
+अणु
+	lockdep_निश्चित_held(&lip->li_ailp->ail_lock);
 
-	if (!test_and_set_bit(XFS_LI_FAILED, &lip->li_flags)) {
+	अगर (!test_and_set_bit(XFS_LI_FAILED, &lip->li_flags)) अणु
 		xfs_buf_hold(bp);
 		lip->li_buf = bp;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif	/* __XFS_TRANS_PRIV_H__ */
+#पूर्ण_अगर	/* __XFS_TRANS_PRIV_H__ */

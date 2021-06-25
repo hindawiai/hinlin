@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * DDR addressing details and AC timing parameters from JEDEC specs
  *
@@ -7,31 +8,31 @@
  * Aneesh V <aneesh@ti.com>
  */
 
-#include <linux/export.h>
+#समावेश <linux/export.h>
 
-#include "jedec_ddr.h"
+#समावेश "jedec_ddr.h"
 
 /* LPDDR2 addressing details from JESD209-2 section 2.4 */
-const struct lpddr2_addressing
-	lpddr2_jedec_addressing_table[NUM_DDR_ADDR_TABLE_ENTRIES] = {
-	{B4, T_REFI_15_6, T_RFC_90}, /* 64M */
-	{B4, T_REFI_15_6, T_RFC_90}, /* 128M */
-	{B4, T_REFI_7_8,  T_RFC_90}, /* 256M */
-	{B4, T_REFI_7_8,  T_RFC_90}, /* 512M */
-	{B8, T_REFI_7_8, T_RFC_130}, /* 1GS4 */
-	{B8, T_REFI_3_9, T_RFC_130}, /* 2GS4 */
-	{B8, T_REFI_3_9, T_RFC_130}, /* 4G */
-	{B8, T_REFI_3_9, T_RFC_210}, /* 8G */
-	{B4, T_REFI_7_8, T_RFC_130}, /* 1GS2 */
-	{B4, T_REFI_3_9, T_RFC_130}, /* 2GS2 */
-};
+स्थिर काष्ठा lpddr2_addressing
+	lpddr2_jedec_addressing_table[NUM_DDR_ADDR_TABLE_ENTRIES] = अणु
+	अणुB4, T_REFI_15_6, T_RFC_90पूर्ण, /* 64M */
+	अणुB4, T_REFI_15_6, T_RFC_90पूर्ण, /* 128M */
+	अणुB4, T_REFI_7_8,  T_RFC_90पूर्ण, /* 256M */
+	अणुB4, T_REFI_7_8,  T_RFC_90पूर्ण, /* 512M */
+	अणुB8, T_REFI_7_8, T_RFC_130पूर्ण, /* 1GS4 */
+	अणुB8, T_REFI_3_9, T_RFC_130पूर्ण, /* 2GS4 */
+	अणुB8, T_REFI_3_9, T_RFC_130पूर्ण, /* 4G */
+	अणुB8, T_REFI_3_9, T_RFC_210पूर्ण, /* 8G */
+	अणुB4, T_REFI_7_8, T_RFC_130पूर्ण, /* 1GS2 */
+	अणुB4, T_REFI_3_9, T_RFC_130पूर्ण, /* 2GS2 */
+पूर्ण;
 EXPORT_SYMBOL_GPL(lpddr2_jedec_addressing_table);
 
 /* LPDDR2 AC timing parameters from JESD209-2 section 12 */
-const struct lpddr2_timings
-	lpddr2_jedec_timings[NUM_DDR_TIMING_TABLE_ENTRIES] = {
+स्थिर काष्ठा lpddr2_timings
+	lpddr2_jedec_timings[NUM_DDR_TIMING_TABLE_ENTRIES] = अणु
 	/* Speed bin 400(200 MHz) */
-	[0] = {
+	[0] = अणु
 		.max_freq	= 200000000,
 		.min_freq	= 10000000,
 		.tRPab		= 21000,
@@ -50,9 +51,9 @@ const struct lpddr2_timings
 		.tZQinit	= 1000000,
 		.tRAS_max_ns	= 70000,
 		.tDQSCK_max_derated = 6000,
-	},
+	पूर्ण,
 	/* Speed bin 533(266 MHz) */
-	[1] = {
+	[1] = अणु
 		.max_freq	= 266666666,
 		.min_freq	= 10000000,
 		.tRPab		= 21000,
@@ -71,9 +72,9 @@ const struct lpddr2_timings
 		.tZQinit	= 1000000,
 		.tRAS_max_ns	= 70000,
 		.tDQSCK_max_derated = 6000,
-	},
+	पूर्ण,
 	/* Speed bin 800(400 MHz) */
-	[2] = {
+	[2] = अणु
 		.max_freq	= 400000000,
 		.min_freq	= 10000000,
 		.tRPab		= 21000,
@@ -92,9 +93,9 @@ const struct lpddr2_timings
 		.tZQinit	= 1000000,
 		.tRAS_max_ns	= 70000,
 		.tDQSCK_max_derated = 6000,
-	},
+	पूर्ण,
 	/* Speed bin 1066(533 MHz) */
-	[3] = {
+	[3] = अणु
 		.max_freq	= 533333333,
 		.min_freq	= 10000000,
 		.tRPab		= 21000,
@@ -113,11 +114,11 @@ const struct lpddr2_timings
 		.tZQinit	= 1000000,
 		.tRAS_max_ns	= 70000,
 		.tDQSCK_max_derated = 5620,
-	},
-};
+	पूर्ण,
+पूर्ण;
 EXPORT_SYMBOL_GPL(lpddr2_jedec_timings);
 
-const struct lpddr2_min_tck lpddr2_jedec_min_tck = {
+स्थिर काष्ठा lpddr2_min_tck lpddr2_jedec_min_tck = अणु
 	.tRPab		= 3,
 	.tRCD		= 3,
 	.tWR		= 3,
@@ -129,5 +130,5 @@ const struct lpddr2_min_tck lpddr2_jedec_min_tck = {
 	.tCKE		= 3,
 	.tCKESR		= 3,
 	.tFAW		= 8
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(lpddr2_jedec_min_tck);

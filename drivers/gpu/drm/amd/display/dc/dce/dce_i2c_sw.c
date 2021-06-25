@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,480 +24,480 @@
  *
  */
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-#include "dce_i2c.h"
-#include "dce_i2c_sw.h"
-#include "include/gpio_service_interface.h"
-#define SCL false
-#define SDA true
+#समावेश "dce_i2c.h"
+#समावेश "dce_i2c_sw.h"
+#समावेश "include/gpio_service_interface.h"
+#घोषणा SCL false
+#घोषणा SDA true
 
-void dce_i2c_sw_construct(
-	struct dce_i2c_sw *dce_i2c_sw,
-	struct dc_context *ctx)
-{
+व्योम dce_i2c_sw_स्थिरruct(
+	काष्ठा dce_i2c_sw *dce_i2c_sw,
+	काष्ठा dc_context *ctx)
+अणु
 	dce_i2c_sw->ctx = ctx;
-}
+पूर्ण
 
-static inline bool read_bit_from_ddc(
-	struct ddc *ddc,
-	bool data_nor_clock)
-{
-	uint32_t value = 0;
+अटल अंतरभूत bool पढ़ो_bit_from_ddc(
+	काष्ठा ddc *ddc,
+	bool data_nor_घड़ी)
+अणु
+	uपूर्णांक32_t value = 0;
 
-	if (data_nor_clock)
+	अगर (data_nor_घड़ी)
 		dal_gpio_get_value(ddc->pin_data, &value);
-	else
-		dal_gpio_get_value(ddc->pin_clock, &value);
+	अन्यथा
+		dal_gpio_get_value(ddc->pin_घड़ी, &value);
 
-	return (value != 0);
-}
+	वापस (value != 0);
+पूर्ण
 
-static inline void write_bit_to_ddc(
-	struct ddc *ddc,
-	bool data_nor_clock,
+अटल अंतरभूत व्योम ग_लिखो_bit_to_ddc(
+	काष्ठा ddc *ddc,
+	bool data_nor_घड़ी,
 	bool bit)
-{
-	uint32_t value = bit ? 1 : 0;
+अणु
+	uपूर्णांक32_t value = bit ? 1 : 0;
 
-	if (data_nor_clock)
+	अगर (data_nor_घड़ी)
 		dal_gpio_set_value(ddc->pin_data, value);
-	else
-		dal_gpio_set_value(ddc->pin_clock, value);
-}
+	अन्यथा
+		dal_gpio_set_value(ddc->pin_घड़ी, value);
+पूर्ण
 
-static void release_engine_dce_sw(
-	struct resource_pool *pool,
-	struct dce_i2c_sw *dce_i2c_sw)
-{
-	dal_ddc_close(dce_i2c_sw->ddc);
-	dce_i2c_sw->ddc = NULL;
-}
+अटल व्योम release_engine_dce_sw(
+	काष्ठा resource_pool *pool,
+	काष्ठा dce_i2c_sw *dce_i2c_sw)
+अणु
+	dal_ddc_बंद(dce_i2c_sw->ddc);
+	dce_i2c_sw->ddc = शून्य;
+पूर्ण
 
-static bool wait_for_scl_high_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc,
-	uint16_t clock_delay_div_4)
-{
-	uint32_t scl_retry = 0;
-	uint32_t scl_retry_max = I2C_SW_TIMEOUT_DELAY / clock_delay_div_4;
+अटल bool रुको_क्रम_scl_high_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc,
+	uपूर्णांक16_t घड़ी_delay_भाग_4)
+अणु
+	uपूर्णांक32_t scl_retry = 0;
+	uपूर्णांक32_t scl_retry_max = I2C_SW_TIMEOUT_DELAY / घड़ी_delay_भाग_4;
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	do {
-		if (read_bit_from_ddc(ddc, SCL))
-			return true;
+	करो अणु
+		अगर (पढ़ो_bit_from_ddc(ddc, SCL))
+			वापस true;
 
-		udelay(clock_delay_div_4);
+		udelay(घड़ी_delay_भाग_4);
 
 		++scl_retry;
-	} while (scl_retry <= scl_retry_max);
+	पूर्ण जबतक (scl_retry <= scl_retry_max);
 
-	return false;
-}
-static bool write_byte_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc_handle,
-	uint16_t clock_delay_div_4,
-	uint8_t byte)
-{
-	int32_t shift = 7;
+	वापस false;
+पूर्ण
+अटल bool ग_लिखो_byte_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc_handle,
+	uपूर्णांक16_t घड़ी_delay_भाग_4,
+	uपूर्णांक8_t byte)
+अणु
+	पूर्णांक32_t shअगरt = 7;
 	bool ack;
 
 	/* bits are transmitted serially, starting from MSB */
 
-	do {
-		udelay(clock_delay_div_4);
+	करो अणु
+		udelay(घड़ी_delay_भाग_4);
 
-		write_bit_to_ddc(ddc_handle, SDA, (byte >> shift) & 1);
+		ग_लिखो_bit_to_ddc(ddc_handle, SDA, (byte >> shअगरt) & 1);
 
-		udelay(clock_delay_div_4);
+		udelay(घड़ी_delay_भाग_4);
 
-		write_bit_to_ddc(ddc_handle, SCL, true);
+		ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-		if (!wait_for_scl_high_sw(ctx, ddc_handle, clock_delay_div_4))
-			return false;
+		अगर (!रुको_क्रम_scl_high_sw(ctx, ddc_handle, घड़ी_delay_भाग_4))
+			वापस false;
 
-		write_bit_to_ddc(ddc_handle, SCL, false);
+		ग_लिखो_bit_to_ddc(ddc_handle, SCL, false);
 
-		--shift;
-	} while (shift >= 0);
+		--shअगरt;
+	पूर्ण जबतक (shअगरt >= 0);
 
 	/* The display sends ACK by preventing the SDA from going high
 	 * after the SCL pulse we use to send our last data bit.
 	 * If the SDA goes high after that bit, it's a NACK
 	 */
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	write_bit_to_ddc(ddc_handle, SDA, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SDA, true);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	write_bit_to_ddc(ddc_handle, SCL, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-	if (!wait_for_scl_high_sw(ctx, ddc_handle, clock_delay_div_4))
-		return false;
+	अगर (!रुको_क्रम_scl_high_sw(ctx, ddc_handle, घड़ी_delay_भाग_4))
+		वापस false;
 
-	/* read ACK bit */
+	/* पढ़ो ACK bit */
 
-	ack = !read_bit_from_ddc(ddc_handle, SDA);
+	ack = !पढ़ो_bit_from_ddc(ddc_handle, SDA);
 
-	udelay(clock_delay_div_4 << 1);
+	udelay(घड़ी_delay_भाग_4 << 1);
 
-	write_bit_to_ddc(ddc_handle, SCL, false);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, false);
 
-	udelay(clock_delay_div_4 << 1);
+	udelay(घड़ी_delay_भाग_4 << 1);
 
-	return ack;
-}
+	वापस ack;
+पूर्ण
 
-static bool read_byte_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc_handle,
-	uint16_t clock_delay_div_4,
-	uint8_t *byte,
+अटल bool पढ़ो_byte_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc_handle,
+	uपूर्णांक16_t घड़ी_delay_भाग_4,
+	uपूर्णांक8_t *byte,
 	bool more)
-{
-	int32_t shift = 7;
+अणु
+	पूर्णांक32_t shअगरt = 7;
 
-	uint8_t data = 0;
+	uपूर्णांक8_t data = 0;
 
-	/* The data bits are read from MSB to LSB;
-	 * bit is read while SCL is high
+	/* The data bits are पढ़ो from MSB to LSB;
+	 * bit is पढ़ो जबतक SCL is high
 	 */
 
-	do {
-		write_bit_to_ddc(ddc_handle, SCL, true);
+	करो अणु
+		ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-		if (!wait_for_scl_high_sw(ctx, ddc_handle, clock_delay_div_4))
-			return false;
+		अगर (!रुको_क्रम_scl_high_sw(ctx, ddc_handle, घड़ी_delay_भाग_4))
+			वापस false;
 
-		if (read_bit_from_ddc(ddc_handle, SDA))
-			data |= (1 << shift);
+		अगर (पढ़ो_bit_from_ddc(ddc_handle, SDA))
+			data |= (1 << shअगरt);
 
-		write_bit_to_ddc(ddc_handle, SCL, false);
+		ग_लिखो_bit_to_ddc(ddc_handle, SCL, false);
 
-		udelay(clock_delay_div_4 << 1);
+		udelay(घड़ी_delay_भाग_4 << 1);
 
-		--shift;
-	} while (shift >= 0);
+		--shअगरt;
+	पूर्ण जबतक (shअगरt >= 0);
 
-	/* read only whole byte */
+	/* पढ़ो only whole byte */
 
 	*byte = data;
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
 	/* send the acknowledge bit:
 	 * SDA low means ACK, SDA high means NACK
 	 */
 
-	write_bit_to_ddc(ddc_handle, SDA, !more);
+	ग_लिखो_bit_to_ddc(ddc_handle, SDA, !more);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	write_bit_to_ddc(ddc_handle, SCL, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-	if (!wait_for_scl_high_sw(ctx, ddc_handle, clock_delay_div_4))
-		return false;
+	अगर (!रुको_क्रम_scl_high_sw(ctx, ddc_handle, घड़ी_delay_भाग_4))
+		वापस false;
 
-	write_bit_to_ddc(ddc_handle, SCL, false);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, false);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	write_bit_to_ddc(ddc_handle, SDA, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SDA, true);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	return true;
-}
-static bool stop_sync_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc_handle,
-	uint16_t clock_delay_div_4)
-{
-	uint32_t retry = 0;
+	वापस true;
+पूर्ण
+अटल bool stop_sync_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc_handle,
+	uपूर्णांक16_t घड़ी_delay_भाग_4)
+अणु
+	uपूर्णांक32_t retry = 0;
 
-	/* The I2C communications stop signal is:
-	 * the SDA going high from low, while the SCL is high.
+	/* The I2C communications stop संकेत is:
+	 * the SDA going high from low, जबतक the SCL is high.
 	 */
 
-	write_bit_to_ddc(ddc_handle, SCL, false);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, false);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	write_bit_to_ddc(ddc_handle, SDA, false);
+	ग_लिखो_bit_to_ddc(ddc_handle, SDA, false);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	write_bit_to_ddc(ddc_handle, SCL, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-	if (!wait_for_scl_high_sw(ctx, ddc_handle, clock_delay_div_4))
-		return false;
+	अगर (!रुको_क्रम_scl_high_sw(ctx, ddc_handle, घड़ी_delay_भाग_4))
+		वापस false;
 
-	write_bit_to_ddc(ddc_handle, SDA, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SDA, true);
 
-	do {
-		udelay(clock_delay_div_4);
+	करो अणु
+		udelay(घड़ी_delay_भाग_4);
 
-		if (read_bit_from_ddc(ddc_handle, SDA))
-			return true;
+		अगर (पढ़ो_bit_from_ddc(ddc_handle, SDA))
+			वापस true;
 
 		++retry;
-	} while (retry <= 2);
+	पूर्ण जबतक (retry <= 2);
 
-	return false;
-}
-static bool i2c_write_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc_handle,
-	uint16_t clock_delay_div_4,
-	uint8_t address,
-	uint32_t length,
-	const uint8_t *data)
-{
-	uint32_t i = 0;
+	वापस false;
+पूर्ण
+अटल bool i2c_ग_लिखो_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc_handle,
+	uपूर्णांक16_t घड़ी_delay_भाग_4,
+	uपूर्णांक8_t address,
+	uपूर्णांक32_t length,
+	स्थिर uपूर्णांक8_t *data)
+अणु
+	uपूर्णांक32_t i = 0;
 
-	if (!write_byte_sw(ctx, ddc_handle, clock_delay_div_4, address))
-		return false;
+	अगर (!ग_लिखो_byte_sw(ctx, ddc_handle, घड़ी_delay_भाग_4, address))
+		वापस false;
 
-	while (i < length) {
-		if (!write_byte_sw(ctx, ddc_handle, clock_delay_div_4, data[i]))
-			return false;
+	जबतक (i < length) अणु
+		अगर (!ग_लिखो_byte_sw(ctx, ddc_handle, घड़ी_delay_भाग_4, data[i]))
+			वापस false;
 		++i;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool i2c_read_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc_handle,
-	uint16_t clock_delay_div_4,
-	uint8_t address,
-	uint32_t length,
-	uint8_t *data)
-{
-	uint32_t i = 0;
+अटल bool i2c_पढ़ो_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc_handle,
+	uपूर्णांक16_t घड़ी_delay_भाग_4,
+	uपूर्णांक8_t address,
+	uपूर्णांक32_t length,
+	uपूर्णांक8_t *data)
+अणु
+	uपूर्णांक32_t i = 0;
 
-	if (!write_byte_sw(ctx, ddc_handle, clock_delay_div_4, address))
-		return false;
+	अगर (!ग_लिखो_byte_sw(ctx, ddc_handle, घड़ी_delay_भाग_4, address))
+		वापस false;
 
-	while (i < length) {
-		if (!read_byte_sw(ctx, ddc_handle, clock_delay_div_4, data + i,
+	जबतक (i < length) अणु
+		अगर (!पढ़ो_byte_sw(ctx, ddc_handle, घड़ी_delay_भाग_4, data + i,
 			i < length - 1))
-			return false;
+			वापस false;
 		++i;
-	}
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
 
-static bool start_sync_sw(
-	struct dc_context *ctx,
-	struct ddc *ddc_handle,
-	uint16_t clock_delay_div_4)
-{
-	uint32_t retry = 0;
+अटल bool start_sync_sw(
+	काष्ठा dc_context *ctx,
+	काष्ठा ddc *ddc_handle,
+	uपूर्णांक16_t घड़ी_delay_भाग_4)
+अणु
+	uपूर्णांक32_t retry = 0;
 
-	/* The I2C communications start signal is:
-	 * the SDA going low from high, while the SCL is high.
+	/* The I2C communications start संकेत is:
+	 * the SDA going low from high, जबतक the SCL is high.
 	 */
 
-	write_bit_to_ddc(ddc_handle, SCL, true);
+	ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-	udelay(clock_delay_div_4);
+	udelay(घड़ी_delay_भाग_4);
 
-	do {
-		write_bit_to_ddc(ddc_handle, SDA, true);
+	करो अणु
+		ग_लिखो_bit_to_ddc(ddc_handle, SDA, true);
 
-		if (!read_bit_from_ddc(ddc_handle, SDA)) {
+		अगर (!पढ़ो_bit_from_ddc(ddc_handle, SDA)) अणु
 			++retry;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		udelay(clock_delay_div_4);
+		udelay(घड़ी_delay_भाग_4);
 
-		write_bit_to_ddc(ddc_handle, SCL, true);
+		ग_लिखो_bit_to_ddc(ddc_handle, SCL, true);
 
-		if (!wait_for_scl_high_sw(ctx, ddc_handle, clock_delay_div_4))
-			break;
+		अगर (!रुको_क्रम_scl_high_sw(ctx, ddc_handle, घड़ी_delay_भाग_4))
+			अवरोध;
 
-		write_bit_to_ddc(ddc_handle, SDA, false);
+		ग_लिखो_bit_to_ddc(ddc_handle, SDA, false);
 
-		udelay(clock_delay_div_4);
+		udelay(घड़ी_delay_भाग_4);
 
-		write_bit_to_ddc(ddc_handle, SCL, false);
+		ग_लिखो_bit_to_ddc(ddc_handle, SCL, false);
 
-		udelay(clock_delay_div_4);
+		udelay(घड़ी_delay_भाग_4);
 
-		return true;
-	} while (retry <= I2C_SW_RETRIES);
+		वापस true;
+	पूर्ण जबतक (retry <= I2C_SW_RETRIES);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void dce_i2c_sw_engine_set_speed(
-	struct dce_i2c_sw *engine,
-	uint32_t speed)
-{
+अटल व्योम dce_i2c_sw_engine_set_speed(
+	काष्ठा dce_i2c_sw *engine,
+	uपूर्णांक32_t speed)
+अणु
 	ASSERT(speed);
 
 	engine->speed = speed ? speed : DCE_I2C_DEFAULT_I2C_SW_SPEED;
 
-	engine->clock_delay = 1000 / engine->speed;
+	engine->घड़ी_delay = 1000 / engine->speed;
 
-	if (engine->clock_delay < 12)
-		engine->clock_delay = 12;
-}
+	अगर (engine->घड़ी_delay < 12)
+		engine->घड़ी_delay = 12;
+पूर्ण
 
-static bool dce_i2c_sw_engine_acquire_engine(
-	struct dce_i2c_sw *engine,
-	struct ddc *ddc)
-{
-	enum gpio_result result;
+अटल bool dce_i2c_sw_engine_acquire_engine(
+	काष्ठा dce_i2c_sw *engine,
+	काष्ठा ddc *ddc)
+अणु
+	क्रमागत gpio_result result;
 
-	result = dal_ddc_open(ddc, GPIO_MODE_FAST_OUTPUT,
+	result = dal_ddc_खोलो(ddc, GPIO_MODE_FAST_OUTPUT,
 		GPIO_DDC_CONFIG_TYPE_MODE_I2C);
 
-	if (result != GPIO_RESULT_OK)
-		return false;
+	अगर (result != GPIO_RESULT_OK)
+		वापस false;
 
 	engine->ddc = ddc;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 bool dce_i2c_engine_acquire_sw(
-	struct dce_i2c_sw *dce_i2c_sw,
-	struct ddc *ddc_handle)
-{
-	uint32_t counter = 0;
+	काष्ठा dce_i2c_sw *dce_i2c_sw,
+	काष्ठा ddc *ddc_handle)
+अणु
+	uपूर्णांक32_t counter = 0;
 	bool result;
 
-	do {
+	करो अणु
 
 		result = dce_i2c_sw_engine_acquire_engine(
 				dce_i2c_sw, ddc_handle);
 
-		if (result)
-			break;
+		अगर (result)
+			अवरोध;
 
-		/* i2c_engine is busy by VBios, lets wait and retry */
+		/* i2c_engine is busy by VBios, lets रुको and retry */
 
 		udelay(10);
 
 		++counter;
-	} while (counter < 2);
+	पूर्ण जबतक (counter < 2);
 
-	return result;
-}
-
-
+	वापस result;
+पूर्ण
 
 
-static void dce_i2c_sw_engine_submit_channel_request(
-	struct dce_i2c_sw *engine,
-	struct i2c_request_transaction_data *req)
-{
-	struct ddc *ddc = engine->ddc;
-	uint16_t clock_delay_div_4 = engine->clock_delay >> 2;
+
+
+अटल व्योम dce_i2c_sw_engine_submit_channel_request(
+	काष्ठा dce_i2c_sw *engine,
+	काष्ठा i2c_request_transaction_data *req)
+अणु
+	काष्ठा ddc *ddc = engine->ddc;
+	uपूर्णांक16_t घड़ी_delay_भाग_4 = engine->घड़ी_delay >> 2;
 
 	/* send sync (start / repeated start) */
 
-	bool result = start_sync_sw(engine->ctx, ddc, clock_delay_div_4);
+	bool result = start_sync_sw(engine->ctx, ddc, घड़ी_delay_भाग_4);
 
 	/* process payload */
 
-	if (result) {
-		switch (req->action) {
-		case DCE_I2C_TRANSACTION_ACTION_I2C_WRITE:
-		case DCE_I2C_TRANSACTION_ACTION_I2C_WRITE_MOT:
-			result = i2c_write_sw(engine->ctx, ddc, clock_delay_div_4,
+	अगर (result) अणु
+		चयन (req->action) अणु
+		हाल DCE_I2C_TRANSACTION_ACTION_I2C_WRITE:
+		हाल DCE_I2C_TRANSACTION_ACTION_I2C_WRITE_MOT:
+			result = i2c_ग_लिखो_sw(engine->ctx, ddc, घड़ी_delay_भाग_4,
 				req->address, req->length, req->data);
-		break;
-		case DCE_I2C_TRANSACTION_ACTION_I2C_READ:
-		case DCE_I2C_TRANSACTION_ACTION_I2C_READ_MOT:
-			result = i2c_read_sw(engine->ctx, ddc, clock_delay_div_4,
+		अवरोध;
+		हाल DCE_I2C_TRANSACTION_ACTION_I2C_READ:
+		हाल DCE_I2C_TRANSACTION_ACTION_I2C_READ_MOT:
+			result = i2c_पढ़ो_sw(engine->ctx, ddc, घड़ी_delay_भाग_4,
 				req->address, req->length, req->data);
-		break;
-		default:
+		अवरोध;
+		शेष:
 			result = false;
-		break;
-		}
-	}
+		अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* send stop if not 'mot' or operation failed */
+	/* send stop अगर not 'mot' or operation failed */
 
-	if (!result ||
+	अगर (!result ||
 		(req->action == DCE_I2C_TRANSACTION_ACTION_I2C_WRITE) ||
 		(req->action == DCE_I2C_TRANSACTION_ACTION_I2C_READ))
-		if (!stop_sync_sw(engine->ctx, ddc, clock_delay_div_4))
+		अगर (!stop_sync_sw(engine->ctx, ddc, घड़ी_delay_भाग_4))
 			result = false;
 
 	req->status = result ?
 		I2C_CHANNEL_OPERATION_SUCCEEDED :
 		I2C_CHANNEL_OPERATION_FAILED;
-}
+पूर्ण
 
-static bool dce_i2c_sw_engine_submit_payload(
-	struct dce_i2c_sw *engine,
-	struct i2c_payload *payload,
+अटल bool dce_i2c_sw_engine_submit_payload(
+	काष्ठा dce_i2c_sw *engine,
+	काष्ठा i2c_payload *payload,
 	bool middle_of_transaction)
-{
-	struct i2c_request_transaction_data request;
+अणु
+	काष्ठा i2c_request_transaction_data request;
 
-	if (!payload->write)
+	अगर (!payload->ग_लिखो)
 		request.action = middle_of_transaction ?
 			DCE_I2C_TRANSACTION_ACTION_I2C_READ_MOT :
 			DCE_I2C_TRANSACTION_ACTION_I2C_READ;
-	else
+	अन्यथा
 		request.action = middle_of_transaction ?
 			DCE_I2C_TRANSACTION_ACTION_I2C_WRITE_MOT :
 			DCE_I2C_TRANSACTION_ACTION_I2C_WRITE;
 
-	request.address = (uint8_t) ((payload->address << 1) | !payload->write);
+	request.address = (uपूर्णांक8_t) ((payload->address << 1) | !payload->ग_लिखो);
 	request.length = payload->length;
 	request.data = payload->data;
 
 	dce_i2c_sw_engine_submit_channel_request(engine, &request);
 
-	if ((request.status == I2C_CHANNEL_OPERATION_ENGINE_BUSY) ||
+	अगर ((request.status == I2C_CHANNEL_OPERATION_ENGINE_BUSY) ||
 		(request.status == I2C_CHANNEL_OPERATION_FAILED))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 bool dce_i2c_submit_command_sw(
-	struct resource_pool *pool,
-	struct ddc *ddc,
-	struct i2c_command *cmd,
-	struct dce_i2c_sw *dce_i2c_sw)
-{
-	uint8_t index_of_payload = 0;
+	काष्ठा resource_pool *pool,
+	काष्ठा ddc *ddc,
+	काष्ठा i2c_command *cmd,
+	काष्ठा dce_i2c_sw *dce_i2c_sw)
+अणु
+	uपूर्णांक8_t index_of_payload = 0;
 	bool result;
 
 	dce_i2c_sw_engine_set_speed(dce_i2c_sw, cmd->speed);
 
 	result = true;
 
-	while (index_of_payload < cmd->number_of_payloads) {
+	जबतक (index_of_payload < cmd->number_of_payloads) अणु
 		bool mot = (index_of_payload != cmd->number_of_payloads - 1);
 
-		struct i2c_payload *payload = cmd->payloads + index_of_payload;
+		काष्ठा i2c_payload *payload = cmd->payloads + index_of_payload;
 
-		if (!dce_i2c_sw_engine_submit_payload(
-			dce_i2c_sw, payload, mot)) {
+		अगर (!dce_i2c_sw_engine_submit_payload(
+			dce_i2c_sw, payload, mot)) अणु
 			result = false;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		++index_of_payload;
-	}
+	पूर्ण
 
 	release_engine_dce_sw(pool, dce_i2c_sw);
 
-	return result;
-}
+	वापस result;
+पूर्ण

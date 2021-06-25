@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/alpha/kernel/setup.c
  *
  *  Copyright (C) 1995  Linus Torvalds
  */
 
-/* 2.3.x bootmem, 1999 Andrea Arcangeli <andrea@suse.de> */
+/* 2.3.x booपंचांगem, 1999 Andrea Arcangeli <andrea@suse.de> */
 
 /*
  * Bootup setup stuff.
  */
 
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/stddef.h>
-#include <linux/unistd.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/user.h>
-#include <linux/screen_info.h>
-#include <linux/delay.h>
-#include <linux/mc146818rtc.h>
-#include <linux/console.h>
-#include <linux/cpu.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/memblock.h>
-#include <linux/pci.h>
-#include <linux/seq_file.h>
-#include <linux/root_dev.h>
-#include <linux/initrd.h>
-#include <linux/eisa.h>
-#include <linux/pfn.h>
-#ifdef CONFIG_MAGIC_SYSRQ
-#include <linux/sysrq.h>
-#include <linux/reboot.h>
-#endif
-#include <linux/notifier.h>
-#include <asm/setup.h>
-#include <asm/io.h>
-#include <linux/log2.h>
-#include <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/unistd.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/user.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/console.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/root_dev.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/eisa.h>
+#समावेश <linux/pfn.h>
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+#समावेश <linux/sysrq.h>
+#समावेश <linux/reboot.h>
+#पूर्ण_अगर
+#समावेश <linux/notअगरier.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/log2.h>
+#समावेश <linux/export.h>
 
-extern struct atomic_notifier_head panic_notifier_list;
-static int alpha_panic_event(struct notifier_block *, unsigned long, void *);
-static struct notifier_block alpha_panic_block = {
+बाह्य काष्ठा atomic_notअगरier_head panic_notअगरier_list;
+अटल पूर्णांक alpha_panic_event(काष्ठा notअगरier_block *, अचिन्हित दीर्घ, व्योम *);
+अटल काष्ठा notअगरier_block alpha_panic_block = अणु
 	alpha_panic_event,
-        NULL,
-        INT_MAX /* try to do it first */
-};
+        शून्य,
+        पूर्णांक_उच्च /* try to करो it first */
+पूर्ण;
 
-#include <linux/uaccess.h>
-#include <asm/hwrpb.h>
-#include <asm/dma.h>
-#include <asm/mmu_context.h>
-#include <asm/console.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/console.h>
 
-#include "proto.h"
-#include "pci_impl.h"
+#समावेश "proto.h"
+#समावेश "pci_impl.h"
 
 
-struct hwrpb_struct *hwrpb;
+काष्ठा hwrpb_काष्ठा *hwrpb;
 EXPORT_SYMBOL(hwrpb);
-unsigned long srm_hae;
+अचिन्हित दीर्घ srm_hae;
 
-int alpha_l1i_cacheshape;
-int alpha_l1d_cacheshape;
-int alpha_l2_cacheshape;
-int alpha_l3_cacheshape;
+पूर्णांक alpha_l1i_cacheshape;
+पूर्णांक alpha_l1d_cacheshape;
+पूर्णांक alpha_l2_cacheshape;
+पूर्णांक alpha_l3_cacheshape;
 
-#ifdef CONFIG_VERBOSE_MCHECK
+#अगर_घोषित CONFIG_VERBOSE_MCHECK
 /* 0=minimum, 1=verbose, 2=all */
 /* These can be overridden via the command line, ie "verbose_mcheck=2") */
-unsigned long alpha_verbose_mcheck = CONFIG_VERBOSE_MCHECK_ON;
-#endif
+अचिन्हित दीर्घ alpha_verbose_mcheck = CONFIG_VERBOSE_MCHECK_ON;
+#पूर्ण_अगर
 
-#ifdef CONFIG_NUMA
-struct cpumask node_to_cpumask_map[MAX_NUMNODES] __read_mostly;
+#अगर_घोषित CONFIG_NUMA
+काष्ठा cpumask node_to_cpumask_map[MAX_NUMNODES] __पढ़ो_mostly;
 EXPORT_SYMBOL(node_to_cpumask_map);
-#endif
+#पूर्ण_अगर
 
 /* Which processor we booted from.  */
-int boot_cpuid;
+पूर्णांक boot_cpuid;
 
 /*
- * Using SRM callbacks for initial console output. This works from
- * setup_arch() time through the end of time_init(), as those places
+ * Using SRM callbacks क्रम initial console output. This works from
+ * setup_arch() समय through the end of समय_init(), as those places
  * are under our (Alpha) control.
 
- * "srmcons" specified in the boot command arguments allows us to
- * see kernel messages during the period of time before the true
+ * "srmcons" specअगरied in the boot command arguments allows us to
+ * see kernel messages during the period of समय beक्रमe the true
  * console device is "registered" during console_init(). 
  * As of this version (2.5.59), console_init() will call
- * disable_early_printk() as the last action before initializing
- * the console drivers. That's the last possible time srmcons can be 
- * unregistered without interfering with console behavior.
+ * disable_early_prपूर्णांकk() as the last action beक्रमe initializing
+ * the console drivers. That's the last possible समय srmcons can be 
+ * unरेजिस्टरed without पूर्णांकerfering with console behavior.
  *
- * By default, OFF; set it with a bootcommand arg of "srmcons" or 
+ * By शेष, OFF; set it with a bootcommand arg of "srmcons" or 
  * "console=srm". The meaning of these two args is:
- *     "srmcons"     - early callback prints 
- *     "console=srm" - full callback based console, including early prints
+ *     "srmcons"     - early callback prपूर्णांकs 
+ *     "console=srm" - full callback based console, including early prपूर्णांकs
  */
-int srmcons_output = 0;
+पूर्णांक srmcons_output = 0;
 
-/* Enforce a memory size limit; useful for testing. By default, none. */
-unsigned long mem_size_limit = 0;
+/* Enक्रमce a memory size limit; useful क्रम testing. By शेष, none. */
+अचिन्हित दीर्घ mem_size_limit = 0;
 
-/* Set AGP GART window size (0 means disabled). */
-unsigned long alpha_agpgart_size = DEFAULT_AGP_APER_SIZE;
+/* Set AGP GART winकरोw size (0 means disabled). */
+अचिन्हित दीर्घ alpha_agpgart_size = DEFAULT_AGP_APER_SIZE;
 
-#ifdef CONFIG_ALPHA_GENERIC
-struct alpha_machine_vector alpha_mv;
+#अगर_घोषित CONFIG_ALPHA_GENERIC
+काष्ठा alpha_machine_vector alpha_mv;
 EXPORT_SYMBOL(alpha_mv);
-#endif
+#पूर्ण_अगर
 
-#ifndef alpha_using_srm
-int alpha_using_srm;
+#अगर_अघोषित alpha_using_srm
+पूर्णांक alpha_using_srm;
 EXPORT_SYMBOL(alpha_using_srm);
-#endif
+#पूर्ण_अगर
 
-#ifndef alpha_using_qemu
-int alpha_using_qemu;
-#endif
+#अगर_अघोषित alpha_using_qemu
+पूर्णांक alpha_using_qemu;
+#पूर्ण_अगर
 
-static struct alpha_machine_vector *get_sysvec(unsigned long, unsigned long,
-					       unsigned long);
-static struct alpha_machine_vector *get_sysvec_byname(const char *);
-static void get_sysnames(unsigned long, unsigned long, unsigned long,
-			 char **, char **);
-static void determine_cpu_caches (unsigned int);
+अटल काष्ठा alpha_machine_vector *get_sysvec(अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+					       अचिन्हित दीर्घ);
+अटल काष्ठा alpha_machine_vector *get_sysvec_byname(स्थिर अक्षर *);
+अटल व्योम get_sysnames(अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+			 अक्षर **, अक्षर **);
+अटल व्योम determine_cpu_caches (अचिन्हित पूर्णांक);
 
-static char __initdata command_line[COMMAND_LINE_SIZE];
+अटल अक्षर __initdata command_line[COMMAND_LINE_SIZE];
 
 /*
- * The format of "screen_info" is strange, and due to early
+ * The क्रमmat of "screen_info" is strange, and due to early
  * i386-setup code. This is just enough to make the console
  * code think we're on a VGA color display.
  */
 
-struct screen_info screen_info = {
+काष्ठा screen_info screen_info = अणु
 	.orig_x = 0,
 	.orig_y = 25,
 	.orig_video_cols = 80,
 	.orig_video_lines = 25,
 	.orig_video_isVGA = 1,
-	.orig_video_points = 16
-};
+	.orig_video_poपूर्णांकs = 16
+पूर्ण;
 
 EXPORT_SYMBOL(screen_info);
 
 /*
- * The direct map I/O window, if any.  This should be the same
- * for all busses, since it's used by virt_to_bus.
+ * The direct map I/O winकरोw, अगर any.  This should be the same
+ * क्रम all busses, since it's used by virt_to_bus.
  */
 
-unsigned long __direct_map_base;
-unsigned long __direct_map_size;
+अचिन्हित दीर्घ __direct_map_base;
+अचिन्हित दीर्घ __direct_map_size;
 EXPORT_SYMBOL(__direct_map_base);
 EXPORT_SYMBOL(__direct_map_size);
 
@@ -167,13 +168,13 @@ EXPORT_SYMBOL(__direct_map_size);
  * Declare all of the machine vectors.
  */
 
-/* GCC 2.7.2 (on alpha at least) is lame.  It does not support either 
-   __attribute__((weak)) or #pragma weak.  Bypass it and talk directly
+/* GCC 2.7.2 (on alpha at least) is lame.  It करोes not support either 
+   __attribute__((weak)) or #आशय weak.  Bypass it and talk directly
    to the assembler.  */
 
-#define WEAK(X) \
-	extern struct alpha_machine_vector X; \
-	asm(".weak "#X)
+#घोषणा WEAK(X) \
+	बाह्य काष्ठा alpha_machine_vector X; \
+	यंत्र(".weak "#X)
 
 WEAK(alcor_mv);
 WEAK(alphabook1_mv);
@@ -200,7 +201,7 @@ WEAK(noritake_mv);
 WEAK(noritake_primo_mv);
 WEAK(p2k_mv);
 WEAK(pc164_mv);
-WEAK(privateer_mv);
+WEAK(निजीer_mv);
 WEAK(rawhide_mv);
 WEAK(ruffian_mv);
 WEAK(rx164_mv);
@@ -215,250 +216,250 @@ WEAK(wildfire_mv);
 WEAK(xl_mv);
 WEAK(xlt_mv);
 
-#undef WEAK
+#अघोषित WEAK
 
 /*
- * I/O resources inherited from PeeCees.  Except for perhaps the
+ * I/O resources inherited from PeeCees.  Except क्रम perhaps the
  * turbochannel alphas, everyone has these on some sort of SuperIO chip.
  *
- * ??? If this becomes less standard, move the struct out into the
+ * ??? If this becomes less standard, move the काष्ठा out पूर्णांकo the
  * machine vector.
  */
 
-static void __init
-reserve_std_resources(void)
-{
-	static struct resource standard_io_resources[] = {
-		{ .name = "rtc", .start = -1, .end = -1 },
-        	{ .name = "dma1", .start = 0x00, .end = 0x1f },
-        	{ .name = "pic1", .start = 0x20, .end = 0x3f },
-        	{ .name = "timer", .start = 0x40, .end = 0x5f },
-        	{ .name = "keyboard", .start = 0x60, .end = 0x6f },
-        	{ .name = "dma page reg", .start = 0x80, .end = 0x8f },
-        	{ .name = "pic2", .start = 0xa0, .end = 0xbf },
-        	{ .name = "dma2", .start = 0xc0, .end = 0xdf },
-	};
+अटल व्योम __init
+reserve_std_resources(व्योम)
+अणु
+	अटल काष्ठा resource standard_io_resources[] = अणु
+		अणु .name = "rtc", .start = -1, .end = -1 पूर्ण,
+        	अणु .name = "dma1", .start = 0x00, .end = 0x1f पूर्ण,
+        	अणु .name = "pic1", .start = 0x20, .end = 0x3f पूर्ण,
+        	अणु .name = "timer", .start = 0x40, .end = 0x5f पूर्ण,
+        	अणु .name = "keyboard", .start = 0x60, .end = 0x6f पूर्ण,
+        	अणु .name = "dma page reg", .start = 0x80, .end = 0x8f पूर्ण,
+        	अणु .name = "pic2", .start = 0xa0, .end = 0xbf पूर्ण,
+        	अणु .name = "dma2", .start = 0xc0, .end = 0xdf पूर्ण,
+	पूर्ण;
 
-	struct resource *io = &ioport_resource;
-	size_t i;
+	काष्ठा resource *io = &ioport_resource;
+	माप_प्रकार i;
 
-	if (hose_head) {
-		struct pci_controller *hose;
-		for (hose = hose_head; hose; hose = hose->next)
-			if (hose->index == 0) {
+	अगर (hose_head) अणु
+		काष्ठा pci_controller *hose;
+		क्रम (hose = hose_head; hose; hose = hose->next)
+			अगर (hose->index == 0) अणु
 				io = hose->io_space;
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
-	/* Fix up for the Jensen's queer RTC placement.  */
+	/* Fix up क्रम the Jensen's queer RTC placement.  */
 	standard_io_resources[0].start = RTC_PORT(0);
 	standard_io_resources[0].end = RTC_PORT(0) + 0x0f;
 
-	for (i = 0; i < ARRAY_SIZE(standard_io_resources); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(standard_io_resources); ++i)
 		request_resource(io, standard_io_resources+i);
-}
+पूर्ण
 
-#define PFN_MAX		PFN_DOWN(0x80000000)
-#define for_each_mem_cluster(memdesc, _cluster, i)		\
-	for ((_cluster) = (memdesc)->cluster, (i) = 0;		\
+#घोषणा PFN_MAX		PFN_DOWN(0x80000000)
+#घोषणा क्रम_each_mem_cluster(memdesc, _cluster, i)		\
+	क्रम ((_cluster) = (memdesc)->cluster, (i) = 0;		\
 	     (i) < (memdesc)->numclusters; (i)++, (_cluster)++)
 
-static unsigned long __init
-get_mem_size_limit(char *s)
-{
-        unsigned long end = 0;
-        char *from = s;
+अटल अचिन्हित दीर्घ __init
+get_mem_size_limit(अक्षर *s)
+अणु
+        अचिन्हित दीर्घ end = 0;
+        अक्षर *from = s;
 
-        end = simple_strtoul(from, &from, 0);
-        if ( *from == 'K' || *from == 'k' ) {
+        end = simple_म_से_अदीर्घ(from, &from, 0);
+        अगर ( *from == 'K' || *from == 'k' ) अणु
                 end = end << 10;
                 from++;
-        } else if ( *from == 'M' || *from == 'm' ) {
+        पूर्ण अन्यथा अगर ( *from == 'M' || *from == 'm' ) अणु
                 end = end << 20;
                 from++;
-        } else if ( *from == 'G' || *from == 'g' ) {
+        पूर्ण अन्यथा अगर ( *from == 'G' || *from == 'g' ) अणु
                 end = end << 30;
                 from++;
-        }
-        return end >> PAGE_SHIFT; /* Return the PFN of the limit. */
-}
+        पूर्ण
+        वापस end >> PAGE_SHIFT; /* Return the PFN of the limit. */
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_INITRD
-void * __init
-move_initrd(unsigned long mem_limit)
-{
-	void *start;
-	unsigned long size;
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+व्योम * __init
+move_initrd(अचिन्हित दीर्घ mem_limit)
+अणु
+	व्योम *start;
+	अचिन्हित दीर्घ size;
 
 	size = initrd_end - initrd_start;
 	start = memblock_alloc(PAGE_ALIGN(size), PAGE_SIZE);
-	if (!start || __pa(start) + size > mem_limit) {
+	अगर (!start || __pa(start) + size > mem_limit) अणु
 		initrd_start = initrd_end = 0;
-		return NULL;
-	}
-	memmove(start, (void *)initrd_start, size);
-	initrd_start = (unsigned long)start;
+		वापस शून्य;
+	पूर्ण
+	स_हटाओ(start, (व्योम *)initrd_start, size);
+	initrd_start = (अचिन्हित दीर्घ)start;
 	initrd_end = initrd_start + size;
-	printk("initrd moved to %p\n", start);
-	return start;
-}
-#endif
+	prपूर्णांकk("initrd moved to %p\n", start);
+	वापस start;
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef CONFIG_DISCONTIGMEM
-static void __init
-setup_memory(void *kernel_end)
-{
-	struct memclust_struct * cluster;
-	struct memdesc_struct * memdesc;
-	unsigned long kernel_size;
-	unsigned long i;
+#अगर_अघोषित CONFIG_DISCONTIGMEM
+अटल व्योम __init
+setup_memory(व्योम *kernel_end)
+अणु
+	काष्ठा memclust_काष्ठा * cluster;
+	काष्ठा memdesc_काष्ठा * memdesc;
+	अचिन्हित दीर्घ kernel_size;
+	अचिन्हित दीर्घ i;
 
-	/* Find free clusters, and init and free the bootmem accordingly.  */
-	memdesc = (struct memdesc_struct *)
-	  (hwrpb->mddt_offset + (unsigned long) hwrpb);
+	/* Find मुक्त clusters, and init and मुक्त the booपंचांगem accordingly.  */
+	memdesc = (काष्ठा memdesc_काष्ठा *)
+	  (hwrpb->mddt_offset + (अचिन्हित दीर्घ) hwrpb);
 
-	for_each_mem_cluster(memdesc, cluster, i) {
-		unsigned long end;
+	क्रम_each_mem_cluster(memdesc, cluster, i) अणु
+		अचिन्हित दीर्घ end;
 
-		printk("memcluster %lu, usage %01lx, start %8lu, end %8lu\n",
+		prपूर्णांकk("memcluster %lu, usage %01lx, start %8lu, end %8lu\n",
 		       i, cluster->usage, cluster->start_pfn,
 		       cluster->start_pfn + cluster->numpages);
 
 		/* Bit 0 is console/PALcode reserved.  Bit 1 is
-		   non-volatile memory -- we might want to mark
-		   this for later.  */
-		if (cluster->usage & 3)
-			continue;
+		   non-अस्थिर memory -- we might want to mark
+		   this क्रम later.  */
+		अगर (cluster->usage & 3)
+			जारी;
 
 		end = cluster->start_pfn + cluster->numpages;
-		if (end > max_low_pfn)
+		अगर (end > max_low_pfn)
 			max_low_pfn = end;
 
 		memblock_add(PFN_PHYS(cluster->start_pfn),
 			     cluster->numpages << PAGE_SHIFT);
-	}
+	पूर्ण
 
 	/*
-	 * Except for the NUMA systems (wildfire, marvel) all of the 
-	 * Alpha systems we run on support 32GB of memory or less.
-	 * Since the NUMA systems introduce large holes in memory addressing,
-	 * we can get into a situation where there is not enough contiguous
-	 * memory for the memory map. 
+	 * Except क्रम the NUMA प्रणालीs (wildfire, marvel) all of the 
+	 * Alpha प्रणालीs we run on support 32GB of memory or less.
+	 * Since the NUMA प्रणालीs पूर्णांकroduce large holes in memory addressing,
+	 * we can get पूर्णांकo a situation where there is not enough contiguous
+	 * memory क्रम the memory map. 
 	 *
-	 * Limit memory to the first 32GB to limit the NUMA systems to 
-	 * memory on their first node (wildfire) or 2 (marvel) to avoid 
+	 * Limit memory to the first 32GB to limit the NUMA प्रणालीs to 
+	 * memory on their first node (wildfire) or 2 (marvel) to aव्योम 
 	 * not being able to produce the memory map. In order to access 
-	 * all of the memory on the NUMA systems, build with discontiguous
+	 * all of the memory on the NUMA प्रणालीs, build with discontiguous
 	 * memory support.
 	 *
-	 * If the user specified a memory limit, let that memory limit stand.
+	 * If the user specअगरied a memory limit, let that memory limit stand.
 	 */
-	if (!mem_size_limit) 
+	अगर (!mem_size_limit) 
 		mem_size_limit = (32ul * 1024 * 1024 * 1024) >> PAGE_SHIFT;
 
-	if (mem_size_limit && max_low_pfn >= mem_size_limit)
-	{
-		printk("setup: forcing memory size to %ldK (from %ldK).\n",
+	अगर (mem_size_limit && max_low_pfn >= mem_size_limit)
+	अणु
+		prपूर्णांकk("setup: forcing memory size to %ldK (from %ldK).\n",
 		       mem_size_limit << (PAGE_SHIFT - 10),
 		       max_low_pfn    << (PAGE_SHIFT - 10));
 		max_low_pfn = mem_size_limit;
-	}
+	पूर्ण
 
 	/* Reserve the kernel memory. */
 	kernel_size = virt_to_phys(kernel_end) - KERNEL_START_PHYS;
 	memblock_reserve(KERNEL_START_PHYS, kernel_size);
 
-#ifdef CONFIG_BLK_DEV_INITRD
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
 	initrd_start = INITRD_START;
-	if (initrd_start) {
+	अगर (initrd_start) अणु
 		initrd_end = initrd_start+INITRD_SIZE;
-		printk("Initial ramdisk at: 0x%p (%lu bytes)\n",
-		       (void *) initrd_start, INITRD_SIZE);
+		prपूर्णांकk("Initial ramdisk at: 0x%p (%lu bytes)\n",
+		       (व्योम *) initrd_start, INITRD_SIZE);
 
-		if ((void *)initrd_end > phys_to_virt(PFN_PHYS(max_low_pfn))) {
-			if (!move_initrd(PFN_PHYS(max_low_pfn)))
-				printk("initrd extends beyond end of memory "
+		अगर ((व्योम *)initrd_end > phys_to_virt(PFN_PHYS(max_low_pfn))) अणु
+			अगर (!move_initrd(PFN_PHYS(max_low_pfn)))
+				prपूर्णांकk("initrd extends beyond end of memory "
 				       "(0x%08lx > 0x%p)\ndisabling initrd\n",
 				       initrd_end,
 				       phys_to_virt(PFN_PHYS(max_low_pfn)));
-		} else {
-			memblock_reserve(virt_to_phys((void *)initrd_start),
+		पूर्ण अन्यथा अणु
+			memblock_reserve(virt_to_phys((व्योम *)initrd_start),
 					INITRD_SIZE);
-		}
-	}
-#endif /* CONFIG_BLK_DEV_INITRD */
-}
-#else
-extern void setup_memory(void *);
-#endif /* !CONFIG_DISCONTIGMEM */
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
+पूर्ण
+#अन्यथा
+बाह्य व्योम setup_memory(व्योम *);
+#पूर्ण_अगर /* !CONFIG_DISCONTIGMEM */
 
-int __init
-page_is_ram(unsigned long pfn)
-{
-	struct memclust_struct * cluster;
-	struct memdesc_struct * memdesc;
-	unsigned long i;
+पूर्णांक __init
+page_is_ram(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा memclust_काष्ठा * cluster;
+	काष्ठा memdesc_काष्ठा * memdesc;
+	अचिन्हित दीर्घ i;
 
-	memdesc = (struct memdesc_struct *)
-		(hwrpb->mddt_offset + (unsigned long) hwrpb);
-	for_each_mem_cluster(memdesc, cluster, i)
-	{
-		if (pfn >= cluster->start_pfn  &&
-		    pfn < cluster->start_pfn + cluster->numpages) {
-			return (cluster->usage & 3) ? 0 : 1;
-		}
-	}
+	memdesc = (काष्ठा memdesc_काष्ठा *)
+		(hwrpb->mddt_offset + (अचिन्हित दीर्घ) hwrpb);
+	क्रम_each_mem_cluster(memdesc, cluster, i)
+	अणु
+		अगर (pfn >= cluster->start_pfn  &&
+		    pfn < cluster->start_pfn + cluster->numpages) अणु
+			वापस (cluster->usage & 3) ? 0 : 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-register_cpus(void)
-{
-	int i;
+अटल पूर्णांक __init
+रेजिस्टर_cpus(व्योम)
+अणु
+	पूर्णांक i;
 
-	for_each_possible_cpu(i) {
-		struct cpu *p = kzalloc(sizeof(*p), GFP_KERNEL);
-		if (!p)
-			return -ENOMEM;
-		register_cpu(p, i);
-	}
-	return 0;
-}
+	क्रम_each_possible_cpu(i) अणु
+		काष्ठा cpu *p = kzalloc(माप(*p), GFP_KERNEL);
+		अगर (!p)
+			वापस -ENOMEM;
+		रेजिस्टर_cpu(p, i);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-arch_initcall(register_cpus);
+arch_initcall(रेजिस्टर_cpus);
 
-#ifdef CONFIG_MAGIC_SYSRQ
-static void sysrq_reboot_handler(int unused)
-{
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
+अटल व्योम sysrq_reboot_handler(पूर्णांक unused)
+अणु
 	machine_halt();
-}
+पूर्ण
 
-static const struct sysrq_key_op srm_sysrq_reboot_op = {
+अटल स्थिर काष्ठा sysrq_key_op srm_sysrq_reboot_op = अणु
 	.handler	= sysrq_reboot_handler,
 	.help_msg       = "reboot(b)",
 	.action_msg     = "Resetting",
 	.enable_mask    = SYSRQ_ENABLE_BOOT,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-void __init
-setup_arch(char **cmdline_p)
-{
-	extern char _end[];
+व्योम __init
+setup_arch(अक्षर **cmdline_p)
+अणु
+	बाह्य अक्षर _end[];
 
-	struct alpha_machine_vector *vec = NULL;
-	struct percpu_struct *cpu;
-	char *type_name, *var_name, *p;
-	void *kernel_end = _end; /* end of kernel */
-	char *args = command_line;
+	काष्ठा alpha_machine_vector *vec = शून्य;
+	काष्ठा percpu_काष्ठा *cpu;
+	अक्षर *type_name, *var_name, *p;
+	व्योम *kernel_end = _end; /* end of kernel */
+	अक्षर *args = command_line;
 
-	hwrpb = (struct hwrpb_struct*) __va(INIT_HWRPB->phys_addr);
+	hwrpb = (काष्ठा hwrpb_काष्ठा*) __va(INIT_HWRPB->phys_addr);
 	boot_cpuid = hard_smp_processor_id();
 
         /*
-	 * Pre-process the system type to make sure it will be valid.
+	 * Pre-process the प्रणाली type to make sure it will be valid.
 	 *
 	 * This may restore real CABRIO and EB66+ family names, ie
 	 * EB64+ and EB66.
@@ -467,27 +468,27 @@ setup_arch(char **cmdline_p)
 	 * and AS1200 (DIGITAL Server 5000 series) have the type as
 	 * the negative of the real one.
 	 */
-        if ((long)hwrpb->sys_type < 0) {
-		hwrpb->sys_type = -((long)hwrpb->sys_type);
+        अगर ((दीर्घ)hwrpb->sys_type < 0) अणु
+		hwrpb->sys_type = -((दीर्घ)hwrpb->sys_type);
 		hwrpb_update_checksum(hwrpb);
-	}
+	पूर्ण
 
-	/* Register a call for panic conditions. */
-	atomic_notifier_chain_register(&panic_notifier_list,
+	/* Register a call क्रम panic conditions. */
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
 			&alpha_panic_block);
 
-#ifndef alpha_using_srm
+#अगर_अघोषित alpha_using_srm
 	/* Assume that we've booted from SRM if we haven't booted from MILO.
-	   Detect the later by looking for "MILO" in the system serial nr.  */
-	alpha_using_srm = !str_has_prefix((const char *)hwrpb->ssn, "MILO");
-#endif
-#ifndef alpha_using_qemu
-	/* Similarly, look for QEMU.  */
-	alpha_using_qemu = strstr((const char *)hwrpb->ssn, "QEMU") != 0;
-#endif
+	   Detect the later by looking क्रम "MILO" in the प्रणाली serial nr.  */
+	alpha_using_srm = !str_has_prefix((स्थिर अक्षर *)hwrpb->ssn, "MILO");
+#पूर्ण_अगर
+#अगर_अघोषित alpha_using_qemu
+	/* Similarly, look क्रम QEMU.  */
+	alpha_using_qemu = म_माला((स्थिर अक्षर *)hwrpb->ssn, "QEMU") != 0;
+#पूर्ण_अगर
 
 	/* If we are using SRM, we want to allow callbacks
-	   as early as possible, so do this NOW, and then
+	   as early as possible, so करो this NOW, and then
 	   they should work immediately thereafter.
 	*/
 	kernel_end = callback_init(kernel_end);
@@ -495,151 +496,151 @@ setup_arch(char **cmdline_p)
 	/* 
 	 * Locate the command line.
 	 */
-	/* Hack for Jensen... since we're restricted to 8 or 16 chars for
-	   boot flags depending on the boot mode, we need some shorthand.
-	   This should do for installation.  */
-	if (strcmp(COMMAND_LINE, "INSTALL") == 0) {
-		strlcpy(command_line, "root=/dev/fd0 load_ramdisk=1", sizeof command_line);
-	} else {
-		strlcpy(command_line, COMMAND_LINE, sizeof command_line);
-	}
-	strcpy(boot_command_line, command_line);
+	/* Hack क्रम Jensen... since we're restricted to 8 or 16 अक्षरs क्रम
+	   boot flags depending on the boot mode, we need some लघुhand.
+	   This should करो क्रम installation.  */
+	अगर (म_भेद(COMMAND_LINE, "INSTALL") == 0) अणु
+		strlcpy(command_line, "root=/dev/fd0 load_ramdisk=1", माप command_line);
+	पूर्ण अन्यथा अणु
+		strlcpy(command_line, COMMAND_LINE, माप command_line);
+	पूर्ण
+	म_नकल(boot_command_line, command_line);
 	*cmdline_p = command_line;
 
 	/* 
 	 * Process command-line arguments.
 	 */
-	while ((p = strsep(&args, " \t")) != NULL) {
-		if (!*p) continue;
-		if (strncmp(p, "alpha_mv=", 9) == 0) {
+	जबतक ((p = strsep(&args, " \t")) != शून्य) अणु
+		अगर (!*p) जारी;
+		अगर (म_भेदन(p, "alpha_mv=", 9) == 0) अणु
 			vec = get_sysvec_byname(p+9);
-			continue;
-		}
-		if (strncmp(p, "cycle=", 6) == 0) {
-			est_cycle_freq = simple_strtol(p+6, NULL, 0);
-			continue;
-		}
-		if (strncmp(p, "mem=", 4) == 0) {
+			जारी;
+		पूर्ण
+		अगर (म_भेदन(p, "cycle=", 6) == 0) अणु
+			est_cycle_freq = simple_म_से_दीर्घ(p+6, शून्य, 0);
+			जारी;
+		पूर्ण
+		अगर (म_भेदन(p, "mem=", 4) == 0) अणु
 			mem_size_limit = get_mem_size_limit(p+4);
-			continue;
-		}
-		if (strncmp(p, "srmcons", 7) == 0) {
+			जारी;
+		पूर्ण
+		अगर (म_भेदन(p, "srmcons", 7) == 0) अणु
 			srmcons_output |= 1;
-			continue;
-		}
-		if (strncmp(p, "console=srm", 11) == 0) {
+			जारी;
+		पूर्ण
+		अगर (म_भेदन(p, "console=srm", 11) == 0) अणु
 			srmcons_output |= 2;
-			continue;
-		}
-		if (strncmp(p, "gartsize=", 9) == 0) {
+			जारी;
+		पूर्ण
+		अगर (म_भेदन(p, "gartsize=", 9) == 0) अणु
 			alpha_agpgart_size =
 				get_mem_size_limit(p+9) << PAGE_SHIFT;
-			continue;
-		}
-#ifdef CONFIG_VERBOSE_MCHECK
-		if (strncmp(p, "verbose_mcheck=", 15) == 0) {
-			alpha_verbose_mcheck = simple_strtol(p+15, NULL, 0);
-			continue;
-		}
-#endif
-	}
+			जारी;
+		पूर्ण
+#अगर_घोषित CONFIG_VERBOSE_MCHECK
+		अगर (म_भेदन(p, "verbose_mcheck=", 15) == 0) अणु
+			alpha_verbose_mcheck = simple_म_से_दीर्घ(p+15, शून्य, 0);
+			जारी;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	/* Replace the command line, now that we've killed it with strsep.  */
-	strcpy(command_line, boot_command_line);
+	/* Replace the command line, now that we've समाप्तed it with strsep.  */
+	म_नकल(command_line, boot_command_line);
 
-	/* If we want SRM console printk echoing early, do it now. */
-	if (alpha_using_srm && srmcons_output) {
-		register_srm_console();
+	/* If we want SRM console prपूर्णांकk echoing early, करो it now. */
+	अगर (alpha_using_srm && srmcons_output) अणु
+		रेजिस्टर_srm_console();
 
 		/*
-		 * If "console=srm" was specified, clear the srmcons_output
-		 * flag now so that time.c won't unregister_srm_console
+		 * If "console=srm" was specअगरied, clear the srmcons_output
+		 * flag now so that समय.c won't unरेजिस्टर_srm_console
 		 */
-		if (srmcons_output & 2)
+		अगर (srmcons_output & 2)
 			srmcons_output = 0;
-	}
+	पूर्ण
 
-#ifdef CONFIG_MAGIC_SYSRQ
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
 	/* If we're using SRM, make sysrq-b halt back to the prom,
-	   not auto-reboot.  */
-	if (alpha_using_srm) {
-		unregister_sysrq_key('b', __sysrq_reboot_op);
-		register_sysrq_key('b', &srm_sysrq_reboot_op);
-	}
-#endif
+	   not स्वतः-reboot.  */
+	अगर (alpha_using_srm) अणु
+		unरेजिस्टर_sysrq_key('b', __sysrq_reboot_op);
+		रेजिस्टर_sysrq_key('b', &srm_sysrq_reboot_op);
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * Identify and reconfigure for the current system.
+	 * Identअगरy and reconfigure क्रम the current प्रणाली.
 	 */
-	cpu = (struct percpu_struct*)((char*)hwrpb + hwrpb->processor_offset);
+	cpu = (काष्ठा percpu_काष्ठा*)((अक्षर*)hwrpb + hwrpb->processor_offset);
 
 	get_sysnames(hwrpb->sys_type, hwrpb->sys_variation,
 		     cpu->type, &type_name, &var_name);
-	if (*var_name == '0')
+	अगर (*var_name == '0')
 		var_name = "";
 
-	if (!vec) {
+	अगर (!vec) अणु
 		vec = get_sysvec(hwrpb->sys_type, hwrpb->sys_variation,
 				 cpu->type);
-	}
+	पूर्ण
 
-	if (!vec) {
+	अगर (!vec) अणु
 		panic("Unsupported system type: %s%s%s (%ld %ld)\n",
 		      type_name, (*var_name ? " variation " : ""), var_name,
 		      hwrpb->sys_type, hwrpb->sys_variation);
-	}
-	if (vec != &alpha_mv) {
+	पूर्ण
+	अगर (vec != &alpha_mv) अणु
 		alpha_mv = *vec;
-	}
+	पूर्ण
 	
-	printk("Booting "
-#ifdef CONFIG_ALPHA_GENERIC
+	prपूर्णांकk("Booting "
+#अगर_घोषित CONFIG_ALPHA_GENERIC
 	       "GENERIC "
-#endif
+#पूर्ण_अगर
 	       "on %s%s%s using machine vector %s from %s\n",
 	       type_name, (*var_name ? " variation " : ""),
 	       var_name, alpha_mv.vector_name,
 	       (alpha_using_srm ? "SRM" : "MILO"));
 
-	printk("Major Options: "
-#ifdef CONFIG_SMP
+	prपूर्णांकk("Major Options: "
+#अगर_घोषित CONFIG_SMP
 	       "SMP "
-#endif
-#ifdef CONFIG_ALPHA_EV56
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALPHA_EV56
 	       "EV56 "
-#endif
-#ifdef CONFIG_ALPHA_EV67
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALPHA_EV67
 	       "EV67 "
-#endif
-#ifdef CONFIG_ALPHA_LEGACY_START_ADDRESS
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ALPHA_LEGACY_START_ADDRESS
 	       "LEGACY_START "
-#endif
-#ifdef CONFIG_VERBOSE_MCHECK
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_VERBOSE_MCHECK
 	       "VERBOSE_MCHECK "
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_DISCONTIGMEM
+#अगर_घोषित CONFIG_DISCONTIGMEM
 	       "DISCONTIGMEM "
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 	       "NUMA "
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_SPINLOCK
+#अगर_घोषित CONFIG_DEBUG_SPINLOCK
 	       "DEBUG_SPINLOCK "
-#endif
-#ifdef CONFIG_MAGIC_SYSRQ
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_MAGIC_SYSRQ
 	       "MAGIC_SYSRQ "
-#endif
+#पूर्ण_अगर
 	       "\n");
 
-	printk("Command line: %s\n", command_line);
+	prपूर्णांकk("Command line: %s\n", command_line);
 
 	/* 
 	 * Sync up the HAE.
-	 * Save the SRM's current value for restoration.
+	 * Save the SRM's current value क्रम restoration.
 	 */
-	srm_hae = *alpha_mv.hae_register;
+	srm_hae = *alpha_mv.hae_रेजिस्टर;
 	__set_hae(alpha_mv.hae_cache);
 
 	/* Reset enable correctable error reports.  */
@@ -650,58 +651,58 @@ setup_arch(char **cmdline_p)
 	memblock_set_bottom_up(true);
 	sparse_init();
 
-	/* First guess at cpu cache sizes.  Do this before init_arch.  */
+	/* First guess at cpu cache sizes.  Do this beक्रमe init_arch.  */
 	determine_cpu_caches(cpu->type);
 
-	/* Initialize the machine.  Usually has to do with setting up
-	   DMA windows and the like.  */
-	if (alpha_mv.init_arch)
+	/* Initialize the machine.  Usually has to करो with setting up
+	   DMA winकरोws and the like.  */
+	अगर (alpha_mv.init_arch)
 		alpha_mv.init_arch();
 
 	/* Reserve standard resources.  */
 	reserve_std_resources();
 
 	/* 
-	 * Give us a default console.  TGA users will see nothing until
+	 * Give us a शेष console.  TGA users will see nothing until
 	 * chr_dev_init is called, rather late in the boot sequence.
 	 */
 
-#ifdef CONFIG_VT
-#if defined(CONFIG_VGA_CONSOLE)
-	conswitchp = &vga_con;
-#endif
-#endif
+#अगर_घोषित CONFIG_VT
+#अगर defined(CONFIG_VGA_CONSOLE)
+	conचयनp = &vga_con;
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-	/* Default root filesystem to sda2.  */
+	/* Default root fileप्रणाली to sda2.  */
 	ROOT_DEV = Root_SDA2;
 
-#ifdef CONFIG_EISA
+#अगर_घोषित CONFIG_EISA
 	/* FIXME:  only set this when we actually have EISA in this box? */
 	EISA_bus = 1;
-#endif
+#पूर्ण_अगर
 
  	/*
-	 * Check ASN in HWRPB for validity, report if bad.
+	 * Check ASN in HWRPB क्रम validity, report अगर bad.
 	 * FIXME: how was this failing?  Should we trust it instead,
-	 * and copy the value into alpha_mv.max_asn?
+	 * and copy the value पूर्णांकo alpha_mv.max_asn?
  	 */
 
- 	if (hwrpb->max_asn != MAX_ASN) {
-		printk("Max ASN from HWRPB is bad (0x%lx)\n", hwrpb->max_asn);
- 	}
+ 	अगर (hwrpb->max_asn != MAX_ASN) अणु
+		prपूर्णांकk("Max ASN from HWRPB is bad (0x%lx)\n", hwrpb->max_asn);
+ 	पूर्ण
 
 	/*
-	 * Identify the flock of penguins.
+	 * Identअगरy the flock of penguins.
 	 */
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	setup_smp();
-#endif
+#पूर्ण_अगर
 	paging_init();
-}
+पूर्ण
 
-static char sys_unknown[] = "Unknown";
-static char systype_names[][16] = {
+अटल अक्षर sys_unknown[] = "Unknown";
+अटल अक्षर systype_names[][16] = अणु
 	"0",
 	"ADU", "Cobra", "Ruby", "Flamingo", "Mannequin", "Jensen",
 	"Pelican", "Morgan", "Sable", "Medulla", "Noname",
@@ -710,144 +711,144 @@ static char systype_names[][16] = {
 	"Rawhide", "K2", "Lynx", "XL", "EB164", "Noritake",
 	"Cortex", "29", "Miata", "XXM", "Takara", "Yukon",
 	"Tsunami", "Wildfire", "CUSCO", "Eiger", "Titan", "Marvel"
-};
+पूर्ण;
 
-static char unofficial_names[][8] = {"100", "Ruffian"};
+अटल अक्षर unofficial_names[][8] = अणु"100", "Ruffian"पूर्ण;
 
-static char api_names[][16] = {"200", "Nautilus"};
+अटल अक्षर api_names[][16] = अणु"200", "Nautilus"पूर्ण;
 
-static char eb164_names[][8] = {"EB164", "PC164", "LX164", "SX164", "RX164"};
-static int eb164_indices[] = {0,0,0,1,1,1,1,1,2,2,2,2,3,3,3,3,4};
+अटल अक्षर eb164_names[][8] = अणु"EB164", "PC164", "LX164", "SX164", "RX164"पूर्ण;
+अटल पूर्णांक eb164_indices[] = अणु0,0,0,1,1,1,1,1,2,2,2,2,3,3,3,3,4पूर्ण;
 
-static char alcor_names[][16] = {"Alcor", "Maverick", "Bret"};
-static int alcor_indices[] = {0,0,0,1,1,1,0,0,0,0,0,0,2,2,2,2,2,2};
+अटल अक्षर alcor_names[][16] = अणु"Alcor", "Maverick", "Bret"पूर्ण;
+अटल पूर्णांक alcor_indices[] = अणु0,0,0,1,1,1,0,0,0,0,0,0,2,2,2,2,2,2पूर्ण;
 
-static char eb64p_names[][16] = {"EB64+", "Cabriolet", "AlphaPCI64"};
-static int eb64p_indices[] = {0,0,1,2};
+अटल अक्षर eb64p_names[][16] = अणु"EB64+", "Cabriolet", "AlphaPCI64"पूर्ण;
+अटल पूर्णांक eb64p_indices[] = अणु0,0,1,2पूर्ण;
 
-static char eb66_names[][8] = {"EB66", "EB66+"};
-static int eb66_indices[] = {0,0,1};
+अटल अक्षर eb66_names[][8] = अणु"EB66", "EB66+"पूर्ण;
+अटल पूर्णांक eb66_indices[] = अणु0,0,1पूर्ण;
 
-static char marvel_names[][16] = {
+अटल अक्षर marvel_names[][16] = अणु
 	"Marvel/EV7"
-};
-static int marvel_indices[] = { 0 };
+पूर्ण;
+अटल पूर्णांक marvel_indices[] = अणु 0 पूर्ण;
 
-static char rawhide_names[][16] = {
+अटल अक्षर rawhide_names[][16] = अणु
 	"Dodge", "Wrangler", "Durango", "Tincup", "DaVinci"
-};
-static int rawhide_indices[] = {0,0,0,1,1,2,2,3,3,4,4};
+पूर्ण;
+अटल पूर्णांक rawhide_indices[] = अणु0,0,0,1,1,2,2,3,3,4,4पूर्ण;
 
-static char titan_names[][16] = {
+अटल अक्षर titan_names[][16] = अणु
 	"DEFAULT", "Privateer", "Falcon", "Granite"
-};
-static int titan_indices[] = {0,1,2,2,3};
+पूर्ण;
+अटल पूर्णांक titan_indices[] = अणु0,1,2,2,3पूर्ण;
 
-static char tsunami_names[][16] = {
+अटल अक्षर tsunami_names[][16] = अणु
 	"0", "DP264", "Warhol", "Windjammer", "Monet", "Clipper",
 	"Goldrush", "Webbrick", "Catamaran", "Brisbane", "Melbourne",
 	"Flying Clipper", "Shark"
-};
-static int tsunami_indices[] = {0,1,2,3,4,5,6,7,8,9,10,11,12};
+पूर्ण;
+अटल पूर्णांक tsunami_indices[] = अणु0,1,2,3,4,5,6,7,8,9,10,11,12पूर्ण;
 
-static struct alpha_machine_vector * __init
-get_sysvec(unsigned long type, unsigned long variation, unsigned long cpu)
-{
-	static struct alpha_machine_vector *systype_vecs[] __initdata =
-	{
-		NULL,		/* 0 */
-		NULL,		/* ADU */
-		NULL,		/* Cobra */
-		NULL,		/* Ruby */
-		NULL,		/* Flamingo */
-		NULL,		/* Mannequin */
+अटल काष्ठा alpha_machine_vector * __init
+get_sysvec(अचिन्हित दीर्घ type, अचिन्हित दीर्घ variation, अचिन्हित दीर्घ cpu)
+अणु
+	अटल काष्ठा alpha_machine_vector *systype_vecs[] __initdata =
+	अणु
+		शून्य,		/* 0 */
+		शून्य,		/* ADU */
+		शून्य,		/* Cobra */
+		शून्य,		/* Ruby */
+		शून्य,		/* Flamingo */
+		शून्य,		/* Mannequin */
 		&jensen_mv,
-		NULL, 		/* Pelican */
-		NULL,		/* Morgan */
-		NULL,		/* Sable -- see below.  */
-		NULL,		/* Medulla */
+		शून्य, 		/* Pelican */
+		शून्य,		/* Morgan */
+		शून्य,		/* Sable -- see below.  */
+		शून्य,		/* Medulla */
 		&noname_mv,
-		NULL,		/* Turbolaser */
+		शून्य,		/* Turbolaser */
 		&avanti_mv,
-		NULL,		/* Mustang */
-		NULL,		/* Alcor, Bret, Maverick. HWRPB inaccurate? */
-		NULL,		/* Tradewind */
-		NULL,		/* Mikasa -- see below.  */
-		NULL,		/* EB64 */
-		NULL,		/* EB66 -- see variation.  */
-		NULL,		/* EB64+ -- see variation.  */
+		शून्य,		/* Mustang */
+		शून्य,		/* Alcor, Bret, Maverick. HWRPB inaccurate? */
+		शून्य,		/* Tradewind */
+		शून्य,		/* Mikasa -- see below.  */
+		शून्य,		/* EB64 */
+		शून्य,		/* EB66 -- see variation.  */
+		शून्य,		/* EB64+ -- see variation.  */
 		&alphabook1_mv,
 		&rawhide_mv,
-		NULL,		/* K2 */
+		शून्य,		/* K2 */
 		&lynx_mv,	/* Lynx */
 		&xl_mv,
-		NULL,		/* EB164 -- see variation.  */
-		NULL,		/* Noritake -- see below.  */
-		NULL,		/* Cortex */
-		NULL,		/* 29 */
+		शून्य,		/* EB164 -- see variation.  */
+		शून्य,		/* Noritake -- see below.  */
+		शून्य,		/* Cortex */
+		शून्य,		/* 29 */
 		&miata_mv,
-		NULL,		/* XXM */
+		शून्य,		/* XXM */
 		&takara_mv,
-		NULL,		/* Yukon */
-		NULL,		/* Tsunami -- see variation.  */
+		शून्य,		/* Yukon */
+		शून्य,		/* Tsunami -- see variation.  */
 		&wildfire_mv,	/* Wildfire */
-		NULL,		/* CUSCO */
+		शून्य,		/* CUSCO */
 		&eiger_mv,	/* Eiger */
-		NULL,		/* Titan */
-		NULL,		/* Marvel */
-	};
+		शून्य,		/* Titan */
+		शून्य,		/* Marvel */
+	पूर्ण;
 
-	static struct alpha_machine_vector *unofficial_vecs[] __initdata =
-	{
-		NULL,		/* 100 */
+	अटल काष्ठा alpha_machine_vector *unofficial_vecs[] __initdata =
+	अणु
+		शून्य,		/* 100 */
 		&ruffian_mv,
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *api_vecs[] __initdata =
-	{
-		NULL,		/* 200 */
+	अटल काष्ठा alpha_machine_vector *api_vecs[] __initdata =
+	अणु
+		शून्य,		/* 200 */
 		&nautilus_mv,
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *alcor_vecs[] __initdata = 
-	{
+	अटल काष्ठा alpha_machine_vector *alcor_vecs[] __initdata = 
+	अणु
 		&alcor_mv, &xlt_mv, &xlt_mv
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *eb164_vecs[] __initdata =
-	{
+	अटल काष्ठा alpha_machine_vector *eb164_vecs[] __initdata =
+	अणु
 		&eb164_mv, &pc164_mv, &lx164_mv, &sx164_mv, &rx164_mv
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *eb64p_vecs[] __initdata =
-	{
+	अटल काष्ठा alpha_machine_vector *eb64p_vecs[] __initdata =
+	अणु
 		&eb64p_mv,
 		&cabriolet_mv,
 		&cabriolet_mv		/* AlphaPCI64 */
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *eb66_vecs[] __initdata =
-	{
+	अटल काष्ठा alpha_machine_vector *eb66_vecs[] __initdata =
+	अणु
 		&eb66_mv,
 		&eb66p_mv
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *marvel_vecs[] __initdata =
-	{
+	अटल काष्ठा alpha_machine_vector *marvel_vecs[] __initdata =
+	अणु
 		&marvel_ev7_mv,
-	};
+	पूर्ण;
 
-	static struct alpha_machine_vector *titan_vecs[] __initdata =
-	{
-		&titan_mv,		/* default   */
-		&privateer_mv,		/* privateer */
+	अटल काष्ठा alpha_machine_vector *titan_vecs[] __initdata =
+	अणु
+		&titan_mv,		/* शेष   */
+		&निजीer_mv,		/* निजीer */
 		&titan_mv,		/* falcon    */
-		&privateer_mv,		/* granite   */
-	};
+		&निजीer_mv,		/* granite   */
+	पूर्ण;
 
-	static struct alpha_machine_vector *tsunami_vecs[]  __initdata =
-	{
-		NULL,
+	अटल काष्ठा alpha_machine_vector *tsunami_vecs[]  __initdata =
+	अणु
+		शून्य,
 		&dp264_mv,		/* dp264 */
 		&dp264_mv,		/* warhol */
 		&dp264_mv,		/* windjammer */
@@ -856,98 +857,98 @@ get_sysvec(unsigned long type, unsigned long variation, unsigned long cpu)
 		&dp264_mv,		/* goldrush */
 		&webbrick_mv,		/* webbrick */
 		&dp264_mv,		/* catamaran */
-		NULL,			/* brisbane? */
-		NULL,			/* melbourne? */
-		NULL,			/* flying clipper? */
+		शून्य,			/* brisbane? */
+		शून्य,			/* melbourne? */
+		शून्य,			/* flying clipper? */
 		&shark_mv,		/* shark */
-	};
+	पूर्ण;
 
 	/* ??? Do we need to distinguish between Rawhides?  */
 
-	struct alpha_machine_vector *vec;
+	काष्ठा alpha_machine_vector *vec;
 
-	/* Search the system tables first... */
-	vec = NULL;
-	if (type < ARRAY_SIZE(systype_vecs)) {
+	/* Search the प्रणाली tables first... */
+	vec = शून्य;
+	अगर (type < ARRAY_SIZE(systype_vecs)) अणु
 		vec = systype_vecs[type];
-	} else if ((type > ST_API_BIAS) &&
-		   (type - ST_API_BIAS) < ARRAY_SIZE(api_vecs)) {
+	पूर्ण अन्यथा अगर ((type > ST_API_BIAS) &&
+		   (type - ST_API_BIAS) < ARRAY_SIZE(api_vecs)) अणु
 		vec = api_vecs[type - ST_API_BIAS];
-	} else if ((type > ST_UNOFFICIAL_BIAS) &&
-		   (type - ST_UNOFFICIAL_BIAS) < ARRAY_SIZE(unofficial_vecs)) {
+	पूर्ण अन्यथा अगर ((type > ST_UNOFFICIAL_BIAS) &&
+		   (type - ST_UNOFFICIAL_BIAS) < ARRAY_SIZE(unofficial_vecs)) अणु
 		vec = unofficial_vecs[type - ST_UNOFFICIAL_BIAS];
-	}
+	पूर्ण
 
-	/* If we've not found one, try for a variation.  */
+	/* If we've not found one, try क्रम a variation.  */
 
-	if (!vec) {
+	अगर (!vec) अणु
 		/* Member ID is a bit-field. */
-		unsigned long member = (variation >> 10) & 0x3f;
+		अचिन्हित दीर्घ member = (variation >> 10) & 0x3f;
 
 		cpu &= 0xffffffff; /* make it usable */
 
-		switch (type) {
-		case ST_DEC_ALCOR:
-			if (member < ARRAY_SIZE(alcor_indices))
+		चयन (type) अणु
+		हाल ST_DEC_ALCOR:
+			अगर (member < ARRAY_SIZE(alcor_indices))
 				vec = alcor_vecs[alcor_indices[member]];
-			break;
-		case ST_DEC_EB164:
-			if (member < ARRAY_SIZE(eb164_indices))
+			अवरोध;
+		हाल ST_DEC_EB164:
+			अगर (member < ARRAY_SIZE(eb164_indices))
 				vec = eb164_vecs[eb164_indices[member]];
 			/* PC164 may show as EB164 variation with EV56 CPU,
 			   but, since no true EB164 had anything but EV5... */
-			if (vec == &eb164_mv && cpu == EV56_CPU)
+			अगर (vec == &eb164_mv && cpu == EV56_CPU)
 				vec = &pc164_mv;
-			break;
-		case ST_DEC_EB64P:
-			if (member < ARRAY_SIZE(eb64p_indices))
+			अवरोध;
+		हाल ST_DEC_EB64P:
+			अगर (member < ARRAY_SIZE(eb64p_indices))
 				vec = eb64p_vecs[eb64p_indices[member]];
-			break;
-		case ST_DEC_EB66:
-			if (member < ARRAY_SIZE(eb66_indices))
+			अवरोध;
+		हाल ST_DEC_EB66:
+			अगर (member < ARRAY_SIZE(eb66_indices))
 				vec = eb66_vecs[eb66_indices[member]];
-			break;
-		case ST_DEC_MARVEL:
-			if (member < ARRAY_SIZE(marvel_indices))
+			अवरोध;
+		हाल ST_DEC_MARVEL:
+			अगर (member < ARRAY_SIZE(marvel_indices))
 				vec = marvel_vecs[marvel_indices[member]];
-			break;
-		case ST_DEC_TITAN:
-			vec = titan_vecs[0];	/* default */
-			if (member < ARRAY_SIZE(titan_indices))
+			अवरोध;
+		हाल ST_DEC_TITAN:
+			vec = titan_vecs[0];	/* शेष */
+			अगर (member < ARRAY_SIZE(titan_indices))
 				vec = titan_vecs[titan_indices[member]];
-			break;
-		case ST_DEC_TSUNAMI:
-			if (member < ARRAY_SIZE(tsunami_indices))
+			अवरोध;
+		हाल ST_DEC_TSUNAMI:
+			अगर (member < ARRAY_SIZE(tsunami_indices))
 				vec = tsunami_vecs[tsunami_indices[member]];
-			break;
-		case ST_DEC_1000:
-			if (cpu == EV5_CPU || cpu == EV56_CPU)
+			अवरोध;
+		हाल ST_DEC_1000:
+			अगर (cpu == EV5_CPU || cpu == EV56_CPU)
 				vec = &mikasa_primo_mv;
-			else
+			अन्यथा
 				vec = &mikasa_mv;
-			break;
-		case ST_DEC_NORITAKE:
-			if (cpu == EV5_CPU || cpu == EV56_CPU)
+			अवरोध;
+		हाल ST_DEC_NORITAKE:
+			अगर (cpu == EV5_CPU || cpu == EV56_CPU)
 				vec = &noritake_primo_mv;
-			else
+			अन्यथा
 				vec = &noritake_mv;
-			break;
-		case ST_DEC_2100_A500:
-			if (cpu == EV5_CPU || cpu == EV56_CPU)
+			अवरोध;
+		हाल ST_DEC_2100_A500:
+			अगर (cpu == EV5_CPU || cpu == EV56_CPU)
 				vec = &sable_gamma_mv;
-			else
+			अन्यथा
 				vec = &sable_mv;
-			break;
-		}
-	}
-	return vec;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस vec;
+पूर्ण
 
-static struct alpha_machine_vector * __init
-get_sysvec_byname(const char *name)
-{
-	static struct alpha_machine_vector *all_vecs[] __initdata =
-	{
+अटल काष्ठा alpha_machine_vector * __init
+get_sysvec_byname(स्थिर अक्षर *name)
+अणु
+	अटल काष्ठा alpha_machine_vector *all_vecs[] __initdata =
+	अणु
 		&alcor_mv,
 		&alphabook1_mv,
 		&avanti_mv,
@@ -972,7 +973,7 @@ get_sysvec_byname(const char *name)
 		&noritake_primo_mv,
 		&p2k_mv,
 		&pc164_mv,
-		&privateer_mv,
+		&निजीer_mv,
 		&rawhide_mv,
 		&ruffian_mv,
 		&rx164_mv,
@@ -985,185 +986,185 @@ get_sysvec_byname(const char *name)
 		&wildfire_mv,
 		&xl_mv,
 		&xlt_mv
-	};
+	पूर्ण;
 
-	size_t i;
+	माप_प्रकार i;
 
-	for (i = 0; i < ARRAY_SIZE(all_vecs); ++i) {
-		struct alpha_machine_vector *mv = all_vecs[i];
-		if (strcasecmp(mv->vector_name, name) == 0)
-			return mv;
-	}
-	return NULL;
-}
+	क्रम (i = 0; i < ARRAY_SIZE(all_vecs); ++i) अणु
+		काष्ठा alpha_machine_vector *mv = all_vecs[i];
+		अगर (strहालcmp(mv->vector_name, name) == 0)
+			वापस mv;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void
-get_sysnames(unsigned long type, unsigned long variation, unsigned long cpu,
-	     char **type_name, char **variation_name)
-{
-	unsigned long member;
+अटल व्योम
+get_sysnames(अचिन्हित दीर्घ type, अचिन्हित दीर्घ variation, अचिन्हित दीर्घ cpu,
+	     अक्षर **type_name, अक्षर **variation_name)
+अणु
+	अचिन्हित दीर्घ member;
 
 	/* If not in the tables, make it UNKNOWN,
-	   else set type name to family */
-	if (type < ARRAY_SIZE(systype_names)) {
+	   अन्यथा set type name to family */
+	अगर (type < ARRAY_SIZE(systype_names)) अणु
 		*type_name = systype_names[type];
-	} else if ((type > ST_API_BIAS) &&
-		   (type - ST_API_BIAS) < ARRAY_SIZE(api_names)) {
+	पूर्ण अन्यथा अगर ((type > ST_API_BIAS) &&
+		   (type - ST_API_BIAS) < ARRAY_SIZE(api_names)) अणु
 		*type_name = api_names[type - ST_API_BIAS];
-	} else if ((type > ST_UNOFFICIAL_BIAS) &&
-		   (type - ST_UNOFFICIAL_BIAS) < ARRAY_SIZE(unofficial_names)) {
+	पूर्ण अन्यथा अगर ((type > ST_UNOFFICIAL_BIAS) &&
+		   (type - ST_UNOFFICIAL_BIAS) < ARRAY_SIZE(unofficial_names)) अणु
 		*type_name = unofficial_names[type - ST_UNOFFICIAL_BIAS];
-	} else {
+	पूर्ण अन्यथा अणु
 		*type_name = sys_unknown;
 		*variation_name = sys_unknown;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Set variation to "0"; if variation is zero, done.  */
+	/* Set variation to "0"; अगर variation is zero, करोne.  */
 	*variation_name = systype_names[0];
-	if (variation == 0) {
-		return;
-	}
+	अगर (variation == 0) अणु
+		वापस;
+	पूर्ण
 
 	member = (variation >> 10) & 0x3f; /* member ID is a bit-field */
 
 	cpu &= 0xffffffff; /* make it usable */
 
-	switch (type) { /* select by family */
-	default: /* default to variation "0" for now */
-		break;
-	case ST_DEC_EB164:
-		if (member >= ARRAY_SIZE(eb164_indices))
-			break;
+	चयन (type) अणु /* select by family */
+	शेष: /* शेष to variation "0" क्रम now */
+		अवरोध;
+	हाल ST_DEC_EB164:
+		अगर (member >= ARRAY_SIZE(eb164_indices))
+			अवरोध;
 		*variation_name = eb164_names[eb164_indices[member]];
 		/* PC164 may show as EB164 variation, but with EV56 CPU,
 		   so, since no true EB164 had anything but EV5... */
-		if (eb164_indices[member] == 0 && cpu == EV56_CPU)
+		अगर (eb164_indices[member] == 0 && cpu == EV56_CPU)
 			*variation_name = eb164_names[1]; /* make it PC164 */
-		break;
-	case ST_DEC_ALCOR:
-		if (member < ARRAY_SIZE(alcor_indices))
+		अवरोध;
+	हाल ST_DEC_ALCOR:
+		अगर (member < ARRAY_SIZE(alcor_indices))
 			*variation_name = alcor_names[alcor_indices[member]];
-		break;
-	case ST_DEC_EB64P:
-		if (member < ARRAY_SIZE(eb64p_indices))
+		अवरोध;
+	हाल ST_DEC_EB64P:
+		अगर (member < ARRAY_SIZE(eb64p_indices))
 			*variation_name = eb64p_names[eb64p_indices[member]];
-		break;
-	case ST_DEC_EB66:
-		if (member < ARRAY_SIZE(eb66_indices))
+		अवरोध;
+	हाल ST_DEC_EB66:
+		अगर (member < ARRAY_SIZE(eb66_indices))
 			*variation_name = eb66_names[eb66_indices[member]];
-		break;
-	case ST_DEC_MARVEL:
-		if (member < ARRAY_SIZE(marvel_indices))
+		अवरोध;
+	हाल ST_DEC_MARVEL:
+		अगर (member < ARRAY_SIZE(marvel_indices))
 			*variation_name = marvel_names[marvel_indices[member]];
-		break;
-	case ST_DEC_RAWHIDE:
-		if (member < ARRAY_SIZE(rawhide_indices))
+		अवरोध;
+	हाल ST_DEC_RAWHIDE:
+		अगर (member < ARRAY_SIZE(rawhide_indices))
 			*variation_name = rawhide_names[rawhide_indices[member]];
-		break;
-	case ST_DEC_TITAN:
-		*variation_name = titan_names[0];	/* default */
-		if (member < ARRAY_SIZE(titan_indices))
+		अवरोध;
+	हाल ST_DEC_TITAN:
+		*variation_name = titan_names[0];	/* शेष */
+		अगर (member < ARRAY_SIZE(titan_indices))
 			*variation_name = titan_names[titan_indices[member]];
-		break;
-	case ST_DEC_TSUNAMI:
-		if (member < ARRAY_SIZE(tsunami_indices))
+		अवरोध;
+	हाल ST_DEC_TSUNAMI:
+		अगर (member < ARRAY_SIZE(tsunami_indices))
 			*variation_name = tsunami_names[tsunami_indices[member]];
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * A change was made to the HWRPB via an ECO and the following code
  * tracks a part of the ECO.  In HWRPB versions less than 5, the ECO
  * was not implemented in the console firmware.  If it's revision 5 or
- * greater we can get the name of the platform as an ASCII string from
- * the HWRPB.  That's what this function does.  It checks the revision
- * level and if the string is in the HWRPB it returns the address of
- * the string--a pointer to the name of the platform.
+ * greater we can get the name of the platक्रमm as an ASCII string from
+ * the HWRPB.  That's what this function करोes.  It checks the revision
+ * level and अगर the string is in the HWRPB it वापसs the address of
+ * the string--a poपूर्णांकer to the name of the platक्रमm.
  *
  * Returns:
- *      - Pointer to a ASCII string if it's in the HWRPB
- *      - Pointer to a blank string if the data is not in the HWRPB.
+ *      - Poपूर्णांकer to a ASCII string अगर it's in the HWRPB
+ *      - Poपूर्णांकer to a blank string अगर the data is not in the HWRPB.
  */
 
-static char *
-platform_string(void)
-{
-	struct dsr_struct *dsr;
-	static char unk_system_string[] = "N/A";
+अटल अक्षर *
+platक्रमm_string(व्योम)
+अणु
+	काष्ठा dsr_काष्ठा *dsr;
+	अटल अक्षर unk_प्रणाली_string[] = "N/A";
 
-	/* Go to the console for the string pointer.
+	/* Go to the console क्रम the string poपूर्णांकer.
 	 * If the rpb_vers is not 5 or greater the rpb
-	 * is old and does not have this data in it.
+	 * is old and करोes not have this data in it.
 	 */
-	if (hwrpb->revision < 5)
-		return (unk_system_string);
-	else {
-		/* The Dynamic System Recognition struct
-		 * has the system platform name starting
-		 * after the character count of the string.
+	अगर (hwrpb->revision < 5)
+		वापस (unk_प्रणाली_string);
+	अन्यथा अणु
+		/* The Dynamic System Recognition काष्ठा
+		 * has the प्रणाली platक्रमm name starting
+		 * after the अक्षरacter count of the string.
 		 */
-		dsr =  ((struct dsr_struct *)
-			((char *)hwrpb + hwrpb->dsr_offset));
-		return ((char *)dsr + (dsr->sysname_off +
-				       sizeof(long)));
-	}
-}
+		dsr =  ((काष्ठा dsr_काष्ठा *)
+			((अक्षर *)hwrpb + hwrpb->dsr_offset));
+		वापस ((अक्षर *)dsr + (dsr->sysname_off +
+				       माप(दीर्घ)));
+	पूर्ण
+पूर्ण
 
-static int
-get_nr_processors(struct percpu_struct *cpubase, unsigned long num)
-{
-	struct percpu_struct *cpu;
-	unsigned long i;
-	int count = 0;
+अटल पूर्णांक
+get_nr_processors(काष्ठा percpu_काष्ठा *cpubase, अचिन्हित दीर्घ num)
+अणु
+	काष्ठा percpu_काष्ठा *cpu;
+	अचिन्हित दीर्घ i;
+	पूर्णांक count = 0;
 
-	for (i = 0; i < num; i++) {
-		cpu = (struct percpu_struct *)
-			((char *)cpubase + i*hwrpb->processor_size);
-		if ((cpu->flags & 0x1cc) == 0x1cc)
+	क्रम (i = 0; i < num; i++) अणु
+		cpu = (काष्ठा percpu_काष्ठा *)
+			((अक्षर *)cpubase + i*hwrpb->processor_size);
+		अगर ((cpu->flags & 0x1cc) == 0x1cc)
 			count++;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static void
-show_cache_size (struct seq_file *f, const char *which, int shape)
-{
-	if (shape == -1)
-		seq_printf (f, "%s\t\t: n/a\n", which);
-	else if (shape == 0)
-		seq_printf (f, "%s\t\t: unknown\n", which);
-	else
-		seq_printf (f, "%s\t\t: %dK, %d-way, %db line\n",
+अटल व्योम
+show_cache_size (काष्ठा seq_file *f, स्थिर अक्षर *which, पूर्णांक shape)
+अणु
+	अगर (shape == -1)
+		seq_म_लिखो (f, "%s\t\t: n/a\n", which);
+	अन्यथा अगर (shape == 0)
+		seq_म_लिखो (f, "%s\t\t: unknown\n", which);
+	अन्यथा
+		seq_म_लिखो (f, "%s\t\t: %dK, %d-way, %db line\n",
 			    which, shape >> 10, shape & 15,
 			    1 << ((shape >> 4) & 15));
-}
+पूर्ण
 
-static int
-show_cpuinfo(struct seq_file *f, void *slot)
-{
-	extern struct unaligned_stat {
-		unsigned long count, va, pc;
-	} unaligned[2];
+अटल पूर्णांक
+show_cpuinfo(काष्ठा seq_file *f, व्योम *slot)
+अणु
+	बाह्य काष्ठा unaligned_stat अणु
+		अचिन्हित दीर्घ count, va, pc;
+	पूर्ण unaligned[2];
 
-	static char cpu_names[][8] = {
+	अटल अक्षर cpu_names[][8] = अणु
 		"EV3", "EV4", "Simulate", "LCA4", "EV5", "EV45", "EV56",
 		"EV6", "PCA56", "PCA57", "EV67", "EV68CB", "EV68AL",
 		"EV68CX", "EV7", "EV79", "EV69"
-	};
+	पूर्ण;
 
-	struct percpu_struct *cpu = slot;
-	unsigned int cpu_index;
-	char *cpu_name;
-	char *systype_name;
-	char *sysvariation_name;
-	int nr_processors;
-	unsigned long timer_freq;
+	काष्ठा percpu_काष्ठा *cpu = slot;
+	अचिन्हित पूर्णांक cpu_index;
+	अक्षर *cpu_name;
+	अक्षर *systype_name;
+	अक्षर *sysvariation_name;
+	पूर्णांक nr_processors;
+	अचिन्हित दीर्घ समयr_freq;
 
-	cpu_index = (unsigned) (cpu->type - 1);
+	cpu_index = (अचिन्हित) (cpu->type - 1);
 	cpu_name = "Unknown";
-	if (cpu_index < ARRAY_SIZE(cpu_names))
+	अगर (cpu_index < ARRAY_SIZE(cpu_names))
 		cpu_name = cpu_names[cpu_index];
 
 	get_sysnames(hwrpb->sys_type, hwrpb->sys_variation,
@@ -1171,13 +1172,13 @@ show_cpuinfo(struct seq_file *f, void *slot)
 
 	nr_processors = get_nr_processors(cpu, hwrpb->nr_processors);
 
-#if CONFIG_HZ == 1024 || CONFIG_HZ == 1200
-	timer_freq = (100UL * hwrpb->intr_freq) / 4096;
-#else
-	timer_freq = 100UL * CONFIG_HZ;
-#endif
+#अगर CONFIG_HZ == 1024 || CONFIG_HZ == 1200
+	समयr_freq = (100UL * hwrpb->पूर्णांकr_freq) / 4096;
+#अन्यथा
+	समयr_freq = 100UL * CONFIG_HZ;
+#पूर्ण_अगर
 
-	seq_printf(f, "cpu\t\t\t: Alpha\n"
+	seq_म_लिखो(f, "cpu\t\t\t: Alpha\n"
 		      "cpu model\t\t: %s\n"
 		      "cpu variation\t\t: %ld\n"
 		      "cpu revision\t\t: %ld\n"
@@ -1197,45 +1198,45 @@ show_cpuinfo(struct seq_file *f, void *slot)
 		      "platform string\t\t: %s\n"
 		      "cpus detected\t\t: %d\n",
 		       cpu_name, cpu->variation, cpu->revision,
-		       (char*)cpu->serial_no,
+		       (अक्षर*)cpu->serial_no,
 		       systype_name, sysvariation_name, hwrpb->sys_revision,
-		       (char*)hwrpb->ssn,
+		       (अक्षर*)hwrpb->ssn,
 		       est_cycle_freq ? : hwrpb->cycle_freq,
 		       est_cycle_freq ? "est." : "",
-		       timer_freq / 100, timer_freq % 100,
+		       समयr_freq / 100, समयr_freq % 100,
 		       hwrpb->pagesize,
 		       hwrpb->pa_bits,
 		       hwrpb->max_asn,
-		       loops_per_jiffy / (500000/HZ),
-		       (loops_per_jiffy / (5000/HZ)) % 100,
+		       loops_per_jअगरfy / (500000/HZ),
+		       (loops_per_jअगरfy / (5000/HZ)) % 100,
 		       unaligned[0].count, unaligned[0].pc, unaligned[0].va,
 		       unaligned[1].count, unaligned[1].pc, unaligned[1].va,
-		       platform_string(), nr_processors);
+		       platक्रमm_string(), nr_processors);
 
-#ifdef CONFIG_SMP
-	seq_printf(f, "cpus active\t\t: %u\n"
+#अगर_घोषित CONFIG_SMP
+	seq_म_लिखो(f, "cpus active\t\t: %u\n"
 		      "cpu active mask\t\t: %016lx\n",
 		       num_online_cpus(), cpumask_bits(cpu_possible_mask)[0]);
-#endif
+#पूर्ण_अगर
 
 	show_cache_size (f, "L1 Icache", alpha_l1i_cacheshape);
 	show_cache_size (f, "L1 Dcache", alpha_l1d_cacheshape);
 	show_cache_size (f, "L2 cache", alpha_l2_cacheshape);
 	show_cache_size (f, "L3 cache", alpha_l3_cacheshape);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-read_mem_block(int *addr, int stride, int size)
-{
-	long nloads = size / stride, cnt, tmp;
+अटल पूर्णांक __init
+पढ़ो_mem_block(पूर्णांक *addr, पूर्णांक stride, पूर्णांक size)
+अणु
+	दीर्घ nloads = size / stride, cnt, पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	rpcc    %0\n"
 	"1:	ldl	%3,0(%2)\n"
 	"	subq	%1,1,%1\n"
-	/* Next two XORs introduce an explicit data dependency between
+	/* Next two XORs पूर्णांकroduce an explicit data dependency between
 	   consecutive loads in the loop, which will give us true load
 	   latency. */
 	"	xor	%3,%2,%2\n"
@@ -1244,84 +1245,84 @@ read_mem_block(int *addr, int stride, int size)
 	"	bne	%1,1b\n"
 	"	rpcc	%3\n"
 	"	subl	%3,%0,%0\n"
-	: "=&r" (cnt), "=&r" (nloads), "=&r" (addr), "=&r" (tmp)
+	: "=&r" (cnt), "=&r" (nloads), "=&r" (addr), "=&r" (पंचांगp)
 	: "r" (stride), "1" (nloads), "2" (addr));
 
-	return cnt / (size / stride);
-}
+	वापस cnt / (size / stride);
+पूर्ण
 
-#define CSHAPE(totalsize, linesize, assoc) \
+#घोषणा CSHAPE(totalsize, linesize, assoc) \
   ((totalsize & ~0xff) | (linesize << 4) | assoc)
 
-/* ??? EV5 supports up to 64M, but did the systems with more than
+/* ??? EV5 supports up to 64M, but did the प्रणालीs with more than
    16M of BCACHE ever exist? */
-#define MAX_BCACHE_SIZE	16*1024*1024
+#घोषणा MAX_BCACHE_SIZE	16*1024*1024
 
 /* Note that the offchip caches are direct mapped on all Alphas. */
-static int __init
-external_cache_probe(int minsize, int width)
-{
-	int cycles, prev_cycles = 1000000;
-	int stride = 1 << width;
-	long size = minsize, maxsize = MAX_BCACHE_SIZE * 2;
+अटल पूर्णांक __init
+बाह्यal_cache_probe(पूर्णांक minsize, पूर्णांक width)
+अणु
+	पूर्णांक cycles, prev_cycles = 1000000;
+	पूर्णांक stride = 1 << width;
+	दीर्घ size = minsize, maxsize = MAX_BCACHE_SIZE * 2;
 
-	if (maxsize > (max_low_pfn + 1) << PAGE_SHIFT)
+	अगर (maxsize > (max_low_pfn + 1) << PAGE_SHIFT)
 		maxsize = 1 << (ilog2(max_low_pfn + 1) + PAGE_SHIFT);
 
 	/* Get the first block cached. */
-	read_mem_block(__va(0), stride, size);
+	पढ़ो_mem_block(__va(0), stride, size);
 
-	while (size < maxsize) {
+	जबतक (size < maxsize) अणु
 		/* Get an average load latency in cycles. */
-		cycles = read_mem_block(__va(0), stride, size);
-		if (cycles > prev_cycles * 2) {
+		cycles = पढ़ो_mem_block(__va(0), stride, size);
+		अगर (cycles > prev_cycles * 2) अणु
 			/* Fine, we exceed the cache. */
-			printk("%ldK Bcache detected; load hit latency %d "
+			prपूर्णांकk("%ldK Bcache detected; load hit latency %d "
 			       "cycles, load miss latency %d cycles\n",
 			       size >> 11, prev_cycles, cycles);
-			return CSHAPE(size >> 1, width, 1);
-		}
+			वापस CSHAPE(size >> 1, width, 1);
+		पूर्ण
 		/* Try to get the next block cached. */
-		read_mem_block(__va(size), stride, size);
+		पढ़ो_mem_block(__va(size), stride, size);
 		prev_cycles = cycles;
 		size <<= 1;
-	}
-	return -1;	/* No BCACHE found. */
-}
+	पूर्ण
+	वापस -1;	/* No BCACHE found. */
+पूर्ण
 
-static void __init
-determine_cpu_caches (unsigned int cpu_type)
-{
-	int L1I, L1D, L2, L3;
+अटल व्योम __init
+determine_cpu_caches (अचिन्हित पूर्णांक cpu_type)
+अणु
+	पूर्णांक L1I, L1D, L2, L3;
 
-	switch (cpu_type) {
-	case EV4_CPU:
-	case EV45_CPU:
-	  {
-		if (cpu_type == EV4_CPU)
+	चयन (cpu_type) अणु
+	हाल EV4_CPU:
+	हाल EV45_CPU:
+	  अणु
+		अगर (cpu_type == EV4_CPU)
 			L1I = CSHAPE(8*1024, 5, 1);
-		else
+		अन्यथा
 			L1I = CSHAPE(16*1024, 5, 1);
 		L1D = L1I;
 		L3 = -1;
 	
-		/* BIU_CTL is a write-only Abox register.  PALcode has a
-		   shadow copy, and may be available from some versions
+		/* BIU_CTL is a ग_लिखो-only Abox रेजिस्टर.  PALcode has a
+		   shaकरोw copy, and may be available from some versions
 		   of the CSERVE PALcall.  If we can get it, then
 
-			unsigned long biu_ctl, size;
+			अचिन्हित दीर्घ biu_ctl, size;
 			size = 128*1024 * (1 << ((biu_ctl >> 28) & 7));
 			L2 = CSHAPE (size, 5, 1);
 
-		   Unfortunately, we can't rely on that.
+		   Unक्रमtunately, we can't rely on that.
 		*/
-		L2 = external_cache_probe(128*1024, 5);
-		break;
-	  }
+		L2 = बाह्यal_cache_probe(128*1024, 5);
+		अवरोध;
+	  पूर्ण
 
-	case LCA4_CPU:
-	  {
-		unsigned long car, size;
+	हाल LCA4_CPU:
+	  अणु
+		अचिन्हित दीर्घ car, size;
 
 		L1I = L1D = CSHAPE(8*1024, 5, 1);
 		L3 = -1;
@@ -1330,13 +1331,13 @@ determine_cpu_caches (unsigned int cpu_type)
 		size = 64*1024 * (1 << ((car >> 5) & 7));
 		/* No typo -- 8 byte cacheline size.  Whodathunk.  */
 		L2 = (car & 1 ? CSHAPE (size, 3, 1) : -1);
-		break;
-	  }
+		अवरोध;
+	  पूर्ण
 
-	case EV5_CPU:
-	case EV56_CPU:
-	  {
-		unsigned long sc_ctl, width;
+	हाल EV5_CPU:
+	हाल EV56_CPU:
+	  अणु
+		अचिन्हित दीर्घ sc_ctl, width;
 
 		L1I = L1D = CSHAPE(8*1024, 5, 1);
 
@@ -1345,129 +1346,129 @@ determine_cpu_caches (unsigned int cpu_type)
 		width = sc_ctl & 0x1000 ? 6 : 5;
 		L2 = CSHAPE (96*1024, width, 3);
 
-		/* BC_CONTROL and BC_CONFIG are write-only IPRs.  PALcode
-		   has a shadow copy, and may be available from some versions
+		/* BC_CONTROL and BC_CONFIG are ग_लिखो-only IPRs.  PALcode
+		   has a shaकरोw copy, and may be available from some versions
 		   of the CSERVE PALcall.  If we can get it, then
 
-			unsigned long bc_control, bc_config, size;
+			अचिन्हित दीर्घ bc_control, bc_config, size;
 			size = 1024*1024 * (1 << ((bc_config & 7) - 1));
 			L3 = (bc_control & 1 ? CSHAPE (size, width, 1) : -1);
 
-		   Unfortunately, we can't rely on that.
+		   Unक्रमtunately, we can't rely on that.
 		*/
-		L3 = external_cache_probe(1024*1024, width);
-		break;
-	  }
+		L3 = बाह्यal_cache_probe(1024*1024, width);
+		अवरोध;
+	  पूर्ण
 
-	case PCA56_CPU:
-	case PCA57_CPU:
-	  {
-		if (cpu_type == PCA56_CPU) {
+	हाल PCA56_CPU:
+	हाल PCA57_CPU:
+	  अणु
+		अगर (cpu_type == PCA56_CPU) अणु
 			L1I = CSHAPE(16*1024, 6, 1);
 			L1D = CSHAPE(8*1024, 5, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			L1I = CSHAPE(32*1024, 6, 2);
 			L1D = CSHAPE(16*1024, 5, 1);
-		}
+		पूर्ण
 		L3 = -1;
 
-#if 0
-		unsigned long cbox_config, size;
+#अगर 0
+		अचिन्हित दीर्घ cbox_config, size;
 
 		cbox_config = *(vulp) phys_to_virt (0xfffff00008UL);
 		size = 512*1024 * (1 << ((cbox_config >> 12) & 3));
 
 		L2 = ((cbox_config >> 31) & 1 ? CSHAPE (size, 6, 1) : -1);
-#else
-		L2 = external_cache_probe(512*1024, 6);
-#endif
-		break;
-	  }
+#अन्यथा
+		L2 = बाह्यal_cache_probe(512*1024, 6);
+#पूर्ण_अगर
+		अवरोध;
+	  पूर्ण
 
-	case EV6_CPU:
-	case EV67_CPU:
-	case EV68CB_CPU:
-	case EV68AL_CPU:
-	case EV68CX_CPU:
-	case EV69_CPU:
+	हाल EV6_CPU:
+	हाल EV67_CPU:
+	हाल EV68CB_CPU:
+	हाल EV68AL_CPU:
+	हाल EV68CX_CPU:
+	हाल EV69_CPU:
 		L1I = L1D = CSHAPE(64*1024, 6, 2);
-		L2 = external_cache_probe(1024*1024, 6);
+		L2 = बाह्यal_cache_probe(1024*1024, 6);
 		L3 = -1;
-		break;
+		अवरोध;
 
-	case EV7_CPU:
-	case EV79_CPU:
+	हाल EV7_CPU:
+	हाल EV79_CPU:
 		L1I = L1D = CSHAPE(64*1024, 6, 2);
 		L2 = CSHAPE(7*1024*1024/4, 6, 7);
 		L3 = -1;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Nothing known about this cpu type.  */
 		L1I = L1D = L2 = L3 = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	alpha_l1i_cacheshape = L1I;
 	alpha_l1d_cacheshape = L1D;
 	alpha_l2_cacheshape = L2;
 	alpha_l3_cacheshape = L3;
-}
+पूर्ण
 
 /*
  * We show only CPU #0 info.
  */
-static void *
-c_start(struct seq_file *f, loff_t *pos)
-{
-	return *pos ? NULL : (char *)hwrpb + hwrpb->processor_offset;
-}
+अटल व्योम *
+c_start(काष्ठा seq_file *f, loff_t *pos)
+अणु
+	वापस *pos ? शून्य : (अक्षर *)hwrpb + hwrpb->processor_offset;
+पूर्ण
 
-static void *
-c_next(struct seq_file *f, void *v, loff_t *pos)
-{
+अटल व्योम *
+c_next(काष्ठा seq_file *f, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void
-c_stop(struct seq_file *f, void *v)
-{
-}
+अटल व्योम
+c_stop(काष्ठा seq_file *f, व्योम *v)
+अणु
+पूर्ण
 
-const struct seq_operations cpuinfo_op = {
+स्थिर काष्ठा seq_operations cpuinfo_op = अणु
 	.start	= c_start,
 	.next	= c_next,
 	.stop	= c_stop,
 	.show	= show_cpuinfo,
-};
+पूर्ण;
 
 
-static int
-alpha_panic_event(struct notifier_block *this, unsigned long event, void *ptr)
-{
-#if 1
+अटल पूर्णांक
+alpha_panic_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+#अगर 1
 	/* FIXME FIXME FIXME */
 	/* If we are using SRM and serial console, just hard halt here. */
-	if (alpha_using_srm && srmcons_output)
+	अगर (alpha_using_srm && srmcons_output)
 		__halt();
-#endif
-        return NOTIFY_DONE;
-}
+#पूर्ण_अगर
+        वापस NOTIFY_DONE;
+पूर्ण
 
-static __init int add_pcspkr(void)
-{
-	struct platform_device *pd;
-	int ret;
+अटल __init पूर्णांक add_pcspkr(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pd;
+	पूर्णांक ret;
 
-	pd = platform_device_alloc("pcspkr", -1);
-	if (!pd)
-		return -ENOMEM;
+	pd = platक्रमm_device_alloc("pcspkr", -1);
+	अगर (!pd)
+		वापस -ENOMEM;
 
-	ret = platform_device_add(pd);
-	if (ret)
-		platform_device_put(pd);
+	ret = platक्रमm_device_add(pd);
+	अगर (ret)
+		platक्रमm_device_put(pd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 device_initcall(add_pcspkr);

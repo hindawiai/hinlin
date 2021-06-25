@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2014 Intel Corporation; author Matt Fleming
  * Copyright (c) 2014 Red Hat, Inc., Mark Salter <msalter@redhat.com>
  */
-#include <linux/efi.h>
-#include <linux/reboot.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/reboot.h>
 
-static void (*orig_pm_power_off)(void);
+अटल व्योम (*orig_pm_घातer_off)(व्योम);
 
-int efi_reboot_quirk_mode = -1;
+पूर्णांक efi_reboot_quirk_mode = -1;
 
-void efi_reboot(enum reboot_mode reboot_mode, const char *__unused)
-{
-	const char *str[] = { "cold", "warm", "shutdown", "platform" };
-	int efi_mode, cap_reset_mode;
+व्योम efi_reboot(क्रमागत reboot_mode reboot_mode, स्थिर अक्षर *__unused)
+अणु
+	स्थिर अक्षर *str[] = अणु "cold", "warm", "shutdown", "platform" पूर्ण;
+	पूर्णांक efi_mode, cap_reset_mode;
 
-	if (!efi_rt_services_supported(EFI_RT_SUPPORTED_RESET_SYSTEM))
-		return;
+	अगर (!efi_rt_services_supported(EFI_RT_SUPPORTED_RESET_SYSTEM))
+		वापस;
 
-	switch (reboot_mode) {
-	case REBOOT_WARM:
-	case REBOOT_SOFT:
+	चयन (reboot_mode) अणु
+	हाल REBOOT_WARM:
+	हाल REBOOT_SOFT:
 		efi_mode = EFI_RESET_WARM;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		efi_mode = EFI_RESET_COLD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * If a quirk forced an EFI reset mode, always use that.
+	 * If a quirk क्रमced an EFI reset mode, always use that.
 	 */
-	if (efi_reboot_quirk_mode != -1)
+	अगर (efi_reboot_quirk_mode != -1)
 		efi_mode = efi_reboot_quirk_mode;
 
-	if (efi_capsule_pending(&cap_reset_mode)) {
-		if (efi_mode != cap_reset_mode)
-			printk(KERN_CRIT "efi: %s reset requested but pending "
+	अगर (efi_capsule_pending(&cap_reset_mode)) अणु
+		अगर (efi_mode != cap_reset_mode)
+			prपूर्णांकk(KERN_CRIT "efi: %s reset requested but pending "
 			       "capsule update requires %s reset... Performing "
 			       "%s reset.\n", str[efi_mode], str[cap_reset_mode],
 			       str[cap_reset_mode]);
 		efi_mode = cap_reset_mode;
-	}
+	पूर्ण
 
-	efi.reset_system(efi_mode, EFI_SUCCESS, 0, NULL);
-}
+	efi.reset_प्रणाली(efi_mode, EFI_SUCCESS, 0, शून्य);
+पूर्ण
 
-bool __weak efi_poweroff_required(void)
-{
-	return false;
-}
+bool __weak efi_घातeroff_required(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static void efi_power_off(void)
-{
-	efi.reset_system(EFI_RESET_SHUTDOWN, EFI_SUCCESS, 0, NULL);
+अटल व्योम efi_घातer_off(व्योम)
+अणु
+	efi.reset_प्रणाली(EFI_RESET_SHUTDOWN, EFI_SUCCESS, 0, शून्य);
 	/*
-	 * The above call should not return, if it does fall back to
-	 * the original power off method (typically ACPI poweroff).
+	 * The above call should not वापस, अगर it करोes fall back to
+	 * the original घातer off method (typically ACPI घातeroff).
 	 */
-	if (orig_pm_power_off)
-		orig_pm_power_off();
-}
+	अगर (orig_pm_घातer_off)
+		orig_pm_घातer_off();
+पूर्ण
 
-static int __init efi_shutdown_init(void)
-{
-	if (!efi_rt_services_supported(EFI_RT_SUPPORTED_RESET_SYSTEM))
-		return -ENODEV;
+अटल पूर्णांक __init efi_shutकरोwn_init(व्योम)
+अणु
+	अगर (!efi_rt_services_supported(EFI_RT_SUPPORTED_RESET_SYSTEM))
+		वापस -ENODEV;
 
-	if (efi_poweroff_required()) {
-		orig_pm_power_off = pm_power_off;
-		pm_power_off = efi_power_off;
-	}
+	अगर (efi_घातeroff_required()) अणु
+		orig_pm_घातer_off = pm_घातer_off;
+		pm_घातer_off = efi_घातer_off;
+	पूर्ण
 
-	return 0;
-}
-late_initcall(efi_shutdown_init);
+	वापस 0;
+पूर्ण
+late_initcall(efi_shutकरोwn_init);

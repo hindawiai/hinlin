@@ -1,10 +1,11 @@
+<शैली गुरु>
 /*
- *   fs/cifs/inode.c
+ *   fs/cअगरs/inode.c
  *
  *   Copyright (C) International Business Machines  Corp., 2002,2010
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -12,487 +13,487 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
-#include <linux/fs.h>
-#include <linux/stat.h>
-#include <linux/slab.h>
-#include <linux/pagemap.h>
-#include <linux/freezer.h>
-#include <linux/sched/signal.h>
-#include <linux/wait_bit.h>
-#include <linux/fiemap.h>
-#include <asm/div64.h>
-#include "cifsfs.h"
-#include "cifspdu.h"
-#include "cifsglob.h"
-#include "cifsproto.h"
-#include "smb2proto.h"
-#include "cifs_debug.h"
-#include "cifs_fs_sb.h"
-#include "cifs_unicode.h"
-#include "fscache.h"
-#include "fs_context.h"
-#include "cifs_ioctl.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/रुको_bit.h>
+#समावेश <linux/fiemap.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश "cifsfs.h"
+#समावेश "cifspdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifsproto.h"
+#समावेश "smb2proto.h"
+#समावेश "cifs_debug.h"
+#समावेश "cifs_fs_sb.h"
+#समावेश "cifs_unicode.h"
+#समावेश "fscache.h"
+#समावेश "fs_context.h"
+#समावेश "cifs_ioctl.h"
 
-static void cifs_set_ops(struct inode *inode)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
+अटल व्योम cअगरs_set_ops(काष्ठा inode *inode)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
 
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFREG:
-		inode->i_op = &cifs_file_inode_ops;
-		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DIRECT_IO) {
-			if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_BRL)
-				inode->i_fop = &cifs_file_direct_nobrl_ops;
-			else
-				inode->i_fop = &cifs_file_direct_ops;
-		} else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_STRICT_IO) {
-			if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_BRL)
-				inode->i_fop = &cifs_file_strict_nobrl_ops;
-			else
-				inode->i_fop = &cifs_file_strict_ops;
-		} else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_BRL)
-			inode->i_fop = &cifs_file_nobrl_ops;
-		else { /* not direct, send byte range locks */
-			inode->i_fop = &cifs_file_ops;
-		}
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFREG:
+		inode->i_op = &cअगरs_file_inode_ops;
+		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_सूचीECT_IO) अणु
+			अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_BRL)
+				inode->i_fop = &cअगरs_file_direct_nobrl_ops;
+			अन्यथा
+				inode->i_fop = &cअगरs_file_direct_ops;
+		पूर्ण अन्यथा अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_STRICT_IO) अणु
+			अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_BRL)
+				inode->i_fop = &cअगरs_file_strict_nobrl_ops;
+			अन्यथा
+				inode->i_fop = &cअगरs_file_strict_ops;
+		पूर्ण अन्यथा अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_BRL)
+			inode->i_fop = &cअगरs_file_nobrl_ops;
+		अन्यथा अणु /* not direct, send byte range locks */
+			inode->i_fop = &cअगरs_file_ops;
+		पूर्ण
 
-		/* check if server can support readpages */
-		if (cifs_sb_master_tcon(cifs_sb)->ses->server->max_read <
+		/* check अगर server can support पढ़ोpages */
+		अगर (cअगरs_sb_master_tcon(cअगरs_sb)->ses->server->max_पढ़ो <
 				PAGE_SIZE + MAX_CIFS_HDR_SIZE)
-			inode->i_data.a_ops = &cifs_addr_ops_smallbuf;
-		else
-			inode->i_data.a_ops = &cifs_addr_ops;
-		break;
-	case S_IFDIR:
-#ifdef CONFIG_CIFS_DFS_UPCALL
-		if (IS_AUTOMOUNT(inode)) {
-			inode->i_op = &cifs_dfs_referral_inode_operations;
-		} else {
-#else /* NO DFS support, treat as a directory */
-		{
-#endif
-			inode->i_op = &cifs_dir_inode_ops;
-			inode->i_fop = &cifs_dir_ops;
-		}
-		break;
-	case S_IFLNK:
-		inode->i_op = &cifs_symlink_inode_ops;
-		break;
-	default:
+			inode->i_data.a_ops = &cअगरs_addr_ops_smallbuf;
+		अन्यथा
+			inode->i_data.a_ops = &cअगरs_addr_ops;
+		अवरोध;
+	हाल S_IFसूची:
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
+		अगर (IS_AUTOMOUNT(inode)) अणु
+			inode->i_op = &cअगरs_dfs_referral_inode_operations;
+		पूर्ण अन्यथा अणु
+#अन्यथा /* NO DFS support, treat as a directory */
+		अणु
+#पूर्ण_अगर
+			inode->i_op = &cअगरs_dir_inode_ops;
+			inode->i_fop = &cअगरs_dir_ops;
+		पूर्ण
+		अवरोध;
+	हाल S_IFLNK:
+		inode->i_op = &cअगरs_symlink_inode_ops;
+		अवरोध;
+	शेष:
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* check inode attributes against fattr. If they don't match, tag the
- * inode for cache invalidation
+/* check inode attributes against fattr. If they करोn't match, tag the
+ * inode क्रम cache invalidation
  */
-static void
-cifs_revalidate_cache(struct inode *inode, struct cifs_fattr *fattr)
-{
-	struct cifsInodeInfo *cifs_i = CIFS_I(inode);
+अटल व्योम
+cअगरs_revalidate_cache(काष्ठा inode *inode, काष्ठा cअगरs_fattr *fattr)
+अणु
+	काष्ठा cअगरsInodeInfo *cअगरs_i = CIFS_I(inode);
 
-	cifs_dbg(FYI, "%s: revalidating inode %llu\n",
-		 __func__, cifs_i->uniqueid);
+	cअगरs_dbg(FYI, "%s: revalidating inode %llu\n",
+		 __func__, cअगरs_i->uniqueid);
 
-	if (inode->i_state & I_NEW) {
-		cifs_dbg(FYI, "%s: inode %llu is new\n",
-			 __func__, cifs_i->uniqueid);
-		return;
-	}
+	अगर (inode->i_state & I_NEW) अणु
+		cअगरs_dbg(FYI, "%s: inode %llu is new\n",
+			 __func__, cअगरs_i->uniqueid);
+		वापस;
+	पूर्ण
 
-	/* don't bother with revalidation if we have an oplock */
-	if (CIFS_CACHE_READ(cifs_i)) {
-		cifs_dbg(FYI, "%s: inode %llu is oplocked\n",
-			 __func__, cifs_i->uniqueid);
-		return;
-	}
+	/* करोn't bother with revalidation अगर we have an oplock */
+	अगर (CIFS_CACHE_READ(cअगरs_i)) अणु
+		cअगरs_dbg(FYI, "%s: inode %llu is oplocked\n",
+			 __func__, cअगरs_i->uniqueid);
+		वापस;
+	पूर्ण
 
-	 /* revalidate if mtime or size have changed */
-	fattr->cf_mtime = timestamp_truncate(fattr->cf_mtime, inode);
-	if (timespec64_equal(&inode->i_mtime, &fattr->cf_mtime) &&
-	    cifs_i->server_eof == fattr->cf_eof) {
-		cifs_dbg(FYI, "%s: inode %llu is unchanged\n",
-			 __func__, cifs_i->uniqueid);
-		return;
-	}
+	 /* revalidate अगर mसमय or size have changed */
+	fattr->cf_mसमय = बारtamp_truncate(fattr->cf_mसमय, inode);
+	अगर (बारpec64_equal(&inode->i_mसमय, &fattr->cf_mसमय) &&
+	    cअगरs_i->server_eof == fattr->cf_eof) अणु
+		cअगरs_dbg(FYI, "%s: inode %llu is unchanged\n",
+			 __func__, cअगरs_i->uniqueid);
+		वापस;
+	पूर्ण
 
-	cifs_dbg(FYI, "%s: invalidating inode %llu mapping\n",
-		 __func__, cifs_i->uniqueid);
-	set_bit(CIFS_INO_INVALID_MAPPING, &cifs_i->flags);
-}
+	cअगरs_dbg(FYI, "%s: invalidating inode %llu mapping\n",
+		 __func__, cअगरs_i->uniqueid);
+	set_bit(CIFS_INO_INVALID_MAPPING, &cअगरs_i->flags);
+पूर्ण
 
 /*
  * copy nlink to the inode, unless it wasn't provided.  Provide
- * sane values if we don't have an existing one and none was provided
+ * sane values अगर we करोn't have an existing one and none was provided
  */
-static void
-cifs_nlink_fattr_to_inode(struct inode *inode, struct cifs_fattr *fattr)
-{
+अटल व्योम
+cअगरs_nlink_fattr_to_inode(काष्ठा inode *inode, काष्ठा cअगरs_fattr *fattr)
+अणु
 	/*
-	 * if we're in a situation where we can't trust what we
-	 * got from the server (readdir, some non-unix cases)
+	 * अगर we're in a situation where we can't trust what we
+	 * got from the server (सूची_पढ़ो, some non-unix हालs)
 	 * fake reasonable values
 	 */
-	if (fattr->cf_flags & CIFS_FATTR_UNKNOWN_NLINK) {
+	अगर (fattr->cf_flags & CIFS_FATTR_UNKNOWN_NLINK) अणु
 		/* only provide fake values on a new inode */
-		if (inode->i_state & I_NEW) {
-			if (fattr->cf_cifsattrs & ATTR_DIRECTORY)
+		अगर (inode->i_state & I_NEW) अणु
+			अगर (fattr->cf_cअगरsattrs & ATTR_सूचीECTORY)
 				set_nlink(inode, 2);
-			else
+			अन्यथा
 				set_nlink(inode, 1);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	/* we trust the server, so update it */
 	set_nlink(inode, fattr->cf_nlink);
-}
+पूर्ण
 
-/* populate an inode with info from a cifs_fattr struct */
-int
-cifs_fattr_to_inode(struct inode *inode, struct cifs_fattr *fattr)
-{
-	struct cifsInodeInfo *cifs_i = CIFS_I(inode);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
+/* populate an inode with info from a cअगरs_fattr काष्ठा */
+पूर्णांक
+cअगरs_fattr_to_inode(काष्ठा inode *inode, काष्ठा cअगरs_fattr *fattr)
+अणु
+	काष्ठा cअगरsInodeInfo *cअगरs_i = CIFS_I(inode);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
 
-	if (!(inode->i_state & I_NEW) &&
-	    unlikely(inode_wrong_type(inode, fattr->cf_mode))) {
-		CIFS_I(inode)->time = 0; /* force reval */
-		return -ESTALE;
-	}
+	अगर (!(inode->i_state & I_NEW) &&
+	    unlikely(inode_wrong_type(inode, fattr->cf_mode))) अणु
+		CIFS_I(inode)->समय = 0; /* क्रमce reval */
+		वापस -ESTALE;
+	पूर्ण
 
-	cifs_revalidate_cache(inode, fattr);
+	cअगरs_revalidate_cache(inode, fattr);
 
 	spin_lock(&inode->i_lock);
-	fattr->cf_mtime = timestamp_truncate(fattr->cf_mtime, inode);
-	fattr->cf_atime = timestamp_truncate(fattr->cf_atime, inode);
-	fattr->cf_ctime = timestamp_truncate(fattr->cf_ctime, inode);
-	/* we do not want atime to be less than mtime, it broke some apps */
-	if (timespec64_compare(&fattr->cf_atime, &fattr->cf_mtime) < 0)
-		inode->i_atime = fattr->cf_mtime;
-	else
-		inode->i_atime = fattr->cf_atime;
-	inode->i_mtime = fattr->cf_mtime;
-	inode->i_ctime = fattr->cf_ctime;
+	fattr->cf_mसमय = बारtamp_truncate(fattr->cf_mसमय, inode);
+	fattr->cf_aसमय = बारtamp_truncate(fattr->cf_aसमय, inode);
+	fattr->cf_स_समय = बारtamp_truncate(fattr->cf_स_समय, inode);
+	/* we करो not want aसमय to be less than mसमय, it broke some apps */
+	अगर (बारpec64_compare(&fattr->cf_aसमय, &fattr->cf_mसमय) < 0)
+		inode->i_aसमय = fattr->cf_mसमय;
+	अन्यथा
+		inode->i_aसमय = fattr->cf_aसमय;
+	inode->i_mसमय = fattr->cf_mसमय;
+	inode->i_स_समय = fattr->cf_स_समय;
 	inode->i_rdev = fattr->cf_rdev;
-	cifs_nlink_fattr_to_inode(inode, fattr);
+	cअगरs_nlink_fattr_to_inode(inode, fattr);
 	inode->i_uid = fattr->cf_uid;
 	inode->i_gid = fattr->cf_gid;
 
-	/* if dynperm is set, don't clobber existing mode */
-	if (inode->i_state & I_NEW ||
-	    !(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DYNPERM))
+	/* अगर dynperm is set, करोn't clobber existing mode */
+	अगर (inode->i_state & I_NEW ||
+	    !(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_DYNPERM))
 		inode->i_mode = fattr->cf_mode;
 
-	cifs_i->cifsAttrs = fattr->cf_cifsattrs;
+	cअगरs_i->cअगरsAttrs = fattr->cf_cअगरsattrs;
 
-	if (fattr->cf_flags & CIFS_FATTR_NEED_REVAL)
-		cifs_i->time = 0;
-	else
-		cifs_i->time = jiffies;
+	अगर (fattr->cf_flags & CIFS_FATTR_NEED_REVAL)
+		cअगरs_i->समय = 0;
+	अन्यथा
+		cअगरs_i->समय = jअगरfies;
 
-	if (fattr->cf_flags & CIFS_FATTR_DELETE_PENDING)
-		set_bit(CIFS_INO_DELETE_PENDING, &cifs_i->flags);
-	else
-		clear_bit(CIFS_INO_DELETE_PENDING, &cifs_i->flags);
+	अगर (fattr->cf_flags & CIFS_FATTR_DELETE_PENDING)
+		set_bit(CIFS_INO_DELETE_PENDING, &cअगरs_i->flags);
+	अन्यथा
+		clear_bit(CIFS_INO_DELETE_PENDING, &cअगरs_i->flags);
 
-	cifs_i->server_eof = fattr->cf_eof;
+	cअगरs_i->server_eof = fattr->cf_eof;
 	/*
-	 * Can't safely change the file size here if the client is writing to
+	 * Can't safely change the file size here अगर the client is writing to
 	 * it due to potential races.
 	 */
-	if (is_size_safe_to_change(cifs_i, fattr->cf_eof)) {
-		i_size_write(inode, fattr->cf_eof);
+	अगर (is_size_safe_to_change(cअगरs_i, fattr->cf_eof)) अणु
+		i_size_ग_लिखो(inode, fattr->cf_eof);
 
 		/*
 		 * i_blocks is not related to (i_size / i_blksize),
-		 * but instead 512 byte (2**9) size is required for
+		 * but instead 512 byte (2**9) size is required क्रम
 		 * calculating num blocks.
 		 */
 		inode->i_blocks = (512 - 1 + fattr->cf_bytes) >> 9;
-	}
+	पूर्ण
 	spin_unlock(&inode->i_lock);
 
-	if (fattr->cf_flags & CIFS_FATTR_DFS_REFERRAL)
+	अगर (fattr->cf_flags & CIFS_FATTR_DFS_REFERRAL)
 		inode->i_flags |= S_AUTOMOUNT;
-	if (inode->i_state & I_NEW)
-		cifs_set_ops(inode);
-	return 0;
-}
+	अगर (inode->i_state & I_NEW)
+		cअगरs_set_ops(inode);
+	वापस 0;
+पूर्ण
 
-void
-cifs_fill_uniqueid(struct super_block *sb, struct cifs_fattr *fattr)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+व्योम
+cअगरs_fill_uniqueid(काष्ठा super_block *sb, काष्ठा cअगरs_fattr *fattr)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
 
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM)
-		return;
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM)
+		वापस;
 
 	fattr->cf_uniqueid = iunique(sb, ROOT_I);
-}
+पूर्ण
 
-/* Fill a cifs_fattr struct with info from FILE_UNIX_BASIC_INFO. */
-void
-cifs_unix_basic_to_fattr(struct cifs_fattr *fattr, FILE_UNIX_BASIC_INFO *info,
-			 struct cifs_sb_info *cifs_sb)
-{
-	memset(fattr, 0, sizeof(*fattr));
+/* Fill a cअगरs_fattr काष्ठा with info from खाता_UNIX_BASIC_INFO. */
+व्योम
+cअगरs_unix_basic_to_fattr(काष्ठा cअगरs_fattr *fattr, खाता_UNIX_BASIC_INFO *info,
+			 काष्ठा cअगरs_sb_info *cअगरs_sb)
+अणु
+	स_रखो(fattr, 0, माप(*fattr));
 	fattr->cf_uniqueid = le64_to_cpu(info->UniqueId);
 	fattr->cf_bytes = le64_to_cpu(info->NumOfBytes);
 	fattr->cf_eof = le64_to_cpu(info->EndOfFile);
 
-	fattr->cf_atime = cifs_NTtimeToUnix(info->LastAccessTime);
-	fattr->cf_mtime = cifs_NTtimeToUnix(info->LastModificationTime);
-	fattr->cf_ctime = cifs_NTtimeToUnix(info->LastStatusChange);
-	/* old POSIX extensions don't get create time */
+	fattr->cf_aसमय = cअगरs_NTसमयToUnix(info->LastAccessTime);
+	fattr->cf_mसमय = cअगरs_NTसमयToUnix(info->LastModअगरicationTime);
+	fattr->cf_स_समय = cअगरs_NTसमयToUnix(info->LastStatusChange);
+	/* old POSIX extensions करोn't get create समय */
 
 	fattr->cf_mode = le64_to_cpu(info->Permissions);
 
 	/*
 	 * Since we set the inode type below we need to mask off
-	 * to avoid strange results if bits set above.
+	 * to aव्योम strange results अगर bits set above.
 	 */
 	fattr->cf_mode &= ~S_IFMT;
-	switch (le32_to_cpu(info->Type)) {
-	case UNIX_FILE:
+	चयन (le32_to_cpu(info->Type)) अणु
+	हाल UNIX_खाता:
 		fattr->cf_mode |= S_IFREG;
 		fattr->cf_dtype = DT_REG;
-		break;
-	case UNIX_SYMLINK:
+		अवरोध;
+	हाल UNIX_SYMLINK:
 		fattr->cf_mode |= S_IFLNK;
 		fattr->cf_dtype = DT_LNK;
-		break;
-	case UNIX_DIR:
-		fattr->cf_mode |= S_IFDIR;
-		fattr->cf_dtype = DT_DIR;
-		break;
-	case UNIX_CHARDEV:
+		अवरोध;
+	हाल UNIX_सूची:
+		fattr->cf_mode |= S_IFसूची;
+		fattr->cf_dtype = DT_सूची;
+		अवरोध;
+	हाल UNIX_CHARDEV:
 		fattr->cf_mode |= S_IFCHR;
 		fattr->cf_dtype = DT_CHR;
 		fattr->cf_rdev = MKDEV(le64_to_cpu(info->DevMajor),
 				       le64_to_cpu(info->DevMinor) & MINORMASK);
-		break;
-	case UNIX_BLOCKDEV:
+		अवरोध;
+	हाल UNIX_BLOCKDEV:
 		fattr->cf_mode |= S_IFBLK;
 		fattr->cf_dtype = DT_BLK;
 		fattr->cf_rdev = MKDEV(le64_to_cpu(info->DevMajor),
 				       le64_to_cpu(info->DevMinor) & MINORMASK);
-		break;
-	case UNIX_FIFO:
+		अवरोध;
+	हाल UNIX_FIFO:
 		fattr->cf_mode |= S_IFIFO;
 		fattr->cf_dtype = DT_FIFO;
-		break;
-	case UNIX_SOCKET:
+		अवरोध;
+	हाल UNIX_SOCKET:
 		fattr->cf_mode |= S_IFSOCK;
 		fattr->cf_dtype = DT_SOCK;
-		break;
-	default:
-		/* safest to call it a file if we do not know */
+		अवरोध;
+	शेष:
+		/* safest to call it a file अगर we करो not know */
 		fattr->cf_mode |= S_IFREG;
 		fattr->cf_dtype = DT_REG;
-		cifs_dbg(FYI, "unknown type %d\n", le32_to_cpu(info->Type));
-		break;
-	}
+		cअगरs_dbg(FYI, "unknown type %d\n", le32_to_cpu(info->Type));
+		अवरोध;
+	पूर्ण
 
-	fattr->cf_uid = cifs_sb->ctx->linux_uid;
-	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_OVERR_UID)) {
+	fattr->cf_uid = cअगरs_sb->ctx->linux_uid;
+	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_OVERR_UID)) अणु
 		u64 id = le64_to_cpu(info->Uid);
-		if (id < ((uid_t)-1)) {
+		अगर (id < ((uid_t)-1)) अणु
 			kuid_t uid = make_kuid(&init_user_ns, id);
-			if (uid_valid(uid))
+			अगर (uid_valid(uid))
 				fattr->cf_uid = uid;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	
-	fattr->cf_gid = cifs_sb->ctx->linux_gid;
-	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_OVERR_GID)) {
+	fattr->cf_gid = cअगरs_sb->ctx->linux_gid;
+	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_OVERR_GID)) अणु
 		u64 id = le64_to_cpu(info->Gid);
-		if (id < ((gid_t)-1)) {
+		अगर (id < ((gid_t)-1)) अणु
 			kgid_t gid = make_kgid(&init_user_ns, id);
-			if (gid_valid(gid))
+			अगर (gid_valid(gid))
 				fattr->cf_gid = gid;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	fattr->cf_nlink = le64_to_cpu(info->Nlinks);
-}
+पूर्ण
 
 /*
- * Fill a cifs_fattr struct with fake inode info.
+ * Fill a cअगरs_fattr काष्ठा with fake inode info.
  *
- * Needed to setup cifs_fattr data for the directory which is the
+ * Needed to setup cअगरs_fattr data क्रम the directory which is the
  * junction to the new submount (ie to setup the fake directory
  * which represents a DFS referral).
  */
-static void
-cifs_create_dfs_fattr(struct cifs_fattr *fattr, struct super_block *sb)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+अटल व्योम
+cअगरs_create_dfs_fattr(काष्ठा cअगरs_fattr *fattr, काष्ठा super_block *sb)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
 
-	cifs_dbg(FYI, "creating fake fattr for DFS referral\n");
+	cअगरs_dbg(FYI, "creating fake fattr for DFS referral\n");
 
-	memset(fattr, 0, sizeof(*fattr));
-	fattr->cf_mode = S_IFDIR | S_IXUGO | S_IRWXU;
-	fattr->cf_uid = cifs_sb->ctx->linux_uid;
-	fattr->cf_gid = cifs_sb->ctx->linux_gid;
-	ktime_get_coarse_real_ts64(&fattr->cf_mtime);
-	fattr->cf_atime = fattr->cf_ctime = fattr->cf_mtime;
+	स_रखो(fattr, 0, माप(*fattr));
+	fattr->cf_mode = S_IFसूची | S_IXUGO | S_IRWXU;
+	fattr->cf_uid = cअगरs_sb->ctx->linux_uid;
+	fattr->cf_gid = cअगरs_sb->ctx->linux_gid;
+	kसमय_get_coarse_real_ts64(&fattr->cf_mसमय);
+	fattr->cf_aसमय = fattr->cf_स_समय = fattr->cf_mसमय;
 	fattr->cf_nlink = 2;
 	fattr->cf_flags = CIFS_FATTR_DFS_REFERRAL;
-}
+पूर्ण
 
-static int
-cifs_get_file_info_unix(struct file *filp)
-{
-	int rc;
-	unsigned int xid;
-	FILE_UNIX_BASIC_INFO find_data;
-	struct cifs_fattr fattr;
-	struct inode *inode = file_inode(filp);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct cifsFileInfo *cfile = filp->private_data;
-	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
+अटल पूर्णांक
+cअगरs_get_file_info_unix(काष्ठा file *filp)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक xid;
+	खाता_UNIX_BASIC_INFO find_data;
+	काष्ठा cअगरs_fattr fattr;
+	काष्ठा inode *inode = file_inode(filp);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा cअगरsFileInfo *cfile = filp->निजी_data;
+	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
 
 	xid = get_xid();
 	rc = CIFSSMBUnixQFileInfo(xid, tcon, cfile->fid.netfid, &find_data);
-	if (!rc) {
-		cifs_unix_basic_to_fattr(&fattr, &find_data, cifs_sb);
-	} else if (rc == -EREMOTE) {
-		cifs_create_dfs_fattr(&fattr, inode->i_sb);
+	अगर (!rc) अणु
+		cअगरs_unix_basic_to_fattr(&fattr, &find_data, cअगरs_sb);
+	पूर्ण अन्यथा अगर (rc == -EREMOTE) अणु
+		cअगरs_create_dfs_fattr(&fattr, inode->i_sb);
 		rc = 0;
-	}
+	पूर्ण
 
-	rc = cifs_fattr_to_inode(inode, &fattr);
-	free_xid(xid);
-	return rc;
-}
+	rc = cअगरs_fattr_to_inode(inode, &fattr);
+	मुक्त_xid(xid);
+	वापस rc;
+पूर्ण
 
-int cifs_get_inode_info_unix(struct inode **pinode,
-			     const unsigned char *full_path,
-			     struct super_block *sb, unsigned int xid)
-{
-	int rc;
-	FILE_UNIX_BASIC_INFO find_data;
-	struct cifs_fattr fattr;
-	struct cifs_tcon *tcon;
-	struct tcon_link *tlink;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+पूर्णांक cअगरs_get_inode_info_unix(काष्ठा inode **pinode,
+			     स्थिर अचिन्हित अक्षर *full_path,
+			     काष्ठा super_block *sb, अचिन्हित पूर्णांक xid)
+अणु
+	पूर्णांक rc;
+	खाता_UNIX_BASIC_INFO find_data;
+	काष्ठा cअगरs_fattr fattr;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
 
-	cifs_dbg(FYI, "Getting info on %s\n", full_path);
+	cअगरs_dbg(FYI, "Getting info on %s\n", full_path);
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
-	/* could have done a find first instead but this returns more info */
+	/* could have करोne a find first instead but this वापसs more info */
 	rc = CIFSSMBUnixQPathInfo(xid, tcon, full_path, &find_data,
-				  cifs_sb->local_nls, cifs_remap(cifs_sb));
-	cifs_put_tlink(tlink);
+				  cअगरs_sb->local_nls, cअगरs_remap(cअगरs_sb));
+	cअगरs_put_tlink(tlink);
 
-	if (!rc) {
-		cifs_unix_basic_to_fattr(&fattr, &find_data, cifs_sb);
-	} else if (rc == -EREMOTE) {
-		cifs_create_dfs_fattr(&fattr, sb);
+	अगर (!rc) अणु
+		cअगरs_unix_basic_to_fattr(&fattr, &find_data, cअगरs_sb);
+	पूर्ण अन्यथा अगर (rc == -EREMOTE) अणु
+		cअगरs_create_dfs_fattr(&fattr, sb);
 		rc = 0;
-	} else {
-		return rc;
-	}
+	पूर्ण अन्यथा अणु
+		वापस rc;
+	पूर्ण
 
-	/* check for Minshall+French symlinks */
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MF_SYMLINKS) {
-		int tmprc = check_mf_symlink(xid, tcon, cifs_sb, &fattr,
+	/* check क्रम Minshall+French symlinks */
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MF_SYMLINKS) अणु
+		पूर्णांक पंचांगprc = check_mf_symlink(xid, tcon, cअगरs_sb, &fattr,
 					     full_path);
-		if (tmprc)
-			cifs_dbg(FYI, "check_mf_symlink: %d\n", tmprc);
-	}
+		अगर (पंचांगprc)
+			cअगरs_dbg(FYI, "check_mf_symlink: %d\n", पंचांगprc);
+	पूर्ण
 
-	if (*pinode == NULL) {
+	अगर (*pinode == शून्य) अणु
 		/* get new inode */
-		cifs_fill_uniqueid(sb, &fattr);
-		*pinode = cifs_iget(sb, &fattr);
-		if (!*pinode)
+		cअगरs_fill_uniqueid(sb, &fattr);
+		*pinode = cअगरs_iget(sb, &fattr);
+		अगर (!*pinode)
 			rc = -ENOMEM;
-	} else {
-		/* we already have inode, update it */
+	पूर्ण अन्यथा अणु
+		/* we alपढ़ोy have inode, update it */
 
-		/* if uniqueid is different, return error */
-		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
-		    CIFS_I(*pinode)->uniqueid != fattr.cf_uniqueid)) {
-			CIFS_I(*pinode)->time = 0; /* force reval */
+		/* अगर uniqueid is dअगरferent, वापस error */
+		अगर (unlikely(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM &&
+		    CIFS_I(*pinode)->uniqueid != fattr.cf_uniqueid)) अणु
+			CIFS_I(*pinode)->समय = 0; /* क्रमce reval */
 			rc = -ESTALE;
-			goto cgiiu_exit;
-		}
+			जाओ cgiiu_निकास;
+		पूर्ण
 
-		/* if filetype is different, return error */
-		rc = cifs_fattr_to_inode(*pinode, &fattr);
-	}
+		/* अगर filetype is dअगरferent, वापस error */
+		rc = cअगरs_fattr_to_inode(*pinode, &fattr);
+	पूर्ण
 
-cgiiu_exit:
-	return rc;
-}
+cgiiu_निकास:
+	वापस rc;
+पूर्ण
 
-static int
-cifs_sfu_type(struct cifs_fattr *fattr, const char *path,
-	      struct cifs_sb_info *cifs_sb, unsigned int xid)
-{
-	int rc;
+अटल पूर्णांक
+cअगरs_sfu_type(काष्ठा cअगरs_fattr *fattr, स्थिर अक्षर *path,
+	      काष्ठा cअगरs_sb_info *cअगरs_sb, अचिन्हित पूर्णांक xid)
+अणु
+	पूर्णांक rc;
 	__u32 oplock;
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	struct cifs_fid fid;
-	struct cifs_open_parms oparms;
-	struct cifs_io_parms io_parms = {0};
-	char buf[24];
-	unsigned int bytes_read;
-	char *pbuf;
-	int buf_type = CIFS_NO_BUFFER;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा cअगरs_fid fid;
+	काष्ठा cअगरs_खोलो_parms oparms;
+	काष्ठा cअगरs_io_parms io_parms = अणु0पूर्ण;
+	अक्षर buf[24];
+	अचिन्हित पूर्णांक bytes_पढ़ो;
+	अक्षर *pbuf;
+	पूर्णांक buf_type = CIFS_NO_BUFFER;
 
 	pbuf = buf;
 
 	fattr->cf_mode &= ~S_IFMT;
 
-	if (fattr->cf_eof == 0) {
+	अगर (fattr->cf_eof == 0) अणु
 		fattr->cf_mode |= S_IFIFO;
 		fattr->cf_dtype = DT_FIFO;
-		return 0;
-	} else if (fattr->cf_eof < 8) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (fattr->cf_eof < 8) अणु
 		fattr->cf_mode |= S_IFREG;
 		fattr->cf_dtype = DT_REG;
-		return -EINVAL;	 /* EOPNOTSUPP? */
-	}
+		वापस -EINVAL;	 /* EOPNOTSUPP? */
+	पूर्ण
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
 	oparms.tcon = tcon;
-	oparms.cifs_sb = cifs_sb;
+	oparms.cअगरs_sb = cअगरs_sb;
 	oparms.desired_access = GENERIC_READ;
-	oparms.create_options = cifs_create_options(cifs_sb, CREATE_NOT_DIR);
-	oparms.disposition = FILE_OPEN;
+	oparms.create_options = cअगरs_create_options(cअगरs_sb, CREATE_NOT_सूची);
+	oparms.disposition = खाता_OPEN;
 	oparms.path = path;
 	oparms.fid = &fid;
 	oparms.reconnect = false;
 
-	if (tcon->ses->server->oplocks)
+	अगर (tcon->ses->server->oplocks)
 		oplock = REQ_OPLOCK;
-	else
+	अन्यथा
 		oplock = 0;
-	rc = tcon->ses->server->ops->open(xid, &oparms, &oplock, NULL);
-	if (rc) {
-		cifs_dbg(FYI, "check sfu type of %s, open rc = %d\n", path, rc);
-		cifs_put_tlink(tlink);
-		return rc;
-	}
+	rc = tcon->ses->server->ops->खोलो(xid, &oparms, &oplock, शून्य);
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "check sfu type of %s, open rc = %d\n", path, rc);
+		cअगरs_put_tlink(tlink);
+		वापस rc;
+	पूर्ण
 
 	/* Read header */
 	io_parms.netfid = fid.netfid;
@@ -501,1609 +502,1609 @@ cifs_sfu_type(struct cifs_fattr *fattr, const char *path,
 	io_parms.offset = 0;
 	io_parms.length = 24;
 
-	rc = tcon->ses->server->ops->sync_read(xid, &fid, &io_parms,
-					&bytes_read, &pbuf, &buf_type);
-	if ((rc == 0) && (bytes_read >= 8)) {
-		if (memcmp("IntxBLK", pbuf, 8) == 0) {
-			cifs_dbg(FYI, "Block device\n");
+	rc = tcon->ses->server->ops->sync_पढ़ो(xid, &fid, &io_parms,
+					&bytes_पढ़ो, &pbuf, &buf_type);
+	अगर ((rc == 0) && (bytes_पढ़ो >= 8)) अणु
+		अगर (स_भेद("IntxBLK", pbuf, 8) == 0) अणु
+			cअगरs_dbg(FYI, "Block device\n");
 			fattr->cf_mode |= S_IFBLK;
 			fattr->cf_dtype = DT_BLK;
-			if (bytes_read == 24) {
+			अगर (bytes_पढ़ो == 24) अणु
 				/* we have enough to decode dev num */
 				__u64 mjr; /* major */
 				__u64 mnr; /* minor */
 				mjr = le64_to_cpu(*(__le64 *)(pbuf+8));
 				mnr = le64_to_cpu(*(__le64 *)(pbuf+16));
 				fattr->cf_rdev = MKDEV(mjr, mnr);
-			}
-		} else if (memcmp("IntxCHR", pbuf, 8) == 0) {
-			cifs_dbg(FYI, "Char device\n");
+			पूर्ण
+		पूर्ण अन्यथा अगर (स_भेद("IntxCHR", pbuf, 8) == 0) अणु
+			cअगरs_dbg(FYI, "Char device\n");
 			fattr->cf_mode |= S_IFCHR;
 			fattr->cf_dtype = DT_CHR;
-			if (bytes_read == 24) {
+			अगर (bytes_पढ़ो == 24) अणु
 				/* we have enough to decode dev num */
 				__u64 mjr; /* major */
 				__u64 mnr; /* minor */
 				mjr = le64_to_cpu(*(__le64 *)(pbuf+8));
 				mnr = le64_to_cpu(*(__le64 *)(pbuf+16));
 				fattr->cf_rdev = MKDEV(mjr, mnr);
-			}
-		} else if (memcmp("IntxLNK", pbuf, 7) == 0) {
-			cifs_dbg(FYI, "Symlink\n");
+			पूर्ण
+		पूर्ण अन्यथा अगर (स_भेद("IntxLNK", pbuf, 7) == 0) अणु
+			cअगरs_dbg(FYI, "Symlink\n");
 			fattr->cf_mode |= S_IFLNK;
 			fattr->cf_dtype = DT_LNK;
-		} else {
+		पूर्ण अन्यथा अणु
 			fattr->cf_mode |= S_IFREG; /* file? */
 			fattr->cf_dtype = DT_REG;
 			rc = -EOPNOTSUPP;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		fattr->cf_mode |= S_IFREG; /* then it is a file */
 		fattr->cf_dtype = DT_REG;
 		rc = -EOPNOTSUPP; /* or some unknown SFU type */
-	}
+	पूर्ण
 
-	tcon->ses->server->ops->close(xid, tcon, &fid);
-	cifs_put_tlink(tlink);
-	return rc;
-}
+	tcon->ses->server->ops->बंद(xid, tcon, &fid);
+	cअगरs_put_tlink(tlink);
+	वापस rc;
+पूर्ण
 
-#define SFBITS_MASK (S_ISVTX | S_ISGID | S_ISUID)  /* SETFILEBITS valid bits */
+#घोषणा SFBITS_MASK (S_ISVTX | S_ISGID | S_ISUID)  /* SETखाताBITS valid bits */
 
 /*
  * Fetch mode bits as provided by SFU.
  *
- * FIXME: Doesn't this clobber the type bit we got from cifs_sfu_type ?
+ * FIXME: Doesn't this clobber the type bit we got from cअगरs_sfu_type ?
  */
-static int cifs_sfu_mode(struct cifs_fattr *fattr, const unsigned char *path,
-			 struct cifs_sb_info *cifs_sb, unsigned int xid)
-{
-#ifdef CONFIG_CIFS_XATTR
-	ssize_t rc;
-	char ea_value[4];
+अटल पूर्णांक cअगरs_sfu_mode(काष्ठा cअगरs_fattr *fattr, स्थिर अचिन्हित अक्षर *path,
+			 काष्ठा cअगरs_sb_info *cअगरs_sb, अचिन्हित पूर्णांक xid)
+अणु
+#अगर_घोषित CONFIG_CIFS_XATTR
+	sमाप_प्रकार rc;
+	अक्षर ea_value[4];
 	__u32 mode;
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
-	if (tcon->ses->server->ops->query_all_EAs == NULL) {
-		cifs_put_tlink(tlink);
-		return -EOPNOTSUPP;
-	}
+	अगर (tcon->ses->server->ops->query_all_EAs == शून्य) अणु
+		cअगरs_put_tlink(tlink);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	rc = tcon->ses->server->ops->query_all_EAs(xid, tcon, path,
 			"SETFILEBITS", ea_value, 4 /* size of buf */,
-			cifs_sb);
-	cifs_put_tlink(tlink);
-	if (rc < 0)
-		return (int)rc;
-	else if (rc > 3) {
+			cअगरs_sb);
+	cअगरs_put_tlink(tlink);
+	अगर (rc < 0)
+		वापस (पूर्णांक)rc;
+	अन्यथा अगर (rc > 3) अणु
 		mode = le32_to_cpu(*((__le32 *)ea_value));
 		fattr->cf_mode &= ~SFBITS_MASK;
-		cifs_dbg(FYI, "special bits 0%o org mode 0%o\n",
+		cअगरs_dbg(FYI, "special bits 0%o org mode 0%o\n",
 			 mode, fattr->cf_mode);
 		fattr->cf_mode = (mode & SFBITS_MASK) | fattr->cf_mode;
-		cifs_dbg(FYI, "special mode bits 0%o\n", mode);
-	}
+		cअगरs_dbg(FYI, "special mode bits 0%o\n", mode);
+	पूर्ण
 
-	return 0;
-#else
-	return -EOPNOTSUPP;
-#endif
-}
+	वापस 0;
+#अन्यथा
+	वापस -EOPNOTSUPP;
+#पूर्ण_अगर
+पूर्ण
 
-/* Fill a cifs_fattr struct with info from POSIX info struct */
-static void
-smb311_posix_info_to_fattr(struct cifs_fattr *fattr, struct smb311_posix_qinfo *info,
-			   struct super_block *sb, bool adjust_tz, bool symlink)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
+/* Fill a cअगरs_fattr काष्ठा with info from POSIX info काष्ठा */
+अटल व्योम
+smb311_posix_info_to_fattr(काष्ठा cअगरs_fattr *fattr, काष्ठा smb311_posix_qinfo *info,
+			   काष्ठा super_block *sb, bool adjust_tz, bool symlink)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
 
-	memset(fattr, 0, sizeof(*fattr));
+	स_रखो(fattr, 0, माप(*fattr));
 
 	/* no fattr->flags to set */
-	fattr->cf_cifsattrs = le32_to_cpu(info->DosAttributes);
+	fattr->cf_cअगरsattrs = le32_to_cpu(info->DosAttributes);
 	fattr->cf_uniqueid = le64_to_cpu(info->Inode);
 
-	if (info->LastAccessTime)
-		fattr->cf_atime = cifs_NTtimeToUnix(info->LastAccessTime);
-	else
-		ktime_get_coarse_real_ts64(&fattr->cf_atime);
+	अगर (info->LastAccessTime)
+		fattr->cf_aसमय = cअगरs_NTसमयToUnix(info->LastAccessTime);
+	अन्यथा
+		kसमय_get_coarse_real_ts64(&fattr->cf_aसमय);
 
-	fattr->cf_ctime = cifs_NTtimeToUnix(info->ChangeTime);
-	fattr->cf_mtime = cifs_NTtimeToUnix(info->LastWriteTime);
+	fattr->cf_स_समय = cअगरs_NTसमयToUnix(info->ChangeTime);
+	fattr->cf_mसमय = cअगरs_NTसमयToUnix(info->LastWriteTime);
 
-	if (adjust_tz) {
-		fattr->cf_ctime.tv_sec += tcon->ses->server->timeAdj;
-		fattr->cf_mtime.tv_sec += tcon->ses->server->timeAdj;
-	}
+	अगर (adjust_tz) अणु
+		fattr->cf_स_समय.tv_sec += tcon->ses->server->समयAdj;
+		fattr->cf_mसमय.tv_sec += tcon->ses->server->समयAdj;
+	पूर्ण
 
 	fattr->cf_eof = le64_to_cpu(info->EndOfFile);
 	fattr->cf_bytes = le64_to_cpu(info->AllocationSize);
-	fattr->cf_createtime = le64_to_cpu(info->CreationTime);
+	fattr->cf_createसमय = le64_to_cpu(info->CreationTime);
 
 	fattr->cf_nlink = le32_to_cpu(info->HardLinks);
 	fattr->cf_mode = (umode_t) le32_to_cpu(info->Mode);
 	/* The srv fs device id is overridden on network mount so setting rdev isn't needed here */
 	/* fattr->cf_rdev = le32_to_cpu(info->DeviceId); */
 
-	if (symlink) {
+	अगर (symlink) अणु
 		fattr->cf_mode |= S_IFLNK;
 		fattr->cf_dtype = DT_LNK;
-	} else if (fattr->cf_cifsattrs & ATTR_DIRECTORY) {
-		fattr->cf_mode |= S_IFDIR;
-		fattr->cf_dtype = DT_DIR;
-	} else { /* file */
+	पूर्ण अन्यथा अगर (fattr->cf_cअगरsattrs & ATTR_सूचीECTORY) अणु
+		fattr->cf_mode |= S_IFसूची;
+		fattr->cf_dtype = DT_सूची;
+	पूर्ण अन्यथा अणु /* file */
 		fattr->cf_mode |= S_IFREG;
 		fattr->cf_dtype = DT_REG;
-	}
-	/* else if reparse point ... TODO: add support for FIFO and blk dev; special file types */
+	पूर्ण
+	/* अन्यथा अगर reparse poपूर्णांक ... TODO: add support क्रम FIFO and blk dev; special file types */
 
-	fattr->cf_uid = cifs_sb->ctx->linux_uid; /* TODO: map uid and gid from SID */
-	fattr->cf_gid = cifs_sb->ctx->linux_gid;
+	fattr->cf_uid = cअगरs_sb->ctx->linux_uid; /* TODO: map uid and gid from SID */
+	fattr->cf_gid = cअगरs_sb->ctx->linux_gid;
 
-	cifs_dbg(FYI, "POSIX query info: mode 0x%x uniqueid 0x%llx nlink %d\n",
+	cअगरs_dbg(FYI, "POSIX query info: mode 0x%x uniqueid 0x%llx nlink %d\n",
 		fattr->cf_mode, fattr->cf_uniqueid, fattr->cf_nlink);
-}
+पूर्ण
 
 
-/* Fill a cifs_fattr struct with info from FILE_ALL_INFO */
-static void
-cifs_all_info_to_fattr(struct cifs_fattr *fattr, FILE_ALL_INFO *info,
-		       struct super_block *sb, bool adjust_tz,
+/* Fill a cअगरs_fattr काष्ठा with info from खाता_ALL_INFO */
+अटल व्योम
+cअगरs_all_info_to_fattr(काष्ठा cअगरs_fattr *fattr, खाता_ALL_INFO *info,
+		       काष्ठा super_block *sb, bool adjust_tz,
 		       bool symlink, u32 reparse_tag)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
 
-	memset(fattr, 0, sizeof(*fattr));
-	fattr->cf_cifsattrs = le32_to_cpu(info->Attributes);
-	if (info->DeletePending)
+	स_रखो(fattr, 0, माप(*fattr));
+	fattr->cf_cअगरsattrs = le32_to_cpu(info->Attributes);
+	अगर (info->DeletePending)
 		fattr->cf_flags |= CIFS_FATTR_DELETE_PENDING;
 
-	if (info->LastAccessTime)
-		fattr->cf_atime = cifs_NTtimeToUnix(info->LastAccessTime);
-	else
-		ktime_get_coarse_real_ts64(&fattr->cf_atime);
+	अगर (info->LastAccessTime)
+		fattr->cf_aसमय = cअगरs_NTसमयToUnix(info->LastAccessTime);
+	अन्यथा
+		kसमय_get_coarse_real_ts64(&fattr->cf_aसमय);
 
-	fattr->cf_ctime = cifs_NTtimeToUnix(info->ChangeTime);
-	fattr->cf_mtime = cifs_NTtimeToUnix(info->LastWriteTime);
+	fattr->cf_स_समय = cअगरs_NTसमयToUnix(info->ChangeTime);
+	fattr->cf_mसमय = cअगरs_NTसमयToUnix(info->LastWriteTime);
 
-	if (adjust_tz) {
-		fattr->cf_ctime.tv_sec += tcon->ses->server->timeAdj;
-		fattr->cf_mtime.tv_sec += tcon->ses->server->timeAdj;
-	}
+	अगर (adjust_tz) अणु
+		fattr->cf_स_समय.tv_sec += tcon->ses->server->समयAdj;
+		fattr->cf_mसमय.tv_sec += tcon->ses->server->समयAdj;
+	पूर्ण
 
 	fattr->cf_eof = le64_to_cpu(info->EndOfFile);
 	fattr->cf_bytes = le64_to_cpu(info->AllocationSize);
-	fattr->cf_createtime = le64_to_cpu(info->CreationTime);
+	fattr->cf_createसमय = le64_to_cpu(info->CreationTime);
 
 	fattr->cf_nlink = le32_to_cpu(info->NumberOfLinks);
-	if (reparse_tag == IO_REPARSE_TAG_LX_SYMLINK) {
-		fattr->cf_mode |= S_IFLNK | cifs_sb->ctx->file_mode;
+	अगर (reparse_tag == IO_REPARSE_TAG_LX_SYMLINK) अणु
+		fattr->cf_mode |= S_IFLNK | cअगरs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_LNK;
-	} else if (reparse_tag == IO_REPARSE_TAG_LX_FIFO) {
-		fattr->cf_mode |= S_IFIFO | cifs_sb->ctx->file_mode;
+	पूर्ण अन्यथा अगर (reparse_tag == IO_REPARSE_TAG_LX_FIFO) अणु
+		fattr->cf_mode |= S_IFIFO | cअगरs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_FIFO;
-	} else if (reparse_tag == IO_REPARSE_TAG_AF_UNIX) {
-		fattr->cf_mode |= S_IFSOCK | cifs_sb->ctx->file_mode;
+	पूर्ण अन्यथा अगर (reparse_tag == IO_REPARSE_TAG_AF_UNIX) अणु
+		fattr->cf_mode |= S_IFSOCK | cअगरs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_SOCK;
-	} else if (reparse_tag == IO_REPARSE_TAG_LX_CHR) {
-		fattr->cf_mode |= S_IFCHR | cifs_sb->ctx->file_mode;
+	पूर्ण अन्यथा अगर (reparse_tag == IO_REPARSE_TAG_LX_CHR) अणु
+		fattr->cf_mode |= S_IFCHR | cअगरs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_CHR;
-	} else if (reparse_tag == IO_REPARSE_TAG_LX_BLK) {
-		fattr->cf_mode |= S_IFBLK | cifs_sb->ctx->file_mode;
+	पूर्ण अन्यथा अगर (reparse_tag == IO_REPARSE_TAG_LX_BLK) अणु
+		fattr->cf_mode |= S_IFBLK | cअगरs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_BLK;
-	} else if (symlink) { /* TODO add more reparse tag checks */
+	पूर्ण अन्यथा अगर (symlink) अणु /* TODO add more reparse tag checks */
 		fattr->cf_mode = S_IFLNK;
 		fattr->cf_dtype = DT_LNK;
-	} else if (fattr->cf_cifsattrs & ATTR_DIRECTORY) {
-		fattr->cf_mode = S_IFDIR | cifs_sb->ctx->dir_mode;
-		fattr->cf_dtype = DT_DIR;
+	पूर्ण अन्यथा अगर (fattr->cf_cअगरsattrs & ATTR_सूचीECTORY) अणु
+		fattr->cf_mode = S_IFसूची | cअगरs_sb->ctx->dir_mode;
+		fattr->cf_dtype = DT_सूची;
 		/*
-		 * Server can return wrong NumberOfLinks value for directories
+		 * Server can वापस wrong NumberOfLinks value क्रम directories
 		 * when Unix extensions are disabled - fake it.
 		 */
-		if (!tcon->unix_ext)
+		अगर (!tcon->unix_ext)
 			fattr->cf_flags |= CIFS_FATTR_UNKNOWN_NLINK;
-	} else {
-		fattr->cf_mode = S_IFREG | cifs_sb->ctx->file_mode;
+	पूर्ण अन्यथा अणु
+		fattr->cf_mode = S_IFREG | cअगरs_sb->ctx->file_mode;
 		fattr->cf_dtype = DT_REG;
 
-		/* clear write bits if ATTR_READONLY is set */
-		if (fattr->cf_cifsattrs & ATTR_READONLY)
+		/* clear ग_लिखो bits अगर ATTR_READONLY is set */
+		अगर (fattr->cf_cअगरsattrs & ATTR_READONLY)
 			fattr->cf_mode &= ~(S_IWUGO);
 
 		/*
 		 * Don't accept zero nlink from non-unix servers unless
 		 * delete is pending.  Instead mark it as unknown.
 		 */
-		if ((fattr->cf_nlink < 1) && !tcon->unix_ext &&
-		    !info->DeletePending) {
-			cifs_dbg(VFS, "bogus file nlink value %u\n",
+		अगर ((fattr->cf_nlink < 1) && !tcon->unix_ext &&
+		    !info->DeletePending) अणु
+			cअगरs_dbg(VFS, "bogus file nlink value %u\n",
 				 fattr->cf_nlink);
 			fattr->cf_flags |= CIFS_FATTR_UNKNOWN_NLINK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	fattr->cf_uid = cifs_sb->ctx->linux_uid;
-	fattr->cf_gid = cifs_sb->ctx->linux_gid;
-}
+	fattr->cf_uid = cअगरs_sb->ctx->linux_uid;
+	fattr->cf_gid = cअगरs_sb->ctx->linux_gid;
+पूर्ण
 
-static int
-cifs_get_file_info(struct file *filp)
-{
-	int rc;
-	unsigned int xid;
-	FILE_ALL_INFO find_data;
-	struct cifs_fattr fattr;
-	struct inode *inode = file_inode(filp);
-	struct cifsFileInfo *cfile = filp->private_data;
-	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
-	struct TCP_Server_Info *server = tcon->ses->server;
+अटल पूर्णांक
+cअगरs_get_file_info(काष्ठा file *filp)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक xid;
+	खाता_ALL_INFO find_data;
+	काष्ठा cअगरs_fattr fattr;
+	काष्ठा inode *inode = file_inode(filp);
+	काष्ठा cअगरsFileInfo *cfile = filp->निजी_data;
+	काष्ठा cअगरs_tcon *tcon = tlink_tcon(cfile->tlink);
+	काष्ठा TCP_Server_Info *server = tcon->ses->server;
 
-	if (!server->ops->query_file_info)
-		return -ENOSYS;
+	अगर (!server->ops->query_file_info)
+		वापस -ENOSYS;
 
 	xid = get_xid();
 	rc = server->ops->query_file_info(xid, tcon, &cfile->fid, &find_data);
-	switch (rc) {
-	case 0:
+	चयन (rc) अणु
+	हाल 0:
 		/* TODO: add support to query reparse tag */
-		cifs_all_info_to_fattr(&fattr, &find_data, inode->i_sb, false,
+		cअगरs_all_info_to_fattr(&fattr, &find_data, inode->i_sb, false,
 				       false, 0 /* no reparse tag */);
-		break;
-	case -EREMOTE:
-		cifs_create_dfs_fattr(&fattr, inode->i_sb);
+		अवरोध;
+	हाल -EREMOTE:
+		cअगरs_create_dfs_fattr(&fattr, inode->i_sb);
 		rc = 0;
-		break;
-	case -EOPNOTSUPP:
-	case -EINVAL:
+		अवरोध;
+	हाल -EOPNOTSUPP:
+	हाल -EINVAL:
 		/*
 		 * FIXME: legacy server -- fall back to path-based call?
-		 * for now, just skip revalidating and mark inode for
+		 * क्रम now, just skip revalidating and mark inode क्रम
 		 * immediate reval.
 		 */
 		rc = 0;
-		CIFS_I(inode)->time = 0;
-		goto cgfi_exit;
-	default:
-		goto cgfi_exit;
-	}
+		CIFS_I(inode)->समय = 0;
+		जाओ cgfi_निकास;
+	शेष:
+		जाओ cgfi_निकास;
+	पूर्ण
 
 	/*
-	 * don't bother with SFU junk here -- just mark inode as needing
+	 * करोn't bother with SFU junk here -- just mark inode as needing
 	 * revalidation.
 	 */
 	fattr.cf_uniqueid = CIFS_I(inode)->uniqueid;
 	fattr.cf_flags |= CIFS_FATTR_NEED_REVAL;
-	/* if filetype is different, return error */
-	rc = cifs_fattr_to_inode(inode, &fattr);
-cgfi_exit:
-	free_xid(xid);
-	return rc;
-}
+	/* अगर filetype is dअगरferent, वापस error */
+	rc = cअगरs_fattr_to_inode(inode, &fattr);
+cgfi_निकास:
+	मुक्त_xid(xid);
+	वापस rc;
+पूर्ण
 
-/* Simple function to return a 64 bit hash of string.  Rarely called */
-static __u64 simple_hashstr(const char *str)
-{
-	const __u64 hash_mult =  1125899906842597ULL; /* a big enough prime */
+/* Simple function to वापस a 64 bit hash of string.  Rarely called */
+अटल __u64 simple_hashstr(स्थिर अक्षर *str)
+अणु
+	स्थिर __u64 hash_mult =  1125899906842597ULL; /* a big enough prime */
 	__u64 hash = 0;
 
-	while (*str)
+	जबतक (*str)
 		hash = (hash + (__u64) *str++) * hash_mult;
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
 /**
- * cifs_backup_query_path_info - SMB1 fallback code to get ino
+ * cअगरs_backup_query_path_info - SMB1 fallback code to get ino
  *
- * Fallback code to get file metadata when we don't have access to
+ * Fallback code to get file metadata when we करोn't have access to
  * full_path (EACCES) and have backup creds.
  *
- * @xid:	transaction id used to identify original request in logs
- * @tcon:	information about the server share we have mounted
+ * @xid:	transaction id used to identअगरy original request in logs
+ * @tcon:	inक्रमmation about the server share we have mounted
  * @sb:	the superblock stores info such as disk space available
- * @full_path:	name of the file we are getting the metadata for
- * @resp_buf:	will be set to cifs resp buf and needs to be freed with
- * 		cifs_buf_release() when done with @data
+ * @full_path:	name of the file we are getting the metadata क्रम
+ * @resp_buf:	will be set to cअगरs resp buf and needs to be मुक्तd with
+ * 		cअगरs_buf_release() when करोne with @data
  * @data:	will be set to search info result buffer
  */
-static int
-cifs_backup_query_path_info(int xid,
-			    struct cifs_tcon *tcon,
-			    struct super_block *sb,
-			    const char *full_path,
-			    void **resp_buf,
-			    FILE_ALL_INFO **data)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
-	struct cifs_search_info info = {0};
+अटल पूर्णांक
+cअगरs_backup_query_path_info(पूर्णांक xid,
+			    काष्ठा cअगरs_tcon *tcon,
+			    काष्ठा super_block *sb,
+			    स्थिर अक्षर *full_path,
+			    व्योम **resp_buf,
+			    खाता_ALL_INFO **data)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+	काष्ठा cअगरs_search_info info = अणु0पूर्ण;
 	u16 flags;
-	int rc;
+	पूर्णांक rc;
 
-	*resp_buf = NULL;
+	*resp_buf = शून्य;
 	info.endOfSearch = false;
-	if (tcon->unix_ext)
-		info.info_level = SMB_FIND_FILE_UNIX;
-	else if ((tcon->ses->capabilities &
+	अगर (tcon->unix_ext)
+		info.info_level = SMB_FIND_खाता_UNIX;
+	अन्यथा अगर ((tcon->ses->capabilities &
 		  tcon->ses->server->vals->cap_nt_find) == 0)
-		info.info_level = SMB_FIND_FILE_INFO_STANDARD;
-	else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM)
-		info.info_level = SMB_FIND_FILE_ID_FULL_DIR_INFO;
-	else /* no srvino useful for fallback to some netapp */
-		info.info_level = SMB_FIND_FILE_DIRECTORY_INFO;
+		info.info_level = SMB_FIND_खाता_INFO_STANDARD;
+	अन्यथा अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM)
+		info.info_level = SMB_FIND_खाता_ID_FULL_सूची_INFO;
+	अन्यथा /* no srvino useful क्रम fallback to some netapp */
+		info.info_level = SMB_FIND_खाता_सूचीECTORY_INFO;
 
 	flags = CIFS_SEARCH_CLOSE_ALWAYS |
 		CIFS_SEARCH_CLOSE_AT_END |
 		CIFS_SEARCH_BACKUP_SEARCH;
 
 	rc = CIFSFindFirst(xid, tcon, full_path,
-			   cifs_sb, NULL, flags, &info, false);
-	if (rc)
-		return rc;
+			   cअगरs_sb, शून्य, flags, &info, false);
+	अगर (rc)
+		वापस rc;
 
-	*resp_buf = (void *)info.ntwrk_buf_start;
-	*data = (FILE_ALL_INFO *)info.srch_entries_start;
-	return 0;
-}
+	*resp_buf = (व्योम *)info.ntwrk_buf_start;
+	*data = (खाता_ALL_INFO *)info.srch_entries_start;
+	वापस 0;
+पूर्ण
 
-static void
-cifs_set_fattr_ino(int xid,
-		   struct cifs_tcon *tcon,
-		   struct super_block *sb,
-		   struct inode **inode,
-		   const char *full_path,
-		   FILE_ALL_INFO *data,
-		   struct cifs_fattr *fattr)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
-	struct TCP_Server_Info *server = tcon->ses->server;
-	int rc;
+अटल व्योम
+cअगरs_set_fattr_ino(पूर्णांक xid,
+		   काष्ठा cअगरs_tcon *tcon,
+		   काष्ठा super_block *sb,
+		   काष्ठा inode **inode,
+		   स्थिर अक्षर *full_path,
+		   खाता_ALL_INFO *data,
+		   काष्ठा cअगरs_fattr *fattr)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+	काष्ठा TCP_Server_Info *server = tcon->ses->server;
+	पूर्णांक rc;
 
-	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM)) {
-		if (*inode)
+	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM)) अणु
+		अगर (*inode)
 			fattr->cf_uniqueid = CIFS_I(*inode)->uniqueid;
-		else
+		अन्यथा
 			fattr->cf_uniqueid = iunique(sb, ROOT_I);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If we have an inode pass a NULL tcon to ensure we don't
-	 * make a round trip to the server. This only works for SMB2+.
+	 * If we have an inode pass a शून्य tcon to ensure we करोn't
+	 * make a round trip to the server. This only works क्रम SMB2+.
 	 */
 	rc = server->ops->get_srv_inum(xid,
-				       *inode ? NULL : tcon,
-				       cifs_sb, full_path,
+				       *inode ? शून्य : tcon,
+				       cअगरs_sb, full_path,
 				       &fattr->cf_uniqueid,
 				       data);
-	if (rc) {
+	अगर (rc) अणु
 		/*
 		 * If that fails reuse existing ino or generate one
 		 * and disable server ones
 		 */
-		if (*inode)
+		अगर (*inode)
 			fattr->cf_uniqueid = CIFS_I(*inode)->uniqueid;
-		else {
+		अन्यथा अणु
 			fattr->cf_uniqueid = iunique(sb, ROOT_I);
-			cifs_autodisable_serverino(cifs_sb);
-		}
-		return;
-	}
+			cअगरs_स्वतःdisable_serverino(cअगरs_sb);
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	/* If no errors, check for zero root inode (invalid) */
-	if (fattr->cf_uniqueid == 0 && strlen(full_path) == 0) {
-		cifs_dbg(FYI, "Invalid (0) inodenum\n");
-		if (*inode) {
+	/* If no errors, check क्रम zero root inode (invalid) */
+	अगर (fattr->cf_uniqueid == 0 && म_माप(full_path) == 0) अणु
+		cअगरs_dbg(FYI, "Invalid (0) inodenum\n");
+		अगर (*inode) अणु
 			/* reuse */
 			fattr->cf_uniqueid = CIFS_I(*inode)->uniqueid;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* make an ino by hashing the UNC */
 			fattr->cf_flags |= CIFS_FATTR_FAKE_ROOT_INO;
 			fattr->cf_uniqueid = simple_hashstr(tcon->treeName);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline bool is_inode_cache_good(struct inode *ino)
-{
-	return ino && CIFS_CACHE_READ(CIFS_I(ino)) && CIFS_I(ino)->time != 0;
-}
+अटल अंतरभूत bool is_inode_cache_good(काष्ठा inode *ino)
+अणु
+	वापस ino && CIFS_CACHE_READ(CIFS_I(ino)) && CIFS_I(ino)->समय != 0;
+पूर्ण
 
-int
-cifs_get_inode_info(struct inode **inode,
-		    const char *full_path,
-		    FILE_ALL_INFO *in_data,
-		    struct super_block *sb, int xid,
-		    const struct cifs_fid *fid)
-{
+पूर्णांक
+cअगरs_get_inode_info(काष्ठा inode **inode,
+		    स्थिर अक्षर *full_path,
+		    खाता_ALL_INFO *in_data,
+		    काष्ठा super_block *sb, पूर्णांक xid,
+		    स्थिर काष्ठा cअगरs_fid *fid)
+अणु
 
-	struct cifs_tcon *tcon;
-	struct TCP_Server_Info *server;
-	struct tcon_link *tlink;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा TCP_Server_Info *server;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
 	bool adjust_tz = false;
-	struct cifs_fattr fattr = {0};
-	bool is_reparse_point = false;
-	FILE_ALL_INFO *data = in_data;
-	FILE_ALL_INFO *tmp_data = NULL;
-	void *smb1_backup_rsp_buf = NULL;
-	int rc = 0;
-	int tmprc = 0;
+	काष्ठा cअगरs_fattr fattr = अणु0पूर्ण;
+	bool is_reparse_poपूर्णांक = false;
+	खाता_ALL_INFO *data = in_data;
+	खाता_ALL_INFO *पंचांगp_data = शून्य;
+	व्योम *smb1_backup_rsp_buf = शून्य;
+	पूर्णांक rc = 0;
+	पूर्णांक पंचांगprc = 0;
 	__u32 reparse_tag = 0;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
 	/*
-	 * 1. Fetch file metadata if not provided (data)
+	 * 1. Fetch file metadata अगर not provided (data)
 	 */
 
-	if (!data) {
-		if (is_inode_cache_good(*inode)) {
-			cifs_dbg(FYI, "No need to revalidate cached inode sizes\n");
-			goto out;
-		}
-		tmp_data = kmalloc(sizeof(FILE_ALL_INFO), GFP_KERNEL);
-		if (!tmp_data) {
+	अगर (!data) अणु
+		अगर (is_inode_cache_good(*inode)) अणु
+			cअगरs_dbg(FYI, "No need to revalidate cached inode sizes\n");
+			जाओ out;
+		पूर्ण
+		पंचांगp_data = kदो_स्मृति(माप(खाता_ALL_INFO), GFP_KERNEL);
+		अगर (!पंचांगp_data) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
-		rc = server->ops->query_path_info(xid, tcon, cifs_sb,
-						 full_path, tmp_data,
-						 &adjust_tz, &is_reparse_point);
-		data = tmp_data;
-	}
+			जाओ out;
+		पूर्ण
+		rc = server->ops->query_path_info(xid, tcon, cअगरs_sb,
+						 full_path, पंचांगp_data,
+						 &adjust_tz, &is_reparse_poपूर्णांक);
+		data = पंचांगp_data;
+	पूर्ण
 
 	/*
-	 * 2. Convert it to internal cifs metadata (fattr)
+	 * 2. Convert it to पूर्णांकernal cअगरs metadata (fattr)
 	 */
 
-	switch (rc) {
-	case 0:
+	चयन (rc) अणु
+	हाल 0:
 		/*
-		 * If the file is a reparse point, it is more complicated
-		 * since we have to check if its reparse tag matches a known
-		 * special file type e.g. symlink or fifo or char etc.
+		 * If the file is a reparse poपूर्णांक, it is more complicated
+		 * since we have to check अगर its reparse tag matches a known
+		 * special file type e.g. symlink or fअगरo or अक्षर etc.
 		 */
-		if ((le32_to_cpu(data->Attributes) & ATTR_REPARSE) &&
-		    server->ops->query_reparse_tag) {
-			rc = server->ops->query_reparse_tag(xid, tcon, cifs_sb,
+		अगर ((le32_to_cpu(data->Attributes) & ATTR_REPARSE) &&
+		    server->ops->query_reparse_tag) अणु
+			rc = server->ops->query_reparse_tag(xid, tcon, cअगरs_sb,
 						full_path, &reparse_tag);
-			cifs_dbg(FYI, "reparse tag 0x%x\n", reparse_tag);
-		}
-		cifs_all_info_to_fattr(&fattr, data, sb, adjust_tz,
-				       is_reparse_point, reparse_tag);
-		break;
-	case -EREMOTE:
+			cअगरs_dbg(FYI, "reparse tag 0x%x\n", reparse_tag);
+		पूर्ण
+		cअगरs_all_info_to_fattr(&fattr, data, sb, adjust_tz,
+				       is_reparse_poपूर्णांक, reparse_tag);
+		अवरोध;
+	हाल -EREMOTE:
 		/* DFS link, no metadata available on this server */
-		cifs_create_dfs_fattr(&fattr, sb);
+		cअगरs_create_dfs_fattr(&fattr, sb);
 		rc = 0;
-		break;
-	case -EACCES:
+		अवरोध;
+	हाल -EACCES:
 		/*
-		 * perm errors, try again with backup flags if possible
+		 * perm errors, try again with backup flags अगर possible
 		 *
-		 * For SMB2 and later the backup intent flag
-		 * is already sent if needed on open and there
+		 * For SMB2 and later the backup पूर्णांकent flag
+		 * is alपढ़ोy sent अगर needed on खोलो and there
 		 * is no path based FindFirst operation to use
 		 * to retry with
 		 */
-		if (backup_cred(cifs_sb) && is_smb1_server(server)) {
-			/* for easier reading */
-			FILE_DIRECTORY_INFO *fdi;
-			SEARCH_ID_FULL_DIR_INFO *si;
+		अगर (backup_cred(cअगरs_sb) && is_smb1_server(server)) अणु
+			/* क्रम easier पढ़ोing */
+			खाता_सूचीECTORY_INFO *fdi;
+			SEARCH_ID_FULL_सूची_INFO *si;
 
-			rc = cifs_backup_query_path_info(xid, tcon, sb,
+			rc = cअगरs_backup_query_path_info(xid, tcon, sb,
 							 full_path,
 							 &smb1_backup_rsp_buf,
 							 &data);
-			if (rc)
-				goto out;
+			अगर (rc)
+				जाओ out;
 
-			fdi = (FILE_DIRECTORY_INFO *)data;
-			si = (SEARCH_ID_FULL_DIR_INFO *)data;
+			fdi = (खाता_सूचीECTORY_INFO *)data;
+			si = (SEARCH_ID_FULL_सूची_INFO *)data;
 
-			cifs_dir_info_to_fattr(&fattr, fdi, cifs_sb);
+			cअगरs_dir_info_to_fattr(&fattr, fdi, cअगरs_sb);
 			fattr.cf_uniqueid = le64_to_cpu(si->UniqueId);
 			/* uniqueid set, skip get inum step */
-			goto handle_mnt_opt;
-		} else {
-			/* nothing we can do, bail out */
-			goto out;
-		}
-		break;
-	default:
-		cifs_dbg(FYI, "%s: unhandled err rc %d\n", __func__, rc);
-		goto out;
-	}
+			जाओ handle_mnt_opt;
+		पूर्ण अन्यथा अणु
+			/* nothing we can करो, bail out */
+			जाओ out;
+		पूर्ण
+		अवरोध;
+	शेष:
+		cअगरs_dbg(FYI, "%s: unhandled err rc %d\n", __func__, rc);
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * 3. Get or update inode number (fattr.cf_uniqueid)
 	 */
 
-	cifs_set_fattr_ino(xid, tcon, sb, inode, full_path, data, &fattr);
+	cअगरs_set_fattr_ino(xid, tcon, sb, inode, full_path, data, &fattr);
 
 	/*
 	 * 4. Tweak fattr based on mount options
 	 */
 
 handle_mnt_opt:
-	/* query for SFU type info if supported and needed */
-	if (fattr.cf_cifsattrs & ATTR_SYSTEM &&
-	    cifs_sb->mnt_cifs_flags & CIFS_MOUNT_UNX_EMUL) {
-		tmprc = cifs_sfu_type(&fattr, full_path, cifs_sb, xid);
-		if (tmprc)
-			cifs_dbg(FYI, "cifs_sfu_type failed: %d\n", tmprc);
-	}
+	/* query क्रम SFU type info अगर supported and needed */
+	अगर (fattr.cf_cअगरsattrs & ATTR_SYSTEM &&
+	    cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_UNX_EMUL) अणु
+		पंचांगprc = cअगरs_sfu_type(&fattr, full_path, cअगरs_sb, xid);
+		अगर (पंचांगprc)
+			cअगरs_dbg(FYI, "cifs_sfu_type failed: %d\n", पंचांगprc);
+	पूर्ण
 
 	/* fill in 0777 bits from ACL */
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MODE_FROM_SID) {
-		rc = cifs_acl_to_fattr(cifs_sb, &fattr, *inode, true,
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MODE_FROM_SID) अणु
+		rc = cअगरs_acl_to_fattr(cअगरs_sb, &fattr, *inode, true,
 				       full_path, fid);
-		if (rc == -EREMOTE)
+		अगर (rc == -EREMOTE)
 			rc = 0;
-		if (rc) {
-			cifs_dbg(FYI, "%s: Get mode from SID failed. rc=%d\n",
+		अगर (rc) अणु
+			cअगरs_dbg(FYI, "%s: Get mode from SID failed. rc=%d\n",
 				 __func__, rc);
-			goto out;
-		}
-	} else if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) {
-		rc = cifs_acl_to_fattr(cifs_sb, &fattr, *inode, false,
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_ACL) अणु
+		rc = cअगरs_acl_to_fattr(cअगरs_sb, &fattr, *inode, false,
 				       full_path, fid);
-		if (rc == -EREMOTE)
+		अगर (rc == -EREMOTE)
 			rc = 0;
-		if (rc) {
-			cifs_dbg(FYI, "%s: Getting ACL failed with error: %d\n",
+		अगर (rc) अणु
+			cअगरs_dbg(FYI, "%s: Getting ACL failed with error: %d\n",
 				 __func__, rc);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* fill in remaining high mode bits e.g. SUID, VTX */
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_UNX_EMUL)
-		cifs_sfu_mode(&fattr, full_path, cifs_sb, xid);
+	/* fill in reमुख्यing high mode bits e.g. SUID, VTX */
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_UNX_EMUL)
+		cअगरs_sfu_mode(&fattr, full_path, cअगरs_sb, xid);
 
-	/* check for Minshall+French symlinks */
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MF_SYMLINKS) {
-		tmprc = check_mf_symlink(xid, tcon, cifs_sb, &fattr,
+	/* check क्रम Minshall+French symlinks */
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MF_SYMLINKS) अणु
+		पंचांगprc = check_mf_symlink(xid, tcon, cअगरs_sb, &fattr,
 					 full_path);
-		if (tmprc)
-			cifs_dbg(FYI, "check_mf_symlink: %d\n", tmprc);
-	}
+		अगर (पंचांगprc)
+			cअगरs_dbg(FYI, "check_mf_symlink: %d\n", पंचांगprc);
+	पूर्ण
 
 	/*
 	 * 5. Update inode with final fattr data
 	 */
 
-	if (!*inode) {
-		*inode = cifs_iget(sb, &fattr);
-		if (!*inode)
+	अगर (!*inode) अणु
+		*inode = cअगरs_iget(sb, &fattr);
+		अगर (!*inode)
 			rc = -ENOMEM;
-	} else {
-		/* we already have inode, update it */
+	पूर्ण अन्यथा अणु
+		/* we alपढ़ोy have inode, update it */
 
-		/* if uniqueid is different, return error */
-		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
-		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) {
-			CIFS_I(*inode)->time = 0; /* force reval */
+		/* अगर uniqueid is dअगरferent, वापस error */
+		अगर (unlikely(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM &&
+		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) अणु
+			CIFS_I(*inode)->समय = 0; /* क्रमce reval */
 			rc = -ESTALE;
-			goto out;
-		}
-		/* if filetype is different, return error */
-		rc = cifs_fattr_to_inode(*inode, &fattr);
-	}
+			जाओ out;
+		पूर्ण
+		/* अगर filetype is dअगरferent, वापस error */
+		rc = cअगरs_fattr_to_inode(*inode, &fattr);
+	पूर्ण
 out:
-	cifs_buf_release(smb1_backup_rsp_buf);
-	cifs_put_tlink(tlink);
-	kfree(tmp_data);
-	return rc;
-}
+	cअगरs_buf_release(smb1_backup_rsp_buf);
+	cअगरs_put_tlink(tlink);
+	kमुक्त(पंचांगp_data);
+	वापस rc;
+पूर्ण
 
-int
-smb311_posix_get_inode_info(struct inode **inode,
-		    const char *full_path,
-		    struct super_block *sb, unsigned int xid)
-{
-	struct cifs_tcon *tcon;
-	struct tcon_link *tlink;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
+पूर्णांक
+smb311_posix_get_inode_info(काष्ठा inode **inode,
+		    स्थिर अक्षर *full_path,
+		    काष्ठा super_block *sb, अचिन्हित पूर्णांक xid)
+अणु
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
 	bool adjust_tz = false;
-	struct cifs_fattr fattr = {0};
+	काष्ठा cअगरs_fattr fattr = अणु0पूर्ण;
 	bool symlink = false;
-	struct smb311_posix_qinfo *data = NULL;
-	int rc = 0;
-	int tmprc = 0;
+	काष्ठा smb311_posix_qinfo *data = शून्य;
+	पूर्णांक rc = 0;
+	पूर्णांक पंचांगprc = 0;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
 	/*
 	 * 1. Fetch file metadata
 	 */
 
-	if (is_inode_cache_good(*inode)) {
-		cifs_dbg(FYI, "No need to revalidate cached inode sizes\n");
-		goto out;
-	}
-	data = kmalloc(sizeof(struct smb311_posix_qinfo), GFP_KERNEL);
-	if (!data) {
+	अगर (is_inode_cache_good(*inode)) अणु
+		cअगरs_dbg(FYI, "No need to revalidate cached inode sizes\n");
+		जाओ out;
+	पूर्ण
+	data = kदो_स्मृति(माप(काष्ठा smb311_posix_qinfo), GFP_KERNEL);
+	अगर (!data) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = smb311_posix_query_path_info(xid, tcon, cifs_sb,
+	rc = smb311_posix_query_path_info(xid, tcon, cअगरs_sb,
 						  full_path, data,
 						  &adjust_tz, &symlink);
 
 	/*
-	 * 2. Convert it to internal cifs metadata (fattr)
+	 * 2. Convert it to पूर्णांकernal cअगरs metadata (fattr)
 	 */
 
-	switch (rc) {
-	case 0:
+	चयन (rc) अणु
+	हाल 0:
 		smb311_posix_info_to_fattr(&fattr, data, sb, adjust_tz, symlink);
-		break;
-	case -EREMOTE:
+		अवरोध;
+	हाल -EREMOTE:
 		/* DFS link, no metadata available on this server */
-		cifs_create_dfs_fattr(&fattr, sb);
+		cअगरs_create_dfs_fattr(&fattr, sb);
 		rc = 0;
-		break;
-	case -EACCES:
+		अवरोध;
+	हाल -EACCES:
 		/*
-		 * For SMB2 and later the backup intent flag
-		 * is already sent if needed on open and there
+		 * For SMB2 and later the backup पूर्णांकent flag
+		 * is alपढ़ोy sent अगर needed on खोलो and there
 		 * is no path based FindFirst operation to use
-		 * to retry with so nothing we can do, bail out
+		 * to retry with so nothing we can करो, bail out
 		 */
-		goto out;
-	default:
-		cifs_dbg(FYI, "%s: unhandled err rc %d\n", __func__, rc);
-		goto out;
-	}
+		जाओ out;
+	शेष:
+		cअगरs_dbg(FYI, "%s: unhandled err rc %d\n", __func__, rc);
+		जाओ out;
+	पूर्ण
 
 
 	/*
 	 * 3. Tweak fattr based on mount options
 	 */
 
-	/* check for Minshall+French symlinks */
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MF_SYMLINKS) {
-		tmprc = check_mf_symlink(xid, tcon, cifs_sb, &fattr,
+	/* check क्रम Minshall+French symlinks */
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MF_SYMLINKS) अणु
+		पंचांगprc = check_mf_symlink(xid, tcon, cअगरs_sb, &fattr,
 					 full_path);
-		if (tmprc)
-			cifs_dbg(FYI, "check_mf_symlink: %d\n", tmprc);
-	}
+		अगर (पंचांगprc)
+			cअगरs_dbg(FYI, "check_mf_symlink: %d\n", पंचांगprc);
+	पूर्ण
 
 	/*
 	 * 4. Update inode with final fattr data
 	 */
 
-	if (!*inode) {
-		*inode = cifs_iget(sb, &fattr);
-		if (!*inode)
+	अगर (!*inode) अणु
+		*inode = cअगरs_iget(sb, &fattr);
+		अगर (!*inode)
 			rc = -ENOMEM;
-	} else {
-		/* we already have inode, update it */
+	पूर्ण अन्यथा अणु
+		/* we alपढ़ोy have inode, update it */
 
-		/* if uniqueid is different, return error */
-		if (unlikely(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM &&
-		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) {
-			CIFS_I(*inode)->time = 0; /* force reval */
+		/* अगर uniqueid is dअगरferent, वापस error */
+		अगर (unlikely(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM &&
+		    CIFS_I(*inode)->uniqueid != fattr.cf_uniqueid)) अणु
+			CIFS_I(*inode)->समय = 0; /* क्रमce reval */
 			rc = -ESTALE;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* if filetype is different, return error */
-		rc = cifs_fattr_to_inode(*inode, &fattr);
-	}
+		/* अगर filetype is dअगरferent, वापस error */
+		rc = cअगरs_fattr_to_inode(*inode, &fattr);
+	पूर्ण
 out:
-	cifs_put_tlink(tlink);
-	kfree(data);
-	return rc;
-}
+	cअगरs_put_tlink(tlink);
+	kमुक्त(data);
+	वापस rc;
+पूर्ण
 
 
-static const struct inode_operations cifs_ipc_inode_ops = {
-	.lookup = cifs_lookup,
-};
+अटल स्थिर काष्ठा inode_operations cअगरs_ipc_inode_ops = अणु
+	.lookup = cअगरs_lookup,
+पूर्ण;
 
-static int
-cifs_find_inode(struct inode *inode, void *opaque)
-{
-	struct cifs_fattr *fattr = (struct cifs_fattr *) opaque;
+अटल पूर्णांक
+cअगरs_find_inode(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	काष्ठा cअगरs_fattr *fattr = (काष्ठा cअगरs_fattr *) opaque;
 
-	/* don't match inode with different uniqueid */
-	if (CIFS_I(inode)->uniqueid != fattr->cf_uniqueid)
-		return 0;
+	/* करोn't match inode with dअगरferent uniqueid */
+	अगर (CIFS_I(inode)->uniqueid != fattr->cf_uniqueid)
+		वापस 0;
 
-	/* use createtime like an i_generation field */
-	if (CIFS_I(inode)->createtime != fattr->cf_createtime)
-		return 0;
+	/* use createसमय like an i_generation field */
+	अगर (CIFS_I(inode)->createसमय != fattr->cf_createसमय)
+		वापस 0;
 
-	/* don't match inode of different type */
-	if (inode_wrong_type(inode, fattr->cf_mode))
-		return 0;
+	/* करोn't match inode of dअगरferent type */
+	अगर (inode_wrong_type(inode, fattr->cf_mode))
+		वापस 0;
 
-	/* if it's not a directory or has no dentries, then flag it */
-	if (S_ISDIR(inode->i_mode) && !hlist_empty(&inode->i_dentry))
+	/* अगर it's not a directory or has no dentries, then flag it */
+	अगर (S_ISसूची(inode->i_mode) && !hlist_empty(&inode->i_dentry))
 		fattr->cf_flags |= CIFS_FATTR_INO_COLLISION;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int
-cifs_init_inode(struct inode *inode, void *opaque)
-{
-	struct cifs_fattr *fattr = (struct cifs_fattr *) opaque;
+अटल पूर्णांक
+cअगरs_init_inode(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	काष्ठा cअगरs_fattr *fattr = (काष्ठा cअगरs_fattr *) opaque;
 
 	CIFS_I(inode)->uniqueid = fattr->cf_uniqueid;
-	CIFS_I(inode)->createtime = fattr->cf_createtime;
-	return 0;
-}
+	CIFS_I(inode)->createसमय = fattr->cf_createसमय;
+	वापस 0;
+पूर्ण
 
 /*
- * walk dentry list for an inode and report whether it has aliases that
- * are hashed. We use this to determine if a directory inode can actually
+ * walk dentry list क्रम an inode and report whether it has aliases that
+ * are hashed. We use this to determine अगर a directory inode can actually
  * be used.
  */
-static bool
-inode_has_hashed_dentries(struct inode *inode)
-{
-	struct dentry *dentry;
+अटल bool
+inode_has_hashed_dentries(काष्ठा inode *inode)
+अणु
+	काष्ठा dentry *dentry;
 
 	spin_lock(&inode->i_lock);
-	hlist_for_each_entry(dentry, &inode->i_dentry, d_u.d_alias) {
-		if (!d_unhashed(dentry) || IS_ROOT(dentry)) {
+	hlist_क्रम_each_entry(dentry, &inode->i_dentry, d_u.d_alias) अणु
+		अगर (!d_unhashed(dentry) || IS_ROOT(dentry)) अणु
 			spin_unlock(&inode->i_lock);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&inode->i_lock);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Given fattrs, get a corresponding inode */
-struct inode *
-cifs_iget(struct super_block *sb, struct cifs_fattr *fattr)
-{
-	unsigned long hash;
-	struct inode *inode;
+काष्ठा inode *
+cअगरs_iget(काष्ठा super_block *sb, काष्ठा cअगरs_fattr *fattr)
+अणु
+	अचिन्हित दीर्घ hash;
+	काष्ठा inode *inode;
 
 retry_iget5_locked:
-	cifs_dbg(FYI, "looking for uniqueid=%llu\n", fattr->cf_uniqueid);
+	cअगरs_dbg(FYI, "looking for uniqueid=%llu\n", fattr->cf_uniqueid);
 
-	/* hash down to 32-bits on 32-bit arch */
-	hash = cifs_uniqueid_to_ino_t(fattr->cf_uniqueid);
+	/* hash करोwn to 32-bits on 32-bit arch */
+	hash = cअगरs_uniqueid_to_ino_t(fattr->cf_uniqueid);
 
-	inode = iget5_locked(sb, hash, cifs_find_inode, cifs_init_inode, fattr);
-	if (inode) {
+	inode = iget5_locked(sb, hash, cअगरs_find_inode, cअगरs_init_inode, fattr);
+	अगर (inode) अणु
 		/* was there a potentially problematic inode collision? */
-		if (fattr->cf_flags & CIFS_FATTR_INO_COLLISION) {
+		अगर (fattr->cf_flags & CIFS_FATTR_INO_COLLISION) अणु
 			fattr->cf_flags &= ~CIFS_FATTR_INO_COLLISION;
 
-			if (inode_has_hashed_dentries(inode)) {
-				cifs_autodisable_serverino(CIFS_SB(sb));
+			अगर (inode_has_hashed_dentries(inode)) अणु
+				cअगरs_स्वतःdisable_serverino(CIFS_SB(sb));
 				iput(inode);
 				fattr->cf_uniqueid = iunique(sb, ROOT_I);
-				goto retry_iget5_locked;
-			}
-		}
+				जाओ retry_iget5_locked;
+			पूर्ण
+		पूर्ण
 
-		/* can't fail - see cifs_find_inode() */
-		cifs_fattr_to_inode(inode, fattr);
-		if (sb->s_flags & SB_NOATIME)
+		/* can't fail - see cअगरs_find_inode() */
+		cअगरs_fattr_to_inode(inode, fattr);
+		अगर (sb->s_flags & SB_NOATIME)
 			inode->i_flags |= S_NOATIME | S_NOCMTIME;
-		if (inode->i_state & I_NEW) {
+		अगर (inode->i_state & I_NEW) अणु
 			inode->i_ino = hash;
-#ifdef CONFIG_CIFS_FSCACHE
-			/* initialize per-inode cache cookie pointer */
-			CIFS_I(inode)->fscache = NULL;
-#endif
+#अगर_घोषित CONFIG_CIFS_FSCACHE
+			/* initialize per-inode cache cookie poपूर्णांकer */
+			CIFS_I(inode)->fscache = शून्य;
+#पूर्ण_अगर
 			unlock_new_inode(inode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-/* gets root inode */
-struct inode *cifs_root_iget(struct super_block *sb)
-{
-	unsigned int xid;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
-	struct inode *inode = NULL;
-	long rc;
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
-	char *path = NULL;
-	int len;
+/* माला_लो root inode */
+काष्ठा inode *cअगरs_root_iget(काष्ठा super_block *sb)
+अणु
+	अचिन्हित पूर्णांक xid;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+	काष्ठा inode *inode = शून्य;
+	दीर्घ rc;
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	अक्षर *path = शून्य;
+	पूर्णांक len;
 
-	if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_USE_PREFIX_PATH)
-	    && cifs_sb->prepath) {
-		len = strlen(cifs_sb->prepath);
+	अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_USE_PREFIX_PATH)
+	    && cअगरs_sb->prepath) अणु
+		len = म_माप(cअगरs_sb->prepath);
 		path = kzalloc(len + 2 /* leading sep + null */, GFP_KERNEL);
-		if (path == NULL)
-			return ERR_PTR(-ENOMEM);
+		अगर (path == शून्य)
+			वापस ERR_PTR(-ENOMEM);
 		path[0] = '/';
-		memcpy(path+1, cifs_sb->prepath, len);
-	} else {
+		स_नकल(path+1, cअगरs_sb->prepath, len);
+	पूर्ण अन्यथा अणु
 		path = kstrdup("", GFP_KERNEL);
-		if (path == NULL)
-			return ERR_PTR(-ENOMEM);
-	}
+		अगर (path == शून्य)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	xid = get_xid();
-	if (tcon->unix_ext) {
-		rc = cifs_get_inode_info_unix(&inode, path, sb, xid);
+	अगर (tcon->unix_ext) अणु
+		rc = cअगरs_get_inode_info_unix(&inode, path, sb, xid);
 		/* some servers mistakenly claim POSIX support */
-		if (rc != -EOPNOTSUPP)
-			goto iget_no_retry;
-		cifs_dbg(VFS, "server does not support POSIX extensions\n");
+		अगर (rc != -EOPNOTSUPP)
+			जाओ iget_no_retry;
+		cअगरs_dbg(VFS, "server does not support POSIX extensions\n");
 		tcon->unix_ext = false;
-	}
+	पूर्ण
 
-	convert_delimiter(path, CIFS_DIR_SEP(cifs_sb));
-	if (tcon->posix_extensions)
+	convert_delimiter(path, CIFS_सूची_SEP(cअगरs_sb));
+	अगर (tcon->posix_extensions)
 		rc = smb311_posix_get_inode_info(&inode, path, sb, xid);
-	else
-		rc = cifs_get_inode_info(&inode, path, NULL, sb, xid, NULL);
+	अन्यथा
+		rc = cअगरs_get_inode_info(&inode, path, शून्य, sb, xid, शून्य);
 
 iget_no_retry:
-	if (!inode) {
+	अगर (!inode) अणु
 		inode = ERR_PTR(rc);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-#ifdef CONFIG_CIFS_FSCACHE
+#अगर_घोषित CONFIG_CIFS_FSCACHE
 	/* populate tcon->resource_id */
 	tcon->resource_id = CIFS_I(inode)->uniqueid;
-#endif
+#पूर्ण_अगर
 
-	if (rc && tcon->pipe) {
-		cifs_dbg(FYI, "ipc connection - fake read inode\n");
+	अगर (rc && tcon->pipe) अणु
+		cअगरs_dbg(FYI, "ipc connection - fake read inode\n");
 		spin_lock(&inode->i_lock);
-		inode->i_mode |= S_IFDIR;
+		inode->i_mode |= S_IFसूची;
 		set_nlink(inode, 2);
-		inode->i_op = &cifs_ipc_inode_ops;
+		inode->i_op = &cअगरs_ipc_inode_ops;
 		inode->i_fop = &simple_dir_operations;
-		inode->i_uid = cifs_sb->ctx->linux_uid;
-		inode->i_gid = cifs_sb->ctx->linux_gid;
+		inode->i_uid = cअगरs_sb->ctx->linux_uid;
+		inode->i_gid = cअगरs_sb->ctx->linux_gid;
 		spin_unlock(&inode->i_lock);
-	} else if (rc) {
+	पूर्ण अन्यथा अगर (rc) अणु
 		iget_failed(inode);
 		inode = ERR_PTR(rc);
-	}
+	पूर्ण
 
 out:
-	kfree(path);
-	free_xid(xid);
-	return inode;
-}
+	kमुक्त(path);
+	मुक्त_xid(xid);
+	वापस inode;
+पूर्ण
 
-int
-cifs_set_file_info(struct inode *inode, struct iattr *attrs, unsigned int xid,
-		   const char *full_path, __u32 dosattr)
-{
-	bool set_time = false;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct TCP_Server_Info *server;
-	FILE_BASIC_INFO	info_buf;
+पूर्णांक
+cअगरs_set_file_info(काष्ठा inode *inode, काष्ठा iattr *attrs, अचिन्हित पूर्णांक xid,
+		   स्थिर अक्षर *full_path, __u32 करोsattr)
+अणु
+	bool set_समय = false;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा TCP_Server_Info *server;
+	खाता_BASIC_INFO	info_buf;
 
-	if (attrs == NULL)
-		return -EINVAL;
+	अगर (attrs == शून्य)
+		वापस -EINVAL;
 
-	server = cifs_sb_master_tcon(cifs_sb)->ses->server;
-	if (!server->ops->set_file_info)
-		return -ENOSYS;
+	server = cअगरs_sb_master_tcon(cअगरs_sb)->ses->server;
+	अगर (!server->ops->set_file_info)
+		वापस -ENOSYS;
 
 	info_buf.Pad = 0;
 
-	if (attrs->ia_valid & ATTR_ATIME) {
-		set_time = true;
+	अगर (attrs->ia_valid & ATTR_ATIME) अणु
+		set_समय = true;
 		info_buf.LastAccessTime =
-			cpu_to_le64(cifs_UnixTimeToNT(attrs->ia_atime));
-	} else
+			cpu_to_le64(cअगरs_UnixTimeToNT(attrs->ia_aसमय));
+	पूर्ण अन्यथा
 		info_buf.LastAccessTime = 0;
 
-	if (attrs->ia_valid & ATTR_MTIME) {
-		set_time = true;
+	अगर (attrs->ia_valid & ATTR_MTIME) अणु
+		set_समय = true;
 		info_buf.LastWriteTime =
-		    cpu_to_le64(cifs_UnixTimeToNT(attrs->ia_mtime));
-	} else
+		    cpu_to_le64(cअगरs_UnixTimeToNT(attrs->ia_mसमय));
+	पूर्ण अन्यथा
 		info_buf.LastWriteTime = 0;
 
 	/*
-	 * Samba throws this field away, but windows may actually use it.
-	 * Do not set ctime unless other time stamps are changed explicitly
-	 * (i.e. by utimes()) since we would then have a mix of client and
-	 * server times.
+	 * Samba throws this field away, but winकरोws may actually use it.
+	 * Do not set स_समय unless other समय stamps are changed explicitly
+	 * (i.e. by uबार()) since we would then have a mix of client and
+	 * server बार.
 	 */
-	if (set_time && (attrs->ia_valid & ATTR_CTIME)) {
-		cifs_dbg(FYI, "CIFS - CTIME changed\n");
+	अगर (set_समय && (attrs->ia_valid & ATTR_CTIME)) अणु
+		cअगरs_dbg(FYI, "CIFS - CTIME changed\n");
 		info_buf.ChangeTime =
-		    cpu_to_le64(cifs_UnixTimeToNT(attrs->ia_ctime));
-	} else
+		    cpu_to_le64(cअगरs_UnixTimeToNT(attrs->ia_स_समय));
+	पूर्ण अन्यथा
 		info_buf.ChangeTime = 0;
 
-	info_buf.CreationTime = 0;	/* don't change */
-	info_buf.Attributes = cpu_to_le32(dosattr);
+	info_buf.CreationTime = 0;	/* करोn't change */
+	info_buf.Attributes = cpu_to_le32(करोsattr);
 
-	return server->ops->set_file_info(inode, full_path, &info_buf, xid);
-}
+	वापस server->ops->set_file_info(inode, full_path, &info_buf, xid);
+पूर्ण
 
 /*
- * Open the given file (if it isn't already), set the DELETE_ON_CLOSE bit
- * and rename it to a random name that hopefully won't conflict with
- * anything else.
+ * Open the given file (अगर it isn't alपढ़ोy), set the DELETE_ON_CLOSE bit
+ * and नाम it to a अक्रमom name that hopefully won't conflict with
+ * anything अन्यथा.
  */
-int
-cifs_rename_pending_delete(const char *full_path, struct dentry *dentry,
-			   const unsigned int xid)
-{
-	int oplock = 0;
-	int rc;
-	struct cifs_fid fid;
-	struct cifs_open_parms oparms;
-	struct inode *inode = d_inode(dentry);
-	struct cifsInodeInfo *cifsInode = CIFS_I(inode);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	__u32 dosattr, origattr;
-	FILE_BASIC_INFO *info_buf = NULL;
+पूर्णांक
+cअगरs_नाम_pending_delete(स्थिर अक्षर *full_path, काष्ठा dentry *dentry,
+			   स्थिर अचिन्हित पूर्णांक xid)
+अणु
+	पूर्णांक oplock = 0;
+	पूर्णांक rc;
+	काष्ठा cअगरs_fid fid;
+	काष्ठा cअगरs_खोलो_parms oparms;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा cअगरsInodeInfo *cअगरsInode = CIFS_I(inode);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	__u32 करोsattr, origattr;
+	खाता_BASIC_INFO *info_buf = शून्य;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
 	/*
-	 * We cannot rename the file if the server doesn't support
+	 * We cannot नाम the file अगर the server करोesn't support
 	 * CAP_INFOLEVEL_PASSTHRU
 	 */
-	if (!(tcon->ses->capabilities & CAP_INFOLEVEL_PASSTHRU)) {
+	अगर (!(tcon->ses->capabilities & CAP_INFOLEVEL_PASSTHRU)) अणु
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	oparms.tcon = tcon;
-	oparms.cifs_sb = cifs_sb;
-	oparms.desired_access = DELETE | FILE_WRITE_ATTRIBUTES;
-	oparms.create_options = cifs_create_options(cifs_sb, CREATE_NOT_DIR);
-	oparms.disposition = FILE_OPEN;
+	oparms.cअगरs_sb = cअगरs_sb;
+	oparms.desired_access = DELETE | खाता_WRITE_ATTRIBUTES;
+	oparms.create_options = cअगरs_create_options(cअगरs_sb, CREATE_NOT_सूची);
+	oparms.disposition = खाता_OPEN;
 	oparms.path = full_path;
 	oparms.fid = &fid;
 	oparms.reconnect = false;
 
-	rc = CIFS_open(xid, &oparms, &oplock, NULL);
-	if (rc != 0)
-		goto out;
+	rc = CIFS_खोलो(xid, &oparms, &oplock, शून्य);
+	अगर (rc != 0)
+		जाओ out;
 
-	origattr = cifsInode->cifsAttrs;
-	if (origattr == 0)
+	origattr = cअगरsInode->cअगरsAttrs;
+	अगर (origattr == 0)
 		origattr |= ATTR_NORMAL;
 
-	dosattr = origattr & ~ATTR_READONLY;
-	if (dosattr == 0)
-		dosattr |= ATTR_NORMAL;
-	dosattr |= ATTR_HIDDEN;
+	करोsattr = origattr & ~ATTR_READONLY;
+	अगर (करोsattr == 0)
+		करोsattr |= ATTR_NORMAL;
+	करोsattr |= ATTR_HIDDEN;
 
-	/* set ATTR_HIDDEN and clear ATTR_READONLY, but only if needed */
-	if (dosattr != origattr) {
-		info_buf = kzalloc(sizeof(*info_buf), GFP_KERNEL);
-		if (info_buf == NULL) {
+	/* set ATTR_HIDDEN and clear ATTR_READONLY, but only अगर needed */
+	अगर (करोsattr != origattr) अणु
+		info_buf = kzalloc(माप(*info_buf), GFP_KERNEL);
+		अगर (info_buf == शून्य) अणु
 			rc = -ENOMEM;
-			goto out_close;
-		}
-		info_buf->Attributes = cpu_to_le32(dosattr);
+			जाओ out_बंद;
+		पूर्ण
+		info_buf->Attributes = cpu_to_le32(करोsattr);
 		rc = CIFSSMBSetFileInfo(xid, tcon, info_buf, fid.netfid,
 					current->tgid);
 		/* although we would like to mark the file hidden
- 		   if that fails we will still try to rename it */
-		if (!rc)
-			cifsInode->cifsAttrs = dosattr;
-		else
-			dosattr = origattr; /* since not able to change them */
-	}
+ 		   अगर that fails we will still try to नाम it */
+		अगर (!rc)
+			cअगरsInode->cअगरsAttrs = करोsattr;
+		अन्यथा
+			करोsattr = origattr; /* since not able to change them */
+	पूर्ण
 
-	/* rename the file */
-	rc = CIFSSMBRenameOpenFile(xid, tcon, fid.netfid, NULL,
-				   cifs_sb->local_nls,
-				   cifs_remap(cifs_sb));
-	if (rc != 0) {
+	/* नाम the file */
+	rc = CIFSSMBRenameOpenFile(xid, tcon, fid.netfid, शून्य,
+				   cअगरs_sb->local_nls,
+				   cअगरs_remap(cअगरs_sb));
+	अगर (rc != 0) अणु
 		rc = -EBUSY;
-		goto undo_setattr;
-	}
+		जाओ unकरो_setattr;
+	पूर्ण
 
 	/* try to set DELETE_ON_CLOSE */
-	if (!test_bit(CIFS_INO_DELETE_PENDING, &cifsInode->flags)) {
+	अगर (!test_bit(CIFS_INO_DELETE_PENDING, &cअगरsInode->flags)) अणु
 		rc = CIFSSMBSetFileDisposition(xid, tcon, true, fid.netfid,
 					       current->tgid);
 		/*
-		 * some samba versions return -ENOENT when we try to set the
+		 * some samba versions वापस -ENOENT when we try to set the
 		 * file disposition here. Likely a samba bug, but work around
-		 * it for now. This means that some cifsXXX files may hang
+		 * it क्रम now. This means that some cअगरsXXX files may hang
 		 * around after they shouldn't.
 		 *
-		 * BB: remove this hack after more servers have the fix
+		 * BB: हटाओ this hack after more servers have the fix
 		 */
-		if (rc == -ENOENT)
+		अगर (rc == -ENOENT)
 			rc = 0;
-		else if (rc != 0) {
+		अन्यथा अगर (rc != 0) अणु
 			rc = -EBUSY;
-			goto undo_rename;
-		}
-		set_bit(CIFS_INO_DELETE_PENDING, &cifsInode->flags);
-	}
+			जाओ unकरो_नाम;
+		पूर्ण
+		set_bit(CIFS_INO_DELETE_PENDING, &cअगरsInode->flags);
+	पूर्ण
 
-out_close:
+out_बंद:
 	CIFSSMBClose(xid, tcon, fid.netfid);
 out:
-	kfree(info_buf);
-	cifs_put_tlink(tlink);
-	return rc;
+	kमुक्त(info_buf);
+	cअगरs_put_tlink(tlink);
+	वापस rc;
 
 	/*
 	 * reset everything back to the original state. Don't bother
-	 * dealing with errors here since we can't do anything about
+	 * dealing with errors here since we can't करो anything about
 	 * them anyway.
 	 */
-undo_rename:
+unकरो_नाम:
 	CIFSSMBRenameOpenFile(xid, tcon, fid.netfid, dentry->d_name.name,
-				cifs_sb->local_nls, cifs_remap(cifs_sb));
-undo_setattr:
-	if (dosattr != origattr) {
+				cअगरs_sb->local_nls, cअगरs_remap(cअगरs_sb));
+unकरो_setattr:
+	अगर (करोsattr != origattr) अणु
 		info_buf->Attributes = cpu_to_le32(origattr);
-		if (!CIFSSMBSetFileInfo(xid, tcon, info_buf, fid.netfid,
+		अगर (!CIFSSMBSetFileInfo(xid, tcon, info_buf, fid.netfid,
 					current->tgid))
-			cifsInode->cifsAttrs = origattr;
-	}
+			cअगरsInode->cअगरsAttrs = origattr;
+	पूर्ण
 
-	goto out_close;
-}
+	जाओ out_बंद;
+पूर्ण
 
 /* copied from fs/nfs/dir.c with small changes */
-static void
-cifs_drop_nlink(struct inode *inode)
-{
+अटल व्योम
+cअगरs_drop_nlink(काष्ठा inode *inode)
+अणु
 	spin_lock(&inode->i_lock);
-	if (inode->i_nlink > 0)
+	अगर (inode->i_nlink > 0)
 		drop_nlink(inode);
 	spin_unlock(&inode->i_lock);
-}
+पूर्ण
 
 /*
  * If d_inode(dentry) is null (usually meaning the cached dentry
  * is a negative dentry) then we would attempt a standard SMB delete, but
- * if that fails we can not attempt the fall back mechanisms on EACCES
- * but will return the EACCES to the caller. Note that the VFS does not call
+ * अगर that fails we can not attempt the fall back mechanisms on EACCES
+ * but will वापस the EACCES to the caller. Note that the VFS करोes not call
  * unlink on negative dentries currently.
  */
-int cifs_unlink(struct inode *dir, struct dentry *dentry)
-{
-	int rc = 0;
-	unsigned int xid;
-	const char *full_path;
-	void *page;
-	struct inode *inode = d_inode(dentry);
-	struct cifsInodeInfo *cifs_inode;
-	struct super_block *sb = dir->i_sb;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(sb);
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	struct TCP_Server_Info *server;
-	struct iattr *attrs = NULL;
-	__u32 dosattr = 0, origattr = 0;
+पूर्णांक cअगरs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक xid;
+	स्थिर अक्षर *full_path;
+	व्योम *page;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा cअगरsInodeInfo *cअगरs_inode;
+	काष्ठा super_block *sb = dir->i_sb;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(sb);
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा TCP_Server_Info *server;
+	काष्ठा iattr *attrs = शून्य;
+	__u32 करोsattr = 0, origattr = 0;
 
-	cifs_dbg(FYI, "cifs_unlink, dir=0x%p, dentry=0x%p\n", dir, dentry);
+	cअगरs_dbg(FYI, "cifs_unlink, dir=0x%p, dentry=0x%p\n", dir, dentry);
 
-	if (unlikely(cifs_forced_shutdown(cifs_sb)))
-		return -EIO;
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb)))
+		वापस -EIO;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
 	xid = get_xid();
 	page = alloc_dentry_path();
 
-	if (tcon->nodelete) {
+	अगर (tcon->nodelete) अणु
 		rc = -EACCES;
-		goto unlink_out;
-	}
+		जाओ unlink_out;
+	पूर्ण
 
-	/* Unlink can be called from rename so we can not take the
-	 * sb->s_vfs_rename_mutex here */
+	/* Unlink can be called from नाम so we can not take the
+	 * sb->s_vfs_नाम_mutex here */
 	full_path = build_path_from_dentry(dentry, page);
-	if (IS_ERR(full_path)) {
+	अगर (IS_ERR(full_path)) अणु
 		rc = PTR_ERR(full_path);
-		goto unlink_out;
-	}
+		जाओ unlink_out;
+	पूर्ण
 
-	cifs_close_all_deferred_files(tcon);
-	if (cap_unix(tcon->ses) && (CIFS_UNIX_POSIX_PATH_OPS_CAP &
-				le64_to_cpu(tcon->fsUnixInfo.Capability))) {
+	cअगरs_बंद_all_deferred_files(tcon);
+	अगर (cap_unix(tcon->ses) && (CIFS_UNIX_POSIX_PATH_OPS_CAP &
+				le64_to_cpu(tcon->fsUnixInfo.Capability))) अणु
 		rc = CIFSPOSIXDelFile(xid, tcon, full_path,
-			SMB_POSIX_UNLINK_FILE_TARGET, cifs_sb->local_nls,
-			cifs_remap(cifs_sb));
-		cifs_dbg(FYI, "posix del rc %d\n", rc);
-		if ((rc == 0) || (rc == -ENOENT))
-			goto psx_del_no_retry;
-	}
+			SMB_POSIX_UNLINK_खाता_TARGET, cअगरs_sb->local_nls,
+			cअगरs_remap(cअगरs_sb));
+		cअगरs_dbg(FYI, "posix del rc %d\n", rc);
+		अगर ((rc == 0) || (rc == -ENOENT))
+			जाओ psx_del_no_retry;
+	पूर्ण
 
 retry_std_delete:
-	if (!server->ops->unlink) {
+	अगर (!server->ops->unlink) अणु
 		rc = -ENOSYS;
-		goto psx_del_no_retry;
-	}
+		जाओ psx_del_no_retry;
+	पूर्ण
 
-	rc = server->ops->unlink(xid, tcon, full_path, cifs_sb);
+	rc = server->ops->unlink(xid, tcon, full_path, cअगरs_sb);
 
 psx_del_no_retry:
-	if (!rc) {
-		if (inode)
-			cifs_drop_nlink(inode);
-	} else if (rc == -ENOENT) {
+	अगर (!rc) अणु
+		अगर (inode)
+			cअगरs_drop_nlink(inode);
+	पूर्ण अन्यथा अगर (rc == -ENOENT) अणु
 		d_drop(dentry);
-	} else if (rc == -EBUSY) {
-		if (server->ops->rename_pending_delete) {
-			rc = server->ops->rename_pending_delete(full_path,
+	पूर्ण अन्यथा अगर (rc == -EBUSY) अणु
+		अगर (server->ops->नाम_pending_delete) अणु
+			rc = server->ops->नाम_pending_delete(full_path,
 								dentry, xid);
-			if (rc == 0)
-				cifs_drop_nlink(inode);
-		}
-	} else if ((rc == -EACCES) && (dosattr == 0) && inode) {
-		attrs = kzalloc(sizeof(*attrs), GFP_KERNEL);
-		if (attrs == NULL) {
+			अगर (rc == 0)
+				cअगरs_drop_nlink(inode);
+		पूर्ण
+	पूर्ण अन्यथा अगर ((rc == -EACCES) && (करोsattr == 0) && inode) अणु
+		attrs = kzalloc(माप(*attrs), GFP_KERNEL);
+		अगर (attrs == शून्य) अणु
 			rc = -ENOMEM;
-			goto out_reval;
-		}
+			जाओ out_reval;
+		पूर्ण
 
-		/* try to reset dos attributes */
-		cifs_inode = CIFS_I(inode);
-		origattr = cifs_inode->cifsAttrs;
-		if (origattr == 0)
+		/* try to reset करोs attributes */
+		cअगरs_inode = CIFS_I(inode);
+		origattr = cअगरs_inode->cअगरsAttrs;
+		अगर (origattr == 0)
 			origattr |= ATTR_NORMAL;
-		dosattr = origattr & ~ATTR_READONLY;
-		if (dosattr == 0)
-			dosattr |= ATTR_NORMAL;
-		dosattr |= ATTR_HIDDEN;
+		करोsattr = origattr & ~ATTR_READONLY;
+		अगर (करोsattr == 0)
+			करोsattr |= ATTR_NORMAL;
+		करोsattr |= ATTR_HIDDEN;
 
-		rc = cifs_set_file_info(inode, attrs, xid, full_path, dosattr);
-		if (rc != 0)
-			goto out_reval;
+		rc = cअगरs_set_file_info(inode, attrs, xid, full_path, करोsattr);
+		अगर (rc != 0)
+			जाओ out_reval;
 
-		goto retry_std_delete;
-	}
+		जाओ retry_std_delete;
+	पूर्ण
 
-	/* undo the setattr if we errored out and it's needed */
-	if (rc != 0 && dosattr != 0)
-		cifs_set_file_info(inode, attrs, xid, full_path, origattr);
+	/* unकरो the setattr अगर we errored out and it's needed */
+	अगर (rc != 0 && करोsattr != 0)
+		cअगरs_set_file_info(inode, attrs, xid, full_path, origattr);
 
 out_reval:
-	if (inode) {
-		cifs_inode = CIFS_I(inode);
-		cifs_inode->time = 0;	/* will force revalidate to get info
+	अगर (inode) अणु
+		cअगरs_inode = CIFS_I(inode);
+		cअगरs_inode->समय = 0;	/* will क्रमce revalidate to get info
 					   when needed */
-		inode->i_ctime = current_time(inode);
-	}
-	dir->i_ctime = dir->i_mtime = current_time(dir);
-	cifs_inode = CIFS_I(dir);
-	CIFS_I(dir)->time = 0;	/* force revalidate of dir as well */
+		inode->i_स_समय = current_समय(inode);
+	पूर्ण
+	dir->i_स_समय = dir->i_mसमय = current_समय(dir);
+	cअगरs_inode = CIFS_I(dir);
+	CIFS_I(dir)->समय = 0;	/* क्रमce revalidate of dir as well */
 unlink_out:
-	free_dentry_path(page);
-	kfree(attrs);
-	free_xid(xid);
-	cifs_put_tlink(tlink);
-	return rc;
-}
+	मुक्त_dentry_path(page);
+	kमुक्त(attrs);
+	मुक्त_xid(xid);
+	cअगरs_put_tlink(tlink);
+	वापस rc;
+पूर्ण
 
-static int
-cifs_mkdir_qinfo(struct inode *parent, struct dentry *dentry, umode_t mode,
-		 const char *full_path, struct cifs_sb_info *cifs_sb,
-		 struct cifs_tcon *tcon, const unsigned int xid)
-{
-	int rc = 0;
-	struct inode *inode = NULL;
+अटल पूर्णांक
+cअगरs_सूची_गढ़ो_qinfo(काष्ठा inode *parent, काष्ठा dentry *dentry, umode_t mode,
+		 स्थिर अक्षर *full_path, काष्ठा cअगरs_sb_info *cअगरs_sb,
+		 काष्ठा cअगरs_tcon *tcon, स्थिर अचिन्हित पूर्णांक xid)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा inode *inode = शून्य;
 
-	if (tcon->posix_extensions)
+	अगर (tcon->posix_extensions)
 		rc = smb311_posix_get_inode_info(&inode, full_path, parent->i_sb, xid);
-	else if (tcon->unix_ext)
-		rc = cifs_get_inode_info_unix(&inode, full_path, parent->i_sb,
+	अन्यथा अगर (tcon->unix_ext)
+		rc = cअगरs_get_inode_info_unix(&inode, full_path, parent->i_sb,
 					      xid);
-	else
-		rc = cifs_get_inode_info(&inode, full_path, NULL, parent->i_sb,
-					 xid, NULL);
+	अन्यथा
+		rc = cअगरs_get_inode_info(&inode, full_path, शून्य, parent->i_sb,
+					 xid, शून्य);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (!S_ISDIR(inode->i_mode)) {
+	अगर (!S_ISसूची(inode->i_mode)) अणु
 		/*
-		 * mkdir succeeded, but another client has managed to remove the
+		 * सूची_गढ़ो succeeded, but another client has managed to हटाओ the
 		 * sucker and replace it with non-directory.  Return success,
-		 * but don't leave the child in dcache.
+		 * but करोn't leave the child in dcache.
 		 */
 		 iput(inode);
 		 d_drop(dentry);
-		 return 0;
-	}
+		 वापस 0;
+	पूर्ण
 	/*
-	 * setting nlink not necessary except in cases where we failed to get it
-	 * from the server or was set bogus. Also, since this is a brand new
-	 * inode, no need to grab the i_lock before setting the i_nlink.
+	 * setting nlink not necessary except in हालs where we failed to get it
+	 * from the server or was set bogus. Also, since this is a bअक्रम new
+	 * inode, no need to grab the i_lock beक्रमe setting the i_nlink.
 	 */
-	if (inode->i_nlink < 2)
+	अगर (inode->i_nlink < 2)
 		set_nlink(inode, 2);
 	mode &= ~current_umask();
-	/* must turn on setgid bit if parent dir has it */
-	if (parent->i_mode & S_ISGID)
+	/* must turn on setgid bit अगर parent dir has it */
+	अगर (parent->i_mode & S_ISGID)
 		mode |= S_ISGID;
 
-	if (tcon->unix_ext) {
-		struct cifs_unix_set_info_args args = {
+	अगर (tcon->unix_ext) अणु
+		काष्ठा cअगरs_unix_set_info_args args = अणु
 			.mode	= mode,
-			.ctime	= NO_CHANGE_64,
-			.atime	= NO_CHANGE_64,
-			.mtime	= NO_CHANGE_64,
+			.स_समय	= NO_CHANGE_64,
+			.aसमय	= NO_CHANGE_64,
+			.mसमय	= NO_CHANGE_64,
 			.device	= 0,
-		};
-		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SET_UID) {
+		पूर्ण;
+		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SET_UID) अणु
 			args.uid = current_fsuid();
-			if (parent->i_mode & S_ISGID)
+			अगर (parent->i_mode & S_ISGID)
 				args.gid = parent->i_gid;
-			else
+			अन्यथा
 				args.gid = current_fsgid();
-		} else {
+		पूर्ण अन्यथा अणु
 			args.uid = INVALID_UID; /* no change */
 			args.gid = INVALID_GID; /* no change */
-		}
+		पूर्ण
 		CIFSSMBUnixSetPathInfo(xid, tcon, full_path, &args,
-				       cifs_sb->local_nls,
-				       cifs_remap(cifs_sb));
-	} else {
-		struct TCP_Server_Info *server = tcon->ses->server;
-		if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) &&
-		    (mode & S_IWUGO) == 0 && server->ops->mkdir_setinfo)
-			server->ops->mkdir_setinfo(inode, full_path, cifs_sb,
+				       cअगरs_sb->local_nls,
+				       cअगरs_remap(cअगरs_sb));
+	पूर्ण अन्यथा अणु
+		काष्ठा TCP_Server_Info *server = tcon->ses->server;
+		अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_ACL) &&
+		    (mode & S_IWUGO) == 0 && server->ops->सूची_गढ़ो_setinfo)
+			server->ops->सूची_गढ़ो_setinfo(inode, full_path, cअगरs_sb,
 						   tcon, xid);
-		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DYNPERM)
-			inode->i_mode = (mode | S_IFDIR);
+		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_DYNPERM)
+			inode->i_mode = (mode | S_IFसूची);
 
-		if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SET_UID) {
+		अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SET_UID) अणु
 			inode->i_uid = current_fsuid();
-			if (inode->i_mode & S_ISGID)
+			अगर (inode->i_mode & S_ISGID)
 				inode->i_gid = parent->i_gid;
-			else
+			अन्यथा
 				inode->i_gid = current_fsgid();
-		}
-	}
+		पूर्ण
+	पूर्ण
 	d_instantiate(dentry, inode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-cifs_posix_mkdir(struct inode *inode, struct dentry *dentry, umode_t mode,
-		 const char *full_path, struct cifs_sb_info *cifs_sb,
-		 struct cifs_tcon *tcon, const unsigned int xid)
-{
-	int rc = 0;
+अटल पूर्णांक
+cअगरs_posix_सूची_गढ़ो(काष्ठा inode *inode, काष्ठा dentry *dentry, umode_t mode,
+		 स्थिर अक्षर *full_path, काष्ठा cअगरs_sb_info *cअगरs_sb,
+		 काष्ठा cअगरs_tcon *tcon, स्थिर अचिन्हित पूर्णांक xid)
+अणु
+	पूर्णांक rc = 0;
 	u32 oplock = 0;
-	FILE_UNIX_BASIC_INFO *info = NULL;
-	struct inode *newinode = NULL;
-	struct cifs_fattr fattr;
+	खाता_UNIX_BASIC_INFO *info = शून्य;
+	काष्ठा inode *newinode = शून्य;
+	काष्ठा cअगरs_fattr fattr;
 
-	info = kzalloc(sizeof(FILE_UNIX_BASIC_INFO), GFP_KERNEL);
-	if (info == NULL) {
+	info = kzalloc(माप(खाता_UNIX_BASIC_INFO), GFP_KERNEL);
+	अगर (info == शून्य) अणु
 		rc = -ENOMEM;
-		goto posix_mkdir_out;
-	}
+		जाओ posix_सूची_गढ़ो_out;
+	पूर्ण
 
 	mode &= ~current_umask();
-	rc = CIFSPOSIXCreate(xid, tcon, SMB_O_DIRECTORY | SMB_O_CREAT, mode,
-			     NULL /* netfid */, info, &oplock, full_path,
-			     cifs_sb->local_nls, cifs_remap(cifs_sb));
-	if (rc == -EOPNOTSUPP)
-		goto posix_mkdir_out;
-	else if (rc) {
-		cifs_dbg(FYI, "posix mkdir returned 0x%x\n", rc);
+	rc = CIFSPOSIXCreate(xid, tcon, SMB_O_सूचीECTORY | SMB_O_CREAT, mode,
+			     शून्य /* netfid */, info, &oplock, full_path,
+			     cअगरs_sb->local_nls, cअगरs_remap(cअगरs_sb));
+	अगर (rc == -EOPNOTSUPP)
+		जाओ posix_सूची_गढ़ो_out;
+	अन्यथा अगर (rc) अणु
+		cअगरs_dbg(FYI, "posix mkdir returned 0x%x\n", rc);
 		d_drop(dentry);
-		goto posix_mkdir_out;
-	}
+		जाओ posix_सूची_गढ़ो_out;
+	पूर्ण
 
-	if (info->Type == cpu_to_le32(-1))
-		/* no return info, go query for it */
-		goto posix_mkdir_get_info;
+	अगर (info->Type == cpu_to_le32(-1))
+		/* no वापस info, go query क्रम it */
+		जाओ posix_सूची_गढ़ो_get_info;
 	/*
-	 * BB check (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SET_UID ) to see if
+	 * BB check (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SET_UID ) to see अगर
 	 * need to set uid/gid.
 	 */
 
-	cifs_unix_basic_to_fattr(&fattr, info, cifs_sb);
-	cifs_fill_uniqueid(inode->i_sb, &fattr);
-	newinode = cifs_iget(inode->i_sb, &fattr);
-	if (!newinode)
-		goto posix_mkdir_get_info;
+	cअगरs_unix_basic_to_fattr(&fattr, info, cअगरs_sb);
+	cअगरs_fill_uniqueid(inode->i_sb, &fattr);
+	newinode = cअगरs_iget(inode->i_sb, &fattr);
+	अगर (!newinode)
+		जाओ posix_सूची_गढ़ो_get_info;
 
 	d_instantiate(dentry, newinode);
 
-#ifdef CONFIG_CIFS_DEBUG2
-	cifs_dbg(FYI, "instantiated dentry %p %pd to inode %p\n",
+#अगर_घोषित CONFIG_CIFS_DEBUG2
+	cअगरs_dbg(FYI, "instantiated dentry %p %pd to inode %p\n",
 		 dentry, dentry, newinode);
 
-	if (newinode->i_nlink != 2)
-		cifs_dbg(FYI, "unexpected number of links %d\n",
+	अगर (newinode->i_nlink != 2)
+		cअगरs_dbg(FYI, "unexpected number of links %d\n",
 			 newinode->i_nlink);
-#endif
+#पूर्ण_अगर
 
-posix_mkdir_out:
-	kfree(info);
-	return rc;
-posix_mkdir_get_info:
-	rc = cifs_mkdir_qinfo(inode, dentry, mode, full_path, cifs_sb, tcon,
+posix_सूची_गढ़ो_out:
+	kमुक्त(info);
+	वापस rc;
+posix_सूची_गढ़ो_get_info:
+	rc = cअगरs_सूची_गढ़ो_qinfo(inode, dentry, mode, full_path, cअगरs_sb, tcon,
 			      xid);
-	goto posix_mkdir_out;
-}
+	जाओ posix_सूची_गढ़ो_out;
+पूर्ण
 
-int cifs_mkdir(struct user_namespace *mnt_userns, struct inode *inode,
-	       struct dentry *direntry, umode_t mode)
-{
-	int rc = 0;
-	unsigned int xid;
-	struct cifs_sb_info *cifs_sb;
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	struct TCP_Server_Info *server;
-	const char *full_path;
-	void *page;
+पूर्णांक cअगरs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+	       काष्ठा dentry *direntry, umode_t mode)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक xid;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा TCP_Server_Info *server;
+	स्थिर अक्षर *full_path;
+	व्योम *page;
 
-	cifs_dbg(FYI, "In cifs_mkdir, mode = %04ho inode = 0x%p\n",
+	cअगरs_dbg(FYI, "In cifs_mkdir, mode = %04ho inode = 0x%p\n",
 		 mode, inode);
 
-	cifs_sb = CIFS_SB(inode->i_sb);
-	if (unlikely(cifs_forced_shutdown(cifs_sb)))
-		return -EIO;
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	cअगरs_sb = CIFS_SB(inode->i_sb);
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb)))
+		वापस -EIO;
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
 	xid = get_xid();
 
 	page = alloc_dentry_path();
 	full_path = build_path_from_dentry(direntry, page);
-	if (IS_ERR(full_path)) {
+	अगर (IS_ERR(full_path)) अणु
 		rc = PTR_ERR(full_path);
-		goto mkdir_out;
-	}
+		जाओ सूची_गढ़ो_out;
+	पूर्ण
 
 	server = tcon->ses->server;
 
-	if ((server->ops->posix_mkdir) && (tcon->posix_extensions)) {
-		rc = server->ops->posix_mkdir(xid, inode, mode, tcon, full_path,
-					      cifs_sb);
-		d_drop(direntry); /* for time being always refresh inode info */
-		goto mkdir_out;
-	}
+	अगर ((server->ops->posix_सूची_गढ़ो) && (tcon->posix_extensions)) अणु
+		rc = server->ops->posix_सूची_गढ़ो(xid, inode, mode, tcon, full_path,
+					      cअगरs_sb);
+		d_drop(direntry); /* क्रम समय being always refresh inode info */
+		जाओ सूची_गढ़ो_out;
+	पूर्ण
 
-	if (cap_unix(tcon->ses) && (CIFS_UNIX_POSIX_PATH_OPS_CAP &
-				le64_to_cpu(tcon->fsUnixInfo.Capability))) {
-		rc = cifs_posix_mkdir(inode, direntry, mode, full_path, cifs_sb,
+	अगर (cap_unix(tcon->ses) && (CIFS_UNIX_POSIX_PATH_OPS_CAP &
+				le64_to_cpu(tcon->fsUnixInfo.Capability))) अणु
+		rc = cअगरs_posix_सूची_गढ़ो(inode, direntry, mode, full_path, cअगरs_sb,
 				      tcon, xid);
-		if (rc != -EOPNOTSUPP)
-			goto mkdir_out;
-	}
+		अगर (rc != -EOPNOTSUPP)
+			जाओ सूची_गढ़ो_out;
+	पूर्ण
 
-	if (!server->ops->mkdir) {
+	अगर (!server->ops->सूची_गढ़ो) अणु
 		rc = -ENOSYS;
-		goto mkdir_out;
-	}
+		जाओ सूची_गढ़ो_out;
+	पूर्ण
 
 	/* BB add setting the equivalent of mode via CreateX w/ACLs */
-	rc = server->ops->mkdir(xid, inode, mode, tcon, full_path, cifs_sb);
-	if (rc) {
-		cifs_dbg(FYI, "cifs_mkdir returned 0x%x\n", rc);
+	rc = server->ops->सूची_गढ़ो(xid, inode, mode, tcon, full_path, cअगरs_sb);
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "cifs_mkdir returned 0x%x\n", rc);
 		d_drop(direntry);
-		goto mkdir_out;
-	}
+		जाओ सूची_गढ़ो_out;
+	पूर्ण
 
-	/* TODO: skip this for smb2/smb3 */
-	rc = cifs_mkdir_qinfo(inode, direntry, mode, full_path, cifs_sb, tcon,
+	/* TODO: skip this क्रम smb2/smb3 */
+	rc = cअगरs_सूची_गढ़ो_qinfo(inode, direntry, mode, full_path, cअगरs_sb, tcon,
 			      xid);
-mkdir_out:
+सूची_गढ़ो_out:
 	/*
 	 * Force revalidate to get parent dir info when needed since cached
 	 * attributes are invalid now.
 	 */
-	CIFS_I(inode)->time = 0;
-	free_dentry_path(page);
-	free_xid(xid);
-	cifs_put_tlink(tlink);
-	return rc;
-}
+	CIFS_I(inode)->समय = 0;
+	मुक्त_dentry_path(page);
+	मुक्त_xid(xid);
+	cअगरs_put_tlink(tlink);
+	वापस rc;
+पूर्ण
 
-int cifs_rmdir(struct inode *inode, struct dentry *direntry)
-{
-	int rc = 0;
-	unsigned int xid;
-	struct cifs_sb_info *cifs_sb;
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	struct TCP_Server_Info *server;
-	const char *full_path;
-	void *page = alloc_dentry_path();
-	struct cifsInodeInfo *cifsInode;
+पूर्णांक cअगरs_सूची_हटाओ(काष्ठा inode *inode, काष्ठा dentry *direntry)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक xid;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा TCP_Server_Info *server;
+	स्थिर अक्षर *full_path;
+	व्योम *page = alloc_dentry_path();
+	काष्ठा cअगरsInodeInfo *cअगरsInode;
 
-	cifs_dbg(FYI, "cifs_rmdir, inode = 0x%p\n", inode);
+	cअगरs_dbg(FYI, "cifs_rmdir, inode = 0x%p\n", inode);
 
 	xid = get_xid();
 
 	full_path = build_path_from_dentry(direntry, page);
-	if (IS_ERR(full_path)) {
+	अगर (IS_ERR(full_path)) अणु
 		rc = PTR_ERR(full_path);
-		goto rmdir_exit;
-	}
+		जाओ सूची_हटाओ_निकास;
+	पूर्ण
 
-	cifs_sb = CIFS_SB(inode->i_sb);
-	if (unlikely(cifs_forced_shutdown(cifs_sb))) {
+	cअगरs_sb = CIFS_SB(inode->i_sb);
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb))) अणु
 		rc = -EIO;
-		goto rmdir_exit;
-	}
+		जाओ सूची_हटाओ_निकास;
+	पूर्ण
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink)) {
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink)) अणु
 		rc = PTR_ERR(tlink);
-		goto rmdir_exit;
-	}
+		जाओ सूची_हटाओ_निकास;
+	पूर्ण
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
-	if (!server->ops->rmdir) {
+	अगर (!server->ops->सूची_हटाओ) अणु
 		rc = -ENOSYS;
-		cifs_put_tlink(tlink);
-		goto rmdir_exit;
-	}
+		cअगरs_put_tlink(tlink);
+		जाओ सूची_हटाओ_निकास;
+	पूर्ण
 
-	if (tcon->nodelete) {
+	अगर (tcon->nodelete) अणु
 		rc = -EACCES;
-		cifs_put_tlink(tlink);
-		goto rmdir_exit;
-	}
+		cअगरs_put_tlink(tlink);
+		जाओ सूची_हटाओ_निकास;
+	पूर्ण
 
-	rc = server->ops->rmdir(xid, tcon, full_path, cifs_sb);
-	cifs_put_tlink(tlink);
+	rc = server->ops->सूची_हटाओ(xid, tcon, full_path, cअगरs_sb);
+	cअगरs_put_tlink(tlink);
 
-	if (!rc) {
+	अगर (!rc) अणु
 		spin_lock(&d_inode(direntry)->i_lock);
-		i_size_write(d_inode(direntry), 0);
+		i_size_ग_लिखो(d_inode(direntry), 0);
 		clear_nlink(d_inode(direntry));
 		spin_unlock(&d_inode(direntry)->i_lock);
-	}
+	पूर्ण
 
-	cifsInode = CIFS_I(d_inode(direntry));
-	/* force revalidate to go get info when needed */
-	cifsInode->time = 0;
+	cअगरsInode = CIFS_I(d_inode(direntry));
+	/* क्रमce revalidate to go get info when needed */
+	cअगरsInode->समय = 0;
 
-	cifsInode = CIFS_I(inode);
+	cअगरsInode = CIFS_I(inode);
 	/*
 	 * Force revalidate to get parent dir info when needed since cached
 	 * attributes are invalid now.
 	 */
-	cifsInode->time = 0;
+	cअगरsInode->समय = 0;
 
-	d_inode(direntry)->i_ctime = inode->i_ctime = inode->i_mtime =
-		current_time(inode);
+	d_inode(direntry)->i_स_समय = inode->i_स_समय = inode->i_mसमय =
+		current_समय(inode);
 
-rmdir_exit:
-	free_dentry_path(page);
-	free_xid(xid);
-	return rc;
-}
+सूची_हटाओ_निकास:
+	मुक्त_dentry_path(page);
+	मुक्त_xid(xid);
+	वापस rc;
+पूर्ण
 
-static int
-cifs_do_rename(const unsigned int xid, struct dentry *from_dentry,
-	       const char *from_path, struct dentry *to_dentry,
-	       const char *to_path)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(from_dentry->d_sb);
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	struct TCP_Server_Info *server;
-	struct cifs_fid fid;
-	struct cifs_open_parms oparms;
-	int oplock, rc;
+अटल पूर्णांक
+cअगरs_करो_नाम(स्थिर अचिन्हित पूर्णांक xid, काष्ठा dentry *from_dentry,
+	       स्थिर अक्षर *from_path, काष्ठा dentry *to_dentry,
+	       स्थिर अक्षर *to_path)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(from_dentry->d_sb);
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	काष्ठा TCP_Server_Info *server;
+	काष्ठा cअगरs_fid fid;
+	काष्ठा cअगरs_खोलो_parms oparms;
+	पूर्णांक oplock, rc;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 	server = tcon->ses->server;
 
-	if (!server->ops->rename)
-		return -ENOSYS;
+	अगर (!server->ops->नाम)
+		वापस -ENOSYS;
 
-	/* try path-based rename first */
-	rc = server->ops->rename(xid, tcon, from_path, to_path, cifs_sb);
+	/* try path-based नाम first */
+	rc = server->ops->नाम(xid, tcon, from_path, to_path, cअगरs_sb);
 
 	/*
-	 * Don't bother with rename by filehandle unless file is busy and
-	 * source. Note that cross directory moves do not work with
-	 * rename by filehandle to various Windows servers.
+	 * Don't bother with नाम by filehandle unless file is busy and
+	 * source. Note that cross directory moves करो not work with
+	 * नाम by filehandle to various Winकरोws servers.
 	 */
-	if (rc == 0 || rc != -EBUSY)
-		goto do_rename_exit;
+	अगर (rc == 0 || rc != -EBUSY)
+		जाओ करो_नाम_निकास;
 
 	/* Don't fall back to using SMB on SMB 2+ mount */
-	if (server->vals->protocol_id != 0)
-		goto do_rename_exit;
+	अगर (server->vals->protocol_id != 0)
+		जाओ करो_नाम_निकास;
 
-	/* open-file renames don't work across directories */
-	if (to_dentry->d_parent != from_dentry->d_parent)
-		goto do_rename_exit;
+	/* खोलो-file नामs करोn't work across directories */
+	अगर (to_dentry->d_parent != from_dentry->d_parent)
+		जाओ करो_नाम_निकास;
 
 	oparms.tcon = tcon;
-	oparms.cifs_sb = cifs_sb;
-	/* open the file to be renamed -- we need DELETE perms */
+	oparms.cअगरs_sb = cअगरs_sb;
+	/* खोलो the file to be नामd -- we need DELETE perms */
 	oparms.desired_access = DELETE;
-	oparms.create_options = cifs_create_options(cifs_sb, CREATE_NOT_DIR);
-	oparms.disposition = FILE_OPEN;
+	oparms.create_options = cअगरs_create_options(cअगरs_sb, CREATE_NOT_सूची);
+	oparms.disposition = खाता_OPEN;
 	oparms.path = from_path;
 	oparms.fid = &fid;
 	oparms.reconnect = false;
 
-	rc = CIFS_open(xid, &oparms, &oplock, NULL);
-	if (rc == 0) {
+	rc = CIFS_खोलो(xid, &oparms, &oplock, शून्य);
+	अगर (rc == 0) अणु
 		rc = CIFSSMBRenameOpenFile(xid, tcon, fid.netfid,
-				(const char *) to_dentry->d_name.name,
-				cifs_sb->local_nls, cifs_remap(cifs_sb));
+				(स्थिर अक्षर *) to_dentry->d_name.name,
+				cअगरs_sb->local_nls, cअगरs_remap(cअगरs_sb));
 		CIFSSMBClose(xid, tcon, fid.netfid);
-	}
-do_rename_exit:
-	if (rc == 0)
+	पूर्ण
+करो_नाम_निकास:
+	अगर (rc == 0)
 		d_move(from_dentry, to_dentry);
-	cifs_put_tlink(tlink);
-	return rc;
-}
+	cअगरs_put_tlink(tlink);
+	वापस rc;
+पूर्ण
 
-int
-cifs_rename2(struct user_namespace *mnt_userns, struct inode *source_dir,
-	     struct dentry *source_dentry, struct inode *target_dir,
-	     struct dentry *target_dentry, unsigned int flags)
-{
-	const char *from_name, *to_name;
-	void *page1, *page2;
-	struct cifs_sb_info *cifs_sb;
-	struct tcon_link *tlink;
-	struct cifs_tcon *tcon;
-	FILE_UNIX_BASIC_INFO *info_buf_source = NULL;
-	FILE_UNIX_BASIC_INFO *info_buf_target;
-	unsigned int xid;
-	int rc, tmprc;
+पूर्णांक
+cअगरs_नाम2(काष्ठा user_namespace *mnt_userns, काष्ठा inode *source_dir,
+	     काष्ठा dentry *source_dentry, काष्ठा inode *target_dir,
+	     काष्ठा dentry *target_dentry, अचिन्हित पूर्णांक flags)
+अणु
+	स्थिर अक्षर *from_name, *to_name;
+	व्योम *page1, *page2;
+	काष्ठा cअगरs_sb_info *cअगरs_sb;
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *tcon;
+	खाता_UNIX_BASIC_INFO *info_buf_source = शून्य;
+	खाता_UNIX_BASIC_INFO *info_buf_target;
+	अचिन्हित पूर्णांक xid;
+	पूर्णांक rc, पंचांगprc;
 
-	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+	अगर (flags & ~RENAME_NOREPLACE)
+		वापस -EINVAL;
 
-	cifs_sb = CIFS_SB(source_dir->i_sb);
-	if (unlikely(cifs_forced_shutdown(cifs_sb)))
-		return -EIO;
+	cअगरs_sb = CIFS_SB(source_dir->i_sb);
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb)))
+		वापस -EIO;
 
-	tlink = cifs_sb_tlink(cifs_sb);
-	if (IS_ERR(tlink))
-		return PTR_ERR(tlink);
+	tlink = cअगरs_sb_tlink(cअगरs_sb);
+	अगर (IS_ERR(tlink))
+		वापस PTR_ERR(tlink);
 	tcon = tlink_tcon(tlink);
 
 	page1 = alloc_dentry_path();
@@ -2111,888 +2112,888 @@ cifs_rename2(struct user_namespace *mnt_userns, struct inode *source_dir,
 	xid = get_xid();
 
 	from_name = build_path_from_dentry(source_dentry, page1);
-	if (IS_ERR(from_name)) {
+	अगर (IS_ERR(from_name)) अणु
 		rc = PTR_ERR(from_name);
-		goto cifs_rename_exit;
-	}
+		जाओ cअगरs_नाम_निकास;
+	पूर्ण
 
 	to_name = build_path_from_dentry(target_dentry, page2);
-	if (IS_ERR(to_name)) {
+	अगर (IS_ERR(to_name)) अणु
 		rc = PTR_ERR(to_name);
-		goto cifs_rename_exit;
-	}
+		जाओ cअगरs_नाम_निकास;
+	पूर्ण
 
-	cifs_close_all_deferred_files(tcon);
-	rc = cifs_do_rename(xid, source_dentry, from_name, target_dentry,
+	cअगरs_बंद_all_deferred_files(tcon);
+	rc = cअगरs_करो_नाम(xid, source_dentry, from_name, target_dentry,
 			    to_name);
 
 	/*
-	 * No-replace is the natural behavior for CIFS, so skip unlink hacks.
+	 * No-replace is the natural behavior क्रम CIFS, so skip unlink hacks.
 	 */
-	if (flags & RENAME_NOREPLACE)
-		goto cifs_rename_exit;
+	अगर (flags & RENAME_NOREPLACE)
+		जाओ cअगरs_नाम_निकास;
 
-	if (rc == -EEXIST && tcon->unix_ext) {
+	अगर (rc == -EEXIST && tcon->unix_ext) अणु
 		/*
 		 * Are src and dst hardlinks of same inode? We can only tell
 		 * with unix extensions enabled.
 		 */
 		info_buf_source =
-			kmalloc_array(2, sizeof(FILE_UNIX_BASIC_INFO),
+			kदो_स्मृति_array(2, माप(खाता_UNIX_BASIC_INFO),
 					GFP_KERNEL);
-		if (info_buf_source == NULL) {
+		अगर (info_buf_source == शून्य) अणु
 			rc = -ENOMEM;
-			goto cifs_rename_exit;
-		}
+			जाओ cअगरs_नाम_निकास;
+		पूर्ण
 
 		info_buf_target = info_buf_source + 1;
-		tmprc = CIFSSMBUnixQPathInfo(xid, tcon, from_name,
+		पंचांगprc = CIFSSMBUnixQPathInfo(xid, tcon, from_name,
 					     info_buf_source,
-					     cifs_sb->local_nls,
-					     cifs_remap(cifs_sb));
-		if (tmprc != 0)
-			goto unlink_target;
+					     cअगरs_sb->local_nls,
+					     cअगरs_remap(cअगरs_sb));
+		अगर (पंचांगprc != 0)
+			जाओ unlink_target;
 
-		tmprc = CIFSSMBUnixQPathInfo(xid, tcon, to_name,
+		पंचांगprc = CIFSSMBUnixQPathInfo(xid, tcon, to_name,
 					     info_buf_target,
-					     cifs_sb->local_nls,
-					     cifs_remap(cifs_sb));
+					     cअगरs_sb->local_nls,
+					     cअगरs_remap(cअगरs_sb));
 
-		if (tmprc == 0 && (info_buf_source->UniqueId ==
-				   info_buf_target->UniqueId)) {
+		अगर (पंचांगprc == 0 && (info_buf_source->UniqueId ==
+				   info_buf_target->UniqueId)) अणु
 			/* same file, POSIX says that this is a noop */
 			rc = 0;
-			goto cifs_rename_exit;
-		}
-	}
+			जाओ cअगरs_नाम_निकास;
+		पूर्ण
+	पूर्ण
 	/*
-	 * else ... BB we could add the same check for Windows by
-	 * checking the UniqueId via FILE_INTERNAL_INFO
+	 * अन्यथा ... BB we could add the same check क्रम Winकरोws by
+	 * checking the UniqueId via खाता_INTERNAL_INFO
 	 */
 
 unlink_target:
-	/* Try unlinking the target dentry if it's not negative */
-	if (d_really_is_positive(target_dentry) && (rc == -EACCES || rc == -EEXIST)) {
-		if (d_is_dir(target_dentry))
-			tmprc = cifs_rmdir(target_dir, target_dentry);
-		else
-			tmprc = cifs_unlink(target_dir, target_dentry);
-		if (tmprc)
-			goto cifs_rename_exit;
-		rc = cifs_do_rename(xid, source_dentry, from_name,
+	/* Try unlinking the target dentry अगर it's not negative */
+	अगर (d_really_is_positive(target_dentry) && (rc == -EACCES || rc == -EEXIST)) अणु
+		अगर (d_is_dir(target_dentry))
+			पंचांगprc = cअगरs_सूची_हटाओ(target_dir, target_dentry);
+		अन्यथा
+			पंचांगprc = cअगरs_unlink(target_dir, target_dentry);
+		अगर (पंचांगprc)
+			जाओ cअगरs_नाम_निकास;
+		rc = cअगरs_करो_नाम(xid, source_dentry, from_name,
 				    target_dentry, to_name);
-	}
+	पूर्ण
 
-	/* force revalidate to go get info when needed */
-	CIFS_I(source_dir)->time = CIFS_I(target_dir)->time = 0;
+	/* क्रमce revalidate to go get info when needed */
+	CIFS_I(source_dir)->समय = CIFS_I(target_dir)->समय = 0;
 
-	source_dir->i_ctime = source_dir->i_mtime = target_dir->i_ctime =
-		target_dir->i_mtime = current_time(source_dir);
+	source_dir->i_स_समय = source_dir->i_mसमय = target_dir->i_स_समय =
+		target_dir->i_mसमय = current_समय(source_dir);
 
-cifs_rename_exit:
-	kfree(info_buf_source);
-	free_dentry_path(page2);
-	free_dentry_path(page1);
-	free_xid(xid);
-	cifs_put_tlink(tlink);
-	return rc;
-}
+cअगरs_नाम_निकास:
+	kमुक्त(info_buf_source);
+	मुक्त_dentry_path(page2);
+	मुक्त_dentry_path(page1);
+	मुक्त_xid(xid);
+	cअगरs_put_tlink(tlink);
+	वापस rc;
+पूर्ण
 
-static bool
-cifs_dentry_needs_reval(struct dentry *dentry)
-{
-	struct inode *inode = d_inode(dentry);
-	struct cifsInodeInfo *cifs_i = CIFS_I(inode);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
-	struct cached_fid *cfid = NULL;
+अटल bool
+cअगरs_dentry_needs_reval(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा cअगरsInodeInfo *cअगरs_i = CIFS_I(inode);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	काष्ठा cached_fid *cfid = शून्य;
 
-	if (cifs_i->time == 0)
-		return true;
+	अगर (cअगरs_i->समय == 0)
+		वापस true;
 
-	if (CIFS_CACHE_READ(cifs_i))
-		return false;
+	अगर (CIFS_CACHE_READ(cअगरs_i))
+		वापस false;
 
-	if (!lookupCacheEnabled)
-		return true;
+	अगर (!lookupCacheEnabled)
+		वापस true;
 
-	if (!open_cached_dir_by_dentry(tcon, dentry->d_parent, &cfid)) {
+	अगर (!खोलो_cached_dir_by_dentry(tcon, dentry->d_parent, &cfid)) अणु
 		mutex_lock(&cfid->fid_mutex);
-		if (cfid->time && cifs_i->time > cfid->time) {
+		अगर (cfid->समय && cअगरs_i->समय > cfid->समय) अणु
 			mutex_unlock(&cfid->fid_mutex);
-			close_cached_dir(cfid);
-			return false;
-		}
+			बंद_cached_dir(cfid);
+			वापस false;
+		पूर्ण
 		mutex_unlock(&cfid->fid_mutex);
-		close_cached_dir(cfid);
-	}
+		बंद_cached_dir(cfid);
+	पूर्ण
 	/*
-	 * depending on inode type, check if attribute caching disabled for
+	 * depending on inode type, check अगर attribute caching disabled क्रम
 	 * files or directories
 	 */
-	if (S_ISDIR(inode->i_mode)) {
-		if (!cifs_sb->ctx->acdirmax)
-			return true;
-		if (!time_in_range(jiffies, cifs_i->time,
-				   cifs_i->time + cifs_sb->ctx->acdirmax))
-			return true;
-	} else { /* file */
-		if (!cifs_sb->ctx->acregmax)
-			return true;
-		if (!time_in_range(jiffies, cifs_i->time,
-				   cifs_i->time + cifs_sb->ctx->acregmax))
-			return true;
-	}
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		अगर (!cअगरs_sb->ctx->acdirmax)
+			वापस true;
+		अगर (!समय_in_range(jअगरfies, cअगरs_i->समय,
+				   cअगरs_i->समय + cअगरs_sb->ctx->acdirmax))
+			वापस true;
+	पूर्ण अन्यथा अणु /* file */
+		अगर (!cअगरs_sb->ctx->acregmax)
+			वापस true;
+		अगर (!समय_in_range(jअगरfies, cअगरs_i->समय,
+				   cअगरs_i->समय + cअगरs_sb->ctx->acregmax))
+			वापस true;
+	पूर्ण
 
-	/* hardlinked files w/ noserverino get "special" treatment */
-	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SERVER_INUM) &&
+	/* hardlinked files w/ noserverino get "special" treaपंचांगent */
+	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SERVER_INUM) &&
 	    S_ISREG(inode->i_mode) && inode->i_nlink != 1)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Zap the cache. Called when invalid_mapping flag is set.
  */
-int
-cifs_invalidate_mapping(struct inode *inode)
-{
-	int rc = 0;
+पूर्णांक
+cअगरs_invalidate_mapping(काष्ठा inode *inode)
+अणु
+	पूर्णांक rc = 0;
 
-	if (inode->i_mapping && inode->i_mapping->nrpages != 0) {
+	अगर (inode->i_mapping && inode->i_mapping->nrpages != 0) अणु
 		rc = invalidate_inode_pages2(inode->i_mapping);
-		if (rc)
-			cifs_dbg(VFS, "%s: Could not invalidate inode %p\n",
+		अगर (rc)
+			cअगरs_dbg(VFS, "%s: Could not invalidate inode %p\n",
 				 __func__, inode);
-	}
+	पूर्ण
 
-	cifs_fscache_reset_inode_cookie(inode);
-	return rc;
-}
+	cअगरs_fscache_reset_inode_cookie(inode);
+	वापस rc;
+पूर्ण
 
 /**
- * cifs_wait_bit_killable - helper for functions that are sleeping on bit locks
+ * cअगरs_रुको_bit_समाप्तable - helper क्रम functions that are sleeping on bit locks
  *
  * @key:	currently unused
  * @mode:	the task state to sleep in
  */
-static int
-cifs_wait_bit_killable(struct wait_bit_key *key, int mode)
-{
-	freezable_schedule_unsafe();
-	if (signal_pending_state(mode, current))
-		return -ERESTARTSYS;
-	return 0;
-}
+अटल पूर्णांक
+cअगरs_रुको_bit_समाप्तable(काष्ठा रुको_bit_key *key, पूर्णांक mode)
+अणु
+	मुक्तzable_schedule_unsafe();
+	अगर (संकेत_pending_state(mode, current))
+		वापस -ERESTARTSYS;
+	वापस 0;
+पूर्ण
 
-int
-cifs_revalidate_mapping(struct inode *inode)
-{
-	int rc;
-	unsigned long *flags = &CIFS_I(inode)->flags;
+पूर्णांक
+cअगरs_revalidate_mapping(काष्ठा inode *inode)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ *flags = &CIFS_I(inode)->flags;
 
 	/* swapfiles are not supposed to be shared */
-	if (IS_SWAPFILE(inode))
-		return 0;
+	अगर (IS_SWAPखाता(inode))
+		वापस 0;
 
-	rc = wait_on_bit_lock_action(flags, CIFS_INO_LOCK, cifs_wait_bit_killable,
+	rc = रुको_on_bit_lock_action(flags, CIFS_INO_LOCK, cअगरs_रुको_bit_समाप्तable,
 				     TASK_KILLABLE);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (test_and_clear_bit(CIFS_INO_INVALID_MAPPING, flags)) {
-		rc = cifs_invalidate_mapping(inode);
-		if (rc)
+	अगर (test_and_clear_bit(CIFS_INO_INVALID_MAPPING, flags)) अणु
+		rc = cअगरs_invalidate_mapping(inode);
+		अगर (rc)
 			set_bit(CIFS_INO_INVALID_MAPPING, flags);
-	}
+	पूर्ण
 
 	clear_bit_unlock(CIFS_INO_LOCK, flags);
 	smp_mb__after_atomic();
 	wake_up_bit(flags, CIFS_INO_LOCK);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-cifs_zap_mapping(struct inode *inode)
-{
+पूर्णांक
+cअगरs_zap_mapping(काष्ठा inode *inode)
+अणु
 	set_bit(CIFS_INO_INVALID_MAPPING, &CIFS_I(inode)->flags);
-	return cifs_revalidate_mapping(inode);
-}
+	वापस cअगरs_revalidate_mapping(inode);
+पूर्ण
 
-int cifs_revalidate_file_attr(struct file *filp)
-{
-	int rc = 0;
-	struct dentry *dentry = file_dentry(filp);
-	struct cifsFileInfo *cfile = (struct cifsFileInfo *) filp->private_data;
+पूर्णांक cअगरs_revalidate_file_attr(काष्ठा file *filp)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा dentry *dentry = file_dentry(filp);
+	काष्ठा cअगरsFileInfo *cfile = (काष्ठा cअगरsFileInfo *) filp->निजी_data;
 
-	if (!cifs_dentry_needs_reval(dentry))
-		return rc;
+	अगर (!cअगरs_dentry_needs_reval(dentry))
+		वापस rc;
 
-	if (tlink_tcon(cfile->tlink)->unix_ext)
-		rc = cifs_get_file_info_unix(filp);
-	else
-		rc = cifs_get_file_info(filp);
+	अगर (tlink_tcon(cfile->tlink)->unix_ext)
+		rc = cअगरs_get_file_info_unix(filp);
+	अन्यथा
+		rc = cअगरs_get_file_info(filp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int cifs_revalidate_dentry_attr(struct dentry *dentry)
-{
-	unsigned int xid;
-	int rc = 0;
-	struct inode *inode = d_inode(dentry);
-	struct super_block *sb = dentry->d_sb;
-	const char *full_path;
-	void *page;
-	int count = 0;
+पूर्णांक cअगरs_revalidate_dentry_attr(काष्ठा dentry *dentry)
+अणु
+	अचिन्हित पूर्णांक xid;
+	पूर्णांक rc = 0;
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा super_block *sb = dentry->d_sb;
+	स्थिर अक्षर *full_path;
+	व्योम *page;
+	पूर्णांक count = 0;
 
-	if (inode == NULL)
-		return -ENOENT;
+	अगर (inode == शून्य)
+		वापस -ENOENT;
 
-	if (!cifs_dentry_needs_reval(dentry))
-		return rc;
+	अगर (!cअगरs_dentry_needs_reval(dentry))
+		वापस rc;
 
 	xid = get_xid();
 
 	page = alloc_dentry_path();
 	full_path = build_path_from_dentry(dentry, page);
-	if (IS_ERR(full_path)) {
+	अगर (IS_ERR(full_path)) अणु
 		rc = PTR_ERR(full_path);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cifs_dbg(FYI, "Update attributes: %s inode 0x%p count %d dentry: 0x%p d_time %ld jiffies %ld\n",
+	cअगरs_dbg(FYI, "Update attributes: %s inode 0x%p count %d dentry: 0x%p d_time %ld jiffies %ld\n",
 		 full_path, inode, inode->i_count.counter,
-		 dentry, cifs_get_time(dentry), jiffies);
+		 dentry, cअगरs_get_समय(dentry), jअगरfies);
 
 again:
-	if (cifs_sb_master_tcon(CIFS_SB(sb))->posix_extensions)
+	अगर (cअगरs_sb_master_tcon(CIFS_SB(sb))->posix_extensions)
 		rc = smb311_posix_get_inode_info(&inode, full_path, sb, xid);
-	else if (cifs_sb_master_tcon(CIFS_SB(sb))->unix_ext)
-		rc = cifs_get_inode_info_unix(&inode, full_path, sb, xid);
-	else
-		rc = cifs_get_inode_info(&inode, full_path, NULL, sb,
-					 xid, NULL);
-	if (rc == -EAGAIN && count++ < 10)
-		goto again;
+	अन्यथा अगर (cअगरs_sb_master_tcon(CIFS_SB(sb))->unix_ext)
+		rc = cअगरs_get_inode_info_unix(&inode, full_path, sb, xid);
+	अन्यथा
+		rc = cअगरs_get_inode_info(&inode, full_path, शून्य, sb,
+					 xid, शून्य);
+	अगर (rc == -EAGAIN && count++ < 10)
+		जाओ again;
 out:
-	free_dentry_path(page);
-	free_xid(xid);
+	मुक्त_dentry_path(page);
+	मुक्त_xid(xid);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int cifs_revalidate_file(struct file *filp)
-{
-	int rc;
-	struct inode *inode = file_inode(filp);
+पूर्णांक cअगरs_revalidate_file(काष्ठा file *filp)
+अणु
+	पूर्णांक rc;
+	काष्ठा inode *inode = file_inode(filp);
 
-	rc = cifs_revalidate_file_attr(filp);
-	if (rc)
-		return rc;
+	rc = cअगरs_revalidate_file_attr(filp);
+	अगर (rc)
+		वापस rc;
 
-	return cifs_revalidate_mapping(inode);
-}
+	वापस cअगरs_revalidate_mapping(inode);
+पूर्ण
 
 /* revalidate a dentry's inode attributes */
-int cifs_revalidate_dentry(struct dentry *dentry)
-{
-	int rc;
-	struct inode *inode = d_inode(dentry);
+पूर्णांक cअगरs_revalidate_dentry(काष्ठा dentry *dentry)
+अणु
+	पूर्णांक rc;
+	काष्ठा inode *inode = d_inode(dentry);
 
-	rc = cifs_revalidate_dentry_attr(dentry);
-	if (rc)
-		return rc;
+	rc = cअगरs_revalidate_dentry_attr(dentry);
+	अगर (rc)
+		वापस rc;
 
-	return cifs_revalidate_mapping(inode);
-}
+	वापस cअगरs_revalidate_mapping(inode);
+पूर्ण
 
-int cifs_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		 struct kstat *stat, u32 request_mask, unsigned int flags)
-{
-	struct dentry *dentry = path->dentry;
-	struct cifs_sb_info *cifs_sb = CIFS_SB(dentry->d_sb);
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
-	struct inode *inode = d_inode(dentry);
-	int rc;
+पूर्णांक cअगरs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		 काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा dentry *dentry = path->dentry;
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(dentry->d_sb);
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	काष्ठा inode *inode = d_inode(dentry);
+	पूर्णांक rc;
 
-	if (unlikely(cifs_forced_shutdown(CIFS_SB(inode->i_sb))))
-		return -EIO;
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(CIFS_SB(inode->i_sb))))
+		वापस -EIO;
 
 	/*
 	 * We need to be sure that all dirty pages are written and the server
-	 * has actual ctime, mtime and file length.
+	 * has actual स_समय, mसमय and file length.
 	 */
-	if ((request_mask & (STATX_CTIME | STATX_MTIME | STATX_SIZE | STATX_BLOCKS)) &&
+	अगर ((request_mask & (STATX_CTIME | STATX_MTIME | STATX_SIZE | STATX_BLOCKS)) &&
 	    !CIFS_CACHE_READ(CIFS_I(inode)) &&
-	    inode->i_mapping && inode->i_mapping->nrpages != 0) {
-		rc = filemap_fdatawait(inode->i_mapping);
-		if (rc) {
+	    inode->i_mapping && inode->i_mapping->nrpages != 0) अणु
+		rc = filemap_fdataरुको(inode->i_mapping);
+		अगर (rc) अणु
 			mapping_set_error(inode->i_mapping, rc);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	if ((flags & AT_STATX_SYNC_TYPE) == AT_STATX_FORCE_SYNC)
-		CIFS_I(inode)->time = 0; /* force revalidate */
+	अगर ((flags & AT_STATX_SYNC_TYPE) == AT_STATX_FORCE_SYNC)
+		CIFS_I(inode)->समय = 0; /* क्रमce revalidate */
 
 	/*
-	 * If the caller doesn't require syncing, only sync if
+	 * If the caller करोesn't require syncing, only sync अगर
 	 * necessary (e.g. due to earlier truncate or setattr
 	 * invalidating the cached metadata)
 	 */
-	if (((flags & AT_STATX_SYNC_TYPE) != AT_STATX_DONT_SYNC) ||
-	    (CIFS_I(inode)->time == 0)) {
-		rc = cifs_revalidate_dentry_attr(dentry);
-		if (rc)
-			return rc;
-	}
+	अगर (((flags & AT_STATX_SYNC_TYPE) != AT_STATX_DONT_SYNC) ||
+	    (CIFS_I(inode)->समय == 0)) अणु
+		rc = cअगरs_revalidate_dentry_attr(dentry);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	generic_fillattr(&init_user_ns, inode, stat);
-	stat->blksize = cifs_sb->ctx->bsize;
+	stat->blksize = cअगरs_sb->ctx->bsize;
 	stat->ino = CIFS_I(inode)->uniqueid;
 
-	/* old CIFS Unix Extensions doesn't return create time */
-	if (CIFS_I(inode)->createtime) {
+	/* old CIFS Unix Extensions करोesn't वापस create समय */
+	अगर (CIFS_I(inode)->createसमय) अणु
 		stat->result_mask |= STATX_BTIME;
-		stat->btime =
-		      cifs_NTtimeToUnix(cpu_to_le64(CIFS_I(inode)->createtime));
-	}
+		stat->bसमय =
+		      cअगरs_NTसमयToUnix(cpu_to_le64(CIFS_I(inode)->createसमय));
+	पूर्ण
 
 	stat->attributes_mask |= (STATX_ATTR_COMPRESSED | STATX_ATTR_ENCRYPTED);
-	if (CIFS_I(inode)->cifsAttrs & FILE_ATTRIBUTE_COMPRESSED)
+	अगर (CIFS_I(inode)->cअगरsAttrs & खाता_ATTRIBUTE_COMPRESSED)
 		stat->attributes |= STATX_ATTR_COMPRESSED;
-	if (CIFS_I(inode)->cifsAttrs & FILE_ATTRIBUTE_ENCRYPTED)
+	अगर (CIFS_I(inode)->cअगरsAttrs & खाता_ATTRIBUTE_ENCRYPTED)
 		stat->attributes |= STATX_ATTR_ENCRYPTED;
 
 	/*
-	 * If on a multiuser mount without unix extensions or cifsacl being
+	 * If on a multiuser mount without unix extensions or cअगरsacl being
 	 * enabled, and the admin hasn't overridden them, set the ownership
 	 * to the fsuid/fsgid of the current process.
 	 */
-	if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MULTIUSER) &&
-	    !(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) &&
-	    !tcon->unix_ext) {
-		if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_OVERR_UID))
+	अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MULTIUSER) &&
+	    !(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_ACL) &&
+	    !tcon->unix_ext) अणु
+		अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_OVERR_UID))
 			stat->uid = current_fsuid();
-		if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_OVERR_GID))
+		अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_OVERR_GID))
 			stat->gid = current_fsgid();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cifs_fiemap(struct inode *inode, struct fiemap_extent_info *fei, u64 start,
+पूर्णांक cअगरs_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fei, u64 start,
 		u64 len)
-{
-	struct cifsInodeInfo *cifs_i = CIFS_I(inode);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(cifs_i->vfs_inode.i_sb);
-	struct cifs_tcon *tcon = cifs_sb_master_tcon(cifs_sb);
-	struct TCP_Server_Info *server = tcon->ses->server;
-	struct cifsFileInfo *cfile;
-	int rc;
+अणु
+	काष्ठा cअगरsInodeInfo *cअगरs_i = CIFS_I(inode);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(cअगरs_i->vfs_inode.i_sb);
+	काष्ठा cअगरs_tcon *tcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	काष्ठा TCP_Server_Info *server = tcon->ses->server;
+	काष्ठा cअगरsFileInfo *cfile;
+	पूर्णांक rc;
 
-	if (unlikely(cifs_forced_shutdown(cifs_sb)))
-		return -EIO;
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb)))
+		वापस -EIO;
 
 	/*
 	 * We need to be sure that all dirty pages are written as they
 	 * might fill holes on the server.
 	 */
-	if (!CIFS_CACHE_READ(CIFS_I(inode)) && inode->i_mapping &&
-	    inode->i_mapping->nrpages != 0) {
-		rc = filemap_fdatawait(inode->i_mapping);
-		if (rc) {
+	अगर (!CIFS_CACHE_READ(CIFS_I(inode)) && inode->i_mapping &&
+	    inode->i_mapping->nrpages != 0) अणु
+		rc = filemap_fdataरुको(inode->i_mapping);
+		अगर (rc) अणु
 			mapping_set_error(inode->i_mapping, rc);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	cfile = find_readable_file(cifs_i, false);
-	if (cfile == NULL)
-		return -EINVAL;
+	cfile = find_पढ़ोable_file(cअगरs_i, false);
+	अगर (cfile == शून्य)
+		वापस -EINVAL;
 
-	if (server->ops->fiemap) {
+	अगर (server->ops->fiemap) अणु
 		rc = server->ops->fiemap(tcon, cfile, fei, start, len);
-		cifsFileInfo_put(cfile);
-		return rc;
-	}
+		cअगरsFileInfo_put(cfile);
+		वापस rc;
+	पूर्ण
 
-	cifsFileInfo_put(cfile);
-	return -ENOTSUPP;
-}
+	cअगरsFileInfo_put(cfile);
+	वापस -ENOTSUPP;
+पूर्ण
 
-int cifs_truncate_page(struct address_space *mapping, loff_t from)
-{
+पूर्णांक cअगरs_truncate_page(काष्ठा address_space *mapping, loff_t from)
+अणु
 	pgoff_t index = from >> PAGE_SHIFT;
-	unsigned offset = from & (PAGE_SIZE - 1);
-	struct page *page;
-	int rc = 0;
+	अचिन्हित offset = from & (PAGE_SIZE - 1);
+	काष्ठा page *page;
+	पूर्णांक rc = 0;
 
 	page = grab_cache_page(mapping, index);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
 	zero_user_segment(page, offset, PAGE_SIZE);
 	unlock_page(page);
 	put_page(page);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void cifs_setsize(struct inode *inode, loff_t offset)
-{
-	struct cifsInodeInfo *cifs_i = CIFS_I(inode);
+व्योम cअगरs_setsize(काष्ठा inode *inode, loff_t offset)
+अणु
+	काष्ठा cअगरsInodeInfo *cअगरs_i = CIFS_I(inode);
 
 	spin_lock(&inode->i_lock);
-	i_size_write(inode, offset);
+	i_size_ग_लिखो(inode, offset);
 	spin_unlock(&inode->i_lock);
 
 	/* Cached inode must be refreshed on truncate */
-	cifs_i->time = 0;
+	cअगरs_i->समय = 0;
 	truncate_pagecache(inode, offset);
-}
+पूर्ण
 
-static int
-cifs_set_file_size(struct inode *inode, struct iattr *attrs,
-		   unsigned int xid, const char *full_path)
-{
-	int rc;
-	struct cifsFileInfo *open_file;
-	struct cifsInodeInfo *cifsInode = CIFS_I(inode);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct tcon_link *tlink = NULL;
-	struct cifs_tcon *tcon = NULL;
-	struct TCP_Server_Info *server;
+अटल पूर्णांक
+cअगरs_set_file_size(काष्ठा inode *inode, काष्ठा iattr *attrs,
+		   अचिन्हित पूर्णांक xid, स्थिर अक्षर *full_path)
+अणु
+	पूर्णांक rc;
+	काष्ठा cअगरsFileInfo *खोलो_file;
+	काष्ठा cअगरsInodeInfo *cअगरsInode = CIFS_I(inode);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा tcon_link *tlink = शून्य;
+	काष्ठा cअगरs_tcon *tcon = शून्य;
+	काष्ठा TCP_Server_Info *server;
 
 	/*
-	 * To avoid spurious oplock breaks from server, in the case of
-	 * inodes that we already have open, avoid doing path based
-	 * setting of file size if we can do it by handle.
-	 * This keeps our caching token (oplock) and avoids timeouts
-	 * when the local oplock break takes longer to flush
-	 * writebehind data than the SMB timeout for the SetPathInfo
+	 * To aव्योम spurious oplock अवरोधs from server, in the हाल of
+	 * inodes that we alपढ़ोy have खोलो, aव्योम करोing path based
+	 * setting of file size अगर we can करो it by handle.
+	 * This keeps our caching token (oplock) and aव्योमs समयouts
+	 * when the local oplock अवरोध takes दीर्घer to flush
+	 * ग_लिखोbehind data than the SMB समयout क्रम the SetPathInfo
 	 * request would allow
 	 */
-	open_file = find_writable_file(cifsInode, FIND_WR_FSUID_ONLY);
-	if (open_file) {
-		tcon = tlink_tcon(open_file->tlink);
+	खोलो_file = find_writable_file(cअगरsInode, FIND_WR_FSUID_ONLY);
+	अगर (खोलो_file) अणु
+		tcon = tlink_tcon(खोलो_file->tlink);
 		server = tcon->ses->server;
-		if (server->ops->set_file_size)
-			rc = server->ops->set_file_size(xid, tcon, open_file,
+		अगर (server->ops->set_file_size)
+			rc = server->ops->set_file_size(xid, tcon, खोलो_file,
 							attrs->ia_size, false);
-		else
+		अन्यथा
 			rc = -ENOSYS;
-		cifsFileInfo_put(open_file);
-		cifs_dbg(FYI, "SetFSize for attrs rc = %d\n", rc);
-	} else
+		cअगरsFileInfo_put(खोलो_file);
+		cअगरs_dbg(FYI, "SetFSize for attrs rc = %d\n", rc);
+	पूर्ण अन्यथा
 		rc = -EINVAL;
 
-	if (!rc)
-		goto set_size_out;
+	अगर (!rc)
+		जाओ set_size_out;
 
-	if (tcon == NULL) {
-		tlink = cifs_sb_tlink(cifs_sb);
-		if (IS_ERR(tlink))
-			return PTR_ERR(tlink);
+	अगर (tcon == शून्य) अणु
+		tlink = cअगरs_sb_tlink(cअगरs_sb);
+		अगर (IS_ERR(tlink))
+			वापस PTR_ERR(tlink);
 		tcon = tlink_tcon(tlink);
 		server = tcon->ses->server;
-	}
+	पूर्ण
 
 	/*
 	 * Set file size by pathname rather than by handle either because no
-	 * valid, writeable file handle for it was found or because there was
+	 * valid, ग_लिखोable file handle क्रम it was found or because there was
 	 * an error setting it by handle.
 	 */
-	if (server->ops->set_path_size)
+	अगर (server->ops->set_path_size)
 		rc = server->ops->set_path_size(xid, tcon, full_path,
-						attrs->ia_size, cifs_sb, false);
-	else
+						attrs->ia_size, cअगरs_sb, false);
+	अन्यथा
 		rc = -ENOSYS;
-	cifs_dbg(FYI, "SetEOF by path (setattrs) rc = %d\n", rc);
+	cअगरs_dbg(FYI, "SetEOF by path (setattrs) rc = %d\n", rc);
 
-	if (tlink)
-		cifs_put_tlink(tlink);
+	अगर (tlink)
+		cअगरs_put_tlink(tlink);
 
 set_size_out:
-	if (rc == 0) {
-		cifsInode->server_eof = attrs->ia_size;
-		cifs_setsize(inode, attrs->ia_size);
+	अगर (rc == 0) अणु
+		cअगरsInode->server_eof = attrs->ia_size;
+		cअगरs_setsize(inode, attrs->ia_size);
 		/*
 		 * i_blocks is not related to (i_size / i_blksize), but instead
-		 * 512 byte (2**9) size is required for calculating num blocks.
-		 * Until we can query the server for actual allocation size,
-		 * this is best estimate we have for blocks allocated for a file
+		 * 512 byte (2**9) size is required क्रम calculating num blocks.
+		 * Until we can query the server क्रम actual allocation size,
+		 * this is best estimate we have क्रम blocks allocated क्रम a file
 		 * Number of blocks must be rounded up so size 1 is not 0 blocks
 		 */
 		inode->i_blocks = (512 - 1 + attrs->ia_size) >> 9;
 
 		/*
-		 * The man page of truncate says if the size changed,
-		 * then the st_ctime and st_mtime fields for the file
+		 * The man page of truncate says अगर the size changed,
+		 * then the st_स_समय and st_mसमय fields क्रम the file
 		 * are updated.
 		 */
-		attrs->ia_ctime = attrs->ia_mtime = current_time(inode);
+		attrs->ia_स_समय = attrs->ia_mसमय = current_समय(inode);
 		attrs->ia_valid |= ATTR_CTIME | ATTR_MTIME;
 
-		cifs_truncate_page(inode->i_mapping, inode->i_size);
-	}
+		cअगरs_truncate_page(inode->i_mapping, inode->i_size);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-cifs_setattr_unix(struct dentry *direntry, struct iattr *attrs)
-{
-	int rc;
-	unsigned int xid;
-	const char *full_path;
-	void *page = alloc_dentry_path();
-	struct inode *inode = d_inode(direntry);
-	struct cifsInodeInfo *cifsInode = CIFS_I(inode);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct tcon_link *tlink;
-	struct cifs_tcon *pTcon;
-	struct cifs_unix_set_info_args *args = NULL;
-	struct cifsFileInfo *open_file;
+अटल पूर्णांक
+cअगरs_setattr_unix(काष्ठा dentry *direntry, काष्ठा iattr *attrs)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक xid;
+	स्थिर अक्षर *full_path;
+	व्योम *page = alloc_dentry_path();
+	काष्ठा inode *inode = d_inode(direntry);
+	काष्ठा cअगरsInodeInfo *cअगरsInode = CIFS_I(inode);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा tcon_link *tlink;
+	काष्ठा cअगरs_tcon *pTcon;
+	काष्ठा cअगरs_unix_set_info_args *args = शून्य;
+	काष्ठा cअगरsFileInfo *खोलो_file;
 
-	cifs_dbg(FYI, "setattr_unix on file %pd attrs->ia_valid=0x%x\n",
+	cअगरs_dbg(FYI, "setattr_unix on file %pd attrs->ia_valid=0x%x\n",
 		 direntry, attrs->ia_valid);
 
 	xid = get_xid();
 
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_PERM)
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_PERM)
 		attrs->ia_valid |= ATTR_FORCE;
 
 	rc = setattr_prepare(&init_user_ns, direntry, attrs);
-	if (rc < 0)
-		goto out;
+	अगर (rc < 0)
+		जाओ out;
 
 	full_path = build_path_from_dentry(direntry, page);
-	if (IS_ERR(full_path)) {
+	अगर (IS_ERR(full_path)) अणु
 		rc = PTR_ERR(full_path);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Attempt to flush data before changing attributes. We need to do
-	 * this for ATTR_SIZE and ATTR_MTIME for sure, and if we change the
-	 * ownership or mode then we may also need to do this. Here, we take
-	 * the safe way out and just do the flush on all setattr requests. If
-	 * the flush returns error, store it to report later and continue.
+	 * Attempt to flush data beक्रमe changing attributes. We need to करो
+	 * this क्रम ATTR_SIZE and ATTR_MTIME क्रम sure, and अगर we change the
+	 * ownership or mode then we may also need to करो this. Here, we take
+	 * the safe way out and just करो the flush on all setattr requests. If
+	 * the flush वापसs error, store it to report later and जारी.
 	 *
 	 * BB: This should be smarter. Why bother flushing pages that
-	 * will be truncated anyway? Also, should we error out here if
-	 * the flush returns error?
+	 * will be truncated anyway? Also, should we error out here अगर
+	 * the flush वापसs error?
 	 */
-	rc = filemap_write_and_wait(inode->i_mapping);
-	if (is_interrupt_error(rc)) {
+	rc = filemap_ग_लिखो_and_रुको(inode->i_mapping);
+	अगर (is_पूर्णांकerrupt_error(rc)) अणु
 		rc = -ERESTARTSYS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mapping_set_error(inode->i_mapping, rc);
 	rc = 0;
 
-	if (attrs->ia_valid & ATTR_SIZE) {
-		rc = cifs_set_file_size(inode, attrs, xid, full_path);
-		if (rc != 0)
-			goto out;
-	}
+	अगर (attrs->ia_valid & ATTR_SIZE) अणु
+		rc = cअगरs_set_file_size(inode, attrs, xid, full_path);
+		अगर (rc != 0)
+			जाओ out;
+	पूर्ण
 
-	/* skip mode change if it's just for clearing setuid/setgid */
-	if (attrs->ia_valid & (ATTR_KILL_SUID|ATTR_KILL_SGID))
+	/* skip mode change अगर it's just क्रम clearing setuid/setgid */
+	अगर (attrs->ia_valid & (ATTR_KILL_SUID|ATTR_KILL_SGID))
 		attrs->ia_valid &= ~ATTR_MODE;
 
-	args = kmalloc(sizeof(*args), GFP_KERNEL);
-	if (args == NULL) {
+	args = kदो_स्मृति(माप(*args), GFP_KERNEL);
+	अगर (args == शून्य) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* set up the struct */
-	if (attrs->ia_valid & ATTR_MODE)
+	/* set up the काष्ठा */
+	अगर (attrs->ia_valid & ATTR_MODE)
 		args->mode = attrs->ia_mode;
-	else
+	अन्यथा
 		args->mode = NO_CHANGE_64;
 
-	if (attrs->ia_valid & ATTR_UID)
+	अगर (attrs->ia_valid & ATTR_UID)
 		args->uid = attrs->ia_uid;
-	else
+	अन्यथा
 		args->uid = INVALID_UID; /* no change */
 
-	if (attrs->ia_valid & ATTR_GID)
+	अगर (attrs->ia_valid & ATTR_GID)
 		args->gid = attrs->ia_gid;
-	else
+	अन्यथा
 		args->gid = INVALID_GID; /* no change */
 
-	if (attrs->ia_valid & ATTR_ATIME)
-		args->atime = cifs_UnixTimeToNT(attrs->ia_atime);
-	else
-		args->atime = NO_CHANGE_64;
+	अगर (attrs->ia_valid & ATTR_ATIME)
+		args->aसमय = cअगरs_UnixTimeToNT(attrs->ia_aसमय);
+	अन्यथा
+		args->aसमय = NO_CHANGE_64;
 
-	if (attrs->ia_valid & ATTR_MTIME)
-		args->mtime = cifs_UnixTimeToNT(attrs->ia_mtime);
-	else
-		args->mtime = NO_CHANGE_64;
+	अगर (attrs->ia_valid & ATTR_MTIME)
+		args->mसमय = cअगरs_UnixTimeToNT(attrs->ia_mसमय);
+	अन्यथा
+		args->mसमय = NO_CHANGE_64;
 
-	if (attrs->ia_valid & ATTR_CTIME)
-		args->ctime = cifs_UnixTimeToNT(attrs->ia_ctime);
-	else
-		args->ctime = NO_CHANGE_64;
+	अगर (attrs->ia_valid & ATTR_CTIME)
+		args->स_समय = cअगरs_UnixTimeToNT(attrs->ia_स_समय);
+	अन्यथा
+		args->स_समय = NO_CHANGE_64;
 
 	args->device = 0;
-	open_file = find_writable_file(cifsInode, FIND_WR_FSUID_ONLY);
-	if (open_file) {
-		u16 nfid = open_file->fid.netfid;
-		u32 npid = open_file->pid;
-		pTcon = tlink_tcon(open_file->tlink);
+	खोलो_file = find_writable_file(cअगरsInode, FIND_WR_FSUID_ONLY);
+	अगर (खोलो_file) अणु
+		u16 nfid = खोलो_file->fid.netfid;
+		u32 npid = खोलो_file->pid;
+		pTcon = tlink_tcon(खोलो_file->tlink);
 		rc = CIFSSMBUnixSetFileInfo(xid, pTcon, args, nfid, npid);
-		cifsFileInfo_put(open_file);
-	} else {
-		tlink = cifs_sb_tlink(cifs_sb);
-		if (IS_ERR(tlink)) {
+		cअगरsFileInfo_put(खोलो_file);
+	पूर्ण अन्यथा अणु
+		tlink = cअगरs_sb_tlink(cअगरs_sb);
+		अगर (IS_ERR(tlink)) अणु
 			rc = PTR_ERR(tlink);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		pTcon = tlink_tcon(tlink);
 		rc = CIFSSMBUnixSetPathInfo(xid, pTcon, full_path, args,
-				    cifs_sb->local_nls,
-				    cifs_remap(cifs_sb));
-		cifs_put_tlink(tlink);
-	}
+				    cअगरs_sb->local_nls,
+				    cअगरs_remap(cअगरs_sb));
+		cअगरs_put_tlink(tlink);
+	पूर्ण
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if ((attrs->ia_valid & ATTR_SIZE) &&
-	    attrs->ia_size != i_size_read(inode))
+	अगर ((attrs->ia_valid & ATTR_SIZE) &&
+	    attrs->ia_size != i_size_पढ़ो(inode))
 		truncate_setsize(inode, attrs->ia_size);
 
 	setattr_copy(&init_user_ns, inode, attrs);
 	mark_inode_dirty(inode);
 
-	/* force revalidate when any of these times are set since some
-	   of the fs types (eg ext3, fat) do not have fine enough
-	   time granularity to match protocol, and we do not have a
-	   a way (yet) to query the server fs's time granularity (and
-	   whether it rounds times down).
+	/* क्रमce revalidate when any of these बार are set since some
+	   of the fs types (eg ext3, fat) करो not have fine enough
+	   समय granularity to match protocol, and we करो not have a
+	   a way (yet) to query the server fs's समय granularity (and
+	   whether it rounds बार करोwn).
 	*/
-	if (attrs->ia_valid & (ATTR_MTIME | ATTR_CTIME))
-		cifsInode->time = 0;
+	अगर (attrs->ia_valid & (ATTR_MTIME | ATTR_CTIME))
+		cअगरsInode->समय = 0;
 out:
-	kfree(args);
-	free_dentry_path(page);
-	free_xid(xid);
-	return rc;
-}
+	kमुक्त(args);
+	मुक्त_dentry_path(page);
+	मुक्त_xid(xid);
+	वापस rc;
+पूर्ण
 
-static int
-cifs_setattr_nounix(struct dentry *direntry, struct iattr *attrs)
-{
-	unsigned int xid;
+अटल पूर्णांक
+cअगरs_setattr_nounix(काष्ठा dentry *direntry, काष्ठा iattr *attrs)
+अणु
+	अचिन्हित पूर्णांक xid;
 	kuid_t uid = INVALID_UID;
 	kgid_t gid = INVALID_GID;
-	struct inode *inode = d_inode(direntry);
-	struct cifs_sb_info *cifs_sb = CIFS_SB(inode->i_sb);
-	struct cifsInodeInfo *cifsInode = CIFS_I(inode);
-	struct cifsFileInfo *wfile;
-	struct cifs_tcon *tcon;
-	const char *full_path;
-	void *page = alloc_dentry_path();
-	int rc = -EACCES;
-	__u32 dosattr = 0;
+	काष्ठा inode *inode = d_inode(direntry);
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(inode->i_sb);
+	काष्ठा cअगरsInodeInfo *cअगरsInode = CIFS_I(inode);
+	काष्ठा cअगरsFileInfo *wfile;
+	काष्ठा cअगरs_tcon *tcon;
+	स्थिर अक्षर *full_path;
+	व्योम *page = alloc_dentry_path();
+	पूर्णांक rc = -EACCES;
+	__u32 करोsattr = 0;
 	__u64 mode = NO_CHANGE_64;
 
 	xid = get_xid();
 
-	cifs_dbg(FYI, "setattr on file %pd attrs->ia_valid 0x%x\n",
+	cअगरs_dbg(FYI, "setattr on file %pd attrs->ia_valid 0x%x\n",
 		 direntry, attrs->ia_valid);
 
-	if (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NO_PERM)
+	अगर (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NO_PERM)
 		attrs->ia_valid |= ATTR_FORCE;
 
 	rc = setattr_prepare(&init_user_ns, direntry, attrs);
-	if (rc < 0)
-		goto cifs_setattr_exit;
+	अगर (rc < 0)
+		जाओ cअगरs_setattr_निकास;
 
 	full_path = build_path_from_dentry(direntry, page);
-	if (IS_ERR(full_path)) {
+	अगर (IS_ERR(full_path)) अणु
 		rc = PTR_ERR(full_path);
-		goto cifs_setattr_exit;
-	}
+		जाओ cअगरs_setattr_निकास;
+	पूर्ण
 
 	/*
-	 * Attempt to flush data before changing attributes. We need to do
-	 * this for ATTR_SIZE and ATTR_MTIME.  If the flush of the data
-	 * returns error, store it to report later and continue.
+	 * Attempt to flush data beक्रमe changing attributes. We need to करो
+	 * this क्रम ATTR_SIZE and ATTR_MTIME.  If the flush of the data
+	 * वापसs error, store it to report later and जारी.
 	 *
 	 * BB: This should be smarter. Why bother flushing pages that
-	 * will be truncated anyway? Also, should we error out here if
-	 * the flush returns error? Do we need to check for ATTR_MTIME_SET flag?
+	 * will be truncated anyway? Also, should we error out here अगर
+	 * the flush वापसs error? Do we need to check क्रम ATTR_MTIME_SET flag?
 	 */
-	if (attrs->ia_valid & (ATTR_MTIME | ATTR_SIZE | ATTR_CTIME)) {
-		rc = filemap_write_and_wait(inode->i_mapping);
-		if (is_interrupt_error(rc)) {
+	अगर (attrs->ia_valid & (ATTR_MTIME | ATTR_SIZE | ATTR_CTIME)) अणु
+		rc = filemap_ग_लिखो_and_रुको(inode->i_mapping);
+		अगर (is_पूर्णांकerrupt_error(rc)) अणु
 			rc = -ERESTARTSYS;
-			goto cifs_setattr_exit;
-		}
+			जाओ cअगरs_setattr_निकास;
+		पूर्ण
 		mapping_set_error(inode->i_mapping, rc);
-	}
+	पूर्ण
 
 	rc = 0;
 
-	if ((attrs->ia_valid & ATTR_MTIME) &&
-	    !(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_NOSSYNC)) {
-		rc = cifs_get_writable_file(cifsInode, FIND_WR_ANY, &wfile);
-		if (!rc) {
+	अगर ((attrs->ia_valid & ATTR_MTIME) &&
+	    !(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_NOSSYNC)) अणु
+		rc = cअगरs_get_writable_file(cअगरsInode, FIND_WR_ANY, &wfile);
+		अगर (!rc) अणु
 			tcon = tlink_tcon(wfile->tlink);
 			rc = tcon->ses->server->ops->flush(xid, tcon, &wfile->fid);
-			cifsFileInfo_put(wfile);
-			if (rc)
-				goto cifs_setattr_exit;
-		} else if (rc != -EBADF)
-			goto cifs_setattr_exit;
-		else
+			cअगरsFileInfo_put(wfile);
+			अगर (rc)
+				जाओ cअगरs_setattr_निकास;
+		पूर्ण अन्यथा अगर (rc != -EBADF)
+			जाओ cअगरs_setattr_निकास;
+		अन्यथा
 			rc = 0;
-	}
+	पूर्ण
 
-	if (attrs->ia_valid & ATTR_SIZE) {
-		rc = cifs_set_file_size(inode, attrs, xid, full_path);
-		if (rc != 0)
-			goto cifs_setattr_exit;
-	}
+	अगर (attrs->ia_valid & ATTR_SIZE) अणु
+		rc = cअगरs_set_file_size(inode, attrs, xid, full_path);
+		अगर (rc != 0)
+			जाओ cअगरs_setattr_निकास;
+	पूर्ण
 
-	if (attrs->ia_valid & ATTR_UID)
+	अगर (attrs->ia_valid & ATTR_UID)
 		uid = attrs->ia_uid;
 
-	if (attrs->ia_valid & ATTR_GID)
+	अगर (attrs->ia_valid & ATTR_GID)
 		gid = attrs->ia_gid;
 
-	if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) ||
-	    (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MODE_FROM_SID)) {
-		if (uid_valid(uid) || gid_valid(gid)) {
+	अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_ACL) ||
+	    (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MODE_FROM_SID)) अणु
+		अगर (uid_valid(uid) || gid_valid(gid)) अणु
 			mode = NO_CHANGE_64;
-			rc = id_mode_to_cifs_acl(inode, full_path, &mode,
+			rc = id_mode_to_cअगरs_acl(inode, full_path, &mode,
 							uid, gid);
-			if (rc) {
-				cifs_dbg(FYI, "%s: Setting id failed with error: %d\n",
+			अगर (rc) अणु
+				cअगरs_dbg(FYI, "%s: Setting id failed with error: %d\n",
 					 __func__, rc);
-				goto cifs_setattr_exit;
-			}
-		}
-	} else
-	if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_SET_UID))
+				जाओ cअगरs_setattr_निकास;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_SET_UID))
 		attrs->ia_valid &= ~(ATTR_UID | ATTR_GID);
 
-	/* skip mode change if it's just for clearing setuid/setgid */
-	if (attrs->ia_valid & (ATTR_KILL_SUID|ATTR_KILL_SGID))
+	/* skip mode change अगर it's just क्रम clearing setuid/setgid */
+	अगर (attrs->ia_valid & (ATTR_KILL_SUID|ATTR_KILL_SGID))
 		attrs->ia_valid &= ~ATTR_MODE;
 
-	if (attrs->ia_valid & ATTR_MODE) {
+	अगर (attrs->ia_valid & ATTR_MODE) अणु
 		mode = attrs->ia_mode;
 		rc = 0;
-		if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_CIFS_ACL) ||
-		    (cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MODE_FROM_SID)) {
-			rc = id_mode_to_cifs_acl(inode, full_path, &mode,
+		अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_CIFS_ACL) ||
+		    (cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MODE_FROM_SID)) अणु
+			rc = id_mode_to_cअगरs_acl(inode, full_path, &mode,
 						INVALID_UID, INVALID_GID);
-			if (rc) {
-				cifs_dbg(FYI, "%s: Setting ACL failed with error: %d\n",
+			अगर (rc) अणु
+				cअगरs_dbg(FYI, "%s: Setting ACL failed with error: %d\n",
 					 __func__, rc);
-				goto cifs_setattr_exit;
-			}
+				जाओ cअगरs_setattr_निकास;
+			पूर्ण
 
 			/*
-			 * In case of CIFS_MOUNT_CIFS_ACL, we cannot support all modes.
+			 * In हाल of CIFS_MOUNT_CIFS_ACL, we cannot support all modes.
 			 * Pick up the actual mode bits that were set.
 			 */
-			if (mode != attrs->ia_mode)
+			अगर (mode != attrs->ia_mode)
 				attrs->ia_mode = mode;
-		} else
-		if (((mode & S_IWUGO) == 0) &&
-		    (cifsInode->cifsAttrs & ATTR_READONLY) == 0) {
+		पूर्ण अन्यथा
+		अगर (((mode & S_IWUGO) == 0) &&
+		    (cअगरsInode->cअगरsAttrs & ATTR_READONLY) == 0) अणु
 
-			dosattr = cifsInode->cifsAttrs | ATTR_READONLY;
+			करोsattr = cअगरsInode->cअगरsAttrs | ATTR_READONLY;
 
-			/* fix up mode if we're not using dynperm */
-			if ((cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DYNPERM) == 0)
+			/* fix up mode अगर we're not using dynperm */
+			अगर ((cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_DYNPERM) == 0)
 				attrs->ia_mode = inode->i_mode & ~S_IWUGO;
-		} else if ((mode & S_IWUGO) &&
-			   (cifsInode->cifsAttrs & ATTR_READONLY)) {
+		पूर्ण अन्यथा अगर ((mode & S_IWUGO) &&
+			   (cअगरsInode->cअगरsAttrs & ATTR_READONLY)) अणु
 
-			dosattr = cifsInode->cifsAttrs & ~ATTR_READONLY;
+			करोsattr = cअगरsInode->cअगरsAttrs & ~ATTR_READONLY;
 			/* Attributes of 0 are ignored */
-			if (dosattr == 0)
-				dosattr |= ATTR_NORMAL;
+			अगर (करोsattr == 0)
+				करोsattr |= ATTR_NORMAL;
 
 			/* reset local inode permissions to normal */
-			if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DYNPERM)) {
+			अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_DYNPERM)) अणु
 				attrs->ia_mode &= ~(S_IALLUGO);
-				if (S_ISDIR(inode->i_mode))
+				अगर (S_ISसूची(inode->i_mode))
 					attrs->ia_mode |=
-						cifs_sb->ctx->dir_mode;
-				else
+						cअगरs_sb->ctx->dir_mode;
+				अन्यथा
 					attrs->ia_mode |=
-						cifs_sb->ctx->file_mode;
-			}
-		} else if (!(cifs_sb->mnt_cifs_flags & CIFS_MOUNT_DYNPERM)) {
+						cअगरs_sb->ctx->file_mode;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!(cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_DYNPERM)) अणु
 			/* ignore mode change - ATTR_READONLY hasn't changed */
 			attrs->ia_valid &= ~ATTR_MODE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (attrs->ia_valid & (ATTR_MTIME|ATTR_ATIME|ATTR_CTIME) ||
-	    ((attrs->ia_valid & ATTR_MODE) && dosattr)) {
-		rc = cifs_set_file_info(inode, attrs, xid, full_path, dosattr);
-		/* BB: check for rc = -EOPNOTSUPP and switch to legacy mode */
+	अगर (attrs->ia_valid & (ATTR_MTIME|ATTR_ATIME|ATTR_CTIME) ||
+	    ((attrs->ia_valid & ATTR_MODE) && करोsattr)) अणु
+		rc = cअगरs_set_file_info(inode, attrs, xid, full_path, करोsattr);
+		/* BB: check क्रम rc = -EOPNOTSUPP and चयन to legacy mode */
 
-		/* Even if error on time set, no sense failing the call if
-		the server would set the time to a reasonable value anyway,
+		/* Even अगर error on समय set, no sense failing the call अगर
+		the server would set the समय to a reasonable value anyway,
 		and this check ensures that we are not being called from
-		sys_utimes in which case we ought to fail the call back to
+		sys_uबार in which हाल we ought to fail the call back to
 		the user when the server rejects the call */
-		if ((rc) && (attrs->ia_valid &
+		अगर ((rc) && (attrs->ia_valid &
 				(ATTR_MODE | ATTR_GID | ATTR_UID | ATTR_SIZE)))
 			rc = 0;
-	}
+	पूर्ण
 
-	/* do not need local check to inode_check_ok since the server does
+	/* करो not need local check to inode_check_ok since the server करोes
 	   that */
-	if (rc)
-		goto cifs_setattr_exit;
+	अगर (rc)
+		जाओ cअगरs_setattr_निकास;
 
-	if ((attrs->ia_valid & ATTR_SIZE) &&
-	    attrs->ia_size != i_size_read(inode))
+	अगर ((attrs->ia_valid & ATTR_SIZE) &&
+	    attrs->ia_size != i_size_पढ़ो(inode))
 		truncate_setsize(inode, attrs->ia_size);
 
 	setattr_copy(&init_user_ns, inode, attrs);
 	mark_inode_dirty(inode);
 
-cifs_setattr_exit:
-	free_xid(xid);
-	free_dentry_path(page);
-	return rc;
-}
+cअगरs_setattr_निकास:
+	मुक्त_xid(xid);
+	मुक्त_dentry_path(page);
+	वापस rc;
+पूर्ण
 
-int
-cifs_setattr(struct user_namespace *mnt_userns, struct dentry *direntry,
-	     struct iattr *attrs)
-{
-	struct cifs_sb_info *cifs_sb = CIFS_SB(direntry->d_sb);
-	struct cifs_tcon *pTcon = cifs_sb_master_tcon(cifs_sb);
-	int rc, retries = 0;
+पूर्णांक
+cअगरs_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *direntry,
+	     काष्ठा iattr *attrs)
+अणु
+	काष्ठा cअगरs_sb_info *cअगरs_sb = CIFS_SB(direntry->d_sb);
+	काष्ठा cअगरs_tcon *pTcon = cअगरs_sb_master_tcon(cअगरs_sb);
+	पूर्णांक rc, retries = 0;
 
-	if (unlikely(cifs_forced_shutdown(cifs_sb)))
-		return -EIO;
+	अगर (unlikely(cअगरs_क्रमced_shutकरोwn(cअगरs_sb)))
+		वापस -EIO;
 
-	do {
-		if (pTcon->unix_ext)
-			rc = cifs_setattr_unix(direntry, attrs);
-		else
-			rc = cifs_setattr_nounix(direntry, attrs);
+	करो अणु
+		अगर (pTcon->unix_ext)
+			rc = cअगरs_setattr_unix(direntry, attrs);
+		अन्यथा
+			rc = cअगरs_setattr_nounix(direntry, attrs);
 		retries++;
-	} while (is_retryable_error(rc) && retries < 2);
+	पूर्ण जबतक (is_retryable_error(rc) && retries < 2);
 
-	/* BB: add cifs_setattr_legacy for really old servers */
-	return rc;
-}
+	/* BB: add cअगरs_setattr_legacy क्रम really old servers */
+	वापस rc;
+पूर्ण

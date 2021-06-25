@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * apds9802als.c - apds9802  ALS Driver
  *
@@ -9,299 +10,299 @@
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/sysfs.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/pm_runसमय.स>
 
-#define ALS_MIN_RANGE_VAL 1
-#define ALS_MAX_RANGE_VAL 2
-#define POWER_STA_ENABLE 1
-#define POWER_STA_DISABLE 0
+#घोषणा ALS_MIN_RANGE_VAL 1
+#घोषणा ALS_MAX_RANGE_VAL 2
+#घोषणा POWER_STA_ENABLE 1
+#घोषणा POWER_STA_DISABLE 0
 
-#define DRIVER_NAME "apds9802als"
+#घोषणा DRIVER_NAME "apds9802als"
 
-struct als_data {
-	struct mutex mutex;
-};
+काष्ठा als_data अणु
+	काष्ठा mutex mutex;
+पूर्ण;
 
-static ssize_t als_sensing_range_show(struct device *dev,
-			struct device_attribute *attr,  char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int  val;
+अटल sमाप_प्रकार als_sensing_range_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr,  अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक  val;
 
-	val = i2c_smbus_read_byte_data(client, 0x81);
-	if (val < 0)
-		return val;
-	if (val & 1)
-		return sprintf(buf, "4095\n");
-	else
-		return sprintf(buf, "65535\n");
-}
+	val = i2c_smbus_पढ़ो_byte_data(client, 0x81);
+	अगर (val < 0)
+		वापस val;
+	अगर (val & 1)
+		वापस प्र_लिखो(buf, "4095\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "65535\n");
+पूर्ण
 
-static int als_wait_for_data_ready(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int ret;
-	int retry = 10;
+अटल पूर्णांक als_रुको_क्रम_data_पढ़ोy(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक ret;
+	पूर्णांक retry = 10;
 
-	do {
+	करो अणु
 		msleep(30);
-		ret = i2c_smbus_read_byte_data(client, 0x86);
-	} while (!(ret & 0x80) && retry--);
+		ret = i2c_smbus_पढ़ो_byte_data(client, 0x86);
+	पूर्ण जबतक (!(ret & 0x80) && retry--);
 
-	if (retry < 0) {
+	अगर (retry < 0) अणु
 		dev_warn(dev, "timeout waiting for data ready\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t als_lux0_input_data_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct als_data *data = i2c_get_clientdata(client);
-	int ret_val;
-	int temp;
+अटल sमाप_प्रकार als_lux0_input_data_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा als_data *data = i2c_get_clientdata(client);
+	पूर्णांक ret_val;
+	पूर्णांक temp;
 
-	/* Protect against parallel reads */
-	pm_runtime_get_sync(dev);
+	/* Protect against parallel पढ़ोs */
+	pm_runसमय_get_sync(dev);
 	mutex_lock(&data->mutex);
 
-	/* clear EOC interrupt status */
-	i2c_smbus_write_byte(client, 0x40);
+	/* clear EOC पूर्णांकerrupt status */
+	i2c_smbus_ग_लिखो_byte(client, 0x40);
 	/* start measurement */
-	temp = i2c_smbus_read_byte_data(client, 0x81);
-	i2c_smbus_write_byte_data(client, 0x81, temp | 0x08);
+	temp = i2c_smbus_पढ़ो_byte_data(client, 0x81);
+	i2c_smbus_ग_लिखो_byte_data(client, 0x81, temp | 0x08);
 
-	ret_val = als_wait_for_data_ready(dev);
-	if (ret_val < 0)
-		goto failed;
+	ret_val = als_रुको_क्रम_data_पढ़ोy(dev);
+	अगर (ret_val < 0)
+		जाओ failed;
 
-	temp = i2c_smbus_read_byte_data(client, 0x8C); /* LSB data */
-	if (temp < 0) {
+	temp = i2c_smbus_पढ़ो_byte_data(client, 0x8C); /* LSB data */
+	अगर (temp < 0) अणु
 		ret_val = temp;
-		goto failed;
-	}
-	ret_val = i2c_smbus_read_byte_data(client, 0x8D); /* MSB data */
-	if (ret_val < 0)
-		goto failed;
+		जाओ failed;
+	पूर्ण
+	ret_val = i2c_smbus_पढ़ो_byte_data(client, 0x8D); /* MSB data */
+	अगर (ret_val < 0)
+		जाओ failed;
 
 	mutex_unlock(&data->mutex);
-	pm_runtime_put_sync(dev);
+	pm_runसमय_put_sync(dev);
 
 	temp = (ret_val << 8) | temp;
-	return sprintf(buf, "%d\n", temp);
+	वापस प्र_लिखो(buf, "%d\n", temp);
 failed:
 	mutex_unlock(&data->mutex);
-	pm_runtime_put_sync(dev);
-	return ret_val;
-}
+	pm_runसमय_put_sync(dev);
+	वापस ret_val;
+पूर्ण
 
-static ssize_t als_sensing_range_store(struct device *dev,
-		struct device_attribute *attr, const  char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct als_data *data = i2c_get_clientdata(client);
-	int ret_val;
-	unsigned long val;
+अटल sमाप_प्रकार als_sensing_range_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर  अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा als_data *data = i2c_get_clientdata(client);
+	पूर्णांक ret_val;
+	अचिन्हित दीर्घ val;
 
-	ret_val = kstrtoul(buf, 10, &val);
-	if (ret_val)
-		return ret_val;
+	ret_val = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (ret_val)
+		वापस ret_val;
 
-	if (val < 4096)
+	अगर (val < 4096)
 		val = 1;
-	else if (val < 65536)
+	अन्यथा अगर (val < 65536)
 		val = 2;
-	else
-		return -ERANGE;
+	अन्यथा
+		वापस -दुस्फल;
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
-	/* Make sure nobody else reads/modifies/writes 0x81 while we
+	/* Make sure nobody अन्यथा पढ़ोs/modअगरies/ग_लिखोs 0x81 जबतक we
 	   are active */
 	mutex_lock(&data->mutex);
 
-	ret_val = i2c_smbus_read_byte_data(client, 0x81);
-	if (ret_val < 0)
-		goto fail;
+	ret_val = i2c_smbus_पढ़ो_byte_data(client, 0x81);
+	अगर (ret_val < 0)
+		जाओ fail;
 
-	/* Reset the bits before setting them */
+	/* Reset the bits beक्रमe setting them */
 	ret_val = ret_val & 0xFA;
 
-	if (val == 1) /* Setting detection range up to 4k LUX */
+	अगर (val == 1) /* Setting detection range up to 4k LUX */
 		ret_val = (ret_val | 0x01);
-	else /* Setting detection range up to 64k LUX*/
+	अन्यथा /* Setting detection range up to 64k LUX*/
 		ret_val = (ret_val | 0x00);
 
-	ret_val = i2c_smbus_write_byte_data(client, 0x81, ret_val);
+	ret_val = i2c_smbus_ग_लिखो_byte_data(client, 0x81, ret_val);
 
-	if (ret_val >= 0) {
+	अगर (ret_val >= 0) अणु
 		/* All OK */
 		mutex_unlock(&data->mutex);
-		pm_runtime_put_sync(dev);
-		return count;
-	}
+		pm_runसमय_put_sync(dev);
+		वापस count;
+	पूर्ण
 fail:
 	mutex_unlock(&data->mutex);
-	pm_runtime_put_sync(dev);
-	return ret_val;
-}
+	pm_runसमय_put_sync(dev);
+	वापस ret_val;
+पूर्ण
 
-static int als_set_power_state(struct i2c_client *client, bool on_off)
-{
-	int ret_val;
-	struct als_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक als_set_घातer_state(काष्ठा i2c_client *client, bool on_off)
+अणु
+	पूर्णांक ret_val;
+	काष्ठा als_data *data = i2c_get_clientdata(client);
 
 	mutex_lock(&data->mutex);
-	ret_val = i2c_smbus_read_byte_data(client, 0x80);
-	if (ret_val < 0)
-		goto fail;
-	if (on_off)
+	ret_val = i2c_smbus_पढ़ो_byte_data(client, 0x80);
+	अगर (ret_val < 0)
+		जाओ fail;
+	अगर (on_off)
 		ret_val = ret_val | 0x01;
-	else
+	अन्यथा
 		ret_val = ret_val & 0xFE;
-	ret_val = i2c_smbus_write_byte_data(client, 0x80, ret_val);
+	ret_val = i2c_smbus_ग_लिखो_byte_data(client, 0x80, ret_val);
 fail:
 	mutex_unlock(&data->mutex);
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-static DEVICE_ATTR(lux0_sensor_range, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(lux0_sensor_range, S_IRUGO | S_IWUSR,
 	als_sensing_range_show, als_sensing_range_store);
-static DEVICE_ATTR(lux0_input, S_IRUGO, als_lux0_input_data_show, NULL);
+अटल DEVICE_ATTR(lux0_input, S_IRUGO, als_lux0_input_data_show, शून्य);
 
-static struct attribute *mid_att_als[] = {
+अटल काष्ठा attribute *mid_att_als[] = अणु
 	&dev_attr_lux0_sensor_range.attr,
 	&dev_attr_lux0_input.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group m_als_gr = {
+अटल स्थिर काष्ठा attribute_group m_als_gr = अणु
 	.name = "apds9802als",
 	.attrs = mid_att_als
-};
+पूर्ण;
 
-static int als_set_default_config(struct i2c_client *client)
-{
-	int ret_val;
-	/* Write the command and then switch on */
-	ret_val = i2c_smbus_write_byte_data(client, 0x80, 0x01);
-	if (ret_val < 0) {
+अटल पूर्णांक als_set_शेष_config(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक ret_val;
+	/* Write the command and then चयन on */
+	ret_val = i2c_smbus_ग_लिखो_byte_data(client, 0x80, 0x01);
+	अगर (ret_val < 0) अणु
 		dev_err(&client->dev, "failed default switch on write\n");
-		return ret_val;
-	}
+		वापस ret_val;
+	पूर्ण
 	/* detection range: 1~64K Lux, maunal measurement */
-	ret_val = i2c_smbus_write_byte_data(client, 0x81, 0x08);
-	if (ret_val < 0)
+	ret_val = i2c_smbus_ग_लिखो_byte_data(client, 0x81, 0x08);
+	अगर (ret_val < 0)
 		dev_err(&client->dev, "failed default LUX on write\n");
 
-	/*  We always get 0 for the 1st measurement after system power on,
-	 *  so make sure it is finished before user asks for data.
+	/*  We always get 0 क्रम the 1st measurement after प्रणाली घातer on,
+	 *  so make sure it is finished beक्रमe user asks क्रम data.
 	 */
-	als_wait_for_data_ready(&client->dev);
+	als_रुको_क्रम_data_पढ़ोy(&client->dev);
 
-	return ret_val;
-}
+	वापस ret_val;
+पूर्ण
 
-static int apds9802als_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	int res;
-	struct als_data *data;
+अटल पूर्णांक apds9802als_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक res;
+	काष्ठा als_data *data;
 
-	data = kzalloc(sizeof(struct als_data), GFP_KERNEL);
-	if (data == NULL) {
+	data = kzalloc(माप(काष्ठा als_data), GFP_KERNEL);
+	अगर (data == शून्य) अणु
 		dev_err(&client->dev, "Memory allocation failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	i2c_set_clientdata(client, data);
 	res = sysfs_create_group(&client->dev.kobj, &m_als_gr);
-	if (res) {
+	अगर (res) अणु
 		dev_err(&client->dev, "device create file failed\n");
-		goto als_error1;
-	}
+		जाओ als_error1;
+	पूर्ण
 	dev_info(&client->dev, "ALS chip found\n");
-	als_set_default_config(client);
+	als_set_शेष_config(client);
 	mutex_init(&data->mutex);
 
-	pm_runtime_set_active(&client->dev);
-	pm_runtime_enable(&client->dev);
+	pm_runसमय_set_active(&client->dev);
+	pm_runसमय_enable(&client->dev);
 
-	return res;
+	वापस res;
 als_error1:
-	kfree(data);
-	return res;
-}
+	kमुक्त(data);
+	वापस res;
+पूर्ण
 
-static int apds9802als_remove(struct i2c_client *client)
-{
-	struct als_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक apds9802als_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा als_data *data = i2c_get_clientdata(client);
 
-	pm_runtime_get_sync(&client->dev);
+	pm_runसमय_get_sync(&client->dev);
 
-	als_set_power_state(client, false);
-	sysfs_remove_group(&client->dev.kobj, &m_als_gr);
+	als_set_घातer_state(client, false);
+	sysfs_हटाओ_group(&client->dev.kobj, &m_als_gr);
 
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
 
-	kfree(data);
-	return 0;
-}
+	kमुक्त(data);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int apds9802als_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक apds9802als_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	als_set_power_state(client, false);
-	return 0;
-}
+	als_set_घातer_state(client, false);
+	वापस 0;
+पूर्ण
 
-static int apds9802als_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+अटल पूर्णांक apds9802als_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	als_set_power_state(client, true);
-	return 0;
-}
+	als_set_घातer_state(client, true);
+	वापस 0;
+पूर्ण
 
-static UNIVERSAL_DEV_PM_OPS(apds9802als_pm_ops, apds9802als_suspend,
-	apds9802als_resume, NULL);
+अटल UNIVERSAL_DEV_PM_OPS(apds9802als_pm_ops, apds9802als_suspend,
+	apds9802als_resume, शून्य);
 
-#define APDS9802ALS_PM_OPS (&apds9802als_pm_ops)
+#घोषणा APDS9802ALS_PM_OPS (&apds9802als_pm_ops)
 
-#else	/* CONFIG_PM */
-#define APDS9802ALS_PM_OPS NULL
-#endif	/* CONFIG_PM */
+#अन्यथा	/* CONFIG_PM */
+#घोषणा APDS9802ALS_PM_OPS शून्य
+#पूर्ण_अगर	/* CONFIG_PM */
 
-static const struct i2c_device_id apds9802als_id[] = {
-	{ DRIVER_NAME, 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id apds9802als_id[] = अणु
+	अणु DRIVER_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, apds9802als_id);
 
-static struct i2c_driver apds9802als_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver apds9802als_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.pm = APDS9802ALS_PM_OPS,
-	},
+	पूर्ण,
 	.probe = apds9802als_probe,
-	.remove = apds9802als_remove,
+	.हटाओ = apds9802als_हटाओ,
 	.id_table = apds9802als_id,
-};
+पूर्ण;
 
 module_i2c_driver(apds9802als_driver);
 

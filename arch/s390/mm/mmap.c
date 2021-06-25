@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  flexible mmap layout support
  *
@@ -8,52 +9,52 @@
  * Started by Ingo Molnar <mingo@elte.hu>
  */
 
-#include <linux/elf-randomize.h>
-#include <linux/personality.h>
-#include <linux/mm.h>
-#include <linux/mman.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/mm.h>
-#include <linux/random.h>
-#include <linux/compat.h>
-#include <linux/security.h>
-#include <asm/elf.h>
+#समावेश <linux/elf-अक्रमomize.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/security.h>
+#समावेश <यंत्र/elf.h>
 
-static unsigned long stack_maxrandom_size(void)
-{
-	if (!(current->flags & PF_RANDOMIZE))
-		return 0;
-	return STACK_RND_MASK << PAGE_SHIFT;
-}
+अटल अचिन्हित दीर्घ stack_maxअक्रमom_size(व्योम)
+अणु
+	अगर (!(current->flags & PF_RANDOMIZE))
+		वापस 0;
+	वापस STACK_RND_MASK << PAGE_SHIFT;
+पूर्ण
 
-static inline int mmap_is_legacy(struct rlimit *rlim_stack)
-{
-	if (current->personality & ADDR_COMPAT_LAYOUT)
-		return 1;
-	if (rlim_stack->rlim_cur == RLIM_INFINITY)
-		return 1;
-	return sysctl_legacy_va_layout;
-}
+अटल अंतरभूत पूर्णांक mmap_is_legacy(काष्ठा rlimit *rlim_stack)
+अणु
+	अगर (current->personality & ADDR_COMPAT_LAYOUT)
+		वापस 1;
+	अगर (rlim_stack->rlim_cur == RLIM_अनन्त)
+		वापस 1;
+	वापस sysctl_legacy_va_layout;
+पूर्ण
 
-unsigned long arch_mmap_rnd(void)
-{
-	return (get_random_int() & MMAP_RND_MASK) << PAGE_SHIFT;
-}
+अचिन्हित दीर्घ arch_mmap_rnd(व्योम)
+अणु
+	वापस (get_अक्रमom_पूर्णांक() & MMAP_RND_MASK) << PAGE_SHIFT;
+पूर्ण
 
-static unsigned long mmap_base_legacy(unsigned long rnd)
-{
-	return TASK_UNMAPPED_BASE + rnd;
-}
+अटल अचिन्हित दीर्घ mmap_base_legacy(अचिन्हित दीर्घ rnd)
+अणु
+	वापस TASK_UNMAPPED_BASE + rnd;
+पूर्ण
 
-static inline unsigned long mmap_base(unsigned long rnd,
-				      struct rlimit *rlim_stack)
-{
-	unsigned long gap = rlim_stack->rlim_cur;
-	unsigned long pad = stack_maxrandom_size() + stack_guard_gap;
-	unsigned long gap_min, gap_max;
+अटल अंतरभूत अचिन्हित दीर्घ mmap_base(अचिन्हित दीर्घ rnd,
+				      काष्ठा rlimit *rlim_stack)
+अणु
+	अचिन्हित दीर्घ gap = rlim_stack->rlim_cur;
+	अचिन्हित दीर्घ pad = stack_maxअक्रमom_size() + stack_guard_gap;
+	अचिन्हित दीर्घ gap_min, gap_max;
 
-	/* Values close to RLIM_INFINITY can overflow. */
-	if (gap + pad > gap)
+	/* Values बंद to RLIM_अनन्त can overflow. */
+	अगर (gap + pad > gap)
 		gap += pad;
 
 	/*
@@ -63,84 +64,84 @@ static inline unsigned long mmap_base(unsigned long rnd,
 	gap_min = 32 * 1024 * 1024UL;
 	gap_max = (STACK_TOP / 6) * 5;
 
-	if (gap < gap_min)
+	अगर (gap < gap_min)
 		gap = gap_min;
-	else if (gap > gap_max)
+	अन्यथा अगर (gap > gap_max)
 		gap = gap_max;
 
-	return PAGE_ALIGN(STACK_TOP - gap - rnd);
-}
+	वापस PAGE_ALIGN(STACK_TOP - gap - rnd);
+पूर्ण
 
-unsigned long arch_get_unmapped_area(struct file *filp, unsigned long addr,
-				     unsigned long len, unsigned long pgoff,
-				     unsigned long flags)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+				     अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
+				     अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा vm_unmapped_area_info info;
 
-	if (len > TASK_SIZE - mmap_min_addr)
-		return -ENOMEM;
+	अगर (len > TASK_SIZE - mmap_min_addr)
+		वापस -ENOMEM;
 
-	if (flags & MAP_FIXED)
-		goto check_asce_limit;
+	अगर (flags & MAP_FIXED)
+		जाओ check_asce_limit;
 
-	if (addr) {
+	अगर (addr) अणु
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma(mm, addr);
-		if (TASK_SIZE - len >= addr && addr >= mmap_min_addr &&
+		अगर (TASK_SIZE - len >= addr && addr >= mmap_min_addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			goto check_asce_limit;
-	}
+			जाओ check_asce_limit;
+	पूर्ण
 
 	info.flags = 0;
 	info.length = len;
 	info.low_limit = mm->mmap_base;
 	info.high_limit = TASK_SIZE;
-	if (filp || (flags & MAP_SHARED))
+	अगर (filp || (flags & MAP_SHARED))
 		info.align_mask = MMAP_ALIGN_MASK << PAGE_SHIFT;
-	else
+	अन्यथा
 		info.align_mask = 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
 	addr = vm_unmapped_area(&info);
-	if (offset_in_page(addr))
-		return addr;
+	अगर (offset_in_page(addr))
+		वापस addr;
 
 check_asce_limit:
-	return check_asce_limit(mm, addr, len);
-}
+	वापस check_asce_limit(mm, addr, len);
+पूर्ण
 
-unsigned long arch_get_unmapped_area_topdown(struct file *filp, unsigned long addr,
-					     unsigned long len, unsigned long pgoff,
-					     unsigned long flags)
-{
-	struct vm_area_struct *vma;
-	struct mm_struct *mm = current->mm;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ arch_get_unmapped_area_topकरोwn(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+					     अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff,
+					     अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_unmapped_area_info info;
 
-	/* requested length too big for entire address space */
-	if (len > TASK_SIZE - mmap_min_addr)
-		return -ENOMEM;
+	/* requested length too big क्रम entire address space */
+	अगर (len > TASK_SIZE - mmap_min_addr)
+		वापस -ENOMEM;
 
-	if (flags & MAP_FIXED)
-		goto check_asce_limit;
+	अगर (flags & MAP_FIXED)
+		जाओ check_asce_limit;
 
-	/* requesting a specific address */
-	if (addr) {
+	/* requesting a specअगरic address */
+	अगर (addr) अणु
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma(mm, addr);
-		if (TASK_SIZE - len >= addr && addr >= mmap_min_addr &&
+		अगर (TASK_SIZE - len >= addr && addr >= mmap_min_addr &&
 				(!vma || addr + len <= vm_start_gap(vma)))
-			goto check_asce_limit;
-	}
+			जाओ check_asce_limit;
+	पूर्ण
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
 	info.length = len;
 	info.low_limit = max(PAGE_SIZE, mmap_min_addr);
 	info.high_limit = mm->mmap_base;
-	if (filp || (flags & MAP_SHARED))
+	अगर (filp || (flags & MAP_SHARED))
 		info.align_mask = MMAP_ALIGN_MASK << PAGE_SHIFT;
-	else
+	अन्यथा
 		info.align_mask = 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
 	addr = vm_unmapped_area(&info);
@@ -151,40 +152,40 @@ unsigned long arch_get_unmapped_area_topdown(struct file *filp, unsigned long ad
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	if (offset_in_page(addr)) {
+	अगर (offset_in_page(addr)) अणु
 		VM_BUG_ON(addr != -ENOMEM);
 		info.flags = 0;
 		info.low_limit = TASK_UNMAPPED_BASE;
 		info.high_limit = TASK_SIZE;
 		addr = vm_unmapped_area(&info);
-		if (offset_in_page(addr))
-			return addr;
-	}
+		अगर (offset_in_page(addr))
+			वापस addr;
+	पूर्ण
 
 check_asce_limit:
-	return check_asce_limit(mm, addr, len);
-}
+	वापस check_asce_limit(mm, addr, len);
+पूर्ण
 
 /*
  * This function, called very early during the creation of a new
  * process VM image, sets up which VM layout function to use:
  */
-void arch_pick_mmap_layout(struct mm_struct *mm, struct rlimit *rlim_stack)
-{
-	unsigned long random_factor = 0UL;
+व्योम arch_pick_mmap_layout(काष्ठा mm_काष्ठा *mm, काष्ठा rlimit *rlim_stack)
+अणु
+	अचिन्हित दीर्घ अक्रमom_factor = 0UL;
 
-	if (current->flags & PF_RANDOMIZE)
-		random_factor = arch_mmap_rnd();
+	अगर (current->flags & PF_RANDOMIZE)
+		अक्रमom_factor = arch_mmap_rnd();
 
 	/*
-	 * Fall back to the standard layout if the personality
-	 * bit is set, or if the expected stack growth is unlimited:
+	 * Fall back to the standard layout अगर the personality
+	 * bit is set, or अगर the expected stack growth is unlimited:
 	 */
-	if (mmap_is_legacy(rlim_stack)) {
-		mm->mmap_base = mmap_base_legacy(random_factor);
+	अगर (mmap_is_legacy(rlim_stack)) अणु
+		mm->mmap_base = mmap_base_legacy(अक्रमom_factor);
 		mm->get_unmapped_area = arch_get_unmapped_area;
-	} else {
-		mm->mmap_base = mmap_base(random_factor, rlim_stack);
-		mm->get_unmapped_area = arch_get_unmapped_area_topdown;
-	}
-}
+	पूर्ण अन्यथा अणु
+		mm->mmap_base = mmap_base(अक्रमom_factor, rlim_stack);
+		mm->get_unmapped_area = arch_get_unmapped_area_topकरोwn;
+	पूर्ण
+पूर्ण

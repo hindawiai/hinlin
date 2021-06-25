@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_IOV_IF_H
-#define _QED_IOV_IF_H
+#अगर_अघोषित _QED_IOV_IF_H
+#घोषणा _QED_IOV_IF_H
 
-#include <linux/qed/qed_if.h>
+#समावेश <linux/qed/qed_अगर.h>
 
 /* Structs used by PF to control and manipulate child VFs */
-struct qed_iov_hv_ops {
-	int (*configure)(struct qed_dev *cdev, int num_vfs_param);
+काष्ठा qed_iov_hv_ops अणु
+	पूर्णांक (*configure)(काष्ठा qed_dev *cdev, पूर्णांक num_vfs_param);
 
-	int (*set_mac) (struct qed_dev *cdev, u8 *mac, int vfid);
+	पूर्णांक (*set_mac) (काष्ठा qed_dev *cdev, u8 *mac, पूर्णांक vfid);
 
-	int (*set_vlan) (struct qed_dev *cdev, u16 vid, int vfid);
+	पूर्णांक (*set_vlan) (काष्ठा qed_dev *cdev, u16 vid, पूर्णांक vfid);
 
-	int (*get_config) (struct qed_dev *cdev, int vf_id,
-			   struct ifla_vf_info *ivi);
+	पूर्णांक (*get_config) (काष्ठा qed_dev *cdev, पूर्णांक vf_id,
+			   काष्ठा अगरla_vf_info *ivi);
 
-	int (*set_link_state) (struct qed_dev *cdev, int vf_id,
-			       int link_state);
+	पूर्णांक (*set_link_state) (काष्ठा qed_dev *cdev, पूर्णांक vf_id,
+			       पूर्णांक link_state);
 
-	int (*set_spoof) (struct qed_dev *cdev, int vfid, bool val);
+	पूर्णांक (*set_spoof) (काष्ठा qed_dev *cdev, पूर्णांक vfid, bool val);
 
-	int (*set_rate) (struct qed_dev *cdev, int vfid,
+	पूर्णांक (*set_rate) (काष्ठा qed_dev *cdev, पूर्णांक vfid,
 			 u32 min_rate, u32 max_rate);
 
-	int (*set_trust) (struct qed_dev *cdev, int vfid, bool trust);
-};
+	पूर्णांक (*set_trust) (काष्ठा qed_dev *cdev, पूर्णांक vfid, bool trust);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

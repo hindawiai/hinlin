@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2018 Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
-#include <linux/kernel.h>
-#include <linux/firmware.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
 
-#include "mt76x0.h"
-#include "mcu.h"
-#include "../mt76x02_usb.h"
+#समावेश "mt76x0.h"
+#समावेश "mcu.h"
+#समावेश "../mt76x02_usb.h"
 
-#define MCU_FW_URB_MAX_PAYLOAD		0x38f8
-#define MCU_FW_URB_SIZE			(MCU_FW_URB_MAX_PAYLOAD + 12)
+#घोषणा MCU_FW_URB_MAX_PAYLOAD		0x38f8
+#घोषणा MCU_FW_URB_SIZE			(MCU_FW_URB_MAX_PAYLOAD + 12)
 
-static int
-mt76x0u_upload_firmware(struct mt76x02_dev *dev,
-			const struct mt76x02_fw_header *hdr)
-{
+अटल पूर्णांक
+mt76x0u_upload_firmware(काष्ठा mt76x02_dev *dev,
+			स्थिर काष्ठा mt76x02_fw_header *hdr)
+अणु
 	u8 *fw_payload = (u8 *)(hdr + 1);
 	u32 ilm_len, dlm_len;
-	void *ivb;
-	int err;
+	व्योम *ivb;
+	पूर्णांक err;
 
 	ivb = kmemdup(fw_payload, MT_MCU_IVB_SIZE, GFP_KERNEL);
-	if (!ivb)
-		return -ENOMEM;
+	अगर (!ivb)
+		वापस -ENOMEM;
 
 	ilm_len = le32_to_cpu(hdr->ilm_len) - MT_MCU_IVB_SIZE;
 	dev_dbg(dev->mt76.dev, "loading FW - ILM %u + IVB %u\n",
@@ -32,8 +33,8 @@ mt76x0u_upload_firmware(struct mt76x02_dev *dev,
 	err = mt76x02u_mcu_fw_send_data(dev, fw_payload + MT_MCU_IVB_SIZE,
 					ilm_len, MCU_FW_URB_MAX_PAYLOAD,
 					MT_MCU_IVB_SIZE);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	dlm_len = le32_to_cpu(hdr->dlm_len);
 	dev_dbg(dev->mt76.dev, "loading FW - DLM %u\n", dlm_len);
@@ -41,84 +42,84 @@ mt76x0u_upload_firmware(struct mt76x02_dev *dev,
 					fw_payload + le32_to_cpu(hdr->ilm_len),
 					dlm_len, MCU_FW_URB_MAX_PAYLOAD,
 					MT_MCU_DLM_OFFSET);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = mt76u_vendor_request(&dev->mt76, MT_VEND_DEV_MODE,
-				   USB_DIR_OUT | USB_TYPE_VENDOR,
+	err = mt76u_venकरोr_request(&dev->mt76, MT_VEND_DEV_MODE,
+				   USB_सूची_OUT | USB_TYPE_VENDOR,
 				   0x12, 0, ivb, MT_MCU_IVB_SIZE);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	if (!mt76_poll_msec(dev, MT_MCU_COM_REG0, 1, 1, 1000)) {
+	अगर (!mt76_poll_msec(dev, MT_MCU_COM_REG0, 1, 1, 1000)) अणु
 		dev_err(dev->mt76.dev, "Firmware failed to start\n");
 		err = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(dev->mt76.dev, "Firmware running!\n");
 
 out:
-	kfree(ivb);
+	kमुक्त(ivb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mt76x0_get_firmware(struct mt76x02_dev *dev,
-			       const struct firmware **fw)
-{
-	int err;
+अटल पूर्णांक mt76x0_get_firmware(काष्ठा mt76x02_dev *dev,
+			       स्थिर काष्ठा firmware **fw)
+अणु
+	पूर्णांक err;
 
-	/* try to load mt7610e fw if available
+	/* try to load mt7610e fw अगर available
 	 * otherwise fall back to mt7610u one
 	 */
 	err = firmware_request_nowarn(fw, MT7610E_FIRMWARE, dev->mt76.dev);
-	if (err) {
+	अगर (err) अणु
 		dev_info(dev->mt76.dev, "%s not found, switching to %s",
 			 MT7610E_FIRMWARE, MT7610U_FIRMWARE);
-		return request_firmware(fw, MT7610U_FIRMWARE,
+		वापस request_firmware(fw, MT7610U_FIRMWARE,
 					dev->mt76.dev);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mt76x0u_load_firmware(struct mt76x02_dev *dev)
-{
-	const struct firmware *fw;
-	const struct mt76x02_fw_header *hdr;
-	int len, ret;
+अटल पूर्णांक mt76x0u_load_firmware(काष्ठा mt76x02_dev *dev)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	स्थिर काष्ठा mt76x02_fw_header *hdr;
+	पूर्णांक len, ret;
 	u32 val;
 
 	mt76_wr(dev, MT_USB_DMA_CFG, (MT_USB_DMA_CFG_RX_BULK_EN |
 				      MT_USB_DMA_CFG_TX_BULK_EN));
 
-	if (mt76x0_firmware_running(dev))
-		return 0;
+	अगर (mt76x0_firmware_running(dev))
+		वापस 0;
 
 	ret = mt76x0_get_firmware(dev, &fw);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!fw || !fw->data || fw->size < sizeof(*hdr))
-		goto err_inv_fw;
+	अगर (!fw || !fw->data || fw->size < माप(*hdr))
+		जाओ err_inv_fw;
 
-	hdr = (const struct mt76x02_fw_header *)fw->data;
+	hdr = (स्थिर काष्ठा mt76x02_fw_header *)fw->data;
 
-	if (le32_to_cpu(hdr->ilm_len) <= MT_MCU_IVB_SIZE)
-		goto err_inv_fw;
+	अगर (le32_to_cpu(hdr->ilm_len) <= MT_MCU_IVB_SIZE)
+		जाओ err_inv_fw;
 
-	len = sizeof(*hdr);
+	len = माप(*hdr);
 	len += le32_to_cpu(hdr->ilm_len);
 	len += le32_to_cpu(hdr->dlm_len);
 
-	if (fw->size != len)
-		goto err_inv_fw;
+	अगर (fw->size != len)
+		जाओ err_inv_fw;
 
 	val = le16_to_cpu(hdr->fw_ver);
 	dev_dbg(dev->mt76.dev,
 		"Firmware Version: %d.%d.%02d Build: %x Build time: %.16s\n",
 		(val >> 12) & 0xf, (val >> 8) & 0xf, val & 0xf,
-		le16_to_cpu(hdr->build_ver), hdr->build_time);
+		le16_to_cpu(hdr->build_ver), hdr->build_समय);
 
 	len = le32_to_cpu(hdr->ilm_len);
 
@@ -152,23 +153,23 @@ static int mt76x0u_load_firmware(struct mt76x02_dev *dev)
 
 	mt76_wr(dev, MT_FCE_PSE_CTRL, 1);
 
-	return ret;
+	वापस ret;
 
 err_inv_fw:
 	dev_err(dev->mt76.dev, "Invalid firmware image\n");
 	release_firmware(fw);
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-int mt76x0u_mcu_init(struct mt76x02_dev *dev)
-{
-	int ret;
+पूर्णांक mt76x0u_mcu_init(काष्ठा mt76x02_dev *dev)
+अणु
+	पूर्णांक ret;
 
 	ret = mt76x0u_load_firmware(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	set_bit(MT76_STATE_MCU_RUNNING, &dev->mphy.state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

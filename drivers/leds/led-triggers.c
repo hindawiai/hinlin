@@ -1,463 +1,464 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * LED Triggers Core
  *
  * Copyright 2005-2007 Openedhand Ltd.
  *
- * Author: Richard Purdie <rpurdie@openedhand.com>
+ * Author: Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
  */
 
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/device.h>
-#include <linux/timer.h>
-#include <linux/rwsem.h>
-#include <linux/leds.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include "leds.h"
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/device.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश "leds.h"
 
 /*
  * Nests outside led_cdev->trigger_lock
  */
-static DECLARE_RWSEM(triggers_list_lock);
+अटल DECLARE_RWSEM(triggers_list_lock);
 LIST_HEAD(trigger_list);
 
  /* Used by LED Class */
 
-static inline bool
-trigger_relevant(struct led_classdev *led_cdev, struct led_trigger *trig)
-{
-	return !trig->trigger_type || trig->trigger_type == led_cdev->trigger_type;
-}
+अटल अंतरभूत bool
+trigger_relevant(काष्ठा led_classdev *led_cdev, काष्ठा led_trigger *trig)
+अणु
+	वापस !trig->trigger_type || trig->trigger_type == led_cdev->trigger_type;
+पूर्ण
 
-ssize_t led_trigger_write(struct file *filp, struct kobject *kobj,
-			  struct bin_attribute *bin_attr, char *buf,
-			  loff_t pos, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct led_classdev *led_cdev = dev_get_drvdata(dev);
-	struct led_trigger *trig;
-	int ret = count;
+sमाप_प्रकार led_trigger_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			  काष्ठा bin_attribute *bin_attr, अक्षर *buf,
+			  loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+	काष्ठा led_trigger *trig;
+	पूर्णांक ret = count;
 
 	mutex_lock(&led_cdev->led_access);
 
-	if (led_sysfs_is_disabled(led_cdev)) {
+	अगर (led_sysfs_is_disabled(led_cdev)) अणु
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (sysfs_streq(buf, "none")) {
-		led_trigger_remove(led_cdev);
-		goto unlock;
-	}
+	अगर (sysfs_streq(buf, "none")) अणु
+		led_trigger_हटाओ(led_cdev);
+		जाओ unlock;
+	पूर्ण
 
-	down_read(&triggers_list_lock);
-	list_for_each_entry(trig, &trigger_list, next_trig) {
-		if (sysfs_streq(buf, trig->name) && trigger_relevant(led_cdev, trig)) {
-			down_write(&led_cdev->trigger_lock);
+	करोwn_पढ़ो(&triggers_list_lock);
+	list_क्रम_each_entry(trig, &trigger_list, next_trig) अणु
+		अगर (sysfs_streq(buf, trig->name) && trigger_relevant(led_cdev, trig)) अणु
+			करोwn_ग_लिखो(&led_cdev->trigger_lock);
 			led_trigger_set(led_cdev, trig);
-			up_write(&led_cdev->trigger_lock);
+			up_ग_लिखो(&led_cdev->trigger_lock);
 
-			up_read(&triggers_list_lock);
-			goto unlock;
-		}
-	}
-	/* we come here only if buf matches no trigger */
+			up_पढ़ो(&triggers_list_lock);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
+	/* we come here only अगर buf matches no trigger */
 	ret = -EINVAL;
-	up_read(&triggers_list_lock);
+	up_पढ़ो(&triggers_list_lock);
 
 unlock:
 	mutex_unlock(&led_cdev->led_access);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(led_trigger_write);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_ग_लिखो);
 
-__printf(3, 4)
-static int led_trigger_snprintf(char *buf, ssize_t size, const char *fmt, ...)
-{
-	va_list args;
-	int i;
+__म_लिखो(3, 4)
+अटल पूर्णांक led_trigger_snम_लिखो(अक्षर *buf, sमाप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i;
 
-	va_start(args, fmt);
-	if (size <= 0)
-		i = vsnprintf(NULL, 0, fmt, args);
-	else
-		i = vscnprintf(buf, size, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	अगर (size <= 0)
+		i = vsnम_लिखो(शून्य, 0, fmt, args);
+	अन्यथा
+		i = vscnम_लिखो(buf, size, fmt, args);
+	बहु_पूर्ण(args);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int led_trigger_format(char *buf, size_t size,
-			      struct led_classdev *led_cdev)
-{
-	struct led_trigger *trig;
-	int len = led_trigger_snprintf(buf, size, "%s",
+अटल पूर्णांक led_trigger_क्रमmat(अक्षर *buf, माप_प्रकार size,
+			      काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा led_trigger *trig;
+	पूर्णांक len = led_trigger_snम_लिखो(buf, size, "%s",
 				       led_cdev->trigger ? "none" : "[none]");
 
-	list_for_each_entry(trig, &trigger_list, next_trig) {
+	list_क्रम_each_entry(trig, &trigger_list, next_trig) अणु
 		bool hit;
 
-		if (!trigger_relevant(led_cdev, trig))
-			continue;
+		अगर (!trigger_relevant(led_cdev, trig))
+			जारी;
 
-		hit = led_cdev->trigger && !strcmp(led_cdev->trigger->name, trig->name);
+		hit = led_cdev->trigger && !म_भेद(led_cdev->trigger->name, trig->name);
 
-		len += led_trigger_snprintf(buf + len, size - len,
+		len += led_trigger_snम_लिखो(buf + len, size - len,
 					    " %s%s%s", hit ? "[" : "",
 					    trig->name, hit ? "]" : "");
-	}
+	पूर्ण
 
-	len += led_trigger_snprintf(buf + len, size - len, "\n");
+	len += led_trigger_snम_लिखो(buf + len, size - len, "\n");
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
  * It was stupid to create 10000 cpu triggers, but we are stuck with it now.
  * Don't make that mistake again. We work around it here by creating binary
- * attribute, which is not limited by length. This is _not_ good design, do not
+ * attribute, which is not limited by length. This is _not_ good design, करो not
  * copy it.
  */
-ssize_t led_trigger_read(struct file *filp, struct kobject *kobj,
-			struct bin_attribute *attr, char *buf,
-			loff_t pos, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct led_classdev *led_cdev = dev_get_drvdata(dev);
-	void *data;
-	int len;
+sमाप_प्रकार led_trigger_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *attr, अक्षर *buf,
+			loff_t pos, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा led_classdev *led_cdev = dev_get_drvdata(dev);
+	व्योम *data;
+	पूर्णांक len;
 
-	down_read(&triggers_list_lock);
-	down_read(&led_cdev->trigger_lock);
+	करोwn_पढ़ो(&triggers_list_lock);
+	करोwn_पढ़ो(&led_cdev->trigger_lock);
 
-	len = led_trigger_format(NULL, 0, led_cdev);
-	data = kvmalloc(len + 1, GFP_KERNEL);
-	if (!data) {
-		up_read(&led_cdev->trigger_lock);
-		up_read(&triggers_list_lock);
-		return -ENOMEM;
-	}
-	len = led_trigger_format(data, len + 1, led_cdev);
+	len = led_trigger_क्रमmat(शून्य, 0, led_cdev);
+	data = kvदो_स्मृति(len + 1, GFP_KERNEL);
+	अगर (!data) अणु
+		up_पढ़ो(&led_cdev->trigger_lock);
+		up_पढ़ो(&triggers_list_lock);
+		वापस -ENOMEM;
+	पूर्ण
+	len = led_trigger_क्रमmat(data, len + 1, led_cdev);
 
-	up_read(&led_cdev->trigger_lock);
-	up_read(&triggers_list_lock);
+	up_पढ़ो(&led_cdev->trigger_lock);
+	up_पढ़ो(&triggers_list_lock);
 
-	len = memory_read_from_buffer(buf, count, &pos, data, len);
+	len = memory_पढ़ो_from_buffer(buf, count, &pos, data, len);
 
-	kvfree(data);
+	kvमुक्त(data);
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(led_trigger_read);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_पढ़ो);
 
 /* Caller must ensure led_cdev->trigger_lock held */
-int led_trigger_set(struct led_classdev *led_cdev, struct led_trigger *trig)
-{
-	unsigned long flags;
-	char *event = NULL;
-	char *envp[2];
-	const char *name;
-	int ret;
+पूर्णांक led_trigger_set(काष्ठा led_classdev *led_cdev, काष्ठा led_trigger *trig)
+अणु
+	अचिन्हित दीर्घ flags;
+	अक्षर *event = शून्य;
+	अक्षर *envp[2];
+	स्थिर अक्षर *name;
+	पूर्णांक ret;
 
-	if (!led_cdev->trigger && !trig)
-		return 0;
+	अगर (!led_cdev->trigger && !trig)
+		वापस 0;
 
 	name = trig ? trig->name : "none";
-	event = kasprintf(GFP_KERNEL, "TRIGGER=%s", name);
+	event = kaप्र_लिखो(GFP_KERNEL, "TRIGGER=%s", name);
 
 	/* Remove any existing trigger */
-	if (led_cdev->trigger) {
-		write_lock_irqsave(&led_cdev->trigger->leddev_list_lock, flags);
+	अगर (led_cdev->trigger) अणु
+		ग_लिखो_lock_irqsave(&led_cdev->trigger->leddev_list_lock, flags);
 		list_del(&led_cdev->trig_list);
-		write_unlock_irqrestore(&led_cdev->trigger->leddev_list_lock,
+		ग_लिखो_unlock_irqrestore(&led_cdev->trigger->leddev_list_lock,
 			flags);
 		cancel_work_sync(&led_cdev->set_brightness_work);
 		led_stop_software_blink(led_cdev);
-		if (led_cdev->trigger->deactivate)
+		अगर (led_cdev->trigger->deactivate)
 			led_cdev->trigger->deactivate(led_cdev);
-		device_remove_groups(led_cdev->dev, led_cdev->trigger->groups);
-		led_cdev->trigger = NULL;
-		led_cdev->trigger_data = NULL;
+		device_हटाओ_groups(led_cdev->dev, led_cdev->trigger->groups);
+		led_cdev->trigger = शून्य;
+		led_cdev->trigger_data = शून्य;
 		led_cdev->activated = false;
 		led_set_brightness(led_cdev, LED_OFF);
-	}
-	if (trig) {
-		write_lock_irqsave(&trig->leddev_list_lock, flags);
+	पूर्ण
+	अगर (trig) अणु
+		ग_लिखो_lock_irqsave(&trig->leddev_list_lock, flags);
 		list_add_tail(&led_cdev->trig_list, &trig->led_cdevs);
-		write_unlock_irqrestore(&trig->leddev_list_lock, flags);
+		ग_लिखो_unlock_irqrestore(&trig->leddev_list_lock, flags);
 		led_cdev->trigger = trig;
 
-		if (trig->activate)
+		अगर (trig->activate)
 			ret = trig->activate(led_cdev);
-		else
+		अन्यथा
 			ret = 0;
 
-		if (ret)
-			goto err_activate;
+		अगर (ret)
+			जाओ err_activate;
 
 		ret = device_add_groups(led_cdev->dev, trig->groups);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(led_cdev->dev, "Failed to add trigger attributes\n");
-			goto err_add_groups;
-		}
-	}
+			जाओ err_add_groups;
+		पूर्ण
+	पूर्ण
 
-	if (event) {
+	अगर (event) अणु
 		envp[0] = event;
-		envp[1] = NULL;
-		if (kobject_uevent_env(&led_cdev->dev->kobj, KOBJ_CHANGE, envp))
+		envp[1] = शून्य;
+		अगर (kobject_uevent_env(&led_cdev->dev->kobj, KOBJ_CHANGE, envp))
 			dev_err(led_cdev->dev,
 				"%s: Error sending uevent\n", __func__);
-		kfree(event);
-	}
+		kमुक्त(event);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_add_groups:
 
-	if (trig->deactivate)
+	अगर (trig->deactivate)
 		trig->deactivate(led_cdev);
 err_activate:
 
-	write_lock_irqsave(&led_cdev->trigger->leddev_list_lock, flags);
+	ग_लिखो_lock_irqsave(&led_cdev->trigger->leddev_list_lock, flags);
 	list_del(&led_cdev->trig_list);
-	write_unlock_irqrestore(&led_cdev->trigger->leddev_list_lock, flags);
-	led_cdev->trigger = NULL;
-	led_cdev->trigger_data = NULL;
+	ग_लिखो_unlock_irqrestore(&led_cdev->trigger->leddev_list_lock, flags);
+	led_cdev->trigger = शून्य;
+	led_cdev->trigger_data = शून्य;
 	led_set_brightness(led_cdev, LED_OFF);
-	kfree(event);
+	kमुक्त(event);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(led_trigger_set);
 
-void led_trigger_remove(struct led_classdev *led_cdev)
-{
-	down_write(&led_cdev->trigger_lock);
-	led_trigger_set(led_cdev, NULL);
-	up_write(&led_cdev->trigger_lock);
-}
-EXPORT_SYMBOL_GPL(led_trigger_remove);
+व्योम led_trigger_हटाओ(काष्ठा led_classdev *led_cdev)
+अणु
+	करोwn_ग_लिखो(&led_cdev->trigger_lock);
+	led_trigger_set(led_cdev, शून्य);
+	up_ग_लिखो(&led_cdev->trigger_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_हटाओ);
 
-void led_trigger_set_default(struct led_classdev *led_cdev)
-{
-	struct led_trigger *trig;
+व्योम led_trigger_set_शेष(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा led_trigger *trig;
 
-	if (!led_cdev->default_trigger)
-		return;
+	अगर (!led_cdev->शेष_trigger)
+		वापस;
 
-	down_read(&triggers_list_lock);
-	down_write(&led_cdev->trigger_lock);
-	list_for_each_entry(trig, &trigger_list, next_trig) {
-		if (!strcmp(led_cdev->default_trigger, trig->name) &&
-		    trigger_relevant(led_cdev, trig)) {
+	करोwn_पढ़ो(&triggers_list_lock);
+	करोwn_ग_लिखो(&led_cdev->trigger_lock);
+	list_क्रम_each_entry(trig, &trigger_list, next_trig) अणु
+		अगर (!म_भेद(led_cdev->शेष_trigger, trig->name) &&
+		    trigger_relevant(led_cdev, trig)) अणु
 			led_cdev->flags |= LED_INIT_DEFAULT_TRIGGER;
 			led_trigger_set(led_cdev, trig);
-			break;
-		}
-	}
-	up_write(&led_cdev->trigger_lock);
-	up_read(&triggers_list_lock);
-}
-EXPORT_SYMBOL_GPL(led_trigger_set_default);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&led_cdev->trigger_lock);
+	up_पढ़ो(&triggers_list_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_set_शेष);
 
-void led_trigger_rename_static(const char *name, struct led_trigger *trig)
-{
+व्योम led_trigger_नाम_अटल(स्थिर अक्षर *name, काष्ठा led_trigger *trig)
+अणु
 	/* new name must be on a temporary string to prevent races */
 	BUG_ON(name == trig->name);
 
-	down_write(&triggers_list_lock);
+	करोwn_ग_लिखो(&triggers_list_lock);
 	/* this assumes that trig->name was originaly allocated to
-	 * non constant storage */
-	strcpy((char *)trig->name, name);
-	up_write(&triggers_list_lock);
-}
-EXPORT_SYMBOL_GPL(led_trigger_rename_static);
+	 * non स्थिरant storage */
+	म_नकल((अक्षर *)trig->name, name);
+	up_ग_लिखो(&triggers_list_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_नाम_अटल);
 
 /* LED Trigger Interface */
 
-int led_trigger_register(struct led_trigger *trig)
-{
-	struct led_classdev *led_cdev;
-	struct led_trigger *_trig;
+पूर्णांक led_trigger_रेजिस्टर(काष्ठा led_trigger *trig)
+अणु
+	काष्ठा led_classdev *led_cdev;
+	काष्ठा led_trigger *_trig;
 
 	rwlock_init(&trig->leddev_list_lock);
 	INIT_LIST_HEAD(&trig->led_cdevs);
 
-	down_write(&triggers_list_lock);
-	/* Make sure the trigger's name isn't already in use */
-	list_for_each_entry(_trig, &trigger_list, next_trig) {
-		if (!strcmp(_trig->name, trig->name) &&
+	करोwn_ग_लिखो(&triggers_list_lock);
+	/* Make sure the trigger's name isn't alपढ़ोy in use */
+	list_क्रम_each_entry(_trig, &trigger_list, next_trig) अणु
+		अगर (!म_भेद(_trig->name, trig->name) &&
 		    (trig->trigger_type == _trig->trigger_type ||
-		     !trig->trigger_type || !_trig->trigger_type)) {
-			up_write(&triggers_list_lock);
-			return -EEXIST;
-		}
-	}
+		     !trig->trigger_type || !_trig->trigger_type)) अणु
+			up_ग_लिखो(&triggers_list_lock);
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
 	/* Add to the list of led triggers */
 	list_add_tail(&trig->next_trig, &trigger_list);
-	up_write(&triggers_list_lock);
+	up_ग_लिखो(&triggers_list_lock);
 
-	/* Register with any LEDs that have this as a default trigger */
-	down_read(&leds_list_lock);
-	list_for_each_entry(led_cdev, &leds_list, node) {
-		down_write(&led_cdev->trigger_lock);
-		if (!led_cdev->trigger && led_cdev->default_trigger &&
-		    !strcmp(led_cdev->default_trigger, trig->name) &&
-		    trigger_relevant(led_cdev, trig)) {
+	/* Register with any LEDs that have this as a शेष trigger */
+	करोwn_पढ़ो(&leds_list_lock);
+	list_क्रम_each_entry(led_cdev, &leds_list, node) अणु
+		करोwn_ग_लिखो(&led_cdev->trigger_lock);
+		अगर (!led_cdev->trigger && led_cdev->शेष_trigger &&
+		    !म_भेद(led_cdev->शेष_trigger, trig->name) &&
+		    trigger_relevant(led_cdev, trig)) अणु
 			led_cdev->flags |= LED_INIT_DEFAULT_TRIGGER;
 			led_trigger_set(led_cdev, trig);
-		}
-		up_write(&led_cdev->trigger_lock);
-	}
-	up_read(&leds_list_lock);
+		पूर्ण
+		up_ग_लिखो(&led_cdev->trigger_lock);
+	पूर्ण
+	up_पढ़ो(&leds_list_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(led_trigger_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_रेजिस्टर);
 
-void led_trigger_unregister(struct led_trigger *trig)
-{
-	struct led_classdev *led_cdev;
+व्योम led_trigger_unरेजिस्टर(काष्ठा led_trigger *trig)
+अणु
+	काष्ठा led_classdev *led_cdev;
 
-	if (list_empty_careful(&trig->next_trig))
-		return;
+	अगर (list_empty_careful(&trig->next_trig))
+		वापस;
 
 	/* Remove from the list of led triggers */
-	down_write(&triggers_list_lock);
+	करोwn_ग_लिखो(&triggers_list_lock);
 	list_del_init(&trig->next_trig);
-	up_write(&triggers_list_lock);
+	up_ग_लिखो(&triggers_list_lock);
 
 	/* Remove anyone actively using this trigger */
-	down_read(&leds_list_lock);
-	list_for_each_entry(led_cdev, &leds_list, node) {
-		down_write(&led_cdev->trigger_lock);
-		if (led_cdev->trigger == trig)
-			led_trigger_set(led_cdev, NULL);
-		up_write(&led_cdev->trigger_lock);
-	}
-	up_read(&leds_list_lock);
-}
-EXPORT_SYMBOL_GPL(led_trigger_unregister);
+	करोwn_पढ़ो(&leds_list_lock);
+	list_क्रम_each_entry(led_cdev, &leds_list, node) अणु
+		करोwn_ग_लिखो(&led_cdev->trigger_lock);
+		अगर (led_cdev->trigger == trig)
+			led_trigger_set(led_cdev, शून्य);
+		up_ग_लिखो(&led_cdev->trigger_lock);
+	पूर्ण
+	up_पढ़ो(&leds_list_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_unरेजिस्टर);
 
-static void devm_led_trigger_release(struct device *dev, void *res)
-{
-	led_trigger_unregister(*(struct led_trigger **)res);
-}
+अटल व्योम devm_led_trigger_release(काष्ठा device *dev, व्योम *res)
+अणु
+	led_trigger_unरेजिस्टर(*(काष्ठा led_trigger **)res);
+पूर्ण
 
-int devm_led_trigger_register(struct device *dev,
-			      struct led_trigger *trig)
-{
-	struct led_trigger **dr;
-	int rc;
+पूर्णांक devm_led_trigger_रेजिस्टर(काष्ठा device *dev,
+			      काष्ठा led_trigger *trig)
+अणु
+	काष्ठा led_trigger **dr;
+	पूर्णांक rc;
 
-	dr = devres_alloc(devm_led_trigger_release, sizeof(*dr),
+	dr = devres_alloc(devm_led_trigger_release, माप(*dr),
 			  GFP_KERNEL);
-	if (!dr)
-		return -ENOMEM;
+	अगर (!dr)
+		वापस -ENOMEM;
 
 	*dr = trig;
 
-	rc = led_trigger_register(trig);
-	if (rc)
-		devres_free(dr);
-	else
+	rc = led_trigger_रेजिस्टर(trig);
+	अगर (rc)
+		devres_मुक्त(dr);
+	अन्यथा
 		devres_add(dev, dr);
 
-	return rc;
-}
-EXPORT_SYMBOL_GPL(devm_led_trigger_register);
+	वापस rc;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_led_trigger_रेजिस्टर);
 
 /* Simple LED Trigger Interface */
 
-void led_trigger_event(struct led_trigger *trig,
-			enum led_brightness brightness)
-{
-	struct led_classdev *led_cdev;
-	unsigned long flags;
+व्योम led_trigger_event(काष्ठा led_trigger *trig,
+			क्रमागत led_brightness brightness)
+अणु
+	काष्ठा led_classdev *led_cdev;
+	अचिन्हित दीर्घ flags;
 
-	if (!trig)
-		return;
+	अगर (!trig)
+		वापस;
 
-	read_lock_irqsave(&trig->leddev_list_lock, flags);
-	list_for_each_entry(led_cdev, &trig->led_cdevs, trig_list)
+	पढ़ो_lock_irqsave(&trig->leddev_list_lock, flags);
+	list_क्रम_each_entry(led_cdev, &trig->led_cdevs, trig_list)
 		led_set_brightness(led_cdev, brightness);
-	read_unlock_irqrestore(&trig->leddev_list_lock, flags);
-}
+	पढ़ो_unlock_irqrestore(&trig->leddev_list_lock, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(led_trigger_event);
 
-static void led_trigger_blink_setup(struct led_trigger *trig,
-			     unsigned long *delay_on,
-			     unsigned long *delay_off,
-			     int oneshot,
-			     int invert)
-{
-	struct led_classdev *led_cdev;
-	unsigned long flags;
+अटल व्योम led_trigger_blink_setup(काष्ठा led_trigger *trig,
+			     अचिन्हित दीर्घ *delay_on,
+			     अचिन्हित दीर्घ *delay_off,
+			     पूर्णांक oneshot,
+			     पूर्णांक invert)
+अणु
+	काष्ठा led_classdev *led_cdev;
+	अचिन्हित दीर्घ flags;
 
-	if (!trig)
-		return;
+	अगर (!trig)
+		वापस;
 
-	read_lock_irqsave(&trig->leddev_list_lock, flags);
-	list_for_each_entry(led_cdev, &trig->led_cdevs, trig_list) {
-		if (oneshot)
+	पढ़ो_lock_irqsave(&trig->leddev_list_lock, flags);
+	list_क्रम_each_entry(led_cdev, &trig->led_cdevs, trig_list) अणु
+		अगर (oneshot)
 			led_blink_set_oneshot(led_cdev, delay_on, delay_off,
 					      invert);
-		else
+		अन्यथा
 			led_blink_set(led_cdev, delay_on, delay_off);
-	}
-	read_unlock_irqrestore(&trig->leddev_list_lock, flags);
-}
+	पूर्ण
+	पढ़ो_unlock_irqrestore(&trig->leddev_list_lock, flags);
+पूर्ण
 
-void led_trigger_blink(struct led_trigger *trig,
-		       unsigned long *delay_on,
-		       unsigned long *delay_off)
-{
+व्योम led_trigger_blink(काष्ठा led_trigger *trig,
+		       अचिन्हित दीर्घ *delay_on,
+		       अचिन्हित दीर्घ *delay_off)
+अणु
 	led_trigger_blink_setup(trig, delay_on, delay_off, 0, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(led_trigger_blink);
 
-void led_trigger_blink_oneshot(struct led_trigger *trig,
-			       unsigned long *delay_on,
-			       unsigned long *delay_off,
-			       int invert)
-{
+व्योम led_trigger_blink_oneshot(काष्ठा led_trigger *trig,
+			       अचिन्हित दीर्घ *delay_on,
+			       अचिन्हित दीर्घ *delay_off,
+			       पूर्णांक invert)
+अणु
 	led_trigger_blink_setup(trig, delay_on, delay_off, 1, invert);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(led_trigger_blink_oneshot);
 
-void led_trigger_register_simple(const char *name, struct led_trigger **tp)
-{
-	struct led_trigger *trig;
-	int err;
+व्योम led_trigger_रेजिस्टर_simple(स्थिर अक्षर *name, काष्ठा led_trigger **tp)
+अणु
+	काष्ठा led_trigger *trig;
+	पूर्णांक err;
 
-	trig = kzalloc(sizeof(struct led_trigger), GFP_KERNEL);
+	trig = kzalloc(माप(काष्ठा led_trigger), GFP_KERNEL);
 
-	if (trig) {
+	अगर (trig) अणु
 		trig->name = name;
-		err = led_trigger_register(trig);
-		if (err < 0) {
-			kfree(trig);
-			trig = NULL;
+		err = led_trigger_रेजिस्टर(trig);
+		अगर (err < 0) अणु
+			kमुक्त(trig);
+			trig = शून्य;
 			pr_warn("LED trigger %s failed to register (%d)\n",
 				name, err);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_warn("LED trigger %s failed to register (no memory)\n",
 			name);
-	}
+	पूर्ण
 	*tp = trig;
-}
-EXPORT_SYMBOL_GPL(led_trigger_register_simple);
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_रेजिस्टर_simple);
 
-void led_trigger_unregister_simple(struct led_trigger *trig)
-{
-	if (trig)
-		led_trigger_unregister(trig);
-	kfree(trig);
-}
-EXPORT_SYMBOL_GPL(led_trigger_unregister_simple);
+व्योम led_trigger_unरेजिस्टर_simple(काष्ठा led_trigger *trig)
+अणु
+	अगर (trig)
+		led_trigger_unरेजिस्टर(trig);
+	kमुक्त(trig);
+पूर्ण
+EXPORT_SYMBOL_GPL(led_trigger_unरेजिस्टर_simple);

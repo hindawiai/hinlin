@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _DT_BINDINGS_INTERRUPT_CONTROLLER_MIPS_GIC_H
-#define _DT_BINDINGS_INTERRUPT_CONTROLLER_MIPS_GIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _DT_BINDINGS_INTERRUPT_CONTROLLER_MIPS_GIC_H
+#घोषणा _DT_BINDINGS_INTERRUPT_CONTROLLER_MIPS_GIC_H
 
-#include <dt-bindings/interrupt-controller/irq.h>
+#समावेश <dt-bindings/पूर्णांकerrupt-controller/irq.h>
 
-#define GIC_SHARED 0
-#define GIC_LOCAL 1
+#घोषणा GIC_SHARED 0
+#घोषणा GIC_LOCAL 1
 
-#endif
+#पूर्ण_अगर

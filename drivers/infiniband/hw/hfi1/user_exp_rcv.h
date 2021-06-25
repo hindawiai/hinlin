@@ -1,44 +1,45 @@
-#ifndef _HFI1_USER_EXP_RCV_H
-#define _HFI1_USER_EXP_RCV_H
+<शैली गुरु>
+#अगर_अघोषित _HFI1_USER_EXP_RCV_H
+#घोषणा _HFI1_USER_EXP_RCV_H
 /*
  * Copyright(c) 2020 - Cornelis Networks, Inc.
  * Copyright(c) 2015 - 2017 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -48,57 +49,57 @@
  *
  */
 
-#include "hfi.h"
-#include "exp_rcv.h"
+#समावेश "hfi.h"
+#समावेश "exp_rcv.h"
 
-struct tid_pageset {
+काष्ठा tid_pageset अणु
 	u16 idx;
 	u16 count;
-};
+पूर्ण;
 
-struct tid_user_buf {
-	unsigned long vaddr;
-	unsigned long length;
-	unsigned int npages;
-	struct page **pages;
-	struct tid_pageset *psets;
-	unsigned int n_psets;
-};
+काष्ठा tid_user_buf अणु
+	अचिन्हित दीर्घ vaddr;
+	अचिन्हित दीर्घ length;
+	अचिन्हित पूर्णांक npages;
+	काष्ठा page **pages;
+	काष्ठा tid_pageset *psets;
+	अचिन्हित पूर्णांक n_psets;
+पूर्ण;
 
-struct tid_rb_node {
-	struct mmu_interval_notifier notifier;
-	struct hfi1_filedata *fdata;
-	unsigned long phys;
-	struct tid_group *grp;
+काष्ठा tid_rb_node अणु
+	काष्ठा mmu_पूर्णांकerval_notअगरier notअगरier;
+	काष्ठा hfi1_filedata *fdata;
+	अचिन्हित दीर्घ phys;
+	काष्ठा tid_group *grp;
 	u32 rcventry;
 	dma_addr_t dma_addr;
-	bool freed;
-	unsigned int npages;
-	struct page *pages[];
-};
+	bool मुक्तd;
+	अचिन्हित पूर्णांक npages;
+	काष्ठा page *pages[];
+पूर्ण;
 
-static inline int num_user_pages(unsigned long addr,
-				 unsigned long len)
-{
-	const unsigned long spage = addr & PAGE_MASK;
-	const unsigned long epage = (addr + len - 1) & PAGE_MASK;
+अटल अंतरभूत पूर्णांक num_user_pages(अचिन्हित दीर्घ addr,
+				 अचिन्हित दीर्घ len)
+अणु
+	स्थिर अचिन्हित दीर्घ spage = addr & PAGE_MASK;
+	स्थिर अचिन्हित दीर्घ epage = (addr + len - 1) & PAGE_MASK;
 
-	return 1 + ((epage - spage) >> PAGE_SHIFT);
-}
+	वापस 1 + ((epage - spage) >> PAGE_SHIFT);
+पूर्ण
 
-int hfi1_user_exp_rcv_init(struct hfi1_filedata *fd,
-			   struct hfi1_ctxtdata *uctxt);
-void hfi1_user_exp_rcv_free(struct hfi1_filedata *fd);
-int hfi1_user_exp_rcv_setup(struct hfi1_filedata *fd,
-			    struct hfi1_tid_info *tinfo);
-int hfi1_user_exp_rcv_clear(struct hfi1_filedata *fd,
-			    struct hfi1_tid_info *tinfo);
-int hfi1_user_exp_rcv_invalid(struct hfi1_filedata *fd,
-			      struct hfi1_tid_info *tinfo);
+पूर्णांक hfi1_user_exp_rcv_init(काष्ठा hfi1_filedata *fd,
+			   काष्ठा hfi1_ctxtdata *uctxt);
+व्योम hfi1_user_exp_rcv_मुक्त(काष्ठा hfi1_filedata *fd);
+पूर्णांक hfi1_user_exp_rcv_setup(काष्ठा hfi1_filedata *fd,
+			    काष्ठा hfi1_tid_info *tinfo);
+पूर्णांक hfi1_user_exp_rcv_clear(काष्ठा hfi1_filedata *fd,
+			    काष्ठा hfi1_tid_info *tinfo);
+पूर्णांक hfi1_user_exp_rcv_invalid(काष्ठा hfi1_filedata *fd,
+			      काष्ठा hfi1_tid_info *tinfo);
 
-static inline struct mm_struct *mm_from_tid_node(struct tid_rb_node *node)
-{
-	return node->notifier.mm;
-}
+अटल अंतरभूत काष्ठा mm_काष्ठा *mm_from_tid_node(काष्ठा tid_rb_node *node)
+अणु
+	वापस node->notअगरier.mm;
+पूर्ण
 
-#endif /* _HFI1_USER_EXP_RCV_H */
+#पूर्ण_अगर /* _HFI1_USER_EXP_RCV_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/ocfs2/ioctl.c
  *
@@ -6,971 +7,971 @@
  * adapted from Remy Card's ext2/ioctl.c
  */
 
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/blkdev.h>
-#include <linux/compat.h>
-#include <linux/fileattr.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/fileattr.h>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
-#include "alloc.h"
-#include "dlmglue.h"
-#include "file.h"
-#include "inode.h"
-#include "journal.h"
+#समावेश "ocfs2.h"
+#समावेश "alloc.h"
+#समावेश "dlmglue.h"
+#समावेश "file.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
 
-#include "ocfs2_fs.h"
-#include "ioctl.h"
-#include "resize.h"
-#include "refcounttree.h"
-#include "sysfile.h"
-#include "dir.h"
-#include "buffer_head_io.h"
-#include "suballoc.h"
-#include "move_extents.h"
+#समावेश "ocfs2_fs.h"
+#समावेश "ioctl.h"
+#समावेश "resize.h"
+#समावेश "refcounttree.h"
+#समावेश "sysfile.h"
+#समावेश "dir.h"
+#समावेश "buffer_head_io.h"
+#समावेश "suballoc.h"
+#समावेश "move_extents.h"
 
-#define o2info_from_user(a, b)	\
-		copy_from_user(&(a), (b), sizeof(a))
-#define o2info_to_user(a, b)	\
-		copy_to_user((typeof(a) __user *)b, &(a), sizeof(a))
+#घोषणा o2info_from_user(a, b)	\
+		copy_from_user(&(a), (b), माप(a))
+#घोषणा o2info_to_user(a, b)	\
+		copy_to_user((typeof(a) __user *)b, &(a), माप(a))
 
 /*
- * This is just a best-effort to tell userspace that this request
+ * This is just a best-efक्रमt to tell userspace that this request
  * caused the error.
  */
-static inline void o2info_set_request_error(struct ocfs2_info_request *kreq,
-					struct ocfs2_info_request __user *req)
-{
+अटल अंतरभूत व्योम o2info_set_request_error(काष्ठा ocfs2_info_request *kreq,
+					काष्ठा ocfs2_info_request __user *req)
+अणु
 	kreq->ir_flags |= OCFS2_INFO_FL_ERROR;
-	(void)put_user(kreq->ir_flags, (__u32 __user *)&(req->ir_flags));
-}
+	(व्योम)put_user(kreq->ir_flags, (__u32 __user *)&(req->ir_flags));
+पूर्ण
 
-static inline void o2info_set_request_filled(struct ocfs2_info_request *req)
-{
+अटल अंतरभूत व्योम o2info_set_request_filled(काष्ठा ocfs2_info_request *req)
+अणु
 	req->ir_flags |= OCFS2_INFO_FL_FILLED;
-}
+पूर्ण
 
-static inline void o2info_clear_request_filled(struct ocfs2_info_request *req)
-{
+अटल अंतरभूत व्योम o2info_clear_request_filled(काष्ठा ocfs2_info_request *req)
+अणु
 	req->ir_flags &= ~OCFS2_INFO_FL_FILLED;
-}
+पूर्ण
 
-static inline int o2info_coherent(struct ocfs2_info_request *req)
-{
-	return (!(req->ir_flags & OCFS2_INFO_FL_NON_COHERENT));
-}
+अटल अंतरभूत पूर्णांक o2info_coherent(काष्ठा ocfs2_info_request *req)
+अणु
+	वापस (!(req->ir_flags & OCFS2_INFO_FL_NON_COHERENT));
+पूर्ण
 
-int ocfs2_fileattr_get(struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	unsigned int flags;
-	int status;
+पूर्णांक ocfs2_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक status;
 
-	status = ocfs2_inode_lock(inode, NULL, 0);
-	if (status < 0) {
-		mlog_errno(status);
-		return status;
-	}
+	status = ocfs2_inode_lock(inode, शून्य, 0);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		वापस status;
+	पूर्ण
 	ocfs2_get_inode_flags(OCFS2_I(inode));
 	flags = OCFS2_I(inode)->ip_attr;
 	ocfs2_inode_unlock(inode, 0);
 
 	fileattr_fill_flags(fa, flags & OCFS2_FL_VISIBLE);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_fileattr_set(struct user_namespace *mnt_userns,
-		       struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	unsigned int flags = fa->flags;
-	struct ocfs2_inode_info *ocfs2_inode = OCFS2_I(inode);
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	handle_t *handle = NULL;
-	struct buffer_head *bh = NULL;
-	unsigned oldflags;
-	int status;
+पूर्णांक ocfs2_fileattr_set(काष्ठा user_namespace *mnt_userns,
+		       काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	अचिन्हित पूर्णांक flags = fa->flags;
+	काष्ठा ocfs2_inode_info *ocfs2_inode = OCFS2_I(inode);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	handle_t *handle = शून्य;
+	काष्ठा buffer_head *bh = शून्य;
+	अचिन्हित oldflags;
+	पूर्णांक status;
 
-	if (fileattr_has_fsx(fa))
-		return -EOPNOTSUPP;
+	अगर (fileattr_has_fsx(fa))
+		वापस -EOPNOTSUPP;
 
 	status = ocfs2_inode_lock(inode, &bh, 1);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	if (!S_ISDIR(inode->i_mode))
-		flags &= ~OCFS2_DIRSYNC_FL;
+	अगर (!S_ISसूची(inode->i_mode))
+		flags &= ~OCFS2_सूचीSYNC_FL;
 
 	oldflags = ocfs2_inode->ip_attr;
 	flags = flags & OCFS2_FL_MODIFIABLE;
 	flags |= oldflags & ~OCFS2_FL_MODIFIABLE;
 
-	/* Check already done by VFS, but repeat with ocfs lock */
+	/* Check alपढ़ोy करोne by VFS, but repeat with ocfs lock */
 	status = -EPERM;
-	if ((flags ^ oldflags) & (FS_APPEND_FL | FS_IMMUTABLE_FL) &&
+	अगर ((flags ^ oldflags) & (FS_APPEND_FL | FS_IMMUTABLE_FL) &&
 	    !capable(CAP_LINUX_IMMUTABLE))
-		goto bail_unlock;
+		जाओ bail_unlock;
 
 	handle = ocfs2_start_trans(osb, OCFS2_INODE_UPDATE_CREDITS);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		mlog_errno(status);
-		goto bail_unlock;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail_unlock;
+	पूर्ण
 
 	ocfs2_inode->ip_attr = flags;
 	ocfs2_set_inode_flags(inode);
 
 	status = ocfs2_mark_inode_dirty(handle, inode, bh);
-	if (status < 0)
-		mlog_errno(status);
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
 
 	ocfs2_commit_trans(osb, handle);
 
 bail_unlock:
 	ocfs2_inode_unlock(inode, 1);
 bail:
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_info_handle_blocksize(struct inode *inode,
-				       struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_blocksize oib;
+अटल पूर्णांक ocfs2_info_handle_blocksize(काष्ठा inode *inode,
+				       काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_blocksize oib;
 
-	if (o2info_from_user(oib, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oib, req))
+		वापस -EFAULT;
 
 	oib.ib_blocksize = inode->i_sb->s_blocksize;
 
 	o2info_set_request_filled(&oib.ib_req);
 
-	if (o2info_to_user(oib, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oib, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_handle_clustersize(struct inode *inode,
-					 struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_clustersize oic;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_info_handle_clustersize(काष्ठा inode *inode,
+					 काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_clustersize oic;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (o2info_from_user(oic, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oic, req))
+		वापस -EFAULT;
 
 	oic.ic_clustersize = osb->s_clustersize;
 
 	o2info_set_request_filled(&oic.ic_req);
 
-	if (o2info_to_user(oic, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oic, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_handle_maxslots(struct inode *inode,
-				      struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_maxslots oim;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_info_handle_maxslots(काष्ठा inode *inode,
+				      काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_maxslots oim;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (o2info_from_user(oim, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oim, req))
+		वापस -EFAULT;
 
 	oim.im_max_slots = osb->max_slots;
 
 	o2info_set_request_filled(&oim.im_req);
 
-	if (o2info_to_user(oim, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oim, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_handle_label(struct inode *inode,
-				   struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_label oil;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_info_handle_label(काष्ठा inode *inode,
+				   काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_label oil;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (o2info_from_user(oil, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oil, req))
+		वापस -EFAULT;
 
-	memcpy(oil.il_label, osb->vol_label, OCFS2_MAX_VOL_LABEL_LEN);
+	स_नकल(oil.il_label, osb->vol_label, OCFS2_MAX_VOL_LABEL_LEN);
 
 	o2info_set_request_filled(&oil.il_req);
 
-	if (o2info_to_user(oil, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oil, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_handle_uuid(struct inode *inode,
-				  struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_uuid oiu;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_info_handle_uuid(काष्ठा inode *inode,
+				  काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_uuid oiu;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (o2info_from_user(oiu, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oiu, req))
+		वापस -EFAULT;
 
-	memcpy(oiu.iu_uuid_str, osb->uuid_str, OCFS2_TEXT_UUID_LEN + 1);
+	स_नकल(oiu.iu_uuid_str, osb->uuid_str, OCFS2_TEXT_UUID_LEN + 1);
 
 	o2info_set_request_filled(&oiu.iu_req);
 
-	if (o2info_to_user(oiu, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oiu, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_handle_fs_features(struct inode *inode,
-					 struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_fs_features oif;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_info_handle_fs_features(काष्ठा inode *inode,
+					 काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_fs_features oअगर;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (o2info_from_user(oif, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oअगर, req))
+		वापस -EFAULT;
 
-	oif.if_compat_features = osb->s_feature_compat;
-	oif.if_incompat_features = osb->s_feature_incompat;
-	oif.if_ro_compat_features = osb->s_feature_ro_compat;
+	oअगर.अगर_compat_features = osb->s_feature_compat;
+	oअगर.अगर_incompat_features = osb->s_feature_incompat;
+	oअगर.अगर_ro_compat_features = osb->s_feature_ro_compat;
 
-	o2info_set_request_filled(&oif.if_req);
+	o2info_set_request_filled(&oअगर.अगर_req);
 
-	if (o2info_to_user(oif, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oअगर, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_handle_journal_size(struct inode *inode,
-					  struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_journal_size oij;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अटल पूर्णांक ocfs2_info_handle_journal_size(काष्ठा inode *inode,
+					  काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_journal_size oij;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	if (o2info_from_user(oij, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oij, req))
+		वापस -EFAULT;
 
-	oij.ij_journal_size = i_size_read(osb->journal->j_inode);
+	oij.ij_journal_size = i_size_पढ़ो(osb->journal->j_inode);
 
 	o2info_set_request_filled(&oij.ij_req);
 
-	if (o2info_to_user(oij, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oij, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_info_scan_inode_alloc(struct ocfs2_super *osb,
-				       struct inode *inode_alloc, u64 blkno,
-				       struct ocfs2_info_freeinode *fi,
+अटल पूर्णांक ocfs2_info_scan_inode_alloc(काष्ठा ocfs2_super *osb,
+				       काष्ठा inode *inode_alloc, u64 blkno,
+				       काष्ठा ocfs2_info_मुक्तinode *fi,
 				       u32 slot)
-{
-	int status = 0, unlock = 0;
+अणु
+	पूर्णांक status = 0, unlock = 0;
 
-	struct buffer_head *bh = NULL;
-	struct ocfs2_dinode *dinode_alloc = NULL;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा ocfs2_dinode *dinode_alloc = शून्य;
 
-	if (inode_alloc)
+	अगर (inode_alloc)
 		inode_lock(inode_alloc);
 
-	if (inode_alloc && o2info_coherent(&fi->ifi_req)) {
+	अगर (inode_alloc && o2info_coherent(&fi->अगरi_req)) अणु
 		status = ocfs2_inode_lock(inode_alloc, &bh, 0);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
 		unlock = 1;
-	} else {
-		status = ocfs2_read_blocks_sync(osb, blkno, 1, &bh);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+	पूर्ण अन्यथा अणु
+		status = ocfs2_पढ़ो_blocks_sync(osb, blkno, 1, &bh);
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	dinode_alloc = (struct ocfs2_dinode *)bh->b_data;
+	dinode_alloc = (काष्ठा ocfs2_dinode *)bh->b_data;
 
-	fi->ifi_stat[slot].lfi_total =
-		le32_to_cpu(dinode_alloc->id1.bitmap1.i_total);
-	fi->ifi_stat[slot].lfi_free =
-		le32_to_cpu(dinode_alloc->id1.bitmap1.i_total) -
-		le32_to_cpu(dinode_alloc->id1.bitmap1.i_used);
+	fi->अगरi_stat[slot].lfi_total =
+		le32_to_cpu(dinode_alloc->id1.biपंचांगap1.i_total);
+	fi->अगरi_stat[slot].lfi_मुक्त =
+		le32_to_cpu(dinode_alloc->id1.biपंचांगap1.i_total) -
+		le32_to_cpu(dinode_alloc->id1.biपंचांगap1.i_used);
 
 bail:
-	if (unlock)
+	अगर (unlock)
 		ocfs2_inode_unlock(inode_alloc, 0);
 
-	if (inode_alloc)
+	अगर (inode_alloc)
 		inode_unlock(inode_alloc);
 
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_info_handle_freeinode(struct inode *inode,
-				       struct ocfs2_info_request __user *req)
-{
+अटल पूर्णांक ocfs2_info_handle_मुक्तinode(काष्ठा inode *inode,
+				       काष्ठा ocfs2_info_request __user *req)
+अणु
 	u32 i;
 	u64 blkno = -1;
-	char namebuf[40];
-	int status, type = INODE_ALLOC_SYSTEM_INODE;
-	struct ocfs2_info_freeinode *oifi = NULL;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct inode *inode_alloc = NULL;
+	अक्षर namebuf[40];
+	पूर्णांक status, type = INODE_ALLOC_SYSTEM_INODE;
+	काष्ठा ocfs2_info_मुक्तinode *oअगरi = शून्य;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा inode *inode_alloc = शून्य;
 
-	oifi = kzalloc(sizeof(struct ocfs2_info_freeinode), GFP_KERNEL);
-	if (!oifi) {
+	oअगरi = kzalloc(माप(काष्ठा ocfs2_info_मुक्तinode), GFP_KERNEL);
+	अगर (!oअगरi) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto out_err;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ out_err;
+	पूर्ण
 
-	if (o2info_from_user(*oifi, req)) {
+	अगर (o2info_from_user(*oअगरi, req)) अणु
 		status = -EFAULT;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	oifi->ifi_slotnum = osb->max_slots;
+	oअगरi->अगरi_slotnum = osb->max_slots;
 
-	for (i = 0; i < oifi->ifi_slotnum; i++) {
-		if (o2info_coherent(&oifi->ifi_req)) {
-			inode_alloc = ocfs2_get_system_file_inode(osb, type, i);
-			if (!inode_alloc) {
+	क्रम (i = 0; i < oअगरi->अगरi_slotnum; i++) अणु
+		अगर (o2info_coherent(&oअगरi->अगरi_req)) अणु
+			inode_alloc = ocfs2_get_प्रणाली_file_inode(osb, type, i);
+			अगर (!inode_alloc) अणु
 				mlog(ML_ERROR, "unable to get alloc inode in "
 				    "slot %u\n", i);
 				status = -EIO;
-				goto bail;
-			}
-		} else {
-			ocfs2_sprintf_system_inode_name(namebuf,
-							sizeof(namebuf),
+				जाओ bail;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ocfs2_प्र_लिखो_प्रणाली_inode_name(namebuf,
+							माप(namebuf),
 							type, i);
 			status = ocfs2_lookup_ino_from_name(osb->sys_root_inode,
 							    namebuf,
-							    strlen(namebuf),
+							    म_माप(namebuf),
 							    &blkno);
-			if (status < 0) {
+			अगर (status < 0) अणु
 				status = -ENOENT;
-				goto bail;
-			}
-		}
+				जाओ bail;
+			पूर्ण
+		पूर्ण
 
-		status = ocfs2_info_scan_inode_alloc(osb, inode_alloc, blkno, oifi, i);
+		status = ocfs2_info_scan_inode_alloc(osb, inode_alloc, blkno, oअगरi, i);
 
 		iput(inode_alloc);
-		inode_alloc = NULL;
+		inode_alloc = शून्य;
 
-		if (status < 0)
-			goto bail;
-	}
+		अगर (status < 0)
+			जाओ bail;
+	पूर्ण
 
-	o2info_set_request_filled(&oifi->ifi_req);
+	o2info_set_request_filled(&oअगरi->अगरi_req);
 
-	if (o2info_to_user(*oifi, req)) {
+	अगर (o2info_to_user(*oअगरi, req)) अणु
 		status = -EFAULT;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	status = 0;
 bail:
-	if (status)
-		o2info_set_request_error(&oifi->ifi_req, req);
-out_free:
-	kfree(oifi);
+	अगर (status)
+		o2info_set_request_error(&oअगरi->अगरi_req, req);
+out_मुक्त:
+	kमुक्त(oअगरi);
 out_err:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void o2ffg_update_histogram(struct ocfs2_info_free_chunk_list *hist,
-				   unsigned int chunksize)
-{
+अटल व्योम o2ffg_update_histogram(काष्ठा ocfs2_info_मुक्त_chunk_list *hist,
+				   अचिन्हित पूर्णांक chunksize)
+अणु
 	u32 index;
 
 	index = __ilog2_u32(chunksize);
-	if (index >= OCFS2_INFO_MAX_HIST)
+	अगर (index >= OCFS2_INFO_MAX_HIST)
 		index = OCFS2_INFO_MAX_HIST - 1;
 
 	hist->fc_chunks[index]++;
 	hist->fc_clusters[index] += chunksize;
-}
+पूर्ण
 
-static void o2ffg_update_stats(struct ocfs2_info_freefrag_stats *stats,
-			       unsigned int chunksize)
-{
-	if (chunksize > stats->ffs_max)
+अटल व्योम o2ffg_update_stats(काष्ठा ocfs2_info_मुक्तfrag_stats *stats,
+			       अचिन्हित पूर्णांक chunksize)
+अणु
+	अगर (chunksize > stats->ffs_max)
 		stats->ffs_max = chunksize;
 
-	if (chunksize < stats->ffs_min)
+	अगर (chunksize < stats->ffs_min)
 		stats->ffs_min = chunksize;
 
 	stats->ffs_avg += chunksize;
-	stats->ffs_free_chunks_real++;
-}
+	stats->ffs_मुक्त_chunks_real++;
+पूर्ण
 
-static void ocfs2_info_update_ffg(struct ocfs2_info_freefrag *ffg,
-				  unsigned int chunksize)
-{
-	o2ffg_update_histogram(&(ffg->iff_ffs.ffs_fc_hist), chunksize);
-	o2ffg_update_stats(&(ffg->iff_ffs), chunksize);
-}
+अटल व्योम ocfs2_info_update_ffg(काष्ठा ocfs2_info_मुक्तfrag *ffg,
+				  अचिन्हित पूर्णांक chunksize)
+अणु
+	o2ffg_update_histogram(&(ffg->अगरf_ffs.ffs_fc_hist), chunksize);
+	o2ffg_update_stats(&(ffg->अगरf_ffs), chunksize);
+पूर्ण
 
-static int ocfs2_info_freefrag_scan_chain(struct ocfs2_super *osb,
-					  struct inode *gb_inode,
-					  struct ocfs2_dinode *gb_dinode,
-					  struct ocfs2_chain_rec *rec,
-					  struct ocfs2_info_freefrag *ffg,
+अटल पूर्णांक ocfs2_info_मुक्तfrag_scan_chain(काष्ठा ocfs2_super *osb,
+					  काष्ठा inode *gb_inode,
+					  काष्ठा ocfs2_dinode *gb_dinode,
+					  काष्ठा ocfs2_chain_rec *rec,
+					  काष्ठा ocfs2_info_मुक्तfrag *ffg,
 					  u32 chunks_in_group)
-{
-	int status = 0, used;
+अणु
+	पूर्णांक status = 0, used;
 	u64 blkno;
 
-	struct buffer_head *bh = NULL;
-	struct ocfs2_group_desc *bg = NULL;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा ocfs2_group_desc *bg = शून्य;
 
-	unsigned int max_bits, num_clusters;
-	unsigned int offset = 0, cluster, chunk;
-	unsigned int chunk_free, last_chunksize = 0;
+	अचिन्हित पूर्णांक max_bits, num_clusters;
+	अचिन्हित पूर्णांक offset = 0, cluster, chunk;
+	अचिन्हित पूर्णांक chunk_मुक्त, last_chunksize = 0;
 
-	if (!le32_to_cpu(rec->c_free))
-		goto bail;
+	अगर (!le32_to_cpu(rec->c_मुक्त))
+		जाओ bail;
 
-	do {
-		if (!bg)
+	करो अणु
+		अगर (!bg)
 			blkno = le64_to_cpu(rec->c_blkno);
-		else
+		अन्यथा
 			blkno = le64_to_cpu(bg->bg_next_group);
 
-		if (bh) {
-			brelse(bh);
-			bh = NULL;
-		}
+		अगर (bh) अणु
+			brअन्यथा(bh);
+			bh = शून्य;
+		पूर्ण
 
-		if (o2info_coherent(&ffg->iff_req))
-			status = ocfs2_read_group_descriptor(gb_inode,
+		अगर (o2info_coherent(&ffg->अगरf_req))
+			status = ocfs2_पढ़ो_group_descriptor(gb_inode,
 							     gb_dinode,
 							     blkno, &bh);
-		else
-			status = ocfs2_read_blocks_sync(osb, blkno, 1, &bh);
+		अन्यथा
+			status = ocfs2_पढ़ो_blocks_sync(osb, blkno, 1, &bh);
 
-		if (status < 0) {
+		अगर (status < 0) अणु
 			mlog(ML_ERROR, "Can't read the group descriptor # "
-			     "%llu from device.", (unsigned long long)blkno);
+			     "%llu from device.", (अचिन्हित दीर्घ दीर्घ)blkno);
 			status = -EIO;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
-		bg = (struct ocfs2_group_desc *)bh->b_data;
+		bg = (काष्ठा ocfs2_group_desc *)bh->b_data;
 
-		if (!le16_to_cpu(bg->bg_free_bits_count))
-			continue;
+		अगर (!le16_to_cpu(bg->bg_मुक्त_bits_count))
+			जारी;
 
 		max_bits = le16_to_cpu(bg->bg_bits);
 		offset = 0;
 
-		for (chunk = 0; chunk < chunks_in_group; chunk++) {
+		क्रम (chunk = 0; chunk < chunks_in_group; chunk++) अणु
 			/*
 			 * last chunk may be not an entire one.
 			 */
-			if ((offset + ffg->iff_chunksize) > max_bits)
+			अगर ((offset + ffg->अगरf_chunksize) > max_bits)
 				num_clusters = max_bits - offset;
-			else
-				num_clusters = ffg->iff_chunksize;
+			अन्यथा
+				num_clusters = ffg->अगरf_chunksize;
 
-			chunk_free = 0;
-			for (cluster = 0; cluster < num_clusters; cluster++) {
+			chunk_मुक्त = 0;
+			क्रम (cluster = 0; cluster < num_clusters; cluster++) अणु
 				used = ocfs2_test_bit(offset,
-						(unsigned long *)bg->bg_bitmap);
+						(अचिन्हित दीर्घ *)bg->bg_biपंचांगap);
 				/*
-				 * - chunk_free counts free clusters in #N chunk.
+				 * - chunk_मुक्त counts मुक्त clusters in #N chunk.
 				 * - last_chunksize records the size(in) clusters
-				 *   for the last real free chunk being counted.
+				 *   क्रम the last real मुक्त chunk being counted.
 				 */
-				if (!used) {
+				अगर (!used) अणु
 					last_chunksize++;
-					chunk_free++;
-				}
+					chunk_मुक्त++;
+				पूर्ण
 
-				if (used && last_chunksize) {
+				अगर (used && last_chunksize) अणु
 					ocfs2_info_update_ffg(ffg,
 							      last_chunksize);
 					last_chunksize = 0;
-				}
+				पूर्ण
 
 				offset++;
-			}
+			पूर्ण
 
-			if (chunk_free == ffg->iff_chunksize)
-				ffg->iff_ffs.ffs_free_chunks++;
-		}
+			अगर (chunk_मुक्त == ffg->अगरf_chunksize)
+				ffg->अगरf_ffs.ffs_मुक्त_chunks++;
+		पूर्ण
 
 		/*
-		 * need to update the info for last free chunk.
+		 * need to update the info क्रम last मुक्त chunk.
 		 */
-		if (last_chunksize)
+		अगर (last_chunksize)
 			ocfs2_info_update_ffg(ffg, last_chunksize);
 
-	} while (le64_to_cpu(bg->bg_next_group));
+	पूर्ण जबतक (le64_to_cpu(bg->bg_next_group));
 
 bail:
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_info_freefrag_scan_bitmap(struct ocfs2_super *osb,
-					   struct inode *gb_inode, u64 blkno,
-					   struct ocfs2_info_freefrag *ffg)
-{
+अटल पूर्णांक ocfs2_info_मुक्तfrag_scan_biपंचांगap(काष्ठा ocfs2_super *osb,
+					   काष्ठा inode *gb_inode, u64 blkno,
+					   काष्ठा ocfs2_info_मुक्तfrag *ffg)
+अणु
 	u32 chunks_in_group;
-	int status = 0, unlock = 0, i;
+	पूर्णांक status = 0, unlock = 0, i;
 
-	struct buffer_head *bh = NULL;
-	struct ocfs2_chain_list *cl = NULL;
-	struct ocfs2_chain_rec *rec = NULL;
-	struct ocfs2_dinode *gb_dinode = NULL;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा ocfs2_chain_list *cl = शून्य;
+	काष्ठा ocfs2_chain_rec *rec = शून्य;
+	काष्ठा ocfs2_dinode *gb_dinode = शून्य;
 
-	if (gb_inode)
+	अगर (gb_inode)
 		inode_lock(gb_inode);
 
-	if (o2info_coherent(&ffg->iff_req)) {
+	अगर (o2info_coherent(&ffg->अगरf_req)) अणु
 		status = ocfs2_inode_lock(gb_inode, &bh, 0);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
 		unlock = 1;
-	} else {
-		status = ocfs2_read_blocks_sync(osb, blkno, 1, &bh);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+	पूर्ण अन्यथा अणु
+		status = ocfs2_पढ़ो_blocks_sync(osb, blkno, 1, &bh);
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	gb_dinode = (struct ocfs2_dinode *)bh->b_data;
+	gb_dinode = (काष्ठा ocfs2_dinode *)bh->b_data;
 	cl = &(gb_dinode->id2.i_chain);
 
 	/*
 	 * Chunksize(in) clusters from userspace should be
 	 * less than clusters in a group.
 	 */
-	if (ffg->iff_chunksize > le16_to_cpu(cl->cl_cpg)) {
+	अगर (ffg->अगरf_chunksize > le16_to_cpu(cl->cl_cpg)) अणु
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	memset(&ffg->iff_ffs, 0, sizeof(struct ocfs2_info_freefrag_stats));
+	स_रखो(&ffg->अगरf_ffs, 0, माप(काष्ठा ocfs2_info_मुक्तfrag_stats));
 
-	ffg->iff_ffs.ffs_min = ~0U;
-	ffg->iff_ffs.ffs_clusters =
-			le32_to_cpu(gb_dinode->id1.bitmap1.i_total);
-	ffg->iff_ffs.ffs_free_clusters = ffg->iff_ffs.ffs_clusters -
-			le32_to_cpu(gb_dinode->id1.bitmap1.i_used);
+	ffg->अगरf_ffs.ffs_min = ~0U;
+	ffg->अगरf_ffs.ffs_clusters =
+			le32_to_cpu(gb_dinode->id1.biपंचांगap1.i_total);
+	ffg->अगरf_ffs.ffs_मुक्त_clusters = ffg->अगरf_ffs.ffs_clusters -
+			le32_to_cpu(gb_dinode->id1.biपंचांगap1.i_used);
 
-	chunks_in_group = le16_to_cpu(cl->cl_cpg) / ffg->iff_chunksize + 1;
+	chunks_in_group = le16_to_cpu(cl->cl_cpg) / ffg->अगरf_chunksize + 1;
 
-	for (i = 0; i < le16_to_cpu(cl->cl_next_free_rec); i++) {
+	क्रम (i = 0; i < le16_to_cpu(cl->cl_next_मुक्त_rec); i++) अणु
 		rec = &(cl->cl_recs[i]);
-		status = ocfs2_info_freefrag_scan_chain(osb, gb_inode,
+		status = ocfs2_info_मुक्तfrag_scan_chain(osb, gb_inode,
 							gb_dinode,
 							rec, ffg,
 							chunks_in_group);
-		if (status)
-			goto bail;
-	}
+		अगर (status)
+			जाओ bail;
+	पूर्ण
 
-	if (ffg->iff_ffs.ffs_free_chunks_real)
-		ffg->iff_ffs.ffs_avg = (ffg->iff_ffs.ffs_avg /
-					ffg->iff_ffs.ffs_free_chunks_real);
+	अगर (ffg->अगरf_ffs.ffs_मुक्त_chunks_real)
+		ffg->अगरf_ffs.ffs_avg = (ffg->अगरf_ffs.ffs_avg /
+					ffg->अगरf_ffs.ffs_मुक्त_chunks_real);
 bail:
-	if (unlock)
+	अगर (unlock)
 		ocfs2_inode_unlock(gb_inode, 0);
 
-	if (gb_inode)
+	अगर (gb_inode)
 		inode_unlock(gb_inode);
 
 	iput(gb_inode);
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_info_handle_freefrag(struct inode *inode,
-				      struct ocfs2_info_request __user *req)
-{
+अटल पूर्णांक ocfs2_info_handle_मुक्तfrag(काष्ठा inode *inode,
+				      काष्ठा ocfs2_info_request __user *req)
+अणु
 	u64 blkno = -1;
-	char namebuf[40];
-	int status, type = GLOBAL_BITMAP_SYSTEM_INODE;
+	अक्षर namebuf[40];
+	पूर्णांक status, type = GLOBAL_BITMAP_SYSTEM_INODE;
 
-	struct ocfs2_info_freefrag *oiff;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	struct inode *gb_inode = NULL;
+	काष्ठा ocfs2_info_मुक्तfrag *oअगरf;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	काष्ठा inode *gb_inode = शून्य;
 
-	oiff = kzalloc(sizeof(struct ocfs2_info_freefrag), GFP_KERNEL);
-	if (!oiff) {
+	oअगरf = kzalloc(माप(काष्ठा ocfs2_info_मुक्तfrag), GFP_KERNEL);
+	अगर (!oअगरf) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto out_err;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ out_err;
+	पूर्ण
 
-	if (o2info_from_user(*oiff, req)) {
+	अगर (o2info_from_user(*oअगरf, req)) अणु
 		status = -EFAULT;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 	/*
-	 * chunksize from userspace should be power of 2.
+	 * chunksize from userspace should be घातer of 2.
 	 */
-	if ((oiff->iff_chunksize & (oiff->iff_chunksize - 1)) ||
-	    (!oiff->iff_chunksize)) {
+	अगर ((oअगरf->अगरf_chunksize & (oअगरf->अगरf_chunksize - 1)) ||
+	    (!oअगरf->अगरf_chunksize)) अणु
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (o2info_coherent(&oiff->iff_req)) {
-		gb_inode = ocfs2_get_system_file_inode(osb, type,
+	अगर (o2info_coherent(&oअगरf->अगरf_req)) अणु
+		gb_inode = ocfs2_get_प्रणाली_file_inode(osb, type,
 						       OCFS2_INVALID_SLOT);
-		if (!gb_inode) {
+		अगर (!gb_inode) अणु
 			mlog(ML_ERROR, "unable to get global_bitmap inode\n");
 			status = -EIO;
-			goto bail;
-		}
-	} else {
-		ocfs2_sprintf_system_inode_name(namebuf, sizeof(namebuf), type,
+			जाओ bail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ocfs2_प्र_लिखो_प्रणाली_inode_name(namebuf, माप(namebuf), type,
 						OCFS2_INVALID_SLOT);
 		status = ocfs2_lookup_ino_from_name(osb->sys_root_inode,
 						    namebuf,
-						    strlen(namebuf),
+						    म_माप(namebuf),
 						    &blkno);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			status = -ENOENT;
-			goto bail;
-		}
-	}
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	status = ocfs2_info_freefrag_scan_bitmap(osb, gb_inode, blkno, oiff);
-	if (status < 0)
-		goto bail;
+	status = ocfs2_info_मुक्तfrag_scan_biपंचांगap(osb, gb_inode, blkno, oअगरf);
+	अगर (status < 0)
+		जाओ bail;
 
-	o2info_set_request_filled(&oiff->iff_req);
+	o2info_set_request_filled(&oअगरf->अगरf_req);
 
-	if (o2info_to_user(*oiff, req)) {
+	अगर (o2info_to_user(*oअगरf, req)) अणु
 		status = -EFAULT;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	status = 0;
 bail:
-	if (status)
-		o2info_set_request_error(&oiff->iff_req, req);
-out_free:
-	kfree(oiff);
+	अगर (status)
+		o2info_set_request_error(&oअगरf->अगरf_req, req);
+out_मुक्त:
+	kमुक्त(oअगरf);
 out_err:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_info_handle_unknown(struct inode *inode,
-				     struct ocfs2_info_request __user *req)
-{
-	struct ocfs2_info_request oir;
+अटल पूर्णांक ocfs2_info_handle_unknown(काष्ठा inode *inode,
+				     काष्ठा ocfs2_info_request __user *req)
+अणु
+	काष्ठा ocfs2_info_request oir;
 
-	if (o2info_from_user(oir, req))
-		return -EFAULT;
+	अगर (o2info_from_user(oir, req))
+		वापस -EFAULT;
 
 	o2info_clear_request_filled(&oir);
 
-	if (o2info_to_user(oir, req))
-		return -EFAULT;
+	अगर (o2info_to_user(oir, req))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Validate and distinguish OCFS2_IOC_INFO requests.
  *
  * - validate the magic number.
- * - distinguish different requests.
- * - validate size of different requests.
+ * - distinguish dअगरferent requests.
+ * - validate size of dअगरferent requests.
  */
-static int ocfs2_info_handle_request(struct inode *inode,
-				     struct ocfs2_info_request __user *req)
-{
-	int status = -EFAULT;
-	struct ocfs2_info_request oir;
+अटल पूर्णांक ocfs2_info_handle_request(काष्ठा inode *inode,
+				     काष्ठा ocfs2_info_request __user *req)
+अणु
+	पूर्णांक status = -EFAULT;
+	काष्ठा ocfs2_info_request oir;
 
-	if (o2info_from_user(oir, req))
-		goto bail;
+	अगर (o2info_from_user(oir, req))
+		जाओ bail;
 
 	status = -EINVAL;
-	if (oir.ir_magic != OCFS2_INFO_MAGIC)
-		goto bail;
+	अगर (oir.ir_magic != OCFS2_INFO_MAGIC)
+		जाओ bail;
 
-	switch (oir.ir_code) {
-	case OCFS2_INFO_BLOCKSIZE:
-		if (oir.ir_size == sizeof(struct ocfs2_info_blocksize))
+	चयन (oir.ir_code) अणु
+	हाल OCFS2_INFO_BLOCKSIZE:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_blocksize))
 			status = ocfs2_info_handle_blocksize(inode, req);
-		break;
-	case OCFS2_INFO_CLUSTERSIZE:
-		if (oir.ir_size == sizeof(struct ocfs2_info_clustersize))
+		अवरोध;
+	हाल OCFS2_INFO_CLUSTERSIZE:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_clustersize))
 			status = ocfs2_info_handle_clustersize(inode, req);
-		break;
-	case OCFS2_INFO_MAXSLOTS:
-		if (oir.ir_size == sizeof(struct ocfs2_info_maxslots))
+		अवरोध;
+	हाल OCFS2_INFO_MAXSLOTS:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_maxslots))
 			status = ocfs2_info_handle_maxslots(inode, req);
-		break;
-	case OCFS2_INFO_LABEL:
-		if (oir.ir_size == sizeof(struct ocfs2_info_label))
+		अवरोध;
+	हाल OCFS2_INFO_LABEL:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_label))
 			status = ocfs2_info_handle_label(inode, req);
-		break;
-	case OCFS2_INFO_UUID:
-		if (oir.ir_size == sizeof(struct ocfs2_info_uuid))
+		अवरोध;
+	हाल OCFS2_INFO_UUID:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_uuid))
 			status = ocfs2_info_handle_uuid(inode, req);
-		break;
-	case OCFS2_INFO_FS_FEATURES:
-		if (oir.ir_size == sizeof(struct ocfs2_info_fs_features))
+		अवरोध;
+	हाल OCFS2_INFO_FS_FEATURES:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_fs_features))
 			status = ocfs2_info_handle_fs_features(inode, req);
-		break;
-	case OCFS2_INFO_JOURNAL_SIZE:
-		if (oir.ir_size == sizeof(struct ocfs2_info_journal_size))
+		अवरोध;
+	हाल OCFS2_INFO_JOURNAL_SIZE:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_journal_size))
 			status = ocfs2_info_handle_journal_size(inode, req);
-		break;
-	case OCFS2_INFO_FREEINODE:
-		if (oir.ir_size == sizeof(struct ocfs2_info_freeinode))
-			status = ocfs2_info_handle_freeinode(inode, req);
-		break;
-	case OCFS2_INFO_FREEFRAG:
-		if (oir.ir_size == sizeof(struct ocfs2_info_freefrag))
-			status = ocfs2_info_handle_freefrag(inode, req);
-		break;
-	default:
+		अवरोध;
+	हाल OCFS2_INFO_FREEINODE:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_मुक्तinode))
+			status = ocfs2_info_handle_मुक्तinode(inode, req);
+		अवरोध;
+	हाल OCFS2_INFO_FREEFRAG:
+		अगर (oir.ir_size == माप(काष्ठा ocfs2_info_मुक्तfrag))
+			status = ocfs2_info_handle_मुक्तfrag(inode, req);
+		अवरोध;
+	शेष:
 		status = ocfs2_info_handle_unknown(inode, req);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_get_request_ptr(struct ocfs2_info *info, int idx,
-				 u64 *req_addr, int compat_flag)
-{
-	int status = -EFAULT;
-	u64 __user *bp = NULL;
+अटल पूर्णांक ocfs2_get_request_ptr(काष्ठा ocfs2_info *info, पूर्णांक idx,
+				 u64 *req_addr, पूर्णांक compat_flag)
+अणु
+	पूर्णांक status = -EFAULT;
+	u64 __user *bp = शून्य;
 
-	if (compat_flag) {
-#ifdef CONFIG_COMPAT
+	अगर (compat_flag) अणु
+#अगर_घोषित CONFIG_COMPAT
 		/*
-		 * pointer bp stores the base address of a pointers array,
+		 * poपूर्णांकer bp stores the base address of a poपूर्णांकers array,
 		 * which collects all addresses of separate request.
 		 */
-		bp = (u64 __user *)(unsigned long)compat_ptr(info->oi_requests);
-#else
+		bp = (u64 __user *)(अचिन्हित दीर्घ)compat_ptr(info->oi_requests);
+#अन्यथा
 		BUG();
-#endif
-	} else
-		bp = (u64 __user *)(unsigned long)(info->oi_requests);
+#पूर्ण_अगर
+	पूर्ण अन्यथा
+		bp = (u64 __user *)(अचिन्हित दीर्घ)(info->oi_requests);
 
-	if (o2info_from_user(*req_addr, bp + idx))
-		goto bail;
+	अगर (o2info_from_user(*req_addr, bp + idx))
+		जाओ bail;
 
 	status = 0;
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * OCFS2_IOC_INFO handles an array of requests passed from userspace.
  *
  * ocfs2_info_handle() recevies a large info aggregation, grab and
- * validate the request count from header, then break it into small
- * pieces, later specific handlers can handle them one by one.
+ * validate the request count from header, then अवरोध it पूर्णांकo small
+ * pieces, later specअगरic handlers can handle them one by one.
  *
  * Idea here is to make each separate request small enough to ensure
- * a better backward&forward compatibility, since a small piece of
- * request will be less likely to be broken if disk layout get changed.
+ * a better backward&क्रमward compatibility, since a small piece of
+ * request will be less likely to be broken अगर disk layout get changed.
  */
-static int ocfs2_info_handle(struct inode *inode, struct ocfs2_info *info,
-			     int compat_flag)
-{
-	int i, status = 0;
+अटल पूर्णांक ocfs2_info_handle(काष्ठा inode *inode, काष्ठा ocfs2_info *info,
+			     पूर्णांक compat_flag)
+अणु
+	पूर्णांक i, status = 0;
 	u64 req_addr;
-	struct ocfs2_info_request __user *reqp;
+	काष्ठा ocfs2_info_request __user *reqp;
 
-	if ((info->oi_count > OCFS2_INFO_MAX_REQUEST) ||
-	    (!info->oi_requests)) {
+	अगर ((info->oi_count > OCFS2_INFO_MAX_REQUEST) ||
+	    (!info->oi_requests)) अणु
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	for (i = 0; i < info->oi_count; i++) {
+	क्रम (i = 0; i < info->oi_count; i++) अणु
 
 		status = ocfs2_get_request_ptr(info, i, &req_addr, compat_flag);
-		if (status)
-			break;
+		अगर (status)
+			अवरोध;
 
-		reqp = (struct ocfs2_info_request __user *)(unsigned long)req_addr;
-		if (!reqp) {
+		reqp = (काष्ठा ocfs2_info_request __user *)(अचिन्हित दीर्घ)req_addr;
+		अगर (!reqp) अणु
 			status = -EINVAL;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
 		status = ocfs2_info_handle_request(inode, reqp);
-		if (status)
-			break;
-	}
+		अगर (status)
+			अवरोध;
+	पूर्ण
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-long ocfs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	struct inode *inode = file_inode(filp);
-	int new_clusters;
-	int status;
-	struct ocfs2_space_resv sr;
-	struct ocfs2_new_group_input input;
-	struct reflink_arguments args;
-	const char __user *old_path;
-	const char __user *new_path;
+दीर्घ ocfs2_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा inode *inode = file_inode(filp);
+	पूर्णांक new_clusters;
+	पूर्णांक status;
+	काष्ठा ocfs2_space_resv sr;
+	काष्ठा ocfs2_new_group_input input;
+	काष्ठा reflink_arguments args;
+	स्थिर अक्षर __user *old_path;
+	स्थिर अक्षर __user *new_path;
 	bool preserve;
-	struct ocfs2_info info;
-	void __user *argp = (void __user *)arg;
+	काष्ठा ocfs2_info info;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case OCFS2_IOC_RESVSP:
-	case OCFS2_IOC_RESVSP64:
-	case OCFS2_IOC_UNRESVSP:
-	case OCFS2_IOC_UNRESVSP64:
-		if (copy_from_user(&sr, (int __user *) arg, sizeof(sr)))
-			return -EFAULT;
+	चयन (cmd) अणु
+	हाल OCFS2_IOC_RESVSP:
+	हाल OCFS2_IOC_RESVSP64:
+	हाल OCFS2_IOC_UNRESVSP:
+	हाल OCFS2_IOC_UNRESVSP64:
+		अगर (copy_from_user(&sr, (पूर्णांक __user *) arg, माप(sr)))
+			वापस -EFAULT;
 
-		return ocfs2_change_file_space(filp, cmd, &sr);
-	case OCFS2_IOC_GROUP_EXTEND:
-		if (!capable(CAP_SYS_RESOURCE))
-			return -EPERM;
+		वापस ocfs2_change_file_space(filp, cmd, &sr);
+	हाल OCFS2_IOC_GROUP_EXTEND:
+		अगर (!capable(CAP_SYS_RESOURCE))
+			वापस -EPERM;
 
-		if (get_user(new_clusters, (int __user *)arg))
-			return -EFAULT;
+		अगर (get_user(new_clusters, (पूर्णांक __user *)arg))
+			वापस -EFAULT;
 
-		status = mnt_want_write_file(filp);
-		if (status)
-			return status;
+		status = mnt_want_ग_लिखो_file(filp);
+		अगर (status)
+			वापस status;
 		status = ocfs2_group_extend(inode, new_clusters);
-		mnt_drop_write_file(filp);
-		return status;
-	case OCFS2_IOC_GROUP_ADD:
-	case OCFS2_IOC_GROUP_ADD64:
-		if (!capable(CAP_SYS_RESOURCE))
-			return -EPERM;
+		mnt_drop_ग_लिखो_file(filp);
+		वापस status;
+	हाल OCFS2_IOC_GROUP_ADD:
+	हाल OCFS2_IOC_GROUP_ADD64:
+		अगर (!capable(CAP_SYS_RESOURCE))
+			वापस -EPERM;
 
-		if (copy_from_user(&input, (int __user *) arg, sizeof(input)))
-			return -EFAULT;
+		अगर (copy_from_user(&input, (पूर्णांक __user *) arg, माप(input)))
+			वापस -EFAULT;
 
-		status = mnt_want_write_file(filp);
-		if (status)
-			return status;
+		status = mnt_want_ग_लिखो_file(filp);
+		अगर (status)
+			वापस status;
 		status = ocfs2_group_add(inode, &input);
-		mnt_drop_write_file(filp);
-		return status;
-	case OCFS2_IOC_REFLINK:
-		if (copy_from_user(&args, argp, sizeof(args)))
-			return -EFAULT;
-		old_path = (const char __user *)(unsigned long)args.old_path;
-		new_path = (const char __user *)(unsigned long)args.new_path;
+		mnt_drop_ग_लिखो_file(filp);
+		वापस status;
+	हाल OCFS2_IOC_REFLINK:
+		अगर (copy_from_user(&args, argp, माप(args)))
+			वापस -EFAULT;
+		old_path = (स्थिर अक्षर __user *)(अचिन्हित दीर्घ)args.old_path;
+		new_path = (स्थिर अक्षर __user *)(अचिन्हित दीर्घ)args.new_path;
 		preserve = (args.preserve != 0);
 
-		return ocfs2_reflink_ioctl(inode, old_path, new_path, preserve);
-	case OCFS2_IOC_INFO:
-		if (copy_from_user(&info, argp, sizeof(struct ocfs2_info)))
-			return -EFAULT;
+		वापस ocfs2_reflink_ioctl(inode, old_path, new_path, preserve);
+	हाल OCFS2_IOC_INFO:
+		अगर (copy_from_user(&info, argp, माप(काष्ठा ocfs2_info)))
+			वापस -EFAULT;
 
-		return ocfs2_info_handle(inode, &info, 0);
-	case FITRIM:
-	{
-		struct super_block *sb = inode->i_sb;
-		struct request_queue *q = bdev_get_queue(sb->s_bdev);
-		struct fstrim_range range;
-		int ret = 0;
+		वापस ocfs2_info_handle(inode, &info, 0);
+	हाल FITRIM:
+	अणु
+		काष्ठा super_block *sb = inode->i_sb;
+		काष्ठा request_queue *q = bdev_get_queue(sb->s_bdev);
+		काष्ठा fstrim_range range;
+		पूर्णांक ret = 0;
 
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
 
-		if (!blk_queue_discard(q))
-			return -EOPNOTSUPP;
+		अगर (!blk_queue_discard(q))
+			वापस -EOPNOTSUPP;
 
-		if (copy_from_user(&range, argp, sizeof(range)))
-			return -EFAULT;
+		अगर (copy_from_user(&range, argp, माप(range)))
+			वापस -EFAULT;
 
 		range.minlen = max_t(u64, q->limits.discard_granularity,
 				     range.minlen);
 		ret = ocfs2_trim_fs(sb, &range);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (copy_to_user(argp, &range, sizeof(range)))
-			return -EFAULT;
+		अगर (copy_to_user(argp, &range, माप(range)))
+			वापस -EFAULT;
 
-		return 0;
-	}
-	case OCFS2_IOC_MOVE_EXT:
-		return ocfs2_ioctl_move_extents(filp, argp);
-	default:
-		return -ENOTTY;
-	}
-}
+		वापस 0;
+	पूर्ण
+	हाल OCFS2_IOC_MOVE_EXT:
+		वापस ocfs2_ioctl_move_extents(filp, argp);
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-long ocfs2_compat_ioctl(struct file *file, unsigned cmd, unsigned long arg)
-{
+#अगर_घोषित CONFIG_COMPAT
+दीर्घ ocfs2_compat_ioctl(काष्ठा file *file, अचिन्हित cmd, अचिन्हित दीर्घ arg)
+अणु
 	bool preserve;
-	struct reflink_arguments args;
-	struct inode *inode = file_inode(file);
-	struct ocfs2_info info;
-	void __user *argp = (void __user *)arg;
+	काष्ठा reflink_arguments args;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ocfs2_info info;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case OCFS2_IOC_RESVSP:
-	case OCFS2_IOC_RESVSP64:
-	case OCFS2_IOC_UNRESVSP:
-	case OCFS2_IOC_UNRESVSP64:
-	case OCFS2_IOC_GROUP_EXTEND:
-	case OCFS2_IOC_GROUP_ADD:
-	case OCFS2_IOC_GROUP_ADD64:
-		break;
-	case OCFS2_IOC_REFLINK:
-		if (copy_from_user(&args, argp, sizeof(args)))
-			return -EFAULT;
+	चयन (cmd) अणु
+	हाल OCFS2_IOC_RESVSP:
+	हाल OCFS2_IOC_RESVSP64:
+	हाल OCFS2_IOC_UNRESVSP:
+	हाल OCFS2_IOC_UNRESVSP64:
+	हाल OCFS2_IOC_GROUP_EXTEND:
+	हाल OCFS2_IOC_GROUP_ADD:
+	हाल OCFS2_IOC_GROUP_ADD64:
+		अवरोध;
+	हाल OCFS2_IOC_REFLINK:
+		अगर (copy_from_user(&args, argp, माप(args)))
+			वापस -EFAULT;
 		preserve = (args.preserve != 0);
 
-		return ocfs2_reflink_ioctl(inode, compat_ptr(args.old_path),
+		वापस ocfs2_reflink_ioctl(inode, compat_ptr(args.old_path),
 					   compat_ptr(args.new_path), preserve);
-	case OCFS2_IOC_INFO:
-		if (copy_from_user(&info, argp, sizeof(struct ocfs2_info)))
-			return -EFAULT;
+	हाल OCFS2_IOC_INFO:
+		अगर (copy_from_user(&info, argp, माप(काष्ठा ocfs2_info)))
+			वापस -EFAULT;
 
-		return ocfs2_info_handle(inode, &info, 1);
-	case FITRIM:
-	case OCFS2_IOC_MOVE_EXT:
-		break;
-	default:
-		return -ENOIOCTLCMD;
-	}
+		वापस ocfs2_info_handle(inode, &info, 1);
+	हाल FITRIM:
+	हाल OCFS2_IOC_MOVE_EXT:
+		अवरोध;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
 
-	return ocfs2_ioctl(file, cmd, arg);
-}
-#endif
+	वापस ocfs2_ioctl(file, cmd, arg);
+पूर्ण
+#पूर्ण_अगर

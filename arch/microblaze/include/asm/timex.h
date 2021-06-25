@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
 
-#ifndef _ASM_MICROBLAZE_TIMEX_H
-#define _ASM_MICROBLAZE_TIMEX_H
+#अगर_अघोषित _ASM_MICROBLAZE_TIMEX_H
+#घोषणा _ASM_MICROBLAZE_TIMEX_H
 
-#include <asm-generic/timex.h>
+#समावेश <यंत्र-generic/समयx.h>
 
-#define CLOCK_TICK_RATE 1000 /* Timer input freq. */
+#घोषणा CLOCK_TICK_RATE 1000 /* Timer input freq. */
 
-#endif /* _ASM_TIMEX_H */
+#पूर्ण_अगर /* _ASM_TIMEX_H */

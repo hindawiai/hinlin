@@ -1,178 +1,179 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * polling mode stateless debugging stuff, originally for NS16550 Serial Ports
+ * polling mode stateless debugging stuff, originally क्रम NS16550 Serial Ports
  *
  * c 2001 PPC 64 Team, IBM Corp
  */
 
-#include <stdarg.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/console.h>
-#include <linux/init.h>
-#include <asm/processor.h>
-#include <asm/udbg.h>
+#समावेश <मानकतर्क.स>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/console.h>
+#समावेश <linux/init.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/udbg.h>
 
-void (*udbg_putc)(char c);
-void (*udbg_flush)(void);
-int (*udbg_getc)(void);
-int (*udbg_getc_poll)(void);
+व्योम (*udbg_अ_दो)(अक्षर c);
+व्योम (*udbg_flush)(व्योम);
+पूर्णांक (*udbg_अ_लो)(व्योम);
+पूर्णांक (*udbg_अ_लो_poll)(व्योम);
 
 /*
  * Early debugging facilities. You can enable _one_ of these via .config,
- * if you do so your kernel _will not boot_ on anything else. Be careful.
+ * अगर you करो so your kernel _will not boot_ on anything अन्यथा. Be careful.
  */
-void __init udbg_early_init(void)
-{
-#if defined(CONFIG_PPC_EARLY_DEBUG_LPAR)
+व्योम __init udbg_early_init(व्योम)
+अणु
+#अगर defined(CONFIG_PPC_EARLY_DEBUG_LPAR)
 	/* For LPAR machines that have an HVC console on vterm 0 */
 	udbg_init_debug_lpar();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_LPAR_HVSI)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_LPAR_HVSI)
 	/* For LPAR machines that have an HVSI console on vterm 0 */
 	udbg_init_debug_lpar_hvsi();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_G5)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_G5)
 	/* For use on Apple G5 machines */
 	udbg_init_pmac_realmode();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_RTAS_PANEL)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_RTAS_PANEL)
 	/* RTAS panel debug */
 	udbg_init_rtas_panel();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_RTAS_CONSOLE)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_RTAS_CONSOLE)
 	/* RTAS console debug */
 	udbg_init_rtas_console();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_MAPLE)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_MAPLE)
 	/* Maple real mode debug */
 	udbg_init_maple_realmode();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_PAS_REALMODE)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_PAS_REALMODE)
 	udbg_init_pas_realmode();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_BOOTX)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_BOOTX)
 	udbg_init_btext();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_44x)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_44x)
 	/* PPC44x debug */
 	udbg_init_44x_as1();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_40x)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_40x)
 	/* PPC40x debug */
 	udbg_init_40x_realmode();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_CPM)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_CPM)
 	udbg_init_cpm();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_USBGECKO)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_USBGECKO)
 	udbg_init_usbgecko();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_MEMCONS)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_MEMCONS)
 	/* In memory console */
 	udbg_init_memcons();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_EHV_BC)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_EHV_BC)
 	udbg_init_ehv_bc();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_PS3GELIC)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_PS3GELIC)
 	udbg_init_ps3gelic();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_OPAL_RAW)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_OPAL_RAW)
 	udbg_init_debug_opal_raw();
-#elif defined(CONFIG_PPC_EARLY_DEBUG_OPAL_HVSI)
+#या_अगर defined(CONFIG_PPC_EARLY_DEBUG_OPAL_HVSI)
 	udbg_init_debug_opal_hvsi();
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_EARLY_DEBUG
+#अगर_घोषित CONFIG_PPC_EARLY_DEBUG
 	console_loglevel = CONSOLE_LOGLEVEL_DEBUG;
 
-	register_early_udbg_console();
-#endif
-}
+	रेजिस्टर_early_udbg_console();
+#पूर्ण_अगर
+पूर्ण
 
 /* udbg library, used by xmon et al */
-void udbg_puts(const char *s)
-{
-	if (udbg_putc) {
-		char c;
+व्योम udbg_माला_दो(स्थिर अक्षर *s)
+अणु
+	अगर (udbg_अ_दो) अणु
+		अक्षर c;
 
-		if (s && *s != '\0') {
-			while ((c = *s++) != '\0')
-				udbg_putc(c);
-		}
+		अगर (s && *s != '\0') अणु
+			जबतक ((c = *s++) != '\0')
+				udbg_अ_दो(c);
+		पूर्ण
 
-		if (udbg_flush)
+		अगर (udbg_flush)
 			udbg_flush();
-	}
-#if 0
-	else {
-		printk("%s", s);
-	}
-#endif
-}
+	पूर्ण
+#अगर 0
+	अन्यथा अणु
+		prपूर्णांकk("%s", s);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-int udbg_write(const char *s, int n)
-{
-	int remain = n;
-	char c;
+पूर्णांक udbg_ग_लिखो(स्थिर अक्षर *s, पूर्णांक n)
+अणु
+	पूर्णांक reमुख्य = n;
+	अक्षर c;
 
-	if (!udbg_putc)
-		return 0;
+	अगर (!udbg_अ_दो)
+		वापस 0;
 
-	if (s && *s != '\0') {
-		while (((c = *s++) != '\0') && (remain-- > 0)) {
-			udbg_putc(c);
-		}
-	}
+	अगर (s && *s != '\0') अणु
+		जबतक (((c = *s++) != '\0') && (reमुख्य-- > 0)) अणु
+			udbg_अ_दो(c);
+		पूर्ण
+	पूर्ण
 
-	if (udbg_flush)
+	अगर (udbg_flush)
 		udbg_flush();
 
-	return n - remain;
-}
+	वापस n - reमुख्य;
+पूर्ण
 
-#define UDBG_BUFSIZE 256
-void udbg_printf(const char *fmt, ...)
-{
-	if (udbg_putc) {
-		char buf[UDBG_BUFSIZE];
-		va_list args;
+#घोषणा UDBG_बफ_मानE 256
+व्योम udbg_म_लिखो(स्थिर अक्षर *fmt, ...)
+अणु
+	अगर (udbg_अ_दो) अणु
+		अक्षर buf[UDBG_बफ_मानE];
+		बहु_सूची args;
 
-		va_start(args, fmt);
-		vsnprintf(buf, UDBG_BUFSIZE, fmt, args);
-		udbg_puts(buf);
-		va_end(args);
-	}
-}
+		बहु_शुरू(args, fmt);
+		vsnम_लिखो(buf, UDBG_बफ_मानE, fmt, args);
+		udbg_माला_दो(buf);
+		बहु_पूर्ण(args);
+	पूर्ण
+पूर्ण
 
-void __init udbg_progress(char *s, unsigned short hex)
-{
-	udbg_puts(s);
-	udbg_puts("\n");
-}
+व्योम __init udbg_progress(अक्षर *s, अचिन्हित लघु hex)
+अणु
+	udbg_माला_दो(s);
+	udbg_माला_दो("\n");
+पूर्ण
 
 /*
  * Early boot console based on udbg
  */
-static void udbg_console_write(struct console *con, const char *s,
-		unsigned int n)
-{
-	udbg_write(s, n);
-}
+अटल व्योम udbg_console_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *s,
+		अचिन्हित पूर्णांक n)
+अणु
+	udbg_ग_लिखो(s, n);
+पूर्ण
 
-static struct console udbg_console = {
+अटल काष्ठा console udbg_console = अणु
 	.name	= "udbg",
-	.write	= udbg_console_write,
+	.ग_लिखो	= udbg_console_ग_लिखो,
 	.flags	= CON_PRINTBUFFER | CON_ENABLED | CON_BOOT | CON_ANYTIME,
 	.index	= 0,
-};
+पूर्ण;
 
 /*
- * Called by setup_system after ppc_md->probe and ppc_md->early_init.
- * Call it again after setting udbg_putc in ppc_md->setup_arch.
+ * Called by setup_प्रणाली after ppc_md->probe and ppc_md->early_init.
+ * Call it again after setting udbg_अ_दो in ppc_md->setup_arch.
  */
-void __init register_early_udbg_console(void)
-{
-	if (early_console)
-		return;
+व्योम __init रेजिस्टर_early_udbg_console(व्योम)
+अणु
+	अगर (early_console)
+		वापस;
 
-	if (!udbg_putc)
-		return;
+	अगर (!udbg_अ_दो)
+		वापस;
 
-	if (strstr(boot_command_line, "udbg-immortal")) {
-		printk(KERN_INFO "early console immortal !\n");
+	अगर (म_माला(boot_command_line, "udbg-immortal")) अणु
+		prपूर्णांकk(KERN_INFO "early console immortal !\n");
 		udbg_console.flags &= ~CON_BOOT;
-	}
+	पूर्ण
 	early_console = &udbg_console;
-	register_console(&udbg_console);
-}
+	रेजिस्टर_console(&udbg_console);
+पूर्ण
 
-#if 0   /* if you want to use this as a regular output console */
-console_initcall(register_udbg_console);
-#endif
+#अगर 0   /* अगर you want to use this as a regular output console */
+console_initcall(रेजिस्टर_udbg_console);
+#पूर्ण_अगर

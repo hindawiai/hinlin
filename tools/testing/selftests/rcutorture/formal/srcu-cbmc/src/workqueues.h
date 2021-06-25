@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef WORKQUEUES_H
-#define WORKQUEUES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित WORKQUEUES_H
+#घोषणा WORKQUEUES_H
 
-#include <stdbool.h>
+#समावेश <stdbool.h>
 
-#include "barriers.h"
-#include "bug_on.h"
-#include "int_typedefs.h"
+#समावेश "barriers.h"
+#समावेश "bug_on.h"
+#समावेश "int_typedefs.h"
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Stub workqueue implementation. */
 
-struct work_struct;
-typedef void (*work_func_t)(struct work_struct *work);
-void delayed_work_timer_fn(unsigned long __data);
+काष्ठा work_काष्ठा;
+प्रकार व्योम (*work_func_t)(काष्ठा work_काष्ठा *work);
+व्योम delayed_work_समयr_fn(अचिन्हित दीर्घ __data);
 
-struct work_struct {
-/*	atomic_long_t data; */
-	unsigned long data;
+काष्ठा work_काष्ठा अणु
+/*	atomic_दीर्घ_t data; */
+	अचिन्हित दीर्घ data;
 
-	struct list_head entry;
+	काष्ठा list_head entry;
 	work_func_t func;
-#ifdef CONFIG_LOCKDEP
-	struct lockdep_map lockdep_map;
-#endif
-};
+#अगर_घोषित CONFIG_LOCKDEP
+	काष्ठा lockdep_map lockdep_map;
+#पूर्ण_अगर
+पूर्ण;
 
-struct timer_list {
-	struct hlist_node	entry;
-	unsigned long		expires;
-	void			(*function)(unsigned long);
-	unsigned long		data;
+काष्ठा समयr_list अणु
+	काष्ठा hlist_node	entry;
+	अचिन्हित दीर्घ		expires;
+	व्योम			(*function)(अचिन्हित दीर्घ);
+	अचिन्हित दीर्घ		data;
 	u32			flags;
-	int			slack;
-};
+	पूर्णांक			slack;
+पूर्ण;
 
-struct delayed_work {
-	struct work_struct work;
-	struct timer_list timer;
+काष्ठा delayed_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा समयr_list समयr;
 
-	/* target workqueue and CPU ->timer uses to queue ->work */
-	struct workqueue_struct *wq;
-	int cpu;
-};
+	/* target workqueue and CPU ->समयr uses to queue ->work */
+	काष्ठा workqueue_काष्ठा *wq;
+	पूर्णांक cpu;
+पूर्ण;
 
 
-static inline bool schedule_work(struct work_struct *work)
-{
+अटल अंतरभूत bool schedule_work(काष्ठा work_काष्ठा *work)
+अणु
 	BUG();
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool schedule_work_on(int cpu, struct work_struct *work)
-{
+अटल अंतरभूत bool schedule_work_on(पूर्णांक cpu, काष्ठा work_काष्ठा *work)
+अणु
 	BUG();
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool queue_work(struct workqueue_struct *wq,
-			      struct work_struct *work)
-{
+अटल अंतरभूत bool queue_work(काष्ठा workqueue_काष्ठा *wq,
+			      काष्ठा work_काष्ठा *work)
+अणु
 	BUG();
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool queue_delayed_work(struct workqueue_struct *wq,
-				      struct delayed_work *dwork,
-				      unsigned long delay)
-{
+अटल अंतरभूत bool queue_delayed_work(काष्ठा workqueue_काष्ठा *wq,
+				      काष्ठा delayed_work *dwork,
+				      अचिन्हित दीर्घ delay)
+अणु
 	BUG();
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#define INIT_WORK(w, f) \
-	do { \
+#घोषणा INIT_WORK(w, f) \
+	करो अणु \
 		(w)->data = 0; \
 		(w)->func = (f); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define INIT_DELAYED_WORK(w, f) INIT_WORK(&(w)->work, (f))
+#घोषणा INIT_DELAYED_WORK(w, f) INIT_WORK(&(w)->work, (f))
 
-#define __WORK_INITIALIZER(n, f) { \
+#घोषणा __WORK_INITIALIZER(n, f) अणु \
 		.data = 0, \
-		.entry = { &(n).entry, &(n).entry }, \
+		.entry = अणु &(n).entry, &(n).entry पूर्ण, \
 		.func = f \
-	}
+	पूर्ण
 
-/* Don't bother initializing timer. */
-#define __DELAYED_WORK_INITIALIZER(n, f, tflags) { \
+/* Don't bother initializing समयr. */
+#घोषणा __DELAYED_WORK_INITIALIZER(n, f, tflags) अणु \
 	.work = __WORK_INITIALIZER((n).work, (f)), \
-	}
+	पूर्ण
 
-#define DECLARE_WORK(n, f) \
-	struct workqueue_struct n = __WORK_INITIALIZER
+#घोषणा DECLARE_WORK(n, f) \
+	काष्ठा workqueue_काष्ठा n = __WORK_INITIALIZER
 
-#define DECLARE_DELAYED_WORK(n, f) \
-	struct delayed_work n = __DELAYED_WORK_INITIALIZER(n, f, 0)
+#घोषणा DECLARE_DELAYED_WORK(n, f) \
+	काष्ठा delayed_work n = __DELAYED_WORK_INITIALIZER(n, f, 0)
 
-#define system_power_efficient_wq ((struct workqueue_struct *) NULL)
+#घोषणा प्रणाली_घातer_efficient_wq ((काष्ठा workqueue_काष्ठा *) शून्य)
 
-#endif
+#पूर्ण_अगर

@@ -1,649 +1,650 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * FSI-attached I2C master algorithm
  *
  * Copyright 2018 IBM Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  */
 
-#include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/fsi.h>
-#include <linux/i2c.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/slab.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fsi.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
 
-#define FSI_ENGID_I2C		0x7
+#घोषणा FSI_ENGID_I2C		0x7
 
-#define I2C_DEFAULT_CLK_DIV	6
+#घोषणा I2C_DEFAULT_CLK_DIV	6
 
-/* i2c registers */
-#define I2C_FSI_FIFO		0x00
-#define I2C_FSI_CMD		0x04
-#define I2C_FSI_MODE		0x08
-#define I2C_FSI_WATER_MARK	0x0C
-#define I2C_FSI_INT_MASK	0x10
-#define I2C_FSI_INT_COND	0x14
-#define I2C_FSI_OR_INT_MASK	0x14
-#define I2C_FSI_INTS		0x18
-#define I2C_FSI_AND_INT_MASK	0x18
-#define I2C_FSI_STAT		0x1C
-#define I2C_FSI_RESET_I2C	0x1C
-#define I2C_FSI_ESTAT		0x20
-#define I2C_FSI_RESET_ERR	0x20
-#define I2C_FSI_RESID_LEN	0x24
-#define I2C_FSI_SET_SCL		0x24
-#define I2C_FSI_PORT_BUSY	0x28
-#define I2C_FSI_RESET_SCL	0x2C
-#define I2C_FSI_SET_SDA		0x30
-#define I2C_FSI_RESET_SDA	0x34
+/* i2c रेजिस्टरs */
+#घोषणा I2C_FSI_FIFO		0x00
+#घोषणा I2C_FSI_CMD		0x04
+#घोषणा I2C_FSI_MODE		0x08
+#घोषणा I2C_FSI_WATER_MARK	0x0C
+#घोषणा I2C_FSI_INT_MASK	0x10
+#घोषणा I2C_FSI_INT_COND	0x14
+#घोषणा I2C_FSI_OR_INT_MASK	0x14
+#घोषणा I2C_FSI_INTS		0x18
+#घोषणा I2C_FSI_AND_INT_MASK	0x18
+#घोषणा I2C_FSI_STAT		0x1C
+#घोषणा I2C_FSI_RESET_I2C	0x1C
+#घोषणा I2C_FSI_ESTAT		0x20
+#घोषणा I2C_FSI_RESET_ERR	0x20
+#घोषणा I2C_FSI_RESID_LEN	0x24
+#घोषणा I2C_FSI_SET_SCL		0x24
+#घोषणा I2C_FSI_PORT_BUSY	0x28
+#घोषणा I2C_FSI_RESET_SCL	0x2C
+#घोषणा I2C_FSI_SET_SDA		0x30
+#घोषणा I2C_FSI_RESET_SDA	0x34
 
-/* cmd register */
-#define I2C_CMD_WITH_START	BIT(31)
-#define I2C_CMD_WITH_ADDR	BIT(30)
-#define I2C_CMD_RD_CONT		BIT(29)
-#define I2C_CMD_WITH_STOP	BIT(28)
-#define I2C_CMD_FORCELAUNCH	BIT(27)
-#define I2C_CMD_ADDR		GENMASK(23, 17)
-#define I2C_CMD_READ		BIT(16)
-#define I2C_CMD_LEN		GENMASK(15, 0)
+/* cmd रेजिस्टर */
+#घोषणा I2C_CMD_WITH_START	BIT(31)
+#घोषणा I2C_CMD_WITH_ADDR	BIT(30)
+#घोषणा I2C_CMD_RD_CONT		BIT(29)
+#घोषणा I2C_CMD_WITH_STOP	BIT(28)
+#घोषणा I2C_CMD_FORCELAUNCH	BIT(27)
+#घोषणा I2C_CMD_ADDR		GENMASK(23, 17)
+#घोषणा I2C_CMD_READ		BIT(16)
+#घोषणा I2C_CMD_LEN		GENMASK(15, 0)
 
-/* mode register */
-#define I2C_MODE_CLKDIV		GENMASK(31, 16)
-#define I2C_MODE_PORT		GENMASK(15, 10)
-#define I2C_MODE_ENHANCED	BIT(3)
-#define I2C_MODE_DIAG		BIT(2)
-#define I2C_MODE_PACE_ALLOW	BIT(1)
-#define I2C_MODE_WRAP		BIT(0)
+/* mode रेजिस्टर */
+#घोषणा I2C_MODE_CLKDIV		GENMASK(31, 16)
+#घोषणा I2C_MODE_PORT		GENMASK(15, 10)
+#घोषणा I2C_MODE_ENHANCED	BIT(3)
+#घोषणा I2C_MODE_DIAG		BIT(2)
+#घोषणा I2C_MODE_PACE_ALLOW	BIT(1)
+#घोषणा I2C_MODE_WRAP		BIT(0)
 
-/* watermark register */
-#define I2C_WATERMARK_HI	GENMASK(15, 12)
-#define I2C_WATERMARK_LO	GENMASK(7, 4)
+/* watermark रेजिस्टर */
+#घोषणा I2C_WATERMARK_HI	GENMASK(15, 12)
+#घोषणा I2C_WATERMARK_LO	GENMASK(7, 4)
 
-#define I2C_FIFO_HI_LVL		4
-#define I2C_FIFO_LO_LVL		4
+#घोषणा I2C_FIFO_HI_LVL		4
+#घोषणा I2C_FIFO_LO_LVL		4
 
-/* interrupt register */
-#define I2C_INT_INV_CMD		BIT(15)
-#define I2C_INT_PARITY		BIT(14)
-#define I2C_INT_BE_OVERRUN	BIT(13)
-#define I2C_INT_BE_ACCESS	BIT(12)
-#define I2C_INT_LOST_ARB	BIT(11)
-#define I2C_INT_NACK		BIT(10)
-#define I2C_INT_DAT_REQ		BIT(9)
-#define I2C_INT_CMD_COMP	BIT(8)
-#define I2C_INT_STOP_ERR	BIT(7)
-#define I2C_INT_BUSY		BIT(6)
-#define I2C_INT_IDLE		BIT(5)
+/* पूर्णांकerrupt रेजिस्टर */
+#घोषणा I2C_INT_INV_CMD		BIT(15)
+#घोषणा I2C_INT_PARITY		BIT(14)
+#घोषणा I2C_INT_BE_OVERRUN	BIT(13)
+#घोषणा I2C_INT_BE_ACCESS	BIT(12)
+#घोषणा I2C_INT_LOST_ARB	BIT(11)
+#घोषणा I2C_INT_NACK		BIT(10)
+#घोषणा I2C_INT_DAT_REQ		BIT(9)
+#घोषणा I2C_INT_CMD_COMP	BIT(8)
+#घोषणा I2C_INT_STOP_ERR	BIT(7)
+#घोषणा I2C_INT_BUSY		BIT(6)
+#घोषणा I2C_INT_IDLE		BIT(5)
 
-/* status register */
-#define I2C_STAT_INV_CMD	BIT(31)
-#define I2C_STAT_PARITY		BIT(30)
-#define I2C_STAT_BE_OVERRUN	BIT(29)
-#define I2C_STAT_BE_ACCESS	BIT(28)
-#define I2C_STAT_LOST_ARB	BIT(27)
-#define I2C_STAT_NACK		BIT(26)
-#define I2C_STAT_DAT_REQ	BIT(25)
-#define I2C_STAT_CMD_COMP	BIT(24)
-#define I2C_STAT_STOP_ERR	BIT(23)
-#define I2C_STAT_MAX_PORT	GENMASK(22, 16)
-#define I2C_STAT_ANY_INT	BIT(15)
-#define I2C_STAT_SCL_IN		BIT(11)
-#define I2C_STAT_SDA_IN		BIT(10)
-#define I2C_STAT_PORT_BUSY	BIT(9)
-#define I2C_STAT_SELF_BUSY	BIT(8)
-#define I2C_STAT_FIFO_COUNT	GENMASK(7, 0)
+/* status रेजिस्टर */
+#घोषणा I2C_STAT_INV_CMD	BIT(31)
+#घोषणा I2C_STAT_PARITY		BIT(30)
+#घोषणा I2C_STAT_BE_OVERRUN	BIT(29)
+#घोषणा I2C_STAT_BE_ACCESS	BIT(28)
+#घोषणा I2C_STAT_LOST_ARB	BIT(27)
+#घोषणा I2C_STAT_NACK		BIT(26)
+#घोषणा I2C_STAT_DAT_REQ	BIT(25)
+#घोषणा I2C_STAT_CMD_COMP	BIT(24)
+#घोषणा I2C_STAT_STOP_ERR	BIT(23)
+#घोषणा I2C_STAT_MAX_PORT	GENMASK(22, 16)
+#घोषणा I2C_STAT_ANY_INT	BIT(15)
+#घोषणा I2C_STAT_SCL_IN		BIT(11)
+#घोषणा I2C_STAT_SDA_IN		BIT(10)
+#घोषणा I2C_STAT_PORT_BUSY	BIT(9)
+#घोषणा I2C_STAT_SELF_BUSY	BIT(8)
+#घोषणा I2C_STAT_FIFO_COUNT	GENMASK(7, 0)
 
-#define I2C_STAT_ERR		(I2C_STAT_INV_CMD |			\
+#घोषणा I2C_STAT_ERR		(I2C_STAT_INV_CMD |			\
 				 I2C_STAT_PARITY |			\
 				 I2C_STAT_BE_OVERRUN |			\
 				 I2C_STAT_BE_ACCESS |			\
 				 I2C_STAT_LOST_ARB |			\
 				 I2C_STAT_NACK |			\
 				 I2C_STAT_STOP_ERR)
-#define I2C_STAT_ANY_RESP	(I2C_STAT_ERR |				\
+#घोषणा I2C_STAT_ANY_RESP	(I2C_STAT_ERR |				\
 				 I2C_STAT_DAT_REQ |			\
 				 I2C_STAT_CMD_COMP)
 
-/* extended status register */
-#define I2C_ESTAT_FIFO_SZ	GENMASK(31, 24)
-#define I2C_ESTAT_SCL_IN_SY	BIT(15)
-#define I2C_ESTAT_SDA_IN_SY	BIT(14)
-#define I2C_ESTAT_S_SCL		BIT(13)
-#define I2C_ESTAT_S_SDA		BIT(12)
-#define I2C_ESTAT_M_SCL		BIT(11)
-#define I2C_ESTAT_M_SDA		BIT(10)
-#define I2C_ESTAT_HI_WATER	BIT(9)
-#define I2C_ESTAT_LO_WATER	BIT(8)
-#define I2C_ESTAT_PORT_BUSY	BIT(7)
-#define I2C_ESTAT_SELF_BUSY	BIT(6)
-#define I2C_ESTAT_VERSION	GENMASK(4, 0)
+/* extended status रेजिस्टर */
+#घोषणा I2C_ESTAT_FIFO_SZ	GENMASK(31, 24)
+#घोषणा I2C_ESTAT_SCL_IN_SY	BIT(15)
+#घोषणा I2C_ESTAT_SDA_IN_SY	BIT(14)
+#घोषणा I2C_ESTAT_S_SCL		BIT(13)
+#घोषणा I2C_ESTAT_S_SDA		BIT(12)
+#घोषणा I2C_ESTAT_M_SCL		BIT(11)
+#घोषणा I2C_ESTAT_M_SDA		BIT(10)
+#घोषणा I2C_ESTAT_HI_WATER	BIT(9)
+#घोषणा I2C_ESTAT_LO_WATER	BIT(8)
+#घोषणा I2C_ESTAT_PORT_BUSY	BIT(7)
+#घोषणा I2C_ESTAT_SELF_BUSY	BIT(6)
+#घोषणा I2C_ESTAT_VERSION	GENMASK(4, 0)
 
-/* port busy register */
-#define I2C_PORT_BUSY_RESET	BIT(31)
+/* port busy रेजिस्टर */
+#घोषणा I2C_PORT_BUSY_RESET	BIT(31)
 
-/* wait for command complete or data request */
-#define I2C_CMD_SLEEP_MAX_US	500
-#define I2C_CMD_SLEEP_MIN_US	50
+/* रुको क्रम command complete or data request */
+#घोषणा I2C_CMD_SLEEP_MAX_US	500
+#घोषणा I2C_CMD_SLEEP_MIN_US	50
 
-/* wait after reset; choose time from legacy driver */
-#define I2C_RESET_SLEEP_MAX_US	2000
-#define I2C_RESET_SLEEP_MIN_US	1000
+/* रुको after reset; choose समय from legacy driver */
+#घोषणा I2C_RESET_SLEEP_MAX_US	2000
+#घोषणा I2C_RESET_SLEEP_MIN_US	1000
 
-/* choose timeout length from legacy driver; it's well tested */
-#define I2C_ABORT_TIMEOUT	msecs_to_jiffies(100)
+/* choose समयout length from legacy driver; it's well tested */
+#घोषणा I2C_ABORT_TIMEOUT	msecs_to_jअगरfies(100)
 
-struct fsi_i2c_master {
-	struct fsi_device	*fsi;
-	u8			fifo_size;
-	struct list_head	ports;
-	struct mutex		lock;
-};
+काष्ठा fsi_i2c_master अणु
+	काष्ठा fsi_device	*fsi;
+	u8			fअगरo_size;
+	काष्ठा list_head	ports;
+	काष्ठा mutex		lock;
+पूर्ण;
 
-struct fsi_i2c_port {
-	struct list_head	list;
-	struct i2c_adapter	adapter;
-	struct fsi_i2c_master	*master;
+काष्ठा fsi_i2c_port अणु
+	काष्ठा list_head	list;
+	काष्ठा i2c_adapter	adapter;
+	काष्ठा fsi_i2c_master	*master;
 	u16			port;
 	u16			xfrd;
-};
+पूर्ण;
 
-static int fsi_i2c_read_reg(struct fsi_device *fsi, unsigned int reg,
+अटल पूर्णांक fsi_i2c_पढ़ो_reg(काष्ठा fsi_device *fsi, अचिन्हित पूर्णांक reg,
 			    u32 *data)
-{
-	int rc;
+अणु
+	पूर्णांक rc;
 	__be32 data_be;
 
-	rc = fsi_device_read(fsi, reg, &data_be, sizeof(data_be));
-	if (rc)
-		return rc;
+	rc = fsi_device_पढ़ो(fsi, reg, &data_be, माप(data_be));
+	अगर (rc)
+		वापस rc;
 
 	*data = be32_to_cpu(data_be);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_i2c_write_reg(struct fsi_device *fsi, unsigned int reg,
+अटल पूर्णांक fsi_i2c_ग_लिखो_reg(काष्ठा fsi_device *fsi, अचिन्हित पूर्णांक reg,
 			     u32 *data)
-{
+अणु
 	__be32 data_be = cpu_to_be32p(data);
 
-	return fsi_device_write(fsi, reg, &data_be, sizeof(data_be));
-}
+	वापस fsi_device_ग_लिखो(fsi, reg, &data_be, माप(data_be));
+पूर्ण
 
-static int fsi_i2c_dev_init(struct fsi_i2c_master *i2c)
-{
-	int rc;
+अटल पूर्णांक fsi_i2c_dev_init(काष्ठा fsi_i2c_master *i2c)
+अणु
+	पूर्णांक rc;
 	u32 mode = I2C_MODE_ENHANCED, extended_status, watermark;
-	u32 interrupt = 0;
+	u32 पूर्णांकerrupt = 0;
 
-	/* since we use polling, disable interrupts */
-	rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_INT_MASK, &interrupt);
-	if (rc)
-		return rc;
+	/* since we use polling, disable पूर्णांकerrupts */
+	rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_INT_MASK, &पूर्णांकerrupt);
+	अगर (rc)
+		वापस rc;
 
 	mode |= FIELD_PREP(I2C_MODE_CLKDIV, I2C_DEFAULT_CLK_DIV);
-	rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+	अगर (rc)
+		वापस rc;
 
-	rc = fsi_i2c_read_reg(i2c->fsi, I2C_FSI_ESTAT, &extended_status);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_ESTAT, &extended_status);
+	अगर (rc)
+		वापस rc;
 
-	i2c->fifo_size = FIELD_GET(I2C_ESTAT_FIFO_SZ, extended_status);
+	i2c->fअगरo_size = FIELD_GET(I2C_ESTAT_FIFO_SZ, extended_status);
 	watermark = FIELD_PREP(I2C_WATERMARK_HI,
-			       i2c->fifo_size - I2C_FIFO_HI_LVL);
+			       i2c->fअगरo_size - I2C_FIFO_HI_LVL);
 	watermark |= FIELD_PREP(I2C_WATERMARK_LO, I2C_FIFO_LO_LVL);
 
-	return fsi_i2c_write_reg(i2c->fsi, I2C_FSI_WATER_MARK, &watermark);
-}
+	वापस fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_WATER_MARK, &watermark);
+पूर्ण
 
-static int fsi_i2c_set_port(struct fsi_i2c_port *port)
-{
-	int rc;
-	struct fsi_device *fsi = port->master->fsi;
+अटल पूर्णांक fsi_i2c_set_port(काष्ठा fsi_i2c_port *port)
+अणु
+	पूर्णांक rc;
+	काष्ठा fsi_device *fsi = port->master->fsi;
 	u32 mode, dummy = 0;
 
-	rc = fsi_i2c_read_reg(fsi, I2C_FSI_MODE, &mode);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_पढ़ो_reg(fsi, I2C_FSI_MODE, &mode);
+	अगर (rc)
+		वापस rc;
 
-	if (FIELD_GET(I2C_MODE_PORT, mode) == port->port)
-		return 0;
+	अगर (FIELD_GET(I2C_MODE_PORT, mode) == port->port)
+		वापस 0;
 
 	mode = (mode & ~I2C_MODE_PORT) | FIELD_PREP(I2C_MODE_PORT, port->port);
-	rc = fsi_i2c_write_reg(fsi, I2C_FSI_MODE, &mode);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_ग_लिखो_reg(fsi, I2C_FSI_MODE, &mode);
+	अगर (rc)
+		वापस rc;
 
 	/* reset engine when port is changed */
-	return fsi_i2c_write_reg(fsi, I2C_FSI_RESET_ERR, &dummy);
-}
+	वापस fsi_i2c_ग_लिखो_reg(fsi, I2C_FSI_RESET_ERR, &dummy);
+पूर्ण
 
-static int fsi_i2c_start(struct fsi_i2c_port *port, struct i2c_msg *msg,
+अटल पूर्णांक fsi_i2c_start(काष्ठा fsi_i2c_port *port, काष्ठा i2c_msg *msg,
 			 bool stop)
-{
-	struct fsi_i2c_master *i2c = port->master;
+अणु
+	काष्ठा fsi_i2c_master *i2c = port->master;
 	u32 cmd = I2C_CMD_WITH_START | I2C_CMD_WITH_ADDR;
 
 	port->xfrd = 0;
 
-	if (msg->flags & I2C_M_RD)
+	अगर (msg->flags & I2C_M_RD)
 		cmd |= I2C_CMD_READ;
 
-	if (stop || msg->flags & I2C_M_STOP)
+	अगर (stop || msg->flags & I2C_M_STOP)
 		cmd |= I2C_CMD_WITH_STOP;
 
 	cmd |= FIELD_PREP(I2C_CMD_ADDR, msg->addr);
 	cmd |= FIELD_PREP(I2C_CMD_LEN, msg->len);
 
-	return fsi_i2c_write_reg(i2c->fsi, I2C_FSI_CMD, &cmd);
-}
+	वापस fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_CMD, &cmd);
+पूर्ण
 
-static int fsi_i2c_get_op_bytes(int op_bytes)
-{
+अटल पूर्णांक fsi_i2c_get_op_bytes(पूर्णांक op_bytes)
+अणु
 	/* fsi is limited to max 4 byte aligned ops */
-	if (op_bytes > 4)
-		return 4;
-	else if (op_bytes == 3)
-		return 2;
-	return op_bytes;
-}
+	अगर (op_bytes > 4)
+		वापस 4;
+	अन्यथा अगर (op_bytes == 3)
+		वापस 2;
+	वापस op_bytes;
+पूर्ण
 
-static int fsi_i2c_write_fifo(struct fsi_i2c_port *port, struct i2c_msg *msg,
-			      u8 fifo_count)
-{
-	int write;
-	int rc;
-	struct fsi_i2c_master *i2c = port->master;
-	int bytes_to_write = i2c->fifo_size - fifo_count;
-	int bytes_remaining = msg->len - port->xfrd;
+अटल पूर्णांक fsi_i2c_ग_लिखो_fअगरo(काष्ठा fsi_i2c_port *port, काष्ठा i2c_msg *msg,
+			      u8 fअगरo_count)
+अणु
+	पूर्णांक ग_लिखो;
+	पूर्णांक rc;
+	काष्ठा fsi_i2c_master *i2c = port->master;
+	पूर्णांक bytes_to_ग_लिखो = i2c->fअगरo_size - fअगरo_count;
+	पूर्णांक bytes_reमुख्यing = msg->len - port->xfrd;
 
-	bytes_to_write = min(bytes_to_write, bytes_remaining);
+	bytes_to_ग_लिखो = min(bytes_to_ग_लिखो, bytes_reमुख्यing);
 
-	while (bytes_to_write) {
-		write = fsi_i2c_get_op_bytes(bytes_to_write);
+	जबतक (bytes_to_ग_लिखो) अणु
+		ग_लिखो = fsi_i2c_get_op_bytes(bytes_to_ग_लिखो);
 
-		rc = fsi_device_write(i2c->fsi, I2C_FSI_FIFO,
-				      &msg->buf[port->xfrd], write);
-		if (rc)
-			return rc;
+		rc = fsi_device_ग_लिखो(i2c->fsi, I2C_FSI_FIFO,
+				      &msg->buf[port->xfrd], ग_लिखो);
+		अगर (rc)
+			वापस rc;
 
-		port->xfrd += write;
-		bytes_to_write -= write;
-	}
+		port->xfrd += ग_लिखो;
+		bytes_to_ग_लिखो -= ग_लिखो;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_i2c_read_fifo(struct fsi_i2c_port *port, struct i2c_msg *msg,
-			     u8 fifo_count)
-{
-	int read;
-	int rc;
-	struct fsi_i2c_master *i2c = port->master;
-	int bytes_to_read;
-	int xfr_remaining = msg->len - port->xfrd;
+अटल पूर्णांक fsi_i2c_पढ़ो_fअगरo(काष्ठा fsi_i2c_port *port, काष्ठा i2c_msg *msg,
+			     u8 fअगरo_count)
+अणु
+	पूर्णांक पढ़ो;
+	पूर्णांक rc;
+	काष्ठा fsi_i2c_master *i2c = port->master;
+	पूर्णांक bytes_to_पढ़ो;
+	पूर्णांक xfr_reमुख्यing = msg->len - port->xfrd;
 	u32 dummy;
 
-	bytes_to_read = min_t(int, fifo_count, xfr_remaining);
+	bytes_to_पढ़ो = min_t(पूर्णांक, fअगरo_count, xfr_reमुख्यing);
 
-	while (bytes_to_read) {
-		read = fsi_i2c_get_op_bytes(bytes_to_read);
+	जबतक (bytes_to_पढ़ो) अणु
+		पढ़ो = fsi_i2c_get_op_bytes(bytes_to_पढ़ो);
 
-		if (xfr_remaining) {
-			rc = fsi_device_read(i2c->fsi, I2C_FSI_FIFO,
-					     &msg->buf[port->xfrd], read);
-			if (rc)
-				return rc;
+		अगर (xfr_reमुख्यing) अणु
+			rc = fsi_device_पढ़ो(i2c->fsi, I2C_FSI_FIFO,
+					     &msg->buf[port->xfrd], पढ़ो);
+			अगर (rc)
+				वापस rc;
 
-			port->xfrd += read;
-			xfr_remaining -= read;
-		} else {
-			/* no more buffer but data in fifo, need to clear it */
-			rc = fsi_device_read(i2c->fsi, I2C_FSI_FIFO, &dummy,
-					     read);
-			if (rc)
-				return rc;
-		}
+			port->xfrd += पढ़ो;
+			xfr_reमुख्यing -= पढ़ो;
+		पूर्ण अन्यथा अणु
+			/* no more buffer but data in fअगरo, need to clear it */
+			rc = fsi_device_पढ़ो(i2c->fsi, I2C_FSI_FIFO, &dummy,
+					     पढ़ो);
+			अगर (rc)
+				वापस rc;
+		पूर्ण
 
-		bytes_to_read -= read;
-	}
+		bytes_to_पढ़ो -= पढ़ो;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_i2c_get_scl(struct i2c_adapter *adap)
-{
+अटल पूर्णांक fsi_i2c_get_scl(काष्ठा i2c_adapter *adap)
+अणु
 	u32 stat = 0;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *i2c = port->master;
 
-	fsi_i2c_read_reg(i2c->fsi, I2C_FSI_STAT, &stat);
+	fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_STAT, &stat);
 
-	return !!(stat & I2C_STAT_SCL_IN);
-}
+	वापस !!(stat & I2C_STAT_SCL_IN);
+पूर्ण
 
-static void fsi_i2c_set_scl(struct i2c_adapter *adap, int val)
-{
+अटल व्योम fsi_i2c_set_scl(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
 	u32 dummy = 0;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *i2c = port->master;
 
-	if (val)
-		fsi_i2c_write_reg(i2c->fsi, I2C_FSI_SET_SCL, &dummy);
-	else
-		fsi_i2c_write_reg(i2c->fsi, I2C_FSI_RESET_SCL, &dummy);
-}
+	अगर (val)
+		fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_SET_SCL, &dummy);
+	अन्यथा
+		fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_RESET_SCL, &dummy);
+पूर्ण
 
-static int fsi_i2c_get_sda(struct i2c_adapter *adap)
-{
+अटल पूर्णांक fsi_i2c_get_sda(काष्ठा i2c_adapter *adap)
+अणु
 	u32 stat = 0;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *i2c = port->master;
 
-	fsi_i2c_read_reg(i2c->fsi, I2C_FSI_STAT, &stat);
+	fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_STAT, &stat);
 
-	return !!(stat & I2C_STAT_SDA_IN);
-}
+	वापस !!(stat & I2C_STAT_SDA_IN);
+पूर्ण
 
-static void fsi_i2c_set_sda(struct i2c_adapter *adap, int val)
-{
+अटल व्योम fsi_i2c_set_sda(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
 	u32 dummy = 0;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *i2c = port->master;
 
-	if (val)
-		fsi_i2c_write_reg(i2c->fsi, I2C_FSI_SET_SDA, &dummy);
-	else
-		fsi_i2c_write_reg(i2c->fsi, I2C_FSI_RESET_SDA, &dummy);
-}
+	अगर (val)
+		fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_SET_SDA, &dummy);
+	अन्यथा
+		fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_RESET_SDA, &dummy);
+पूर्ण
 
-static void fsi_i2c_prepare_recovery(struct i2c_adapter *adap)
-{
-	int rc;
+अटल व्योम fsi_i2c_prepare_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	पूर्णांक rc;
 	u32 mode;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *i2c = port->master;
 
-	rc = fsi_i2c_read_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-	if (rc)
-		return;
+	rc = fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+	अगर (rc)
+		वापस;
 
 	mode |= I2C_MODE_DIAG;
-	fsi_i2c_write_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-}
+	fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+पूर्ण
 
-static void fsi_i2c_unprepare_recovery(struct i2c_adapter *adap)
-{
-	int rc;
+अटल व्योम fsi_i2c_unprepare_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	पूर्णांक rc;
 	u32 mode;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *i2c = port->master;
 
-	rc = fsi_i2c_read_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-	if (rc)
-		return;
+	rc = fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+	अगर (rc)
+		वापस;
 
 	mode &= ~I2C_MODE_DIAG;
-	fsi_i2c_write_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-}
+	fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+पूर्ण
 
-static int fsi_i2c_reset_bus(struct fsi_i2c_master *i2c,
-			     struct fsi_i2c_port *port)
-{
-	int rc;
+अटल पूर्णांक fsi_i2c_reset_bus(काष्ठा fsi_i2c_master *i2c,
+			     काष्ठा fsi_i2c_port *port)
+अणु
+	पूर्णांक rc;
 	u32 stat, dummy = 0;
 
-	/* force bus reset, ignore errors */
+	/* क्रमce bus reset, ignore errors */
 	i2c_recover_bus(&port->adapter);
 
 	/* reset errors */
-	rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_RESET_ERR, &dummy);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_RESET_ERR, &dummy);
+	अगर (rc)
+		वापस rc;
 
-	/* wait for command complete */
+	/* रुको क्रम command complete */
 	usleep_range(I2C_RESET_SLEEP_MIN_US, I2C_RESET_SLEEP_MAX_US);
 
-	rc = fsi_i2c_read_reg(i2c->fsi, I2C_FSI_STAT, &stat);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_STAT, &stat);
+	अगर (rc)
+		वापस rc;
 
-	if (stat & I2C_STAT_CMD_COMP)
-		return 0;
+	अगर (stat & I2C_STAT_CMD_COMP)
+		वापस 0;
 
 	/* failed to get command complete; reset engine again */
-	rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_RESET_I2C, &dummy);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_RESET_I2C, &dummy);
+	अगर (rc)
+		वापस rc;
 
 	/* re-init engine again */
-	return fsi_i2c_dev_init(i2c);
-}
+	वापस fsi_i2c_dev_init(i2c);
+पूर्ण
 
-static int fsi_i2c_reset_engine(struct fsi_i2c_master *i2c, u16 port)
-{
-	int rc;
+अटल पूर्णांक fsi_i2c_reset_engine(काष्ठा fsi_i2c_master *i2c, u16 port)
+अणु
+	पूर्णांक rc;
 	u32 mode, dummy = 0;
 
 	/* reset engine */
-	rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_RESET_I2C, &dummy);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_RESET_I2C, &dummy);
+	अगर (rc)
+		वापस rc;
 
 	/* re-init engine */
 	rc = fsi_i2c_dev_init(i2c);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = fsi_i2c_read_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+	अगर (rc)
+		वापस rc;
 
-	/* set port; default after reset is 0 */
-	if (port) {
+	/* set port; शेष after reset is 0 */
+	अगर (port) अणु
 		mode &= ~I2C_MODE_PORT;
 		mode |= FIELD_PREP(I2C_MODE_PORT, port);
-		rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_MODE, &mode);
-		if (rc)
-			return rc;
-	}
+		rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_MODE, &mode);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	/* reset busy register; hw workaround */
+	/* reset busy रेजिस्टर; hw workaround */
 	dummy = I2C_PORT_BUSY_RESET;
-	rc = fsi_i2c_write_reg(i2c->fsi, I2C_FSI_PORT_BUSY, &dummy);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_ग_लिखो_reg(i2c->fsi, I2C_FSI_PORT_BUSY, &dummy);
+	अगर (rc)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_i2c_abort(struct fsi_i2c_port *port, u32 status)
-{
-	int rc;
-	unsigned long start;
+अटल पूर्णांक fsi_i2c_पात(काष्ठा fsi_i2c_port *port, u32 status)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ start;
 	u32 cmd = I2C_CMD_WITH_STOP;
 	u32 stat;
-	struct fsi_i2c_master *i2c = port->master;
-	struct fsi_device *fsi = i2c->fsi;
+	काष्ठा fsi_i2c_master *i2c = port->master;
+	काष्ठा fsi_device *fsi = i2c->fsi;
 
 	rc = fsi_i2c_reset_engine(i2c, port->port);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = fsi_i2c_read_reg(fsi, I2C_FSI_STAT, &stat);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_पढ़ो_reg(fsi, I2C_FSI_STAT, &stat);
+	अगर (rc)
+		वापस rc;
 
-	/* if sda is low, peform full bus reset */
-	if (!(stat & I2C_STAT_SDA_IN)) {
+	/* अगर sda is low, peक्रमm full bus reset */
+	अगर (!(stat & I2C_STAT_SDA_IN)) अणु
 		rc = fsi_i2c_reset_bus(i2c, port);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	/* skip final stop command for these errors */
-	if (status & (I2C_STAT_PARITY | I2C_STAT_LOST_ARB | I2C_STAT_STOP_ERR))
-		return 0;
+	/* skip final stop command क्रम these errors */
+	अगर (status & (I2C_STAT_PARITY | I2C_STAT_LOST_ARB | I2C_STAT_STOP_ERR))
+		वापस 0;
 
-	/* write stop command */
-	rc = fsi_i2c_write_reg(fsi, I2C_FSI_CMD, &cmd);
-	if (rc)
-		return rc;
+	/* ग_लिखो stop command */
+	rc = fsi_i2c_ग_लिखो_reg(fsi, I2C_FSI_CMD, &cmd);
+	अगर (rc)
+		वापस rc;
 
-	/* wait until we see command complete in the master */
-	start = jiffies;
+	/* रुको until we see command complete in the master */
+	start = jअगरfies;
 
-	do {
-		rc = fsi_i2c_read_reg(fsi, I2C_FSI_STAT, &status);
-		if (rc)
-			return rc;
+	करो अणु
+		rc = fsi_i2c_पढ़ो_reg(fsi, I2C_FSI_STAT, &status);
+		अगर (rc)
+			वापस rc;
 
-		if (status & I2C_STAT_CMD_COMP)
-			return 0;
+		अगर (status & I2C_STAT_CMD_COMP)
+			वापस 0;
 
 		usleep_range(I2C_CMD_SLEEP_MIN_US, I2C_CMD_SLEEP_MAX_US);
-	} while (time_after(start + I2C_ABORT_TIMEOUT, jiffies));
+	पूर्ण जबतक (समय_after(start + I2C_ABORT_TIMEOUT, jअगरfies));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int fsi_i2c_handle_status(struct fsi_i2c_port *port,
-				 struct i2c_msg *msg, u32 status)
-{
-	int rc;
-	u8 fifo_count;
+अटल पूर्णांक fsi_i2c_handle_status(काष्ठा fsi_i2c_port *port,
+				 काष्ठा i2c_msg *msg, u32 status)
+अणु
+	पूर्णांक rc;
+	u8 fअगरo_count;
 
-	if (status & I2C_STAT_ERR) {
-		rc = fsi_i2c_abort(port, status);
-		if (rc)
-			return rc;
+	अगर (status & I2C_STAT_ERR) अणु
+		rc = fsi_i2c_पात(port, status);
+		अगर (rc)
+			वापस rc;
 
-		if (status & I2C_STAT_INV_CMD)
-			return -EINVAL;
+		अगर (status & I2C_STAT_INV_CMD)
+			वापस -EINVAL;
 
-		if (status & (I2C_STAT_PARITY | I2C_STAT_BE_OVERRUN |
+		अगर (status & (I2C_STAT_PARITY | I2C_STAT_BE_OVERRUN |
 		    I2C_STAT_BE_ACCESS))
-			return -EPROTO;
+			वापस -EPROTO;
 
-		if (status & I2C_STAT_NACK)
-			return -ENXIO;
+		अगर (status & I2C_STAT_NACK)
+			वापस -ENXIO;
 
-		if (status & I2C_STAT_LOST_ARB)
-			return -EAGAIN;
+		अगर (status & I2C_STAT_LOST_ARB)
+			वापस -EAGAIN;
 
-		if (status & I2C_STAT_STOP_ERR)
-			return -EBADMSG;
+		अगर (status & I2C_STAT_STOP_ERR)
+			वापस -EBADMSG;
 
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (status & I2C_STAT_DAT_REQ) {
-		fifo_count = FIELD_GET(I2C_STAT_FIFO_COUNT, status);
+	अगर (status & I2C_STAT_DAT_REQ) अणु
+		fअगरo_count = FIELD_GET(I2C_STAT_FIFO_COUNT, status);
 
-		if (msg->flags & I2C_M_RD)
-			return fsi_i2c_read_fifo(port, msg, fifo_count);
+		अगर (msg->flags & I2C_M_RD)
+			वापस fsi_i2c_पढ़ो_fअगरo(port, msg, fअगरo_count);
 
-		return fsi_i2c_write_fifo(port, msg, fifo_count);
-	}
+		वापस fsi_i2c_ग_लिखो_fअगरo(port, msg, fअगरo_count);
+	पूर्ण
 
-	if (status & I2C_STAT_CMD_COMP) {
-		if (port->xfrd < msg->len)
-			return -ENODATA;
+	अगर (status & I2C_STAT_CMD_COMP) अणु
+		अगर (port->xfrd < msg->len)
+			वापस -ENODATA;
 
-		return msg->len;
-	}
+		वापस msg->len;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_i2c_wait(struct fsi_i2c_port *port, struct i2c_msg *msg,
-			unsigned long timeout)
-{
+अटल पूर्णांक fsi_i2c_रुको(काष्ठा fsi_i2c_port *port, काष्ठा i2c_msg *msg,
+			अचिन्हित दीर्घ समयout)
+अणु
 	u32 status = 0;
-	int rc;
-	unsigned long start = jiffies;
+	पूर्णांक rc;
+	अचिन्हित दीर्घ start = jअगरfies;
 
-	do {
-		rc = fsi_i2c_read_reg(port->master->fsi, I2C_FSI_STAT,
+	करो अणु
+		rc = fsi_i2c_पढ़ो_reg(port->master->fsi, I2C_FSI_STAT,
 				      &status);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		if (status & I2C_STAT_ANY_RESP) {
+		अगर (status & I2C_STAT_ANY_RESP) अणु
 			rc = fsi_i2c_handle_status(port, msg, status);
-			if (rc < 0)
-				return rc;
+			अगर (rc < 0)
+				वापस rc;
 
 			/* cmd complete and all data xfrd */
-			if (rc == msg->len)
-				return 0;
+			अगर (rc == msg->len)
+				वापस 0;
 
-			/* need to xfr more data, but maybe don't need wait */
-			continue;
-		}
+			/* need to xfr more data, but maybe करोn't need रुको */
+			जारी;
+		पूर्ण
 
 		usleep_range(I2C_CMD_SLEEP_MIN_US, I2C_CMD_SLEEP_MAX_US);
-	} while (time_after(start + timeout, jiffies));
+	पूर्ण जबतक (समय_after(start + समयout, jअगरfies));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int fsi_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs,
-			int num)
-{
-	int i, rc;
-	unsigned long start_time;
-	struct fsi_i2c_port *port = adap->algo_data;
-	struct fsi_i2c_master *master = port->master;
-	struct i2c_msg *msg;
+अटल पूर्णांक fsi_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs,
+			पूर्णांक num)
+अणु
+	पूर्णांक i, rc;
+	अचिन्हित दीर्घ start_समय;
+	काष्ठा fsi_i2c_port *port = adap->algo_data;
+	काष्ठा fsi_i2c_master *master = port->master;
+	काष्ठा i2c_msg *msg;
 
 	mutex_lock(&master->lock);
 
 	rc = fsi_i2c_set_port(port);
-	if (rc)
-		goto unlock;
+	अगर (rc)
+		जाओ unlock;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		msg = msgs + i;
-		start_time = jiffies;
+		start_समय = jअगरfies;
 
 		rc = fsi_i2c_start(port, msg, i == num - 1);
-		if (rc)
-			goto unlock;
+		अगर (rc)
+			जाओ unlock;
 
-		rc = fsi_i2c_wait(port, msg,
-				  adap->timeout - (jiffies - start_time));
-		if (rc)
-			goto unlock;
-	}
+		rc = fsi_i2c_रुको(port, msg,
+				  adap->समयout - (jअगरfies - start_समय));
+		अगर (rc)
+			जाओ unlock;
+	पूर्ण
 
 unlock:
 	mutex_unlock(&master->lock);
-	return rc ? : num;
-}
+	वापस rc ? : num;
+पूर्ण
 
-static u32 fsi_i2c_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_PROTOCOL_MANGLING |
+अटल u32 fsi_i2c_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_PROTOCOL_MANGLING |
 		I2C_FUNC_SMBUS_EMUL | I2C_FUNC_SMBUS_BLOCK_DATA;
-}
+पूर्ण
 
-static struct i2c_bus_recovery_info fsi_i2c_bus_recovery_info = {
+अटल काष्ठा i2c_bus_recovery_info fsi_i2c_bus_recovery_info = अणु
 	.recover_bus = i2c_generic_scl_recovery,
 	.get_scl = fsi_i2c_get_scl,
 	.set_scl = fsi_i2c_set_scl,
@@ -651,66 +652,66 @@ static struct i2c_bus_recovery_info fsi_i2c_bus_recovery_info = {
 	.set_sda = fsi_i2c_set_sda,
 	.prepare_recovery = fsi_i2c_prepare_recovery,
 	.unprepare_recovery = fsi_i2c_unprepare_recovery,
-};
+पूर्ण;
 
-static const struct i2c_algorithm fsi_i2c_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm fsi_i2c_algorithm = अणु
 	.master_xfer = fsi_i2c_xfer,
 	.functionality = fsi_i2c_functionality,
-};
+पूर्ण;
 
-static struct device_node *fsi_i2c_find_port_of_node(struct device_node *fsi,
-						     int port)
-{
-	struct device_node *np;
+अटल काष्ठा device_node *fsi_i2c_find_port_of_node(काष्ठा device_node *fsi,
+						     पूर्णांक port)
+अणु
+	काष्ठा device_node *np;
 	u32 port_no;
-	int rc;
+	पूर्णांक rc;
 
-	for_each_child_of_node(fsi, np) {
-		rc = of_property_read_u32(np, "reg", &port_no);
-		if (!rc && port_no == port)
-			return np;
-	}
+	क्रम_each_child_of_node(fsi, np) अणु
+		rc = of_property_पढ़ो_u32(np, "reg", &port_no);
+		अगर (!rc && port_no == port)
+			वापस np;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int fsi_i2c_probe(struct device *dev)
-{
-	struct fsi_i2c_master *i2c;
-	struct fsi_i2c_port *port;
-	struct device_node *np;
+अटल पूर्णांक fsi_i2c_probe(काष्ठा device *dev)
+अणु
+	काष्ठा fsi_i2c_master *i2c;
+	काष्ठा fsi_i2c_port *port;
+	काष्ठा device_node *np;
 	u32 port_no, ports, stat;
-	int rc;
+	पूर्णांक rc;
 
-	i2c = devm_kzalloc(dev, sizeof(*i2c), GFP_KERNEL);
-	if (!i2c)
-		return -ENOMEM;
+	i2c = devm_kzalloc(dev, माप(*i2c), GFP_KERNEL);
+	अगर (!i2c)
+		वापस -ENOMEM;
 
 	mutex_init(&i2c->lock);
 	i2c->fsi = to_fsi_dev(dev);
 	INIT_LIST_HEAD(&i2c->ports);
 
 	rc = fsi_i2c_dev_init(i2c);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	rc = fsi_i2c_read_reg(i2c->fsi, I2C_FSI_STAT, &stat);
-	if (rc)
-		return rc;
+	rc = fsi_i2c_पढ़ो_reg(i2c->fsi, I2C_FSI_STAT, &stat);
+	अगर (rc)
+		वापस rc;
 
 	ports = FIELD_GET(I2C_STAT_MAX_PORT, stat) + 1;
 	dev_dbg(dev, "I2C master has %d ports\n", ports);
 
-	for (port_no = 0; port_no < ports; port_no++) {
+	क्रम (port_no = 0; port_no < ports; port_no++) अणु
 		np = fsi_i2c_find_port_of_node(dev->of_node, port_no);
-		if (!of_device_is_available(np))
-			continue;
+		अगर (!of_device_is_available(np))
+			जारी;
 
-		port = kzalloc(sizeof(*port), GFP_KERNEL);
-		if (!port) {
+		port = kzalloc(माप(*port), GFP_KERNEL);
+		अगर (!port) अणु
 			of_node_put(np);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		port->master = i2c;
 		port->port = port_no;
@@ -722,52 +723,52 @@ static int fsi_i2c_probe(struct device *dev)
 		port->adapter.bus_recovery_info = &fsi_i2c_bus_recovery_info;
 		port->adapter.algo_data = port;
 
-		snprintf(port->adapter.name, sizeof(port->adapter.name),
+		snम_लिखो(port->adapter.name, माप(port->adapter.name),
 			 "i2c_bus-%u", port_no);
 
 		rc = i2c_add_adapter(&port->adapter);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			dev_err(dev, "Failed to register adapter: %d\n", rc);
-			kfree(port);
-			continue;
-		}
+			kमुक्त(port);
+			जारी;
+		पूर्ण
 
 		list_add(&port->list, &i2c->ports);
-	}
+	पूर्ण
 
 	dev_set_drvdata(dev, i2c);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_i2c_remove(struct device *dev)
-{
-	struct fsi_i2c_master *i2c = dev_get_drvdata(dev);
-	struct fsi_i2c_port *port, *tmp;
+अटल पूर्णांक fsi_i2c_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा fsi_i2c_master *i2c = dev_get_drvdata(dev);
+	काष्ठा fsi_i2c_port *port, *पंचांगp;
 
-	list_for_each_entry_safe(port, tmp, &i2c->ports, list) {
+	list_क्रम_each_entry_safe(port, पंचांगp, &i2c->ports, list) अणु
 		list_del(&port->list);
 		i2c_del_adapter(&port->adapter);
-		kfree(port);
-	}
+		kमुक्त(port);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fsi_device_id fsi_i2c_ids[] = {
-	{ FSI_ENGID_I2C, FSI_VERSION_ANY },
-	{ }
-};
+अटल स्थिर काष्ठा fsi_device_id fsi_i2c_ids[] = अणु
+	अणु FSI_ENGID_I2C, FSI_VERSION_ANY पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct fsi_driver fsi_i2c_driver = {
+अटल काष्ठा fsi_driver fsi_i2c_driver = अणु
 	.id_table = fsi_i2c_ids,
-	.drv = {
+	.drv = अणु
 		.name = "i2c-fsi",
 		.bus = &fsi_bus_type,
 		.probe = fsi_i2c_probe,
-		.remove = fsi_i2c_remove,
-	},
-};
+		.हटाओ = fsi_i2c_हटाओ,
+	पूर्ण,
+पूर्ण;
 
 module_fsi_driver(fsi_i2c_driver);
 

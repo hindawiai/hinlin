@@ -1,679 +1,680 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * This file contains functions which emulate a local clock-event
+ * This file contains functions which emulate a local घड़ी-event
  * device via a broadcast event source.
  *
  * Copyright(C) 2005-2006, Thomas Gleixner <tglx@linutronix.de>
  * Copyright(C) 2005-2007, Red Hat, Inc., Ingo Molnar
  * Copyright(C) 2006-2007, Timesys Corp., Thomas Gleixner
  */
-#include <linux/cpu.h>
-#include <linux/err.h>
-#include <linux/hrtimer.h>
-#include <linux/interrupt.h>
-#include <linux/percpu.h>
-#include <linux/profile.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-#include <linux/module.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/module.h>
 
-#include "tick-internal.h"
-
-/*
- * Broadcast support for broken x86 hardware, where the local apic
- * timer stops in C3 state.
- */
-
-static struct tick_device tick_broadcast_device;
-static cpumask_var_t tick_broadcast_mask __cpumask_var_read_mostly;
-static cpumask_var_t tick_broadcast_on __cpumask_var_read_mostly;
-static cpumask_var_t tmpmask __cpumask_var_read_mostly;
-static int tick_broadcast_forced;
-
-static __cacheline_aligned_in_smp DEFINE_RAW_SPINLOCK(tick_broadcast_lock);
-
-#ifdef CONFIG_TICK_ONESHOT
-static void tick_broadcast_setup_oneshot(struct clock_event_device *bc);
-static void tick_broadcast_clear_oneshot(int cpu);
-static void tick_resume_broadcast_oneshot(struct clock_event_device *bc);
-# ifdef CONFIG_HOTPLUG_CPU
-static void tick_broadcast_oneshot_offline(unsigned int cpu);
-# endif
-#else
-static inline void tick_broadcast_setup_oneshot(struct clock_event_device *bc) { BUG(); }
-static inline void tick_broadcast_clear_oneshot(int cpu) { }
-static inline void tick_resume_broadcast_oneshot(struct clock_event_device *bc) { }
-# ifdef CONFIG_HOTPLUG_CPU
-static inline void tick_broadcast_oneshot_offline(unsigned int cpu) { }
-# endif
-#endif
+#समावेश "tick-internal.h"
 
 /*
- * Debugging: see timer_list.c
+ * Broadcast support क्रम broken x86 hardware, where the local apic
+ * समयr stops in C3 state.
  */
-struct tick_device *tick_get_broadcast_device(void)
-{
-	return &tick_broadcast_device;
-}
 
-struct cpumask *tick_get_broadcast_mask(void)
-{
-	return tick_broadcast_mask;
-}
+अटल काष्ठा tick_device tick_broadcast_device;
+अटल cpumask_var_t tick_broadcast_mask __cpumask_var_पढ़ो_mostly;
+अटल cpumask_var_t tick_broadcast_on __cpumask_var_पढ़ो_mostly;
+अटल cpumask_var_t पंचांगpmask __cpumask_var_पढ़ो_mostly;
+अटल पूर्णांक tick_broadcast_क्रमced;
+
+अटल __cacheline_aligned_in_smp DEFINE_RAW_SPINLOCK(tick_broadcast_lock);
+
+#अगर_घोषित CONFIG_TICK_ONESHOT
+अटल व्योम tick_broadcast_setup_oneshot(काष्ठा घड़ी_event_device *bc);
+अटल व्योम tick_broadcast_clear_oneshot(पूर्णांक cpu);
+अटल व्योम tick_resume_broadcast_oneshot(काष्ठा घड़ी_event_device *bc);
+# अगरdef CONFIG_HOTPLUG_CPU
+अटल व्योम tick_broadcast_oneshot_offline(अचिन्हित पूर्णांक cpu);
+# endअगर
+#अन्यथा
+अटल अंतरभूत व्योम tick_broadcast_setup_oneshot(काष्ठा घड़ी_event_device *bc) अणु BUG(); पूर्ण
+अटल अंतरभूत व्योम tick_broadcast_clear_oneshot(पूर्णांक cpu) अणु पूर्ण
+अटल अंतरभूत व्योम tick_resume_broadcast_oneshot(काष्ठा घड़ी_event_device *bc) अणु पूर्ण
+# अगरdef CONFIG_HOTPLUG_CPU
+अटल अंतरभूत व्योम tick_broadcast_oneshot_offline(अचिन्हित पूर्णांक cpu) अणु पूर्ण
+# endअगर
+#पूर्ण_अगर
+
+/*
+ * Debugging: see समयr_list.c
+ */
+काष्ठा tick_device *tick_get_broadcast_device(व्योम)
+अणु
+	वापस &tick_broadcast_device;
+पूर्ण
+
+काष्ठा cpumask *tick_get_broadcast_mask(व्योम)
+अणु
+	वापस tick_broadcast_mask;
+पूर्ण
 
 /*
  * Start the device in periodic mode
  */
-static void tick_broadcast_start_periodic(struct clock_event_device *bc)
-{
-	if (bc)
+अटल व्योम tick_broadcast_start_periodic(काष्ठा घड़ी_event_device *bc)
+अणु
+	अगर (bc)
 		tick_setup_periodic(bc, 1);
-}
+पूर्ण
 
 /*
- * Check, if the device can be utilized as broadcast device:
+ * Check, अगर the device can be utilized as broadcast device:
  */
-static bool tick_check_broadcast_device(struct clock_event_device *curdev,
-					struct clock_event_device *newdev)
-{
-	if ((newdev->features & CLOCK_EVT_FEAT_DUMMY) ||
+अटल bool tick_check_broadcast_device(काष्ठा घड़ी_event_device *curdev,
+					काष्ठा घड़ी_event_device *newdev)
+अणु
+	अगर ((newdev->features & CLOCK_EVT_FEAT_DUMMY) ||
 	    (newdev->features & CLOCK_EVT_FEAT_PERCPU) ||
 	    (newdev->features & CLOCK_EVT_FEAT_C3STOP))
-		return false;
+		वापस false;
 
-	if (tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT &&
+	अगर (tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT &&
 	    !(newdev->features & CLOCK_EVT_FEAT_ONESHOT))
-		return false;
+		वापस false;
 
-	return !curdev || newdev->rating > curdev->rating;
-}
+	वापस !curdev || newdev->rating > curdev->rating;
+पूर्ण
 
 /*
  * Conditionally install/replace broadcast device
  */
-void tick_install_broadcast_device(struct clock_event_device *dev)
-{
-	struct clock_event_device *cur = tick_broadcast_device.evtdev;
+व्योम tick_install_broadcast_device(काष्ठा घड़ी_event_device *dev)
+अणु
+	काष्ठा घड़ी_event_device *cur = tick_broadcast_device.evtdev;
 
-	if (!tick_check_broadcast_device(cur, dev))
-		return;
+	अगर (!tick_check_broadcast_device(cur, dev))
+		वापस;
 
-	if (!try_module_get(dev->owner))
-		return;
+	अगर (!try_module_get(dev->owner))
+		वापस;
 
-	clockevents_exchange_device(cur, dev);
-	if (cur)
-		cur->event_handler = clockevents_handle_noop;
+	घड़ीevents_exchange_device(cur, dev);
+	अगर (cur)
+		cur->event_handler = घड़ीevents_handle_noop;
 	tick_broadcast_device.evtdev = dev;
-	if (!cpumask_empty(tick_broadcast_mask))
+	अगर (!cpumask_empty(tick_broadcast_mask))
 		tick_broadcast_start_periodic(dev);
 
-	if (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
-		return;
+	अगर (!(dev->features & CLOCK_EVT_FEAT_ONESHOT))
+		वापस;
 
 	/*
-	 * If the system already runs in oneshot mode, switch the newly
-	 * registered broadcast device to oneshot mode explicitly.
+	 * If the प्रणाली alपढ़ोy runs in oneshot mode, चयन the newly
+	 * रेजिस्टरed broadcast device to oneshot mode explicitly.
 	 */
-	if (tick_broadcast_oneshot_active()) {
-		tick_broadcast_switch_to_oneshot();
-		return;
-	}
+	अगर (tick_broadcast_oneshot_active()) अणु
+		tick_broadcast_चयन_to_oneshot();
+		वापस;
+	पूर्ण
 
 	/*
-	 * Inform all cpus about this. We might be in a situation
-	 * where we did not switch to oneshot mode because the per cpu
+	 * Inक्रमm all cpus about this. We might be in a situation
+	 * where we did not चयन to oneshot mode because the per cpu
 	 * devices are affected by CLOCK_EVT_FEAT_C3STOP and the lack
 	 * of a oneshot capable broadcast device. Without that
-	 * notification the systems stays stuck in periodic mode
-	 * forever.
+	 * notअगरication the प्रणालीs stays stuck in periodic mode
+	 * क्रमever.
 	 */
-	tick_clock_notify();
-}
+	tick_घड़ी_notअगरy();
+पूर्ण
 
 /*
- * Check, if the device is the broadcast device
+ * Check, अगर the device is the broadcast device
  */
-int tick_is_broadcast_device(struct clock_event_device *dev)
-{
-	return (dev && tick_broadcast_device.evtdev == dev);
-}
+पूर्णांक tick_is_broadcast_device(काष्ठा घड़ी_event_device *dev)
+अणु
+	वापस (dev && tick_broadcast_device.evtdev == dev);
+पूर्ण
 
-int tick_broadcast_update_freq(struct clock_event_device *dev, u32 freq)
-{
-	int ret = -ENODEV;
+पूर्णांक tick_broadcast_update_freq(काष्ठा घड़ी_event_device *dev, u32 freq)
+अणु
+	पूर्णांक ret = -ENODEV;
 
-	if (tick_is_broadcast_device(dev)) {
+	अगर (tick_is_broadcast_device(dev)) अणु
 		raw_spin_lock(&tick_broadcast_lock);
-		ret = __clockevents_update_freq(dev, freq);
+		ret = __घड़ीevents_update_freq(dev, freq);
 		raw_spin_unlock(&tick_broadcast_lock);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-static void err_broadcast(const struct cpumask *mask)
-{
+अटल व्योम err_broadcast(स्थिर काष्ठा cpumask *mask)
+अणु
 	pr_crit_once("Failed to broadcast timer tick. Some CPUs may be unresponsive.\n");
-}
+पूर्ण
 
-static void tick_device_setup_broadcast_func(struct clock_event_device *dev)
-{
-	if (!dev->broadcast)
+अटल व्योम tick_device_setup_broadcast_func(काष्ठा घड़ी_event_device *dev)
+अणु
+	अगर (!dev->broadcast)
 		dev->broadcast = tick_broadcast;
-	if (!dev->broadcast) {
+	अगर (!dev->broadcast) अणु
 		pr_warn_once("%s depends on broadcast, but no broadcast function available\n",
 			     dev->name);
 		dev->broadcast = err_broadcast;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Check, if the device is dysfunctional and a placeholder, which
+ * Check, अगर the device is dysfunctional and a placeholder, which
  * needs to be handled by the broadcast device.
  */
-int tick_device_uses_broadcast(struct clock_event_device *dev, int cpu)
-{
-	struct clock_event_device *bc = tick_broadcast_device.evtdev;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक tick_device_uses_broadcast(काष्ठा घड़ी_event_device *dev, पूर्णांक cpu)
+अणु
+	काष्ठा घड़ी_event_device *bc = tick_broadcast_device.evtdev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 
 	/*
-	 * Devices might be registered with both periodic and oneshot
-	 * mode disabled. This signals, that the device needs to be
-	 * operated from the broadcast device and is a placeholder for
+	 * Devices might be रेजिस्टरed with both periodic and oneshot
+	 * mode disabled. This संकेतs, that the device needs to be
+	 * operated from the broadcast device and is a placeholder क्रम
 	 * the cpu local device.
 	 */
-	if (!tick_device_is_functional(dev)) {
+	अगर (!tick_device_is_functional(dev)) अणु
 		dev->event_handler = tick_handle_periodic;
 		tick_device_setup_broadcast_func(dev);
 		cpumask_set_cpu(cpu, tick_broadcast_mask);
-		if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC)
+		अगर (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC)
 			tick_broadcast_start_periodic(bc);
-		else
+		अन्यथा
 			tick_broadcast_setup_oneshot(bc);
 		ret = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Clear the broadcast bit for this cpu if the
-		 * device is not power state affected.
+		 * Clear the broadcast bit क्रम this cpu अगर the
+		 * device is not घातer state affected.
 		 */
-		if (!(dev->features & CLOCK_EVT_FEAT_C3STOP))
+		अगर (!(dev->features & CLOCK_EVT_FEAT_C3STOP))
 			cpumask_clear_cpu(cpu, tick_broadcast_mask);
-		else
+		अन्यथा
 			tick_device_setup_broadcast_func(dev);
 
 		/*
-		 * Clear the broadcast bit if the CPU is not in
+		 * Clear the broadcast bit अगर the CPU is not in
 		 * periodic broadcast on state.
 		 */
-		if (!cpumask_test_cpu(cpu, tick_broadcast_on))
+		अगर (!cpumask_test_cpu(cpu, tick_broadcast_on))
 			cpumask_clear_cpu(cpu, tick_broadcast_mask);
 
-		switch (tick_broadcast_device.mode) {
-		case TICKDEV_MODE_ONESHOT:
+		चयन (tick_broadcast_device.mode) अणु
+		हाल TICKDEV_MODE_ONESHOT:
 			/*
-			 * If the system is in oneshot mode we can
+			 * If the प्रणाली is in oneshot mode we can
 			 * unconditionally clear the oneshot mask bit,
-			 * because the CPU is running and therefore
-			 * not in an idle state which causes the power
+			 * because the CPU is running and thereक्रमe
+			 * not in an idle state which causes the घातer
 			 * state affected device to stop. Let the
 			 * caller initialize the device.
 			 */
 			tick_broadcast_clear_oneshot(cpu);
 			ret = 0;
-			break;
+			अवरोध;
 
-		case TICKDEV_MODE_PERIODIC:
+		हाल TICKDEV_MODE_PERIODIC:
 			/*
-			 * If the system is in periodic mode, check
+			 * If the प्रणाली is in periodic mode, check
 			 * whether the broadcast device can be
-			 * switched off now.
+			 * चयनed off now.
 			 */
-			if (cpumask_empty(tick_broadcast_mask) && bc)
-				clockevents_shutdown(bc);
+			अगर (cpumask_empty(tick_broadcast_mask) && bc)
+				घड़ीevents_shutकरोwn(bc);
 			/*
 			 * If we kept the cpu in the broadcast mask,
 			 * tell the caller to leave the per cpu device
-			 * in shutdown state. The periodic interrupt
-			 * is delivered by the broadcast device, if
+			 * in shutकरोwn state. The periodic पूर्णांकerrupt
+			 * is delivered by the broadcast device, अगर
 			 * the broadcast device exists and is not
-			 * hrtimer based.
+			 * hrसमयr based.
 			 */
-			if (bc && !(bc->features & CLOCK_EVT_FEAT_HRTIMER))
+			अगर (bc && !(bc->features & CLOCK_EVT_FEAT_HRTIMER))
 				ret = cpumask_test_cpu(cpu, tick_broadcast_mask);
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
-int tick_receive_broadcast(void)
-{
-	struct tick_device *td = this_cpu_ptr(&tick_cpu_device);
-	struct clock_event_device *evt = td->evtdev;
+#अगर_घोषित CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
+पूर्णांक tick_receive_broadcast(व्योम)
+अणु
+	काष्ठा tick_device *td = this_cpu_ptr(&tick_cpu_device);
+	काष्ठा घड़ी_event_device *evt = td->evtdev;
 
-	if (!evt)
-		return -ENODEV;
+	अगर (!evt)
+		वापस -ENODEV;
 
-	if (!evt->event_handler)
-		return -EINVAL;
+	अगर (!evt->event_handler)
+		वापस -EINVAL;
 
 	evt->event_handler(evt);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Broadcast the event to the cpus, which are set in the mask (mangled).
  */
-static bool tick_do_broadcast(struct cpumask *mask)
-{
-	int cpu = smp_processor_id();
-	struct tick_device *td;
+अटल bool tick_करो_broadcast(काष्ठा cpumask *mask)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा tick_device *td;
 	bool local = false;
 
 	/*
-	 * Check, if the current cpu is in the mask
+	 * Check, अगर the current cpu is in the mask
 	 */
-	if (cpumask_test_cpu(cpu, mask)) {
-		struct clock_event_device *bc = tick_broadcast_device.evtdev;
+	अगर (cpumask_test_cpu(cpu, mask)) अणु
+		काष्ठा घड़ी_event_device *bc = tick_broadcast_device.evtdev;
 
 		cpumask_clear_cpu(cpu, mask);
 		/*
-		 * We only run the local handler, if the broadcast
-		 * device is not hrtimer based. Otherwise we run into
-		 * a hrtimer recursion.
+		 * We only run the local handler, अगर the broadcast
+		 * device is not hrसमयr based. Otherwise we run पूर्णांकo
+		 * a hrसमयr recursion.
 		 *
-		 * local timer_interrupt()
+		 * local समयr_पूर्णांकerrupt()
 		 *   local_handler()
-		 *     expire_hrtimers()
+		 *     expire_hrसमयrs()
 		 *       bc_handler()
 		 *         local_handler()
-		 *	     expire_hrtimers()
+		 *	     expire_hrसमयrs()
 		 */
 		local = !(bc->features & CLOCK_EVT_FEAT_HRTIMER);
-	}
+	पूर्ण
 
-	if (!cpumask_empty(mask)) {
+	अगर (!cpumask_empty(mask)) अणु
 		/*
 		 * It might be necessary to actually check whether the devices
-		 * have different broadcast functions. For now, just use the
-		 * one of the first device. This works as long as we have this
+		 * have dअगरferent broadcast functions. For now, just use the
+		 * one of the first device. This works as दीर्घ as we have this
 		 * misfeature only on x86 (lapic)
 		 */
 		td = &per_cpu(tick_cpu_device, cpumask_first(mask));
 		td->evtdev->broadcast(mask);
-	}
-	return local;
-}
+	पूर्ण
+	वापस local;
+पूर्ण
 
 /*
  * Periodic broadcast:
  * - invoke the broadcast handlers
  */
-static bool tick_do_periodic_broadcast(void)
-{
-	cpumask_and(tmpmask, cpu_online_mask, tick_broadcast_mask);
-	return tick_do_broadcast(tmpmask);
-}
+अटल bool tick_करो_periodic_broadcast(व्योम)
+अणु
+	cpumask_and(पंचांगpmask, cpu_online_mask, tick_broadcast_mask);
+	वापस tick_करो_broadcast(पंचांगpmask);
+पूर्ण
 
 /*
- * Event handler for periodic broadcast ticks
+ * Event handler क्रम periodic broadcast ticks
  */
-static void tick_handle_periodic_broadcast(struct clock_event_device *dev)
-{
-	struct tick_device *td = this_cpu_ptr(&tick_cpu_device);
+अटल व्योम tick_handle_periodic_broadcast(काष्ठा घड़ी_event_device *dev)
+अणु
+	काष्ठा tick_device *td = this_cpu_ptr(&tick_cpu_device);
 	bool bc_local;
 
 	raw_spin_lock(&tick_broadcast_lock);
 
-	/* Handle spurious interrupts gracefully */
-	if (clockevent_state_shutdown(tick_broadcast_device.evtdev)) {
+	/* Handle spurious पूर्णांकerrupts gracefully */
+	अगर (घड़ीevent_state_shutकरोwn(tick_broadcast_device.evtdev)) अणु
 		raw_spin_unlock(&tick_broadcast_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bc_local = tick_do_periodic_broadcast();
+	bc_local = tick_करो_periodic_broadcast();
 
-	if (clockevent_state_oneshot(dev)) {
-		ktime_t next = ktime_add_ns(dev->next_event, TICK_NSEC);
+	अगर (घड़ीevent_state_oneshot(dev)) अणु
+		kसमय_प्रकार next = kसमय_add_ns(dev->next_event, TICK_NSEC);
 
-		clockevents_program_event(dev, next, true);
-	}
+		घड़ीevents_program_event(dev, next, true);
+	पूर्ण
 	raw_spin_unlock(&tick_broadcast_lock);
 
 	/*
 	 * We run the handler of the local cpu after dropping
 	 * tick_broadcast_lock because the handler might deadlock when
-	 * trying to switch to oneshot mode.
+	 * trying to चयन to oneshot mode.
 	 */
-	if (bc_local)
+	अगर (bc_local)
 		td->evtdev->event_handler(td->evtdev);
-}
+पूर्ण
 
 /**
- * tick_broadcast_control - Enable/disable or force broadcast mode
+ * tick_broadcast_control - Enable/disable or क्रमce broadcast mode
  * @mode:	The selected broadcast mode
  *
- * Called when the system enters a state where affected tick devices
- * might stop. Note: TICK_BROADCAST_FORCE cannot be undone.
+ * Called when the प्रणाली enters a state where affected tick devices
+ * might stop. Note: TICK_BROADCAST_FORCE cannot be unकरोne.
  */
-void tick_broadcast_control(enum tick_broadcast_mode mode)
-{
-	struct clock_event_device *bc, *dev;
-	struct tick_device *td;
-	int cpu, bc_stopped;
-	unsigned long flags;
+व्योम tick_broadcast_control(क्रमागत tick_broadcast_mode mode)
+अणु
+	काष्ठा घड़ी_event_device *bc, *dev;
+	काष्ठा tick_device *td;
+	पूर्णांक cpu, bc_stopped;
+	अचिन्हित दीर्घ flags;
 
-	/* Protects also the local clockevent device. */
+	/* Protects also the local घड़ीevent device. */
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 	td = this_cpu_ptr(&tick_cpu_device);
 	dev = td->evtdev;
 
 	/*
-	 * Is the device not affected by the powerstate ?
+	 * Is the device not affected by the घातerstate ?
 	 */
-	if (!dev || !(dev->features & CLOCK_EVT_FEAT_C3STOP))
-		goto out;
+	अगर (!dev || !(dev->features & CLOCK_EVT_FEAT_C3STOP))
+		जाओ out;
 
-	if (!tick_device_is_functional(dev))
-		goto out;
+	अगर (!tick_device_is_functional(dev))
+		जाओ out;
 
 	cpu = smp_processor_id();
 	bc = tick_broadcast_device.evtdev;
 	bc_stopped = cpumask_empty(tick_broadcast_mask);
 
-	switch (mode) {
-	case TICK_BROADCAST_FORCE:
-		tick_broadcast_forced = 1;
+	चयन (mode) अणु
+	हाल TICK_BROADCAST_FORCE:
+		tick_broadcast_क्रमced = 1;
 		fallthrough;
-	case TICK_BROADCAST_ON:
+	हाल TICK_BROADCAST_ON:
 		cpumask_set_cpu(cpu, tick_broadcast_on);
-		if (!cpumask_test_and_set_cpu(cpu, tick_broadcast_mask)) {
+		अगर (!cpumask_test_and_set_cpu(cpu, tick_broadcast_mask)) अणु
 			/*
-			 * Only shutdown the cpu local device, if:
+			 * Only shutकरोwn the cpu local device, अगर:
 			 *
 			 * - the broadcast device exists
-			 * - the broadcast device is not a hrtimer based one
+			 * - the broadcast device is not a hrसमयr based one
 			 * - the broadcast device is in periodic mode to
-			 *   avoid a hiccup during switch to oneshot mode
+			 *   aव्योम a hiccup during चयन to oneshot mode
 			 */
-			if (bc && !(bc->features & CLOCK_EVT_FEAT_HRTIMER) &&
+			अगर (bc && !(bc->features & CLOCK_EVT_FEAT_HRTIMER) &&
 			    tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC)
-				clockevents_shutdown(dev);
-		}
-		break;
+				घड़ीevents_shutकरोwn(dev);
+		पूर्ण
+		अवरोध;
 
-	case TICK_BROADCAST_OFF:
-		if (tick_broadcast_forced)
-			break;
+	हाल TICK_BROADCAST_OFF:
+		अगर (tick_broadcast_क्रमced)
+			अवरोध;
 		cpumask_clear_cpu(cpu, tick_broadcast_on);
-		if (cpumask_test_and_clear_cpu(cpu, tick_broadcast_mask)) {
-			if (tick_broadcast_device.mode ==
+		अगर (cpumask_test_and_clear_cpu(cpu, tick_broadcast_mask)) अणु
+			अगर (tick_broadcast_device.mode ==
 			    TICKDEV_MODE_PERIODIC)
 				tick_setup_periodic(dev, 0);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (bc) {
-		if (cpumask_empty(tick_broadcast_mask)) {
-			if (!bc_stopped)
-				clockevents_shutdown(bc);
-		} else if (bc_stopped) {
-			if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC)
+	अगर (bc) अणु
+		अगर (cpumask_empty(tick_broadcast_mask)) अणु
+			अगर (!bc_stopped)
+				घड़ीevents_shutकरोwn(bc);
+		पूर्ण अन्यथा अगर (bc_stopped) अणु
+			अगर (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC)
 				tick_broadcast_start_periodic(bc);
-			else
+			अन्यथा
 				tick_broadcast_setup_oneshot(bc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tick_broadcast_control);
 
 /*
  * Set the periodic handler depending on broadcast on/off
  */
-void tick_set_periodic_handler(struct clock_event_device *dev, int broadcast)
-{
-	if (!broadcast)
+व्योम tick_set_periodic_handler(काष्ठा घड़ी_event_device *dev, पूर्णांक broadcast)
+अणु
+	अगर (!broadcast)
 		dev->event_handler = tick_handle_periodic;
-	else
+	अन्यथा
 		dev->event_handler = tick_handle_periodic_broadcast;
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void tick_shutdown_broadcast(void)
-{
-	struct clock_event_device *bc = tick_broadcast_device.evtdev;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम tick_shutकरोwn_broadcast(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *bc = tick_broadcast_device.evtdev;
 
-	if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC) {
-		if (bc && cpumask_empty(tick_broadcast_mask))
-			clockevents_shutdown(bc);
-	}
-}
+	अगर (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC) अणु
+		अगर (bc && cpumask_empty(tick_broadcast_mask))
+			घड़ीevents_shutकरोwn(bc);
+	पूर्ण
+पूर्ण
 
 /*
  * Remove a CPU from broadcasting
  */
-void tick_broadcast_offline(unsigned int cpu)
-{
+व्योम tick_broadcast_offline(अचिन्हित पूर्णांक cpu)
+अणु
 	raw_spin_lock(&tick_broadcast_lock);
 	cpumask_clear_cpu(cpu, tick_broadcast_mask);
 	cpumask_clear_cpu(cpu, tick_broadcast_on);
 	tick_broadcast_oneshot_offline(cpu);
-	tick_shutdown_broadcast();
+	tick_shutकरोwn_broadcast();
 	raw_spin_unlock(&tick_broadcast_lock);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-void tick_suspend_broadcast(void)
-{
-	struct clock_event_device *bc;
-	unsigned long flags;
+व्योम tick_suspend_broadcast(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *bc;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 
 	bc = tick_broadcast_device.evtdev;
-	if (bc)
-		clockevents_shutdown(bc);
+	अगर (bc)
+		घड़ीevents_shutकरोwn(bc);
 
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
-}
+पूर्ण
 
 /*
  * This is called from tick_resume_local() on a resuming CPU. That's
- * called from the core resume function, tick_unfreeze() and the magic XEN
+ * called from the core resume function, tick_unमुक्तze() and the magic XEN
  * resume hackery.
  *
- * In none of these cases the broadcast device mode can change and the
+ * In none of these हालs the broadcast device mode can change and the
  * bit of the resuming CPU in the broadcast mask is safe as well.
  */
-bool tick_resume_check_broadcast(void)
-{
-	if (tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT)
-		return false;
-	else
-		return cpumask_test_cpu(smp_processor_id(), tick_broadcast_mask);
-}
+bool tick_resume_check_broadcast(व्योम)
+अणु
+	अगर (tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT)
+		वापस false;
+	अन्यथा
+		वापस cpumask_test_cpu(smp_processor_id(), tick_broadcast_mask);
+पूर्ण
 
-void tick_resume_broadcast(void)
-{
-	struct clock_event_device *bc;
-	unsigned long flags;
+व्योम tick_resume_broadcast(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *bc;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 
 	bc = tick_broadcast_device.evtdev;
 
-	if (bc) {
-		clockevents_tick_resume(bc);
+	अगर (bc) अणु
+		घड़ीevents_tick_resume(bc);
 
-		switch (tick_broadcast_device.mode) {
-		case TICKDEV_MODE_PERIODIC:
-			if (!cpumask_empty(tick_broadcast_mask))
+		चयन (tick_broadcast_device.mode) अणु
+		हाल TICKDEV_MODE_PERIODIC:
+			अगर (!cpumask_empty(tick_broadcast_mask))
 				tick_broadcast_start_periodic(bc);
-			break;
-		case TICKDEV_MODE_ONESHOT:
-			if (!cpumask_empty(tick_broadcast_mask))
+			अवरोध;
+		हाल TICKDEV_MODE_ONESHOT:
+			अगर (!cpumask_empty(tick_broadcast_mask))
 				tick_resume_broadcast_oneshot(bc);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
-}
+पूर्ण
 
-#ifdef CONFIG_TICK_ONESHOT
+#अगर_घोषित CONFIG_TICK_ONESHOT
 
-static cpumask_var_t tick_broadcast_oneshot_mask __cpumask_var_read_mostly;
-static cpumask_var_t tick_broadcast_pending_mask __cpumask_var_read_mostly;
-static cpumask_var_t tick_broadcast_force_mask __cpumask_var_read_mostly;
+अटल cpumask_var_t tick_broadcast_oneshot_mask __cpumask_var_पढ़ो_mostly;
+अटल cpumask_var_t tick_broadcast_pending_mask __cpumask_var_पढ़ो_mostly;
+अटल cpumask_var_t tick_broadcast_क्रमce_mask __cpumask_var_पढ़ो_mostly;
 
 /*
- * Exposed for debugging: see timer_list.c
+ * Exposed क्रम debugging: see समयr_list.c
  */
-struct cpumask *tick_get_broadcast_oneshot_mask(void)
-{
-	return tick_broadcast_oneshot_mask;
-}
+काष्ठा cpumask *tick_get_broadcast_oneshot_mask(व्योम)
+अणु
+	वापस tick_broadcast_oneshot_mask;
+पूर्ण
 
 /*
- * Called before going idle with interrupts disabled. Checks whether a
+ * Called beक्रमe going idle with पूर्णांकerrupts disabled. Checks whether a
  * broadcast event from the other core is about to happen. We detected
  * that in tick_broadcast_oneshot_control(). The callsite can use this
- * to avoid a deep idle transition as we are about to get the
+ * to aव्योम a deep idle transition as we are about to get the
  * broadcast IPI right away.
  */
-int tick_check_broadcast_expired(void)
-{
-	return cpumask_test_cpu(smp_processor_id(), tick_broadcast_force_mask);
-}
+पूर्णांक tick_check_broadcast_expired(व्योम)
+अणु
+	वापस cpumask_test_cpu(smp_processor_id(), tick_broadcast_क्रमce_mask);
+पूर्ण
 
 /*
- * Set broadcast interrupt affinity
+ * Set broadcast पूर्णांकerrupt affinity
  */
-static void tick_broadcast_set_affinity(struct clock_event_device *bc,
-					const struct cpumask *cpumask)
-{
-	if (!(bc->features & CLOCK_EVT_FEAT_DYNIRQ))
-		return;
+अटल व्योम tick_broadcast_set_affinity(काष्ठा घड़ी_event_device *bc,
+					स्थिर काष्ठा cpumask *cpumask)
+अणु
+	अगर (!(bc->features & CLOCK_EVT_FEAT_DYNIRQ))
+		वापस;
 
-	if (cpumask_equal(bc->cpumask, cpumask))
-		return;
+	अगर (cpumask_equal(bc->cpumask, cpumask))
+		वापस;
 
 	bc->cpumask = cpumask;
 	irq_set_affinity(bc->irq, bc->cpumask);
-}
+पूर्ण
 
-static void tick_broadcast_set_event(struct clock_event_device *bc, int cpu,
-				     ktime_t expires)
-{
-	if (!clockevent_state_oneshot(bc))
-		clockevents_switch_state(bc, CLOCK_EVT_STATE_ONESHOT);
+अटल व्योम tick_broadcast_set_event(काष्ठा घड़ी_event_device *bc, पूर्णांक cpu,
+				     kसमय_प्रकार expires)
+अणु
+	अगर (!घड़ीevent_state_oneshot(bc))
+		घड़ीevents_चयन_state(bc, CLOCK_EVT_STATE_ONESHOT);
 
-	clockevents_program_event(bc, expires, 1);
+	घड़ीevents_program_event(bc, expires, 1);
 	tick_broadcast_set_affinity(bc, cpumask_of(cpu));
-}
+पूर्ण
 
-static void tick_resume_broadcast_oneshot(struct clock_event_device *bc)
-{
-	clockevents_switch_state(bc, CLOCK_EVT_STATE_ONESHOT);
-}
+अटल व्योम tick_resume_broadcast_oneshot(काष्ठा घड़ी_event_device *bc)
+अणु
+	घड़ीevents_चयन_state(bc, CLOCK_EVT_STATE_ONESHOT);
+पूर्ण
 
 /*
- * Called from irq_enter() when idle was interrupted to reenable the
+ * Called from irq_enter() when idle was पूर्णांकerrupted to reenable the
  * per cpu device.
  */
-void tick_check_oneshot_broadcast_this_cpu(void)
-{
-	if (cpumask_test_cpu(smp_processor_id(), tick_broadcast_oneshot_mask)) {
-		struct tick_device *td = this_cpu_ptr(&tick_cpu_device);
+व्योम tick_check_oneshot_broadcast_this_cpu(व्योम)
+अणु
+	अगर (cpumask_test_cpu(smp_processor_id(), tick_broadcast_oneshot_mask)) अणु
+		काष्ठा tick_device *td = this_cpu_ptr(&tick_cpu_device);
 
 		/*
-		 * We might be in the middle of switching over from
+		 * We might be in the middle of चयनing over from
 		 * periodic to oneshot. If the CPU has not yet
-		 * switched over, leave the device alone.
+		 * चयनed over, leave the device alone.
 		 */
-		if (td->mode == TICKDEV_MODE_ONESHOT) {
-			clockevents_switch_state(td->evtdev,
+		अगर (td->mode == TICKDEV_MODE_ONESHOT) अणु
+			घड़ीevents_चयन_state(td->evtdev,
 					      CLOCK_EVT_STATE_ONESHOT);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Handle oneshot mode broadcasting
  */
-static void tick_handle_oneshot_broadcast(struct clock_event_device *dev)
-{
-	struct tick_device *td;
-	ktime_t now, next_event;
-	int cpu, next_cpu = 0;
+अटल व्योम tick_handle_oneshot_broadcast(काष्ठा घड़ी_event_device *dev)
+अणु
+	काष्ठा tick_device *td;
+	kसमय_प्रकार now, next_event;
+	पूर्णांक cpu, next_cpu = 0;
 	bool bc_local;
 
 	raw_spin_lock(&tick_broadcast_lock);
 	dev->next_event = KTIME_MAX;
 	next_event = KTIME_MAX;
-	cpumask_clear(tmpmask);
-	now = ktime_get();
+	cpumask_clear(पंचांगpmask);
+	now = kसमय_get();
 	/* Find all expired events */
-	for_each_cpu(cpu, tick_broadcast_oneshot_mask) {
+	क्रम_each_cpu(cpu, tick_broadcast_oneshot_mask) अणु
 		/*
-		 * Required for !SMP because for_each_cpu() reports
+		 * Required क्रम !SMP because क्रम_each_cpu() reports
 		 * unconditionally CPU0 as set on UP kernels.
 		 */
-		if (!IS_ENABLED(CONFIG_SMP) &&
+		अगर (!IS_ENABLED(CONFIG_SMP) &&
 		    cpumask_empty(tick_broadcast_oneshot_mask))
-			break;
+			अवरोध;
 
 		td = &per_cpu(tick_cpu_device, cpu);
-		if (td->evtdev->next_event <= now) {
-			cpumask_set_cpu(cpu, tmpmask);
+		अगर (td->evtdev->next_event <= now) अणु
+			cpumask_set_cpu(cpu, पंचांगpmask);
 			/*
 			 * Mark the remote cpu in the pending mask, so
-			 * it can avoid reprogramming the cpu local
-			 * timer in tick_broadcast_oneshot_control().
+			 * it can aव्योम reprogramming the cpu local
+			 * समयr in tick_broadcast_oneshot_control().
 			 */
 			cpumask_set_cpu(cpu, tick_broadcast_pending_mask);
-		} else if (td->evtdev->next_event < next_event) {
+		पूर्ण अन्यथा अगर (td->evtdev->next_event < next_event) अणु
 			next_event = td->evtdev->next_event;
 			next_cpu = cpu;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Remove the current cpu from the pending mask. The event is
-	 * delivered immediately in tick_do_broadcast() !
+	 * delivered immediately in tick_करो_broadcast() !
 	 */
 	cpumask_clear_cpu(smp_processor_id(), tick_broadcast_pending_mask);
 
-	/* Take care of enforced broadcast requests */
-	cpumask_or(tmpmask, tmpmask, tick_broadcast_force_mask);
-	cpumask_clear(tick_broadcast_force_mask);
+	/* Take care of enक्रमced broadcast requests */
+	cpumask_or(पंचांगpmask, पंचांगpmask, tick_broadcast_क्रमce_mask);
+	cpumask_clear(tick_broadcast_क्रमce_mask);
 
 	/*
-	 * Sanity check. Catch the case where we try to broadcast to
+	 * Sanity check. Catch the हाल where we try to broadcast to
 	 * offline cpus.
 	 */
-	if (WARN_ON_ONCE(!cpumask_subset(tmpmask, cpu_online_mask)))
-		cpumask_and(tmpmask, tmpmask, cpu_online_mask);
+	अगर (WARN_ON_ONCE(!cpumask_subset(पंचांगpmask, cpu_online_mask)))
+		cpumask_and(पंचांगpmask, पंचांगpmask, cpu_online_mask);
 
 	/*
 	 * Wakeup the cpus which have an expired event.
 	 */
-	bc_local = tick_do_broadcast(tmpmask);
+	bc_local = tick_करो_broadcast(पंचांगpmask);
 
 	/*
-	 * Two reasons for reprogram:
+	 * Two reasons क्रम reprogram:
 	 *
 	 * - The global event did not expire any CPU local
 	 * events. This happens in dyntick mode, as the maximum PIT
@@ -682,55 +683,55 @@ static void tick_handle_oneshot_broadcast(struct clock_event_device *dev)
 	 * - There are pending events on sleeping CPUs which were not
 	 * in the event mask
 	 */
-	if (next_event != KTIME_MAX)
+	अगर (next_event != KTIME_MAX)
 		tick_broadcast_set_event(dev, next_cpu, next_event);
 
 	raw_spin_unlock(&tick_broadcast_lock);
 
-	if (bc_local) {
+	अगर (bc_local) अणु
 		td = this_cpu_ptr(&tick_cpu_device);
 		td->evtdev->event_handler(td->evtdev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int broadcast_needs_cpu(struct clock_event_device *bc, int cpu)
-{
-	if (!(bc->features & CLOCK_EVT_FEAT_HRTIMER))
-		return 0;
-	if (bc->next_event == KTIME_MAX)
-		return 0;
-	return bc->bound_on == cpu ? -EBUSY : 0;
-}
+अटल पूर्णांक broadcast_needs_cpu(काष्ठा घड़ी_event_device *bc, पूर्णांक cpu)
+अणु
+	अगर (!(bc->features & CLOCK_EVT_FEAT_HRTIMER))
+		वापस 0;
+	अगर (bc->next_event == KTIME_MAX)
+		वापस 0;
+	वापस bc->bound_on == cpu ? -EBUSY : 0;
+पूर्ण
 
-static void broadcast_shutdown_local(struct clock_event_device *bc,
-				     struct clock_event_device *dev)
-{
+अटल व्योम broadcast_shutकरोwn_local(काष्ठा घड़ी_event_device *bc,
+				     काष्ठा घड़ी_event_device *dev)
+अणु
 	/*
-	 * For hrtimer based broadcasting we cannot shutdown the cpu
-	 * local device if our own event is the first one to expire or
-	 * if we own the broadcast timer.
+	 * For hrसमयr based broadcasting we cannot shutकरोwn the cpu
+	 * local device अगर our own event is the first one to expire or
+	 * अगर we own the broadcast समयr.
 	 */
-	if (bc->features & CLOCK_EVT_FEAT_HRTIMER) {
-		if (broadcast_needs_cpu(bc, smp_processor_id()))
-			return;
-		if (dev->next_event < bc->next_event)
-			return;
-	}
-	clockevents_switch_state(dev, CLOCK_EVT_STATE_SHUTDOWN);
-}
+	अगर (bc->features & CLOCK_EVT_FEAT_HRTIMER) अणु
+		अगर (broadcast_needs_cpu(bc, smp_processor_id()))
+			वापस;
+		अगर (dev->next_event < bc->next_event)
+			वापस;
+	पूर्ण
+	घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_SHUTDOWN);
+पूर्ण
 
-int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
-{
-	struct clock_event_device *bc, *dev;
-	int cpu, ret = 0;
-	ktime_t now;
+पूर्णांक __tick_broadcast_oneshot_control(क्रमागत tick_broadcast_state state)
+अणु
+	काष्ठा घड़ी_event_device *bc, *dev;
+	पूर्णांक cpu, ret = 0;
+	kसमय_प्रकार now;
 
 	/*
 	 * If there is no broadcast device, tell the caller not to go
-	 * into deep idle.
+	 * पूर्णांकo deep idle.
 	 */
-	if (!tick_broadcast_device.evtdev)
-		return -EBUSY;
+	अगर (!tick_broadcast_device.evtdev)
+		वापस -EBUSY;
 
 	dev = this_cpu_ptr(&tick_cpu_device)->evtdev;
 
@@ -738,108 +739,108 @@ int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 	bc = tick_broadcast_device.evtdev;
 	cpu = smp_processor_id();
 
-	if (state == TICK_BROADCAST_ENTER) {
+	अगर (state == TICK_BROADCAST_ENTER) अणु
 		/*
-		 * If the current CPU owns the hrtimer broadcast
-		 * mechanism, it cannot go deep idle and we do not add
-		 * the CPU to the broadcast mask. We don't have to go
-		 * through the EXIT path as the local timer is not
-		 * shutdown.
+		 * If the current CPU owns the hrसमयr broadcast
+		 * mechanism, it cannot go deep idle and we करो not add
+		 * the CPU to the broadcast mask. We करोn't have to go
+		 * through the EXIT path as the local समयr is not
+		 * shutकरोwn.
 		 */
 		ret = broadcast_needs_cpu(bc, cpu);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		/*
 		 * If the broadcast device is in periodic mode, we
-		 * return.
+		 * वापस.
 		 */
-		if (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC) {
-			/* If it is a hrtimer based broadcast, return busy */
-			if (bc->features & CLOCK_EVT_FEAT_HRTIMER)
+		अगर (tick_broadcast_device.mode == TICKDEV_MODE_PERIODIC) अणु
+			/* If it is a hrसमयr based broadcast, वापस busy */
+			अगर (bc->features & CLOCK_EVT_FEAT_HRTIMER)
 				ret = -EBUSY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!cpumask_test_and_set_cpu(cpu, tick_broadcast_oneshot_mask)) {
+		अगर (!cpumask_test_and_set_cpu(cpu, tick_broadcast_oneshot_mask)) अणु
 			WARN_ON_ONCE(cpumask_test_cpu(cpu, tick_broadcast_pending_mask));
 
-			/* Conditionally shut down the local timer. */
-			broadcast_shutdown_local(bc, dev);
+			/* Conditionally shut करोwn the local समयr. */
+			broadcast_shutकरोwn_local(bc, dev);
 
 			/*
-			 * We only reprogram the broadcast timer if we
-			 * did not mark ourself in the force mask and
-			 * if the cpu local event is earlier than the
+			 * We only reprogram the broadcast समयr अगर we
+			 * did not mark ourself in the क्रमce mask and
+			 * अगर the cpu local event is earlier than the
 			 * broadcast event. If the current CPU is in
-			 * the force mask, then we are going to be
-			 * woken by the IPI right away; we return
-			 * busy, so the CPU does not try to go deep
+			 * the क्रमce mask, then we are going to be
+			 * woken by the IPI right away; we वापस
+			 * busy, so the CPU करोes not try to go deep
 			 * idle.
 			 */
-			if (cpumask_test_cpu(cpu, tick_broadcast_force_mask)) {
+			अगर (cpumask_test_cpu(cpu, tick_broadcast_क्रमce_mask)) अणु
 				ret = -EBUSY;
-			} else if (dev->next_event < bc->next_event) {
+			पूर्ण अन्यथा अगर (dev->next_event < bc->next_event) अणु
 				tick_broadcast_set_event(bc, cpu, dev->next_event);
 				/*
-				 * In case of hrtimer broadcasts the
+				 * In हाल of hrसमयr broadcasts the
 				 * programming might have moved the
-				 * timer to this cpu. If yes, remove
+				 * समयr to this cpu. If yes, हटाओ
 				 * us from the broadcast mask and
-				 * return busy.
+				 * वापस busy.
 				 */
 				ret = broadcast_needs_cpu(bc, cpu);
-				if (ret) {
+				अगर (ret) अणु
 					cpumask_clear_cpu(cpu,
 						tick_broadcast_oneshot_mask);
-				}
-			}
-		}
-	} else {
-		if (cpumask_test_and_clear_cpu(cpu, tick_broadcast_oneshot_mask)) {
-			clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (cpumask_test_and_clear_cpu(cpu, tick_broadcast_oneshot_mask)) अणु
+			घड़ीevents_चयन_state(dev, CLOCK_EVT_STATE_ONESHOT);
 			/*
 			 * The cpu which was handling the broadcast
-			 * timer marked this cpu in the broadcast
+			 * समयr marked this cpu in the broadcast
 			 * pending mask and fired the broadcast
 			 * IPI. So we are going to handle the expired
 			 * event anyway via the broadcast IPI
-			 * handler. No need to reprogram the timer
-			 * with an already expired event.
+			 * handler. No need to reprogram the समयr
+			 * with an alपढ़ोy expired event.
 			 */
-			if (cpumask_test_and_clear_cpu(cpu,
+			अगर (cpumask_test_and_clear_cpu(cpu,
 				       tick_broadcast_pending_mask))
-				goto out;
+				जाओ out;
 
 			/*
-			 * Bail out if there is no next event.
+			 * Bail out अगर there is no next event.
 			 */
-			if (dev->next_event == KTIME_MAX)
-				goto out;
+			अगर (dev->next_event == KTIME_MAX)
+				जाओ out;
 			/*
 			 * If the pending bit is not set, then we are
 			 * either the CPU handling the broadcast
-			 * interrupt or we got woken by something else.
+			 * पूर्णांकerrupt or we got woken by something अन्यथा.
 			 *
-			 * We are no longer in the broadcast mask, so
-			 * if the cpu local expiry time is already
+			 * We are no दीर्घer in the broadcast mask, so
+			 * अगर the cpu local expiry समय is alपढ़ोy
 			 * reached, we would reprogram the cpu local
-			 * timer with an already expired event.
+			 * समयr with an alपढ़ोy expired event.
 			 *
-			 * This can lead to a ping-pong when we return
-			 * to idle and therefore rearm the broadcast
-			 * timer before the cpu local timer was able
-			 * to fire. This happens because the forced
+			 * This can lead to a ping-pong when we वापस
+			 * to idle and thereक्रमe rearm the broadcast
+			 * समयr beक्रमe the cpu local समयr was able
+			 * to fire. This happens because the क्रमced
 			 * reprogramming makes sure that the event
 			 * will happen in the future and depending on
 			 * the min_delta setting this might be far
 			 * enough out that the ping-pong starts.
 			 *
 			 * If the cpu local next_event has expired
-			 * then we know that the broadcast timer
+			 * then we know that the broadcast समयr
 			 * next_event has expired as well and
 			 * broadcast is about to be handled. So we
-			 * avoid reprogramming and enforce that the
+			 * aव्योम reprogramming and enक्रमce that the
 			 * broadcast handler, which did not run yet,
 			 * will invoke the cpu local handler.
 			 *
@@ -848,197 +849,197 @@ int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
 			 * and we did not go through the irq_enter()
 			 * nohz fixups.
 			 */
-			now = ktime_get();
-			if (dev->next_event <= now) {
-				cpumask_set_cpu(cpu, tick_broadcast_force_mask);
-				goto out;
-			}
+			now = kसमय_get();
+			अगर (dev->next_event <= now) अणु
+				cpumask_set_cpu(cpu, tick_broadcast_क्रमce_mask);
+				जाओ out;
+			पूर्ण
 			/*
-			 * We got woken by something else. Reprogram
-			 * the cpu local timer device.
+			 * We got woken by something अन्यथा. Reprogram
+			 * the cpu local समयr device.
 			 */
 			tick_program_event(dev->next_event, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
 	raw_spin_unlock(&tick_broadcast_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Reset the one shot broadcast for a cpu
+ * Reset the one shot broadcast क्रम a cpu
  *
  * Called with tick_broadcast_lock held
  */
-static void tick_broadcast_clear_oneshot(int cpu)
-{
+अटल व्योम tick_broadcast_clear_oneshot(पूर्णांक cpu)
+अणु
 	cpumask_clear_cpu(cpu, tick_broadcast_oneshot_mask);
 	cpumask_clear_cpu(cpu, tick_broadcast_pending_mask);
-}
+पूर्ण
 
-static void tick_broadcast_init_next_event(struct cpumask *mask,
-					   ktime_t expires)
-{
-	struct tick_device *td;
-	int cpu;
+अटल व्योम tick_broadcast_init_next_event(काष्ठा cpumask *mask,
+					   kसमय_प्रकार expires)
+अणु
+	काष्ठा tick_device *td;
+	पूर्णांक cpu;
 
-	for_each_cpu(cpu, mask) {
+	क्रम_each_cpu(cpu, mask) अणु
 		td = &per_cpu(tick_cpu_device, cpu);
-		if (td->evtdev)
+		अगर (td->evtdev)
 			td->evtdev->next_event = expires;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline ktime_t tick_get_next_period(void)
-{
-	ktime_t next;
+अटल अंतरभूत kसमय_प्रकार tick_get_next_period(व्योम)
+अणु
+	kसमय_प्रकार next;
 
 	/*
 	 * Protect against concurrent updates (store /load tearing on
-	 * 32bit). It does not matter if the time is already in the
+	 * 32bit). It करोes not matter अगर the समय is alपढ़ोy in the
 	 * past. The broadcast device which is about to be programmed will
-	 * fire in any case.
+	 * fire in any हाल.
 	 */
-	raw_spin_lock(&jiffies_lock);
+	raw_spin_lock(&jअगरfies_lock);
 	next = tick_next_period;
-	raw_spin_unlock(&jiffies_lock);
-	return next;
-}
+	raw_spin_unlock(&jअगरfies_lock);
+	वापस next;
+पूर्ण
 
 /**
  * tick_broadcast_setup_oneshot - setup the broadcast device
  */
-static void tick_broadcast_setup_oneshot(struct clock_event_device *bc)
-{
-	int cpu = smp_processor_id();
+अटल व्योम tick_broadcast_setup_oneshot(काष्ठा घड़ी_event_device *bc)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
-	if (!bc)
-		return;
+	अगर (!bc)
+		वापस;
 
 	/* Set it up only once ! */
-	if (bc->event_handler != tick_handle_oneshot_broadcast) {
-		int was_periodic = clockevent_state_periodic(bc);
+	अगर (bc->event_handler != tick_handle_oneshot_broadcast) अणु
+		पूर्णांक was_periodic = घड़ीevent_state_periodic(bc);
 
 		bc->event_handler = tick_handle_oneshot_broadcast;
 
 		/*
 		 * We must be careful here. There might be other CPUs
-		 * waiting for periodic broadcast. We need to set the
-		 * oneshot_mask bits for those and program the
+		 * रुकोing क्रम periodic broadcast. We need to set the
+		 * oneshot_mask bits क्रम those and program the
 		 * broadcast device to fire.
 		 */
-		cpumask_copy(tmpmask, tick_broadcast_mask);
-		cpumask_clear_cpu(cpu, tmpmask);
+		cpumask_copy(पंचांगpmask, tick_broadcast_mask);
+		cpumask_clear_cpu(cpu, पंचांगpmask);
 		cpumask_or(tick_broadcast_oneshot_mask,
-			   tick_broadcast_oneshot_mask, tmpmask);
+			   tick_broadcast_oneshot_mask, पंचांगpmask);
 
-		if (was_periodic && !cpumask_empty(tmpmask)) {
-			ktime_t nextevt = tick_get_next_period();
+		अगर (was_periodic && !cpumask_empty(पंचांगpmask)) अणु
+			kसमय_प्रकार nextevt = tick_get_next_period();
 
-			clockevents_switch_state(bc, CLOCK_EVT_STATE_ONESHOT);
-			tick_broadcast_init_next_event(tmpmask, nextevt);
+			घड़ीevents_चयन_state(bc, CLOCK_EVT_STATE_ONESHOT);
+			tick_broadcast_init_next_event(पंचांगpmask, nextevt);
 			tick_broadcast_set_event(bc, cpu, nextevt);
-		} else
+		पूर्ण अन्यथा
 			bc->next_event = KTIME_MAX;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The first cpu which switches to oneshot mode sets
-		 * the bit for all other cpus which are in the general
+		 * The first cpu which चयनes to oneshot mode sets
+		 * the bit क्रम all other cpus which are in the general
 		 * (periodic) broadcast mask. So the bit is set and
 		 * would prevent the first broadcast enter after this
 		 * to program the bc device.
 		 */
 		tick_broadcast_clear_oneshot(cpu);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Select oneshot operating mode for the broadcast device
+ * Select oneshot operating mode क्रम the broadcast device
  */
-void tick_broadcast_switch_to_oneshot(void)
-{
-	struct clock_event_device *bc;
-	unsigned long flags;
+व्योम tick_broadcast_चयन_to_oneshot(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *bc;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 
 	tick_broadcast_device.mode = TICKDEV_MODE_ONESHOT;
 	bc = tick_broadcast_device.evtdev;
-	if (bc)
+	अगर (bc)
 		tick_broadcast_setup_oneshot(bc);
 
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-void hotplug_cpu__broadcast_tick_pull(int deadcpu)
-{
-	struct clock_event_device *bc;
-	unsigned long flags;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+व्योम hotplug_cpu__broadcast_tick_pull(पूर्णांक deadcpu)
+अणु
+	काष्ठा घड़ी_event_device *bc;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&tick_broadcast_lock, flags);
 	bc = tick_broadcast_device.evtdev;
 
-	if (bc && broadcast_needs_cpu(bc, deadcpu)) {
+	अगर (bc && broadcast_needs_cpu(bc, deadcpu)) अणु
 		/* This moves the broadcast assignment to this CPU: */
-		clockevents_program_event(bc, bc->next_event, 1);
-	}
+		घड़ीevents_program_event(bc, bc->next_event, 1);
+	पूर्ण
 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
-}
+पूर्ण
 
 /*
  * Remove a dying CPU from broadcasting
  */
-static void tick_broadcast_oneshot_offline(unsigned int cpu)
-{
+अटल व्योम tick_broadcast_oneshot_offline(अचिन्हित पूर्णांक cpu)
+अणु
 	/*
-	 * Clear the broadcast masks for the dead cpu, but do not stop
+	 * Clear the broadcast masks क्रम the dead cpu, but करो not stop
 	 * the broadcast device!
 	 */
 	cpumask_clear_cpu(cpu, tick_broadcast_oneshot_mask);
 	cpumask_clear_cpu(cpu, tick_broadcast_pending_mask);
-	cpumask_clear_cpu(cpu, tick_broadcast_force_mask);
-}
-#endif
+	cpumask_clear_cpu(cpu, tick_broadcast_क्रमce_mask);
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Check, whether the broadcast device is in one shot mode
  */
-int tick_broadcast_oneshot_active(void)
-{
-	return tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT;
-}
+पूर्णांक tick_broadcast_oneshot_active(व्योम)
+अणु
+	वापस tick_broadcast_device.mode == TICKDEV_MODE_ONESHOT;
+पूर्ण
 
 /*
  * Check whether the broadcast device supports oneshot.
  */
-bool tick_broadcast_oneshot_available(void)
-{
-	struct clock_event_device *bc = tick_broadcast_device.evtdev;
+bool tick_broadcast_oneshot_available(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *bc = tick_broadcast_device.evtdev;
 
-	return bc ? bc->features & CLOCK_EVT_FEAT_ONESHOT : false;
-}
+	वापस bc ? bc->features & CLOCK_EVT_FEAT_ONESHOT : false;
+पूर्ण
 
-#else
-int __tick_broadcast_oneshot_control(enum tick_broadcast_state state)
-{
-	struct clock_event_device *bc = tick_broadcast_device.evtdev;
+#अन्यथा
+पूर्णांक __tick_broadcast_oneshot_control(क्रमागत tick_broadcast_state state)
+अणु
+	काष्ठा घड़ी_event_device *bc = tick_broadcast_device.evtdev;
 
-	if (!bc || (bc->features & CLOCK_EVT_FEAT_HRTIMER))
-		return -EBUSY;
+	अगर (!bc || (bc->features & CLOCK_EVT_FEAT_HRTIMER))
+		वापस -EBUSY;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void __init tick_broadcast_init(void)
-{
+व्योम __init tick_broadcast_init(व्योम)
+अणु
 	zalloc_cpumask_var(&tick_broadcast_mask, GFP_NOWAIT);
 	zalloc_cpumask_var(&tick_broadcast_on, GFP_NOWAIT);
-	zalloc_cpumask_var(&tmpmask, GFP_NOWAIT);
-#ifdef CONFIG_TICK_ONESHOT
+	zalloc_cpumask_var(&पंचांगpmask, GFP_NOWAIT);
+#अगर_घोषित CONFIG_TICK_ONESHOT
 	zalloc_cpumask_var(&tick_broadcast_oneshot_mask, GFP_NOWAIT);
 	zalloc_cpumask_var(&tick_broadcast_pending_mask, GFP_NOWAIT);
-	zalloc_cpumask_var(&tick_broadcast_force_mask, GFP_NOWAIT);
-#endif
-}
+	zalloc_cpumask_var(&tick_broadcast_क्रमce_mask, GFP_NOWAIT);
+#पूर्ण_अगर
+पूर्ण

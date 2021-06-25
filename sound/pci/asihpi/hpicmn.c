@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 
     AudioScience HPI driver
     Copyright (C) 1997-2014  AudioScience Inc. <support@audioscience.com>
 
 
-\file hpicmn.c
+\पile hpicmn.c
 
  Common functions used by hpixxxx.c modules
 
 (C) Copyright AudioScience Inc. 1998-2003
 *******************************************************************************/
-#define SOURCEFILE_NAME "hpicmn.c"
+#घोषणा SOURCEखाता_NAME "hpicmn.c"
 
-#include "hpi_internal.h"
-#include "hpidebug.h"
-#include "hpimsginit.h"
+#समावेश "hpi_internal.h"
+#समावेश "hpidebug.h"
+#समावेश "hpimsginit.h"
 
-#include "hpicmn.h"
+#समावेश "hpicmn.h"
 
-struct hpi_adapters_list {
-	struct hpios_spinlock list_lock;
-	struct hpi_adapter_obj adapter[HPI_MAX_ADAPTERS];
+काष्ठा hpi_adapters_list अणु
+	काष्ठा hpios_spinlock list_lock;
+	काष्ठा hpi_adapter_obj adapter[HPI_MAX_ADAPTERS];
 	u16 gw_num_adapters;
-};
+पूर्ण;
 
-static struct hpi_adapters_list adapters;
+अटल काष्ठा hpi_adapters_list adapters;
 
 /**
  * hpi_validate_response - Given an HPI Message that was sent out and
@@ -34,201 +35,201 @@ static struct hpi_adapters_list adapters;
  * @phm: message
  * @phr: response
  */
-u16 hpi_validate_response(struct hpi_message *phm, struct hpi_response *phr)
-{
-	if (phr->type != HPI_TYPE_RESPONSE) {
+u16 hpi_validate_response(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	अगर (phr->type != HPI_TYPE_RESPONSE) अणु
 		HPI_DEBUG_LOG(ERROR, "header type %d invalid\n", phr->type);
-		return HPI_ERROR_INVALID_RESPONSE;
-	}
+		वापस HPI_ERROR_INVALID_RESPONSE;
+	पूर्ण
 
-	if (phr->object != phm->object) {
+	अगर (phr->object != phm->object) अणु
 		HPI_DEBUG_LOG(ERROR, "header object %d invalid\n",
 			phr->object);
-		return HPI_ERROR_INVALID_RESPONSE;
-	}
+		वापस HPI_ERROR_INVALID_RESPONSE;
+	पूर्ण
 
-	if (phr->function != phm->function) {
+	अगर (phr->function != phm->function) अणु
 		HPI_DEBUG_LOG(ERROR, "header function %d invalid\n",
 			phr->function);
-		return HPI_ERROR_INVALID_RESPONSE;
-	}
+		वापस HPI_ERROR_INVALID_RESPONSE;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u16 hpi_add_adapter(struct hpi_adapter_obj *pao)
-{
+u16 hpi_add_adapter(काष्ठा hpi_adapter_obj *pao)
+अणु
 	u16 retval = 0;
 	/*HPI_ASSERT(pao->type); */
 
 	hpios_alistlock_lock(&adapters);
 
-	if (pao->index >= HPI_MAX_ADAPTERS) {
+	अगर (pao->index >= HPI_MAX_ADAPTERS) अणु
 		retval = HPI_ERROR_BAD_ADAPTER_NUMBER;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (adapters.adapter[pao->index].type) {
-		int a;
-		for (a = HPI_MAX_ADAPTERS - 1; a >= 0; a--) {
-			if (!adapters.adapter[a].type) {
+	अगर (adapters.adapter[pao->index].type) अणु
+		पूर्णांक a;
+		क्रम (a = HPI_MAX_ADAPTERS - 1; a >= 0; a--) अणु
+			अगर (!adapters.adapter[a].type) अणु
 				HPI_DEBUG_LOG(WARNING,
 					"ASI%X duplicate index %d moved to %d\n",
 					pao->type, pao->index, a);
 				pao->index = a;
-				break;
-			}
-		}
-		if (a < 0) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (a < 0) अणु
 			retval = HPI_ERROR_DUPLICATE_ADAPTER_NUMBER;
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 	adapters.adapter[pao->index] = *pao;
 	hpios_dsplock_init(&adapters.adapter[pao->index]);
 	adapters.gw_num_adapters++;
 
 unlock:
 	hpios_alistlock_unlock(&adapters);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void hpi_delete_adapter(struct hpi_adapter_obj *pao)
-{
-	if (!pao->type) {
+व्योम hpi_delete_adapter(काष्ठा hpi_adapter_obj *pao)
+अणु
+	अगर (!pao->type) अणु
 		HPI_DEBUG_LOG(ERROR, "removing null adapter?\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hpios_alistlock_lock(&adapters);
-	if (adapters.adapter[pao->index].type)
+	अगर (adapters.adapter[pao->index].type)
 		adapters.gw_num_adapters--;
-	memset(&adapters.adapter[pao->index], 0, sizeof(adapters.adapter[0]));
+	स_रखो(&adapters.adapter[pao->index], 0, माप(adapters.adapter[0]));
 	hpios_alistlock_unlock(&adapters);
-}
+पूर्ण
 
 /**
- * hpi_find_adapter - FindAdapter returns a pointer to the struct
+ * hpi_find_adapter - FindAdapter वापसs a poपूर्णांकer to the काष्ठा
  * hpi_adapter_obj with index wAdapterIndex in an HPI_ADAPTERS_LIST
- * structure.
+ * काष्ठाure.
  * @adapter_index: value in [0, HPI_MAX_ADAPTERS[
  */
-struct hpi_adapter_obj *hpi_find_adapter(u16 adapter_index)
-{
-	struct hpi_adapter_obj *pao = NULL;
+काष्ठा hpi_adapter_obj *hpi_find_adapter(u16 adapter_index)
+अणु
+	काष्ठा hpi_adapter_obj *pao = शून्य;
 
-	if (adapter_index >= HPI_MAX_ADAPTERS) {
+	अगर (adapter_index >= HPI_MAX_ADAPTERS) अणु
 		HPI_DEBUG_LOG(VERBOSE, "find_adapter invalid index %d\n",
 			adapter_index);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	pao = &adapters.adapter[adapter_index];
-	if (pao->type != 0) {
+	अगर (pao->type != 0) अणु
 		/*
 		   HPI_DEBUG_LOG(VERBOSE, "Found adapter index %d\n",
 		   wAdapterIndex);
 		 */
-		return pao;
-	} else {
+		वापस pao;
+	पूर्ण अन्यथा अणु
 		/*
 		   HPI_DEBUG_LOG(VERBOSE, "No adapter index %d\n",
 		   wAdapterIndex);
 		 */
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * wipe_adapter_list - wipe an HPI_ADAPTERS_LIST structure.
+ * wipe_adapter_list - wipe an HPI_ADAPTERS_LIST काष्ठाure.
  *
  */
-static void wipe_adapter_list(void)
-{
-	memset(&adapters, 0, sizeof(adapters));
-}
+अटल व्योम wipe_adapter_list(व्योम)
+अणु
+	स_रखो(&adapters, 0, माप(adapters));
+पूर्ण
 
-static void subsys_get_adapter(struct hpi_message *phm,
-	struct hpi_response *phr)
-{
-	int count = phm->obj_index;
+अटल व्योम subsys_get_adapter(काष्ठा hpi_message *phm,
+	काष्ठा hpi_response *phr)
+अणु
+	पूर्णांक count = phm->obj_index;
 	u16 index = 0;
 
 	/* find the nCount'th nonzero adapter in array */
-	for (index = 0; index < HPI_MAX_ADAPTERS; index++) {
-		if (adapters.adapter[index].type) {
-			if (!count)
-				break;
+	क्रम (index = 0; index < HPI_MAX_ADAPTERS; index++) अणु
+		अगर (adapters.adapter[index].type) अणु
+			अगर (!count)
+				अवरोध;
 			count--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (index < HPI_MAX_ADAPTERS) {
+	अगर (index < HPI_MAX_ADAPTERS) अणु
 		phr->u.s.adapter_index = adapters.adapter[index].index;
 		phr->u.s.adapter_type = adapters.adapter[index].type;
-	} else {
+	पूर्ण अन्यथा अणु
 		phr->u.s.adapter_index = 0;
 		phr->u.s.adapter_type = 0;
 		phr->error = HPI_ERROR_INVALID_OBJ_INDEX;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int control_cache_alloc_check(struct hpi_control_cache *pC)
-{
-	unsigned int i;
-	int cached = 0;
-	if (!pC)
-		return 0;
+अटल अचिन्हित पूर्णांक control_cache_alloc_check(काष्ठा hpi_control_cache *pC)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक cached = 0;
+	अगर (!pC)
+		वापस 0;
 
-	if (pC->init)
-		return pC->init;
+	अगर (pC->init)
+		वापस pC->init;
 
-	if (!pC->p_cache)
-		return 0;
+	अगर (!pC->p_cache)
+		वापस 0;
 
-	if (pC->control_count && pC->cache_size_in_bytes) {
-		char *p_master_cache;
-		unsigned int byte_count = 0;
+	अगर (pC->control_count && pC->cache_size_in_bytes) अणु
+		अक्षर *p_master_cache;
+		अचिन्हित पूर्णांक byte_count = 0;
 
-		p_master_cache = (char *)pC->p_cache;
+		p_master_cache = (अक्षर *)pC->p_cache;
 		HPI_DEBUG_LOG(DEBUG, "check %d controls\n",
 			pC->control_count);
-		for (i = 0; i < pC->control_count; i++) {
-			struct hpi_control_cache_info *info =
-				(struct hpi_control_cache_info *)
+		क्रम (i = 0; i < pC->control_count; i++) अणु
+			काष्ठा hpi_control_cache_info *info =
+				(काष्ठा hpi_control_cache_info *)
 				&p_master_cache[byte_count];
 			u16 control_index = info->control_index;
 
-			if (control_index >= pC->control_count) {
+			अगर (control_index >= pC->control_count) अणु
 				HPI_DEBUG_LOG(INFO,
 					"adap %d control index %d out of range, cache not ready?\n",
 					pC->adap_idx, control_index);
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
-			if (!info->size_in32bit_words) {
-				if (!i) {
+			अगर (!info->size_in32bit_words) अणु
+				अगर (!i) अणु
 					HPI_DEBUG_LOG(INFO,
 						"adap %d cache not ready?\n",
 						pC->adap_idx);
-					return 0;
-				}
+					वापस 0;
+				पूर्ण
 				/* The cache is invalid.
 				 * Minimum valid entry size is
-				 * sizeof(struct hpi_control_cache_info)
+				 * माप(काष्ठा hpi_control_cache_info)
 				 */
 				HPI_DEBUG_LOG(ERROR,
 					"adap %d zero size cache entry %d\n",
 					pC->adap_idx, i);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (info->control_type) {
+			अगर (info->control_type) अणु
 				pC->p_info[control_index] = info;
 				cached++;
-			} else {	/* dummy cache entry */
-				pC->p_info[control_index] = NULL;
-			}
+			पूर्ण अन्यथा अणु	/* dummy cache entry */
+				pC->p_info[control_index] = शून्य;
+			पूर्ण
 
 			byte_count += info->size_in32bit_words * 4;
 
@@ -238,476 +239,476 @@ static unsigned int control_cache_alloc_check(struct hpi_control_cache *pC)
 				info->control_index, info->control_type,
 				info->size_in32bit_words);
 
-			/* quit loop early if whole cache has been scanned.
+			/* quit loop early अगर whole cache has been scanned.
 			 * dwControlCount is the maximum possible entries
-			 * but some may be absent from the cache
+			 * but some may be असलent from the cache
 			 */
-			if (byte_count >= pC->cache_size_in_bytes)
-				break;
+			अगर (byte_count >= pC->cache_size_in_bytes)
+				अवरोध;
 			/* have seen last control index */
-			if (info->control_index == pC->control_count - 1)
-				break;
-		}
+			अगर (info->control_index == pC->control_count - 1)
+				अवरोध;
+		पूर्ण
 
-		if (byte_count != pC->cache_size_in_bytes)
+		अगर (byte_count != pC->cache_size_in_bytes)
 			HPI_DEBUG_LOG(WARNING,
 				"adap %d bytecount %d != cache size %d\n",
 				pC->adap_idx, byte_count,
 				pC->cache_size_in_bytes);
-		else
+		अन्यथा
 			HPI_DEBUG_LOG(DEBUG,
 				"adap %d cache good, bytecount == cache size = %d\n",
 				pC->adap_idx, byte_count);
 
 		pC->init = (u16)cached;
-	}
-	return pC->init;
-}
+	पूर्ण
+	वापस pC->init;
+पूर्ण
 
 /** Find a control.
 */
-static short find_control(u16 control_index,
-	struct hpi_control_cache *p_cache, struct hpi_control_cache_info **pI)
-{
-	if (!control_cache_alloc_check(p_cache)) {
+अटल लघु find_control(u16 control_index,
+	काष्ठा hpi_control_cache *p_cache, काष्ठा hpi_control_cache_info **pI)
+अणु
+	अगर (!control_cache_alloc_check(p_cache)) अणु
 		HPI_DEBUG_LOG(VERBOSE,
 			"control_cache_alloc_check() failed %d\n",
 			control_index);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	*pI = p_cache->p_info[control_index];
-	if (!*pI) {
+	अगर (!*pI) अणु
 		HPI_DEBUG_LOG(VERBOSE, "Uncached Control %d\n",
 			control_index);
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		HPI_DEBUG_LOG(VERBOSE, "find_control() type %d\n",
 			(*pI)->control_type);
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-/* allow unified treatment of several string fields within struct */
-#define HPICMN_PAD_OFS_AND_SIZE(m)  {\
-	offsetof(struct hpi_control_cache_pad, m), \
-	sizeof(((struct hpi_control_cache_pad *)(NULL))->m) }
+/* allow unअगरied treaपंचांगent of several string fields within काष्ठा */
+#घोषणा HPICMN_PAD_OFS_AND_SIZE(m)  अणु\
+	दुरत्व(काष्ठा hpi_control_cache_pad, m), \
+	माप(((काष्ठा hpi_control_cache_pad *)(शून्य))->m) पूर्ण
 
-struct pad_ofs_size {
-	unsigned int offset;
-	unsigned int field_size;
-};
+काष्ठा pad_ofs_size अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक field_size;
+पूर्ण;
 
-static const struct pad_ofs_size pad_desc[] = {
+अटल स्थिर काष्ठा pad_ofs_size pad_desc[] = अणु
 	HPICMN_PAD_OFS_AND_SIZE(c_channel),	/* HPI_PAD_CHANNEL_NAME */
 	HPICMN_PAD_OFS_AND_SIZE(c_artist),	/* HPI_PAD_ARTIST */
 	HPICMN_PAD_OFS_AND_SIZE(c_title),	/* HPI_PAD_TITLE */
 	HPICMN_PAD_OFS_AND_SIZE(c_comment),	/* HPI_PAD_COMMENT */
-};
+पूर्ण;
 
-/** CheckControlCache checks the cache and fills the struct hpi_response
- * accordingly. It returns one if a cache hit occurred, zero otherwise.
+/** CheckControlCache checks the cache and fills the काष्ठा hpi_response
+ * accordingly. It वापसs one अगर a cache hit occurred, zero otherwise.
  */
-short hpi_check_control_cache_single(struct hpi_control_cache_single *pC,
-	struct hpi_message *phm, struct hpi_response *phr)
-{
-	size_t response_size;
-	short found = 1;
+लघु hpi_check_control_cache_single(काष्ठा hpi_control_cache_single *pC,
+	काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	माप_प्रकार response_size;
+	लघु found = 1;
 
-	/* set the default response size */
+	/* set the शेष response size */
 	response_size =
-		sizeof(struct hpi_response_header) +
-		sizeof(struct hpi_control_res);
+		माप(काष्ठा hpi_response_header) +
+		माप(काष्ठा hpi_control_res);
 
-	switch (pC->u.i.control_type) {
+	चयन (pC->u.i.control_type) अणु
 
-	case HPI_CONTROL_METER:
-		if (phm->u.c.attribute == HPI_METER_PEAK) {
+	हाल HPI_CONTROL_METER:
+		अगर (phm->u.c.attribute == HPI_METER_PEAK) अणु
 			phr->u.c.an_log_value[0] = pC->u.meter.an_log_peak[0];
 			phr->u.c.an_log_value[1] = pC->u.meter.an_log_peak[1];
-		} else if (phm->u.c.attribute == HPI_METER_RMS) {
-			if (pC->u.meter.an_logRMS[0] ==
-				HPI_CACHE_INVALID_SHORT) {
+		पूर्ण अन्यथा अगर (phm->u.c.attribute == HPI_METER_RMS) अणु
+			अगर (pC->u.meter.an_logRMS[0] ==
+				HPI_CACHE_INVALID_SHORT) अणु
 				phr->error =
 					HPI_ERROR_INVALID_CONTROL_ATTRIBUTE;
 				phr->u.c.an_log_value[0] = HPI_METER_MINIMUM;
 				phr->u.c.an_log_value[1] = HPI_METER_MINIMUM;
-			} else {
+			पूर्ण अन्यथा अणु
 				phr->u.c.an_log_value[0] =
 					pC->u.meter.an_logRMS[0];
 				phr->u.c.an_log_value[1] =
 					pC->u.meter.an_logRMS[1];
-			}
-		} else
+			पूर्ण
+		पूर्ण अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_VOLUME:
-		if (phm->u.c.attribute == HPI_VOLUME_GAIN) {
+		अवरोध;
+	हाल HPI_CONTROL_VOLUME:
+		अगर (phm->u.c.attribute == HPI_VOLUME_GAIN) अणु
 			phr->u.c.an_log_value[0] = pC->u.vol.an_log[0];
 			phr->u.c.an_log_value[1] = pC->u.vol.an_log[1];
-		} else if (phm->u.c.attribute == HPI_VOLUME_MUTE) {
-			if (pC->u.vol.flags & HPI_VOLUME_FLAG_HAS_MUTE) {
-				if (pC->u.vol.flags & HPI_VOLUME_FLAG_MUTED)
+		पूर्ण अन्यथा अगर (phm->u.c.attribute == HPI_VOLUME_MUTE) अणु
+			अगर (pC->u.vol.flags & HPI_VOLUME_FLAG_HAS_MUTE) अणु
+				अगर (pC->u.vol.flags & HPI_VOLUME_FLAG_MUTED)
 					phr->u.c.param1 =
 						HPI_BITMASK_ALL_CHANNELS;
-				else
+				अन्यथा
 					phr->u.c.param1 = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				phr->error =
 					HPI_ERROR_INVALID_CONTROL_ATTRIBUTE;
 				phr->u.c.param1 = 0;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			found = 0;
-		}
-		break;
-	case HPI_CONTROL_MULTIPLEXER:
-		if (phm->u.c.attribute == HPI_MULTIPLEXER_SOURCE) {
+		पूर्ण
+		अवरोध;
+	हाल HPI_CONTROL_MULTIPLEXER:
+		अगर (phm->u.c.attribute == HPI_MULTIPLEXER_SOURCE) अणु
 			phr->u.c.param1 = pC->u.mux.source_node_type;
 			phr->u.c.param2 = pC->u.mux.source_node_index;
-		} else {
+		पूर्ण अन्यथा अणु
 			found = 0;
-		}
-		break;
-	case HPI_CONTROL_CHANNEL_MODE:
-		if (phm->u.c.attribute == HPI_CHANNEL_MODE_MODE)
+		पूर्ण
+		अवरोध;
+	हाल HPI_CONTROL_CHANNEL_MODE:
+		अगर (phm->u.c.attribute == HPI_CHANNEL_MODE_MODE)
 			phr->u.c.param1 = pC->u.mode.mode;
-		else
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_LEVEL:
-		if (phm->u.c.attribute == HPI_LEVEL_GAIN) {
+		अवरोध;
+	हाल HPI_CONTROL_LEVEL:
+		अगर (phm->u.c.attribute == HPI_LEVEL_GAIN) अणु
 			phr->u.c.an_log_value[0] = pC->u.level.an_log[0];
 			phr->u.c.an_log_value[1] = pC->u.level.an_log[1];
-		} else
+		पूर्ण अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_TUNER:
-		if (phm->u.c.attribute == HPI_TUNER_FREQ)
+		अवरोध;
+	हाल HPI_CONTROL_TUNER:
+		अगर (phm->u.c.attribute == HPI_TUNER_FREQ)
 			phr->u.c.param1 = pC->u.tuner.freq_ink_hz;
-		else if (phm->u.c.attribute == HPI_TUNER_BAND)
+		अन्यथा अगर (phm->u.c.attribute == HPI_TUNER_BAND)
 			phr->u.c.param1 = pC->u.tuner.band;
-		else if (phm->u.c.attribute == HPI_TUNER_LEVEL_AVG)
-			if (pC->u.tuner.s_level_avg ==
-				HPI_CACHE_INVALID_SHORT) {
+		अन्यथा अगर (phm->u.c.attribute == HPI_TUNER_LEVEL_AVG)
+			अगर (pC->u.tuner.s_level_avg ==
+				HPI_CACHE_INVALID_SHORT) अणु
 				phr->u.cu.tuner.s_level = 0;
 				phr->error =
 					HPI_ERROR_INVALID_CONTROL_ATTRIBUTE;
-			} else
+			पूर्ण अन्यथा
 				phr->u.cu.tuner.s_level =
 					pC->u.tuner.s_level_avg;
-		else
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_AESEBU_RECEIVER:
-		if (phm->u.c.attribute == HPI_AESEBURX_ERRORSTATUS)
+		अवरोध;
+	हाल HPI_CONTROL_AESEBU_RECEIVER:
+		अगर (phm->u.c.attribute == HPI_AESEBURX_ERRORSTATUS)
 			phr->u.c.param1 = pC->u.aes3rx.error_status;
-		else if (phm->u.c.attribute == HPI_AESEBURX_FORMAT)
-			phr->u.c.param1 = pC->u.aes3rx.format;
-		else
+		अन्यथा अगर (phm->u.c.attribute == HPI_AESEBURX_FORMAT)
+			phr->u.c.param1 = pC->u.aes3rx.क्रमmat;
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_AESEBU_TRANSMITTER:
-		if (phm->u.c.attribute == HPI_AESEBUTX_FORMAT)
-			phr->u.c.param1 = pC->u.aes3tx.format;
-		else
+		अवरोध;
+	हाल HPI_CONTROL_AESEBU_TRANSMITTER:
+		अगर (phm->u.c.attribute == HPI_AESEBUTX_FORMAT)
+			phr->u.c.param1 = pC->u.aes3tx.क्रमmat;
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_TONEDETECTOR:
-		if (phm->u.c.attribute == HPI_TONEDETECTOR_STATE)
+		अवरोध;
+	हाल HPI_CONTROL_TONEDETECTOR:
+		अगर (phm->u.c.attribute == HPI_TONEDETECTOR_STATE)
 			phr->u.c.param1 = pC->u.tone.state;
-		else
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_SILENCEDETECTOR:
-		if (phm->u.c.attribute == HPI_SILENCEDETECTOR_STATE) {
+		अवरोध;
+	हाल HPI_CONTROL_SILENCEDETECTOR:
+		अगर (phm->u.c.attribute == HPI_SILENCEDETECTOR_STATE) अणु
 			phr->u.c.param1 = pC->u.silence.state;
-		} else
+		पूर्ण अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_MICROPHONE:
-		if (phm->u.c.attribute == HPI_MICROPHONE_PHANTOM_POWER)
+		अवरोध;
+	हाल HPI_CONTROL_MICROPHONE:
+		अगर (phm->u.c.attribute == HPI_MICROPHONE_PHANTOM_POWER)
 			phr->u.c.param1 = pC->u.microphone.phantom_state;
-		else
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_SAMPLECLOCK:
-		if (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE)
+		अवरोध;
+	हाल HPI_CONTROL_SAMPLECLOCK:
+		अगर (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE)
 			phr->u.c.param1 = pC->u.clk.source;
-		else if (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE_INDEX) {
-			if (pC->u.clk.source_index ==
-				HPI_CACHE_INVALID_UINT16) {
+		अन्यथा अगर (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE_INDEX) अणु
+			अगर (pC->u.clk.source_index ==
+				HPI_CACHE_INVALID_UINT16) अणु
 				phr->u.c.param1 = 0;
 				phr->error =
 					HPI_ERROR_INVALID_CONTROL_ATTRIBUTE;
-			} else
+			पूर्ण अन्यथा
 				phr->u.c.param1 = pC->u.clk.source_index;
-		} else if (phm->u.c.attribute == HPI_SAMPLECLOCK_SAMPLERATE)
+		पूर्ण अन्यथा अगर (phm->u.c.attribute == HPI_SAMPLECLOCK_SAMPLERATE)
 			phr->u.c.param1 = pC->u.clk.sample_rate;
-		else
+		अन्यथा
 			found = 0;
-		break;
-	case HPI_CONTROL_PAD:{
-			struct hpi_control_cache_pad *p_pad;
-			p_pad = (struct hpi_control_cache_pad *)pC;
+		अवरोध;
+	हाल HPI_CONTROL_PAD:अणु
+			काष्ठा hpi_control_cache_pad *p_pad;
+			p_pad = (काष्ठा hpi_control_cache_pad *)pC;
 
-			if (!(p_pad->field_valid_flags & (1 <<
+			अगर (!(p_pad->field_valid_flags & (1 <<
 						HPI_CTL_ATTR_INDEX(phm->u.c.
-							attribute)))) {
+							attribute)))) अणु
 				phr->error =
 					HPI_ERROR_INVALID_CONTROL_ATTRIBUTE;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (phm->u.c.attribute == HPI_PAD_PROGRAM_ID)
+			अगर (phm->u.c.attribute == HPI_PAD_PROGRAM_ID)
 				phr->u.c.param1 = p_pad->pI;
-			else if (phm->u.c.attribute == HPI_PAD_PROGRAM_TYPE)
+			अन्यथा अगर (phm->u.c.attribute == HPI_PAD_PROGRAM_TYPE)
 				phr->u.c.param1 = p_pad->pTY;
-			else {
-				unsigned int index =
+			अन्यथा अणु
+				अचिन्हित पूर्णांक index =
 					HPI_CTL_ATTR_INDEX(phm->u.c.
 					attribute) - 1;
-				unsigned int offset = phm->u.c.param1;
-				unsigned int pad_string_len, field_size;
-				char *pad_string;
-				unsigned int tocopy;
+				अचिन्हित पूर्णांक offset = phm->u.c.param1;
+				अचिन्हित पूर्णांक pad_string_len, field_size;
+				अक्षर *pad_string;
+				अचिन्हित पूर्णांक tocopy;
 
-				if (index > ARRAY_SIZE(pad_desc) - 1) {
+				अगर (index > ARRAY_SIZE(pad_desc) - 1) अणु
 					phr->error =
 						HPI_ERROR_INVALID_CONTROL_ATTRIBUTE;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				pad_string =
-					((char *)p_pad) +
+					((अक्षर *)p_pad) +
 					pad_desc[index].offset;
 				field_size = pad_desc[index].field_size;
 				/* Ensure null terminator */
 				pad_string[field_size - 1] = 0;
 
-				pad_string_len = strlen(pad_string) + 1;
+				pad_string_len = म_माप(pad_string) + 1;
 
-				if (offset > pad_string_len) {
+				अगर (offset > pad_string_len) अणु
 					phr->error =
 						HPI_ERROR_INVALID_CONTROL_VALUE;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				tocopy = pad_string_len - offset;
-				if (tocopy > sizeof(phr->u.cu.chars8.sz_data))
-					tocopy = sizeof(phr->u.cu.chars8.
+				अगर (tocopy > माप(phr->u.cu.अक्षरs8.sz_data))
+					tocopy = माप(phr->u.cu.अक्षरs8.
 						sz_data);
 
-				memcpy(phr->u.cu.chars8.sz_data,
+				स_नकल(phr->u.cu.अक्षरs8.sz_data,
 					&pad_string[offset], tocopy);
 
-				phr->u.cu.chars8.remaining_chars =
+				phr->u.cu.अक्षरs8.reमुख्यing_अक्षरs =
 					pad_string_len - offset - tocopy;
-			}
-		}
-		break;
-	default:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		found = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	HPI_DEBUG_LOG(VERBOSE, "%s Adap %d, Ctl %d, Type %d, Attr %d\n",
 		found ? "Cached" : "Uncached", phm->adapter_index,
 		pC->u.i.control_index, pC->u.i.control_type,
 		phm->u.c.attribute);
 
-	if (found) {
+	अगर (found) अणु
 		phr->size = (u16)response_size;
 		phr->type = HPI_TYPE_RESPONSE;
 		phr->object = phm->object;
 		phr->function = phm->function;
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-short hpi_check_control_cache(struct hpi_control_cache *p_cache,
-	struct hpi_message *phm, struct hpi_response *phr)
-{
-	struct hpi_control_cache_info *pI;
+लघु hpi_check_control_cache(काष्ठा hpi_control_cache *p_cache,
+	काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	काष्ठा hpi_control_cache_info *pI;
 
-	if (!find_control(phm->obj_index, p_cache, &pI)) {
+	अगर (!find_control(phm->obj_index, p_cache, &pI)) अणु
 		HPI_DEBUG_LOG(VERBOSE,
 			"HPICMN find_control() failed for adap %d\n",
 			phm->adapter_index);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	phr->error = 0;
-	phr->specific_error = 0;
+	phr->specअगरic_error = 0;
 	phr->version = 0;
 
-	return hpi_check_control_cache_single((struct hpi_control_cache_single
+	वापस hpi_check_control_cache_single((काष्ठा hpi_control_cache_single
 			*)pI, phm, phr);
-}
+पूर्ण
 
 /** Updates the cache with Set values.
 
-Only update if no error.
-Volume and Level return the limited values in the response, so use these
-Multiplexer does so use sent values
+Only update अगर no error.
+Volume and Level वापस the limited values in the response, so use these
+Multiplexer करोes so use sent values
 */
-void hpi_cmn_control_cache_sync_to_msg_single(struct hpi_control_cache_single
-	*pC, struct hpi_message *phm, struct hpi_response *phr)
-{
-	switch (pC->u.i.control_type) {
-	case HPI_CONTROL_VOLUME:
-		if (phm->u.c.attribute == HPI_VOLUME_GAIN) {
+व्योम hpi_cmn_control_cache_sync_to_msg_single(काष्ठा hpi_control_cache_single
+	*pC, काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	चयन (pC->u.i.control_type) अणु
+	हाल HPI_CONTROL_VOLUME:
+		अगर (phm->u.c.attribute == HPI_VOLUME_GAIN) अणु
 			pC->u.vol.an_log[0] = phr->u.c.an_log_value[0];
 			pC->u.vol.an_log[1] = phr->u.c.an_log_value[1];
-		} else if (phm->u.c.attribute == HPI_VOLUME_MUTE) {
-			if (phm->u.c.param1)
+		पूर्ण अन्यथा अगर (phm->u.c.attribute == HPI_VOLUME_MUTE) अणु
+			अगर (phm->u.c.param1)
 				pC->u.vol.flags |= HPI_VOLUME_FLAG_MUTED;
-			else
+			अन्यथा
 				pC->u.vol.flags &= ~HPI_VOLUME_FLAG_MUTED;
-		}
-		break;
-	case HPI_CONTROL_MULTIPLEXER:
-		/* mux does not return its setting on Set command. */
-		if (phm->u.c.attribute == HPI_MULTIPLEXER_SOURCE) {
+		पूर्ण
+		अवरोध;
+	हाल HPI_CONTROL_MULTIPLEXER:
+		/* mux करोes not वापस its setting on Set command. */
+		अगर (phm->u.c.attribute == HPI_MULTIPLEXER_SOURCE) अणु
 			pC->u.mux.source_node_type = (u16)phm->u.c.param1;
 			pC->u.mux.source_node_index = (u16)phm->u.c.param2;
-		}
-		break;
-	case HPI_CONTROL_CHANNEL_MODE:
-		/* mode does not return its setting on Set command. */
-		if (phm->u.c.attribute == HPI_CHANNEL_MODE_MODE)
+		पूर्ण
+		अवरोध;
+	हाल HPI_CONTROL_CHANNEL_MODE:
+		/* mode करोes not वापस its setting on Set command. */
+		अगर (phm->u.c.attribute == HPI_CHANNEL_MODE_MODE)
 			pC->u.mode.mode = (u16)phm->u.c.param1;
-		break;
-	case HPI_CONTROL_LEVEL:
-		if (phm->u.c.attribute == HPI_LEVEL_GAIN) {
+		अवरोध;
+	हाल HPI_CONTROL_LEVEL:
+		अगर (phm->u.c.attribute == HPI_LEVEL_GAIN) अणु
 			pC->u.vol.an_log[0] = phr->u.c.an_log_value[0];
 			pC->u.vol.an_log[1] = phr->u.c.an_log_value[1];
-		}
-		break;
-	case HPI_CONTROL_MICROPHONE:
-		if (phm->u.c.attribute == HPI_MICROPHONE_PHANTOM_POWER)
+		पूर्ण
+		अवरोध;
+	हाल HPI_CONTROL_MICROPHONE:
+		अगर (phm->u.c.attribute == HPI_MICROPHONE_PHANTOM_POWER)
 			pC->u.microphone.phantom_state = (u16)phm->u.c.param1;
-		break;
-	case HPI_CONTROL_AESEBU_TRANSMITTER:
-		if (phm->u.c.attribute == HPI_AESEBUTX_FORMAT)
-			pC->u.aes3tx.format = phm->u.c.param1;
-		break;
-	case HPI_CONTROL_AESEBU_RECEIVER:
-		if (phm->u.c.attribute == HPI_AESEBURX_FORMAT)
-			pC->u.aes3rx.format = phm->u.c.param1;
-		break;
-	case HPI_CONTROL_SAMPLECLOCK:
-		if (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE)
+		अवरोध;
+	हाल HPI_CONTROL_AESEBU_TRANSMITTER:
+		अगर (phm->u.c.attribute == HPI_AESEBUTX_FORMAT)
+			pC->u.aes3tx.क्रमmat = phm->u.c.param1;
+		अवरोध;
+	हाल HPI_CONTROL_AESEBU_RECEIVER:
+		अगर (phm->u.c.attribute == HPI_AESEBURX_FORMAT)
+			pC->u.aes3rx.क्रमmat = phm->u.c.param1;
+		अवरोध;
+	हाल HPI_CONTROL_SAMPLECLOCK:
+		अगर (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE)
 			pC->u.clk.source = (u16)phm->u.c.param1;
-		else if (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE_INDEX)
+		अन्यथा अगर (phm->u.c.attribute == HPI_SAMPLECLOCK_SOURCE_INDEX)
 			pC->u.clk.source_index = (u16)phm->u.c.param1;
-		else if (phm->u.c.attribute == HPI_SAMPLECLOCK_SAMPLERATE)
+		अन्यथा अगर (phm->u.c.attribute == HPI_SAMPLECLOCK_SAMPLERATE)
 			pC->u.clk.sample_rate = phm->u.c.param1;
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void hpi_cmn_control_cache_sync_to_msg(struct hpi_control_cache *p_cache,
-	struct hpi_message *phm, struct hpi_response *phr)
-{
-	struct hpi_control_cache_single *pC;
-	struct hpi_control_cache_info *pI;
+व्योम hpi_cmn_control_cache_sync_to_msg(काष्ठा hpi_control_cache *p_cache,
+	काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	काष्ठा hpi_control_cache_single *pC;
+	काष्ठा hpi_control_cache_info *pI;
 
-	if (phr->error)
-		return;
+	अगर (phr->error)
+		वापस;
 
-	if (!find_control(phm->obj_index, p_cache, &pI)) {
+	अगर (!find_control(phm->obj_index, p_cache, &pI)) अणु
 		HPI_DEBUG_LOG(VERBOSE,
 			"HPICMN find_control() failed for adap %d\n",
 			phm->adapter_index);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* pC is the default cached control strucure.
-	   May be cast to something else in the following switch statement.
+	/* pC is the शेष cached control strucure.
+	   May be cast to something अन्यथा in the following चयन statement.
 	 */
-	pC = (struct hpi_control_cache_single *)pI;
+	pC = (काष्ठा hpi_control_cache_single *)pI;
 
 	hpi_cmn_control_cache_sync_to_msg_single(pC, phm, phr);
-}
+पूर्ण
 
 /** Allocate control cache.
 
-\return Cache pointer, or NULL if allocation fails.
+\लeturn Cache poपूर्णांकer, or शून्य अगर allocation fails.
 */
-struct hpi_control_cache *hpi_alloc_control_cache(const u32 control_count,
-	const u32 size_in_bytes, u8 *p_dsp_control_buffer)
-{
-	struct hpi_control_cache *p_cache =
-		kmalloc(sizeof(*p_cache), GFP_KERNEL);
-	if (!p_cache)
-		return NULL;
+काष्ठा hpi_control_cache *hpi_alloc_control_cache(स्थिर u32 control_count,
+	स्थिर u32 size_in_bytes, u8 *p_dsp_control_buffer)
+अणु
+	काष्ठा hpi_control_cache *p_cache =
+		kदो_स्मृति(माप(*p_cache), GFP_KERNEL);
+	अगर (!p_cache)
+		वापस शून्य;
 
 	p_cache->p_info =
-		kcalloc(control_count, sizeof(*p_cache->p_info), GFP_KERNEL);
-	if (!p_cache->p_info) {
-		kfree(p_cache);
-		return NULL;
-	}
+		kसुस्मृति(control_count, माप(*p_cache->p_info), GFP_KERNEL);
+	अगर (!p_cache->p_info) अणु
+		kमुक्त(p_cache);
+		वापस शून्य;
+	पूर्ण
 
 	p_cache->cache_size_in_bytes = size_in_bytes;
 	p_cache->control_count = control_count;
 	p_cache->p_cache = p_dsp_control_buffer;
 	p_cache->init = 0;
-	return p_cache;
-}
+	वापस p_cache;
+पूर्ण
 
-void hpi_free_control_cache(struct hpi_control_cache *p_cache)
-{
-	if (p_cache) {
-		kfree(p_cache->p_info);
-		kfree(p_cache);
-	}
-}
+व्योम hpi_मुक्त_control_cache(काष्ठा hpi_control_cache *p_cache)
+अणु
+	अगर (p_cache) अणु
+		kमुक्त(p_cache->p_info);
+		kमुक्त(p_cache);
+	पूर्ण
+पूर्ण
 
-static void subsys_message(struct hpi_message *phm, struct hpi_response *phr)
-{
+अटल व्योम subsys_message(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
 	hpi_init_response(phr, HPI_OBJ_SUBSYSTEM, phm->function, 0);
 
-	switch (phm->function) {
-	case HPI_SUBSYS_OPEN:
-	case HPI_SUBSYS_CLOSE:
-	case HPI_SUBSYS_DRIVER_UNLOAD:
-		break;
-	case HPI_SUBSYS_DRIVER_LOAD:
+	चयन (phm->function) अणु
+	हाल HPI_SUBSYS_OPEN:
+	हाल HPI_SUBSYS_CLOSE:
+	हाल HPI_SUBSYS_DRIVER_UNLOAD:
+		अवरोध;
+	हाल HPI_SUBSYS_DRIVER_LOAD:
 		wipe_adapter_list();
 		hpios_alistlock_init(&adapters);
-		break;
-	case HPI_SUBSYS_GET_ADAPTER:
+		अवरोध;
+	हाल HPI_SUBSYS_GET_ADAPTER:
 		subsys_get_adapter(phm, phr);
-		break;
-	case HPI_SUBSYS_GET_NUM_ADAPTERS:
+		अवरोध;
+	हाल HPI_SUBSYS_GET_NUM_ADAPTERS:
 		phr->u.s.num_adapters = adapters.gw_num_adapters;
-		break;
-	case HPI_SUBSYS_CREATE_ADAPTER:
-		break;
-	default:
+		अवरोध;
+	हाल HPI_SUBSYS_CREATE_ADAPTER:
+		अवरोध;
+	शेष:
 		phr->error = HPI_ERROR_INVALID_FUNC;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void HPI_COMMON(struct hpi_message *phm, struct hpi_response *phr)
-{
-	switch (phm->type) {
-	case HPI_TYPE_REQUEST:
-		switch (phm->object) {
-		case HPI_OBJ_SUBSYSTEM:
+व्योम HPI_COMMON(काष्ठा hpi_message *phm, काष्ठा hpi_response *phr)
+अणु
+	चयन (phm->type) अणु
+	हाल HPI_TYPE_REQUEST:
+		चयन (phm->object) अणु
+		हाल HPI_OBJ_SUBSYSTEM:
 			subsys_message(phm, phr);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		phr->error = HPI_ERROR_INVALID_TYPE;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण

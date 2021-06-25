@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/boards/renesas/r7780rp/setup.c
  *
@@ -7,356 +8,356 @@
  * Copyright (C) 2002 Atom Create Engineering Co., Ltd.
  * Copyright (C) 2005 - 2008 Paul Mundt
  *
- * This contains support for the R7780RP-1, R7780MP, and R7785RP
+ * This contains support क्रम the R7780RP-1, R7780MP, and R7785RP
  * Highlander modules.
  */
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <linux/types.h>
-#include <linux/mtd/physmap.h>
-#include <linux/i2c.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/usb/r8a66597.h>
-#include <linux/usb/m66592.h>
-#include <linux/clkdev.h>
-#include <net/ax88796.h>
-#include <asm/machvec.h>
-#include <mach/highlander.h>
-#include <asm/clock.h>
-#include <asm/heartbeat.h>
-#include <asm/io.h>
-#include <asm/io_trapped.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/usb/r8a66597.h>
+#समावेश <linux/usb/m66592.h>
+#समावेश <linux/clkdev.h>
+#समावेश <net/ax88796.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <mach/highlander.h>
+#समावेश <यंत्र/घड़ी.h>
+#समावेश <यंत्र/heartbeat.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/io_trapped.h>
 
-static struct r8a66597_platdata r8a66597_data = {
+अटल काष्ठा r8a66597_platdata r8a66597_data = अणु
 	.xtal = R8A66597_PLATDATA_XTAL_12MHZ,
-	.vif = 1,
-};
+	.vअगर = 1,
+पूर्ण;
 
-static struct resource r8a66597_usb_host_resources[] = {
-	[0] = {
+अटल काष्ठा resource r8a66597_usb_host_resources[] = अणु
+	[0] = अणु
 		.start	= 0xA4200000,
 		.end	= 0xA42000FF,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= IRQ_EXT1,		/* irq number */
 		.end	= IRQ_EXT1,
 		.flags	= IORESOURCE_IRQ | IRQF_TRIGGER_LOW,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device r8a66597_usb_host_device = {
+अटल काष्ठा platक्रमm_device r8a66597_usb_host_device = अणु
 	.name		= "r8a66597_hcd",
 	.id		= -1,
-	.dev = {
-		.dma_mask		= NULL,		/* don't use dma */
+	.dev = अणु
+		.dma_mask		= शून्य,		/* करोn't use dma */
 		.coherent_dma_mask	= 0xffffffff,
-		.platform_data		= &r8a66597_data,
-	},
+		.platक्रमm_data		= &r8a66597_data,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(r8a66597_usb_host_resources),
 	.resource	= r8a66597_usb_host_resources,
-};
+पूर्ण;
 
-static struct m66592_platdata usbf_platdata = {
+अटल काष्ठा m66592_platdata usbf_platdata = अणु
 	.xtal = M66592_PLATDATA_XTAL_24MHZ,
-	.vif = 1,
-};
+	.vअगर = 1,
+पूर्ण;
 
-static struct resource m66592_usb_peripheral_resources[] = {
-	[0] = {
+अटल काष्ठा resource m66592_usb_peripheral_resources[] = अणु
+	[0] = अणु
 		.name	= "m66592_udc",
 		.start	= 0xb0000000,
 		.end	= 0xb00000FF,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "m66592_udc",
 		.start	= IRQ_EXT4,		/* irq number */
 		.end	= IRQ_EXT4,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device m66592_usb_peripheral_device = {
+अटल काष्ठा platक्रमm_device m66592_usb_peripheral_device = अणु
 	.name		= "m66592_udc",
 	.id		= -1,
-	.dev = {
-		.dma_mask		= NULL,		/* don't use dma */
+	.dev = अणु
+		.dma_mask		= शून्य,		/* करोn't use dma */
 		.coherent_dma_mask	= 0xffffffff,
-		.platform_data		= &usbf_platdata,
-	},
+		.platक्रमm_data		= &usbf_platdata,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(m66592_usb_peripheral_resources),
 	.resource	= m66592_usb_peripheral_resources,
-};
+पूर्ण;
 
-static struct resource cf_ide_resources[] = {
-	[0] = {
+अटल काष्ठा resource cf_ide_resources[] = अणु
+	[0] = अणु
 		.start	= PA_AREA5_IO + 0x1000,
 		.end	= PA_AREA5_IO + 0x1000 + 0x08 - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= PA_AREA5_IO + 0x80c,
 		.end	= PA_AREA5_IO + 0x80c + 0x16 - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.start	= IRQ_CF,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pata_platform_info pata_info = {
-	.ioport_shift	= 1,
-};
+अटल काष्ठा pata_platक्रमm_info pata_info = अणु
+	.ioport_shअगरt	= 1,
+पूर्ण;
 
-static struct platform_device cf_ide_device  = {
+अटल काष्ठा platक्रमm_device cf_ide_device  = अणु
 	.name		= "pata_platform",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(cf_ide_resources),
 	.resource	= cf_ide_resources,
-	.dev	= {
-		.platform_data	= &pata_info,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data	= &pata_info,
+	पूर्ण,
+पूर्ण;
 
-static struct resource heartbeat_resources[] = {
-	[0] = {
+अटल काष्ठा resource heartbeat_resources[] = अणु
+	[0] = अणु
 		.start	= PA_OBLED,
 		.end	= PA_OBLED,
 		.flags	= IORESOURCE_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifndef CONFIG_SH_R7785RP
-static unsigned char heartbeat_bit_pos[] = { 2, 1, 0, 3, 6, 5, 4, 7 };
+#अगर_अघोषित CONFIG_SH_R7785RP
+अटल अचिन्हित अक्षर heartbeat_bit_pos[] = अणु 2, 1, 0, 3, 6, 5, 4, 7 पूर्ण;
 
-static struct heartbeat_data heartbeat_data = {
+अटल काष्ठा heartbeat_data heartbeat_data = अणु
 	.bit_pos	= heartbeat_bit_pos,
 	.nr_bits	= ARRAY_SIZE(heartbeat_bit_pos),
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct platform_device heartbeat_device = {
+अटल काष्ठा platक्रमm_device heartbeat_device = अणु
 	.name		= "heartbeat",
 	.id		= -1,
 
 	/* R7785RP has a slightly more sensible FPGA.. */
-#ifndef CONFIG_SH_R7785RP
-	.dev	= {
-		.platform_data	= &heartbeat_data,
-	},
-#endif
+#अगर_अघोषित CONFIG_SH_R7785RP
+	.dev	= अणु
+		.platक्रमm_data	= &heartbeat_data,
+	पूर्ण,
+#पूर्ण_अगर
 	.num_resources	= ARRAY_SIZE(heartbeat_resources),
 	.resource	= heartbeat_resources,
-};
+पूर्ण;
 
-static struct ax_plat_data ax88796_platdata = {
+अटल काष्ठा ax_plat_data ax88796_platdata = अणु
 	.flags          = AXFLG_HAS_93CX6,
 	.wordlength     = 2,
 	.dcr_val        = 0x1,
 	.rcr_val        = 0x40,
-};
+पूर्ण;
 
-static struct resource ax88796_resources[] = {
-	{
-#ifdef CONFIG_SH_R7780RP
+अटल काष्ठा resource ax88796_resources[] = अणु
+	अणु
+#अगर_घोषित CONFIG_SH_R7780RP
 		.start  = 0xa5800400,
 		.end    = 0xa5800400 + (0x20 * 0x2) - 1,
-#else
+#अन्यथा
 		.start  = 0xa4100400,
 		.end    = 0xa4100400 + (0x20 * 0x2) - 1,
-#endif
+#पूर्ण_अगर
 		.flags  = IORESOURCE_MEM,
-	},
-	{
+	पूर्ण,
+	अणु
 		.start  = IRQ_AX88796,
 		.end    = IRQ_AX88796,
 		.flags  = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device ax88796_device = {
+अटल काष्ठा platक्रमm_device ax88796_device = अणु
 	.name           = "ax88796",
 	.id             = 0,
 
-	.dev    = {
-		.platform_data = &ax88796_platdata,
-	},
+	.dev    = अणु
+		.platक्रमm_data = &ax88796_platdata,
+	पूर्ण,
 
 	.num_resources  = ARRAY_SIZE(ax88796_resources),
 	.resource       = ax88796_resources,
-};
+पूर्ण;
 
-static struct mtd_partition nor_flash_partitions[] = {
-	{
+अटल काष्ठा mtd_partition nor_flash_partitions[] = अणु
+	अणु
 		.name		= "loader",
 		.offset		= 0x00000000,
 		.size		= 512 * 1024,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "bootenv",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 512 * 1024,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "kernel",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= 4 * 1024 * 1024,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "data",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= MTDPART_SIZ_FULL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data nor_flash_data = {
+अटल काष्ठा physmap_flash_data nor_flash_data = अणु
 	.width		= 4,
 	.parts		= nor_flash_partitions,
 	.nr_parts	= ARRAY_SIZE(nor_flash_partitions),
-};
+पूर्ण;
 
-/* This config is flash board for mass production. */
-static struct resource nor_flash_resources[] = {
-	[0]	= {
+/* This config is flash board क्रम mass production. */
+अटल काष्ठा resource nor_flash_resources[] = अणु
+	[0]	= अणु
 		.start	= PA_NORFLASH_ADDR,
 		.end	= PA_NORFLASH_ADDR + PA_NORFLASH_SIZE - 1,
 		.flags	= IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device nor_flash_device = {
+अटल काष्ठा platक्रमm_device nor_flash_device = अणु
 	.name		= "physmap-flash",
-	.dev		= {
-		.platform_data	= &nor_flash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &nor_flash_data,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(nor_flash_resources),
 	.resource	= nor_flash_resources,
-};
+पूर्ण;
 
-static struct resource smbus_resources[] = {
-	[0] = {
+अटल काष्ठा resource smbus_resources[] = अणु
+	[0] = अणु
 		.start	= PA_SMCR,
 		.end	= PA_SMCR + 0x100 - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= IRQ_SMBUS,
 		.end	= IRQ_SMBUS,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device smbus_device = {
+अटल काष्ठा platक्रमm_device smbus_device = अणु
 	.name		= "i2c-highlander",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smbus_resources),
 	.resource	= smbus_resources,
-};
+पूर्ण;
 
-static struct i2c_board_info __initdata highlander_i2c_devices[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata highlander_i2c_devices[] = अणु
+	अणु
 		I2C_BOARD_INFO("r2025sd", 0x32),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *r7780rp_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *r7780rp_devices[] __initdata = अणु
 	&r8a66597_usb_host_device,
 	&m66592_usb_peripheral_device,
 	&heartbeat_device,
 	&smbus_device,
 	&nor_flash_device,
-#ifndef CONFIG_SH_R7780RP
+#अगर_अघोषित CONFIG_SH_R7780RP
 	&ax88796_device,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * The CF is connected using a 16-bit bus where 8-bit operations are
  * unsupported. The linux ata driver is however using 8-bit operations, so
- * insert a trapped io filter to convert 8-bit operations into 16-bit.
+ * insert a trapped io filter to convert 8-bit operations पूर्णांकo 16-bit.
  */
-static struct trapped_io cf_trapped_io = {
+अटल काष्ठा trapped_io cf_trapped_io = अणु
 	.resource		= cf_ide_resources,
 	.num_resources		= 2,
 	.minimum_bus_width	= 16,
-};
+पूर्ण;
 
-static int __init r7780rp_devices_setup(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init r7780rp_devices_setup(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-#ifndef CONFIG_SH_R7780RP
-	if (register_trapped_io(&cf_trapped_io) == 0)
-		ret |= platform_device_register(&cf_ide_device);
-#endif
+#अगर_अघोषित CONFIG_SH_R7780RP
+	अगर (रेजिस्टर_trapped_io(&cf_trapped_io) == 0)
+		ret |= platक्रमm_device_रेजिस्टर(&cf_ide_device);
+#पूर्ण_अगर
 
-	ret |= platform_add_devices(r7780rp_devices,
+	ret |= platक्रमm_add_devices(r7780rp_devices,
 				    ARRAY_SIZE(r7780rp_devices));
 
-	ret |= i2c_register_board_info(0, highlander_i2c_devices,
+	ret |= i2c_रेजिस्टर_board_info(0, highlander_i2c_devices,
 				       ARRAY_SIZE(highlander_i2c_devices));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 device_initcall(r7780rp_devices_setup);
 
 /*
- * Platform specific clocks
+ * Platक्रमm specअगरic घड़ीs
  */
-static int ivdr_clk_enable(struct clk *clk)
-{
-	__raw_writew(__raw_readw(PA_IVDRCTL) | (1 << IVDR_CK_ON), PA_IVDRCTL);
-	return 0;
-}
+अटल पूर्णांक ivdr_clk_enable(काष्ठा clk *clk)
+अणु
+	__raw_ग_लिखोw(__raw_पढ़ोw(PA_IVDRCTL) | (1 << IVDR_CK_ON), PA_IVDRCTL);
+	वापस 0;
+पूर्ण
 
-static void ivdr_clk_disable(struct clk *clk)
-{
-	__raw_writew(__raw_readw(PA_IVDRCTL) & ~(1 << IVDR_CK_ON), PA_IVDRCTL);
-}
+अटल व्योम ivdr_clk_disable(काष्ठा clk *clk)
+अणु
+	__raw_ग_लिखोw(__raw_पढ़ोw(PA_IVDRCTL) & ~(1 << IVDR_CK_ON), PA_IVDRCTL);
+पूर्ण
 
-static struct sh_clk_ops ivdr_clk_ops = {
+अटल काष्ठा sh_clk_ops ivdr_clk_ops = अणु
 	.enable		= ivdr_clk_enable,
 	.disable	= ivdr_clk_disable,
-};
+पूर्ण;
 
-static struct clk ivdr_clk = {
+अटल काष्ठा clk ivdr_clk = अणु
 	.ops		= &ivdr_clk_ops,
-};
+पूर्ण;
 
-static struct clk *r7780rp_clocks[] = {
+अटल काष्ठा clk *r7780rp_घड़ीs[] = अणु
 	&ivdr_clk,
-};
+पूर्ण;
 
-static struct clk_lookup lookups[] = {
-	/* main clocks */
+अटल काष्ठा clk_lookup lookups[] = अणु
+	/* मुख्य घड़ीs */
 	CLKDEV_CON_ID("ivdr_clk", &ivdr_clk),
-};
+पूर्ण;
 
-static void r7780rp_power_off(void)
-{
-	if (mach_is_r7780mp() || mach_is_r7785rp())
-		__raw_writew(0x0001, PA_POFF);
-}
+अटल व्योम r7780rp_घातer_off(व्योम)
+अणु
+	अगर (mach_is_r7780mp() || mach_is_r7785rp())
+		__raw_ग_लिखोw(0x0001, PA_POFF);
+पूर्ण
 
 /*
  * Initialize the board
  */
-static void __init highlander_setup(char **cmdline_p)
-{
-	u16 ver = __raw_readw(PA_VERREG);
-	int i;
+अटल व्योम __init highlander_setup(अक्षर **cmdline_p)
+अणु
+	u16 ver = __raw_पढ़ोw(PA_VERREG);
+	पूर्णांक i;
 
-	printk(KERN_INFO "Renesas Solutions Highlander %s support.\n",
+	prपूर्णांकk(KERN_INFO "Renesas Solutions Highlander %s support.\n",
 			 mach_is_r7780rp() ? "R7780RP-1" :
 			 mach_is_r7780mp() ? "R7780MP"	 :
 					     "R7785RP");
 
-	printk(KERN_INFO "Board version: %d (revision %d), "
+	prपूर्णांकk(KERN_INFO "Board version: %d (revision %d), "
 			 "FPGA version: %d (revision %d)\n",
 			 (ver >> 12) & 0xf, (ver >> 8) & 0xf,
 			 (ver >>  4) & 0xf, ver & 0xf);
@@ -364,53 +365,53 @@ static void __init highlander_setup(char **cmdline_p)
 	highlander_plat_pinmux_setup();
 
 	/*
-	 * Enable the important clocks right away..
+	 * Enable the important घड़ीs right away..
 	 */
-	for (i = 0; i < ARRAY_SIZE(r7780rp_clocks); i++) {
-		struct clk *clk = r7780rp_clocks[i];
+	क्रम (i = 0; i < ARRAY_SIZE(r7780rp_घड़ीs); i++) अणु
+		काष्ठा clk *clk = r7780rp_घड़ीs[i];
 
-		clk_register(clk);
+		clk_रेजिस्टर(clk);
 		clk_enable(clk);
-	}
+	पूर्ण
 
 	clkdev_add_table(lookups, ARRAY_SIZE(lookups));
 
-	__raw_writew(0x0000, PA_OBLED);	/* Clear LED. */
+	__raw_ग_लिखोw(0x0000, PA_OBLED);	/* Clear LED. */
 
-	if (mach_is_r7780rp())
-		__raw_writew(0x0001, PA_SDPOW);	/* SD Power ON */
+	अगर (mach_is_r7780rp())
+		__raw_ग_लिखोw(0x0001, PA_SDPOW);	/* SD Power ON */
 
-	__raw_writew(__raw_readw(PA_IVDRCTL) | 0x01, PA_IVDRCTL);	/* Si13112 */
+	__raw_ग_लिखोw(__raw_पढ़ोw(PA_IVDRCTL) | 0x01, PA_IVDRCTL);	/* Si13112 */
 
-	pm_power_off = r7780rp_power_off;
-}
+	pm_घातer_off = r7780rp_घातer_off;
+पूर्ण
 
-static unsigned char irl2irq[HL_NR_IRL];
+अटल अचिन्हित अक्षर irl2irq[HL_NR_IRL];
 
-static int highlander_irq_demux(int irq)
-{
-	if (irq >= HL_NR_IRL || irq < 0 || !irl2irq[irq])
-		return irq;
+अटल पूर्णांक highlander_irq_demux(पूर्णांक irq)
+अणु
+	अगर (irq >= HL_NR_IRL || irq < 0 || !irl2irq[irq])
+		वापस irq;
 
-	return irl2irq[irq];
-}
+	वापस irl2irq[irq];
+पूर्ण
 
-static void __init highlander_init_irq(void)
-{
-	unsigned char *ucp = highlander_plat_irq_setup();
+अटल व्योम __init highlander_init_irq(व्योम)
+अणु
+	अचिन्हित अक्षर *ucp = highlander_plat_irq_setup();
 
-	if (ucp) {
+	अगर (ucp) अणु
 		plat_irq_setup_pins(IRQ_MODE_IRL3210);
-		memcpy(irl2irq, ucp, HL_NR_IRL);
-	}
-}
+		स_नकल(irl2irq, ucp, HL_NR_IRL);
+	पूर्ण
+पूर्ण
 
 /*
  * The Machine Vector
  */
-static struct sh_machine_vector mv_highlander __initmv = {
+अटल काष्ठा sh_machine_vector mv_highlander __iniपंचांगv = अणु
 	.mv_name		= "Highlander",
 	.mv_setup		= highlander_setup,
 	.mv_init_irq		= highlander_init_irq,
 	.mv_irq_demux		= highlander_irq_demux,
-};
+पूर्ण;

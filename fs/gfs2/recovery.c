@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/buffer_head.h>
-#include <linux/gfs2_ondisk.h>
-#include <linux/crc32.h>
-#include <linux/crc32c.h>
-#include <linux/ktime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/gfs2_ondisk.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/crc32c.h>
+#समावेश <linux/kसमय.स>
 
-#include "gfs2.h"
-#include "incore.h"
-#include "bmap.h"
-#include "glock.h"
-#include "glops.h"
-#include "log.h"
-#include "lops.h"
-#include "meta_io.h"
-#include "recovery.h"
-#include "super.h"
-#include "util.h"
-#include "dir.h"
+#समावेश "gfs2.h"
+#समावेश "incore.h"
+#समावेश "bmap.h"
+#समावेश "glock.h"
+#समावेश "glops.h"
+#समावेश "log.h"
+#समावेश "lops.h"
+#समावेश "meta_io.h"
+#समावेश "recovery.h"
+#समावेश "super.h"
+#समावेश "util.h"
+#समावेश "dir.h"
 
-struct workqueue_struct *gfs_recovery_wq;
+काष्ठा workqueue_काष्ठा *gfs_recovery_wq;
 
-int gfs2_replay_read_block(struct gfs2_jdesc *jd, unsigned int blk,
-			   struct buffer_head **bh)
-{
-	struct gfs2_inode *ip = GFS2_I(jd->jd_inode);
-	struct gfs2_glock *gl = ip->i_gl;
+पूर्णांक gfs2_replay_पढ़ो_block(काष्ठा gfs2_jdesc *jd, अचिन्हित पूर्णांक blk,
+			   काष्ठा buffer_head **bh)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(jd->jd_inode);
+	काष्ठा gfs2_glock *gl = ip->i_gl;
 	u64 dblock;
 	u32 extlen;
-	int error;
+	पूर्णांक error;
 
 	extlen = 32;
 	error = gfs2_get_extent(&ip->i_inode, blk, &dblock, &extlen);
-	if (error)
-		return error;
-	if (!dblock) {
+	अगर (error)
+		वापस error;
+	अगर (!dblock) अणु
 		gfs2_consist_inode(ip);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	*bh = gfs2_meta_ra(gl, dblock, extlen);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int gfs2_revoke_add(struct gfs2_jdesc *jd, u64 blkno, unsigned int where)
-{
-	struct list_head *head = &jd->jd_revoke_list;
-	struct gfs2_revoke_replay *rr;
-	int found = 0;
+पूर्णांक gfs2_revoke_add(काष्ठा gfs2_jdesc *jd, u64 blkno, अचिन्हित पूर्णांक where)
+अणु
+	काष्ठा list_head *head = &jd->jd_revoke_list;
+	काष्ठा gfs2_revoke_replay *rr;
+	पूर्णांक found = 0;
 
-	list_for_each_entry(rr, head, rr_list) {
-		if (rr->rr_blkno == blkno) {
+	list_क्रम_each_entry(rr, head, rr_list) अणु
+		अगर (rr->rr_blkno == blkno) अणु
 			found = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (found) {
+	अगर (found) अणु
 		rr->rr_where = where;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	rr = kmalloc(sizeof(struct gfs2_revoke_replay), GFP_NOFS);
-	if (!rr)
-		return -ENOMEM;
+	rr = kदो_स्मृति(माप(काष्ठा gfs2_revoke_replay), GFP_NOFS);
+	अगर (!rr)
+		वापस -ENOMEM;
 
 	rr->rr_blkno = blkno;
 	rr->rr_where = where;
 	list_add(&rr->rr_list, head);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int gfs2_revoke_check(struct gfs2_jdesc *jd, u64 blkno, unsigned int where)
-{
-	struct gfs2_revoke_replay *rr;
-	int wrap, a, b, revoke;
-	int found = 0;
+पूर्णांक gfs2_revoke_check(काष्ठा gfs2_jdesc *jd, u64 blkno, अचिन्हित पूर्णांक where)
+अणु
+	काष्ठा gfs2_revoke_replay *rr;
+	पूर्णांक wrap, a, b, revoke;
+	पूर्णांक found = 0;
 
-	list_for_each_entry(rr, &jd->jd_revoke_list, rr_list) {
-		if (rr->rr_blkno == blkno) {
+	list_क्रम_each_entry(rr, &jd->jd_revoke_list, rr_list) अणु
+		अगर (rr->rr_blkno == blkno) अणु
 			found = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found)
-		return 0;
+	अगर (!found)
+		वापस 0;
 
 	wrap = (rr->rr_where < jd->jd_replay_tail);
 	a = (jd->jd_replay_tail < where);
 	b = (where < rr->rr_where);
 	revoke = (wrap) ? (a || b) : (a && b);
 
-	return revoke;
-}
+	वापस revoke;
+पूर्ण
 
-void gfs2_revoke_clean(struct gfs2_jdesc *jd)
-{
-	struct list_head *head = &jd->jd_revoke_list;
-	struct gfs2_revoke_replay *rr;
+व्योम gfs2_revoke_clean(काष्ठा gfs2_jdesc *jd)
+अणु
+	काष्ठा list_head *head = &jd->jd_revoke_list;
+	काष्ठा gfs2_revoke_replay *rr;
 
-	while (!list_empty(head)) {
-		rr = list_first_entry(head, struct gfs2_revoke_replay, rr_list);
+	जबतक (!list_empty(head)) अणु
+		rr = list_first_entry(head, काष्ठा gfs2_revoke_replay, rr_list);
 		list_del(&rr->rr_list);
-		kfree(rr);
-	}
-}
+		kमुक्त(rr);
+	पूर्ण
+पूर्ण
 
-int __get_log_header(struct gfs2_sbd *sdp, const struct gfs2_log_header *lh,
-		     unsigned int blkno, struct gfs2_log_header_host *head)
-{
+पूर्णांक __get_log_header(काष्ठा gfs2_sbd *sdp, स्थिर काष्ठा gfs2_log_header *lh,
+		     अचिन्हित पूर्णांक blkno, काष्ठा gfs2_log_header_host *head)
+अणु
 	u32 hash, crc;
 
-	if (lh->lh_header.mh_magic != cpu_to_be32(GFS2_MAGIC) ||
+	अगर (lh->lh_header.mh_magic != cpu_to_be32(GFS2_MAGIC) ||
 	    lh->lh_header.mh_type != cpu_to_be32(GFS2_METATYPE_LH) ||
 	    (blkno && be32_to_cpu(lh->lh_blkno) != blkno))
-		return 1;
+		वापस 1;
 
 	hash = crc32(~0, lh, LH_V1_SIZE - 4);
-	hash = ~crc32_le_shift(hash, 4); /* assume lh_hash is zero */
+	hash = ~crc32_le_shअगरt(hash, 4); /* assume lh_hash is zero */
 
-	if (be32_to_cpu(lh->lh_hash) != hash)
-		return 1;
+	अगर (be32_to_cpu(lh->lh_hash) != hash)
+		वापस 1;
 
-	crc = crc32c(~0, (void *)lh + LH_V1_SIZE + 4,
+	crc = crc32c(~0, (व्योम *)lh + LH_V1_SIZE + 4,
 		     sdp->sd_sb.sb_bsize - LH_V1_SIZE - 4);
 
-	if ((lh->lh_crc != 0 && be32_to_cpu(lh->lh_crc) != crc))
-		return 1;
+	अगर ((lh->lh_crc != 0 && be32_to_cpu(lh->lh_crc) != crc))
+		वापस 1;
 
 	head->lh_sequence = be64_to_cpu(lh->lh_sequence);
 	head->lh_flags = be32_to_cpu(lh->lh_flags);
@@ -145,440 +146,440 @@ int __get_log_header(struct gfs2_sbd *sdp, const struct gfs2_log_header *lh,
 	head->lh_blkno = be32_to_cpu(lh->lh_blkno);
 
 	head->lh_local_total = be64_to_cpu(lh->lh_local_total);
-	head->lh_local_free = be64_to_cpu(lh->lh_local_free);
+	head->lh_local_मुक्त = be64_to_cpu(lh->lh_local_मुक्त);
 	head->lh_local_dinodes = be64_to_cpu(lh->lh_local_dinodes);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /**
- * get_log_header - read the log header for a given segment
+ * get_log_header - पढ़ो the log header क्रम a given segment
  * @jd: the journal
  * @blk: the block to look at
- * @head: the log header to return
+ * @head: the log header to वापस
  *
- * Read the log header for a given segement in a given journal.  Do a few
+ * Read the log header क्रम a given segement in a given journal.  Do a few
  * sanity checks on it.
  *
  * Returns: 0 on success,
- *          1 if the header was invalid or incomplete,
- *          errno on error
+ *          1 अगर the header was invalid or incomplete,
+ *          त्रुटि_सं on error
  */
 
-static int get_log_header(struct gfs2_jdesc *jd, unsigned int blk,
-			  struct gfs2_log_header_host *head)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
-	struct buffer_head *bh;
-	int error;
+अटल पूर्णांक get_log_header(काष्ठा gfs2_jdesc *jd, अचिन्हित पूर्णांक blk,
+			  काष्ठा gfs2_log_header_host *head)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
+	काष्ठा buffer_head *bh;
+	पूर्णांक error;
 
-	error = gfs2_replay_read_block(jd, blk, &bh);
-	if (error)
-		return error;
+	error = gfs2_replay_पढ़ो_block(jd, blk, &bh);
+	अगर (error)
+		वापस error;
 
-	error = __get_log_header(sdp, (const struct gfs2_log_header *)bh->b_data,
+	error = __get_log_header(sdp, (स्थिर काष्ठा gfs2_log_header *)bh->b_data,
 				 blk, head);
-	brelse(bh);
+	brअन्यथा(bh);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * foreach_descriptor - go through the active part of the log
+ * क्रमeach_descriptor - go through the active part of the log
  * @jd: the journal
  * @start: the first log header in the active region
- * @end: the last log header (don't process the contents of this entry))
- * @pass: iteration number (foreach_descriptor() is called in a for() loop)
+ * @end: the last log header (करोn't process the contents of this entry))
+ * @pass: iteration number (क्रमeach_descriptor() is called in a क्रम() loop)
  *
- * Call a given function once for every log descriptor in the active
+ * Call a given function once क्रम every log descriptor in the active
  * portion of the log.
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static int foreach_descriptor(struct gfs2_jdesc *jd, u32 start,
-			      unsigned int end, int pass)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
-	struct buffer_head *bh;
-	struct gfs2_log_descriptor *ld;
-	int error = 0;
+अटल पूर्णांक क्रमeach_descriptor(काष्ठा gfs2_jdesc *jd, u32 start,
+			      अचिन्हित पूर्णांक end, पूर्णांक pass)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
+	काष्ठा buffer_head *bh;
+	काष्ठा gfs2_log_descriptor *ld;
+	पूर्णांक error = 0;
 	u32 length;
 	__be64 *ptr;
-	unsigned int offset = sizeof(struct gfs2_log_descriptor);
-	offset += sizeof(__be64) - 1;
-	offset &= ~(sizeof(__be64) - 1);
+	अचिन्हित पूर्णांक offset = माप(काष्ठा gfs2_log_descriptor);
+	offset += माप(__be64) - 1;
+	offset &= ~(माप(__be64) - 1);
 
-	while (start != end) {
-		error = gfs2_replay_read_block(jd, start, &bh);
-		if (error)
-			return error;
-		if (gfs2_meta_check(sdp, bh)) {
-			brelse(bh);
-			return -EIO;
-		}
-		ld = (struct gfs2_log_descriptor *)bh->b_data;
+	जबतक (start != end) अणु
+		error = gfs2_replay_पढ़ो_block(jd, start, &bh);
+		अगर (error)
+			वापस error;
+		अगर (gfs2_meta_check(sdp, bh)) अणु
+			brअन्यथा(bh);
+			वापस -EIO;
+		पूर्ण
+		ld = (काष्ठा gfs2_log_descriptor *)bh->b_data;
 		length = be32_to_cpu(ld->ld_length);
 
-		if (be32_to_cpu(ld->ld_header.mh_type) == GFS2_METATYPE_LH) {
-			struct gfs2_log_header_host lh;
+		अगर (be32_to_cpu(ld->ld_header.mh_type) == GFS2_METATYPE_LH) अणु
+			काष्ठा gfs2_log_header_host lh;
 			error = get_log_header(jd, start, &lh);
-			if (!error) {
+			अगर (!error) अणु
 				gfs2_replay_incr_blk(jd, &start);
-				brelse(bh);
-				continue;
-			}
-			if (error == 1) {
+				brअन्यथा(bh);
+				जारी;
+			पूर्ण
+			अगर (error == 1) अणु
 				gfs2_consist_inode(GFS2_I(jd->jd_inode));
 				error = -EIO;
-			}
-			brelse(bh);
-			return error;
-		} else if (gfs2_metatype_check(sdp, bh, GFS2_METATYPE_LD)) {
-			brelse(bh);
-			return -EIO;
-		}
+			पूर्ण
+			brअन्यथा(bh);
+			वापस error;
+		पूर्ण अन्यथा अगर (gfs2_metatype_check(sdp, bh, GFS2_METATYPE_LD)) अणु
+			brअन्यथा(bh);
+			वापस -EIO;
+		पूर्ण
 		ptr = (__be64 *)(bh->b_data + offset);
 		error = lops_scan_elements(jd, start, ld, ptr, pass);
-		if (error) {
-			brelse(bh);
-			return error;
-		}
+		अगर (error) अणु
+			brअन्यथा(bh);
+			वापस error;
+		पूर्ण
 
-		while (length--)
+		जबतक (length--)
 			gfs2_replay_incr_blk(jd, &start);
 
-		brelse(bh);
-	}
+		brअन्यथा(bh);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * clean_journal - mark a dirty journal as being clean
  * @jd: the journal
  * @head: the head journal to start from
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
 
-static void clean_journal(struct gfs2_jdesc *jd,
-			  struct gfs2_log_header_host *head)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
+अटल व्योम clean_journal(काष्ठा gfs2_jdesc *jd,
+			  काष्ठा gfs2_log_header_host *head)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
 	u32 lblock = head->lh_blkno;
 
 	gfs2_replay_incr_blk(jd, &lblock);
-	gfs2_write_log_header(sdp, jd, head->lh_sequence + 1, 0, lblock,
+	gfs2_ग_लिखो_log_header(sdp, jd, head->lh_sequence + 1, 0, lblock,
 			      GFS2_LOG_HEAD_UNMOUNT | GFS2_LOG_HEAD_RECOVERY,
 			      REQ_PREFLUSH | REQ_FUA | REQ_META | REQ_SYNC);
-	if (jd->jd_jid == sdp->sd_lockstruct.ls_jid) {
+	अगर (jd->jd_jid == sdp->sd_lockकाष्ठा.ls_jid) अणु
 		sdp->sd_log_flush_head = lblock;
 		gfs2_log_incr_head(sdp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static void gfs2_recovery_done(struct gfs2_sbd *sdp, unsigned int jid,
-                               unsigned int message)
-{
-	char env_jid[20];
-	char env_status[20];
-	char *envp[] = { env_jid, env_status, NULL };
-	struct lm_lockstruct *ls = &sdp->sd_lockstruct;
+अटल व्योम gfs2_recovery_करोne(काष्ठा gfs2_sbd *sdp, अचिन्हित पूर्णांक jid,
+                               अचिन्हित पूर्णांक message)
+अणु
+	अक्षर env_jid[20];
+	अक्षर env_status[20];
+	अक्षर *envp[] = अणु env_jid, env_status, शून्य पूर्ण;
+	काष्ठा lm_lockकाष्ठा *ls = &sdp->sd_lockकाष्ठा;
 
-        ls->ls_recover_jid_done = jid;
+        ls->ls_recover_jid_करोne = jid;
         ls->ls_recover_jid_status = message;
-	sprintf(env_jid, "JID=%u", jid);
-	sprintf(env_status, "RECOVERY=%s",
+	प्र_लिखो(env_jid, "JID=%u", jid);
+	प्र_लिखो(env_status, "RECOVERY=%s",
 		message == LM_RD_SUCCESS ? "Done" : "Failed");
         kobject_uevent_env(&sdp->sd_kobj, KOBJ_CHANGE, envp);
 
-	if (sdp->sd_lockstruct.ls_ops->lm_recovery_result)
-		sdp->sd_lockstruct.ls_ops->lm_recovery_result(sdp, jid, message);
-}
+	अगर (sdp->sd_lockकाष्ठा.ls_ops->lm_recovery_result)
+		sdp->sd_lockकाष्ठा.ls_ops->lm_recovery_result(sdp, jid, message);
+पूर्ण
 
 /**
  * update_statfs_inode - Update the master statfs inode or zero out the local
- *			 statfs inode for a given journal.
+ *			 statfs inode क्रम a given journal.
  * @jd: The journal
- * @head: If NULL, @inode is the local statfs inode and we need to zero it out.
+ * @head: If शून्य, @inode is the local statfs inode and we need to zero it out.
  *	  Otherwise, it @head contains the statfs change info that needs to be
- *	  synced to the master statfs inode (pointed to by @inode).
+ *	  synced to the master statfs inode (poपूर्णांकed to by @inode).
  * @inode: statfs inode to update.
  */
-static int update_statfs_inode(struct gfs2_jdesc *jd,
-			       struct gfs2_log_header_host *head,
-			       struct inode *inode)
-{
-	struct gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
-	struct gfs2_inode *ip;
-	struct buffer_head *bh;
-	struct gfs2_statfs_change_host sc;
-	int error = 0;
+अटल पूर्णांक update_statfs_inode(काष्ठा gfs2_jdesc *jd,
+			       काष्ठा gfs2_log_header_host *head,
+			       काष्ठा inode *inode)
+अणु
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
+	काष्ठा gfs2_inode *ip;
+	काष्ठा buffer_head *bh;
+	काष्ठा gfs2_statfs_change_host sc;
+	पूर्णांक error = 0;
 
 	BUG_ON(!inode);
 	ip = GFS2_I(inode);
 
 	error = gfs2_meta_inode_buffer(ip, &bh);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 	spin_lock(&sdp->sd_statfs_spin);
 
-	if (head) { /* Update the master statfs inode */
-		gfs2_statfs_change_in(&sc, bh->b_data + sizeof(struct gfs2_dinode));
+	अगर (head) अणु /* Update the master statfs inode */
+		gfs2_statfs_change_in(&sc, bh->b_data + माप(काष्ठा gfs2_dinode));
 		sc.sc_total += head->lh_local_total;
-		sc.sc_free += head->lh_local_free;
+		sc.sc_मुक्त += head->lh_local_मुक्त;
 		sc.sc_dinodes += head->lh_local_dinodes;
-		gfs2_statfs_change_out(&sc, bh->b_data + sizeof(struct gfs2_dinode));
+		gfs2_statfs_change_out(&sc, bh->b_data + माप(काष्ठा gfs2_dinode));
 
 		fs_info(sdp, "jid=%u: Updated master statfs Total:%lld, "
 			"Free:%lld, Dinodes:%lld after change "
 			"[%+lld,%+lld,%+lld]\n", jd->jd_jid, sc.sc_total,
-			sc.sc_free, sc.sc_dinodes, head->lh_local_total,
-			head->lh_local_free, head->lh_local_dinodes);
-	} else { /* Zero out the local statfs inode */
-		memset(bh->b_data + sizeof(struct gfs2_dinode), 0,
-		       sizeof(struct gfs2_statfs_change));
+			sc.sc_मुक्त, sc.sc_dinodes, head->lh_local_total,
+			head->lh_local_मुक्त, head->lh_local_dinodes);
+	पूर्ण अन्यथा अणु /* Zero out the local statfs inode */
+		स_रखो(bh->b_data + माप(काष्ठा gfs2_dinode), 0,
+		       माप(काष्ठा gfs2_statfs_change));
 		/* If it's our own journal, reset any in-memory changes too */
-		if (jd->jd_jid == sdp->sd_lockstruct.ls_jid) {
-			memset(&sdp->sd_statfs_local, 0,
-			       sizeof(struct gfs2_statfs_change_host));
-		}
-	}
+		अगर (jd->jd_jid == sdp->sd_lockकाष्ठा.ls_jid) अणु
+			स_रखो(&sdp->sd_statfs_local, 0,
+			       माप(काष्ठा gfs2_statfs_change_host));
+		पूर्ण
+	पूर्ण
 	spin_unlock(&sdp->sd_statfs_spin);
 
 	mark_buffer_dirty(bh);
-	brelse(bh);
+	brअन्यथा(bh);
 	gfs2_inode_metasync(ip->i_gl);
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * recover_local_statfs - Update the master and local statfs changes for this
+ * recover_local_statfs - Update the master and local statfs changes क्रम this
  *			  journal.
  *
- * Previously, statfs updates would be read in from the local statfs inode and
+ * Previously, statfs updates would be पढ़ो in from the local statfs inode and
  * synced to the master statfs inode during recovery.
  *
  * We now use the statfs updates in the journal head to update the master statfs
- * inode instead of reading in from the local statfs inode. To preserve backward
- * compatibility with kernels that can't do this, we still need to keep the
- * local statfs inode up to date by writing changes to it. At some point in the
- * future, we can do away with the local statfs inodes altogether and keep the
+ * inode instead of पढ़ोing in from the local statfs inode. To preserve backward
+ * compatibility with kernels that can't करो this, we still need to keep the
+ * local statfs inode up to date by writing changes to it. At some poपूर्णांक in the
+ * future, we can करो away with the local statfs inodes altogether and keep the
  * statfs changes solely in the journal.
  *
  * @jd: the journal
  * @head: the journal head
  *
- * Returns: errno
+ * Returns: त्रुटि_सं
  */
-static void recover_local_statfs(struct gfs2_jdesc *jd,
-				 struct gfs2_log_header_host *head)
-{
-	int error;
-	struct gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
+अटल व्योम recover_local_statfs(काष्ठा gfs2_jdesc *jd,
+				 काष्ठा gfs2_log_header_host *head)
+अणु
+	पूर्णांक error;
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
 
-	if (!head->lh_local_total && !head->lh_local_free
+	अगर (!head->lh_local_total && !head->lh_local_मुक्त
 	    && !head->lh_local_dinodes) /* No change */
-		goto zero_local;
+		जाओ zero_local;
 
 	 /* First update the master statfs inode with the changes we
 	  * found in the journal. */
 	error = update_statfs_inode(jd, head, sdp->sd_statfs_inode);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
 zero_local:
 	/* Zero out the local statfs inode so any changes in there
 	 * are not re-recovered. */
-	error = update_statfs_inode(jd, NULL,
+	error = update_statfs_inode(jd, शून्य,
 				    find_local_statfs_inode(sdp, jd->jd_jid));
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-void gfs2_recover_func(struct work_struct *work)
-{
-	struct gfs2_jdesc *jd = container_of(work, struct gfs2_jdesc, jd_work);
-	struct gfs2_inode *ip = GFS2_I(jd->jd_inode);
-	struct gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
-	struct gfs2_log_header_host head;
-	struct gfs2_holder j_gh, ji_gh, thaw_gh;
-	ktime_t t_start, t_jlck, t_jhd, t_tlck, t_rep;
-	int ro = 0;
-	unsigned int pass;
-	int error = 0;
-	int jlocked = 0;
+व्योम gfs2_recover_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gfs2_jdesc *jd = container_of(work, काष्ठा gfs2_jdesc, jd_work);
+	काष्ठा gfs2_inode *ip = GFS2_I(jd->jd_inode);
+	काष्ठा gfs2_sbd *sdp = GFS2_SB(jd->jd_inode);
+	काष्ठा gfs2_log_header_host head;
+	काष्ठा gfs2_holder j_gh, ji_gh, thaw_gh;
+	kसमय_प्रकार t_start, t_jlck, t_jhd, t_tlck, t_rep;
+	पूर्णांक ro = 0;
+	अचिन्हित पूर्णांक pass;
+	पूर्णांक error = 0;
+	पूर्णांक jlocked = 0;
 
-	if (gfs2_withdrawn(sdp)) {
+	अगर (gfs2_withdrawn(sdp)) अणु
 		fs_err(sdp, "jid=%u: Recovery not attempted due to withdraw.\n",
 		       jd->jd_jid);
-		goto fail;
-	}
-	t_start = ktime_get();
-	if (sdp->sd_args.ar_spectator)
-		goto fail;
-	if (jd->jd_jid != sdp->sd_lockstruct.ls_jid) {
+		जाओ fail;
+	पूर्ण
+	t_start = kसमय_get();
+	अगर (sdp->sd_args.ar_spectator)
+		जाओ fail;
+	अगर (jd->jd_jid != sdp->sd_lockकाष्ठा.ls_jid) अणु
 		fs_info(sdp, "jid=%u: Trying to acquire journal lock...\n",
 			jd->jd_jid);
 		jlocked = 1;
-		/* Acquire the journal lock so we can do recovery */
+		/* Acquire the journal lock so we can करो recovery */
 
 		error = gfs2_glock_nq_num(sdp, jd->jd_jid, &gfs2_journal_glops,
 					  LM_ST_EXCLUSIVE,
 					  LM_FLAG_NOEXP | LM_FLAG_TRY | GL_NOCACHE,
 					  &j_gh);
-		switch (error) {
-		case 0:
-			break;
+		चयन (error) अणु
+		हाल 0:
+			अवरोध;
 
-		case GLR_TRYFAILED:
+		हाल GLR_TRYFAILED:
 			fs_info(sdp, "jid=%u: Busy\n", jd->jd_jid);
 			error = 0;
-			goto fail;
+			जाओ fail;
 
-		default:
-			goto fail;
-		}
+		शेष:
+			जाओ fail;
+		पूर्ण
 
 		error = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED,
 					   LM_FLAG_NOEXP | GL_NOCACHE, &ji_gh);
-		if (error)
-			goto fail_gunlock_j;
-	} else {
+		अगर (error)
+			जाओ fail_gunlock_j;
+	पूर्ण अन्यथा अणु
 		fs_info(sdp, "jid=%u, already locked for use\n", jd->jd_jid);
-	}
+	पूर्ण
 
-	t_jlck = ktime_get();
+	t_jlck = kसमय_get();
 	fs_info(sdp, "jid=%u: Looking at journal...\n", jd->jd_jid);
 
 	error = gfs2_jdesc_check(jd);
-	if (error)
-		goto fail_gunlock_ji;
+	अगर (error)
+		जाओ fail_gunlock_ji;
 
 	error = gfs2_find_jhead(jd, &head, true);
-	if (error)
-		goto fail_gunlock_ji;
-	t_jhd = ktime_get();
+	अगर (error)
+		जाओ fail_gunlock_ji;
+	t_jhd = kसमय_get();
 	fs_info(sdp, "jid=%u: Journal head lookup took %lldms\n", jd->jd_jid,
-		ktime_ms_delta(t_jhd, t_jlck));
+		kसमय_ms_delta(t_jhd, t_jlck));
 
-	if (!(head.lh_flags & GFS2_LOG_HEAD_UNMOUNT)) {
+	अगर (!(head.lh_flags & GFS2_LOG_HEAD_UNMOUNT)) अणु
 		fs_info(sdp, "jid=%u: Acquiring the transaction lock...\n",
 			jd->jd_jid);
 
-		/* Acquire a shared hold on the freeze lock */
+		/* Acquire a shared hold on the मुक्तze lock */
 
-		error = gfs2_freeze_lock(sdp, &thaw_gh, LM_FLAG_PRIORITY);
-		if (error)
-			goto fail_gunlock_ji;
+		error = gfs2_मुक्तze_lock(sdp, &thaw_gh, LM_FLAG_PRIORITY);
+		अगर (error)
+			जाओ fail_gunlock_ji;
 
-		if (test_bit(SDF_RORECOVERY, &sdp->sd_flags)) {
+		अगर (test_bit(SDF_RORECOVERY, &sdp->sd_flags)) अणु
 			ro = 1;
-		} else if (test_bit(SDF_JOURNAL_CHECKED, &sdp->sd_flags)) {
-			if (!test_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags))
+		पूर्ण अन्यथा अगर (test_bit(SDF_JOURNAL_CHECKED, &sdp->sd_flags)) अणु
+			अगर (!test_bit(SDF_JOURNAL_LIVE, &sdp->sd_flags))
 				ro = 1;
-		} else {
-			if (sb_rdonly(sdp->sd_vfs)) {
-				/* check if device itself is read-only */
-				ro = bdev_read_only(sdp->sd_vfs->s_bdev);
-				if (!ro) {
+		पूर्ण अन्यथा अणु
+			अगर (sb_rकरोnly(sdp->sd_vfs)) अणु
+				/* check अगर device itself is पढ़ो-only */
+				ro = bdev_पढ़ो_only(sdp->sd_vfs->s_bdev);
+				अगर (!ro) अणु
 					fs_info(sdp, "recovery required on "
 						"read-only filesystem.\n");
 					fs_info(sdp, "write access will be "
 						"enabled during recovery.\n");
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (ro) {
+		अगर (ro) अणु
 			fs_warn(sdp, "jid=%u: Can't replay: read-only block "
 				"device\n", jd->jd_jid);
 			error = -EROFS;
-			goto fail_gunlock_thaw;
-		}
+			जाओ fail_gunlock_thaw;
+		पूर्ण
 
-		t_tlck = ktime_get();
+		t_tlck = kसमय_get();
 		fs_info(sdp, "jid=%u: Replaying journal...0x%x to 0x%x\n",
 			jd->jd_jid, head.lh_tail, head.lh_blkno);
 
 		/* We take the sd_log_flush_lock here primarily to prevent log
 		 * flushes and simultaneous journal replays from stomping on
 		 * each other wrt jd_log_bio. */
-		down_read(&sdp->sd_log_flush_lock);
-		for (pass = 0; pass < 2; pass++) {
-			lops_before_scan(jd, &head, pass);
-			error = foreach_descriptor(jd, head.lh_tail,
+		करोwn_पढ़ो(&sdp->sd_log_flush_lock);
+		क्रम (pass = 0; pass < 2; pass++) अणु
+			lops_beक्रमe_scan(jd, &head, pass);
+			error = क्रमeach_descriptor(jd, head.lh_tail,
 						   head.lh_blkno, pass);
 			lops_after_scan(jd, error, pass);
-			if (error) {
-				up_read(&sdp->sd_log_flush_lock);
-				goto fail_gunlock_thaw;
-			}
-		}
+			अगर (error) अणु
+				up_पढ़ो(&sdp->sd_log_flush_lock);
+				जाओ fail_gunlock_thaw;
+			पूर्ण
+		पूर्ण
 
 		recover_local_statfs(jd, &head);
 		clean_journal(jd, &head);
-		up_read(&sdp->sd_log_flush_lock);
+		up_पढ़ो(&sdp->sd_log_flush_lock);
 
-		gfs2_freeze_unlock(&thaw_gh);
-		t_rep = ktime_get();
+		gfs2_मुक्तze_unlock(&thaw_gh);
+		t_rep = kसमय_get();
 		fs_info(sdp, "jid=%u: Journal replayed in %lldms [jlck:%lldms, "
 			"jhead:%lldms, tlck:%lldms, replay:%lldms]\n",
-			jd->jd_jid, ktime_ms_delta(t_rep, t_start),
-			ktime_ms_delta(t_jlck, t_start),
-			ktime_ms_delta(t_jhd, t_jlck),
-			ktime_ms_delta(t_tlck, t_jhd),
-			ktime_ms_delta(t_rep, t_tlck));
-	}
+			jd->jd_jid, kसमय_ms_delta(t_rep, t_start),
+			kसमय_ms_delta(t_jlck, t_start),
+			kसमय_ms_delta(t_jhd, t_jlck),
+			kसमय_ms_delta(t_tlck, t_jhd),
+			kसमय_ms_delta(t_rep, t_tlck));
+	पूर्ण
 
-	gfs2_recovery_done(sdp, jd->jd_jid, LM_RD_SUCCESS);
+	gfs2_recovery_करोne(sdp, jd->jd_jid, LM_RD_SUCCESS);
 
-	if (jlocked) {
+	अगर (jlocked) अणु
 		gfs2_glock_dq_uninit(&ji_gh);
 		gfs2_glock_dq_uninit(&j_gh);
-	}
+	पूर्ण
 
 	fs_info(sdp, "jid=%u: Done\n", jd->jd_jid);
-	goto done;
+	जाओ करोne;
 
 fail_gunlock_thaw:
-	gfs2_freeze_unlock(&thaw_gh);
+	gfs2_मुक्तze_unlock(&thaw_gh);
 fail_gunlock_ji:
-	if (jlocked) {
+	अगर (jlocked) अणु
 		gfs2_glock_dq_uninit(&ji_gh);
 fail_gunlock_j:
 		gfs2_glock_dq_uninit(&j_gh);
-	}
+	पूर्ण
 
 	fs_info(sdp, "jid=%u: %s\n", jd->jd_jid, (error) ? "Failed" : "Done");
 fail:
 	jd->jd_recover_error = error;
-	gfs2_recovery_done(sdp, jd->jd_jid, LM_RD_GAVEUP);
-done:
+	gfs2_recovery_करोne(sdp, jd->jd_jid, LM_RD_GAVEUP);
+करोne:
 	clear_bit(JDF_RECOVERY, &jd->jd_flags);
 	smp_mb__after_atomic();
 	wake_up_bit(&jd->jd_flags, JDF_RECOVERY);
-}
+पूर्ण
 
-int gfs2_recover_journal(struct gfs2_jdesc *jd, bool wait)
-{
-	int rv;
+पूर्णांक gfs2_recover_journal(काष्ठा gfs2_jdesc *jd, bool रुको)
+अणु
+	पूर्णांक rv;
 
-	if (test_and_set_bit(JDF_RECOVERY, &jd->jd_flags))
-		return -EBUSY;
+	अगर (test_and_set_bit(JDF_RECOVERY, &jd->jd_flags))
+		वापस -EBUSY;
 
 	/* we have JDF_RECOVERY, queue should always succeed */
 	rv = queue_work(gfs_recovery_wq, &jd->jd_work);
 	BUG_ON(!rv);
 
-	if (wait)
-		wait_on_bit(&jd->jd_flags, JDF_RECOVERY,
+	अगर (रुको)
+		रुको_on_bit(&jd->jd_flags, JDF_RECOVERY,
 			    TASK_UNINTERRUPTIBLE);
 
-	return wait ? jd->jd_recover_error : 0;
-}
+	वापस रुको ? jd->jd_recover_error : 0;
+पूर्ण
 

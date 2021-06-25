@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (C) 2021 Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
-#if !defined(__MT7921_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define __MT7921_TRACE_H
+#अगर !defined(__MT7921_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __MT7921_TRACE_H
 
-#include <linux/tracepoint.h>
-#include "mt7921.h"
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश "mt7921.h"
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mt7921
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mt7921
 
-#define MAXNAME		32
-#define DEV_ENTRY	__array(char, wiphy_name, 32)
-#define DEV_ASSIGN	strlcpy(__entry->wiphy_name,	\
+#घोषणा MAXNAME		32
+#घोषणा DEV_ENTRY	__array(अक्षर, wiphy_name, 32)
+#घोषणा DEV_ASSIGN	strlcpy(__entry->wiphy_name,	\
 				wiphy_name(mt76_hw(dev)->wiphy), MAXNAME)
-#define DEV_PR_FMT	"%s"
-#define DEV_PR_ARG	__entry->wiphy_name
-#define LP_STATE_PR_ARG	__entry->lp_state ? "lp ready" : "lp not ready"
+#घोषणा DEV_PR_FMT	"%s"
+#घोषणा DEV_PR_ARG	__entry->wiphy_name
+#घोषणा LP_STATE_PR_ARG	__entry->lp_state ? "lp ready" : "lp not ready"
 
 TRACE_EVENT(lp_event,
-	TP_PROTO(struct mt7921_dev *dev, u8 lp_state),
+	TP_PROTO(काष्ठा mt7921_dev *dev, u8 lp_state),
 
 	TP_ARGS(dev, lp_state),
 
@@ -35,17 +36,17 @@ TRACE_EVENT(lp_event,
 		__entry->lp_state = lp_state;
 	),
 
-	TP_printk(
+	TP_prपूर्णांकk(
 		DEV_PR_FMT " %s",
 		DEV_PR_ARG, LP_STATE_PR_ARG
 	)
 );
 
-#endif
+#पूर्ण_अगर
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE mt7921_trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता mt7921_trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

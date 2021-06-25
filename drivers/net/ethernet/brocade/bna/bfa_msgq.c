@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Linux network driver for QLogic BR-series Converged Network Adapter.
+ * Linux network driver क्रम QLogic BR-series Converged Network Adapter.
  */
 /*
  * Copyright (c) 2005-2014 Brocade Communications Systems, Inc.
@@ -11,45 +12,45 @@
 
 /* MSGQ module source file. */
 
-#include "bfi.h"
-#include "bfa_msgq.h"
-#include "bfa_ioc.h"
+#समावेश "bfi.h"
+#समावेश "bfa_msgq.h"
+#समावेश "bfa_ioc.h"
 
-#define call_cmdq_ent_cbfn(_cmdq_ent, _status)				\
-{									\
+#घोषणा call_cmdq_ent_cbfn(_cmdq_ent, _status)				\
+अणु									\
 	bfa_msgq_cmdcbfn_t cbfn;					\
-	void *cbarg;							\
+	व्योम *cbarg;							\
 	cbfn = (_cmdq_ent)->cbfn;					\
 	cbarg = (_cmdq_ent)->cbarg;					\
-	(_cmdq_ent)->cbfn = NULL;					\
-	(_cmdq_ent)->cbarg = NULL;					\
-	if (cbfn) {							\
+	(_cmdq_ent)->cbfn = शून्य;					\
+	(_cmdq_ent)->cbarg = शून्य;					\
+	अगर (cbfn) अणु							\
 		cbfn(cbarg, (_status));					\
-	}								\
-}
+	पूर्ण								\
+पूर्ण
 
-static void bfa_msgq_cmdq_dbell(struct bfa_msgq_cmdq *cmdq);
-static void bfa_msgq_cmdq_copy_rsp(struct bfa_msgq_cmdq *cmdq);
+अटल व्योम bfa_msgq_cmdq_dbell(काष्ठा bfa_msgq_cmdq *cmdq);
+अटल व्योम bfa_msgq_cmdq_copy_rsp(काष्ठा bfa_msgq_cmdq *cmdq);
 
-enum cmdq_event {
+क्रमागत cmdq_event अणु
 	CMDQ_E_START			= 1,
 	CMDQ_E_STOP			= 2,
 	CMDQ_E_FAIL			= 3,
 	CMDQ_E_POST			= 4,
 	CMDQ_E_INIT_RESP		= 5,
 	CMDQ_E_DB_READY			= 6,
-};
+पूर्ण;
 
-bfa_fsm_state_decl(cmdq, stopped, struct bfa_msgq_cmdq, enum cmdq_event);
-bfa_fsm_state_decl(cmdq, init_wait, struct bfa_msgq_cmdq, enum cmdq_event);
-bfa_fsm_state_decl(cmdq, ready, struct bfa_msgq_cmdq, enum cmdq_event);
-bfa_fsm_state_decl(cmdq, dbell_wait, struct bfa_msgq_cmdq,
-			enum cmdq_event);
+bfa_fsm_state_decl(cmdq, stopped, काष्ठा bfa_msgq_cmdq, क्रमागत cmdq_event);
+bfa_fsm_state_decl(cmdq, init_रुको, काष्ठा bfa_msgq_cmdq, क्रमागत cmdq_event);
+bfa_fsm_state_decl(cmdq, पढ़ोy, काष्ठा bfa_msgq_cmdq, क्रमागत cmdq_event);
+bfa_fsm_state_decl(cmdq, dbell_रुको, काष्ठा bfa_msgq_cmdq,
+			क्रमागत cmdq_event);
 
-static void
-cmdq_sm_stopped_entry(struct bfa_msgq_cmdq *cmdq)
-{
-	struct bfa_msgq_cmd_entry *cmdq_ent;
+अटल व्योम
+cmdq_sm_stopped_entry(काष्ठा bfa_msgq_cmdq *cmdq)
+अणु
+	काष्ठा bfa_msgq_cmd_entry *cmdq_ent;
 
 	cmdq->producer_index = 0;
 	cmdq->consumer_index = 0;
@@ -57,460 +58,460 @@ cmdq_sm_stopped_entry(struct bfa_msgq_cmdq *cmdq)
 	cmdq->token = 0;
 	cmdq->offset = 0;
 	cmdq->bytes_to_copy = 0;
-	while (!list_empty(&cmdq->pending_q)) {
+	जबतक (!list_empty(&cmdq->pending_q)) अणु
 		cmdq_ent = list_first_entry(&cmdq->pending_q,
-					    struct bfa_msgq_cmd_entry, qe);
+					    काष्ठा bfa_msgq_cmd_entry, qe);
 		list_del(&cmdq_ent->qe);
 		call_cmdq_ent_cbfn(cmdq_ent, BFA_STATUS_FAILED);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-cmdq_sm_stopped(struct bfa_msgq_cmdq *cmdq, enum cmdq_event event)
-{
-	switch (event) {
-	case CMDQ_E_START:
-		bfa_fsm_set_state(cmdq, cmdq_sm_init_wait);
-		break;
+अटल व्योम
+cmdq_sm_stopped(काष्ठा bfa_msgq_cmdq *cmdq, क्रमागत cmdq_event event)
+अणु
+	चयन (event) अणु
+	हाल CMDQ_E_START:
+		bfa_fsm_set_state(cmdq, cmdq_sm_init_रुको);
+		अवरोध;
 
-	case CMDQ_E_STOP:
-	case CMDQ_E_FAIL:
+	हाल CMDQ_E_STOP:
+	हाल CMDQ_E_FAIL:
 		/* No-op */
-		break;
+		अवरोध;
 
-	case CMDQ_E_POST:
+	हाल CMDQ_E_POST:
 		cmdq->flags |= BFA_MSGQ_CMDQ_F_DB_UPDATE;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-cmdq_sm_init_wait_entry(struct bfa_msgq_cmdq *cmdq)
-{
-	bfa_wc_down(&cmdq->msgq->init_wc);
-}
+अटल व्योम
+cmdq_sm_init_रुको_entry(काष्ठा bfa_msgq_cmdq *cmdq)
+अणु
+	bfa_wc_करोwn(&cmdq->msgq->init_wc);
+पूर्ण
 
-static void
-cmdq_sm_init_wait(struct bfa_msgq_cmdq *cmdq, enum cmdq_event event)
-{
-	switch (event) {
-	case CMDQ_E_STOP:
-	case CMDQ_E_FAIL:
+अटल व्योम
+cmdq_sm_init_रुको(काष्ठा bfa_msgq_cmdq *cmdq, क्रमागत cmdq_event event)
+अणु
+	चयन (event) अणु
+	हाल CMDQ_E_STOP:
+	हाल CMDQ_E_FAIL:
 		bfa_fsm_set_state(cmdq, cmdq_sm_stopped);
-		break;
+		अवरोध;
 
-	case CMDQ_E_POST:
+	हाल CMDQ_E_POST:
 		cmdq->flags |= BFA_MSGQ_CMDQ_F_DB_UPDATE;
-		break;
+		अवरोध;
 
-	case CMDQ_E_INIT_RESP:
-		if (cmdq->flags & BFA_MSGQ_CMDQ_F_DB_UPDATE) {
+	हाल CMDQ_E_INIT_RESP:
+		अगर (cmdq->flags & BFA_MSGQ_CMDQ_F_DB_UPDATE) अणु
 			cmdq->flags &= ~BFA_MSGQ_CMDQ_F_DB_UPDATE;
-			bfa_fsm_set_state(cmdq, cmdq_sm_dbell_wait);
-		} else
-			bfa_fsm_set_state(cmdq, cmdq_sm_ready);
-		break;
+			bfa_fsm_set_state(cmdq, cmdq_sm_dbell_रुको);
+		पूर्ण अन्यथा
+			bfa_fsm_set_state(cmdq, cmdq_sm_पढ़ोy);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-cmdq_sm_ready_entry(struct bfa_msgq_cmdq *cmdq)
-{
-}
+अटल व्योम
+cmdq_sm_पढ़ोy_entry(काष्ठा bfa_msgq_cmdq *cmdq)
+अणु
+पूर्ण
 
-static void
-cmdq_sm_ready(struct bfa_msgq_cmdq *cmdq, enum cmdq_event event)
-{
-	switch (event) {
-	case CMDQ_E_STOP:
-	case CMDQ_E_FAIL:
+अटल व्योम
+cmdq_sm_पढ़ोy(काष्ठा bfa_msgq_cmdq *cmdq, क्रमागत cmdq_event event)
+अणु
+	चयन (event) अणु
+	हाल CMDQ_E_STOP:
+	हाल CMDQ_E_FAIL:
 		bfa_fsm_set_state(cmdq, cmdq_sm_stopped);
-		break;
+		अवरोध;
 
-	case CMDQ_E_POST:
-		bfa_fsm_set_state(cmdq, cmdq_sm_dbell_wait);
-		break;
+	हाल CMDQ_E_POST:
+		bfa_fsm_set_state(cmdq, cmdq_sm_dbell_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-cmdq_sm_dbell_wait_entry(struct bfa_msgq_cmdq *cmdq)
-{
+अटल व्योम
+cmdq_sm_dbell_रुको_entry(काष्ठा bfa_msgq_cmdq *cmdq)
+अणु
 	bfa_msgq_cmdq_dbell(cmdq);
-}
+पूर्ण
 
-static void
-cmdq_sm_dbell_wait(struct bfa_msgq_cmdq *cmdq, enum cmdq_event event)
-{
-	switch (event) {
-	case CMDQ_E_STOP:
-	case CMDQ_E_FAIL:
+अटल व्योम
+cmdq_sm_dbell_रुको(काष्ठा bfa_msgq_cmdq *cmdq, क्रमागत cmdq_event event)
+अणु
+	चयन (event) अणु
+	हाल CMDQ_E_STOP:
+	हाल CMDQ_E_FAIL:
 		bfa_fsm_set_state(cmdq, cmdq_sm_stopped);
-		break;
+		अवरोध;
 
-	case CMDQ_E_POST:
+	हाल CMDQ_E_POST:
 		cmdq->flags |= BFA_MSGQ_CMDQ_F_DB_UPDATE;
-		break;
+		अवरोध;
 
-	case CMDQ_E_DB_READY:
-		if (cmdq->flags & BFA_MSGQ_CMDQ_F_DB_UPDATE) {
+	हाल CMDQ_E_DB_READY:
+		अगर (cmdq->flags & BFA_MSGQ_CMDQ_F_DB_UPDATE) अणु
 			cmdq->flags &= ~BFA_MSGQ_CMDQ_F_DB_UPDATE;
-			bfa_fsm_set_state(cmdq, cmdq_sm_dbell_wait);
-		} else
-			bfa_fsm_set_state(cmdq, cmdq_sm_ready);
-		break;
+			bfa_fsm_set_state(cmdq, cmdq_sm_dbell_रुको);
+		पूर्ण अन्यथा
+			bfa_fsm_set_state(cmdq, cmdq_sm_पढ़ोy);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_msgq_cmdq_dbell_ready(void *arg)
-{
-	struct bfa_msgq_cmdq *cmdq = (struct bfa_msgq_cmdq *)arg;
+अटल व्योम
+bfa_msgq_cmdq_dbell_पढ़ोy(व्योम *arg)
+अणु
+	काष्ठा bfa_msgq_cmdq *cmdq = (काष्ठा bfa_msgq_cmdq *)arg;
 	bfa_fsm_send_event(cmdq, CMDQ_E_DB_READY);
-}
+पूर्ण
 
-static void
-bfa_msgq_cmdq_dbell(struct bfa_msgq_cmdq *cmdq)
-{
-	struct bfi_msgq_h2i_db *dbell =
-		(struct bfi_msgq_h2i_db *)(&cmdq->dbell_mb.msg[0]);
+अटल व्योम
+bfa_msgq_cmdq_dbell(काष्ठा bfa_msgq_cmdq *cmdq)
+अणु
+	काष्ठा bfi_msgq_h2i_db *dbell =
+		(काष्ठा bfi_msgq_h2i_db *)(&cmdq->dbell_mb.msg[0]);
 
-	memset(dbell, 0, sizeof(struct bfi_msgq_h2i_db));
+	स_रखो(dbell, 0, माप(काष्ठा bfi_msgq_h2i_db));
 	bfi_h2i_set(dbell->mh, BFI_MC_MSGQ, BFI_MSGQ_H2I_DOORBELL_PI, 0);
 	dbell->mh.mtag.i2htok = 0;
 	dbell->idx.cmdq_pi = htons(cmdq->producer_index);
 
-	if (!bfa_nw_ioc_mbox_queue(cmdq->msgq->ioc, &cmdq->dbell_mb,
-				bfa_msgq_cmdq_dbell_ready, cmdq)) {
-		bfa_msgq_cmdq_dbell_ready(cmdq);
-	}
-}
+	अगर (!bfa_nw_ioc_mbox_queue(cmdq->msgq->ioc, &cmdq->dbell_mb,
+				bfa_msgq_cmdq_dbell_पढ़ोy, cmdq)) अणु
+		bfa_msgq_cmdq_dbell_पढ़ोy(cmdq);
+	पूर्ण
+पूर्ण
 
-static void
-__cmd_copy(struct bfa_msgq_cmdq *cmdq, struct bfa_msgq_cmd_entry *cmd)
-{
-	size_t len = cmd->msg_size;
-	int num_entries = 0;
-	size_t to_copy;
+अटल व्योम
+__cmd_copy(काष्ठा bfa_msgq_cmdq *cmdq, काष्ठा bfa_msgq_cmd_entry *cmd)
+अणु
+	माप_प्रकार len = cmd->msg_size;
+	पूर्णांक num_entries = 0;
+	माप_प्रकार to_copy;
 	u8 *src, *dst;
 
 	src = (u8 *)cmd->msg_hdr;
 	dst = (u8 *)cmdq->addr.kva;
 	dst += (cmdq->producer_index * BFI_MSGQ_CMD_ENTRY_SIZE);
 
-	while (len) {
+	जबतक (len) अणु
 		to_copy = (len < BFI_MSGQ_CMD_ENTRY_SIZE) ?
 				len : BFI_MSGQ_CMD_ENTRY_SIZE;
-		memcpy(dst, src, to_copy);
+		स_नकल(dst, src, to_copy);
 		len -= to_copy;
 		src += BFI_MSGQ_CMD_ENTRY_SIZE;
 		BFA_MSGQ_INDX_ADD(cmdq->producer_index, 1, cmdq->depth);
 		dst = (u8 *)cmdq->addr.kva;
 		dst += (cmdq->producer_index * BFI_MSGQ_CMD_ENTRY_SIZE);
 		num_entries++;
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static void
-bfa_msgq_cmdq_ci_update(struct bfa_msgq_cmdq *cmdq, struct bfi_mbmsg *mb)
-{
-	struct bfi_msgq_i2h_db *dbell = (struct bfi_msgq_i2h_db *)mb;
-	struct bfa_msgq_cmd_entry *cmd;
-	int posted = 0;
+अटल व्योम
+bfa_msgq_cmdq_ci_update(काष्ठा bfa_msgq_cmdq *cmdq, काष्ठा bfi_mbmsg *mb)
+अणु
+	काष्ठा bfi_msgq_i2h_db *dbell = (काष्ठा bfi_msgq_i2h_db *)mb;
+	काष्ठा bfa_msgq_cmd_entry *cmd;
+	पूर्णांक posted = 0;
 
 	cmdq->consumer_index = ntohs(dbell->idx.cmdq_ci);
 
-	/* Walk through pending list to see if the command can be posted */
-	while (!list_empty(&cmdq->pending_q)) {
+	/* Walk through pending list to see अगर the command can be posted */
+	जबतक (!list_empty(&cmdq->pending_q)) अणु
 		cmd = list_first_entry(&cmdq->pending_q,
-				       struct bfa_msgq_cmd_entry, qe);
-		if (ntohs(cmd->msg_hdr->num_entries) <=
-			BFA_MSGQ_FREE_CNT(cmdq)) {
+				       काष्ठा bfa_msgq_cmd_entry, qe);
+		अगर (ntohs(cmd->msg_hdr->num_entries) <=
+			BFA_MSGQ_FREE_CNT(cmdq)) अणु
 			list_del(&cmd->qe);
 			__cmd_copy(cmdq, cmd);
 			posted = 1;
 			call_cmdq_ent_cbfn(cmd, BFA_STATUS_OK);
-		} else {
-			break;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (posted)
+	अगर (posted)
 		bfa_fsm_send_event(cmdq, CMDQ_E_POST);
-}
+पूर्ण
 
-static void
-bfa_msgq_cmdq_copy_next(void *arg)
-{
-	struct bfa_msgq_cmdq *cmdq = (struct bfa_msgq_cmdq *)arg;
+अटल व्योम
+bfa_msgq_cmdq_copy_next(व्योम *arg)
+अणु
+	काष्ठा bfa_msgq_cmdq *cmdq = (काष्ठा bfa_msgq_cmdq *)arg;
 
-	if (cmdq->bytes_to_copy)
+	अगर (cmdq->bytes_to_copy)
 		bfa_msgq_cmdq_copy_rsp(cmdq);
-}
+पूर्ण
 
-static void
-bfa_msgq_cmdq_copy_req(struct bfa_msgq_cmdq *cmdq, struct bfi_mbmsg *mb)
-{
-	struct bfi_msgq_i2h_cmdq_copy_req *req =
-		(struct bfi_msgq_i2h_cmdq_copy_req *)mb;
+अटल व्योम
+bfa_msgq_cmdq_copy_req(काष्ठा bfa_msgq_cmdq *cmdq, काष्ठा bfi_mbmsg *mb)
+अणु
+	काष्ठा bfi_msgq_i2h_cmdq_copy_req *req =
+		(काष्ठा bfi_msgq_i2h_cmdq_copy_req *)mb;
 
 	cmdq->token = 0;
 	cmdq->offset = ntohs(req->offset);
 	cmdq->bytes_to_copy = ntohs(req->len);
 	bfa_msgq_cmdq_copy_rsp(cmdq);
-}
+पूर्ण
 
-static void
-bfa_msgq_cmdq_copy_rsp(struct bfa_msgq_cmdq *cmdq)
-{
-	struct bfi_msgq_h2i_cmdq_copy_rsp *rsp =
-		(struct bfi_msgq_h2i_cmdq_copy_rsp *)&cmdq->copy_mb.msg[0];
-	int copied;
+अटल व्योम
+bfa_msgq_cmdq_copy_rsp(काष्ठा bfa_msgq_cmdq *cmdq)
+अणु
+	काष्ठा bfi_msgq_h2i_cmdq_copy_rsp *rsp =
+		(काष्ठा bfi_msgq_h2i_cmdq_copy_rsp *)&cmdq->copy_mb.msg[0];
+	पूर्णांक copied;
 	u8 *addr = (u8 *)cmdq->addr.kva;
 
-	memset(rsp, 0, sizeof(struct bfi_msgq_h2i_cmdq_copy_rsp));
+	स_रखो(rsp, 0, माप(काष्ठा bfi_msgq_h2i_cmdq_copy_rsp));
 	bfi_h2i_set(rsp->mh, BFI_MC_MSGQ, BFI_MSGQ_H2I_CMDQ_COPY_RSP, 0);
 	rsp->mh.mtag.i2htok = htons(cmdq->token);
 	copied = (cmdq->bytes_to_copy >= BFI_CMD_COPY_SZ) ? BFI_CMD_COPY_SZ :
 		cmdq->bytes_to_copy;
 	addr += cmdq->offset;
-	memcpy(rsp->data, addr, copied);
+	स_नकल(rsp->data, addr, copied);
 
 	cmdq->token++;
 	cmdq->offset += copied;
 	cmdq->bytes_to_copy -= copied;
 
-	if (!bfa_nw_ioc_mbox_queue(cmdq->msgq->ioc, &cmdq->copy_mb,
-				bfa_msgq_cmdq_copy_next, cmdq)) {
+	अगर (!bfa_nw_ioc_mbox_queue(cmdq->msgq->ioc, &cmdq->copy_mb,
+				bfa_msgq_cmdq_copy_next, cmdq)) अणु
 		bfa_msgq_cmdq_copy_next(cmdq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_msgq_cmdq_attach(struct bfa_msgq_cmdq *cmdq, struct bfa_msgq *msgq)
-{
+अटल व्योम
+bfa_msgq_cmdq_attach(काष्ठा bfa_msgq_cmdq *cmdq, काष्ठा bfa_msgq *msgq)
+अणु
 	cmdq->depth = BFA_MSGQ_CMDQ_NUM_ENTRY;
 	INIT_LIST_HEAD(&cmdq->pending_q);
 	cmdq->msgq = msgq;
 	bfa_fsm_set_state(cmdq, cmdq_sm_stopped);
-}
+पूर्ण
 
-static void bfa_msgq_rspq_dbell(struct bfa_msgq_rspq *rspq);
+अटल व्योम bfa_msgq_rspq_dbell(काष्ठा bfa_msgq_rspq *rspq);
 
-enum rspq_event {
+क्रमागत rspq_event अणु
 	RSPQ_E_START			= 1,
 	RSPQ_E_STOP			= 2,
 	RSPQ_E_FAIL			= 3,
 	RSPQ_E_RESP			= 4,
 	RSPQ_E_INIT_RESP		= 5,
 	RSPQ_E_DB_READY			= 6,
-};
+पूर्ण;
 
-bfa_fsm_state_decl(rspq, stopped, struct bfa_msgq_rspq, enum rspq_event);
-bfa_fsm_state_decl(rspq, init_wait, struct bfa_msgq_rspq,
-			enum rspq_event);
-bfa_fsm_state_decl(rspq, ready, struct bfa_msgq_rspq, enum rspq_event);
-bfa_fsm_state_decl(rspq, dbell_wait, struct bfa_msgq_rspq,
-			enum rspq_event);
+bfa_fsm_state_decl(rspq, stopped, काष्ठा bfa_msgq_rspq, क्रमागत rspq_event);
+bfa_fsm_state_decl(rspq, init_रुको, काष्ठा bfa_msgq_rspq,
+			क्रमागत rspq_event);
+bfa_fsm_state_decl(rspq, पढ़ोy, काष्ठा bfa_msgq_rspq, क्रमागत rspq_event);
+bfa_fsm_state_decl(rspq, dbell_रुको, काष्ठा bfa_msgq_rspq,
+			क्रमागत rspq_event);
 
-static void
-rspq_sm_stopped_entry(struct bfa_msgq_rspq *rspq)
-{
+अटल व्योम
+rspq_sm_stopped_entry(काष्ठा bfa_msgq_rspq *rspq)
+अणु
 	rspq->producer_index = 0;
 	rspq->consumer_index = 0;
 	rspq->flags = 0;
-}
+पूर्ण
 
-static void
-rspq_sm_stopped(struct bfa_msgq_rspq *rspq, enum rspq_event event)
-{
-	switch (event) {
-	case RSPQ_E_START:
-		bfa_fsm_set_state(rspq, rspq_sm_init_wait);
-		break;
+अटल व्योम
+rspq_sm_stopped(काष्ठा bfa_msgq_rspq *rspq, क्रमागत rspq_event event)
+अणु
+	चयन (event) अणु
+	हाल RSPQ_E_START:
+		bfa_fsm_set_state(rspq, rspq_sm_init_रुको);
+		अवरोध;
 
-	case RSPQ_E_STOP:
-	case RSPQ_E_FAIL:
+	हाल RSPQ_E_STOP:
+	हाल RSPQ_E_FAIL:
 		/* No-op */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-rspq_sm_init_wait_entry(struct bfa_msgq_rspq *rspq)
-{
-	bfa_wc_down(&rspq->msgq->init_wc);
-}
+अटल व्योम
+rspq_sm_init_रुको_entry(काष्ठा bfa_msgq_rspq *rspq)
+अणु
+	bfa_wc_करोwn(&rspq->msgq->init_wc);
+पूर्ण
 
-static void
-rspq_sm_init_wait(struct bfa_msgq_rspq *rspq, enum rspq_event event)
-{
-	switch (event) {
-	case RSPQ_E_FAIL:
-	case RSPQ_E_STOP:
+अटल व्योम
+rspq_sm_init_रुको(काष्ठा bfa_msgq_rspq *rspq, क्रमागत rspq_event event)
+अणु
+	चयन (event) अणु
+	हाल RSPQ_E_FAIL:
+	हाल RSPQ_E_STOP:
 		bfa_fsm_set_state(rspq, rspq_sm_stopped);
-		break;
+		अवरोध;
 
-	case RSPQ_E_INIT_RESP:
-		bfa_fsm_set_state(rspq, rspq_sm_ready);
-		break;
+	हाल RSPQ_E_INIT_RESP:
+		bfa_fsm_set_state(rspq, rspq_sm_पढ़ोy);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-rspq_sm_ready_entry(struct bfa_msgq_rspq *rspq)
-{
-}
+अटल व्योम
+rspq_sm_पढ़ोy_entry(काष्ठा bfa_msgq_rspq *rspq)
+अणु
+पूर्ण
 
-static void
-rspq_sm_ready(struct bfa_msgq_rspq *rspq, enum rspq_event event)
-{
-	switch (event) {
-	case RSPQ_E_STOP:
-	case RSPQ_E_FAIL:
+अटल व्योम
+rspq_sm_पढ़ोy(काष्ठा bfa_msgq_rspq *rspq, क्रमागत rspq_event event)
+अणु
+	चयन (event) अणु
+	हाल RSPQ_E_STOP:
+	हाल RSPQ_E_FAIL:
 		bfa_fsm_set_state(rspq, rspq_sm_stopped);
-		break;
+		अवरोध;
 
-	case RSPQ_E_RESP:
-		bfa_fsm_set_state(rspq, rspq_sm_dbell_wait);
-		break;
+	हाल RSPQ_E_RESP:
+		bfa_fsm_set_state(rspq, rspq_sm_dbell_रुको);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-rspq_sm_dbell_wait_entry(struct bfa_msgq_rspq *rspq)
-{
-	if (!bfa_nw_ioc_is_disabled(rspq->msgq->ioc))
+अटल व्योम
+rspq_sm_dbell_रुको_entry(काष्ठा bfa_msgq_rspq *rspq)
+अणु
+	अगर (!bfa_nw_ioc_is_disabled(rspq->msgq->ioc))
 		bfa_msgq_rspq_dbell(rspq);
-}
+पूर्ण
 
-static void
-rspq_sm_dbell_wait(struct bfa_msgq_rspq *rspq, enum rspq_event event)
-{
-	switch (event) {
-	case RSPQ_E_STOP:
-	case RSPQ_E_FAIL:
+अटल व्योम
+rspq_sm_dbell_रुको(काष्ठा bfa_msgq_rspq *rspq, क्रमागत rspq_event event)
+अणु
+	चयन (event) अणु
+	हाल RSPQ_E_STOP:
+	हाल RSPQ_E_FAIL:
 		bfa_fsm_set_state(rspq, rspq_sm_stopped);
-		break;
+		अवरोध;
 
-	case RSPQ_E_RESP:
+	हाल RSPQ_E_RESP:
 		rspq->flags |= BFA_MSGQ_RSPQ_F_DB_UPDATE;
-		break;
+		अवरोध;
 
-	case RSPQ_E_DB_READY:
-		if (rspq->flags & BFA_MSGQ_RSPQ_F_DB_UPDATE) {
+	हाल RSPQ_E_DB_READY:
+		अगर (rspq->flags & BFA_MSGQ_RSPQ_F_DB_UPDATE) अणु
 			rspq->flags &= ~BFA_MSGQ_RSPQ_F_DB_UPDATE;
-			bfa_fsm_set_state(rspq, rspq_sm_dbell_wait);
-		} else
-			bfa_fsm_set_state(rspq, rspq_sm_ready);
-		break;
+			bfa_fsm_set_state(rspq, rspq_sm_dbell_रुको);
+		पूर्ण अन्यथा
+			bfa_fsm_set_state(rspq, rspq_sm_पढ़ोy);
+		अवरोध;
 
-	default:
+	शेष:
 		bfa_sm_fault(event);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_msgq_rspq_dbell_ready(void *arg)
-{
-	struct bfa_msgq_rspq *rspq = (struct bfa_msgq_rspq *)arg;
+अटल व्योम
+bfa_msgq_rspq_dbell_पढ़ोy(व्योम *arg)
+अणु
+	काष्ठा bfa_msgq_rspq *rspq = (काष्ठा bfa_msgq_rspq *)arg;
 	bfa_fsm_send_event(rspq, RSPQ_E_DB_READY);
-}
+पूर्ण
 
-static void
-bfa_msgq_rspq_dbell(struct bfa_msgq_rspq *rspq)
-{
-	struct bfi_msgq_h2i_db *dbell =
-		(struct bfi_msgq_h2i_db *)(&rspq->dbell_mb.msg[0]);
+अटल व्योम
+bfa_msgq_rspq_dbell(काष्ठा bfa_msgq_rspq *rspq)
+अणु
+	काष्ठा bfi_msgq_h2i_db *dbell =
+		(काष्ठा bfi_msgq_h2i_db *)(&rspq->dbell_mb.msg[0]);
 
-	memset(dbell, 0, sizeof(struct bfi_msgq_h2i_db));
+	स_रखो(dbell, 0, माप(काष्ठा bfi_msgq_h2i_db));
 	bfi_h2i_set(dbell->mh, BFI_MC_MSGQ, BFI_MSGQ_H2I_DOORBELL_CI, 0);
 	dbell->mh.mtag.i2htok = 0;
 	dbell->idx.rspq_ci = htons(rspq->consumer_index);
 
-	if (!bfa_nw_ioc_mbox_queue(rspq->msgq->ioc, &rspq->dbell_mb,
-				bfa_msgq_rspq_dbell_ready, rspq)) {
-		bfa_msgq_rspq_dbell_ready(rspq);
-	}
-}
+	अगर (!bfa_nw_ioc_mbox_queue(rspq->msgq->ioc, &rspq->dbell_mb,
+				bfa_msgq_rspq_dbell_पढ़ोy, rspq)) अणु
+		bfa_msgq_rspq_dbell_पढ़ोy(rspq);
+	पूर्ण
+पूर्ण
 
-static void
-bfa_msgq_rspq_pi_update(struct bfa_msgq_rspq *rspq, struct bfi_mbmsg *mb)
-{
-	struct bfi_msgq_i2h_db *dbell = (struct bfi_msgq_i2h_db *)mb;
-	struct bfi_msgq_mhdr *msghdr;
-	int num_entries;
-	int mc;
+अटल व्योम
+bfa_msgq_rspq_pi_update(काष्ठा bfa_msgq_rspq *rspq, काष्ठा bfi_mbmsg *mb)
+अणु
+	काष्ठा bfi_msgq_i2h_db *dbell = (काष्ठा bfi_msgq_i2h_db *)mb;
+	काष्ठा bfi_msgq_mhdr *msghdr;
+	पूर्णांक num_entries;
+	पूर्णांक mc;
 	u8 *rspq_qe;
 
 	rspq->producer_index = ntohs(dbell->idx.rspq_pi);
 
-	while (rspq->consumer_index != rspq->producer_index) {
+	जबतक (rspq->consumer_index != rspq->producer_index) अणु
 		rspq_qe = (u8 *)rspq->addr.kva;
 		rspq_qe += (rspq->consumer_index * BFI_MSGQ_RSP_ENTRY_SIZE);
-		msghdr = (struct bfi_msgq_mhdr *)rspq_qe;
+		msghdr = (काष्ठा bfi_msgq_mhdr *)rspq_qe;
 
 		mc = msghdr->msg_class;
 		num_entries = ntohs(msghdr->num_entries);
 
-		if ((mc >= BFI_MC_MAX) || (rspq->rsphdlr[mc].cbfn == NULL))
-			break;
+		अगर ((mc >= BFI_MC_MAX) || (rspq->rsphdlr[mc].cbfn == शून्य))
+			अवरोध;
 
 		(rspq->rsphdlr[mc].cbfn)(rspq->rsphdlr[mc].cbarg, msghdr);
 
 		BFA_MSGQ_INDX_ADD(rspq->consumer_index, num_entries,
 				rspq->depth);
-	}
+	पूर्ण
 
 	bfa_fsm_send_event(rspq, RSPQ_E_RESP);
-}
+पूर्ण
 
-static void
-bfa_msgq_rspq_attach(struct bfa_msgq_rspq *rspq, struct bfa_msgq *msgq)
-{
+अटल व्योम
+bfa_msgq_rspq_attach(काष्ठा bfa_msgq_rspq *rspq, काष्ठा bfa_msgq *msgq)
+अणु
 	rspq->depth = BFA_MSGQ_RSPQ_NUM_ENTRY;
 	rspq->msgq = msgq;
 	bfa_fsm_set_state(rspq, rspq_sm_stopped);
-}
+पूर्ण
 
-static void
-bfa_msgq_init_rsp(struct bfa_msgq *msgq,
-		 struct bfi_mbmsg *mb)
-{
+अटल व्योम
+bfa_msgq_init_rsp(काष्ठा bfa_msgq *msgq,
+		 काष्ठा bfi_mbmsg *mb)
+अणु
 	bfa_fsm_send_event(&msgq->cmdq, CMDQ_E_INIT_RESP);
 	bfa_fsm_send_event(&msgq->rspq, RSPQ_E_INIT_RESP);
-}
+पूर्ण
 
-static void
-bfa_msgq_init(void *arg)
-{
-	struct bfa_msgq *msgq = (struct bfa_msgq *)arg;
-	struct bfi_msgq_cfg_req *msgq_cfg =
-		(struct bfi_msgq_cfg_req *)&msgq->init_mb.msg[0];
+अटल व्योम
+bfa_msgq_init(व्योम *arg)
+अणु
+	काष्ठा bfa_msgq *msgq = (काष्ठा bfa_msgq *)arg;
+	काष्ठा bfi_msgq_cfg_req *msgq_cfg =
+		(काष्ठा bfi_msgq_cfg_req *)&msgq->init_mb.msg[0];
 
-	memset(msgq_cfg, 0, sizeof(struct bfi_msgq_cfg_req));
+	स_रखो(msgq_cfg, 0, माप(काष्ठा bfi_msgq_cfg_req));
 	bfi_h2i_set(msgq_cfg->mh, BFI_MC_MSGQ, BFI_MSGQ_H2I_INIT_REQ, 0);
 	msgq_cfg->mh.mtag.i2htok = 0;
 
@@ -519,76 +520,76 @@ bfa_msgq_init(void *arg)
 	bfa_dma_be_addr_set(msgq_cfg->rspq.addr, msgq->rspq.addr.pa);
 	msgq_cfg->rspq.q_depth = htons(msgq->rspq.depth);
 
-	bfa_nw_ioc_mbox_queue(msgq->ioc, &msgq->init_mb, NULL, NULL);
-}
+	bfa_nw_ioc_mbox_queue(msgq->ioc, &msgq->init_mb, शून्य, शून्य);
+पूर्ण
 
-static void
-bfa_msgq_isr(void *cbarg, struct bfi_mbmsg *msg)
-{
-	struct bfa_msgq *msgq = (struct bfa_msgq *)cbarg;
+अटल व्योम
+bfa_msgq_isr(व्योम *cbarg, काष्ठा bfi_mbmsg *msg)
+अणु
+	काष्ठा bfa_msgq *msgq = (काष्ठा bfa_msgq *)cbarg;
 
-	switch (msg->mh.msg_id) {
-	case BFI_MSGQ_I2H_INIT_RSP:
+	चयन (msg->mh.msg_id) अणु
+	हाल BFI_MSGQ_I2H_INIT_RSP:
 		bfa_msgq_init_rsp(msgq, msg);
-		break;
+		अवरोध;
 
-	case BFI_MSGQ_I2H_DOORBELL_PI:
+	हाल BFI_MSGQ_I2H_DOORBELL_PI:
 		bfa_msgq_rspq_pi_update(&msgq->rspq, msg);
-		break;
+		अवरोध;
 
-	case BFI_MSGQ_I2H_DOORBELL_CI:
+	हाल BFI_MSGQ_I2H_DOORBELL_CI:
 		bfa_msgq_cmdq_ci_update(&msgq->cmdq, msg);
-		break;
+		अवरोध;
 
-	case BFI_MSGQ_I2H_CMDQ_COPY_REQ:
+	हाल BFI_MSGQ_I2H_CMDQ_COPY_REQ:
 		bfa_msgq_cmdq_copy_req(&msgq->cmdq, msg);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG_ON(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-bfa_msgq_notify(void *cbarg, enum bfa_ioc_event event)
-{
-	struct bfa_msgq *msgq = (struct bfa_msgq *)cbarg;
+अटल व्योम
+bfa_msgq_notअगरy(व्योम *cbarg, क्रमागत bfa_ioc_event event)
+अणु
+	काष्ठा bfa_msgq *msgq = (काष्ठा bfa_msgq *)cbarg;
 
-	switch (event) {
-	case BFA_IOC_E_ENABLED:
+	चयन (event) अणु
+	हाल BFA_IOC_E_ENABLED:
 		bfa_wc_init(&msgq->init_wc, bfa_msgq_init, msgq);
 		bfa_wc_up(&msgq->init_wc);
 		bfa_fsm_send_event(&msgq->cmdq, CMDQ_E_START);
 		bfa_wc_up(&msgq->init_wc);
 		bfa_fsm_send_event(&msgq->rspq, RSPQ_E_START);
-		bfa_wc_wait(&msgq->init_wc);
-		break;
+		bfa_wc_रुको(&msgq->init_wc);
+		अवरोध;
 
-	case BFA_IOC_E_DISABLED:
+	हाल BFA_IOC_E_DISABLED:
 		bfa_fsm_send_event(&msgq->cmdq, CMDQ_E_STOP);
 		bfa_fsm_send_event(&msgq->rspq, RSPQ_E_STOP);
-		break;
+		अवरोध;
 
-	case BFA_IOC_E_FAILED:
+	हाल BFA_IOC_E_FAILED:
 		bfa_fsm_send_event(&msgq->cmdq, CMDQ_E_FAIL);
 		bfa_fsm_send_event(&msgq->rspq, RSPQ_E_FAIL);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 u32
-bfa_msgq_meminfo(void)
-{
-	return roundup(BFA_MSGQ_CMDQ_SIZE, BFA_DMA_ALIGN_SZ) +
+bfa_msgq_meminfo(व्योम)
+अणु
+	वापस roundup(BFA_MSGQ_CMDQ_SIZE, BFA_DMA_ALIGN_SZ) +
 		roundup(BFA_MSGQ_RSPQ_SIZE, BFA_DMA_ALIGN_SZ);
-}
+पूर्ण
 
-void
-bfa_msgq_memclaim(struct bfa_msgq *msgq, u8 *kva, u64 pa)
-{
+व्योम
+bfa_msgq_memclaim(काष्ठा bfa_msgq *msgq, u8 *kva, u64 pa)
+अणु
 	msgq->cmdq.addr.kva = kva;
 	msgq->cmdq.addr.pa  = pa;
 
@@ -597,49 +598,49 @@ bfa_msgq_memclaim(struct bfa_msgq *msgq, u8 *kva, u64 pa)
 
 	msgq->rspq.addr.kva = kva;
 	msgq->rspq.addr.pa = pa;
-}
+पूर्ण
 
-void
-bfa_msgq_attach(struct bfa_msgq *msgq, struct bfa_ioc *ioc)
-{
+व्योम
+bfa_msgq_attach(काष्ठा bfa_msgq *msgq, काष्ठा bfa_ioc *ioc)
+अणु
 	msgq->ioc    = ioc;
 
 	bfa_msgq_cmdq_attach(&msgq->cmdq, msgq);
 	bfa_msgq_rspq_attach(&msgq->rspq, msgq);
 
 	bfa_nw_ioc_mbox_regisr(msgq->ioc, BFI_MC_MSGQ, bfa_msgq_isr, msgq);
-	bfa_ioc_notify_init(&msgq->ioc_notify, bfa_msgq_notify, msgq);
-	bfa_nw_ioc_notify_register(msgq->ioc, &msgq->ioc_notify);
-}
+	bfa_ioc_notअगरy_init(&msgq->ioc_notअगरy, bfa_msgq_notअगरy, msgq);
+	bfa_nw_ioc_notअगरy_रेजिस्टर(msgq->ioc, &msgq->ioc_notअगरy);
+पूर्ण
 
-void
-bfa_msgq_regisr(struct bfa_msgq *msgq, enum bfi_mclass mc,
-		bfa_msgq_mcfunc_t cbfn, void *cbarg)
-{
+व्योम
+bfa_msgq_regisr(काष्ठा bfa_msgq *msgq, क्रमागत bfi_mclass mc,
+		bfa_msgq_mcfunc_t cbfn, व्योम *cbarg)
+अणु
 	msgq->rspq.rsphdlr[mc].cbfn	= cbfn;
 	msgq->rspq.rsphdlr[mc].cbarg	= cbarg;
-}
+पूर्ण
 
-void
-bfa_msgq_cmd_post(struct bfa_msgq *msgq,  struct bfa_msgq_cmd_entry *cmd)
-{
-	if (ntohs(cmd->msg_hdr->num_entries) <=
-		BFA_MSGQ_FREE_CNT(&msgq->cmdq)) {
+व्योम
+bfa_msgq_cmd_post(काष्ठा bfa_msgq *msgq,  काष्ठा bfa_msgq_cmd_entry *cmd)
+अणु
+	अगर (ntohs(cmd->msg_hdr->num_entries) <=
+		BFA_MSGQ_FREE_CNT(&msgq->cmdq)) अणु
 		__cmd_copy(&msgq->cmdq, cmd);
 		call_cmdq_ent_cbfn(cmd, BFA_STATUS_OK);
 		bfa_fsm_send_event(&msgq->cmdq, CMDQ_E_POST);
-	} else {
+	पूर्ण अन्यथा अणु
 		list_add_tail(&cmd->qe, &msgq->cmdq.pending_q);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-bfa_msgq_rsp_copy(struct bfa_msgq *msgq, u8 *buf, size_t buf_len)
-{
-	struct bfa_msgq_rspq *rspq = &msgq->rspq;
-	size_t len = buf_len;
-	size_t to_copy;
-	int ci;
+व्योम
+bfa_msgq_rsp_copy(काष्ठा bfa_msgq *msgq, u8 *buf, माप_प्रकार buf_len)
+अणु
+	काष्ठा bfa_msgq_rspq *rspq = &msgq->rspq;
+	माप_प्रकार len = buf_len;
+	माप_प्रकार to_copy;
+	पूर्णांक ci;
 	u8 *src, *dst;
 
 	ci = rspq->consumer_index;
@@ -647,14 +648,14 @@ bfa_msgq_rsp_copy(struct bfa_msgq *msgq, u8 *buf, size_t buf_len)
 	src += (ci * BFI_MSGQ_RSP_ENTRY_SIZE);
 	dst = buf;
 
-	while (len) {
+	जबतक (len) अणु
 		to_copy = (len < BFI_MSGQ_RSP_ENTRY_SIZE) ?
 				len : BFI_MSGQ_RSP_ENTRY_SIZE;
-		memcpy(dst, src, to_copy);
+		स_नकल(dst, src, to_copy);
 		len -= to_copy;
 		dst += BFI_MSGQ_RSP_ENTRY_SIZE;
 		BFA_MSGQ_INDX_ADD(ci, 1, rspq->depth);
 		src = (u8 *)rspq->addr.kva;
 		src += (ci * BFI_MSGQ_RSP_ENTRY_SIZE);
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_ATOMIC_H
-#define __ASM_SH_ATOMIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_ATOMIC_H
+#घोषणा __ASM_SH_ATOMIC_H
 
-#if defined(CONFIG_CPU_J2)
+#अगर defined(CONFIG_CPU_J2)
 
-#include <asm-generic/atomic.h>
+#समावेश <यंत्र-generic/atomic.h>
 
-#else
+#अन्यथा
 
 /*
- * Atomic operations that C can't guarantee us.  Useful for
+ * Atomic operations that C can't guarantee us.  Useful क्रम
  * resource counting etc..
  *
  */
 
-#include <linux/compiler.h>
-#include <linux/types.h>
-#include <asm/cmpxchg.h>
-#include <asm/barrier.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/cmpxchg.h>
+#समावेश <यंत्र/barrier.h>
 
-#define atomic_read(v)		READ_ONCE((v)->counter)
-#define atomic_set(v,i)		WRITE_ONCE((v)->counter, (i))
+#घोषणा atomic_पढ़ो(v)		READ_ONCE((v)->counter)
+#घोषणा atomic_set(v,i)		WRITE_ONCE((v)->counter, (i))
 
-#if defined(CONFIG_GUSA_RB)
-#include <asm/atomic-grb.h>
-#elif defined(CONFIG_CPU_SH4A)
-#include <asm/atomic-llsc.h>
-#else
-#include <asm/atomic-irq.h>
-#endif
+#अगर defined(CONFIG_GUSA_RB)
+#समावेश <यंत्र/atomic-grb.h>
+#या_अगर defined(CONFIG_CPU_SH4A)
+#समावेश <यंत्र/atomic-llsc.h>
+#अन्यथा
+#समावेश <यंत्र/atomic-irq.h>
+#पूर्ण_अगर
 
-#define atomic_xchg(v, new)		(xchg(&((v)->counter), new))
-#define atomic_cmpxchg(v, o, n)		(cmpxchg(&((v)->counter), (o), (n)))
+#घोषणा atomic_xchg(v, new)		(xchg(&((v)->counter), new))
+#घोषणा atomic_cmpxchg(v, o, n)		(cmpxchg(&((v)->counter), (o), (n)))
 
-#endif /* CONFIG_CPU_J2 */
+#पूर्ण_अगर /* CONFIG_CPU_J2 */
 
-#endif /* __ASM_SH_ATOMIC_H */
+#पूर्ण_अगर /* __ASM_SH_ATOMIC_H */

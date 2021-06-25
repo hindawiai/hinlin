@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2012-2020, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#ifndef _MEI_INTERFACE_H_
-#define _MEI_INTERFACE_H_
+#अगर_अघोषित _MEI_INTERFACE_H_
+#घोषणा _MEI_INTERFACE_H_
 
-#include <linux/irqreturn.h>
-#include <linux/pci.h>
-#include <linux/mei.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mei.h>
 
-#include "mei_dev.h"
-#include "client.h"
+#समावेश "mei_dev.h"
+#समावेश "client.h"
 
 /*
  * mei_cfg - mei device configuration
@@ -22,81 +23,81 @@
  * @kind: MEI head kind
  * @dma_size: device DMA buffers size
  * @fw_ver_supported: is fw version retrievable from FW
- * @hw_trc_supported: does the hw support trc register
+ * @hw_trc_supported: करोes the hw support trc रेजिस्टर
  */
-struct mei_cfg {
-	const struct mei_fw_status fw_status;
-	bool (*quirk_probe)(const struct pci_dev *pdev);
-	const char *kind;
-	size_t dma_size[DMA_DSCR_NUM];
+काष्ठा mei_cfg अणु
+	स्थिर काष्ठा mei_fw_status fw_status;
+	bool (*quirk_probe)(स्थिर काष्ठा pci_dev *pdev);
+	स्थिर अक्षर *kind;
+	माप_प्रकार dma_size[DMA_DSCR_NUM];
 	u32 fw_ver_supported:1;
 	u32 hw_trc_supported:1;
-};
+पूर्ण;
 
 
-#define MEI_PCI_DEVICE(dev, cfg) \
-	.vendor = PCI_VENDOR_ID_INTEL, .device = (dev), \
-	.subvendor = PCI_ANY_ID, .subdevice = PCI_ANY_ID, \
-	.driver_data = (kernel_ulong_t)(cfg),
+#घोषणा MEI_PCI_DEVICE(dev, cfg) \
+	.venकरोr = PCI_VENDOR_ID_INTEL, .device = (dev), \
+	.subvenकरोr = PCI_ANY_ID, .subdevice = PCI_ANY_ID, \
+	.driver_data = (kernel_uदीर्घ_t)(cfg),
 
-#define MEI_ME_RPM_TIMEOUT    500 /* ms */
+#घोषणा MEI_ME_RPM_TIMEOUT    500 /* ms */
 
 /**
- * struct mei_me_hw - me hw specific data
+ * काष्ठा mei_me_hw - me hw specअगरic data
  *
  * @cfg: per device generation config and ops
  * @mem_addr: io memory address
  * @irq: irq number
- * @pg_state: power gating state
+ * @pg_state: घातer gating state
  * @d0i3_supported: di03 support
- * @hbuf_depth: depth of hardware host/write buffer in slots
- * @read_fws: read FW status register handler
+ * @hbuf_depth: depth of hardware host/ग_लिखो buffer in slots
+ * @पढ़ो_fws: पढ़ो FW status रेजिस्टर handler
  */
-struct mei_me_hw {
-	const struct mei_cfg *cfg;
-	void __iomem *mem_addr;
-	int irq;
-	enum mei_pg_state pg_state;
+काष्ठा mei_me_hw अणु
+	स्थिर काष्ठा mei_cfg *cfg;
+	व्योम __iomem *mem_addr;
+	पूर्णांक irq;
+	क्रमागत mei_pg_state pg_state;
 	bool d0i3_supported;
 	u8 hbuf_depth;
-	int (*read_fws)(const struct mei_device *dev, int where, u32 *val);
-};
+	पूर्णांक (*पढ़ो_fws)(स्थिर काष्ठा mei_device *dev, पूर्णांक where, u32 *val);
+पूर्ण;
 
-#define to_me_hw(dev) (struct mei_me_hw *)((dev)->hw)
+#घोषणा to_me_hw(dev) (काष्ठा mei_me_hw *)((dev)->hw)
 
 /**
- * enum mei_cfg_idx - indices to platform specific configurations.
+ * क्रमागत mei_cfg_idx - indices to platक्रमm specअगरic configurations.
  *
  * Note: has to be synchronized with mei_cfg_list[]
  *
  * @MEI_ME_UNDEF_CFG:      Lower sentinel.
  * @MEI_ME_ICH_CFG:        I/O Controller Hub legacy devices.
- * @MEI_ME_ICH10_CFG:      I/O Controller Hub platforms Gen10
- * @MEI_ME_PCH6_CFG:       Platform Controller Hub platforms (Gen6).
- * @MEI_ME_PCH7_CFG:       Platform Controller Hub platforms (Gen7).
- * @MEI_ME_PCH_CPT_PBG_CFG:Platform Controller Hub workstations
- *                         with quirk for Node Manager exclusion.
- * @MEI_ME_PCH8_CFG:       Platform Controller Hub Gen8 and newer
- *                         client platforms.
- * @MEI_ME_PCH8_ITOUCH_CFG:Platform Controller Hub Gen8 and newer
- *                         client platforms (iTouch).
- * @MEI_ME_PCH8_SPS_4_CFG: Platform Controller Hub Gen8 and newer
- *                         servers platforms with quirk for
+ * @MEI_ME_ICH10_CFG:      I/O Controller Hub platक्रमms Gen10
+ * @MEI_ME_PCH6_CFG:       Platक्रमm Controller Hub platक्रमms (Gen6).
+ * @MEI_ME_PCH7_CFG:       Platक्रमm Controller Hub platक्रमms (Gen7).
+ * @MEI_ME_PCH_CPT_PBG_CFG:Platक्रमm Controller Hub workstations
+ *                         with quirk क्रम Node Manager exclusion.
+ * @MEI_ME_PCH8_CFG:       Platक्रमm Controller Hub Gen8 and newer
+ *                         client platक्रमms.
+ * @MEI_ME_PCH8_ITOUCH_CFG:Platक्रमm Controller Hub Gen8 and newer
+ *                         client platक्रमms (iTouch).
+ * @MEI_ME_PCH8_SPS_4_CFG: Platक्रमm Controller Hub Gen8 and newer
+ *                         servers platक्रमms with quirk क्रम
  *                         SPS firmware exclusion.
- * @MEI_ME_PCH12_CFG:      Platform Controller Hub Gen12 and newer
- * @MEI_ME_PCH12_SPS_4_CFG:Platform Controller Hub Gen12 up to 4.0
- *                         servers platforms with quirk for
+ * @MEI_ME_PCH12_CFG:      Platक्रमm Controller Hub Gen12 and newer
+ * @MEI_ME_PCH12_SPS_4_CFG:Platक्रमm Controller Hub Gen12 up to 4.0
+ *                         servers platक्रमms with quirk क्रम
  *                         SPS firmware exclusion.
- * @MEI_ME_PCH12_SPS_CFG:  Platform Controller Hub Gen12 5.0 and newer
- *                         servers platforms with quirk for
+ * @MEI_ME_PCH12_SPS_CFG:  Platक्रमm Controller Hub Gen12 5.0 and newer
+ *                         servers platक्रमms with quirk क्रम
  *                         SPS firmware exclusion.
- * @MEI_ME_PCH15_CFG:      Platform Controller Hub Gen15 and newer
- * @MEI_ME_PCH15_SPS_CFG:  Platform Controller Hub Gen15 and newer
- *                         servers platforms with quirk for
+ * @MEI_ME_PCH15_CFG:      Platक्रमm Controller Hub Gen15 and newer
+ * @MEI_ME_PCH15_SPS_CFG:  Platक्रमm Controller Hub Gen15 and newer
+ *                         servers platक्रमms with quirk क्रम
  *                         SPS firmware exclusion.
  * @MEI_ME_NUM_CFG:        Upper Sentinel.
  */
-enum mei_cfg_idx {
+क्रमागत mei_cfg_idx अणु
 	MEI_ME_UNDEF_CFG,
 	MEI_ME_ICH_CFG,
 	MEI_ME_ICH10_CFG,
@@ -113,17 +114,17 @@ enum mei_cfg_idx {
 	MEI_ME_PCH15_CFG,
 	MEI_ME_PCH15_SPS_CFG,
 	MEI_ME_NUM_CFG,
-};
+पूर्ण;
 
-const struct mei_cfg *mei_me_get_cfg(kernel_ulong_t idx);
+स्थिर काष्ठा mei_cfg *mei_me_get_cfg(kernel_uदीर्घ_t idx);
 
-struct mei_device *mei_me_dev_init(struct device *parent,
-				   const struct mei_cfg *cfg);
+काष्ठा mei_device *mei_me_dev_init(काष्ठा device *parent,
+				   स्थिर काष्ठा mei_cfg *cfg);
 
-int mei_me_pg_enter_sync(struct mei_device *dev);
-int mei_me_pg_exit_sync(struct mei_device *dev);
+पूर्णांक mei_me_pg_enter_sync(काष्ठा mei_device *dev);
+पूर्णांक mei_me_pg_निकास_sync(काष्ठा mei_device *dev);
 
-irqreturn_t mei_me_irq_quick_handler(int irq, void *dev_id);
-irqreturn_t mei_me_irq_thread_handler(int irq, void *dev_id);
+irqवापस_t mei_me_irq_quick_handler(पूर्णांक irq, व्योम *dev_id);
+irqवापस_t mei_me_irq_thपढ़ो_handler(पूर्णांक irq, व्योम *dev_id);
 
-#endif /* _MEI_INTERFACE_H_ */
+#पूर्ण_अगर /* _MEI_INTERFACE_H_ */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * max9850.c  --  codec driver for max9850
+ * max9850.c  --  codec driver क्रम max9850
  *
  * Copyright (C) 2011 taskit GmbH
  *
@@ -10,269 +11,269 @@
  * MICRONIC Computer Systeme GmbH, https://www.mcsberlin.de/
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/i2c.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
 
-#include "max9850.h"
+#समावेश "max9850.h"
 
-struct max9850_priv {
-	struct regmap *regmap;
-	unsigned int sysclk;
-};
+काष्ठा max9850_priv अणु
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक sysclk;
+पूर्ण;
 
-/* these registers are not used at the moment but provided for the sake of
+/* these रेजिस्टरs are not used at the moment but provided क्रम the sake of
  * completeness */
-static bool max9850_volatile_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case MAX9850_STATUSA:
-	case MAX9850_STATUSB:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max9850_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल MAX9850_STATUSA:
+	हाल MAX9850_STATUSB:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config max9850_regmap = {
+अटल स्थिर काष्ठा regmap_config max9850_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = MAX9850_DIGITAL_AUDIO,
-	.volatile_reg = max9850_volatile_register,
+	.max_रेजिस्टर = MAX9850_DIGITAL_AUDIO,
+	.अस्थिर_reg = max9850_अस्थिर_रेजिस्टर,
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static const DECLARE_TLV_DB_RANGE(max9850_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max9850_tlv,
 	0x18, 0x1f, TLV_DB_SCALE_ITEM(-7450, 400, 0),
 	0x20, 0x33, TLV_DB_SCALE_ITEM(-4150, 200, 0),
 	0x34, 0x37, TLV_DB_SCALE_ITEM(-150, 100, 0),
 	0x38, 0x3f, TLV_DB_SCALE_ITEM(250, 50, 0)
 );
 
-static const struct snd_kcontrol_new max9850_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new max9850_controls[] = अणु
 SOC_SINGLE_TLV("Headphone Volume", MAX9850_VOLUME, 0, 0x3f, 1, max9850_tlv),
 SOC_SINGLE("Headphone Switch", MAX9850_VOLUME, 7, 1, 1),
 SOC_SINGLE("Mono Switch", MAX9850_GENERAL_PURPOSE, 2, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new max9850_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new max9850_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Line In Switch", MAX9850_ENABLE, 1, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget max9850_dapm_widgets[] = {
-SND_SOC_DAPM_SUPPLY("Charge Pump 1", MAX9850_ENABLE, 4, 0, NULL, 0),
-SND_SOC_DAPM_SUPPLY("Charge Pump 2", MAX9850_ENABLE, 5, 0, NULL, 0),
-SND_SOC_DAPM_SUPPLY("MCLK", MAX9850_ENABLE, 6, 0, NULL, 0),
-SND_SOC_DAPM_SUPPLY("SHDN", MAX9850_ENABLE, 7, 0, NULL, 0),
+अटल स्थिर काष्ठा snd_soc_dapm_widget max9850_dapm_widमाला_लो[] = अणु
+SND_SOC_DAPM_SUPPLY("Charge Pump 1", MAX9850_ENABLE, 4, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("Charge Pump 2", MAX9850_ENABLE, 5, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("MCLK", MAX9850_ENABLE, 6, 0, शून्य, 0),
+SND_SOC_DAPM_SUPPLY("SHDN", MAX9850_ENABLE, 7, 0, शून्य, 0),
 SND_SOC_DAPM_MIXER_NAMED_CTL("Output Mixer", MAX9850_ENABLE, 2, 0,
 		&max9850_mixer_controls[0],
 		ARRAY_SIZE(max9850_mixer_controls)),
-SND_SOC_DAPM_PGA("Headphone Output", MAX9850_ENABLE, 3, 0, NULL, 0),
+SND_SOC_DAPM_PGA("Headphone Output", MAX9850_ENABLE, 3, 0, शून्य, 0),
 SND_SOC_DAPM_DAC("DAC", "HiFi Playback", MAX9850_ENABLE, 0, 0),
 SND_SOC_DAPM_OUTPUT("OUTL"),
 SND_SOC_DAPM_OUTPUT("HPL"),
 SND_SOC_DAPM_OUTPUT("OUTR"),
 SND_SOC_DAPM_OUTPUT("HPR"),
-SND_SOC_DAPM_MIXER("Line Input", SND_SOC_NOPM, 0, 0, NULL, 0),
+SND_SOC_DAPM_MIXER("Line Input", SND_SOC_NOPM, 0, 0, शून्य, 0),
 SND_SOC_DAPM_INPUT("INL"),
 SND_SOC_DAPM_INPUT("INR"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route max9850_dapm_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route max9850_dapm_routes[] = अणु
 	/* output mixer */
-	{"Output Mixer", NULL, "DAC"},
-	{"Output Mixer", "Line In Switch", "Line Input"},
+	अणु"Output Mixer", शून्य, "DAC"पूर्ण,
+	अणु"Output Mixer", "Line In Switch", "Line Input"पूर्ण,
 
-	/* outputs */
-	{"Headphone Output", NULL, "Output Mixer"},
-	{"HPL", NULL, "Headphone Output"},
-	{"HPR", NULL, "Headphone Output"},
-	{"OUTL", NULL, "Output Mixer"},
-	{"OUTR", NULL, "Output Mixer"},
+	/* outमाला_दो */
+	अणु"Headphone Output", शून्य, "Output Mixer"पूर्ण,
+	अणु"HPL", शून्य, "Headphone Output"पूर्ण,
+	अणु"HPR", शून्य, "Headphone Output"पूर्ण,
+	अणु"OUTL", शून्य, "Output Mixer"पूर्ण,
+	अणु"OUTR", शून्य, "Output Mixer"पूर्ण,
 
-	/* inputs */
-	{"Line Input", NULL, "INL"},
-	{"Line Input", NULL, "INR"},
+	/* inमाला_दो */
+	अणु"Line Input", शून्य, "INL"पूर्ण,
+	अणु"Line Input", शून्य, "INR"पूर्ण,
 
 	/* supplies */
-	{"Output Mixer", NULL, "Charge Pump 1"},
-	{"Output Mixer", NULL, "Charge Pump 2"},
-	{"Output Mixer", NULL, "SHDN"},
-	{"DAC", NULL, "MCLK"},
-};
+	अणु"Output Mixer", शून्य, "Charge Pump 1"पूर्ण,
+	अणु"Output Mixer", शून्य, "Charge Pump 2"पूर्ण,
+	अणु"Output Mixer", शून्य, "SHDN"पूर्ण,
+	अणु"DAC", शून्य, "MCLK"पूर्ण,
+पूर्ण;
 
-static int max9850_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params,
-			     struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct max9850_priv *max9850 = snd_soc_component_get_drvdata(component);
-	u64 lrclk_div;
+अटल पूर्णांक max9850_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा max9850_priv *max9850 = snd_soc_component_get_drvdata(component);
+	u64 lrclk_भाग;
 	u8 sf, da;
 
-	if (!max9850->sysclk)
-		return -EINVAL;
+	अगर (!max9850->sysclk)
+		वापस -EINVAL;
 
-	/* lrclk_div = 2^22 * rate / iclk with iclk = mclk / sf */
-	sf = (snd_soc_component_read(component, MAX9850_CLOCK) >> 2) + 1;
-	lrclk_div = (1 << 22);
-	lrclk_div *= params_rate(params);
-	lrclk_div *= sf;
-	do_div(lrclk_div, max9850->sysclk);
+	/* lrclk_भाग = 2^22 * rate / iclk with iclk = mclk / sf */
+	sf = (snd_soc_component_पढ़ो(component, MAX9850_CLOCK) >> 2) + 1;
+	lrclk_भाग = (1 << 22);
+	lrclk_भाग *= params_rate(params);
+	lrclk_भाग *= sf;
+	करो_भाग(lrclk_भाग, max9850->sysclk);
 
-	snd_soc_component_write(component, MAX9850_LRCLK_MSB, (lrclk_div >> 8) & 0x7f);
-	snd_soc_component_write(component, MAX9850_LRCLK_LSB, lrclk_div & 0xff);
+	snd_soc_component_ग_लिखो(component, MAX9850_LRCLK_MSB, (lrclk_भाग >> 8) & 0x7f);
+	snd_soc_component_ग_लिखो(component, MAX9850_LRCLK_LSB, lrclk_भाग & 0xff);
 
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		da = 0;
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		da = 0x2;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		da = 0x3;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 	snd_soc_component_update_bits(component, MAX9850_DIGITAL_AUDIO, 0x3, da);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max9850_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-		int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct max9850_priv *max9850 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक max9850_set_dai_sysclk(काष्ठा snd_soc_dai *codec_dai,
+		पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा max9850_priv *max9850 = snd_soc_component_get_drvdata(component);
 
-	/* calculate mclk -> iclk divider */
-	if (freq <= 13000000)
-		snd_soc_component_write(component, MAX9850_CLOCK, 0x0);
-	else if (freq <= 26000000)
-		snd_soc_component_write(component, MAX9850_CLOCK, 0x4);
-	else if (freq <= 40000000)
-		snd_soc_component_write(component, MAX9850_CLOCK, 0x8);
-	else
-		return -EINVAL;
+	/* calculate mclk -> iclk भागider */
+	अगर (freq <= 13000000)
+		snd_soc_component_ग_लिखो(component, MAX9850_CLOCK, 0x0);
+	अन्यथा अगर (freq <= 26000000)
+		snd_soc_component_ग_लिखो(component, MAX9850_CLOCK, 0x4);
+	अन्यथा अगर (freq <= 40000000)
+		snd_soc_component_ग_लिखो(component, MAX9850_CLOCK, 0x8);
+	अन्यथा
+		वापस -EINVAL;
 
 	max9850->sysclk = freq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max9850_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
+अटल पूर्णांक max9850_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
 	u8 da = 0;
 
-	/* set master/slave audio interface */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
+	/* set master/slave audio पूर्णांकerface */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
 		da |= MAX9850_MASTER;
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* interface format */
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+	/* पूर्णांकerface क्रमmat */
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		da |= MAX9850_DLY;
-		break;
-	case SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_RIGHT_J:
 		da |= MAX9850_RTJ;
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* clock inversion */
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_NF:
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+	/* घड़ी inversion */
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		da |= MAX9850_BCINV | MAX9850_INV;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		da |= MAX9850_BCINV;
-		break;
-	case SND_SOC_DAIFMT_NB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_IF:
 		da |= MAX9850_INV;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* set da */
-	snd_soc_component_write(component, MAX9850_DIGITAL_AUDIO, da);
+	snd_soc_component_ग_लिखो(component, MAX9850_DIGITAL_AUDIO, da);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max9850_set_bias_level(struct snd_soc_component *component,
-				  enum snd_soc_bias_level level)
-{
-	struct max9850_priv *max9850 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक max9850_set_bias_level(काष्ठा snd_soc_component *component,
+				  क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा max9850_priv *max9850 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		break;
-	case SND_SOC_BIAS_PREPARE:
-		break;
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		अवरोध;
+	हाल SND_SOC_BIAS_PREPARE:
+		अवरोध;
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
 			ret = regcache_sync(max9850->regmap);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(component->dev,
 					"Failed to sync cache: %d\n", ret);
-				return ret;
-			}
-		}
-		break;
-	case SND_SOC_BIAS_OFF:
-		break;
-	}
-	return 0;
-}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल SND_SOC_BIAS_OFF:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define MAX9850_RATES SNDRV_PCM_RATE_8000_48000
+#घोषणा MAX9850_RATES SNDRV_PCM_RATE_8000_48000
 
-#define MAX9850_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
+#घोषणा MAX9850_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |\
 	SNDRV_PCM_FMTBIT_S24_LE)
 
-static const struct snd_soc_dai_ops max9850_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops max9850_dai_ops = अणु
 	.hw_params	= max9850_hw_params,
 	.set_sysclk	= max9850_set_dai_sysclk,
 	.set_fmt	= max9850_set_dai_fmt,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver max9850_dai = {
+अटल काष्ठा snd_soc_dai_driver max9850_dai = अणु
 	.name = "max9850-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = MAX9850_RATES,
-		.formats = MAX9850_FORMATS
-	},
+		.क्रमmats = MAX9850_FORMATS
+	पूर्ण,
 	.ops = &max9850_dai_ops,
-};
+पूर्ण;
 
-static int max9850_probe(struct snd_soc_component *component)
-{
+अटल पूर्णांक max9850_probe(काष्ठा snd_soc_component *component)
+अणु
 	/* enable zero-detect */
 	snd_soc_component_update_bits(component, MAX9850_GENERAL_PURPOSE, 1, 1);
 	/* enable slew-rate control */
@@ -280,60 +281,60 @@ static int max9850_probe(struct snd_soc_component *component)
 	/* set slew-rate 125ms */
 	snd_soc_component_update_bits(component, MAX9850_CHARGE_PUMP, 0xff, 0xc0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_max9850 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_max9850 = अणु
 	.probe			= max9850_probe,
 	.set_bias_level		= max9850_set_bias_level,
 	.controls		= max9850_controls,
 	.num_controls		= ARRAY_SIZE(max9850_controls),
-	.dapm_widgets		= max9850_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(max9850_dapm_widgets),
+	.dapm_widमाला_लो		= max9850_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(max9850_dapm_widमाला_लो),
 	.dapm_routes		= max9850_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(max9850_dapm_routes),
 	.suspend_bias_off	= 1,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static int max9850_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	struct max9850_priv *max9850;
-	int ret;
+अटल पूर्णांक max9850_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा max9850_priv *max9850;
+	पूर्णांक ret;
 
-	max9850 = devm_kzalloc(&i2c->dev, sizeof(struct max9850_priv),
+	max9850 = devm_kzalloc(&i2c->dev, माप(काष्ठा max9850_priv),
 			       GFP_KERNEL);
-	if (max9850 == NULL)
-		return -ENOMEM;
+	अगर (max9850 == शून्य)
+		वापस -ENOMEM;
 
 	max9850->regmap = devm_regmap_init_i2c(i2c, &max9850_regmap);
-	if (IS_ERR(max9850->regmap))
-		return PTR_ERR(max9850->regmap);
+	अगर (IS_ERR(max9850->regmap))
+		वापस PTR_ERR(max9850->regmap);
 
 	i2c_set_clientdata(i2c, max9850);
 
-	ret = devm_snd_soc_register_component(&i2c->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 			&soc_component_dev_max9850, &max9850_dai, 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id max9850_i2c_id[] = {
-	{ "max9850", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max9850_i2c_id[] = अणु
+	अणु "max9850", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max9850_i2c_id);
 
-static struct i2c_driver max9850_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max9850_i2c_driver = अणु
+	.driver = अणु
 		.name = "max9850",
-	},
+	पूर्ण,
 	.probe = max9850_i2c_probe,
 	.id_table = max9850_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(max9850_i2c_driver);
 

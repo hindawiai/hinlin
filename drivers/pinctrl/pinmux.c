@@ -1,424 +1,425 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Core driver for the pin muxing portions of the pin control subsystem
+ * Core driver क्रम the pin muxing portions of the pin control subप्रणाली
  *
  * Copyright (C) 2011-2012 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  *
  * Copyright (C) 2012 NVIDIA CORPORATION. All rights reserved.
  */
-#define pr_fmt(fmt) "pinmux core: " fmt
+#घोषणा pr_fmt(fmt) "pinmux core: " fmt
 
-#include <linux/ctype.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/radix-tree.h>
-#include <linux/err.h>
-#include <linux/list.h>
-#include <linux/string.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinmux.h>
-#include "core.h"
-#include "pinmux.h"
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <linux/err.h>
+#समावेश <linux/list.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश "core.h"
+#समावेश "pinmux.h"
 
-int pinmux_check_ops(struct pinctrl_dev *pctldev)
-{
-	const struct pinmux_ops *ops = pctldev->desc->pmxops;
-	unsigned nfuncs;
-	unsigned selector = 0;
+पूर्णांक pinmux_check_ops(काष्ठा pinctrl_dev *pctldev)
+अणु
+	स्थिर काष्ठा pinmux_ops *ops = pctldev->desc->pmxops;
+	अचिन्हित nfuncs;
+	अचिन्हित selector = 0;
 
 	/* Check that we implement required operations */
-	if (!ops ||
+	अगर (!ops ||
 	    !ops->get_functions_count ||
 	    !ops->get_function_name ||
 	    !ops->get_function_groups ||
-	    !ops->set_mux) {
+	    !ops->set_mux) अणु
 		dev_err(pctldev->dev, "pinmux ops lacks necessary functions\n");
-		return -EINVAL;
-	}
-	/* Check that all functions registered have names */
+		वापस -EINVAL;
+	पूर्ण
+	/* Check that all functions रेजिस्टरed have names */
 	nfuncs = ops->get_functions_count(pctldev);
-	while (selector < nfuncs) {
-		const char *fname = ops->get_function_name(pctldev,
+	जबतक (selector < nfuncs) अणु
+		स्थिर अक्षर *fname = ops->get_function_name(pctldev,
 							   selector);
-		if (!fname) {
+		अगर (!fname) अणु
 			dev_err(pctldev->dev, "pinmux ops has no name for function%u\n",
 				selector);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		selector++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pinmux_validate_map(const struct pinctrl_map *map, int i)
-{
-	if (!map->data.mux.function) {
+पूर्णांक pinmux_validate_map(स्थिर काष्ठा pinctrl_map *map, पूर्णांक i)
+अणु
+	अगर (!map->data.mux.function) अणु
 		pr_err("failed to register map %s (%d): no function given\n",
 		       map->name, i);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pinmux_can_be_used_for_gpio() - check if a specific pin
- *	is either muxed to a different function or used as gpio.
+ * pinmux_can_be_used_क्रम_gpio() - check अगर a specअगरic pin
+ *	is either muxed to a dअगरferent function or used as gpio.
  *
  * @pctldev: the associated pin controller device
  * @pin: the pin number in the global pin space
  *
- * Controllers not defined as strict will always return true,
+ * Controllers not defined as strict will always वापस true,
  * menaning that the gpio can be used.
  */
-bool pinmux_can_be_used_for_gpio(struct pinctrl_dev *pctldev, unsigned pin)
-{
-	struct pin_desc *desc = pin_desc_get(pctldev, pin);
-	const struct pinmux_ops *ops = pctldev->desc->pmxops;
+bool pinmux_can_be_used_क्रम_gpio(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin)
+अणु
+	काष्ठा pin_desc *desc = pin_desc_get(pctldev, pin);
+	स्थिर काष्ठा pinmux_ops *ops = pctldev->desc->pmxops;
 
 	/* Can't inspect pin, assume it can be used */
-	if (!desc || !ops)
-		return true;
+	अगर (!desc || !ops)
+		वापस true;
 
-	if (ops->strict && desc->mux_usecount)
-		return false;
+	अगर (ops->strict && desc->mux_usecount)
+		वापस false;
 
-	return !(ops->strict && !!desc->gpio_owner);
-}
+	वापस !(ops->strict && !!desc->gpio_owner);
+पूर्ण
 
 /**
- * pin_request() - request a single pin to be muxed in, typically for GPIO
+ * pin_request() - request a single pin to be muxed in, typically क्रम GPIO
  * @pctldev: the associated pin controller device
  * @pin: the pin number in the global pin space
  * @owner: a representation of the owner of this pin; typically the device
  *	name that controls its mux function, or the requested GPIO name
- * @gpio_range: the range matching the GPIO pin if this is a request for a
+ * @gpio_range: the range matching the GPIO pin अगर this is a request क्रम a
  *	single GPIO pin
  */
-static int pin_request(struct pinctrl_dev *pctldev,
-		       int pin, const char *owner,
-		       struct pinctrl_gpio_range *gpio_range)
-{
-	struct pin_desc *desc;
-	const struct pinmux_ops *ops = pctldev->desc->pmxops;
-	int status = -EINVAL;
+अटल पूर्णांक pin_request(काष्ठा pinctrl_dev *pctldev,
+		       पूर्णांक pin, स्थिर अक्षर *owner,
+		       काष्ठा pinctrl_gpio_range *gpio_range)
+अणु
+	काष्ठा pin_desc *desc;
+	स्थिर काष्ठा pinmux_ops *ops = pctldev->desc->pmxops;
+	पूर्णांक status = -EINVAL;
 
 	desc = pin_desc_get(pctldev, pin);
-	if (desc == NULL) {
+	अगर (desc == शून्य) अणु
 		dev_err(pctldev->dev,
 			"pin %d is not registered so it cannot be requested\n",
 			pin);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(pctldev->dev, "request pin %d (%s) for %s\n",
 		pin, desc->name, owner);
 
-	if ((!gpio_range || ops->strict) &&
-	    desc->mux_usecount && strcmp(desc->mux_owner, owner)) {
+	अगर ((!gpio_range || ops->strict) &&
+	    desc->mux_usecount && म_भेद(desc->mux_owner, owner)) अणु
 		dev_err(pctldev->dev,
 			"pin %s already requested by %s; cannot claim for %s\n",
 			desc->name, desc->mux_owner, owner);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if ((gpio_range || ops->strict) && desc->gpio_owner) {
+	अगर ((gpio_range || ops->strict) && desc->gpio_owner) अणु
 		dev_err(pctldev->dev,
 			"pin %s already requested by %s; cannot claim for %s\n",
 			desc->name, desc->gpio_owner, owner);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (gpio_range) {
+	अगर (gpio_range) अणु
 		desc->gpio_owner = owner;
-	} else {
+	पूर्ण अन्यथा अणु
 		desc->mux_usecount++;
-		if (desc->mux_usecount > 1)
-			return 0;
+		अगर (desc->mux_usecount > 1)
+			वापस 0;
 
 		desc->mux_owner = owner;
-	}
+	पूर्ण
 
 	/* Let each pin increase references to this module */
-	if (!try_module_get(pctldev->owner)) {
+	अगर (!try_module_get(pctldev->owner)) अणु
 		dev_err(pctldev->dev,
 			"could not increase module refcount for pin %d\n",
 			pin);
 		status = -EINVAL;
-		goto out_free_pin;
-	}
+		जाओ out_मुक्त_pin;
+	पूर्ण
 
 	/*
-	 * If there is no kind of request function for the pin we just assume
-	 * we got it by default and proceed.
+	 * If there is no kind of request function क्रम the pin we just assume
+	 * we got it by शेष and proceed.
 	 */
-	if (gpio_range && ops->gpio_request_enable)
+	अगर (gpio_range && ops->gpio_request_enable)
 		/* This requests and enables a single GPIO pin */
 		status = ops->gpio_request_enable(pctldev, gpio_range, pin);
-	else if (ops->request)
+	अन्यथा अगर (ops->request)
 		status = ops->request(pctldev, pin);
-	else
+	अन्यथा
 		status = 0;
 
-	if (status) {
+	अगर (status) अणु
 		dev_err(pctldev->dev, "request() failed for pin %d\n", pin);
 		module_put(pctldev->owner);
-	}
+	पूर्ण
 
-out_free_pin:
-	if (status) {
-		if (gpio_range) {
-			desc->gpio_owner = NULL;
-		} else {
+out_मुक्त_pin:
+	अगर (status) अणु
+		अगर (gpio_range) अणु
+			desc->gpio_owner = शून्य;
+		पूर्ण अन्यथा अणु
 			desc->mux_usecount--;
-			if (!desc->mux_usecount)
-				desc->mux_owner = NULL;
-		}
-	}
+			अगर (!desc->mux_usecount)
+				desc->mux_owner = शून्य;
+		पूर्ण
+	पूर्ण
 out:
-	if (status)
+	अगर (status)
 		dev_err(pctldev->dev, "pin-%d (%s) status %d\n",
 			pin, owner, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * pin_free() - release a single muxed in pin so something else can be muxed
+ * pin_मुक्त() - release a single muxed in pin so something अन्यथा can be muxed
  * @pctldev: pin controller device handling this pin
- * @pin: the pin to free
- * @gpio_range: the range matching the GPIO pin if this is a request for a
+ * @pin: the pin to मुक्त
+ * @gpio_range: the range matching the GPIO pin अगर this is a request क्रम a
  *	single GPIO pin
  *
- * This function returns a pointer to the previous owner. This is used
- * for callers that dynamically allocate an owner name so it can be freed
- * once the pin is free. This is done for GPIO request functions.
+ * This function वापसs a poपूर्णांकer to the previous owner. This is used
+ * क्रम callers that dynamically allocate an owner name so it can be मुक्तd
+ * once the pin is मुक्त. This is करोne क्रम GPIO request functions.
  */
-static const char *pin_free(struct pinctrl_dev *pctldev, int pin,
-			    struct pinctrl_gpio_range *gpio_range)
-{
-	const struct pinmux_ops *ops = pctldev->desc->pmxops;
-	struct pin_desc *desc;
-	const char *owner;
+अटल स्थिर अक्षर *pin_मुक्त(काष्ठा pinctrl_dev *pctldev, पूर्णांक pin,
+			    काष्ठा pinctrl_gpio_range *gpio_range)
+अणु
+	स्थिर काष्ठा pinmux_ops *ops = pctldev->desc->pmxops;
+	काष्ठा pin_desc *desc;
+	स्थिर अक्षर *owner;
 
 	desc = pin_desc_get(pctldev, pin);
-	if (desc == NULL) {
+	अगर (desc == शून्य) अणु
 		dev_err(pctldev->dev,
 			"pin is not registered so it cannot be freed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!gpio_range) {
+	अगर (!gpio_range) अणु
 		/*
-		 * A pin should not be freed more times than allocated.
+		 * A pin should not be मुक्तd more बार than allocated.
 		 */
-		if (WARN_ON(!desc->mux_usecount))
-			return NULL;
+		अगर (WARN_ON(!desc->mux_usecount))
+			वापस शून्य;
 		desc->mux_usecount--;
-		if (desc->mux_usecount)
-			return NULL;
-	}
+		अगर (desc->mux_usecount)
+			वापस शून्य;
+	पूर्ण
 
 	/*
-	 * If there is no kind of request function for the pin we just assume
-	 * we got it by default and proceed.
+	 * If there is no kind of request function क्रम the pin we just assume
+	 * we got it by शेष and proceed.
 	 */
-	if (gpio_range && ops->gpio_disable_free)
-		ops->gpio_disable_free(pctldev, gpio_range, pin);
-	else if (ops->free)
-		ops->free(pctldev, pin);
+	अगर (gpio_range && ops->gpio_disable_मुक्त)
+		ops->gpio_disable_मुक्त(pctldev, gpio_range, pin);
+	अन्यथा अगर (ops->मुक्त)
+		ops->मुक्त(pctldev, pin);
 
-	if (gpio_range) {
+	अगर (gpio_range) अणु
 		owner = desc->gpio_owner;
-		desc->gpio_owner = NULL;
-	} else {
+		desc->gpio_owner = शून्य;
+	पूर्ण अन्यथा अणु
 		owner = desc->mux_owner;
-		desc->mux_owner = NULL;
-		desc->mux_setting = NULL;
-	}
+		desc->mux_owner = शून्य;
+		desc->mux_setting = शून्य;
+	पूर्ण
 
 	module_put(pctldev->owner);
 
-	return owner;
-}
+	वापस owner;
+पूर्ण
 
 /**
- * pinmux_request_gpio() - request pinmuxing for a GPIO pin
+ * pinmux_request_gpio() - request pinmuxing क्रम a GPIO pin
  * @pctldev: pin controller device affected
- * @pin: the pin to mux in for GPIO
+ * @pin: the pin to mux in क्रम GPIO
  * @range: the applicable GPIO range
  * @gpio: number of requested GPIO
  */
-int pinmux_request_gpio(struct pinctrl_dev *pctldev,
-			struct pinctrl_gpio_range *range,
-			unsigned pin, unsigned gpio)
-{
-	const char *owner;
-	int ret;
+पूर्णांक pinmux_request_gpio(काष्ठा pinctrl_dev *pctldev,
+			काष्ठा pinctrl_gpio_range *range,
+			अचिन्हित pin, अचिन्हित gpio)
+अणु
+	स्थिर अक्षर *owner;
+	पूर्णांक ret;
 
 	/* Conjure some name stating what chip and pin this is taken by */
-	owner = kasprintf(GFP_KERNEL, "%s:%d", range->name, gpio);
-	if (!owner)
-		return -ENOMEM;
+	owner = kaप्र_लिखो(GFP_KERNEL, "%s:%d", range->name, gpio);
+	अगर (!owner)
+		वापस -ENOMEM;
 
 	ret = pin_request(pctldev, pin, owner, range);
-	if (ret < 0)
-		kfree(owner);
+	अगर (ret < 0)
+		kमुक्त(owner);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pinmux_free_gpio() - release a pin from GPIO muxing
- * @pctldev: the pin controller device for the pin
+ * pinmux_मुक्त_gpio() - release a pin from GPIO muxing
+ * @pctldev: the pin controller device क्रम the pin
  * @pin: the affected currently GPIO-muxed in pin
  * @range: applicable GPIO range
  */
-void pinmux_free_gpio(struct pinctrl_dev *pctldev, unsigned pin,
-		      struct pinctrl_gpio_range *range)
-{
-	const char *owner;
+व्योम pinmux_मुक्त_gpio(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+		      काष्ठा pinctrl_gpio_range *range)
+अणु
+	स्थिर अक्षर *owner;
 
-	owner = pin_free(pctldev, pin, range);
-	kfree(owner);
-}
+	owner = pin_मुक्त(pctldev, pin, range);
+	kमुक्त(owner);
+पूर्ण
 
 /**
  * pinmux_gpio_direction() - set the direction of a single muxed-in GPIO pin
  * @pctldev: the pin controller handling this pin
  * @range: applicable GPIO range
  * @pin: the affected GPIO pin in this controller
- * @input: true if we set the pin as input, false for output
+ * @input: true अगर we set the pin as input, false क्रम output
  */
-int pinmux_gpio_direction(struct pinctrl_dev *pctldev,
-			  struct pinctrl_gpio_range *range,
-			  unsigned pin, bool input)
-{
-	const struct pinmux_ops *ops;
-	int ret;
+पूर्णांक pinmux_gpio_direction(काष्ठा pinctrl_dev *pctldev,
+			  काष्ठा pinctrl_gpio_range *range,
+			  अचिन्हित pin, bool input)
+अणु
+	स्थिर काष्ठा pinmux_ops *ops;
+	पूर्णांक ret;
 
 	ops = pctldev->desc->pmxops;
 
-	if (ops->gpio_set_direction)
+	अगर (ops->gpio_set_direction)
 		ret = ops->gpio_set_direction(pctldev, range, pin, input);
-	else
+	अन्यथा
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pinmux_func_name_to_selector(struct pinctrl_dev *pctldev,
-					const char *function)
-{
-	const struct pinmux_ops *ops = pctldev->desc->pmxops;
-	unsigned nfuncs = ops->get_functions_count(pctldev);
-	unsigned selector = 0;
+अटल पूर्णांक pinmux_func_name_to_selector(काष्ठा pinctrl_dev *pctldev,
+					स्थिर अक्षर *function)
+अणु
+	स्थिर काष्ठा pinmux_ops *ops = pctldev->desc->pmxops;
+	अचिन्हित nfuncs = ops->get_functions_count(pctldev);
+	अचिन्हित selector = 0;
 
-	/* See if this pctldev has this function */
-	while (selector < nfuncs) {
-		const char *fname = ops->get_function_name(pctldev, selector);
+	/* See अगर this pctldev has this function */
+	जबतक (selector < nfuncs) अणु
+		स्थिर अक्षर *fname = ops->get_function_name(pctldev, selector);
 
-		if (!strcmp(function, fname))
-			return selector;
+		अगर (!म_भेद(function, fname))
+			वापस selector;
 
 		selector++;
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int pinmux_map_to_setting(const struct pinctrl_map *map,
-			  struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	const struct pinmux_ops *pmxops = pctldev->desc->pmxops;
-	char const * const *groups;
-	unsigned num_groups;
-	int ret;
-	const char *group;
+पूर्णांक pinmux_map_to_setting(स्थिर काष्ठा pinctrl_map *map,
+			  काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	स्थिर काष्ठा pinmux_ops *pmxops = pctldev->desc->pmxops;
+	अक्षर स्थिर * स्थिर *groups;
+	अचिन्हित num_groups;
+	पूर्णांक ret;
+	स्थिर अक्षर *group;
 
-	if (!pmxops) {
+	अगर (!pmxops) अणु
 		dev_err(pctldev->dev, "does not support mux function\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = pinmux_func_name_to_selector(pctldev, map->data.mux.function);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "invalid function %s in map table\n",
 			map->data.mux.function);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	setting->data.mux.func = ret;
 
 	ret = pmxops->get_function_groups(pctldev, setting->data.mux.func,
 					  &groups, &num_groups);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "can't query groups for function %s\n",
 			map->data.mux.function);
-		return ret;
-	}
-	if (!num_groups) {
+		वापस ret;
+	पूर्ण
+	अगर (!num_groups) अणु
 		dev_err(pctldev->dev,
 			"function %s can't be selected on any group\n",
 			map->data.mux.function);
-		return -EINVAL;
-	}
-	if (map->data.mux.group) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (map->data.mux.group) अणु
 		group = map->data.mux.group;
 		ret = match_string(groups, num_groups, group);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(pctldev->dev,
 				"invalid group \"%s\" for function \"%s\"\n",
 				group, map->data.mux.function);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		group = groups[0];
-	}
+	पूर्ण
 
 	ret = pinctrl_get_group_selector(pctldev, group);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "invalid group %s in map table\n",
 			map->data.mux.group);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	setting->data.mux.group = ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pinmux_free_setting(const struct pinctrl_setting *setting)
-{
+व्योम pinmux_मुक्त_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
 	/* This function is currently unused */
-}
+पूर्ण
 
-int pinmux_enable_setting(const struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	const struct pinmux_ops *ops = pctldev->desc->pmxops;
-	int ret = 0;
-	const unsigned *pins = NULL;
-	unsigned num_pins = 0;
-	int i;
-	struct pin_desc *desc;
+पूर्णांक pinmux_enable_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	स्थिर काष्ठा pinmux_ops *ops = pctldev->desc->pmxops;
+	पूर्णांक ret = 0;
+	स्थिर अचिन्हित *pins = शून्य;
+	अचिन्हित num_pins = 0;
+	पूर्णांक i;
+	काष्ठा pin_desc *desc;
 
-	if (pctlops->get_group_pins)
+	अगर (pctlops->get_group_pins)
 		ret = pctlops->get_group_pins(pctldev, setting->data.mux.group,
 					      &pins, &num_pins);
 
-	if (ret) {
-		const char *gname;
+	अगर (ret) अणु
+		स्थिर अक्षर *gname;
 
 		/* errors only affect debug data, so just warn */
 		gname = pctlops->get_group_name(pctldev,
@@ -427,14 +428,14 @@ int pinmux_enable_setting(const struct pinctrl_setting *setting)
 			 "could not get pins for group %s\n",
 			 gname);
 		num_pins = 0;
-	}
+	पूर्ण
 
 	/* Try to allocate all pins in this group, one by one */
-	for (i = 0; i < num_pins; i++) {
-		ret = pin_request(pctldev, pins[i], setting->dev_name, NULL);
-		if (ret) {
-			const char *gname;
-			const char *pname;
+	क्रम (i = 0; i < num_pins; i++) अणु
+		ret = pin_request(pctldev, pins[i], setting->dev_name, शून्य);
+		अगर (ret) अणु
+			स्थिर अक्षर *gname;
+			स्थिर अक्षर *pname;
 
 			desc = pin_desc_get(pctldev, pins[i]);
 			pname = desc ? desc->name : "non-existing";
@@ -445,59 +446,59 @@ int pinmux_enable_setting(const struct pinctrl_setting *setting)
 				" on device %s\n",
 				pins[i], pname, gname,
 				pinctrl_dev_get_name(pctldev));
-			goto err_pin_request;
-		}
-	}
+			जाओ err_pin_request;
+		पूर्ण
+	पूर्ण
 
 	/* Now that we have acquired the pins, encode the mux setting */
-	for (i = 0; i < num_pins; i++) {
+	क्रम (i = 0; i < num_pins; i++) अणु
 		desc = pin_desc_get(pctldev, pins[i]);
-		if (desc == NULL) {
+		अगर (desc == शून्य) अणु
 			dev_warn(pctldev->dev,
 				 "could not get pin desc for pin %d\n",
 				 pins[i]);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		desc->mux_setting = &(setting->data.mux);
-	}
+	पूर्ण
 
 	ret = ops->set_mux(pctldev, setting->data.mux.func,
 			   setting->data.mux.group);
 
-	if (ret)
-		goto err_set_mux;
+	अगर (ret)
+		जाओ err_set_mux;
 
-	return 0;
+	वापस 0;
 
 err_set_mux:
-	for (i = 0; i < num_pins; i++) {
+	क्रम (i = 0; i < num_pins; i++) अणु
 		desc = pin_desc_get(pctldev, pins[i]);
-		if (desc)
-			desc->mux_setting = NULL;
-	}
+		अगर (desc)
+			desc->mux_setting = शून्य;
+	पूर्ण
 err_pin_request:
 	/* On error release all taken pins */
-	while (--i >= 0)
-		pin_free(pctldev, pins[i], NULL);
+	जबतक (--i >= 0)
+		pin_मुक्त(pctldev, pins[i], शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void pinmux_disable_setting(const struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	int ret = 0;
-	const unsigned *pins = NULL;
-	unsigned num_pins = 0;
-	int i;
-	struct pin_desc *desc;
+व्योम pinmux_disable_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	पूर्णांक ret = 0;
+	स्थिर अचिन्हित *pins = शून्य;
+	अचिन्हित num_pins = 0;
+	पूर्णांक i;
+	काष्ठा pin_desc *desc;
 
-	if (pctlops->get_group_pins)
+	अगर (pctlops->get_group_pins)
 		ret = pctlops->get_group_pins(pctldev, setting->data.mux.group,
 					      &pins, &num_pins);
-	if (ret) {
-		const char *gname;
+	अगर (ret) अणु
+		स्थिर अक्षर *gname;
 
 		/* errors only affect debug data, so just warn */
 		gname = pctlops->get_group_name(pctldev,
@@ -506,21 +507,21 @@ void pinmux_disable_setting(const struct pinctrl_setting *setting)
 			 "could not get pins for group %s\n",
 			 gname);
 		num_pins = 0;
-	}
+	पूर्ण
 
 	/* Flag the descs that no setting is active */
-	for (i = 0; i < num_pins; i++) {
+	क्रम (i = 0; i < num_pins; i++) अणु
 		desc = pin_desc_get(pctldev, pins[i]);
-		if (desc == NULL) {
+		अगर (desc == शून्य) अणु
 			dev_warn(pctldev->dev,
 				 "could not get pin desc for pin %d\n",
 				 pins[i]);
-			continue;
-		}
-		if (desc->mux_setting == &(setting->data.mux)) {
-			pin_free(pctldev, pins[i], NULL);
-		} else {
-			const char *gname;
+			जारी;
+		पूर्ण
+		अगर (desc->mux_setting == &(setting->data.mux)) अणु
+			pin_मुक्त(pctldev, pins[i], शून्य);
+		पूर्ण अन्यथा अणु
+			स्थिर अक्षर *gname;
 
 			gname = pctlops->get_group_name(pctldev,
 						setting->data.mux.group);
@@ -529,340 +530,340 @@ void pinmux_disable_setting(const struct pinctrl_setting *setting)
 				 "deactivating group %s - it is already "
 				 "used for some other setting",
 				 pins[i], desc->name, gname);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
 /* Called from pincontrol core */
-static int pinmux_functions_show(struct seq_file *s, void *what)
-{
-	struct pinctrl_dev *pctldev = s->private;
-	const struct pinmux_ops *pmxops = pctldev->desc->pmxops;
-	unsigned nfuncs;
-	unsigned func_selector = 0;
+अटल पूर्णांक pinmux_functions_show(काष्ठा seq_file *s, व्योम *what)
+अणु
+	काष्ठा pinctrl_dev *pctldev = s->निजी;
+	स्थिर काष्ठा pinmux_ops *pmxops = pctldev->desc->pmxops;
+	अचिन्हित nfuncs;
+	अचिन्हित func_selector = 0;
 
-	if (!pmxops)
-		return 0;
+	अगर (!pmxops)
+		वापस 0;
 
 	mutex_lock(&pctldev->mutex);
 	nfuncs = pmxops->get_functions_count(pctldev);
-	while (func_selector < nfuncs) {
-		const char *func = pmxops->get_function_name(pctldev,
+	जबतक (func_selector < nfuncs) अणु
+		स्थिर अक्षर *func = pmxops->get_function_name(pctldev,
 							  func_selector);
-		const char * const *groups;
-		unsigned num_groups;
-		int ret;
-		int i;
+		स्थिर अक्षर * स्थिर *groups;
+		अचिन्हित num_groups;
+		पूर्णांक ret;
+		पूर्णांक i;
 
 		ret = pmxops->get_function_groups(pctldev, func_selector,
 						  &groups, &num_groups);
-		if (ret) {
-			seq_printf(s, "function %s: COULD NOT GET GROUPS\n",
+		अगर (ret) अणु
+			seq_म_लिखो(s, "function %s: COULD NOT GET GROUPS\n",
 				   func);
 			func_selector++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		seq_printf(s, "function %d: %s, groups = [ ", func_selector, func);
-		for (i = 0; i < num_groups; i++)
-			seq_printf(s, "%s ", groups[i]);
-		seq_puts(s, "]\n");
+		seq_म_लिखो(s, "function %d: %s, groups = [ ", func_selector, func);
+		क्रम (i = 0; i < num_groups; i++)
+			seq_म_लिखो(s, "%s ", groups[i]);
+		seq_माला_दो(s, "]\n");
 
 		func_selector++;
-	}
+	पूर्ण
 
 	mutex_unlock(&pctldev->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pinmux_pins_show(struct seq_file *s, void *what)
-{
-	struct pinctrl_dev *pctldev = s->private;
-	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	const struct pinmux_ops *pmxops = pctldev->desc->pmxops;
-	unsigned i, pin;
+अटल पूर्णांक pinmux_pins_show(काष्ठा seq_file *s, व्योम *what)
+अणु
+	काष्ठा pinctrl_dev *pctldev = s->निजी;
+	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	स्थिर काष्ठा pinmux_ops *pmxops = pctldev->desc->pmxops;
+	अचिन्हित i, pin;
 
-	if (!pmxops)
-		return 0;
+	अगर (!pmxops)
+		वापस 0;
 
-	seq_puts(s, "Pinmux settings per pin\n");
-	if (pmxops->strict)
-		seq_puts(s,
+	seq_माला_दो(s, "Pinmux settings per pin\n");
+	अगर (pmxops->strict)
+		seq_माला_दो(s,
 		 "Format: pin (name): mux_owner|gpio_owner (strict) hog?\n");
-	else
-		seq_puts(s,
+	अन्यथा
+		seq_माला_दो(s,
 		"Format: pin (name): mux_owner gpio_owner hog?\n");
 
 	mutex_lock(&pctldev->mutex);
 
 	/* The pin number can be retrived from the pin controller descriptor */
-	for (i = 0; i < pctldev->desc->npins; i++) {
-		struct pin_desc *desc;
+	क्रम (i = 0; i < pctldev->desc->npins; i++) अणु
+		काष्ठा pin_desc *desc;
 		bool is_hog = false;
 
 		pin = pctldev->desc->pins[i].number;
 		desc = pin_desc_get(pctldev, pin);
-		/* Skip if we cannot search the pin */
-		if (desc == NULL)
-			continue;
+		/* Skip अगर we cannot search the pin */
+		अगर (desc == शून्य)
+			जारी;
 
-		if (desc->mux_owner &&
-		    !strcmp(desc->mux_owner, pinctrl_dev_get_name(pctldev)))
+		अगर (desc->mux_owner &&
+		    !म_भेद(desc->mux_owner, pinctrl_dev_get_name(pctldev)))
 			is_hog = true;
 
-		if (pmxops->strict) {
-			if (desc->mux_owner)
-				seq_printf(s, "pin %d (%s): device %s%s",
+		अगर (pmxops->strict) अणु
+			अगर (desc->mux_owner)
+				seq_म_लिखो(s, "pin %d (%s): device %s%s",
 					   pin, desc->name, desc->mux_owner,
 					   is_hog ? " (HOG)" : "");
-			else if (desc->gpio_owner)
-				seq_printf(s, "pin %d (%s): GPIO %s",
+			अन्यथा अगर (desc->gpio_owner)
+				seq_म_लिखो(s, "pin %d (%s): GPIO %s",
 					   pin, desc->name, desc->gpio_owner);
-			else
-				seq_printf(s, "pin %d (%s): UNCLAIMED",
+			अन्यथा
+				seq_म_लिखो(s, "pin %d (%s): UNCLAIMED",
 					   pin, desc->name);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* For non-strict controllers */
-			seq_printf(s, "pin %d (%s): %s %s%s", pin, desc->name,
+			seq_म_लिखो(s, "pin %d (%s): %s %s%s", pin, desc->name,
 				   desc->mux_owner ? desc->mux_owner
 				   : "(MUX UNCLAIMED)",
 				   desc->gpio_owner ? desc->gpio_owner
 				   : "(GPIO UNCLAIMED)",
 				   is_hog ? " (HOG)" : "");
-		}
+		पूर्ण
 
-		/* If mux: print function+group claiming the pin */
-		if (desc->mux_setting)
-			seq_printf(s, " function %s group %s\n",
+		/* If mux: prपूर्णांक function+group claiming the pin */
+		अगर (desc->mux_setting)
+			seq_म_लिखो(s, " function %s group %s\n",
 				   pmxops->get_function_name(pctldev,
 					desc->mux_setting->func),
 				   pctlops->get_group_name(pctldev,
 					desc->mux_setting->group));
-		else
-			seq_putc(s, '\n');
-	}
+		अन्यथा
+			seq_अ_दो(s, '\n');
+	पूर्ण
 
 	mutex_unlock(&pctldev->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pinmux_show_map(struct seq_file *s, const struct pinctrl_map *map)
-{
-	seq_printf(s, "group %s\nfunction %s\n",
+व्योम pinmux_show_map(काष्ठा seq_file *s, स्थिर काष्ठा pinctrl_map *map)
+अणु
+	seq_म_लिखो(s, "group %s\nfunction %s\n",
 		map->data.mux.group ? map->data.mux.group : "(default)",
 		map->data.mux.function);
-}
+पूर्ण
 
-void pinmux_show_setting(struct seq_file *s,
-			 const struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	const struct pinmux_ops *pmxops = pctldev->desc->pmxops;
-	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
+व्योम pinmux_show_setting(काष्ठा seq_file *s,
+			 स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	स्थिर काष्ठा pinmux_ops *pmxops = pctldev->desc->pmxops;
+	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
 
-	seq_printf(s, "group: %s (%u) function: %s (%u)\n",
+	seq_म_लिखो(s, "group: %s (%u) function: %s (%u)\n",
 		   pctlops->get_group_name(pctldev, setting->data.mux.group),
 		   setting->data.mux.group,
 		   pmxops->get_function_name(pctldev, setting->data.mux.func),
 		   setting->data.mux.func);
-}
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(pinmux_functions);
 DEFINE_SHOW_ATTRIBUTE(pinmux_pins);
 
-#define PINMUX_SELECT_MAX 128
-static ssize_t pinmux_select(struct file *file, const char __user *user_buf,
-				   size_t len, loff_t *ppos)
-{
-	struct seq_file *sfile = file->private_data;
-	struct pinctrl_dev *pctldev = sfile->private;
-	const struct pinmux_ops *pmxops = pctldev->desc->pmxops;
-	const char *const *groups;
-	char *buf, *gname, *fname;
-	unsigned int num_groups;
-	int fsel, gsel, ret;
+#घोषणा PINMUX_SELECT_MAX 128
+अटल sमाप_प्रकार pinmux_select(काष्ठा file *file, स्थिर अक्षर __user *user_buf,
+				   माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा seq_file *sfile = file->निजी_data;
+	काष्ठा pinctrl_dev *pctldev = sfile->निजी;
+	स्थिर काष्ठा pinmux_ops *pmxops = pctldev->desc->pmxops;
+	स्थिर अक्षर *स्थिर *groups;
+	अक्षर *buf, *gname, *fname;
+	अचिन्हित पूर्णांक num_groups;
+	पूर्णांक fsel, gsel, ret;
 
-	if (len > PINMUX_SELECT_MAX)
-		return -ENOMEM;
+	अगर (len > PINMUX_SELECT_MAX)
+		वापस -ENOMEM;
 
 	buf = kzalloc(PINMUX_SELECT_MAX, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	ret = strncpy_from_user(buf, user_buf, PINMUX_SELECT_MAX);
-	if (ret < 0)
-		goto exit_free_buf;
+	ret = म_नकलन_from_user(buf, user_buf, PINMUX_SELECT_MAX);
+	अगर (ret < 0)
+		जाओ निकास_मुक्त_buf;
 	buf[len-1] = '\0';
 
-	/* remove leading and trailing spaces of input buffer */
-	gname = strstrip(buf);
-	if (*gname == '\0') {
+	/* हटाओ leading and trailing spaces of input buffer */
+	gname = म_मालाip(buf);
+	अगर (*gname == '\0') अणु
 		ret = -EINVAL;
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 
-	/* find a separator which is a spacelike character */
-	for (fname = gname; !isspace(*fname); fname++) {
-		if (*fname == '\0') {
+	/* find a separator which is a spacelike अक्षरacter */
+	क्रम (fname = gname; !है_खाली(*fname); fname++) अणु
+		अगर (*fname == '\0') अणु
 			ret = -EINVAL;
-			goto exit_free_buf;
-		}
-	}
+			जाओ निकास_मुक्त_buf;
+		पूर्ण
+	पूर्ण
 	*fname = '\0';
 
 	/* drop extra spaces between function and group names */
 	fname = skip_spaces(fname + 1);
-	if (*fname == '\0') {
+	अगर (*fname == '\0') अणु
 		ret = -EINVAL;
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 
 	ret = pinmux_func_name_to_selector(pctldev, fname);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "invalid function %s in map table\n", fname);
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 	fsel = ret;
 
 	ret = pmxops->get_function_groups(pctldev, fsel, &groups, &num_groups);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctldev->dev, "no groups for function %d (%s)", fsel, fname);
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 
 	ret = match_string(groups, num_groups, gname);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "invalid group %s", gname);
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 
 	ret = pinctrl_get_group_selector(pctldev, gname);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctldev->dev, "failed to get group selector for %s", gname);
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 	gsel = ret;
 
 	ret = pmxops->set_mux(pctldev, fsel, gsel);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctldev->dev, "set_mux() failed: %d", ret);
-		goto exit_free_buf;
-	}
+		जाओ निकास_मुक्त_buf;
+	पूर्ण
 	ret = len;
 
-exit_free_buf:
-	kfree(buf);
+निकास_मुक्त_buf:
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pinmux_select_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, NULL, inode->i_private);
-}
+अटल पूर्णांक pinmux_select_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, शून्य, inode->i_निजी);
+पूर्ण
 
-static const struct file_operations pinmux_select_ops = {
+अटल स्थिर काष्ठा file_operations pinmux_select_ops = अणु
 	.owner = THIS_MODULE,
-	.open = pinmux_select_open,
-	.write = pinmux_select,
+	.खोलो = pinmux_select_खोलो,
+	.ग_लिखो = pinmux_select,
 	.llseek = no_llseek,
 	.release = single_release,
-};
+पूर्ण;
 
-void pinmux_init_device_debugfs(struct dentry *devroot,
-			 struct pinctrl_dev *pctldev)
-{
+व्योम pinmux_init_device_debugfs(काष्ठा dentry *devroot,
+			 काष्ठा pinctrl_dev *pctldev)
+अणु
 	debugfs_create_file("pinmux-functions", 0444,
 			    devroot, pctldev, &pinmux_functions_fops);
 	debugfs_create_file("pinmux-pins", 0444,
 			    devroot, pctldev, &pinmux_pins_fops);
 	debugfs_create_file("pinmux-select", 0200,
 			    devroot, pctldev, &pinmux_select_ops);
-}
+पूर्ण
 
-#endif /* CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-#ifdef CONFIG_GENERIC_PINMUX_FUNCTIONS
+#अगर_घोषित CONFIG_GENERIC_PINMUX_FUNCTIONS
 
 /**
- * pinmux_generic_get_function_count() - returns number of functions
+ * pinmux_generic_get_function_count() - वापसs number of functions
  * @pctldev: pin controller device
  */
-int pinmux_generic_get_function_count(struct pinctrl_dev *pctldev)
-{
-	return pctldev->num_functions;
-}
+पूर्णांक pinmux_generic_get_function_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस pctldev->num_functions;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinmux_generic_get_function_count);
 
 /**
- * pinmux_generic_get_function_name() - returns the function name
+ * pinmux_generic_get_function_name() - वापसs the function name
  * @pctldev: pin controller device
  * @selector: function number
  */
-const char *
-pinmux_generic_get_function_name(struct pinctrl_dev *pctldev,
-				 unsigned int selector)
-{
-	struct function_desc *function;
+स्थिर अक्षर *
+pinmux_generic_get_function_name(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा function_desc *function;
 
 	function = radix_tree_lookup(&pctldev->pin_function_tree,
 				     selector);
-	if (!function)
-		return NULL;
+	अगर (!function)
+		वापस शून्य;
 
-	return function->name;
-}
+	वापस function->name;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinmux_generic_get_function_name);
 
 /**
- * pinmux_generic_get_function_groups() - gets the function groups
+ * pinmux_generic_get_function_groups() - माला_लो the function groups
  * @pctldev: pin controller device
  * @selector: function number
  * @groups: array of pin groups
  * @num_groups: number of pin groups
  */
-int pinmux_generic_get_function_groups(struct pinctrl_dev *pctldev,
-				       unsigned int selector,
-				       const char * const **groups,
-				       unsigned * const num_groups)
-{
-	struct function_desc *function;
+पूर्णांक pinmux_generic_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित पूर्णांक selector,
+				       स्थिर अक्षर * स्थिर **groups,
+				       अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा function_desc *function;
 
 	function = radix_tree_lookup(&pctldev->pin_function_tree,
 				     selector);
-	if (!function) {
+	अगर (!function) अणु
 		dev_err(pctldev->dev, "%s could not find function%i\n",
 			__func__, selector);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	*groups = function->group_names;
 	*num_groups = function->num_group_names;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinmux_generic_get_function_groups);
 
 /**
- * pinmux_generic_get_function() - returns a function based on the number
+ * pinmux_generic_get_function() - वापसs a function based on the number
  * @pctldev: pin controller device
  * @selector: function number
  */
-struct function_desc *pinmux_generic_get_function(struct pinctrl_dev *pctldev,
-						  unsigned int selector)
-{
-	struct function_desc *function;
+काष्ठा function_desc *pinmux_generic_get_function(काष्ठा pinctrl_dev *pctldev,
+						  अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा function_desc *function;
 
 	function = radix_tree_lookup(&pctldev->pin_function_tree,
 				     selector);
-	if (!function)
-		return NULL;
+	अगर (!function)
+		वापस शून्य;
 
-	return function;
-}
+	वापस function;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinmux_generic_get_function);
 
 /**
@@ -871,29 +872,29 @@ EXPORT_SYMBOL_GPL(pinmux_generic_get_function);
  * @name: name of the function
  * @groups: array of pin groups
  * @num_groups: number of pin groups
- * @data: pin controller driver specific data
+ * @data: pin controller driver specअगरic data
  */
-int pinmux_generic_add_function(struct pinctrl_dev *pctldev,
-				const char *name,
-				const char **groups,
-				const unsigned int num_groups,
-				void *data)
-{
-	struct function_desc *function;
-	int selector;
+पूर्णांक pinmux_generic_add_function(काष्ठा pinctrl_dev *pctldev,
+				स्थिर अक्षर *name,
+				स्थिर अक्षर **groups,
+				स्थिर अचिन्हित पूर्णांक num_groups,
+				व्योम *data)
+अणु
+	काष्ठा function_desc *function;
+	पूर्णांक selector;
 
-	if (!name)
-		return -EINVAL;
+	अगर (!name)
+		वापस -EINVAL;
 
 	selector = pinmux_func_name_to_selector(pctldev, name);
-	if (selector >= 0)
-		return selector;
+	अगर (selector >= 0)
+		वापस selector;
 
 	selector = pctldev->num_functions;
 
-	function = devm_kzalloc(pctldev->dev, sizeof(*function), GFP_KERNEL);
-	if (!function)
-		return -ENOMEM;
+	function = devm_kzalloc(pctldev->dev, माप(*function), GFP_KERNEL);
+	अगर (!function)
+		वापस -ENOMEM;
 
 	function->name = name;
 	function->group_names = groups;
@@ -904,53 +905,53 @@ int pinmux_generic_add_function(struct pinctrl_dev *pctldev,
 
 	pctldev->num_functions++;
 
-	return selector;
-}
+	वापस selector;
+पूर्ण
 EXPORT_SYMBOL_GPL(pinmux_generic_add_function);
 
 /**
- * pinmux_generic_remove_function() - removes a numbered function
+ * pinmux_generic_हटाओ_function() - हटाओs a numbered function
  * @pctldev: pin controller device
  * @selector: function number
  *
  * Note that the caller must take care of locking.
  */
-int pinmux_generic_remove_function(struct pinctrl_dev *pctldev,
-				   unsigned int selector)
-{
-	struct function_desc *function;
+पूर्णांक pinmux_generic_हटाओ_function(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा function_desc *function;
 
 	function = radix_tree_lookup(&pctldev->pin_function_tree,
 				     selector);
-	if (!function)
-		return -ENOENT;
+	अगर (!function)
+		वापस -ENOENT;
 
 	radix_tree_delete(&pctldev->pin_function_tree, selector);
-	devm_kfree(pctldev->dev, function);
+	devm_kमुक्त(pctldev->dev, function);
 
 	pctldev->num_functions--;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(pinmux_generic_remove_function);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(pinmux_generic_हटाओ_function);
 
 /**
- * pinmux_generic_free_functions() - removes all functions
+ * pinmux_generic_मुक्त_functions() - हटाओs all functions
  * @pctldev: pin controller device
  *
  * Note that the caller must take care of locking. The pinctrl
- * functions are allocated with devm_kzalloc() so no need to free
+ * functions are allocated with devm_kzalloc() so no need to मुक्त
  * them here.
  */
-void pinmux_generic_free_functions(struct pinctrl_dev *pctldev)
-{
-	struct radix_tree_iter iter;
-	void __rcu **slot;
+व्योम pinmux_generic_मुक्त_functions(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा radix_tree_iter iter;
+	व्योम __rcu **slot;
 
-	radix_tree_for_each_slot(slot, &pctldev->pin_function_tree, &iter, 0)
+	radix_tree_क्रम_each_slot(slot, &pctldev->pin_function_tree, &iter, 0)
 		radix_tree_delete(&pctldev->pin_function_tree, iter.index);
 
 	pctldev->num_functions = 0;
-}
+पूर्ण
 
-#endif /* CONFIG_GENERIC_PINMUX_FUNCTIONS */
+#पूर्ण_अगर /* CONFIG_GENERIC_PINMUX_FUNCTIONS */

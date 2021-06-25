@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019 SiFive
  */
 
-#ifndef _ASM_RISCV_PTDUMP_H
-#define _ASM_RISCV_PTDUMP_H
+#अगर_अघोषित _ASM_RISCV_PTDUMP_H
+#घोषणा _ASM_RISCV_PTDUMP_H
 
-void ptdump_check_wx(void);
+व्योम ptdump_check_wx(व्योम);
 
-#ifdef CONFIG_DEBUG_WX
-static inline void debug_checkwx(void)
-{
+#अगर_घोषित CONFIG_DEBUG_WX
+अटल अंतरभूत व्योम debug_checkwx(व्योम)
+अणु
 	ptdump_check_wx();
-}
-#else
-static inline void debug_checkwx(void)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम debug_checkwx(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_RISCV_PTDUMP_H */
+#पूर्ण_अगर /* _ASM_RISCV_PTDUMP_H */

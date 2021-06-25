@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_RAW_H
-#define __LINUX_RAW_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_RAW_H
+#घोषणा __LINUX_RAW_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define RAW_SETBIND	_IO( 0xac, 0 )
-#define RAW_GETBIND	_IO( 0xac, 1 )
+#घोषणा RAW_SETBIND	_IO( 0xac, 0 )
+#घोषणा RAW_GETBIND	_IO( 0xac, 1 )
 
-struct raw_config_request 
-{
-	int	raw_minor;
+काष्ठा raw_config_request 
+अणु
+	पूर्णांक	raw_minor;
 	__u64	block_major;
 	__u64	block_minor;
-};
+पूर्ण;
 
-#endif /* __LINUX_RAW_H */
+#पूर्ण_अगर /* __LINUX_RAW_H */

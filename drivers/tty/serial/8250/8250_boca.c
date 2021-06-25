@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2005 Russell King.
- *  Data taken from include/asm-i386/serial.h
+ *  Data taken from include/यंत्र-i386/serial.h
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial_8250.h>
 
-#include "8250.h"
+#समावेश "8250.h"
 
-static struct plat_serial8250_port boca_data[] = {
+अटल काष्ठा plat_serial8250_port boca_data[] = अणु
 	SERIAL8250_PORT(0x100, 12),
 	SERIAL8250_PORT(0x108, 12),
 	SERIAL8250_PORT(0x110, 12),
@@ -26,21 +27,21 @@ static struct plat_serial8250_port boca_data[] = {
 	SERIAL8250_PORT(0x168, 12),
 	SERIAL8250_PORT(0x170, 12),
 	SERIAL8250_PORT(0x178, 12),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_device boca_device = {
+अटल काष्ठा platक्रमm_device boca_device = अणु
 	.name			= "serial8250",
 	.id			= PLAT8250_DEV_BOCA,
-	.dev			= {
-		.platform_data	= boca_data,
-	},
-};
+	.dev			= अणु
+		.platक्रमm_data	= boca_data,
+	पूर्ण,
+पूर्ण;
 
-static int __init boca_init(void)
-{
-	return platform_device_register(&boca_device);
-}
+अटल पूर्णांक __init boca_init(व्योम)
+अणु
+	वापस platक्रमm_device_रेजिस्टर(&boca_device);
+पूर्ण
 
 module_init(boca_init);
 

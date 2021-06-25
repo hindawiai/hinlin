@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * consolemap.c
  *
- * Mapping from internal code (such as Latin-1 or Unicode or IBM PC code)
+ * Mapping from पूर्णांकernal code (such as Latin-1 or Unicode or IBM PC code)
  * to font positions.
  *
  * aeb, 950210
  *
- * Support for multiple unimaps by Jakub Jelinek <jj@ultra.linux.cz>, July 1998
+ * Support क्रम multiple unimaps by Jakub Jelinek <jj@ultra.linux.cz>, July 1998
  *
  * Fix bug in inverse translation. Stanislav Voronyi <stas@cnti.uanet.kharkov.ua>, Dec 1998
  *
  * In order to prevent the following circular lock dependency:
  *   &mm->mmap_lock --> cpu_hotplug.lock --> console_lock --> &mm->mmap_lock
  *
- * We cannot allow page fault to happen while holding the console_lock.
- * Therefore, all the userspace copy operations have to be done outside
+ * We cannot allow page fault to happen जबतक holding the console_lock.
+ * Thereक्रमe, all the userspace copy operations have to be करोne outside
  * the console_lock critical sections.
  *
  * As all the affected functions are all called directly from vt_ioctl(), we
@@ -23,22 +24,22 @@
  * stack overflow.
  */
 
-#include <linux/module.h>
-#include <linux/kd.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/tty.h>
-#include <linux/uaccess.h>
-#include <linux/console.h>
-#include <linux/consolemap.h>
-#include <linux/vt_kern.h>
-#include <linux/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kd.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/console.h>
+#समावेश <linux/consolemap.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/माला.स>
 
-static unsigned short translations[][256] = {
+अटल अचिन्हित लघु translations[][256] = अणु
   /* 8-bit Latin-1 mapped to Unicode -- trivial mapping */
-  {
+  अणु
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
     0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
     0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
@@ -71,9 +72,9 @@ static unsigned short translations[][256] = {
     0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
     0x00f0, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
     0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff
-  }, 
+  पूर्ण, 
   /* VT100 graphics mapped to Unicode */
-  {
+  अणु
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
     0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
     0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
@@ -106,9 +107,9 @@ static unsigned short translations[][256] = {
     0x00e8, 0x00e9, 0x00ea, 0x00eb, 0x00ec, 0x00ed, 0x00ee, 0x00ef,
     0x00f0, 0x00f1, 0x00f2, 0x00f3, 0x00f4, 0x00f5, 0x00f6, 0x00f7,
     0x00f8, 0x00f9, 0x00fa, 0x00fb, 0x00fc, 0x00fd, 0x00fe, 0x00ff
-  },
+  पूर्ण,
   /* IBM Codepage 437 mapped to Unicode */
-  {
+  अणु
     0x0000, 0x263a, 0x263b, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022, 
     0x25d8, 0x25cb, 0x25d9, 0x2642, 0x2640, 0x266a, 0x266b, 0x263c,
     0x25b6, 0x25c0, 0x2195, 0x203c, 0x00b6, 0x00a7, 0x25ac, 0x21a8,
@@ -141,9 +142,9 @@ static unsigned short translations[][256] = {
     0x03a6, 0x0398, 0x03a9, 0x03b4, 0x221e, 0x03c6, 0x03b5, 0x2229,
     0x2261, 0x00b1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00f7, 0x2248,
     0x00b0, 0x2219, 0x00b7, 0x221a, 0x207f, 0x00b2, 0x25a0, 0x00a0
-  }, 
-  /* User mapping -- default to codes for direct font mapping */
-  {
+  पूर्ण, 
+  /* User mapping -- शेष to codes क्रम direct font mapping */
+  अणु
     0xf000, 0xf001, 0xf002, 0xf003, 0xf004, 0xf005, 0xf006, 0xf007,
     0xf008, 0xf009, 0xf00a, 0xf00b, 0xf00c, 0xf00d, 0xf00e, 0xf00f,
     0xf010, 0xf011, 0xf012, 0xf013, 0xf014, 0xf015, 0xf016, 0xf017,
@@ -176,534 +177,534 @@ static unsigned short translations[][256] = {
     0xf0e8, 0xf0e9, 0xf0ea, 0xf0eb, 0xf0ec, 0xf0ed, 0xf0ee, 0xf0ef,
     0xf0f0, 0xf0f1, 0xf0f2, 0xf0f3, 0xf0f4, 0xf0f5, 0xf0f6, 0xf0f7,
     0xf0f8, 0xf0f9, 0xf0fa, 0xf0fb, 0xf0fc, 0xf0fd, 0xf0fe, 0xf0ff
-  }
-};
+  पूर्ण
+पूर्ण;
 
-/* The standard kernel character-to-font mappings are not invertible
-   -- this is just a best effort. */
+/* The standard kernel अक्षरacter-to-font mappings are not invertible
+   -- this is just a best efक्रमt. */
 
-#define MAX_GLYPH 512		/* Max possible glyph value */
+#घोषणा MAX_GLYPH 512		/* Max possible glyph value */
 
-static int inv_translate[MAX_NR_CONSOLES];
+अटल पूर्णांक inv_translate[MAX_NR_CONSOLES];
 
-struct uni_pagedir {
+काष्ठा uni_pagedir अणु
 	u16 		**uni_pgdir[32];
-	unsigned long	refcount;
-	unsigned long	sum;
-	unsigned char	*inverse_translations[4];
+	अचिन्हित दीर्घ	refcount;
+	अचिन्हित दीर्घ	sum;
+	अचिन्हित अक्षर	*inverse_translations[4];
 	u16		*inverse_trans_unicode;
-};
+पूर्ण;
 
-static struct uni_pagedir *dflt;
+अटल काष्ठा uni_pagedir *dflt;
 
-static void set_inverse_transl(struct vc_data *conp, struct uni_pagedir *p, int i)
-{
-	int j, glyph;
-	unsigned short *t = translations[i];
-	unsigned char *q;
+अटल व्योम set_inverse_transl(काष्ठा vc_data *conp, काष्ठा uni_pagedir *p, पूर्णांक i)
+अणु
+	पूर्णांक j, glyph;
+	अचिन्हित लघु *t = translations[i];
+	अचिन्हित अक्षर *q;
 	
-	if (!p) return;
+	अगर (!p) वापस;
 	q = p->inverse_translations[i];
 
-	if (!q) {
-		q = p->inverse_translations[i] = kmalloc(MAX_GLYPH, GFP_KERNEL);
-		if (!q) return;
-	}
-	memset(q, 0, MAX_GLYPH);
+	अगर (!q) अणु
+		q = p->inverse_translations[i] = kदो_स्मृति(MAX_GLYPH, GFP_KERNEL);
+		अगर (!q) वापस;
+	पूर्ण
+	स_रखो(q, 0, MAX_GLYPH);
 
-	for (j = 0; j < E_TABSZ; j++) {
+	क्रम (j = 0; j < E_TABSZ; j++) अणु
 		glyph = conv_uni_to_pc(conp, t[j]);
-		if (glyph >= 0 && glyph < MAX_GLYPH && q[glyph] < 32) {
+		अगर (glyph >= 0 && glyph < MAX_GLYPH && q[glyph] < 32) अणु
 			/* prefer '-' above SHY etc. */
 		  	q[glyph] = j;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void set_inverse_trans_unicode(struct vc_data *conp,
-				      struct uni_pagedir *p)
-{
-	int i, j, k, glyph;
+अटल व्योम set_inverse_trans_unicode(काष्ठा vc_data *conp,
+				      काष्ठा uni_pagedir *p)
+अणु
+	पूर्णांक i, j, k, glyph;
 	u16 **p1, *p2;
 	u16 *q;
 
-	if (!p) return;
+	अगर (!p) वापस;
 	q = p->inverse_trans_unicode;
-	if (!q) {
+	अगर (!q) अणु
 		q = p->inverse_trans_unicode =
-			kmalloc_array(MAX_GLYPH, sizeof(u16), GFP_KERNEL);
-		if (!q)
-			return;
-	}
-	memset(q, 0, MAX_GLYPH * sizeof(u16));
+			kदो_स्मृति_array(MAX_GLYPH, माप(u16), GFP_KERNEL);
+		अगर (!q)
+			वापस;
+	पूर्ण
+	स_रखो(q, 0, MAX_GLYPH * माप(u16));
 
-	for (i = 0; i < 32; i++) {
+	क्रम (i = 0; i < 32; i++) अणु
 		p1 = p->uni_pgdir[i];
-		if (!p1)
-			continue;
-		for (j = 0; j < 32; j++) {
+		अगर (!p1)
+			जारी;
+		क्रम (j = 0; j < 32; j++) अणु
 			p2 = p1[j];
-			if (!p2)
-				continue;
-			for (k = 0; k < 64; k++) {
+			अगर (!p2)
+				जारी;
+			क्रम (k = 0; k < 64; k++) अणु
 				glyph = p2[k];
-				if (glyph >= 0 && glyph < MAX_GLYPH
+				अगर (glyph >= 0 && glyph < MAX_GLYPH
 					       && q[glyph] < 32)
 		  			q[glyph] = (i << 11) + (j << 6) + k;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-unsigned short *set_translate(int m, struct vc_data *vc)
-{
+अचिन्हित लघु *set_translate(पूर्णांक m, काष्ठा vc_data *vc)
+अणु
 	inv_translate[vc->vc_num] = m;
-	return translations[m];
-}
+	वापस translations[m];
+पूर्ण
 
 /*
- * Inverse translation is impossible for several reasons:
- * 1. The font<->character maps are not 1-1.
- * 2. The text may have been written while a different translation map
+ * Inverse translation is impossible क्रम several reasons:
+ * 1. The font<->अक्षरacter maps are not 1-1.
+ * 2. The text may have been written जबतक a dअगरferent translation map
  *    was active.
  * Still, it is now possible to a certain extent to cut and paste non-ASCII.
  */
-u16 inverse_translate(const struct vc_data *conp, int glyph, int use_unicode)
-{
-	struct uni_pagedir *p;
-	int m;
-	if (glyph < 0 || glyph >= MAX_GLYPH)
-		return 0;
-	else {
+u16 inverse_translate(स्थिर काष्ठा vc_data *conp, पूर्णांक glyph, पूर्णांक use_unicode)
+अणु
+	काष्ठा uni_pagedir *p;
+	पूर्णांक m;
+	अगर (glyph < 0 || glyph >= MAX_GLYPH)
+		वापस 0;
+	अन्यथा अणु
 		p = *conp->vc_uni_pagedir_loc;
-		if (!p)
-			return glyph;
-		else if (use_unicode) {
-			if (!p->inverse_trans_unicode)
-				return glyph;
-			else
-				return p->inverse_trans_unicode[glyph];
-			} else {
+		अगर (!p)
+			वापस glyph;
+		अन्यथा अगर (use_unicode) अणु
+			अगर (!p->inverse_trans_unicode)
+				वापस glyph;
+			अन्यथा
+				वापस p->inverse_trans_unicode[glyph];
+			पूर्ण अन्यथा अणु
 			m = inv_translate[conp->vc_num];
-			if (!p->inverse_translations[m])
-				return glyph;
-			else
-				return p->inverse_translations[m][glyph];
-			}
-	}
-}
+			अगर (!p->inverse_translations[m])
+				वापस glyph;
+			अन्यथा
+				वापस p->inverse_translations[m][glyph];
+			पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(inverse_translate);
 
-static void update_user_maps(void)
-{
-	int i;
-	struct uni_pagedir *p, *q = NULL;
+अटल व्योम update_user_maps(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा uni_pagedir *p, *q = शून्य;
 	
-	for (i = 0; i < MAX_NR_CONSOLES; i++) {
-		if (!vc_cons_allocated(i))
-			continue;
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+		अगर (!vc_cons_allocated(i))
+			जारी;
 		p = *vc_cons[i].d->vc_uni_pagedir_loc;
-		if (p && p != q) {
+		अगर (p && p != q) अणु
 			set_inverse_transl(vc_cons[i].d, p, USER_MAP);
 			set_inverse_trans_unicode(vc_cons[i].d, p);
 			q = p;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Load customizable translation table
- * arg points to a 256 byte translation table.
+ * arg poपूर्णांकs to a 256 byte translation table.
  *
- * The "old" variants are for translation directly to font (using the
+ * The "old" variants are क्रम translation directly to font (using the
  * 0xf000-0xf0ff "transparent" Unicodes) whereas the "new" variants set
  * Unicodes explicitly.
  */
-int con_set_trans_old(unsigned char __user * arg)
-{
-	int i;
-	unsigned short inbuf[E_TABSZ];
-	unsigned char ubuf[E_TABSZ];
+पूर्णांक con_set_trans_old(अचिन्हित अक्षर __user * arg)
+अणु
+	पूर्णांक i;
+	अचिन्हित लघु inbuf[E_TABSZ];
+	अचिन्हित अक्षर ubuf[E_TABSZ];
 
-	if (copy_from_user(ubuf, arg, E_TABSZ))
-		return -EFAULT;
+	अगर (copy_from_user(ubuf, arg, E_TABSZ))
+		वापस -EFAULT;
 
-	for (i = 0; i < E_TABSZ ; i++)
-		inbuf[i] = UNI_DIRECT_BASE | ubuf[i];
+	क्रम (i = 0; i < E_TABSZ ; i++)
+		inbuf[i] = UNI_सूचीECT_BASE | ubuf[i];
 
 	console_lock();
-	memcpy(translations[USER_MAP], inbuf, sizeof(inbuf));
+	स_नकल(translations[USER_MAP], inbuf, माप(inbuf));
 	update_user_maps();
 	console_unlock();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int con_get_trans_old(unsigned char __user * arg)
-{
-	int i, ch;
-	unsigned short *p = translations[USER_MAP];
-	unsigned char outbuf[E_TABSZ];
+पूर्णांक con_get_trans_old(अचिन्हित अक्षर __user * arg)
+अणु
+	पूर्णांक i, ch;
+	अचिन्हित लघु *p = translations[USER_MAP];
+	अचिन्हित अक्षर outbuf[E_TABSZ];
 
 	console_lock();
-	for (i = 0; i < E_TABSZ ; i++)
-	{
+	क्रम (i = 0; i < E_TABSZ ; i++)
+	अणु
 		ch = conv_uni_to_pc(vc_cons[fg_console].d, p[i]);
 		outbuf[i] = (ch & ~0xff) ? 0 : ch;
-	}
+	पूर्ण
 	console_unlock();
 
-	return copy_to_user(arg, outbuf, sizeof(outbuf)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(arg, outbuf, माप(outbuf)) ? -EFAULT : 0;
+पूर्ण
 
-int con_set_trans_new(ushort __user * arg)
-{
-	unsigned short inbuf[E_TABSZ];
+पूर्णांक con_set_trans_new(uलघु __user * arg)
+अणु
+	अचिन्हित लघु inbuf[E_TABSZ];
 
-	if (copy_from_user(inbuf, arg, sizeof(inbuf)))
-		return -EFAULT;
+	अगर (copy_from_user(inbuf, arg, माप(inbuf)))
+		वापस -EFAULT;
 
 	console_lock();
-	memcpy(translations[USER_MAP], inbuf, sizeof(inbuf));
+	स_नकल(translations[USER_MAP], inbuf, माप(inbuf));
 	update_user_maps();
 	console_unlock();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int con_get_trans_new(ushort __user * arg)
-{
-	unsigned short outbuf[E_TABSZ];
+पूर्णांक con_get_trans_new(uलघु __user * arg)
+अणु
+	अचिन्हित लघु outbuf[E_TABSZ];
 
 	console_lock();
-	memcpy(outbuf, translations[USER_MAP], sizeof(outbuf));
+	स_नकल(outbuf, translations[USER_MAP], माप(outbuf));
 	console_unlock();
 
-	return copy_to_user(arg, outbuf, sizeof(outbuf)) ? -EFAULT : 0;
-}
+	वापस copy_to_user(arg, outbuf, माप(outbuf)) ? -EFAULT : 0;
+पूर्ण
 
 /*
  * Unicode -> current font conversion 
  *
- * A font has at most 512 chars, usually 256.
- * But one font position may represent several Unicode chars.
+ * A font has at most 512 अक्षरs, usually 256.
+ * But one font position may represent several Unicode अक्षरs.
  * A hashtable is somewhat of a pain to deal with, so use a
  * "paged table" instead.  Simulation has shown the memory cost of
  * this 3-level paged table scheme to be comparable to a hash table.
  */
 
-extern u8 dfont_unicount[];	/* Defined in console_defmap.c */
-extern u16 dfont_unitable[];
+बाह्य u8 dfont_unicount[];	/* Defined in console_defmap.c */
+बाह्य u16 dfont_unitable[];
 
-static void con_release_unimap(struct uni_pagedir *p)
-{
+अटल व्योम con_release_unimap(काष्ठा uni_pagedir *p)
+अणु
 	u16 **p1;
-	int i, j;
+	पूर्णांक i, j;
 
-	if (p == dflt) dflt = NULL;  
-	for (i = 0; i < 32; i++) {
+	अगर (p == dflt) dflt = शून्य;  
+	क्रम (i = 0; i < 32; i++) अणु
 		p1 = p->uni_pgdir[i];
-		if (p1 != NULL) {
-			for (j = 0; j < 32; j++)
-				kfree(p1[j]);
-			kfree(p1);
-		}
-		p->uni_pgdir[i] = NULL;
-	}
-	for (i = 0; i < 4; i++) {
-		kfree(p->inverse_translations[i]);
-		p->inverse_translations[i] = NULL;
-	}
-	kfree(p->inverse_trans_unicode);
-	p->inverse_trans_unicode = NULL;
-}
+		अगर (p1 != शून्य) अणु
+			क्रम (j = 0; j < 32; j++)
+				kमुक्त(p1[j]);
+			kमुक्त(p1);
+		पूर्ण
+		p->uni_pgdir[i] = शून्य;
+	पूर्ण
+	क्रम (i = 0; i < 4; i++) अणु
+		kमुक्त(p->inverse_translations[i]);
+		p->inverse_translations[i] = शून्य;
+	पूर्ण
+	kमुक्त(p->inverse_trans_unicode);
+	p->inverse_trans_unicode = शून्य;
+पूर्ण
 
 /* Caller must hold the console lock */
-void con_free_unimap(struct vc_data *vc)
-{
-	struct uni_pagedir *p;
+व्योम con_मुक्त_unimap(काष्ठा vc_data *vc)
+अणु
+	काष्ठा uni_pagedir *p;
 
 	p = *vc->vc_uni_pagedir_loc;
-	if (!p)
-		return;
-	*vc->vc_uni_pagedir_loc = NULL;
-	if (--p->refcount)
-		return;
+	अगर (!p)
+		वापस;
+	*vc->vc_uni_pagedir_loc = शून्य;
+	अगर (--p->refcount)
+		वापस;
 	con_release_unimap(p);
-	kfree(p);
-}
+	kमुक्त(p);
+पूर्ण
   
-static int con_unify_unimap(struct vc_data *conp, struct uni_pagedir *p)
-{
-	int i, j, k;
-	struct uni_pagedir *q;
+अटल पूर्णांक con_unअगरy_unimap(काष्ठा vc_data *conp, काष्ठा uni_pagedir *p)
+अणु
+	पूर्णांक i, j, k;
+	काष्ठा uni_pagedir *q;
 	
-	for (i = 0; i < MAX_NR_CONSOLES; i++) {
-		if (!vc_cons_allocated(i))
-			continue;
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+		अगर (!vc_cons_allocated(i))
+			जारी;
 		q = *vc_cons[i].d->vc_uni_pagedir_loc;
-		if (!q || q == p || q->sum != p->sum)
-			continue;
-		for (j = 0; j < 32; j++) {
+		अगर (!q || q == p || q->sum != p->sum)
+			जारी;
+		क्रम (j = 0; j < 32; j++) अणु
 			u16 **p1, **q1;
 			p1 = p->uni_pgdir[j]; q1 = q->uni_pgdir[j];
-			if (!p1 && !q1)
-				continue;
-			if (!p1 || !q1)
-				break;
-			for (k = 0; k < 32; k++) {
-				if (!p1[k] && !q1[k])
-					continue;
-				if (!p1[k] || !q1[k])
-					break;
-				if (memcmp(p1[k], q1[k], 64*sizeof(u16)))
-					break;
-			}
-			if (k < 32)
-				break;
-		}
-		if (j == 32) {
+			अगर (!p1 && !q1)
+				जारी;
+			अगर (!p1 || !q1)
+				अवरोध;
+			क्रम (k = 0; k < 32; k++) अणु
+				अगर (!p1[k] && !q1[k])
+					जारी;
+				अगर (!p1[k] || !q1[k])
+					अवरोध;
+				अगर (स_भेद(p1[k], q1[k], 64*माप(u16)))
+					अवरोध;
+			पूर्ण
+			अगर (k < 32)
+				अवरोध;
+		पूर्ण
+		अगर (j == 32) अणु
 			q->refcount++;
 			*conp->vc_uni_pagedir_loc = q;
 			con_release_unimap(p);
-			kfree(p);
-			return 1;
-		}
-	}
-	return 0;
-}
+			kमुक्त(p);
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-con_insert_unipair(struct uni_pagedir *p, u_short unicode, u_short fontpos)
-{
-	int i, n;
+अटल पूर्णांक
+con_insert_unipair(काष्ठा uni_pagedir *p, u_लघु unicode, u_लघु fontpos)
+अणु
+	पूर्णांक i, n;
 	u16 **p1, *p2;
 
 	p1 = p->uni_pgdir[n = unicode >> 11];
-	if (!p1) {
-		p1 = p->uni_pgdir[n] = kmalloc_array(32, sizeof(u16 *),
+	अगर (!p1) अणु
+		p1 = p->uni_pgdir[n] = kदो_स्मृति_array(32, माप(u16 *),
 						     GFP_KERNEL);
-		if (!p1) return -ENOMEM;
-		for (i = 0; i < 32; i++)
-			p1[i] = NULL;
-	}
+		अगर (!p1) वापस -ENOMEM;
+		क्रम (i = 0; i < 32; i++)
+			p1[i] = शून्य;
+	पूर्ण
 
 	p2 = p1[n = (unicode >> 6) & 0x1f];
-	if (!p2) {
-		p2 = p1[n] = kmalloc_array(64, sizeof(u16), GFP_KERNEL);
-		if (!p2) return -ENOMEM;
-		memset(p2, 0xff, 64*sizeof(u16)); /* No glyphs for the characters (yet) */
-	}
+	अगर (!p2) अणु
+		p2 = p1[n] = kदो_स्मृति_array(64, माप(u16), GFP_KERNEL);
+		अगर (!p2) वापस -ENOMEM;
+		स_रखो(p2, 0xff, 64*माप(u16)); /* No glyphs क्रम the अक्षरacters (yet) */
+	पूर्ण
 
 	p2[unicode & 0x3f] = fontpos;
 	
 	p->sum += (fontpos << 20U) + unicode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Caller must hold the lock */
-static int con_do_clear_unimap(struct vc_data *vc)
-{
-	struct uni_pagedir *p, *q;
+अटल पूर्णांक con_करो_clear_unimap(काष्ठा vc_data *vc)
+अणु
+	काष्ठा uni_pagedir *p, *q;
 
 	p = *vc->vc_uni_pagedir_loc;
-	if (!p || --p->refcount) {
-		q = kzalloc(sizeof(*p), GFP_KERNEL);
-		if (!q) {
-			if (p)
+	अगर (!p || --p->refcount) अणु
+		q = kzalloc(माप(*p), GFP_KERNEL);
+		अगर (!q) अणु
+			अगर (p)
 				p->refcount++;
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		q->refcount=1;
 		*vc->vc_uni_pagedir_loc = q;
-	} else {
-		if (p == dflt) dflt = NULL;
+	पूर्ण अन्यथा अणु
+		अगर (p == dflt) dflt = शून्य;
 		p->refcount++;
 		p->sum = 0;
 		con_release_unimap(p);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int con_clear_unimap(struct vc_data *vc)
-{
-	int ret;
+पूर्णांक con_clear_unimap(काष्ठा vc_data *vc)
+अणु
+	पूर्णांक ret;
 	console_lock();
-	ret = con_do_clear_unimap(vc);
+	ret = con_करो_clear_unimap(vc);
 	console_unlock();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 	
-int con_set_unimap(struct vc_data *vc, ushort ct, struct unipair __user *list)
-{
-	int err = 0, err1, i;
-	struct uni_pagedir *p, *q;
-	struct unipair *unilist, *plist;
+पूर्णांक con_set_unimap(काष्ठा vc_data *vc, uलघु ct, काष्ठा unipair __user *list)
+अणु
+	पूर्णांक err = 0, err1, i;
+	काष्ठा uni_pagedir *p, *q;
+	काष्ठा unipair *unilist, *plist;
 
-	if (!ct)
-		return 0;
+	अगर (!ct)
+		वापस 0;
 
-	unilist = vmemdup_user(list, array_size(sizeof(struct unipair), ct));
-	if (IS_ERR(unilist))
-		return PTR_ERR(unilist);
+	unilist = vmemdup_user(list, array_size(माप(काष्ठा unipair), ct));
+	अगर (IS_ERR(unilist))
+		वापस PTR_ERR(unilist);
 
 	console_lock();
 
-	/* Save original vc_unipagdir_loc in case we allocate a new one */
+	/* Save original vc_unipagdir_loc in हाल we allocate a new one */
 	p = *vc->vc_uni_pagedir_loc;
 
-	if (!p) {
+	अगर (!p) अणु
 		err = -EINVAL;
 
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	
-	if (p->refcount > 1) {
-		int j, k;
+	अगर (p->refcount > 1) अणु
+		पूर्णांक j, k;
 		u16 **p1, *p2, l;
 		
-		err1 = con_do_clear_unimap(vc);
-		if (err1) {
+		err1 = con_करो_clear_unimap(vc);
+		अगर (err1) अणु
 			err = err1;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 		
 		/*
 		 * Since refcount was > 1, con_clear_unimap() allocated a
-		 * a new uni_pagedir for this vc.  Re: p != q
+		 * a new uni_pagedir क्रम this vc.  Re: p != q
 		 */
 		q = *vc->vc_uni_pagedir_loc;
 
 		/*
 		 * uni_pgdir is a 32*32*64 table with rows allocated
 		 * when its first entry is added.  The unicode value must
-		 * still be incremented for empty rows.  We are copying
+		 * still be incremented क्रम empty rows.  We are copying
 		 * entries from "p" (old) to "q" (new).
 		 */
 		l = 0;		/* unicode value */
-		for (i = 0; i < 32; i++) {
+		क्रम (i = 0; i < 32; i++) अणु
 		p1 = p->uni_pgdir[i];
-		if (p1)
-			for (j = 0; j < 32; j++) {
+		अगर (p1)
+			क्रम (j = 0; j < 32; j++) अणु
 			p2 = p1[j];
-			if (p2) {
-				for (k = 0; k < 64; k++, l++)
-				if (p2[k] != 0xffff) {
+			अगर (p2) अणु
+				क्रम (k = 0; k < 64; k++, l++)
+				अगर (p2[k] != 0xffff) अणु
 					/*
-					 * Found one, copy entry for unicode
+					 * Found one, copy entry क्रम unicode
 					 * l with fontpos value p2[k].
 					 */
 					err1 = con_insert_unipair(q, l, p2[k]);
-					if (err1) {
+					अगर (err1) अणु
 						p->refcount++;
 						*vc->vc_uni_pagedir_loc = p;
 						con_release_unimap(q);
-						kfree(q);
+						kमुक्त(q);
 						err = err1;
-						goto out_unlock;
-					}
-				}
-			} else {
-				/* Account for row of 64 empty entries */
+						जाओ out_unlock;
+					पूर्ण
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* Account क्रम row of 64 empty entries */
 				l += 64;
-			}
-		}
-		else
-			/* Account for empty table */
+			पूर्ण
+		पूर्ण
+		अन्यथा
+			/* Account क्रम empty table */
 			l += 32 * 64;
-		}
+		पूर्ण
 
 		/*
 		 * Finished copying font table, set vc_uni_pagedir to new table
 		 */
 		p = q;
-	} else if (p == dflt) {
-		dflt = NULL;
-	}
+	पूर्ण अन्यथा अगर (p == dflt) अणु
+		dflt = शून्य;
+	पूर्ण
 
 	/*
-	 * Insert user specified unicode pairs into new table.
+	 * Insert user specअगरied unicode pairs पूर्णांकo new table.
 	 */
-	for (plist = unilist; ct; ct--, plist++) {
+	क्रम (plist = unilist; ct; ct--, plist++) अणु
 		err1 = con_insert_unipair(p, plist->unicode, plist->fontpos);
-		if (err1)
+		अगर (err1)
 			err = err1;
-	}
+	पूर्ण
 	
 	/*
-	 * Merge with fontmaps of any other virtual consoles.
+	 * Merge with fonपंचांगaps of any other भव consoles.
 	 */
-	if (con_unify_unimap(vc, p))
-		goto out_unlock;
+	अगर (con_unअगरy_unimap(vc, p))
+		जाओ out_unlock;
 
-	for (i = 0; i <= 3; i++)
+	क्रम (i = 0; i <= 3; i++)
 		set_inverse_transl(vc, p, i); /* Update inverse translations */
 	set_inverse_trans_unicode(vc, p);
 
 out_unlock:
 	console_unlock();
-	kvfree(unilist);
-	return err;
-}
+	kvमुक्त(unilist);
+	वापस err;
+पूर्ण
 
 /**
- *	con_set_default_unimap	-	set default unicode map
+ *	con_set_शेष_unimap	-	set शेष unicode map
  *	@vc: the console we are updating
  *
- *	Loads the unimap for the hardware font, as defined in uni_hash.tbl.
+ *	Loads the unimap क्रम the hardware font, as defined in uni_hash.tbl.
  *	The representation used was the most compact I could come up
  *	with.  This routine is executed at video setup, and when the
  *	PIO_FONTRESET ioctl is called. 
  *
  *	The caller must hold the console lock
  */
-int con_set_default_unimap(struct vc_data *vc)
-{
-	int i, j, err = 0, err1;
+पूर्णांक con_set_शेष_unimap(काष्ठा vc_data *vc)
+अणु
+	पूर्णांक i, j, err = 0, err1;
 	u16 *q;
-	struct uni_pagedir *p;
+	काष्ठा uni_pagedir *p;
 
-	if (dflt) {
+	अगर (dflt) अणु
 		p = *vc->vc_uni_pagedir_loc;
-		if (p == dflt)
-			return 0;
+		अगर (p == dflt)
+			वापस 0;
 
 		dflt->refcount++;
 		*vc->vc_uni_pagedir_loc = dflt;
-		if (p && !--p->refcount) {
+		अगर (p && !--p->refcount) अणु
 			con_release_unimap(p);
-			kfree(p);
-		}
-		return 0;
-	}
+			kमुक्त(p);
+		पूर्ण
+		वापस 0;
+	पूर्ण
 	
-	/* The default font is always 256 characters */
+	/* The शेष font is always 256 अक्षरacters */
 
-	err = con_do_clear_unimap(vc);
-	if (err)
-		return err;
+	err = con_करो_clear_unimap(vc);
+	अगर (err)
+		वापस err;
     
 	p = *vc->vc_uni_pagedir_loc;
 	q = dfont_unitable;
 	
-	for (i = 0; i < 256; i++)
-		for (j = dfont_unicount[i]; j; j--) {
+	क्रम (i = 0; i < 256; i++)
+		क्रम (j = dfont_unicount[i]; j; j--) अणु
 			err1 = con_insert_unipair(p, *(q++), i);
-			if (err1)
+			अगर (err1)
 				err = err1;
-		}
+		पूर्ण
 			
-	if (con_unify_unimap(vc, p)) {
+	अगर (con_unअगरy_unimap(vc, p)) अणु
 		dflt = *vc->vc_uni_pagedir_loc;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	for (i = 0; i <= 3; i++)
+	क्रम (i = 0; i <= 3; i++)
 		set_inverse_transl(vc, p, i);	/* Update all inverse translations */
 	set_inverse_trans_unicode(vc, p);
 	dflt = p;
-	return err;
-}
-EXPORT_SYMBOL(con_set_default_unimap);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(con_set_शेष_unimap);
 
 /**
  *	con_copy_unimap		-	copy unimap between two vts
@@ -712,145 +713,145 @@ EXPORT_SYMBOL(con_set_default_unimap);
  *
  *	The caller must hold the console lock when invoking this method
  */
-int con_copy_unimap(struct vc_data *dst_vc, struct vc_data *src_vc)
-{
-	struct uni_pagedir *q;
+पूर्णांक con_copy_unimap(काष्ठा vc_data *dst_vc, काष्ठा vc_data *src_vc)
+अणु
+	काष्ठा uni_pagedir *q;
 
-	if (!*src_vc->vc_uni_pagedir_loc)
-		return -EINVAL;
-	if (*dst_vc->vc_uni_pagedir_loc == *src_vc->vc_uni_pagedir_loc)
-		return 0;
-	con_free_unimap(dst_vc);
+	अगर (!*src_vc->vc_uni_pagedir_loc)
+		वापस -EINVAL;
+	अगर (*dst_vc->vc_uni_pagedir_loc == *src_vc->vc_uni_pagedir_loc)
+		वापस 0;
+	con_मुक्त_unimap(dst_vc);
 	q = *src_vc->vc_uni_pagedir_loc;
 	q->refcount++;
 	*dst_vc->vc_uni_pagedir_loc = q;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(con_copy_unimap);
 
 /*
  *	con_get_unimap		-	get the unicode map
  *
- *	Read the console unicode data for this console. Called from the ioctl
+ *	Read the console unicode data क्रम this console. Called from the ioctl
  *	handlers.
  */
-int con_get_unimap(struct vc_data *vc, ushort ct, ushort __user *uct, struct unipair __user *list)
-{
-	int i, j, k, ret = 0;
-	ushort ect;
+पूर्णांक con_get_unimap(काष्ठा vc_data *vc, uलघु ct, uलघु __user *uct, काष्ठा unipair __user *list)
+अणु
+	पूर्णांक i, j, k, ret = 0;
+	uलघु ect;
 	u16 **p1, *p2;
-	struct uni_pagedir *p;
-	struct unipair *unilist;
+	काष्ठा uni_pagedir *p;
+	काष्ठा unipair *unilist;
 
-	unilist = kvmalloc_array(ct, sizeof(struct unipair), GFP_KERNEL);
-	if (!unilist)
-		return -ENOMEM;
+	unilist = kvदो_स्मृति_array(ct, माप(काष्ठा unipair), GFP_KERNEL);
+	अगर (!unilist)
+		वापस -ENOMEM;
 
 	console_lock();
 
 	ect = 0;
-	if (*vc->vc_uni_pagedir_loc) {
+	अगर (*vc->vc_uni_pagedir_loc) अणु
 		p = *vc->vc_uni_pagedir_loc;
-		for (i = 0; i < 32; i++) {
+		क्रम (i = 0; i < 32; i++) अणु
 		p1 = p->uni_pgdir[i];
-		if (p1)
-			for (j = 0; j < 32; j++) {
+		अगर (p1)
+			क्रम (j = 0; j < 32; j++) अणु
 			p2 = *(p1++);
-			if (p2)
-				for (k = 0; k < 64; k++, p2++) {
-					if (*p2 >= MAX_GLYPH)
-						continue;
-					if (ect < ct) {
+			अगर (p2)
+				क्रम (k = 0; k < 64; k++, p2++) अणु
+					अगर (*p2 >= MAX_GLYPH)
+						जारी;
+					अगर (ect < ct) अणु
 						unilist[ect].unicode =
 							(i<<11)+(j<<6)+k;
 						unilist[ect].fontpos = *p2;
-					}
+					पूर्ण
 					ect++;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	console_unlock();
-	if (copy_to_user(list, unilist, min(ect, ct) * sizeof(struct unipair)))
+	अगर (copy_to_user(list, unilist, min(ect, ct) * माप(काष्ठा unipair)))
 		ret = -EFAULT;
 	put_user(ect, uct);
-	kvfree(unilist);
-	return ret ? ret : (ect <= ct) ? 0 : -ENOMEM;
-}
+	kvमुक्त(unilist);
+	वापस ret ? ret : (ect <= ct) ? 0 : -ENOMEM;
+पूर्ण
 
 /*
  * Always use USER_MAP. These functions are used by the keyboard,
- * which shouldn't be affected by G0/G1 switching, etc.
- * If the user map still contains default values, i.e. the
+ * which shouldn't be affected by G0/G1 चयनing, etc.
+ * If the user map still contains शेष values, i.e. the
  * direct-to-font mapping, then assume user is using Latin1.
  *
- * FIXME: at some point we need to decide if we want to lock the table
- * update element itself via the keyboard_event_lock for consistency with the
+ * FIXME: at some poपूर्णांक we need to decide अगर we want to lock the table
+ * update element itself via the keyboard_event_lock क्रम consistency with the
  * keyboard driver as well as the consoles
  */
-/* may be called during an interrupt */
-u32 conv_8bit_to_uni(unsigned char c)
-{
-	unsigned short uni = translations[USER_MAP][c];
-	return uni == (0xf000 | c) ? c : uni;
-}
+/* may be called during an पूर्णांकerrupt */
+u32 conv_8bit_to_uni(अचिन्हित अक्षर c)
+अणु
+	अचिन्हित लघु uni = translations[USER_MAP][c];
+	वापस uni == (0xf000 | c) ? c : uni;
+पूर्ण
 
-int conv_uni_to_8bit(u32 uni)
-{
-	int c;
-	for (c = 0; c < 0x100; c++)
-		if (translations[USER_MAP][c] == uni ||
+पूर्णांक conv_uni_to_8bit(u32 uni)
+अणु
+	पूर्णांक c;
+	क्रम (c = 0; c < 0x100; c++)
+		अगर (translations[USER_MAP][c] == uni ||
 		   (translations[USER_MAP][c] == (c | 0xf000) && uni == c))
-			return c;
-	return -1;
-}
+			वापस c;
+	वापस -1;
+पूर्ण
 
-int
-conv_uni_to_pc(struct vc_data *conp, long ucs) 
-{
-	int h;
+पूर्णांक
+conv_uni_to_pc(काष्ठा vc_data *conp, दीर्घ ucs) 
+अणु
+	पूर्णांक h;
 	u16 **p1, *p2;
-	struct uni_pagedir *p;
+	काष्ठा uni_pagedir *p;
   
-	/* Only 16-bit codes supported at this time */
-	if (ucs > 0xffff)
-		return -4;		/* Not found */
-	else if (ucs < 0x20)
-		return -1;		/* Not a printable character */
-	else if (ucs == 0xfeff || (ucs >= 0x200b && ucs <= 0x200f))
-		return -2;			/* Zero-width space */
+	/* Only 16-bit codes supported at this समय */
+	अगर (ucs > 0xffff)
+		वापस -4;		/* Not found */
+	अन्यथा अगर (ucs < 0x20)
+		वापस -1;		/* Not a prपूर्णांकable अक्षरacter */
+	अन्यथा अगर (ucs == 0xfeff || (ucs >= 0x200b && ucs <= 0x200f))
+		वापस -2;			/* Zero-width space */
 	/*
-	 * UNI_DIRECT_BASE indicates the start of the region in the User Zone
+	 * UNI_सूचीECT_BASE indicates the start of the region in the User Zone
 	 * which always has a 1:1 mapping to the currently loaded font.  The
-	 * UNI_DIRECT_MASK indicates the bit span of the region.
+	 * UNI_सूचीECT_MASK indicates the bit span of the region.
 	 */
-	else if ((ucs & ~UNI_DIRECT_MASK) == UNI_DIRECT_BASE)
-		return ucs & UNI_DIRECT_MASK;
+	अन्यथा अगर ((ucs & ~UNI_सूचीECT_MASK) == UNI_सूचीECT_BASE)
+		वापस ucs & UNI_सूचीECT_MASK;
   
-	if (!*conp->vc_uni_pagedir_loc)
-		return -3;
+	अगर (!*conp->vc_uni_pagedir_loc)
+		वापस -3;
 
 	p = *conp->vc_uni_pagedir_loc;
-	if ((p1 = p->uni_pgdir[ucs >> 11]) &&
+	अगर ((p1 = p->uni_pgdir[ucs >> 11]) &&
 	    (p2 = p1[(ucs >> 6) & 0x1f]) &&
 	    (h = p2[ucs & 0x3f]) < MAX_GLYPH)
-		return h;
+		वापस h;
 
-	return -4;		/* not found */
-}
+	वापस -4;		/* not found */
+पूर्ण
 
 /*
- * This is called at sys_setup time, after memory and the console are
- * initialized.  It must be possible to call kmalloc(..., GFP_KERNEL)
+ * This is called at sys_setup समय, after memory and the console are
+ * initialized.  It must be possible to call kदो_स्मृति(..., GFP_KERNEL)
  * from this function, hence the call from sys_setup.
  */
-void __init 
-console_map_init(void)
-{
-	int i;
+व्योम __init 
+console_map_init(व्योम)
+अणु
+	पूर्णांक i;
 	
-	for (i = 0; i < MAX_NR_CONSOLES; i++)
-		if (vc_cons_allocated(i) && !*vc_cons[i].d->vc_uni_pagedir_loc)
-			con_set_default_unimap(vc_cons[i].d);
-}
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++)
+		अगर (vc_cons_allocated(i) && !*vc_cons[i].d->vc_uni_pagedir_loc)
+			con_set_शेष_unimap(vc_cons[i].d);
+पूर्ण
 

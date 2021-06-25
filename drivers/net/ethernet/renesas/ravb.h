@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Renesas Ethernet AVB device driver
  *
  * Copyright (C) 2014-2015 Renesas Electronics Corporation
@@ -8,44 +9,44 @@
  * Based on the SuperH Ethernet driver
  */
 
-#ifndef __RAVB_H__
-#define __RAVB_H__
+#अगर_अघोषित __RAVB_H__
+#घोषणा __RAVB_H__
 
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mdio-bitbang.h>
-#include <linux/netdevice.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
-#include <linux/ptp_clock_kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mdio-bitbang.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
 
-#define BE_TX_RING_SIZE	64	/* TX ring size for Best Effort */
-#define BE_RX_RING_SIZE	1024	/* RX ring size for Best Effort */
-#define NC_TX_RING_SIZE	64	/* TX ring size for Network Control */
-#define NC_RX_RING_SIZE	64	/* RX ring size for Network Control */
-#define BE_TX_RING_MIN	64
-#define BE_RX_RING_MIN	64
-#define BE_TX_RING_MAX	1024
-#define BE_RX_RING_MAX	2048
+#घोषणा BE_TX_RING_SIZE	64	/* TX ring size क्रम Best Efक्रमt */
+#घोषणा BE_RX_RING_SIZE	1024	/* RX ring size क्रम Best Efक्रमt */
+#घोषणा NC_TX_RING_SIZE	64	/* TX ring size क्रम Network Control */
+#घोषणा NC_RX_RING_SIZE	64	/* RX ring size क्रम Network Control */
+#घोषणा BE_TX_RING_MIN	64
+#घोषणा BE_RX_RING_MIN	64
+#घोषणा BE_TX_RING_MAX	1024
+#घोषणा BE_RX_RING_MAX	2048
 
-#define PKT_BUF_SZ	1538
+#घोषणा PKT_BUF_SZ	1538
 
 /* Driver's parameters */
-#define RAVB_ALIGN	128
+#घोषणा RAVB_ALIGN	128
 
-/* Hardware time stamp */
-#define RAVB_TXTSTAMP_VALID	0x00000001	/* TX timestamp valid */
-#define RAVB_TXTSTAMP_ENABLED	0x00000010	/* Enable TX timestamping */
+/* Hardware समय stamp */
+#घोषणा RAVB_TXTSTAMP_VALID	0x00000001	/* TX बारtamp valid */
+#घोषणा RAVB_TXTSTAMP_ENABLED	0x00000010	/* Enable TX बारtamping */
 
-#define RAVB_RXTSTAMP_VALID	0x00000001	/* RX timestamp valid */
-#define RAVB_RXTSTAMP_TYPE	0x00000006	/* RX type mask */
-#define RAVB_RXTSTAMP_TYPE_V2_L2_EVENT 0x00000002
-#define RAVB_RXTSTAMP_TYPE_ALL	0x00000006
-#define RAVB_RXTSTAMP_ENABLED	0x00000010	/* Enable RX timestamping */
+#घोषणा RAVB_RXTSTAMP_VALID	0x00000001	/* RX बारtamp valid */
+#घोषणा RAVB_RXTSTAMP_TYPE	0x00000006	/* RX type mask */
+#घोषणा RAVB_RXTSTAMP_TYPE_V2_L2_EVENT 0x00000002
+#घोषणा RAVB_RXTSTAMP_TYPE_ALL	0x00000006
+#घोषणा RAVB_RXTSTAMP_ENABLED	0x00000010	/* Enable RX बारtamping */
 
-enum ravb_reg {
-	/* AVB-DMAC registers */
+क्रमागत ravb_reg अणु
+	/* AVB-DMAC रेजिस्टरs */
 	CCC	= 0x0000,
 	DBAT	= 0x0004,
 	DLR	= 0x0008,
@@ -165,7 +166,7 @@ enum ravb_reg {
 	GTO2	= 0x03A8,
 	GIC	= 0x03AC,
 	GIS	= 0x03B0,
-	GCPT	= 0x03B4,	/* Documented for R-Car Gen3 only */
+	GCPT	= 0x03B4,	/* Documented क्रम R-Car Gen3 only */
 	GCT0	= 0x03B8,
 	GCT1	= 0x03BC,
 	GCT2	= 0x03C0,
@@ -179,7 +180,7 @@ enum ravb_reg {
 	TIE	= 0x0478,	/* R-Car Gen3 only */
 	TID	= 0x047c,	/* R-Car Gen3 only */
 
-	/* E-MAC registers */
+	/* E-MAC रेजिस्टरs */
 	ECMR	= 0x0500,
 	RFLR	= 0x0508,
 	ECSR	= 0x0510,
@@ -200,12 +201,12 @@ enum ravb_reg {
 	TLFRCR	= 0x0758,
 	RFCR	= 0x0760,
 	MAFCR	= 0x0778,
-};
+पूर्ण;
 
 
 /* Register bits of the Ethernet AVB */
 /* CCC */
-enum CCC_BIT {
+क्रमागत CCC_BIT अणु
 	CCC_OPC		= 0x00000003,
 	CCC_OPC_RESET	= 0x00000000,
 	CCC_OPC_CONFIG	= 0x00000001,
@@ -217,50 +218,50 @@ enum CCC_BIT {
 	CCC_CSEL_ETH_TX	= 0x00020000,
 	CCC_CSEL_GMII_REF = 0x00030000,
 	CCC_LBME	= 0x01000000,
-};
+पूर्ण;
 
 /* CSR */
-enum CSR_BIT {
+क्रमागत CSR_BIT अणु
 	CSR_OPS		= 0x0000000F,
 	CSR_OPS_RESET	= 0x00000001,
 	CSR_OPS_CONFIG	= 0x00000002,
 	CSR_OPS_OPERATION = 0x00000004,
-	CSR_OPS_STANDBY	= 0x00000008,	/* Documented for R-Car Gen3 only */
+	CSR_OPS_STANDBY	= 0x00000008,	/* Documented क्रम R-Car Gen3 only */
 	CSR_DTS		= 0x00000100,
 	CSR_TPO0	= 0x00010000,
 	CSR_TPO1	= 0x00020000,
 	CSR_TPO2	= 0x00040000,
 	CSR_TPO3	= 0x00080000,
 	CSR_RPO		= 0x00100000,
-};
+पूर्ण;
 
 /* ESR */
-enum ESR_BIT {
+क्रमागत ESR_BIT अणु
 	ESR_EQN		= 0x0000001F,
 	ESR_ET		= 0x00000F00,
 	ESR_EIL		= 0x00001000,
-};
+पूर्ण;
 
 /* APSR (R-Car Gen3 only) */
-enum APSR_BIT {
-	APSR_MEMS	= 0x00000002,	/* Undocumented */
+क्रमागत APSR_BIT अणु
+	APSR_MEMS	= 0x00000002,	/* Unकरोcumented */
 	APSR_CMSW	= 0x00000010,
 	APSR_RDM	= 0x00002000,
 	APSR_TDM	= 0x00004000,
-};
+पूर्ण;
 
 /* RCR */
-enum RCR_BIT {
+क्रमागत RCR_BIT अणु
 	RCR_EFFS	= 0x00000001,
 	RCR_ENCF	= 0x00000002,
 	RCR_ESF		= 0x0000000C,
 	RCR_ETS0	= 0x00000010,
 	RCR_ETS2	= 0x00000020,
 	RCR_RFCL	= 0x1FFF0000,
-};
+पूर्ण;
 
 /* RQC0/1/2/3/4 */
-enum RQC_BIT {
+क्रमागत RQC_BIT अणु
 	RQC_RSM0	= 0x00000003,
 	RQC_UFCC0	= 0x00000030,
 	RQC_RSM1	= 0x00000300,
@@ -269,59 +270,59 @@ enum RQC_BIT {
 	RQC_UFCC2	= 0x00300000,
 	RQC_RSM3	= 0x03000000,
 	RQC_UFCC3	= 0x30000000,
-};
+पूर्ण;
 
 /* RPC */
-enum RPC_BIT {
+क्रमागत RPC_BIT अणु
 	RPC_PCNT	= 0x00000700,
 	RPC_DCNT	= 0x00FF0000,
-};
+पूर्ण;
 
 /* UFCW */
-enum UFCW_BIT {
+क्रमागत UFCW_BIT अणु
 	UFCW_WL0	= 0x0000003F,
 	UFCW_WL1	= 0x00003F00,
 	UFCW_WL2	= 0x003F0000,
 	UFCW_WL3	= 0x3F000000,
-};
+पूर्ण;
 
 /* UFCS */
-enum UFCS_BIT {
+क्रमागत UFCS_BIT अणु
 	UFCS_SL0	= 0x0000003F,
 	UFCS_SL1	= 0x00003F00,
 	UFCS_SL2	= 0x003F0000,
 	UFCS_SL3	= 0x3F000000,
-};
+पूर्ण;
 
 /* UFCV0/1/2/3/4 */
-enum UFCV_BIT {
+क्रमागत UFCV_BIT अणु
 	UFCV_CV0	= 0x0000003F,
 	UFCV_CV1	= 0x00003F00,
 	UFCV_CV2	= 0x003F0000,
 	UFCV_CV3	= 0x3F000000,
-};
+पूर्ण;
 
 /* UFCD0/1/2/3/4 */
-enum UFCD_BIT {
+क्रमागत UFCD_BIT अणु
 	UFCD_DV0	= 0x0000003F,
 	UFCD_DV1	= 0x00003F00,
 	UFCD_DV2	= 0x003F0000,
 	UFCD_DV3	= 0x3F000000,
-};
+पूर्ण;
 
 /* SFO */
-enum SFO_BIT {
+क्रमागत SFO_BIT अणु
 	SFO_FBP		= 0x0000003F,
-};
+पूर्ण;
 
 /* RTC */
-enum RTC_BIT {
+क्रमागत RTC_BIT अणु
 	RTC_MFL0	= 0x00000FFF,
 	RTC_MFL1	= 0x0FFF0000,
-};
+पूर्ण;
 
 /* TGC */
-enum TGC_BIT {
+क्रमागत TGC_BIT अणु
 	TGC_TSM0	= 0x00000001,
 	TGC_TSM1	= 0x00000002,
 	TGC_TSM2	= 0x00000004,
@@ -334,33 +335,33 @@ enum TGC_BIT {
 	TGC_TBD1	= 0x00003000,
 	TGC_TBD2	= 0x00030000,
 	TGC_TBD3	= 0x00300000,
-};
+पूर्ण;
 
 /* TCCR */
-enum TCCR_BIT {
+क्रमागत TCCR_BIT अणु
 	TCCR_TSRQ0	= 0x00000001,
 	TCCR_TSRQ1	= 0x00000002,
 	TCCR_TSRQ2	= 0x00000004,
 	TCCR_TSRQ3	= 0x00000008,
 	TCCR_TFEN	= 0x00000100,
 	TCCR_TFR	= 0x00000200,
-};
+पूर्ण;
 
 /* TSR */
-enum TSR_BIT {
+क्रमागत TSR_BIT अणु
 	TSR_CCS0	= 0x00000003,
 	TSR_CCS1	= 0x0000000C,
 	TSR_TFFL	= 0x00000700,
-};
+पूर्ण;
 
 /* TFA2 */
-enum TFA2_BIT {
+क्रमागत TFA2_BIT अणु
 	TFA2_TSV	= 0x0000FFFF,
 	TFA2_TST	= 0x03FF0000,
-};
+पूर्ण;
 
 /* DIC */
-enum DIC_BIT {
+क्रमागत DIC_BIT अणु
 	DIC_DPE1	= 0x00000002,
 	DIC_DPE2	= 0x00000004,
 	DIC_DPE3	= 0x00000008,
@@ -376,10 +377,10 @@ enum DIC_BIT {
 	DIC_DPE13	= 0x00002000,
 	DIC_DPE14	= 0x00004000,
 	DIC_DPE15	= 0x00008000,
-};
+पूर्ण;
 
 /* DIS */
-enum DIS_BIT {
+क्रमागत DIS_BIT अणु
 	DIS_DPF1	= 0x00000002,
 	DIS_DPF2	= 0x00000004,
 	DIS_DPF3	= 0x00000008,
@@ -395,10 +396,10 @@ enum DIS_BIT {
 	DIS_DPF13	= 0x00002000,
 	DIS_DPF14	= 0x00004000,
 	DIS_DPF15	= 0x00008000,
-};
+पूर्ण;
 
 /* EIC */
-enum EIC_BIT {
+क्रमागत EIC_BIT अणु
 	EIC_MREE	= 0x00000001,
 	EIC_MTEE	= 0x00000002,
 	EIC_QEE		= 0x00000004,
@@ -408,10 +409,10 @@ enum EIC_BIT {
 	EIC_CULE0	= 0x00000040,
 	EIC_CULE1	= 0x00000080,
 	EIC_TFFE	= 0x00000100,
-};
+पूर्ण;
 
 /* EIS */
-enum EIS_BIT {
+क्रमागत EIS_BIT अणु
 	EIS_MREF	= 0x00000001,
 	EIS_MTEF	= 0x00000002,
 	EIS_QEF		= 0x00000004,
@@ -423,10 +424,10 @@ enum EIS_BIT {
 	EIS_TFFF	= 0x00000100,
 	EIS_QFS		= 0x00010000,
 	EIS_RESERVED	= (GENMASK(31, 17) | GENMASK(15, 11)),
-};
+पूर्ण;
 
 /* RIC0 */
-enum RIC0_BIT {
+क्रमागत RIC0_BIT अणु
 	RIC0_FRE0	= 0x00000001,
 	RIC0_FRE1	= 0x00000002,
 	RIC0_FRE2	= 0x00000004,
@@ -445,10 +446,10 @@ enum RIC0_BIT {
 	RIC0_FRE15	= 0x00008000,
 	RIC0_FRE16	= 0x00010000,
 	RIC0_FRE17	= 0x00020000,
-};
+पूर्ण;
 
 /* RIC0 */
-enum RIS0_BIT {
+क्रमागत RIS0_BIT अणु
 	RIS0_FRF0	= 0x00000001,
 	RIS0_FRF1	= 0x00000002,
 	RIS0_FRF2	= 0x00000004,
@@ -468,20 +469,20 @@ enum RIS0_BIT {
 	RIS0_FRF16	= 0x00010000,
 	RIS0_FRF17	= 0x00020000,
 	RIS0_RESERVED	= GENMASK(31, 18),
-};
+पूर्ण;
 
 /* RIC1 */
-enum RIC1_BIT {
+क्रमागत RIC1_BIT अणु
 	RIC1_RFWE	= 0x80000000,
-};
+पूर्ण;
 
 /* RIS1 */
-enum RIS1_BIT {
+क्रमागत RIS1_BIT अणु
 	RIS1_RFWF	= 0x80000000,
-};
+पूर्ण;
 
 /* RIC2 */
-enum RIC2_BIT {
+क्रमागत RIC2_BIT अणु
 	RIC2_QFE0	= 0x00000001,
 	RIC2_QFE1	= 0x00000002,
 	RIC2_QFE2	= 0x00000004,
@@ -501,10 +502,10 @@ enum RIC2_BIT {
 	RIC2_QFE16	= 0x00010000,
 	RIC2_QFE17	= 0x00020000,
 	RIC2_RFFE	= 0x80000000,
-};
+पूर्ण;
 
 /* RIS2 */
-enum RIS2_BIT {
+क्रमागत RIS2_BIT अणु
 	RIS2_QFF0	= 0x00000001,
 	RIS2_QFF1	= 0x00000002,
 	RIS2_QFF2	= 0x00000004,
@@ -525,29 +526,29 @@ enum RIS2_BIT {
 	RIS2_QFF17	= 0x00020000,
 	RIS2_RFFF	= 0x80000000,
 	RIS2_RESERVED	= GENMASK(30, 18),
-};
+पूर्ण;
 
 /* TIC */
-enum TIC_BIT {
-	TIC_FTE0	= 0x00000001,	/* Documented for R-Car Gen3 only */
-	TIC_FTE1	= 0x00000002,	/* Documented for R-Car Gen3 only */
+क्रमागत TIC_BIT अणु
+	TIC_FTE0	= 0x00000001,	/* Documented क्रम R-Car Gen3 only */
+	TIC_FTE1	= 0x00000002,	/* Documented क्रम R-Car Gen3 only */
 	TIC_TFUE	= 0x00000100,
 	TIC_TFWE	= 0x00000200,
-};
+पूर्ण;
 
 /* TIS */
-enum TIS_BIT {
-	TIS_FTF0	= 0x00000001,	/* Documented for R-Car Gen3 only */
-	TIS_FTF1	= 0x00000002,	/* Documented for R-Car Gen3 only */
+क्रमागत TIS_BIT अणु
+	TIS_FTF0	= 0x00000001,	/* Documented क्रम R-Car Gen3 only */
+	TIS_FTF1	= 0x00000002,	/* Documented क्रम R-Car Gen3 only */
 	TIS_TFUF	= 0x00000100,
 	TIS_TFWF	= 0x00000200,
 	TIS_RESERVED	= (GENMASK(31, 20) | GENMASK(15, 12) | GENMASK(7, 4))
-};
+पूर्ण;
 
 /* ISS */
-enum ISS_BIT {
-	ISS_FRS		= 0x00000001,	/* Documented for R-Car Gen3 only */
-	ISS_FTS		= 0x00000004,	/* Documented for R-Car Gen3 only */
+क्रमागत ISS_BIT अणु
+	ISS_FRS		= 0x00000001,	/* Documented क्रम R-Car Gen3 only */
+	ISS_FTS		= 0x00000004,	/* Documented क्रम R-Car Gen3 only */
 	ISS_ES		= 0x00000040,
 	ISS_MS		= 0x00000080,
 	ISS_TFUS	= 0x00000100,
@@ -569,57 +570,57 @@ enum ISS_BIT {
 	ISS_DPS13	= 0x20000000,
 	ISS_DPS14	= 0x40000000,
 	ISS_DPS15	= 0x80000000,
-};
+पूर्ण;
 
 /* CIE (R-Car Gen3 only) */
-enum CIE_BIT {
+क्रमागत CIE_BIT अणु
 	CIE_CRIE	= 0x00000001,
 	CIE_CTIE	= 0x00000100,
 	CIE_RQFM	= 0x00010000,
 	CIE_CL0M	= 0x00020000,
 	CIE_RFWL	= 0x00040000,
 	CIE_RFFL	= 0x00080000,
-};
+पूर्ण;
 
 /* GCCR */
-enum GCCR_BIT {
+क्रमागत GCCR_BIT अणु
 	GCCR_TCR	= 0x00000003,
 	GCCR_TCR_NOREQ	= 0x00000000, /* No request */
-	GCCR_TCR_RESET	= 0x00000001, /* gPTP/AVTP presentation timer reset */
+	GCCR_TCR_RESET	= 0x00000001, /* gPTP/AVTP presentation समयr reset */
 	GCCR_TCR_CAPTURE = 0x00000003, /* Capture value set in GCCR.TCSS */
 	GCCR_LTO	= 0x00000004,
 	GCCR_LTI	= 0x00000008,
 	GCCR_LPTC	= 0x00000010,
 	GCCR_LMTT	= 0x00000020,
 	GCCR_TCSS	= 0x00000300,
-	GCCR_TCSS_GPTP	= 0x00000000,	/* gPTP timer value */
-	GCCR_TCSS_ADJGPTP = 0x00000100, /* Adjusted gPTP timer value */
-	GCCR_TCSS_AVTP	= 0x00000200,	/* AVTP presentation time value */
-};
+	GCCR_TCSS_GPTP	= 0x00000000,	/* gPTP समयr value */
+	GCCR_TCSS_ADJGPTP = 0x00000100, /* Adjusted gPTP समयr value */
+	GCCR_TCSS_AVTP	= 0x00000200,	/* AVTP presentation समय value */
+पूर्ण;
 
 /* GTI */
-enum GTI_BIT {
+क्रमागत GTI_BIT अणु
 	GTI_TIV		= 0x0FFFFFFF,
-};
+पूर्ण;
 
-#define GTI_TIV_MAX	GTI_TIV
-#define GTI_TIV_MIN	0x20
+#घोषणा GTI_TIV_MAX	GTI_TIV
+#घोषणा GTI_TIV_MIN	0x20
 
 /* GIC */
-enum GIC_BIT {
-	GIC_PTCE	= 0x00000001,	/* Documented for R-Car Gen3 only */
+क्रमागत GIC_BIT अणु
+	GIC_PTCE	= 0x00000001,	/* Documented क्रम R-Car Gen3 only */
 	GIC_PTME	= 0x00000004,
-};
+पूर्ण;
 
 /* GIS */
-enum GIS_BIT {
-	GIS_PTCF	= 0x00000001,	/* Documented for R-Car Gen3 only */
+क्रमागत GIS_BIT अणु
+	GIS_PTCF	= 0x00000001,	/* Documented क्रम R-Car Gen3 only */
 	GIS_PTMF	= 0x00000004,
 	GIS_RESERVED	= GENMASK(15, 10),
-};
+पूर्ण;
 
 /* GIE (R-Car Gen3 only) */
-enum GIE_BIT {
+क्रमागत GIE_BIT अणु
 	GIE_PTCS	= 0x00000001,
 	GIE_PTOS	= 0x00000002,
 	GIE_PTMS0	= 0x00000004,
@@ -646,10 +647,10 @@ enum GIE_BIT {
 	GIE_ATCS13	= 0x20000000,
 	GIE_ATCS14	= 0x40000000,
 	GIE_ATCS15	= 0x80000000,
-};
+पूर्ण;
 
 /* GID (R-Car Gen3 only) */
-enum GID_BIT {
+क्रमागत GID_BIT अणु
 	GID_PTCD	= 0x00000001,
 	GID_PTOD	= 0x00000002,
 	GID_PTMD0	= 0x00000004,
@@ -676,10 +677,10 @@ enum GID_BIT {
 	GID_ATCD13	= 0x20000000,
 	GID_ATCD14	= 0x40000000,
 	GID_ATCD15	= 0x80000000,
-};
+पूर्ण;
 
 /* RIE0 (R-Car Gen3 only) */
-enum RIE0_BIT {
+क्रमागत RIE0_BIT अणु
 	RIE0_FRS0	= 0x00000001,
 	RIE0_FRS1	= 0x00000002,
 	RIE0_FRS2	= 0x00000004,
@@ -698,10 +699,10 @@ enum RIE0_BIT {
 	RIE0_FRS15	= 0x00008000,
 	RIE0_FRS16	= 0x00010000,
 	RIE0_FRS17	= 0x00020000,
-};
+पूर्ण;
 
 /* RID0 (R-Car Gen3 only) */
-enum RID0_BIT {
+क्रमागत RID0_BIT अणु
 	RID0_FRD0	= 0x00000001,
 	RID0_FRD1	= 0x00000002,
 	RID0_FRD2	= 0x00000004,
@@ -720,10 +721,10 @@ enum RID0_BIT {
 	RID0_FRD15	= 0x00008000,
 	RID0_FRD16	= 0x00010000,
 	RID0_FRD17	= 0x00020000,
-};
+पूर्ण;
 
 /* RIE2 (R-Car Gen3 only) */
-enum RIE2_BIT {
+क्रमागत RIE2_BIT अणु
 	RIE2_QFS0	= 0x00000001,
 	RIE2_QFS1	= 0x00000002,
 	RIE2_QFS2	= 0x00000004,
@@ -743,10 +744,10 @@ enum RIE2_BIT {
 	RIE2_QFS16	= 0x00010000,
 	RIE2_QFS17	= 0x00020000,
 	RIE2_RFFS	= 0x80000000,
-};
+पूर्ण;
 
 /* RID2 (R-Car Gen3 only) */
-enum RID2_BIT {
+क्रमागत RID2_BIT अणु
 	RID2_QFD0	= 0x00000001,
 	RID2_QFD1	= 0x00000002,
 	RID2_QFD2	= 0x00000004,
@@ -766,10 +767,10 @@ enum RID2_BIT {
 	RID2_QFD16	= 0x00010000,
 	RID2_QFD17	= 0x00020000,
 	RID2_RFFD	= 0x80000000,
-};
+पूर्ण;
 
 /* TIE (R-Car Gen3 only) */
-enum TIE_BIT {
+क्रमागत TIE_BIT अणु
 	TIE_FTS0	= 0x00000001,
 	TIE_FTS1	= 0x00000002,
 	TIE_FTS2	= 0x00000004,
@@ -782,10 +783,10 @@ enum TIE_BIT {
 	TIE_TDPS1	= 0x00020000,
 	TIE_TDPS2	= 0x00040000,
 	TIE_TDPS3	= 0x00080000,
-};
+पूर्ण;
 
 /* TID (R-Car Gen3 only) */
-enum TID_BIT {
+क्रमागत TID_BIT अणु
 	TID_FTD0	= 0x00000001,
 	TID_FTD1	= 0x00000002,
 	TID_FTD2	= 0x00000004,
@@ -798,81 +799,81 @@ enum TID_BIT {
 	TID_TDPD1	= 0x00020000,
 	TID_TDPD2	= 0x00040000,
 	TID_TDPD3	= 0x00080000,
-};
+पूर्ण;
 
 /* ECMR */
-enum ECMR_BIT {
+क्रमागत ECMR_BIT अणु
 	ECMR_PRM	= 0x00000001,
 	ECMR_DM		= 0x00000002,
 	ECMR_TE		= 0x00000020,
 	ECMR_RE		= 0x00000040,
 	ECMR_MPDE	= 0x00000200,
-	ECMR_TXF	= 0x00010000,	/* Documented for R-Car Gen3 only */
+	ECMR_TXF	= 0x00010000,	/* Documented क्रम R-Car Gen3 only */
 	ECMR_RXF	= 0x00020000,
 	ECMR_PFR	= 0x00040000,
-	ECMR_ZPF	= 0x00080000,	/* Documented for R-Car Gen3 only */
+	ECMR_ZPF	= 0x00080000,	/* Documented क्रम R-Car Gen3 only */
 	ECMR_RZPF	= 0x00100000,
 	ECMR_DPAD	= 0x00200000,
 	ECMR_RCSC	= 0x00800000,
 	ECMR_TRCCM	= 0x04000000,
-};
+पूर्ण;
 
 /* ECSR */
-enum ECSR_BIT {
+क्रमागत ECSR_BIT अणु
 	ECSR_ICD	= 0x00000001,
 	ECSR_MPD	= 0x00000002,
 	ECSR_LCHNG	= 0x00000004,
 	ECSR_PHYI	= 0x00000008,
-};
+पूर्ण;
 
 /* ECSIPR */
-enum ECSIPR_BIT {
+क्रमागत ECSIPR_BIT अणु
 	ECSIPR_ICDIP	= 0x00000001,
 	ECSIPR_MPDIP	= 0x00000002,
 	ECSIPR_LCHNGIP	= 0x00000004,
-};
+पूर्ण;
 
 /* PIR */
-enum PIR_BIT {
+क्रमागत PIR_BIT अणु
 	PIR_MDC		= 0x00000001,
 	PIR_MMD		= 0x00000002,
 	PIR_MDO		= 0x00000004,
 	PIR_MDI		= 0x00000008,
-};
+पूर्ण;
 
 /* PSR */
-enum PSR_BIT {
+क्रमागत PSR_BIT अणु
 	PSR_LMON	= 0x00000001,
-};
+पूर्ण;
 
 /* PIPR */
-enum PIPR_BIT {
+क्रमागत PIPR_BIT अणु
 	PIPR_PHYIP	= 0x00000001,
-};
+पूर्ण;
 
 /* MPR */
-enum MPR_BIT {
+क्रमागत MPR_BIT अणु
 	MPR_MP		= 0x0000ffff,
-};
+पूर्ण;
 
 /* GECMR */
-enum GECMR_BIT {
+क्रमागत GECMR_BIT अणु
 	GECMR_SPEED	= 0x00000001,
 	GECMR_SPEED_100	= 0x00000000,
 	GECMR_SPEED_1000 = 0x00000001,
-};
+पूर्ण;
 
 /* The Ethernet AVB descriptor definitions. */
-struct ravb_desc {
+काष्ठा ravb_desc अणु
 	__le16 ds;		/* Descriptor size */
 	u8 cc;		/* Content control MSBs (reserved) */
-	u8 die_dt;	/* Descriptor interrupt enable and type */
-	__le32 dptr;	/* Descriptor pointer */
-};
+	u8 die_dt;	/* Descriptor पूर्णांकerrupt enable and type */
+	__le32 dptr;	/* Descriptor poपूर्णांकer */
+पूर्ण;
 
-#define DPTR_ALIGN	4	/* Required descriptor pointer alignment */
+#घोषणा DPTR_ALIGN	4	/* Required descriptor poपूर्णांकer alignment */
 
-enum DIE_DT {
+क्रमागत DIE_DT अणु
 	/* Frame data */
 	DT_FMID		= 0x40,
 	DT_FSTART	= 0x50,
@@ -889,180 +890,180 @@ enum DIE_DT {
 	DT_FEMPTY_ND	= 0xf0,
 	DT_LEMPTY	= 0x20,
 	DT_EEMPTY	= 0x30,
-};
+पूर्ण;
 
-struct ravb_rx_desc {
+काष्ठा ravb_rx_desc अणु
 	__le16 ds_cc;	/* Descriptor size and content control LSBs */
 	u8 msc;		/* MAC status code */
-	u8 die_dt;	/* Descriptor interrupt enable and type */
-	__le32 dptr;	/* Descpriptor pointer */
-};
+	u8 die_dt;	/* Descriptor पूर्णांकerrupt enable and type */
+	__le32 dptr;	/* Descpriptor poपूर्णांकer */
+पूर्ण;
 
-struct ravb_ex_rx_desc {
+काष्ठा ravb_ex_rx_desc अणु
 	__le16 ds_cc;	/* Descriptor size and content control lower bits */
 	u8 msc;		/* MAC status code */
-	u8 die_dt;	/* Descriptor interrupt enable and type */
-	__le32 dptr;	/* Descpriptor pointer */
+	u8 die_dt;	/* Descriptor पूर्णांकerrupt enable and type */
+	__le32 dptr;	/* Descpriptor poपूर्णांकer */
 	__le32 ts_n;	/* Timestampe nsec */
 	__le32 ts_sl;	/* Timestamp low */
 	__le16 ts_sh;	/* Timestamp high */
 	__le16 res;	/* Reserved bits */
-};
+पूर्ण;
 
-enum RX_DS_CC_BIT {
+क्रमागत RX_DS_CC_BIT अणु
 	RX_DS		= 0x0fff, /* Data size */
 	RX_TR		= 0x1000, /* Truncation indication */
 	RX_EI		= 0x2000, /* Error indication */
 	RX_PS		= 0xc000, /* Padding selection */
-};
+पूर्ण;
 
 /* E-MAC status code */
-enum MSC_BIT {
+क्रमागत MSC_BIT अणु
 	MSC_CRC		= 0x01, /* Frame CRC error */
 	MSC_RFE		= 0x02, /* Frame reception error (flagged by PHY) */
-	MSC_RTSF	= 0x04, /* Frame length error (frame too short) */
-	MSC_RTLF	= 0x08, /* Frame length error (frame too long) */
+	MSC_RTSF	= 0x04, /* Frame length error (frame too लघु) */
+	MSC_RTLF	= 0x08, /* Frame length error (frame too दीर्घ) */
 	MSC_FRE		= 0x10, /* Fraction error (not a multiple of 8 bits) */
 	MSC_CRL		= 0x20, /* Carrier lost */
 	MSC_CEEF	= 0x40, /* Carrier extension error */
 	MSC_MC		= 0x80, /* Multicast frame reception */
-};
+पूर्ण;
 
-struct ravb_tx_desc {
+काष्ठा ravb_tx_desc अणु
 	__le16 ds_tagl;	/* Descriptor size and frame tag LSBs */
-	u8 tagh_tsr;	/* Frame tag MSBs and timestamp storage request bit */
-	u8 die_dt;	/* Descriptor interrupt enable and type */
-	__le32 dptr;	/* Descpriptor pointer */
-};
+	u8 tagh_tsr;	/* Frame tag MSBs and बारtamp storage request bit */
+	u8 die_dt;	/* Descriptor पूर्णांकerrupt enable and type */
+	__le32 dptr;	/* Descpriptor poपूर्णांकer */
+पूर्ण;
 
-enum TX_DS_TAGL_BIT {
+क्रमागत TX_DS_TAGL_BIT अणु
 	TX_DS		= 0x0fff, /* Data size */
 	TX_TAGL		= 0xf000, /* Frame tag LSBs */
-};
+पूर्ण;
 
-enum TX_TAGH_TSR_BIT {
+क्रमागत TX_TAGH_TSR_BIT अणु
 	TX_TAGH		= 0x3f, /* Frame tag MSBs */
 	TX_TSR		= 0x40, /* Timestamp storage request */
-};
-enum RAVB_QUEUE {
-	RAVB_BE = 0,	/* Best Effort Queue */
+पूर्ण;
+क्रमागत RAVB_QUEUE अणु
+	RAVB_BE = 0,	/* Best Efक्रमt Queue */
 	RAVB_NC,	/* Network Control Queue */
-};
+पूर्ण;
 
-#define DBAT_ENTRY_NUM	22
-#define RX_QUEUE_OFFSET	4
-#define NUM_RX_QUEUE	2
-#define NUM_TX_QUEUE	2
+#घोषणा DBAT_ENTRY_NUM	22
+#घोषणा RX_QUEUE_OFFSET	4
+#घोषणा NUM_RX_QUEUE	2
+#घोषणा NUM_TX_QUEUE	2
 
-#define RX_BUF_SZ	(2048 - ETH_FCS_LEN + sizeof(__sum16))
+#घोषणा RX_BUF_SZ	(2048 - ETH_FCS_LEN + माप(__sum16))
 
 /* TX descriptors per packet */
-#define NUM_TX_DESC_GEN2	2
-#define NUM_TX_DESC_GEN3	1
+#घोषणा NUM_TX_DESC_GEN2	2
+#घोषणा NUM_TX_DESC_GEN3	1
 
-struct ravb_tstamp_skb {
-	struct list_head list;
-	struct sk_buff *skb;
+काष्ठा ravb_tstamp_skb अणु
+	काष्ठा list_head list;
+	काष्ठा sk_buff *skb;
 	u16 tag;
-};
+पूर्ण;
 
-struct ravb_ptp_perout {
+काष्ठा ravb_ptp_perout अणु
 	u32 target;
 	u32 period;
-};
+पूर्ण;
 
-#define N_EXT_TS	1
-#define N_PER_OUT	1
+#घोषणा N_EXT_TS	1
+#घोषणा N_PER_OUT	1
 
-struct ravb_ptp {
-	struct ptp_clock *clock;
-	struct ptp_clock_info info;
-	u32 default_addend;
+काष्ठा ravb_ptp अणु
+	काष्ठा ptp_घड़ी *घड़ी;
+	काष्ठा ptp_घड़ी_info info;
+	u32 शेष_addend;
 	u32 current_addend;
-	int extts[N_EXT_TS];
-	struct ravb_ptp_perout perout[N_PER_OUT];
-};
+	पूर्णांक extts[N_EXT_TS];
+	काष्ठा ravb_ptp_perout perout[N_PER_OUT];
+पूर्ण;
 
-enum ravb_chip_id {
+क्रमागत ravb_chip_id अणु
 	RCAR_GEN2,
 	RCAR_GEN3,
-};
+पूर्ण;
 
-struct ravb_private {
-	struct net_device *ndev;
-	struct platform_device *pdev;
-	void __iomem *addr;
-	struct clk *clk;
-	struct clk *refclk;
-	struct mdiobb_ctrl mdiobb;
+काष्ठा ravb_निजी अणु
+	काष्ठा net_device *ndev;
+	काष्ठा platक्रमm_device *pdev;
+	व्योम __iomem *addr;
+	काष्ठा clk *clk;
+	काष्ठा clk *refclk;
+	काष्ठा mdiobb_ctrl mdiobb;
 	u32 num_rx_ring[NUM_RX_QUEUE];
 	u32 num_tx_ring[NUM_TX_QUEUE];
 	u32 desc_bat_size;
 	dma_addr_t desc_bat_dma;
-	struct ravb_desc *desc_bat;
+	काष्ठा ravb_desc *desc_bat;
 	dma_addr_t rx_desc_dma[NUM_RX_QUEUE];
 	dma_addr_t tx_desc_dma[NUM_TX_QUEUE];
-	struct ravb_ex_rx_desc *rx_ring[NUM_RX_QUEUE];
-	struct ravb_tx_desc *tx_ring[NUM_TX_QUEUE];
-	void *tx_align[NUM_TX_QUEUE];
-	struct sk_buff **rx_skb[NUM_RX_QUEUE];
-	struct sk_buff **tx_skb[NUM_TX_QUEUE];
+	काष्ठा ravb_ex_rx_desc *rx_ring[NUM_RX_QUEUE];
+	काष्ठा ravb_tx_desc *tx_ring[NUM_TX_QUEUE];
+	व्योम *tx_align[NUM_TX_QUEUE];
+	काष्ठा sk_buff **rx_skb[NUM_RX_QUEUE];
+	काष्ठा sk_buff **tx_skb[NUM_TX_QUEUE];
 	u32 rx_over_errors;
-	u32 rx_fifo_errors;
-	struct net_device_stats stats[NUM_RX_QUEUE];
+	u32 rx_fअगरo_errors;
+	काष्ठा net_device_stats stats[NUM_RX_QUEUE];
 	u32 tstamp_tx_ctrl;
 	u32 tstamp_rx_ctrl;
-	struct list_head ts_skb_list;
+	काष्ठा list_head ts_skb_list;
 	u32 ts_skb_tag;
-	struct ravb_ptp ptp;
+	काष्ठा ravb_ptp ptp;
 	spinlock_t lock;		/* Register access lock */
 	u32 cur_rx[NUM_RX_QUEUE];	/* Consumer ring indices */
 	u32 dirty_rx[NUM_RX_QUEUE];	/* Producer ring indices */
 	u32 cur_tx[NUM_TX_QUEUE];
 	u32 dirty_tx[NUM_TX_QUEUE];
-	struct napi_struct napi[NUM_RX_QUEUE];
-	struct work_struct work;
+	काष्ठा napi_काष्ठा napi[NUM_RX_QUEUE];
+	काष्ठा work_काष्ठा work;
 	/* MII transceiver section. */
-	struct mii_bus *mii_bus;	/* MDIO bus control */
-	int link;
-	phy_interface_t phy_interface;
-	int msg_enable;
-	int speed;
-	int emac_irq;
-	enum ravb_chip_id chip_id;
-	int rx_irqs[NUM_RX_QUEUE];
-	int tx_irqs[NUM_TX_QUEUE];
+	काष्ठा mii_bus *mii_bus;	/* MDIO bus control */
+	पूर्णांक link;
+	phy_पूर्णांकerface_t phy_पूर्णांकerface;
+	पूर्णांक msg_enable;
+	पूर्णांक speed;
+	पूर्णांक emac_irq;
+	क्रमागत ravb_chip_id chip_id;
+	पूर्णांक rx_irqs[NUM_RX_QUEUE];
+	पूर्णांक tx_irqs[NUM_TX_QUEUE];
 
-	unsigned no_avb_link:1;
-	unsigned avb_link_active_low:1;
-	unsigned wol_enabled:1;
-	unsigned rxcidm:1;		/* RX Clock Internal Delay Mode */
-	unsigned txcidm:1;		/* TX Clock Internal Delay Mode */
-	unsigned rgmii_override:1;	/* Deprecated rgmii-*id behavior */
-	int num_tx_desc;		/* TX descriptors per packet */
-};
+	अचिन्हित no_avb_link:1;
+	अचिन्हित avb_link_active_low:1;
+	अचिन्हित wol_enabled:1;
+	अचिन्हित rxcidm:1;		/* RX Clock Internal Delay Mode */
+	अचिन्हित txcidm:1;		/* TX Clock Internal Delay Mode */
+	अचिन्हित rgmii_override:1;	/* Deprecated rgmii-*id behavior */
+	पूर्णांक num_tx_desc;		/* TX descriptors per packet */
+पूर्ण;
 
-static inline u32 ravb_read(struct net_device *ndev, enum ravb_reg reg)
-{
-	struct ravb_private *priv = netdev_priv(ndev);
+अटल अंतरभूत u32 ravb_पढ़ो(काष्ठा net_device *ndev, क्रमागत ravb_reg reg)
+अणु
+	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
 
-	return ioread32(priv->addr + reg);
-}
+	वापस ioपढ़ो32(priv->addr + reg);
+पूर्ण
 
-static inline void ravb_write(struct net_device *ndev, u32 data,
-			      enum ravb_reg reg)
-{
-	struct ravb_private *priv = netdev_priv(ndev);
+अटल अंतरभूत व्योम ravb_ग_लिखो(काष्ठा net_device *ndev, u32 data,
+			      क्रमागत ravb_reg reg)
+अणु
+	काष्ठा ravb_निजी *priv = netdev_priv(ndev);
 
-	iowrite32(data, priv->addr + reg);
-}
+	ioग_लिखो32(data, priv->addr + reg);
+पूर्ण
 
-void ravb_modify(struct net_device *ndev, enum ravb_reg reg, u32 clear,
+व्योम ravb_modअगरy(काष्ठा net_device *ndev, क्रमागत ravb_reg reg, u32 clear,
 		 u32 set);
-int ravb_wait(struct net_device *ndev, enum ravb_reg reg, u32 mask, u32 value);
+पूर्णांक ravb_रुको(काष्ठा net_device *ndev, क्रमागत ravb_reg reg, u32 mask, u32 value);
 
-void ravb_ptp_interrupt(struct net_device *ndev);
-void ravb_ptp_init(struct net_device *ndev, struct platform_device *pdev);
-void ravb_ptp_stop(struct net_device *ndev);
+व्योम ravb_ptp_पूर्णांकerrupt(काष्ठा net_device *ndev);
+व्योम ravb_ptp_init(काष्ठा net_device *ndev, काष्ठा platक्रमm_device *pdev);
+व्योम ravb_ptp_stop(काष्ठा net_device *ndev);
 
-#endif	/* #ifndef __RAVB_H__ */
+#पूर्ण_अगर	/* #अगर_अघोषित __RAVB_H__ */

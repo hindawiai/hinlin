@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2019 Genesys Logic, Inc.
  *
@@ -7,172 +8,172 @@
  * Version: v0.9.0 (2019-08-08)
  */
 
-#include <linux/bitfield.h>
-#include <linux/bits.h>
-#include <linux/pci.h>
-#include <linux/mmc/mmc.h>
-#include <linux/delay.h>
-#include "sdhci.h"
-#include "sdhci-pci.h"
-#include "cqhci.h"
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/delay.h>
+#समावेश "sdhci.h"
+#समावेश "sdhci-pci.h"
+#समावेश "cqhci.h"
 
-/*  Genesys Logic extra registers */
-#define SDHCI_GLI_9750_WT         0x800
-#define   SDHCI_GLI_9750_WT_EN      BIT(0)
-#define   GLI_9750_WT_EN_ON	    0x1
-#define   GLI_9750_WT_EN_OFF	    0x0
+/*  Genesys Logic extra रेजिस्टरs */
+#घोषणा SDHCI_GLI_9750_WT         0x800
+#घोषणा   SDHCI_GLI_9750_WT_EN      BIT(0)
+#घोषणा   GLI_9750_WT_EN_ON	    0x1
+#घोषणा   GLI_9750_WT_EN_OFF	    0x0
 
-#define SDHCI_GLI_9750_CFG2          0x848
-#define   SDHCI_GLI_9750_CFG2_L1DLY    GENMASK(28, 24)
-#define   GLI_9750_CFG2_L1DLY_VALUE    0x1F
+#घोषणा SDHCI_GLI_9750_CFG2          0x848
+#घोषणा   SDHCI_GLI_9750_CFG2_L1DLY    GENMASK(28, 24)
+#घोषणा   GLI_9750_CFG2_L1DLY_VALUE    0x1F
 
-#define SDHCI_GLI_9750_DRIVING      0x860
-#define   SDHCI_GLI_9750_DRIVING_1    GENMASK(11, 0)
-#define   SDHCI_GLI_9750_DRIVING_2    GENMASK(27, 26)
-#define   GLI_9750_DRIVING_1_VALUE    0xFFF
-#define   GLI_9750_DRIVING_2_VALUE    0x3
-#define   SDHCI_GLI_9750_SEL_1        BIT(29)
-#define   SDHCI_GLI_9750_SEL_2        BIT(31)
-#define   SDHCI_GLI_9750_ALL_RST      (BIT(24)|BIT(25)|BIT(28)|BIT(30))
+#घोषणा SDHCI_GLI_9750_DRIVING      0x860
+#घोषणा   SDHCI_GLI_9750_DRIVING_1    GENMASK(11, 0)
+#घोषणा   SDHCI_GLI_9750_DRIVING_2    GENMASK(27, 26)
+#घोषणा   GLI_9750_DRIVING_1_VALUE    0xFFF
+#घोषणा   GLI_9750_DRIVING_2_VALUE    0x3
+#घोषणा   SDHCI_GLI_9750_SEL_1        BIT(29)
+#घोषणा   SDHCI_GLI_9750_SEL_2        BIT(31)
+#घोषणा   SDHCI_GLI_9750_ALL_RST      (BIT(24)|BIT(25)|BIT(28)|BIT(30))
 
-#define SDHCI_GLI_9750_PLL	      0x864
-#define   SDHCI_GLI_9750_PLL_LDIV       GENMASK(9, 0)
-#define   SDHCI_GLI_9750_PLL_PDIV       GENMASK(14, 12)
-#define   SDHCI_GLI_9750_PLL_DIR        BIT(15)
-#define   SDHCI_GLI_9750_PLL_TX2_INV    BIT(23)
-#define   SDHCI_GLI_9750_PLL_TX2_DLY    GENMASK(22, 20)
-#define   GLI_9750_PLL_TX2_INV_VALUE    0x1
-#define   GLI_9750_PLL_TX2_DLY_VALUE    0x0
-#define   SDHCI_GLI_9750_PLLSSC_STEP    GENMASK(28, 24)
-#define   SDHCI_GLI_9750_PLLSSC_EN      BIT(31)
+#घोषणा SDHCI_GLI_9750_PLL	      0x864
+#घोषणा   SDHCI_GLI_9750_PLL_LDIV       GENMASK(9, 0)
+#घोषणा   SDHCI_GLI_9750_PLL_PDIV       GENMASK(14, 12)
+#घोषणा   SDHCI_GLI_9750_PLL_सूची        BIT(15)
+#घोषणा   SDHCI_GLI_9750_PLL_TX2_INV    BIT(23)
+#घोषणा   SDHCI_GLI_9750_PLL_TX2_DLY    GENMASK(22, 20)
+#घोषणा   GLI_9750_PLL_TX2_INV_VALUE    0x1
+#घोषणा   GLI_9750_PLL_TX2_DLY_VALUE    0x0
+#घोषणा   SDHCI_GLI_9750_PLLSSC_STEP    GENMASK(28, 24)
+#घोषणा   SDHCI_GLI_9750_PLLSSC_EN      BIT(31)
 
-#define SDHCI_GLI_9750_PLLSSC        0x86C
-#define   SDHCI_GLI_9750_PLLSSC_PPM    GENMASK(31, 16)
+#घोषणा SDHCI_GLI_9750_PLLSSC        0x86C
+#घोषणा   SDHCI_GLI_9750_PLLSSC_PPM    GENMASK(31, 16)
 
-#define SDHCI_GLI_9750_SW_CTRL      0x874
-#define   SDHCI_GLI_9750_SW_CTRL_4    GENMASK(7, 6)
-#define   GLI_9750_SW_CTRL_4_VALUE    0x3
+#घोषणा SDHCI_GLI_9750_SW_CTRL      0x874
+#घोषणा   SDHCI_GLI_9750_SW_CTRL_4    GENMASK(7, 6)
+#घोषणा   GLI_9750_SW_CTRL_4_VALUE    0x3
 
-#define SDHCI_GLI_9750_MISC            0x878
-#define   SDHCI_GLI_9750_MISC_TX1_INV    BIT(2)
-#define   SDHCI_GLI_9750_MISC_RX_INV     BIT(3)
-#define   SDHCI_GLI_9750_MISC_TX1_DLY    GENMASK(6, 4)
-#define   GLI_9750_MISC_TX1_INV_VALUE    0x0
-#define   GLI_9750_MISC_RX_INV_ON        0x1
-#define   GLI_9750_MISC_RX_INV_OFF       0x0
-#define   GLI_9750_MISC_RX_INV_VALUE     GLI_9750_MISC_RX_INV_OFF
-#define   GLI_9750_MISC_TX1_DLY_VALUE    0x5
+#घोषणा SDHCI_GLI_9750_MISC            0x878
+#घोषणा   SDHCI_GLI_9750_MISC_TX1_INV    BIT(2)
+#घोषणा   SDHCI_GLI_9750_MISC_RX_INV     BIT(3)
+#घोषणा   SDHCI_GLI_9750_MISC_TX1_DLY    GENMASK(6, 4)
+#घोषणा   GLI_9750_MISC_TX1_INV_VALUE    0x0
+#घोषणा   GLI_9750_MISC_RX_INV_ON        0x1
+#घोषणा   GLI_9750_MISC_RX_INV_OFF       0x0
+#घोषणा   GLI_9750_MISC_RX_INV_VALUE     GLI_9750_MISC_RX_INV_OFF
+#घोषणा   GLI_9750_MISC_TX1_DLY_VALUE    0x5
 
-#define SDHCI_GLI_9750_TUNING_CONTROL	          0x540
-#define   SDHCI_GLI_9750_TUNING_CONTROL_EN          BIT(4)
-#define   GLI_9750_TUNING_CONTROL_EN_ON             0x1
-#define   GLI_9750_TUNING_CONTROL_EN_OFF            0x0
-#define   SDHCI_GLI_9750_TUNING_CONTROL_GLITCH_1    BIT(16)
-#define   SDHCI_GLI_9750_TUNING_CONTROL_GLITCH_2    GENMASK(20, 19)
-#define   GLI_9750_TUNING_CONTROL_GLITCH_1_VALUE    0x1
-#define   GLI_9750_TUNING_CONTROL_GLITCH_2_VALUE    0x2
+#घोषणा SDHCI_GLI_9750_TUNING_CONTROL	          0x540
+#घोषणा   SDHCI_GLI_9750_TUNING_CONTROL_EN          BIT(4)
+#घोषणा   GLI_9750_TUNING_CONTROL_EN_ON             0x1
+#घोषणा   GLI_9750_TUNING_CONTROL_EN_OFF            0x0
+#घोषणा   SDHCI_GLI_9750_TUNING_CONTROL_GLITCH_1    BIT(16)
+#घोषणा   SDHCI_GLI_9750_TUNING_CONTROL_GLITCH_2    GENMASK(20, 19)
+#घोषणा   GLI_9750_TUNING_CONTROL_GLITCH_1_VALUE    0x1
+#घोषणा   GLI_9750_TUNING_CONTROL_GLITCH_2_VALUE    0x2
 
-#define SDHCI_GLI_9750_TUNING_PARAMETERS           0x544
-#define   SDHCI_GLI_9750_TUNING_PARAMETERS_RX_DLY    GENMASK(2, 0)
-#define   GLI_9750_TUNING_PARAMETERS_RX_DLY_VALUE    0x1
+#घोषणा SDHCI_GLI_9750_TUNING_PARAMETERS           0x544
+#घोषणा   SDHCI_GLI_9750_TUNING_PARAMETERS_RX_DLY    GENMASK(2, 0)
+#घोषणा   GLI_9750_TUNING_PARAMETERS_RX_DLY_VALUE    0x1
 
-#define SDHCI_GLI_9763E_CTRL_HS400  0x7
+#घोषणा SDHCI_GLI_9763E_CTRL_HS400  0x7
 
-#define SDHCI_GLI_9763E_HS400_ES_REG      0x52C
-#define   SDHCI_GLI_9763E_HS400_ES_BIT      BIT(8)
+#घोषणा SDHCI_GLI_9763E_HS400_ES_REG      0x52C
+#घोषणा   SDHCI_GLI_9763E_HS400_ES_BIT      BIT(8)
 
-#define PCIE_GLI_9763E_VHS	 0x884
-#define   GLI_9763E_VHS_REV	   GENMASK(19, 16)
-#define   GLI_9763E_VHS_REV_R      0x0
-#define   GLI_9763E_VHS_REV_M      0x1
-#define   GLI_9763E_VHS_REV_W      0x2
-#define PCIE_GLI_9763E_MB	 0x888
-#define   GLI_9763E_MB_CMDQ_OFF	   BIT(19)
-#define   GLI_9763E_MB_ERP_ON      BIT(7)
-#define PCIE_GLI_9763E_SCR	 0x8E0
-#define   GLI_9763E_SCR_AXI_REQ	   BIT(9)
+#घोषणा PCIE_GLI_9763E_VHS	 0x884
+#घोषणा   GLI_9763E_VHS_REV	   GENMASK(19, 16)
+#घोषणा   GLI_9763E_VHS_REV_R      0x0
+#घोषणा   GLI_9763E_VHS_REV_M      0x1
+#घोषणा   GLI_9763E_VHS_REV_W      0x2
+#घोषणा PCIE_GLI_9763E_MB	 0x888
+#घोषणा   GLI_9763E_MB_CMDQ_OFF	   BIT(19)
+#घोषणा   GLI_9763E_MB_ERP_ON      BIT(7)
+#घोषणा PCIE_GLI_9763E_SCR	 0x8E0
+#घोषणा   GLI_9763E_SCR_AXI_REQ	   BIT(9)
 
-#define PCIE_GLI_9763E_CFG2      0x8A4
-#define   GLI_9763E_CFG2_L1DLY     GENMASK(28, 19)
-#define   GLI_9763E_CFG2_L1DLY_MID 0x50
+#घोषणा PCIE_GLI_9763E_CFG2      0x8A4
+#घोषणा   GLI_9763E_CFG2_L1DLY     GENMASK(28, 19)
+#घोषणा   GLI_9763E_CFG2_L1DLY_MID 0x50
 
-#define PCIE_GLI_9763E_MMC_CTRL  0x960
-#define   GLI_9763E_HS400_SLOW     BIT(3)
+#घोषणा PCIE_GLI_9763E_MMC_CTRL  0x960
+#घोषणा   GLI_9763E_HS400_SLOW     BIT(3)
 
-#define PCIE_GLI_9763E_CLKRXDLY  0x934
-#define   GLI_9763E_HS400_RXDLY    GENMASK(31, 28)
-#define   GLI_9763E_HS400_RXDLY_5  0x5
+#घोषणा PCIE_GLI_9763E_CLKRXDLY  0x934
+#घोषणा   GLI_9763E_HS400_RXDLY    GENMASK(31, 28)
+#घोषणा   GLI_9763E_HS400_RXDLY_5  0x5
 
-#define SDHCI_GLI_9763E_CQE_BASE_ADDR	 0x200
-#define GLI_9763E_CQE_TRNS_MODE	   (SDHCI_TRNS_MULTI | \
+#घोषणा SDHCI_GLI_9763E_CQE_BASE_ADDR	 0x200
+#घोषणा GLI_9763E_CQE_TRNS_MODE	   (SDHCI_TRNS_MULTI | \
 				    SDHCI_TRNS_BLK_CNT_EN | \
 				    SDHCI_TRNS_DMA)
 
-#define PCI_GLI_9755_WT       0x800
-#define   PCI_GLI_9755_WT_EN    BIT(0)
-#define   GLI_9755_WT_EN_ON     0x1
-#define   GLI_9755_WT_EN_OFF    0x0
+#घोषणा PCI_GLI_9755_WT       0x800
+#घोषणा   PCI_GLI_9755_WT_EN    BIT(0)
+#घोषणा   GLI_9755_WT_EN_ON     0x1
+#घोषणा   GLI_9755_WT_EN_OFF    0x0
 
-#define PCI_GLI_9755_PECONF   0x44
-#define   PCI_GLI_9755_LFCLK    GENMASK(14, 12)
-#define   PCI_GLI_9755_DMACLK   BIT(29)
+#घोषणा PCI_GLI_9755_PECONF   0x44
+#घोषणा   PCI_GLI_9755_LFCLK    GENMASK(14, 12)
+#घोषणा   PCI_GLI_9755_DMACLK   BIT(29)
 
-#define PCI_GLI_9755_CFG2          0x48
-#define   PCI_GLI_9755_CFG2_L1DLY    GENMASK(28, 24)
-#define   GLI_9755_CFG2_L1DLY_VALUE  0x1F
+#घोषणा PCI_GLI_9755_CFG2          0x48
+#घोषणा   PCI_GLI_9755_CFG2_L1DLY    GENMASK(28, 24)
+#घोषणा   GLI_9755_CFG2_L1DLY_VALUE  0x1F
 
-#define PCI_GLI_9755_PLL            0x64
-#define   PCI_GLI_9755_PLL_LDIV       GENMASK(9, 0)
-#define   PCI_GLI_9755_PLL_PDIV       GENMASK(14, 12)
-#define   PCI_GLI_9755_PLL_DIR        BIT(15)
-#define   PCI_GLI_9755_PLLSSC_STEP    GENMASK(28, 24)
-#define   PCI_GLI_9755_PLLSSC_EN      BIT(31)
+#घोषणा PCI_GLI_9755_PLL            0x64
+#घोषणा   PCI_GLI_9755_PLL_LDIV       GENMASK(9, 0)
+#घोषणा   PCI_GLI_9755_PLL_PDIV       GENMASK(14, 12)
+#घोषणा   PCI_GLI_9755_PLL_सूची        BIT(15)
+#घोषणा   PCI_GLI_9755_PLLSSC_STEP    GENMASK(28, 24)
+#घोषणा   PCI_GLI_9755_PLLSSC_EN      BIT(31)
 
-#define PCI_GLI_9755_PLLSSC        0x68
-#define   PCI_GLI_9755_PLLSSC_PPM    GENMASK(15, 0)
+#घोषणा PCI_GLI_9755_PLLSSC        0x68
+#घोषणा   PCI_GLI_9755_PLLSSC_PPM    GENMASK(15, 0)
 
-#define PCI_GLI_9755_SerDes  0x70
-#define PCI_GLI_9755_SCP_DIS   BIT(19)
+#घोषणा PCI_GLI_9755_SerDes  0x70
+#घोषणा PCI_GLI_9755_SCP_DIS   BIT(19)
 
-#define GLI_MAX_TUNING_LOOP 40
+#घोषणा GLI_MAX_TUNING_LOOP 40
 
 /* Genesys Logic chipset */
-static inline void gl9750_wt_on(struct sdhci_host *host)
-{
+अटल अंतरभूत व्योम gl9750_wt_on(काष्ठा sdhci_host *host)
+अणु
 	u32 wt_value;
 	u32 wt_enable;
 
-	wt_value = sdhci_readl(host, SDHCI_GLI_9750_WT);
+	wt_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_WT);
 	wt_enable = FIELD_GET(SDHCI_GLI_9750_WT_EN, wt_value);
 
-	if (wt_enable == GLI_9750_WT_EN_ON)
-		return;
+	अगर (wt_enable == GLI_9750_WT_EN_ON)
+		वापस;
 
 	wt_value &= ~SDHCI_GLI_9750_WT_EN;
 	wt_value |= FIELD_PREP(SDHCI_GLI_9750_WT_EN, GLI_9750_WT_EN_ON);
 
-	sdhci_writel(host, wt_value, SDHCI_GLI_9750_WT);
-}
+	sdhci_ग_लिखोl(host, wt_value, SDHCI_GLI_9750_WT);
+पूर्ण
 
-static inline void gl9750_wt_off(struct sdhci_host *host)
-{
+अटल अंतरभूत व्योम gl9750_wt_off(काष्ठा sdhci_host *host)
+अणु
 	u32 wt_value;
 	u32 wt_enable;
 
-	wt_value = sdhci_readl(host, SDHCI_GLI_9750_WT);
+	wt_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_WT);
 	wt_enable = FIELD_GET(SDHCI_GLI_9750_WT_EN, wt_value);
 
-	if (wt_enable == GLI_9750_WT_EN_OFF)
-		return;
+	अगर (wt_enable == GLI_9750_WT_EN_OFF)
+		वापस;
 
 	wt_value &= ~SDHCI_GLI_9750_WT_EN;
 	wt_value |= FIELD_PREP(SDHCI_GLI_9750_WT_EN, GLI_9750_WT_EN_OFF);
 
-	sdhci_writel(host, wt_value, SDHCI_GLI_9750_WT);
-}
+	sdhci_ग_लिखोl(host, wt_value, SDHCI_GLI_9750_WT);
+पूर्ण
 
-static void gli_set_9750(struct sdhci_host *host)
-{
+अटल व्योम gli_set_9750(काष्ठा sdhci_host *host)
+अणु
 	u32 driving_value;
 	u32 pll_value;
 	u32 sw_ctrl_value;
@@ -183,12 +184,12 @@ static void gli_set_9750(struct sdhci_host *host)
 
 	gl9750_wt_on(host);
 
-	driving_value = sdhci_readl(host, SDHCI_GLI_9750_DRIVING);
-	pll_value = sdhci_readl(host, SDHCI_GLI_9750_PLL);
-	sw_ctrl_value = sdhci_readl(host, SDHCI_GLI_9750_SW_CTRL);
-	misc_value = sdhci_readl(host, SDHCI_GLI_9750_MISC);
-	parameter_value = sdhci_readl(host, SDHCI_GLI_9750_TUNING_PARAMETERS);
-	control_value = sdhci_readl(host, SDHCI_GLI_9750_TUNING_CONTROL);
+	driving_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_DRIVING);
+	pll_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_PLL);
+	sw_ctrl_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_SW_CTRL);
+	misc_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_MISC);
+	parameter_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_TUNING_PARAMETERS);
+	control_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_TUNING_CONTROL);
 
 	driving_value &= ~(SDHCI_GLI_9750_DRIVING_1);
 	driving_value &= ~(SDHCI_GLI_9750_DRIVING_2);
@@ -198,14 +199,14 @@ static void gli_set_9750(struct sdhci_host *host)
 				    GLI_9750_DRIVING_2_VALUE);
 	driving_value &= ~(SDHCI_GLI_9750_SEL_1|SDHCI_GLI_9750_SEL_2|SDHCI_GLI_9750_ALL_RST);
 	driving_value |= SDHCI_GLI_9750_SEL_2;
-	sdhci_writel(host, driving_value, SDHCI_GLI_9750_DRIVING);
+	sdhci_ग_लिखोl(host, driving_value, SDHCI_GLI_9750_DRIVING);
 
 	sw_ctrl_value &= ~SDHCI_GLI_9750_SW_CTRL_4;
 	sw_ctrl_value |= FIELD_PREP(SDHCI_GLI_9750_SW_CTRL_4,
 				    GLI_9750_SW_CTRL_4_VALUE);
-	sdhci_writel(host, sw_ctrl_value, SDHCI_GLI_9750_SW_CTRL);
+	sdhci_ग_लिखोl(host, sw_ctrl_value, SDHCI_GLI_9750_SW_CTRL);
 
-	/* reset the tuning flow after reinit and before starting tuning */
+	/* reset the tuning flow after reinit and beक्रमe starting tuning */
 	pll_value &= ~SDHCI_GLI_9750_PLL_TX2_INV;
 	pll_value &= ~SDHCI_GLI_9750_PLL_TX2_DLY;
 	pll_value |= FIELD_PREP(SDHCI_GLI_9750_PLL_TX2_INV,
@@ -234,638 +235,638 @@ static void gli_set_9750(struct sdhci_host *host)
 	control_value |= FIELD_PREP(SDHCI_GLI_9750_TUNING_CONTROL_GLITCH_2,
 				    GLI_9750_TUNING_CONTROL_GLITCH_2_VALUE);
 
-	sdhci_writel(host, pll_value, SDHCI_GLI_9750_PLL);
-	sdhci_writel(host, misc_value, SDHCI_GLI_9750_MISC);
+	sdhci_ग_लिखोl(host, pll_value, SDHCI_GLI_9750_PLL);
+	sdhci_ग_लिखोl(host, misc_value, SDHCI_GLI_9750_MISC);
 
 	/* disable tuned clk */
-	ctrl2 = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+	ctrl2 = sdhci_पढ़ोw(host, SDHCI_HOST_CONTROL2);
 	ctrl2 &= ~SDHCI_CTRL_TUNED_CLK;
-	sdhci_writew(host, ctrl2, SDHCI_HOST_CONTROL2);
+	sdhci_ग_लिखोw(host, ctrl2, SDHCI_HOST_CONTROL2);
 
 	/* enable tuning parameters control */
 	control_value &= ~SDHCI_GLI_9750_TUNING_CONTROL_EN;
 	control_value |= FIELD_PREP(SDHCI_GLI_9750_TUNING_CONTROL_EN,
 				    GLI_9750_TUNING_CONTROL_EN_ON);
-	sdhci_writel(host, control_value, SDHCI_GLI_9750_TUNING_CONTROL);
+	sdhci_ग_लिखोl(host, control_value, SDHCI_GLI_9750_TUNING_CONTROL);
 
-	/* write tuning parameters */
-	sdhci_writel(host, parameter_value, SDHCI_GLI_9750_TUNING_PARAMETERS);
+	/* ग_लिखो tuning parameters */
+	sdhci_ग_लिखोl(host, parameter_value, SDHCI_GLI_9750_TUNING_PARAMETERS);
 
 	/* disable tuning parameters control */
 	control_value &= ~SDHCI_GLI_9750_TUNING_CONTROL_EN;
 	control_value |= FIELD_PREP(SDHCI_GLI_9750_TUNING_CONTROL_EN,
 				    GLI_9750_TUNING_CONTROL_EN_OFF);
-	sdhci_writel(host, control_value, SDHCI_GLI_9750_TUNING_CONTROL);
+	sdhci_ग_लिखोl(host, control_value, SDHCI_GLI_9750_TUNING_CONTROL);
 
 	/* clear tuned clk */
-	ctrl2 = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+	ctrl2 = sdhci_पढ़ोw(host, SDHCI_HOST_CONTROL2);
 	ctrl2 &= ~SDHCI_CTRL_TUNED_CLK;
-	sdhci_writew(host, ctrl2, SDHCI_HOST_CONTROL2);
+	sdhci_ग_लिखोw(host, ctrl2, SDHCI_HOST_CONTROL2);
 
 	gl9750_wt_off(host);
-}
+पूर्ण
 
-static void gli_set_9750_rx_inv(struct sdhci_host *host, bool b)
-{
+अटल व्योम gli_set_9750_rx_inv(काष्ठा sdhci_host *host, bool b)
+अणु
 	u32 misc_value;
 
 	gl9750_wt_on(host);
 
-	misc_value = sdhci_readl(host, SDHCI_GLI_9750_MISC);
+	misc_value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_MISC);
 	misc_value &= ~SDHCI_GLI_9750_MISC_RX_INV;
-	if (b) {
+	अगर (b) अणु
 		misc_value |= FIELD_PREP(SDHCI_GLI_9750_MISC_RX_INV,
 					 GLI_9750_MISC_RX_INV_ON);
-	} else {
+	पूर्ण अन्यथा अणु
 		misc_value |= FIELD_PREP(SDHCI_GLI_9750_MISC_RX_INV,
 					 GLI_9750_MISC_RX_INV_OFF);
-	}
-	sdhci_writel(host, misc_value, SDHCI_GLI_9750_MISC);
+	पूर्ण
+	sdhci_ग_लिखोl(host, misc_value, SDHCI_GLI_9750_MISC);
 
 	gl9750_wt_off(host);
-}
+पूर्ण
 
-static int __sdhci_execute_tuning_9750(struct sdhci_host *host, u32 opcode)
-{
-	int i;
-	int rx_inv;
+अटल पूर्णांक __sdhci_execute_tuning_9750(काष्ठा sdhci_host *host, u32 opcode)
+अणु
+	पूर्णांक i;
+	पूर्णांक rx_inv;
 
-	for (rx_inv = 0; rx_inv < 2; rx_inv++) {
+	क्रम (rx_inv = 0; rx_inv < 2; rx_inv++) अणु
 		gli_set_9750_rx_inv(host, !!rx_inv);
 		sdhci_start_tuning(host);
 
-		for (i = 0; i < GLI_MAX_TUNING_LOOP; i++) {
+		क्रम (i = 0; i < GLI_MAX_TUNING_LOOP; i++) अणु
 			u16 ctrl;
 
 			sdhci_send_tuning(host, opcode);
 
-			if (!host->tuning_done) {
-				sdhci_abort_tuning(host, opcode);
-				break;
-			}
+			अगर (!host->tuning_करोne) अणु
+				sdhci_पात_tuning(host, opcode);
+				अवरोध;
+			पूर्ण
 
-			ctrl = sdhci_readw(host, SDHCI_HOST_CONTROL2);
-			if (!(ctrl & SDHCI_CTRL_EXEC_TUNING)) {
-				if (ctrl & SDHCI_CTRL_TUNED_CLK)
-					return 0; /* Success! */
-				break;
-			}
-		}
-	}
-	if (!host->tuning_done) {
+			ctrl = sdhci_पढ़ोw(host, SDHCI_HOST_CONTROL2);
+			अगर (!(ctrl & SDHCI_CTRL_EXEC_TUNING)) अणु
+				अगर (ctrl & SDHCI_CTRL_TUNED_CLK)
+					वापस 0; /* Success! */
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (!host->tuning_करोne) अणु
 		pr_info("%s: Tuning timeout, falling back to fixed sampling clock\n",
 			mmc_hostname(host->mmc));
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	pr_info("%s: Tuning failed, falling back to fixed sampling clock\n",
 		mmc_hostname(host->mmc));
 	sdhci_reset_tuning(host);
 
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static int gl9750_execute_tuning(struct sdhci_host *host, u32 opcode)
-{
+अटल पूर्णांक gl9750_execute_tuning(काष्ठा sdhci_host *host, u32 opcode)
+अणु
 	host->mmc->retune_period = 0;
-	if (host->tuning_mode == SDHCI_TUNING_MODE_1)
+	अगर (host->tuning_mode == SDHCI_TUNING_MODE_1)
 		host->mmc->retune_period = host->tuning_count;
 
 	gli_set_9750(host);
 	host->tuning_err = __sdhci_execute_tuning_9750(host, opcode);
 	sdhci_end_tuning(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gl9750_disable_ssc_pll(struct sdhci_host *host)
-{
+अटल व्योम gl9750_disable_ssc_pll(काष्ठा sdhci_host *host)
+अणु
 	u32 pll;
 
 	gl9750_wt_on(host);
-	pll = sdhci_readl(host, SDHCI_GLI_9750_PLL);
-	pll &= ~(SDHCI_GLI_9750_PLL_DIR | SDHCI_GLI_9750_PLLSSC_EN);
-	sdhci_writel(host, pll, SDHCI_GLI_9750_PLL);
+	pll = sdhci_पढ़ोl(host, SDHCI_GLI_9750_PLL);
+	pll &= ~(SDHCI_GLI_9750_PLL_सूची | SDHCI_GLI_9750_PLLSSC_EN);
+	sdhci_ग_लिखोl(host, pll, SDHCI_GLI_9750_PLL);
 	gl9750_wt_off(host);
-}
+पूर्ण
 
-static void gl9750_set_pll(struct sdhci_host *host, u8 dir, u16 ldiv, u8 pdiv)
-{
+अटल व्योम gl9750_set_pll(काष्ठा sdhci_host *host, u8 dir, u16 द_भाग, u8 pभाग)
+अणु
 	u32 pll;
 
 	gl9750_wt_on(host);
-	pll = sdhci_readl(host, SDHCI_GLI_9750_PLL);
+	pll = sdhci_पढ़ोl(host, SDHCI_GLI_9750_PLL);
 	pll &= ~(SDHCI_GLI_9750_PLL_LDIV |
 		 SDHCI_GLI_9750_PLL_PDIV |
-		 SDHCI_GLI_9750_PLL_DIR);
-	pll |= FIELD_PREP(SDHCI_GLI_9750_PLL_LDIV, ldiv) |
-	       FIELD_PREP(SDHCI_GLI_9750_PLL_PDIV, pdiv) |
-	       FIELD_PREP(SDHCI_GLI_9750_PLL_DIR, dir);
-	sdhci_writel(host, pll, SDHCI_GLI_9750_PLL);
+		 SDHCI_GLI_9750_PLL_सूची);
+	pll |= FIELD_PREP(SDHCI_GLI_9750_PLL_LDIV, द_भाग) |
+	       FIELD_PREP(SDHCI_GLI_9750_PLL_PDIV, pभाग) |
+	       FIELD_PREP(SDHCI_GLI_9750_PLL_सूची, dir);
+	sdhci_ग_लिखोl(host, pll, SDHCI_GLI_9750_PLL);
 	gl9750_wt_off(host);
 
-	/* wait for pll stable */
+	/* रुको क्रम pll stable */
 	mdelay(1);
-}
+पूर्ण
 
-static void gl9750_set_ssc(struct sdhci_host *host, u8 enable, u8 step, u16 ppm)
-{
+अटल व्योम gl9750_set_ssc(काष्ठा sdhci_host *host, u8 enable, u8 step, u16 ppm)
+अणु
 	u32 pll;
 	u32 ssc;
 
 	gl9750_wt_on(host);
-	pll = sdhci_readl(host, SDHCI_GLI_9750_PLL);
-	ssc = sdhci_readl(host, SDHCI_GLI_9750_PLLSSC);
+	pll = sdhci_पढ़ोl(host, SDHCI_GLI_9750_PLL);
+	ssc = sdhci_पढ़ोl(host, SDHCI_GLI_9750_PLLSSC);
 	pll &= ~(SDHCI_GLI_9750_PLLSSC_STEP |
 		 SDHCI_GLI_9750_PLLSSC_EN);
 	ssc &= ~SDHCI_GLI_9750_PLLSSC_PPM;
 	pll |= FIELD_PREP(SDHCI_GLI_9750_PLLSSC_STEP, step) |
 	       FIELD_PREP(SDHCI_GLI_9750_PLLSSC_EN, enable);
 	ssc |= FIELD_PREP(SDHCI_GLI_9750_PLLSSC_PPM, ppm);
-	sdhci_writel(host, ssc, SDHCI_GLI_9750_PLLSSC);
-	sdhci_writel(host, pll, SDHCI_GLI_9750_PLL);
+	sdhci_ग_लिखोl(host, ssc, SDHCI_GLI_9750_PLLSSC);
+	sdhci_ग_लिखोl(host, pll, SDHCI_GLI_9750_PLL);
 	gl9750_wt_off(host);
-}
+पूर्ण
 
-static void gl9750_set_ssc_pll_205mhz(struct sdhci_host *host)
-{
+अटल व्योम gl9750_set_ssc_pll_205mhz(काष्ठा sdhci_host *host)
+अणु
 	/* set pll to 205MHz and enable ssc */
 	gl9750_set_ssc(host, 0x1, 0x1F, 0xFFE7);
 	gl9750_set_pll(host, 0x1, 0x246, 0x0);
-}
+पूर्ण
 
-static void sdhci_gl9750_set_clock(struct sdhci_host *host, unsigned int clock)
-{
-	struct mmc_ios *ios = &host->mmc->ios;
+अटल व्योम sdhci_gl9750_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
+अणु
+	काष्ठा mmc_ios *ios = &host->mmc->ios;
 	u16 clk;
 
-	host->mmc->actual_clock = 0;
+	host->mmc->actual_घड़ी = 0;
 
 	gl9750_disable_ssc_pll(host);
-	sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
+	sdhci_ग_लिखोw(host, 0, SDHCI_CLOCK_CONTROL);
 
-	if (clock == 0)
-		return;
+	अगर (घड़ी == 0)
+		वापस;
 
-	clk = sdhci_calc_clk(host, clock, &host->mmc->actual_clock);
-	if (clock == 200000000 && ios->timing == MMC_TIMING_UHS_SDR104) {
-		host->mmc->actual_clock = 205000000;
+	clk = sdhci_calc_clk(host, घड़ी, &host->mmc->actual_घड़ी);
+	अगर (घड़ी == 200000000 && ios->timing == MMC_TIMING_UHS_SDR104) अणु
+		host->mmc->actual_घड़ी = 205000000;
 		gl9750_set_ssc_pll_205mhz(host);
-	}
+	पूर्ण
 
 	sdhci_enable_clk(host, clk);
-}
+पूर्ण
 
-static void gl9750_hw_setting(struct sdhci_host *host)
-{
+अटल व्योम gl9750_hw_setting(काष्ठा sdhci_host *host)
+अणु
 	u32 value;
 
 	gl9750_wt_on(host);
 
-	value = sdhci_readl(host, SDHCI_GLI_9750_CFG2);
+	value = sdhci_पढ़ोl(host, SDHCI_GLI_9750_CFG2);
 	value &= ~SDHCI_GLI_9750_CFG2_L1DLY;
 	/* set ASPM L1 entry delay to 7.9us */
 	value |= FIELD_PREP(SDHCI_GLI_9750_CFG2_L1DLY,
 			    GLI_9750_CFG2_L1DLY_VALUE);
-	sdhci_writel(host, value, SDHCI_GLI_9750_CFG2);
+	sdhci_ग_लिखोl(host, value, SDHCI_GLI_9750_CFG2);
 
 	gl9750_wt_off(host);
-}
+पूर्ण
 
-static void gli_pcie_enable_msi(struct sdhci_pci_slot *slot)
-{
-	int ret;
+अटल व्योम gli_pcie_enable_msi(काष्ठा sdhci_pci_slot *slot)
+अणु
+	पूर्णांक ret;
 
 	ret = pci_alloc_irq_vectors(slot->chip->pdev, 1, 1,
 				    PCI_IRQ_MSI | PCI_IRQ_MSIX);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_warn("%s: enable PCI MSI failed, error=%d\n",
 		       mmc_hostname(slot->host->mmc), ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	slot->host->irq = pci_irq_vector(slot->chip->pdev, 0);
-}
+पूर्ण
 
-static inline void gl9755_wt_on(struct pci_dev *pdev)
-{
+अटल अंतरभूत व्योम gl9755_wt_on(काष्ठा pci_dev *pdev)
+अणु
 	u32 wt_value;
 	u32 wt_enable;
 
-	pci_read_config_dword(pdev, PCI_GLI_9755_WT, &wt_value);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_WT, &wt_value);
 	wt_enable = FIELD_GET(PCI_GLI_9755_WT_EN, wt_value);
 
-	if (wt_enable == GLI_9755_WT_EN_ON)
-		return;
+	अगर (wt_enable == GLI_9755_WT_EN_ON)
+		वापस;
 
 	wt_value &= ~PCI_GLI_9755_WT_EN;
 	wt_value |= FIELD_PREP(PCI_GLI_9755_WT_EN, GLI_9755_WT_EN_ON);
 
-	pci_write_config_dword(pdev, PCI_GLI_9755_WT, wt_value);
-}
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_WT, wt_value);
+पूर्ण
 
-static inline void gl9755_wt_off(struct pci_dev *pdev)
-{
+अटल अंतरभूत व्योम gl9755_wt_off(काष्ठा pci_dev *pdev)
+अणु
 	u32 wt_value;
 	u32 wt_enable;
 
-	pci_read_config_dword(pdev, PCI_GLI_9755_WT, &wt_value);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_WT, &wt_value);
 	wt_enable = FIELD_GET(PCI_GLI_9755_WT_EN, wt_value);
 
-	if (wt_enable == GLI_9755_WT_EN_OFF)
-		return;
+	अगर (wt_enable == GLI_9755_WT_EN_OFF)
+		वापस;
 
 	wt_value &= ~PCI_GLI_9755_WT_EN;
 	wt_value |= FIELD_PREP(PCI_GLI_9755_WT_EN, GLI_9755_WT_EN_OFF);
 
-	pci_write_config_dword(pdev, PCI_GLI_9755_WT, wt_value);
-}
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_WT, wt_value);
+पूर्ण
 
-static void gl9755_disable_ssc_pll(struct pci_dev *pdev)
-{
+अटल व्योम gl9755_disable_ssc_pll(काष्ठा pci_dev *pdev)
+अणु
 	u32 pll;
 
 	gl9755_wt_on(pdev);
-	pci_read_config_dword(pdev, PCI_GLI_9755_PLL, &pll);
-	pll &= ~(PCI_GLI_9755_PLL_DIR | PCI_GLI_9755_PLLSSC_EN);
-	pci_write_config_dword(pdev, PCI_GLI_9755_PLL, pll);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_PLL, &pll);
+	pll &= ~(PCI_GLI_9755_PLL_सूची | PCI_GLI_9755_PLLSSC_EN);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_PLL, pll);
 	gl9755_wt_off(pdev);
-}
+पूर्ण
 
-static void gl9755_set_pll(struct pci_dev *pdev, u8 dir, u16 ldiv, u8 pdiv)
-{
+अटल व्योम gl9755_set_pll(काष्ठा pci_dev *pdev, u8 dir, u16 द_भाग, u8 pभाग)
+अणु
 	u32 pll;
 
 	gl9755_wt_on(pdev);
-	pci_read_config_dword(pdev, PCI_GLI_9755_PLL, &pll);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_PLL, &pll);
 	pll &= ~(PCI_GLI_9755_PLL_LDIV |
 		 PCI_GLI_9755_PLL_PDIV |
-		 PCI_GLI_9755_PLL_DIR);
-	pll |= FIELD_PREP(PCI_GLI_9755_PLL_LDIV, ldiv) |
-	       FIELD_PREP(PCI_GLI_9755_PLL_PDIV, pdiv) |
-	       FIELD_PREP(PCI_GLI_9755_PLL_DIR, dir);
-	pci_write_config_dword(pdev, PCI_GLI_9755_PLL, pll);
+		 PCI_GLI_9755_PLL_सूची);
+	pll |= FIELD_PREP(PCI_GLI_9755_PLL_LDIV, द_भाग) |
+	       FIELD_PREP(PCI_GLI_9755_PLL_PDIV, pभाग) |
+	       FIELD_PREP(PCI_GLI_9755_PLL_सूची, dir);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_PLL, pll);
 	gl9755_wt_off(pdev);
 
-	/* wait for pll stable */
+	/* रुको क्रम pll stable */
 	mdelay(1);
-}
+पूर्ण
 
-static void gl9755_set_ssc(struct pci_dev *pdev, u8 enable, u8 step, u16 ppm)
-{
+अटल व्योम gl9755_set_ssc(काष्ठा pci_dev *pdev, u8 enable, u8 step, u16 ppm)
+अणु
 	u32 pll;
 	u32 ssc;
 
 	gl9755_wt_on(pdev);
-	pci_read_config_dword(pdev, PCI_GLI_9755_PLL, &pll);
-	pci_read_config_dword(pdev, PCI_GLI_9755_PLLSSC, &ssc);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_PLL, &pll);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_PLLSSC, &ssc);
 	pll &= ~(PCI_GLI_9755_PLLSSC_STEP |
 		 PCI_GLI_9755_PLLSSC_EN);
 	ssc &= ~PCI_GLI_9755_PLLSSC_PPM;
 	pll |= FIELD_PREP(PCI_GLI_9755_PLLSSC_STEP, step) |
 	       FIELD_PREP(PCI_GLI_9755_PLLSSC_EN, enable);
 	ssc |= FIELD_PREP(PCI_GLI_9755_PLLSSC_PPM, ppm);
-	pci_write_config_dword(pdev, PCI_GLI_9755_PLLSSC, ssc);
-	pci_write_config_dword(pdev, PCI_GLI_9755_PLL, pll);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_PLLSSC, ssc);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_PLL, pll);
 	gl9755_wt_off(pdev);
-}
+पूर्ण
 
-static void gl9755_set_ssc_pll_205mhz(struct pci_dev *pdev)
-{
+अटल व्योम gl9755_set_ssc_pll_205mhz(काष्ठा pci_dev *pdev)
+अणु
 	/* set pll to 205MHz and enable ssc */
 	gl9755_set_ssc(pdev, 0x1, 0x1F, 0xFFE7);
 	gl9755_set_pll(pdev, 0x1, 0x246, 0x0);
-}
+पूर्ण
 
-static void sdhci_gl9755_set_clock(struct sdhci_host *host, unsigned int clock)
-{
-	struct sdhci_pci_slot *slot = sdhci_priv(host);
-	struct mmc_ios *ios = &host->mmc->ios;
-	struct pci_dev *pdev;
+अटल व्योम sdhci_gl9755_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
+अणु
+	काष्ठा sdhci_pci_slot *slot = sdhci_priv(host);
+	काष्ठा mmc_ios *ios = &host->mmc->ios;
+	काष्ठा pci_dev *pdev;
 	u16 clk;
 
 	pdev = slot->chip->pdev;
-	host->mmc->actual_clock = 0;
+	host->mmc->actual_घड़ी = 0;
 
 	gl9755_disable_ssc_pll(pdev);
-	sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
+	sdhci_ग_लिखोw(host, 0, SDHCI_CLOCK_CONTROL);
 
-	if (clock == 0)
-		return;
+	अगर (घड़ी == 0)
+		वापस;
 
-	clk = sdhci_calc_clk(host, clock, &host->mmc->actual_clock);
-	if (clock == 200000000 && ios->timing == MMC_TIMING_UHS_SDR104) {
-		host->mmc->actual_clock = 205000000;
+	clk = sdhci_calc_clk(host, घड़ी, &host->mmc->actual_घड़ी);
+	अगर (घड़ी == 200000000 && ios->timing == MMC_TIMING_UHS_SDR104) अणु
+		host->mmc->actual_घड़ी = 205000000;
 		gl9755_set_ssc_pll_205mhz(pdev);
-	}
+	पूर्ण
 
 	sdhci_enable_clk(host, clk);
-}
+पूर्ण
 
-static void gl9755_hw_setting(struct sdhci_pci_slot *slot)
-{
-	struct pci_dev *pdev = slot->chip->pdev;
+अटल व्योम gl9755_hw_setting(काष्ठा sdhci_pci_slot *slot)
+अणु
+	काष्ठा pci_dev *pdev = slot->chip->pdev;
 	u32 value;
 
 	gl9755_wt_on(pdev);
 
-	pci_read_config_dword(pdev, PCI_GLI_9755_PECONF, &value);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_PECONF, &value);
 	value &= ~PCI_GLI_9755_LFCLK;
 	value &= ~PCI_GLI_9755_DMACLK;
-	pci_write_config_dword(pdev, PCI_GLI_9755_PECONF, value);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_PECONF, value);
 
-	/* enable short circuit protection */
-	pci_read_config_dword(pdev, PCI_GLI_9755_SerDes, &value);
+	/* enable लघु circuit protection */
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_SerDes, &value);
 	value &= ~PCI_GLI_9755_SCP_DIS;
-	pci_write_config_dword(pdev, PCI_GLI_9755_SerDes, value);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_SerDes, value);
 
-	pci_read_config_dword(pdev, PCI_GLI_9755_CFG2, &value);
+	pci_पढ़ो_config_dword(pdev, PCI_GLI_9755_CFG2, &value);
 	value &= ~PCI_GLI_9755_CFG2_L1DLY;
 	/* set ASPM L1 entry delay to 7.9us */
 	value |= FIELD_PREP(PCI_GLI_9755_CFG2_L1DLY,
 			    GLI_9755_CFG2_L1DLY_VALUE);
-	pci_write_config_dword(pdev, PCI_GLI_9755_CFG2, value);
+	pci_ग_लिखो_config_dword(pdev, PCI_GLI_9755_CFG2, value);
 
 	gl9755_wt_off(pdev);
-}
+पूर्ण
 
-static int gli_probe_slot_gl9750(struct sdhci_pci_slot *slot)
-{
-	struct sdhci_host *host = slot->host;
+अटल पूर्णांक gli_probe_slot_gl9750(काष्ठा sdhci_pci_slot *slot)
+अणु
+	काष्ठा sdhci_host *host = slot->host;
 
 	gl9750_hw_setting(host);
 	gli_pcie_enable_msi(slot);
 	slot->host->mmc->caps2 |= MMC_CAP2_NO_SDIO;
 	sdhci_enable_v4_mode(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gli_probe_slot_gl9755(struct sdhci_pci_slot *slot)
-{
-	struct sdhci_host *host = slot->host;
+अटल पूर्णांक gli_probe_slot_gl9755(काष्ठा sdhci_pci_slot *slot)
+अणु
+	काष्ठा sdhci_host *host = slot->host;
 
 	gl9755_hw_setting(slot);
 	gli_pcie_enable_msi(slot);
 	slot->host->mmc->caps2 |= MMC_CAP2_NO_SDIO;
 	sdhci_enable_v4_mode(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sdhci_gli_voltage_switch(struct sdhci_host *host)
-{
+अटल व्योम sdhci_gli_voltage_चयन(काष्ठा sdhci_host *host)
+अणु
 	/*
-	 * According to Section 3.6.1 signal voltage switch procedure in
-	 * SD Host Controller Simplified Spec. 4.20, steps 6~8 are as
+	 * According to Section 3.6.1 संकेत voltage चयन procedure in
+	 * SD Host Controller Simplअगरied Spec. 4.20, steps 6~8 are as
 	 * follows:
-	 * (6) Set 1.8V Signal Enable in the Host Control 2 register.
+	 * (6) Set 1.8V Signal Enable in the Host Control 2 रेजिस्टर.
 	 * (7) Wait 5ms. 1.8V voltage regulator shall be stable within this
 	 *     period.
 	 * (8) If 1.8V Signal Enable is cleared by Host Controller, go to
 	 *     step (12).
 	 *
-	 * Wait 5ms after set 1.8V signal enable in Host Control 2 register
-	 * to ensure 1.8V signal enable bit is set by GL9750/GL9755.
+	 * Wait 5ms after set 1.8V संकेत enable in Host Control 2 रेजिस्टर
+	 * to ensure 1.8V संकेत enable bit is set by GL9750/GL9755.
 	 *
 	 * ...however, the controller in the NUC10i3FNK4 (a 9755) requires
-	 * slightly longer than 5ms before the control register reports that
-	 * 1.8V is ready, and far longer still before the card will actually
+	 * slightly दीर्घer than 5ms beक्रमe the control रेजिस्टर reports that
+	 * 1.8V is पढ़ोy, and far दीर्घer still beक्रमe the card will actually
 	 * work reliably.
 	 */
 	usleep_range(100000, 110000);
-}
+पूर्ण
 
-static void sdhci_gl9750_reset(struct sdhci_host *host, u8 mask)
-{
+अटल व्योम sdhci_gl9750_reset(काष्ठा sdhci_host *host, u8 mask)
+अणु
 	sdhci_reset(host, mask);
 	gli_set_9750(host);
-}
+पूर्ण
 
-static u32 sdhci_gl9750_readl(struct sdhci_host *host, int reg)
-{
+अटल u32 sdhci_gl9750_पढ़ोl(काष्ठा sdhci_host *host, पूर्णांक reg)
+अणु
 	u32 value;
 
-	value = readl(host->ioaddr + reg);
-	if (unlikely(reg == SDHCI_MAX_CURRENT && !(value & 0xff)))
+	value = पढ़ोl(host->ioaddr + reg);
+	अगर (unlikely(reg == SDHCI_MAX_CURRENT && !(value & 0xff)))
 		value |= 0xc8;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int sdhci_pci_gli_resume(struct sdhci_pci_chip *chip)
-{
-	struct sdhci_pci_slot *slot = chip->slots[0];
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sdhci_pci_gli_resume(काष्ठा sdhci_pci_chip *chip)
+अणु
+	काष्ठा sdhci_pci_slot *slot = chip->slots[0];
 
-	pci_free_irq_vectors(slot->chip->pdev);
+	pci_मुक्त_irq_vectors(slot->chip->pdev);
 	gli_pcie_enable_msi(slot);
 
-	return sdhci_pci_resume_host(chip);
-}
+	वापस sdhci_pci_resume_host(chip);
+पूर्ण
 
-static int sdhci_cqhci_gli_resume(struct sdhci_pci_chip *chip)
-{
-	struct sdhci_pci_slot *slot = chip->slots[0];
-	int ret;
+अटल पूर्णांक sdhci_cqhci_gli_resume(काष्ठा sdhci_pci_chip *chip)
+अणु
+	काष्ठा sdhci_pci_slot *slot = chip->slots[0];
+	पूर्णांक ret;
 
 	ret = sdhci_pci_gli_resume(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return cqhci_resume(slot->host->mmc);
-}
+	वापस cqhci_resume(slot->host->mmc);
+पूर्ण
 
-static int sdhci_cqhci_gli_suspend(struct sdhci_pci_chip *chip)
-{
-	struct sdhci_pci_slot *slot = chip->slots[0];
-	int ret;
+अटल पूर्णांक sdhci_cqhci_gli_suspend(काष्ठा sdhci_pci_chip *chip)
+अणु
+	काष्ठा sdhci_pci_slot *slot = chip->slots[0];
+	पूर्णांक ret;
 
 	ret = cqhci_suspend(slot->host->mmc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return sdhci_suspend_host(slot->host);
-}
-#endif
+	वापस sdhci_suspend_host(slot->host);
+पूर्ण
+#पूर्ण_अगर
 
-static void gl9763e_hs400_enhanced_strobe(struct mmc_host *mmc,
-					  struct mmc_ios *ios)
-{
-	struct sdhci_host *host = mmc_priv(mmc);
+अटल व्योम gl9763e_hs400_enhanced_strobe(काष्ठा mmc_host *mmc,
+					  काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा sdhci_host *host = mmc_priv(mmc);
 	u32 val;
 
-	val = sdhci_readl(host, SDHCI_GLI_9763E_HS400_ES_REG);
-	if (ios->enhanced_strobe)
+	val = sdhci_पढ़ोl(host, SDHCI_GLI_9763E_HS400_ES_REG);
+	अगर (ios->enhanced_strobe)
 		val |= SDHCI_GLI_9763E_HS400_ES_BIT;
-	else
+	अन्यथा
 		val &= ~SDHCI_GLI_9763E_HS400_ES_BIT;
 
-	sdhci_writel(host, val, SDHCI_GLI_9763E_HS400_ES_REG);
-}
+	sdhci_ग_लिखोl(host, val, SDHCI_GLI_9763E_HS400_ES_REG);
+पूर्ण
 
-static void sdhci_set_gl9763e_signaling(struct sdhci_host *host,
-					unsigned int timing)
-{
+अटल व्योम sdhci_set_gl9763e_संकेतing(काष्ठा sdhci_host *host,
+					अचिन्हित पूर्णांक timing)
+अणु
 	u16 ctrl_2;
 
-	ctrl_2 = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+	ctrl_2 = sdhci_पढ़ोw(host, SDHCI_HOST_CONTROL2);
 	ctrl_2 &= ~SDHCI_CTRL_UHS_MASK;
-	if (timing == MMC_TIMING_MMC_HS200)
+	अगर (timing == MMC_TIMING_MMC_HS200)
 		ctrl_2 |= SDHCI_CTRL_UHS_SDR104;
-	else if (timing == MMC_TIMING_MMC_HS)
+	अन्यथा अगर (timing == MMC_TIMING_MMC_HS)
 		ctrl_2 |= SDHCI_CTRL_UHS_SDR25;
-	else if (timing == MMC_TIMING_MMC_DDR52)
+	अन्यथा अगर (timing == MMC_TIMING_MMC_DDR52)
 		ctrl_2 |= SDHCI_CTRL_UHS_DDR50;
-	else if (timing == MMC_TIMING_MMC_HS400)
+	अन्यथा अगर (timing == MMC_TIMING_MMC_HS400)
 		ctrl_2 |= SDHCI_GLI_9763E_CTRL_HS400;
 
-	sdhci_writew(host, ctrl_2, SDHCI_HOST_CONTROL2);
-}
+	sdhci_ग_लिखोw(host, ctrl_2, SDHCI_HOST_CONTROL2);
+पूर्ण
 
-static void sdhci_gl9763e_dumpregs(struct mmc_host *mmc)
-{
+अटल व्योम sdhci_gl9763e_dumpregs(काष्ठा mmc_host *mmc)
+अणु
 	sdhci_dumpregs(mmc_priv(mmc));
-}
+पूर्ण
 
-static void sdhci_gl9763e_cqe_pre_enable(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल व्योम sdhci_gl9763e_cqe_pre_enable(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 	u32 value;
 
-	value = cqhci_readl(cq_host, CQHCI_CFG);
+	value = cqhci_पढ़ोl(cq_host, CQHCI_CFG);
 	value |= CQHCI_ENABLE;
-	cqhci_writel(cq_host, value, CQHCI_CFG);
-}
+	cqhci_ग_लिखोl(cq_host, value, CQHCI_CFG);
+पूर्ण
 
-static void sdhci_gl9763e_cqe_enable(struct mmc_host *mmc)
-{
-	struct sdhci_host *host = mmc_priv(mmc);
+अटल व्योम sdhci_gl9763e_cqe_enable(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा sdhci_host *host = mmc_priv(mmc);
 
-	sdhci_writew(host, GLI_9763E_CQE_TRNS_MODE, SDHCI_TRANSFER_MODE);
+	sdhci_ग_लिखोw(host, GLI_9763E_CQE_TRNS_MODE, SDHCI_TRANSFER_MODE);
 	sdhci_cqe_enable(mmc);
-}
+पूर्ण
 
-static u32 sdhci_gl9763e_cqhci_irq(struct sdhci_host *host, u32 intmask)
-{
-	int cmd_error = 0;
-	int data_error = 0;
+अटल u32 sdhci_gl9763e_cqhci_irq(काष्ठा sdhci_host *host, u32 पूर्णांकmask)
+अणु
+	पूर्णांक cmd_error = 0;
+	पूर्णांक data_error = 0;
 
-	if (!sdhci_cqe_irq(host, intmask, &cmd_error, &data_error))
-		return intmask;
+	अगर (!sdhci_cqe_irq(host, पूर्णांकmask, &cmd_error, &data_error))
+		वापस पूर्णांकmask;
 
-	cqhci_irq(host->mmc, intmask, cmd_error, data_error);
+	cqhci_irq(host->mmc, पूर्णांकmask, cmd_error, data_error);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sdhci_gl9763e_cqe_post_disable(struct mmc_host *mmc)
-{
-	struct sdhci_host *host = mmc_priv(mmc);
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल व्योम sdhci_gl9763e_cqe_post_disable(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा sdhci_host *host = mmc_priv(mmc);
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 	u32 value;
 
-	value = cqhci_readl(cq_host, CQHCI_CFG);
+	value = cqhci_पढ़ोl(cq_host, CQHCI_CFG);
 	value &= ~CQHCI_ENABLE;
-	cqhci_writel(cq_host, value, CQHCI_CFG);
-	sdhci_writew(host, 0x0, SDHCI_TRANSFER_MODE);
-}
+	cqhci_ग_लिखोl(cq_host, value, CQHCI_CFG);
+	sdhci_ग_लिखोw(host, 0x0, SDHCI_TRANSFER_MODE);
+पूर्ण
 
-static const struct cqhci_host_ops sdhci_gl9763e_cqhci_ops = {
+अटल स्थिर काष्ठा cqhci_host_ops sdhci_gl9763e_cqhci_ops = अणु
 	.enable         = sdhci_gl9763e_cqe_enable,
 	.disable        = sdhci_cqe_disable,
 	.dumpregs       = sdhci_gl9763e_dumpregs,
 	.pre_enable     = sdhci_gl9763e_cqe_pre_enable,
 	.post_disable   = sdhci_gl9763e_cqe_post_disable,
-};
+पूर्ण;
 
-static int gl9763e_add_host(struct sdhci_pci_slot *slot)
-{
-	struct device *dev = &slot->chip->pdev->dev;
-	struct sdhci_host *host = slot->host;
-	struct cqhci_host *cq_host;
+अटल पूर्णांक gl9763e_add_host(काष्ठा sdhci_pci_slot *slot)
+अणु
+	काष्ठा device *dev = &slot->chip->pdev->dev;
+	काष्ठा sdhci_host *host = slot->host;
+	काष्ठा cqhci_host *cq_host;
 	bool dma64;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sdhci_setup_host(host);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	cq_host = devm_kzalloc(dev, sizeof(*cq_host), GFP_KERNEL);
-	if (!cq_host) {
+	cq_host = devm_kzalloc(dev, माप(*cq_host), GFP_KERNEL);
+	अगर (!cq_host) अणु
 		ret = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	cq_host->mmio = host->ioaddr + SDHCI_GLI_9763E_CQE_BASE_ADDR;
 	cq_host->ops = &sdhci_gl9763e_cqhci_ops;
 
 	dma64 = host->flags & SDHCI_USE_64_BIT_DMA;
-	if (dma64)
+	अगर (dma64)
 		cq_host->caps |= CQHCI_TASK_DESC_SZ_128;
 
 	ret = cqhci_init(cq_host, host->mmc, dma64);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
 	ret = __sdhci_add_host(host);
-	if (ret)
-		goto cleanup;
+	अगर (ret)
+		जाओ cleanup;
 
-	return 0;
+	वापस 0;
 
 cleanup:
 	sdhci_cleanup_host(host);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sdhci_gl9763e_reset(struct sdhci_host *host, u8 mask)
-{
-	if ((host->mmc->caps2 & MMC_CAP2_CQE) && (mask & SDHCI_RESET_ALL) &&
-	    host->mmc->cqe_private)
+अटल व्योम sdhci_gl9763e_reset(काष्ठा sdhci_host *host, u8 mask)
+अणु
+	अगर ((host->mmc->caps2 & MMC_CAP2_CQE) && (mask & SDHCI_RESET_ALL) &&
+	    host->mmc->cqe_निजी)
 		cqhci_deactivate(host->mmc);
 	sdhci_reset(host, mask);
-}
+पूर्ण
 
-static void gli_set_gl9763e(struct sdhci_pci_slot *slot)
-{
-	struct pci_dev *pdev = slot->chip->pdev;
+अटल व्योम gli_set_gl9763e(काष्ठा sdhci_pci_slot *slot)
+अणु
+	काष्ठा pci_dev *pdev = slot->chip->pdev;
 	u32 value;
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_VHS, &value);
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_VHS, &value);
 	value &= ~GLI_9763E_VHS_REV;
 	value |= FIELD_PREP(GLI_9763E_VHS_REV, GLI_9763E_VHS_REV_W);
-	pci_write_config_dword(pdev, PCIE_GLI_9763E_VHS, value);
+	pci_ग_लिखो_config_dword(pdev, PCIE_GLI_9763E_VHS, value);
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_SCR, &value);
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_SCR, &value);
 	value |= GLI_9763E_SCR_AXI_REQ;
-	pci_write_config_dword(pdev, PCIE_GLI_9763E_SCR, value);
+	pci_ग_लिखो_config_dword(pdev, PCIE_GLI_9763E_SCR, value);
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_MMC_CTRL, &value);
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_MMC_CTRL, &value);
 	value &= ~GLI_9763E_HS400_SLOW;
-	pci_write_config_dword(pdev, PCIE_GLI_9763E_MMC_CTRL, value);
+	pci_ग_लिखो_config_dword(pdev, PCIE_GLI_9763E_MMC_CTRL, value);
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_CFG2, &value);
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_CFG2, &value);
 	value &= ~GLI_9763E_CFG2_L1DLY;
 	/* set ASPM L1 entry delay to 20us */
 	value |= FIELD_PREP(GLI_9763E_CFG2_L1DLY, GLI_9763E_CFG2_L1DLY_MID);
-	pci_write_config_dword(pdev, PCIE_GLI_9763E_CFG2, value);
+	pci_ग_लिखो_config_dword(pdev, PCIE_GLI_9763E_CFG2, value);
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_CLKRXDLY, &value);
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_CLKRXDLY, &value);
 	value &= ~GLI_9763E_HS400_RXDLY;
 	value |= FIELD_PREP(GLI_9763E_HS400_RXDLY, GLI_9763E_HS400_RXDLY_5);
-	pci_write_config_dword(pdev, PCIE_GLI_9763E_CLKRXDLY, value);
+	pci_ग_लिखो_config_dword(pdev, PCIE_GLI_9763E_CLKRXDLY, value);
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_VHS, &value);
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_VHS, &value);
 	value &= ~GLI_9763E_VHS_REV;
 	value |= FIELD_PREP(GLI_9763E_VHS_REV, GLI_9763E_VHS_REV_R);
-	pci_write_config_dword(pdev, PCIE_GLI_9763E_VHS, value);
-}
+	pci_ग_लिखो_config_dword(pdev, PCIE_GLI_9763E_VHS, value);
+पूर्ण
 
-static int gli_probe_slot_gl9763e(struct sdhci_pci_slot *slot)
-{
-	struct pci_dev *pdev = slot->chip->pdev;
-	struct sdhci_host *host = slot->host;
+अटल पूर्णांक gli_probe_slot_gl9763e(काष्ठा sdhci_pci_slot *slot)
+अणु
+	काष्ठा pci_dev *pdev = slot->chip->pdev;
+	काष्ठा sdhci_host *host = slot->host;
 	u32 value;
 
 	host->mmc->caps |= MMC_CAP_8_BIT_DATA |
@@ -877,9 +878,9 @@ static int gli_probe_slot_gl9763e(struct sdhci_pci_slot *slot)
 			    MMC_CAP2_NO_SDIO |
 			    MMC_CAP2_NO_SD;
 
-	pci_read_config_dword(pdev, PCIE_GLI_9763E_MB, &value);
-	if (!(value & GLI_9763E_MB_CMDQ_OFF))
-		if (value & GLI_9763E_MB_ERP_ON)
+	pci_पढ़ो_config_dword(pdev, PCIE_GLI_9763E_MB, &value);
+	अगर (!(value & GLI_9763E_MB_CMDQ_OFF))
+		अगर (value & GLI_9763E_MB_ERP_ON)
 			host->mmc->caps2 |= MMC_CAP2_CQE | MMC_CAP2_CQE_DCMD;
 
 	gli_pcie_enable_msi(slot);
@@ -888,66 +889,66 @@ static int gli_probe_slot_gl9763e(struct sdhci_pci_slot *slot)
 	gli_set_gl9763e(slot);
 	sdhci_enable_v4_mode(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sdhci_ops sdhci_gl9755_ops = {
-	.set_clock		= sdhci_gl9755_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_gl9755_ops = अणु
+	.set_घड़ी		= sdhci_gl9755_set_घड़ी,
 	.enable_dma		= sdhci_pci_enable_dma,
 	.set_bus_width		= sdhci_set_bus_width,
 	.reset			= sdhci_reset,
-	.set_uhs_signaling	= sdhci_set_uhs_signaling,
-	.voltage_switch		= sdhci_gli_voltage_switch,
-};
+	.set_uhs_संकेतing	= sdhci_set_uhs_संकेतing,
+	.voltage_चयन		= sdhci_gli_voltage_चयन,
+पूर्ण;
 
-const struct sdhci_pci_fixes sdhci_gl9755 = {
+स्थिर काष्ठा sdhci_pci_fixes sdhci_gl9755 = अणु
 	.quirks		= SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC,
 	.quirks2	= SDHCI_QUIRK2_BROKEN_DDR50,
 	.probe_slot	= gli_probe_slot_gl9755,
 	.ops            = &sdhci_gl9755_ops,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 	.resume         = sdhci_pci_gli_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct sdhci_ops sdhci_gl9750_ops = {
-	.read_l                 = sdhci_gl9750_readl,
-	.set_clock		= sdhci_gl9750_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_gl9750_ops = अणु
+	.पढ़ो_l                 = sdhci_gl9750_पढ़ोl,
+	.set_घड़ी		= sdhci_gl9750_set_घड़ी,
 	.enable_dma		= sdhci_pci_enable_dma,
 	.set_bus_width		= sdhci_set_bus_width,
 	.reset			= sdhci_gl9750_reset,
-	.set_uhs_signaling	= sdhci_set_uhs_signaling,
-	.voltage_switch		= sdhci_gli_voltage_switch,
-	.platform_execute_tuning = gl9750_execute_tuning,
-};
+	.set_uhs_संकेतing	= sdhci_set_uhs_संकेतing,
+	.voltage_चयन		= sdhci_gli_voltage_चयन,
+	.platक्रमm_execute_tuning = gl9750_execute_tuning,
+पूर्ण;
 
-const struct sdhci_pci_fixes sdhci_gl9750 = {
+स्थिर काष्ठा sdhci_pci_fixes sdhci_gl9750 = अणु
 	.quirks		= SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC,
 	.quirks2	= SDHCI_QUIRK2_BROKEN_DDR50,
 	.probe_slot	= gli_probe_slot_gl9750,
 	.ops            = &sdhci_gl9750_ops,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 	.resume         = sdhci_pci_gli_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct sdhci_ops sdhci_gl9763e_ops = {
-	.set_clock		= sdhci_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_gl9763e_ops = अणु
+	.set_घड़ी		= sdhci_set_घड़ी,
 	.enable_dma		= sdhci_pci_enable_dma,
 	.set_bus_width		= sdhci_set_bus_width,
 	.reset			= sdhci_gl9763e_reset,
-	.set_uhs_signaling	= sdhci_set_gl9763e_signaling,
-	.voltage_switch		= sdhci_gli_voltage_switch,
+	.set_uhs_संकेतing	= sdhci_set_gl9763e_संकेतing,
+	.voltage_चयन		= sdhci_gli_voltage_चयन,
 	.irq                    = sdhci_gl9763e_cqhci_irq,
-};
+पूर्ण;
 
-const struct sdhci_pci_fixes sdhci_gl9763e = {
+स्थिर काष्ठा sdhci_pci_fixes sdhci_gl9763e = अणु
 	.quirks		= SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC,
 	.probe_slot	= gli_probe_slot_gl9763e,
 	.ops            = &sdhci_gl9763e_ops,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 	.resume		= sdhci_cqhci_gli_resume,
 	.suspend	= sdhci_cqhci_gli_suspend,
-#endif
+#पूर्ण_अगर
 	.add_host       = gl9763e_add_host,
-};
+पूर्ण;

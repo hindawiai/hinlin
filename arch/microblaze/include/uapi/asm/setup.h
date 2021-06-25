@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2007-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2007-2009 PetaLogix
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#ifndef _UAPI_ASM_MICROBLAZE_SETUP_H
-#define _UAPI_ASM_MICROBLAZE_SETUP_H
+#अगर_अघोषित _UAPI_ASM_MICROBLAZE_SETUP_H
+#घोषणा _UAPI_ASM_MICROBLAZE_SETUP_H
 
-#define COMMAND_LINE_SIZE	256
+#घोषणा COMMAND_LINE_SIZE	256
 
-# ifndef __ASSEMBLY__
+# अगरndef __ASSEMBLY__
 
-# endif /* __ASSEMBLY__ */
-#endif /* _UAPI_ASM_MICROBLAZE_SETUP_H */
+# endअगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* _UAPI_ASM_MICROBLAZE_SETUP_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/mfp-pxa2xx.c
  *
@@ -6,139 +7,139 @@
  *
  *  The GPIOs on PXA2xx can be configured as one of many alternate
  *  functions, this is by concept samilar to the MFP configuration
- *  on PXA3xx,  what's more important, the low power pin state and
+ *  on PXA3xx,  what's more important, the low घातer pin state and
  *  wakeup detection are also supported by the same framework.
  */
-#include <linux/gpio.h>
-#include <linux/gpio-pxa.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio-pxa.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/syscore_ops.h>
 
-#include <mach/pxa2xx-regs.h>
-#include "mfp-pxa2xx.h"
+#समावेश <mach/pxa2xx-regs.h>
+#समावेश "mfp-pxa2xx.h"
 
-#include "generic.h"
+#समावेश "generic.h"
 
-#define PGSR(x)		__REG2(0x40F00020, (x) << 2)
-#define __GAFR(u, x)	__REG2((u) ? 0x40E00058 : 0x40E00054, (x) << 3)
-#define GAFR_L(x)	__GAFR(0, x)
-#define GAFR_U(x)	__GAFR(1, x)
+#घोषणा PGSR(x)		__REG2(0x40F00020, (x) << 2)
+#घोषणा __GAFR(u, x)	__REG2((u) ? 0x40E00058 : 0x40E00054, (x) << 3)
+#घोषणा GAFR_L(x)	__GAFR(0, x)
+#घोषणा GAFR_U(x)	__GAFR(1, x)
 
-#define BANK_OFF(n)	(((n) < 3) ? (n) << 2 : 0x100 + (((n) - 3) << 2))
-#define GPLR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5))
-#define GPDR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5) + 0x0c)
-#define GPSR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5) + 0x18)
-#define GPCR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5) + 0x24)
+#घोषणा BANK_OFF(n)	(((n) < 3) ? (n) << 2 : 0x100 + (((n) - 3) << 2))
+#घोषणा GPLR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5))
+#घोषणा GPDR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5) + 0x0c)
+#घोषणा GPSR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5) + 0x18)
+#घोषणा GPCR(x)		__REG2(0x40E00000, BANK_OFF((x) >> 5) + 0x24)
 
-#define PWER_WE35	(1 << 24)
+#घोषणा PWER_WE35	(1 << 24)
 
-struct gpio_desc {
-	unsigned	valid		: 1;
-	unsigned	can_wakeup	: 1;
-	unsigned	keypad_gpio	: 1;
-	unsigned	dir_inverted	: 1;
-	unsigned int	mask; /* bit mask in PWER or PKWR */
-	unsigned int	mux_mask; /* bit mask of muxed gpio bits, 0 if no mux */
-	unsigned long	config;
-};
+काष्ठा gpio_desc अणु
+	अचिन्हित	valid		: 1;
+	अचिन्हित	can_wakeup	: 1;
+	अचिन्हित	keypad_gpio	: 1;
+	अचिन्हित	dir_inverted	: 1;
+	अचिन्हित पूर्णांक	mask; /* bit mask in PWER or PKWR */
+	अचिन्हित पूर्णांक	mux_mask; /* bit mask of muxed gpio bits, 0 अगर no mux */
+	अचिन्हित दीर्घ	config;
+पूर्ण;
 
-static struct gpio_desc gpio_desc[MFP_PIN_GPIO127 + 1];
+अटल काष्ठा gpio_desc gpio_desc[MFP_PIN_GPIO127 + 1];
 
-static unsigned long gpdr_lpm[4];
+अटल अचिन्हित दीर्घ gpdr_lpm[4];
 
-static int __mfp_config_gpio(unsigned gpio, unsigned long c)
-{
-	unsigned long gafr, mask = GPIO_bit(gpio);
-	int bank = gpio_to_bank(gpio);
-	int uorl = !!(gpio & 0x10); /* GAFRx_U or GAFRx_L ? */
-	int shft = (gpio & 0xf) << 1;
-	int fn = MFP_AF(c);
-	int is_out = (c & MFP_DIR_OUT) ? 1 : 0;
+अटल पूर्णांक __mfp_config_gpio(अचिन्हित gpio, अचिन्हित दीर्घ c)
+अणु
+	अचिन्हित दीर्घ gafr, mask = GPIO_bit(gpio);
+	पूर्णांक bank = gpio_to_bank(gpio);
+	पूर्णांक uorl = !!(gpio & 0x10); /* GAFRx_U or GAFRx_L ? */
+	पूर्णांक shft = (gpio & 0xf) << 1;
+	पूर्णांक fn = MFP_AF(c);
+	पूर्णांक is_out = (c & MFP_सूची_OUT) ? 1 : 0;
 
-	if (fn > 3)
-		return -EINVAL;
+	अगर (fn > 3)
+		वापस -EINVAL;
 
-	/* alternate function and direction at run-time */
+	/* alternate function and direction at run-समय */
 	gafr = (uorl == 0) ? GAFR_L(bank) : GAFR_U(bank);
 	gafr = (gafr & ~(0x3 << shft)) | (fn << shft);
 
-	if (uorl == 0)
+	अगर (uorl == 0)
 		GAFR_L(bank) = gafr;
-	else
+	अन्यथा
 		GAFR_U(bank) = gafr;
 
-	if (is_out ^ gpio_desc[gpio].dir_inverted)
+	अगर (is_out ^ gpio_desc[gpio].dir_inverted)
 		GPDR(gpio) |= mask;
-	else
+	अन्यथा
 		GPDR(gpio) &= ~mask;
 
-	/* alternate function and direction at low power mode */
-	switch (c & MFP_LPM_STATE_MASK) {
-	case MFP_LPM_DRIVE_HIGH:
+	/* alternate function and direction at low घातer mode */
+	चयन (c & MFP_LPM_STATE_MASK) अणु
+	हाल MFP_LPM_DRIVE_HIGH:
 		PGSR(bank) |= mask;
 		is_out = 1;
-		break;
-	case MFP_LPM_DRIVE_LOW:
+		अवरोध;
+	हाल MFP_LPM_DRIVE_LOW:
 		PGSR(bank) &= ~mask;
 		is_out = 1;
-		break;
-	case MFP_LPM_INPUT:
-	case MFP_LPM_DEFAULT:
-		break;
-	default:
+		अवरोध;
+	हाल MFP_LPM_INPUT:
+	हाल MFP_LPM_DEFAULT:
+		अवरोध;
+	शेष:
 		/* warning and fall through, treat as MFP_LPM_DEFAULT */
 		pr_warn("%s: GPIO%d: unsupported low power mode\n",
 			__func__, gpio);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (is_out ^ gpio_desc[gpio].dir_inverted)
+	अगर (is_out ^ gpio_desc[gpio].dir_inverted)
 		gpdr_lpm[bank] |= mask;
-	else
+	अन्यथा
 		gpdr_lpm[bank] &= ~mask;
 
-	/* give early warning if MFP_LPM_CAN_WAKEUP is set on the
+	/* give early warning अगर MFP_LPM_CAN_WAKEUP is set on the
 	 * configurations of those pins not able to wakeup
 	 */
-	if ((c & MFP_LPM_CAN_WAKEUP) && !gpio_desc[gpio].can_wakeup) {
+	अगर ((c & MFP_LPM_CAN_WAKEUP) && !gpio_desc[gpio].can_wakeup) अणु
 		pr_warn("%s: GPIO%d unable to wakeup\n", __func__, gpio);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((c & MFP_LPM_CAN_WAKEUP) && is_out) {
+	अगर ((c & MFP_LPM_CAN_WAKEUP) && is_out) अणु
 		pr_warn("%s: output GPIO%d unable to wakeup\n", __func__, gpio);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int __mfp_validate(int mfp)
-{
-	int gpio = mfp_to_gpio(mfp);
+अटल अंतरभूत पूर्णांक __mfp_validate(पूर्णांक mfp)
+अणु
+	पूर्णांक gpio = mfp_to_gpio(mfp);
 
-	if ((mfp > MFP_PIN_GPIO127) || !gpio_desc[gpio].valid) {
+	अगर ((mfp > MFP_PIN_GPIO127) || !gpio_desc[gpio].valid) अणु
 		pr_warn("%s: GPIO%d is invalid pin\n", __func__, gpio);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return gpio;
-}
+	वापस gpio;
+पूर्ण
 
-void pxa2xx_mfp_config(unsigned long *mfp_cfgs, int num)
-{
-	unsigned long flags;
-	unsigned long *c;
-	int i, gpio;
+व्योम pxa2xx_mfp_config(अचिन्हित दीर्घ *mfp_cfgs, पूर्णांक num)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ *c;
+	पूर्णांक i, gpio;
 
-	for (i = 0, c = mfp_cfgs; i < num; i++, c++) {
+	क्रम (i = 0, c = mfp_cfgs; i < num; i++, c++) अणु
 
 		gpio = __mfp_validate(MFP_PIN(*c));
-		if (gpio < 0)
-			continue;
+		अगर (gpio < 0)
+			जारी;
 
 		local_irq_save(flags);
 
@@ -146,17 +147,17 @@ void pxa2xx_mfp_config(unsigned long *mfp_cfgs, int num)
 		__mfp_config_gpio(gpio, *c);
 
 		local_irq_restore(flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pxa2xx_mfp_set_lpm(int mfp, unsigned long lpm)
-{
-	unsigned long flags, c;
-	int gpio;
+व्योम pxa2xx_mfp_set_lpm(पूर्णांक mfp, अचिन्हित दीर्घ lpm)
+अणु
+	अचिन्हित दीर्घ flags, c;
+	पूर्णांक gpio;
 
 	gpio = __mfp_validate(mfp);
-	if (gpio < 0)
-		return;
+	अगर (gpio < 0)
+		वापस;
 
 	local_irq_save(flags);
 
@@ -165,168 +166,168 @@ void pxa2xx_mfp_set_lpm(int mfp, unsigned long lpm)
 	__mfp_config_gpio(gpio, c);
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-int gpio_set_wake(unsigned int gpio, unsigned int on)
-{
-	struct gpio_desc *d;
-	unsigned long c, mux_taken;
+पूर्णांक gpio_set_wake(अचिन्हित पूर्णांक gpio, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा gpio_desc *d;
+	अचिन्हित दीर्घ c, mux_taken;
 
-	if (gpio > mfp_to_gpio(MFP_PIN_GPIO127))
-		return -EINVAL;
+	अगर (gpio > mfp_to_gpio(MFP_PIN_GPIO127))
+		वापस -EINVAL;
 
 	d = &gpio_desc[gpio];
 	c = d->config;
 
-	if (!d->valid)
-		return -EINVAL;
+	अगर (!d->valid)
+		वापस -EINVAL;
 
-	/* Allow keypad GPIOs to wakeup system when
+	/* Allow keypad GPIOs to wakeup प्रणाली when
 	 * configured as generic GPIOs.
 	 */
-	if (d->keypad_gpio && (MFP_AF(d->config) == 0) &&
-	    (d->config & MFP_LPM_CAN_WAKEUP)) {
-		if (on)
+	अगर (d->keypad_gpio && (MFP_AF(d->config) == 0) &&
+	    (d->config & MFP_LPM_CAN_WAKEUP)) अणु
+		अगर (on)
 			PKWR |= d->mask;
-		else
+		अन्यथा
 			PKWR &= ~d->mask;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mux_taken = (PWER & d->mux_mask) & (~d->mask);
-	if (on && mux_taken)
-		return -EBUSY;
+	अगर (on && mux_taken)
+		वापस -EBUSY;
 
-	if (d->can_wakeup && (c & MFP_LPM_CAN_WAKEUP)) {
-		if (on) {
+	अगर (d->can_wakeup && (c & MFP_LPM_CAN_WAKEUP)) अणु
+		अगर (on) अणु
 			PWER = (PWER & ~d->mux_mask) | d->mask;
 
-			if (c & MFP_LPM_EDGE_RISE)
+			अगर (c & MFP_LPM_EDGE_RISE)
 				PRER |= d->mask;
-			else
+			अन्यथा
 				PRER &= ~d->mask;
 
-			if (c & MFP_LPM_EDGE_FALL)
+			अगर (c & MFP_LPM_EDGE_FALL)
 				PFER |= d->mask;
-			else
+			अन्यथा
 				PFER &= ~d->mask;
-		} else {
+		पूर्ण अन्यथा अणु
 			PWER &= ~d->mask;
 			PRER &= ~d->mask;
 			PFER &= ~d->mask;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PXA25x
-static void __init pxa25x_mfp_init(void)
-{
-	int i;
+#अगर_घोषित CONFIG_PXA25x
+अटल व्योम __init pxa25x_mfp_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* running before pxa_gpio_probe() */
-#ifdef CONFIG_CPU_PXA26x
+	/* running beक्रमe pxa_gpio_probe() */
+#अगर_घोषित CONFIG_CPU_PXA26x
 	pxa_last_gpio = 89;
-#else
+#अन्यथा
 	pxa_last_gpio = 84;
-#endif
-	for (i = 0; i <= pxa_last_gpio; i++)
+#पूर्ण_अगर
+	क्रम (i = 0; i <= pxa_last_gpio; i++)
 		gpio_desc[i].valid = 1;
 
-	for (i = 0; i <= 15; i++) {
+	क्रम (i = 0; i <= 15; i++) अणु
 		gpio_desc[i].can_wakeup = 1;
 		gpio_desc[i].mask = GPIO_bit(i);
-	}
+	पूर्ण
 
 	/* PXA26x has additional 4 GPIOs (86/87/88/89) which has the
 	 * direction bit inverted in GPDR2. See PXA26x DM 4.1.1.
 	 */
-	for (i = 86; i <= pxa_last_gpio; i++)
+	क्रम (i = 86; i <= pxa_last_gpio; i++)
 		gpio_desc[i].dir_inverted = 1;
-}
-#else
-static inline void pxa25x_mfp_init(void) {}
-#endif /* CONFIG_PXA25x */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम pxa25x_mfp_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PXA25x */
 
-#ifdef CONFIG_PXA27x
-static int pxa27x_pkwr_gpio[] = {
+#अगर_घोषित CONFIG_PXA27x
+अटल पूर्णांक pxa27x_pkwr_gpio[] = अणु
 	13, 16, 17, 34, 36, 37, 38, 39, 90, 91, 93, 94,
 	95, 96, 97, 98, 99, 100, 101, 102
-};
+पूर्ण;
 
-int keypad_set_wake(unsigned int on)
-{
-	unsigned int i, gpio, mask = 0;
-	struct gpio_desc *d;
+पूर्णांक keypad_set_wake(अचिन्हित पूर्णांक on)
+अणु
+	अचिन्हित पूर्णांक i, gpio, mask = 0;
+	काष्ठा gpio_desc *d;
 
-	for (i = 0; i < ARRAY_SIZE(pxa27x_pkwr_gpio); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(pxa27x_pkwr_gpio); i++) अणु
 
 		gpio = pxa27x_pkwr_gpio[i];
 		d = &gpio_desc[gpio];
 
-		/* skip if configured as generic GPIO */
-		if (MFP_AF(d->config) == 0)
-			continue;
+		/* skip अगर configured as generic GPIO */
+		अगर (MFP_AF(d->config) == 0)
+			जारी;
 
-		if (d->config & MFP_LPM_CAN_WAKEUP)
+		अगर (d->config & MFP_LPM_CAN_WAKEUP)
 			mask |= gpio_desc[gpio].mask;
-	}
+	पूर्ण
 
-	if (on)
+	अगर (on)
 		PKWR |= mask;
-	else
+	अन्यथा
 		PKWR &= ~mask;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PWER_WEMUX2_GPIO38	(1 << 16)
-#define PWER_WEMUX2_GPIO53	(2 << 16)
-#define PWER_WEMUX2_GPIO40	(3 << 16)
-#define PWER_WEMUX2_GPIO36	(4 << 16)
-#define PWER_WEMUX2_MASK	(7 << 16)
-#define PWER_WEMUX3_GPIO31	(1 << 19)
-#define PWER_WEMUX3_GPIO113	(2 << 19)
-#define PWER_WEMUX3_MASK	(3 << 19)
+#घोषणा PWER_WEMUX2_GPIO38	(1 << 16)
+#घोषणा PWER_WEMUX2_GPIO53	(2 << 16)
+#घोषणा PWER_WEMUX2_GPIO40	(3 << 16)
+#घोषणा PWER_WEMUX2_GPIO36	(4 << 16)
+#घोषणा PWER_WEMUX2_MASK	(7 << 16)
+#घोषणा PWER_WEMUX3_GPIO31	(1 << 19)
+#घोषणा PWER_WEMUX3_GPIO113	(2 << 19)
+#घोषणा PWER_WEMUX3_MASK	(3 << 19)
 
-#define INIT_GPIO_DESC_MUXED(mux, gpio)				\
-do {								\
+#घोषणा INIT_GPIO_DESC_MUXED(mux, gpio)				\
+करो अणु								\
 	gpio_desc[(gpio)].can_wakeup = 1;			\
 	gpio_desc[(gpio)].mask = PWER_ ## mux ## _GPIO ##gpio;	\
 	gpio_desc[(gpio)].mux_mask = PWER_ ## mux ## _MASK;	\
-} while (0)
+पूर्ण जबतक (0)
 
-static void __init pxa27x_mfp_init(void)
-{
-	int i, gpio;
+अटल व्योम __init pxa27x_mfp_init(व्योम)
+अणु
+	पूर्णांक i, gpio;
 
-	pxa_last_gpio = 120;	/* running before pxa_gpio_probe() */
-	for (i = 0; i <= pxa_last_gpio; i++) {
+	pxa_last_gpio = 120;	/* running beक्रमe pxa_gpio_probe() */
+	क्रम (i = 0; i <= pxa_last_gpio; i++) अणु
 		/* skip GPIO2, 5, 6, 7, 8, they are not
 		 * valid pins allow configuration
 		 */
-		if (i == 2 || i == 5 || i == 6 || i == 7 || i == 8)
-			continue;
+		अगर (i == 2 || i == 5 || i == 6 || i == 7 || i == 8)
+			जारी;
 
 		gpio_desc[i].valid = 1;
-	}
+	पूर्ण
 
 	/* Keypad GPIOs */
-	for (i = 0; i < ARRAY_SIZE(pxa27x_pkwr_gpio); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(pxa27x_pkwr_gpio); i++) अणु
 		gpio = pxa27x_pkwr_gpio[i];
 		gpio_desc[gpio].can_wakeup = 1;
 		gpio_desc[gpio].keypad_gpio = 1;
 		gpio_desc[gpio].mask = 1 << i;
-	}
+	पूर्ण
 
-	/* Overwrite GPIO13 as a PWER wakeup source */
-	for (i = 0; i <= 15; i++) {
+	/* Overग_लिखो GPIO13 as a PWER wakeup source */
+	क्रम (i = 0; i <= 15; i++) अणु
 		/* skip GPIO2, 5, 6, 7, 8 */
-		if (GPIO_bit(i) & 0x1e4)
-			continue;
+		अगर (GPIO_bit(i) & 0x1e4)
+			जारी;
 
 		gpio_desc[i].can_wakeup = 1;
 		gpio_desc[i].mask = GPIO_bit(i);
-	}
+	पूर्ण
 
 	gpio_desc[35].can_wakeup = 1;
 	gpio_desc[35].mask = PWER_WE35;
@@ -337,33 +338,33 @@ static void __init pxa27x_mfp_init(void)
 	INIT_GPIO_DESC_MUXED(WEMUX2, 53);
 	INIT_GPIO_DESC_MUXED(WEMUX2, 40);
 	INIT_GPIO_DESC_MUXED(WEMUX2, 36);
-}
-#else
-static inline void pxa27x_mfp_init(void) {}
-#endif /* CONFIG_PXA27x */
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम pxa27x_mfp_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PXA27x */
 
-#ifdef CONFIG_PM
-static unsigned long saved_gafr[2][4];
-static unsigned long saved_gpdr[4];
-static unsigned long saved_gplr[4];
-static unsigned long saved_pgsr[4];
+#अगर_घोषित CONFIG_PM
+अटल अचिन्हित दीर्घ saved_gafr[2][4];
+अटल अचिन्हित दीर्घ saved_gpdr[4];
+अटल अचिन्हित दीर्घ saved_gplr[4];
+अटल अचिन्हित दीर्घ saved_pgsr[4];
 
-static int pxa2xx_mfp_suspend(void)
-{
-	int i;
+अटल पूर्णांक pxa2xx_mfp_suspend(व्योम)
+अणु
+	पूर्णांक i;
 
 	/* set corresponding PGSR bit of those marked MFP_LPM_KEEP_OUTPUT */
-	for (i = 0; i < pxa_last_gpio; i++) {
-		if ((gpio_desc[i].config & MFP_LPM_KEEP_OUTPUT) &&
-		    (GPDR(i) & GPIO_bit(i))) {
-			if (GPLR(i) & GPIO_bit(i))
+	क्रम (i = 0; i < pxa_last_gpio; i++) अणु
+		अगर ((gpio_desc[i].config & MFP_LPM_KEEP_OUTPUT) &&
+		    (GPDR(i) & GPIO_bit(i))) अणु
+			अगर (GPLR(i) & GPIO_bit(i))
 				PGSR(gpio_to_bank(i)) |= GPIO_bit(i);
-			else
+			अन्यथा
 				PGSR(gpio_to_bank(i)) &= ~GPIO_bit(i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i <= gpio_to_bank(pxa_last_gpio); i++) {
+	क्रम (i = 0; i <= gpio_to_bank(pxa_last_gpio); i++) अणु
 		saved_gafr[0][i] = GAFR_L(i);
 		saved_gafr[1][i] = GAFR_U(i);
 		saved_gpdr[i] = GPDR(i * 32);
@@ -372,65 +373,65 @@ static int pxa2xx_mfp_suspend(void)
 
 		GPSR(i * 32) = PGSR(i);
 		GPCR(i * 32) = ~PGSR(i);
-	}
+	पूर्ण
 
-	/* set GPDR bits taking into account MFP_LPM_KEEP_OUTPUT */
-	for (i = 0; i < pxa_last_gpio; i++) {
-		if ((gpdr_lpm[gpio_to_bank(i)] & GPIO_bit(i)) ||
+	/* set GPDR bits taking पूर्णांकo account MFP_LPM_KEEP_OUTPUT */
+	क्रम (i = 0; i < pxa_last_gpio; i++) अणु
+		अगर ((gpdr_lpm[gpio_to_bank(i)] & GPIO_bit(i)) ||
 		    ((gpio_desc[i].config & MFP_LPM_KEEP_OUTPUT) &&
 		     (saved_gpdr[gpio_to_bank(i)] & GPIO_bit(i))))
 			GPDR(i) |= GPIO_bit(i);
-		else
+		अन्यथा
 			GPDR(i) &= ~GPIO_bit(i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pxa2xx_mfp_resume(void)
-{
-	int i;
+अटल व्योम pxa2xx_mfp_resume(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i <= gpio_to_bank(pxa_last_gpio); i++) {
+	क्रम (i = 0; i <= gpio_to_bank(pxa_last_gpio); i++) अणु
 		GAFR_L(i) = saved_gafr[0][i];
 		GAFR_U(i) = saved_gafr[1][i];
 		GPSR(i * 32) = saved_gplr[i];
 		GPCR(i * 32) = ~saved_gplr[i];
 		GPDR(i * 32) = saved_gpdr[i];
 		PGSR(i) = saved_pgsr[i];
-	}
+	पूर्ण
 	PSSR = PSSR_RDH | PSSR_PH;
-}
-#else
-#define pxa2xx_mfp_suspend	NULL
-#define pxa2xx_mfp_resume	NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा pxa2xx_mfp_suspend	शून्य
+#घोषणा pxa2xx_mfp_resume	शून्य
+#पूर्ण_अगर
 
-struct syscore_ops pxa2xx_mfp_syscore_ops = {
+काष्ठा syscore_ops pxa2xx_mfp_syscore_ops = अणु
 	.suspend	= pxa2xx_mfp_suspend,
 	.resume		= pxa2xx_mfp_resume,
-};
+पूर्ण;
 
-static int __init pxa2xx_mfp_init(void)
-{
-	int i;
+अटल पूर्णांक __init pxa2xx_mfp_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!cpu_is_pxa2xx())
-		return 0;
+	अगर (!cpu_is_pxa2xx())
+		वापस 0;
 
-	if (cpu_is_pxa25x())
+	अगर (cpu_is_pxa25x())
 		pxa25x_mfp_init();
 
-	if (cpu_is_pxa27x())
+	अगर (cpu_is_pxa27x())
 		pxa27x_mfp_init();
 
-	/* clear RDH bit to enable GPIO receivers after reset/sleep exit */
+	/* clear RDH bit to enable GPIO receivers after reset/sleep निकास */
 	PSSR = PSSR_RDH;
 
 	/* initialize gafr_run[], pgsr_lpm[] from existing values */
-	for (i = 0; i <= gpio_to_bank(pxa_last_gpio); i++)
+	क्रम (i = 0; i <= gpio_to_bank(pxa_last_gpio); i++)
 		gpdr_lpm[i] = GPDR(i * 32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 postcore_initcall(pxa2xx_mfp_init);

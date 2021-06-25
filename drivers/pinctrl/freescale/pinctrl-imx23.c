@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Freescale i.MX23 pinctrl driver
 //
 // Author: Shawn Guo <shawn.guo@linaro.org>
 // Copyright 2012 Freescale Semiconductor, Inc.
 
-#include <linux/init.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include "pinctrl-mxs.h"
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश "pinctrl-mxs.h"
 
-enum imx23_pin_enum {
+क्रमागत imx23_pin_क्रमागत अणु
 	GPMI_D00	= PINID(0, 0),
 	GPMI_D01	= PINID(0, 1),
 	GPMI_D02	= PINID(0, 2),
@@ -128,9 +129,9 @@ enum imx23_pin_enum {
 	EMI_DQS1	= PINID(3, 19),
 	EMI_CLK		= PINID(3, 20),
 	EMI_CLKN	= PINID(3, 21),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc imx23_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc imx23_pins[] = अणु
 	MXS_PINCTRL_PIN(GPMI_D00),
 	MXS_PINCTRL_PIN(GPMI_D01),
 	MXS_PINCTRL_PIN(GPMI_D02),
@@ -248,41 +249,41 @@ static const struct pinctrl_pin_desc imx23_pins[] = {
 	MXS_PINCTRL_PIN(EMI_DQS1),
 	MXS_PINCTRL_PIN(EMI_CLK),
 	MXS_PINCTRL_PIN(EMI_CLKN),
-};
+पूर्ण;
 
-static const struct mxs_regs imx23_regs = {
+अटल स्थिर काष्ठा mxs_regs imx23_regs = अणु
 	.muxsel = 0x100,
 	.drive = 0x200,
 	.pull = 0x400,
-};
+पूर्ण;
 
-static struct mxs_pinctrl_soc_data imx23_pinctrl_data = {
+अटल काष्ठा mxs_pinctrl_soc_data imx23_pinctrl_data = अणु
 	.regs = &imx23_regs,
 	.pins = imx23_pins,
 	.npins = ARRAY_SIZE(imx23_pins),
-};
+पूर्ण;
 
-static int imx23_pinctrl_probe(struct platform_device *pdev)
-{
-	return mxs_pinctrl_probe(pdev, &imx23_pinctrl_data);
-}
+अटल पूर्णांक imx23_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस mxs_pinctrl_probe(pdev, &imx23_pinctrl_data);
+पूर्ण
 
-static const struct of_device_id imx23_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx23-pinctrl", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx23_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx23-pinctrl", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver imx23_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx23_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx23-pinctrl",
 		.suppress_bind_attrs = true,
 		.of_match_table = imx23_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = imx23_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx23_pinctrl_init(void)
-{
-	return platform_driver_register(&imx23_pinctrl_driver);
-}
+अटल पूर्णांक __init imx23_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx23_pinctrl_driver);
+पूर्ण
 postcore_initcall(imx23_pinctrl_init);

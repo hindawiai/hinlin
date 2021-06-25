@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2016 Yang Ling <gnaygnil@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/watchdog.h>
-#include <loongson1.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <loongson1.h>
 
-#define DEFAULT_HEARTBEAT	30
+#घोषणा DEFAULT_HEARTBEAT	30
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0444);
 
-static unsigned int heartbeat;
-module_param(heartbeat, uint, 0444);
+अटल अचिन्हित पूर्णांक heartbeat;
+module_param(heartbeat, uपूर्णांक, 0444);
 
-struct ls1x_wdt_drvdata {
-	void __iomem *base;
-	struct clk *clk;
-	unsigned long clk_rate;
-	struct watchdog_device wdt;
-};
+काष्ठा ls1x_wdt_drvdata अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ clk_rate;
+	काष्ठा watchकरोg_device wdt;
+पूर्ण;
 
-static int ls1x_wdt_ping(struct watchdog_device *wdt_dev)
-{
-	struct ls1x_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
+अटल पूर्णांक ls1x_wdt_ping(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा ls1x_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
 
-	writel(0x1, drvdata->base + WDT_SET);
+	ग_लिखोl(0x1, drvdata->base + WDT_SET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ls1x_wdt_set_timeout(struct watchdog_device *wdt_dev,
-				unsigned int timeout)
-{
-	struct ls1x_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
-	unsigned int max_hw_heartbeat = wdt_dev->max_hw_heartbeat_ms / 1000;
-	unsigned int counts;
+अटल पूर्णांक ls1x_wdt_set_समयout(काष्ठा watchकरोg_device *wdt_dev,
+				अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा ls1x_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
+	अचिन्हित पूर्णांक max_hw_heartbeat = wdt_dev->max_hw_heartbeat_ms / 1000;
+	अचिन्हित पूर्णांक counts;
 
-	wdt_dev->timeout = timeout;
+	wdt_dev->समयout = समयout;
 
-	counts = drvdata->clk_rate * min(timeout, max_hw_heartbeat);
-	writel(counts, drvdata->base + WDT_TIMER);
+	counts = drvdata->clk_rate * min(समयout, max_hw_heartbeat);
+	ग_लिखोl(counts, drvdata->base + WDT_TIMER);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ls1x_wdt_start(struct watchdog_device *wdt_dev)
-{
-	struct ls1x_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
+अटल पूर्णांक ls1x_wdt_start(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा ls1x_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
 
-	writel(0x1, drvdata->base + WDT_EN);
+	ग_लिखोl(0x1, drvdata->base + WDT_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ls1x_wdt_stop(struct watchdog_device *wdt_dev)
-{
-	struct ls1x_wdt_drvdata *drvdata = watchdog_get_drvdata(wdt_dev);
+अटल पूर्णांक ls1x_wdt_stop(काष्ठा watchकरोg_device *wdt_dev)
+अणु
+	काष्ठा ls1x_wdt_drvdata *drvdata = watchकरोg_get_drvdata(wdt_dev);
 
-	writel(0x0, drvdata->base + WDT_EN);
+	ग_लिखोl(0x0, drvdata->base + WDT_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct watchdog_info ls1x_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info ls1x_wdt_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "Loongson1 Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops ls1x_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops ls1x_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = ls1x_wdt_start,
 	.stop = ls1x_wdt_stop,
 	.ping = ls1x_wdt_ping,
-	.set_timeout = ls1x_wdt_set_timeout,
-};
+	.set_समयout = ls1x_wdt_set_समयout,
+पूर्ण;
 
-static void ls1x_clk_disable_unprepare(void *data)
-{
+अटल व्योम ls1x_clk_disable_unprepare(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static int ls1x_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ls1x_wdt_drvdata *drvdata;
-	struct watchdog_device *ls1x_wdt;
-	unsigned long clk_rate;
-	int err;
+अटल पूर्णांक ls1x_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ls1x_wdt_drvdata *drvdata;
+	काष्ठा watchकरोg_device *ls1x_wdt;
+	अचिन्हित दीर्घ clk_rate;
+	पूर्णांक err;
 
-	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
-	drvdata->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(drvdata->base))
-		return PTR_ERR(drvdata->base);
+	drvdata->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(drvdata->base))
+		वापस PTR_ERR(drvdata->base);
 
 	drvdata->clk = devm_clk_get(dev, pdev->name);
-	if (IS_ERR(drvdata->clk))
-		return PTR_ERR(drvdata->clk);
+	अगर (IS_ERR(drvdata->clk))
+		वापस PTR_ERR(drvdata->clk);
 
 	err = clk_prepare_enable(drvdata->clk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "clk enable failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	err = devm_add_action_or_reset(dev, ls1x_clk_disable_unprepare,
 				       drvdata->clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	clk_rate = clk_get_rate(drvdata->clk);
-	if (!clk_rate)
-		return -EINVAL;
+	अगर (!clk_rate)
+		वापस -EINVAL;
 	drvdata->clk_rate = clk_rate;
 
 	ls1x_wdt = &drvdata->wdt;
 	ls1x_wdt->info = &ls1x_wdt_info;
 	ls1x_wdt->ops = &ls1x_wdt_ops;
-	ls1x_wdt->timeout = DEFAULT_HEARTBEAT;
-	ls1x_wdt->min_timeout = 1;
+	ls1x_wdt->समयout = DEFAULT_HEARTBEAT;
+	ls1x_wdt->min_समयout = 1;
 	ls1x_wdt->max_hw_heartbeat_ms = U32_MAX / clk_rate * 1000;
 	ls1x_wdt->parent = dev;
 
-	watchdog_init_timeout(ls1x_wdt, heartbeat, dev);
-	watchdog_set_nowayout(ls1x_wdt, nowayout);
-	watchdog_set_drvdata(ls1x_wdt, drvdata);
+	watchकरोg_init_समयout(ls1x_wdt, heartbeat, dev);
+	watchकरोg_set_nowayout(ls1x_wdt, nowayout);
+	watchकरोg_set_drvdata(ls1x_wdt, drvdata);
 
-	err = devm_watchdog_register_device(dev, &drvdata->wdt);
-	if (err)
-		return err;
+	err = devm_watchकरोg_रेजिस्टर_device(dev, &drvdata->wdt);
+	अगर (err)
+		वापस err;
 
-	platform_set_drvdata(pdev, drvdata);
+	platक्रमm_set_drvdata(pdev, drvdata);
 
 	dev_info(dev, "Loongson1 Watchdog driver registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ls1x_wdt_driver = {
+अटल काष्ठा platक्रमm_driver ls1x_wdt_driver = अणु
 	.probe = ls1x_wdt_probe,
-	.driver = {
+	.driver = अणु
 		.name = "ls1x-wdt",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ls1x_wdt_driver);
+module_platक्रमm_driver(ls1x_wdt_driver);
 
 MODULE_AUTHOR("Yang Ling <gnaygnil@gmail.com>");
 MODULE_DESCRIPTION("Loongson1 Watchdog Driver");

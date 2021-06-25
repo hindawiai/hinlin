@@ -1,342 +1,343 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/module.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
-#include <net/netfilter/nf_tproxy.h>
-#include <net/inet_sock.h>
-#include <net/tcp.h>
-#include <linux/if_ether.h>
-#include <net/netfilter/ipv4/nf_defrag_ipv4.h>
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-#include <net/netfilter/ipv6/nf_defrag_ipv6.h>
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/module.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
+#समावेश <net/netfilter/nf_tproxy.h>
+#समावेश <net/inet_sock.h>
+#समावेश <net/tcp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <net/netfilter/ipv4/nf_defrag_ipv4.h>
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+#समावेश <net/netfilter/ipv6/nf_defrag_ipv6.h>
+#पूर्ण_अगर
 
-struct nft_tproxy {
+काष्ठा nft_tproxy अणु
 	u8	sreg_addr;
 	u8	sreg_port;
 	u8	family;
-};
+पूर्ण;
 
-static void nft_tproxy_eval_v4(const struct nft_expr *expr,
-			       struct nft_regs *regs,
-			       const struct nft_pktinfo *pkt)
-{
-	const struct nft_tproxy *priv = nft_expr_priv(expr);
-	struct sk_buff *skb = pkt->skb;
-	const struct iphdr *iph = ip_hdr(skb);
-	struct udphdr _hdr, *hp;
+अटल व्योम nft_tproxy_eval_v4(स्थिर काष्ठा nft_expr *expr,
+			       काष्ठा nft_regs *regs,
+			       स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_tproxy *priv = nft_expr_priv(expr);
+	काष्ठा sk_buff *skb = pkt->skb;
+	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
+	काष्ठा udphdr _hdr, *hp;
 	__be32 taddr = 0;
 	__be16 tport = 0;
-	struct sock *sk;
+	काष्ठा sock *sk;
 
-	hp = skb_header_pointer(skb, ip_hdrlen(skb), sizeof(_hdr), &_hdr);
-	if (!hp) {
+	hp = skb_header_poपूर्णांकer(skb, ip_hdrlen(skb), माप(_hdr), &_hdr);
+	अगर (!hp) अणु
 		regs->verdict.code = NFT_BREAK;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* check if there's an ongoing connection on the packet addresses, this
-	 * happens if the redirect already happened and the current packet
-	 * belongs to an already established connection
+	/* check अगर there's an ongoing connection on the packet addresses, this
+	 * happens अगर the redirect alपढ़ोy happened and the current packet
+	 * beदीर्घs to an alपढ़ोy established connection
 	 */
 	sk = nf_tproxy_get_sock_v4(nft_net(pkt), skb, iph->protocol,
 				   iph->saddr, iph->daddr,
 				   hp->source, hp->dest,
 				   skb->dev, NF_TPROXY_LOOKUP_ESTABLISHED);
 
-	if (priv->sreg_addr)
+	अगर (priv->sreg_addr)
 		taddr = regs->data[priv->sreg_addr];
 	taddr = nf_tproxy_laddr4(skb, taddr, iph->daddr);
 
-	if (priv->sreg_port)
+	अगर (priv->sreg_port)
 		tport = nft_reg_load16(&regs->data[priv->sreg_port]);
-	if (!tport)
+	अगर (!tport)
 		tport = hp->dest;
 
 	/* UDP has no TCP_TIME_WAIT state, so we never enter here */
-	if (sk && sk->sk_state == TCP_TIME_WAIT) {
-		/* reopening a TIME_WAIT connection needs special handling */
-		sk = nf_tproxy_handle_time_wait4(nft_net(pkt), skb, taddr, tport, sk);
-	} else if (!sk) {
-		/* no, there's no established connection, check if
+	अगर (sk && sk->sk_state == TCP_TIME_WAIT) अणु
+		/* reखोलोing a TIME_WAIT connection needs special handling */
+		sk = nf_tproxy_handle_समय_रुको4(nft_net(pkt), skb, taddr, tport, sk);
+	पूर्ण अन्यथा अगर (!sk) अणु
+		/* no, there's no established connection, check अगर
 		 * there's a listener on the redirected addr/port
 		 */
 		sk = nf_tproxy_get_sock_v4(nft_net(pkt), skb, iph->protocol,
 					   iph->saddr, taddr,
 					   hp->source, tport,
 					   skb->dev, NF_TPROXY_LOOKUP_LISTENER);
-	}
+	पूर्ण
 
-	if (sk && nf_tproxy_sk_is_transparent(sk))
+	अगर (sk && nf_tproxy_sk_is_transparent(sk))
 		nf_tproxy_assign_sock(skb, sk);
-	else
+	अन्यथा
 		regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-static void nft_tproxy_eval_v6(const struct nft_expr *expr,
-			       struct nft_regs *regs,
-			       const struct nft_pktinfo *pkt)
-{
-	const struct nft_tproxy *priv = nft_expr_priv(expr);
-	struct sk_buff *skb = pkt->skb;
-	const struct ipv6hdr *iph = ipv6_hdr(skb);
-	struct in6_addr taddr;
-	int thoff = pkt->xt.thoff;
-	struct udphdr _hdr, *hp;
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+अटल व्योम nft_tproxy_eval_v6(स्थिर काष्ठा nft_expr *expr,
+			       काष्ठा nft_regs *regs,
+			       स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_tproxy *priv = nft_expr_priv(expr);
+	काष्ठा sk_buff *skb = pkt->skb;
+	स्थिर काष्ठा ipv6hdr *iph = ipv6_hdr(skb);
+	काष्ठा in6_addr taddr;
+	पूर्णांक thoff = pkt->xt.thoff;
+	काष्ठा udphdr _hdr, *hp;
 	__be16 tport = 0;
-	struct sock *sk;
-	int l4proto;
+	काष्ठा sock *sk;
+	पूर्णांक l4proto;
 
-	memset(&taddr, 0, sizeof(taddr));
+	स_रखो(&taddr, 0, माप(taddr));
 
-	if (!pkt->tprot_set) {
+	अगर (!pkt->tprot_set) अणु
 		regs->verdict.code = NFT_BREAK;
-		return;
-	}
+		वापस;
+	पूर्ण
 	l4proto = pkt->tprot;
 
-	hp = skb_header_pointer(skb, thoff, sizeof(_hdr), &_hdr);
-	if (hp == NULL) {
+	hp = skb_header_poपूर्णांकer(skb, thoff, माप(_hdr), &_hdr);
+	अगर (hp == शून्य) अणु
 		regs->verdict.code = NFT_BREAK;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* check if there's an ongoing connection on the packet addresses, this
-	 * happens if the redirect already happened and the current packet
-	 * belongs to an already established connection
+	/* check अगर there's an ongoing connection on the packet addresses, this
+	 * happens अगर the redirect alपढ़ोy happened and the current packet
+	 * beदीर्घs to an alपढ़ोy established connection
 	 */
 	sk = nf_tproxy_get_sock_v6(nft_net(pkt), skb, thoff, l4proto,
 				   &iph->saddr, &iph->daddr,
 				   hp->source, hp->dest,
 				   nft_in(pkt), NF_TPROXY_LOOKUP_ESTABLISHED);
 
-	if (priv->sreg_addr)
-		memcpy(&taddr, &regs->data[priv->sreg_addr], sizeof(taddr));
+	अगर (priv->sreg_addr)
+		स_नकल(&taddr, &regs->data[priv->sreg_addr], माप(taddr));
 	taddr = *nf_tproxy_laddr6(skb, &taddr, &iph->daddr);
 
-	if (priv->sreg_port)
+	अगर (priv->sreg_port)
 		tport = nft_reg_load16(&regs->data[priv->sreg_port]);
-	if (!tport)
+	अगर (!tport)
 		tport = hp->dest;
 
 	/* UDP has no TCP_TIME_WAIT state, so we never enter here */
-	if (sk && sk->sk_state == TCP_TIME_WAIT) {
-		/* reopening a TIME_WAIT connection needs special handling */
-		sk = nf_tproxy_handle_time_wait6(skb, l4proto, thoff,
+	अगर (sk && sk->sk_state == TCP_TIME_WAIT) अणु
+		/* reखोलोing a TIME_WAIT connection needs special handling */
+		sk = nf_tproxy_handle_समय_रुको6(skb, l4proto, thoff,
 						 nft_net(pkt),
 						 &taddr,
 						 tport,
 						 sk);
-	} else if (!sk) {
-		/* no there's no established connection, check if
+	पूर्ण अन्यथा अगर (!sk) अणु
+		/* no there's no established connection, check अगर
 		 * there's a listener on the redirected addr/port
 		 */
 		sk = nf_tproxy_get_sock_v6(nft_net(pkt), skb, thoff,
 					   l4proto, &iph->saddr, &taddr,
 					   hp->source, tport,
 					   nft_in(pkt), NF_TPROXY_LOOKUP_LISTENER);
-	}
+	पूर्ण
 
 	/* NOTE: assign_sock consumes our sk reference */
-	if (sk && nf_tproxy_sk_is_transparent(sk))
+	अगर (sk && nf_tproxy_sk_is_transparent(sk))
 		nf_tproxy_assign_sock(skb, sk);
-	else
+	अन्यथा
 		regs->verdict.code = NFT_BREAK;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void nft_tproxy_eval(const struct nft_expr *expr,
-			    struct nft_regs *regs,
-			    const struct nft_pktinfo *pkt)
-{
-	const struct nft_tproxy *priv = nft_expr_priv(expr);
+अटल व्योम nft_tproxy_eval(स्थिर काष्ठा nft_expr *expr,
+			    काष्ठा nft_regs *regs,
+			    स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_tproxy *priv = nft_expr_priv(expr);
 
-	switch (nft_pf(pkt)) {
-	case NFPROTO_IPV4:
-		switch (priv->family) {
-		case NFPROTO_IPV4:
-		case NFPROTO_UNSPEC:
+	चयन (nft_pf(pkt)) अणु
+	हाल NFPROTO_IPV4:
+		चयन (priv->family) अणु
+		हाल NFPROTO_IPV4:
+		हाल NFPROTO_UNSPEC:
 			nft_tproxy_eval_v4(expr, regs, pkt);
-			return;
-		}
-		break;
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-	case NFPROTO_IPV6:
-		switch (priv->family) {
-		case NFPROTO_IPV6:
-		case NFPROTO_UNSPEC:
+			वापस;
+		पूर्ण
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+	हाल NFPROTO_IPV6:
+		चयन (priv->family) अणु
+		हाल NFPROTO_IPV6:
+		हाल NFPROTO_UNSPEC:
 			nft_tproxy_eval_v6(expr, regs, pkt);
-			return;
-		}
-#endif
-	}
+			वापस;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 	regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-static const struct nla_policy nft_tproxy_policy[NFTA_TPROXY_MAX + 1] = {
-	[NFTA_TPROXY_FAMILY]   = { .type = NLA_U32 },
-	[NFTA_TPROXY_REG_ADDR] = { .type = NLA_U32 },
-	[NFTA_TPROXY_REG_PORT] = { .type = NLA_U32 },
-};
+अटल स्थिर काष्ठा nla_policy nft_tproxy_policy[NFTA_TPROXY_MAX + 1] = अणु
+	[NFTA_TPROXY_FAMILY]   = अणु .type = NLA_U32 पूर्ण,
+	[NFTA_TPROXY_REG_ADDR] = अणु .type = NLA_U32 पूर्ण,
+	[NFTA_TPROXY_REG_PORT] = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int nft_tproxy_init(const struct nft_ctx *ctx,
-			   const struct nft_expr *expr,
-			   const struct nlattr * const tb[])
-{
-	struct nft_tproxy *priv = nft_expr_priv(expr);
-	unsigned int alen = 0;
-	int err;
+अटल पूर्णांक nft_tproxy_init(स्थिर काष्ठा nft_ctx *ctx,
+			   स्थिर काष्ठा nft_expr *expr,
+			   स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_tproxy *priv = nft_expr_priv(expr);
+	अचिन्हित पूर्णांक alen = 0;
+	पूर्णांक err;
 
-	if (!tb[NFTA_TPROXY_FAMILY] ||
+	अगर (!tb[NFTA_TPROXY_FAMILY] ||
 	    (!tb[NFTA_TPROXY_REG_ADDR] && !tb[NFTA_TPROXY_REG_PORT]))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	priv->family = ntohl(nla_get_be32(tb[NFTA_TPROXY_FAMILY]));
 
-	switch (ctx->family) {
-	case NFPROTO_IPV4:
-		if (priv->family != NFPROTO_IPV4)
-			return -EINVAL;
-		break;
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-	case NFPROTO_IPV6:
-		if (priv->family != NFPROTO_IPV6)
-			return -EINVAL;
-		break;
-#endif
-	case NFPROTO_INET:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	चयन (ctx->family) अणु
+	हाल NFPROTO_IPV4:
+		अगर (priv->family != NFPROTO_IPV4)
+			वापस -EINVAL;
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+	हाल NFPROTO_IPV6:
+		अगर (priv->family != NFPROTO_IPV6)
+			वापस -EINVAL;
+		अवरोध;
+#पूर्ण_अगर
+	हाल NFPROTO_INET:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* Address is specified but the rule family is not set accordingly */
-	if (priv->family == NFPROTO_UNSPEC && tb[NFTA_TPROXY_REG_ADDR])
-		return -EINVAL;
+	/* Address is specअगरied but the rule family is not set accordingly */
+	अगर (priv->family == NFPROTO_UNSPEC && tb[NFTA_TPROXY_REG_ADDR])
+		वापस -EINVAL;
 
-	switch (priv->family) {
-	case NFPROTO_IPV4:
-		alen = sizeof_field(union nf_inet_addr, in);
+	चयन (priv->family) अणु
+	हाल NFPROTO_IPV4:
+		alen = माप_field(जोड़ nf_inet_addr, in);
 		err = nf_defrag_ipv4_enable(ctx->net);
-		if (err)
-			return err;
-		break;
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-	case NFPROTO_IPV6:
-		alen = sizeof_field(union nf_inet_addr, in6);
+		अगर (err)
+			वापस err;
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+	हाल NFPROTO_IPV6:
+		alen = माप_field(जोड़ nf_inet_addr, in6);
 		err = nf_defrag_ipv6_enable(ctx->net);
-		if (err)
-			return err;
-		break;
-#endif
-	case NFPROTO_UNSPEC:
-		/* No address is specified here */
+		अगर (err)
+			वापस err;
+		अवरोध;
+#पूर्ण_अगर
+	हाल NFPROTO_UNSPEC:
+		/* No address is specअगरied here */
 		err = nf_defrag_ipv4_enable(ctx->net);
-		if (err)
-			return err;
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+		अगर (err)
+			वापस err;
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
 		err = nf_defrag_ipv6_enable(ctx->net);
-		if (err)
-			return err;
-#endif
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अगर (err)
+			वापस err;
+#पूर्ण_अगर
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (tb[NFTA_TPROXY_REG_ADDR]) {
-		err = nft_parse_register_load(tb[NFTA_TPROXY_REG_ADDR],
+	अगर (tb[NFTA_TPROXY_REG_ADDR]) अणु
+		err = nft_parse_रेजिस्टर_load(tb[NFTA_TPROXY_REG_ADDR],
 					      &priv->sreg_addr, alen);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (tb[NFTA_TPROXY_REG_PORT]) {
-		err = nft_parse_register_load(tb[NFTA_TPROXY_REG_PORT],
-					      &priv->sreg_port, sizeof(u16));
-		if (err < 0)
-			return err;
-	}
+	अगर (tb[NFTA_TPROXY_REG_PORT]) अणु
+		err = nft_parse_रेजिस्टर_load(tb[NFTA_TPROXY_REG_PORT],
+					      &priv->sreg_port, माप(u16));
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nft_tproxy_destroy(const struct nft_ctx *ctx,
-			       const struct nft_expr *expr)
-{
-	const struct nft_tproxy *priv = nft_expr_priv(expr);
+अटल व्योम nft_tproxy_destroy(स्थिर काष्ठा nft_ctx *ctx,
+			       स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_tproxy *priv = nft_expr_priv(expr);
 
-	switch (priv->family) {
-	case NFPROTO_IPV4:
+	चयन (priv->family) अणु
+	हाल NFPROTO_IPV4:
 		nf_defrag_ipv4_disable(ctx->net);
-		break;
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
-	case NFPROTO_IPV6:
+		अवरोध;
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+	हाल NFPROTO_IPV6:
 		nf_defrag_ipv6_disable(ctx->net);
-		break;
-#endif
-	case NFPROTO_UNSPEC:
+		अवरोध;
+#पूर्ण_अगर
+	हाल NFPROTO_UNSPEC:
 		nf_defrag_ipv4_disable(ctx->net);
-#if IS_ENABLED(CONFIG_NF_TABLES_IPV6)
+#अगर IS_ENABLED(CONFIG_NF_TABLES_IPV6)
 		nf_defrag_ipv6_disable(ctx->net);
-#endif
-		break;
-	}
-}
+#पूर्ण_अगर
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int nft_tproxy_dump(struct sk_buff *skb,
-			   const struct nft_expr *expr)
-{
-	const struct nft_tproxy *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_tproxy_dump(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_tproxy *priv = nft_expr_priv(expr);
 
-	if (nla_put_be32(skb, NFTA_TPROXY_FAMILY, htonl(priv->family)))
-		return -1;
+	अगर (nla_put_be32(skb, NFTA_TPROXY_FAMILY, htonl(priv->family)))
+		वापस -1;
 
-	if (priv->sreg_addr &&
-	    nft_dump_register(skb, NFTA_TPROXY_REG_ADDR, priv->sreg_addr))
-		return -1;
+	अगर (priv->sreg_addr &&
+	    nft_dump_रेजिस्टर(skb, NFTA_TPROXY_REG_ADDR, priv->sreg_addr))
+		वापस -1;
 
-	if (priv->sreg_port &&
-	    nft_dump_register(skb, NFTA_TPROXY_REG_PORT, priv->sreg_port))
-			return -1;
+	अगर (priv->sreg_port &&
+	    nft_dump_रेजिस्टर(skb, NFTA_TPROXY_REG_PORT, priv->sreg_port))
+			वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nft_expr_type nft_tproxy_type;
-static const struct nft_expr_ops nft_tproxy_ops = {
+अटल काष्ठा nft_expr_type nft_tproxy_type;
+अटल स्थिर काष्ठा nft_expr_ops nft_tproxy_ops = अणु
 	.type		= &nft_tproxy_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_tproxy)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_tproxy)),
 	.eval		= nft_tproxy_eval,
 	.init		= nft_tproxy_init,
 	.destroy	= nft_tproxy_destroy,
 	.dump		= nft_tproxy_dump,
-};
+पूर्ण;
 
-static struct nft_expr_type nft_tproxy_type __read_mostly = {
+अटल काष्ठा nft_expr_type nft_tproxy_type __पढ़ो_mostly = अणु
 	.name		= "tproxy",
 	.ops		= &nft_tproxy_ops,
 	.policy		= nft_tproxy_policy,
 	.maxattr	= NFTA_TPROXY_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nft_tproxy_module_init(void)
-{
-	return nft_register_expr(&nft_tproxy_type);
-}
+अटल पूर्णांक __init nft_tproxy_module_init(व्योम)
+अणु
+	वापस nft_रेजिस्टर_expr(&nft_tproxy_type);
+पूर्ण
 
-static void __exit nft_tproxy_module_exit(void)
-{
-	nft_unregister_expr(&nft_tproxy_type);
-}
+अटल व्योम __निकास nft_tproxy_module_निकास(व्योम)
+अणु
+	nft_unरेजिस्टर_expr(&nft_tproxy_type);
+पूर्ण
 
 module_init(nft_tproxy_module_init);
-module_exit(nft_tproxy_module_exit);
+module_निकास(nft_tproxy_module_निकास);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Máté Eckl");
+MODULE_AUTHOR("Mथँtथऊ Eckl");
 MODULE_DESCRIPTION("nf_tables tproxy support module");
 MODULE_ALIAS_NFT_EXPR("tproxy");

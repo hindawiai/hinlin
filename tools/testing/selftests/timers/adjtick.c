@@ -1,4 +1,5 @@
-/* adjtimex() tick adjustment test
+<शैली गुरु>
+/* adjसमयx() tick adjusपंचांगent test
  *		by:   John Stultz <john.stultz@linaro.org>
  *		(C) Copyright Linaro Limited 2015
  *		Licensed under the GPLv2
@@ -6,7 +7,7 @@
  *  To build:
  *	$ gcc adjtick.c -o adjtick -lrt
  *
- *   This program is free software: you can redistribute it and/or modify
+ *   This program is मुक्त software: you can redistribute it and/or modअगरy
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 2 of the License, or
  *   (at your option) any later version.
@@ -14,89 +15,89 @@
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *   GNU General Public License for more details.
+ *   GNU General Public License क्रम more details.
  */
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#include <sys/timex.h>
-#include <time.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/समयx.h>
+#समावेश <समय.स>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-#define CLOCK_MONOTONIC_RAW	4
+#घोषणा CLOCK_MONOTONIC_RAW	4
 
-#define NSEC_PER_SEC		1000000000LL
-#define USEC_PER_SEC		1000000
+#घोषणा NSEC_PER_SEC		1000000000LL
+#घोषणा USEC_PER_SEC		1000000
 
-#define MILLION			1000000
+#घोषणा MILLION			1000000
 
-long systick;
+दीर्घ systick;
 
-long long llabs(long long val)
-{
-	if (val < 0)
+दीर्घ दीर्घ lद_असल(दीर्घ दीर्घ val)
+अणु
+	अगर (val < 0)
 		val = -val;
-	return val;
-}
+	वापस val;
+पूर्ण
 
-unsigned long long ts_to_nsec(struct timespec ts)
-{
-	return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
-}
+अचिन्हित दीर्घ दीर्घ ts_to_nsec(काष्ठा बारpec ts)
+अणु
+	वापस ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
+पूर्ण
 
-struct timespec nsec_to_ts(long long ns)
-{
-	struct timespec ts;
+काष्ठा बारpec nsec_to_ts(दीर्घ दीर्घ ns)
+अणु
+	काष्ठा बारpec ts;
 
 	ts.tv_sec = ns/NSEC_PER_SEC;
 	ts.tv_nsec = ns%NSEC_PER_SEC;
 
-	return ts;
-}
+	वापस ts;
+पूर्ण
 
-long long diff_timespec(struct timespec start, struct timespec end)
-{
-	long long start_ns, end_ns;
+दीर्घ दीर्घ dअगरf_बारpec(काष्ठा बारpec start, काष्ठा बारpec end)
+अणु
+	दीर्घ दीर्घ start_ns, end_ns;
 
 	start_ns = ts_to_nsec(start);
 	end_ns = ts_to_nsec(end);
 
-	return end_ns - start_ns;
-}
+	वापस end_ns - start_ns;
+पूर्ण
 
-void get_monotonic_and_raw(struct timespec *mon, struct timespec *raw)
-{
-	struct timespec start, mid, end;
-	long long diff = 0, tmp;
-	int i;
+व्योम get_monotonic_and_raw(काष्ठा बारpec *mon, काष्ठा बारpec *raw)
+अणु
+	काष्ठा बारpec start, mid, end;
+	दीर्घ दीर्घ dअगरf = 0, पंचांगp;
+	पूर्णांक i;
 
-	clock_gettime(CLOCK_MONOTONIC, mon);
-	clock_gettime(CLOCK_MONOTONIC_RAW, raw);
+	घड़ी_समय_लो(CLOCK_MONOTONIC, mon);
+	घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, raw);
 
 	/* Try to get a more tightly bound pairing */
-	for (i = 0; i < 3; i++) {
-		long long newdiff;
+	क्रम (i = 0; i < 3; i++) अणु
+		दीर्घ दीर्घ newdअगरf;
 
-		clock_gettime(CLOCK_MONOTONIC, &start);
-		clock_gettime(CLOCK_MONOTONIC_RAW, &mid);
-		clock_gettime(CLOCK_MONOTONIC, &end);
+		घड़ी_समय_लो(CLOCK_MONOTONIC, &start);
+		घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, &mid);
+		घड़ी_समय_लो(CLOCK_MONOTONIC, &end);
 
-		newdiff = diff_timespec(start, end);
-		if (diff == 0 || newdiff < diff) {
-			diff = newdiff;
+		newdअगरf = dअगरf_बारpec(start, end);
+		अगर (dअगरf == 0 || newdअगरf < dअगरf) अणु
+			dअगरf = newdअगरf;
 			*raw = mid;
-			tmp = (ts_to_nsec(start) + ts_to_nsec(end))/2;
-			*mon = nsec_to_ts(tmp);
-		}
-	}
-}
+			पंचांगp = (ts_to_nsec(start) + ts_to_nsec(end))/2;
+			*mon = nsec_to_ts(पंचांगp);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-long long get_ppm_drift(void)
-{
-	struct timespec mon_start, raw_start, mon_end, raw_end;
-	long long delta1, delta2, eppm;
+दीर्घ दीर्घ get_ppm_drअगरt(व्योम)
+अणु
+	काष्ठा बारpec mon_start, raw_start, mon_end, raw_end;
+	दीर्घ दीर्घ delta1, delta2, eppm;
 
 	get_monotonic_and_raw(&mon_start, &raw_start);
 
@@ -104,18 +105,18 @@ long long get_ppm_drift(void)
 
 	get_monotonic_and_raw(&mon_end, &raw_end);
 
-	delta1 = diff_timespec(mon_start, mon_end);
-	delta2 = diff_timespec(raw_start, raw_end);
+	delta1 = dअगरf_बारpec(mon_start, mon_end);
+	delta2 = dअगरf_बारpec(raw_start, raw_end);
 
 	eppm = (delta1*MILLION)/delta2 - MILLION;
 
-	return eppm;
-}
+	वापस eppm;
+पूर्ण
 
-int check_tick_adj(long tickval)
-{
-	long long eppm, ppm;
-	struct timex tx1;
+पूर्णांक check_tick_adj(दीर्घ tickval)
+अणु
+	दीर्घ दीर्घ eppm, ppm;
+	काष्ठा समयx tx1;
 
 	tx1.modes	 = ADJ_TICK;
 	tx1.modes	|= ADJ_OFFSET;
@@ -127,71 +128,71 @@ int check_tick_adj(long tickval)
 	tx1.freq	= 0;
 	tx1.tick	= tickval;
 
-	adjtimex(&tx1);
+	adjसमयx(&tx1);
 
 	sleep(1);
 
-	ppm = ((long long)tickval * MILLION)/systick - MILLION;
-	printf("Estimating tick (act: %ld usec, %lld ppm): ", tickval, ppm);
+	ppm = ((दीर्घ दीर्घ)tickval * MILLION)/systick - MILLION;
+	म_लिखो("Estimating tick (act: %ld usec, %lld ppm): ", tickval, ppm);
 
-	eppm = get_ppm_drift();
-	printf("%lld usec, %lld ppm", systick + (systick * eppm / MILLION), eppm);
-	fflush(stdout);
+	eppm = get_ppm_drअगरt();
+	म_लिखो("%lld usec, %lld ppm", systick + (systick * eppm / MILLION), eppm);
+	ख_साफ(मानक_निकास);
 
 	tx1.modes = 0;
-	adjtimex(&tx1);
+	adjसमयx(&tx1);
 
-	if (tx1.offset || tx1.freq || tx1.tick != tickval) {
-		printf("	[ERROR]\n");
-		printf("\tUnexpected adjtimex return values, make sure ntpd is not running.\n");
-		return -1;
-	}
+	अगर (tx1.offset || tx1.freq || tx1.tick != tickval) अणु
+		म_लिखो("	[ERROR]\n");
+		म_लिखो("\tUnexpected adjtimex return values, make sure ntpd is not running.\n");
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * Here we use 100ppm difference as an error bound.
-	 * We likely should see better, but some coarse clocksources
+	 * Here we use 100ppm dअगरference as an error bound.
+	 * We likely should see better, but some coarse घड़ीsources
 	 * cannot match the HZ tick size accurately, so we have a
-	 * internal correction factor that doesn't scale exactly
-	 * with the adjustment, resulting in > 10ppm error during
-	 * a 10% adjustment. 100ppm also gives us more breathing
-	 * room for interruptions during the measurement.
+	 * पूर्णांकernal correction factor that करोesn't scale exactly
+	 * with the adjusपंचांगent, resulting in > 10ppm error during
+	 * a 10% adjusपंचांगent. 100ppm also gives us more breathing
+	 * room क्रम पूर्णांकerruptions during the measurement.
 	 */
-	if (llabs(eppm - ppm) > 100) {
-		printf("	[FAILED]\n");
-		return -1;
-	}
-	printf("	[OK]\n");
+	अगर (lद_असल(eppm - ppm) > 100) अणु
+		म_लिखो("	[FAILED]\n");
+		वापस -1;
+	पूर्ण
+	म_लिखो("	[OK]\n");
 
-	return  0;
-}
+	वापस  0;
+पूर्ण
 
-int main(int argv, char **argc)
-{
-	struct timespec raw;
-	long tick, max, interval, err;
-	struct timex tx1;
+पूर्णांक मुख्य(पूर्णांक argv, अक्षर **argc)
+अणु
+	काष्ठा बारpec raw;
+	दीर्घ tick, max, पूर्णांकerval, err;
+	काष्ठा समयx tx1;
 
 	err = 0;
-	setbuf(stdout, NULL);
+	रखो_बफ(मानक_निकास, शून्य);
 
-	if (clock_gettime(CLOCK_MONOTONIC_RAW, &raw)) {
-		printf("ERR: NO CLOCK_MONOTONIC_RAW\n");
-		return -1;
-	}
+	अगर (घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, &raw)) अणु
+		म_लिखो("ERR: NO CLOCK_MONOTONIC_RAW\n");
+		वापस -1;
+	पूर्ण
 
-	printf("Each iteration takes about 15 seconds\n");
+	म_लिखो("Each iteration takes about 15 seconds\n");
 
-	systick = sysconf(_SC_CLK_TCK);
-	systick = USEC_PER_SEC/sysconf(_SC_CLK_TCK);
+	systick = sysconf(_SC_घड़ी_टिक);
+	systick = USEC_PER_SEC/sysconf(_SC_घड़ी_टिक);
 	max = systick/10; /* +/- 10% */
-	interval = max/4; /* in 4 steps each side */
+	पूर्णांकerval = max/4; /* in 4 steps each side */
 
-	for (tick = (systick - max); tick < (systick + max); tick += interval) {
-		if (check_tick_adj(tick)) {
+	क्रम (tick = (systick - max); tick < (systick + max); tick += पूर्णांकerval) अणु
+		अगर (check_tick_adj(tick)) अणु
 			err = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Reset things to zero */
 	tx1.modes	 = ADJ_TICK;
@@ -202,10 +203,10 @@ int main(int argv, char **argc)
 	tx1.freq	 = 0;
 	tx1.tick	 = systick;
 
-	adjtimex(&tx1);
+	adjसमयx(&tx1);
 
-	if (err)
-		return ksft_exit_fail();
+	अगर (err)
+		वापस ksft_निकास_fail();
 
-	return ksft_exit_pass();
-}
+	वापस ksft_निकास_pass();
+पूर्ण

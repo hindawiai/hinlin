@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef	__BPQETHER_H
-#define	__BPQETHER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित	__BPQETHER_H
+#घोषणा	__BPQETHER_H
 
 /*
- * 	Defines for the BPQETHER pseudo device driver
+ * 	Defines क्रम the BPQETHER pseuकरो device driver
  */
 
-#include <linux/if_ether.h>
+#समावेश <linux/अगर_ether.h>
 
-#define SIOCSBPQETHOPT		(SIOCDEVPRIVATE+0)	/* reserved */
-#define SIOCSBPQETHADDR		(SIOCDEVPRIVATE+1)
+#घोषणा SIOCSBPQETHOPT		(SIOCDEVPRIVATE+0)	/* reserved */
+#घोषणा SIOCSBPQETHADDR		(SIOCDEVPRIVATE+1)
  
-struct bpq_ethaddr {
-	unsigned char destination[ETH_ALEN];
-	unsigned char accept[ETH_ALEN];
-};
+काष्ठा bpq_ethaddr अणु
+	अचिन्हित अक्षर destination[ETH_ALEN];
+	अचिन्हित अक्षर accept[ETH_ALEN];
+पूर्ण;
 
 /* 
  * For SIOCSBPQETHOPT - this is compatible with PI2/PacketTwin card drivers,
@@ -22,19 +23,19 @@ struct bpq_ethaddr {
  * to his Ethernet card he may find this useful. ;-)
  */
 
-#define SIOCGBPQETHPARAM	0x5000  /* get Level 1 parameters */
-#define SIOCSBPQETHPARAM	0x5001  /* set */
+#घोषणा SIOCGBPQETHPARAM	0x5000  /* get Level 1 parameters */
+#घोषणा SIOCSBPQETHPARAM	0x5001  /* set */
 
-struct bpq_req  {
-    int cmd;
-    int speed;			/* unused */
-    int clockmode;		/* unused */
-    int txdelay;
-    unsigned char persist;	/* unused */
-    int slotime;		/* unused */
-    int squeldelay;
-    int dmachan;		/* unused */
-    int irq;			/* unused */
-};
+काष्ठा bpq_req  अणु
+    पूर्णांक cmd;
+    पूर्णांक speed;			/* unused */
+    पूर्णांक घड़ीmode;		/* unused */
+    पूर्णांक txdelay;
+    अचिन्हित अक्षर persist;	/* unused */
+    पूर्णांक sloसमय;		/* unused */
+    पूर्णांक squeldelay;
+    पूर्णांक dmachan;		/* unused */
+    पूर्णांक irq;			/* unused */
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

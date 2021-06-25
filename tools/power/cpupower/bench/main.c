@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*  cpufreq-bench CPUFreq microbenchmark
  *
  *  Copyright (C) 2008 Christian Kornacker <ckornacker@suse.de>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <errno.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <getopt.h>
+#समावेश <त्रुटिसं.स>
 
-#include "config.h"
-#include "system.h"
-#include "benchmark.h"
+#समावेश "config.h"
+#समावेश "system.h"
+#समावेश "benchmark.h"
 
-static struct option long_options[] = {
-	{"output",	1,	0,	'o'},
-	{"sleep",	1,	0,	's'},
-	{"load",	1,	0,	'l'},
-	{"verbose",	0,	0,	'v'},
-	{"cpu",		1,	0,	'c'},
-	{"governor",	1,	0,	'g'},
-	{"prio",	1,	0,	'p'},
-	{"file",	1,	0,	'f'},
-	{"cycles",	1,	0,	'n'},
-	{"rounds",	1,	0,	'r'},
-	{"load-step",	1,	0,	'x'},
-	{"sleep-step",	1,	0,	'y'},
-	{"help",	0,	0,	'h'},
-	{0, 0, 0, 0}
-};
+अटल काष्ठा option दीर्घ_options[] = अणु
+	अणु"output",	1,	0,	'o'पूर्ण,
+	अणु"sleep",	1,	0,	's'पूर्ण,
+	अणु"load",	1,	0,	'l'पूर्ण,
+	अणु"verbose",	0,	0,	'v'पूर्ण,
+	अणु"cpu",		1,	0,	'c'पूर्ण,
+	अणु"governor",	1,	0,	'g'पूर्ण,
+	अणु"prio",	1,	0,	'p'पूर्ण,
+	अणु"file",	1,	0,	'f'पूर्ण,
+	अणु"cycles",	1,	0,	'n'पूर्ण,
+	अणु"rounds",	1,	0,	'r'पूर्ण,
+	अणु"load-step",	1,	0,	'x'पूर्ण,
+	अणु"sleep-step",	1,	0,	'y'पूर्ण,
+	अणु"help",	0,	0,	'h'पूर्ण,
+	अणु0, 0, 0, 0पूर्ण
+पूर्ण;
 
 /*******************************************************************
  usage
 *******************************************************************/
 
-void usage()
-{
-	printf("usage: ./bench\n");
-	printf("Options:\n");
-	printf(" -l, --load=<long int>\t\tinitial load time in us\n");
-	printf(" -s, --sleep=<long int>\t\tinitial sleep time in us\n");
-	printf(" -x, --load-step=<long int>\ttime to be added to load time, in us\n");
-	printf(" -y, --sleep-step=<long int>\ttime to be added to sleep time, in us\n");
-	printf(" -c, --cpu=<cpu #>\t\t\tCPU Nr. to use, starting at 0\n");
-	printf(" -p, --prio=<priority>\t\t\tscheduler priority, HIGH, LOW or DEFAULT\n");
-	printf(" -g, --governor=<governor>\t\tcpufreq governor to test\n");
-	printf(" -n, --cycles=<int>\t\t\tload/sleep cycles\n");
-	printf(" -r, --rounds<int>\t\t\tload/sleep rounds\n");
-	printf(" -f, --file=<configfile>\t\tconfig file to use\n");
-	printf(" -o, --output=<dir>\t\t\toutput path. Filename will be OUTPUTPATH/benchmark_TIMESTAMP.log\n");
-	printf(" -v, --verbose\t\t\t\tverbose output on/off\n");
-	printf(" -h, --help\t\t\t\tPrint this help screen\n");
-	exit(1);
-}
+व्योम usage()
+अणु
+	म_लिखो("usage: ./bench\n");
+	म_लिखो("Options:\n");
+	म_लिखो(" -l, --load=<long int>\t\tinitial load time in us\n");
+	म_लिखो(" -s, --sleep=<long int>\t\tinitial sleep time in us\n");
+	म_लिखो(" -x, --load-step=<long int>\ttime to be added to load time, in us\n");
+	म_लिखो(" -y, --sleep-step=<long int>\ttime to be added to sleep time, in us\n");
+	म_लिखो(" -c, --cpu=<cpu #>\t\t\tCPU Nr. to use, starting at 0\n");
+	म_लिखो(" -p, --prio=<priority>\t\t\tscheduler priority, HIGH, LOW or DEFAULT\n");
+	म_लिखो(" -g, --governor=<governor>\t\tcpufreq governor to test\n");
+	म_लिखो(" -n, --cycles=<int>\t\t\tload/sleep cycles\n");
+	म_लिखो(" -r, --rounds<int>\t\t\tload/sleep rounds\n");
+	म_लिखो(" -f, --file=<configfile>\t\tconfig file to use\n");
+	म_लिखो(" -o, --output=<dir>\t\t\toutput path. Filename will be OUTPUTPATH/benchmark_TIMESTAMP.log\n");
+	म_लिखो(" -v, --verbose\t\t\t\tverbose output on/off\n");
+	म_लिखो(" -h, --help\t\t\t\tPrint this help screen\n");
+	निकास(1);
+पूर्ण
 
 /*******************************************************************
- main
+ मुख्य
 *******************************************************************/
 
-int main(int argc, char **argv)
-{
-	int c;
-	int option_index = 0;
-	struct config *config = NULL;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक c;
+	पूर्णांक option_index = 0;
+	काष्ठा config *config = शून्य;
 
-	config = prepare_default_config();
+	config = prepare_शेष_config();
 
-	if (config == NULL)
-		return EXIT_FAILURE;
+	अगर (config == शून्य)
+		वापस निकास_त्रुटि;
 
-	while (1) {
-		c = getopt_long (argc, argv, "hg:o:s:l:vc:p:f:n:r:x:y:",
-				long_options, &option_index);
-		if (c == -1)
-			break;
+	जबतक (1) अणु
+		c = getopt_दीर्घ (argc, argv, "hg:o:s:l:vc:p:f:n:r:x:y:",
+				दीर्घ_options, &option_index);
+		अगर (c == -1)
+			अवरोध;
 
-		switch (c) {
-		case 'o':
-			if (config->output != NULL)
-				fclose(config->output);
+		चयन (c) अणु
+		हाल 'o':
+			अगर (config->output != शून्य)
+				ख_बंद(config->output);
 
 			config->output = prepare_output(optarg);
 
-			if (config->output == NULL)
-				return EXIT_FAILURE;
+			अगर (config->output == शून्य)
+				वापस निकास_त्रुटि;
 
-			dprintf("user output path -> %s\n", optarg);
-			break;
-		case 's':
-			sscanf(optarg, "%li", &config->sleep);
-			dprintf("user sleep time -> %s\n", optarg);
-			break;
-		case 'l':
-			sscanf(optarg, "%li", &config->load);
-			dprintf("user load time -> %s\n", optarg);
-			break;
-		case 'c':
-			sscanf(optarg, "%u", &config->cpu);
-			dprintf("user cpu -> %s\n", optarg);
-			break;
-		case 'g':
-			strncpy(config->governor, optarg, 14);
-			dprintf("user governor -> %s\n", optarg);
-			break;
-		case 'p':
-			if (string_to_prio(optarg) != SCHED_ERR) {
+			dम_लिखो("user output path -> %s\n", optarg);
+			अवरोध;
+		हाल 's':
+			माला_पूछो(optarg, "%li", &config->sleep);
+			dम_लिखो("user sleep time -> %s\n", optarg);
+			अवरोध;
+		हाल 'l':
+			माला_पूछो(optarg, "%li", &config->load);
+			dम_लिखो("user load time -> %s\n", optarg);
+			अवरोध;
+		हाल 'c':
+			माला_पूछो(optarg, "%u", &config->cpu);
+			dम_लिखो("user cpu -> %s\n", optarg);
+			अवरोध;
+		हाल 'g':
+			म_नकलन(config->governor, optarg, 14);
+			dम_लिखो("user governor -> %s\n", optarg);
+			अवरोध;
+		हाल 'p':
+			अगर (string_to_prio(optarg) != SCHED_ERR) अणु
 				config->prio = string_to_prio(optarg);
-				dprintf("user prio -> %s\n", optarg);
-			} else {
-				if (config != NULL) {
-					if (config->output != NULL)
-						fclose(config->output);
-					free(config);
-				}
+				dम_लिखो("user prio -> %s\n", optarg);
+			पूर्ण अन्यथा अणु
+				अगर (config != शून्य) अणु
+					अगर (config->output != शून्य)
+						ख_बंद(config->output);
+					मुक्त(config);
+				पूर्ण
 				usage();
-			}
-			break;
-		case 'n':
-			sscanf(optarg, "%u", &config->cycles);
-			dprintf("user cycles -> %s\n", optarg);
-			break;
-		case 'r':
-			sscanf(optarg, "%u", &config->rounds);
-			dprintf("user rounds -> %s\n", optarg);
-			break;
-		case 'x':
-			sscanf(optarg, "%li", &config->load_step);
-			dprintf("user load_step -> %s\n", optarg);
-			break;
-		case 'y':
-			sscanf(optarg, "%li", &config->sleep_step);
-			dprintf("user sleep_step -> %s\n", optarg);
-			break;
-		case 'f':
-			if (prepare_config(optarg, config))
-				return EXIT_FAILURE;
-			break;
-		case 'v':
+			पूर्ण
+			अवरोध;
+		हाल 'n':
+			माला_पूछो(optarg, "%u", &config->cycles);
+			dम_लिखो("user cycles -> %s\n", optarg);
+			अवरोध;
+		हाल 'r':
+			माला_पूछो(optarg, "%u", &config->rounds);
+			dम_लिखो("user rounds -> %s\n", optarg);
+			अवरोध;
+		हाल 'x':
+			माला_पूछो(optarg, "%li", &config->load_step);
+			dम_लिखो("user load_step -> %s\n", optarg);
+			अवरोध;
+		हाल 'y':
+			माला_पूछो(optarg, "%li", &config->sleep_step);
+			dम_लिखो("user sleep_step -> %s\n", optarg);
+			अवरोध;
+		हाल 'f':
+			अगर (prepare_config(optarg, config))
+				वापस निकास_त्रुटि;
+			अवरोध;
+		हाल 'v':
 			config->verbose = 1;
-			dprintf("verbose output enabled\n");
-			break;
-		case 'h':
-		case '?':
-		default:
-			if (config != NULL) {
-				if (config->output != NULL)
-					fclose(config->output);
-				free(config);
-			}
+			dम_लिखो("verbose output enabled\n");
+			अवरोध;
+		हाल 'h':
+		हाल '?':
+		शेष:
+			अगर (config != शून्य) अणु
+				अगर (config->output != शून्य)
+					ख_बंद(config->output);
+				मुक्त(config);
+			पूर्ण
 			usage();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (config->verbose) {
-		printf("starting benchmark with parameters:\n");
-		printf("config:\n\t"
+	अगर (config->verbose) अणु
+		म_लिखो("starting benchmark with parameters:\n");
+		म_लिखो("config:\n\t"
 		       "sleep=%li\n\t"
 		       "load=%li\n\t"
 		       "sleep_step=%li\n\t"
@@ -173,17 +174,17 @@ int main(int argc, char **argv)
 		       config->cycles,
 		       config->rounds,
 		       config->governor);
-	}
+	पूर्ण
 
 	prepare_user(config);
-	prepare_system(config);
+	prepare_प्रणाली(config);
 	start_benchmark(config);
 
-	if (config->output != stdout)
-		fclose(config->output);
+	अगर (config->output != मानक_निकास)
+		ख_बंद(config->output);
 
-	free(config);
+	मुक्त(config);
 
-	return EXIT_SUCCESS;
-}
+	वापस निकास_सफल;
+पूर्ण
 

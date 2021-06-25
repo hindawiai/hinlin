@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * svm_vmcall_test
  *
@@ -7,70 +8,70 @@
  * Nested SVM testing: VMCALL
  */
 
-#include "test_util.h"
-#include "kvm_util.h"
-#include "processor.h"
-#include "svm_util.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
+#समावेश "processor.h"
+#समावेश "svm_util.h"
 
-#define VCPU_ID		5
+#घोषणा VCPU_ID		5
 
-static struct kvm_vm *vm;
+अटल काष्ठा kvm_vm *vm;
 
-static void l2_guest_code(struct svm_test_data *svm)
-{
-	__asm__ __volatile__("vmcall");
-}
+अटल व्योम l2_guest_code(काष्ठा svm_test_data *svm)
+अणु
+	__यंत्र__ __अस्थिर__("vmcall");
+पूर्ण
 
-static void l1_guest_code(struct svm_test_data *svm)
-{
-	#define L2_GUEST_STACK_SIZE 64
-	unsigned long l2_guest_stack[L2_GUEST_STACK_SIZE];
-	struct vmcb *vmcb = svm->vmcb;
+अटल व्योम l1_guest_code(काष्ठा svm_test_data *svm)
+अणु
+	#घोषणा L2_GUEST_STACK_SIZE 64
+	अचिन्हित दीर्घ l2_guest_stack[L2_GUEST_STACK_SIZE];
+	काष्ठा vmcb *vmcb = svm->vmcb;
 
-	/* Prepare for L2 execution. */
+	/* Prepare क्रम L2 execution. */
 	generic_svm_setup(svm, l2_guest_code,
 			  &l2_guest_stack[L2_GUEST_STACK_SIZE]);
 
 	run_guest(vmcb, svm->vmcb_gpa);
 
-	GUEST_ASSERT(vmcb->control.exit_code == SVM_EXIT_VMMCALL);
+	GUEST_ASSERT(vmcb->control.निकास_code == SVM_EXIT_VMMCALL);
 	GUEST_DONE();
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
 	vm_vaddr_t svm_gva;
 
 	nested_svm_check_supported();
 
-	vm = vm_create_default(VCPU_ID, 0, (void *) l1_guest_code);
+	vm = vm_create_शेष(VCPU_ID, 0, (व्योम *) l1_guest_code);
 
 	vcpu_alloc_svm(vm, &svm_gva);
 	vcpu_args_set(vm, VCPU_ID, 1, svm_gva);
 
-	for (;;) {
-		volatile struct kvm_run *run = vcpu_state(vm, VCPU_ID);
-		struct ucall uc;
+	क्रम (;;) अणु
+		अस्थिर काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+		काष्ठा ucall uc;
 
 		vcpu_run(vm, VCPU_ID);
-		TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
+		TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
 			    "Got exit_reason other than KVM_EXIT_IO: %u (%s)\n",
-			    run->exit_reason,
-			    exit_reason_str(run->exit_reason));
+			    run->निकास_reason,
+			    निकास_reason_str(run->निकास_reason));
 
-		switch (get_ucall(vm, VCPU_ID, &uc)) {
-		case UCALL_ABORT:
-			TEST_FAIL("%s", (const char *)uc.args[0]);
+		चयन (get_ucall(vm, VCPU_ID, &uc)) अणु
+		हाल UCALL_ABORT:
+			TEST_FAIL("%s", (स्थिर अक्षर *)uc.args[0]);
 			/* NOT REACHED */
-		case UCALL_SYNC:
-			break;
-		case UCALL_DONE:
-			goto done;
-		default:
+		हाल UCALL_SYNC:
+			अवरोध;
+		हाल UCALL_DONE:
+			जाओ करोne;
+		शेष:
 			TEST_FAIL("Unknown ucall 0x%lx.", uc.cmd);
-		}
-	}
-done:
-	kvm_vm_free(vm);
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+करोne:
+	kvm_vm_मुक्त(vm);
+	वापस 0;
+पूर्ण

@@ -1,158 +1,159 @@
-#ifndef INTERNAL_IO_WQ_H
-#define INTERNAL_IO_WQ_H
+<शैली गुरु>
+#अगर_अघोषित INTERNAL_IO_WQ_H
+#घोषणा INTERNAL_IO_WQ_H
 
-#include <linux/refcount.h>
+#समावेश <linux/refcount.h>
 
-struct io_wq;
+काष्ठा io_wq;
 
-enum {
+क्रमागत अणु
 	IO_WQ_WORK_CANCEL	= 1,
 	IO_WQ_WORK_HASHED	= 2,
 	IO_WQ_WORK_UNBOUND	= 4,
 	IO_WQ_WORK_CONCURRENT	= 16,
 
-	IO_WQ_HASH_SHIFT	= 24,	/* upper 8 bits are used for hash key */
-};
+	IO_WQ_HASH_SHIFT	= 24,	/* upper 8 bits are used क्रम hash key */
+पूर्ण;
 
-enum io_wq_cancel {
-	IO_WQ_CANCEL_OK,	/* cancelled before started */
+क्रमागत io_wq_cancel अणु
+	IO_WQ_CANCEL_OK,	/* cancelled beक्रमe started */
 	IO_WQ_CANCEL_RUNNING,	/* found, running, and attempted cancelled */
 	IO_WQ_CANCEL_NOTFOUND,	/* work not found */
-};
+पूर्ण;
 
-struct io_wq_work_node {
-	struct io_wq_work_node *next;
-};
+काष्ठा io_wq_work_node अणु
+	काष्ठा io_wq_work_node *next;
+पूर्ण;
 
-struct io_wq_work_list {
-	struct io_wq_work_node *first;
-	struct io_wq_work_node *last;
-};
+काष्ठा io_wq_work_list अणु
+	काष्ठा io_wq_work_node *first;
+	काष्ठा io_wq_work_node *last;
+पूर्ण;
 
-static inline void wq_list_add_after(struct io_wq_work_node *node,
-				     struct io_wq_work_node *pos,
-				     struct io_wq_work_list *list)
-{
-	struct io_wq_work_node *next = pos->next;
+अटल अंतरभूत व्योम wq_list_add_after(काष्ठा io_wq_work_node *node,
+				     काष्ठा io_wq_work_node *pos,
+				     काष्ठा io_wq_work_list *list)
+अणु
+	काष्ठा io_wq_work_node *next = pos->next;
 
 	pos->next = node;
 	node->next = next;
-	if (!next)
+	अगर (!next)
 		list->last = node;
-}
+पूर्ण
 
-static inline void wq_list_add_tail(struct io_wq_work_node *node,
-				    struct io_wq_work_list *list)
-{
-	if (!list->first) {
+अटल अंतरभूत व्योम wq_list_add_tail(काष्ठा io_wq_work_node *node,
+				    काष्ठा io_wq_work_list *list)
+अणु
+	अगर (!list->first) अणु
 		list->last = node;
 		WRITE_ONCE(list->first, node);
-	} else {
+	पूर्ण अन्यथा अणु
 		list->last->next = node;
 		list->last = node;
-	}
-	node->next = NULL;
-}
+	पूर्ण
+	node->next = शून्य;
+पूर्ण
 
-static inline void wq_list_cut(struct io_wq_work_list *list,
-			       struct io_wq_work_node *last,
-			       struct io_wq_work_node *prev)
-{
-	/* first in the list, if prev==NULL */
-	if (!prev)
+अटल अंतरभूत व्योम wq_list_cut(काष्ठा io_wq_work_list *list,
+			       काष्ठा io_wq_work_node *last,
+			       काष्ठा io_wq_work_node *prev)
+अणु
+	/* first in the list, अगर prev==शून्य */
+	अगर (!prev)
 		WRITE_ONCE(list->first, last->next);
-	else
+	अन्यथा
 		prev->next = last->next;
 
-	if (last == list->last)
+	अगर (last == list->last)
 		list->last = prev;
-	last->next = NULL;
-}
+	last->next = शून्य;
+पूर्ण
 
-static inline void wq_list_del(struct io_wq_work_list *list,
-			       struct io_wq_work_node *node,
-			       struct io_wq_work_node *prev)
-{
+अटल अंतरभूत व्योम wq_list_del(काष्ठा io_wq_work_list *list,
+			       काष्ठा io_wq_work_node *node,
+			       काष्ठा io_wq_work_node *prev)
+अणु
 	wq_list_cut(list, node, prev);
-}
+पूर्ण
 
-#define wq_list_for_each(pos, prv, head)			\
-	for (pos = (head)->first, prv = NULL; pos; prv = pos, pos = (pos)->next)
+#घोषणा wq_list_क्रम_each(pos, prv, head)			\
+	क्रम (pos = (head)->first, prv = शून्य; pos; prv = pos, pos = (pos)->next)
 
-#define wq_list_empty(list)	(READ_ONCE((list)->first) == NULL)
-#define INIT_WQ_LIST(list)	do {				\
-	(list)->first = NULL;					\
-	(list)->last = NULL;					\
-} while (0)
+#घोषणा wq_list_empty(list)	(READ_ONCE((list)->first) == शून्य)
+#घोषणा INIT_WQ_LIST(list)	करो अणु				\
+	(list)->first = शून्य;					\
+	(list)->last = शून्य;					\
+पूर्ण जबतक (0)
 
-struct io_wq_work {
-	struct io_wq_work_node list;
-	const struct cred *creds;
-	unsigned flags;
-};
+काष्ठा io_wq_work अणु
+	काष्ठा io_wq_work_node list;
+	स्थिर काष्ठा cred *creds;
+	अचिन्हित flags;
+पूर्ण;
 
-static inline struct io_wq_work *wq_next_work(struct io_wq_work *work)
-{
-	if (!work->list.next)
-		return NULL;
+अटल अंतरभूत काष्ठा io_wq_work *wq_next_work(काष्ठा io_wq_work *work)
+अणु
+	अगर (!work->list.next)
+		वापस शून्य;
 
-	return container_of(work->list.next, struct io_wq_work, list);
-}
+	वापस container_of(work->list.next, काष्ठा io_wq_work, list);
+पूर्ण
 
-typedef struct io_wq_work *(free_work_fn)(struct io_wq_work *);
-typedef void (io_wq_work_fn)(struct io_wq_work *);
+प्रकार काष्ठा io_wq_work *(मुक्त_work_fn)(काष्ठा io_wq_work *);
+प्रकार व्योम (io_wq_work_fn)(काष्ठा io_wq_work *);
 
-struct io_wq_hash {
+काष्ठा io_wq_hash अणु
 	refcount_t refs;
-	unsigned long map;
-	struct wait_queue_head wait;
-};
+	अचिन्हित दीर्घ map;
+	काष्ठा रुको_queue_head रुको;
+पूर्ण;
 
-static inline void io_wq_put_hash(struct io_wq_hash *hash)
-{
-	if (refcount_dec_and_test(&hash->refs))
-		kfree(hash);
-}
+अटल अंतरभूत व्योम io_wq_put_hash(काष्ठा io_wq_hash *hash)
+अणु
+	अगर (refcount_dec_and_test(&hash->refs))
+		kमुक्त(hash);
+पूर्ण
 
-struct io_wq_data {
-	struct io_wq_hash *hash;
-	struct task_struct *task;
-	io_wq_work_fn *do_work;
-	free_work_fn *free_work;
-};
+काष्ठा io_wq_data अणु
+	काष्ठा io_wq_hash *hash;
+	काष्ठा task_काष्ठा *task;
+	io_wq_work_fn *करो_work;
+	मुक्त_work_fn *मुक्त_work;
+पूर्ण;
 
-struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data);
-void io_wq_exit_start(struct io_wq *wq);
-void io_wq_put_and_exit(struct io_wq *wq);
+काष्ठा io_wq *io_wq_create(अचिन्हित bounded, काष्ठा io_wq_data *data);
+व्योम io_wq_निकास_start(काष्ठा io_wq *wq);
+व्योम io_wq_put_and_निकास(काष्ठा io_wq *wq);
 
-void io_wq_enqueue(struct io_wq *wq, struct io_wq_work *work);
-void io_wq_hash_work(struct io_wq_work *work, void *val);
+व्योम io_wq_enqueue(काष्ठा io_wq *wq, काष्ठा io_wq_work *work);
+व्योम io_wq_hash_work(काष्ठा io_wq_work *work, व्योम *val);
 
-static inline bool io_wq_is_hashed(struct io_wq_work *work)
-{
-	return work->flags & IO_WQ_WORK_HASHED;
-}
+अटल अंतरभूत bool io_wq_is_hashed(काष्ठा io_wq_work *work)
+अणु
+	वापस work->flags & IO_WQ_WORK_HASHED;
+पूर्ण
 
-typedef bool (work_cancel_fn)(struct io_wq_work *, void *);
+प्रकार bool (work_cancel_fn)(काष्ठा io_wq_work *, व्योम *);
 
-enum io_wq_cancel io_wq_cancel_cb(struct io_wq *wq, work_cancel_fn *cancel,
-					void *data, bool cancel_all);
+क्रमागत io_wq_cancel io_wq_cancel_cb(काष्ठा io_wq *wq, work_cancel_fn *cancel,
+					व्योम *data, bool cancel_all);
 
-#if defined(CONFIG_IO_WQ)
-extern void io_wq_worker_sleeping(struct task_struct *);
-extern void io_wq_worker_running(struct task_struct *);
-#else
-static inline void io_wq_worker_sleeping(struct task_struct *tsk)
-{
-}
-static inline void io_wq_worker_running(struct task_struct *tsk)
-{
-}
-#endif
+#अगर defined(CONFIG_IO_WQ)
+बाह्य व्योम io_wq_worker_sleeping(काष्ठा task_काष्ठा *);
+बाह्य व्योम io_wq_worker_running(काष्ठा task_काष्ठा *);
+#अन्यथा
+अटल अंतरभूत व्योम io_wq_worker_sleeping(काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम io_wq_worker_running(काष्ठा task_काष्ठा *tsk)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline bool io_wq_current_is_worker(void)
-{
-	return in_task() && (current->flags & PF_IO_WORKER) &&
+अटल अंतरभूत bool io_wq_current_is_worker(व्योम)
+अणु
+	वापस in_task() && (current->flags & PF_IO_WORKER) &&
 		current->pf_io_worker;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर

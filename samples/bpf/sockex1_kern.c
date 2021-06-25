@@ -1,30 +1,31 @@
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/if_packet.h>
-#include <uapi/linux/ip.h>
-#include <bpf/bpf_helpers.h>
-#include "bpf_legacy.h"
+<शैली गुरु>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/अगर_packet.h>
+#समावेश <uapi/linux/ip.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश "bpf_legacy.h"
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
 	__type(key, u32);
-	__type(value, long);
-	__uint(max_entries, 256);
-} my_map SEC(".maps");
+	__type(value, दीर्घ);
+	__uपूर्णांक(max_entries, 256);
+पूर्ण my_map SEC(".maps");
 
 SEC("socket1")
-int bpf_prog1(struct __sk_buff *skb)
-{
-	int index = load_byte(skb, ETH_HLEN + offsetof(struct iphdr, protocol));
-	long *value;
+पूर्णांक bpf_prog1(काष्ठा __sk_buff *skb)
+अणु
+	पूर्णांक index = load_byte(skb, ETH_HLEN + दुरत्व(काष्ठा iphdr, protocol));
+	दीर्घ *value;
 
-	if (skb->pkt_type != PACKET_OUTGOING)
-		return 0;
+	अगर (skb->pkt_type != PACKET_OUTGOING)
+		वापस 0;
 
 	value = bpf_map_lookup_elem(&my_map, &index);
-	if (value)
+	अगर (value)
 		__sync_fetch_and_add(value, skb->len);
 
-	return 0;
-}
-char _license[] SEC("license") = "GPL";
+	वापस 0;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

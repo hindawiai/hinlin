@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,19 +13,19 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_SPINLOCK_H
-#define __ASM_OPENRISC_SPINLOCK_H
+#अगर_अघोषित __ASM_OPENRISC_SPINLOCK_H
+#घोषणा __ASM_OPENRISC_SPINLOCK_H
 
-#include <asm/qspinlock.h>
+#समावेश <यंत्र/qspinlock.h>
 
-#include <asm/qrwlock.h>
+#समावेश <यंत्र/qrwlock.h>
 
-#define arch_read_lock_flags(lock, flags) arch_read_lock(lock)
-#define arch_write_lock_flags(lock, flags) arch_write_lock(lock)
+#घोषणा arch_पढ़ो_lock_flags(lock, flags) arch_पढ़ो_lock(lock)
+#घोषणा arch_ग_लिखो_lock_flags(lock, flags) arch_ग_लिखो_lock(lock)
 
-#define arch_spin_relax(lock)	cpu_relax()
-#define arch_read_relax(lock)	cpu_relax()
-#define arch_write_relax(lock)	cpu_relax()
+#घोषणा arch_spin_relax(lock)	cpu_relax()
+#घोषणा arch_पढ़ो_relax(lock)	cpu_relax()
+#घोषणा arch_ग_लिखो_relax(lock)	cpu_relax()
 
 
-#endif
+#पूर्ण_अगर

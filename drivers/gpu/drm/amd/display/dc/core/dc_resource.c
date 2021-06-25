@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,700 +24,700 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-#include "resource.h"
-#include "include/irq_service_interface.h"
-#include "link_encoder.h"
-#include "stream_encoder.h"
-#include "opp.h"
-#include "timing_generator.h"
-#include "transform.h"
-#include "dccg.h"
-#include "dchubbub.h"
-#include "dpp.h"
-#include "core_types.h"
-#include "set_mode_types.h"
-#include "virtual/virtual_stream_encoder.h"
-#include "dpcd_defs.h"
+#समावेश "resource.h"
+#समावेश "include/irq_service_interface.h"
+#समावेश "link_encoder.h"
+#समावेश "stream_encoder.h"
+#समावेश "opp.h"
+#समावेश "timing_generator.h"
+#समावेश "transform.h"
+#समावेश "dccg.h"
+#समावेश "dchubbub.h"
+#समावेश "dpp.h"
+#समावेश "core_types.h"
+#समावेश "set_mode_types.h"
+#समावेश "virtual/virtual_stream_encoder.h"
+#समावेश "dpcd_defs.h"
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-#include "dce60/dce60_resource.h"
-#endif
-#include "dce80/dce80_resource.h"
-#include "dce100/dce100_resource.h"
-#include "dce110/dce110_resource.h"
-#include "dce112/dce112_resource.h"
-#include "dce120/dce120_resource.h"
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-#include "dcn10/dcn10_resource.h"
-#include "dcn20/dcn20_resource.h"
-#include "dcn21/dcn21_resource.h"
-#include "dcn30/dcn30_resource.h"
-#include "dcn301/dcn301_resource.h"
-#include "dcn302/dcn302_resource.h"
-#endif
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+#समावेश "dce60/dce60_resource.h"
+#पूर्ण_अगर
+#समावेश "dce80/dce80_resource.h"
+#समावेश "dce100/dce100_resource.h"
+#समावेश "dce110/dce110_resource.h"
+#समावेश "dce112/dce112_resource.h"
+#समावेश "dce120/dce120_resource.h"
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+#समावेश "dcn10/dcn10_resource.h"
+#समावेश "dcn20/dcn20_resource.h"
+#समावेश "dcn21/dcn21_resource.h"
+#समावेश "dcn30/dcn30_resource.h"
+#समावेश "dcn301/dcn301_resource.h"
+#समावेश "dcn302/dcn302_resource.h"
+#पूर्ण_अगर
 
-#define DC_LOGGER_INIT(logger)
+#घोषणा DC_LOGGER_INIT(logger)
 
-enum dce_version resource_parse_asic_id(struct hw_asic_id asic_id)
-{
-	enum dce_version dc_version = DCE_VERSION_UNKNOWN;
-	switch (asic_id.chip_family) {
+क्रमागत dce_version resource_parse_asic_id(काष्ठा hw_asic_id asic_id)
+अणु
+	क्रमागत dce_version dc_version = DCE_VERSION_UNKNOWN;
+	चयन (asic_id.chip_family) अणु
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-	case FAMILY_SI:
-		if (ASIC_REV_IS_TAHITI_P(asic_id.hw_internal_rev) ||
-		    ASIC_REV_IS_PITCAIRN_PM(asic_id.hw_internal_rev) ||
-		    ASIC_REV_IS_CAPEVERDE_M(asic_id.hw_internal_rev))
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+	हाल FAMILY_SI:
+		अगर (ASIC_REV_IS_TAHITI_P(asic_id.hw_पूर्णांकernal_rev) ||
+		    ASIC_REV_IS_PITCAIRN_PM(asic_id.hw_पूर्णांकernal_rev) ||
+		    ASIC_REV_IS_CAPEVERDE_M(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCE_VERSION_6_0;
-		else if (ASIC_REV_IS_OLAND_M(asic_id.hw_internal_rev))
+		अन्यथा अगर (ASIC_REV_IS_OLAND_M(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCE_VERSION_6_4;
-		else
+		अन्यथा
 			dc_version = DCE_VERSION_6_1;
-		break;
-#endif
-	case FAMILY_CI:
+		अवरोध;
+#पूर्ण_अगर
+	हाल FAMILY_CI:
 		dc_version = DCE_VERSION_8_0;
-		break;
-	case FAMILY_KV:
-		if (ASIC_REV_IS_KALINDI(asic_id.hw_internal_rev) ||
-		    ASIC_REV_IS_BHAVANI(asic_id.hw_internal_rev) ||
-		    ASIC_REV_IS_GODAVARI(asic_id.hw_internal_rev))
+		अवरोध;
+	हाल FAMILY_KV:
+		अगर (ASIC_REV_IS_KALINDI(asic_id.hw_पूर्णांकernal_rev) ||
+		    ASIC_REV_IS_BHAVANI(asic_id.hw_पूर्णांकernal_rev) ||
+		    ASIC_REV_IS_GODAVARI(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCE_VERSION_8_3;
-		else
+		अन्यथा
 			dc_version = DCE_VERSION_8_1;
-		break;
-	case FAMILY_CZ:
+		अवरोध;
+	हाल FAMILY_CZ:
 		dc_version = DCE_VERSION_11_0;
-		break;
+		अवरोध;
 
-	case FAMILY_VI:
-		if (ASIC_REV_IS_TONGA_P(asic_id.hw_internal_rev) ||
-				ASIC_REV_IS_FIJI_P(asic_id.hw_internal_rev)) {
+	हाल FAMILY_VI:
+		अगर (ASIC_REV_IS_TONGA_P(asic_id.hw_पूर्णांकernal_rev) ||
+				ASIC_REV_IS_FIJI_P(asic_id.hw_पूर्णांकernal_rev)) अणु
 			dc_version = DCE_VERSION_10_0;
-			break;
-		}
-		if (ASIC_REV_IS_POLARIS10_P(asic_id.hw_internal_rev) ||
-				ASIC_REV_IS_POLARIS11_M(asic_id.hw_internal_rev) ||
-				ASIC_REV_IS_POLARIS12_V(asic_id.hw_internal_rev)) {
+			अवरोध;
+		पूर्ण
+		अगर (ASIC_REV_IS_POLARIS10_P(asic_id.hw_पूर्णांकernal_rev) ||
+				ASIC_REV_IS_POLARIS11_M(asic_id.hw_पूर्णांकernal_rev) ||
+				ASIC_REV_IS_POLARIS12_V(asic_id.hw_पूर्णांकernal_rev)) अणु
 			dc_version = DCE_VERSION_11_2;
-		}
-		if (ASIC_REV_IS_VEGAM(asic_id.hw_internal_rev))
+		पूर्ण
+		अगर (ASIC_REV_IS_VEGAM(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCE_VERSION_11_22;
-		break;
-	case FAMILY_AI:
-		if (ASICREV_IS_VEGA20_P(asic_id.hw_internal_rev))
+		अवरोध;
+	हाल FAMILY_AI:
+		अगर (ASICREV_IS_VEGA20_P(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCE_VERSION_12_1;
-		else
+		अन्यथा
 			dc_version = DCE_VERSION_12_0;
-		break;
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	case FAMILY_RV:
+		अवरोध;
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	हाल FAMILY_RV:
 		dc_version = DCN_VERSION_1_0;
-		if (ASICREV_IS_RAVEN2(asic_id.hw_internal_rev))
+		अगर (ASICREV_IS_RAVEN2(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCN_VERSION_1_01;
-		if (ASICREV_IS_RENOIR(asic_id.hw_internal_rev))
+		अगर (ASICREV_IS_RENOIR(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCN_VERSION_2_1;
-		if (ASICREV_IS_GREEN_SARDINE(asic_id.hw_internal_rev))
+		अगर (ASICREV_IS_GREEN_SARDINE(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCN_VERSION_2_1;
-		break;
+		अवरोध;
 
-	case FAMILY_NV:
+	हाल FAMILY_NV:
 		dc_version = DCN_VERSION_2_0;
-		if (ASICREV_IS_SIENNA_CICHLID_P(asic_id.hw_internal_rev))
+		अगर (ASICREV_IS_SIENNA_CICHLID_P(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCN_VERSION_3_0;
-		if (ASICREV_IS_DIMGREY_CAVEFISH_P(asic_id.hw_internal_rev))
+		अगर (ASICREV_IS_DIMGREY_CAVEFISH_P(asic_id.hw_पूर्णांकernal_rev))
 			dc_version = DCN_VERSION_3_02;
-		break;
+		अवरोध;
 
-	case FAMILY_VGH:
+	हाल FAMILY_VGH:
 		dc_version = DCN_VERSION_3_01;
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		dc_version = DCE_VERSION_UNKNOWN;
-		break;
-	}
-	return dc_version;
-}
+		अवरोध;
+	पूर्ण
+	वापस dc_version;
+पूर्ण
 
-struct resource_pool *dc_create_resource_pool(struct dc  *dc,
-					      const struct dc_init_data *init_data,
-					      enum dce_version dc_version)
-{
-	struct resource_pool *res_pool = NULL;
+काष्ठा resource_pool *dc_create_resource_pool(काष्ठा dc  *dc,
+					      स्थिर काष्ठा dc_init_data *init_data,
+					      क्रमागत dce_version dc_version)
+अणु
+	काष्ठा resource_pool *res_pool = शून्य;
 
-	switch (dc_version) {
-#if defined(CONFIG_DRM_AMD_DC_SI)
-	case DCE_VERSION_6_0:
+	चयन (dc_version) अणु
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+	हाल DCE_VERSION_6_0:
 		res_pool = dce60_create_resource_pool(
-			init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_6_1:
+			init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_6_1:
 		res_pool = dce61_create_resource_pool(
-			init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_6_4:
+			init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_6_4:
 		res_pool = dce64_create_resource_pool(
-			init_data->num_virtual_links, dc);
-		break;
-#endif
-	case DCE_VERSION_8_0:
+			init_data->num_भव_links, dc);
+		अवरोध;
+#पूर्ण_अगर
+	हाल DCE_VERSION_8_0:
 		res_pool = dce80_create_resource_pool(
-				init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_8_1:
+				init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_8_1:
 		res_pool = dce81_create_resource_pool(
-				init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_8_3:
+				init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_8_3:
 		res_pool = dce83_create_resource_pool(
-				init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_10_0:
+				init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_10_0:
 		res_pool = dce100_create_resource_pool(
-				init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_11_0:
+				init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_11_0:
 		res_pool = dce110_create_resource_pool(
-				init_data->num_virtual_links, dc,
+				init_data->num_भव_links, dc,
 				init_data->asic_id);
-		break;
-	case DCE_VERSION_11_2:
-	case DCE_VERSION_11_22:
+		अवरोध;
+	हाल DCE_VERSION_11_2:
+	हाल DCE_VERSION_11_22:
 		res_pool = dce112_create_resource_pool(
-				init_data->num_virtual_links, dc);
-		break;
-	case DCE_VERSION_12_0:
-	case DCE_VERSION_12_1:
+				init_data->num_भव_links, dc);
+		अवरोध;
+	हाल DCE_VERSION_12_0:
+	हाल DCE_VERSION_12_1:
 		res_pool = dce120_create_resource_pool(
-				init_data->num_virtual_links, dc);
-		break;
+				init_data->num_भव_links, dc);
+		अवरोध;
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	case DCN_VERSION_1_0:
-	case DCN_VERSION_1_01:
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	हाल DCN_VERSION_1_0:
+	हाल DCN_VERSION_1_01:
 		res_pool = dcn10_create_resource_pool(init_data, dc);
-		break;
-	case DCN_VERSION_2_0:
+		अवरोध;
+	हाल DCN_VERSION_2_0:
 		res_pool = dcn20_create_resource_pool(init_data, dc);
-		break;
-	case DCN_VERSION_2_1:
+		अवरोध;
+	हाल DCN_VERSION_2_1:
 		res_pool = dcn21_create_resource_pool(init_data, dc);
-		break;
-	case DCN_VERSION_3_0:
+		अवरोध;
+	हाल DCN_VERSION_3_0:
 		res_pool = dcn30_create_resource_pool(init_data, dc);
-		break;
-	case DCN_VERSION_3_01:
+		अवरोध;
+	हाल DCN_VERSION_3_01:
 		res_pool = dcn301_create_resource_pool(init_data, dc);
-		break;
-	case DCN_VERSION_3_02:
+		अवरोध;
+	हाल DCN_VERSION_3_02:
 		res_pool = dcn302_create_resource_pool(init_data, dc);
-		break;
-#endif
-	default:
-		break;
-	}
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (res_pool != NULL) {
-		if (dc->ctx->dc_bios->fw_info_valid) {
-			res_pool->ref_clocks.xtalin_clock_inKhz =
+	अगर (res_pool != शून्य) अणु
+		अगर (dc->ctx->dc_bios->fw_info_valid) अणु
+			res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz =
 				dc->ctx->dc_bios->fw_info.pll_info.crystal_frequency;
 			/* initialize with firmware data first, no all
 			 * ASIC have DCCG SW component. FPGA or
 			 * simulation need initialization of
-			 * dccg_ref_clock_inKhz, dchub_ref_clock_inKhz
-			 * with xtalin_clock_inKhz
+			 * dccg_ref_घड़ी_inKhz, dchub_ref_घड़ी_inKhz
+			 * with xtalin_घड़ी_inKhz
 			 */
-			res_pool->ref_clocks.dccg_ref_clock_inKhz =
-				res_pool->ref_clocks.xtalin_clock_inKhz;
-			res_pool->ref_clocks.dchub_ref_clock_inKhz =
-				res_pool->ref_clocks.xtalin_clock_inKhz;
-		} else
+			res_pool->ref_घड़ीs.dccg_ref_घड़ी_inKhz =
+				res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz;
+			res_pool->ref_घड़ीs.dchub_ref_घड़ी_inKhz =
+				res_pool->ref_घड़ीs.xtalin_घड़ी_inKhz;
+		पूर्ण अन्यथा
 			ASSERT_CRITICAL(false);
-	}
+	पूर्ण
 
-	return res_pool;
-}
+	वापस res_pool;
+पूर्ण
 
-void dc_destroy_resource_pool(struct dc  *dc)
-{
-	if (dc) {
-		if (dc->res_pool)
+व्योम dc_destroy_resource_pool(काष्ठा dc  *dc)
+अणु
+	अगर (dc) अणु
+		अगर (dc->res_pool)
 			dc->res_pool->funcs->destroy(&dc->res_pool);
 
-		kfree(dc->hwseq);
-	}
-}
+		kमुक्त(dc->hwseq);
+	पूर्ण
+पूर्ण
 
-static void update_num_audio(
-	const struct resource_straps *straps,
-	unsigned int *num_audio,
-	struct audio_support *aud_support)
-{
+अटल व्योम update_num_audio(
+	स्थिर काष्ठा resource_straps *straps,
+	अचिन्हित पूर्णांक *num_audio,
+	काष्ठा audio_support *aud_support)
+अणु
 	aud_support->dp_audio = true;
 	aud_support->hdmi_audio_native = false;
-	aud_support->hdmi_audio_on_dongle = false;
+	aud_support->hdmi_audio_on_करोngle = false;
 
-	if (straps->hdmi_disable == 0) {
-		if (straps->dc_pinstraps_audio & 0x2) {
-			aud_support->hdmi_audio_on_dongle = true;
+	अगर (straps->hdmi_disable == 0) अणु
+		अगर (straps->dc_pinstraps_audio & 0x2) अणु
+			aud_support->hdmi_audio_on_करोngle = true;
 			aud_support->hdmi_audio_native = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (straps->audio_stream_number) {
-	case 0: /* multi streams supported */
-		break;
-	case 1: /* multi streams not supported */
+	चयन (straps->audio_stream_number) अणु
+	हाल 0: /* multi streams supported */
+		अवरोध;
+	हाल 1: /* multi streams not supported */
 		*num_audio = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DC_ERR("DC: unexpected audio fuse!\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-bool resource_construct(
-	unsigned int num_virtual_links,
-	struct dc  *dc,
-	struct resource_pool *pool,
-	const struct resource_create_funcs *create_funcs)
-{
-	struct dc_context *ctx = dc->ctx;
-	const struct resource_caps *caps = pool->res_cap;
-	int i;
-	unsigned int num_audio = caps->num_audio;
-	struct resource_straps straps = {0};
+bool resource_स्थिरruct(
+	अचिन्हित पूर्णांक num_भव_links,
+	काष्ठा dc  *dc,
+	काष्ठा resource_pool *pool,
+	स्थिर काष्ठा resource_create_funcs *create_funcs)
+अणु
+	काष्ठा dc_context *ctx = dc->ctx;
+	स्थिर काष्ठा resource_caps *caps = pool->res_cap;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक num_audio = caps->num_audio;
+	काष्ठा resource_straps straps = अणु0पूर्ण;
 
-	if (create_funcs->read_dce_straps)
-		create_funcs->read_dce_straps(dc->ctx, &straps);
+	अगर (create_funcs->पढ़ो_dce_straps)
+		create_funcs->पढ़ो_dce_straps(dc->ctx, &straps);
 
 	pool->audio_count = 0;
-	if (create_funcs->create_audio) {
+	अगर (create_funcs->create_audio) अणु
 		/* find the total number of streams available via the
 		 * AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT
-		 * registers (one for each pin) starting from pin 1
+		 * रेजिस्टरs (one क्रम each pin) starting from pin 1
 		 * up to the max number of audio pins.
 		 * We stop on the first pin where
-		 * PORT_CONNECTIVITY == 1 (as instructed by HW team).
+		 * PORT_CONNECTIVITY == 1 (as inकाष्ठाed by HW team).
 		 */
 		update_num_audio(&straps, &num_audio, &pool->audio_support);
-		for (i = 0; i < caps->num_audio; i++) {
-			struct audio *aud = create_funcs->create_audio(ctx, i);
+		क्रम (i = 0; i < caps->num_audio; i++) अणु
+			काष्ठा audio *aud = create_funcs->create_audio(ctx, i);
 
-			if (aud == NULL) {
+			अगर (aud == शून्य) अणु
 				DC_ERR("DC: failed to create audio!\n");
-				return false;
-			}
-			if (!aud->funcs->endpoint_valid(aud)) {
+				वापस false;
+			पूर्ण
+			अगर (!aud->funcs->endpoपूर्णांक_valid(aud)) अणु
 				aud->funcs->destroy(&aud);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pool->audios[i] = aud;
 			pool->audio_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pool->stream_enc_count = 0;
-	if (create_funcs->create_stream_encoder) {
-		for (i = 0; i < caps->num_stream_encoder; i++) {
+	अगर (create_funcs->create_stream_encoder) अणु
+		क्रम (i = 0; i < caps->num_stream_encoder; i++) अणु
 			pool->stream_enc[i] = create_funcs->create_stream_encoder(i, ctx);
-			if (pool->stream_enc[i] == NULL)
+			अगर (pool->stream_enc[i] == शून्य)
 				DC_ERR("DC: failed to create stream_encoder!\n");
 			pool->stream_enc_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	for (i = 0; i < caps->num_mpc_3dlut; i++) {
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	क्रम (i = 0; i < caps->num_mpc_3dlut; i++) अणु
 		pool->mpc_lut[i] = dc_create_3dlut_func();
-		if (pool->mpc_lut[i] == NULL)
+		अगर (pool->mpc_lut[i] == शून्य)
 			DC_ERR("DC: failed to create MPC 3dlut!\n");
 		pool->mpc_shaper[i] = dc_create_transfer_func();
-		if (pool->mpc_shaper[i] == NULL)
+		अगर (pool->mpc_shaper[i] == शून्य)
 			DC_ERR("DC: failed to create MPC shaper!\n");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	dc->caps.dynamic_audio = false;
-	if (pool->audio_count < pool->stream_enc_count) {
+	अगर (pool->audio_count < pool->stream_enc_count) अणु
 		dc->caps.dynamic_audio = true;
-	}
-	for (i = 0; i < num_virtual_links; i++) {
+	पूर्ण
+	क्रम (i = 0; i < num_भव_links; i++) अणु
 		pool->stream_enc[pool->stream_enc_count] =
-			virtual_stream_encoder_create(
+			भव_stream_encoder_create(
 					ctx, ctx->dc_bios);
-		if (pool->stream_enc[pool->stream_enc_count] == NULL) {
+		अगर (pool->stream_enc[pool->stream_enc_count] == शून्य) अणु
 			DC_ERR("DC: failed to create stream_encoder!\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		pool->stream_enc_count++;
-	}
+	पूर्ण
 
 	dc->hwseq = create_funcs->create_hwseq(ctx);
 
-	return true;
-}
-static int find_matching_clock_source(
-		const struct resource_pool *pool,
-		struct clock_source *clock_source)
-{
+	वापस true;
+पूर्ण
+अटल पूर्णांक find_matching_घड़ी_source(
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा घड़ी_source *घड़ी_source)
+अणु
 
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < pool->clk_src_count; i++) {
-		if (pool->clock_sources[i] == clock_source)
-			return i;
-	}
-	return -1;
-}
+	क्रम (i = 0; i < pool->clk_src_count; i++) अणु
+		अगर (pool->घड़ी_sources[i] == घड़ी_source)
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-void resource_unreference_clock_source(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct clock_source *clock_source)
-{
-	int i = find_matching_clock_source(pool, clock_source);
+व्योम resource_unreference_घड़ी_source(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा घड़ी_source *घड़ी_source)
+अणु
+	पूर्णांक i = find_matching_घड़ी_source(pool, घड़ी_source);
 
-	if (i > -1)
-		res_ctx->clock_source_ref_count[i]--;
+	अगर (i > -1)
+		res_ctx->घड़ी_source_ref_count[i]--;
 
-	if (pool->dp_clock_source == clock_source)
-		res_ctx->dp_clock_source_ref_count--;
-}
+	अगर (pool->dp_घड़ी_source == घड़ी_source)
+		res_ctx->dp_घड़ी_source_ref_count--;
+पूर्ण
 
-void resource_reference_clock_source(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct clock_source *clock_source)
-{
-	int i = find_matching_clock_source(pool, clock_source);
+व्योम resource_reference_घड़ी_source(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा घड़ी_source *घड़ी_source)
+अणु
+	पूर्णांक i = find_matching_घड़ी_source(pool, घड़ी_source);
 
-	if (i > -1)
-		res_ctx->clock_source_ref_count[i]++;
+	अगर (i > -1)
+		res_ctx->घड़ी_source_ref_count[i]++;
 
-	if (pool->dp_clock_source == clock_source)
-		res_ctx->dp_clock_source_ref_count++;
-}
+	अगर (pool->dp_घड़ी_source == घड़ी_source)
+		res_ctx->dp_घड़ी_source_ref_count++;
+पूर्ण
 
-int resource_get_clock_source_reference(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct clock_source *clock_source)
-{
-	int i = find_matching_clock_source(pool, clock_source);
+पूर्णांक resource_get_घड़ी_source_reference(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा घड़ी_source *घड़ी_source)
+अणु
+	पूर्णांक i = find_matching_घड़ी_source(pool, घड़ी_source);
 
-	if (i > -1)
-		return res_ctx->clock_source_ref_count[i];
+	अगर (i > -1)
+		वापस res_ctx->घड़ी_source_ref_count[i];
 
-	if (pool->dp_clock_source == clock_source)
-		return res_ctx->dp_clock_source_ref_count;
+	अगर (pool->dp_घड़ी_source == घड़ी_source)
+		वापस res_ctx->dp_घड़ी_source_ref_count;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 bool resource_are_vblanks_synchronizable(
-	struct dc_stream_state *stream1,
-	struct dc_stream_state *stream2)
-{
-	uint32_t base60_refresh_rates[] = {10, 20, 5};
-	uint8_t i;
-	uint8_t rr_count = sizeof(base60_refresh_rates)/sizeof(base60_refresh_rates[0]);
-	uint64_t frame_time_diff;
+	काष्ठा dc_stream_state *stream1,
+	काष्ठा dc_stream_state *stream2)
+अणु
+	uपूर्णांक32_t base60_refresh_rates[] = अणु10, 20, 5पूर्ण;
+	uपूर्णांक8_t i;
+	uपूर्णांक8_t rr_count = माप(base60_refresh_rates)/माप(base60_refresh_rates[0]);
+	uपूर्णांक64_t frame_समय_dअगरf;
 
-	if (stream1->ctx->dc->config.vblank_alignment_dto_params &&
-		stream1->ctx->dc->config.vblank_alignment_max_frame_time_diff > 0 &&
-		dc_is_dp_signal(stream1->signal) &&
-		dc_is_dp_signal(stream2->signal) &&
+	अगर (stream1->ctx->dc->config.vblank_alignment_dto_params &&
+		stream1->ctx->dc->config.vblank_alignment_max_frame_समय_dअगरf > 0 &&
+		dc_is_dp_संकेत(stream1->संकेत) &&
+		dc_is_dp_संकेत(stream2->संकेत) &&
 		false == stream1->has_non_synchronizable_pclk &&
 		false == stream2->has_non_synchronizable_pclk &&
 		stream1->timing.flags.VBLANK_SYNCHRONIZABLE &&
-		stream2->timing.flags.VBLANK_SYNCHRONIZABLE) {
-		/* disable refresh rates higher than 60Hz for now */
-		if (stream1->timing.pix_clk_100hz*100/stream1->timing.h_total/
+		stream2->timing.flags.VBLANK_SYNCHRONIZABLE) अणु
+		/* disable refresh rates higher than 60Hz क्रम now */
+		अगर (stream1->timing.pix_clk_100hz*100/stream1->timing.h_total/
 				stream1->timing.v_total > 60)
-			return false;
-		if (stream2->timing.pix_clk_100hz*100/stream2->timing.h_total/
+			वापस false;
+		अगर (stream2->timing.pix_clk_100hz*100/stream2->timing.h_total/
 				stream2->timing.v_total > 60)
-			return false;
-		frame_time_diff = (uint64_t)10000 *
+			वापस false;
+		frame_समय_dअगरf = (uपूर्णांक64_t)10000 *
 			stream1->timing.h_total *
 			stream1->timing.v_total *
 			stream2->timing.pix_clk_100hz;
-		frame_time_diff = div_u64(frame_time_diff, stream1->timing.pix_clk_100hz);
-		frame_time_diff = div_u64(frame_time_diff, stream2->timing.h_total);
-		frame_time_diff = div_u64(frame_time_diff, stream2->timing.v_total);
-		for (i = 0; i < rr_count; i++) {
-			int64_t diff = (int64_t)div_u64(frame_time_diff * base60_refresh_rates[i], 10) - 10000;
+		frame_समय_dअगरf = भाग_u64(frame_समय_dअगरf, stream1->timing.pix_clk_100hz);
+		frame_समय_dअगरf = भाग_u64(frame_समय_dअगरf, stream2->timing.h_total);
+		frame_समय_dअगरf = भाग_u64(frame_समय_dअगरf, stream2->timing.v_total);
+		क्रम (i = 0; i < rr_count; i++) अणु
+			पूर्णांक64_t dअगरf = (पूर्णांक64_t)भाग_u64(frame_समय_dअगरf * base60_refresh_rates[i], 10) - 10000;
 
-			if (diff < 0)
-				diff = -diff;
-			if (diff < stream1->ctx->dc->config.vblank_alignment_max_frame_time_diff)
-				return true;
-		}
-	}
-	return false;
-}
+			अगर (dअगरf < 0)
+				dअगरf = -dअगरf;
+			अगर (dअगरf < stream1->ctx->dc->config.vblank_alignment_max_frame_समय_dअगरf)
+				वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
 bool resource_are_streams_timing_synchronizable(
-	struct dc_stream_state *stream1,
-	struct dc_stream_state *stream2)
-{
-	if (stream1->timing.h_total != stream2->timing.h_total)
-		return false;
+	काष्ठा dc_stream_state *stream1,
+	काष्ठा dc_stream_state *stream2)
+अणु
+	अगर (stream1->timing.h_total != stream2->timing.h_total)
+		वापस false;
 
-	if (stream1->timing.v_total != stream2->timing.v_total)
-		return false;
+	अगर (stream1->timing.v_total != stream2->timing.v_total)
+		वापस false;
 
-	if (stream1->timing.h_addressable
+	अगर (stream1->timing.h_addressable
 				!= stream2->timing.h_addressable)
-		return false;
+		वापस false;
 
-	if (stream1->timing.v_addressable
+	अगर (stream1->timing.v_addressable
 				!= stream2->timing.v_addressable)
-		return false;
+		वापस false;
 
-	if (stream1->timing.v_front_porch
+	अगर (stream1->timing.v_front_porch
 				!= stream2->timing.v_front_porch)
-		return false;
+		वापस false;
 
-	if (stream1->timing.pix_clk_100hz
+	अगर (stream1->timing.pix_clk_100hz
 				!= stream2->timing.pix_clk_100hz)
-		return false;
+		वापस false;
 
-	if (stream1->clamping.c_depth != stream2->clamping.c_depth)
-		return false;
+	अगर (stream1->clamping.c_depth != stream2->clamping.c_depth)
+		वापस false;
 
-	if (stream1->phy_pix_clk != stream2->phy_pix_clk
-			&& (!dc_is_dp_signal(stream1->signal)
-			|| !dc_is_dp_signal(stream2->signal)))
-		return false;
+	अगर (stream1->phy_pix_clk != stream2->phy_pix_clk
+			&& (!dc_is_dp_संकेत(stream1->संकेत)
+			|| !dc_is_dp_संकेत(stream2->संकेत)))
+		वापस false;
 
-	if (stream1->view_format != stream2->view_format)
-		return false;
+	अगर (stream1->view_क्रमmat != stream2->view_क्रमmat)
+		वापस false;
 
-	if (stream1->ignore_msa_timing_param || stream2->ignore_msa_timing_param)
-		return false;
+	अगर (stream1->ignore_msa_timing_param || stream2->ignore_msa_timing_param)
+		वापस false;
 
-	return true;
-}
-static bool is_dp_and_hdmi_sharable(
-		struct dc_stream_state *stream1,
-		struct dc_stream_state *stream2)
-{
-	if (stream1->ctx->dc->caps.disable_dp_clk_share)
-		return false;
+	वापस true;
+पूर्ण
+अटल bool is_dp_and_hdmi_sharable(
+		काष्ठा dc_stream_state *stream1,
+		काष्ठा dc_stream_state *stream2)
+अणु
+	अगर (stream1->ctx->dc->caps.disable_dp_clk_share)
+		वापस false;
 
-	if (stream1->clamping.c_depth != COLOR_DEPTH_888 ||
+	अगर (stream1->clamping.c_depth != COLOR_DEPTH_888 ||
 		stream2->clamping.c_depth != COLOR_DEPTH_888)
-		return false;
+		वापस false;
 
-	return true;
+	वापस true;
 
-}
+पूर्ण
 
-static bool is_sharable_clk_src(
-	const struct pipe_ctx *pipe_with_clk_src,
-	const struct pipe_ctx *pipe)
-{
-	if (pipe_with_clk_src->clock_source == NULL)
-		return false;
+अटल bool is_sharable_clk_src(
+	स्थिर काष्ठा pipe_ctx *pipe_with_clk_src,
+	स्थिर काष्ठा pipe_ctx *pipe)
+अणु
+	अगर (pipe_with_clk_src->घड़ी_source == शून्य)
+		वापस false;
 
-	if (pipe_with_clk_src->stream->signal == SIGNAL_TYPE_VIRTUAL)
-		return false;
+	अगर (pipe_with_clk_src->stream->संकेत == SIGNAL_TYPE_VIRTUAL)
+		वापस false;
 
-	if (dc_is_dp_signal(pipe_with_clk_src->stream->signal) ||
-		(dc_is_dp_signal(pipe->stream->signal) &&
+	अगर (dc_is_dp_संकेत(pipe_with_clk_src->stream->संकेत) ||
+		(dc_is_dp_संकेत(pipe->stream->संकेत) &&
 		!is_dp_and_hdmi_sharable(pipe_with_clk_src->stream,
 				     pipe->stream)))
-		return false;
+		वापस false;
 
-	if (dc_is_hdmi_signal(pipe_with_clk_src->stream->signal)
-			&& dc_is_dual_link_signal(pipe->stream->signal))
-		return false;
+	अगर (dc_is_hdmi_संकेत(pipe_with_clk_src->stream->संकेत)
+			&& dc_is_dual_link_संकेत(pipe->stream->संकेत))
+		वापस false;
 
-	if (dc_is_hdmi_signal(pipe->stream->signal)
-			&& dc_is_dual_link_signal(pipe_with_clk_src->stream->signal))
-		return false;
+	अगर (dc_is_hdmi_संकेत(pipe->stream->संकेत)
+			&& dc_is_dual_link_संकेत(pipe_with_clk_src->stream->संकेत))
+		वापस false;
 
-	if (!resource_are_streams_timing_synchronizable(
+	अगर (!resource_are_streams_timing_synchronizable(
 			pipe_with_clk_src->stream, pipe->stream))
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct clock_source *resource_find_used_clk_src_for_sharing(
-					struct resource_context *res_ctx,
-					struct pipe_ctx *pipe_ctx)
-{
-	int i;
+काष्ठा घड़ी_source *resource_find_used_clk_src_क्रम_sharing(
+					काष्ठा resource_context *res_ctx,
+					काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		if (is_sharable_clk_src(&res_ctx->pipe_ctx[i], pipe_ctx))
-			return res_ctx->pipe_ctx[i].clock_source;
-	}
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		अगर (is_sharable_clk_src(&res_ctx->pipe_ctx[i], pipe_ctx))
+			वापस res_ctx->pipe_ctx[i].घड़ी_source;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static enum pixel_format convert_pixel_format_to_dalsurface(
-		enum surface_pixel_format surface_pixel_format)
-{
-	enum pixel_format dal_pixel_format = PIXEL_FORMAT_UNKNOWN;
+अटल क्रमागत pixel_क्रमmat convert_pixel_क्रमmat_to_dalsurface(
+		क्रमागत surface_pixel_क्रमmat surface_pixel_क्रमmat)
+अणु
+	क्रमागत pixel_क्रमmat dal_pixel_क्रमmat = PIXEL_FORMAT_UNKNOWN;
 
-	switch (surface_pixel_format) {
-	case SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS:
-		dal_pixel_format = PIXEL_FORMAT_INDEX8;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB1555:
-		dal_pixel_format = PIXEL_FORMAT_RGB565;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_RGB565:
-		dal_pixel_format = PIXEL_FORMAT_RGB565;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
-		dal_pixel_format = PIXEL_FORMAT_ARGB8888;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
-		dal_pixel_format = PIXEL_FORMAT_ARGB8888;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
-		dal_pixel_format = PIXEL_FORMAT_ARGB2101010;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
-		dal_pixel_format = PIXEL_FORMAT_ARGB2101010;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS:
-		dal_pixel_format = PIXEL_FORMAT_ARGB2101010_XRBIAS;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
-		dal_pixel_format = PIXEL_FORMAT_FP16;
-		break;
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
-		dal_pixel_format = PIXEL_FORMAT_420BPP8;
-		break;
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCbCr:
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCrCb:
-		dal_pixel_format = PIXEL_FORMAT_420BPP10;
-		break;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
-	default:
-		dal_pixel_format = PIXEL_FORMAT_UNKNOWN;
-		break;
-	}
-	return dal_pixel_format;
-}
+	चयन (surface_pixel_क्रमmat) अणु
+	हाल SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_INDEX8;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB1555:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_RGB565;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_RGB565:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_RGB565;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_ARGB8888;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_ARGB8888;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_ARGB2101010;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_ARGB2101010;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_ARGB2101010_XRBIAS;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_FP16;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_420BPP8;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCbCr:
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCrCb:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_420BPP10;
+		अवरोध;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
+	शेष:
+		dal_pixel_क्रमmat = PIXEL_FORMAT_UNKNOWN;
+		अवरोध;
+	पूर्ण
+	वापस dal_pixel_क्रमmat;
+पूर्ण
 
-static inline void get_vp_scan_direction(
-	enum dc_rotation_angle rotation,
+अटल अंतरभूत व्योम get_vp_scan_direction(
+	क्रमागत dc_rotation_angle rotation,
 	bool horizontal_mirror,
 	bool *orthogonal_rotation,
 	bool *flip_vert_scan_dir,
 	bool *flip_horz_scan_dir)
-{
+अणु
 	*orthogonal_rotation = false;
 	*flip_vert_scan_dir = false;
 	*flip_horz_scan_dir = false;
-	if (rotation == ROTATION_ANGLE_180) {
+	अगर (rotation == ROTATION_ANGLE_180) अणु
 		*flip_vert_scan_dir = true;
 		*flip_horz_scan_dir = true;
-	} else if (rotation == ROTATION_ANGLE_90) {
+	पूर्ण अन्यथा अगर (rotation == ROTATION_ANGLE_90) अणु
 		*orthogonal_rotation = true;
 		*flip_horz_scan_dir = true;
-	} else if (rotation == ROTATION_ANGLE_270) {
+	पूर्ण अन्यथा अगर (rotation == ROTATION_ANGLE_270) अणु
 		*orthogonal_rotation = true;
 		*flip_vert_scan_dir = true;
-	}
+	पूर्ण
 
-	if (horizontal_mirror)
+	अगर (horizontal_mirror)
 		*flip_horz_scan_dir = !*flip_horz_scan_dir;
-}
+पूर्ण
 
-int get_num_mpc_splits(struct pipe_ctx *pipe)
-{
-	int mpc_split_count = 0;
-	struct pipe_ctx *other_pipe = pipe->bottom_pipe;
+पूर्णांक get_num_mpc_splits(काष्ठा pipe_ctx *pipe)
+अणु
+	पूर्णांक mpc_split_count = 0;
+	काष्ठा pipe_ctx *other_pipe = pipe->bottom_pipe;
 
-	while (other_pipe && other_pipe->plane_state == pipe->plane_state) {
+	जबतक (other_pipe && other_pipe->plane_state == pipe->plane_state) अणु
 		mpc_split_count++;
 		other_pipe = other_pipe->bottom_pipe;
-	}
+	पूर्ण
 	other_pipe = pipe->top_pipe;
-	while (other_pipe && other_pipe->plane_state == pipe->plane_state) {
+	जबतक (other_pipe && other_pipe->plane_state == pipe->plane_state) अणु
 		mpc_split_count++;
 		other_pipe = other_pipe->top_pipe;
-	}
+	पूर्ण
 
-	return mpc_split_count;
-}
+	वापस mpc_split_count;
+पूर्ण
 
-int get_num_odm_splits(struct pipe_ctx *pipe)
-{
-	int odm_split_count = 0;
-	struct pipe_ctx *next_pipe = pipe->next_odm_pipe;
-	while (next_pipe) {
+पूर्णांक get_num_odm_splits(काष्ठा pipe_ctx *pipe)
+अणु
+	पूर्णांक odm_split_count = 0;
+	काष्ठा pipe_ctx *next_pipe = pipe->next_odm_pipe;
+	जबतक (next_pipe) अणु
 		odm_split_count++;
 		next_pipe = next_pipe->next_odm_pipe;
-	}
+	पूर्ण
 	pipe = pipe->prev_odm_pipe;
-	while (pipe) {
+	जबतक (pipe) अणु
 		odm_split_count++;
 		pipe = pipe->prev_odm_pipe;
-	}
-	return odm_split_count;
-}
+	पूर्ण
+	वापस odm_split_count;
+पूर्ण
 
-static void calculate_split_count_and_index(struct pipe_ctx *pipe_ctx, int *split_count, int *split_idx)
-{
+अटल व्योम calculate_split_count_and_index(काष्ठा pipe_ctx *pipe_ctx, पूर्णांक *split_count, पूर्णांक *split_idx)
+अणु
 	*split_count = get_num_odm_splits(pipe_ctx);
 	*split_idx = 0;
-	if (*split_count == 0) {
-		/*Check for mpc split*/
-		struct pipe_ctx *split_pipe = pipe_ctx->top_pipe;
+	अगर (*split_count == 0) अणु
+		/*Check क्रम mpc split*/
+		काष्ठा pipe_ctx *split_pipe = pipe_ctx->top_pipe;
 
 		*split_count = get_num_mpc_splits(pipe_ctx);
-		while (split_pipe && split_pipe->plane_state == pipe_ctx->plane_state) {
+		जबतक (split_pipe && split_pipe->plane_state == pipe_ctx->plane_state) अणु
 			(*split_idx)++;
 			split_pipe = split_pipe->top_pipe;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*Get odm split index*/
-		struct pipe_ctx *split_pipe = pipe_ctx->prev_odm_pipe;
+		काष्ठा pipe_ctx *split_pipe = pipe_ctx->prev_odm_pipe;
 
-		while (split_pipe) {
+		जबतक (split_pipe) अणु
 			(*split_idx)++;
 			split_pipe = split_pipe->prev_odm_pipe;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void calculate_viewport(struct pipe_ctx *pipe_ctx)
-{
-	const struct dc_plane_state *plane_state = pipe_ctx->plane_state;
-	const struct dc_stream_state *stream = pipe_ctx->stream;
-	struct scaler_data *data = &pipe_ctx->plane_res.scl_data;
-	struct rect surf_src = plane_state->src_rect;
-	struct rect clip, dest;
-	int vpc_div = (data->format == PIXEL_FORMAT_420BPP8
-			|| data->format == PIXEL_FORMAT_420BPP10) ? 2 : 1;
-	int split_count = 0;
-	int split_idx = 0;
+अटल व्योम calculate_viewport(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	स्थिर काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+	स्थिर काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+	काष्ठा scaler_data *data = &pipe_ctx->plane_res.scl_data;
+	काष्ठा rect surf_src = plane_state->src_rect;
+	काष्ठा rect clip, dest;
+	पूर्णांक vpc_भाग = (data->क्रमmat == PIXEL_FORMAT_420BPP8
+			|| data->क्रमmat == PIXEL_FORMAT_420BPP10) ? 2 : 1;
+	पूर्णांक split_count = 0;
+	पूर्णांक split_idx = 0;
 	bool orthogonal_rotation, flip_y_start, flip_x_start;
 
 	calculate_split_count_and_index(pipe_ctx, &split_count, &split_idx);
 
-	if (stream->view_format == VIEW_3D_FORMAT_SIDE_BY_SIDE ||
-		stream->view_format == VIEW_3D_FORMAT_TOP_AND_BOTTOM) {
+	अगर (stream->view_क्रमmat == VIEW_3D_FORMAT_SIDE_BY_SIDE ||
+		stream->view_क्रमmat == VIEW_3D_FORMAT_TOP_AND_BOTTOM) अणु
 		split_count = 0;
 		split_idx = 0;
-	}
+	पूर्ण
 
-	/* The actual clip is an intersection between stream
+	/* The actual clip is an पूर्णांकersection between stream
 	 * source and surface clip
 	 */
 	dest = plane_state->dst_rect;
@@ -737,7 +738,7 @@ static void calculate_viewport(struct pipe_ctx *pipe_ctx)
 			plane_state->clip_rect.y + plane_state->clip_rect.height - clip.y ;
 
 	/*
-	 * Need to calculate how scan origin is shifted in vp space
+	 * Need to calculate how scan origin is shअगरted in vp space
 	 * to correctly rotate clip and dst
 	 */
 	get_vp_scan_direction(
@@ -747,20 +748,20 @@ static void calculate_viewport(struct pipe_ctx *pipe_ctx)
 			&flip_y_start,
 			&flip_x_start);
 
-	if (orthogonal_rotation) {
+	अगर (orthogonal_rotation) अणु
 		swap(clip.x, clip.y);
 		swap(clip.width, clip.height);
 		swap(dest.x, dest.y);
 		swap(dest.width, dest.height);
-	}
-	if (flip_x_start) {
+	पूर्ण
+	अगर (flip_x_start) अणु
 		clip.x = dest.x + dest.width - clip.x - clip.width;
 		dest.x = 0;
-	}
-	if (flip_y_start) {
+	पूर्ण
+	अगर (flip_y_start) अणु
 		clip.y = dest.y + dest.height - clip.y - clip.height;
 		dest.y = 0;
-	}
+	पूर्ण
 
 	/* offset = surf_src.ofs + (clip.ofs - surface->dst_rect.ofs) * scl_ratio
 	 * num_pixels = clip.num_pix * scl_ratio
@@ -772,130 +773,130 @@ static void calculate_viewport(struct pipe_ctx *pipe_ctx)
 	data->viewport.height = clip.height * surf_src.height / dest.height;
 
 	/* Handle split */
-	if (split_count) {
-		/* extra pixels in the division remainder need to go to pipes after
+	अगर (split_count) अणु
+		/* extra pixels in the भागision reमुख्यder need to go to pipes after
 		 * the extra pixel index minus one(epimo) defined here as:
 		 */
-		int epimo = 0;
+		पूर्णांक epimo = 0;
 
-		if (orthogonal_rotation) {
-			if (flip_y_start)
+		अगर (orthogonal_rotation) अणु
+			अगर (flip_y_start)
 				split_idx = split_count - split_idx;
 
 			epimo = split_count - data->viewport.height % (split_count + 1);
 
 			data->viewport.y += (data->viewport.height / (split_count + 1)) * split_idx;
-			if (split_idx > epimo)
+			अगर (split_idx > epimo)
 				data->viewport.y += split_idx - epimo - 1;
 			data->viewport.height = data->viewport.height / (split_count + 1) + (split_idx > epimo ? 1 : 0);
-		} else {
-			if (flip_x_start)
+		पूर्ण अन्यथा अणु
+			अगर (flip_x_start)
 				split_idx = split_count - split_idx;
 
 			epimo = split_count - data->viewport.width % (split_count + 1);
 
 			data->viewport.x += (data->viewport.width / (split_count + 1)) * split_idx;
-			if (split_idx > epimo)
+			अगर (split_idx > epimo)
 				data->viewport.x += split_idx - epimo - 1;
 			data->viewport.width = data->viewport.width / (split_count + 1) + (split_idx > epimo ? 1 : 0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Round down, compensate in init */
-	data->viewport_c.x = data->viewport.x / vpc_div;
-	data->viewport_c.y = data->viewport.y / vpc_div;
-	data->inits.h_c = (data->viewport.x % vpc_div) != 0 ? dc_fixpt_half : dc_fixpt_zero;
-	data->inits.v_c = (data->viewport.y % vpc_div) != 0 ? dc_fixpt_half : dc_fixpt_zero;
+	/* Round करोwn, compensate in init */
+	data->viewport_c.x = data->viewport.x / vpc_भाग;
+	data->viewport_c.y = data->viewport.y / vpc_भाग;
+	data->inits.h_c = (data->viewport.x % vpc_भाग) != 0 ? dc_fixpt_half : dc_fixpt_zero;
+	data->inits.v_c = (data->viewport.y % vpc_भाग) != 0 ? dc_fixpt_half : dc_fixpt_zero;
 
 	/* Round up, assume original video size always even dimensions */
-	data->viewport_c.width = (data->viewport.width + vpc_div - 1) / vpc_div;
-	data->viewport_c.height = (data->viewport.height + vpc_div - 1) / vpc_div;
+	data->viewport_c.width = (data->viewport.width + vpc_भाग - 1) / vpc_भाग;
+	data->viewport_c.height = (data->viewport.height + vpc_भाग - 1) / vpc_भाग;
 
 	data->viewport_unadjusted = data->viewport;
 	data->viewport_c_unadjusted = data->viewport_c;
-}
+पूर्ण
 
-static void calculate_recout(struct pipe_ctx *pipe_ctx)
-{
-	const struct dc_plane_state *plane_state = pipe_ctx->plane_state;
-	const struct dc_stream_state *stream = pipe_ctx->stream;
-	struct scaler_data *data = &pipe_ctx->plane_res.scl_data;
-	struct rect surf_clip = plane_state->clip_rect;
+अटल व्योम calculate_recout(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	स्थिर काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+	स्थिर काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+	काष्ठा scaler_data *data = &pipe_ctx->plane_res.scl_data;
+	काष्ठा rect surf_clip = plane_state->clip_rect;
 	bool pri_split_tb = pipe_ctx->bottom_pipe &&
 			pipe_ctx->bottom_pipe->plane_state == pipe_ctx->plane_state &&
-			stream->view_format == VIEW_3D_FORMAT_TOP_AND_BOTTOM;
+			stream->view_क्रमmat == VIEW_3D_FORMAT_TOP_AND_BOTTOM;
 	bool sec_split_tb = pipe_ctx->top_pipe &&
 			pipe_ctx->top_pipe->plane_state == pipe_ctx->plane_state &&
-			stream->view_format == VIEW_3D_FORMAT_TOP_AND_BOTTOM;
-	int split_count = 0;
-	int split_idx = 0;
+			stream->view_क्रमmat == VIEW_3D_FORMAT_TOP_AND_BOTTOM;
+	पूर्णांक split_count = 0;
+	पूर्णांक split_idx = 0;
 
 	calculate_split_count_and_index(pipe_ctx, &split_count, &split_idx);
 
 	/*
-	 * Only the leftmost ODM pipe should be offset by a nonzero distance
+	 * Only the lefपंचांगost ODM pipe should be offset by a nonzero distance
 	 */
-	if (!pipe_ctx->prev_odm_pipe) {
+	अगर (!pipe_ctx->prev_odm_pipe) अणु
 		data->recout.x = stream->dst.x;
-		if (stream->src.x < surf_clip.x)
+		अगर (stream->src.x < surf_clip.x)
 			data->recout.x += (surf_clip.x - stream->src.x) * stream->dst.width
 						/ stream->src.width;
 
-	} else
+	पूर्ण अन्यथा
 		data->recout.x = 0;
 
-	if (stream->src.x > surf_clip.x)
+	अगर (stream->src.x > surf_clip.x)
 		surf_clip.width -= stream->src.x - surf_clip.x;
 	data->recout.width = surf_clip.width * stream->dst.width / stream->src.width;
-	if (data->recout.width + data->recout.x > stream->dst.x + stream->dst.width)
+	अगर (data->recout.width + data->recout.x > stream->dst.x + stream->dst.width)
 		data->recout.width = stream->dst.x + stream->dst.width - data->recout.x;
 
 	data->recout.y = stream->dst.y;
-	if (stream->src.y < surf_clip.y)
+	अगर (stream->src.y < surf_clip.y)
 		data->recout.y += (surf_clip.y - stream->src.y) * stream->dst.height
 						/ stream->src.height;
-	else if (stream->src.y > surf_clip.y)
+	अन्यथा अगर (stream->src.y > surf_clip.y)
 		surf_clip.height -= stream->src.y - surf_clip.y;
 
 	data->recout.height = surf_clip.height * stream->dst.height / stream->src.height;
-	if (data->recout.height + data->recout.y > stream->dst.y + stream->dst.height)
+	अगर (data->recout.height + data->recout.y > stream->dst.y + stream->dst.height)
 		data->recout.height = stream->dst.y + stream->dst.height - data->recout.y;
 
 	/* Handle h & v split, handle rotation using viewport */
-	if (sec_split_tb) {
+	अगर (sec_split_tb) अणु
 		data->recout.y += data->recout.height / 2;
-		/* Floor primary pipe, ceil 2ndary pipe */
+		/* Floor primary pipe, उच्चमान 2ndary pipe */
 		data->recout.height = (data->recout.height + 1) / 2;
-	} else if (pri_split_tb)
+	पूर्ण अन्यथा अगर (pri_split_tb)
 		data->recout.height /= 2;
-	else if (split_count) {
-		/* extra pixels in the division remainder need to go to pipes after
+	अन्यथा अगर (split_count) अणु
+		/* extra pixels in the भागision reमुख्यder need to go to pipes after
 		 * the extra pixel index minus one(epimo) defined here as:
 		 */
-		int epimo = split_count - data->recout.width % (split_count + 1);
+		पूर्णांक epimo = split_count - data->recout.width % (split_count + 1);
 
 		/*no recout offset due to odm */
-		if (!pipe_ctx->next_odm_pipe && !pipe_ctx->prev_odm_pipe) {
+		अगर (!pipe_ctx->next_odm_pipe && !pipe_ctx->prev_odm_pipe) अणु
 			data->recout.x += (data->recout.width / (split_count + 1)) * split_idx;
-			if (split_idx > epimo)
+			अगर (split_idx > epimo)
 				data->recout.x += split_idx - epimo - 1;
-		}
+		पूर्ण
 		data->recout.width = data->recout.width / (split_count + 1) + (split_idx > epimo ? 1 : 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void calculate_scaling_ratios(struct pipe_ctx *pipe_ctx)
-{
-	const struct dc_plane_state *plane_state = pipe_ctx->plane_state;
-	const struct dc_stream_state *stream = pipe_ctx->stream;
-	struct rect surf_src = plane_state->src_rect;
-	const int in_w = stream->src.width;
-	const int in_h = stream->src.height;
-	const int out_w = stream->dst.width;
-	const int out_h = stream->dst.height;
+अटल व्योम calculate_scaling_ratios(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	स्थिर काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+	स्थिर काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+	काष्ठा rect surf_src = plane_state->src_rect;
+	स्थिर पूर्णांक in_w = stream->src.width;
+	स्थिर पूर्णांक in_h = stream->src.height;
+	स्थिर पूर्णांक out_w = stream->dst.width;
+	स्थिर पूर्णांक out_h = stream->dst.height;
 
 	/*Swap surf_src height and width since scaling ratios are in recout rotation*/
-	if (pipe_ctx->plane_state->rotation == ROTATION_ANGLE_90 ||
+	अगर (pipe_ctx->plane_state->rotation == ROTATION_ANGLE_90 ||
 			pipe_ctx->plane_state->rotation == ROTATION_ANGLE_270)
 		swap(surf_src.height, surf_src.width);
 
@@ -906,24 +907,24 @@ static void calculate_scaling_ratios(struct pipe_ctx *pipe_ctx)
 					surf_src.height,
 					plane_state->dst_rect.height);
 
-	if (stream->view_format == VIEW_3D_FORMAT_SIDE_BY_SIDE)
+	अगर (stream->view_क्रमmat == VIEW_3D_FORMAT_SIDE_BY_SIDE)
 		pipe_ctx->plane_res.scl_data.ratios.horz.value *= 2;
-	else if (stream->view_format == VIEW_3D_FORMAT_TOP_AND_BOTTOM)
+	अन्यथा अगर (stream->view_क्रमmat == VIEW_3D_FORMAT_TOP_AND_BOTTOM)
 		pipe_ctx->plane_res.scl_data.ratios.vert.value *= 2;
 
-	pipe_ctx->plane_res.scl_data.ratios.vert.value = div64_s64(
+	pipe_ctx->plane_res.scl_data.ratios.vert.value = भाग64_s64(
 		pipe_ctx->plane_res.scl_data.ratios.vert.value * in_h, out_h);
-	pipe_ctx->plane_res.scl_data.ratios.horz.value = div64_s64(
+	pipe_ctx->plane_res.scl_data.ratios.horz.value = भाग64_s64(
 		pipe_ctx->plane_res.scl_data.ratios.horz.value * in_w, out_w);
 
 	pipe_ctx->plane_res.scl_data.ratios.horz_c = pipe_ctx->plane_res.scl_data.ratios.horz;
 	pipe_ctx->plane_res.scl_data.ratios.vert_c = pipe_ctx->plane_res.scl_data.ratios.vert;
 
-	if (pipe_ctx->plane_res.scl_data.format == PIXEL_FORMAT_420BPP8
-			|| pipe_ctx->plane_res.scl_data.format == PIXEL_FORMAT_420BPP10) {
+	अगर (pipe_ctx->plane_res.scl_data.क्रमmat == PIXEL_FORMAT_420BPP8
+			|| pipe_ctx->plane_res.scl_data.क्रमmat == PIXEL_FORMAT_420BPP10) अणु
 		pipe_ctx->plane_res.scl_data.ratios.horz_c.value /= 2;
 		pipe_ctx->plane_res.scl_data.ratios.vert_c.value /= 2;
-	}
+	पूर्ण
 	pipe_ctx->plane_res.scl_data.ratios.horz = dc_fixpt_truncate(
 			pipe_ctx->plane_res.scl_data.ratios.horz, 19);
 	pipe_ctx->plane_res.scl_data.ratios.vert = dc_fixpt_truncate(
@@ -932,103 +933,103 @@ static void calculate_scaling_ratios(struct pipe_ctx *pipe_ctx)
 			pipe_ctx->plane_res.scl_data.ratios.horz_c, 19);
 	pipe_ctx->plane_res.scl_data.ratios.vert_c = dc_fixpt_truncate(
 			pipe_ctx->plane_res.scl_data.ratios.vert_c, 19);
-}
+पूर्ण
 
-static inline void adjust_vp_and_init_for_seamless_clip(
+अटल अंतरभूत व्योम adjust_vp_and_init_क्रम_seamless_clip(
 		bool flip_scan_dir,
-		int recout_skip,
-		int src_size,
-		int taps,
-		struct fixed31_32 ratio,
-		struct fixed31_32 *init,
-		int *vp_offset,
-		int *vp_size)
-{
-	if (!flip_scan_dir) {
-		/* Adjust for viewport end clip-off */
-		if ((*vp_offset + *vp_size) < src_size) {
-			int vp_clip = src_size - *vp_size - *vp_offset;
-			int int_part = dc_fixpt_floor(dc_fixpt_sub(*init, ratio));
+		पूर्णांक recout_skip,
+		पूर्णांक src_size,
+		पूर्णांक taps,
+		काष्ठा fixed31_32 ratio,
+		काष्ठा fixed31_32 *init,
+		पूर्णांक *vp_offset,
+		पूर्णांक *vp_size)
+अणु
+	अगर (!flip_scan_dir) अणु
+		/* Adjust क्रम viewport end clip-off */
+		अगर ((*vp_offset + *vp_size) < src_size) अणु
+			पूर्णांक vp_clip = src_size - *vp_size - *vp_offset;
+			पूर्णांक पूर्णांक_part = dc_fixpt_न्यूनमान(dc_fixpt_sub(*init, ratio));
 
-			int_part = int_part > 0 ? int_part : 0;
-			*vp_size += int_part < vp_clip ? int_part : vp_clip;
-		}
+			पूर्णांक_part = पूर्णांक_part > 0 ? पूर्णांक_part : 0;
+			*vp_size += पूर्णांक_part < vp_clip ? पूर्णांक_part : vp_clip;
+		पूर्ण
 
-		/* Adjust for non-0 viewport offset */
-		if (*vp_offset) {
-			int int_part;
+		/* Adjust क्रम non-0 viewport offset */
+		अगर (*vp_offset) अणु
+			पूर्णांक पूर्णांक_part;
 
-			*init = dc_fixpt_add(*init, dc_fixpt_mul_int(ratio, recout_skip));
-			int_part = dc_fixpt_floor(*init) - *vp_offset;
-			if (int_part < taps) {
-				int int_adj = *vp_offset >= (taps - int_part) ?
-							(taps - int_part) : *vp_offset;
-				*vp_offset -= int_adj;
-				*vp_size += int_adj;
-				int_part += int_adj;
-			} else if (int_part > taps) {
-				*vp_offset += int_part - taps;
-				*vp_size -= int_part - taps;
-				int_part = taps;
-			}
+			*init = dc_fixpt_add(*init, dc_fixpt_mul_पूर्णांक(ratio, recout_skip));
+			पूर्णांक_part = dc_fixpt_न्यूनमान(*init) - *vp_offset;
+			अगर (पूर्णांक_part < taps) अणु
+				पूर्णांक पूर्णांक_adj = *vp_offset >= (taps - पूर्णांक_part) ?
+							(taps - पूर्णांक_part) : *vp_offset;
+				*vp_offset -= पूर्णांक_adj;
+				*vp_size += पूर्णांक_adj;
+				पूर्णांक_part += पूर्णांक_adj;
+			पूर्ण अन्यथा अगर (पूर्णांक_part > taps) अणु
+				*vp_offset += पूर्णांक_part - taps;
+				*vp_size -= पूर्णांक_part - taps;
+				पूर्णांक_part = taps;
+			पूर्ण
 			init->value &= 0xffffffff;
-			*init = dc_fixpt_add_int(*init, int_part);
-		}
-	} else {
-		/* Adjust for non-0 viewport offset */
-		if (*vp_offset) {
-			int int_part = dc_fixpt_floor(dc_fixpt_sub(*init, ratio));
+			*init = dc_fixpt_add_पूर्णांक(*init, पूर्णांक_part);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Adjust क्रम non-0 viewport offset */
+		अगर (*vp_offset) अणु
+			पूर्णांक पूर्णांक_part = dc_fixpt_न्यूनमान(dc_fixpt_sub(*init, ratio));
 
-			int_part = int_part > 0 ? int_part : 0;
-			*vp_size += int_part < *vp_offset ? int_part : *vp_offset;
-			*vp_offset -= int_part < *vp_offset ? int_part : *vp_offset;
-		}
+			पूर्णांक_part = पूर्णांक_part > 0 ? पूर्णांक_part : 0;
+			*vp_size += पूर्णांक_part < *vp_offset ? पूर्णांक_part : *vp_offset;
+			*vp_offset -= पूर्णांक_part < *vp_offset ? पूर्णांक_part : *vp_offset;
+		पूर्ण
 
-		/* Adjust for viewport end clip-off */
-		if ((*vp_offset + *vp_size) < src_size) {
-			int int_part;
-			int end_offset = src_size - *vp_offset - *vp_size;
+		/* Adjust क्रम viewport end clip-off */
+		अगर ((*vp_offset + *vp_size) < src_size) अणु
+			पूर्णांक पूर्णांक_part;
+			पूर्णांक end_offset = src_size - *vp_offset - *vp_size;
 
 			/*
-			 * this is init if vp had no offset, keep in mind this is from the
+			 * this is init अगर vp had no offset, keep in mind this is from the
 			 * right side of vp due to scan direction
 			 */
-			*init = dc_fixpt_add(*init, dc_fixpt_mul_int(ratio, recout_skip));
+			*init = dc_fixpt_add(*init, dc_fixpt_mul_पूर्णांक(ratio, recout_skip));
 			/*
-			 * this is the difference between first pixel of viewport available to read
-			 * and init position, takning into account scan direction
+			 * this is the dअगरference between first pixel of viewport available to पढ़ो
+			 * and init position, takning पूर्णांकo account scan direction
 			 */
-			int_part = dc_fixpt_floor(*init) - end_offset;
-			if (int_part < taps) {
-				int int_adj = end_offset >= (taps - int_part) ?
-							(taps - int_part) : end_offset;
-				*vp_size += int_adj;
-				int_part += int_adj;
-			} else if (int_part > taps) {
-				*vp_size += int_part - taps;
-				int_part = taps;
-			}
+			पूर्णांक_part = dc_fixpt_न्यूनमान(*init) - end_offset;
+			अगर (पूर्णांक_part < taps) अणु
+				पूर्णांक पूर्णांक_adj = end_offset >= (taps - पूर्णांक_part) ?
+							(taps - पूर्णांक_part) : end_offset;
+				*vp_size += पूर्णांक_adj;
+				पूर्णांक_part += पूर्णांक_adj;
+			पूर्ण अन्यथा अगर (पूर्णांक_part > taps) अणु
+				*vp_size += पूर्णांक_part - taps;
+				पूर्णांक_part = taps;
+			पूर्ण
 			init->value &= 0xffffffff;
-			*init = dc_fixpt_add_int(*init, int_part);
-		}
-	}
-}
+			*init = dc_fixpt_add_पूर्णांक(*init, पूर्णांक_part);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
-{
-	const struct dc_plane_state *plane_state = pipe_ctx->plane_state;
-	const struct dc_stream_state *stream = pipe_ctx->stream;
-	struct pipe_ctx *odm_pipe = pipe_ctx;
-	struct scaler_data *data = &pipe_ctx->plane_res.scl_data;
-	struct rect src = pipe_ctx->plane_state->src_rect;
-	int recout_skip_h, recout_skip_v, surf_size_h, surf_size_v;
-	int vpc_div = (data->format == PIXEL_FORMAT_420BPP8
-			|| data->format == PIXEL_FORMAT_420BPP10) ? 2 : 1;
+अटल व्योम calculate_inits_and_adj_vp(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	स्थिर काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+	स्थिर काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+	काष्ठा pipe_ctx *odm_pipe = pipe_ctx;
+	काष्ठा scaler_data *data = &pipe_ctx->plane_res.scl_data;
+	काष्ठा rect src = pipe_ctx->plane_state->src_rect;
+	पूर्णांक recout_skip_h, recout_skip_v, surf_size_h, surf_size_v;
+	पूर्णांक vpc_भाग = (data->क्रमmat == PIXEL_FORMAT_420BPP8
+			|| data->क्रमmat == PIXEL_FORMAT_420BPP10) ? 2 : 1;
 	bool orthogonal_rotation, flip_vert_scan_dir, flip_horz_scan_dir;
-	int odm_idx = 0;
+	पूर्णांक odm_idx = 0;
 
 	/*
-	 * Need to calculate the scan direction for viewport to make adjustments
+	 * Need to calculate the scan direction क्रम viewport to make adjusपंचांगents
 	 */
 	get_vp_scan_direction(
 			plane_state->rotation,
@@ -1040,21 +1041,21 @@ static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
 	/* Calculate src rect rotation adjusted to recout space */
 	surf_size_h = src.x + src.width;
 	surf_size_v = src.y + src.height;
-	if (flip_horz_scan_dir)
+	अगर (flip_horz_scan_dir)
 		src.x = 0;
-	if (flip_vert_scan_dir)
+	अगर (flip_vert_scan_dir)
 		src.y = 0;
-	if (orthogonal_rotation) {
+	अगर (orthogonal_rotation) अणु
 		swap(src.x, src.y);
 		swap(src.width, src.height);
-	}
+	पूर्ण
 
-	/*modified recout_skip_h calculation due to odm having no recout offset*/
-	while (odm_pipe->prev_odm_pipe) {
+	/*modअगरied recout_skip_h calculation due to odm having no recout offset*/
+	जबतक (odm_pipe->prev_odm_pipe) अणु
 		odm_idx++;
 		odm_pipe = odm_pipe->prev_odm_pipe;
-	}
-	/*odm_pipe is the leftmost pipe in the ODM group*/
+	पूर्ण
+	/*odm_pipe is the lefपंचांगost pipe in the ODM group*/
 	recout_skip_h = odm_idx * data->recout.width;
 
 	/* Recout matching initial vp offset = recout_offset - (stream dst offset +
@@ -1072,31 +1073,31 @@ static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
 					* stream->dst.height / stream->src.height -
 					src.y * plane_state->dst_rect.height / src.height
 					* stream->dst.height / stream->src.height);
-	if (orthogonal_rotation)
+	अगर (orthogonal_rotation)
 		swap(recout_skip_h, recout_skip_v);
 	/*
-	 * Init calculated according to formula:
+	 * Init calculated according to क्रमmula:
 	 * 	init = (scaling_ratio + number_of_taps + 1) / 2
 	 * 	init_bot = init + scaling_ratio
 	 * 	init_c = init + truncated_vp_c_offset(from calculate viewport)
 	 */
-	data->inits.h = dc_fixpt_truncate(dc_fixpt_div_int(
-			dc_fixpt_add_int(data->ratios.horz, data->taps.h_taps + 1), 2), 19);
+	data->inits.h = dc_fixpt_truncate(dc_fixpt_भाग_पूर्णांक(
+			dc_fixpt_add_पूर्णांक(data->ratios.horz, data->taps.h_taps + 1), 2), 19);
 
-	data->inits.h_c = dc_fixpt_truncate(dc_fixpt_add(data->inits.h_c, dc_fixpt_div_int(
-			dc_fixpt_add_int(data->ratios.horz_c, data->taps.h_taps_c + 1), 2)), 19);
+	data->inits.h_c = dc_fixpt_truncate(dc_fixpt_add(data->inits.h_c, dc_fixpt_भाग_पूर्णांक(
+			dc_fixpt_add_पूर्णांक(data->ratios.horz_c, data->taps.h_taps_c + 1), 2)), 19);
 
-	data->inits.v = dc_fixpt_truncate(dc_fixpt_div_int(
-			dc_fixpt_add_int(data->ratios.vert, data->taps.v_taps + 1), 2), 19);
+	data->inits.v = dc_fixpt_truncate(dc_fixpt_भाग_पूर्णांक(
+			dc_fixpt_add_पूर्णांक(data->ratios.vert, data->taps.v_taps + 1), 2), 19);
 
-	data->inits.v_c = dc_fixpt_truncate(dc_fixpt_add(data->inits.v_c, dc_fixpt_div_int(
-			dc_fixpt_add_int(data->ratios.vert_c, data->taps.v_taps_c + 1), 2)), 19);
+	data->inits.v_c = dc_fixpt_truncate(dc_fixpt_add(data->inits.v_c, dc_fixpt_भाग_पूर्णांक(
+			dc_fixpt_add_पूर्णांक(data->ratios.vert_c, data->taps.v_taps_c + 1), 2)), 19);
 
 	/*
 	 * Taps, inits and scaling ratios are in recout space need to rotate
-	 * to viewport rotation before adjustment
+	 * to viewport rotation beक्रमe adjusपंचांगent
 	 */
-	adjust_vp_and_init_for_seamless_clip(
+	adjust_vp_and_init_क्रम_seamless_clip(
 			flip_horz_scan_dir,
 			recout_skip_h,
 			surf_size_h,
@@ -1105,16 +1106,16 @@ static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
 			orthogonal_rotation ? &data->inits.v : &data->inits.h,
 			&data->viewport.x,
 			&data->viewport.width);
-	adjust_vp_and_init_for_seamless_clip(
+	adjust_vp_and_init_क्रम_seamless_clip(
 			flip_horz_scan_dir,
 			recout_skip_h,
-			surf_size_h / vpc_div,
+			surf_size_h / vpc_भाग,
 			orthogonal_rotation ? data->taps.v_taps_c : data->taps.h_taps_c,
 			orthogonal_rotation ? data->ratios.vert_c : data->ratios.horz_c,
 			orthogonal_rotation ? &data->inits.v_c : &data->inits.h_c,
 			&data->viewport_c.x,
 			&data->viewport_c.width);
-	adjust_vp_and_init_for_seamless_clip(
+	adjust_vp_and_init_क्रम_seamless_clip(
 			flip_vert_scan_dir,
 			recout_skip_v,
 			surf_size_v,
@@ -1123,10 +1124,10 @@ static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
 			orthogonal_rotation ? &data->inits.h : &data->inits.v,
 			&data->viewport.y,
 			&data->viewport.height);
-	adjust_vp_and_init_for_seamless_clip(
+	adjust_vp_and_init_क्रम_seamless_clip(
 			flip_vert_scan_dir,
 			recout_skip_v,
-			surf_size_v / vpc_div,
+			surf_size_v / vpc_भाग,
 			orthogonal_rotation ? data->taps.h_taps_c : data->taps.v_taps_c,
 			orthogonal_rotation ? data->ratios.horz_c : data->ratios.vert_c,
 			orthogonal_rotation ? &data->inits.h_c : &data->inits.v_c,
@@ -1137,73 +1138,73 @@ static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
 	data->inits.v_bot = dc_fixpt_add(data->inits.v, data->ratios.vert);
 	data->inits.v_c_bot = dc_fixpt_add(data->inits.v_c, data->ratios.vert_c);
 
-}
+पूर्ण
 
 /*
  * When handling 270 rotation in mixed SLS mode, we have
- * stream->timing.h_border_left that is non zero.  If we are doing
- * pipe-splitting, this h_border_left value gets added to recout.x and when it
+ * stream->timing.h_border_left that is non zero.  If we are करोing
+ * pipe-splitting, this h_border_left value माला_लो added to recout.x and when it
  * calls calculate_inits_and_adj_vp() and
- * adjust_vp_and_init_for_seamless_clip(), it can cause viewport.height for a
+ * adjust_vp_and_init_क्रम_seamless_clip(), it can cause viewport.height क्रम a
  * pipe to be incorrect.
  *
  * To fix this, instead of using stream->timing.h_border_left, we can use
  * stream->dst.x to represent the border instead.  So we will set h_border_left
- * to 0 and shift the appropriate amount in stream->dst.x.  We will then
- * perform all calculations in resource_build_scaling_params() based on this
+ * to 0 and shअगरt the appropriate amount in stream->dst.x.  We will then
+ * perक्रमm all calculations in resource_build_scaling_params() based on this
  * and then restore the h_border_left and stream->dst.x to their original
  * values.
  *
- * shift_border_left_to_dst() will shift the amount of h_border_left to
+ * shअगरt_border_left_to_dst() will shअगरt the amount of h_border_left to
  * stream->dst.x and set h_border_left to 0.  restore_border_left_from_dst()
  * will restore h_border_left and stream->dst.x back to their original values
  * We also need to make sure pipe_ctx->plane_res.scl_data.h_active uses the
  * original h_border_left value in its calculation.
  */
-static int shift_border_left_to_dst(struct pipe_ctx *pipe_ctx)
-{
-	int store_h_border_left = pipe_ctx->stream->timing.h_border_left;
+अटल पूर्णांक shअगरt_border_left_to_dst(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	पूर्णांक store_h_border_left = pipe_ctx->stream->timing.h_border_left;
 
-	if (store_h_border_left) {
+	अगर (store_h_border_left) अणु
 		pipe_ctx->stream->timing.h_border_left = 0;
 		pipe_ctx->stream->dst.x += store_h_border_left;
-	}
-	return store_h_border_left;
-}
+	पूर्ण
+	वापस store_h_border_left;
+पूर्ण
 
-static void restore_border_left_from_dst(struct pipe_ctx *pipe_ctx,
-					 int store_h_border_left)
-{
+अटल व्योम restore_border_left_from_dst(काष्ठा pipe_ctx *pipe_ctx,
+					 पूर्णांक store_h_border_left)
+अणु
 	pipe_ctx->stream->dst.x -= store_h_border_left;
 	pipe_ctx->stream->timing.h_border_left = store_h_border_left;
-}
+पूर्ण
 
-bool resource_build_scaling_params(struct pipe_ctx *pipe_ctx)
-{
-	const struct dc_plane_state *plane_state = pipe_ctx->plane_state;
-	struct dc_crtc_timing *timing = &pipe_ctx->stream->timing;
+bool resource_build_scaling_params(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	स्थिर काष्ठा dc_plane_state *plane_state = pipe_ctx->plane_state;
+	काष्ठा dc_crtc_timing *timing = &pipe_ctx->stream->timing;
 	bool res = false;
-	int store_h_border_left = shift_border_left_to_dst(pipe_ctx);
+	पूर्णांक store_h_border_left = shअगरt_border_left_to_dst(pipe_ctx);
 	DC_LOGGER_INIT(pipe_ctx->stream->ctx->logger);
-	/* Important: scaling ratio calculation requires pixel format,
+	/* Important: scaling ratio calculation requires pixel क्रमmat,
 	 * lb depth calculation requires recout and taps require scaling ratios.
 	 * Inits require viewport, taps, ratios and recout of split pipe
 	 */
-	pipe_ctx->plane_res.scl_data.format = convert_pixel_format_to_dalsurface(
-			pipe_ctx->plane_state->format);
+	pipe_ctx->plane_res.scl_data.क्रमmat = convert_pixel_क्रमmat_to_dalsurface(
+			pipe_ctx->plane_state->क्रमmat);
 
 	calculate_scaling_ratios(pipe_ctx);
 
 	calculate_viewport(pipe_ctx);
 
-	if (pipe_ctx->plane_res.scl_data.viewport.height < MIN_VIEWPORT_SIZE ||
-		pipe_ctx->plane_res.scl_data.viewport.width < MIN_VIEWPORT_SIZE) {
-		if (store_h_border_left) {
+	अगर (pipe_ctx->plane_res.scl_data.viewport.height < MIN_VIEWPORT_SIZE ||
+		pipe_ctx->plane_res.scl_data.viewport.width < MIN_VIEWPORT_SIZE) अणु
+		अगर (store_h_border_left) अणु
 			restore_border_left_from_dst(pipe_ctx,
 				store_h_border_left);
-		}
-		return false;
-	}
+		पूर्ण
+		वापस false;
+	पूर्ण
 
 	calculate_recout(pipe_ctx);
 
@@ -1221,37 +1222,37 @@ bool resource_build_scaling_params(struct pipe_ctx *pipe_ctx)
 		store_h_border_left + timing->h_border_right;
 	pipe_ctx->plane_res.scl_data.v_active = timing->v_addressable +
 		timing->v_border_top + timing->v_border_bottom;
-	if (pipe_ctx->next_odm_pipe || pipe_ctx->prev_odm_pipe)
+	अगर (pipe_ctx->next_odm_pipe || pipe_ctx->prev_odm_pipe)
 		pipe_ctx->plane_res.scl_data.h_active /= get_num_odm_splits(pipe_ctx) + 1;
 
 	/* Taps calculations */
-	if (pipe_ctx->plane_res.xfm != NULL)
-		res = pipe_ctx->plane_res.xfm->funcs->transform_get_optimal_number_of_taps(
+	अगर (pipe_ctx->plane_res.xfm != शून्य)
+		res = pipe_ctx->plane_res.xfm->funcs->transक्रमm_get_optimal_number_of_taps(
 				pipe_ctx->plane_res.xfm, &pipe_ctx->plane_res.scl_data, &plane_state->scaling_quality);
 
-	if (pipe_ctx->plane_res.dpp != NULL)
+	अगर (pipe_ctx->plane_res.dpp != शून्य)
 		res = pipe_ctx->plane_res.dpp->funcs->dpp_get_optimal_number_of_taps(
 				pipe_ctx->plane_res.dpp, &pipe_ctx->plane_res.scl_data, &plane_state->scaling_quality);
 
 
-	if (!res) {
+	अगर (!res) अणु
 		/* Try 24 bpp linebuffer */
 		pipe_ctx->plane_res.scl_data.lb_params.depth = LB_PIXEL_DEPTH_24BPP;
 
-		if (pipe_ctx->plane_res.xfm != NULL)
-			res = pipe_ctx->plane_res.xfm->funcs->transform_get_optimal_number_of_taps(
+		अगर (pipe_ctx->plane_res.xfm != शून्य)
+			res = pipe_ctx->plane_res.xfm->funcs->transक्रमm_get_optimal_number_of_taps(
 					pipe_ctx->plane_res.xfm,
 					&pipe_ctx->plane_res.scl_data,
 					&plane_state->scaling_quality);
 
-		if (pipe_ctx->plane_res.dpp != NULL)
+		अगर (pipe_ctx->plane_res.dpp != शून्य)
 			res = pipe_ctx->plane_res.dpp->funcs->dpp_get_optimal_number_of_taps(
 					pipe_ctx->plane_res.dpp,
 					&pipe_ctx->plane_res.scl_data,
 					&plane_state->scaling_quality);
-	}
+	पूर्ण
 
-	if (res)
+	अगर (res)
 		/* May need to re-check lb size after this in some obscure scenario */
 		calculate_inits_and_adj_vp(pipe_ctx);
 
@@ -1282,41 +1283,41 @@ bool resource_build_scaling_params(struct pipe_ctx *pipe_ctx)
 			plane_state->clip_rect.x,
 			plane_state->clip_rect.y);
 
-	if (store_h_border_left)
+	अगर (store_h_border_left)
 		restore_border_left_from_dst(pipe_ctx, store_h_border_left);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 
-enum dc_status resource_build_scaling_params_for_context(
-	const struct dc  *dc,
-	struct dc_state *context)
-{
-	int i;
+क्रमागत dc_status resource_build_scaling_params_क्रम_context(
+	स्थिर काष्ठा dc  *dc,
+	काष्ठा dc_state *context)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		if (context->res_ctx.pipe_ctx[i].plane_state != NULL &&
-				context->res_ctx.pipe_ctx[i].stream != NULL)
-			if (!resource_build_scaling_params(&context->res_ctx.pipe_ctx[i]))
-				return DC_FAIL_SCALING;
-	}
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		अगर (context->res_ctx.pipe_ctx[i].plane_state != शून्य &&
+				context->res_ctx.pipe_ctx[i].stream != शून्य)
+			अगर (!resource_build_scaling_params(&context->res_ctx.pipe_ctx[i]))
+				वापस DC_FAIL_SCALING;
+	पूर्ण
 
-	return DC_OK;
-}
+	वापस DC_OK;
+पूर्ण
 
-struct pipe_ctx *find_idle_secondary_pipe(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		const struct pipe_ctx *primary_pipe)
-{
-	int i;
-	struct pipe_ctx *secondary_pipe = NULL;
+काष्ठा pipe_ctx *find_idle_secondary_pipe(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		स्थिर काष्ठा pipe_ctx *primary_pipe)
+अणु
+	पूर्णांक i;
+	काष्ठा pipe_ctx *secondary_pipe = शून्य;
 
 	/*
-	 * We add a preferred pipe mapping to avoid the chance that
-	 * MPCCs already in use will need to be reassigned to other trees.
-	 * For example, if we went with the strict, assign backwards logic:
+	 * We add a preferred pipe mapping to aव्योम the chance that
+	 * MPCCs alपढ़ोy in use will need to be reasचिन्हित to other trees.
+	 * For example, अगर we went with the strict, assign backwards logic:
 	 *
 	 * (State 1)
 	 * Display A on, no surface, top pipe = 0
@@ -1341,116 +1342,116 @@ struct pipe_ctx *find_idle_secondary_pipe(
 	 *
 	 * This would then cause 2->3 to not require remapping any MPCCs.
 	 */
-	if (primary_pipe) {
-		int preferred_pipe_idx = (pool->pipe_count - 1) - primary_pipe->pipe_idx;
-		if (res_ctx->pipe_ctx[preferred_pipe_idx].stream == NULL) {
+	अगर (primary_pipe) अणु
+		पूर्णांक preferred_pipe_idx = (pool->pipe_count - 1) - primary_pipe->pipe_idx;
+		अगर (res_ctx->pipe_ctx[preferred_pipe_idx].stream == शून्य) अणु
 			secondary_pipe = &res_ctx->pipe_ctx[preferred_pipe_idx];
 			secondary_pipe->pipe_idx = preferred_pipe_idx;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * search backwards for the second pipe to keep pipe
+	 * search backwards क्रम the second pipe to keep pipe
 	 * assignment more consistent
 	 */
-	if (!secondary_pipe)
-		for (i = pool->pipe_count - 1; i >= 0; i--) {
-			if (res_ctx->pipe_ctx[i].stream == NULL) {
+	अगर (!secondary_pipe)
+		क्रम (i = pool->pipe_count - 1; i >= 0; i--) अणु
+			अगर (res_ctx->pipe_ctx[i].stream == शून्य) अणु
 				secondary_pipe = &res_ctx->pipe_ctx[i];
 				secondary_pipe->pipe_idx = i;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-	return secondary_pipe;
-}
+	वापस secondary_pipe;
+पूर्ण
 
-struct pipe_ctx *resource_get_head_pipe_for_stream(
-		struct resource_context *res_ctx,
-		struct dc_stream_state *stream)
-{
-	int i;
+काष्ठा pipe_ctx *resource_get_head_pipe_क्रम_stream(
+		काष्ठा resource_context *res_ctx,
+		काष्ठा dc_stream_state *stream)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		if (res_ctx->pipe_ctx[i].stream == stream
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		अगर (res_ctx->pipe_ctx[i].stream == stream
 				&& !res_ctx->pipe_ctx[i].top_pipe
 				&& !res_ctx->pipe_ctx[i].prev_odm_pipe)
-			return &res_ctx->pipe_ctx[i];
-	}
-	return NULL;
-}
+			वापस &res_ctx->pipe_ctx[i];
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct pipe_ctx *resource_get_tail_pipe(
-		struct resource_context *res_ctx,
-		struct pipe_ctx *head_pipe)
-{
-	struct pipe_ctx *tail_pipe;
+अटल काष्ठा pipe_ctx *resource_get_tail_pipe(
+		काष्ठा resource_context *res_ctx,
+		काष्ठा pipe_ctx *head_pipe)
+अणु
+	काष्ठा pipe_ctx *tail_pipe;
 
 	tail_pipe = head_pipe->bottom_pipe;
 
-	while (tail_pipe) {
+	जबतक (tail_pipe) अणु
 		head_pipe = tail_pipe;
 		tail_pipe = tail_pipe->bottom_pipe;
-	}
+	पूर्ण
 
-	return head_pipe;
-}
+	वापस head_pipe;
+पूर्ण
 
 /*
- * A free_pipe for a stream is defined here as a pipe
+ * A मुक्त_pipe क्रम a stream is defined here as a pipe
  * that has no surface attached yet
  */
-static struct pipe_ctx *acquire_free_pipe_for_head(
-		struct dc_state *context,
-		const struct resource_pool *pool,
-		struct pipe_ctx *head_pipe)
-{
-	int i;
-	struct resource_context *res_ctx = &context->res_ctx;
+अटल काष्ठा pipe_ctx *acquire_मुक्त_pipe_क्रम_head(
+		काष्ठा dc_state *context,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा pipe_ctx *head_pipe)
+अणु
+	पूर्णांक i;
+	काष्ठा resource_context *res_ctx = &context->res_ctx;
 
-	if (!head_pipe->plane_state)
-		return head_pipe;
+	अगर (!head_pipe->plane_state)
+		वापस head_pipe;
 
-	/* Re-use pipe already acquired for this stream if available*/
-	for (i = pool->pipe_count - 1; i >= 0; i--) {
-		if (res_ctx->pipe_ctx[i].stream == head_pipe->stream &&
-				!res_ctx->pipe_ctx[i].plane_state) {
-			return &res_ctx->pipe_ctx[i];
-		}
-	}
+	/* Re-use pipe alपढ़ोy acquired क्रम this stream अगर available*/
+	क्रम (i = pool->pipe_count - 1; i >= 0; i--) अणु
+		अगर (res_ctx->pipe_ctx[i].stream == head_pipe->stream &&
+				!res_ctx->pipe_ctx[i].plane_state) अणु
+			वापस &res_ctx->pipe_ctx[i];
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * At this point we have no re-useable pipe for this stream and we need
+	 * At this poपूर्णांक we have no re-useable pipe क्रम this stream and we need
 	 * to acquire an idle one to satisfy the request
 	 */
 
-	if (!pool->funcs->acquire_idle_pipe_for_layer)
-		return NULL;
+	अगर (!pool->funcs->acquire_idle_pipe_क्रम_layer)
+		वापस शून्य;
 
-	return pool->funcs->acquire_idle_pipe_for_layer(context, pool, head_pipe->stream);
-}
+	वापस pool->funcs->acquire_idle_pipe_क्रम_layer(context, pool, head_pipe->stream);
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-static int acquire_first_split_pipe(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct dc_stream_state *stream)
-{
-	int i;
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+अटल पूर्णांक acquire_first_split_pipe(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा dc_stream_state *stream)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pool->pipe_count; i++) {
-		struct pipe_ctx *split_pipe = &res_ctx->pipe_ctx[i];
+	क्रम (i = 0; i < pool->pipe_count; i++) अणु
+		काष्ठा pipe_ctx *split_pipe = &res_ctx->pipe_ctx[i];
 
-		if (split_pipe->top_pipe &&
-				split_pipe->top_pipe->plane_state == split_pipe->plane_state) {
+		अगर (split_pipe->top_pipe &&
+				split_pipe->top_pipe->plane_state == split_pipe->plane_state) अणु
 			split_pipe->top_pipe->bottom_pipe = split_pipe->bottom_pipe;
-			if (split_pipe->bottom_pipe)
+			अगर (split_pipe->bottom_pipe)
 				split_pipe->bottom_pipe->top_pipe = split_pipe->top_pipe;
 
-			if (split_pipe->top_pipe->plane_state)
+			अगर (split_pipe->top_pipe->plane_state)
 				resource_build_scaling_params(split_pipe->top_pipe);
 
-			memset(split_pipe, 0, sizeof(*split_pipe));
+			स_रखो(split_pipe, 0, माप(*split_pipe));
 			split_pipe->stream_res.tg = pool->timing_generators[i];
 			split_pipe->plane_res.hubp = pool->hubps[i];
 			split_pipe->plane_res.ipp = pool->ipps[i];
@@ -1460,466 +1461,466 @@ static int acquire_first_split_pipe(
 			split_pipe->pipe_idx = i;
 
 			split_pipe->stream = stream;
-			return i;
-		}
-	}
-	return -1;
-}
-#endif
+			वापस i;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
+#पूर्ण_अगर
 
 bool dc_add_plane_to_context(
-		const struct dc *dc,
-		struct dc_stream_state *stream,
-		struct dc_plane_state *plane_state,
-		struct dc_state *context)
-{
-	int i;
-	struct resource_pool *pool = dc->res_pool;
-	struct pipe_ctx *head_pipe, *tail_pipe, *free_pipe;
-	struct dc_stream_status *stream_status = NULL;
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		काष्ठा dc_plane_state *plane_state,
+		काष्ठा dc_state *context)
+अणु
+	पूर्णांक i;
+	काष्ठा resource_pool *pool = dc->res_pool;
+	काष्ठा pipe_ctx *head_pipe, *tail_pipe, *मुक्त_pipe;
+	काष्ठा dc_stream_status *stream_status = शून्य;
 
-	for (i = 0; i < context->stream_count; i++)
-		if (context->streams[i] == stream) {
+	क्रम (i = 0; i < context->stream_count; i++)
+		अगर (context->streams[i] == stream) अणु
 			stream_status = &context->stream_status[i];
-			break;
-		}
-	if (stream_status == NULL) {
+			अवरोध;
+		पूर्ण
+	अगर (stream_status == शून्य) अणु
 		dm_error("Existing stream not found; failed to attach surface!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 
-	if (stream_status->plane_count == MAX_SURFACE_NUM) {
+	अगर (stream_status->plane_count == MAX_SURFACE_NUM) अणु
 		dm_error("Surface: can not attach plane_state %p! Maximum is: %d\n",
 				plane_state, MAX_SURFACE_NUM);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	head_pipe = resource_get_head_pipe_for_stream(&context->res_ctx, stream);
+	head_pipe = resource_get_head_pipe_क्रम_stream(&context->res_ctx, stream);
 
-	if (!head_pipe) {
+	अगर (!head_pipe) अणु
 		dm_error("Head pipe not found for stream_state %p !\n", stream);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* retain new surface, but only once per stream */
 	dc_plane_state_retain(plane_state);
 
-	while (head_pipe) {
-		free_pipe = acquire_free_pipe_for_head(context, pool, head_pipe);
+	जबतक (head_pipe) अणु
+		मुक्त_pipe = acquire_मुक्त_pipe_क्रम_head(context, pool, head_pipe);
 
-	#if defined(CONFIG_DRM_AMD_DC_DCN)
-		if (!free_pipe) {
-			int pipe_idx = acquire_first_split_pipe(&context->res_ctx, pool, stream);
-			if (pipe_idx >= 0)
-				free_pipe = &context->res_ctx.pipe_ctx[pipe_idx];
-		}
-	#endif
-		if (!free_pipe) {
+	#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+		अगर (!मुक्त_pipe) अणु
+			पूर्णांक pipe_idx = acquire_first_split_pipe(&context->res_ctx, pool, stream);
+			अगर (pipe_idx >= 0)
+				मुक्त_pipe = &context->res_ctx.pipe_ctx[pipe_idx];
+		पूर्ण
+	#पूर्ण_अगर
+		अगर (!मुक्त_pipe) अणु
 			dc_plane_state_release(plane_state);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		free_pipe->plane_state = plane_state;
+		मुक्त_pipe->plane_state = plane_state;
 
-		if (head_pipe != free_pipe) {
+		अगर (head_pipe != मुक्त_pipe) अणु
 			tail_pipe = resource_get_tail_pipe(&context->res_ctx, head_pipe);
 			ASSERT(tail_pipe);
-			free_pipe->stream_res.tg = tail_pipe->stream_res.tg;
-			free_pipe->stream_res.abm = tail_pipe->stream_res.abm;
-			free_pipe->stream_res.opp = tail_pipe->stream_res.opp;
-			free_pipe->stream_res.stream_enc = tail_pipe->stream_res.stream_enc;
-			free_pipe->stream_res.audio = tail_pipe->stream_res.audio;
-			free_pipe->clock_source = tail_pipe->clock_source;
-			free_pipe->top_pipe = tail_pipe;
-			tail_pipe->bottom_pipe = free_pipe;
-			if (!free_pipe->next_odm_pipe && tail_pipe->next_odm_pipe && tail_pipe->next_odm_pipe->bottom_pipe) {
-				free_pipe->next_odm_pipe = tail_pipe->next_odm_pipe->bottom_pipe;
-				tail_pipe->next_odm_pipe->bottom_pipe->prev_odm_pipe = free_pipe;
-			}
-			if (!free_pipe->prev_odm_pipe && tail_pipe->prev_odm_pipe && tail_pipe->prev_odm_pipe->bottom_pipe) {
-				free_pipe->prev_odm_pipe = tail_pipe->prev_odm_pipe->bottom_pipe;
-				tail_pipe->prev_odm_pipe->bottom_pipe->next_odm_pipe = free_pipe;
-			}
-		}
+			मुक्त_pipe->stream_res.tg = tail_pipe->stream_res.tg;
+			मुक्त_pipe->stream_res.abm = tail_pipe->stream_res.abm;
+			मुक्त_pipe->stream_res.opp = tail_pipe->stream_res.opp;
+			मुक्त_pipe->stream_res.stream_enc = tail_pipe->stream_res.stream_enc;
+			मुक्त_pipe->stream_res.audio = tail_pipe->stream_res.audio;
+			मुक्त_pipe->घड़ी_source = tail_pipe->घड़ी_source;
+			मुक्त_pipe->top_pipe = tail_pipe;
+			tail_pipe->bottom_pipe = मुक्त_pipe;
+			अगर (!मुक्त_pipe->next_odm_pipe && tail_pipe->next_odm_pipe && tail_pipe->next_odm_pipe->bottom_pipe) अणु
+				मुक्त_pipe->next_odm_pipe = tail_pipe->next_odm_pipe->bottom_pipe;
+				tail_pipe->next_odm_pipe->bottom_pipe->prev_odm_pipe = मुक्त_pipe;
+			पूर्ण
+			अगर (!मुक्त_pipe->prev_odm_pipe && tail_pipe->prev_odm_pipe && tail_pipe->prev_odm_pipe->bottom_pipe) अणु
+				मुक्त_pipe->prev_odm_pipe = tail_pipe->prev_odm_pipe->bottom_pipe;
+				tail_pipe->prev_odm_pipe->bottom_pipe->next_odm_pipe = मुक्त_pipe;
+			पूर्ण
+		पूर्ण
 		head_pipe = head_pipe->next_odm_pipe;
-	}
+	पूर्ण
 	/* assign new surfaces*/
 	stream_status->plane_states[stream_status->plane_count] = plane_state;
 
 	stream_status->plane_count++;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dc_remove_plane_from_context(
-		const struct dc *dc,
-		struct dc_stream_state *stream,
-		struct dc_plane_state *plane_state,
-		struct dc_state *context)
-{
-	int i;
-	struct dc_stream_status *stream_status = NULL;
-	struct resource_pool *pool = dc->res_pool;
+bool dc_हटाओ_plane_from_context(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		काष्ठा dc_plane_state *plane_state,
+		काष्ठा dc_state *context)
+अणु
+	पूर्णांक i;
+	काष्ठा dc_stream_status *stream_status = शून्य;
+	काष्ठा resource_pool *pool = dc->res_pool;
 
-	for (i = 0; i < context->stream_count; i++)
-		if (context->streams[i] == stream) {
+	क्रम (i = 0; i < context->stream_count; i++)
+		अगर (context->streams[i] == stream) अणु
 			stream_status = &context->stream_status[i];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (stream_status == NULL) {
+	अगर (stream_status == शून्य) अणु
 		dm_error("Existing stream not found; failed to remove plane.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* release pipe for plane*/
-	for (i = pool->pipe_count - 1; i >= 0; i--) {
-		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	/* release pipe क्रम plane*/
+	क्रम (i = pool->pipe_count - 1; i >= 0; i--) अणु
+		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
-		if (pipe_ctx->plane_state == plane_state) {
-			if (pipe_ctx->top_pipe)
+		अगर (pipe_ctx->plane_state == plane_state) अणु
+			अगर (pipe_ctx->top_pipe)
 				pipe_ctx->top_pipe->bottom_pipe = pipe_ctx->bottom_pipe;
 
-			/* Second condition is to avoid setting NULL to top pipe
+			/* Second condition is to aव्योम setting शून्य to top pipe
 			 * of tail pipe making it look like head pipe in subsequent
 			 * deletes
 			 */
-			if (pipe_ctx->bottom_pipe && pipe_ctx->top_pipe)
+			अगर (pipe_ctx->bottom_pipe && pipe_ctx->top_pipe)
 				pipe_ctx->bottom_pipe->top_pipe = pipe_ctx->top_pipe;
 
 			/*
-			 * For head pipe detach surfaces from pipe for tail
+			 * For head pipe detach surfaces from pipe क्रम tail
 			 * pipe just zero it out
 			 */
-			if (!pipe_ctx->top_pipe)
-				pipe_ctx->plane_state = NULL;
-			else
-				memset(pipe_ctx, 0, sizeof(*pipe_ctx));
-		}
-	}
+			अगर (!pipe_ctx->top_pipe)
+				pipe_ctx->plane_state = शून्य;
+			अन्यथा
+				स_रखो(pipe_ctx, 0, माप(*pipe_ctx));
+		पूर्ण
+	पूर्ण
 
 
-	for (i = 0; i < stream_status->plane_count; i++) {
-		if (stream_status->plane_states[i] == plane_state) {
+	क्रम (i = 0; i < stream_status->plane_count; i++) अणु
+		अगर (stream_status->plane_states[i] == plane_state) अणु
 
 			dc_plane_state_release(stream_status->plane_states[i]);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == stream_status->plane_count) {
+	अगर (i == stream_status->plane_count) अणु
 		dm_error("Existing plane_state not found; failed to detach it!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	stream_status->plane_count--;
 
-	/* Start at the plane we've just released, and move all the planes one index forward to "trim" the array */
-	for (; i < stream_status->plane_count; i++)
+	/* Start at the plane we've just released, and move all the planes one index क्रमward to "trim" the array */
+	क्रम (; i < stream_status->plane_count; i++)
 		stream_status->plane_states[i] = stream_status->plane_states[i + 1];
 
-	stream_status->plane_states[stream_status->plane_count] = NULL;
+	stream_status->plane_states[stream_status->plane_count] = शून्य;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dc_rem_all_planes_for_stream(
-		const struct dc *dc,
-		struct dc_stream_state *stream,
-		struct dc_state *context)
-{
-	int i, old_plane_count;
-	struct dc_stream_status *stream_status = NULL;
-	struct dc_plane_state *del_planes[MAX_SURFACE_NUM] = { 0 };
+bool dc_rem_all_planes_क्रम_stream(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		काष्ठा dc_state *context)
+अणु
+	पूर्णांक i, old_plane_count;
+	काष्ठा dc_stream_status *stream_status = शून्य;
+	काष्ठा dc_plane_state *del_planes[MAX_SURFACE_NUM] = अणु 0 पूर्ण;
 
-	for (i = 0; i < context->stream_count; i++)
-			if (context->streams[i] == stream) {
+	क्रम (i = 0; i < context->stream_count; i++)
+			अगर (context->streams[i] == stream) अणु
 				stream_status = &context->stream_status[i];
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-	if (stream_status == NULL) {
+	अगर (stream_status == शून्य) अणु
 		dm_error("Existing stream %p not found!\n", stream);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	old_plane_count = stream_status->plane_count;
 
-	for (i = 0; i < old_plane_count; i++)
+	क्रम (i = 0; i < old_plane_count; i++)
 		del_planes[i] = stream_status->plane_states[i];
 
-	for (i = 0; i < old_plane_count; i++)
-		if (!dc_remove_plane_from_context(dc, stream, del_planes[i], context))
-			return false;
+	क्रम (i = 0; i < old_plane_count; i++)
+		अगर (!dc_हटाओ_plane_from_context(dc, stream, del_planes[i], context))
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool add_all_planes_for_stream(
-		const struct dc *dc,
-		struct dc_stream_state *stream,
-		const struct dc_validation_set set[],
-		int set_count,
-		struct dc_state *context)
-{
-	int i, j;
+अटल bool add_all_planes_क्रम_stream(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		स्थिर काष्ठा dc_validation_set set[],
+		पूर्णांक set_count,
+		काष्ठा dc_state *context)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < set_count; i++)
-		if (set[i].stream == stream)
-			break;
+	क्रम (i = 0; i < set_count; i++)
+		अगर (set[i].stream == stream)
+			अवरोध;
 
-	if (i == set_count) {
+	अगर (i == set_count) अणु
 		dm_error("Stream %p not found in set!\n", stream);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	for (j = 0; j < set[i].plane_count; j++)
-		if (!dc_add_plane_to_context(dc, stream, set[i].plane_states[j], context))
-			return false;
+	क्रम (j = 0; j < set[i].plane_count; j++)
+		अगर (!dc_add_plane_to_context(dc, stream, set[i].plane_states[j], context))
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool dc_add_all_planes_for_stream(
-		const struct dc *dc,
-		struct dc_stream_state *stream,
-		struct dc_plane_state * const *plane_states,
-		int plane_count,
-		struct dc_state *context)
-{
-	struct dc_validation_set set;
-	int i;
+bool dc_add_all_planes_क्रम_stream(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_stream_state *stream,
+		काष्ठा dc_plane_state * स्थिर *plane_states,
+		पूर्णांक plane_count,
+		काष्ठा dc_state *context)
+अणु
+	काष्ठा dc_validation_set set;
+	पूर्णांक i;
 
 	set.stream = stream;
 	set.plane_count = plane_count;
 
-	for (i = 0; i < plane_count; i++)
+	क्रम (i = 0; i < plane_count; i++)
 		set.plane_states[i] = plane_states[i];
 
-	return add_all_planes_for_stream(dc, stream, &set, 1, context);
-}
+	वापस add_all_planes_क्रम_stream(dc, stream, &set, 1, context);
+पूर्ण
 
-static bool is_timing_changed(struct dc_stream_state *cur_stream,
-		struct dc_stream_state *new_stream)
-{
-	if (cur_stream == NULL)
-		return true;
+अटल bool is_timing_changed(काष्ठा dc_stream_state *cur_stream,
+		काष्ठा dc_stream_state *new_stream)
+अणु
+	अगर (cur_stream == शून्य)
+		वापस true;
 
-	/* If sink pointer changed, it means this is a hotplug, we should do
+	/* If sink poपूर्णांकer changed, it means this is a hotplug, we should करो
 	 * full hw setting.
 	 */
-	if (cur_stream->sink != new_stream->sink)
-		return true;
+	अगर (cur_stream->sink != new_stream->sink)
+		वापस true;
 
 	/* If output color space is changed, need to reprogram info frames */
-	if (cur_stream->output_color_space != new_stream->output_color_space)
-		return true;
+	अगर (cur_stream->output_color_space != new_stream->output_color_space)
+		वापस true;
 
-	return memcmp(
+	वापस स_भेद(
 		&cur_stream->timing,
 		&new_stream->timing,
-		sizeof(struct dc_crtc_timing)) != 0;
-}
+		माप(काष्ठा dc_crtc_timing)) != 0;
+पूर्ण
 
-static bool are_stream_backends_same(
-	struct dc_stream_state *stream_a, struct dc_stream_state *stream_b)
-{
-	if (stream_a == stream_b)
-		return true;
+अटल bool are_stream_backends_same(
+	काष्ठा dc_stream_state *stream_a, काष्ठा dc_stream_state *stream_b)
+अणु
+	अगर (stream_a == stream_b)
+		वापस true;
 
-	if (stream_a == NULL || stream_b == NULL)
-		return false;
+	अगर (stream_a == शून्य || stream_b == शून्य)
+		वापस false;
 
-	if (is_timing_changed(stream_a, stream_b))
-		return false;
+	अगर (is_timing_changed(stream_a, stream_b))
+		वापस false;
 
-	if (stream_a->dpms_off != stream_b->dpms_off)
-		return false;
+	अगर (stream_a->dpms_off != stream_b->dpms_off)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * dc_is_stream_unchanged() - Compare two stream states for equivalence.
+ * dc_is_stream_unchanged() - Compare two stream states क्रम equivalence.
  *
- * Checks if there a difference between the two states
+ * Checks अगर there a dअगरference between the two states
  * that would require a mode change.
  *
  * Does not compare cursor position or attributes.
  */
 bool dc_is_stream_unchanged(
-	struct dc_stream_state *old_stream, struct dc_stream_state *stream)
-{
+	काष्ठा dc_stream_state *old_stream, काष्ठा dc_stream_state *stream)
+अणु
 
-	if (!are_stream_backends_same(old_stream, stream))
-		return false;
+	अगर (!are_stream_backends_same(old_stream, stream))
+		वापस false;
 
-	if (old_stream->ignore_msa_timing_param != stream->ignore_msa_timing_param)
-		return false;
+	अगर (old_stream->ignore_msa_timing_param != stream->ignore_msa_timing_param)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * dc_is_stream_scaling_unchanged() - Compare scaling rectangles of two streams.
  */
 bool dc_is_stream_scaling_unchanged(
-	struct dc_stream_state *old_stream, struct dc_stream_state *stream)
-{
-	if (old_stream == stream)
-		return true;
+	काष्ठा dc_stream_state *old_stream, काष्ठा dc_stream_state *stream)
+अणु
+	अगर (old_stream == stream)
+		वापस true;
 
-	if (old_stream == NULL || stream == NULL)
-		return false;
+	अगर (old_stream == शून्य || stream == शून्य)
+		वापस false;
 
-	if (memcmp(&old_stream->src,
+	अगर (स_भेद(&old_stream->src,
 			&stream->src,
-			sizeof(struct rect)) != 0)
-		return false;
+			माप(काष्ठा rect)) != 0)
+		वापस false;
 
-	if (memcmp(&old_stream->dst,
+	अगर (स_भेद(&old_stream->dst,
 			&stream->dst,
-			sizeof(struct rect)) != 0)
-		return false;
+			माप(काष्ठा rect)) != 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void update_stream_engine_usage(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct stream_encoder *stream_enc,
+अटल व्योम update_stream_engine_usage(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा stream_encoder *stream_enc,
 		bool acquired)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pool->stream_enc_count; i++) {
-		if (pool->stream_enc[i] == stream_enc)
+	क्रम (i = 0; i < pool->stream_enc_count; i++) अणु
+		अगर (pool->stream_enc[i] == stream_enc)
 			res_ctx->is_stream_enc_acquired[i] = acquired;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* TODO: release audio object */
-void update_audio_usage(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct audio *audio,
+व्योम update_audio_usage(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा audio *audio,
 		bool acquired)
-{
-	int i;
-	for (i = 0; i < pool->audio_count; i++) {
-		if (pool->audios[i] == audio)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < pool->audio_count; i++) अणु
+		अगर (pool->audios[i] == audio)
 			res_ctx->is_audio_acquired[i] = acquired;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int acquire_first_free_pipe(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct dc_stream_state *stream)
-{
-	int i;
+अटल पूर्णांक acquire_first_मुक्त_pipe(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा dc_stream_state *stream)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pool->pipe_count; i++) {
-		if (!res_ctx->pipe_ctx[i].stream) {
-			struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
+	क्रम (i = 0; i < pool->pipe_count; i++) अणु
+		अगर (!res_ctx->pipe_ctx[i].stream) अणु
+			काष्ठा pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
 
 			pipe_ctx->stream_res.tg = pool->timing_generators[i];
 			pipe_ctx->plane_res.mi = pool->mis[i];
 			pipe_ctx->plane_res.hubp = pool->hubps[i];
 			pipe_ctx->plane_res.ipp = pool->ipps[i];
-			pipe_ctx->plane_res.xfm = pool->transforms[i];
+			pipe_ctx->plane_res.xfm = pool->transक्रमms[i];
 			pipe_ctx->plane_res.dpp = pool->dpps[i];
 			pipe_ctx->stream_res.opp = pool->opps[i];
-			if (pool->dpps[i])
+			अगर (pool->dpps[i])
 				pipe_ctx->plane_res.mpcc_inst = pool->dpps[i]->inst;
 			pipe_ctx->pipe_idx = i;
 
 
 			pipe_ctx->stream = stream;
-			return i;
-		}
-	}
-	return -1;
-}
+			वापस i;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static struct audio *find_first_free_audio(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		enum engine_id id,
-		enum dce_version dc_version)
-{
-	int i, available_audio_count;
+अटल काष्ठा audio *find_first_मुक्त_audio(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		क्रमागत engine_id id,
+		क्रमागत dce_version dc_version)
+अणु
+	पूर्णांक i, available_audio_count;
 
 	available_audio_count = pool->audio_count;
 
-	for (i = 0; i < available_audio_count; i++) {
-		if ((res_ctx->is_audio_acquired[i] == false) && (res_ctx->is_stream_enc_acquired[i] == true)) {
-			/*we have enough audio endpoint, find the matching inst*/
-			if (id != i)
-				continue;
-			return pool->audios[i];
-		}
-	}
+	क्रम (i = 0; i < available_audio_count; i++) अणु
+		अगर ((res_ctx->is_audio_acquired[i] == false) && (res_ctx->is_stream_enc_acquired[i] == true)) अणु
+			/*we have enough audio endpoपूर्णांक, find the matching inst*/
+			अगर (id != i)
+				जारी;
+			वापस pool->audios[i];
+		पूर्ण
+	पूर्ण
 
-	/* use engine id to find free audio */
-	if ((id < available_audio_count) && (res_ctx->is_audio_acquired[id] == false)) {
-		return pool->audios[id];
-	}
+	/* use engine id to find मुक्त audio */
+	अगर ((id < available_audio_count) && (res_ctx->is_audio_acquired[id] == false)) अणु
+		वापस pool->audios[id];
+	पूर्ण
 	/*not found the matching one, first come first serve*/
-	for (i = 0; i < available_audio_count; i++) {
-		if (res_ctx->is_audio_acquired[i] == false) {
-			return pool->audios[i];
-		}
-	}
-	return 0;
-}
+	क्रम (i = 0; i < available_audio_count; i++) अणु
+		अगर (res_ctx->is_audio_acquired[i] == false) अणु
+			वापस pool->audios[i];
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * dc_add_stream_to_ctx() - Add a new dc_stream_state to a dc_state.
  */
-enum dc_status dc_add_stream_to_ctx(
-		struct dc *dc,
-		struct dc_state *new_ctx,
-		struct dc_stream_state *stream)
-{
-	enum dc_status res;
+क्रमागत dc_status dc_add_stream_to_ctx(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *new_ctx,
+		काष्ठा dc_stream_state *stream)
+अणु
+	क्रमागत dc_status res;
 	DC_LOGGER_INIT(dc->ctx->logger);
 
-	if (new_ctx->stream_count >= dc->res_pool->timing_generator_count) {
+	अगर (new_ctx->stream_count >= dc->res_pool->timing_generator_count) अणु
 		DC_LOG_WARNING("Max streams reached, can't add stream %p !\n", stream);
-		return DC_ERROR_UNEXPECTED;
-	}
+		वापस DC_ERROR_UNEXPECTED;
+	पूर्ण
 
 	new_ctx->streams[new_ctx->stream_count] = stream;
 	dc_stream_retain(stream);
 	new_ctx->stream_count++;
 
 	res = dc->res_pool->funcs->add_stream_to_ctx(dc, new_ctx, stream);
-	if (res != DC_OK)
+	अगर (res != DC_OK)
 		DC_LOG_WARNING("Adding stream %p to context failed with err %d!\n", stream, res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
- * dc_remove_stream_from_ctx() - Remove a stream from a dc_state.
+ * dc_हटाओ_stream_from_ctx() - Remove a stream from a dc_state.
  */
-enum dc_status dc_remove_stream_from_ctx(
-			struct dc *dc,
-			struct dc_state *new_ctx,
-			struct dc_stream_state *stream)
-{
-	int i;
-	struct dc_context *dc_ctx = dc->ctx;
-	struct pipe_ctx *del_pipe = resource_get_head_pipe_for_stream(&new_ctx->res_ctx, stream);
-	struct pipe_ctx *odm_pipe;
+क्रमागत dc_status dc_हटाओ_stream_from_ctx(
+			काष्ठा dc *dc,
+			काष्ठा dc_state *new_ctx,
+			काष्ठा dc_stream_state *stream)
+अणु
+	पूर्णांक i;
+	काष्ठा dc_context *dc_ctx = dc->ctx;
+	काष्ठा pipe_ctx *del_pipe = resource_get_head_pipe_क्रम_stream(&new_ctx->res_ctx, stream);
+	काष्ठा pipe_ctx *odm_pipe;
 
-	if (!del_pipe) {
+	अगर (!del_pipe) अणु
 		DC_ERROR("Pipe not found for stream %p !\n", stream);
-		return DC_ERROR_UNEXPECTED;
-	}
+		वापस DC_ERROR_UNEXPECTED;
+	पूर्ण
 
 	odm_pipe = del_pipe->next_odm_pipe;
 
@@ -1931,448 +1932,448 @@ enum dc_status dc_remove_stream_from_ctx(
 			del_pipe->stream_res.stream_enc,
 			false);
 	/* Release link encoder from stream in new dc_state. */
-	if (dc->res_pool->funcs->link_enc_unassign)
+	अगर (dc->res_pool->funcs->link_enc_unassign)
 		dc->res_pool->funcs->link_enc_unassign(new_ctx, del_pipe->stream);
 
-	if (del_pipe->stream_res.audio)
+	अगर (del_pipe->stream_res.audio)
 		update_audio_usage(
 			&new_ctx->res_ctx,
 			dc->res_pool,
 			del_pipe->stream_res.audio,
 			false);
 
-	resource_unreference_clock_source(&new_ctx->res_ctx,
+	resource_unreference_घड़ी_source(&new_ctx->res_ctx,
 					  dc->res_pool,
-					  del_pipe->clock_source);
+					  del_pipe->घड़ी_source);
 
-	if (dc->res_pool->funcs->remove_stream_from_ctx)
-		dc->res_pool->funcs->remove_stream_from_ctx(dc, new_ctx, stream);
+	अगर (dc->res_pool->funcs->हटाओ_stream_from_ctx)
+		dc->res_pool->funcs->हटाओ_stream_from_ctx(dc, new_ctx, stream);
 
-	while (odm_pipe) {
-		struct pipe_ctx *next_odm_pipe = odm_pipe->next_odm_pipe;
+	जबतक (odm_pipe) अणु
+		काष्ठा pipe_ctx *next_odm_pipe = odm_pipe->next_odm_pipe;
 
-		memset(odm_pipe, 0, sizeof(*odm_pipe));
+		स_रखो(odm_pipe, 0, माप(*odm_pipe));
 		odm_pipe = next_odm_pipe;
-	}
-	memset(del_pipe, 0, sizeof(*del_pipe));
+	पूर्ण
+	स_रखो(del_pipe, 0, माप(*del_pipe));
 
-	for (i = 0; i < new_ctx->stream_count; i++)
-		if (new_ctx->streams[i] == stream)
-			break;
+	क्रम (i = 0; i < new_ctx->stream_count; i++)
+		अगर (new_ctx->streams[i] == stream)
+			अवरोध;
 
-	if (new_ctx->streams[i] != stream) {
+	अगर (new_ctx->streams[i] != stream) अणु
 		DC_ERROR("Context doesn't have stream %p !\n", stream);
-		return DC_ERROR_UNEXPECTED;
-	}
+		वापस DC_ERROR_UNEXPECTED;
+	पूर्ण
 
 	dc_stream_release(new_ctx->streams[i]);
 	new_ctx->stream_count--;
 
 	/* Trim back arrays */
-	for (; i < new_ctx->stream_count; i++) {
+	क्रम (; i < new_ctx->stream_count; i++) अणु
 		new_ctx->streams[i] = new_ctx->streams[i + 1];
 		new_ctx->stream_status[i] = new_ctx->stream_status[i + 1];
-	}
+	पूर्ण
 
-	new_ctx->streams[new_ctx->stream_count] = NULL;
-	memset(
+	new_ctx->streams[new_ctx->stream_count] = शून्य;
+	स_रखो(
 			&new_ctx->stream_status[new_ctx->stream_count],
 			0,
-			sizeof(new_ctx->stream_status[0]));
+			माप(new_ctx->stream_status[0]));
 
-	return DC_OK;
-}
+	वापस DC_OK;
+पूर्ण
 
-static struct dc_stream_state *find_pll_sharable_stream(
-		struct dc_stream_state *stream_needs_pll,
-		struct dc_state *context)
-{
-	int i;
+अटल काष्ठा dc_stream_state *find_pll_sharable_stream(
+		काष्ठा dc_stream_state *stream_needs_pll,
+		काष्ठा dc_state *context)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < context->stream_count; i++) {
-		struct dc_stream_state *stream_has_pll = context->streams[i];
+	क्रम (i = 0; i < context->stream_count; i++) अणु
+		काष्ठा dc_stream_state *stream_has_pll = context->streams[i];
 
-		/* We are looking for non dp, non virtual stream */
-		if (resource_are_streams_timing_synchronizable(
+		/* We are looking क्रम non dp, non भव stream */
+		अगर (resource_are_streams_timing_synchronizable(
 			stream_needs_pll, stream_has_pll)
-			&& !dc_is_dp_signal(stream_has_pll->signal)
-			&& stream_has_pll->link->connector_signal
+			&& !dc_is_dp_संकेत(stream_has_pll->संकेत)
+			&& stream_has_pll->link->connector_संकेत
 			!= SIGNAL_TYPE_VIRTUAL)
-			return stream_has_pll;
+			वापस stream_has_pll;
 
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int get_norm_pix_clk(const struct dc_crtc_timing *timing)
-{
-	uint32_t pix_clk = timing->pix_clk_100hz;
-	uint32_t normalized_pix_clk = pix_clk;
+अटल पूर्णांक get_norm_pix_clk(स्थिर काष्ठा dc_crtc_timing *timing)
+अणु
+	uपूर्णांक32_t pix_clk = timing->pix_clk_100hz;
+	uपूर्णांक32_t normalized_pix_clk = pix_clk;
 
-	if (timing->pixel_encoding == PIXEL_ENCODING_YCBCR420)
+	अगर (timing->pixel_encoding == PIXEL_ENCODING_YCBCR420)
 		pix_clk /= 2;
-	if (timing->pixel_encoding != PIXEL_ENCODING_YCBCR422) {
-		switch (timing->display_color_depth) {
-		case COLOR_DEPTH_666:
-		case COLOR_DEPTH_888:
+	अगर (timing->pixel_encoding != PIXEL_ENCODING_YCBCR422) अणु
+		चयन (timing->display_color_depth) अणु
+		हाल COLOR_DEPTH_666:
+		हाल COLOR_DEPTH_888:
 			normalized_pix_clk = pix_clk;
-			break;
-		case COLOR_DEPTH_101010:
+			अवरोध;
+		हाल COLOR_DEPTH_101010:
 			normalized_pix_clk = (pix_clk * 30) / 24;
-			break;
-		case COLOR_DEPTH_121212:
+			अवरोध;
+		हाल COLOR_DEPTH_121212:
 			normalized_pix_clk = (pix_clk * 36) / 24;
-		break;
-		case COLOR_DEPTH_161616:
+		अवरोध;
+		हाल COLOR_DEPTH_161616:
 			normalized_pix_clk = (pix_clk * 48) / 24;
-		break;
-		default:
+		अवरोध;
+		शेष:
 			ASSERT(0);
-		break;
-		}
-	}
-	return normalized_pix_clk;
-}
+		अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस normalized_pix_clk;
+पूर्ण
 
-static void calculate_phy_pix_clks(struct dc_stream_state *stream)
-{
-	/* update actual pixel clock on all streams */
-	if (dc_is_hdmi_signal(stream->signal))
+अटल व्योम calculate_phy_pix_clks(काष्ठा dc_stream_state *stream)
+अणु
+	/* update actual pixel घड़ी on all streams */
+	अगर (dc_is_hdmi_संकेत(stream->संकेत))
 		stream->phy_pix_clk = get_norm_pix_clk(
 			&stream->timing) / 10;
-	else
+	अन्यथा
 		stream->phy_pix_clk =
 			stream->timing.pix_clk_100hz / 10;
 
-	if (stream->timing.timing_3d_format == TIMING_3D_FORMAT_HW_FRAME_PACKING)
+	अगर (stream->timing.timing_3d_क्रमmat == TIMING_3D_FORMAT_HW_FRAME_PACKING)
 		stream->phy_pix_clk *= 2;
-}
+पूर्ण
 
-static int acquire_resource_from_hw_enabled_state(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool,
-		struct dc_stream_state *stream)
-{
-	struct dc_link *link = stream->link;
-	unsigned int i, inst, tg_inst = 0;
+अटल पूर्णांक acquire_resource_from_hw_enabled_state(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool,
+		काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा dc_link *link = stream->link;
+	अचिन्हित पूर्णांक i, inst, tg_inst = 0;
 
-	/* Check for enabled DIG to identify enabled display */
-	if (!link->link_enc->funcs->is_dig_enabled(link->link_enc))
-		return -1;
+	/* Check क्रम enabled DIG to identअगरy enabled display */
+	अगर (!link->link_enc->funcs->is_dig_enabled(link->link_enc))
+		वापस -1;
 
 	inst = link->link_enc->funcs->get_dig_frontend(link->link_enc);
 
-	if (inst == ENGINE_ID_UNKNOWN)
-		return -1;
+	अगर (inst == ENGINE_ID_UNKNOWN)
+		वापस -1;
 
-	for (i = 0; i < pool->stream_enc_count; i++) {
-		if (pool->stream_enc[i]->id == inst) {
+	क्रम (i = 0; i < pool->stream_enc_count; i++) अणु
+		अगर (pool->stream_enc[i]->id == inst) अणु
 			tg_inst = pool->stream_enc[i]->funcs->dig_source_otg(
 				pool->stream_enc[i]);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	// tg_inst not found
-	if (i == pool->stream_enc_count)
-		return -1;
+	अगर (i == pool->stream_enc_count)
+		वापस -1;
 
-	if (tg_inst >= pool->timing_generator_count)
-		return -1;
+	अगर (tg_inst >= pool->timing_generator_count)
+		वापस -1;
 
-	if (!res_ctx->pipe_ctx[tg_inst].stream) {
-		struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[tg_inst];
+	अगर (!res_ctx->pipe_ctx[tg_inst].stream) अणु
+		काष्ठा pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[tg_inst];
 
 		pipe_ctx->stream_res.tg = pool->timing_generators[tg_inst];
 		pipe_ctx->plane_res.mi = pool->mis[tg_inst];
 		pipe_ctx->plane_res.hubp = pool->hubps[tg_inst];
 		pipe_ctx->plane_res.ipp = pool->ipps[tg_inst];
-		pipe_ctx->plane_res.xfm = pool->transforms[tg_inst];
+		pipe_ctx->plane_res.xfm = pool->transक्रमms[tg_inst];
 		pipe_ctx->plane_res.dpp = pool->dpps[tg_inst];
 		pipe_ctx->stream_res.opp = pool->opps[tg_inst];
 
-		if (pool->dpps[tg_inst]) {
+		अगर (pool->dpps[tg_inst]) अणु
 			pipe_ctx->plane_res.mpcc_inst = pool->dpps[tg_inst]->inst;
 
 			// Read DPP->MPCC->OPP Pipe from HW State
-			if (pool->mpc->funcs->read_mpcc_state) {
-				struct mpcc_state s = {0};
+			अगर (pool->mpc->funcs->पढ़ो_mpcc_state) अणु
+				काष्ठा mpcc_state s = अणु0पूर्ण;
 
-				pool->mpc->funcs->read_mpcc_state(pool->mpc, pipe_ctx->plane_res.mpcc_inst, &s);
+				pool->mpc->funcs->पढ़ो_mpcc_state(pool->mpc, pipe_ctx->plane_res.mpcc_inst, &s);
 
-				if (s.dpp_id < MAX_MPCC)
+				अगर (s.dpp_id < MAX_MPCC)
 					pool->mpc->mpcc_array[pipe_ctx->plane_res.mpcc_inst].dpp_id = s.dpp_id;
 
-				if (s.bot_mpcc_id < MAX_MPCC)
+				अगर (s.bot_mpcc_id < MAX_MPCC)
 					pool->mpc->mpcc_array[pipe_ctx->plane_res.mpcc_inst].mpcc_bot =
 							&pool->mpc->mpcc_array[s.bot_mpcc_id];
 
-				if (s.opp_id < MAX_OPP)
+				अगर (s.opp_id < MAX_OPP)
 					pipe_ctx->stream_res.opp->mpc_tree_params.opp_id = s.opp_id;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		pipe_ctx->pipe_idx = tg_inst;
 
 		pipe_ctx->stream = stream;
-		return tg_inst;
-	}
+		वापस tg_inst;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void mark_seamless_boot_stream(
-		const struct dc  *dc,
-		struct dc_stream_state *stream)
-{
-	struct dc_bios *dcb = dc->ctx->dc_bios;
+अटल व्योम mark_seamless_boot_stream(
+		स्थिर काष्ठा dc  *dc,
+		काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा dc_bios *dcb = dc->ctx->dc_bios;
 
 	/* TODO: Check Linux */
-	if (dc->config.allow_seamless_boot_optimization &&
-			!dcb->funcs->is_accelerated_mode(dcb)) {
-		if (dc_validate_seamless_boot_timing(dc, stream->sink, &stream->timing))
+	अगर (dc->config.allow_seamless_boot_optimization &&
+			!dcb->funcs->is_accelerated_mode(dcb)) अणु
+		अगर (dc_validate_seamless_boot_timing(dc, stream->sink, &stream->timing))
 			stream->apply_seamless_boot_optimization = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-enum dc_status resource_map_pool_resources(
-		const struct dc  *dc,
-		struct dc_state *context,
-		struct dc_stream_state *stream)
-{
-	const struct resource_pool *pool = dc->res_pool;
-	int i;
-	struct dc_context *dc_ctx = dc->ctx;
-	struct pipe_ctx *pipe_ctx = NULL;
-	int pipe_idx = -1;
+क्रमागत dc_status resource_map_pool_resources(
+		स्थिर काष्ठा dc  *dc,
+		काष्ठा dc_state *context,
+		काष्ठा dc_stream_state *stream)
+अणु
+	स्थिर काष्ठा resource_pool *pool = dc->res_pool;
+	पूर्णांक i;
+	काष्ठा dc_context *dc_ctx = dc->ctx;
+	काष्ठा pipe_ctx *pipe_ctx = शून्य;
+	पूर्णांक pipe_idx = -1;
 
 	calculate_phy_pix_clks(stream);
 
 	mark_seamless_boot_stream(dc, stream);
 
-	if (stream->apply_seamless_boot_optimization) {
+	अगर (stream->apply_seamless_boot_optimization) अणु
 		pipe_idx = acquire_resource_from_hw_enabled_state(
 				&context->res_ctx,
 				pool,
 				stream);
-		if (pipe_idx < 0)
-			/* hw resource was assigned to other stream */
+		अगर (pipe_idx < 0)
+			/* hw resource was asचिन्हित to other stream */
 			stream->apply_seamless_boot_optimization = false;
-	}
+	पूर्ण
 
-	if (pipe_idx < 0)
+	अगर (pipe_idx < 0)
 		/* acquire new resources */
-		pipe_idx = acquire_first_free_pipe(&context->res_ctx, pool, stream);
+		pipe_idx = acquire_first_मुक्त_pipe(&context->res_ctx, pool, stream);
 
-#ifdef CONFIG_DRM_AMD_DC_DCN
-	if (pipe_idx < 0)
+#अगर_घोषित CONFIG_DRM_AMD_DC_DCN
+	अगर (pipe_idx < 0)
 		pipe_idx = acquire_first_split_pipe(&context->res_ctx, pool, stream);
-#endif
+#पूर्ण_अगर
 
-	if (pipe_idx < 0 || context->res_ctx.pipe_ctx[pipe_idx].stream_res.tg == NULL)
-		return DC_NO_CONTROLLER_RESOURCE;
+	अगर (pipe_idx < 0 || context->res_ctx.pipe_ctx[pipe_idx].stream_res.tg == शून्य)
+		वापस DC_NO_CONTROLLER_RESOURCE;
 
 	pipe_ctx = &context->res_ctx.pipe_ctx[pipe_idx];
 
 	pipe_ctx->stream_res.stream_enc =
-		dc->res_pool->funcs->find_first_free_match_stream_enc_for_link(
+		dc->res_pool->funcs->find_first_मुक्त_match_stream_enc_क्रम_link(
 			&context->res_ctx, pool, stream);
 
-	if (!pipe_ctx->stream_res.stream_enc)
-		return DC_NO_STREAM_ENC_RESOURCE;
+	अगर (!pipe_ctx->stream_res.stream_enc)
+		वापस DC_NO_STREAM_ENC_RESOURCE;
 
 	update_stream_engine_usage(
 		&context->res_ctx, pool,
 		pipe_ctx->stream_res.stream_enc,
 		true);
 
-	/* TODO: Add check if ASIC support and EDID audio */
-	if (!stream->converter_disable_audio &&
-	    dc_is_audio_capable_signal(pipe_ctx->stream->signal) &&
-	    stream->audio_info.mode_count && stream->audio_info.flags.all) {
-		pipe_ctx->stream_res.audio = find_first_free_audio(
+	/* TODO: Add check अगर ASIC support and EDID audio */
+	अगर (!stream->converter_disable_audio &&
+	    dc_is_audio_capable_संकेत(pipe_ctx->stream->संकेत) &&
+	    stream->audio_info.mode_count && stream->audio_info.flags.all) अणु
+		pipe_ctx->stream_res.audio = find_first_मुक्त_audio(
 		&context->res_ctx, pool, pipe_ctx->stream_res.stream_enc->id, dc_ctx->dce_version);
 
 		/*
-		 * Audio assigned in order first come first get.
+		 * Audio asचिन्हित in order first come first get.
 		 * There are asics which has number of audio
 		 * resources less then number of pipes
 		 */
-		if (pipe_ctx->stream_res.audio)
+		अगर (pipe_ctx->stream_res.audio)
 			update_audio_usage(&context->res_ctx, pool,
 					   pipe_ctx->stream_res.audio, true);
-	}
+	पूर्ण
 
-	/* Add ABM to the resource if on EDP */
-	if (pipe_ctx->stream && dc_is_embedded_signal(pipe_ctx->stream->signal)) {
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-		if (pool->abm)
+	/* Add ABM to the resource अगर on EDP */
+	अगर (pipe_ctx->stream && dc_is_embedded_संकेत(pipe_ctx->stream->संकेत)) अणु
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+		अगर (pool->abm)
 			pipe_ctx->stream_res.abm = pool->abm;
-		else
+		अन्यथा
 			pipe_ctx->stream_res.abm = pool->multiple_abms[pipe_ctx->stream_res.tg->inst];
-#else
+#अन्यथा
 		pipe_ctx->stream_res.abm = pool->abm;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	for (i = 0; i < context->stream_count; i++)
-		if (context->streams[i] == stream) {
+	क्रम (i = 0; i < context->stream_count; i++)
+		अगर (context->streams[i] == stream) अणु
 			context->stream_status[i].primary_otg_inst = pipe_ctx->stream_res.tg->inst;
 			context->stream_status[i].stream_enc_inst = pipe_ctx->stream_res.stream_enc->stream_enc_inst;
 			context->stream_status[i].audio_inst =
 				pipe_ctx->stream_res.audio ? pipe_ctx->stream_res.audio->inst : -1;
 
-			return DC_OK;
-		}
+			वापस DC_OK;
+		पूर्ण
 
 	DC_ERROR("Stream %p not found in new ctx!\n", stream);
-	return DC_ERROR_UNEXPECTED;
-}
+	वापस DC_ERROR_UNEXPECTED;
+पूर्ण
 
 /**
- * dc_resource_state_copy_construct_current() - Creates a new dc_state from existing state
+ * dc_resource_state_copy_स्थिरruct_current() - Creates a new dc_state from existing state
  * Is a shallow copy.  Increments refcounts on existing streams and planes.
  * @dc: copy out of dc->current_state
- * @dst_ctx: copy into this
+ * @dst_ctx: copy पूर्णांकo this
  */
-void dc_resource_state_copy_construct_current(
-		const struct dc *dc,
-		struct dc_state *dst_ctx)
-{
-	dc_resource_state_copy_construct(dc->current_state, dst_ctx);
-}
+व्योम dc_resource_state_copy_स्थिरruct_current(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_state *dst_ctx)
+अणु
+	dc_resource_state_copy_स्थिरruct(dc->current_state, dst_ctx);
+पूर्ण
 
 
-void dc_resource_state_construct(
-		const struct dc *dc,
-		struct dc_state *dst_ctx)
-{
+व्योम dc_resource_state_स्थिरruct(
+		स्थिर काष्ठा dc *dc,
+		काष्ठा dc_state *dst_ctx)
+अणु
 	dst_ctx->clk_mgr = dc->clk_mgr;
-}
+पूर्ण
 
 
-bool dc_resource_is_dsc_encoding_supported(const struct dc *dc)
-{
-	return dc->res_pool->res_cap->num_dsc > 0;
-}
+bool dc_resource_is_dsc_encoding_supported(स्थिर काष्ठा dc *dc)
+अणु
+	वापस dc->res_pool->res_cap->num_dsc > 0;
+पूर्ण
 
 
 /**
- * dc_validate_global_state() - Determine if HW can support a given state
+ * dc_validate_global_state() - Determine अगर HW can support a given state
  * Checks HW resource availability and bandwidth requirement.
- * @dc: dc struct for this driver
+ * @dc: dc काष्ठा क्रम this driver
  * @new_ctx: state to be validated
- * @fast_validate: set to true if only yes/no to support matters
+ * @fast_validate: set to true अगर only yes/no to support matters
  *
- * Return: DC_OK if the result can be programmed.  Otherwise, an error code.
+ * Return: DC_OK अगर the result can be programmed.  Otherwise, an error code.
  */
-enum dc_status dc_validate_global_state(
-		struct dc *dc,
-		struct dc_state *new_ctx,
+क्रमागत dc_status dc_validate_global_state(
+		काष्ठा dc *dc,
+		काष्ठा dc_state *new_ctx,
 		bool fast_validate)
-{
-	enum dc_status result = DC_ERROR_UNEXPECTED;
-	int i, j;
+अणु
+	क्रमागत dc_status result = DC_ERROR_UNEXPECTED;
+	पूर्णांक i, j;
 
-	if (!new_ctx)
-		return DC_ERROR_UNEXPECTED;
+	अगर (!new_ctx)
+		वापस DC_ERROR_UNEXPECTED;
 
-	if (dc->res_pool->funcs->validate_global) {
+	अगर (dc->res_pool->funcs->validate_global) अणु
 		result = dc->res_pool->funcs->validate_global(dc, new_ctx);
-		if (result != DC_OK)
-			return result;
-	}
+		अगर (result != DC_OK)
+			वापस result;
+	पूर्ण
 
-	for (i = 0; i < new_ctx->stream_count; i++) {
-		struct dc_stream_state *stream = new_ctx->streams[i];
+	क्रम (i = 0; i < new_ctx->stream_count; i++) अणु
+		काष्ठा dc_stream_state *stream = new_ctx->streams[i];
 
-		for (j = 0; j < dc->res_pool->pipe_count; j++) {
-			struct pipe_ctx *pipe_ctx = &new_ctx->res_ctx.pipe_ctx[j];
+		क्रम (j = 0; j < dc->res_pool->pipe_count; j++) अणु
+			काष्ठा pipe_ctx *pipe_ctx = &new_ctx->res_ctx.pipe_ctx[j];
 
-			if (pipe_ctx->stream != stream)
-				continue;
+			अगर (pipe_ctx->stream != stream)
+				जारी;
 
-			if (dc->res_pool->funcs->patch_unknown_plane_state &&
+			अगर (dc->res_pool->funcs->patch_unknown_plane_state &&
 					pipe_ctx->plane_state &&
-					pipe_ctx->plane_state->tiling_info.gfx9.swizzle == DC_SW_UNKNOWN) {
+					pipe_ctx->plane_state->tiling_info.gfx9.swizzle == DC_SW_UNKNOWN) अणु
 				result = dc->res_pool->funcs->patch_unknown_plane_state(pipe_ctx->plane_state);
-				if (result != DC_OK)
-					return result;
-			}
+				अगर (result != DC_OK)
+					वापस result;
+			पूर्ण
 
-			/* Switch to dp clock source only if there is
+			/* Switch to dp घड़ी source only अगर there is
 			 * no non dp stream that shares the same timing
 			 * with the dp stream.
 			 */
-			if (dc_is_dp_signal(pipe_ctx->stream->signal) &&
-				!find_pll_sharable_stream(stream, new_ctx)) {
+			अगर (dc_is_dp_संकेत(pipe_ctx->stream->संकेत) &&
+				!find_pll_sharable_stream(stream, new_ctx)) अणु
 
-				resource_unreference_clock_source(
+				resource_unreference_घड़ी_source(
 						&new_ctx->res_ctx,
 						dc->res_pool,
-						pipe_ctx->clock_source);
+						pipe_ctx->घड़ी_source);
 
-				pipe_ctx->clock_source = dc->res_pool->dp_clock_source;
-				resource_reference_clock_source(
+				pipe_ctx->घड़ी_source = dc->res_pool->dp_घड़ी_source;
+				resource_reference_घड़ी_source(
 						&new_ctx->res_ctx,
 						dc->res_pool,
-						 pipe_ctx->clock_source);
-			}
-		}
-	}
+						 pipe_ctx->घड़ी_source);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	result = resource_build_scaling_params_for_context(dc, new_ctx);
+	result = resource_build_scaling_params_क्रम_context(dc, new_ctx);
 
-	if (result == DC_OK)
-		if (!dc->res_pool->funcs->validate_bandwidth(dc, new_ctx, fast_validate))
+	अगर (result == DC_OK)
+		अगर (!dc->res_pool->funcs->validate_bandwidth(dc, new_ctx, fast_validate))
 			result = DC_FAIL_BANDWIDTH_VALIDATE;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void patch_gamut_packet_checksum(
-		struct dc_info_packet *gamut_packet)
-{
+अटल व्योम patch_gamut_packet_checksum(
+		काष्ठा dc_info_packet *gamut_packet)
+अणु
 	/* For gamut we recalc checksum */
-	if (gamut_packet->valid) {
-		uint8_t chk_sum = 0;
-		uint8_t *ptr;
-		uint8_t i;
+	अगर (gamut_packet->valid) अणु
+		uपूर्णांक8_t chk_sum = 0;
+		uपूर्णांक8_t *ptr;
+		uपूर्णांक8_t i;
 
 		/*start of the Gamut data. */
 		ptr = &gamut_packet->sb[3];
 
-		for (i = 0; i <= gamut_packet->sb[1]; i++)
+		क्रम (i = 0; i <= gamut_packet->sb[1]; i++)
 			chk_sum += ptr[i];
 
-		gamut_packet->sb[2] = (uint8_t) (0x100 - chk_sum);
-	}
-}
+		gamut_packet->sb[2] = (uपूर्णांक8_t) (0x100 - chk_sum);
+	पूर्ण
+पूर्ण
 
-static void set_avi_info_frame(
-		struct dc_info_packet *info_packet,
-		struct pipe_ctx *pipe_ctx)
-{
-	struct dc_stream_state *stream = pipe_ctx->stream;
-	enum dc_color_space color_space = COLOR_SPACE_UNKNOWN;
-	uint32_t pixel_encoding = 0;
-	enum scanning_type scan_type = SCANNING_TYPE_NODATA;
-	enum dc_aspect_ratio aspect = ASPECT_RATIO_NO_DATA;
+अटल व्योम set_avi_info_frame(
+		काष्ठा dc_info_packet *info_packet,
+		काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	काष्ठा dc_stream_state *stream = pipe_ctx->stream;
+	क्रमागत dc_color_space color_space = COLOR_SPACE_UNKNOWN;
+	uपूर्णांक32_t pixel_encoding = 0;
+	क्रमागत scanning_type scan_type = SCANNING_TYPE_NODATA;
+	क्रमागत dc_aspect_ratio aspect = ASPECT_RATIO_NO_DATA;
 	bool itc = false;
-	uint8_t itc_value = 0;
-	uint8_t cn0_cn1 = 0;
-	unsigned int cn0_cn1_value = 0;
-	uint8_t *check_sum = NULL;
-	uint8_t byte_index = 0;
-	union hdmi_info_packet hdmi_info;
-	union display_content_support support = {0};
-	unsigned int vic = pipe_ctx->stream->timing.vic;
-	enum dc_timing_3d_format format;
+	uपूर्णांक8_t itc_value = 0;
+	uपूर्णांक8_t cn0_cn1 = 0;
+	अचिन्हित पूर्णांक cn0_cn1_value = 0;
+	uपूर्णांक8_t *check_sum = शून्य;
+	uपूर्णांक8_t byte_index = 0;
+	जोड़ hdmi_info_packet hdmi_info;
+	जोड़ display_content_support support = अणु0पूर्ण;
+	अचिन्हित पूर्णांक vic = pipe_ctx->stream->timing.vic;
+	क्रमागत dc_timing_3d_क्रमmat क्रमmat;
 
-	memset(&hdmi_info, 0, sizeof(union hdmi_info_packet));
+	स_रखो(&hdmi_info, 0, माप(जोड़ hdmi_info_packet));
 
 	color_space = pipe_ctx->stream->output_color_space;
-	if (color_space == COLOR_SPACE_UNKNOWN)
+	अगर (color_space == COLOR_SPACE_UNKNOWN)
 		color_space = (stream->timing.pixel_encoding == PIXEL_ENCODING_RGB) ?
 			COLOR_SPACE_SRGB:COLOR_SPACE_YCBCR709;
 
@@ -2388,28 +2389,28 @@ static void set_avi_info_frame(
 	 * according to HDMI 2.0 spec (Section 10.1)
 	 */
 
-	switch (stream->timing.pixel_encoding) {
-	case PIXEL_ENCODING_YCBCR422:
+	चयन (stream->timing.pixel_encoding) अणु
+	हाल PIXEL_ENCODING_YCBCR422:
 		pixel_encoding = 1;
-		break;
+		अवरोध;
 
-	case PIXEL_ENCODING_YCBCR444:
+	हाल PIXEL_ENCODING_YCBCR444:
 		pixel_encoding = 2;
-		break;
-	case PIXEL_ENCODING_YCBCR420:
+		अवरोध;
+	हाल PIXEL_ENCODING_YCBCR420:
 		pixel_encoding = 3;
-		break;
+		अवरोध;
 
-	case PIXEL_ENCODING_RGB:
-	default:
+	हाल PIXEL_ENCODING_RGB:
+	शेष:
 		pixel_encoding = 0;
-	}
+	पूर्ण
 
 	/* Y0_Y1_Y2 : The pixel encoding */
 	/* H14b AVI InfoFrame has extension on Y-field from 2 bits to 3 bits */
 	hdmi_info.bits.Y0_Y1_Y2 = pixel_encoding;
 
-	/* A0 = 1 Active Format Information valid */
+	/* A0 = 1 Active Format Inक्रमmation valid */
 	hdmi_info.bits.A0 = ACTIVE_FORMAT_VALID;
 
 	/* B0, B1 = 3; Bar info data is valid */
@@ -2423,40 +2424,40 @@ static void set_avi_info_frame(
 	hdmi_info.bits.S0_S1 = scan_type;
 
 	/* C0, C1 : Colorimetry */
-	if (color_space == COLOR_SPACE_YCBCR709 ||
+	अगर (color_space == COLOR_SPACE_YCBCR709 ||
 			color_space == COLOR_SPACE_YCBCR709_LIMITED)
 		hdmi_info.bits.C0_C1 = COLORIMETRY_ITU709;
-	else if (color_space == COLOR_SPACE_YCBCR601 ||
+	अन्यथा अगर (color_space == COLOR_SPACE_YCBCR601 ||
 			color_space == COLOR_SPACE_YCBCR601_LIMITED)
 		hdmi_info.bits.C0_C1 = COLORIMETRY_ITU601;
-	else {
+	अन्यथा अणु
 		hdmi_info.bits.C0_C1 = COLORIMETRY_NO_DATA;
-	}
-	if (color_space == COLOR_SPACE_2020_RGB_FULLRANGE ||
+	पूर्ण
+	अगर (color_space == COLOR_SPACE_2020_RGB_FULLRANGE ||
 			color_space == COLOR_SPACE_2020_RGB_LIMITEDRANGE ||
-			color_space == COLOR_SPACE_2020_YCBCR) {
+			color_space == COLOR_SPACE_2020_YCBCR) अणु
 		hdmi_info.bits.EC0_EC2 = COLORIMETRYEX_BT2020RGBYCBCR;
 		hdmi_info.bits.C0_C1   = COLORIMETRY_EXTENDED;
-	} else if (color_space == COLOR_SPACE_ADOBERGB) {
+	पूर्ण अन्यथा अगर (color_space == COLOR_SPACE_ADOBERGB) अणु
 		hdmi_info.bits.EC0_EC2 = COLORIMETRYEX_ADOBERGB;
 		hdmi_info.bits.C0_C1   = COLORIMETRY_EXTENDED;
-	}
+	पूर्ण
 
 	/* TODO: un-hardcode aspect ratio */
 	aspect = stream->timing.aspect_ratio;
 
-	switch (aspect) {
-	case ASPECT_RATIO_4_3:
-	case ASPECT_RATIO_16_9:
+	चयन (aspect) अणु
+	हाल ASPECT_RATIO_4_3:
+	हाल ASPECT_RATIO_16_9:
 		hdmi_info.bits.M0_M1 = aspect;
-		break;
+		अवरोध;
 
-	case ASPECT_RATIO_NO_DATA:
-	case ASPECT_RATIO_64_27:
-	case ASPECT_RATIO_256_135:
-	default:
+	हाल ASPECT_RATIO_NO_DATA:
+	हाल ASPECT_RATIO_64_27:
+	हाल ASPECT_RATIO_256_135:
+	शेष:
 		hdmi_info.bits.M0_M1 = 0;
-	}
+	पूर्ण
 
 	/* Active Format Aspect ratio - same as Picture Aspect Ratio. */
 	hdmi_info.bits.R0_R3 = ACTIVE_FORMAT_ASPECT_RATIO_SAME_AS_PICTURE;
@@ -2471,101 +2472,101 @@ static void set_avi_info_frame(
 
 	support = stream->content_support;
 
-	if (itc) {
-		if (!support.bits.valid_content_type) {
+	अगर (itc) अणु
+		अगर (!support.bits.valid_content_type) अणु
 			cn0_cn1_value = 0;
-		} else {
-			if (cn0_cn1 == DISPLAY_CONTENT_TYPE_GRAPHICS) {
-				if (support.bits.graphics_content == 1) {
+		पूर्ण अन्यथा अणु
+			अगर (cn0_cn1 == DISPLAY_CONTENT_TYPE_GRAPHICS) अणु
+				अगर (support.bits.graphics_content == 1) अणु
 					cn0_cn1_value = 0;
-				}
-			} else if (cn0_cn1 == DISPLAY_CONTENT_TYPE_PHOTO) {
-				if (support.bits.photo_content == 1) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (cn0_cn1 == DISPLAY_CONTENT_TYPE_PHOTO) अणु
+				अगर (support.bits.photo_content == 1) अणु
 					cn0_cn1_value = 1;
-				} else {
+				पूर्ण अन्यथा अणु
 					cn0_cn1_value = 0;
 					itc_value = 0;
-				}
-			} else if (cn0_cn1 == DISPLAY_CONTENT_TYPE_CINEMA) {
-				if (support.bits.cinema_content == 1) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (cn0_cn1 == DISPLAY_CONTENT_TYPE_CINEMA) अणु
+				अगर (support.bits.cinema_content == 1) अणु
 					cn0_cn1_value = 2;
-				} else {
+				पूर्ण अन्यथा अणु
 					cn0_cn1_value = 0;
 					itc_value = 0;
-				}
-			} else if (cn0_cn1 == DISPLAY_CONTENT_TYPE_GAME) {
-				if (support.bits.game_content == 1) {
+				पूर्ण
+			पूर्ण अन्यथा अगर (cn0_cn1 == DISPLAY_CONTENT_TYPE_GAME) अणु
+				अगर (support.bits.game_content == 1) अणु
 					cn0_cn1_value = 3;
-				} else {
+				पूर्ण अन्यथा अणु
 					cn0_cn1_value = 0;
 					itc_value = 0;
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 		hdmi_info.bits.CN0_CN1 = cn0_cn1_value;
 		hdmi_info.bits.ITC = itc_value;
-	}
+	पूर्ण
 
-	if (stream->qs_bit == 1) {
-		if (color_space == COLOR_SPACE_SRGB ||
+	अगर (stream->qs_bit == 1) अणु
+		अगर (color_space == COLOR_SPACE_SRGB ||
 			color_space == COLOR_SPACE_2020_RGB_FULLRANGE)
 			hdmi_info.bits.Q0_Q1   = RGB_QUANTIZATION_FULL_RANGE;
-		else if (color_space == COLOR_SPACE_SRGB_LIMITED ||
+		अन्यथा अगर (color_space == COLOR_SPACE_SRGB_LIMITED ||
 					color_space == COLOR_SPACE_2020_RGB_LIMITEDRANGE)
 			hdmi_info.bits.Q0_Q1   = RGB_QUANTIZATION_LIMITED_RANGE;
-		else
+		अन्यथा
 			hdmi_info.bits.Q0_Q1   = RGB_QUANTIZATION_DEFAULT_RANGE;
-	} else
+	पूर्ण अन्यथा
 		hdmi_info.bits.Q0_Q1   = RGB_QUANTIZATION_DEFAULT_RANGE;
 
 	/* TODO : We should handle YCC quantization */
-	/* but we do not have matrix calculation */
-	if (stream->qy_bit == 1) {
-		if (color_space == COLOR_SPACE_SRGB ||
+	/* but we करो not have matrix calculation */
+	अगर (stream->qy_bit == 1) अणु
+		अगर (color_space == COLOR_SPACE_SRGB ||
 			color_space == COLOR_SPACE_2020_RGB_FULLRANGE)
 			hdmi_info.bits.YQ0_YQ1 = YYC_QUANTIZATION_LIMITED_RANGE;
-		else if (color_space == COLOR_SPACE_SRGB_LIMITED ||
+		अन्यथा अगर (color_space == COLOR_SPACE_SRGB_LIMITED ||
 					color_space == COLOR_SPACE_2020_RGB_LIMITEDRANGE)
 			hdmi_info.bits.YQ0_YQ1 = YYC_QUANTIZATION_LIMITED_RANGE;
-		else
+		अन्यथा
 			hdmi_info.bits.YQ0_YQ1 = YYC_QUANTIZATION_LIMITED_RANGE;
-	} else
+	पूर्ण अन्यथा
 		hdmi_info.bits.YQ0_YQ1 = YYC_QUANTIZATION_LIMITED_RANGE;
 
 	///VIC
-	format = stream->timing.timing_3d_format;
-	/*todo, add 3DStereo support*/
-	if (format != TIMING_3D_FORMAT_NONE) {
+	क्रमmat = stream->timing.timing_3d_क्रमmat;
+	/*toकरो, add 3DStereo support*/
+	अगर (क्रमmat != TIMING_3D_FORMAT_NONE) अणु
 		// Based on HDMI specs hdmi vic needs to be converted to cea vic when 3D is enabled
-		switch (pipe_ctx->stream->timing.hdmi_vic) {
-		case 1:
+		चयन (pipe_ctx->stream->timing.hdmi_vic) अणु
+		हाल 1:
 			vic = 95;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			vic = 94;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			vic = 93;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			vic = 98;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* If VIC >= 128, the Source shall use AVI InfoFrame Version 3*/
 	hdmi_info.bits.VIC0_VIC7 = vic;
-	if (vic >= 128)
+	अगर (vic >= 128)
 		hdmi_info.bits.header.version = 3;
 	/* If (C1, C0)=(1, 1) and (EC2, EC1, EC0)=(1, 1, 1),
 	 * the Source shall use 20 AVI InfoFrame Version 4
 	 */
-	if (hdmi_info.bits.C0_C1 == COLORIMETRY_EXTENDED &&
-			hdmi_info.bits.EC0_EC2 == COLORIMETRYEX_RESERVED) {
+	अगर (hdmi_info.bits.C0_C1 == COLORIMETRY_EXTENDED &&
+			hdmi_info.bits.EC0_EC2 == COLORIMETRYEX_RESERVED) अणु
 		hdmi_info.bits.header.version = 4;
 		hdmi_info.bits.header.length = 14;
-	}
+	पूर्ण
 
 	/* pixel repetition
 	 * PR0 - PR3 start from 0 whereas pHwPathMode->mode.timing.flags.pixel
@@ -2596,505 +2597,505 @@ static void set_avi_info_frame(
 
 	*check_sum = HDMI_INFOFRAME_TYPE_AVI + hdmi_info.bits.header.length + hdmi_info.bits.header.version;
 
-	for (byte_index = 1; byte_index <= hdmi_info.bits.header.length; byte_index++)
+	क्रम (byte_index = 1; byte_index <= hdmi_info.bits.header.length; byte_index++)
 		*check_sum += hdmi_info.packet_raw_data.sb[byte_index];
 
 	/* one byte complement */
-	*check_sum = (uint8_t) (0x100 - *check_sum);
+	*check_sum = (uपूर्णांक8_t) (0x100 - *check_sum);
 
 	/* Store in hw_path_mode */
 	info_packet->hb0 = hdmi_info.packet_raw_data.hb0;
 	info_packet->hb1 = hdmi_info.packet_raw_data.hb1;
 	info_packet->hb2 = hdmi_info.packet_raw_data.hb2;
 
-	for (byte_index = 0; byte_index < sizeof(hdmi_info.packet_raw_data.sb); byte_index++)
+	क्रम (byte_index = 0; byte_index < माप(hdmi_info.packet_raw_data.sb); byte_index++)
 		info_packet->sb[byte_index] = hdmi_info.packet_raw_data.sb[byte_index];
 
 	info_packet->valid = true;
-}
+पूर्ण
 
-static void set_vendor_info_packet(
-		struct dc_info_packet *info_packet,
-		struct dc_stream_state *stream)
-{
-	/* SPD info packet for FreeSync */
+अटल व्योम set_venकरोr_info_packet(
+		काष्ठा dc_info_packet *info_packet,
+		काष्ठा dc_stream_state *stream)
+अणु
+	/* SPD info packet क्रम FreeSync */
 
-	/* Check if Freesync is supported. Return if false. If true,
+	/* Check अगर Freesync is supported. Return अगर false. If true,
 	 * set the corresponding bit in the info packet
 	 */
-	if (!stream->vsp_infopacket.valid)
-		return;
+	अगर (!stream->vsp_infopacket.valid)
+		वापस;
 
 	*info_packet = stream->vsp_infopacket;
-}
+पूर्ण
 
-static void set_spd_info_packet(
-		struct dc_info_packet *info_packet,
-		struct dc_stream_state *stream)
-{
-	/* SPD info packet for FreeSync */
+अटल व्योम set_spd_info_packet(
+		काष्ठा dc_info_packet *info_packet,
+		काष्ठा dc_stream_state *stream)
+अणु
+	/* SPD info packet क्रम FreeSync */
 
-	/* Check if Freesync is supported. Return if false. If true,
+	/* Check अगर Freesync is supported. Return अगर false. If true,
 	 * set the corresponding bit in the info packet
 	 */
-	if (!stream->vrr_infopacket.valid)
-		return;
+	अगर (!stream->vrr_infopacket.valid)
+		वापस;
 
 	*info_packet = stream->vrr_infopacket;
-}
+पूर्ण
 
-static void set_hdr_static_info_packet(
-		struct dc_info_packet *info_packet,
-		struct dc_stream_state *stream)
-{
-	/* HDR Static Metadata info packet for HDR10 */
+अटल व्योम set_hdr_अटल_info_packet(
+		काष्ठा dc_info_packet *info_packet,
+		काष्ठा dc_stream_state *stream)
+अणु
+	/* HDR Static Metadata info packet क्रम HDR10 */
 
-	if (!stream->hdr_static_metadata.valid ||
+	अगर (!stream->hdr_अटल_metadata.valid ||
 			stream->use_dynamic_meta)
-		return;
+		वापस;
 
-	*info_packet = stream->hdr_static_metadata;
-}
+	*info_packet = stream->hdr_अटल_metadata;
+पूर्ण
 
-static void set_vsc_info_packet(
-		struct dc_info_packet *info_packet,
-		struct dc_stream_state *stream)
-{
-	if (!stream->vsc_infopacket.valid)
-		return;
+अटल व्योम set_vsc_info_packet(
+		काष्ठा dc_info_packet *info_packet,
+		काष्ठा dc_stream_state *stream)
+अणु
+	अगर (!stream->vsc_infopacket.valid)
+		वापस;
 
 	*info_packet = stream->vsc_infopacket;
-}
+पूर्ण
 
-void dc_resource_state_destruct(struct dc_state *context)
-{
-	int i, j;
+व्योम dc_resource_state_deकाष्ठा(काष्ठा dc_state *context)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < context->stream_count; i++) {
-		for (j = 0; j < context->stream_status[i].plane_count; j++)
+	क्रम (i = 0; i < context->stream_count; i++) अणु
+		क्रम (j = 0; j < context->stream_status[i].plane_count; j++)
 			dc_plane_state_release(
 				context->stream_status[i].plane_states[j]);
 
 		context->stream_status[i].plane_count = 0;
 		dc_stream_release(context->streams[i]);
-		context->streams[i] = NULL;
-	}
-}
+		context->streams[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-void dc_resource_state_copy_construct(
-		const struct dc_state *src_ctx,
-		struct dc_state *dst_ctx)
-{
-	int i, j;
-	struct kref refcount = dst_ctx->refcount;
+व्योम dc_resource_state_copy_स्थिरruct(
+		स्थिर काष्ठा dc_state *src_ctx,
+		काष्ठा dc_state *dst_ctx)
+अणु
+	पूर्णांक i, j;
+	काष्ठा kref refcount = dst_ctx->refcount;
 
 	*dst_ctx = *src_ctx;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct pipe_ctx *cur_pipe = &dst_ctx->res_ctx.pipe_ctx[i];
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा pipe_ctx *cur_pipe = &dst_ctx->res_ctx.pipe_ctx[i];
 
-		if (cur_pipe->top_pipe)
+		अगर (cur_pipe->top_pipe)
 			cur_pipe->top_pipe =  &dst_ctx->res_ctx.pipe_ctx[cur_pipe->top_pipe->pipe_idx];
 
-		if (cur_pipe->bottom_pipe)
+		अगर (cur_pipe->bottom_pipe)
 			cur_pipe->bottom_pipe = &dst_ctx->res_ctx.pipe_ctx[cur_pipe->bottom_pipe->pipe_idx];
 
-		if (cur_pipe->next_odm_pipe)
+		अगर (cur_pipe->next_odm_pipe)
 			cur_pipe->next_odm_pipe =  &dst_ctx->res_ctx.pipe_ctx[cur_pipe->next_odm_pipe->pipe_idx];
 
-		if (cur_pipe->prev_odm_pipe)
+		अगर (cur_pipe->prev_odm_pipe)
 			cur_pipe->prev_odm_pipe = &dst_ctx->res_ctx.pipe_ctx[cur_pipe->prev_odm_pipe->pipe_idx];
-	}
+	पूर्ण
 
-	for (i = 0; i < dst_ctx->stream_count; i++) {
+	क्रम (i = 0; i < dst_ctx->stream_count; i++) अणु
 		dc_stream_retain(dst_ctx->streams[i]);
-		for (j = 0; j < dst_ctx->stream_status[i].plane_count; j++)
+		क्रम (j = 0; j < dst_ctx->stream_status[i].plane_count; j++)
 			dc_plane_state_retain(
 				dst_ctx->stream_status[i].plane_states[j]);
-	}
+	पूर्ण
 
 	/* context refcount should not be overridden */
 	dst_ctx->refcount = refcount;
 
-}
+पूर्ण
 
-struct clock_source *dc_resource_find_first_free_pll(
-		struct resource_context *res_ctx,
-		const struct resource_pool *pool)
-{
-	int i;
+काष्ठा घड़ी_source *dc_resource_find_first_मुक्त_pll(
+		काष्ठा resource_context *res_ctx,
+		स्थिर काष्ठा resource_pool *pool)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pool->clk_src_count; ++i) {
-		if (res_ctx->clock_source_ref_count[i] == 0)
-			return pool->clock_sources[i];
-	}
+	क्रम (i = 0; i < pool->clk_src_count; ++i) अणु
+		अगर (res_ctx->घड़ी_source_ref_count[i] == 0)
+			वापस pool->घड़ी_sources[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void resource_build_info_frame(struct pipe_ctx *pipe_ctx)
-{
-	enum signal_type signal = SIGNAL_TYPE_NONE;
-	struct encoder_info_frame *info = &pipe_ctx->stream_res.encoder_info_frame;
+व्योम resource_build_info_frame(काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	क्रमागत संकेत_type संकेत = SIGNAL_TYPE_NONE;
+	काष्ठा encoder_info_frame *info = &pipe_ctx->stream_res.encoder_info_frame;
 
-	/* default all packets to invalid */
+	/* शेष all packets to invalid */
 	info->avi.valid = false;
 	info->gamut.valid = false;
-	info->vendor.valid = false;
+	info->venकरोr.valid = false;
 	info->spd.valid = false;
 	info->hdrsmd.valid = false;
 	info->vsc.valid = false;
 
-	signal = pipe_ctx->stream->signal;
+	संकेत = pipe_ctx->stream->संकेत;
 
-	/* HDMi and DP have different info packets*/
-	if (dc_is_hdmi_signal(signal)) {
+	/* HDMi and DP have dअगरferent info packets*/
+	अगर (dc_is_hdmi_संकेत(संकेत)) अणु
 		set_avi_info_frame(&info->avi, pipe_ctx);
 
-		set_vendor_info_packet(&info->vendor, pipe_ctx->stream);
+		set_venकरोr_info_packet(&info->venकरोr, pipe_ctx->stream);
 
 		set_spd_info_packet(&info->spd, pipe_ctx->stream);
 
-		set_hdr_static_info_packet(&info->hdrsmd, pipe_ctx->stream);
+		set_hdr_अटल_info_packet(&info->hdrsmd, pipe_ctx->stream);
 
-	} else if (dc_is_dp_signal(signal)) {
+	पूर्ण अन्यथा अगर (dc_is_dp_संकेत(संकेत)) अणु
 		set_vsc_info_packet(&info->vsc, pipe_ctx->stream);
 
 		set_spd_info_packet(&info->spd, pipe_ctx->stream);
 
-		set_hdr_static_info_packet(&info->hdrsmd, pipe_ctx->stream);
-	}
+		set_hdr_अटल_info_packet(&info->hdrsmd, pipe_ctx->stream);
+	पूर्ण
 
 	patch_gamut_packet_checksum(&info->gamut);
-}
+पूर्ण
 
-enum dc_status resource_map_clock_resources(
-		const struct dc  *dc,
-		struct dc_state *context,
-		struct dc_stream_state *stream)
-{
+क्रमागत dc_status resource_map_घड़ी_resources(
+		स्थिर काष्ठा dc  *dc,
+		काष्ठा dc_state *context,
+		काष्ठा dc_stream_state *stream)
+अणु
 	/* acquire new resources */
-	const struct resource_pool *pool = dc->res_pool;
-	struct pipe_ctx *pipe_ctx = resource_get_head_pipe_for_stream(
+	स्थिर काष्ठा resource_pool *pool = dc->res_pool;
+	काष्ठा pipe_ctx *pipe_ctx = resource_get_head_pipe_क्रम_stream(
 				&context->res_ctx, stream);
 
-	if (!pipe_ctx)
-		return DC_ERROR_UNEXPECTED;
+	अगर (!pipe_ctx)
+		वापस DC_ERROR_UNEXPECTED;
 
-	if (dc_is_dp_signal(pipe_ctx->stream->signal)
-		|| pipe_ctx->stream->signal == SIGNAL_TYPE_VIRTUAL)
-		pipe_ctx->clock_source = pool->dp_clock_source;
-	else {
-		pipe_ctx->clock_source = NULL;
+	अगर (dc_is_dp_संकेत(pipe_ctx->stream->संकेत)
+		|| pipe_ctx->stream->संकेत == SIGNAL_TYPE_VIRTUAL)
+		pipe_ctx->घड़ी_source = pool->dp_घड़ी_source;
+	अन्यथा अणु
+		pipe_ctx->घड़ी_source = शून्य;
 
-		if (!dc->config.disable_disp_pll_sharing)
-			pipe_ctx->clock_source = resource_find_used_clk_src_for_sharing(
+		अगर (!dc->config.disable_disp_pll_sharing)
+			pipe_ctx->घड़ी_source = resource_find_used_clk_src_क्रम_sharing(
 				&context->res_ctx,
 				pipe_ctx);
 
-		if (pipe_ctx->clock_source == NULL)
-			pipe_ctx->clock_source =
-				dc_resource_find_first_free_pll(
+		अगर (pipe_ctx->घड़ी_source == शून्य)
+			pipe_ctx->घड़ी_source =
+				dc_resource_find_first_मुक्त_pll(
 					&context->res_ctx,
 					pool);
-	}
+	पूर्ण
 
-	if (pipe_ctx->clock_source == NULL)
-		return DC_NO_CLOCK_SOURCE_RESOURCE;
+	अगर (pipe_ctx->घड़ी_source == शून्य)
+		वापस DC_NO_CLOCK_SOURCE_RESOURCE;
 
-	resource_reference_clock_source(
+	resource_reference_घड़ी_source(
 		&context->res_ctx, pool,
-		pipe_ctx->clock_source);
+		pipe_ctx->घड़ी_source);
 
-	return DC_OK;
-}
+	वापस DC_OK;
+पूर्ण
 
 /*
- * Note: We need to disable output if clock sources change,
- * since bios does optimization and doesn't apply if changing
- * PHY when not already disabled.
+ * Note: We need to disable output अगर घड़ी sources change,
+ * since bios करोes optimization and करोesn't apply अगर changing
+ * PHY when not alपढ़ोy disabled.
  */
 bool pipe_need_reprogram(
-		struct pipe_ctx *pipe_ctx_old,
-		struct pipe_ctx *pipe_ctx)
-{
-	if (!pipe_ctx_old->stream)
-		return false;
+		काष्ठा pipe_ctx *pipe_ctx_old,
+		काष्ठा pipe_ctx *pipe_ctx)
+अणु
+	अगर (!pipe_ctx_old->stream)
+		वापस false;
 
-	if (pipe_ctx_old->stream->sink != pipe_ctx->stream->sink)
-		return true;
+	अगर (pipe_ctx_old->stream->sink != pipe_ctx->stream->sink)
+		वापस true;
 
-	if (pipe_ctx_old->stream->signal != pipe_ctx->stream->signal)
-		return true;
+	अगर (pipe_ctx_old->stream->संकेत != pipe_ctx->stream->संकेत)
+		वापस true;
 
-	if (pipe_ctx_old->stream_res.audio != pipe_ctx->stream_res.audio)
-		return true;
+	अगर (pipe_ctx_old->stream_res.audio != pipe_ctx->stream_res.audio)
+		वापस true;
 
-	if (pipe_ctx_old->clock_source != pipe_ctx->clock_source
+	अगर (pipe_ctx_old->घड़ी_source != pipe_ctx->घड़ी_source
 			&& pipe_ctx_old->stream != pipe_ctx->stream)
-		return true;
+		वापस true;
 
-	if (pipe_ctx_old->stream_res.stream_enc != pipe_ctx->stream_res.stream_enc)
-		return true;
+	अगर (pipe_ctx_old->stream_res.stream_enc != pipe_ctx->stream_res.stream_enc)
+		वापस true;
 
-	if (is_timing_changed(pipe_ctx_old->stream, pipe_ctx->stream))
-		return true;
+	अगर (is_timing_changed(pipe_ctx_old->stream, pipe_ctx->stream))
+		वापस true;
 
-	if (pipe_ctx_old->stream->dpms_off != pipe_ctx->stream->dpms_off)
-		return true;
+	अगर (pipe_ctx_old->stream->dpms_off != pipe_ctx->stream->dpms_off)
+		वापस true;
 
-	if (false == pipe_ctx_old->stream->link->link_state_valid &&
+	अगर (false == pipe_ctx_old->stream->link->link_state_valid &&
 		false == pipe_ctx_old->stream->dpms_off)
-		return true;
+		वापस true;
 
-	if (pipe_ctx_old->stream_res.dsc != pipe_ctx->stream_res.dsc)
-		return true;
+	अगर (pipe_ctx_old->stream_res.dsc != pipe_ctx->stream_res.dsc)
+		वापस true;
 
-	/* DIG link encoder resource assignment for stream changed. */
-	if (pipe_ctx_old->stream->link_enc != pipe_ctx->stream->link_enc)
-		return true;
+	/* DIG link encoder resource assignment क्रम stream changed. */
+	अगर (pipe_ctx_old->stream->link_enc != pipe_ctx->stream->link_enc)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void resource_build_bit_depth_reduction_params(struct dc_stream_state *stream,
-		struct bit_depth_reduction_params *fmt_bit_depth)
-{
-	enum dc_dither_option option = stream->dither_option;
-	enum dc_pixel_encoding pixel_encoding =
+व्योम resource_build_bit_depth_reduction_params(काष्ठा dc_stream_state *stream,
+		काष्ठा bit_depth_reduction_params *fmt_bit_depth)
+अणु
+	क्रमागत dc_dither_option option = stream->dither_option;
+	क्रमागत dc_pixel_encoding pixel_encoding =
 			stream->timing.pixel_encoding;
 
-	memset(fmt_bit_depth, 0, sizeof(*fmt_bit_depth));
+	स_रखो(fmt_bit_depth, 0, माप(*fmt_bit_depth));
 
-	if (option == DITHER_OPTION_DEFAULT) {
-		switch (stream->timing.display_color_depth) {
-		case COLOR_DEPTH_666:
+	अगर (option == DITHER_OPTION_DEFAULT) अणु
+		चयन (stream->timing.display_color_depth) अणु
+		हाल COLOR_DEPTH_666:
 			option = DITHER_OPTION_SPATIAL6;
-			break;
-		case COLOR_DEPTH_888:
+			अवरोध;
+		हाल COLOR_DEPTH_888:
 			option = DITHER_OPTION_SPATIAL8;
-			break;
-		case COLOR_DEPTH_101010:
+			अवरोध;
+		हाल COLOR_DEPTH_101010:
 			option = DITHER_OPTION_SPATIAL10;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			option = DITHER_OPTION_DISABLE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (option == DITHER_OPTION_DISABLE)
-		return;
+	अगर (option == DITHER_OPTION_DISABLE)
+		वापस;
 
-	if (option == DITHER_OPTION_TRUN6) {
+	अगर (option == DITHER_OPTION_TRUN6) अणु
 		fmt_bit_depth->flags.TRUNCATE_ENABLED = 1;
 		fmt_bit_depth->flags.TRUNCATE_DEPTH = 0;
-	} else if (option == DITHER_OPTION_TRUN8 ||
+	पूर्ण अन्यथा अगर (option == DITHER_OPTION_TRUN8 ||
 			option == DITHER_OPTION_TRUN8_SPATIAL6 ||
-			option == DITHER_OPTION_TRUN8_FM6) {
+			option == DITHER_OPTION_TRUN8_FM6) अणु
 		fmt_bit_depth->flags.TRUNCATE_ENABLED = 1;
 		fmt_bit_depth->flags.TRUNCATE_DEPTH = 1;
-	} else if (option == DITHER_OPTION_TRUN10        ||
+	पूर्ण अन्यथा अगर (option == DITHER_OPTION_TRUN10        ||
 			option == DITHER_OPTION_TRUN10_SPATIAL6   ||
 			option == DITHER_OPTION_TRUN10_SPATIAL8   ||
 			option == DITHER_OPTION_TRUN10_FM8     ||
 			option == DITHER_OPTION_TRUN10_FM6     ||
-			option == DITHER_OPTION_TRUN10_SPATIAL8_FM6) {
+			option == DITHER_OPTION_TRUN10_SPATIAL8_FM6) अणु
 		fmt_bit_depth->flags.TRUNCATE_ENABLED = 1;
 		fmt_bit_depth->flags.TRUNCATE_DEPTH = 2;
-	}
+	पूर्ण
 
-	/* special case - Formatter can only reduce by 4 bits at most.
+	/* special हाल - Formatter can only reduce by 4 bits at most.
 	 * When reducing from 12 to 6 bits,
 	 * HW recommends we use trunc with round mode
-	 * (if we did nothing, trunc to 10 bits would be used)
+	 * (अगर we did nothing, trunc to 10 bits would be used)
 	 * note that any 12->10 bit reduction is ignored prior to DCE8,
 	 * as the input was 10 bits.
 	 */
-	if (option == DITHER_OPTION_SPATIAL6_FRAME_RANDOM ||
+	अगर (option == DITHER_OPTION_SPATIAL6_FRAME_RANDOM ||
 			option == DITHER_OPTION_SPATIAL6 ||
-			option == DITHER_OPTION_FM6) {
+			option == DITHER_OPTION_FM6) अणु
 		fmt_bit_depth->flags.TRUNCATE_ENABLED = 1;
 		fmt_bit_depth->flags.TRUNCATE_DEPTH = 2;
 		fmt_bit_depth->flags.TRUNCATE_MODE = 1;
-	}
+	पूर्ण
 
 	/* spatial dither
 	 * note that spatial modes 1-3 are never used
 	 */
-	if (option == DITHER_OPTION_SPATIAL6_FRAME_RANDOM            ||
+	अगर (option == DITHER_OPTION_SPATIAL6_FRAME_RANDOM            ||
 			option == DITHER_OPTION_SPATIAL6 ||
 			option == DITHER_OPTION_TRUN10_SPATIAL6      ||
-			option == DITHER_OPTION_TRUN8_SPATIAL6) {
+			option == DITHER_OPTION_TRUN8_SPATIAL6) अणु
 		fmt_bit_depth->flags.SPATIAL_DITHER_ENABLED = 1;
 		fmt_bit_depth->flags.SPATIAL_DITHER_DEPTH = 0;
 		fmt_bit_depth->flags.HIGHPASS_RANDOM = 1;
 		fmt_bit_depth->flags.RGB_RANDOM =
 				(pixel_encoding == PIXEL_ENCODING_RGB) ? 1 : 0;
-	} else if (option == DITHER_OPTION_SPATIAL8_FRAME_RANDOM            ||
+	पूर्ण अन्यथा अगर (option == DITHER_OPTION_SPATIAL8_FRAME_RANDOM            ||
 			option == DITHER_OPTION_SPATIAL8 ||
 			option == DITHER_OPTION_SPATIAL8_FM6        ||
 			option == DITHER_OPTION_TRUN10_SPATIAL8      ||
-			option == DITHER_OPTION_TRUN10_SPATIAL8_FM6) {
+			option == DITHER_OPTION_TRUN10_SPATIAL8_FM6) अणु
 		fmt_bit_depth->flags.SPATIAL_DITHER_ENABLED = 1;
 		fmt_bit_depth->flags.SPATIAL_DITHER_DEPTH = 1;
 		fmt_bit_depth->flags.HIGHPASS_RANDOM = 1;
 		fmt_bit_depth->flags.RGB_RANDOM =
 				(pixel_encoding == PIXEL_ENCODING_RGB) ? 1 : 0;
-	} else if (option == DITHER_OPTION_SPATIAL10_FRAME_RANDOM ||
+	पूर्ण अन्यथा अगर (option == DITHER_OPTION_SPATIAL10_FRAME_RANDOM ||
 			option == DITHER_OPTION_SPATIAL10 ||
 			option == DITHER_OPTION_SPATIAL10_FM8 ||
-			option == DITHER_OPTION_SPATIAL10_FM6) {
+			option == DITHER_OPTION_SPATIAL10_FM6) अणु
 		fmt_bit_depth->flags.SPATIAL_DITHER_ENABLED = 1;
 		fmt_bit_depth->flags.SPATIAL_DITHER_DEPTH = 2;
 		fmt_bit_depth->flags.HIGHPASS_RANDOM = 1;
 		fmt_bit_depth->flags.RGB_RANDOM =
 				(pixel_encoding == PIXEL_ENCODING_RGB) ? 1 : 0;
-	}
+	पूर्ण
 
-	if (option == DITHER_OPTION_SPATIAL6 ||
+	अगर (option == DITHER_OPTION_SPATIAL6 ||
 			option == DITHER_OPTION_SPATIAL8 ||
-			option == DITHER_OPTION_SPATIAL10) {
+			option == DITHER_OPTION_SPATIAL10) अणु
 		fmt_bit_depth->flags.FRAME_RANDOM = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		fmt_bit_depth->flags.FRAME_RANDOM = 1;
-	}
+	पूर्ण
 
 	//////////////////////
 	//// temporal dither
 	//////////////////////
-	if (option == DITHER_OPTION_FM6           ||
+	अगर (option == DITHER_OPTION_FM6           ||
 			option == DITHER_OPTION_SPATIAL8_FM6     ||
 			option == DITHER_OPTION_SPATIAL10_FM6     ||
 			option == DITHER_OPTION_TRUN10_FM6     ||
 			option == DITHER_OPTION_TRUN8_FM6      ||
-			option == DITHER_OPTION_TRUN10_SPATIAL8_FM6) {
+			option == DITHER_OPTION_TRUN10_SPATIAL8_FM6) अणु
 		fmt_bit_depth->flags.FRAME_MODULATION_ENABLED = 1;
 		fmt_bit_depth->flags.FRAME_MODULATION_DEPTH = 0;
-	} else if (option == DITHER_OPTION_FM8        ||
+	पूर्ण अन्यथा अगर (option == DITHER_OPTION_FM8        ||
 			option == DITHER_OPTION_SPATIAL10_FM8  ||
-			option == DITHER_OPTION_TRUN10_FM8) {
+			option == DITHER_OPTION_TRUN10_FM8) अणु
 		fmt_bit_depth->flags.FRAME_MODULATION_ENABLED = 1;
 		fmt_bit_depth->flags.FRAME_MODULATION_DEPTH = 1;
-	} else if (option == DITHER_OPTION_FM10) {
+	पूर्ण अन्यथा अगर (option == DITHER_OPTION_FM10) अणु
 		fmt_bit_depth->flags.FRAME_MODULATION_ENABLED = 1;
 		fmt_bit_depth->flags.FRAME_MODULATION_DEPTH = 2;
-	}
+	पूर्ण
 
 	fmt_bit_depth->pixel_encoding = pixel_encoding;
-}
+पूर्ण
 
-enum dc_status dc_validate_stream(struct dc *dc, struct dc_stream_state *stream)
-{
-	struct dc_link *link = stream->link;
-	struct timing_generator *tg = dc->res_pool->timing_generators[0];
-	enum dc_status res = DC_OK;
+क्रमागत dc_status dc_validate_stream(काष्ठा dc *dc, काष्ठा dc_stream_state *stream)
+अणु
+	काष्ठा dc_link *link = stream->link;
+	काष्ठा timing_generator *tg = dc->res_pool->timing_generators[0];
+	क्रमागत dc_status res = DC_OK;
 
 	calculate_phy_pix_clks(stream);
 
-	if (!tg->funcs->validate_timing(tg, &stream->timing))
+	अगर (!tg->funcs->validate_timing(tg, &stream->timing))
 		res = DC_FAIL_CONTROLLER_VALIDATE;
 
-	if (res == DC_OK) {
-		if (!link->link_enc->funcs->validate_output_with_stream(
+	अगर (res == DC_OK) अणु
+		अगर (!link->link_enc->funcs->validate_output_with_stream(
 						link->link_enc, stream))
 			res = DC_FAIL_ENC_VALIDATE;
-	}
+	पूर्ण
 
 	/* TODO: validate audio ASIC caps, encoder */
 
-	if (res == DC_OK)
+	अगर (res == DC_OK)
 		res = dc_link_validate_mode_timing(stream,
 		      link,
 		      &stream->timing);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-enum dc_status dc_validate_plane(struct dc *dc, const struct dc_plane_state *plane_state)
-{
-	enum dc_status res = DC_OK;
+क्रमागत dc_status dc_validate_plane(काष्ठा dc *dc, स्थिर काष्ठा dc_plane_state *plane_state)
+अणु
+	क्रमागत dc_status res = DC_OK;
 
-	/* TODO For now validates pixel format only */
-	if (dc->res_pool->funcs->validate_plane)
-		return dc->res_pool->funcs->validate_plane(plane_state, &dc->caps);
+	/* TODO For now validates pixel क्रमmat only */
+	अगर (dc->res_pool->funcs->validate_plane)
+		वापस dc->res_pool->funcs->validate_plane(plane_state, &dc->caps);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-unsigned int resource_pixel_format_to_bpp(enum surface_pixel_format format)
-{
-	switch (format) {
-	case SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS:
-		return 8;
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
-		return 12;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB1555:
-	case SURFACE_PIXEL_FORMAT_GRPH_RGB565:
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCbCr:
-	case SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCrCb:
-		return 16;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS:
-#if defined(CONFIG_DRM_AMD_DC_DCN)
-	case SURFACE_PIXEL_FORMAT_GRPH_RGBE:
-	case SURFACE_PIXEL_FORMAT_GRPH_RGBE_ALPHA:
-#endif
-		return 32;
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
-	case SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
-	case SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
-		return 64;
-	default:
+अचिन्हित पूर्णांक resource_pixel_क्रमmat_to_bpp(क्रमागत surface_pixel_क्रमmat क्रमmat)
+अणु
+	चयन (क्रमmat) अणु
+	हाल SURFACE_PIXEL_FORMAT_GRPH_PALETA_256_COLORS:
+		वापस 8;
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCbCr:
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_YCrCb:
+		वापस 12;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB1555:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_RGB565:
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCbCr:
+	हाल SURFACE_PIXEL_FORMAT_VIDEO_420_10bpc_YCrCb:
+		वापस 16;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB8888:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR8888:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB2101010:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR2101010_XR_BIAS:
+#अगर defined(CONFIG_DRM_AMD_DC_DCN)
+	हाल SURFACE_PIXEL_FORMAT_GRPH_RGBE:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_RGBE_ALPHA:
+#पूर्ण_अगर
+		वापस 32;
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ARGB16161616F:
+	हाल SURFACE_PIXEL_FORMAT_GRPH_ABGR16161616F:
+		वापस 64;
+	शेष:
 		ASSERT_CRITICAL(false);
-		return -1;
-	}
-}
-static unsigned int get_max_audio_sample_rate(struct audio_mode *modes)
-{
-	if (modes) {
-		if (modes->sample_rates.rate.RATE_192)
-			return 192000;
-		if (modes->sample_rates.rate.RATE_176_4)
-			return 176400;
-		if (modes->sample_rates.rate.RATE_96)
-			return 96000;
-		if (modes->sample_rates.rate.RATE_88_2)
-			return 88200;
-		if (modes->sample_rates.rate.RATE_48)
-			return 48000;
-		if (modes->sample_rates.rate.RATE_44_1)
-			return 44100;
-		if (modes->sample_rates.rate.RATE_32)
-			return 32000;
-	}
+		वापस -1;
+	पूर्ण
+पूर्ण
+अटल अचिन्हित पूर्णांक get_max_audio_sample_rate(काष्ठा audio_mode *modes)
+अणु
+	अगर (modes) अणु
+		अगर (modes->sample_rates.rate.RATE_192)
+			वापस 192000;
+		अगर (modes->sample_rates.rate.RATE_176_4)
+			वापस 176400;
+		अगर (modes->sample_rates.rate.RATE_96)
+			वापस 96000;
+		अगर (modes->sample_rates.rate.RATE_88_2)
+			वापस 88200;
+		अगर (modes->sample_rates.rate.RATE_48)
+			वापस 48000;
+		अगर (modes->sample_rates.rate.RATE_44_1)
+			वापस 44100;
+		अगर (modes->sample_rates.rate.RATE_32)
+			वापस 32000;
+	पूर्ण
 	/*original logic when no audio info*/
-	return 441000;
-}
+	वापस 441000;
+पूर्ण
 
-void get_audio_check(struct audio_info *aud_modes,
-	struct audio_check *audio_chk)
-{
-	unsigned int i;
-	unsigned int max_sample_rate = 0;
+व्योम get_audio_check(काष्ठा audio_info *aud_modes,
+	काष्ठा audio_check *audio_chk)
+अणु
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक max_sample_rate = 0;
 
-	if (aud_modes) {
-		audio_chk->audio_packet_type = 0x2;/*audio sample packet AP = .25 for layout0, 1 for layout1*/
+	अगर (aud_modes) अणु
+		audio_chk->audio_packet_type = 0x2;/*audio sample packet AP = .25 क्रम layout0, 1 क्रम layout1*/
 
 		audio_chk->max_audiosample_rate = 0;
-		for (i = 0; i < aud_modes->mode_count; i++) {
+		क्रम (i = 0; i < aud_modes->mode_count; i++) अणु
 			max_sample_rate = get_max_audio_sample_rate(&aud_modes->modes[i]);
-			if (audio_chk->max_audiosample_rate < max_sample_rate)
+			अगर (audio_chk->max_audiosample_rate < max_sample_rate)
 				audio_chk->max_audiosample_rate = max_sample_rate;
 			/*dts takes the same as type 2: AP = 0.25*/
-		}
+		पूर्ण
 		/*check which one take more bandwidth*/
-		if (audio_chk->max_audiosample_rate > 192000)
+		अगर (audio_chk->max_audiosample_rate > 192000)
 			audio_chk->audio_packet_type = 0x9;/*AP =1*/
 		audio_chk->acat = 0;/*not support*/
-	}
-}
+	पूर्ण
+पूर्ण
 

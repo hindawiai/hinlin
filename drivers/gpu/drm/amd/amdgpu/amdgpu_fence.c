@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2009 Jerome Glisse.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,126 +26,126 @@
  */
 /*
  * Authors:
- *    Jerome Glisse <glisse@freedesktop.org>
+ *    Jerome Glisse <glisse@मुक्तdesktop.org>
  *    Dave Airlie
  */
-#include <linux/seq_file.h>
-#include <linux/atomic.h>
-#include <linux/wait.h>
-#include <linux/kref.h>
-#include <linux/slab.h>
-#include <linux/firmware.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "amdgpu.h"
-#include "amdgpu_trace.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_trace.h"
 
 /*
  * Fences
  * Fences mark an event in the GPUs pipeline and are used
- * for GPU/CPU synchronization.  When the fence is written,
+ * क्रम GPU/CPU synchronization.  When the fence is written,
  * it is expected that all buffers associated with that fence
- * are no longer in use by the associated ring on the GPU and
+ * are no दीर्घer in use by the associated ring on the GPU and
  * that the the relevant GPU caches have been flushed.
  */
 
-struct amdgpu_fence {
-	struct dma_fence base;
+काष्ठा amdgpu_fence अणु
+	काष्ठा dma_fence base;
 
 	/* RB, DMA, etc. */
-	struct amdgpu_ring		*ring;
-};
+	काष्ठा amdgpu_ring		*ring;
+पूर्ण;
 
-static struct kmem_cache *amdgpu_fence_slab;
+अटल काष्ठा kmem_cache *amdgpu_fence_slab;
 
-int amdgpu_fence_slab_init(void)
-{
+पूर्णांक amdgpu_fence_slab_init(व्योम)
+अणु
 	amdgpu_fence_slab = kmem_cache_create(
-		"amdgpu_fence", sizeof(struct amdgpu_fence), 0,
-		SLAB_HWCACHE_ALIGN, NULL);
-	if (!amdgpu_fence_slab)
-		return -ENOMEM;
-	return 0;
-}
+		"amdgpu_fence", माप(काष्ठा amdgpu_fence), 0,
+		SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!amdgpu_fence_slab)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void amdgpu_fence_slab_fini(void)
-{
+व्योम amdgpu_fence_slab_fini(व्योम)
+अणु
 	rcu_barrier();
 	kmem_cache_destroy(amdgpu_fence_slab);
-}
+पूर्ण
 /*
  * Cast helper
  */
-static const struct dma_fence_ops amdgpu_fence_ops;
-static inline struct amdgpu_fence *to_amdgpu_fence(struct dma_fence *f)
-{
-	struct amdgpu_fence *__f = container_of(f, struct amdgpu_fence, base);
+अटल स्थिर काष्ठा dma_fence_ops amdgpu_fence_ops;
+अटल अंतरभूत काष्ठा amdgpu_fence *to_amdgpu_fence(काष्ठा dma_fence *f)
+अणु
+	काष्ठा amdgpu_fence *__f = container_of(f, काष्ठा amdgpu_fence, base);
 
-	if (__f->base.ops == &amdgpu_fence_ops)
-		return __f;
+	अगर (__f->base.ops == &amdgpu_fence_ops)
+		वापस __f;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * amdgpu_fence_write - write a fence value
+ * amdgpu_fence_ग_लिखो - ग_लिखो a fence value
  *
  * @ring: ring the fence is associated with
- * @seq: sequence number to write
+ * @seq: sequence number to ग_लिखो
  *
  * Writes a fence value to memory (all asics).
  */
-static void amdgpu_fence_write(struct amdgpu_ring *ring, u32 seq)
-{
-	struct amdgpu_fence_driver *drv = &ring->fence_drv;
+अटल व्योम amdgpu_fence_ग_लिखो(काष्ठा amdgpu_ring *ring, u32 seq)
+अणु
+	काष्ठा amdgpu_fence_driver *drv = &ring->fence_drv;
 
-	if (drv->cpu_addr)
+	अगर (drv->cpu_addr)
 		*drv->cpu_addr = cpu_to_le32(seq);
-}
+पूर्ण
 
 /**
- * amdgpu_fence_read - read a fence value
+ * amdgpu_fence_पढ़ो - पढ़ो a fence value
  *
  * @ring: ring the fence is associated with
  *
  * Reads a fence value from memory (all asics).
- * Returns the value of the fence read from memory.
+ * Returns the value of the fence पढ़ो from memory.
  */
-static u32 amdgpu_fence_read(struct amdgpu_ring *ring)
-{
-	struct amdgpu_fence_driver *drv = &ring->fence_drv;
+अटल u32 amdgpu_fence_पढ़ो(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_fence_driver *drv = &ring->fence_drv;
 	u32 seq = 0;
 
-	if (drv->cpu_addr)
+	अगर (drv->cpu_addr)
 		seq = le32_to_cpu(*drv->cpu_addr);
-	else
-		seq = atomic_read(&drv->last_seq);
+	अन्यथा
+		seq = atomic_पढ़ो(&drv->last_seq);
 
-	return seq;
-}
+	वापस seq;
+पूर्ण
 
 /**
  * amdgpu_fence_emit - emit a fence on the requested ring
  *
  * @ring: ring the fence is associated with
  * @f: resulting fence object
- * @flags: flags to pass into the subordinate .emit_fence() call
+ * @flags: flags to pass पूर्णांकo the subordinate .emit_fence() call
  *
  * Emits a fence command on the requested ring (all asics).
  * Returns 0 on success, -ENOMEM on failure.
  */
-int amdgpu_fence_emit(struct amdgpu_ring *ring, struct dma_fence **f,
-		      unsigned flags)
-{
-	struct amdgpu_device *adev = ring->adev;
-	struct amdgpu_fence *fence;
-	struct dma_fence __rcu **ptr;
-	uint32_t seq;
-	int r;
+पूर्णांक amdgpu_fence_emit(काष्ठा amdgpu_ring *ring, काष्ठा dma_fence **f,
+		      अचिन्हित flags)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	काष्ठा amdgpu_fence *fence;
+	काष्ठा dma_fence __rcu **ptr;
+	uपूर्णांक32_t seq;
+	पूर्णांक r;
 
 	fence = kmem_cache_alloc(amdgpu_fence_slab, GFP_KERNEL);
-	if (fence == NULL)
-		return -ENOMEM;
+	अगर (fence == शून्य)
+		वापस -ENOMEM;
 
 	seq = ++ring->fence_drv.sync_seq;
 	fence->ring = ring;
@@ -154,214 +155,214 @@ int amdgpu_fence_emit(struct amdgpu_ring *ring, struct dma_fence **f,
 		       seq);
 	amdgpu_ring_emit_fence(ring, ring->fence_drv.gpu_addr,
 			       seq, flags | AMDGPU_FENCE_FLAG_INT);
-	pm_runtime_get_noresume(adev_to_drm(adev)->dev);
+	pm_runसमय_get_noresume(adev_to_drm(adev)->dev);
 	ptr = &ring->fence_drv.fences[seq & ring->fence_drv.num_fences_mask];
-	if (unlikely(rcu_dereference_protected(*ptr, 1))) {
-		struct dma_fence *old;
+	अगर (unlikely(rcu_dereference_रक्षित(*ptr, 1))) अणु
+		काष्ठा dma_fence *old;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		old = dma_fence_get_rcu_safe(ptr);
-		rcu_read_unlock();
+		rcu_पढ़ो_unlock();
 
-		if (old) {
-			r = dma_fence_wait(old, false);
+		अगर (old) अणु
+			r = dma_fence_रुको(old, false);
 			dma_fence_put(old);
-			if (r)
-				return r;
-		}
-	}
+			अगर (r)
+				वापस r;
+		पूर्ण
+	पूर्ण
 
 	/* This function can't be called concurrently anyway, otherwise
 	 * emitting the fence would mess up the hardware ring buffer.
 	 */
-	rcu_assign_pointer(*ptr, dma_fence_get(&fence->base));
+	rcu_assign_poपूर्णांकer(*ptr, dma_fence_get(&fence->base));
 
 	*f = &fence->base;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_fence_emit_polling - emit a fence on the requeste ring
  *
  * @ring: ring the fence is associated with
  * @s: resulting sequence number
- * @timeout: the timeout for waiting in usecs
+ * @समयout: the समयout क्रम रुकोing in usecs
  *
  * Emits a fence command on the requested ring (all asics).
  * Used For polling fence.
  * Returns 0 on success, -ENOMEM on failure.
  */
-int amdgpu_fence_emit_polling(struct amdgpu_ring *ring, uint32_t *s,
-			      uint32_t timeout)
-{
-	uint32_t seq;
-	signed long r;
+पूर्णांक amdgpu_fence_emit_polling(काष्ठा amdgpu_ring *ring, uपूर्णांक32_t *s,
+			      uपूर्णांक32_t समयout)
+अणु
+	uपूर्णांक32_t seq;
+	चिन्हित दीर्घ r;
 
-	if (!s)
-		return -EINVAL;
+	अगर (!s)
+		वापस -EINVAL;
 
 	seq = ++ring->fence_drv.sync_seq;
-	r = amdgpu_fence_wait_polling(ring,
+	r = amdgpu_fence_रुको_polling(ring,
 				      seq - ring->fence_drv.num_fences_mask,
-				      timeout);
-	if (r < 1)
-		return -ETIMEDOUT;
+				      समयout);
+	अगर (r < 1)
+		वापस -ETIMEDOUT;
 
 	amdgpu_ring_emit_fence(ring, ring->fence_drv.gpu_addr,
 			       seq, 0);
 
 	*s = seq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_fence_schedule_fallback - schedule fallback check
  *
- * @ring: pointer to struct amdgpu_ring
+ * @ring: poपूर्णांकer to काष्ठा amdgpu_ring
  *
- * Start a timer as fallback to our interrupts.
+ * Start a समयr as fallback to our पूर्णांकerrupts.
  */
-static void amdgpu_fence_schedule_fallback(struct amdgpu_ring *ring)
-{
-	mod_timer(&ring->fence_drv.fallback_timer,
-		  jiffies + AMDGPU_FENCE_JIFFIES_TIMEOUT);
-}
+अटल व्योम amdgpu_fence_schedule_fallback(काष्ठा amdgpu_ring *ring)
+अणु
+	mod_समयr(&ring->fence_drv.fallback_समयr,
+		  jअगरfies + AMDGPU_FENCE_JIFFIES_TIMEOUT);
+पूर्ण
 
 /**
- * amdgpu_fence_process - check for fence activity
+ * amdgpu_fence_process - check क्रम fence activity
  *
- * @ring: pointer to struct amdgpu_ring
+ * @ring: poपूर्णांकer to काष्ठा amdgpu_ring
  *
  * Checks the current fence value and calculates the last
- * signalled fence value. Wakes the fence queue if the
+ * संकेतled fence value. Wakes the fence queue अगर the
  * sequence number has increased.
  *
- * Returns true if fence was processed
+ * Returns true अगर fence was processed
  */
-bool amdgpu_fence_process(struct amdgpu_ring *ring)
-{
-	struct amdgpu_fence_driver *drv = &ring->fence_drv;
-	struct amdgpu_device *adev = ring->adev;
-	uint32_t seq, last_seq;
-	int r;
+bool amdgpu_fence_process(काष्ठा amdgpu_ring *ring)
+अणु
+	काष्ठा amdgpu_fence_driver *drv = &ring->fence_drv;
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक32_t seq, last_seq;
+	पूर्णांक r;
 
-	do {
-		last_seq = atomic_read(&ring->fence_drv.last_seq);
-		seq = amdgpu_fence_read(ring);
+	करो अणु
+		last_seq = atomic_पढ़ो(&ring->fence_drv.last_seq);
+		seq = amdgpu_fence_पढ़ो(ring);
 
-	} while (atomic_cmpxchg(&drv->last_seq, last_seq, seq) != last_seq);
+	पूर्ण जबतक (atomic_cmpxchg(&drv->last_seq, last_seq, seq) != last_seq);
 
-	if (del_timer(&ring->fence_drv.fallback_timer) &&
+	अगर (del_समयr(&ring->fence_drv.fallback_समयr) &&
 	    seq != ring->fence_drv.sync_seq)
 		amdgpu_fence_schedule_fallback(ring);
 
-	if (unlikely(seq == last_seq))
-		return false;
+	अगर (unlikely(seq == last_seq))
+		वापस false;
 
 	last_seq &= drv->num_fences_mask;
 	seq &= drv->num_fences_mask;
 
-	do {
-		struct dma_fence *fence, **ptr;
+	करो अणु
+		काष्ठा dma_fence *fence, **ptr;
 
 		++last_seq;
 		last_seq &= drv->num_fences_mask;
 		ptr = &drv->fences[last_seq];
 
-		/* There is always exactly one thread signaling this fence slot */
-		fence = rcu_dereference_protected(*ptr, 1);
-		RCU_INIT_POINTER(*ptr, NULL);
+		/* There is always exactly one thपढ़ो संकेतing this fence slot */
+		fence = rcu_dereference_रक्षित(*ptr, 1);
+		RCU_INIT_POINTER(*ptr, शून्य);
 
-		if (!fence)
-			continue;
+		अगर (!fence)
+			जारी;
 
-		r = dma_fence_signal(fence);
-		if (!r)
+		r = dma_fence_संकेत(fence);
+		अगर (!r)
 			DMA_FENCE_TRACE(fence, "signaled from irq context\n");
-		else
+		अन्यथा
 			BUG();
 
 		dma_fence_put(fence);
-		pm_runtime_mark_last_busy(adev_to_drm(adev)->dev);
-		pm_runtime_put_autosuspend(adev_to_drm(adev)->dev);
-	} while (last_seq != seq);
+		pm_runसमय_mark_last_busy(adev_to_drm(adev)->dev);
+		pm_runसमय_put_स्वतःsuspend(adev_to_drm(adev)->dev);
+	पूर्ण जबतक (last_seq != seq);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * amdgpu_fence_fallback - fallback for hardware interrupts
+ * amdgpu_fence_fallback - fallback क्रम hardware पूर्णांकerrupts
  *
- * @t: timer context used to obtain the pointer to ring structure
+ * @t: समयr context used to obtain the poपूर्णांकer to ring काष्ठाure
  *
- * Checks for fence activity.
+ * Checks क्रम fence activity.
  */
-static void amdgpu_fence_fallback(struct timer_list *t)
-{
-	struct amdgpu_ring *ring = from_timer(ring, t,
-					      fence_drv.fallback_timer);
+अटल व्योम amdgpu_fence_fallback(काष्ठा समयr_list *t)
+अणु
+	काष्ठा amdgpu_ring *ring = from_समयr(ring, t,
+					      fence_drv.fallback_समयr);
 
-	if (amdgpu_fence_process(ring))
+	अगर (amdgpu_fence_process(ring))
 		DRM_WARN("Fence fallback timer expired on ring %s\n", ring->name);
-}
+पूर्ण
 
 /**
- * amdgpu_fence_wait_empty - wait for all fences to signal
+ * amdgpu_fence_रुको_empty - रुको क्रम all fences to संकेत
  *
  * @ring: ring index the fence is associated with
  *
- * Wait for all fences on the requested ring to signal (all asics).
- * Returns 0 if the fences have passed, error for all other cases.
+ * Wait क्रम all fences on the requested ring to संकेत (all asics).
+ * Returns 0 अगर the fences have passed, error क्रम all other हालs.
  */
-int amdgpu_fence_wait_empty(struct amdgpu_ring *ring)
-{
-	uint64_t seq = READ_ONCE(ring->fence_drv.sync_seq);
-	struct dma_fence *fence, **ptr;
-	int r;
+पूर्णांक amdgpu_fence_रुको_empty(काष्ठा amdgpu_ring *ring)
+अणु
+	uपूर्णांक64_t seq = READ_ONCE(ring->fence_drv.sync_seq);
+	काष्ठा dma_fence *fence, **ptr;
+	पूर्णांक r;
 
-	if (!seq)
-		return 0;
+	अगर (!seq)
+		वापस 0;
 
 	ptr = &ring->fence_drv.fences[seq & ring->fence_drv.num_fences_mask];
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	fence = rcu_dereference(*ptr);
-	if (!fence || !dma_fence_get_rcu(fence)) {
-		rcu_read_unlock();
-		return 0;
-	}
-	rcu_read_unlock();
+	अगर (!fence || !dma_fence_get_rcu(fence)) अणु
+		rcu_पढ़ो_unlock();
+		वापस 0;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	r = dma_fence_wait(fence, false);
+	r = dma_fence_रुको(fence, false);
 	dma_fence_put(fence);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- * amdgpu_fence_wait_polling - busy wait for givn sequence number
+ * amdgpu_fence_रुको_polling - busy रुको क्रम givn sequence number
  *
  * @ring: ring index the fence is associated with
- * @wait_seq: sequence number to wait
- * @timeout: the timeout for waiting in usecs
+ * @रुको_seq: sequence number to रुको
+ * @समयout: the समयout क्रम रुकोing in usecs
  *
- * Wait for all fences on the requested ring to signal (all asics).
- * Returns left time if no timeout, 0 or minus if timeout.
+ * Wait क्रम all fences on the requested ring to संकेत (all asics).
+ * Returns left समय अगर no समयout, 0 or minus अगर समयout.
  */
-signed long amdgpu_fence_wait_polling(struct amdgpu_ring *ring,
-				      uint32_t wait_seq,
-				      signed long timeout)
-{
-	uint32_t seq;
+चिन्हित दीर्घ amdgpu_fence_रुको_polling(काष्ठा amdgpu_ring *ring,
+				      uपूर्णांक32_t रुको_seq,
+				      चिन्हित दीर्घ समयout)
+अणु
+	uपूर्णांक32_t seq;
 
-	do {
-		seq = amdgpu_fence_read(ring);
+	करो अणु
+		seq = amdgpu_fence_पढ़ो(ring);
 		udelay(5);
-		timeout -= 5;
-	} while ((int32_t)(wait_seq - seq) > 0 && timeout > 0);
+		समयout -= 5;
+	पूर्ण जबतक ((पूर्णांक32_t)(रुको_seq - seq) > 0 && समयout > 0);
 
-	return timeout > 0 ? timeout : 0;
-}
+	वापस समयout > 0 ? समयout : 0;
+पूर्ण
 /**
  * amdgpu_fence_count_emitted - get the count of emitted fences
  *
@@ -371,52 +372,52 @@ signed long amdgpu_fence_wait_polling(struct amdgpu_ring *ring,
  * Returns the number of emitted fences on the ring.  Used by the
  * dynpm code to ring track activity.
  */
-unsigned amdgpu_fence_count_emitted(struct amdgpu_ring *ring)
-{
-	uint64_t emitted;
+अचिन्हित amdgpu_fence_count_emitted(काष्ठा amdgpu_ring *ring)
+अणु
+	uपूर्णांक64_t emitted;
 
-	/* We are not protected by ring lock when reading the last sequence
+	/* We are not रक्षित by ring lock when पढ़ोing the last sequence
 	 * but it's ok to report slightly wrong fence count here.
 	 */
 	amdgpu_fence_process(ring);
 	emitted = 0x100000000ull;
-	emitted -= atomic_read(&ring->fence_drv.last_seq);
+	emitted -= atomic_पढ़ो(&ring->fence_drv.last_seq);
 	emitted += READ_ONCE(ring->fence_drv.sync_seq);
-	return lower_32_bits(emitted);
-}
+	वापस lower_32_bits(emitted);
+पूर्ण
 
 /**
  * amdgpu_fence_driver_start_ring - make the fence driver
- * ready for use on the requested ring.
+ * पढ़ोy क्रम use on the requested ring.
  *
  * @ring: ring to start the fence driver on
- * @irq_src: interrupt source to use for this ring
- * @irq_type: interrupt type to use for this ring
+ * @irq_src: पूर्णांकerrupt source to use क्रम this ring
+ * @irq_type: पूर्णांकerrupt type to use क्रम this ring
  *
- * Make the fence driver ready for processing (all asics).
+ * Make the fence driver पढ़ोy क्रम processing (all asics).
  * Not all asics have all rings, so each asic will only
  * start the fence driver on the rings it has.
- * Returns 0 for success, errors for failure.
+ * Returns 0 क्रम success, errors क्रम failure.
  */
-int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
-				   struct amdgpu_irq_src *irq_src,
-				   unsigned irq_type)
-{
-	struct amdgpu_device *adev = ring->adev;
-	uint64_t index;
+पूर्णांक amdgpu_fence_driver_start_ring(काष्ठा amdgpu_ring *ring,
+				   काष्ठा amdgpu_irq_src *irq_src,
+				   अचिन्हित irq_type)
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	uपूर्णांक64_t index;
 
-	if (ring->funcs->type != AMDGPU_RING_TYPE_UVD) {
+	अगर (ring->funcs->type != AMDGPU_RING_TYPE_UVD) अणु
 		ring->fence_drv.cpu_addr = &adev->wb.wb[ring->fence_offs];
 		ring->fence_drv.gpu_addr = adev->wb.gpu_addr + (ring->fence_offs * 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* put fence directly behind firmware */
 		index = ALIGN(adev->uvd.fw->size, 8);
 		ring->fence_drv.cpu_addr = adev->uvd.inst[ring->me].cpu_addr + index;
 		ring->fence_drv.gpu_addr = adev->uvd.inst[ring->me].gpu_addr + index;
-	}
-	amdgpu_fence_write(ring, atomic_read(&ring->fence_drv.last_seq));
+	पूर्ण
+	amdgpu_fence_ग_लिखो(ring, atomic_पढ़ो(&ring->fence_drv.last_seq));
 
-	if (irq_src)
+	अगर (irq_src)
 		amdgpu_irq_get(adev, irq_src, irq_type);
 
 	ring->fence_drv.irq_src = irq_src;
@@ -425,364 +426,364 @@ int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
 
 	DRM_DEV_DEBUG(adev->dev, "fence driver on ring %s use gpu addr 0x%016llx\n",
 		      ring->name, ring->fence_drv.gpu_addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_fence_driver_init_ring - init the fence driver
- * for the requested ring.
+ * क्रम the requested ring.
  *
  * @ring: ring to init the fence driver on
  * @num_hw_submission: number of entries on the hardware queue
  *
- * Init the fence driver for the requested ring (all asics).
- * Helper function for amdgpu_fence_driver_init().
+ * Init the fence driver क्रम the requested ring (all asics).
+ * Helper function क्रम amdgpu_fence_driver_init().
  */
-int amdgpu_fence_driver_init_ring(struct amdgpu_ring *ring,
-				  unsigned num_hw_submission,
+पूर्णांक amdgpu_fence_driver_init_ring(काष्ठा amdgpu_ring *ring,
+				  अचिन्हित num_hw_submission,
 				  atomic_t *sched_score)
-{
-	struct amdgpu_device *adev = ring->adev;
-	long timeout;
-	int r;
+अणु
+	काष्ठा amdgpu_device *adev = ring->adev;
+	दीर्घ समयout;
+	पूर्णांक r;
 
-	if (!adev)
-		return -EINVAL;
+	अगर (!adev)
+		वापस -EINVAL;
 
-	if (!is_power_of_2(num_hw_submission))
-		return -EINVAL;
+	अगर (!is_घातer_of_2(num_hw_submission))
+		वापस -EINVAL;
 
-	ring->fence_drv.cpu_addr = NULL;
+	ring->fence_drv.cpu_addr = शून्य;
 	ring->fence_drv.gpu_addr = 0;
 	ring->fence_drv.sync_seq = 0;
 	atomic_set(&ring->fence_drv.last_seq, 0);
 	ring->fence_drv.initialized = false;
 
-	timer_setup(&ring->fence_drv.fallback_timer, amdgpu_fence_fallback, 0);
+	समयr_setup(&ring->fence_drv.fallback_समयr, amdgpu_fence_fallback, 0);
 
 	ring->fence_drv.num_fences_mask = num_hw_submission * 2 - 1;
 	spin_lock_init(&ring->fence_drv.lock);
-	ring->fence_drv.fences = kcalloc(num_hw_submission * 2, sizeof(void *),
+	ring->fence_drv.fences = kसुस्मृति(num_hw_submission * 2, माप(व्योम *),
 					 GFP_KERNEL);
-	if (!ring->fence_drv.fences)
-		return -ENOMEM;
+	अगर (!ring->fence_drv.fences)
+		वापस -ENOMEM;
 
-	/* No need to setup the GPU scheduler for rings that don't need it */
-	if (ring->no_scheduler)
-		return 0;
+	/* No need to setup the GPU scheduler क्रम rings that करोn't need it */
+	अगर (ring->no_scheduler)
+		वापस 0;
 
-	switch (ring->funcs->type) {
-	case AMDGPU_RING_TYPE_GFX:
-		timeout = adev->gfx_timeout;
-		break;
-	case AMDGPU_RING_TYPE_COMPUTE:
-		timeout = adev->compute_timeout;
-		break;
-	case AMDGPU_RING_TYPE_SDMA:
-		timeout = adev->sdma_timeout;
-		break;
-	default:
-		timeout = adev->video_timeout;
-		break;
-	}
+	चयन (ring->funcs->type) अणु
+	हाल AMDGPU_RING_TYPE_GFX:
+		समयout = adev->gfx_समयout;
+		अवरोध;
+	हाल AMDGPU_RING_TYPE_COMPUTE:
+		समयout = adev->compute_समयout;
+		अवरोध;
+	हाल AMDGPU_RING_TYPE_SDMA:
+		समयout = adev->sdma_समयout;
+		अवरोध;
+	शेष:
+		समयout = adev->video_समयout;
+		अवरोध;
+	पूर्ण
 
 	r = drm_sched_init(&ring->sched, &amdgpu_sched_ops,
 			   num_hw_submission, amdgpu_job_hang_limit,
-			   timeout, sched_score, ring->name);
-	if (r) {
+			   समयout, sched_score, ring->name);
+	अगर (r) अणु
 		DRM_ERROR("Failed to create scheduler on ring %s.\n",
 			  ring->name);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * amdgpu_fence_driver_init - init the fence driver
- * for all possible rings.
+ * क्रम all possible rings.
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Init the fence driver for all possible rings (all asics).
+ * Init the fence driver क्रम all possible rings (all asics).
  * Not all asics have all rings, so each asic will only
  * start the fence driver on the rings it has using
  * amdgpu_fence_driver_start_ring().
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-int amdgpu_fence_driver_init(struct amdgpu_device *adev)
-{
-	return 0;
-}
+पूर्णांक amdgpu_fence_driver_init(काष्ठा amdgpu_device *adev)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
- * amdgpu_fence_driver_fini - tear down the fence driver
- * for all possible rings.
+ * amdgpu_fence_driver_fini - tear करोwn the fence driver
+ * क्रम all possible rings.
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Tear down the fence driver for all possible rings (all asics).
+ * Tear करोwn the fence driver क्रम all possible rings (all asics).
  */
-void amdgpu_fence_driver_fini(struct amdgpu_device *adev)
-{
-	unsigned i, j;
-	int r;
+व्योम amdgpu_fence_driver_fini(काष्ठा amdgpu_device *adev)
+अणु
+	अचिन्हित i, j;
+	पूर्णांक r;
 
-	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
-		struct amdgpu_ring *ring = adev->rings[i];
+	क्रम (i = 0; i < AMDGPU_MAX_RINGS; i++) अणु
+		काष्ठा amdgpu_ring *ring = adev->rings[i];
 
-		if (!ring || !ring->fence_drv.initialized)
-			continue;
-		if (!ring->no_scheduler)
+		अगर (!ring || !ring->fence_drv.initialized)
+			जारी;
+		अगर (!ring->no_scheduler)
 			drm_sched_fini(&ring->sched);
-		r = amdgpu_fence_wait_empty(ring);
-		if (r) {
+		r = amdgpu_fence_रुको_empty(ring);
+		अगर (r) अणु
 			/* no need to trigger GPU reset as we are unloading */
-			amdgpu_fence_driver_force_completion(ring);
-		}
-		if (ring->fence_drv.irq_src)
+			amdgpu_fence_driver_क्रमce_completion(ring);
+		पूर्ण
+		अगर (ring->fence_drv.irq_src)
 			amdgpu_irq_put(adev, ring->fence_drv.irq_src,
 				       ring->fence_drv.irq_type);
 
-		del_timer_sync(&ring->fence_drv.fallback_timer);
-		for (j = 0; j <= ring->fence_drv.num_fences_mask; ++j)
+		del_समयr_sync(&ring->fence_drv.fallback_समयr);
+		क्रम (j = 0; j <= ring->fence_drv.num_fences_mask; ++j)
 			dma_fence_put(ring->fence_drv.fences[j]);
-		kfree(ring->fence_drv.fences);
-		ring->fence_drv.fences = NULL;
+		kमुक्त(ring->fence_drv.fences);
+		ring->fence_drv.fences = शून्य;
 		ring->fence_drv.initialized = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * amdgpu_fence_driver_suspend - suspend the fence driver
- * for all possible rings.
+ * क्रम all possible rings.
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Suspend the fence driver for all possible rings (all asics).
+ * Suspend the fence driver क्रम all possible rings (all asics).
  */
-void amdgpu_fence_driver_suspend(struct amdgpu_device *adev)
-{
-	int i, r;
+व्योम amdgpu_fence_driver_suspend(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i, r;
 
-	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
-		struct amdgpu_ring *ring = adev->rings[i];
-		if (!ring || !ring->fence_drv.initialized)
-			continue;
+	क्रम (i = 0; i < AMDGPU_MAX_RINGS; i++) अणु
+		काष्ठा amdgpu_ring *ring = adev->rings[i];
+		अगर (!ring || !ring->fence_drv.initialized)
+			जारी;
 
-		/* wait for gpu to finish processing current batch */
-		r = amdgpu_fence_wait_empty(ring);
-		if (r) {
+		/* रुको क्रम gpu to finish processing current batch */
+		r = amdgpu_fence_रुको_empty(ring);
+		अगर (r) अणु
 			/* delay GPU reset to resume */
-			amdgpu_fence_driver_force_completion(ring);
-		}
+			amdgpu_fence_driver_क्रमce_completion(ring);
+		पूर्ण
 
-		/* disable the interrupt */
-		if (ring->fence_drv.irq_src)
+		/* disable the पूर्णांकerrupt */
+		अगर (ring->fence_drv.irq_src)
 			amdgpu_irq_put(adev, ring->fence_drv.irq_src,
 				       ring->fence_drv.irq_type);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * amdgpu_fence_driver_resume - resume the fence driver
- * for all possible rings.
+ * क्रम all possible rings.
  *
- * @adev: amdgpu device pointer
+ * @adev: amdgpu device poपूर्णांकer
  *
- * Resume the fence driver for all possible rings (all asics).
+ * Resume the fence driver क्रम all possible rings (all asics).
  * Not all asics have all rings, so each asic will only
  * start the fence driver on the rings it has using
  * amdgpu_fence_driver_start_ring().
- * Returns 0 for success.
+ * Returns 0 क्रम success.
  */
-void amdgpu_fence_driver_resume(struct amdgpu_device *adev)
-{
-	int i;
+व्योम amdgpu_fence_driver_resume(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < AMDGPU_MAX_RINGS; i++) {
-		struct amdgpu_ring *ring = adev->rings[i];
-		if (!ring || !ring->fence_drv.initialized)
-			continue;
+	क्रम (i = 0; i < AMDGPU_MAX_RINGS; i++) अणु
+		काष्ठा amdgpu_ring *ring = adev->rings[i];
+		अगर (!ring || !ring->fence_drv.initialized)
+			जारी;
 
-		/* enable the interrupt */
-		if (ring->fence_drv.irq_src)
+		/* enable the पूर्णांकerrupt */
+		अगर (ring->fence_drv.irq_src)
 			amdgpu_irq_get(adev, ring->fence_drv.irq_src,
 				       ring->fence_drv.irq_type);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * amdgpu_fence_driver_force_completion - force signal latest fence of ring
+ * amdgpu_fence_driver_क्रमce_completion - क्रमce संकेत latest fence of ring
  *
- * @ring: fence of the ring to signal
+ * @ring: fence of the ring to संकेत
  *
  */
-void amdgpu_fence_driver_force_completion(struct amdgpu_ring *ring)
-{
-	amdgpu_fence_write(ring, ring->fence_drv.sync_seq);
+व्योम amdgpu_fence_driver_क्रमce_completion(काष्ठा amdgpu_ring *ring)
+अणु
+	amdgpu_fence_ग_लिखो(ring, ring->fence_drv.sync_seq);
 	amdgpu_fence_process(ring);
-}
+पूर्ण
 
 /*
  * Common fence implementation
  */
 
-static const char *amdgpu_fence_get_driver_name(struct dma_fence *fence)
-{
-	return "amdgpu";
-}
+अटल स्थिर अक्षर *amdgpu_fence_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	वापस "amdgpu";
+पूर्ण
 
-static const char *amdgpu_fence_get_timeline_name(struct dma_fence *f)
-{
-	struct amdgpu_fence *fence = to_amdgpu_fence(f);
-	return (const char *)fence->ring->name;
-}
+अटल स्थिर अक्षर *amdgpu_fence_get_समयline_name(काष्ठा dma_fence *f)
+अणु
+	काष्ठा amdgpu_fence *fence = to_amdgpu_fence(f);
+	वापस (स्थिर अक्षर *)fence->ring->name;
+पूर्ण
 
 /**
- * amdgpu_fence_enable_signaling - enable signalling on fence
+ * amdgpu_fence_enable_संकेतing - enable संकेतling on fence
  * @f: fence
  *
  * This function is called with fence_queue lock held, and adds a callback
- * to fence_queue that checks if this fence is signaled, and if so it
- * signals the fence and removes itself.
+ * to fence_queue that checks अगर this fence is संकेतed, and अगर so it
+ * संकेतs the fence and हटाओs itself.
  */
-static bool amdgpu_fence_enable_signaling(struct dma_fence *f)
-{
-	struct amdgpu_fence *fence = to_amdgpu_fence(f);
-	struct amdgpu_ring *ring = fence->ring;
+अटल bool amdgpu_fence_enable_संकेतing(काष्ठा dma_fence *f)
+अणु
+	काष्ठा amdgpu_fence *fence = to_amdgpu_fence(f);
+	काष्ठा amdgpu_ring *ring = fence->ring;
 
-	if (!timer_pending(&ring->fence_drv.fallback_timer))
+	अगर (!समयr_pending(&ring->fence_drv.fallback_समयr))
 		amdgpu_fence_schedule_fallback(ring);
 
 	DMA_FENCE_TRACE(&fence->base, "armed on ring %i!\n", ring->idx);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * amdgpu_fence_free - free up the fence memory
+ * amdgpu_fence_मुक्त - मुक्त up the fence memory
  *
  * @rcu: RCU callback head
  *
  * Free up the fence memory after the RCU grace period.
  */
-static void amdgpu_fence_free(struct rcu_head *rcu)
-{
-	struct dma_fence *f = container_of(rcu, struct dma_fence, rcu);
-	struct amdgpu_fence *fence = to_amdgpu_fence(f);
-	kmem_cache_free(amdgpu_fence_slab, fence);
-}
+अटल व्योम amdgpu_fence_मुक्त(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा dma_fence *f = container_of(rcu, काष्ठा dma_fence, rcu);
+	काष्ठा amdgpu_fence *fence = to_amdgpu_fence(f);
+	kmem_cache_मुक्त(amdgpu_fence_slab, fence);
+पूर्ण
 
 /**
- * amdgpu_fence_release - callback that fence can be freed
+ * amdgpu_fence_release - callback that fence can be मुक्तd
  *
  * @f: fence
  *
  * This function is called when the reference count becomes zero.
- * It just RCU schedules freeing up the fence.
+ * It just RCU schedules मुक्तing up the fence.
  */
-static void amdgpu_fence_release(struct dma_fence *f)
-{
-	call_rcu(&f->rcu, amdgpu_fence_free);
-}
+अटल व्योम amdgpu_fence_release(काष्ठा dma_fence *f)
+अणु
+	call_rcu(&f->rcu, amdgpu_fence_मुक्त);
+पूर्ण
 
-static const struct dma_fence_ops amdgpu_fence_ops = {
+अटल स्थिर काष्ठा dma_fence_ops amdgpu_fence_ops = अणु
 	.get_driver_name = amdgpu_fence_get_driver_name,
-	.get_timeline_name = amdgpu_fence_get_timeline_name,
-	.enable_signaling = amdgpu_fence_enable_signaling,
+	.get_समयline_name = amdgpu_fence_get_समयline_name,
+	.enable_संकेतing = amdgpu_fence_enable_संकेतing,
 	.release = amdgpu_fence_release,
-};
+पूर्ण;
 
 /*
  * Fence debugfs
  */
-#if defined(CONFIG_DEBUG_FS)
-static int amdgpu_debugfs_fence_info_show(struct seq_file *m, void *unused)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)m->private;
-	int i;
+#अगर defined(CONFIG_DEBUG_FS)
+अटल पूर्णांक amdgpu_debugfs_fence_info_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)m->निजी;
+	पूर्णांक i;
 
-	for (i = 0; i < AMDGPU_MAX_RINGS; ++i) {
-		struct amdgpu_ring *ring = adev->rings[i];
-		if (!ring || !ring->fence_drv.initialized)
-			continue;
+	क्रम (i = 0; i < AMDGPU_MAX_RINGS; ++i) अणु
+		काष्ठा amdgpu_ring *ring = adev->rings[i];
+		अगर (!ring || !ring->fence_drv.initialized)
+			जारी;
 
 		amdgpu_fence_process(ring);
 
-		seq_printf(m, "--- ring %d (%s) ---\n", i, ring->name);
-		seq_printf(m, "Last signaled fence          0x%08x\n",
-			   atomic_read(&ring->fence_drv.last_seq));
-		seq_printf(m, "Last emitted                 0x%08x\n",
+		seq_म_लिखो(m, "--- ring %d (%s) ---\n", i, ring->name);
+		seq_म_लिखो(m, "Last signaled fence          0x%08x\n",
+			   atomic_पढ़ो(&ring->fence_drv.last_seq));
+		seq_म_लिखो(m, "Last emitted                 0x%08x\n",
 			   ring->fence_drv.sync_seq);
 
-		if (ring->funcs->type == AMDGPU_RING_TYPE_GFX ||
-		    ring->funcs->type == AMDGPU_RING_TYPE_SDMA) {
-			seq_printf(m, "Last signaled trailing fence 0x%08x\n",
+		अगर (ring->funcs->type == AMDGPU_RING_TYPE_GFX ||
+		    ring->funcs->type == AMDGPU_RING_TYPE_SDMA) अणु
+			seq_म_लिखो(m, "Last signaled trailing fence 0x%08x\n",
 				   le32_to_cpu(*ring->trail_fence_cpu_addr));
-			seq_printf(m, "Last emitted                 0x%08x\n",
+			seq_म_लिखो(m, "Last emitted                 0x%08x\n",
 				   ring->trail_seq);
-		}
+		पूर्ण
 
-		if (ring->funcs->type != AMDGPU_RING_TYPE_GFX)
-			continue;
+		अगर (ring->funcs->type != AMDGPU_RING_TYPE_GFX)
+			जारी;
 
 		/* set in CP_VMID_PREEMPT and preemption occurred */
-		seq_printf(m, "Last preempted               0x%08x\n",
+		seq_म_लिखो(m, "Last preempted               0x%08x\n",
 			   le32_to_cpu(*(ring->fence_drv.cpu_addr + 2)));
 		/* set in CP_VMID_RESET and reset occurred */
-		seq_printf(m, "Last reset                   0x%08x\n",
+		seq_म_लिखो(m, "Last reset                   0x%08x\n",
 			   le32_to_cpu(*(ring->fence_drv.cpu_addr + 4)));
 		/* Both preemption and reset occurred */
-		seq_printf(m, "Last both                    0x%08x\n",
+		seq_म_लिखो(m, "Last both                    0x%08x\n",
 			   le32_to_cpu(*(ring->fence_drv.cpu_addr + 6)));
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * amdgpu_debugfs_gpu_recover - manually trigger a gpu reset & recover
  *
- * Manually trigger a gpu reset at the next fence wait.
+ * Manually trigger a gpu reset at the next fence रुको.
  */
-static int gpu_recover_get(void *data, u64 *val)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)data;
-	struct drm_device *dev = adev_to_drm(adev);
-	int r;
+अटल पूर्णांक gpu_recover_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)data;
+	काष्ठा drm_device *dev = adev_to_drm(adev);
+	पूर्णांक r;
 
-	r = pm_runtime_get_sync(dev->dev);
-	if (r < 0) {
-		pm_runtime_put_autosuspend(dev->dev);
-		return 0;
-	}
+	r = pm_runसमय_get_sync(dev->dev);
+	अगर (r < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(dev->dev);
+		वापस 0;
+	पूर्ण
 
-	*val = amdgpu_device_gpu_recover(adev, NULL);
+	*val = amdgpu_device_gpu_recover(adev, शून्य);
 
-	pm_runtime_mark_last_busy(dev->dev);
-	pm_runtime_put_autosuspend(dev->dev);
+	pm_runसमय_mark_last_busy(dev->dev);
+	pm_runसमय_put_स्वतःsuspend(dev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(amdgpu_debugfs_fence_info);
-DEFINE_DEBUGFS_ATTRIBUTE(amdgpu_debugfs_gpu_recover_fops, gpu_recover_get, NULL,
+DEFINE_DEBUGFS_ATTRIBUTE(amdgpu_debugfs_gpu_recover_fops, gpu_recover_get, शून्य,
 			 "%lld\n");
 
-#endif
+#पूर्ण_अगर
 
-void amdgpu_debugfs_fence_init(struct amdgpu_device *adev)
-{
-#if defined(CONFIG_DEBUG_FS)
-	struct drm_minor *minor = adev_to_drm(adev)->primary;
-	struct dentry *root = minor->debugfs_root;
+व्योम amdgpu_debugfs_fence_init(काष्ठा amdgpu_device *adev)
+अणु
+#अगर defined(CONFIG_DEBUG_FS)
+	काष्ठा drm_minor *minor = adev_to_drm(adev)->primary;
+	काष्ठा dentry *root = minor->debugfs_root;
 
 	debugfs_create_file("amdgpu_fence_info", 0444, root, adev,
 			    &amdgpu_debugfs_fence_info_fops);
 
-	if (!amdgpu_sriov_vf(adev))
+	अगर (!amdgpu_sriov_vf(adev))
 		debugfs_create_file("amdgpu_gpu_recover", 0444, root, adev,
 				    &amdgpu_debugfs_gpu_recover_fops);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 

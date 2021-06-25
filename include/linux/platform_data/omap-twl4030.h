@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /**
- * omap-twl4030.h - ASoC machine driver for TI SoC based boards with twl4030
+ * omap-twl4030.h - ASoC machine driver क्रम TI SoC based boards with twl4030
  *		    codec, header.
  *
  * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com
@@ -9,19 +10,19 @@
  * Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#ifndef _OMAP_TWL4030_H_
-#define _OMAP_TWL4030_H_
+#अगर_अघोषित _OMAP_TWL4030_H_
+#घोषणा _OMAP_TWL4030_H_
 
-/* To select if only one channel is connected in a stereo port */
-#define OMAP_TWL4030_LEFT	(1 << 0)
-#define OMAP_TWL4030_RIGHT	(1 << 1)
+/* To select अगर only one channel is connected in a stereo port */
+#घोषणा OMAP_TWL4030_LEFT	(1 << 0)
+#घोषणा OMAP_TWL4030_RIGHT	(1 << 1)
 
-struct omap_tw4030_pdata {
-	const char *card_name;
+काष्ठा omap_tw4030_pdata अणु
+	स्थिर अक्षर *card_name;
 	/* Voice port is connected to McBSP3 */
 	bool voice_connected;
 
-	/* The driver will parse the connection flags if this flag is set */
+	/* The driver will parse the connection flags अगर this flag is set */
 	bool	custom_routing;
 	/* Flags to indicate connected audio ports. */
 	u8	has_hs;
@@ -30,16 +31,16 @@ struct omap_tw4030_pdata {
 	u8	has_carkit;
 	bool	has_ear;
 
-	bool	has_mainmic;
+	bool	has_मुख्यmic;
 	bool	has_submic;
 	bool	has_hsmic;
-	bool	has_carkitmic;
+	bool	has_carkiपंचांगic;
 	bool	has_digimic0;
 	bool	has_digimic1;
 	u8	has_linein;
 
-	/* Jack detect GPIO or  <= 0 if it is not implemented */
-	int jack_detect;
-};
+	/* Jack detect GPIO or  <= 0 अगर it is not implemented */
+	पूर्णांक jack_detect;
+पूर्ण;
 
-#endif /* _OMAP_TWL4030_H_ */
+#पूर्ण_अगर /* _OMAP_TWL4030_H_ */

@@ -1,533 +1,534 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This driver implements I2C master functionality using the LSI API2C
  * controller.
  *
- * NOTE: The controller has a limitation in that it can only do transfers of
- * maximum 255 bytes at a time. If a larger transfer is attempted, error code
- * (-EINVAL) is returned.
+ * NOTE: The controller has a limitation in that it can only करो transfers of
+ * maximum 255 bytes at a समय. If a larger transfer is attempted, error code
+ * (-EINVAL) is वापसed.
  */
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define SCL_WAIT_TIMEOUT_NS 25000000
-#define I2C_XFER_TIMEOUT    (msecs_to_jiffies(250))
-#define I2C_STOP_TIMEOUT    (msecs_to_jiffies(100))
-#define FIFO_SIZE           8
-#define SEQ_LEN             2
+#घोषणा SCL_WAIT_TIMEOUT_NS 25000000
+#घोषणा I2C_XFER_TIMEOUT    (msecs_to_jअगरfies(250))
+#घोषणा I2C_STOP_TIMEOUT    (msecs_to_jअगरfies(100))
+#घोषणा FIFO_SIZE           8
+#घोषणा SEQ_LEN             2
 
-#define GLOBAL_CONTROL		0x00
-#define   GLOBAL_MST_EN         BIT(0)
-#define   GLOBAL_SLV_EN         BIT(1)
-#define   GLOBAL_IBML_EN        BIT(2)
-#define INTERRUPT_STATUS	0x04
-#define INTERRUPT_ENABLE	0x08
-#define   INT_SLV               BIT(1)
-#define   INT_MST               BIT(0)
-#define WAIT_TIMER_CONTROL	0x0c
-#define   WT_EN			BIT(15)
-#define   WT_VALUE(_x)		((_x) & 0x7fff)
-#define IBML_TIMEOUT		0x10
-#define IBML_LOW_MEXT		0x14
-#define IBML_LOW_SEXT		0x18
-#define TIMER_CLOCK_DIV		0x1c
-#define I2C_BUS_MONITOR		0x20
-#define   BM_SDAC		BIT(3)
-#define   BM_SCLC		BIT(2)
-#define   BM_SDAS		BIT(1)
-#define   BM_SCLS		BIT(0)
-#define SOFT_RESET		0x24
-#define MST_COMMAND		0x28
-#define   CMD_BUSY		(1<<3)
-#define   CMD_MANUAL		(0x00 | CMD_BUSY)
-#define   CMD_AUTO		(0x01 | CMD_BUSY)
-#define   CMD_SEQUENCE		(0x02 | CMD_BUSY)
-#define MST_RX_XFER		0x2c
-#define MST_TX_XFER		0x30
-#define MST_ADDR_1		0x34
-#define MST_ADDR_2		0x38
-#define MST_DATA		0x3c
-#define MST_TX_FIFO		0x40
-#define MST_RX_FIFO		0x44
-#define MST_INT_ENABLE		0x48
-#define MST_INT_STATUS		0x4c
-#define   MST_STATUS_RFL	(1 << 13) /* RX FIFO serivce */
-#define   MST_STATUS_TFL	(1 << 12) /* TX FIFO service */
-#define   MST_STATUS_SNS	(1 << 11) /* Manual mode done */
-#define   MST_STATUS_SS		(1 << 10) /* Automatic mode done */
-#define   MST_STATUS_SCC	(1 << 9)  /* Stop complete */
-#define   MST_STATUS_IP		(1 << 8)  /* Invalid parameter */
-#define   MST_STATUS_TSS	(1 << 7)  /* Timeout */
-#define   MST_STATUS_AL		(1 << 6)  /* Arbitration lost */
-#define   MST_STATUS_ND		(1 << 5)  /* NAK on data phase */
-#define   MST_STATUS_NA		(1 << 4)  /* NAK on address phase */
-#define   MST_STATUS_NAK	(MST_STATUS_NA | \
+#घोषणा GLOBAL_CONTROL		0x00
+#घोषणा   GLOBAL_MST_EN         BIT(0)
+#घोषणा   GLOBAL_SLV_EN         BIT(1)
+#घोषणा   GLOBAL_IBML_EN        BIT(2)
+#घोषणा INTERRUPT_STATUS	0x04
+#घोषणा INTERRUPT_ENABLE	0x08
+#घोषणा   INT_SLV               BIT(1)
+#घोषणा   INT_MST               BIT(0)
+#घोषणा WAIT_TIMER_CONTROL	0x0c
+#घोषणा   WT_EN			BIT(15)
+#घोषणा   WT_VALUE(_x)		((_x) & 0x7fff)
+#घोषणा IBML_TIMEOUT		0x10
+#घोषणा IBML_LOW_MEXT		0x14
+#घोषणा IBML_LOW_SEXT		0x18
+#घोषणा TIMER_CLOCK_DIV		0x1c
+#घोषणा I2C_BUS_MONITOR		0x20
+#घोषणा   BM_SDAC		BIT(3)
+#घोषणा   BM_SCLC		BIT(2)
+#घोषणा   BM_SDAS		BIT(1)
+#घोषणा   BM_SCLS		BIT(0)
+#घोषणा SOFT_RESET		0x24
+#घोषणा MST_COMMAND		0x28
+#घोषणा   CMD_BUSY		(1<<3)
+#घोषणा   CMD_MANUAL		(0x00 | CMD_BUSY)
+#घोषणा   CMD_AUTO		(0x01 | CMD_BUSY)
+#घोषणा   CMD_SEQUENCE		(0x02 | CMD_BUSY)
+#घोषणा MST_RX_XFER		0x2c
+#घोषणा MST_TX_XFER		0x30
+#घोषणा MST_ADDR_1		0x34
+#घोषणा MST_ADDR_2		0x38
+#घोषणा MST_DATA		0x3c
+#घोषणा MST_TX_FIFO		0x40
+#घोषणा MST_RX_FIFO		0x44
+#घोषणा MST_INT_ENABLE		0x48
+#घोषणा MST_INT_STATUS		0x4c
+#घोषणा   MST_STATUS_RFL	(1 << 13) /* RX FIFO serivce */
+#घोषणा   MST_STATUS_TFL	(1 << 12) /* TX FIFO service */
+#घोषणा   MST_STATUS_SNS	(1 << 11) /* Manual mode करोne */
+#घोषणा   MST_STATUS_SS		(1 << 10) /* Automatic mode करोne */
+#घोषणा   MST_STATUS_SCC	(1 << 9)  /* Stop complete */
+#घोषणा   MST_STATUS_IP		(1 << 8)  /* Invalid parameter */
+#घोषणा   MST_STATUS_TSS	(1 << 7)  /* Timeout */
+#घोषणा   MST_STATUS_AL		(1 << 6)  /* Arbitration lost */
+#घोषणा   MST_STATUS_ND		(1 << 5)  /* NAK on data phase */
+#घोषणा   MST_STATUS_NA		(1 << 4)  /* NAK on address phase */
+#घोषणा   MST_STATUS_NAK	(MST_STATUS_NA | \
 				 MST_STATUS_ND)
-#define   MST_STATUS_ERR	(MST_STATUS_NAK | \
+#घोषणा   MST_STATUS_ERR	(MST_STATUS_NAK | \
 				 MST_STATUS_AL  | \
 				 MST_STATUS_IP)
-#define MST_TX_BYTES_XFRD	0x50
-#define MST_RX_BYTES_XFRD	0x54
-#define SLV_ADDR_DEC_CTL	0x58
-#define   SLV_ADDR_DEC_GCE	BIT(0)  /* ACK to General Call Address from own master (loopback) */
-#define   SLV_ADDR_DEC_OGCE	BIT(1)  /* ACK to General Call Address from external masters */
-#define   SLV_ADDR_DEC_SA1E	BIT(2)  /* ACK to addr_1 enabled */
-#define   SLV_ADDR_DEC_SA1M	BIT(3)  /* 10-bit addressing for addr_1 enabled */
-#define   SLV_ADDR_DEC_SA2E	BIT(4)  /* ACK to addr_2 enabled */
-#define   SLV_ADDR_DEC_SA2M	BIT(5)  /* 10-bit addressing for addr_2 enabled */
-#define SLV_ADDR_1		0x5c
-#define SLV_ADDR_2		0x60
-#define SLV_RX_CTL		0x64
-#define   SLV_RX_ACSA1		BIT(0)  /* Generate ACK for writes to addr_1 */
-#define   SLV_RX_ACSA2		BIT(1)  /* Generate ACK for writes to addr_2 */
-#define   SLV_RX_ACGCA		BIT(2)  /* ACK data phase transfers to General Call Address */
-#define SLV_DATA		0x68
-#define SLV_RX_FIFO		0x6c
-#define   SLV_FIFO_DV1		BIT(0)  /* Data Valid for addr_1 */
-#define   SLV_FIFO_DV2		BIT(1)  /* Data Valid for addr_2 */
-#define   SLV_FIFO_AS		BIT(2)  /* (N)ACK Sent */
-#define   SLV_FIFO_TNAK		BIT(3)  /* Timeout NACK */
-#define   SLV_FIFO_STRC		BIT(4)  /* First byte after start condition received */
-#define   SLV_FIFO_RSC		BIT(5)  /* Repeated Start Condition */
-#define   SLV_FIFO_STPC		BIT(6)  /* Stop Condition */
-#define   SLV_FIFO_DV		(SLV_FIFO_DV1 | SLV_FIFO_DV2)
-#define SLV_INT_ENABLE		0x70
-#define SLV_INT_STATUS		0x74
-#define   SLV_STATUS_RFH	BIT(0)  /* FIFO service */
-#define   SLV_STATUS_WTC	BIT(1)  /* Write transfer complete */
-#define   SLV_STATUS_SRS1	BIT(2)  /* Slave read from addr 1 */
-#define   SLV_STATUS_SRRS1	BIT(3)  /* Repeated start from addr 1 */
-#define   SLV_STATUS_SRND1	BIT(4)  /* Read request not following start condition */
-#define   SLV_STATUS_SRC1	BIT(5)  /* Read canceled */
-#define   SLV_STATUS_SRAT1	BIT(6)  /* Slave Read timed out */
-#define   SLV_STATUS_SRDRE1	BIT(7)  /* Data written after timed out */
-#define SLV_READ_DUMMY		0x78
-#define SCL_HIGH_PERIOD		0x80
-#define SCL_LOW_PERIOD		0x84
-#define SPIKE_FLTR_LEN		0x88
-#define SDA_SETUP_TIME		0x8c
-#define SDA_HOLD_TIME		0x90
+#घोषणा MST_TX_BYTES_XFRD	0x50
+#घोषणा MST_RX_BYTES_XFRD	0x54
+#घोषणा SLV_ADDR_DEC_CTL	0x58
+#घोषणा   SLV_ADDR_DEC_GCE	BIT(0)  /* ACK to General Call Address from own master (loopback) */
+#घोषणा   SLV_ADDR_DEC_OGCE	BIT(1)  /* ACK to General Call Address from बाह्यal masters */
+#घोषणा   SLV_ADDR_DEC_SA1E	BIT(2)  /* ACK to addr_1 enabled */
+#घोषणा   SLV_ADDR_DEC_SA1M	BIT(3)  /* 10-bit addressing क्रम addr_1 enabled */
+#घोषणा   SLV_ADDR_DEC_SA2E	BIT(4)  /* ACK to addr_2 enabled */
+#घोषणा   SLV_ADDR_DEC_SA2M	BIT(5)  /* 10-bit addressing क्रम addr_2 enabled */
+#घोषणा SLV_ADDR_1		0x5c
+#घोषणा SLV_ADDR_2		0x60
+#घोषणा SLV_RX_CTL		0x64
+#घोषणा   SLV_RX_ACSA1		BIT(0)  /* Generate ACK क्रम ग_लिखोs to addr_1 */
+#घोषणा   SLV_RX_ACSA2		BIT(1)  /* Generate ACK क्रम ग_लिखोs to addr_2 */
+#घोषणा   SLV_RX_ACGCA		BIT(2)  /* ACK data phase transfers to General Call Address */
+#घोषणा SLV_DATA		0x68
+#घोषणा SLV_RX_FIFO		0x6c
+#घोषणा   SLV_FIFO_DV1		BIT(0)  /* Data Valid क्रम addr_1 */
+#घोषणा   SLV_FIFO_DV2		BIT(1)  /* Data Valid क्रम addr_2 */
+#घोषणा   SLV_FIFO_AS		BIT(2)  /* (N)ACK Sent */
+#घोषणा   SLV_FIFO_TNAK		BIT(3)  /* Timeout NACK */
+#घोषणा   SLV_FIFO_STRC		BIT(4)  /* First byte after start condition received */
+#घोषणा   SLV_FIFO_RSC		BIT(5)  /* Repeated Start Condition */
+#घोषणा   SLV_FIFO_STPC		BIT(6)  /* Stop Condition */
+#घोषणा   SLV_FIFO_DV		(SLV_FIFO_DV1 | SLV_FIFO_DV2)
+#घोषणा SLV_INT_ENABLE		0x70
+#घोषणा SLV_INT_STATUS		0x74
+#घोषणा   SLV_STATUS_RFH	BIT(0)  /* FIFO service */
+#घोषणा   SLV_STATUS_WTC	BIT(1)  /* Write transfer complete */
+#घोषणा   SLV_STATUS_SRS1	BIT(2)  /* Slave पढ़ो from addr 1 */
+#घोषणा   SLV_STATUS_SRRS1	BIT(3)  /* Repeated start from addr 1 */
+#घोषणा   SLV_STATUS_SRND1	BIT(4)  /* Read request not following start condition */
+#घोषणा   SLV_STATUS_SRC1	BIT(5)  /* Read canceled */
+#घोषणा   SLV_STATUS_SRAT1	BIT(6)  /* Slave Read समयd out */
+#घोषणा   SLV_STATUS_SRDRE1	BIT(7)  /* Data written after समयd out */
+#घोषणा SLV_READ_DUMMY		0x78
+#घोषणा SCL_HIGH_PERIOD		0x80
+#घोषणा SCL_LOW_PERIOD		0x84
+#घोषणा SPIKE_FLTR_LEN		0x88
+#घोषणा SDA_SETUP_TIME		0x8c
+#घोषणा SDA_HOLD_TIME		0x90
 
 /**
  * axxia_i2c_dev - I2C device context
- * @base: pointer to register struct
- * @msg: pointer to current message
- * @msg_r: pointer to current read message (sequence transfer)
- * @msg_xfrd: number of bytes transferred in tx_fifo
- * @msg_xfrd_r: number of bytes transferred in rx_fifo
- * @msg_err: error code for completed message
+ * @base: poपूर्णांकer to रेजिस्टर काष्ठा
+ * @msg: poपूर्णांकer to current message
+ * @msg_r: poपूर्णांकer to current पढ़ो message (sequence transfer)
+ * @msg_xfrd: number of bytes transferred in tx_fअगरo
+ * @msg_xfrd_r: number of bytes transferred in rx_fअगरo
+ * @msg_err: error code क्रम completed message
  * @msg_complete: xfer completion object
  * @dev: device reference
- * @adapter: core i2c abstraction
- * @i2c_clk: clock reference for i2c input clock
- * @bus_clk_rate: current i2c bus clock rate
+ * @adapter: core i2c असलtraction
+ * @i2c_clk: घड़ी reference क्रम i2c input घड़ी
+ * @bus_clk_rate: current i2c bus घड़ी rate
  * @last: a flag indicating is this is last message in transfer
  */
-struct axxia_i2c_dev {
-	void __iomem *base;
-	struct i2c_msg *msg;
-	struct i2c_msg *msg_r;
-	size_t msg_xfrd;
-	size_t msg_xfrd_r;
-	int msg_err;
-	struct completion msg_complete;
-	struct device *dev;
-	struct i2c_adapter adapter;
-	struct clk *i2c_clk;
+काष्ठा axxia_i2c_dev अणु
+	व्योम __iomem *base;
+	काष्ठा i2c_msg *msg;
+	काष्ठा i2c_msg *msg_r;
+	माप_प्रकार msg_xfrd;
+	माप_प्रकार msg_xfrd_r;
+	पूर्णांक msg_err;
+	काष्ठा completion msg_complete;
+	काष्ठा device *dev;
+	काष्ठा i2c_adapter adapter;
+	काष्ठा clk *i2c_clk;
 	u32 bus_clk_rate;
 	bool last;
-	struct i2c_client *slave;
-	int irq;
-};
+	काष्ठा i2c_client *slave;
+	पूर्णांक irq;
+पूर्ण;
 
-static void i2c_int_disable(struct axxia_i2c_dev *idev, u32 mask)
-{
-	u32 int_en;
+अटल व्योम i2c_पूर्णांक_disable(काष्ठा axxia_i2c_dev *idev, u32 mask)
+अणु
+	u32 पूर्णांक_en;
 
-	int_en = readl(idev->base + MST_INT_ENABLE);
-	writel(int_en & ~mask, idev->base + MST_INT_ENABLE);
-}
+	पूर्णांक_en = पढ़ोl(idev->base + MST_INT_ENABLE);
+	ग_लिखोl(पूर्णांक_en & ~mask, idev->base + MST_INT_ENABLE);
+पूर्ण
 
-static void i2c_int_enable(struct axxia_i2c_dev *idev, u32 mask)
-{
-	u32 int_en;
+अटल व्योम i2c_पूर्णांक_enable(काष्ठा axxia_i2c_dev *idev, u32 mask)
+अणु
+	u32 पूर्णांक_en;
 
-	int_en = readl(idev->base + MST_INT_ENABLE);
-	writel(int_en | mask, idev->base + MST_INT_ENABLE);
-}
+	पूर्णांक_en = पढ़ोl(idev->base + MST_INT_ENABLE);
+	ग_लिखोl(पूर्णांक_en | mask, idev->base + MST_INT_ENABLE);
+पूर्ण
 
 /**
- * ns_to_clk - Convert time (ns) to clock cycles for the given clock frequency.
+ * ns_to_clk - Convert समय (ns) to घड़ी cycles क्रम the given घड़ी frequency.
  */
-static u32 ns_to_clk(u64 ns, u32 clk_mhz)
-{
-	return div_u64(ns * clk_mhz, 1000);
-}
+अटल u32 ns_to_clk(u64 ns, u32 clk_mhz)
+अणु
+	वापस भाग_u64(ns * clk_mhz, 1000);
+पूर्ण
 
-static int axxia_i2c_init(struct axxia_i2c_dev *idev)
-{
-	u32 divisor = clk_get_rate(idev->i2c_clk) / idev->bus_clk_rate;
+अटल पूर्णांक axxia_i2c_init(काष्ठा axxia_i2c_dev *idev)
+अणु
+	u32 भागisor = clk_get_rate(idev->i2c_clk) / idev->bus_clk_rate;
 	u32 clk_mhz = clk_get_rate(idev->i2c_clk) / 1000000;
 	u32 t_setup;
 	u32 t_high, t_low;
-	u32 tmo_clk;
+	u32 पंचांगo_clk;
 	u32 prescale;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
 	dev_dbg(idev->dev, "rate=%uHz per_clk=%uMHz -> ratio=1:%u\n",
-		idev->bus_clk_rate, clk_mhz, divisor);
+		idev->bus_clk_rate, clk_mhz, भागisor);
 
 	/* Reset controller */
-	writel(0x01, idev->base + SOFT_RESET);
-	timeout = jiffies + msecs_to_jiffies(100);
-	while (readl(idev->base + SOFT_RESET) & 1) {
-		if (time_after(jiffies, timeout)) {
+	ग_लिखोl(0x01, idev->base + SOFT_RESET);
+	समयout = jअगरfies + msecs_to_jअगरfies(100);
+	जबतक (पढ़ोl(idev->base + SOFT_RESET) & 1) अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_warn(idev->dev, "Soft reset failed\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Enable Master Mode */
-	writel(0x1, idev->base + GLOBAL_CONTROL);
+	ग_लिखोl(0x1, idev->base + GLOBAL_CONTROL);
 
-	if (idev->bus_clk_rate <= I2C_MAX_STANDARD_MODE_FREQ) {
+	अगर (idev->bus_clk_rate <= I2C_MAX_STANDARD_MODE_FREQ) अणु
 		/* Standard mode SCL 50/50, tSU:DAT = 250 ns */
-		t_high = divisor * 1 / 2;
-		t_low = divisor * 1 / 2;
+		t_high = भागisor * 1 / 2;
+		t_low = भागisor * 1 / 2;
 		t_setup = ns_to_clk(250, clk_mhz);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Fast mode SCL 33/66, tSU:DAT = 100 ns */
-		t_high = divisor * 1 / 3;
-		t_low = divisor * 2 / 3;
+		t_high = भागisor * 1 / 3;
+		t_low = भागisor * 2 / 3;
 		t_setup = ns_to_clk(100, clk_mhz);
-	}
+	पूर्ण
 
 	/* SCL High Time */
-	writel(t_high, idev->base + SCL_HIGH_PERIOD);
+	ग_लिखोl(t_high, idev->base + SCL_HIGH_PERIOD);
 	/* SCL Low Time */
-	writel(t_low, idev->base + SCL_LOW_PERIOD);
+	ग_लिखोl(t_low, idev->base + SCL_LOW_PERIOD);
 	/* SDA Setup Time */
-	writel(t_setup, idev->base + SDA_SETUP_TIME);
+	ग_लिखोl(t_setup, idev->base + SDA_SETUP_TIME);
 	/* SDA Hold Time, 300ns */
-	writel(ns_to_clk(300, clk_mhz), idev->base + SDA_HOLD_TIME);
+	ग_लिखोl(ns_to_clk(300, clk_mhz), idev->base + SDA_HOLD_TIME);
 	/* Filter <50ns spikes */
-	writel(ns_to_clk(50, clk_mhz), idev->base + SPIKE_FLTR_LEN);
+	ग_लिखोl(ns_to_clk(50, clk_mhz), idev->base + SPIKE_FLTR_LEN);
 
 	/* Configure Time-Out Registers */
-	tmo_clk = ns_to_clk(SCL_WAIT_TIMEOUT_NS, clk_mhz);
+	पंचांगo_clk = ns_to_clk(SCL_WAIT_TIMEOUT_NS, clk_mhz);
 
-	/* Find prescaler value that makes tmo_clk fit in 15-bits counter. */
-	for (prescale = 0; prescale < 15; ++prescale) {
-		if (tmo_clk <= 0x7fff)
-			break;
-		tmo_clk >>= 1;
-	}
-	if (tmo_clk > 0x7fff)
-		tmo_clk = 0x7fff;
+	/* Find prescaler value that makes पंचांगo_clk fit in 15-bits counter. */
+	क्रम (prescale = 0; prescale < 15; ++prescale) अणु
+		अगर (पंचांगo_clk <= 0x7fff)
+			अवरोध;
+		पंचांगo_clk >>= 1;
+	पूर्ण
+	अगर (पंचांगo_clk > 0x7fff)
+		पंचांगo_clk = 0x7fff;
 
-	/* Prescale divider (log2) */
-	writel(prescale, idev->base + TIMER_CLOCK_DIV);
-	/* Timeout in divided clocks */
-	writel(WT_EN | WT_VALUE(tmo_clk), idev->base + WAIT_TIMER_CONTROL);
+	/* Prescale भागider (log2) */
+	ग_लिखोl(prescale, idev->base + TIMER_CLOCK_DIV);
+	/* Timeout in भागided घड़ीs */
+	ग_लिखोl(WT_EN | WT_VALUE(पंचांगo_clk), idev->base + WAIT_TIMER_CONTROL);
 
-	/* Mask all master interrupt bits */
-	i2c_int_disable(idev, ~0);
+	/* Mask all master पूर्णांकerrupt bits */
+	i2c_पूर्णांक_disable(idev, ~0);
 
 	/* Interrupt enable */
-	writel(0x01, idev->base + INTERRUPT_ENABLE);
+	ग_लिखोl(0x01, idev->base + INTERRUPT_ENABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_m_rd(const struct i2c_msg *msg)
-{
-	return (msg->flags & I2C_M_RD) != 0;
-}
+अटल पूर्णांक i2c_m_rd(स्थिर काष्ठा i2c_msg *msg)
+अणु
+	वापस (msg->flags & I2C_M_RD) != 0;
+पूर्ण
 
-static int i2c_m_ten(const struct i2c_msg *msg)
-{
-	return (msg->flags & I2C_M_TEN) != 0;
-}
+अटल पूर्णांक i2c_m_ten(स्थिर काष्ठा i2c_msg *msg)
+अणु
+	वापस (msg->flags & I2C_M_TEN) != 0;
+पूर्ण
 
-static int i2c_m_recv_len(const struct i2c_msg *msg)
-{
-	return (msg->flags & I2C_M_RECV_LEN) != 0;
-}
+अटल पूर्णांक i2c_m_recv_len(स्थिर काष्ठा i2c_msg *msg)
+अणु
+	वापस (msg->flags & I2C_M_RECV_LEN) != 0;
+पूर्ण
 
 /**
- * axxia_i2c_empty_rx_fifo - Fetch data from RX FIFO and update SMBus block
- * transfer length if this is the first byte of such a transfer.
+ * axxia_i2c_empty_rx_fअगरo - Fetch data from RX FIFO and update SMBus block
+ * transfer length अगर this is the first byte of such a transfer.
  */
-static int axxia_i2c_empty_rx_fifo(struct axxia_i2c_dev *idev)
-{
-	struct i2c_msg *msg = idev->msg_r;
-	size_t rx_fifo_avail = readl(idev->base + MST_RX_FIFO);
-	int bytes_to_transfer = min(rx_fifo_avail, msg->len - idev->msg_xfrd_r);
+अटल पूर्णांक axxia_i2c_empty_rx_fअगरo(काष्ठा axxia_i2c_dev *idev)
+अणु
+	काष्ठा i2c_msg *msg = idev->msg_r;
+	माप_प्रकार rx_fअगरo_avail = पढ़ोl(idev->base + MST_RX_FIFO);
+	पूर्णांक bytes_to_transfer = min(rx_fअगरo_avail, msg->len - idev->msg_xfrd_r);
 
-	while (bytes_to_transfer-- > 0) {
-		int c = readl(idev->base + MST_DATA);
+	जबतक (bytes_to_transfer-- > 0) अणु
+		पूर्णांक c = पढ़ोl(idev->base + MST_DATA);
 
-		if (idev->msg_xfrd_r == 0 && i2c_m_recv_len(msg)) {
+		अगर (idev->msg_xfrd_r == 0 && i2c_m_recv_len(msg)) अणु
 			/*
-			 * Check length byte for SMBus block read
+			 * Check length byte क्रम SMBus block पढ़ो
 			 */
-			if (c <= 0 || c > I2C_SMBUS_BLOCK_MAX) {
+			अगर (c <= 0 || c > I2C_SMBUS_BLOCK_MAX) अणु
 				idev->msg_err = -EPROTO;
-				i2c_int_disable(idev, ~MST_STATUS_TSS);
+				i2c_पूर्णांक_disable(idev, ~MST_STATUS_TSS);
 				complete(&idev->msg_complete);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			msg->len = 1 + c;
-			writel(msg->len, idev->base + MST_RX_XFER);
-		}
+			ग_लिखोl(msg->len, idev->base + MST_RX_XFER);
+		पूर्ण
 		msg->buf[idev->msg_xfrd_r++] = c;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * axxia_i2c_fill_tx_fifo - Fill TX FIFO from current message buffer.
- * @return: Number of bytes left to transfer.
+ * axxia_i2c_fill_tx_fअगरo - Fill TX FIFO from current message buffer.
+ * @वापस: Number of bytes left to transfer.
  */
-static int axxia_i2c_fill_tx_fifo(struct axxia_i2c_dev *idev)
-{
-	struct i2c_msg *msg = idev->msg;
-	size_t tx_fifo_avail = FIFO_SIZE - readl(idev->base + MST_TX_FIFO);
-	int bytes_to_transfer = min(tx_fifo_avail, msg->len - idev->msg_xfrd);
-	int ret = msg->len - idev->msg_xfrd - bytes_to_transfer;
+अटल पूर्णांक axxia_i2c_fill_tx_fअगरo(काष्ठा axxia_i2c_dev *idev)
+अणु
+	काष्ठा i2c_msg *msg = idev->msg;
+	माप_प्रकार tx_fअगरo_avail = FIFO_SIZE - पढ़ोl(idev->base + MST_TX_FIFO);
+	पूर्णांक bytes_to_transfer = min(tx_fअगरo_avail, msg->len - idev->msg_xfrd);
+	पूर्णांक ret = msg->len - idev->msg_xfrd - bytes_to_transfer;
 
-	while (bytes_to_transfer-- > 0)
-		writel(msg->buf[idev->msg_xfrd++], idev->base + MST_DATA);
+	जबतक (bytes_to_transfer-- > 0)
+		ग_लिखोl(msg->buf[idev->msg_xfrd++], idev->base + MST_DATA);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void axxia_i2c_slv_fifo_event(struct axxia_i2c_dev *idev)
-{
-	u32 fifo_status = readl(idev->base + SLV_RX_FIFO);
+अटल व्योम axxia_i2c_slv_fअगरo_event(काष्ठा axxia_i2c_dev *idev)
+अणु
+	u32 fअगरo_status = पढ़ोl(idev->base + SLV_RX_FIFO);
 	u8 val;
 
-	dev_dbg(idev->dev, "slave irq fifo_status=0x%x\n", fifo_status);
+	dev_dbg(idev->dev, "slave irq fifo_status=0x%x\n", fअगरo_status);
 
-	if (fifo_status & SLV_FIFO_DV1) {
-		if (fifo_status & SLV_FIFO_STRC)
+	अगर (fअगरo_status & SLV_FIFO_DV1) अणु
+		अगर (fअगरo_status & SLV_FIFO_STRC)
 			i2c_slave_event(idev->slave,
 					I2C_SLAVE_WRITE_REQUESTED, &val);
 
-		val = readl(idev->base + SLV_DATA);
+		val = पढ़ोl(idev->base + SLV_DATA);
 		i2c_slave_event(idev->slave, I2C_SLAVE_WRITE_RECEIVED, &val);
-	}
-	if (fifo_status & SLV_FIFO_STPC) {
-		readl(idev->base + SLV_DATA); /* dummy read */
+	पूर्ण
+	अगर (fअगरo_status & SLV_FIFO_STPC) अणु
+		पढ़ोl(idev->base + SLV_DATA); /* dummy पढ़ो */
 		i2c_slave_event(idev->slave, I2C_SLAVE_STOP, &val);
-	}
-	if (fifo_status & SLV_FIFO_RSC)
-		readl(idev->base + SLV_DATA); /* dummy read */
-}
+	पूर्ण
+	अगर (fअगरo_status & SLV_FIFO_RSC)
+		पढ़ोl(idev->base + SLV_DATA); /* dummy पढ़ो */
+पूर्ण
 
-static irqreturn_t axxia_i2c_slv_isr(struct axxia_i2c_dev *idev)
-{
-	u32 status = readl(idev->base + SLV_INT_STATUS);
+अटल irqवापस_t axxia_i2c_slv_isr(काष्ठा axxia_i2c_dev *idev)
+अणु
+	u32 status = पढ़ोl(idev->base + SLV_INT_STATUS);
 	u8 val;
 
 	dev_dbg(idev->dev, "slave irq status=0x%x\n", status);
 
-	if (status & SLV_STATUS_RFH)
-		axxia_i2c_slv_fifo_event(idev);
-	if (status & SLV_STATUS_SRS1) {
+	अगर (status & SLV_STATUS_RFH)
+		axxia_i2c_slv_fअगरo_event(idev);
+	अगर (status & SLV_STATUS_SRS1) अणु
 		i2c_slave_event(idev->slave, I2C_SLAVE_READ_REQUESTED, &val);
-		writel(val, idev->base + SLV_DATA);
-	}
-	if (status & SLV_STATUS_SRND1) {
+		ग_लिखोl(val, idev->base + SLV_DATA);
+	पूर्ण
+	अगर (status & SLV_STATUS_SRND1) अणु
 		i2c_slave_event(idev->slave, I2C_SLAVE_READ_PROCESSED, &val);
-		writel(val, idev->base + SLV_DATA);
-	}
-	if (status & SLV_STATUS_SRC1)
+		ग_लिखोl(val, idev->base + SLV_DATA);
+	पूर्ण
+	अगर (status & SLV_STATUS_SRC1)
 		i2c_slave_event(idev->slave, I2C_SLAVE_STOP, &val);
 
-	writel(INT_SLV, idev->base + INTERRUPT_STATUS);
-	return IRQ_HANDLED;
-}
+	ग_लिखोl(INT_SLV, idev->base + INTERRUPT_STATUS);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t axxia_i2c_isr(int irq, void *_dev)
-{
-	struct axxia_i2c_dev *idev = _dev;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t axxia_i2c_isr(पूर्णांक irq, व्योम *_dev)
+अणु
+	काष्ठा axxia_i2c_dev *idev = _dev;
+	irqवापस_t ret = IRQ_NONE;
 	u32 status;
 
-	status = readl(idev->base + INTERRUPT_STATUS);
+	status = पढ़ोl(idev->base + INTERRUPT_STATUS);
 
-	if (status & INT_SLV)
+	अगर (status & INT_SLV)
 		ret = axxia_i2c_slv_isr(idev);
-	if (!(status & INT_MST))
-		return ret;
+	अगर (!(status & INT_MST))
+		वापस ret;
 
-	/* Read interrupt status bits */
-	status = readl(idev->base + MST_INT_STATUS);
+	/* Read पूर्णांकerrupt status bits */
+	status = पढ़ोl(idev->base + MST_INT_STATUS);
 
-	if (!idev->msg) {
+	अगर (!idev->msg) अणु
 		dev_warn(idev->dev, "unexpected interrupt\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* RX FIFO needs service? */
-	if (i2c_m_rd(idev->msg_r) && (status & MST_STATUS_RFL))
-		axxia_i2c_empty_rx_fifo(idev);
+	अगर (i2c_m_rd(idev->msg_r) && (status & MST_STATUS_RFL))
+		axxia_i2c_empty_rx_fअगरo(idev);
 
 	/* TX FIFO needs service? */
-	if (!i2c_m_rd(idev->msg) && (status & MST_STATUS_TFL)) {
-		if (axxia_i2c_fill_tx_fifo(idev) == 0)
-			i2c_int_disable(idev, MST_STATUS_TFL);
-	}
+	अगर (!i2c_m_rd(idev->msg) && (status & MST_STATUS_TFL)) अणु
+		अगर (axxia_i2c_fill_tx_fअगरo(idev) == 0)
+			i2c_पूर्णांक_disable(idev, MST_STATUS_TFL);
+	पूर्ण
 
-	if (unlikely(status & MST_STATUS_ERR)) {
+	अगर (unlikely(status & MST_STATUS_ERR)) अणु
 		/* Transfer error */
-		i2c_int_disable(idev, ~0);
-		if (status & MST_STATUS_AL)
+		i2c_पूर्णांक_disable(idev, ~0);
+		अगर (status & MST_STATUS_AL)
 			idev->msg_err = -EAGAIN;
-		else if (status & MST_STATUS_NAK)
+		अन्यथा अगर (status & MST_STATUS_NAK)
 			idev->msg_err = -ENXIO;
-		else
+		अन्यथा
 			idev->msg_err = -EIO;
 		dev_dbg(idev->dev, "error %#x, addr=%#x rx=%u/%u tx=%u/%u\n",
 			status,
 			idev->msg->addr,
-			readl(idev->base + MST_RX_BYTES_XFRD),
-			readl(idev->base + MST_RX_XFER),
-			readl(idev->base + MST_TX_BYTES_XFRD),
-			readl(idev->base + MST_TX_XFER));
+			पढ़ोl(idev->base + MST_RX_BYTES_XFRD),
+			पढ़ोl(idev->base + MST_RX_XFER),
+			पढ़ोl(idev->base + MST_TX_BYTES_XFRD),
+			पढ़ोl(idev->base + MST_TX_XFER));
 		complete(&idev->msg_complete);
-	} else if (status & MST_STATUS_SCC) {
+	पूर्ण अन्यथा अगर (status & MST_STATUS_SCC) अणु
 		/* Stop completed */
-		i2c_int_disable(idev, ~MST_STATUS_TSS);
+		i2c_पूर्णांक_disable(idev, ~MST_STATUS_TSS);
 		complete(&idev->msg_complete);
-	} else if (status & (MST_STATUS_SNS | MST_STATUS_SS)) {
-		/* Transfer done */
-		int mask = idev->last ? ~0 : ~MST_STATUS_TSS;
+	पूर्ण अन्यथा अगर (status & (MST_STATUS_SNS | MST_STATUS_SS)) अणु
+		/* Transfer करोne */
+		पूर्णांक mask = idev->last ? ~0 : ~MST_STATUS_TSS;
 
-		i2c_int_disable(idev, mask);
-		if (i2c_m_rd(idev->msg_r) && idev->msg_xfrd_r < idev->msg_r->len)
-			axxia_i2c_empty_rx_fifo(idev);
+		i2c_पूर्णांक_disable(idev, mask);
+		अगर (i2c_m_rd(idev->msg_r) && idev->msg_xfrd_r < idev->msg_r->len)
+			axxia_i2c_empty_rx_fअगरo(idev);
 		complete(&idev->msg_complete);
-	} else if (status & MST_STATUS_TSS) {
-		/* Transfer timeout */
+	पूर्ण अन्यथा अगर (status & MST_STATUS_TSS) अणु
+		/* Transfer समयout */
 		idev->msg_err = -ETIMEDOUT;
-		i2c_int_disable(idev, ~MST_STATUS_TSS);
+		i2c_पूर्णांक_disable(idev, ~MST_STATUS_TSS);
 		complete(&idev->msg_complete);
-	}
+	पूर्ण
 
 out:
-	/* Clear interrupt */
-	writel(INT_MST, idev->base + INTERRUPT_STATUS);
+	/* Clear पूर्णांकerrupt */
+	ग_लिखोl(INT_MST, idev->base + INTERRUPT_STATUS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void axxia_i2c_set_addr(struct axxia_i2c_dev *idev, struct i2c_msg *msg)
-{
+अटल व्योम axxia_i2c_set_addr(काष्ठा axxia_i2c_dev *idev, काष्ठा i2c_msg *msg)
+अणु
 	u32 addr_1, addr_2;
 
-	if (i2c_m_ten(msg)) {
+	अगर (i2c_m_ten(msg)) अणु
 		/* 10-bit address
 		 *   addr_1: 5'b11110 | addr[9:8] | (R/nW)
 		 *   addr_2: addr[7:0]
 		 */
 		addr_1 = 0xF0 | ((msg->addr >> 7) & 0x06);
-		if (i2c_m_rd(msg))
+		अगर (i2c_m_rd(msg))
 			addr_1 |= 1;	/* Set the R/nW bit of the address */
 		addr_2 = msg->addr & 0xFF;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* 7-bit address
 		 *   addr_1: addr[6:0] | (R/nW)
-		 *   addr_2: dont care
+		 *   addr_2: करोnt care
 		 */
 		addr_1 = i2c_8bit_addr_from_msg(msg);
 		addr_2 = 0;
-	}
+	पूर्ण
 
-	writel(addr_1, idev->base + MST_ADDR_1);
-	writel(addr_2, idev->base + MST_ADDR_2);
-}
+	ग_लिखोl(addr_1, idev->base + MST_ADDR_1);
+	ग_लिखोl(addr_2, idev->base + MST_ADDR_2);
+पूर्ण
 
-/* The NAK interrupt will be sent _before_ issuing STOP command
+/* The NAK पूर्णांकerrupt will be sent _beक्रमe_ issuing STOP command
  * so the controller might still be busy processing it. No
- * interrupt will be sent at the end so we have to poll for it
+ * पूर्णांकerrupt will be sent at the end so we have to poll क्रम it
  */
-static int axxia_i2c_handle_seq_nak(struct axxia_i2c_dev *idev)
-{
-	unsigned long timeout = jiffies + I2C_XFER_TIMEOUT;
+अटल पूर्णांक axxia_i2c_handle_seq_nak(काष्ठा axxia_i2c_dev *idev)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + I2C_XFER_TIMEOUT;
 
-	do {
-		if ((readl(idev->base + MST_COMMAND) & CMD_BUSY) == 0)
-			return 0;
+	करो अणु
+		अगर ((पढ़ोl(idev->base + MST_COMMAND) & CMD_BUSY) == 0)
+			वापस 0;
 		usleep_range(1, 100);
-	} while (time_before(jiffies, timeout));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int axxia_i2c_xfer_seq(struct axxia_i2c_dev *idev, struct i2c_msg msgs[])
-{
-	u32 int_mask = MST_STATUS_ERR | MST_STATUS_SS | MST_STATUS_RFL;
+अटल पूर्णांक axxia_i2c_xfer_seq(काष्ठा axxia_i2c_dev *idev, काष्ठा i2c_msg msgs[])
+अणु
+	u32 पूर्णांक_mask = MST_STATUS_ERR | MST_STATUS_SS | MST_STATUS_RFL;
 	u32 rlen = i2c_m_recv_len(&msgs[1]) ? I2C_SMBUS_BLOCK_MAX : msgs[1].len;
-	unsigned long time_left;
+	अचिन्हित दीर्घ समय_left;
 
 	axxia_i2c_set_addr(idev, &msgs[0]);
 
-	writel(msgs[0].len, idev->base + MST_TX_XFER);
-	writel(rlen, idev->base + MST_RX_XFER);
+	ग_लिखोl(msgs[0].len, idev->base + MST_TX_XFER);
+	ग_लिखोl(rlen, idev->base + MST_RX_XFER);
 
 	idev->msg = &msgs[0];
 	idev->msg_r = &msgs[1];
 	idev->msg_xfrd = 0;
 	idev->msg_xfrd_r = 0;
 	idev->last = true;
-	axxia_i2c_fill_tx_fifo(idev);
+	axxia_i2c_fill_tx_fअगरo(idev);
 
-	writel(CMD_SEQUENCE, idev->base + MST_COMMAND);
+	ग_लिखोl(CMD_SEQUENCE, idev->base + MST_COMMAND);
 
 	reinit_completion(&idev->msg_complete);
-	i2c_int_enable(idev, int_mask);
+	i2c_पूर्णांक_enable(idev, पूर्णांक_mask);
 
-	time_left = wait_for_completion_timeout(&idev->msg_complete,
+	समय_left = रुको_क्रम_completion_समयout(&idev->msg_complete,
 						I2C_XFER_TIMEOUT);
 
-	if (idev->msg_err == -ENXIO) {
-		if (axxia_i2c_handle_seq_nak(idev))
+	अगर (idev->msg_err == -ENXIO) अणु
+		अगर (axxia_i2c_handle_seq_nak(idev))
 			axxia_i2c_init(idev);
-	} else if (readl(idev->base + MST_COMMAND) & CMD_BUSY) {
+	पूर्ण अन्यथा अगर (पढ़ोl(idev->base + MST_COMMAND) & CMD_BUSY) अणु
 		dev_warn(idev->dev, "busy after xfer\n");
-	}
+	पूर्ण
 
-	if (time_left == 0) {
+	अगर (समय_left == 0) अणु
 		idev->msg_err = -ETIMEDOUT;
 		i2c_recover_bus(&idev->adapter);
 		axxia_i2c_init(idev);
-	}
+	पूर्ण
 
-	if (unlikely(idev->msg_err) && idev->msg_err != -ENXIO)
+	अगर (unlikely(idev->msg_err) && idev->msg_err != -ENXIO)
 		axxia_i2c_init(idev);
 
-	return idev->msg_err;
-}
+	वापस idev->msg_err;
+पूर्ण
 
-static int axxia_i2c_xfer_msg(struct axxia_i2c_dev *idev, struct i2c_msg *msg,
+अटल पूर्णांक axxia_i2c_xfer_msg(काष्ठा axxia_i2c_dev *idev, काष्ठा i2c_msg *msg,
 			      bool last)
-{
-	u32 int_mask = MST_STATUS_ERR;
+अणु
+	u32 पूर्णांक_mask = MST_STATUS_ERR;
 	u32 rx_xfer, tx_xfer;
-	unsigned long time_left;
-	unsigned int wt_value;
+	अचिन्हित दीर्घ समय_left;
+	अचिन्हित पूर्णांक wt_value;
 
 	idev->msg = msg;
 	idev->msg_r = msg;
@@ -538,252 +539,252 @@ static int axxia_i2c_xfer_msg(struct axxia_i2c_dev *idev, struct i2c_msg *msg,
 
 	axxia_i2c_set_addr(idev, msg);
 
-	if (i2c_m_rd(msg)) {
-		/* I2C read transfer */
+	अगर (i2c_m_rd(msg)) अणु
+		/* I2C पढ़ो transfer */
 		rx_xfer = i2c_m_recv_len(msg) ? I2C_SMBUS_BLOCK_MAX : msg->len;
 		tx_xfer = 0;
-	} else {
-		/* I2C write transfer */
+	पूर्ण अन्यथा अणु
+		/* I2C ग_लिखो transfer */
 		rx_xfer = 0;
 		tx_xfer = msg->len;
-	}
+	पूर्ण
 
-	writel(rx_xfer, idev->base + MST_RX_XFER);
-	writel(tx_xfer, idev->base + MST_TX_XFER);
+	ग_लिखोl(rx_xfer, idev->base + MST_RX_XFER);
+	ग_लिखोl(tx_xfer, idev->base + MST_TX_XFER);
 
-	if (i2c_m_rd(msg))
-		int_mask |= MST_STATUS_RFL;
-	else if (axxia_i2c_fill_tx_fifo(idev) != 0)
-		int_mask |= MST_STATUS_TFL;
+	अगर (i2c_m_rd(msg))
+		पूर्णांक_mask |= MST_STATUS_RFL;
+	अन्यथा अगर (axxia_i2c_fill_tx_fअगरo(idev) != 0)
+		पूर्णांक_mask |= MST_STATUS_TFL;
 
-	wt_value = WT_VALUE(readl(idev->base + WAIT_TIMER_CONTROL));
-	/* Disable wait timer temporarly */
-	writel(wt_value, idev->base + WAIT_TIMER_CONTROL);
-	/* Check if timeout error happened */
-	if (idev->msg_err)
-		goto out;
+	wt_value = WT_VALUE(पढ़ोl(idev->base + WAIT_TIMER_CONTROL));
+	/* Disable रुको समयr temporarly */
+	ग_लिखोl(wt_value, idev->base + WAIT_TIMER_CONTROL);
+	/* Check अगर समयout error happened */
+	अगर (idev->msg_err)
+		जाओ out;
 
-	if (!last) {
-		writel(CMD_MANUAL, idev->base + MST_COMMAND);
-		int_mask |= MST_STATUS_SNS;
-	} else {
-		writel(CMD_AUTO, idev->base + MST_COMMAND);
-		int_mask |= MST_STATUS_SS;
-	}
+	अगर (!last) अणु
+		ग_लिखोl(CMD_MANUAL, idev->base + MST_COMMAND);
+		पूर्णांक_mask |= MST_STATUS_SNS;
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(CMD_AUTO, idev->base + MST_COMMAND);
+		पूर्णांक_mask |= MST_STATUS_SS;
+	पूर्ण
 
-	writel(WT_EN | wt_value, idev->base + WAIT_TIMER_CONTROL);
+	ग_लिखोl(WT_EN | wt_value, idev->base + WAIT_TIMER_CONTROL);
 
-	i2c_int_enable(idev, int_mask);
+	i2c_पूर्णांक_enable(idev, पूर्णांक_mask);
 
-	time_left = wait_for_completion_timeout(&idev->msg_complete,
+	समय_left = रुको_क्रम_completion_समयout(&idev->msg_complete,
 					      I2C_XFER_TIMEOUT);
 
-	i2c_int_disable(idev, int_mask);
+	i2c_पूर्णांक_disable(idev, पूर्णांक_mask);
 
-	if (readl(idev->base + MST_COMMAND) & CMD_BUSY)
+	अगर (पढ़ोl(idev->base + MST_COMMAND) & CMD_BUSY)
 		dev_warn(idev->dev, "busy after xfer\n");
 
-	if (time_left == 0) {
+	अगर (समय_left == 0) अणु
 		idev->msg_err = -ETIMEDOUT;
 		i2c_recover_bus(&idev->adapter);
 		axxia_i2c_init(idev);
-	}
+	पूर्ण
 
 out:
-	if (unlikely(idev->msg_err) && idev->msg_err != -ENXIO &&
+	अगर (unlikely(idev->msg_err) && idev->msg_err != -ENXIO &&
 			idev->msg_err != -ETIMEDOUT)
 		axxia_i2c_init(idev);
 
-	return idev->msg_err;
-}
+	वापस idev->msg_err;
+पूर्ण
 
-/* This function checks if the msgs[] array contains messages compatible with
+/* This function checks अगर the msgs[] array contains messages compatible with
  * Sequence mode of operation. This mode assumes there will be exactly one
- * write of non-zero length followed by exactly one read of non-zero length,
+ * ग_लिखो of non-zero length followed by exactly one पढ़ो of non-zero length,
  * both targeted at the same client device.
  */
-static bool axxia_i2c_sequence_ok(struct i2c_msg msgs[], int num)
-{
-	return num == SEQ_LEN && !i2c_m_rd(&msgs[0]) && i2c_m_rd(&msgs[1]) &&
+अटल bool axxia_i2c_sequence_ok(काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	वापस num == SEQ_LEN && !i2c_m_rd(&msgs[0]) && i2c_m_rd(&msgs[1]) &&
 	       msgs[0].len > 0 && msgs[0].len <= FIFO_SIZE &&
 	       msgs[1].len > 0 && msgs[0].addr == msgs[1].addr;
-}
+पूर्ण
 
-static int
-axxia_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg msgs[], int num)
-{
-	struct axxia_i2c_dev *idev = i2c_get_adapdata(adap);
-	int i;
-	int ret = 0;
+अटल पूर्णांक
+axxia_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	काष्ठा axxia_i2c_dev *idev = i2c_get_adapdata(adap);
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
 	idev->msg_err = 0;
 
-	if (axxia_i2c_sequence_ok(msgs, num)) {
+	अगर (axxia_i2c_sequence_ok(msgs, num)) अणु
 		ret = axxia_i2c_xfer_seq(idev, msgs);
-		return ret ? : SEQ_LEN;
-	}
+		वापस ret ? : SEQ_LEN;
+	पूर्ण
 
-	i2c_int_enable(idev, MST_STATUS_TSS);
+	i2c_पूर्णांक_enable(idev, MST_STATUS_TSS);
 
-	for (i = 0; ret == 0 && i < num; ++i)
+	क्रम (i = 0; ret == 0 && i < num; ++i)
 		ret = axxia_i2c_xfer_msg(idev, &msgs[i], i == (num - 1));
 
-	return ret ? : i;
-}
+	वापस ret ? : i;
+पूर्ण
 
-static int axxia_i2c_get_scl(struct i2c_adapter *adap)
-{
-	struct axxia_i2c_dev *idev = i2c_get_adapdata(adap);
+अटल पूर्णांक axxia_i2c_get_scl(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा axxia_i2c_dev *idev = i2c_get_adapdata(adap);
 
-	return !!(readl(idev->base + I2C_BUS_MONITOR) & BM_SCLS);
-}
+	वापस !!(पढ़ोl(idev->base + I2C_BUS_MONITOR) & BM_SCLS);
+पूर्ण
 
-static void axxia_i2c_set_scl(struct i2c_adapter *adap, int val)
-{
-	struct axxia_i2c_dev *idev = i2c_get_adapdata(adap);
-	u32 tmp;
+अटल व्योम axxia_i2c_set_scl(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
+	काष्ठा axxia_i2c_dev *idev = i2c_get_adapdata(adap);
+	u32 पंचांगp;
 
 	/* Preserve SDA Control */
-	tmp = readl(idev->base + I2C_BUS_MONITOR) & BM_SDAC;
-	if (!val)
-		tmp |= BM_SCLC;
-	writel(tmp, idev->base + I2C_BUS_MONITOR);
-}
+	पंचांगp = पढ़ोl(idev->base + I2C_BUS_MONITOR) & BM_SDAC;
+	अगर (!val)
+		पंचांगp |= BM_SCLC;
+	ग_लिखोl(पंचांगp, idev->base + I2C_BUS_MONITOR);
+पूर्ण
 
-static int axxia_i2c_get_sda(struct i2c_adapter *adap)
-{
-	struct axxia_i2c_dev *idev = i2c_get_adapdata(adap);
+अटल पूर्णांक axxia_i2c_get_sda(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा axxia_i2c_dev *idev = i2c_get_adapdata(adap);
 
-	return !!(readl(idev->base + I2C_BUS_MONITOR) & BM_SDAS);
-}
+	वापस !!(पढ़ोl(idev->base + I2C_BUS_MONITOR) & BM_SDAS);
+पूर्ण
 
-static struct i2c_bus_recovery_info axxia_i2c_recovery_info = {
+अटल काष्ठा i2c_bus_recovery_info axxia_i2c_recovery_info = अणु
 	.recover_bus = i2c_generic_scl_recovery,
 	.get_scl = axxia_i2c_get_scl,
 	.set_scl = axxia_i2c_set_scl,
 	.get_sda = axxia_i2c_get_sda,
-};
+पूर्ण;
 
-static u32 axxia_i2c_func(struct i2c_adapter *adap)
-{
+अटल u32 axxia_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
 	u32 caps = (I2C_FUNC_I2C | I2C_FUNC_10BIT_ADDR |
 		    I2C_FUNC_SMBUS_EMUL | I2C_FUNC_SMBUS_BLOCK_DATA);
-	return caps;
-}
+	वापस caps;
+पूर्ण
 
-static int axxia_i2c_reg_slave(struct i2c_client *slave)
-{
-	struct axxia_i2c_dev *idev = i2c_get_adapdata(slave->adapter);
-	u32 slv_int_mask = SLV_STATUS_RFH;
+अटल पूर्णांक axxia_i2c_reg_slave(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा axxia_i2c_dev *idev = i2c_get_adapdata(slave->adapter);
+	u32 slv_पूर्णांक_mask = SLV_STATUS_RFH;
 	u32 dec_ctl;
 
-	if (idev->slave)
-		return -EBUSY;
+	अगर (idev->slave)
+		वापस -EBUSY;
 
 	idev->slave = slave;
 
 	/* Enable slave mode as well */
-	writel(GLOBAL_MST_EN | GLOBAL_SLV_EN, idev->base + GLOBAL_CONTROL);
-	writel(INT_MST | INT_SLV, idev->base + INTERRUPT_ENABLE);
+	ग_लिखोl(GLOBAL_MST_EN | GLOBAL_SLV_EN, idev->base + GLOBAL_CONTROL);
+	ग_लिखोl(INT_MST | INT_SLV, idev->base + INTERRUPT_ENABLE);
 
 	/* Set slave address */
 	dec_ctl = SLV_ADDR_DEC_SA1E;
-	if (slave->flags & I2C_CLIENT_TEN)
+	अगर (slave->flags & I2C_CLIENT_TEN)
 		dec_ctl |= SLV_ADDR_DEC_SA1M;
 
-	writel(SLV_RX_ACSA1, idev->base + SLV_RX_CTL);
-	writel(dec_ctl, idev->base + SLV_ADDR_DEC_CTL);
-	writel(slave->addr, idev->base + SLV_ADDR_1);
+	ग_लिखोl(SLV_RX_ACSA1, idev->base + SLV_RX_CTL);
+	ग_लिखोl(dec_ctl, idev->base + SLV_ADDR_DEC_CTL);
+	ग_लिखोl(slave->addr, idev->base + SLV_ADDR_1);
 
-	/* Enable interrupts */
-	slv_int_mask |= SLV_STATUS_SRS1 | SLV_STATUS_SRRS1 | SLV_STATUS_SRND1;
-	slv_int_mask |= SLV_STATUS_SRC1;
-	writel(slv_int_mask, idev->base + SLV_INT_ENABLE);
+	/* Enable पूर्णांकerrupts */
+	slv_पूर्णांक_mask |= SLV_STATUS_SRS1 | SLV_STATUS_SRRS1 | SLV_STATUS_SRND1;
+	slv_पूर्णांक_mask |= SLV_STATUS_SRC1;
+	ग_लिखोl(slv_पूर्णांक_mask, idev->base + SLV_INT_ENABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int axxia_i2c_unreg_slave(struct i2c_client *slave)
-{
-	struct axxia_i2c_dev *idev = i2c_get_adapdata(slave->adapter);
+अटल पूर्णांक axxia_i2c_unreg_slave(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा axxia_i2c_dev *idev = i2c_get_adapdata(slave->adapter);
 
 	/* Disable slave mode */
-	writel(GLOBAL_MST_EN, idev->base + GLOBAL_CONTROL);
-	writel(INT_MST, idev->base + INTERRUPT_ENABLE);
+	ग_लिखोl(GLOBAL_MST_EN, idev->base + GLOBAL_CONTROL);
+	ग_लिखोl(INT_MST, idev->base + INTERRUPT_ENABLE);
 
 	synchronize_irq(idev->irq);
 
-	idev->slave = NULL;
+	idev->slave = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_algorithm axxia_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm axxia_i2c_algo = अणु
 	.master_xfer = axxia_i2c_xfer,
 	.functionality = axxia_i2c_func,
 	.reg_slave = axxia_i2c_reg_slave,
 	.unreg_slave = axxia_i2c_unreg_slave,
-};
+पूर्ण;
 
-static const struct i2c_adapter_quirks axxia_i2c_quirks = {
-	.max_read_len = 255,
-	.max_write_len = 255,
-};
+अटल स्थिर काष्ठा i2c_adapter_quirks axxia_i2c_quirks = अणु
+	.max_पढ़ो_len = 255,
+	.max_ग_लिखो_len = 255,
+पूर्ण;
 
-static int axxia_i2c_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct axxia_i2c_dev *idev = NULL;
-	void __iomem *base;
-	int ret = 0;
+अटल पूर्णांक axxia_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा axxia_i2c_dev *idev = शून्य;
+	व्योम __iomem *base;
+	पूर्णांक ret = 0;
 
-	idev = devm_kzalloc(&pdev->dev, sizeof(*idev), GFP_KERNEL);
-	if (!idev)
-		return -ENOMEM;
+	idev = devm_kzalloc(&pdev->dev, माप(*idev), GFP_KERNEL);
+	अगर (!idev)
+		वापस -ENOMEM;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	idev->irq = platform_get_irq(pdev, 0);
-	if (idev->irq < 0)
-		return idev->irq;
+	idev->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (idev->irq < 0)
+		वापस idev->irq;
 
 	idev->i2c_clk = devm_clk_get(&pdev->dev, "i2c");
-	if (IS_ERR(idev->i2c_clk)) {
+	अगर (IS_ERR(idev->i2c_clk)) अणु
 		dev_err(&pdev->dev, "missing clock\n");
-		return PTR_ERR(idev->i2c_clk);
-	}
+		वापस PTR_ERR(idev->i2c_clk);
+	पूर्ण
 
 	idev->base = base;
 	idev->dev = &pdev->dev;
 	init_completion(&idev->msg_complete);
 
-	of_property_read_u32(np, "clock-frequency", &idev->bus_clk_rate);
-	if (idev->bus_clk_rate == 0)
-		idev->bus_clk_rate = I2C_MAX_STANDARD_MODE_FREQ;	/* default clock rate */
+	of_property_पढ़ो_u32(np, "clock-frequency", &idev->bus_clk_rate);
+	अगर (idev->bus_clk_rate == 0)
+		idev->bus_clk_rate = I2C_MAX_STANDARD_MODE_FREQ;	/* शेष घड़ी rate */
 
 	ret = clk_prepare_enable(idev->i2c_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = axxia_i2c_init(idev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to initialize\n");
-		goto error_disable_clk;
-	}
+		जाओ error_disable_clk;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, idev->irq, axxia_i2c_isr, 0,
 			       pdev->name, idev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to claim IRQ%d\n", idev->irq);
-		goto error_disable_clk;
-	}
+		जाओ error_disable_clk;
+	पूर्ण
 
 	i2c_set_adapdata(&idev->adapter, idev);
-	strlcpy(idev->adapter.name, pdev->name, sizeof(idev->adapter.name));
+	strlcpy(idev->adapter.name, pdev->name, माप(idev->adapter.name));
 	idev->adapter.owner = THIS_MODULE;
 	idev->adapter.algo = &axxia_i2c_algo;
 	idev->adapter.bus_recovery_info = &axxia_i2c_recovery_info;
@@ -791,47 +792,47 @@ static int axxia_i2c_probe(struct platform_device *pdev)
 	idev->adapter.dev.parent = &pdev->dev;
 	idev->adapter.dev.of_node = pdev->dev.of_node;
 
-	platform_set_drvdata(pdev, idev);
+	platक्रमm_set_drvdata(pdev, idev);
 
 	ret = i2c_add_adapter(&idev->adapter);
-	if (ret)
-		goto error_disable_clk;
+	अगर (ret)
+		जाओ error_disable_clk;
 
-	return 0;
+	वापस 0;
 
 error_disable_clk:
 	clk_disable_unprepare(idev->i2c_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int axxia_i2c_remove(struct platform_device *pdev)
-{
-	struct axxia_i2c_dev *idev = platform_get_drvdata(pdev);
+अटल पूर्णांक axxia_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा axxia_i2c_dev *idev = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(idev->i2c_clk);
 	i2c_del_adapter(&idev->adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Match table for of_platform binding */
-static const struct of_device_id axxia_i2c_of_match[] = {
-	{ .compatible = "lsi,api2c", },
-	{},
-};
+/* Match table क्रम of_platक्रमm binding */
+अटल स्थिर काष्ठा of_device_id axxia_i2c_of_match[] = अणु
+	अणु .compatible = "lsi,api2c", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, axxia_i2c_of_match);
 
-static struct platform_driver axxia_i2c_driver = {
+अटल काष्ठा platक्रमm_driver axxia_i2c_driver = अणु
 	.probe = axxia_i2c_probe,
-	.remove = axxia_i2c_remove,
-	.driver = {
+	.हटाओ = axxia_i2c_हटाओ,
+	.driver = अणु
 		.name = "axxia-i2c",
 		.of_match_table = axxia_i2c_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(axxia_i2c_driver);
+module_platक्रमm_driver(axxia_i2c_driver);
 
 MODULE_DESCRIPTION("Axxia I2C Bus driver");
 MODULE_AUTHOR("Anders Berg <anders.berg@lsi.com>");

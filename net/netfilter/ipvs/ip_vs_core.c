@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * IPVS         An implementation of the IP virtual server support for the
- *              LINUX operating system.  IPVS is now implemented as a module
+ * IPVS         An implementation of the IP भव server support क्रम the
+ *              LINUX operating प्रणाली.  IPVS is now implemented as a module
  *              over the Netfilter framework. IPVS can be used to build a
- *              high-performance and highly available server based on a
+ *              high-perक्रमmance and highly available server based on a
  *              cluster of servers.
  *
- * Authors:     Wensong Zhang <wensong@linuxvirtualserver.org>
+ * Authors:     Wensong Zhang <wensong@linuxभवserver.org>
  *              Peter Kese <peter.kese@ijs.si>
  *              Julian Anastasov <ja@ssi.bg>
  *
- * The IPVS code for kernel 2.2 was done by Wensong Zhang and Peter Kese,
+ * The IPVS code क्रम kernel 2.2 was करोne by Wensong Zhang and Peter Kese,
  * with changes/fixes from Julian Anastasov, Lars Marowsky-Bree, Horms
  * and others.
  *
  * Changes:
  *	Paul `Rusty' Russell		properly handle non-linear skbs
- *	Harald Welte			don't use nfcache
+ *	Harald Welte			करोn't use nfcache
  */
 
-#define KMSG_COMPONENT "IPVS"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "IPVS"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/sctp.h>
-#include <linux/icmp.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/slab.h>
 
-#include <net/ip.h>
-#include <net/tcp.h>
-#include <net/udp.h>
-#include <net/icmp.h>                   /* for icmp_send */
-#include <net/gue.h>
-#include <net/gre.h>
-#include <net/route.h>
-#include <net/ip6_checksum.h>
-#include <net/netns/generic.h>		/* net_generic() */
+#समावेश <net/ip.h>
+#समावेश <net/tcp.h>
+#समावेश <net/udp.h>
+#समावेश <net/icmp.h>                   /* क्रम icmp_send */
+#समावेश <net/gue.h>
+#समावेश <net/gre.h>
+#समावेश <net/route.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/netns/generic.h>		/* net_generic() */
 
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv4.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv4.h>
 
-#ifdef CONFIG_IP_VS_IPV6
-#include <net/ipv6.h>
-#include <linux/netfilter_ipv6.h>
-#include <net/ip6_route.h>
-#endif
+#अगर_घोषित CONFIG_IP_VS_IPV6
+#समावेश <net/ipv6.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <net/ip6_route.h>
+#पूर्ण_अगर
 
-#include <net/ip_vs.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <net/ip_vs.h>
+#समावेश <linux/indirect_call_wrapper.h>
 
 
-EXPORT_SYMBOL(register_ip_vs_scheduler);
-EXPORT_SYMBOL(unregister_ip_vs_scheduler);
+EXPORT_SYMBOL(रेजिस्टर_ip_vs_scheduler);
+EXPORT_SYMBOL(unरेजिस्टर_ip_vs_scheduler);
 EXPORT_SYMBOL(ip_vs_proto_name);
 EXPORT_SYMBOL(ip_vs_conn_new);
 EXPORT_SYMBOL(ip_vs_conn_in_get);
 EXPORT_SYMBOL(ip_vs_conn_out_get);
-#ifdef CONFIG_IP_VS_PROTO_TCP
+#अगर_घोषित CONFIG_IP_VS_PROTO_TCP
 EXPORT_SYMBOL(ip_vs_tcp_conn_listen);
-#endif
+#पूर्ण_अगर
 EXPORT_SYMBOL(ip_vs_conn_put);
-#ifdef CONFIG_IP_VS_DEBUG
+#अगर_घोषित CONFIG_IP_VS_DEBUG
 EXPORT_SYMBOL(ip_vs_get_debug_level);
-#endif
+#पूर्ण_अगर
 EXPORT_SYMBOL(ip_vs_new_conn_out);
 
-#if defined(CONFIG_IP_VS_PROTO_TCP) && defined(CONFIG_IP_VS_PROTO_UDP)
-#define SNAT_CALL(f, ...) \
-	INDIRECT_CALL_2(f, tcp_snat_handler, udp_snat_handler, __VA_ARGS__)
-#elif defined(CONFIG_IP_VS_PROTO_TCP)
-#define SNAT_CALL(f, ...) INDIRECT_CALL_1(f, tcp_snat_handler, __VA_ARGS__)
-#elif defined(CONFIG_IP_VS_PROTO_UDP)
-#define SNAT_CALL(f, ...) INDIRECT_CALL_1(f, udp_snat_handler, __VA_ARGS__)
-#else
-#define SNAT_CALL(f, ...) f(__VA_ARGS__)
-#endif
+#अगर defined(CONFIG_IP_VS_PROTO_TCP) && defined(CONFIG_IP_VS_PROTO_UDP)
+#घोषणा SNAT_CALL(f, ...) \
+	INसूचीECT_CALL_2(f, tcp_snat_handler, udp_snat_handler, __VA_ARGS__)
+#या_अगर defined(CONFIG_IP_VS_PROTO_TCP)
+#घोषणा SNAT_CALL(f, ...) INसूचीECT_CALL_1(f, tcp_snat_handler, __VA_ARGS__)
+#या_अगर defined(CONFIG_IP_VS_PROTO_UDP)
+#घोषणा SNAT_CALL(f, ...) INसूचीECT_CALL_1(f, udp_snat_handler, __VA_ARGS__)
+#अन्यथा
+#घोषणा SNAT_CALL(f, ...) f(__VA_ARGS__)
+#पूर्ण_अगर
 
-static unsigned int ip_vs_net_id __read_mostly;
-/* netns cnt used for uniqueness */
-static atomic_t ipvs_netns_cnt = ATOMIC_INIT(0);
+अटल अचिन्हित पूर्णांक ip_vs_net_id __पढ़ो_mostly;
+/* netns cnt used क्रम uniqueness */
+अटल atomic_t ipvs_netns_cnt = ATOMIC_INIT(0);
 
 /* ID used in ICMP lookups */
-#define icmp_id(icmph)          (((icmph)->un).echo.id)
-#define icmpv6_id(icmph)        (icmph->icmp6_dataun.u_echo.identifier)
+#घोषणा icmp_id(icmph)          (((icmph)->un).echo.id)
+#घोषणा icmpv6_id(icmph)        (icmph->icmp6_dataun.u_echo.identअगरier)
 
-const char *ip_vs_proto_name(unsigned int proto)
-{
-	static char buf[20];
+स्थिर अक्षर *ip_vs_proto_name(अचिन्हित पूर्णांक proto)
+अणु
+	अटल अक्षर buf[20];
 
-	switch (proto) {
-	case IPPROTO_IP:
-		return "IP";
-	case IPPROTO_UDP:
-		return "UDP";
-	case IPPROTO_TCP:
-		return "TCP";
-	case IPPROTO_SCTP:
-		return "SCTP";
-	case IPPROTO_ICMP:
-		return "ICMP";
-#ifdef CONFIG_IP_VS_IPV6
-	case IPPROTO_ICMPV6:
-		return "ICMPv6";
-#endif
-	default:
-		sprintf(buf, "IP_%u", proto);
-		return buf;
-	}
-}
+	चयन (proto) अणु
+	हाल IPPROTO_IP:
+		वापस "IP";
+	हाल IPPROTO_UDP:
+		वापस "UDP";
+	हाल IPPROTO_TCP:
+		वापस "TCP";
+	हाल IPPROTO_SCTP:
+		वापस "SCTP";
+	हाल IPPROTO_ICMP:
+		वापस "ICMP";
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	हाल IPPROTO_ICMPV6:
+		वापस "ICMPv6";
+#पूर्ण_अगर
+	शेष:
+		प्र_लिखो(buf, "IP_%u", proto);
+		वापस buf;
+	पूर्ण
+पूर्ण
 
-void ip_vs_init_hash_table(struct list_head *table, int rows)
-{
-	while (--rows >= 0)
+व्योम ip_vs_init_hash_table(काष्ठा list_head *table, पूर्णांक rows)
+अणु
+	जबतक (--rows >= 0)
 		INIT_LIST_HEAD(&table[rows]);
-}
+पूर्ण
 
-static inline void
-ip_vs_in_stats(struct ip_vs_conn *cp, struct sk_buff *skb)
-{
-	struct ip_vs_dest *dest = cp->dest;
-	struct netns_ipvs *ipvs = cp->ipvs;
+अटल अंतरभूत व्योम
+ip_vs_in_stats(काष्ठा ip_vs_conn *cp, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ip_vs_dest *dest = cp->dest;
+	काष्ठा netns_ipvs *ipvs = cp->ipvs;
 
-	if (dest && (dest->flags & IP_VS_DEST_F_AVAILABLE)) {
-		struct ip_vs_cpu_stats *s;
-		struct ip_vs_service *svc;
+	अगर (dest && (dest->flags & IP_VS_DEST_F_AVAILABLE)) अणु
+		काष्ठा ip_vs_cpu_stats *s;
+		काष्ठा ip_vs_service *svc;
 
 		local_bh_disable();
 
@@ -150,19 +151,19 @@ ip_vs_in_stats(struct ip_vs_conn *cp, struct sk_buff *skb)
 		u64_stats_update_end(&s->syncp);
 
 		local_bh_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static inline void
-ip_vs_out_stats(struct ip_vs_conn *cp, struct sk_buff *skb)
-{
-	struct ip_vs_dest *dest = cp->dest;
-	struct netns_ipvs *ipvs = cp->ipvs;
+अटल अंतरभूत व्योम
+ip_vs_out_stats(काष्ठा ip_vs_conn *cp, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ip_vs_dest *dest = cp->dest;
+	काष्ठा netns_ipvs *ipvs = cp->ipvs;
 
-	if (dest && (dest->flags & IP_VS_DEST_F_AVAILABLE)) {
-		struct ip_vs_cpu_stats *s;
-		struct ip_vs_service *svc;
+	अगर (dest && (dest->flags & IP_VS_DEST_F_AVAILABLE)) अणु
+		काष्ठा ip_vs_cpu_stats *s;
+		काष्ठा ip_vs_service *svc;
 
 		local_bh_disable();
 
@@ -186,15 +187,15 @@ ip_vs_out_stats(struct ip_vs_conn *cp, struct sk_buff *skb)
 		u64_stats_update_end(&s->syncp);
 
 		local_bh_enable();
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static inline void
-ip_vs_conn_stats(struct ip_vs_conn *cp, struct ip_vs_service *svc)
-{
-	struct netns_ipvs *ipvs = svc->ipvs;
-	struct ip_vs_cpu_stats *s;
+अटल अंतरभूत व्योम
+ip_vs_conn_stats(काष्ठा ip_vs_conn *cp, काष्ठा ip_vs_service *svc)
+अणु
+	काष्ठा netns_ipvs *ipvs = svc->ipvs;
+	काष्ठा ip_vs_cpu_stats *s;
 
 	local_bh_disable();
 
@@ -214,74 +215,74 @@ ip_vs_conn_stats(struct ip_vs_conn *cp, struct ip_vs_service *svc)
 	u64_stats_update_end(&s->syncp);
 
 	local_bh_enable();
-}
+पूर्ण
 
 
-static inline void
-ip_vs_set_state(struct ip_vs_conn *cp, int direction,
-		const struct sk_buff *skb,
-		struct ip_vs_proto_data *pd)
-{
-	if (likely(pd->pp->state_transition))
+अटल अंतरभूत व्योम
+ip_vs_set_state(काष्ठा ip_vs_conn *cp, पूर्णांक direction,
+		स्थिर काष्ठा sk_buff *skb,
+		काष्ठा ip_vs_proto_data *pd)
+अणु
+	अगर (likely(pd->pp->state_transition))
 		pd->pp->state_transition(cp, direction, skb, pd);
-}
+पूर्ण
 
-static inline int
-ip_vs_conn_fill_param_persist(const struct ip_vs_service *svc,
-			      struct sk_buff *skb, int protocol,
-			      const union nf_inet_addr *caddr, __be16 cport,
-			      const union nf_inet_addr *vaddr, __be16 vport,
-			      struct ip_vs_conn_param *p)
-{
+अटल अंतरभूत पूर्णांक
+ip_vs_conn_fill_param_persist(स्थिर काष्ठा ip_vs_service *svc,
+			      काष्ठा sk_buff *skb, पूर्णांक protocol,
+			      स्थिर जोड़ nf_inet_addr *caddr, __be16 cport,
+			      स्थिर जोड़ nf_inet_addr *vaddr, __be16 vport,
+			      काष्ठा ip_vs_conn_param *p)
+अणु
 	ip_vs_conn_fill_param(svc->ipvs, svc->af, protocol, caddr, cport, vaddr,
 			      vport, p);
 	p->pe = rcu_dereference(svc->pe);
-	if (p->pe && p->pe->fill_param)
-		return p->pe->fill_param(p, skb);
+	अगर (p->pe && p->pe->fill_param)
+		वापस p->pe->fill_param(p, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *  IPVS persistent scheduling function
- *  It creates a connection entry according to its template if exists,
- *  or selects a server and creates a connection entry plus a template.
+ *  It creates a connection entry according to its ढाँचा अगर exists,
+ *  or selects a server and creates a connection entry plus a ढाँचा.
  *  Locking: we are svc user (svc->refcnt), so we hold all dests too
  *  Protocols supported: TCP, UDP
  */
-static struct ip_vs_conn *
-ip_vs_sched_persist(struct ip_vs_service *svc,
-		    struct sk_buff *skb, __be16 src_port, __be16 dst_port,
-		    int *ignored, struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_conn *cp = NULL;
-	struct ip_vs_dest *dest;
-	struct ip_vs_conn *ct;
-	__be16 dport = 0;		/* destination port to forward */
-	unsigned int flags;
-	struct ip_vs_conn_param param;
-	const union nf_inet_addr fwmark = { .ip = htonl(svc->fwmark) };
-	union nf_inet_addr snet;	/* source network of the client,
+अटल काष्ठा ip_vs_conn *
+ip_vs_sched_persist(काष्ठा ip_vs_service *svc,
+		    काष्ठा sk_buff *skb, __be16 src_port, __be16 dst_port,
+		    पूर्णांक *ignored, काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_conn *cp = शून्य;
+	काष्ठा ip_vs_dest *dest;
+	काष्ठा ip_vs_conn *ct;
+	__be16 dport = 0;		/* destination port to क्रमward */
+	अचिन्हित पूर्णांक flags;
+	काष्ठा ip_vs_conn_param param;
+	स्थिर जोड़ nf_inet_addr fwmark = अणु .ip = htonl(svc->fwmark) पूर्ण;
+	जोड़ nf_inet_addr snet;	/* source network of the client,
 					   after masking */
-	const union nf_inet_addr *src_addr, *dst_addr;
+	स्थिर जोड़ nf_inet_addr *src_addr, *dst_addr;
 
-	if (likely(!ip_vs_iph_inverse(iph))) {
+	अगर (likely(!ip_vs_iph_inverse(iph))) अणु
 		src_addr = &iph->saddr;
 		dst_addr = &iph->daddr;
-	} else {
+	पूर्ण अन्यथा अणु
 		src_addr = &iph->daddr;
 		dst_addr = &iph->saddr;
-	}
+	पूर्ण
 
 
-	/* Mask saddr with the netmask to adjust template granularity */
-#ifdef CONFIG_IP_VS_IPV6
-	if (svc->af == AF_INET6)
+	/* Mask saddr with the neपंचांगask to adjust ढाँचा granularity */
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (svc->af == AF_INET6)
 		ipv6_addr_prefix(&snet.in6, &src_addr->in6,
-				 (__force __u32) svc->netmask);
-	else
-#endif
-		snet.ip = src_addr->ip & svc->netmask;
+				 (__क्रमce __u32) svc->neपंचांगask);
+	अन्यथा
+#पूर्ण_अगर
+		snet.ip = src_addr->ip & svc->neपंचांगask;
 
 	IP_VS_DBG_BUF(6, "p-schedule: src %s:%u dest %s:%u "
 		      "mnet %s\n",
@@ -297,94 +298,94 @@ ip_vs_sched_persist(struct ip_vs_service *svc,
 	 * that it passively listens to,  and the client issues the data
 	 * connection. In the tunneling or direct routing mode, the load
 	 * balancer is on the client-to-server half of connection, the port
-	 * number is unknown to the load balancer. So, a conn template like
-	 * <caddr, 0, vaddr, 0, daddr, 0> is created for persistent FTP
-	 * service, and a template like <caddr, 0, vaddr, vport, daddr, dport>
-	 * is created for other persistent services.
+	 * number is unknown to the load balancer. So, a conn ढाँचा like
+	 * <caddr, 0, vaddr, 0, daddr, 0> is created क्रम persistent FTP
+	 * service, and a ढाँचा like <caddr, 0, vaddr, vport, daddr, dport>
+	 * is created क्रम other persistent services.
 	 */
-	{
-		int protocol = iph->protocol;
-		const union nf_inet_addr *vaddr = dst_addr;
+	अणु
+		पूर्णांक protocol = iph->protocol;
+		स्थिर जोड़ nf_inet_addr *vaddr = dst_addr;
 		__be16 vport = 0;
 
-		if (dst_port == svc->port) {
-			/* non-FTP template:
+		अगर (dst_port == svc->port) अणु
+			/* non-FTP ढाँचा:
 			 * <protocol, caddr, 0, vaddr, vport, daddr, dport>
-			 * FTP template:
+			 * FTP ढाँचा:
 			 * <protocol, caddr, 0, vaddr, 0, daddr, 0>
 			 */
-			if (svc->port != FTPPORT)
+			अगर (svc->port != FTPPORT)
 				vport = dst_port;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Note: persistent fwmark-based services and
 			 * persistent port zero service are handled here.
-			 * fwmark template:
+			 * fwmark ढाँचा:
 			 * <IPPROTO_IP,caddr,0,fwmark,0,daddr,0>
-			 * port zero template:
+			 * port zero ढाँचा:
 			 * <protocol,caddr,0,vaddr,0,daddr,0>
 			 */
-			if (svc->fwmark) {
+			अगर (svc->fwmark) अणु
 				protocol = IPPROTO_IP;
 				vaddr = &fwmark;
-			}
-		}
-		/* return *ignored = -1 so NF_DROP can be used */
-		if (ip_vs_conn_fill_param_persist(svc, skb, protocol, &snet, 0,
-						  vaddr, vport, &param) < 0) {
+			पूर्ण
+		पूर्ण
+		/* वापस *ignored = -1 so NF_DROP can be used */
+		अगर (ip_vs_conn_fill_param_persist(svc, skb, protocol, &snet, 0,
+						  vaddr, vport, &param) < 0) अणु
 			*ignored = -1;
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* Check if a template already exists */
+	/* Check अगर a ढाँचा alपढ़ोy exists */
 	ct = ip_vs_ct_in_get(&param);
-	if (!ct || !ip_vs_check_template(ct, NULL)) {
-		struct ip_vs_scheduler *sched;
+	अगर (!ct || !ip_vs_check_ढाँचा(ct, शून्य)) अणु
+		काष्ठा ip_vs_scheduler *sched;
 
 		/*
-		 * No template found or the dest of the connection
-		 * template is not available.
-		 * return *ignored=0 i.e. ICMP and NF_DROP
+		 * No ढाँचा found or the dest of the connection
+		 * ढाँचा is not available.
+		 * वापस *ignored=0 i.e. ICMP and NF_DROP
 		 */
 		sched = rcu_dereference(svc->scheduler);
-		if (sched) {
-			/* read svc->sched_data after svc->scheduler */
+		अगर (sched) अणु
+			/* पढ़ो svc->sched_data after svc->scheduler */
 			smp_rmb();
 			dest = sched->schedule(svc, skb, iph);
-		} else {
-			dest = NULL;
-		}
-		if (!dest) {
+		पूर्ण अन्यथा अणु
+			dest = शून्य;
+		पूर्ण
+		अगर (!dest) अणु
 			IP_VS_DBG(1, "p-schedule: no dest found.\n");
-			kfree(param.pe_data);
+			kमुक्त(param.pe_data);
 			*ignored = 0;
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		if (dst_port == svc->port && svc->port != FTPPORT)
+		अगर (dst_port == svc->port && svc->port != FTPPORT)
 			dport = dest->port;
 
-		/* Create a template
-		 * This adds param.pe_data to the template,
+		/* Create a ढाँचा
+		 * This adds param.pe_data to the ढाँचा,
 		 * and thus param.pe_data will be destroyed
-		 * when the template expires */
+		 * when the ढाँचा expires */
 		ct = ip_vs_conn_new(&param, dest->af, &dest->addr, dport,
 				    IP_VS_CONN_F_TEMPLATE, dest, skb->mark);
-		if (ct == NULL) {
-			kfree(param.pe_data);
+		अगर (ct == शून्य) अणु
+			kमुक्त(param.pe_data);
 			*ignored = -1;
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		ct->timeout = svc->timeout;
-	} else {
-		/* set destination with the found template */
+		ct->समयout = svc->समयout;
+	पूर्ण अन्यथा अणु
+		/* set destination with the found ढाँचा */
 		dest = ct->dest;
-		kfree(param.pe_data);
-	}
+		kमुक्त(param.pe_data);
+	पूर्ण
 
 	dport = dst_port;
-	if (dport == svc->port && dest->port)
+	अगर (dport == svc->port && dest->port)
 		dport = dest->port;
 
 	flags = (svc->flags & IP_VS_SVC_F_ONEPACKET
@@ -392,18 +393,18 @@ ip_vs_sched_persist(struct ip_vs_service *svc,
 		IP_VS_CONN_F_ONE_PACKET : 0;
 
 	/*
-	 *    Create a new connection according to the template
+	 *    Create a new connection according to the ढाँचा
 	 */
 	ip_vs_conn_fill_param(svc->ipvs, svc->af, iph->protocol, src_addr,
 			      src_port, dst_addr, dst_port, &param);
 
 	cp = ip_vs_conn_new(&param, dest->af, &dest->addr, dport, flags, dest,
 			    skb->mark);
-	if (cp == NULL) {
+	अगर (cp == शून्य) अणु
 		ip_vs_conn_put(ct);
 		*ignored = -1;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 *    Add its control
@@ -412,13 +413,13 @@ ip_vs_sched_persist(struct ip_vs_service *svc,
 	ip_vs_conn_put(ct);
 
 	ip_vs_conn_stats(cp, svc);
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
 
 /*
- *  IPVS main scheduling function
- *  It selects a server according to the virtual service, and
+ *  IPVS मुख्य scheduling function
+ *  It selects a server according to the भव service, and
  *  creates a connection entry.
  *  Protocols supported: TCP, UDP
  *
@@ -429,83 +430,83 @@ ip_vs_sched_persist(struct ip_vs_service *svc,
  *       NF_ACCEPT because it must not be scheduled.
  *
  * 0 :   scheduler can not find destination, so try bypass or
- *       return ICMP and then NF_DROP (ip_vs_leave).
+ *       वापस ICMP and then NF_DROP (ip_vs_leave).
  *
  * -1 :  scheduler tried to schedule but fatal error occurred, eg.
  *       ip_vs_conn_new failure (ENOMEM) or ip_vs_sip_fill_param
  *       failure such as missing Call-ID, ENOMEM on skb_linearize
- *       or pe_data. In this case we should return NF_DROP without
+ *       or pe_data. In this हाल we should वापस NF_DROP without
  *       any attempts to send ICMP with ip_vs_leave.
  */
-struct ip_vs_conn *
-ip_vs_schedule(struct ip_vs_service *svc, struct sk_buff *skb,
-	       struct ip_vs_proto_data *pd, int *ignored,
-	       struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_protocol *pp = pd->pp;
-	struct ip_vs_conn *cp = NULL;
-	struct ip_vs_scheduler *sched;
-	struct ip_vs_dest *dest;
+काष्ठा ip_vs_conn *
+ip_vs_schedule(काष्ठा ip_vs_service *svc, काष्ठा sk_buff *skb,
+	       काष्ठा ip_vs_proto_data *pd, पूर्णांक *ignored,
+	       काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_protocol *pp = pd->pp;
+	काष्ठा ip_vs_conn *cp = शून्य;
+	काष्ठा ip_vs_scheduler *sched;
+	काष्ठा ip_vs_dest *dest;
 	__be16 _ports[2], *pptr, cport, vport;
-	const void *caddr, *vaddr;
-	unsigned int flags;
+	स्थिर व्योम *caddr, *vaddr;
+	अचिन्हित पूर्णांक flags;
 
 	*ignored = 1;
 	/*
 	 * IPv6 frags, only the first hit here.
 	 */
-	pptr = frag_safe_skb_hp(skb, iph->len, sizeof(_ports), _ports);
-	if (pptr == NULL)
-		return NULL;
+	pptr = frag_safe_skb_hp(skb, iph->len, माप(_ports), _ports);
+	अगर (pptr == शून्य)
+		वापस शून्य;
 
-	if (likely(!ip_vs_iph_inverse(iph))) {
+	अगर (likely(!ip_vs_iph_inverse(iph))) अणु
 		cport = pptr[0];
 		caddr = &iph->saddr;
 		vport = pptr[1];
 		vaddr = &iph->daddr;
-	} else {
+	पूर्ण अन्यथा अणु
 		cport = pptr[1];
 		caddr = &iph->daddr;
 		vport = pptr[0];
 		vaddr = &iph->saddr;
-	}
+	पूर्ण
 
 	/*
 	 * FTPDATA needs this check when using local real server.
 	 * Never schedule Active FTPDATA connections from real server.
-	 * For LVS-NAT they must be already created. For other methods
+	 * For LVS-NAT they must be alपढ़ोy created. For other methods
 	 * with persistence the connection is created on SYN+ACK.
 	 */
-	if (cport == FTPDATA) {
+	अगर (cport == FTPDATA) अणु
 		IP_VS_DBG_PKT(12, svc->af, pp, skb, iph->off,
 			      "Not scheduling FTPDATA");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 *    Do not schedule replies from local real server.
 	 */
-	if ((!skb->dev || skb->dev->flags & IFF_LOOPBACK)) {
+	अगर ((!skb->dev || skb->dev->flags & IFF_LOOPBACK)) अणु
 		iph->hdr_flags ^= IP_VS_HDR_INVERSE;
-		cp = INDIRECT_CALL_1(pp->conn_in_get,
+		cp = INसूचीECT_CALL_1(pp->conn_in_get,
 				     ip_vs_conn_in_get_proto, svc->ipvs,
 				     svc->af, skb, iph);
 		iph->hdr_flags ^= IP_VS_HDR_INVERSE;
 
-		if (cp) {
+		अगर (cp) अणु
 			IP_VS_DBG_PKT(12, svc->af, pp, skb, iph->off,
 				      "Not scheduling reply for existing"
 				      " connection");
 			__ip_vs_conn_put(cp);
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 *    Persistent service
 	 */
-	if (svc->flags & IP_VS_SVC_F_PERSISTENT)
-		return ip_vs_sched_persist(svc, skb, cport, vport, ignored,
+	अगर (svc->flags & IP_VS_SVC_F_PERSISTENT)
+		वापस ip_vs_sched_persist(svc, skb, cport, vport, ignored,
 					   iph);
 
 	*ignored = 0;
@@ -513,26 +514,26 @@ ip_vs_schedule(struct ip_vs_service *svc, struct sk_buff *skb,
 	/*
 	 *    Non-persistent service
 	 */
-	if (!svc->fwmark && vport != svc->port) {
-		if (!svc->port)
+	अगर (!svc->fwmark && vport != svc->port) अणु
+		अगर (!svc->port)
 			pr_err("Schedule: port zero only supported "
 			       "in persistent services, "
 			       "check your ipvs configuration\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	sched = rcu_dereference(svc->scheduler);
-	if (sched) {
-		/* read svc->sched_data after svc->scheduler */
+	अगर (sched) अणु
+		/* पढ़ो svc->sched_data after svc->scheduler */
 		smp_rmb();
 		dest = sched->schedule(svc, skb, iph);
-	} else {
-		dest = NULL;
-	}
-	if (dest == NULL) {
+	पूर्ण अन्यथा अणु
+		dest = शून्य;
+	पूर्ण
+	अगर (dest == शून्य) अणु
 		IP_VS_DBG(1, "Schedule: no dest found.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	flags = (svc->flags & IP_VS_SVC_F_ONEPACKET
 		 && iph->protocol == IPPROTO_UDP) ?
@@ -541,19 +542,19 @@ ip_vs_schedule(struct ip_vs_service *svc, struct sk_buff *skb,
 	/*
 	 *    Create a connection entry.
 	 */
-	{
-		struct ip_vs_conn_param p;
+	अणु
+		काष्ठा ip_vs_conn_param p;
 
 		ip_vs_conn_fill_param(svc->ipvs, svc->af, iph->protocol,
 				      caddr, cport, vaddr, vport, &p);
 		cp = ip_vs_conn_new(&p, dest->af, &dest->addr,
 				    dest->port ? dest->port : vport,
 				    flags, dest, skb->mark);
-		if (!cp) {
+		अगर (!cp) अणु
 			*ignored = -1;
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	IP_VS_DBG_BUF(6, "Schedule fwd:%c c:%s:%u v:%s:%u "
 		      "d:%s:%u conn->flags:%X conn->refcnt:%d\n",
@@ -561,414 +562,414 @@ ip_vs_schedule(struct ip_vs_service *svc, struct sk_buff *skb,
 		      IP_VS_DBG_ADDR(cp->af, &cp->caddr), ntohs(cp->cport),
 		      IP_VS_DBG_ADDR(cp->af, &cp->vaddr), ntohs(cp->vport),
 		      IP_VS_DBG_ADDR(cp->daf, &cp->daddr), ntohs(cp->dport),
-		      cp->flags, refcount_read(&cp->refcnt));
+		      cp->flags, refcount_पढ़ो(&cp->refcnt));
 
 	ip_vs_conn_stats(cp, svc);
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-static inline int ip_vs_addr_is_unicast(struct net *net, int af,
-					union nf_inet_addr *addr)
-{
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
-		return ipv6_addr_type(&addr->in6) & IPV6_ADDR_UNICAST;
-#endif
-	return (inet_addr_type(net, addr->ip) == RTN_UNICAST);
-}
+अटल अंतरभूत पूर्णांक ip_vs_addr_is_unicast(काष्ठा net *net, पूर्णांक af,
+					जोड़ nf_inet_addr *addr)
+अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
+		वापस ipv6_addr_type(&addr->in6) & IPV6_ADDR_UNICAST;
+#पूर्ण_अगर
+	वापस (inet_addr_type(net, addr->ip) == RTN_UNICAST);
+पूर्ण
 
 /*
  *  Pass or drop the packet.
- *  Called by ip_vs_in, when the virtual service is available but
- *  no destination is available for a new connection.
+ *  Called by ip_vs_in, when the भव service is available but
+ *  no destination is available क्रम a new connection.
  */
-int ip_vs_leave(struct ip_vs_service *svc, struct sk_buff *skb,
-		struct ip_vs_proto_data *pd, struct ip_vs_iphdr *iph)
-{
+पूर्णांक ip_vs_leave(काष्ठा ip_vs_service *svc, काष्ठा sk_buff *skb,
+		काष्ठा ip_vs_proto_data *pd, काष्ठा ip_vs_iphdr *iph)
+अणु
 	__be16 _ports[2], *pptr, dport;
-	struct netns_ipvs *ipvs = svc->ipvs;
-	struct net *net = ipvs->net;
+	काष्ठा netns_ipvs *ipvs = svc->ipvs;
+	काष्ठा net *net = ipvs->net;
 
-	pptr = frag_safe_skb_hp(skb, iph->len, sizeof(_ports), _ports);
-	if (!pptr)
-		return NF_DROP;
+	pptr = frag_safe_skb_hp(skb, iph->len, माप(_ports), _ports);
+	अगर (!pptr)
+		वापस NF_DROP;
 	dport = likely(!ip_vs_iph_inverse(iph)) ? pptr[1] : pptr[0];
 
-	/* if it is fwmark-based service, the cache_bypass sysctl is up
+	/* अगर it is fwmark-based service, the cache_bypass sysctl is up
 	   and the destination is a non-local unicast, then create
 	   a cache_bypass connection entry */
-	if (sysctl_cache_bypass(ipvs) && svc->fwmark &&
+	अगर (sysctl_cache_bypass(ipvs) && svc->fwmark &&
 	    !(iph->hdr_flags & (IP_VS_HDR_INVERSE | IP_VS_HDR_ICMP)) &&
-	    ip_vs_addr_is_unicast(net, svc->af, &iph->daddr)) {
-		int ret;
-		struct ip_vs_conn *cp;
-		unsigned int flags = (svc->flags & IP_VS_SVC_F_ONEPACKET &&
+	    ip_vs_addr_is_unicast(net, svc->af, &iph->daddr)) अणु
+		पूर्णांक ret;
+		काष्ठा ip_vs_conn *cp;
+		अचिन्हित पूर्णांक flags = (svc->flags & IP_VS_SVC_F_ONEPACKET &&
 				      iph->protocol == IPPROTO_UDP) ?
 				      IP_VS_CONN_F_ONE_PACKET : 0;
-		union nf_inet_addr daddr = { .all = { 0, 0, 0, 0 } };
+		जोड़ nf_inet_addr daddr = अणु .all = अणु 0, 0, 0, 0 पूर्ण पूर्ण;
 
 		/* create a new connection entry */
 		IP_VS_DBG(6, "%s(): create a cache_bypass entry\n", __func__);
-		{
-			struct ip_vs_conn_param p;
+		अणु
+			काष्ठा ip_vs_conn_param p;
 			ip_vs_conn_fill_param(svc->ipvs, svc->af, iph->protocol,
 					      &iph->saddr, pptr[0],
 					      &iph->daddr, pptr[1], &p);
 			cp = ip_vs_conn_new(&p, svc->af, &daddr, 0,
 					    IP_VS_CONN_F_BYPASS | flags,
-					    NULL, skb->mark);
-			if (!cp)
-				return NF_DROP;
-		}
+					    शून्य, skb->mark);
+			अगर (!cp)
+				वापस NF_DROP;
+		पूर्ण
 
 		/* statistics */
 		ip_vs_in_stats(cp, skb);
 
 		/* set state */
-		ip_vs_set_state(cp, IP_VS_DIR_INPUT, skb, pd);
+		ip_vs_set_state(cp, IP_VS_सूची_INPUT, skb, pd);
 
 		/* transmit the first SYN packet */
 		ret = cp->packet_xmit(skb, cp, pd->pp, iph);
-		/* do not touch skb anymore */
+		/* करो not touch skb anymore */
 
-		if ((cp->flags & IP_VS_CONN_F_ONE_PACKET) && cp->control)
+		अगर ((cp->flags & IP_VS_CONN_F_ONE_PACKET) && cp->control)
 			atomic_inc(&cp->control->in_pkts);
-		else
+		अन्यथा
 			atomic_inc(&cp->in_pkts);
 		ip_vs_conn_put(cp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * When the virtual ftp service is presented, packets destined
-	 * for other services on the VIP may get here (except services
+	 * When the भव ftp service is presented, packets destined
+	 * क्रम other services on the VIP may get here (except services
 	 * listed in the ipvs table), pass the packets, because it is
 	 * not ipvs job to decide to drop the packets.
 	 */
-	if (svc->port == FTPPORT && dport != FTPPORT)
-		return NF_ACCEPT;
+	अगर (svc->port == FTPPORT && dport != FTPPORT)
+		वापस NF_ACCEPT;
 
-	if (unlikely(ip_vs_iph_icmp(iph)))
-		return NF_DROP;
+	अगर (unlikely(ip_vs_iph_icmp(iph)))
+		वापस NF_DROP;
 
 	/*
-	 * Notify the client that the destination is unreachable, and
+	 * Notअगरy the client that the destination is unreachable, and
 	 * release the socket buffer.
 	 * Since it is in IP layer, the TCP socket is not actually
 	 * created, the TCP RST packet cannot be sent, instead that
 	 * ICMP_PORT_UNREACH is sent here no matter it is TCP/UDP. --WZ
 	 */
-#ifdef CONFIG_IP_VS_IPV6
-	if (svc->af == AF_INET6) {
-		if (!skb->dev)
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (svc->af == AF_INET6) अणु
+		अगर (!skb->dev)
 			skb->dev = net->loopback_dev;
 		icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
-	} else
-#endif
+	पूर्ण अन्यथा
+#पूर्ण_अगर
 		icmp_send(skb, ICMP_DEST_UNREACH, ICMP_PORT_UNREACH, 0);
 
-	return NF_DROP;
-}
+	वापस NF_DROP;
+पूर्ण
 
-#ifdef CONFIG_SYSCTL
+#अगर_घोषित CONFIG_SYSCTL
 
-static int sysctl_snat_reroute(struct netns_ipvs *ipvs)
-{
-	return ipvs->sysctl_snat_reroute;
-}
+अटल पूर्णांक sysctl_snat_reroute(काष्ठा netns_ipvs *ipvs)
+अणु
+	वापस ipvs->sysctl_snat_reroute;
+पूर्ण
 
-static int sysctl_nat_icmp_send(struct netns_ipvs *ipvs)
-{
-	return ipvs->sysctl_nat_icmp_send;
-}
+अटल पूर्णांक sysctl_nat_icmp_send(काष्ठा netns_ipvs *ipvs)
+अणु
+	वापस ipvs->sysctl_nat_icmp_send;
+पूर्ण
 
-#else
+#अन्यथा
 
-static int sysctl_snat_reroute(struct netns_ipvs *ipvs) { return 0; }
-static int sysctl_nat_icmp_send(struct netns_ipvs *ipvs) { return 0; }
+अटल पूर्णांक sysctl_snat_reroute(काष्ठा netns_ipvs *ipvs) अणु वापस 0; पूर्ण
+अटल पूर्णांक sysctl_nat_icmp_send(काष्ठा netns_ipvs *ipvs) अणु वापस 0; पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-__sum16 ip_vs_checksum_complete(struct sk_buff *skb, int offset)
-{
-	return csum_fold(skb_checksum(skb, offset, skb->len - offset, 0));
-}
+__sum16 ip_vs_checksum_complete(काष्ठा sk_buff *skb, पूर्णांक offset)
+अणु
+	वापस csum_fold(skb_checksum(skb, offset, skb->len - offset, 0));
+पूर्ण
 
-static inline enum ip_defrag_users ip_vs_defrag_user(unsigned int hooknum)
-{
-	if (NF_INET_LOCAL_IN == hooknum)
-		return IP_DEFRAG_VS_IN;
-	if (NF_INET_FORWARD == hooknum)
-		return IP_DEFRAG_VS_FWD;
-	return IP_DEFRAG_VS_OUT;
-}
+अटल अंतरभूत क्रमागत ip_defrag_users ip_vs_defrag_user(अचिन्हित पूर्णांक hooknum)
+अणु
+	अगर (NF_INET_LOCAL_IN == hooknum)
+		वापस IP_DEFRAG_VS_IN;
+	अगर (NF_INET_FORWARD == hooknum)
+		वापस IP_DEFRAG_VS_FWD;
+	वापस IP_DEFRAG_VS_OUT;
+पूर्ण
 
-static inline int ip_vs_gather_frags(struct netns_ipvs *ipvs,
-				     struct sk_buff *skb, u_int32_t user)
-{
-	int err;
+अटल अंतरभूत पूर्णांक ip_vs_gather_frags(काष्ठा netns_ipvs *ipvs,
+				     काष्ठा sk_buff *skb, u_पूर्णांक32_t user)
+अणु
+	पूर्णांक err;
 
 	local_bh_disable();
 	err = ip_defrag(ipvs->net, skb, user);
 	local_bh_enable();
-	if (!err)
+	अगर (!err)
 		ip_send_check(ip_hdr(skb));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ip_vs_route_me_harder(struct netns_ipvs *ipvs, int af,
-				 struct sk_buff *skb, unsigned int hooknum)
-{
-	if (!sysctl_snat_reroute(ipvs))
-		return 0;
+अटल पूर्णांक ip_vs_route_me_harder(काष्ठा netns_ipvs *ipvs, पूर्णांक af,
+				 काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hooknum)
+अणु
+	अगर (!sysctl_snat_reroute(ipvs))
+		वापस 0;
 	/* Reroute replies only to remote clients (FORWARD and LOCAL_OUT) */
-	if (NF_INET_LOCAL_IN == hooknum)
-		return 0;
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6) {
-		struct dst_entry *dst = skb_dst(skb);
+	अगर (NF_INET_LOCAL_IN == hooknum)
+		वापस 0;
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6) अणु
+		काष्ठा dst_entry *dst = skb_dst(skb);
 
-		if (dst->dev && !(dst->dev->flags & IFF_LOOPBACK) &&
+		अगर (dst->dev && !(dst->dev->flags & IFF_LOOPBACK) &&
 		    ip6_route_me_harder(ipvs->net, skb->sk, skb) != 0)
-			return 1;
-	} else
-#endif
-		if (!(skb_rtable(skb)->rt_flags & RTCF_LOCAL) &&
+			वापस 1;
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		अगर (!(skb_rtable(skb)->rt_flags & RTCF_LOCAL) &&
 		    ip_route_me_harder(ipvs->net, skb->sk, skb, RTN_LOCAL) != 0)
-			return 1;
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Packet has been made sufficiently writable in caller
  * - inout: 1=in->out, 0=out->in
  */
-void ip_vs_nat_icmp(struct sk_buff *skb, struct ip_vs_protocol *pp,
-		    struct ip_vs_conn *cp, int inout)
-{
-	struct iphdr *iph	 = ip_hdr(skb);
-	unsigned int icmp_offset = iph->ihl*4;
-	struct icmphdr *icmph	 = (struct icmphdr *)(skb_network_header(skb) +
+व्योम ip_vs_nat_icmp(काष्ठा sk_buff *skb, काष्ठा ip_vs_protocol *pp,
+		    काष्ठा ip_vs_conn *cp, पूर्णांक inout)
+अणु
+	काष्ठा iphdr *iph	 = ip_hdr(skb);
+	अचिन्हित पूर्णांक icmp_offset = iph->ihl*4;
+	काष्ठा icmphdr *icmph	 = (काष्ठा icmphdr *)(skb_network_header(skb) +
 						      icmp_offset);
-	struct iphdr *ciph	 = (struct iphdr *)(icmph + 1);
+	काष्ठा iphdr *ciph	 = (काष्ठा iphdr *)(icmph + 1);
 
-	if (inout) {
+	अगर (inout) अणु
 		iph->saddr = cp->vaddr.ip;
 		ip_send_check(iph);
 		ciph->daddr = cp->vaddr.ip;
 		ip_send_check(ciph);
-	} else {
+	पूर्ण अन्यथा अणु
 		iph->daddr = cp->daddr.ip;
 		ip_send_check(iph);
 		ciph->saddr = cp->daddr.ip;
 		ip_send_check(ciph);
-	}
+	पूर्ण
 
 	/* the TCP/UDP/SCTP port */
-	if (IPPROTO_TCP == ciph->protocol || IPPROTO_UDP == ciph->protocol ||
-	    IPPROTO_SCTP == ciph->protocol) {
-		__be16 *ports = (void *)ciph + ciph->ihl*4;
+	अगर (IPPROTO_TCP == ciph->protocol || IPPROTO_UDP == ciph->protocol ||
+	    IPPROTO_SCTP == ciph->protocol) अणु
+		__be16 *ports = (व्योम *)ciph + ciph->ihl*4;
 
-		if (inout)
+		अगर (inout)
 			ports[1] = cp->vport;
-		else
+		अन्यथा
 			ports[0] = cp->dport;
-	}
+	पूर्ण
 
 	/* And finally the ICMP checksum */
 	icmph->checksum = 0;
 	icmph->checksum = ip_vs_checksum_complete(skb, icmp_offset);
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-	if (inout)
-		IP_VS_DBG_PKT(11, AF_INET, pp, skb, (void *)ciph - (void *)iph,
+	अगर (inout)
+		IP_VS_DBG_PKT(11, AF_INET, pp, skb, (व्योम *)ciph - (व्योम *)iph,
 			"Forwarding altered outgoing ICMP");
-	else
-		IP_VS_DBG_PKT(11, AF_INET, pp, skb, (void *)ciph - (void *)iph,
+	अन्यथा
+		IP_VS_DBG_PKT(11, AF_INET, pp, skb, (व्योम *)ciph - (व्योम *)iph,
 			"Forwarding altered incoming ICMP");
-}
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
-void ip_vs_nat_icmp_v6(struct sk_buff *skb, struct ip_vs_protocol *pp,
-		    struct ip_vs_conn *cp, int inout)
-{
-	struct ipv6hdr *iph	 = ipv6_hdr(skb);
-	unsigned int icmp_offset = 0;
-	unsigned int offs	 = 0; /* header offset*/
-	int protocol;
-	struct icmp6hdr *icmph;
-	struct ipv6hdr *ciph;
-	unsigned short fragoffs;
+#अगर_घोषित CONFIG_IP_VS_IPV6
+व्योम ip_vs_nat_icmp_v6(काष्ठा sk_buff *skb, काष्ठा ip_vs_protocol *pp,
+		    काष्ठा ip_vs_conn *cp, पूर्णांक inout)
+अणु
+	काष्ठा ipv6hdr *iph	 = ipv6_hdr(skb);
+	अचिन्हित पूर्णांक icmp_offset = 0;
+	अचिन्हित पूर्णांक offs	 = 0; /* header offset*/
+	पूर्णांक protocol;
+	काष्ठा icmp6hdr *icmph;
+	काष्ठा ipv6hdr *ciph;
+	अचिन्हित लघु fragoffs;
 
-	ipv6_find_hdr(skb, &icmp_offset, IPPROTO_ICMPV6, &fragoffs, NULL);
-	icmph = (struct icmp6hdr *)(skb_network_header(skb) + icmp_offset);
-	offs = icmp_offset + sizeof(struct icmp6hdr);
-	ciph = (struct ipv6hdr *)(skb_network_header(skb) + offs);
+	ipv6_find_hdr(skb, &icmp_offset, IPPROTO_ICMPV6, &fragoffs, शून्य);
+	icmph = (काष्ठा icmp6hdr *)(skb_network_header(skb) + icmp_offset);
+	offs = icmp_offset + माप(काष्ठा icmp6hdr);
+	ciph = (काष्ठा ipv6hdr *)(skb_network_header(skb) + offs);
 
-	protocol = ipv6_find_hdr(skb, &offs, -1, &fragoffs, NULL);
+	protocol = ipv6_find_hdr(skb, &offs, -1, &fragoffs, शून्य);
 
-	if (inout) {
+	अगर (inout) अणु
 		iph->saddr = cp->vaddr.in6;
 		ciph->daddr = cp->vaddr.in6;
-	} else {
+	पूर्ण अन्यथा अणु
 		iph->daddr = cp->daddr.in6;
 		ciph->saddr = cp->daddr.in6;
-	}
+	पूर्ण
 
 	/* the TCP/UDP/SCTP port */
-	if (!fragoffs && (IPPROTO_TCP == protocol || IPPROTO_UDP == protocol ||
-			  IPPROTO_SCTP == protocol)) {
-		__be16 *ports = (void *)(skb_network_header(skb) + offs);
+	अगर (!fragoffs && (IPPROTO_TCP == protocol || IPPROTO_UDP == protocol ||
+			  IPPROTO_SCTP == protocol)) अणु
+		__be16 *ports = (व्योम *)(skb_network_header(skb) + offs);
 
 		IP_VS_DBG(11, "%s() changed port %d to %d\n", __func__,
 			      ntohs(inout ? ports[1] : ports[0]),
 			      ntohs(inout ? cp->vport : cp->dport));
-		if (inout)
+		अगर (inout)
 			ports[1] = cp->vport;
-		else
+		अन्यथा
 			ports[0] = cp->dport;
-	}
+	पूर्ण
 
 	/* And finally the ICMP checksum */
 	icmph->icmp6_cksum = ~csum_ipv6_magic(&iph->saddr, &iph->daddr,
 					      skb->len - icmp_offset,
 					      IPPROTO_ICMPV6, 0);
 	skb->csum_start = skb_network_header(skb) - skb->head + icmp_offset;
-	skb->csum_offset = offsetof(struct icmp6hdr, icmp6_cksum);
+	skb->csum_offset = दुरत्व(काष्ठा icmp6hdr, icmp6_cksum);
 	skb->ip_summed = CHECKSUM_PARTIAL;
 
-	if (inout)
+	अगर (inout)
 		IP_VS_DBG_PKT(11, AF_INET6, pp, skb,
-			      (void *)ciph - (void *)iph,
+			      (व्योम *)ciph - (व्योम *)iph,
 			      "Forwarding altered outgoing ICMPv6");
-	else
+	अन्यथा
 		IP_VS_DBG_PKT(11, AF_INET6, pp, skb,
-			      (void *)ciph - (void *)iph,
+			      (व्योम *)ciph - (व्योम *)iph,
 			      "Forwarding altered incoming ICMPv6");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* Handle relevant response ICMP messages - forward to the right
+/* Handle relevant response ICMP messages - क्रमward to the right
  * destination host.
  */
-static int handle_response_icmp(int af, struct sk_buff *skb,
-				union nf_inet_addr *snet,
-				__u8 protocol, struct ip_vs_conn *cp,
-				struct ip_vs_protocol *pp,
-				unsigned int offset, unsigned int ihl,
-				unsigned int hooknum)
-{
-	unsigned int verdict = NF_DROP;
+अटल पूर्णांक handle_response_icmp(पूर्णांक af, काष्ठा sk_buff *skb,
+				जोड़ nf_inet_addr *snet,
+				__u8 protocol, काष्ठा ip_vs_conn *cp,
+				काष्ठा ip_vs_protocol *pp,
+				अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक ihl,
+				अचिन्हित पूर्णांक hooknum)
+अणु
+	अचिन्हित पूर्णांक verdict = NF_DROP;
 
-	if (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
-		goto after_nat;
+	अगर (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
+		जाओ after_nat;
 
 	/* Ensure the checksum is correct */
-	if (!skb_csum_unnecessary(skb) && ip_vs_checksum_complete(skb, ihl)) {
+	अगर (!skb_csum_unnecessary(skb) && ip_vs_checksum_complete(skb, ihl)) अणु
 		/* Failed checksum! */
 		IP_VS_DBG_BUF(1, "Forward ICMP: failed checksum from %s!\n",
 			      IP_VS_DBG_ADDR(af, snet));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (IPPROTO_TCP == protocol || IPPROTO_UDP == protocol ||
+	अगर (IPPROTO_TCP == protocol || IPPROTO_UDP == protocol ||
 	    IPPROTO_SCTP == protocol)
-		offset += 2 * sizeof(__u16);
-	if (skb_ensure_writable(skb, offset))
-		goto out;
+		offset += 2 * माप(__u16);
+	अगर (skb_ensure_writable(skb, offset))
+		जाओ out;
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
 		ip_vs_nat_icmp_v6(skb, pp, cp, 1);
-	else
-#endif
+	अन्यथा
+#पूर्ण_अगर
 		ip_vs_nat_icmp(skb, pp, cp, 1);
 
-	if (ip_vs_route_me_harder(cp->ipvs, af, skb, hooknum))
-		goto out;
+	अगर (ip_vs_route_me_harder(cp->ipvs, af, skb, hooknum))
+		जाओ out;
 
 after_nat:
-	/* do the statistics and put it back */
+	/* करो the statistics and put it back */
 	ip_vs_out_stats(cp, skb);
 
 	skb->ipvs_property = 1;
-	if (!(cp->flags & IP_VS_CONN_F_NFCT))
+	अगर (!(cp->flags & IP_VS_CONN_F_NFCT))
 		ip_vs_notrack(skb);
-	else
+	अन्यथा
 		ip_vs_update_conntrack(skb, cp, 0);
 	verdict = NF_ACCEPT;
 
 out:
 	__ip_vs_conn_put(cp);
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
 /*
  *	Handle ICMP messages in the inside-to-outside direction (outgoing).
  *	Find any that might be relevant, check against existing connections.
  *	Currently handles error types - unreachable, quench, ttl exceeded.
  */
-static int ip_vs_out_icmp(struct netns_ipvs *ipvs, struct sk_buff *skb,
-			  int *related, unsigned int hooknum)
-{
-	struct iphdr *iph;
-	struct icmphdr	_icmph, *ic;
-	struct iphdr	_ciph, *cih;	/* The ip header contained within the ICMP */
-	struct ip_vs_iphdr ciph;
-	struct ip_vs_conn *cp;
-	struct ip_vs_protocol *pp;
-	unsigned int offset, ihl;
-	union nf_inet_addr snet;
+अटल पूर्णांक ip_vs_out_icmp(काष्ठा netns_ipvs *ipvs, काष्ठा sk_buff *skb,
+			  पूर्णांक *related, अचिन्हित पूर्णांक hooknum)
+अणु
+	काष्ठा iphdr *iph;
+	काष्ठा icmphdr	_icmph, *ic;
+	काष्ठा iphdr	_ciph, *cih;	/* The ip header contained within the ICMP */
+	काष्ठा ip_vs_iphdr ciph;
+	काष्ठा ip_vs_conn *cp;
+	काष्ठा ip_vs_protocol *pp;
+	अचिन्हित पूर्णांक offset, ihl;
+	जोड़ nf_inet_addr snet;
 
 	*related = 1;
 
 	/* reassemble IP fragments */
-	if (ip_is_fragment(ip_hdr(skb))) {
-		if (ip_vs_gather_frags(ipvs, skb, ip_vs_defrag_user(hooknum)))
-			return NF_STOLEN;
-	}
+	अगर (ip_is_fragment(ip_hdr(skb))) अणु
+		अगर (ip_vs_gather_frags(ipvs, skb, ip_vs_defrag_user(hooknum)))
+			वापस NF_STOLEN;
+	पूर्ण
 
 	iph = ip_hdr(skb);
 	offset = ihl = iph->ihl * 4;
-	ic = skb_header_pointer(skb, offset, sizeof(_icmph), &_icmph);
-	if (ic == NULL)
-		return NF_DROP;
+	ic = skb_header_poपूर्णांकer(skb, offset, माप(_icmph), &_icmph);
+	अगर (ic == शून्य)
+		वापस NF_DROP;
 
 	IP_VS_DBG(12, "Outgoing ICMP (%d,%d) %pI4->%pI4\n",
 		  ic->type, ntohs(icmp_id(ic)),
 		  &iph->saddr, &iph->daddr);
 
 	/*
-	 * Work through seeing if this is for us.
+	 * Work through seeing अगर this is क्रम us.
 	 * These checks are supposed to be in an order that means easy
 	 * things are checked first to speed up processing.... however
-	 * this means that some packets will manage to get a long way
-	 * down this stack and then be rejected, but that's life.
+	 * this means that some packets will manage to get a दीर्घ way
+	 * करोwn this stack and then be rejected, but that's lअगरe.
 	 */
-	if ((ic->type != ICMP_DEST_UNREACH) &&
+	अगर ((ic->type != ICMP_DEST_UNREACH) &&
 	    (ic->type != ICMP_SOURCE_QUENCH) &&
-	    (ic->type != ICMP_TIME_EXCEEDED)) {
+	    (ic->type != ICMP_TIME_EXCEEDED)) अणु
 		*related = 0;
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
 	/* Now find the contained IP header */
-	offset += sizeof(_icmph);
-	cih = skb_header_pointer(skb, offset, sizeof(_ciph), &_ciph);
-	if (cih == NULL)
-		return NF_ACCEPT; /* The packet looks wrong, ignore */
+	offset += माप(_icmph);
+	cih = skb_header_poपूर्णांकer(skb, offset, माप(_ciph), &_ciph);
+	अगर (cih == शून्य)
+		वापस NF_ACCEPT; /* The packet looks wrong, ignore */
 
 	pp = ip_vs_proto_get(cih->protocol);
-	if (!pp)
-		return NF_ACCEPT;
+	अगर (!pp)
+		वापस NF_ACCEPT;
 
 	/* Is the embedded protocol header present? */
-	if (unlikely(cih->frag_off & htons(IP_OFFSET) &&
-		     pp->dont_defrag))
-		return NF_ACCEPT;
+	अगर (unlikely(cih->frag_off & htons(IP_OFFSET) &&
+		     pp->करोnt_defrag))
+		वापस NF_ACCEPT;
 
 	IP_VS_DBG_PKT(11, AF_INET, pp, skb, offset,
 		      "Checking outgoing ICMP for");
@@ -976,169 +977,169 @@ static int ip_vs_out_icmp(struct netns_ipvs *ipvs, struct sk_buff *skb,
 	ip_vs_fill_iph_skb_icmp(AF_INET, skb, offset, true, &ciph);
 
 	/* The embedded headers contain source and dest in reverse order */
-	cp = INDIRECT_CALL_1(pp->conn_out_get, ip_vs_conn_out_get_proto,
+	cp = INसूचीECT_CALL_1(pp->conn_out_get, ip_vs_conn_out_get_proto,
 			     ipvs, AF_INET, skb, &ciph);
-	if (!cp)
-		return NF_ACCEPT;
+	अगर (!cp)
+		वापस NF_ACCEPT;
 
 	snet.ip = iph->saddr;
-	return handle_response_icmp(AF_INET, skb, &snet, cih->protocol, cp,
+	वापस handle_response_icmp(AF_INET, skb, &snet, cih->protocol, cp,
 				    pp, ciph.len, ihl, hooknum);
-}
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
-static int ip_vs_out_icmp_v6(struct netns_ipvs *ipvs, struct sk_buff *skb,
-			     int *related,  unsigned int hooknum,
-			     struct ip_vs_iphdr *ipvsh)
-{
-	struct icmp6hdr	_icmph, *ic;
-	struct ip_vs_iphdr ciph = {.flags = 0, .fragoffs = 0};/*Contained IP */
-	struct ip_vs_conn *cp;
-	struct ip_vs_protocol *pp;
-	union nf_inet_addr snet;
-	unsigned int offset;
+#अगर_घोषित CONFIG_IP_VS_IPV6
+अटल पूर्णांक ip_vs_out_icmp_v6(काष्ठा netns_ipvs *ipvs, काष्ठा sk_buff *skb,
+			     पूर्णांक *related,  अचिन्हित पूर्णांक hooknum,
+			     काष्ठा ip_vs_iphdr *ipvsh)
+अणु
+	काष्ठा icmp6hdr	_icmph, *ic;
+	काष्ठा ip_vs_iphdr ciph = अणु.flags = 0, .fragoffs = 0पूर्ण;/*Contained IP */
+	काष्ठा ip_vs_conn *cp;
+	काष्ठा ip_vs_protocol *pp;
+	जोड़ nf_inet_addr snet;
+	अचिन्हित पूर्णांक offset;
 
 	*related = 1;
-	ic = frag_safe_skb_hp(skb, ipvsh->len, sizeof(_icmph), &_icmph);
-	if (ic == NULL)
-		return NF_DROP;
+	ic = frag_safe_skb_hp(skb, ipvsh->len, माप(_icmph), &_icmph);
+	अगर (ic == शून्य)
+		वापस NF_DROP;
 
 	/*
-	 * Work through seeing if this is for us.
+	 * Work through seeing अगर this is क्रम us.
 	 * These checks are supposed to be in an order that means easy
 	 * things are checked first to speed up processing.... however
-	 * this means that some packets will manage to get a long way
-	 * down this stack and then be rejected, but that's life.
+	 * this means that some packets will manage to get a दीर्घ way
+	 * करोwn this stack and then be rejected, but that's lअगरe.
 	 */
-	if (ic->icmp6_type & ICMPV6_INFOMSG_MASK) {
+	अगर (ic->icmp6_type & ICMPV6_INFOMSG_MASK) अणु
 		*related = 0;
-		return NF_ACCEPT;
-	}
-	/* Fragment header that is before ICMP header tells us that:
+		वापस NF_ACCEPT;
+	पूर्ण
+	/* Fragment header that is beक्रमe ICMP header tells us that:
 	 * it's not an error message since they can't be fragmented.
 	 */
-	if (ipvsh->flags & IP6_FH_F_FRAG)
-		return NF_DROP;
+	अगर (ipvsh->flags & IP6_FH_F_FRAG)
+		वापस NF_DROP;
 
 	IP_VS_DBG(8, "Outgoing ICMPv6 (%d,%d) %pI6c->%pI6c\n",
 		  ic->icmp6_type, ntohs(icmpv6_id(ic)),
 		  &ipvsh->saddr, &ipvsh->daddr);
 
-	if (!ip_vs_fill_iph_skb_icmp(AF_INET6, skb, ipvsh->len + sizeof(_icmph),
+	अगर (!ip_vs_fill_iph_skb_icmp(AF_INET6, skb, ipvsh->len + माप(_icmph),
 				     true, &ciph))
-		return NF_ACCEPT; /* The packet looks wrong, ignore */
+		वापस NF_ACCEPT; /* The packet looks wrong, ignore */
 
 	pp = ip_vs_proto_get(ciph.protocol);
-	if (!pp)
-		return NF_ACCEPT;
+	अगर (!pp)
+		वापस NF_ACCEPT;
 
 	/* The embedded headers contain source and dest in reverse order */
-	cp = INDIRECT_CALL_1(pp->conn_out_get, ip_vs_conn_out_get_proto,
+	cp = INसूचीECT_CALL_1(pp->conn_out_get, ip_vs_conn_out_get_proto,
 			     ipvs, AF_INET6, skb, &ciph);
-	if (!cp)
-		return NF_ACCEPT;
+	अगर (!cp)
+		वापस NF_ACCEPT;
 
 	snet.in6 = ciph.saddr.in6;
 	offset = ciph.len;
-	return handle_response_icmp(AF_INET6, skb, &snet, ciph.protocol, cp,
-				    pp, offset, sizeof(struct ipv6hdr),
+	वापस handle_response_icmp(AF_INET6, skb, &snet, ciph.protocol, cp,
+				    pp, offset, माप(काष्ठा ipv6hdr),
 				    hooknum);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Check if sctp chunc is ABORT chunk
+ * Check अगर sctp chunc is ABORT chunk
  */
-static inline int is_sctp_abort(const struct sk_buff *skb, int nh_len)
-{
-	struct sctp_chunkhdr *sch, schunk;
-	sch = skb_header_pointer(skb, nh_len + sizeof(struct sctphdr),
-				 sizeof(schunk), &schunk);
-	if (sch == NULL)
-		return 0;
-	if (sch->type == SCTP_CID_ABORT)
-		return 1;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक is_sctp_पात(स्थिर काष्ठा sk_buff *skb, पूर्णांक nh_len)
+अणु
+	काष्ठा sctp_chunkhdr *sch, schunk;
+	sch = skb_header_poपूर्णांकer(skb, nh_len + माप(काष्ठा sctphdr),
+				 माप(schunk), &schunk);
+	अगर (sch == शून्य)
+		वापस 0;
+	अगर (sch->type == SCTP_CID_ABORT)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static inline int is_tcp_reset(const struct sk_buff *skb, int nh_len)
-{
-	struct tcphdr _tcph, *th;
+अटल अंतरभूत पूर्णांक is_tcp_reset(स्थिर काष्ठा sk_buff *skb, पूर्णांक nh_len)
+अणु
+	काष्ठा tcphdr _tcph, *th;
 
-	th = skb_header_pointer(skb, nh_len, sizeof(_tcph), &_tcph);
-	if (th == NULL)
-		return 0;
-	return th->rst;
-}
+	th = skb_header_poपूर्णांकer(skb, nh_len, माप(_tcph), &_tcph);
+	अगर (th == शून्य)
+		वापस 0;
+	वापस th->rst;
+पूर्ण
 
-static inline bool is_new_conn(const struct sk_buff *skb,
-			       struct ip_vs_iphdr *iph)
-{
-	switch (iph->protocol) {
-	case IPPROTO_TCP: {
-		struct tcphdr _tcph, *th;
+अटल अंतरभूत bool is_new_conn(स्थिर काष्ठा sk_buff *skb,
+			       काष्ठा ip_vs_iphdr *iph)
+अणु
+	चयन (iph->protocol) अणु
+	हाल IPPROTO_TCP: अणु
+		काष्ठा tcphdr _tcph, *th;
 
-		th = skb_header_pointer(skb, iph->len, sizeof(_tcph), &_tcph);
-		if (th == NULL)
-			return false;
-		return th->syn;
-	}
-	case IPPROTO_SCTP: {
-		struct sctp_chunkhdr *sch, schunk;
+		th = skb_header_poपूर्णांकer(skb, iph->len, माप(_tcph), &_tcph);
+		अगर (th == शून्य)
+			वापस false;
+		वापस th->syn;
+	पूर्ण
+	हाल IPPROTO_SCTP: अणु
+		काष्ठा sctp_chunkhdr *sch, schunk;
 
-		sch = skb_header_pointer(skb, iph->len + sizeof(struct sctphdr),
-					 sizeof(schunk), &schunk);
-		if (sch == NULL)
-			return false;
-		return sch->type == SCTP_CID_INIT;
-	}
-	default:
-		return false;
-	}
-}
+		sch = skb_header_poपूर्णांकer(skb, iph->len + माप(काष्ठा sctphdr),
+					 माप(schunk), &schunk);
+		अगर (sch == शून्य)
+			वापस false;
+		वापस sch->type == SCTP_CID_INIT;
+	पूर्ण
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static inline bool is_new_conn_expected(const struct ip_vs_conn *cp,
-					int conn_reuse_mode)
-{
+अटल अंतरभूत bool is_new_conn_expected(स्थिर काष्ठा ip_vs_conn *cp,
+					पूर्णांक conn_reuse_mode)
+अणु
 	/* Controlled (FTP DATA or persistence)? */
-	if (cp->control)
-		return false;
+	अगर (cp->control)
+		वापस false;
 
-	switch (cp->protocol) {
-	case IPPROTO_TCP:
-		return (cp->state == IP_VS_TCP_S_TIME_WAIT) ||
+	चयन (cp->protocol) अणु
+	हाल IPPROTO_TCP:
+		वापस (cp->state == IP_VS_TCP_S_TIME_WAIT) ||
 		       (cp->state == IP_VS_TCP_S_CLOSE) ||
 			((conn_reuse_mode & 2) &&
 			 (cp->state == IP_VS_TCP_S_FIN_WAIT) &&
 			 (cp->flags & IP_VS_CONN_F_NOOUTPUT));
-	case IPPROTO_SCTP:
-		return cp->state == IP_VS_SCTP_S_CLOSED;
-	default:
-		return false;
-	}
-}
+	हाल IPPROTO_SCTP:
+		वापस cp->state == IP_VS_SCTP_S_CLOSED;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-/* Generic function to create new connections for outgoing RS packets
+/* Generic function to create new connections क्रम outgoing RS packets
  *
- * Pre-requisites for successful connection creation:
+ * Pre-requisites क्रम successful connection creation:
  * 1) Virtual Service is NOT fwmark based:
  *    In fwmark-VS actual vaddr and vport are unknown to IPVS
  * 2) Real Server and Virtual Service were NOT configured without port:
- *    This is to allow match of different VS to the same RS ip-addr
+ *    This is to allow match of dअगरferent VS to the same RS ip-addr
  */
-struct ip_vs_conn *ip_vs_new_conn_out(struct ip_vs_service *svc,
-				      struct ip_vs_dest *dest,
-				      struct sk_buff *skb,
-				      const struct ip_vs_iphdr *iph,
+काष्ठा ip_vs_conn *ip_vs_new_conn_out(काष्ठा ip_vs_service *svc,
+				      काष्ठा ip_vs_dest *dest,
+				      काष्ठा sk_buff *skb,
+				      स्थिर काष्ठा ip_vs_iphdr *iph,
 				      __be16 dport,
 				      __be16 cport)
-{
-	struct ip_vs_conn_param param;
-	struct ip_vs_conn *ct = NULL, *cp = NULL;
-	const union nf_inet_addr *vaddr, *daddr, *caddr;
-	union nf_inet_addr snet;
+अणु
+	काष्ठा ip_vs_conn_param param;
+	काष्ठा ip_vs_conn *ct = शून्य, *cp = शून्य;
+	स्थिर जोड़ nf_inet_addr *vaddr, *daddr, *caddr;
+	जोड़ nf_inet_addr snet;
 	__be16 vport;
-	unsigned int flags;
+	अचिन्हित पूर्णांक flags;
 
 	EnterFunction(12);
 	vaddr = &svc->addr;
@@ -1147,40 +1148,40 @@ struct ip_vs_conn *ip_vs_new_conn_out(struct ip_vs_service *svc,
 	caddr = &iph->daddr;
 
 	/* check pre-requisites are satisfied */
-	if (svc->fwmark)
-		return NULL;
-	if (!vport || !dport)
-		return NULL;
+	अगर (svc->fwmark)
+		वापस शून्य;
+	अगर (!vport || !dport)
+		वापस शून्य;
 
-	/* for persistent service first create connection template */
-	if (svc->flags & IP_VS_SVC_F_PERSISTENT) {
-		/* apply netmask the same way ingress-side does */
-#ifdef CONFIG_IP_VS_IPV6
-		if (svc->af == AF_INET6)
+	/* क्रम persistent service first create connection ढाँचा */
+	अगर (svc->flags & IP_VS_SVC_F_PERSISTENT) अणु
+		/* apply neपंचांगask the same way ingress-side करोes */
+#अगर_घोषित CONFIG_IP_VS_IPV6
+		अगर (svc->af == AF_INET6)
 			ipv6_addr_prefix(&snet.in6, &caddr->in6,
-					 (__force __u32)svc->netmask);
-		else
-#endif
-			snet.ip = caddr->ip & svc->netmask;
-		/* fill params and create template if not existent */
-		if (ip_vs_conn_fill_param_persist(svc, skb, iph->protocol,
+					 (__क्रमce __u32)svc->neपंचांगask);
+		अन्यथा
+#पूर्ण_अगर
+			snet.ip = caddr->ip & svc->neपंचांगask;
+		/* fill params and create ढाँचा अगर not existent */
+		अगर (ip_vs_conn_fill_param_persist(svc, skb, iph->protocol,
 						  &snet, 0, vaddr,
 						  vport, &param) < 0)
-			return NULL;
+			वापस शून्य;
 		ct = ip_vs_ct_in_get(&param);
-		/* check if template exists and points to the same dest */
-		if (!ct || !ip_vs_check_template(ct, dest)) {
+		/* check अगर ढाँचा exists and poपूर्णांकs to the same dest */
+		अगर (!ct || !ip_vs_check_ढाँचा(ct, dest)) अणु
 			ct = ip_vs_conn_new(&param, dest->af, daddr, dport,
 					    IP_VS_CONN_F_TEMPLATE, dest, 0);
-			if (!ct) {
-				kfree(param.pe_data);
-				return NULL;
-			}
-			ct->timeout = svc->timeout;
-		} else {
-			kfree(param.pe_data);
-		}
-	}
+			अगर (!ct) अणु
+				kमुक्त(param.pe_data);
+				वापस शून्य;
+			पूर्ण
+			ct->समयout = svc->समयout;
+		पूर्ण अन्यथा अणु
+			kमुक्त(param.pe_data);
+		पूर्ण
+	पूर्ण
 
 	/* connection flags */
 	flags = ((svc->flags & IP_VS_SVC_F_ONEPACKET) &&
@@ -1189,106 +1190,106 @@ struct ip_vs_conn *ip_vs_new_conn_out(struct ip_vs_service *svc,
 	ip_vs_conn_fill_param(svc->ipvs, svc->af, iph->protocol,
 			      caddr, cport, vaddr, vport, &param);
 	cp = ip_vs_conn_new(&param, dest->af, daddr, dport, flags, dest, 0);
-	if (!cp) {
-		if (ct)
+	अगर (!cp) अणु
+		अगर (ct)
 			ip_vs_conn_put(ct);
-		return NULL;
-	}
-	if (ct) {
+		वापस शून्य;
+	पूर्ण
+	अगर (ct) अणु
 		ip_vs_control_add(cp, ct);
 		ip_vs_conn_put(ct);
-	}
+	पूर्ण
 	ip_vs_conn_stats(cp, svc);
 
-	/* return connection (will be used to handle outgoing packet) */
+	/* वापस connection (will be used to handle outgoing packet) */
 	IP_VS_DBG_BUF(6, "New connection RS-initiated:%c c:%s:%u v:%s:%u "
 		      "d:%s:%u conn->flags:%X conn->refcnt:%d\n",
 		      ip_vs_fwd_tag(cp),
 		      IP_VS_DBG_ADDR(cp->af, &cp->caddr), ntohs(cp->cport),
 		      IP_VS_DBG_ADDR(cp->af, &cp->vaddr), ntohs(cp->vport),
 		      IP_VS_DBG_ADDR(cp->af, &cp->daddr), ntohs(cp->dport),
-		      cp->flags, refcount_read(&cp->refcnt));
+		      cp->flags, refcount_पढ़ो(&cp->refcnt));
 	LeaveFunction(12);
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
 /* Handle outgoing packets which are considered requests initiated by
- * real servers, so that subsequent responses from external client can be
+ * real servers, so that subsequent responses from बाह्यal client can be
  * routed to the right real server.
- * Used also for outgoing responses in OPS mode.
+ * Used also क्रम outgoing responses in OPS mode.
  *
- * Connection management is handled by persistent-engine specific callback.
+ * Connection management is handled by persistent-engine specअगरic callback.
  */
-static struct ip_vs_conn *__ip_vs_rs_conn_out(unsigned int hooknum,
-					      struct netns_ipvs *ipvs,
-					      int af, struct sk_buff *skb,
-					      const struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_dest *dest;
-	struct ip_vs_conn *cp = NULL;
+अटल काष्ठा ip_vs_conn *__ip_vs_rs_conn_out(अचिन्हित पूर्णांक hooknum,
+					      काष्ठा netns_ipvs *ipvs,
+					      पूर्णांक af, काष्ठा sk_buff *skb,
+					      स्थिर काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_dest *dest;
+	काष्ठा ip_vs_conn *cp = शून्य;
 	__be16 _ports[2], *pptr;
 
-	if (hooknum == NF_INET_LOCAL_IN)
-		return NULL;
+	अगर (hooknum == NF_INET_LOCAL_IN)
+		वापस शून्य;
 
 	pptr = frag_safe_skb_hp(skb, iph->len,
-				sizeof(_ports), _ports);
-	if (!pptr)
-		return NULL;
+				माप(_ports), _ports);
+	अगर (!pptr)
+		वापस शून्य;
 
 	dest = ip_vs_find_real_service(ipvs, af, iph->protocol,
 				       &iph->saddr, pptr[0]);
-	if (dest) {
-		struct ip_vs_service *svc;
-		struct ip_vs_pe *pe;
+	अगर (dest) अणु
+		काष्ठा ip_vs_service *svc;
+		काष्ठा ip_vs_pe *pe;
 
 		svc = rcu_dereference(dest->svc);
-		if (svc) {
+		अगर (svc) अणु
 			pe = rcu_dereference(svc->pe);
-			if (pe && pe->conn_out)
+			अगर (pe && pe->conn_out)
 				cp = pe->conn_out(svc, dest, skb, iph,
 						  pptr[0], pptr[1]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-/* Handle response packets: rewrite addresses and send away...
+/* Handle response packets: reग_लिखो addresses and send away...
  */
-static unsigned int
-handle_response(int af, struct sk_buff *skb, struct ip_vs_proto_data *pd,
-		struct ip_vs_conn *cp, struct ip_vs_iphdr *iph,
-		unsigned int hooknum)
-{
-	struct ip_vs_protocol *pp = pd->pp;
+अटल अचिन्हित पूर्णांक
+handle_response(पूर्णांक af, काष्ठा sk_buff *skb, काष्ठा ip_vs_proto_data *pd,
+		काष्ठा ip_vs_conn *cp, काष्ठा ip_vs_iphdr *iph,
+		अचिन्हित पूर्णांक hooknum)
+अणु
+	काष्ठा ip_vs_protocol *pp = pd->pp;
 
-	if (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
-		goto after_nat;
+	अगर (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
+		जाओ after_nat;
 
 	IP_VS_DBG_PKT(11, af, pp, skb, iph->off, "Outgoing packet");
 
-	if (skb_ensure_writable(skb, iph->len))
-		goto drop;
+	अगर (skb_ensure_writable(skb, iph->len))
+		जाओ drop;
 
 	/* mangle the packet */
-	if (pp->snat_handler &&
+	अगर (pp->snat_handler &&
 	    !SNAT_CALL(pp->snat_handler, skb, pp, cp, iph))
-		goto drop;
+		जाओ drop;
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
 		ipv6_hdr(skb)->saddr = cp->vaddr.in6;
-	else
-#endif
-	{
+	अन्यथा
+#पूर्ण_अगर
+	अणु
 		ip_hdr(skb)->saddr = cp->vaddr.ip;
 		ip_send_check(ip_hdr(skb));
-	}
+	पूर्ण
 
 	/*
-	 * nf_iterate does not expect change in the skb->dst->dev.
-	 * It looks like it is not fatal to enable this code for hooks
+	 * nf_iterate करोes not expect change in the skb->dst->dev.
+	 * It looks like it is not fatal to enable this code क्रम hooks
 	 * where our handlers are at the end of the chain list and
 	 * when all next handlers use skb->dst->dev and not outdev.
 	 * It will definitely route properly the inout NAT traffic
@@ -1296,453 +1297,453 @@ handle_response(int af, struct sk_buff *skb, struct ip_vs_proto_data *pd,
 	 */
 
 	/* For policy routing, packets originating from this
-	 * machine itself may be routed differently to packets
+	 * machine itself may be routed dअगरferently to packets
 	 * passing through.  We want this packet to be routed as
-	 * if it came from this machine itself.  So re-compute
-	 * the routing information.
+	 * अगर it came from this machine itself.  So re-compute
+	 * the routing inक्रमmation.
 	 */
-	if (ip_vs_route_me_harder(cp->ipvs, af, skb, hooknum))
-		goto drop;
+	अगर (ip_vs_route_me_harder(cp->ipvs, af, skb, hooknum))
+		जाओ drop;
 
 	IP_VS_DBG_PKT(10, af, pp, skb, iph->off, "After SNAT");
 
 after_nat:
 	ip_vs_out_stats(cp, skb);
-	ip_vs_set_state(cp, IP_VS_DIR_OUTPUT, skb, pd);
+	ip_vs_set_state(cp, IP_VS_सूची_OUTPUT, skb, pd);
 	skb->ipvs_property = 1;
-	if (!(cp->flags & IP_VS_CONN_F_NFCT))
+	अगर (!(cp->flags & IP_VS_CONN_F_NFCT))
 		ip_vs_notrack(skb);
-	else
+	अन्यथा
 		ip_vs_update_conntrack(skb, cp, 0);
 	ip_vs_conn_put(cp);
 
 	LeaveFunction(11);
-	return NF_ACCEPT;
+	वापस NF_ACCEPT;
 
 drop:
 	ip_vs_conn_put(cp);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	LeaveFunction(11);
-	return NF_STOLEN;
-}
+	वापस NF_STOLEN;
+पूर्ण
 
 /*
- *	Check if outgoing packet belongs to the established ip_vs_conn.
+ *	Check अगर outgoing packet beदीर्घs to the established ip_vs_conn.
  */
-static unsigned int
-ip_vs_out(struct netns_ipvs *ipvs, unsigned int hooknum, struct sk_buff *skb, int af)
-{
-	struct ip_vs_iphdr iph;
-	struct ip_vs_protocol *pp;
-	struct ip_vs_proto_data *pd;
-	struct ip_vs_conn *cp;
-	struct sock *sk;
+अटल अचिन्हित पूर्णांक
+ip_vs_out(काष्ठा netns_ipvs *ipvs, अचिन्हित पूर्णांक hooknum, काष्ठा sk_buff *skb, पूर्णांक af)
+अणु
+	काष्ठा ip_vs_iphdr iph;
+	काष्ठा ip_vs_protocol *pp;
+	काष्ठा ip_vs_proto_data *pd;
+	काष्ठा ip_vs_conn *cp;
+	काष्ठा sock *sk;
 
 	EnterFunction(11);
 
-	/* Already marked as IPVS request or reply? */
-	if (skb->ipvs_property)
-		return NF_ACCEPT;
+	/* Alपढ़ोy marked as IPVS request or reply? */
+	अगर (skb->ipvs_property)
+		वापस NF_ACCEPT;
 
 	sk = skb_to_full_sk(skb);
-	/* Bad... Do not break raw sockets */
-	if (unlikely(sk && hooknum == NF_INET_LOCAL_OUT &&
-		     af == AF_INET)) {
+	/* Bad... Do not अवरोध raw sockets */
+	अगर (unlikely(sk && hooknum == NF_INET_LOCAL_OUT &&
+		     af == AF_INET)) अणु
 
-		if (sk->sk_family == PF_INET && inet_sk(sk)->nodefrag)
-			return NF_ACCEPT;
-	}
+		अगर (sk->sk_family == PF_INET && inet_sk(sk)->nodefrag)
+			वापस NF_ACCEPT;
+	पूर्ण
 
-	if (unlikely(!skb_dst(skb)))
-		return NF_ACCEPT;
+	अगर (unlikely(!skb_dst(skb)))
+		वापस NF_ACCEPT;
 
-	if (!ipvs->enable)
-		return NF_ACCEPT;
+	अगर (!ipvs->enable)
+		वापस NF_ACCEPT;
 
 	ip_vs_fill_iph_skb(af, skb, false, &iph);
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6) {
-		if (unlikely(iph.protocol == IPPROTO_ICMPV6)) {
-			int related;
-			int verdict = ip_vs_out_icmp_v6(ipvs, skb, &related,
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6) अणु
+		अगर (unlikely(iph.protocol == IPPROTO_ICMPV6)) अणु
+			पूर्णांक related;
+			पूर्णांक verdict = ip_vs_out_icmp_v6(ipvs, skb, &related,
 							hooknum, &iph);
 
-			if (related)
-				return verdict;
-		}
-	} else
-#endif
-		if (unlikely(iph.protocol == IPPROTO_ICMP)) {
-			int related;
-			int verdict = ip_vs_out_icmp(ipvs, skb, &related, hooknum);
+			अगर (related)
+				वापस verdict;
+		पूर्ण
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		अगर (unlikely(iph.protocol == IPPROTO_ICMP)) अणु
+			पूर्णांक related;
+			पूर्णांक verdict = ip_vs_out_icmp(ipvs, skb, &related, hooknum);
 
-			if (related)
-				return verdict;
-		}
+			अगर (related)
+				वापस verdict;
+		पूर्ण
 
 	pd = ip_vs_proto_data_get(ipvs, iph.protocol);
-	if (unlikely(!pd))
-		return NF_ACCEPT;
+	अगर (unlikely(!pd))
+		वापस NF_ACCEPT;
 	pp = pd->pp;
 
 	/* reassemble IP fragments */
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET)
-#endif
-		if (unlikely(ip_is_fragment(ip_hdr(skb)) && !pp->dont_defrag)) {
-			if (ip_vs_gather_frags(ipvs, skb,
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET)
+#पूर्ण_अगर
+		अगर (unlikely(ip_is_fragment(ip_hdr(skb)) && !pp->करोnt_defrag)) अणु
+			अगर (ip_vs_gather_frags(ipvs, skb,
 					       ip_vs_defrag_user(hooknum)))
-				return NF_STOLEN;
+				वापस NF_STOLEN;
 
 			ip_vs_fill_iph_skb(AF_INET, skb, false, &iph);
-		}
+		पूर्ण
 
 	/*
-	 * Check if the packet belongs to an existing entry
+	 * Check अगर the packet beदीर्घs to an existing entry
 	 */
-	cp = INDIRECT_CALL_1(pp->conn_out_get, ip_vs_conn_out_get_proto,
+	cp = INसूचीECT_CALL_1(pp->conn_out_get, ip_vs_conn_out_get_proto,
 			     ipvs, af, skb, &iph);
 
-	if (likely(cp))
-		return handle_response(af, skb, pd, cp, &iph, hooknum);
+	अगर (likely(cp))
+		वापस handle_response(af, skb, pd, cp, &iph, hooknum);
 
-	/* Check for real-server-started requests */
-	if (atomic_read(&ipvs->conn_out_counter)) {
-		/* Currently only for UDP:
+	/* Check क्रम real-server-started requests */
+	अगर (atomic_पढ़ो(&ipvs->conn_out_counter)) अणु
+		/* Currently only क्रम UDP:
 		 * connection oriented protocols typically use
-		 * ephemeral ports for outgoing connections, so
+		 * ephemeral ports क्रम outgoing connections, so
 		 * related incoming responses would not match any VS
 		 */
-		if (pp->protocol == IPPROTO_UDP) {
+		अगर (pp->protocol == IPPROTO_UDP) अणु
 			cp = __ip_vs_rs_conn_out(hooknum, ipvs, af, skb, &iph);
-			if (likely(cp))
-				return handle_response(af, skb, pd, cp, &iph,
+			अगर (likely(cp))
+				वापस handle_response(af, skb, pd, cp, &iph,
 						       hooknum);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sysctl_nat_icmp_send(ipvs) &&
+	अगर (sysctl_nat_icmp_send(ipvs) &&
 	    (pp->protocol == IPPROTO_TCP ||
 	     pp->protocol == IPPROTO_UDP ||
-	     pp->protocol == IPPROTO_SCTP)) {
+	     pp->protocol == IPPROTO_SCTP)) अणु
 		__be16 _ports[2], *pptr;
 
 		pptr = frag_safe_skb_hp(skb, iph.len,
-					 sizeof(_ports), _ports);
-		if (pptr == NULL)
-			return NF_ACCEPT;	/* Not for me */
-		if (ip_vs_has_real_service(ipvs, af, iph.protocol, &iph.saddr,
-					   pptr[0])) {
+					 माप(_ports), _ports);
+		अगर (pptr == शून्य)
+			वापस NF_ACCEPT;	/* Not क्रम me */
+		अगर (ip_vs_has_real_service(ipvs, af, iph.protocol, &iph.saddr,
+					   pptr[0])) अणु
 			/*
-			 * Notify the real server: there is no
-			 * existing entry if it is not RST
+			 * Notअगरy the real server: there is no
+			 * existing entry अगर it is not RST
 			 * packet or not TCP packet.
 			 */
-			if ((iph.protocol != IPPROTO_TCP &&
+			अगर ((iph.protocol != IPPROTO_TCP &&
 			     iph.protocol != IPPROTO_SCTP)
 			     || ((iph.protocol == IPPROTO_TCP
 				  && !is_tcp_reset(skb, iph.len))
 				 || (iph.protocol == IPPROTO_SCTP
-					&& !is_sctp_abort(skb,
-						iph.len)))) {
-#ifdef CONFIG_IP_VS_IPV6
-				if (af == AF_INET6) {
-					if (!skb->dev)
+					&& !is_sctp_पात(skb,
+						iph.len)))) अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
+				अगर (af == AF_INET6) अणु
+					अगर (!skb->dev)
 						skb->dev = ipvs->net->loopback_dev;
 					icmpv6_send(skb,
 						    ICMPV6_DEST_UNREACH,
 						    ICMPV6_PORT_UNREACH,
 						    0);
-				} else
-#endif
+				पूर्ण अन्यथा
+#पूर्ण_अगर
 					icmp_send(skb,
 						  ICMP_DEST_UNREACH,
 						  ICMP_PORT_UNREACH, 0);
-				return NF_DROP;
-			}
-		}
-	}
+				वापस NF_DROP;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	IP_VS_DBG_PKT(12, af, pp, skb, iph.off,
 		      "ip_vs_out: packet continues traversal as normal");
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 
 /*
  *	It is hooked at the NF_INET_FORWARD and NF_INET_LOCAL_IN chain,
- *	used only for VS/NAT.
- *	Check if packet is reply for established ip_vs_conn.
+ *	used only क्रम VS/NAT.
+ *	Check अगर packet is reply क्रम established ip_vs_conn.
  */
-static unsigned int
-ip_vs_reply4(void *priv, struct sk_buff *skb,
-	     const struct nf_hook_state *state)
-{
-	return ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_reply4(व्योम *priv, काष्ठा sk_buff *skb,
+	     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET);
+पूर्ण
 
 /*
- *	It is hooked at the NF_INET_LOCAL_OUT chain, used only for VS/NAT.
- *	Check if packet is reply for established ip_vs_conn.
+ *	It is hooked at the NF_INET_LOCAL_OUT chain, used only क्रम VS/NAT.
+ *	Check अगर packet is reply क्रम established ip_vs_conn.
  */
-static unsigned int
-ip_vs_local_reply4(void *priv, struct sk_buff *skb,
-		   const struct nf_hook_state *state)
-{
-	return ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_local_reply4(व्योम *priv, काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET);
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
+#अगर_घोषित CONFIG_IP_VS_IPV6
 
 /*
  *	It is hooked at the NF_INET_FORWARD and NF_INET_LOCAL_IN chain,
- *	used only for VS/NAT.
- *	Check if packet is reply for established ip_vs_conn.
+ *	used only क्रम VS/NAT.
+ *	Check अगर packet is reply क्रम established ip_vs_conn.
  */
-static unsigned int
-ip_vs_reply6(void *priv, struct sk_buff *skb,
-	     const struct nf_hook_state *state)
-{
-	return ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET6);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_reply6(व्योम *priv, काष्ठा sk_buff *skb,
+	     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET6);
+पूर्ण
 
 /*
- *	It is hooked at the NF_INET_LOCAL_OUT chain, used only for VS/NAT.
- *	Check if packet is reply for established ip_vs_conn.
+ *	It is hooked at the NF_INET_LOCAL_OUT chain, used only क्रम VS/NAT.
+ *	Check अगर packet is reply क्रम established ip_vs_conn.
  */
-static unsigned int
-ip_vs_local_reply6(void *priv, struct sk_buff *skb,
-		   const struct nf_hook_state *state)
-{
-	return ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET6);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_local_reply6(व्योम *priv, काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_out(net_ipvs(state->net), state->hook, skb, AF_INET6);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static unsigned int
-ip_vs_try_to_schedule(struct netns_ipvs *ipvs, int af, struct sk_buff *skb,
-		      struct ip_vs_proto_data *pd,
-		      int *verdict, struct ip_vs_conn **cpp,
-		      struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_protocol *pp = pd->pp;
+अटल अचिन्हित पूर्णांक
+ip_vs_try_to_schedule(काष्ठा netns_ipvs *ipvs, पूर्णांक af, काष्ठा sk_buff *skb,
+		      काष्ठा ip_vs_proto_data *pd,
+		      पूर्णांक *verdict, काष्ठा ip_vs_conn **cpp,
+		      काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_protocol *pp = pd->pp;
 
-	if (!iph->fragoffs) {
+	अगर (!iph->fragoffs) अणु
 		/* No (second) fragments need to enter here, as nf_defrag_ipv6
-		 * replayed fragment zero will already have created the cp
+		 * replayed fragment zero will alपढ़ोy have created the cp
 		 */
 
-		/* Schedule and create new connection entry into cpp */
-		if (!pp->conn_schedule(ipvs, af, skb, pd, verdict, cpp, iph))
-			return 0;
-	}
+		/* Schedule and create new connection entry पूर्णांकo cpp */
+		अगर (!pp->conn_schedule(ipvs, af, skb, pd, verdict, cpp, iph))
+			वापस 0;
+	पूर्ण
 
-	if (unlikely(!*cpp)) {
-		/* sorry, all this trouble for a no-hit :) */
+	अगर (unlikely(!*cpp)) अणु
+		/* sorry, all this trouble क्रम a no-hit :) */
 		IP_VS_DBG_PKT(12, af, pp, skb, iph->off,
 			      "ip_vs_in: packet continues traversal as normal");
 
 		/* Fragment couldn't be mapped to a conn entry */
-		if (iph->fragoffs)
+		अगर (iph->fragoffs)
 			IP_VS_DBG_PKT(7, af, pp, skb, iph->off,
 				      "unhandled fragment");
 
 		*verdict = NF_ACCEPT;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Check the UDP tunnel and return its header length */
-static int ipvs_udp_decap(struct netns_ipvs *ipvs, struct sk_buff *skb,
-			  unsigned int offset, __u16 af,
-			  const union nf_inet_addr *daddr, __u8 *proto)
-{
-	struct udphdr _udph, *udph;
-	struct ip_vs_dest *dest;
+/* Check the UDP tunnel and वापस its header length */
+अटल पूर्णांक ipvs_udp_decap(काष्ठा netns_ipvs *ipvs, काष्ठा sk_buff *skb,
+			  अचिन्हित पूर्णांक offset, __u16 af,
+			  स्थिर जोड़ nf_inet_addr *daddr, __u8 *proto)
+अणु
+	काष्ठा udphdr _udph, *udph;
+	काष्ठा ip_vs_dest *dest;
 
-	udph = skb_header_pointer(skb, offset, sizeof(_udph), &_udph);
-	if (!udph)
-		goto unk;
-	offset += sizeof(struct udphdr);
+	udph = skb_header_poपूर्णांकer(skb, offset, माप(_udph), &_udph);
+	अगर (!udph)
+		जाओ unk;
+	offset += माप(काष्ठा udphdr);
 	dest = ip_vs_find_tunnel(ipvs, af, daddr, udph->dest);
-	if (!dest)
-		goto unk;
-	if (dest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GUE) {
-		struct guehdr _gueh, *gueh;
+	अगर (!dest)
+		जाओ unk;
+	अगर (dest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GUE) अणु
+		काष्ठा guehdr _gueh, *gueh;
 
-		gueh = skb_header_pointer(skb, offset, sizeof(_gueh), &_gueh);
-		if (!gueh)
-			goto unk;
-		if (gueh->control != 0 || gueh->version != 0)
-			goto unk;
+		gueh = skb_header_poपूर्णांकer(skb, offset, माप(_gueh), &_gueh);
+		अगर (!gueh)
+			जाओ unk;
+		अगर (gueh->control != 0 || gueh->version != 0)
+			जाओ unk;
 		/* Later we can support also IPPROTO_IPV6 */
-		if (gueh->proto_ctype != IPPROTO_IPIP)
-			goto unk;
+		अगर (gueh->proto_ctype != IPPROTO_IPIP)
+			जाओ unk;
 		*proto = gueh->proto_ctype;
-		return sizeof(struct udphdr) + sizeof(struct guehdr) +
+		वापस माप(काष्ठा udphdr) + माप(काष्ठा guehdr) +
 		       (gueh->hlen << 2);
-	}
+	पूर्ण
 
 unk:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Check the GRE tunnel and return its header length */
-static int ipvs_gre_decap(struct netns_ipvs *ipvs, struct sk_buff *skb,
-			  unsigned int offset, __u16 af,
-			  const union nf_inet_addr *daddr, __u8 *proto)
-{
-	struct gre_base_hdr _greh, *greh;
-	struct ip_vs_dest *dest;
+/* Check the GRE tunnel and वापस its header length */
+अटल पूर्णांक ipvs_gre_decap(काष्ठा netns_ipvs *ipvs, काष्ठा sk_buff *skb,
+			  अचिन्हित पूर्णांक offset, __u16 af,
+			  स्थिर जोड़ nf_inet_addr *daddr, __u8 *proto)
+अणु
+	काष्ठा gre_base_hdr _greh, *greh;
+	काष्ठा ip_vs_dest *dest;
 
-	greh = skb_header_pointer(skb, offset, sizeof(_greh), &_greh);
-	if (!greh)
-		goto unk;
+	greh = skb_header_poपूर्णांकer(skb, offset, माप(_greh), &_greh);
+	अगर (!greh)
+		जाओ unk;
 	dest = ip_vs_find_tunnel(ipvs, af, daddr, 0);
-	if (!dest)
-		goto unk;
-	if (dest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GRE) {
+	अगर (!dest)
+		जाओ unk;
+	अगर (dest->tun_type == IP_VS_CONN_F_TUNNEL_TYPE_GRE) अणु
 		__be16 type;
 
 		/* Only support version 0 and C (csum) */
-		if ((greh->flags & ~GRE_CSUM) != 0)
-			goto unk;
+		अगर ((greh->flags & ~GRE_CSUM) != 0)
+			जाओ unk;
 		type = greh->protocol;
 		/* Later we can support also IPPROTO_IPV6 */
-		if (type != htons(ETH_P_IP))
-			goto unk;
+		अगर (type != htons(ETH_P_IP))
+			जाओ unk;
 		*proto = IPPROTO_IPIP;
-		return gre_calc_hlen(gre_flags_to_tnl_flags(greh->flags));
-	}
+		वापस gre_calc_hlen(gre_flags_to_tnl_flags(greh->flags));
+	पूर्ण
 
 unk:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	Handle ICMP messages in the outside-to-inside direction (incoming).
  *	Find any that might be relevant, check against existing connections,
- *	forward to the right destination host if relevant.
+ *	क्रमward to the right destination host अगर relevant.
  *	Currently handles error types - unreachable, quench, ttl exceeded.
  */
-static int
-ip_vs_in_icmp(struct netns_ipvs *ipvs, struct sk_buff *skb, int *related,
-	      unsigned int hooknum)
-{
-	struct iphdr *iph;
-	struct icmphdr	_icmph, *ic;
-	struct iphdr	_ciph, *cih;	/* The ip header contained within the ICMP */
-	struct ip_vs_iphdr ciph;
-	struct ip_vs_conn *cp;
-	struct ip_vs_protocol *pp;
-	struct ip_vs_proto_data *pd;
-	unsigned int offset, offset2, ihl, verdict;
+अटल पूर्णांक
+ip_vs_in_icmp(काष्ठा netns_ipvs *ipvs, काष्ठा sk_buff *skb, पूर्णांक *related,
+	      अचिन्हित पूर्णांक hooknum)
+अणु
+	काष्ठा iphdr *iph;
+	काष्ठा icmphdr	_icmph, *ic;
+	काष्ठा iphdr	_ciph, *cih;	/* The ip header contained within the ICMP */
+	काष्ठा ip_vs_iphdr ciph;
+	काष्ठा ip_vs_conn *cp;
+	काष्ठा ip_vs_protocol *pp;
+	काष्ठा ip_vs_proto_data *pd;
+	अचिन्हित पूर्णांक offset, offset2, ihl, verdict;
 	bool tunnel, new_cp = false;
-	union nf_inet_addr *raddr;
-	char *outer_proto = "IPIP";
+	जोड़ nf_inet_addr *raddr;
+	अक्षर *outer_proto = "IPIP";
 
 	*related = 1;
 
 	/* reassemble IP fragments */
-	if (ip_is_fragment(ip_hdr(skb))) {
-		if (ip_vs_gather_frags(ipvs, skb, ip_vs_defrag_user(hooknum)))
-			return NF_STOLEN;
-	}
+	अगर (ip_is_fragment(ip_hdr(skb))) अणु
+		अगर (ip_vs_gather_frags(ipvs, skb, ip_vs_defrag_user(hooknum)))
+			वापस NF_STOLEN;
+	पूर्ण
 
 	iph = ip_hdr(skb);
 	offset = ihl = iph->ihl * 4;
-	ic = skb_header_pointer(skb, offset, sizeof(_icmph), &_icmph);
-	if (ic == NULL)
-		return NF_DROP;
+	ic = skb_header_poपूर्णांकer(skb, offset, माप(_icmph), &_icmph);
+	अगर (ic == शून्य)
+		वापस NF_DROP;
 
 	IP_VS_DBG(12, "Incoming ICMP (%d,%d) %pI4->%pI4\n",
 		  ic->type, ntohs(icmp_id(ic)),
 		  &iph->saddr, &iph->daddr);
 
 	/*
-	 * Work through seeing if this is for us.
+	 * Work through seeing अगर this is क्रम us.
 	 * These checks are supposed to be in an order that means easy
 	 * things are checked first to speed up processing.... however
-	 * this means that some packets will manage to get a long way
-	 * down this stack and then be rejected, but that's life.
+	 * this means that some packets will manage to get a दीर्घ way
+	 * करोwn this stack and then be rejected, but that's lअगरe.
 	 */
-	if ((ic->type != ICMP_DEST_UNREACH) &&
+	अगर ((ic->type != ICMP_DEST_UNREACH) &&
 	    (ic->type != ICMP_SOURCE_QUENCH) &&
-	    (ic->type != ICMP_TIME_EXCEEDED)) {
+	    (ic->type != ICMP_TIME_EXCEEDED)) अणु
 		*related = 0;
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
 	/* Now find the contained IP header */
-	offset += sizeof(_icmph);
-	cih = skb_header_pointer(skb, offset, sizeof(_ciph), &_ciph);
-	if (cih == NULL)
-		return NF_ACCEPT; /* The packet looks wrong, ignore */
-	raddr = (union nf_inet_addr *)&cih->daddr;
+	offset += माप(_icmph);
+	cih = skb_header_poपूर्णांकer(skb, offset, माप(_ciph), &_ciph);
+	अगर (cih == शून्य)
+		वापस NF_ACCEPT; /* The packet looks wrong, ignore */
+	raddr = (जोड़ nf_inet_addr *)&cih->daddr;
 
-	/* Special case for errors for IPIP/UDP/GRE tunnel packets */
+	/* Special हाल क्रम errors क्रम IPIP/UDP/GRE tunnel packets */
 	tunnel = false;
-	if (cih->protocol == IPPROTO_IPIP) {
-		struct ip_vs_dest *dest;
+	अगर (cih->protocol == IPPROTO_IPIP) अणु
+		काष्ठा ip_vs_dest *dest;
 
-		if (unlikely(cih->frag_off & htons(IP_OFFSET)))
-			return NF_ACCEPT;
-		/* Error for our IPIP must arrive at LOCAL_IN */
-		if (!(skb_rtable(skb)->rt_flags & RTCF_LOCAL))
-			return NF_ACCEPT;
+		अगर (unlikely(cih->frag_off & htons(IP_OFFSET)))
+			वापस NF_ACCEPT;
+		/* Error क्रम our IPIP must arrive at LOCAL_IN */
+		अगर (!(skb_rtable(skb)->rt_flags & RTCF_LOCAL))
+			वापस NF_ACCEPT;
 		dest = ip_vs_find_tunnel(ipvs, AF_INET, raddr, 0);
-		/* Only for known tunnel */
-		if (!dest || dest->tun_type != IP_VS_CONN_F_TUNNEL_TYPE_IPIP)
-			return NF_ACCEPT;
+		/* Only क्रम known tunnel */
+		अगर (!dest || dest->tun_type != IP_VS_CONN_F_TUNNEL_TYPE_IPIP)
+			वापस NF_ACCEPT;
 		offset += cih->ihl * 4;
-		cih = skb_header_pointer(skb, offset, sizeof(_ciph), &_ciph);
-		if (cih == NULL)
-			return NF_ACCEPT; /* The packet looks wrong, ignore */
+		cih = skb_header_poपूर्णांकer(skb, offset, माप(_ciph), &_ciph);
+		अगर (cih == शून्य)
+			वापस NF_ACCEPT; /* The packet looks wrong, ignore */
 		tunnel = true;
-	} else if ((cih->protocol == IPPROTO_UDP ||	/* Can be UDP encap */
+	पूर्ण अन्यथा अगर ((cih->protocol == IPPROTO_UDP ||	/* Can be UDP encap */
 		    cih->protocol == IPPROTO_GRE) &&	/* Can be GRE encap */
-		   /* Error for our tunnel must arrive at LOCAL_IN */
-		   (skb_rtable(skb)->rt_flags & RTCF_LOCAL)) {
+		   /* Error क्रम our tunnel must arrive at LOCAL_IN */
+		   (skb_rtable(skb)->rt_flags & RTCF_LOCAL)) अणु
 		__u8 iproto;
-		int ulen;
+		पूर्णांक ulen;
 
 		/* Non-first fragment has no UDP/GRE header */
-		if (unlikely(cih->frag_off & htons(IP_OFFSET)))
-			return NF_ACCEPT;
+		अगर (unlikely(cih->frag_off & htons(IP_OFFSET)))
+			वापस NF_ACCEPT;
 		offset2 = offset + cih->ihl * 4;
-		if (cih->protocol == IPPROTO_UDP) {
+		अगर (cih->protocol == IPPROTO_UDP) अणु
 			ulen = ipvs_udp_decap(ipvs, skb, offset2, AF_INET,
 					      raddr, &iproto);
 			outer_proto = "UDP";
-		} else {
+		पूर्ण अन्यथा अणु
 			ulen = ipvs_gre_decap(ipvs, skb, offset2, AF_INET,
 					      raddr, &iproto);
 			outer_proto = "GRE";
-		}
-		if (ulen > 0) {
+		पूर्ण
+		अगर (ulen > 0) अणु
 			/* Skip IP and UDP/GRE tunnel headers */
 			offset = offset2 + ulen;
 			/* Now we should be at the original IP header */
-			cih = skb_header_pointer(skb, offset, sizeof(_ciph),
+			cih = skb_header_poपूर्णांकer(skb, offset, माप(_ciph),
 						 &_ciph);
-			if (cih && cih->version == 4 && cih->ihl >= 5 &&
+			अगर (cih && cih->version == 4 && cih->ihl >= 5 &&
 			    iproto == IPPROTO_IPIP)
 				tunnel = true;
-			else
-				return NF_ACCEPT;
-		}
-	}
+			अन्यथा
+				वापस NF_ACCEPT;
+		पूर्ण
+	पूर्ण
 
 	pd = ip_vs_proto_data_get(ipvs, cih->protocol);
-	if (!pd)
-		return NF_ACCEPT;
+	अगर (!pd)
+		वापस NF_ACCEPT;
 	pp = pd->pp;
 
 	/* Is the embedded protocol header present? */
-	if (unlikely(cih->frag_off & htons(IP_OFFSET) &&
-		     pp->dont_defrag))
-		return NF_ACCEPT;
+	अगर (unlikely(cih->frag_off & htons(IP_OFFSET) &&
+		     pp->करोnt_defrag))
+		वापस NF_ACCEPT;
 
 	IP_VS_DBG_PKT(11, AF_INET, pp, skb, offset,
 		      "Checking incoming ICMP for");
@@ -1752,679 +1753,679 @@ ip_vs_in_icmp(struct netns_ipvs *ipvs, struct sk_buff *skb, int *related,
 	offset = ciph.len;
 
 	/* The embedded headers contain source and dest in reverse order.
-	 * For IPIP/UDP/GRE tunnel this is error for request, not for reply.
+	 * For IPIP/UDP/GRE tunnel this is error क्रम request, not क्रम reply.
 	 */
-	cp = INDIRECT_CALL_1(pp->conn_in_get, ip_vs_conn_in_get_proto,
+	cp = INसूचीECT_CALL_1(pp->conn_in_get, ip_vs_conn_in_get_proto,
 			     ipvs, AF_INET, skb, &ciph);
 
-	if (!cp) {
-		int v;
+	अगर (!cp) अणु
+		पूर्णांक v;
 
-		if (tunnel || !sysctl_schedule_icmp(ipvs))
-			return NF_ACCEPT;
+		अगर (tunnel || !sysctl_schedule_icmp(ipvs))
+			वापस NF_ACCEPT;
 
-		if (!ip_vs_try_to_schedule(ipvs, AF_INET, skb, pd, &v, &cp, &ciph))
-			return v;
+		अगर (!ip_vs_try_to_schedule(ipvs, AF_INET, skb, pd, &v, &cp, &ciph))
+			वापस v;
 		new_cp = true;
-	}
+	पूर्ण
 
 	verdict = NF_DROP;
 
 	/* Ensure the checksum is correct */
-	if (!skb_csum_unnecessary(skb) && ip_vs_checksum_complete(skb, ihl)) {
+	अगर (!skb_csum_unnecessary(skb) && ip_vs_checksum_complete(skb, ihl)) अणु
 		/* Failed checksum! */
 		IP_VS_DBG(1, "Incoming ICMP: failed checksum from %pI4!\n",
 			  &iph->saddr);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (tunnel) {
+	अगर (tunnel) अणु
 		__be32 info = ic->un.gateway;
 		__u8 type = ic->type;
 		__u8 code = ic->code;
 
 		/* Update the MTU */
-		if (ic->type == ICMP_DEST_UNREACH &&
-		    ic->code == ICMP_FRAG_NEEDED) {
-			struct ip_vs_dest *dest = cp->dest;
+		अगर (ic->type == ICMP_DEST_UNREACH &&
+		    ic->code == ICMP_FRAG_NEEDED) अणु
+			काष्ठा ip_vs_dest *dest = cp->dest;
 			u32 mtu = ntohs(ic->un.frag.mtu);
 			__be16 frag_off = cih->frag_off;
 
 			/* Strip outer IP and ICMP, go to IPIP/UDP/GRE header */
-			if (pskb_pull(skb, ihl + sizeof(_icmph)) == NULL)
-				goto ignore_tunnel;
-			offset2 -= ihl + sizeof(_icmph);
+			अगर (pskb_pull(skb, ihl + माप(_icmph)) == शून्य)
+				जाओ ignore_tunnel;
+			offset2 -= ihl + माप(_icmph);
 			skb_reset_network_header(skb);
 			IP_VS_DBG(12, "ICMP for %s %pI4->%pI4: mtu=%u\n",
 				  outer_proto, &ip_hdr(skb)->saddr,
 				  &ip_hdr(skb)->daddr, mtu);
 			ipv4_update_pmtu(skb, ipvs->net, mtu, 0, 0);
 			/* Client uses PMTUD? */
-			if (!(frag_off & htons(IP_DF)))
-				goto ignore_tunnel;
+			अगर (!(frag_off & htons(IP_DF)))
+				जाओ ignore_tunnel;
 			/* Prefer the resulting PMTU */
-			if (dest) {
-				struct ip_vs_dest_dst *dest_dst;
+			अगर (dest) अणु
+				काष्ठा ip_vs_dest_dst *dest_dst;
 
 				dest_dst = rcu_dereference(dest->dest_dst);
-				if (dest_dst)
+				अगर (dest_dst)
 					mtu = dst_mtu(dest_dst->dst_cache);
-			}
-			if (mtu > 68 + sizeof(struct iphdr))
-				mtu -= sizeof(struct iphdr);
+			पूर्ण
+			अगर (mtu > 68 + माप(काष्ठा iphdr))
+				mtu -= माप(काष्ठा iphdr);
 			info = htonl(mtu);
-		}
+		पूर्ण
 		/* Strip outer IP, ICMP and IPIP/UDP/GRE, go to IP header of
 		 * original request.
 		 */
-		if (pskb_pull(skb, offset2) == NULL)
-			goto ignore_tunnel;
+		अगर (pskb_pull(skb, offset2) == शून्य)
+			जाओ ignore_tunnel;
 		skb_reset_network_header(skb);
 		IP_VS_DBG(12, "Sending ICMP for %pI4->%pI4: t=%u, c=%u, i=%u\n",
 			&ip_hdr(skb)->saddr, &ip_hdr(skb)->daddr,
 			type, code, ntohl(info));
 		icmp_send(skb, type, code, info);
-		/* ICMP can be shorter but anyways, account it */
+		/* ICMP can be लघुer but anyways, account it */
 		ip_vs_out_stats(cp, skb);
 
 ignore_tunnel:
 		consume_skb(skb);
 		verdict = NF_STOLEN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* do the statistics and put it back */
+	/* करो the statistics and put it back */
 	ip_vs_in_stats(cp, skb);
-	if (IPPROTO_TCP == cih->protocol || IPPROTO_UDP == cih->protocol ||
+	अगर (IPPROTO_TCP == cih->protocol || IPPROTO_UDP == cih->protocol ||
 	    IPPROTO_SCTP == cih->protocol)
-		offset += 2 * sizeof(__u16);
+		offset += 2 * माप(__u16);
 	verdict = ip_vs_icmp_xmit(skb, cp, pp, offset, hooknum, &ciph);
 
 out:
-	if (likely(!new_cp))
+	अगर (likely(!new_cp))
 		__ip_vs_conn_put(cp);
-	else
+	अन्यथा
 		ip_vs_conn_put(cp);
 
-	return verdict;
-}
+	वापस verdict;
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
-static int ip_vs_in_icmp_v6(struct netns_ipvs *ipvs, struct sk_buff *skb,
-			    int *related, unsigned int hooknum,
-			    struct ip_vs_iphdr *iph)
-{
-	struct icmp6hdr	_icmph, *ic;
-	struct ip_vs_iphdr ciph = {.flags = 0, .fragoffs = 0};/*Contained IP */
-	struct ip_vs_conn *cp;
-	struct ip_vs_protocol *pp;
-	struct ip_vs_proto_data *pd;
-	unsigned int offset, verdict;
+#अगर_घोषित CONFIG_IP_VS_IPV6
+अटल पूर्णांक ip_vs_in_icmp_v6(काष्ठा netns_ipvs *ipvs, काष्ठा sk_buff *skb,
+			    पूर्णांक *related, अचिन्हित पूर्णांक hooknum,
+			    काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा icmp6hdr	_icmph, *ic;
+	काष्ठा ip_vs_iphdr ciph = अणु.flags = 0, .fragoffs = 0पूर्ण;/*Contained IP */
+	काष्ठा ip_vs_conn *cp;
+	काष्ठा ip_vs_protocol *pp;
+	काष्ठा ip_vs_proto_data *pd;
+	अचिन्हित पूर्णांक offset, verdict;
 	bool new_cp = false;
 
 	*related = 1;
 
-	ic = frag_safe_skb_hp(skb, iph->len, sizeof(_icmph), &_icmph);
-	if (ic == NULL)
-		return NF_DROP;
+	ic = frag_safe_skb_hp(skb, iph->len, माप(_icmph), &_icmph);
+	अगर (ic == शून्य)
+		वापस NF_DROP;
 
 	/*
-	 * Work through seeing if this is for us.
+	 * Work through seeing अगर this is क्रम us.
 	 * These checks are supposed to be in an order that means easy
 	 * things are checked first to speed up processing.... however
-	 * this means that some packets will manage to get a long way
-	 * down this stack and then be rejected, but that's life.
+	 * this means that some packets will manage to get a दीर्घ way
+	 * करोwn this stack and then be rejected, but that's lअगरe.
 	 */
-	if (ic->icmp6_type & ICMPV6_INFOMSG_MASK) {
+	अगर (ic->icmp6_type & ICMPV6_INFOMSG_MASK) अणु
 		*related = 0;
-		return NF_ACCEPT;
-	}
-	/* Fragment header that is before ICMP header tells us that:
+		वापस NF_ACCEPT;
+	पूर्ण
+	/* Fragment header that is beक्रमe ICMP header tells us that:
 	 * it's not an error message since they can't be fragmented.
 	 */
-	if (iph->flags & IP6_FH_F_FRAG)
-		return NF_DROP;
+	अगर (iph->flags & IP6_FH_F_FRAG)
+		वापस NF_DROP;
 
 	IP_VS_DBG(8, "Incoming ICMPv6 (%d,%d) %pI6c->%pI6c\n",
 		  ic->icmp6_type, ntohs(icmpv6_id(ic)),
 		  &iph->saddr, &iph->daddr);
 
-	offset = iph->len + sizeof(_icmph);
-	if (!ip_vs_fill_iph_skb_icmp(AF_INET6, skb, offset, true, &ciph))
-		return NF_ACCEPT;
+	offset = iph->len + माप(_icmph);
+	अगर (!ip_vs_fill_iph_skb_icmp(AF_INET6, skb, offset, true, &ciph))
+		वापस NF_ACCEPT;
 
 	pd = ip_vs_proto_data_get(ipvs, ciph.protocol);
-	if (!pd)
-		return NF_ACCEPT;
+	अगर (!pd)
+		वापस NF_ACCEPT;
 	pp = pd->pp;
 
 	/* Cannot handle fragmented embedded protocol */
-	if (ciph.fragoffs)
-		return NF_ACCEPT;
+	अगर (ciph.fragoffs)
+		वापस NF_ACCEPT;
 
 	IP_VS_DBG_PKT(11, AF_INET6, pp, skb, offset,
 		      "Checking incoming ICMPv6 for");
 
 	/* The embedded headers contain source and dest in reverse order
-	 * if not from localhost
+	 * अगर not from localhost
 	 */
-	cp = INDIRECT_CALL_1(pp->conn_in_get, ip_vs_conn_in_get_proto,
+	cp = INसूचीECT_CALL_1(pp->conn_in_get, ip_vs_conn_in_get_proto,
 			     ipvs, AF_INET6, skb, &ciph);
 
-	if (!cp) {
-		int v;
+	अगर (!cp) अणु
+		पूर्णांक v;
 
-		if (!sysctl_schedule_icmp(ipvs))
-			return NF_ACCEPT;
+		अगर (!sysctl_schedule_icmp(ipvs))
+			वापस NF_ACCEPT;
 
-		if (!ip_vs_try_to_schedule(ipvs, AF_INET6, skb, pd, &v, &cp, &ciph))
-			return v;
+		अगर (!ip_vs_try_to_schedule(ipvs, AF_INET6, skb, pd, &v, &cp, &ciph))
+			वापस v;
 
 		new_cp = true;
-	}
+	पूर्ण
 
 	/* VS/TUN, VS/DR and LOCALNODE just let it go */
-	if ((hooknum == NF_INET_LOCAL_OUT) &&
-	    (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)) {
+	अगर ((hooknum == NF_INET_LOCAL_OUT) &&
+	    (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)) अणु
 		verdict = NF_ACCEPT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* do the statistics and put it back */
+	/* करो the statistics and put it back */
 	ip_vs_in_stats(cp, skb);
 
 	/* Need to mangle contained IPv6 header in ICMPv6 packet */
 	offset = ciph.len;
-	if (IPPROTO_TCP == ciph.protocol || IPPROTO_UDP == ciph.protocol ||
+	अगर (IPPROTO_TCP == ciph.protocol || IPPROTO_UDP == ciph.protocol ||
 	    IPPROTO_SCTP == ciph.protocol)
-		offset += 2 * sizeof(__u16); /* Also mangle ports */
+		offset += 2 * माप(__u16); /* Also mangle ports */
 
 	verdict = ip_vs_icmp_xmit_v6(skb, cp, pp, offset, hooknum, &ciph);
 
 out:
-	if (likely(!new_cp))
+	अगर (likely(!new_cp))
 		__ip_vs_conn_put(cp);
-	else
+	अन्यथा
 		ip_vs_conn_put(cp);
 
-	return verdict;
-}
-#endif
+	वापस verdict;
+पूर्ण
+#पूर्ण_अगर
 
 
 /*
- *	Check if it's for virtual services, look it up,
+ *	Check अगर it's क्रम भव services, look it up,
  *	and send it on its way...
  */
-static unsigned int
-ip_vs_in(struct netns_ipvs *ipvs, unsigned int hooknum, struct sk_buff *skb, int af)
-{
-	struct ip_vs_iphdr iph;
-	struct ip_vs_protocol *pp;
-	struct ip_vs_proto_data *pd;
-	struct ip_vs_conn *cp;
-	int ret, pkts;
-	int conn_reuse_mode;
-	struct sock *sk;
+अटल अचिन्हित पूर्णांक
+ip_vs_in(काष्ठा netns_ipvs *ipvs, अचिन्हित पूर्णांक hooknum, काष्ठा sk_buff *skb, पूर्णांक af)
+अणु
+	काष्ठा ip_vs_iphdr iph;
+	काष्ठा ip_vs_protocol *pp;
+	काष्ठा ip_vs_proto_data *pd;
+	काष्ठा ip_vs_conn *cp;
+	पूर्णांक ret, pkts;
+	पूर्णांक conn_reuse_mode;
+	काष्ठा sock *sk;
 
-	/* Already marked as IPVS request or reply? */
-	if (skb->ipvs_property)
-		return NF_ACCEPT;
+	/* Alपढ़ोy marked as IPVS request or reply? */
+	अगर (skb->ipvs_property)
+		वापस NF_ACCEPT;
 
 	/*
 	 *	Big tappo:
 	 *	- remote client: only PACKET_HOST
-	 *	- route: used for struct net when skb->dev is unset
+	 *	- route: used क्रम काष्ठा net when skb->dev is unset
 	 */
-	if (unlikely((skb->pkt_type != PACKET_HOST &&
+	अगर (unlikely((skb->pkt_type != PACKET_HOST &&
 		      hooknum != NF_INET_LOCAL_OUT) ||
-		     !skb_dst(skb))) {
+		     !skb_dst(skb))) अणु
 		ip_vs_fill_iph_skb(af, skb, false, &iph);
 		IP_VS_DBG_BUF(12, "packet type=%d proto=%d daddr=%s"
 			      " ignored in hook %u\n",
 			      skb->pkt_type, iph.protocol,
 			      IP_VS_DBG_ADDR(af, &iph.daddr), hooknum);
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 	/* ipvs enabled in this netns ? */
-	if (unlikely(sysctl_backup_only(ipvs) || !ipvs->enable))
-		return NF_ACCEPT;
+	अगर (unlikely(sysctl_backup_only(ipvs) || !ipvs->enable))
+		वापस NF_ACCEPT;
 
 	ip_vs_fill_iph_skb(af, skb, false, &iph);
 
-	/* Bad... Do not break raw sockets */
+	/* Bad... Do not अवरोध raw sockets */
 	sk = skb_to_full_sk(skb);
-	if (unlikely(sk && hooknum == NF_INET_LOCAL_OUT &&
-		     af == AF_INET)) {
+	अगर (unlikely(sk && hooknum == NF_INET_LOCAL_OUT &&
+		     af == AF_INET)) अणु
 
-		if (sk->sk_family == PF_INET && inet_sk(sk)->nodefrag)
-			return NF_ACCEPT;
-	}
+		अगर (sk->sk_family == PF_INET && inet_sk(sk)->nodefrag)
+			वापस NF_ACCEPT;
+	पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6) {
-		if (unlikely(iph.protocol == IPPROTO_ICMPV6)) {
-			int related;
-			int verdict = ip_vs_in_icmp_v6(ipvs, skb, &related,
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6) अणु
+		अगर (unlikely(iph.protocol == IPPROTO_ICMPV6)) अणु
+			पूर्णांक related;
+			पूर्णांक verdict = ip_vs_in_icmp_v6(ipvs, skb, &related,
 						       hooknum, &iph);
 
-			if (related)
-				return verdict;
-		}
-	} else
-#endif
-		if (unlikely(iph.protocol == IPPROTO_ICMP)) {
-			int related;
-			int verdict = ip_vs_in_icmp(ipvs, skb, &related,
+			अगर (related)
+				वापस verdict;
+		पूर्ण
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		अगर (unlikely(iph.protocol == IPPROTO_ICMP)) अणु
+			पूर्णांक related;
+			पूर्णांक verdict = ip_vs_in_icmp(ipvs, skb, &related,
 						    hooknum);
 
-			if (related)
-				return verdict;
-		}
+			अगर (related)
+				वापस verdict;
+		पूर्ण
 
 	/* Protocol supported? */
 	pd = ip_vs_proto_data_get(ipvs, iph.protocol);
-	if (unlikely(!pd)) {
+	अगर (unlikely(!pd)) अणु
 		/* The only way we'll see this packet again is if it's
 		 * encapsulated, so mark it with ipvs_property=1 so we
-		 * skip it if we're ignoring tunneled packets
+		 * skip it अगर we're ignoring tunneled packets
 		 */
-		if (sysctl_ignore_tunneled(ipvs))
+		अगर (sysctl_ignore_tunneled(ipvs))
 			skb->ipvs_property = 1;
 
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 	pp = pd->pp;
 	/*
-	 * Check if the packet belongs to an existing connection entry
+	 * Check अगर the packet beदीर्घs to an existing connection entry
 	 */
-	cp = INDIRECT_CALL_1(pp->conn_in_get, ip_vs_conn_in_get_proto,
+	cp = INसूचीECT_CALL_1(pp->conn_in_get, ip_vs_conn_in_get_proto,
 			     ipvs, af, skb, &iph);
 
 	conn_reuse_mode = sysctl_conn_reuse_mode(ipvs);
-	if (conn_reuse_mode && !iph.fragoffs && is_new_conn(skb, &iph) && cp) {
+	अगर (conn_reuse_mode && !iph.fragoffs && is_new_conn(skb, &iph) && cp) अणु
 		bool old_ct = false, resched = false;
 
-		if (unlikely(sysctl_expire_nodest_conn(ipvs)) && cp->dest &&
-		    unlikely(!atomic_read(&cp->dest->weight))) {
+		अगर (unlikely(sysctl_expire_nodest_conn(ipvs)) && cp->dest &&
+		    unlikely(!atomic_पढ़ो(&cp->dest->weight))) अणु
 			resched = true;
 			old_ct = ip_vs_conn_uses_old_conntrack(cp, skb);
-		} else if (is_new_conn_expected(cp, conn_reuse_mode)) {
+		पूर्ण अन्यथा अगर (is_new_conn_expected(cp, conn_reuse_mode)) अणु
 			old_ct = ip_vs_conn_uses_old_conntrack(cp, skb);
-			if (!atomic_read(&cp->n_control)) {
+			अगर (!atomic_पढ़ो(&cp->n_control)) अणु
 				resched = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Do not reschedule controlling connection
-				 * that uses conntrack while it is still
+				 * that uses conntrack जबतक it is still
 				 * referenced by controlled connection(s).
 				 */
 				resched = !old_ct;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (resched) {
-			if (!old_ct)
+		अगर (resched) अणु
+			अगर (!old_ct)
 				cp->flags &= ~IP_VS_CONN_F_NFCT;
-			if (!atomic_read(&cp->n_control))
+			अगर (!atomic_पढ़ो(&cp->n_control))
 				ip_vs_conn_expire_now(cp);
 			__ip_vs_conn_put(cp);
-			if (old_ct)
-				return NF_DROP;
-			cp = NULL;
-		}
-	}
+			अगर (old_ct)
+				वापस NF_DROP;
+			cp = शून्य;
+		पूर्ण
+	पूर्ण
 
 	/* Check the server status */
-	if (cp && cp->dest && !(cp->dest->flags & IP_VS_DEST_F_AVAILABLE)) {
+	अगर (cp && cp->dest && !(cp->dest->flags & IP_VS_DEST_F_AVAILABLE)) अणु
 		/* the destination server is not available */
-		if (sysctl_expire_nodest_conn(ipvs)) {
+		अगर (sysctl_expire_nodest_conn(ipvs)) अणु
 			bool old_ct = ip_vs_conn_uses_old_conntrack(cp, skb);
 
-			if (!old_ct)
+			अगर (!old_ct)
 				cp->flags &= ~IP_VS_CONN_F_NFCT;
 
 			ip_vs_conn_expire_now(cp);
 			__ip_vs_conn_put(cp);
-			if (old_ct)
-				return NF_DROP;
-			cp = NULL;
-		} else {
+			अगर (old_ct)
+				वापस NF_DROP;
+			cp = शून्य;
+		पूर्ण अन्यथा अणु
 			__ip_vs_conn_put(cp);
-			return NF_DROP;
-		}
-	}
+			वापस NF_DROP;
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(!cp)) {
-		int v;
+	अगर (unlikely(!cp)) अणु
+		पूर्णांक v;
 
-		if (!ip_vs_try_to_schedule(ipvs, af, skb, pd, &v, &cp, &iph))
-			return v;
-	}
+		अगर (!ip_vs_try_to_schedule(ipvs, af, skb, pd, &v, &cp, &iph))
+			वापस v;
+	पूर्ण
 
 	IP_VS_DBG_PKT(11, af, pp, skb, iph.off, "Incoming packet");
 
 	ip_vs_in_stats(cp, skb);
-	ip_vs_set_state(cp, IP_VS_DIR_INPUT, skb, pd);
-	if (cp->packet_xmit)
+	ip_vs_set_state(cp, IP_VS_सूची_INPUT, skb, pd);
+	अगर (cp->packet_xmit)
 		ret = cp->packet_xmit(skb, cp, pp, &iph);
-		/* do not touch skb anymore */
-	else {
+		/* करो not touch skb anymore */
+	अन्यथा अणु
 		IP_VS_DBG_RL("warning: packet_xmit is null");
 		ret = NF_ACCEPT;
-	}
+	पूर्ण
 
-	/* Increase its packet counter and check if it is needed
+	/* Increase its packet counter and check अगर it is needed
 	 * to be synchronized
 	 *
-	 * Sync connection if it is about to close to
-	 * encorage the standby servers to update the connections timeout
+	 * Sync connection अगर it is about to बंद to
+	 * encorage the standby servers to update the connections समयout
 	 *
-	 * For ONE_PKT let ip_vs_sync_conn() do the filter work.
+	 * For ONE_PKT let ip_vs_sync_conn() करो the filter work.
 	 */
 
-	if (cp->flags & IP_VS_CONN_F_ONE_PACKET)
+	अगर (cp->flags & IP_VS_CONN_F_ONE_PACKET)
 		pkts = sysctl_sync_threshold(ipvs);
-	else
-		pkts = atomic_inc_return(&cp->in_pkts);
+	अन्यथा
+		pkts = atomic_inc_वापस(&cp->in_pkts);
 
-	if (ipvs->sync_state & IP_VS_STATE_MASTER)
+	अगर (ipvs->sync_state & IP_VS_STATE_MASTER)
 		ip_vs_sync_conn(ipvs, cp, pkts);
-	else if ((cp->flags & IP_VS_CONN_F_ONE_PACKET) && cp->control)
-		/* increment is done inside ip_vs_sync_conn too */
+	अन्यथा अगर ((cp->flags & IP_VS_CONN_F_ONE_PACKET) && cp->control)
+		/* increment is करोne inside ip_vs_sync_conn too */
 		atomic_inc(&cp->control->in_pkts);
 
 	ip_vs_conn_put(cp);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *	AF_INET handler in NF_INET_LOCAL_IN chain
- *	Schedule and forward packets from remote clients
+ *	Schedule and क्रमward packets from remote clients
  */
-static unsigned int
-ip_vs_remote_request4(void *priv, struct sk_buff *skb,
-		      const struct nf_hook_state *state)
-{
-	return ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_remote_request4(व्योम *priv, काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET);
+पूर्ण
 
 /*
  *	AF_INET handler in NF_INET_LOCAL_OUT chain
- *	Schedule and forward packets from local clients
+ *	Schedule and क्रमward packets from local clients
  */
-static unsigned int
-ip_vs_local_request4(void *priv, struct sk_buff *skb,
-		     const struct nf_hook_state *state)
-{
-	return ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_local_request4(व्योम *priv, काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET);
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
+#अगर_घोषित CONFIG_IP_VS_IPV6
 
 /*
  *	AF_INET6 handler in NF_INET_LOCAL_IN chain
- *	Schedule and forward packets from remote clients
+ *	Schedule and क्रमward packets from remote clients
  */
-static unsigned int
-ip_vs_remote_request6(void *priv, struct sk_buff *skb,
-		      const struct nf_hook_state *state)
-{
-	return ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET6);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_remote_request6(व्योम *priv, काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET6);
+पूर्ण
 
 /*
  *	AF_INET6 handler in NF_INET_LOCAL_OUT chain
- *	Schedule and forward packets from local clients
+ *	Schedule and क्रमward packets from local clients
  */
-static unsigned int
-ip_vs_local_request6(void *priv, struct sk_buff *skb,
-		     const struct nf_hook_state *state)
-{
-	return ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET6);
-}
+अटल अचिन्हित पूर्णांक
+ip_vs_local_request6(व्योम *priv, काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	वापस ip_vs_in(net_ipvs(state->net), state->hook, skb, AF_INET6);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
 /*
  *	It is hooked at the NF_INET_FORWARD chain, in order to catch ICMP
- *      related packets destined for 0.0.0.0/0.
- *      When fwmark-based virtual service is used, such as transparent
+ *      related packets destined क्रम 0.0.0.0/0.
+ *      When fwmark-based भव service is used, such as transparent
  *      cache cluster, TCP packets can be marked and routed to ip_vs_in,
- *      but ICMP destined for 0.0.0.0/0 cannot not be easily marked and
+ *      but ICMP destined क्रम 0.0.0.0/0 cannot not be easily marked and
  *      sent to ip_vs_in_icmp. So, catch them at the NF_INET_FORWARD chain
  *      and send them to ip_vs_in_icmp.
  */
-static unsigned int
-ip_vs_forward_icmp(void *priv, struct sk_buff *skb,
-		   const struct nf_hook_state *state)
-{
-	int r;
-	struct netns_ipvs *ipvs = net_ipvs(state->net);
+अटल अचिन्हित पूर्णांक
+ip_vs_क्रमward_icmp(व्योम *priv, काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा nf_hook_state *state)
+अणु
+	पूर्णांक r;
+	काष्ठा netns_ipvs *ipvs = net_ipvs(state->net);
 
-	if (ip_hdr(skb)->protocol != IPPROTO_ICMP)
-		return NF_ACCEPT;
+	अगर (ip_hdr(skb)->protocol != IPPROTO_ICMP)
+		वापस NF_ACCEPT;
 
 	/* ipvs enabled in this netns ? */
-	if (unlikely(sysctl_backup_only(ipvs) || !ipvs->enable))
-		return NF_ACCEPT;
+	अगर (unlikely(sysctl_backup_only(ipvs) || !ipvs->enable))
+		वापस NF_ACCEPT;
 
-	return ip_vs_in_icmp(ipvs, skb, &r, state->hook);
-}
+	वापस ip_vs_in_icmp(ipvs, skb, &r, state->hook);
+पूर्ण
 
-#ifdef CONFIG_IP_VS_IPV6
-static unsigned int
-ip_vs_forward_icmp_v6(void *priv, struct sk_buff *skb,
-		      const struct nf_hook_state *state)
-{
-	int r;
-	struct netns_ipvs *ipvs = net_ipvs(state->net);
-	struct ip_vs_iphdr iphdr;
+#अगर_घोषित CONFIG_IP_VS_IPV6
+अटल अचिन्हित पूर्णांक
+ip_vs_क्रमward_icmp_v6(व्योम *priv, काष्ठा sk_buff *skb,
+		      स्थिर काष्ठा nf_hook_state *state)
+अणु
+	पूर्णांक r;
+	काष्ठा netns_ipvs *ipvs = net_ipvs(state->net);
+	काष्ठा ip_vs_iphdr iphdr;
 
 	ip_vs_fill_iph_skb(AF_INET6, skb, false, &iphdr);
-	if (iphdr.protocol != IPPROTO_ICMPV6)
-		return NF_ACCEPT;
+	अगर (iphdr.protocol != IPPROTO_ICMPV6)
+		वापस NF_ACCEPT;
 
 	/* ipvs enabled in this netns ? */
-	if (unlikely(sysctl_backup_only(ipvs) || !ipvs->enable))
-		return NF_ACCEPT;
+	अगर (unlikely(sysctl_backup_only(ipvs) || !ipvs->enable))
+		वापस NF_ACCEPT;
 
-	return ip_vs_in_icmp_v6(ipvs, skb, &r, state->hook, &iphdr);
-}
-#endif
+	वापस ip_vs_in_icmp_v6(ipvs, skb, &r, state->hook, &iphdr);
+पूर्ण
+#पूर्ण_अगर
 
 
-static const struct nf_hook_ops ip_vs_ops4[] = {
-	/* After packet filtering, change source only for VS/NAT */
-	{
+अटल स्थिर काष्ठा nf_hook_ops ip_vs_ops4[] = अणु
+	/* After packet filtering, change source only क्रम VS/NAT */
+	अणु
 		.hook		= ip_vs_reply4,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP_PRI_NAT_SRC - 2,
-	},
-	/* After packet filtering, forward packet through VS/DR, VS/TUN,
+	पूर्ण,
+	/* After packet filtering, क्रमward packet through VS/DR, VS/TUN,
 	 * or VS/NAT(change destination), so that filtering rules can be
 	 * applied to IPVS. */
-	{
+	अणु
 		.hook		= ip_vs_remote_request4,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP_PRI_NAT_SRC - 1,
-	},
-	/* Before ip_vs_in, change source only for VS/NAT */
-	{
+	पूर्ण,
+	/* Beक्रमe ip_vs_in, change source only क्रम VS/NAT */
+	अणु
 		.hook		= ip_vs_local_reply4,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP_PRI_NAT_DST + 1,
-	},
-	/* After mangle, schedule and forward local requests */
-	{
+	पूर्ण,
+	/* After mangle, schedule and क्रमward local requests */
+	अणु
 		.hook		= ip_vs_local_request4,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP_PRI_NAT_DST + 2,
-	},
-	/* After packet filtering (but before ip_vs_out_icmp), catch icmp
-	 * destined for 0.0.0.0/0, which is for incoming IPVS connections */
-	{
-		.hook		= ip_vs_forward_icmp,
+	पूर्ण,
+	/* After packet filtering (but beक्रमe ip_vs_out_icmp), catch icmp
+	 * destined क्रम 0.0.0.0/0, which is क्रम incoming IPVS connections */
+	अणु
+		.hook		= ip_vs_क्रमward_icmp,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_FORWARD,
 		.priority	= 99,
-	},
-	/* After packet filtering, change source only for VS/NAT */
-	{
+	पूर्ण,
+	/* After packet filtering, change source only क्रम VS/NAT */
+	अणु
 		.hook		= ip_vs_reply4,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_FORWARD,
 		.priority	= 100,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_IP_VS_IPV6
-static const struct nf_hook_ops ip_vs_ops6[] = {
-	/* After packet filtering, change source only for VS/NAT */
-	{
+#अगर_घोषित CONFIG_IP_VS_IPV6
+अटल स्थिर काष्ठा nf_hook_ops ip_vs_ops6[] = अणु
+	/* After packet filtering, change source only क्रम VS/NAT */
+	अणु
 		.hook		= ip_vs_reply6,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP6_PRI_NAT_SRC - 2,
-	},
-	/* After packet filtering, forward packet through VS/DR, VS/TUN,
+	पूर्ण,
+	/* After packet filtering, क्रमward packet through VS/DR, VS/TUN,
 	 * or VS/NAT(change destination), so that filtering rules can be
 	 * applied to IPVS. */
-	{
+	अणु
 		.hook		= ip_vs_remote_request6,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP6_PRI_NAT_SRC - 1,
-	},
-	/* Before ip_vs_in, change source only for VS/NAT */
-	{
+	पूर्ण,
+	/* Beक्रमe ip_vs_in, change source only क्रम VS/NAT */
+	अणु
 		.hook		= ip_vs_local_reply6,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP6_PRI_NAT_DST + 1,
-	},
-	/* After mangle, schedule and forward local requests */
-	{
+	पूर्ण,
+	/* After mangle, schedule and क्रमward local requests */
+	अणु
 		.hook		= ip_vs_local_request6,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_OUT,
 		.priority	= NF_IP6_PRI_NAT_DST + 2,
-	},
-	/* After packet filtering (but before ip_vs_out_icmp), catch icmp
-	 * destined for 0.0.0.0/0, which is for incoming IPVS connections */
-	{
-		.hook		= ip_vs_forward_icmp_v6,
+	पूर्ण,
+	/* After packet filtering (but beक्रमe ip_vs_out_icmp), catch icmp
+	 * destined क्रम 0.0.0.0/0, which is क्रम incoming IPVS connections */
+	अणु
+		.hook		= ip_vs_क्रमward_icmp_v6,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_FORWARD,
 		.priority	= 99,
-	},
-	/* After packet filtering, change source only for VS/NAT */
-	{
+	पूर्ण,
+	/* After packet filtering, change source only क्रम VS/NAT */
+	अणु
 		.hook		= ip_vs_reply6,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_FORWARD,
 		.priority	= 100,
-	},
-};
-#endif
+	पूर्ण,
+पूर्ण;
+#पूर्ण_अगर
 
-int ip_vs_register_hooks(struct netns_ipvs *ipvs, unsigned int af)
-{
-	const struct nf_hook_ops *ops;
-	unsigned int count;
-	unsigned int afmask;
-	int ret = 0;
+पूर्णांक ip_vs_रेजिस्टर_hooks(काष्ठा netns_ipvs *ipvs, अचिन्हित पूर्णांक af)
+अणु
+	स्थिर काष्ठा nf_hook_ops *ops;
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक afmask;
+	पूर्णांक ret = 0;
 
-	if (af == AF_INET6) {
-#ifdef CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6) अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
 		ops = ip_vs_ops6;
 		count = ARRAY_SIZE(ip_vs_ops6);
 		afmask = 2;
-#else
-		return -EINVAL;
-#endif
-	} else {
+#अन्यथा
+		वापस -EINVAL;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		ops = ip_vs_ops4;
 		count = ARRAY_SIZE(ip_vs_ops4);
 		afmask = 1;
-	}
+	पूर्ण
 
-	if (!(ipvs->hooks_afmask & afmask)) {
-		ret = nf_register_net_hooks(ipvs->net, ops, count);
-		if (ret >= 0)
+	अगर (!(ipvs->hooks_afmask & afmask)) अणु
+		ret = nf_रेजिस्टर_net_hooks(ipvs->net, ops, count);
+		अगर (ret >= 0)
 			ipvs->hooks_afmask |= afmask;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void ip_vs_unregister_hooks(struct netns_ipvs *ipvs, unsigned int af)
-{
-	const struct nf_hook_ops *ops;
-	unsigned int count;
-	unsigned int afmask;
+व्योम ip_vs_unरेजिस्टर_hooks(काष्ठा netns_ipvs *ipvs, अचिन्हित पूर्णांक af)
+अणु
+	स्थिर काष्ठा nf_hook_ops *ops;
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक afmask;
 
-	if (af == AF_INET6) {
-#ifdef CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6) अणु
+#अगर_घोषित CONFIG_IP_VS_IPV6
 		ops = ip_vs_ops6;
 		count = ARRAY_SIZE(ip_vs_ops6);
 		afmask = 2;
-#else
-		return;
-#endif
-	} else {
+#अन्यथा
+		वापस;
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		ops = ip_vs_ops4;
 		count = ARRAY_SIZE(ip_vs_ops4);
 		afmask = 1;
-	}
+	पूर्ण
 
-	if (ipvs->hooks_afmask & afmask) {
-		nf_unregister_net_hooks(ipvs->net, ops, count);
+	अगर (ipvs->hooks_afmask & afmask) अणु
+		nf_unरेजिस्टर_net_hooks(ipvs->net, ops, count);
 		ipvs->hooks_afmask &= ~afmask;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	Initialize IP Virtual Server netns mem.
  */
-static int __net_init __ip_vs_init(struct net *net)
-{
-	struct netns_ipvs *ipvs;
+अटल पूर्णांक __net_init __ip_vs_init(काष्ठा net *net)
+अणु
+	काष्ठा netns_ipvs *ipvs;
 
 	ipvs = net_generic(net, ip_vs_net_id);
-	if (ipvs == NULL)
-		return -ENOMEM;
+	अगर (ipvs == शून्य)
+		वापस -ENOMEM;
 
-	/* Hold the beast until a service is registered */
+	/* Hold the beast until a service is रेजिस्टरed */
 	ipvs->enable = 0;
 	ipvs->net = net;
-	/* Counters used for creating unique names */
-	ipvs->gen = atomic_read(&ipvs_netns_cnt);
+	/* Counters used क्रम creating unique names */
+	ipvs->gen = atomic_पढ़ो(&ipvs_netns_cnt);
 	atomic_inc(&ipvs_netns_cnt);
 	net->ipvs = ipvs;
 
-	if (ip_vs_estimator_net_init(ipvs) < 0)
-		goto estimator_fail;
+	अगर (ip_vs_estimator_net_init(ipvs) < 0)
+		जाओ estimator_fail;
 
-	if (ip_vs_control_net_init(ipvs) < 0)
-		goto control_fail;
+	अगर (ip_vs_control_net_init(ipvs) < 0)
+		जाओ control_fail;
 
-	if (ip_vs_protocol_net_init(ipvs) < 0)
-		goto protocol_fail;
+	अगर (ip_vs_protocol_net_init(ipvs) < 0)
+		जाओ protocol_fail;
 
-	if (ip_vs_app_net_init(ipvs) < 0)
-		goto app_fail;
+	अगर (ip_vs_app_net_init(ipvs) < 0)
+		जाओ app_fail;
 
-	if (ip_vs_conn_net_init(ipvs) < 0)
-		goto conn_fail;
+	अगर (ip_vs_conn_net_init(ipvs) < 0)
+		जाओ conn_fail;
 
-	if (ip_vs_sync_net_init(ipvs) < 0)
-		goto sync_fail;
+	अगर (ip_vs_sync_net_init(ipvs) < 0)
+		जाओ sync_fail;
 
-	return 0;
+	वापस 0;
 /*
  * Error handling
  */
@@ -2440,17 +2441,17 @@ protocol_fail:
 control_fail:
 	ip_vs_estimator_net_cleanup(ipvs);
 estimator_fail:
-	net->ipvs = NULL;
-	return -ENOMEM;
-}
+	net->ipvs = शून्य;
+	वापस -ENOMEM;
+पूर्ण
 
-static void __net_exit __ip_vs_cleanup_batch(struct list_head *net_list)
-{
-	struct netns_ipvs *ipvs;
-	struct net *net;
+अटल व्योम __net_निकास __ip_vs_cleanup_batch(काष्ठा list_head *net_list)
+अणु
+	काष्ठा netns_ipvs *ipvs;
+	काष्ठा net *net;
 
 	ip_vs_service_nets_cleanup(net_list);	/* ip_vs_flush() with locks */
-	list_for_each_entry(net, net_list, exit_list) {
+	list_क्रम_each_entry(net, net_list, निकास_list) अणु
 		ipvs = net_ipvs(net);
 		ip_vs_conn_net_cleanup(ipvs);
 		ip_vs_app_net_cleanup(ipvs);
@@ -2458,101 +2459,101 @@ static void __net_exit __ip_vs_cleanup_batch(struct list_head *net_list)
 		ip_vs_control_net_cleanup(ipvs);
 		ip_vs_estimator_net_cleanup(ipvs);
 		IP_VS_DBG(2, "ipvs netns %d released\n", ipvs->gen);
-		net->ipvs = NULL;
-	}
-}
+		net->ipvs = शून्य;
+	पूर्ण
+पूर्ण
 
-static void __net_exit __ip_vs_dev_cleanup_batch(struct list_head *net_list)
-{
-	struct netns_ipvs *ipvs;
-	struct net *net;
+अटल व्योम __net_निकास __ip_vs_dev_cleanup_batch(काष्ठा list_head *net_list)
+अणु
+	काष्ठा netns_ipvs *ipvs;
+	काष्ठा net *net;
 
 	EnterFunction(2);
-	list_for_each_entry(net, net_list, exit_list) {
+	list_क्रम_each_entry(net, net_list, निकास_list) अणु
 		ipvs = net_ipvs(net);
-		ip_vs_unregister_hooks(ipvs, AF_INET);
-		ip_vs_unregister_hooks(ipvs, AF_INET6);
+		ip_vs_unरेजिस्टर_hooks(ipvs, AF_INET);
+		ip_vs_unरेजिस्टर_hooks(ipvs, AF_INET6);
 		ipvs->enable = 0;	/* Disable packet reception */
 		smp_wmb();
 		ip_vs_sync_net_cleanup(ipvs);
-	}
+	पूर्ण
 	LeaveFunction(2);
-}
+पूर्ण
 
-static struct pernet_operations ipvs_core_ops = {
+अटल काष्ठा pernet_operations ipvs_core_ops = अणु
 	.init = __ip_vs_init,
-	.exit_batch = __ip_vs_cleanup_batch,
+	.निकास_batch = __ip_vs_cleanup_batch,
 	.id   = &ip_vs_net_id,
-	.size = sizeof(struct netns_ipvs),
-};
+	.size = माप(काष्ठा netns_ipvs),
+पूर्ण;
 
-static struct pernet_operations ipvs_core_dev_ops = {
-	.exit_batch = __ip_vs_dev_cleanup_batch,
-};
+अटल काष्ठा pernet_operations ipvs_core_dev_ops = अणु
+	.निकास_batch = __ip_vs_dev_cleanup_batch,
+पूर्ण;
 
 /*
  *	Initialize IP Virtual Server
  */
-static int __init ip_vs_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ip_vs_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = ip_vs_control_init();
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("can't setup control.\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	ip_vs_protocol_init();
 
 	ret = ip_vs_conn_init();
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("can't setup connection table.\n");
-		goto cleanup_protocol;
-	}
+		जाओ cleanup_protocol;
+	पूर्ण
 
-	ret = register_pernet_subsys(&ipvs_core_ops);	/* Alloc ip_vs struct */
-	if (ret < 0)
-		goto cleanup_conn;
+	ret = रेजिस्टर_pernet_subsys(&ipvs_core_ops);	/* Alloc ip_vs काष्ठा */
+	अगर (ret < 0)
+		जाओ cleanup_conn;
 
-	ret = register_pernet_device(&ipvs_core_dev_ops);
-	if (ret < 0)
-		goto cleanup_sub;
+	ret = रेजिस्टर_pernet_device(&ipvs_core_dev_ops);
+	अगर (ret < 0)
+		जाओ cleanup_sub;
 
-	ret = ip_vs_register_nl_ioctl();
-	if (ret < 0) {
+	ret = ip_vs_रेजिस्टर_nl_ioctl();
+	अगर (ret < 0) अणु
 		pr_err("can't register netlink/ioctl.\n");
-		goto cleanup_dev;
-	}
+		जाओ cleanup_dev;
+	पूर्ण
 
 	pr_info("ipvs loaded.\n");
 
-	return ret;
+	वापस ret;
 
 cleanup_dev:
-	unregister_pernet_device(&ipvs_core_dev_ops);
+	unरेजिस्टर_pernet_device(&ipvs_core_dev_ops);
 cleanup_sub:
-	unregister_pernet_subsys(&ipvs_core_ops);
+	unरेजिस्टर_pernet_subsys(&ipvs_core_ops);
 cleanup_conn:
 	ip_vs_conn_cleanup();
 cleanup_protocol:
 	ip_vs_protocol_cleanup();
 	ip_vs_control_cleanup();
-exit:
-	return ret;
-}
+निकास:
+	वापस ret;
+पूर्ण
 
-static void __exit ip_vs_cleanup(void)
-{
-	ip_vs_unregister_nl_ioctl();
-	unregister_pernet_device(&ipvs_core_dev_ops);
-	unregister_pernet_subsys(&ipvs_core_ops);	/* free ip_vs struct */
+अटल व्योम __निकास ip_vs_cleanup(व्योम)
+अणु
+	ip_vs_unरेजिस्टर_nl_ioctl();
+	unरेजिस्टर_pernet_device(&ipvs_core_dev_ops);
+	unरेजिस्टर_pernet_subsys(&ipvs_core_ops);	/* मुक्त ip_vs काष्ठा */
 	ip_vs_conn_cleanup();
 	ip_vs_protocol_cleanup();
 	ip_vs_control_cleanup();
 	pr_info("ipvs unloaded.\n");
-}
+पूर्ण
 
 module_init(ip_vs_init);
-module_exit(ip_vs_cleanup);
+module_निकास(ip_vs_cleanup);
 MODULE_LICENSE("GPL");

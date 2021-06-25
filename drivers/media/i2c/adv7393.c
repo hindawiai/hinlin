@@ -1,52 +1,53 @@
+<शैली गुरु>
 /*
  * adv7393 - ADV7393 Video Encoder Driver
  *
- * The encoder hardware does not support SECAM.
+ * The encoder hardware करोes not support SECAM.
  *
  * Copyright (C) 2010-2012 ADVANSEE - http://www.advansee.com/
- * Benoît Thébaudeau <benoit.thebaudeau@advansee.com>
+ * Benoथऍt Thथऊbaudeau <benoit.thebaudeau@advansee.com>
  *
  * Based on ADV7343 driver,
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - http://www.ti.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed .as is. WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/videodev2.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/uaccess.h>
 
-#include <media/i2c/adv7393.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <media/i2c/adv7393.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
 
-#include "adv7393_regs.h"
+#समावेश "adv7393_regs.h"
 
 MODULE_DESCRIPTION("ADV7393 video encoder driver");
 MODULE_LICENSE("GPL");
 
-static bool debug;
+अटल bool debug;
 module_param(debug, bool, 0644);
 MODULE_PARM_DESC(debug, "Debug level 0-1");
 
-struct adv7393_state {
-	struct v4l2_subdev sd;
-	struct v4l2_ctrl_handler hdl;
+काष्ठा adv7393_state अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा v4l2_ctrl_handler hdl;
 	u8 reg00;
 	u8 reg01;
 	u8 reg02;
@@ -55,26 +56,26 @@ struct adv7393_state {
 	u8 reg82;
 	u32 output;
 	v4l2_std_id std;
-};
+पूर्ण;
 
-static inline struct adv7393_state *to_state(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct adv7393_state, sd);
-}
+अटल अंतरभूत काष्ठा adv7393_state *to_state(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा adv7393_state, sd);
+पूर्ण
 
-static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
-{
-	return &container_of(ctrl->handler, struct adv7393_state, hdl)->sd;
-}
+अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	वापस &container_of(ctrl->handler, काष्ठा adv7393_state, hdl)->sd;
+पूर्ण
 
-static inline int adv7393_write(struct v4l2_subdev *sd, u8 reg, u8 value)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल अंतरभूत पूर्णांक adv7393_ग_लिखो(काष्ठा v4l2_subdev *sd, u8 reg, u8 value)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-	return i2c_smbus_write_byte_data(client, reg, value);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, value);
+पूर्ण
 
-static const u8 adv7393_init_reg_val[] = {
+अटल स्थिर u8 adv7393_init_reg_val[] = अणु
 	ADV7393_SOFT_RESET, ADV7393_SOFT_RESET_DEFAULT,
 	ADV7393_POWER_MODE_REG, ADV7393_POWER_MODE_REG_DEFAULT,
 
@@ -100,302 +101,302 @@ static const u8 adv7393_init_reg_val[] = {
 	ADV7393_SD_HUE_ADJUST, ADV7393_SD_HUE_ADJUST_DEFAULT,
 	ADV7393_SD_CGMS_WSS0, ADV7393_SD_CGMS_WSS0_DEFAULT,
 	ADV7393_SD_BRIGHTNESS_WSS, ADV7393_SD_BRIGHTNESS_WSS_DEFAULT,
-};
+पूर्ण;
 
 /*
  *			    2^32
  * FSC(reg) =  FSC (HZ) * --------
  *			  27000000
  */
-static const struct adv7393_std_info stdinfo[] = {
-	{
+अटल स्थिर काष्ठा adv7393_std_info मानक_निवेशfo[] = अणु
+	अणु
 		/* FSC(Hz) = 4,433,618.75 Hz */
 		SD_STD_NTSC, 705268427, V4L2_STD_NTSC_443,
-	}, {
+	पूर्ण, अणु
 		/* FSC(Hz) = 3,579,545.45 Hz */
 		SD_STD_NTSC, 569408542, V4L2_STD_NTSC,
-	}, {
+	पूर्ण, अणु
 		/* FSC(Hz) = 3,575,611.00 Hz */
 		SD_STD_PAL_M, 568782678, V4L2_STD_PAL_M,
-	}, {
+	पूर्ण, अणु
 		/* FSC(Hz) = 3,582,056.00 Hz */
 		SD_STD_PAL_N, 569807903, V4L2_STD_PAL_Nc,
-	}, {
+	पूर्ण, अणु
 		/* FSC(Hz) = 4,433,618.75 Hz */
 		SD_STD_PAL_N, 705268427, V4L2_STD_PAL_N,
-	}, {
+	पूर्ण, अणु
 		/* FSC(Hz) = 4,433,618.75 Hz */
 		SD_STD_PAL_M, 705268427, V4L2_STD_PAL_60,
-	}, {
+	पूर्ण, अणु
 		/* FSC(Hz) = 4,433,618.75 Hz */
 		SD_STD_PAL_BDGHI, 705268427, V4L2_STD_PAL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int adv7393_setstd(struct v4l2_subdev *sd, v4l2_std_id std)
-{
-	struct adv7393_state *state = to_state(sd);
-	const struct adv7393_std_info *std_info;
-	int num_std;
+अटल पूर्णांक adv7393_setstd(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
+अणु
+	काष्ठा adv7393_state *state = to_state(sd);
+	स्थिर काष्ठा adv7393_std_info *std_info;
+	पूर्णांक num_std;
 	u8 reg;
 	u32 val;
-	int err = 0;
-	int i;
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	num_std = ARRAY_SIZE(stdinfo);
+	num_std = ARRAY_SIZE(मानक_निवेशfo);
 
-	for (i = 0; i < num_std; i++) {
-		if (stdinfo[i].stdid & std)
-			break;
-	}
+	क्रम (i = 0; i < num_std; i++) अणु
+		अगर (मानक_निवेशfo[i].stdid & std)
+			अवरोध;
+	पूर्ण
 
-	if (i == num_std) {
+	अगर (i == num_std) अणु
 		v4l2_dbg(1, debug, sd,
 				"Invalid std or std is not supported: %llx\n",
-						(unsigned long long)std);
-		return -EINVAL;
-	}
+						(अचिन्हित दीर्घ दीर्घ)std);
+		वापस -EINVAL;
+	पूर्ण
 
-	std_info = &stdinfo[i];
+	std_info = &मानक_निवेशfo[i];
 
 	/* Set the standard */
 	val = state->reg80 & ~SD_STD_MASK;
 	val |= std_info->standard_val3;
-	err = adv7393_write(sd, ADV7393_SD_MODE_REG1, val);
-	if (err < 0)
-		goto setstd_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_SD_MODE_REG1, val);
+	अगर (err < 0)
+		जाओ setstd_निकास;
 
 	state->reg80 = val;
 
-	/* Configure the input mode register */
+	/* Configure the input mode रेजिस्टर */
 	val = state->reg01 & ~INPUT_MODE_MASK;
 	val |= SD_INPUT_MODE;
-	err = adv7393_write(sd, ADV7393_MODE_SELECT_REG, val);
-	if (err < 0)
-		goto setstd_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_MODE_SELECT_REG, val);
+	अगर (err < 0)
+		जाओ setstd_निकास;
 
 	state->reg01 = val;
 
-	/* Program the sub carrier frequency registers */
+	/* Program the sub carrier frequency रेजिस्टरs */
 	val = std_info->fsc_val;
-	for (reg = ADV7393_FSC_REG0; reg <= ADV7393_FSC_REG3; reg++) {
-		err = adv7393_write(sd, reg, val);
-		if (err < 0)
-			goto setstd_exit;
+	क्रम (reg = ADV7393_FSC_REG0; reg <= ADV7393_FSC_REG3; reg++) अणु
+		err = adv7393_ग_लिखो(sd, reg, val);
+		अगर (err < 0)
+			जाओ setstd_निकास;
 		val >>= 8;
-	}
+	पूर्ण
 
 	val = state->reg82;
 
 	/* Pedestal settings */
-	if (std & (V4L2_STD_NTSC | V4L2_STD_NTSC_443))
+	अगर (std & (V4L2_STD_NTSC | V4L2_STD_NTSC_443))
 		val |= SD_PEDESTAL_EN;
-	else
+	अन्यथा
 		val &= SD_PEDESTAL_DI;
 
-	err = adv7393_write(sd, ADV7393_SD_MODE_REG2, val);
-	if (err < 0)
-		goto setstd_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_SD_MODE_REG2, val);
+	अगर (err < 0)
+		जाओ setstd_निकास;
 
 	state->reg82 = val;
 
-setstd_exit:
-	if (err != 0)
+setstd_निकास:
+	अगर (err != 0)
 		v4l2_err(sd, "Error setting std, write failed\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int adv7393_setoutput(struct v4l2_subdev *sd, u32 output_type)
-{
-	struct adv7393_state *state = to_state(sd);
+अटल पूर्णांक adv7393_setoutput(काष्ठा v4l2_subdev *sd, u32 output_type)
+अणु
+	काष्ठा adv7393_state *state = to_state(sd);
 	u8 val;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (output_type > ADV7393_SVIDEO_ID) {
+	अगर (output_type > ADV7393_SVIDEO_ID) अणु
 		v4l2_dbg(1, debug, sd,
 			"Invalid output type or output type not supported:%d\n",
 								output_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Enable Appropriate DAC */
 	val = state->reg00 & 0x03;
 
-	if (output_type == ADV7393_COMPOSITE_ID)
+	अगर (output_type == ADV7393_COMPOSITE_ID)
 		val |= ADV7393_COMPOSITE_POWER_VALUE;
-	else if (output_type == ADV7393_COMPONENT_ID)
+	अन्यथा अगर (output_type == ADV7393_COMPONENT_ID)
 		val |= ADV7393_COMPONENT_POWER_VALUE;
-	else
+	अन्यथा
 		val |= ADV7393_SVIDEO_POWER_VALUE;
 
-	err = adv7393_write(sd, ADV7393_POWER_MODE_REG, val);
-	if (err < 0)
-		goto setoutput_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_POWER_MODE_REG, val);
+	अगर (err < 0)
+		जाओ setoutput_निकास;
 
 	state->reg00 = val;
 
 	/* Enable YUV output */
 	val = state->reg02 | YUV_OUTPUT_SELECT;
-	err = adv7393_write(sd, ADV7393_MODE_REG0, val);
-	if (err < 0)
-		goto setoutput_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_MODE_REG0, val);
+	अगर (err < 0)
+		जाओ setoutput_निकास;
 
 	state->reg02 = val;
 
 	/* configure SD DAC Output 1 bit */
 	val = state->reg82;
-	if (output_type == ADV7393_COMPONENT_ID)
+	अगर (output_type == ADV7393_COMPONENT_ID)
 		val &= SD_DAC_OUT1_DI;
-	else
+	अन्यथा
 		val |= SD_DAC_OUT1_EN;
-	err = adv7393_write(sd, ADV7393_SD_MODE_REG2, val);
-	if (err < 0)
-		goto setoutput_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_SD_MODE_REG2, val);
+	अगर (err < 0)
+		जाओ setoutput_निकास;
 
 	state->reg82 = val;
 
 	/* configure ED/HD Color DAC Swap bit to zero */
 	val = state->reg35 & HD_DAC_SWAP_DI;
-	err = adv7393_write(sd, ADV7393_HD_MODE_REG6, val);
-	if (err < 0)
-		goto setoutput_exit;
+	err = adv7393_ग_लिखो(sd, ADV7393_HD_MODE_REG6, val);
+	अगर (err < 0)
+		जाओ setoutput_निकास;
 
 	state->reg35 = val;
 
-setoutput_exit:
-	if (err != 0)
+setoutput_निकास:
+	अगर (err != 0)
 		v4l2_err(sd, "Error setting output, write failed\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int adv7393_log_status(struct v4l2_subdev *sd)
-{
-	struct adv7393_state *state = to_state(sd);
+अटल पूर्णांक adv7393_log_status(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा adv7393_state *state = to_state(sd);
 
-	v4l2_info(sd, "Standard: %llx\n", (unsigned long long)state->std);
+	v4l2_info(sd, "Standard: %llx\n", (अचिन्हित दीर्घ दीर्घ)state->std);
 	v4l2_info(sd, "Output: %s\n", (state->output == 0) ? "Composite" :
 			((state->output == 1) ? "Component" : "S-Video"));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adv7393_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct v4l2_subdev *sd = to_sd(ctrl);
+अटल पूर्णांक adv7393_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
-		return adv7393_write(sd, ADV7393_SD_BRIGHTNESS_WSS,
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
+		वापस adv7393_ग_लिखो(sd, ADV7393_SD_BRIGHTNESS_WSS,
 					ctrl->val & SD_BRIGHTNESS_VALUE_MASK);
 
-	case V4L2_CID_HUE:
-		return adv7393_write(sd, ADV7393_SD_HUE_ADJUST,
+	हाल V4L2_CID_HUE:
+		वापस adv7393_ग_लिखो(sd, ADV7393_SD_HUE_ADJUST,
 					ctrl->val - ADV7393_HUE_MIN);
 
-	case V4L2_CID_GAIN:
-		return adv7393_write(sd, ADV7393_DAC123_OUTPUT_LEVEL,
+	हाल V4L2_CID_GAIN:
+		वापस adv7393_ग_लिखो(sd, ADV7393_DAC123_OUTPUT_LEVEL,
 					ctrl->val);
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static const struct v4l2_ctrl_ops adv7393_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops adv7393_ctrl_ops = अणु
 	.s_ctrl = adv7393_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops adv7393_core_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_core_ops adv7393_core_ops = अणु
 	.log_status = adv7393_log_status,
-};
+पूर्ण;
 
-static int adv7393_s_std_output(struct v4l2_subdev *sd, v4l2_std_id std)
-{
-	struct adv7393_state *state = to_state(sd);
-	int err = 0;
+अटल पूर्णांक adv7393_s_std_output(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
+अणु
+	काष्ठा adv7393_state *state = to_state(sd);
+	पूर्णांक err = 0;
 
-	if (state->std == std)
-		return 0;
+	अगर (state->std == std)
+		वापस 0;
 
 	err = adv7393_setstd(sd, std);
-	if (!err)
+	अगर (!err)
 		state->std = std;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int adv7393_s_routing(struct v4l2_subdev *sd,
+अटल पूर्णांक adv7393_s_routing(काष्ठा v4l2_subdev *sd,
 		u32 input, u32 output, u32 config)
-{
-	struct adv7393_state *state = to_state(sd);
-	int err = 0;
+अणु
+	काष्ठा adv7393_state *state = to_state(sd);
+	पूर्णांक err = 0;
 
-	if (state->output == output)
-		return 0;
+	अगर (state->output == output)
+		वापस 0;
 
 	err = adv7393_setoutput(sd, output);
-	if (!err)
+	अगर (!err)
 		state->output = output;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct v4l2_subdev_video_ops adv7393_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops adv7393_video_ops = अणु
 	.s_std_output	= adv7393_s_std_output,
 	.s_routing	= adv7393_s_routing,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops adv7393_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops adv7393_ops = अणु
 	.core	= &adv7393_core_ops,
 	.video	= &adv7393_video_ops,
-};
+पूर्ण;
 
-static int adv7393_initialize(struct v4l2_subdev *sd)
-{
-	struct adv7393_state *state = to_state(sd);
-	int err = 0;
-	int i;
+अटल पूर्णांक adv7393_initialize(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा adv7393_state *state = to_state(sd);
+	पूर्णांक err = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(adv7393_init_reg_val); i += 2) {
+	क्रम (i = 0; i < ARRAY_SIZE(adv7393_init_reg_val); i += 2) अणु
 
-		err = adv7393_write(sd, adv7393_init_reg_val[i],
+		err = adv7393_ग_लिखो(sd, adv7393_init_reg_val[i],
 					adv7393_init_reg_val[i+1]);
-		if (err) {
+		अगर (err) अणु
 			v4l2_err(sd, "Error initializing\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* Configure for default video standard */
+	/* Configure क्रम शेष video standard */
 	err = adv7393_setoutput(sd, state->output);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		v4l2_err(sd, "Error setting output during init\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = adv7393_setstd(sd, state->std);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		v4l2_err(sd, "Error setting std during init\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int adv7393_probe(struct i2c_client *client,
-				const struct i2c_device_id *id)
-{
-	struct adv7393_state *state;
-	int err;
+अटल पूर्णांक adv7393_probe(काष्ठा i2c_client *client,
+				स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा adv7393_state *state;
+	पूर्णांक err;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
 	v4l_info(client, "chip found @ 0x%x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	state = devm_kzalloc(&client->dev, sizeof(*state), GFP_KERNEL);
-	if (state == NULL)
-		return -ENOMEM;
+	state = devm_kzalloc(&client->dev, माप(*state), GFP_KERNEL);
+	अगर (state == शून्य)
+		वापस -ENOMEM;
 
 	state->reg00	= ADV7393_POWER_MODE_REG_DEFAULT;
 	state->reg01	= 0x00;
@@ -423,43 +424,43 @@ static int adv7393_probe(struct i2c_client *client,
 				       ADV7393_GAIN_MAX, 1,
 				       ADV7393_GAIN_DEF);
 	state->sd.ctrl_handler = &state->hdl;
-	if (state->hdl.error) {
-		int err = state->hdl.error;
+	अगर (state->hdl.error) अणु
+		पूर्णांक err = state->hdl.error;
 
-		v4l2_ctrl_handler_free(&state->hdl);
-		return err;
-	}
+		v4l2_ctrl_handler_मुक्त(&state->hdl);
+		वापस err;
+	पूर्ण
 	v4l2_ctrl_handler_setup(&state->hdl);
 
 	err = adv7393_initialize(&state->sd);
-	if (err)
-		v4l2_ctrl_handler_free(&state->hdl);
-	return err;
-}
+	अगर (err)
+		v4l2_ctrl_handler_मुक्त(&state->hdl);
+	वापस err;
+पूर्ण
 
-static int adv7393_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct adv7393_state *state = to_state(sd);
+अटल पूर्णांक adv7393_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा adv7393_state *state = to_state(sd);
 
-	v4l2_device_unregister_subdev(sd);
-	v4l2_ctrl_handler_free(&state->hdl);
+	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_ctrl_handler_मुक्त(&state->hdl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id adv7393_id[] = {
-	{"adv7393", 0},
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id adv7393_id[] = अणु
+	अणु"adv7393", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, adv7393_id);
 
-static struct i2c_driver adv7393_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver adv7393_driver = अणु
+	.driver = अणु
 		.name	= "adv7393",
-	},
+	पूर्ण,
 	.probe		= adv7393_probe,
-	.remove		= adv7393_remove,
+	.हटाओ		= adv7393_हटाओ,
 	.id_table	= adv7393_id,
-};
+पूर्ण;
 module_i2c_driver(adv7393_driver);

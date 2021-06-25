@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Linaro Ltd.
  *
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  *
- * Implements PM domains using the generic PM domain for ux500.
+ * Implements PM करोमुख्यs using the generic PM करोमुख्य क्रम ux500.
  */
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/pm_domain.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm_करोमुख्य.h>
 
-#include <dt-bindings/arm/ux500_pm_domains.h>
-#include "pm_domains.h"
+#समावेश <dt-bindings/arm/ux500_pm_करोमुख्यs.h>
+#समावेश "pm_domains.h"
 
-static int pd_power_off(struct generic_pm_domain *domain)
-{
+अटल पूर्णांक pd_घातer_off(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
 	/*
-	 * Handle the gating of the PM domain regulator here.
+	 * Handle the gating of the PM करोमुख्य regulator here.
 	 *
-	 * Drivers/subsystems handling devices in the PM domain needs to perform
-	 * register context save/restore from their respective runtime PM
-	 * callbacks, to be able to enable PM domain gating/ungating.
+	 * Drivers/subप्रणालीs handling devices in the PM करोमुख्य needs to perक्रमm
+	 * रेजिस्टर context save/restore from their respective runसमय PM
+	 * callbacks, to be able to enable PM करोमुख्य gating/ungating.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pd_power_on(struct generic_pm_domain *domain)
-{
+अटल पूर्णांक pd_घातer_on(काष्ठा generic_pm_करोमुख्य *करोमुख्य)
+अणु
 	/*
-	 * Handle the ungating of the PM domain regulator here.
+	 * Handle the ungating of the PM करोमुख्य regulator here.
 	 *
-	 * Drivers/subsystems handling devices in the PM domain needs to perform
-	 * register context save/restore from their respective runtime PM
-	 * callbacks, to be able to enable PM domain gating/ungating.
+	 * Drivers/subप्रणालीs handling devices in the PM करोमुख्य needs to perक्रमm
+	 * रेजिस्टर context save/restore from their respective runसमय PM
+	 * callbacks, to be able to enable PM करोमुख्य gating/ungating.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct generic_pm_domain ux500_pm_domain_vape = {
+अटल काष्ठा generic_pm_करोमुख्य ux500_pm_करोमुख्य_vape = अणु
 	.name = "VAPE",
-	.power_off = pd_power_off,
-	.power_on = pd_power_on,
-};
+	.घातer_off = pd_घातer_off,
+	.घातer_on = pd_घातer_on,
+पूर्ण;
 
-static struct generic_pm_domain *ux500_pm_domains[NR_DOMAINS] = {
-	[DOMAIN_VAPE] = &ux500_pm_domain_vape,
-};
+अटल काष्ठा generic_pm_करोमुख्य *ux500_pm_करोमुख्यs[NR_DOMAINS] = अणु
+	[DOMAIN_VAPE] = &ux500_pm_करोमुख्य_vape,
+पूर्ण;
 
-static const struct of_device_id ux500_pm_domain_matches[] __initconst = {
-	{ .compatible = "stericsson,ux500-pm-domains", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ux500_pm_करोमुख्य_matches[] __initस्थिर = अणु
+	अणु .compatible = "stericsson,ux500-pm-domains", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-int __init ux500_pm_domains_init(void)
-{
-	struct device_node *np;
-	struct genpd_onecell_data *genpd_data;
-	int i;
+पूर्णांक __init ux500_pm_करोमुख्यs_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा genpd_onecell_data *genpd_data;
+	पूर्णांक i;
 
-	np = of_find_matching_node(NULL, ux500_pm_domain_matches);
-	if (!np)
-		return -ENODEV;
+	np = of_find_matching_node(शून्य, ux500_pm_करोमुख्य_matches);
+	अगर (!np)
+		वापस -ENODEV;
 
-	genpd_data = kzalloc(sizeof(*genpd_data), GFP_KERNEL);
-	if (!genpd_data)
-		return -ENOMEM;
+	genpd_data = kzalloc(माप(*genpd_data), GFP_KERNEL);
+	अगर (!genpd_data)
+		वापस -ENOMEM;
 
-	genpd_data->domains = ux500_pm_domains;
-	genpd_data->num_domains = ARRAY_SIZE(ux500_pm_domains);
+	genpd_data->करोमुख्यs = ux500_pm_करोमुख्यs;
+	genpd_data->num_करोमुख्यs = ARRAY_SIZE(ux500_pm_करोमुख्यs);
 
-	for (i = 0; i < ARRAY_SIZE(ux500_pm_domains); ++i)
-		pm_genpd_init(ux500_pm_domains[i], NULL, false);
+	क्रम (i = 0; i < ARRAY_SIZE(ux500_pm_करोमुख्यs); ++i)
+		pm_genpd_init(ux500_pm_करोमुख्यs[i], शून्य, false);
 
 	of_genpd_add_provider_onecell(np, genpd_data);
-	return 0;
-}
+	वापस 0;
+पूर्ण

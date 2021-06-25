@@ -1,124 +1,125 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _FS_CEPH_MON_CLIENT_H
-#define _FS_CEPH_MON_CLIENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _FS_CEPH_MON_CLIENT_H
+#घोषणा _FS_CEPH_MON_CLIENT_H
 
-#include <linux/completion.h>
-#include <linux/kref.h>
-#include <linux/rbtree.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/rbtree.h>
 
-#include <linux/ceph/messenger.h>
+#समावेश <linux/ceph/messenger.h>
 
-struct ceph_client;
-struct ceph_mount_args;
-struct ceph_auth_client;
+काष्ठा ceph_client;
+काष्ठा ceph_mount_args;
+काष्ठा ceph_auth_client;
 
 /*
- * The monitor map enumerates the set of all monitors.
+ * The monitor map क्रमागतerates the set of all monitors.
  */
-struct ceph_monmap {
-	struct ceph_fsid fsid;
+काष्ठा ceph_monmap अणु
+	काष्ठा ceph_fsid fsid;
 	u32 epoch;
 	u32 num_mon;
-	struct ceph_entity_inst mon_inst[];
-};
+	काष्ठा ceph_entity_inst mon_inst[];
+पूर्ण;
 
-struct ceph_mon_client;
-struct ceph_mon_generic_request;
+काष्ठा ceph_mon_client;
+काष्ठा ceph_mon_generic_request;
 
 
 /*
- * Generic mechanism for resending monitor requests.
+ * Generic mechanism क्रम resending monitor requests.
  */
-typedef void (*ceph_monc_request_func_t)(struct ceph_mon_client *monc,
-					 int newmon);
+प्रकार व्योम (*ceph_monc_request_func_t)(काष्ठा ceph_mon_client *monc,
+					 पूर्णांक newmon);
 
 /* a pending monitor request */
-struct ceph_mon_request {
-	struct ceph_mon_client *monc;
-	struct delayed_work delayed_work;
-	unsigned long delay;
-	ceph_monc_request_func_t do_request;
-};
+काष्ठा ceph_mon_request अणु
+	काष्ठा ceph_mon_client *monc;
+	काष्ठा delayed_work delayed_work;
+	अचिन्हित दीर्घ delay;
+	ceph_monc_request_func_t करो_request;
+पूर्ण;
 
-typedef void (*ceph_monc_callback_t)(struct ceph_mon_generic_request *);
+प्रकार व्योम (*ceph_monc_callback_t)(काष्ठा ceph_mon_generic_request *);
 
 /*
- * ceph_mon_generic_request is being used for the statfs and
- * mon_get_version requests which are being done a bit differently
+ * ceph_mon_generic_request is being used क्रम the statfs and
+ * mon_get_version requests which are being करोne a bit dअगरferently
  * because we need to get data back to the caller
  */
-struct ceph_mon_generic_request {
-	struct ceph_mon_client *monc;
-	struct kref kref;
+काष्ठा ceph_mon_generic_request अणु
+	काष्ठा ceph_mon_client *monc;
+	काष्ठा kref kref;
 	u64 tid;
-	struct rb_node node;
-	int result;
+	काष्ठा rb_node node;
+	पूर्णांक result;
 
-	struct completion completion;
+	काष्ठा completion completion;
 	ceph_monc_callback_t complete_cb;
-	u64 private_data;          /* r_tid/linger_id */
+	u64 निजी_data;          /* r_tid/linger_id */
 
-	struct ceph_msg *request;  /* original request */
-	struct ceph_msg *reply;    /* and reply */
+	काष्ठा ceph_msg *request;  /* original request */
+	काष्ठा ceph_msg *reply;    /* and reply */
 
-	union {
-		struct ceph_statfs *st;
+	जोड़ अणु
+		काष्ठा ceph_statfs *st;
 		u64 newest;
-	} u;
-};
+	पूर्ण u;
+पूर्ण;
 
-struct ceph_mon_client {
-	struct ceph_client *client;
-	struct ceph_monmap *monmap;
+काष्ठा ceph_mon_client अणु
+	काष्ठा ceph_client *client;
+	काष्ठा ceph_monmap *monmap;
 
-	struct mutex mutex;
-	struct delayed_work delayed_work;
+	काष्ठा mutex mutex;
+	काष्ठा delayed_work delayed_work;
 
-	struct ceph_auth_client *auth;
-	struct ceph_msg *m_auth, *m_auth_reply, *m_subscribe, *m_subscribe_ack;
-	int pending_auth;
+	काष्ठा ceph_auth_client *auth;
+	काष्ठा ceph_msg *m_auth, *m_auth_reply, *m_subscribe, *m_subscribe_ack;
+	पूर्णांक pending_auth;
 
 	bool hunting;
-	int cur_mon;                       /* last monitor i contacted */
-	unsigned long sub_renew_after;
-	unsigned long sub_renew_sent;
-	struct ceph_connection con;
+	पूर्णांक cur_mon;                       /* last monitor i contacted */
+	अचिन्हित दीर्घ sub_renew_after;
+	अचिन्हित दीर्घ sub_renew_sent;
+	काष्ठा ceph_connection con;
 
 	bool had_a_connection;
-	int hunt_mult; /* [1..CEPH_MONC_HUNT_MAX_MULT] */
+	पूर्णांक hunt_mult; /* [1..CEPH_MONC_HUNT_MAX_MULT] */
 
 	/* pending generic requests */
-	struct rb_root generic_request_tree;
+	काष्ठा rb_root generic_request_tree;
 	u64 last_tid;
 
 	/* subs, indexed with CEPH_SUB_* */
-	struct {
-		struct ceph_mon_subscribe_item item;
+	काष्ठा अणु
+		काष्ठा ceph_mon_subscribe_item item;
 		bool want;
 		u32 have; /* epoch */
-	} subs[4];
-	int fs_cluster_id; /* "mdsmap.<id>" sub */
+	पूर्ण subs[4];
+	पूर्णांक fs_cluster_id; /* "mdsmap.<id>" sub */
 
-#ifdef CONFIG_DEBUG_FS
-	struct dentry *debugfs_file;
-#endif
-};
+#अगर_घोषित CONFIG_DEBUG_FS
+	काष्ठा dentry *debugfs_file;
+#पूर्ण_अगर
+पूर्ण;
 
-extern int ceph_monmap_contains(struct ceph_monmap *m,
-				struct ceph_entity_addr *addr);
+बाह्य पूर्णांक ceph_monmap_contains(काष्ठा ceph_monmap *m,
+				काष्ठा ceph_entity_addr *addr);
 
-extern int ceph_monc_init(struct ceph_mon_client *monc, struct ceph_client *cl);
-extern void ceph_monc_stop(struct ceph_mon_client *monc);
-extern void ceph_monc_reopen_session(struct ceph_mon_client *monc);
+बाह्य पूर्णांक ceph_monc_init(काष्ठा ceph_mon_client *monc, काष्ठा ceph_client *cl);
+बाह्य व्योम ceph_monc_stop(काष्ठा ceph_mon_client *monc);
+बाह्य व्योम ceph_monc_reखोलो_session(काष्ठा ceph_mon_client *monc);
 
-enum {
+क्रमागत अणु
 	CEPH_SUB_MONMAP = 0,
 	CEPH_SUB_OSDMAP,
 	CEPH_SUB_FSMAP,
 	CEPH_SUB_MDSMAP,
-};
+पूर्ण;
 
-extern const char *ceph_sub_str[];
+बाह्य स्थिर अक्षर *ceph_sub_str[];
 
 /*
  * The model here is to indicate that we need a new map of at least
@@ -126,27 +127,27 @@ extern const char *ceph_sub_str[];
  * periodically rerequest the map from the monitor cluster until we
  * get what we want.
  */
-bool ceph_monc_want_map(struct ceph_mon_client *monc, int sub, u32 epoch,
+bool ceph_monc_want_map(काष्ठा ceph_mon_client *monc, पूर्णांक sub, u32 epoch,
 			bool continuous);
-void ceph_monc_got_map(struct ceph_mon_client *monc, int sub, u32 epoch);
-void ceph_monc_renew_subs(struct ceph_mon_client *monc);
+व्योम ceph_monc_got_map(काष्ठा ceph_mon_client *monc, पूर्णांक sub, u32 epoch);
+व्योम ceph_monc_renew_subs(काष्ठा ceph_mon_client *monc);
 
-extern int ceph_monc_wait_osdmap(struct ceph_mon_client *monc, u32 epoch,
-				 unsigned long timeout);
+बाह्य पूर्णांक ceph_monc_रुको_osdmap(काष्ठा ceph_mon_client *monc, u32 epoch,
+				 अचिन्हित दीर्घ समयout);
 
-int ceph_monc_do_statfs(struct ceph_mon_client *monc, u64 data_pool,
-			struct ceph_statfs *buf);
+पूर्णांक ceph_monc_करो_statfs(काष्ठा ceph_mon_client *monc, u64 data_pool,
+			काष्ठा ceph_statfs *buf);
 
-int ceph_monc_get_version(struct ceph_mon_client *monc, const char *what,
+पूर्णांक ceph_monc_get_version(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *what,
 			  u64 *newest);
-int ceph_monc_get_version_async(struct ceph_mon_client *monc, const char *what,
-				ceph_monc_callback_t cb, u64 private_data);
+पूर्णांक ceph_monc_get_version_async(काष्ठा ceph_mon_client *monc, स्थिर अक्षर *what,
+				ceph_monc_callback_t cb, u64 निजी_data);
 
-int ceph_monc_blocklist_add(struct ceph_mon_client *monc,
-			    struct ceph_entity_addr *client_addr);
+पूर्णांक ceph_monc_blocklist_add(काष्ठा ceph_mon_client *monc,
+			    काष्ठा ceph_entity_addr *client_addr);
 
-extern int ceph_monc_open_session(struct ceph_mon_client *monc);
+बाह्य पूर्णांक ceph_monc_खोलो_session(काष्ठा ceph_mon_client *monc);
 
-extern int ceph_monc_validate_auth(struct ceph_mon_client *monc);
+बाह्य पूर्णांक ceph_monc_validate_auth(काष्ठा ceph_mon_client *monc);
 
-#endif
+#पूर्ण_अगर

@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2013 - 2019 Intel Corporation. */
 
-#include <linux/ethtool.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "fm10k.h"
+#समावेश "fm10k.h"
 
-struct fm10k_stats {
-	/* The stat_string is expected to be a format string formatted using
-	 * vsnprintf by fm10k_add_stat_strings. Every member of a stats array
-	 * should use the same format specifiers as they will be formatted
+काष्ठा fm10k_stats अणु
+	/* The stat_string is expected to be a क्रमmat string क्रमmatted using
+	 * vsnम_लिखो by fm10k_add_stat_strings. Every member of a stats array
+	 * should use the same क्रमmat specअगरiers as they will be क्रमmatted
 	 * using the same variadic arguments.
 	 */
-	char stat_string[ETH_GSTRING_LEN];
-	int sizeof_stat;
-	int stat_offset;
-};
+	अक्षर stat_string[ETH_GSTRING_LEN];
+	पूर्णांक माप_stat;
+	पूर्णांक stat_offset;
+पूर्ण;
 
-#define FM10K_STAT_FIELDS(_type, _name, _stat) { \
+#घोषणा FM10K_STAT_FIELDS(_type, _name, _stat) अणु \
 	.stat_string = _name, \
-	.sizeof_stat = sizeof_field(_type, _stat), \
-	.stat_offset = offsetof(_type, _stat) \
-}
+	.माप_stat = माप_field(_type, _stat), \
+	.stat_offset = दुरत्व(_type, _stat) \
+पूर्ण
 
 /* netdevice statistics */
-#define FM10K_NETDEV_STAT(_net_stat) \
-	FM10K_STAT_FIELDS(struct net_device_stats, __stringify(_net_stat), \
+#घोषणा FM10K_NETDEV_STAT(_net_stat) \
+	FM10K_STAT_FIELDS(काष्ठा net_device_stats, __stringअगरy(_net_stat), \
 			  _net_stat)
 
-static const struct fm10k_stats fm10k_gstrings_net_stats[] = {
+अटल स्थिर काष्ठा fm10k_stats fm10k_gstrings_net_stats[] = अणु
 	FM10K_NETDEV_STAT(tx_packets),
 	FM10K_NETDEV_STAT(tx_bytes),
 	FM10K_NETDEV_STAT(tx_errors),
@@ -40,16 +41,16 @@ static const struct fm10k_stats fm10k_gstrings_net_stats[] = {
 	/* detailed Rx errors */
 	FM10K_NETDEV_STAT(rx_length_errors),
 	FM10K_NETDEV_STAT(rx_crc_errors),
-	FM10K_NETDEV_STAT(rx_fifo_errors),
-};
+	FM10K_NETDEV_STAT(rx_fअगरo_errors),
+पूर्ण;
 
-#define FM10K_NETDEV_STATS_LEN	ARRAY_SIZE(fm10k_gstrings_net_stats)
+#घोषणा FM10K_NETDEV_STATS_LEN	ARRAY_SIZE(fm10k_gstrings_net_stats)
 
-/* General interface statistics */
-#define FM10K_STAT(_name, _stat) \
-	FM10K_STAT_FIELDS(struct fm10k_intfc, _name, _stat)
+/* General पूर्णांकerface statistics */
+#घोषणा FM10K_STAT(_name, _stat) \
+	FM10K_STAT_FIELDS(काष्ठा fm10k_पूर्णांकfc, _name, _stat)
 
-static const struct fm10k_stats fm10k_gstrings_global_stats[] = {
+अटल स्थिर काष्ठा fm10k_stats fm10k_gstrings_global_stats[] = अणु
 	FM10K_STAT("tx_restart_queue", restart_queue),
 	FM10K_STAT("tx_busy", tx_busy),
 	FM10K_STAT("tx_csum_errors", tx_csum_errors),
@@ -68,13 +69,13 @@ static const struct fm10k_stats fm10k_gstrings_global_stats[] = {
 	FM10K_STAT("mac_rules_used", hw.swapi.mac.used),
 	FM10K_STAT("mac_rules_avail", hw.swapi.mac.avail),
 
-	FM10K_STAT("reset_while_pending", hw.mac.reset_while_pending),
+	FM10K_STAT("reset_while_pending", hw.mac.reset_जबतक_pending),
 
-	FM10K_STAT("tx_hang_count", tx_timeout_count),
-};
+	FM10K_STAT("tx_hang_count", tx_समयout_count),
+पूर्ण;
 
-static const struct fm10k_stats fm10k_gstrings_pf_stats[] = {
-	FM10K_STAT("timeout", stats.timeout.count),
+अटल स्थिर काष्ठा fm10k_stats fm10k_gstrings_pf_stats[] = अणु
+	FM10K_STAT("timeout", stats.समयout.count),
 	FM10K_STAT("ur", stats.ur.count),
 	FM10K_STAT("ca", stats.ca.count),
 	FM10K_STAT("um", stats.um.count),
@@ -82,13 +83,13 @@ static const struct fm10k_stats fm10k_gstrings_pf_stats[] = {
 	FM10K_STAT("vlan_drop", stats.vlan_drop.count),
 	FM10K_STAT("loopback_drop", stats.loopback_drop.count),
 	FM10K_STAT("nodesc_drop", stats.nodesc_drop.count),
-};
+पूर्ण;
 
 /* mailbox statistics */
-#define FM10K_MBX_STAT(_name, _stat) \
-	FM10K_STAT_FIELDS(struct fm10k_mbx_info, _name, _stat)
+#घोषणा FM10K_MBX_STAT(_name, _stat) \
+	FM10K_STAT_FIELDS(काष्ठा fm10k_mbx_info, _name, _stat)
 
-static const struct fm10k_stats fm10k_gstrings_mbx_stats[] = {
+अटल स्थिर काष्ठा fm10k_stats fm10k_gstrings_mbx_stats[] = अणु
 	FM10K_MBX_STAT("mbx_tx_busy", tx_busy),
 	FM10K_MBX_STAT("mbx_tx_dropped", tx_dropped),
 	FM10K_MBX_STAT("mbx_tx_messages", tx_messages),
@@ -98,66 +99,66 @@ static const struct fm10k_stats fm10k_gstrings_mbx_stats[] = {
 	FM10K_MBX_STAT("mbx_rx_dwords", rx_dwords),
 	FM10K_MBX_STAT("mbx_rx_parse_err", rx_parse_err),
 	FM10K_MBX_STAT("mbx_rx_mbmem_pushed", rx_mbmem_pushed),
-};
+पूर्ण;
 
 /* per-queue ring statistics */
-#define FM10K_QUEUE_STAT(_name, _stat) \
-	FM10K_STAT_FIELDS(struct fm10k_ring, _name, _stat)
+#घोषणा FM10K_QUEUE_STAT(_name, _stat) \
+	FM10K_STAT_FIELDS(काष्ठा fm10k_ring, _name, _stat)
 
-static const struct fm10k_stats fm10k_gstrings_queue_stats[] = {
+अटल स्थिर काष्ठा fm10k_stats fm10k_gstrings_queue_stats[] = अणु
 	FM10K_QUEUE_STAT("%s_queue_%u_packets", stats.packets),
 	FM10K_QUEUE_STAT("%s_queue_%u_bytes", stats.bytes),
-};
+पूर्ण;
 
-#define FM10K_GLOBAL_STATS_LEN ARRAY_SIZE(fm10k_gstrings_global_stats)
-#define FM10K_PF_STATS_LEN ARRAY_SIZE(fm10k_gstrings_pf_stats)
-#define FM10K_MBX_STATS_LEN ARRAY_SIZE(fm10k_gstrings_mbx_stats)
-#define FM10K_QUEUE_STATS_LEN ARRAY_SIZE(fm10k_gstrings_queue_stats)
+#घोषणा FM10K_GLOBAL_STATS_LEN ARRAY_SIZE(fm10k_gstrings_global_stats)
+#घोषणा FM10K_PF_STATS_LEN ARRAY_SIZE(fm10k_gstrings_pf_stats)
+#घोषणा FM10K_MBX_STATS_LEN ARRAY_SIZE(fm10k_gstrings_mbx_stats)
+#घोषणा FM10K_QUEUE_STATS_LEN ARRAY_SIZE(fm10k_gstrings_queue_stats)
 
-#define FM10K_STATIC_STATS_LEN (FM10K_GLOBAL_STATS_LEN + \
+#घोषणा FM10K_STATIC_STATS_LEN (FM10K_GLOBAL_STATS_LEN + \
 				FM10K_NETDEV_STATS_LEN + \
 				FM10K_MBX_STATS_LEN)
 
-static const char fm10k_gstrings_test[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर fm10k_gstrings_test[][ETH_GSTRING_LEN] = अणु
 	"Mailbox test (on/offline)"
-};
+पूर्ण;
 
-#define FM10K_TEST_LEN (sizeof(fm10k_gstrings_test) / ETH_GSTRING_LEN)
+#घोषणा FM10K_TEST_LEN (माप(fm10k_gstrings_test) / ETH_GSTRING_LEN)
 
-enum fm10k_self_test_types {
+क्रमागत fm10k_self_test_types अणु
 	FM10K_TEST_MBX,
 	FM10K_TEST_MAX = FM10K_TEST_LEN
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	FM10K_PRV_FLAG_LEN,
-};
+पूर्ण;
 
-static const char fm10k_prv_flags[FM10K_PRV_FLAG_LEN][ETH_GSTRING_LEN] = {
-};
+अटल स्थिर अक्षर fm10k_prv_flags[FM10K_PRV_FLAG_LEN][ETH_GSTRING_LEN] = अणु
+पूर्ण;
 
-static void __fm10k_add_stat_strings(u8 **p, const struct fm10k_stats stats[],
-				     const unsigned int size, ...)
-{
-	unsigned int i;
+अटल व्योम __fm10k_add_stat_strings(u8 **p, स्थिर काष्ठा fm10k_stats stats[],
+				     स्थिर अचिन्हित पूर्णांक size, ...)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < size; i++) {
-		va_list args;
+	क्रम (i = 0; i < size; i++) अणु
+		बहु_सूची args;
 
-		va_start(args, size);
-		vsnprintf(*p, ETH_GSTRING_LEN, stats[i].stat_string, args);
+		बहु_शुरू(args, size);
+		vsnम_लिखो(*p, ETH_GSTRING_LEN, stats[i].stat_string, args);
 		*p += ETH_GSTRING_LEN;
-		va_end(args);
-	}
-}
+		बहु_पूर्ण(args);
+	पूर्ण
+पूर्ण
 
-#define fm10k_add_stat_strings(p, stats, ...) \
+#घोषणा fm10k_add_stat_strings(p, stats, ...) \
 	__fm10k_add_stat_strings(p, stats, ARRAY_SIZE(stats), ## __VA_ARGS__)
 
-static void fm10k_get_stat_strings(struct net_device *dev, u8 *data)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	unsigned int i;
+अटल व्योम fm10k_get_stat_strings(काष्ठा net_device *dev, u8 *data)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	अचिन्हित पूर्णांक i;
 
 	fm10k_add_stat_strings(&data, fm10k_gstrings_net_stats);
 
@@ -165,367 +166,367 @@ static void fm10k_get_stat_strings(struct net_device *dev, u8 *data)
 
 	fm10k_add_stat_strings(&data, fm10k_gstrings_mbx_stats);
 
-	if (interface->hw.mac.type != fm10k_mac_vf)
+	अगर (पूर्णांकerface->hw.mac.type != fm10k_mac_vf)
 		fm10k_add_stat_strings(&data, fm10k_gstrings_pf_stats);
 
-	for (i = 0; i < interface->hw.mac.max_queues; i++) {
+	क्रम (i = 0; i < पूर्णांकerface->hw.mac.max_queues; i++) अणु
 		fm10k_add_stat_strings(&data, fm10k_gstrings_queue_stats,
 				       "tx", i);
 
 		fm10k_add_stat_strings(&data, fm10k_gstrings_queue_stats,
 				       "rx", i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void fm10k_get_strings(struct net_device *dev,
+अटल व्योम fm10k_get_strings(काष्ठा net_device *dev,
 			      u32 stringset, u8 *data)
-{
-	switch (stringset) {
-	case ETH_SS_TEST:
-		memcpy(data, fm10k_gstrings_test,
+अणु
+	चयन (stringset) अणु
+	हाल ETH_SS_TEST:
+		स_नकल(data, fm10k_gstrings_test,
 		       FM10K_TEST_LEN * ETH_GSTRING_LEN);
-		break;
-	case ETH_SS_STATS:
+		अवरोध;
+	हाल ETH_SS_STATS:
 		fm10k_get_stat_strings(dev, data);
-		break;
-	case ETH_SS_PRIV_FLAGS:
-		memcpy(data, fm10k_prv_flags,
+		अवरोध;
+	हाल ETH_SS_PRIV_FLAGS:
+		स_नकल(data, fm10k_prv_flags,
 		       FM10K_PRV_FLAG_LEN * ETH_GSTRING_LEN);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int fm10k_get_sset_count(struct net_device *dev, int sset)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	struct fm10k_hw *hw = &interface->hw;
-	int stats_len = FM10K_STATIC_STATS_LEN;
+अटल पूर्णांक fm10k_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+	पूर्णांक stats_len = FM10K_STATIC_STATS_LEN;
 
-	switch (sset) {
-	case ETH_SS_TEST:
-		return FM10K_TEST_LEN;
-	case ETH_SS_STATS:
+	चयन (sset) अणु
+	हाल ETH_SS_TEST:
+		वापस FM10K_TEST_LEN;
+	हाल ETH_SS_STATS:
 		stats_len += hw->mac.max_queues * 2 * FM10K_QUEUE_STATS_LEN;
 
-		if (hw->mac.type != fm10k_mac_vf)
+		अगर (hw->mac.type != fm10k_mac_vf)
 			stats_len += FM10K_PF_STATS_LEN;
 
-		return stats_len;
-	case ETH_SS_PRIV_FLAGS:
-		return FM10K_PRV_FLAG_LEN;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस stats_len;
+	हाल ETH_SS_PRIV_FLAGS:
+		वापस FM10K_PRV_FLAG_LEN;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void __fm10k_add_ethtool_stats(u64 **data, void *pointer,
-				      const struct fm10k_stats stats[],
-				      const unsigned int size)
-{
-	unsigned int i;
+अटल व्योम __fm10k_add_ethtool_stats(u64 **data, व्योम *poपूर्णांकer,
+				      स्थिर काष्ठा fm10k_stats stats[],
+				      स्थिर अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!pointer) {
+	अगर (!poपूर्णांकer) अणु
 		/* memory is not zero allocated so we have to clear it */
-		for (i = 0; i < size; i++)
+		क्रम (i = 0; i < size; i++)
 			*((*data)++) = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < size; i++) {
-		char *p = (char *)pointer + stats[i].stat_offset;
+	क्रम (i = 0; i < size; i++) अणु
+		अक्षर *p = (अक्षर *)poपूर्णांकer + stats[i].stat_offset;
 
-		switch (stats[i].sizeof_stat) {
-		case sizeof(u64):
+		चयन (stats[i].माप_stat) अणु
+		हाल माप(u64):
 			*((*data)++) = *(u64 *)p;
-			break;
-		case sizeof(u32):
+			अवरोध;
+		हाल माप(u32):
 			*((*data)++) = *(u32 *)p;
-			break;
-		case sizeof(u16):
+			अवरोध;
+		हाल माप(u16):
 			*((*data)++) = *(u16 *)p;
-			break;
-		case sizeof(u8):
+			अवरोध;
+		हाल माप(u8):
 			*((*data)++) = *(u8 *)p;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			WARN_ONCE(1, "unexpected stat size for %s",
 				  stats[i].stat_string);
 			*((*data)++) = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define fm10k_add_ethtool_stats(data, pointer, stats) \
-	__fm10k_add_ethtool_stats(data, pointer, stats, ARRAY_SIZE(stats))
+#घोषणा fm10k_add_ethtool_stats(data, poपूर्णांकer, stats) \
+	__fm10k_add_ethtool_stats(data, poपूर्णांकer, stats, ARRAY_SIZE(stats))
 
-static void fm10k_get_ethtool_stats(struct net_device *netdev,
-				    struct ethtool_stats __always_unused *stats,
+अटल व्योम fm10k_get_ethtool_stats(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_stats __always_unused *stats,
 				    u64 *data)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	struct net_device_stats *net_stats = &netdev->stats;
-	int i;
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	काष्ठा net_device_stats *net_stats = &netdev->stats;
+	पूर्णांक i;
 
-	fm10k_update_stats(interface);
+	fm10k_update_stats(पूर्णांकerface);
 
 	fm10k_add_ethtool_stats(&data, net_stats, fm10k_gstrings_net_stats);
 
-	fm10k_add_ethtool_stats(&data, interface, fm10k_gstrings_global_stats);
+	fm10k_add_ethtool_stats(&data, पूर्णांकerface, fm10k_gstrings_global_stats);
 
-	fm10k_add_ethtool_stats(&data, &interface->hw.mbx,
+	fm10k_add_ethtool_stats(&data, &पूर्णांकerface->hw.mbx,
 				fm10k_gstrings_mbx_stats);
 
-	if (interface->hw.mac.type != fm10k_mac_vf) {
-		fm10k_add_ethtool_stats(&data, interface,
+	अगर (पूर्णांकerface->hw.mac.type != fm10k_mac_vf) अणु
+		fm10k_add_ethtool_stats(&data, पूर्णांकerface,
 					fm10k_gstrings_pf_stats);
-	}
+	पूर्ण
 
-	for (i = 0; i < interface->hw.mac.max_queues; i++) {
-		struct fm10k_ring *ring;
+	क्रम (i = 0; i < पूर्णांकerface->hw.mac.max_queues; i++) अणु
+		काष्ठा fm10k_ring *ring;
 
-		ring = interface->tx_ring[i];
+		ring = पूर्णांकerface->tx_ring[i];
 		fm10k_add_ethtool_stats(&data, ring,
 					fm10k_gstrings_queue_stats);
 
-		ring = interface->rx_ring[i];
+		ring = पूर्णांकerface->rx_ring[i];
 		fm10k_add_ethtool_stats(&data, ring,
 					fm10k_gstrings_queue_stats);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* If function below adds more registers this define needs to be updated */
-#define FM10K_REGS_LEN_Q 29
+/* If function below adds more रेजिस्टरs this define needs to be updated */
+#घोषणा FM10K_REGS_LEN_Q 29
 
-static void fm10k_get_reg_q(struct fm10k_hw *hw, u32 *buff, int i)
-{
-	int idx = 0;
+अटल व्योम fm10k_get_reg_q(काष्ठा fm10k_hw *hw, u32 *buff, पूर्णांक i)
+अणु
+	पूर्णांक idx = 0;
 
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RDBAL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RDBAH(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RDLEN(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TPH_RXCTRL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RDH(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RDT(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RXQCTL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RXDCTL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_RXINT(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_SRRCTL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QPRC(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QPRDC(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QBRC_L(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QBRC_H(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TDBAL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TDBAH(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TDLEN(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TPH_TXCTRL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TDH(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TDT(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TXDCTL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TXQCTL(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TXINT(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QPTC(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QBTC_L(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_QBTC_H(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TQDLOC(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_TX_SGLORT(i));
-	buff[idx++] = fm10k_read_reg(hw, FM10K_PFVTCTL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RDBAL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RDBAH(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RDLEN(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TPH_RXCTRL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RDH(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RDT(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RXQCTL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RXDCTL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RXINT(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_SRRCTL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QPRC(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QPRDC(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QBRC_L(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QBRC_H(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TDBAL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TDBAH(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TDLEN(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TPH_TXCTRL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TDH(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TDT(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TXDCTL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TXQCTL(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TXINT(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QPTC(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QBTC_L(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_QBTC_H(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TQDLOC(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_TX_SGLORT(i));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_PFVTCTL(i));
 
 	BUG_ON(idx != FM10K_REGS_LEN_Q);
-}
+पूर्ण
 
-/* If function above adds more registers this define needs to be updated */
-#define FM10K_REGS_LEN_VSI 43
+/* If function above adds more रेजिस्टरs this define needs to be updated */
+#घोषणा FM10K_REGS_LEN_VSI 43
 
-static void fm10k_get_reg_vsi(struct fm10k_hw *hw, u32 *buff, int i)
-{
-	int idx = 0, j;
+अटल व्योम fm10k_get_reg_vsi(काष्ठा fm10k_hw *hw, u32 *buff, पूर्णांक i)
+अणु
+	पूर्णांक idx = 0, j;
 
-	buff[idx++] = fm10k_read_reg(hw, FM10K_MRQC(i));
-	for (j = 0; j < 10; j++)
-		buff[idx++] = fm10k_read_reg(hw, FM10K_RSSRK(i, j));
-	for (j = 0; j < 32; j++)
-		buff[idx++] = fm10k_read_reg(hw, FM10K_RETA(i, j));
+	buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_MRQC(i));
+	क्रम (j = 0; j < 10; j++)
+		buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RSSRK(i, j));
+	क्रम (j = 0; j < 32; j++)
+		buff[idx++] = fm10k_पढ़ो_reg(hw, FM10K_RETA(i, j));
 
 	BUG_ON(idx != FM10K_REGS_LEN_VSI);
-}
+पूर्ण
 
-static void fm10k_get_regs(struct net_device *netdev,
-			   struct ethtool_regs *regs, void *p)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	struct fm10k_hw *hw = &interface->hw;
+अटल व्योम fm10k_get_regs(काष्ठा net_device *netdev,
+			   काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
 	u32 *buff = p;
 	u16 i;
 
 	regs->version = BIT(24) | (hw->revision_id << 16) | hw->device_id;
 
-	switch (hw->mac.type) {
-	case fm10k_mac_pf:
+	चयन (hw->mac.type) अणु
+	हाल fm10k_mac_pf:
 		/* General PF Registers */
-		*(buff++) = fm10k_read_reg(hw, FM10K_CTRL);
-		*(buff++) = fm10k_read_reg(hw, FM10K_CTRL_EXT);
-		*(buff++) = fm10k_read_reg(hw, FM10K_GCR);
-		*(buff++) = fm10k_read_reg(hw, FM10K_GCR_EXT);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_CTRL);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_CTRL_EXT);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_GCR);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_GCR_EXT);
 
-		for (i = 0; i < 8; i++) {
-			*(buff++) = fm10k_read_reg(hw, FM10K_DGLORTMAP(i));
-			*(buff++) = fm10k_read_reg(hw, FM10K_DGLORTDEC(i));
-		}
+		क्रम (i = 0; i < 8; i++) अणु
+			*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_DGLORTMAP(i));
+			*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_DGLORTDEC(i));
+		पूर्ण
 
-		for (i = 0; i < 65; i++) {
+		क्रम (i = 0; i < 65; i++) अणु
 			fm10k_get_reg_vsi(hw, buff, i);
 			buff += FM10K_REGS_LEN_VSI;
-		}
+		पूर्ण
 
-		*(buff++) = fm10k_read_reg(hw, FM10K_DMA_CTRL);
-		*(buff++) = fm10k_read_reg(hw, FM10K_DMA_CTRL2);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_DMA_CTRL);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_DMA_CTRL2);
 
-		for (i = 0; i < FM10K_MAX_QUEUES_PF; i++) {
+		क्रम (i = 0; i < FM10K_MAX_QUEUES_PF; i++) अणु
 			fm10k_get_reg_q(hw, buff, i);
 			buff += FM10K_REGS_LEN_Q;
-		}
+		पूर्ण
 
-		*(buff++) = fm10k_read_reg(hw, FM10K_TPH_CTRL);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_TPH_CTRL);
 
-		for (i = 0; i < 8; i++)
-			*(buff++) = fm10k_read_reg(hw, FM10K_INT_MAP(i));
-
-		/* Interrupt Throttling Registers */
-		for (i = 0; i < 130; i++)
-			*(buff++) = fm10k_read_reg(hw, FM10K_ITR(i));
-
-		break;
-	case fm10k_mac_vf:
-		/* General VF registers */
-		*(buff++) = fm10k_read_reg(hw, FM10K_VFCTRL);
-		*(buff++) = fm10k_read_reg(hw, FM10K_VFINT_MAP);
-		*(buff++) = fm10k_read_reg(hw, FM10K_VFSYSTIME);
+		क्रम (i = 0; i < 8; i++)
+			*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_INT_MAP(i));
 
 		/* Interrupt Throttling Registers */
-		for (i = 0; i < 8; i++)
-			*(buff++) = fm10k_read_reg(hw, FM10K_VFITR(i));
+		क्रम (i = 0; i < 130; i++)
+			*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_ITR(i));
+
+		अवरोध;
+	हाल fm10k_mac_vf:
+		/* General VF रेजिस्टरs */
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_VFCTRL);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_VFINT_MAP);
+		*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_VFSYSTIME);
+
+		/* Interrupt Throttling Registers */
+		क्रम (i = 0; i < 8; i++)
+			*(buff++) = fm10k_पढ़ो_reg(hw, FM10K_VFITR(i));
 
 		fm10k_get_reg_vsi(hw, buff, 0);
 		buff += FM10K_REGS_LEN_VSI;
 
-		for (i = 0; i < FM10K_MAX_QUEUES_POOL; i++) {
-			if (i < hw->mac.max_queues)
+		क्रम (i = 0; i < FM10K_MAX_QUEUES_POOL; i++) अणु
+			अगर (i < hw->mac.max_queues)
 				fm10k_get_reg_q(hw, buff, i);
-			else
-				memset(buff, 0, sizeof(u32) * FM10K_REGS_LEN_Q);
+			अन्यथा
+				स_रखो(buff, 0, माप(u32) * FM10K_REGS_LEN_Q);
 			buff += FM10K_REGS_LEN_Q;
-		}
+		पूर्ण
 
-		break;
-	default:
-		return;
-	}
-}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
+पूर्ण
 
-/* If function above adds more registers these define need to be updated */
-#define FM10K_REGS_LEN_PF \
+/* If function above adds more रेजिस्टरs these define need to be updated */
+#घोषणा FM10K_REGS_LEN_PF \
 (162 + (65 * FM10K_REGS_LEN_VSI) + (FM10K_MAX_QUEUES_PF * FM10K_REGS_LEN_Q))
-#define FM10K_REGS_LEN_VF \
+#घोषणा FM10K_REGS_LEN_VF \
 (11 + FM10K_REGS_LEN_VSI + (FM10K_MAX_QUEUES_POOL * FM10K_REGS_LEN_Q))
 
-static int fm10k_get_regs_len(struct net_device *netdev)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	struct fm10k_hw *hw = &interface->hw;
+अटल पूर्णांक fm10k_get_regs_len(काष्ठा net_device *netdev)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
 
-	switch (hw->mac.type) {
-	case fm10k_mac_pf:
-		return FM10K_REGS_LEN_PF * sizeof(u32);
-	case fm10k_mac_vf:
-		return FM10K_REGS_LEN_VF * sizeof(u32);
-	default:
-		return 0;
-	}
-}
+	चयन (hw->mac.type) अणु
+	हाल fm10k_mac_pf:
+		वापस FM10K_REGS_LEN_PF * माप(u32);
+	हाल fm10k_mac_vf:
+		वापस FM10K_REGS_LEN_VF * माप(u32);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void fm10k_get_drvinfo(struct net_device *dev,
-			      struct ethtool_drvinfo *info)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
+अटल व्योम fm10k_get_drvinfo(काष्ठा net_device *dev,
+			      काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
 
-	strncpy(info->driver, fm10k_driver_name,
-		sizeof(info->driver) - 1);
-	strncpy(info->bus_info, pci_name(interface->pdev),
-		sizeof(info->bus_info) - 1);
-}
+	म_नकलन(info->driver, fm10k_driver_name,
+		माप(info->driver) - 1);
+	म_नकलन(info->bus_info, pci_name(पूर्णांकerface->pdev),
+		माप(info->bus_info) - 1);
+पूर्ण
 
-static void fm10k_get_pauseparam(struct net_device *dev,
-				 struct ethtool_pauseparam *pause)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
+अटल व्योम fm10k_get_छोड़ोparam(काष्ठा net_device *dev,
+				 काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
 
-	/* record fixed values for autoneg and tx pause */
-	pause->autoneg = 0;
-	pause->tx_pause = 1;
+	/* record fixed values क्रम स्वतःneg and tx छोड़ो */
+	छोड़ो->स्वतःneg = 0;
+	छोड़ो->tx_छोड़ो = 1;
 
-	pause->rx_pause = interface->rx_pause ? 1 : 0;
-}
+	छोड़ो->rx_छोड़ो = पूर्णांकerface->rx_छोड़ो ? 1 : 0;
+पूर्ण
 
-static int fm10k_set_pauseparam(struct net_device *dev,
-				struct ethtool_pauseparam *pause)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	struct fm10k_hw *hw = &interface->hw;
+अटल पूर्णांक fm10k_set_छोड़ोparam(काष्ठा net_device *dev,
+				काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
 
-	if (pause->autoneg || !pause->tx_pause)
-		return -EINVAL;
+	अगर (छोड़ो->स्वतःneg || !छोड़ो->tx_छोड़ो)
+		वापस -EINVAL;
 
-	/* we can only support pause on the PF to avoid head-of-line blocking */
-	if (hw->mac.type == fm10k_mac_pf)
-		interface->rx_pause = pause->rx_pause ? ~0 : 0;
-	else if (pause->rx_pause)
-		return -EINVAL;
+	/* we can only support छोड़ो on the PF to aव्योम head-of-line blocking */
+	अगर (hw->mac.type == fm10k_mac_pf)
+		पूर्णांकerface->rx_छोड़ो = छोड़ो->rx_छोड़ो ? ~0 : 0;
+	अन्यथा अगर (छोड़ो->rx_छोड़ो)
+		वापस -EINVAL;
 
-	if (netif_running(dev))
-		fm10k_update_rx_drop_en(interface);
+	अगर (netअगर_running(dev))
+		fm10k_update_rx_drop_en(पूर्णांकerface);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 fm10k_get_msglevel(struct net_device *netdev)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
+अटल u32 fm10k_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
 
-	return interface->msg_enable;
-}
+	वापस पूर्णांकerface->msg_enable;
+पूर्ण
 
-static void fm10k_set_msglevel(struct net_device *netdev, u32 data)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
+अटल व्योम fm10k_set_msglevel(काष्ठा net_device *netdev, u32 data)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
 
-	interface->msg_enable = data;
-}
+	पूर्णांकerface->msg_enable = data;
+पूर्ण
 
-static void fm10k_get_ringparam(struct net_device *netdev,
-				struct ethtool_ringparam *ring)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
+अटल व्योम fm10k_get_ringparam(काष्ठा net_device *netdev,
+				काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
 
 	ring->rx_max_pending = FM10K_MAX_RXD;
 	ring->tx_max_pending = FM10K_MAX_TXD;
 	ring->rx_mini_max_pending = 0;
 	ring->rx_jumbo_max_pending = 0;
-	ring->rx_pending = interface->rx_ring_count;
-	ring->tx_pending = interface->tx_ring_count;
+	ring->rx_pending = पूर्णांकerface->rx_ring_count;
+	ring->tx_pending = पूर्णांकerface->tx_ring_count;
 	ring->rx_mini_pending = 0;
 	ring->rx_jumbo_pending = 0;
-}
+पूर्ण
 
-static int fm10k_set_ringparam(struct net_device *netdev,
-			       struct ethtool_ringparam *ring)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	struct fm10k_ring *temp_ring;
-	int i, err = 0;
+अटल पूर्णांक fm10k_set_ringparam(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	काष्ठा fm10k_ring *temp_ring;
+	पूर्णांक i, err = 0;
 	u32 new_rx_count, new_tx_count;
 
-	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		return -EINVAL;
+	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		वापस -EINVAL;
 
 	new_tx_count = clamp_t(u32, ring->tx_pending,
 			       FM10K_MIN_TXD, FM10K_MAX_TXD);
@@ -535,621 +536,621 @@ static int fm10k_set_ringparam(struct net_device *netdev,
 			       FM10K_MIN_RXD, FM10K_MAX_RXD);
 	new_rx_count = ALIGN(new_rx_count, FM10K_REQ_RX_DESCRIPTOR_MULTIPLE);
 
-	if ((new_tx_count == interface->tx_ring_count) &&
-	    (new_rx_count == interface->rx_ring_count)) {
-		/* nothing to do */
-		return 0;
-	}
+	अगर ((new_tx_count == पूर्णांकerface->tx_ring_count) &&
+	    (new_rx_count == पूर्णांकerface->rx_ring_count)) अणु
+		/* nothing to करो */
+		वापस 0;
+	पूर्ण
 
-	while (test_and_set_bit(__FM10K_RESETTING, interface->state))
+	जबतक (test_and_set_bit(__FM10K_RESETTING, पूर्णांकerface->state))
 		usleep_range(1000, 2000);
 
-	if (!netif_running(interface->netdev)) {
-		for (i = 0; i < interface->num_tx_queues; i++)
-			interface->tx_ring[i]->count = new_tx_count;
-		for (i = 0; i < interface->num_rx_queues; i++)
-			interface->rx_ring[i]->count = new_rx_count;
-		interface->tx_ring_count = new_tx_count;
-		interface->rx_ring_count = new_rx_count;
-		goto clear_reset;
-	}
+	अगर (!netअगर_running(पूर्णांकerface->netdev)) अणु
+		क्रम (i = 0; i < पूर्णांकerface->num_tx_queues; i++)
+			पूर्णांकerface->tx_ring[i]->count = new_tx_count;
+		क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++)
+			पूर्णांकerface->rx_ring[i]->count = new_rx_count;
+		पूर्णांकerface->tx_ring_count = new_tx_count;
+		पूर्णांकerface->rx_ring_count = new_rx_count;
+		जाओ clear_reset;
+	पूर्ण
 
 	/* allocate temporary buffer to store rings in */
-	i = max_t(int, interface->num_tx_queues, interface->num_rx_queues);
-	temp_ring = vmalloc(array_size(i, sizeof(struct fm10k_ring)));
+	i = max_t(पूर्णांक, पूर्णांकerface->num_tx_queues, पूर्णांकerface->num_rx_queues);
+	temp_ring = vदो_स्मृति(array_size(i, माप(काष्ठा fm10k_ring)));
 
-	if (!temp_ring) {
+	अगर (!temp_ring) अणु
 		err = -ENOMEM;
-		goto clear_reset;
-	}
+		जाओ clear_reset;
+	पूर्ण
 
-	fm10k_down(interface);
+	fm10k_करोwn(पूर्णांकerface);
 
-	/* Setup new Tx resources and free the old Tx resources in that order.
-	 * We can then assign the new resources to the rings via a memcpy.
+	/* Setup new Tx resources and मुक्त the old Tx resources in that order.
+	 * We can then assign the new resources to the rings via a स_नकल.
 	 * The advantage to this approach is that we are guaranteed to still
-	 * have resources even in the case of an allocation failure.
+	 * have resources even in the हाल of an allocation failure.
 	 */
-	if (new_tx_count != interface->tx_ring_count) {
-		for (i = 0; i < interface->num_tx_queues; i++) {
-			memcpy(&temp_ring[i], interface->tx_ring[i],
-			       sizeof(struct fm10k_ring));
+	अगर (new_tx_count != पूर्णांकerface->tx_ring_count) अणु
+		क्रम (i = 0; i < पूर्णांकerface->num_tx_queues; i++) अणु
+			स_नकल(&temp_ring[i], पूर्णांकerface->tx_ring[i],
+			       माप(काष्ठा fm10k_ring));
 
 			temp_ring[i].count = new_tx_count;
 			err = fm10k_setup_tx_resources(&temp_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					fm10k_free_tx_resources(&temp_ring[i]);
-				}
-				goto err_setup;
-			}
-		}
+					fm10k_मुक्त_tx_resources(&temp_ring[i]);
+				पूर्ण
+				जाओ err_setup;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < interface->num_tx_queues; i++) {
-			fm10k_free_tx_resources(interface->tx_ring[i]);
+		क्रम (i = 0; i < पूर्णांकerface->num_tx_queues; i++) अणु
+			fm10k_मुक्त_tx_resources(पूर्णांकerface->tx_ring[i]);
 
-			memcpy(interface->tx_ring[i], &temp_ring[i],
-			       sizeof(struct fm10k_ring));
-		}
+			स_नकल(पूर्णांकerface->tx_ring[i], &temp_ring[i],
+			       माप(काष्ठा fm10k_ring));
+		पूर्ण
 
-		interface->tx_ring_count = new_tx_count;
-	}
+		पूर्णांकerface->tx_ring_count = new_tx_count;
+	पूर्ण
 
-	/* Repeat the process for the Rx rings if needed */
-	if (new_rx_count != interface->rx_ring_count) {
-		for (i = 0; i < interface->num_rx_queues; i++) {
-			memcpy(&temp_ring[i], interface->rx_ring[i],
-			       sizeof(struct fm10k_ring));
+	/* Repeat the process क्रम the Rx rings अगर needed */
+	अगर (new_rx_count != पूर्णांकerface->rx_ring_count) अणु
+		क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++) अणु
+			स_नकल(&temp_ring[i], पूर्णांकerface->rx_ring[i],
+			       माप(काष्ठा fm10k_ring));
 
 			temp_ring[i].count = new_rx_count;
 			err = fm10k_setup_rx_resources(&temp_ring[i]);
-			if (err) {
-				while (i) {
+			अगर (err) अणु
+				जबतक (i) अणु
 					i--;
-					fm10k_free_rx_resources(&temp_ring[i]);
-				}
-				goto err_setup;
-			}
-		}
+					fm10k_मुक्त_rx_resources(&temp_ring[i]);
+				पूर्ण
+				जाओ err_setup;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < interface->num_rx_queues; i++) {
-			fm10k_free_rx_resources(interface->rx_ring[i]);
+		क्रम (i = 0; i < पूर्णांकerface->num_rx_queues; i++) अणु
+			fm10k_मुक्त_rx_resources(पूर्णांकerface->rx_ring[i]);
 
-			memcpy(interface->rx_ring[i], &temp_ring[i],
-			       sizeof(struct fm10k_ring));
-		}
+			स_नकल(पूर्णांकerface->rx_ring[i], &temp_ring[i],
+			       माप(काष्ठा fm10k_ring));
+		पूर्ण
 
-		interface->rx_ring_count = new_rx_count;
-	}
+		पूर्णांकerface->rx_ring_count = new_rx_count;
+	पूर्ण
 
 err_setup:
-	fm10k_up(interface);
-	vfree(temp_ring);
+	fm10k_up(पूर्णांकerface);
+	vमुक्त(temp_ring);
 clear_reset:
-	clear_bit(__FM10K_RESETTING, interface->state);
-	return err;
-}
+	clear_bit(__FM10K_RESETTING, पूर्णांकerface->state);
+	वापस err;
+पूर्ण
 
-static int fm10k_get_coalesce(struct net_device *dev,
-			      struct ethtool_coalesce *ec)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
+अटल पूर्णांक fm10k_get_coalesce(काष्ठा net_device *dev,
+			      काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
 
-	ec->use_adaptive_tx_coalesce = ITR_IS_ADAPTIVE(interface->tx_itr);
-	ec->tx_coalesce_usecs = interface->tx_itr & ~FM10K_ITR_ADAPTIVE;
+	ec->use_adaptive_tx_coalesce = ITR_IS_ADAPTIVE(पूर्णांकerface->tx_itr);
+	ec->tx_coalesce_usecs = पूर्णांकerface->tx_itr & ~FM10K_ITR_ADAPTIVE;
 
-	ec->use_adaptive_rx_coalesce = ITR_IS_ADAPTIVE(interface->rx_itr);
-	ec->rx_coalesce_usecs = interface->rx_itr & ~FM10K_ITR_ADAPTIVE;
+	ec->use_adaptive_rx_coalesce = ITR_IS_ADAPTIVE(पूर्णांकerface->rx_itr);
+	ec->rx_coalesce_usecs = पूर्णांकerface->rx_itr & ~FM10K_ITR_ADAPTIVE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_set_coalesce(struct net_device *dev,
-			      struct ethtool_coalesce *ec)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
+अटल पूर्णांक fm10k_set_coalesce(काष्ठा net_device *dev,
+			      काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
 	u16 tx_itr, rx_itr;
-	int i;
+	पूर्णांक i;
 
-	/* verify limits */
-	if ((ec->rx_coalesce_usecs > FM10K_ITR_MAX) ||
+	/* verअगरy limits */
+	अगर ((ec->rx_coalesce_usecs > FM10K_ITR_MAX) ||
 	    (ec->tx_coalesce_usecs > FM10K_ITR_MAX))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* record settings */
 	tx_itr = ec->tx_coalesce_usecs;
 	rx_itr = ec->rx_coalesce_usecs;
 
-	/* set initial values for adaptive ITR */
-	if (ec->use_adaptive_tx_coalesce)
+	/* set initial values क्रम adaptive ITR */
+	अगर (ec->use_adaptive_tx_coalesce)
 		tx_itr = FM10K_ITR_ADAPTIVE | FM10K_TX_ITR_DEFAULT;
 
-	if (ec->use_adaptive_rx_coalesce)
+	अगर (ec->use_adaptive_rx_coalesce)
 		rx_itr = FM10K_ITR_ADAPTIVE | FM10K_RX_ITR_DEFAULT;
 
-	/* update interface */
-	interface->tx_itr = tx_itr;
-	interface->rx_itr = rx_itr;
+	/* update पूर्णांकerface */
+	पूर्णांकerface->tx_itr = tx_itr;
+	पूर्णांकerface->rx_itr = rx_itr;
 
 	/* update q_vectors */
-	for (i = 0; i < interface->num_q_vectors; i++) {
-		struct fm10k_q_vector *qv = interface->q_vector[i];
+	क्रम (i = 0; i < पूर्णांकerface->num_q_vectors; i++) अणु
+		काष्ठा fm10k_q_vector *qv = पूर्णांकerface->q_vector[i];
 
 		qv->tx.itr = tx_itr;
 		qv->rx.itr = rx_itr;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_get_rss_hash_opts(struct fm10k_intfc *interface,
-				   struct ethtool_rxnfc *cmd)
-{
+अटल पूर्णांक fm10k_get_rss_hash_opts(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface,
+				   काष्ठा ethtool_rxnfc *cmd)
+अणु
 	cmd->data = 0;
 
-	/* Report default options for RSS on fm10k */
-	switch (cmd->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
+	/* Report शेष options क्रम RSS on fm10k */
+	चयन (cmd->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case UDP_V4_FLOW:
-		if (test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
-			     interface->flags))
+	हाल UDP_V4_FLOW:
+		अगर (test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
+			     पूर्णांकerface->flags))
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case SCTP_V4_FLOW:
-	case SCTP_V6_FLOW:
-	case AH_ESP_V4_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V4_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V4_FLOW:
-	case ESP_V6_FLOW:
-	case IPV4_FLOW:
-	case IPV6_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल SCTP_V6_FLOW:
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V4_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	case UDP_V6_FLOW:
-		if (test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
-			     interface->flags))
+		अवरोध;
+	हाल UDP_V6_FLOW:
+		अगर (test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
+			     पूर्णांकerface->flags))
 			cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd,
+अटल पूर्णांक fm10k_get_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd,
 			   u32 __always_unused *rule_locs)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	int ret = -EOPNOTSUPP;
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
-		cmd->data = interface->num_rx_queues;
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
+		cmd->data = पूर्णांकerface->num_rx_queues;
 		ret = 0;
-		break;
-	case ETHTOOL_GRXFH:
-		ret = fm10k_get_rss_hash_opts(interface, cmd);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	हाल ETHTOOL_GRXFH:
+		ret = fm10k_get_rss_hash_opts(पूर्णांकerface, cmd);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fm10k_set_rss_hash_opt(struct fm10k_intfc *interface,
-				  struct ethtool_rxnfc *nfc)
-{
-	int rss_ipv4_udp = test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
-				    interface->flags);
-	int rss_ipv6_udp = test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
-				    interface->flags);
+अटल पूर्णांक fm10k_set_rss_hash_opt(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface,
+				  काष्ठा ethtool_rxnfc *nfc)
+अणु
+	पूर्णांक rss_ipv4_udp = test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
+				    पूर्णांकerface->flags);
+	पूर्णांक rss_ipv6_udp = test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
+				    पूर्णांकerface->flags);
 
-	/* RSS does not support anything other than hashing
+	/* RSS करोes not support anything other than hashing
 	 * to queues on src and dst IPs and ports
 	 */
-	if (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
+	अगर (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
 			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	switch (nfc->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+	चयन (nfc->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST) ||
 		    !(nfc->data & RXH_L4_B_0_1) ||
 		    !(nfc->data & RXH_L4_B_2_3))
-			return -EINVAL;
-		break;
-	case UDP_V4_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+			वापस -EINVAL;
+		अवरोध;
+	हाल UDP_V4_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			return -EINVAL;
-		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+			वापस -EINVAL;
+		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			clear_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
-				  interface->flags);
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+				  पूर्णांकerface->flags);
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			set_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
-				interface->flags);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case UDP_V6_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+				पूर्णांकerface->flags);
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल UDP_V6_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST))
-			return -EINVAL;
-		switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+			वापस -EINVAL;
+		चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			clear_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
-				  interface->flags);
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+				  पूर्णांकerface->flags);
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			set_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
-				interface->flags);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case AH_ESP_V4_FLOW:
-	case AH_V4_FLOW:
-	case ESP_V4_FLOW:
-	case SCTP_V4_FLOW:
-	case AH_ESP_V6_FLOW:
-	case AH_V6_FLOW:
-	case ESP_V6_FLOW:
-	case SCTP_V6_FLOW:
-		if (!(nfc->data & RXH_IP_SRC) ||
+				पूर्णांकerface->flags);
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल AH_ESP_V4_FLOW:
+	हाल AH_V4_FLOW:
+	हाल ESP_V4_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल AH_ESP_V6_FLOW:
+	हाल AH_V6_FLOW:
+	हाल ESP_V6_FLOW:
+	हाल SCTP_V6_FLOW:
+		अगर (!(nfc->data & RXH_IP_SRC) ||
 		    !(nfc->data & RXH_IP_DST) ||
 		    (nfc->data & RXH_L4_B_0_1) ||
 		    (nfc->data & RXH_L4_B_2_3))
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* If something changed we need to update the MRQC register. Note that
-	 * test_bit() is guaranteed to return strictly 0 or 1, so testing for
+	/* If something changed we need to update the MRQC रेजिस्टर. Note that
+	 * test_bit() is guaranteed to वापस strictly 0 or 1, so testing क्रम
 	 * equality is safe.
 	 */
-	if ((rss_ipv4_udp != test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
-				      interface->flags)) ||
+	अगर ((rss_ipv4_udp != test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
+				      पूर्णांकerface->flags)) ||
 	    (rss_ipv6_udp != test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
-				      interface->flags))) {
-		struct fm10k_hw *hw = &interface->hw;
+				      पूर्णांकerface->flags))) अणु
+		काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
 		bool warn = false;
 		u32 mrqc;
 
-		/* Perform hash on these packet types */
+		/* Perक्रमm hash on these packet types */
 		mrqc = FM10K_MRQC_IPV4 |
 		       FM10K_MRQC_TCP_IPV4 |
 		       FM10K_MRQC_IPV6 |
 		       FM10K_MRQC_TCP_IPV6;
 
-		if (test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
-			     interface->flags)) {
+		अगर (test_bit(FM10K_FLAG_RSS_FIELD_IPV4_UDP,
+			     पूर्णांकerface->flags)) अणु
 			mrqc |= FM10K_MRQC_UDP_IPV4;
 			warn = true;
-		}
-		if (test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
-			     interface->flags)) {
+		पूर्ण
+		अगर (test_bit(FM10K_FLAG_RSS_FIELD_IPV6_UDP,
+			     पूर्णांकerface->flags)) अणु
 			mrqc |= FM10K_MRQC_UDP_IPV6;
 			warn = true;
-		}
+		पूर्ण
 
 		/* If we enable UDP RSS display a warning that this may cause
 		 * fragmented UDP packets to arrive out of order.
 		 */
-		if (warn)
-			netif_warn(interface, drv, interface->netdev,
+		अगर (warn)
+			netअगर_warn(पूर्णांकerface, drv, पूर्णांकerface->netdev,
 				   "enabling UDP RSS: fragmented packets may arrive out of order to the stack above\n");
 
-		fm10k_write_reg(hw, FM10K_MRQC(0), mrqc);
-	}
+		fm10k_ग_लिखो_reg(hw, FM10K_MRQC(0), mrqc);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक fm10k_set_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXFH:
-		ret = fm10k_set_rss_hash_opt(interface, cmd);
-		break;
-	default:
-		break;
-	}
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXFH:
+		ret = fm10k_set_rss_hash_opt(पूर्णांकerface, cmd);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fm10k_mbx_test(struct fm10k_intfc *interface, u64 *data)
-{
-	struct fm10k_hw *hw = &interface->hw;
-	struct fm10k_mbx_info *mbx = &hw->mbx;
+अटल पूर्णांक fm10k_mbx_test(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface, u64 *data)
+अणु
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+	काष्ठा fm10k_mbx_info *mbx = &hw->mbx;
 	u32 attr_flag, test_msg[6];
-	unsigned long timeout;
-	int err = -EINVAL;
+	अचिन्हित दीर्घ समयout;
+	पूर्णांक err = -EINVAL;
 
 	/* For now this is a VF only feature */
-	if (hw->mac.type != fm10k_mac_vf)
-		return 0;
+	अगर (hw->mac.type != fm10k_mac_vf)
+		वापस 0;
 
 	/* loop through both nested and unnested attribute types */
-	for (attr_flag = BIT(FM10K_TEST_MSG_UNSET);
+	क्रम (attr_flag = BIT(FM10K_TEST_MSG_UNSET);
 	     attr_flag < BIT(2 * FM10K_TEST_MSG_NESTED);
-	     attr_flag += attr_flag) {
+	     attr_flag += attr_flag) अणु
 		/* generate message to be tested */
 		fm10k_tlv_msg_test_create(test_msg, attr_flag);
 
-		fm10k_mbx_lock(interface);
+		fm10k_mbx_lock(पूर्णांकerface);
 		mbx->test_result = FM10K_NOT_IMPLEMENTED;
 		err = mbx->ops.enqueue_tx(hw, mbx, test_msg);
-		fm10k_mbx_unlock(interface);
+		fm10k_mbx_unlock(पूर्णांकerface);
 
-		/* wait up to 1 second for response */
-		timeout = jiffies + HZ;
-		do {
-			if (err < 0)
-				goto err_out;
+		/* रुको up to 1 second क्रम response */
+		समयout = jअगरfies + HZ;
+		करो अणु
+			अगर (err < 0)
+				जाओ err_out;
 
 			usleep_range(500, 1000);
 
-			fm10k_mbx_lock(interface);
+			fm10k_mbx_lock(पूर्णांकerface);
 			mbx->ops.process(hw, mbx);
-			fm10k_mbx_unlock(interface);
+			fm10k_mbx_unlock(पूर्णांकerface);
 
 			err = mbx->test_result;
-			if (!err)
-				break;
-		} while (time_is_after_jiffies(timeout));
+			अगर (!err)
+				अवरोध;
+		पूर्ण जबतक (समय_is_after_jअगरfies(समयout));
 
 		/* reporting errors */
-		if (err)
-			goto err_out;
-	}
+		अगर (err)
+			जाओ err_out;
+	पूर्ण
 
 err_out:
 	*data = err < 0 ? (attr_flag) : (err > 0);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fm10k_self_test(struct net_device *dev,
-			    struct ethtool_test *eth_test, u64 *data)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	struct fm10k_hw *hw = &interface->hw;
+अटल व्योम fm10k_self_test(काष्ठा net_device *dev,
+			    काष्ठा ethtool_test *eth_test, u64 *data)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
 
-	memset(data, 0, sizeof(*data) * FM10K_TEST_LEN);
+	स_रखो(data, 0, माप(*data) * FM10K_TEST_LEN);
 
-	if (FM10K_REMOVED(hw->hw_addr)) {
-		netif_err(interface, drv, dev,
+	अगर (FM10K_REMOVED(hw->hw_addr)) अणु
+		netअगर_err(पूर्णांकerface, drv, dev,
 			  "Interface removed - test blocked\n");
 		eth_test->flags |= ETH_TEST_FL_FAILED;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (fm10k_mbx_test(interface, &data[FM10K_TEST_MBX]))
+	अगर (fm10k_mbx_test(पूर्णांकerface, &data[FM10K_TEST_MBX]))
 		eth_test->flags |= ETH_TEST_FL_FAILED;
-}
+पूर्ण
 
-static u32 fm10k_get_priv_flags(struct net_device *netdev)
-{
-	return 0;
-}
+अटल u32 fm10k_get_priv_flags(काष्ठा net_device *netdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int fm10k_set_priv_flags(struct net_device *netdev, u32 priv_flags)
-{
-	if (priv_flags >= BIT(FM10K_PRV_FLAG_LEN))
-		return -EINVAL;
+अटल पूर्णांक fm10k_set_priv_flags(काष्ठा net_device *netdev, u32 priv_flags)
+अणु
+	अगर (priv_flags >= BIT(FM10K_PRV_FLAG_LEN))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 fm10k_get_reta_size(struct net_device __always_unused *netdev)
-{
-	return FM10K_RETA_SIZE * FM10K_RETA_ENTRIES_PER_REG;
-}
+अटल u32 fm10k_get_reta_size(काष्ठा net_device __always_unused *netdev)
+अणु
+	वापस FM10K_RETA_SIZE * FM10K_RETA_ENTRIES_PER_REG;
+पूर्ण
 
-void fm10k_write_reta(struct fm10k_intfc *interface, const u32 *indir)
-{
-	u16 rss_i = interface->ring_feature[RING_F_RSS].indices;
-	struct fm10k_hw *hw = &interface->hw;
+व्योम fm10k_ग_लिखो_reta(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface, स्थिर u32 *indir)
+अणु
+	u16 rss_i = पूर्णांकerface->ring_feature[RING_F_RSS].indices;
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
 	u32 table[4];
-	int i, j;
+	पूर्णांक i, j;
 
 	/* record entries to reta table */
-	for (i = 0; i < FM10K_RETA_SIZE; i++) {
+	क्रम (i = 0; i < FM10K_RETA_SIZE; i++) अणु
 		u32 reta, n;
 
-		/* generate a new table if we weren't given one */
-		for (j = 0; j < 4; j++) {
-			if (indir)
+		/* generate a new table अगर we weren't given one */
+		क्रम (j = 0; j < 4; j++) अणु
+			अगर (indir)
 				n = indir[4 * i + j];
-			else
-				n = ethtool_rxfh_indir_default(4 * i + j,
+			अन्यथा
+				n = ethtool_rxfh_indir_शेष(4 * i + j,
 							       rss_i);
 
 			table[j] = n;
-		}
+		पूर्ण
 
 		reta = table[0] |
 			(table[1] << 8) |
 			(table[2] << 16) |
 			(table[3] << 24);
 
-		if (interface->reta[i] == reta)
-			continue;
+		अगर (पूर्णांकerface->reta[i] == reta)
+			जारी;
 
-		interface->reta[i] = reta;
-		fm10k_write_reg(hw, FM10K_RETA(0, i), reta);
-	}
-}
+		पूर्णांकerface->reta[i] = reta;
+		fm10k_ग_लिखो_reg(hw, FM10K_RETA(0, i), reta);
+	पूर्ण
+पूर्ण
 
-static int fm10k_get_reta(struct net_device *netdev, u32 *indir)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	int i;
+अटल पूर्णांक fm10k_get_reta(काष्ठा net_device *netdev, u32 *indir)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	पूर्णांक i;
 
-	if (!indir)
-		return 0;
+	अगर (!indir)
+		वापस 0;
 
-	for (i = 0; i < FM10K_RETA_SIZE; i++, indir += 4) {
-		u32 reta = interface->reta[i];
+	क्रम (i = 0; i < FM10K_RETA_SIZE; i++, indir += 4) अणु
+		u32 reta = पूर्णांकerface->reta[i];
 
 		indir[0] = (reta << 24) >> 24;
 		indir[1] = (reta << 16) >> 24;
 		indir[2] = (reta <<  8) >> 24;
 		indir[3] = (reta) >> 24;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_set_reta(struct net_device *netdev, const u32 *indir)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	int i;
+अटल पूर्णांक fm10k_set_reta(काष्ठा net_device *netdev, स्थिर u32 *indir)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	पूर्णांक i;
 	u16 rss_i;
 
-	if (!indir)
-		return 0;
+	अगर (!indir)
+		वापस 0;
 
-	/* Verify user input. */
-	rss_i = interface->ring_feature[RING_F_RSS].indices;
-	for (i = fm10k_get_reta_size(netdev); i--;) {
-		if (indir[i] < rss_i)
-			continue;
-		return -EINVAL;
-	}
+	/* Verअगरy user input. */
+	rss_i = पूर्णांकerface->ring_feature[RING_F_RSS].indices;
+	क्रम (i = fm10k_get_reta_size(netdev); i--;) अणु
+		अगर (indir[i] < rss_i)
+			जारी;
+		वापस -EINVAL;
+	पूर्ण
 
-	fm10k_write_reta(interface, indir);
+	fm10k_ग_लिखो_reta(पूर्णांकerface, indir);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 fm10k_get_rssrk_size(struct net_device __always_unused *netdev)
-{
-	return FM10K_RSSRK_SIZE * FM10K_RSSRK_ENTRIES_PER_REG;
-}
+अटल u32 fm10k_get_rssrk_size(काष्ठा net_device __always_unused *netdev)
+अणु
+	वापस FM10K_RSSRK_SIZE * FM10K_RSSRK_ENTRIES_PER_REG;
+पूर्ण
 
-static int fm10k_get_rssh(struct net_device *netdev, u32 *indir, u8 *key,
+अटल पूर्णांक fm10k_get_rssh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
 			  u8 *hfunc)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	int i, err;
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	पूर्णांक i, err;
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 
 	err = fm10k_get_reta(netdev, indir);
-	if (err || !key)
-		return err;
+	अगर (err || !key)
+		वापस err;
 
-	for (i = 0; i < FM10K_RSSRK_SIZE; i++, key += 4)
-		*(__le32 *)key = cpu_to_le32(interface->rssrk[i]);
+	क्रम (i = 0; i < FM10K_RSSRK_SIZE; i++, key += 4)
+		*(__le32 *)key = cpu_to_le32(पूर्णांकerface->rssrk[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_set_rssh(struct net_device *netdev, const u32 *indir,
-			  const u8 *key, const u8 hfunc)
-{
-	struct fm10k_intfc *interface = netdev_priv(netdev);
-	struct fm10k_hw *hw = &interface->hw;
-	int i, err;
+अटल पूर्णांक fm10k_set_rssh(काष्ठा net_device *netdev, स्थिर u32 *indir,
+			  स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(netdev);
+	काष्ठा fm10k_hw *hw = &पूर्णांकerface->hw;
+	पूर्णांक i, err;
 
-	/* We do not allow change in unsupported parameters */
-	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
-		return -EOPNOTSUPP;
+	/* We करो not allow change in unsupported parameters */
+	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
+		वापस -EOPNOTSUPP;
 
 	err = fm10k_set_reta(netdev, indir);
-	if (err || !key)
-		return err;
+	अगर (err || !key)
+		वापस err;
 
-	for (i = 0; i < FM10K_RSSRK_SIZE; i++, key += 4) {
+	क्रम (i = 0; i < FM10K_RSSRK_SIZE; i++, key += 4) अणु
 		u32 rssrk = le32_to_cpu(*(__le32 *)key);
 
-		if (interface->rssrk[i] == rssrk)
-			continue;
+		अगर (पूर्णांकerface->rssrk[i] == rssrk)
+			जारी;
 
-		interface->rssrk[i] = rssrk;
-		fm10k_write_reg(hw, FM10K_RSSRK(0, i), rssrk);
-	}
+		पूर्णांकerface->rssrk[i] = rssrk;
+		fm10k_ग_लिखो_reg(hw, FM10K_RSSRK(0, i), rssrk);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int fm10k_max_channels(struct net_device *dev)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	unsigned int max_combined = interface->hw.mac.max_queues;
+अटल अचिन्हित पूर्णांक fm10k_max_channels(काष्ठा net_device *dev)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	अचिन्हित पूर्णांक max_combined = पूर्णांकerface->hw.mac.max_queues;
 	u8 tcs = netdev_get_num_tc(dev);
 
 	/* For QoS report channels per traffic class */
-	if (tcs > 1)
+	अगर (tcs > 1)
 		max_combined = BIT((fls(max_combined / tcs) - 1));
 
-	return max_combined;
-}
+	वापस max_combined;
+पूर्ण
 
-static void fm10k_get_channels(struct net_device *dev,
-			       struct ethtool_channels *ch)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
+अटल व्योम fm10k_get_channels(काष्ठा net_device *dev,
+			       काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
 
 	/* report maximum channels */
 	ch->max_combined = fm10k_max_channels(dev);
 
-	/* report info for other vector */
+	/* report info क्रम other vector */
 	ch->max_other = NON_Q_VECTORS;
 	ch->other_count = ch->max_other;
 
 	/* record RSS queues */
-	ch->combined_count = interface->ring_feature[RING_F_RSS].indices;
-}
+	ch->combined_count = पूर्णांकerface->ring_feature[RING_F_RSS].indices;
+पूर्ण
 
-static int fm10k_set_channels(struct net_device *dev,
-			      struct ethtool_channels *ch)
-{
-	struct fm10k_intfc *interface = netdev_priv(dev);
-	unsigned int count = ch->combined_count;
+अटल पूर्णांक fm10k_set_channels(काष्ठा net_device *dev,
+			      काष्ठा ethtool_channels *ch)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = netdev_priv(dev);
+	अचिन्हित पूर्णांक count = ch->combined_count;
 
-	/* verify they are not requesting separate vectors */
-	if (!count || ch->rx_count || ch->tx_count)
-		return -EINVAL;
+	/* verअगरy they are not requesting separate vectors */
+	अगर (!count || ch->rx_count || ch->tx_count)
+		वापस -EINVAL;
 
-	/* verify other_count has not changed */
-	if (ch->other_count != NON_Q_VECTORS)
-		return -EINVAL;
+	/* verअगरy other_count has not changed */
+	अगर (ch->other_count != NON_Q_VECTORS)
+		वापस -EINVAL;
 
-	/* verify the number of channels does not exceed hardware limits */
-	if (count > fm10k_max_channels(dev))
-		return -EINVAL;
+	/* verअगरy the number of channels करोes not exceed hardware limits */
+	अगर (count > fm10k_max_channels(dev))
+		वापस -EINVAL;
 
-	interface->ring_feature[RING_F_RSS].limit = count;
+	पूर्णांकerface->ring_feature[RING_F_RSS].limit = count;
 
 	/* use setup TC to update any traffic class queue mapping */
-	return fm10k_setup_tc(dev, netdev_get_num_tc(dev));
-}
+	वापस fm10k_setup_tc(dev, netdev_get_num_tc(dev));
+पूर्ण
 
-static const struct ethtool_ops fm10k_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops fm10k_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_USE_ADAPTIVE,
 	.get_strings		= fm10k_get_strings,
@@ -1157,8 +1158,8 @@ static const struct ethtool_ops fm10k_ethtool_ops = {
 	.get_ethtool_stats      = fm10k_get_ethtool_stats,
 	.get_drvinfo		= fm10k_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
-	.get_pauseparam		= fm10k_get_pauseparam,
-	.set_pauseparam		= fm10k_set_pauseparam,
+	.get_छोड़ोparam		= fm10k_get_छोड़ोparam,
+	.set_छोड़ोparam		= fm10k_set_छोड़ोparam,
 	.get_msglevel		= fm10k_get_msglevel,
 	.set_msglevel		= fm10k_set_msglevel,
 	.get_ringparam		= fm10k_get_ringparam,
@@ -1179,9 +1180,9 @@ static const struct ethtool_ops fm10k_ethtool_ops = {
 	.get_channels		= fm10k_get_channels,
 	.set_channels		= fm10k_set_channels,
 	.get_ts_info		= ethtool_op_get_ts_info,
-};
+पूर्ण;
 
-void fm10k_set_ethtool_ops(struct net_device *dev)
-{
+व्योम fm10k_set_ethtool_ops(काष्ठा net_device *dev)
+अणु
 	dev->ethtool_ops = &fm10k_ethtool_ops;
-}
+पूर्ण

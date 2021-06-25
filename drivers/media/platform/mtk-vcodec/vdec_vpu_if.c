@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: PC Chen <pc.chen@mediatek.com>
  */
 
-#include "mtk_vcodec_drv.h"
-#include "mtk_vcodec_util.h"
-#include "vdec_ipi_msg.h"
-#include "vdec_vpu_if.h"
-#include "mtk_vcodec_fw.h"
+#समावेश "mtk_vcodec_drv.h"
+#समावेश "mtk_vcodec_util.h"
+#समावेश "vdec_ipi_msg.h"
+#समावेश "vdec_vpu_if.h"
+#समावेश "mtk_vcodec_fw.h"
 
-static void handle_init_ack_msg(const struct vdec_vpu_ipi_init_ack *msg)
-{
-	struct vdec_vpu_inst *vpu = (struct vdec_vpu_inst *)
-					(unsigned long)msg->ap_inst_addr;
+अटल व्योम handle_init_ack_msg(स्थिर काष्ठा vdec_vpu_ipi_init_ack *msg)
+अणु
+	काष्ठा vdec_vpu_inst *vpu = (काष्ठा vdec_vpu_inst *)
+					(अचिन्हित दीर्घ)msg->ap_inst_addr;
 
 	mtk_vcodec_debug(vpu, "+ ap_inst_addr = 0x%llx", msg->ap_inst_addr);
 
-	/* mapping VPU address to kernel virtual address */
+	/* mapping VPU address to kernel भव address */
 	/* the content in vsi is initialized to 0 in VPU */
 	vpu->vsi = mtk_vcodec_fw_map_dm_addr(vpu->ctx->dev->fw_handler,
 					     msg->vpu_inst_addr);
 	vpu->inst_addr = msg->vpu_inst_addr;
 
 	mtk_vcodec_debug(vpu, "- vpu_inst_addr = 0x%x", vpu->inst_addr);
-}
+पूर्ण
 
 /*
- * vpu_dec_ipi_handler - Handler for VPU ipi message.
+ * vpu_dec_ipi_handler - Handler क्रम VPU ipi message.
  *
  * @data: ipi message
  * @len : length of ipi message
- * @priv: callback private data which is passed by decoder when register.
+ * @priv: callback निजी data which is passed by decoder when रेजिस्टर.
  *
- * This function runs in interrupt context and it means there's an IPI MSG
+ * This function runs in पूर्णांकerrupt context and it means there's an IPI MSG
  * from VPU.
  */
-static void vpu_dec_ipi_handler(void *data, unsigned int len, void *priv)
-{
-	const struct vdec_vpu_ipi_ack *msg = data;
-	struct vdec_vpu_inst *vpu = (struct vdec_vpu_inst *)
-					(unsigned long)msg->ap_inst_addr;
+अटल व्योम vpu_dec_ipi_handler(व्योम *data, अचिन्हित पूर्णांक len, व्योम *priv)
+अणु
+	स्थिर काष्ठा vdec_vpu_ipi_ack *msg = data;
+	काष्ठा vdec_vpu_inst *vpu = (काष्ठा vdec_vpu_inst *)
+					(अचिन्हित दीर्घ)msg->ap_inst_addr;
 
 	mtk_vcodec_debug(vpu, "+ id=%X", msg->msg_id);
 
-	if (msg->status == 0) {
-		switch (msg->msg_id) {
-		case VPU_IPIMSG_DEC_INIT_ACK:
+	अगर (msg->status == 0) अणु
+		चयन (msg->msg_id) अणु
+		हाल VPU_IPIMSG_DEC_INIT_ACK:
 			handle_init_ack_msg(data);
-			break;
+			अवरोध;
 
-		case VPU_IPIMSG_DEC_START_ACK:
-		case VPU_IPIMSG_DEC_END_ACK:
-		case VPU_IPIMSG_DEC_DEINIT_ACK:
-		case VPU_IPIMSG_DEC_RESET_ACK:
-			break;
+		हाल VPU_IPIMSG_DEC_START_ACK:
+		हाल VPU_IPIMSG_DEC_END_ACK:
+		हाल VPU_IPIMSG_DEC_DEINIT_ACK:
+		हाल VPU_IPIMSG_DEC_RESET_ACK:
+			अवरोध;
 
-		default:
+		शेष:
 			mtk_vcodec_err(vpu, "invalid msg=%X", msg->msg_id);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mtk_vcodec_debug(vpu, "- id=%X", msg->msg_id);
 	vpu->failure = msg->status;
-	vpu->signaled = 1;
-}
+	vpu->संकेतed = 1;
+पूर्ण
 
-static int vcodec_vpu_send_msg(struct vdec_vpu_inst *vpu, void *msg, int len)
-{
-	int err;
+अटल पूर्णांक vcodec_vpu_send_msg(काष्ठा vdec_vpu_inst *vpu, व्योम *msg, पूर्णांक len)
+अणु
+	पूर्णांक err;
 
-	mtk_vcodec_debug(vpu, "id=%X", *(uint32_t *)msg);
+	mtk_vcodec_debug(vpu, "id=%X", *(uपूर्णांक32_t *)msg);
 
 	vpu->failure = 0;
-	vpu->signaled = 0;
+	vpu->संकेतed = 0;
 
 	err = mtk_vcodec_fw_ipi_send(vpu->ctx->dev->fw_handler, vpu->id, msg,
 				     len, 2000);
-	if (err) {
+	अगर (err) अणु
 		mtk_vcodec_err(vpu, "send fail vpu_id=%d msg_id=%X status=%d",
-			       vpu->id, *(uint32_t *)msg, err);
-		return err;
-	}
+			       vpu->id, *(uपूर्णांक32_t *)msg, err);
+		वापस err;
+	पूर्ण
 
-	return vpu->failure;
-}
+	वापस vpu->failure;
+पूर्ण
 
-static int vcodec_send_ap_ipi(struct vdec_vpu_inst *vpu, unsigned int msg_id)
-{
-	struct vdec_ap_ipi_cmd msg;
-	int err = 0;
+अटल पूर्णांक vcodec_send_ap_ipi(काष्ठा vdec_vpu_inst *vpu, अचिन्हित पूर्णांक msg_id)
+अणु
+	काष्ठा vdec_ap_ipi_cmd msg;
+	पूर्णांक err = 0;
 
 	mtk_vcodec_debug(vpu, "+ id=%X", msg_id);
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.msg_id = msg_id;
 	msg.vpu_inst_addr = vpu->inst_addr;
 
-	err = vcodec_vpu_send_msg(vpu, &msg, sizeof(msg));
+	err = vcodec_vpu_send_msg(vpu, &msg, माप(msg));
 	mtk_vcodec_debug(vpu, "- id=%X ret=%d", msg_id, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int vpu_dec_init(struct vdec_vpu_inst *vpu)
-{
-	struct vdec_ap_ipi_init msg;
-	int err;
+पूर्णांक vpu_dec_init(काष्ठा vdec_vpu_inst *vpu)
+अणु
+	काष्ठा vdec_ap_ipi_init msg;
+	पूर्णांक err;
 
 	mtk_vcodec_debug_enter(vpu);
 
-	init_waitqueue_head(&vpu->wq);
+	init_रुकोqueue_head(&vpu->wq);
 	vpu->handler = vpu_dec_ipi_handler;
 
-	err = mtk_vcodec_fw_ipi_register(vpu->ctx->dev->fw_handler, vpu->id,
-					 vpu->handler, "vdec", NULL);
-	if (err != 0) {
+	err = mtk_vcodec_fw_ipi_रेजिस्टर(vpu->ctx->dev->fw_handler, vpu->id,
+					 vpu->handler, "vdec", शून्य);
+	अगर (err != 0) अणु
 		mtk_vcodec_err(vpu, "vpu_ipi_register fail status=%d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.msg_id = AP_IPIMSG_DEC_INIT;
-	msg.ap_inst_addr = (unsigned long)vpu;
+	msg.ap_inst_addr = (अचिन्हित दीर्घ)vpu;
 
 	mtk_vcodec_debug(vpu, "vdec_inst=%p", vpu);
 
-	err = vcodec_vpu_send_msg(vpu, (void *)&msg, sizeof(msg));
+	err = vcodec_vpu_send_msg(vpu, (व्योम *)&msg, माप(msg));
 	mtk_vcodec_debug(vpu, "- ret=%d", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int vpu_dec_start(struct vdec_vpu_inst *vpu, uint32_t *data, unsigned int len)
-{
-	struct vdec_ap_ipi_dec_start msg;
-	int i;
-	int err = 0;
+पूर्णांक vpu_dec_start(काष्ठा vdec_vpu_inst *vpu, uपूर्णांक32_t *data, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा vdec_ap_ipi_dec_start msg;
+	पूर्णांक i;
+	पूर्णांक err = 0;
 
 	mtk_vcodec_debug_enter(vpu);
 
-	if (len > ARRAY_SIZE(msg.data)) {
+	अगर (len > ARRAY_SIZE(msg.data)) अणु
 		mtk_vcodec_err(vpu, "invalid len = %d\n", len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.msg_id = AP_IPIMSG_DEC_START;
 	msg.vpu_inst_addr = vpu->inst_addr;
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		msg.data[i] = data[i];
 
-	err = vcodec_vpu_send_msg(vpu, (void *)&msg, sizeof(msg));
+	err = vcodec_vpu_send_msg(vpu, (व्योम *)&msg, माप(msg));
 	mtk_vcodec_debug(vpu, "- ret=%d", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int vpu_dec_end(struct vdec_vpu_inst *vpu)
-{
-	return vcodec_send_ap_ipi(vpu, AP_IPIMSG_DEC_END);
-}
+पूर्णांक vpu_dec_end(काष्ठा vdec_vpu_inst *vpu)
+अणु
+	वापस vcodec_send_ap_ipi(vpu, AP_IPIMSG_DEC_END);
+पूर्ण
 
-int vpu_dec_deinit(struct vdec_vpu_inst *vpu)
-{
-	return vcodec_send_ap_ipi(vpu, AP_IPIMSG_DEC_DEINIT);
-}
+पूर्णांक vpu_dec_deinit(काष्ठा vdec_vpu_inst *vpu)
+अणु
+	वापस vcodec_send_ap_ipi(vpu, AP_IPIMSG_DEC_DEINIT);
+पूर्ण
 
-int vpu_dec_reset(struct vdec_vpu_inst *vpu)
-{
-	return vcodec_send_ap_ipi(vpu, AP_IPIMSG_DEC_RESET);
-}
+पूर्णांक vpu_dec_reset(काष्ठा vdec_vpu_inst *vpu)
+अणु
+	वापस vcodec_send_ap_ipi(vpu, AP_IPIMSG_DEC_RESET);
+पूर्ण

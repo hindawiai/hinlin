@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-vexpress/platsmp.c
  *
  *  Copyright (C) 2002 ARM Ltd.
  *  All Rights Reserved
  */
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/smp.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/vexpress.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/smp.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/vexpress.h>
 
-#include <asm/mcpm.h>
-#include <asm/smp_scu.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mcpm.h>
+#समावेश <यंत्र/smp_scu.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <plat/platsmp.h>
+#समावेश <plat/platsmp.h>
 
-#include "core.h"
+#समावेश "core.h"
 
-bool __init vexpress_smp_init_ops(void)
-{
-#ifdef CONFIG_MCPM
-	int cpu;
-	struct device_node *cpu_node, *cci_node;
+bool __init vexpress_smp_init_ops(व्योम)
+अणु
+#अगर_घोषित CONFIG_MCPM
+	पूर्णांक cpu;
+	काष्ठा device_node *cpu_node, *cci_node;
 
 	/*
 	 * The best way to detect a multi-cluster configuration
-	 * is to detect if the kernel can take over CCI ports
-	 * control. Loop over possible CPUs and check if CCI
+	 * is to detect अगर the kernel can take over CCI ports
+	 * control. Loop over possible CPUs and check अगर CCI
 	 * port control is available.
-	 * Override the default vexpress_smp_ops if so.
+	 * Override the शेष vexpress_smp_ops अगर so.
 	 */
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		bool available;
 
-		cpu_node = of_get_cpu_node(cpu, NULL);
-		if (WARN(!cpu_node, "Missing cpu device node!"))
-			return false;
+		cpu_node = of_get_cpu_node(cpu, शून्य);
+		अगर (WARN(!cpu_node, "Missing cpu device node!"))
+			वापस false;
 
 		cci_node = of_parse_phandle(cpu_node, "cci-control-port", 0);
 		available = cci_node && of_device_is_available(cci_node);
 		of_node_put(cci_node);
 		of_node_put(cpu_node);
 
-		if (!available)
-			return false;
-	}
+		अगर (!available)
+			वापस false;
+	पूर्ण
 
 	mcpm_smp_set_ops();
-	return true;
-#else
-	return false;
-#endif
-}
+	वापस true;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-static const struct of_device_id vexpress_smp_dt_scu_match[] __initconst = {
-	{ .compatible = "arm,cortex-a5-scu", },
-	{ .compatible = "arm,cortex-a9-scu", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id vexpress_smp_dt_scu_match[] __initस्थिर = अणु
+	अणु .compatible = "arm,cortex-a5-scu", पूर्ण,
+	अणु .compatible = "arm,cortex-a9-scu", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void __init vexpress_smp_dt_prepare_cpus(unsigned int max_cpus)
-{
-	struct device_node *scu = of_find_matching_node(NULL,
+अटल व्योम __init vexpress_smp_dt_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+	काष्ठा device_node *scu = of_find_matching_node(शून्य,
 			vexpress_smp_dt_scu_match);
 
-	if (scu)
+	अगर (scu)
 		scu_enable(of_iomap(scu, 0));
 
 	/*
-	 * Write the address of secondary startup into the
-	 * system-wide flags register. The boot monitor waits
-	 * until it receives a soft interrupt, and then the
+	 * Write the address of secondary startup पूर्णांकo the
+	 * प्रणाली-wide flags रेजिस्टर. The boot monitor रुकोs
+	 * until it receives a soft पूर्णांकerrupt, and then the
 	 * secondary CPU branches to this address.
 	 */
 	vexpress_flags_set(__pa_symbol(versatile_secondary_startup));
-}
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void vexpress_cpu_die(unsigned int cpu)
-{
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम vexpress_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	versatile_immitation_cpu_die(cpu, 0x40);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-const struct smp_operations vexpress_smp_dt_ops __initconst = {
+स्थिर काष्ठा smp_operations vexpress_smp_dt_ops __initस्थिर = अणु
 	.smp_prepare_cpus	= vexpress_smp_dt_prepare_cpus,
 	.smp_secondary_init	= versatile_secondary_init,
 	.smp_boot_secondary	= versatile_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_die		= vexpress_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

@@ -1,66 +1,67 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /*
  * Copyright (c) 2019 Mellanox Technologies. All rights reserved.
  */
 
-#ifndef _RDMA_COUNTER_H_
-#define _RDMA_COUNTER_H_
+#अगर_अघोषित _RDMA_COUNTER_H_
+#घोषणा _RDMA_COUNTER_H_
 
-#include <linux/mutex.h>
-#include <linux/pid_namespace.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pid_namespace.h>
 
-#include <rdma/restrack.h>
-#include <rdma/rdma_netlink.h>
+#समावेश <rdma/restrack.h>
+#समावेश <rdma/rdma_netlink.h>
 
-struct ib_device;
-struct ib_qp;
+काष्ठा ib_device;
+काष्ठा ib_qp;
 
-struct auto_mode_param {
-	int qp_type;
-};
+काष्ठा स्वतः_mode_param अणु
+	पूर्णांक qp_type;
+पूर्ण;
 
-struct rdma_counter_mode {
-	enum rdma_nl_counter_mode mode;
-	enum rdma_nl_counter_mask mask;
-	struct auto_mode_param param;
-};
+काष्ठा rdma_counter_mode अणु
+	क्रमागत rdma_nl_counter_mode mode;
+	क्रमागत rdma_nl_counter_mask mask;
+	काष्ठा स्वतः_mode_param param;
+पूर्ण;
 
-struct rdma_port_counter {
-	struct rdma_counter_mode mode;
-	struct rdma_hw_stats *hstats;
-	unsigned int num_counters;
-	struct mutex lock;
-};
+काष्ठा rdma_port_counter अणु
+	काष्ठा rdma_counter_mode mode;
+	काष्ठा rdma_hw_stats *hstats;
+	अचिन्हित पूर्णांक num_counters;
+	काष्ठा mutex lock;
+पूर्ण;
 
-struct rdma_counter {
-	struct rdma_restrack_entry	res;
-	struct ib_device		*device;
-	uint32_t			id;
-	struct kref			kref;
-	struct rdma_counter_mode	mode;
-	struct mutex			lock;
-	struct rdma_hw_stats		*stats;
+काष्ठा rdma_counter अणु
+	काष्ठा rdma_restrack_entry	res;
+	काष्ठा ib_device		*device;
+	uपूर्णांक32_t			id;
+	काष्ठा kref			kref;
+	काष्ठा rdma_counter_mode	mode;
+	काष्ठा mutex			lock;
+	काष्ठा rdma_hw_stats		*stats;
 	u32				port;
-};
+पूर्ण;
 
-void rdma_counter_init(struct ib_device *dev);
-void rdma_counter_release(struct ib_device *dev);
-int rdma_counter_set_auto_mode(struct ib_device *dev, u32 port,
-			       enum rdma_nl_counter_mask mask,
-			       struct netlink_ext_ack *extack);
-int rdma_counter_bind_qp_auto(struct ib_qp *qp, u32 port);
-int rdma_counter_unbind_qp(struct ib_qp *qp, bool force);
+व्योम rdma_counter_init(काष्ठा ib_device *dev);
+व्योम rdma_counter_release(काष्ठा ib_device *dev);
+पूर्णांक rdma_counter_set_स्वतः_mode(काष्ठा ib_device *dev, u32 port,
+			       क्रमागत rdma_nl_counter_mask mask,
+			       काष्ठा netlink_ext_ack *extack);
+पूर्णांक rdma_counter_bind_qp_स्वतः(काष्ठा ib_qp *qp, u32 port);
+पूर्णांक rdma_counter_unbind_qp(काष्ठा ib_qp *qp, bool क्रमce);
 
-int rdma_counter_query_stats(struct rdma_counter *counter);
-u64 rdma_counter_get_hwstat_value(struct ib_device *dev, u32 port, u32 index);
-int rdma_counter_bind_qpn(struct ib_device *dev, u32 port,
+पूर्णांक rdma_counter_query_stats(काष्ठा rdma_counter *counter);
+u64 rdma_counter_get_hwstat_value(काष्ठा ib_device *dev, u32 port, u32 index);
+पूर्णांक rdma_counter_bind_qpn(काष्ठा ib_device *dev, u32 port,
 			  u32 qp_num, u32 counter_id);
-int rdma_counter_bind_qpn_alloc(struct ib_device *dev, u32 port,
+पूर्णांक rdma_counter_bind_qpn_alloc(काष्ठा ib_device *dev, u32 port,
 				u32 qp_num, u32 *counter_id);
-int rdma_counter_unbind_qpn(struct ib_device *dev, u32 port,
+पूर्णांक rdma_counter_unbind_qpn(काष्ठा ib_device *dev, u32 port,
 			    u32 qp_num, u32 counter_id);
-int rdma_counter_get_mode(struct ib_device *dev, u32 port,
-			  enum rdma_nl_counter_mode *mode,
-			  enum rdma_nl_counter_mask *mask);
+पूर्णांक rdma_counter_get_mode(काष्ठा ib_device *dev, u32 port,
+			  क्रमागत rdma_nl_counter_mode *mode,
+			  क्रमागत rdma_nl_counter_mask *mask);
 
-#endif /* _RDMA_COUNTER_H_ */
+#पूर्ण_अगर /* _RDMA_COUNTER_H_ */

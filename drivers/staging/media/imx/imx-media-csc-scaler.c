@@ -1,266 +1,267 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * i.MX IPUv3 IC PP mem2mem CSC/Scaler driver
  *
  * Copyright (C) 2011 Pengutronix, Sascha Hauer
  * Copyright (C) 2018 Pengutronix, Philipp Zabel
  */
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <video/imx-ipu-v3.h>
-#include <video/imx-ipu-image-convert.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <video/imx-ipu-v3.h>
+#समावेश <video/imx-ipu-image-convert.h>
 
-#include <media/media-device.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/media-device.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "imx-media.h"
+#समावेश "imx-media.h"
 
-#define fh_to_ctx(__fh)	container_of(__fh, struct ipu_csc_scaler_ctx, fh)
+#घोषणा fh_to_ctx(__fh)	container_of(__fh, काष्ठा ipu_csc_scaler_ctx, fh)
 
-#define IMX_CSC_SCALER_NAME "imx-csc-scaler"
+#घोषणा IMX_CSC_SCALER_NAME "imx-csc-scaler"
 
-enum {
+क्रमागत अणु
 	V4L2_M2M_SRC = 0,
 	V4L2_M2M_DST = 1,
-};
+पूर्ण;
 
-struct ipu_csc_scaler_priv {
-	struct imx_media_video_dev	vdev;
+काष्ठा ipu_csc_scaler_priv अणु
+	काष्ठा imx_media_video_dev	vdev;
 
-	struct v4l2_m2m_dev		*m2m_dev;
-	struct device			*dev;
+	काष्ठा v4l2_m2m_dev		*m2m_dev;
+	काष्ठा device			*dev;
 
-	struct imx_media_dev		*md;
+	काष्ठा imx_media_dev		*md;
 
-	struct mutex			mutex;	/* mem2mem device mutex */
-};
+	काष्ठा mutex			mutex;	/* mem2mem device mutex */
+पूर्ण;
 
-#define vdev_to_priv(v) container_of(v, struct ipu_csc_scaler_priv, vdev)
+#घोषणा vdev_to_priv(v) container_of(v, काष्ठा ipu_csc_scaler_priv, vdev)
 
-/* Per-queue, driver-specific private data */
-struct ipu_csc_scaler_q_data {
-	struct v4l2_pix_format		cur_fmt;
-	struct v4l2_rect		rect;
-};
+/* Per-queue, driver-specअगरic निजी data */
+काष्ठा ipu_csc_scaler_q_data अणु
+	काष्ठा v4l2_pix_क्रमmat		cur_fmt;
+	काष्ठा v4l2_rect		rect;
+पूर्ण;
 
-struct ipu_csc_scaler_ctx {
-	struct ipu_csc_scaler_priv	*priv;
+काष्ठा ipu_csc_scaler_ctx अणु
+	काष्ठा ipu_csc_scaler_priv	*priv;
 
-	struct v4l2_fh			fh;
-	struct ipu_csc_scaler_q_data	q_data[2];
-	struct ipu_image_convert_ctx	*icc;
+	काष्ठा v4l2_fh			fh;
+	काष्ठा ipu_csc_scaler_q_data	q_data[2];
+	काष्ठा ipu_image_convert_ctx	*icc;
 
-	struct v4l2_ctrl_handler	ctrl_hdlr;
-	int				rotate;
+	काष्ठा v4l2_ctrl_handler	ctrl_hdlr;
+	पूर्णांक				rotate;
 	bool				hflip;
 	bool				vflip;
-	enum ipu_rotate_mode		rot_mode;
-	unsigned int			sequence;
-};
+	क्रमागत ipu_rotate_mode		rot_mode;
+	अचिन्हित पूर्णांक			sequence;
+पूर्ण;
 
-static struct ipu_csc_scaler_q_data *get_q_data(struct ipu_csc_scaler_ctx *ctx,
-						enum v4l2_buf_type type)
-{
-	if (V4L2_TYPE_IS_OUTPUT(type))
-		return &ctx->q_data[V4L2_M2M_SRC];
-	else
-		return &ctx->q_data[V4L2_M2M_DST];
-}
+अटल काष्ठा ipu_csc_scaler_q_data *get_q_data(काष्ठा ipu_csc_scaler_ctx *ctx,
+						क्रमागत v4l2_buf_type type)
+अणु
+	अगर (V4L2_TYPE_IS_OUTPUT(type))
+		वापस &ctx->q_data[V4L2_M2M_SRC];
+	अन्यथा
+		वापस &ctx->q_data[V4L2_M2M_DST];
+पूर्ण
 
 /*
  * mem2mem callbacks
  */
 
-static void job_abort(void *_ctx)
-{
-	struct ipu_csc_scaler_ctx *ctx = _ctx;
+अटल व्योम job_पात(व्योम *_ctx)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = _ctx;
 
-	if (ctx->icc)
-		ipu_image_convert_abort(ctx->icc);
-}
+	अगर (ctx->icc)
+		ipu_image_convert_पात(ctx->icc);
+पूर्ण
 
-static void ipu_ic_pp_complete(struct ipu_image_convert_run *run, void *_ctx)
-{
-	struct ipu_csc_scaler_ctx *ctx = _ctx;
-	struct ipu_csc_scaler_priv *priv = ctx->priv;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
+अटल व्योम ipu_ic_pp_complete(काष्ठा ipu_image_convert_run *run, व्योम *_ctx)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = _ctx;
+	काष्ठा ipu_csc_scaler_priv *priv = ctx->priv;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
 
-	src_buf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-	dst_buf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
+	src_buf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+	dst_buf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
 
 	v4l2_m2m_buf_copy_metadata(src_buf, dst_buf, true);
 
 	src_buf->sequence = ctx->sequence++;
 	dst_buf->sequence = src_buf->sequence;
 
-	v4l2_m2m_buf_done(src_buf, run->status ? VB2_BUF_STATE_ERROR :
+	v4l2_m2m_buf_करोne(src_buf, run->status ? VB2_BUF_STATE_ERROR :
 						 VB2_BUF_STATE_DONE);
-	v4l2_m2m_buf_done(dst_buf, run->status ? VB2_BUF_STATE_ERROR :
+	v4l2_m2m_buf_करोne(dst_buf, run->status ? VB2_BUF_STATE_ERROR :
 						 VB2_BUF_STATE_DONE);
 
 	v4l2_m2m_job_finish(priv->m2m_dev, ctx->fh.m2m_ctx);
-	kfree(run);
-}
+	kमुक्त(run);
+पूर्ण
 
-static void device_run(void *_ctx)
-{
-	struct ipu_csc_scaler_ctx *ctx = _ctx;
-	struct ipu_csc_scaler_priv *priv = ctx->priv;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
-	struct ipu_image_convert_run *run;
-	int ret;
+अटल व्योम device_run(व्योम *_ctx)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = _ctx;
+	काष्ठा ipu_csc_scaler_priv *priv = ctx->priv;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
+	काष्ठा ipu_image_convert_run *run;
+	पूर्णांक ret;
 
 	src_buf = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 	dst_buf = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
 
-	run = kzalloc(sizeof(*run), GFP_KERNEL);
-	if (!run)
-		goto err;
+	run = kzalloc(माप(*run), GFP_KERNEL);
+	अगर (!run)
+		जाओ err;
 
 	run->ctx = ctx->icc;
 	run->in_phys = vb2_dma_contig_plane_dma_addr(&src_buf->vb2_buf, 0);
 	run->out_phys = vb2_dma_contig_plane_dma_addr(&dst_buf->vb2_buf, 0);
 
 	ret = ipu_image_convert_queue(run);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		v4l2_err(ctx->priv->vdev.vfd->v4l2_dev,
 			 "%s: failed to queue: %d\n", __func__, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return;
+	वापस;
 
 err:
-	v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx);
-	v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx);
-	v4l2_m2m_buf_done(src_buf, VB2_BUF_STATE_ERROR);
-	v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
+	v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx);
+	v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx);
+	v4l2_m2m_buf_करोne(src_buf, VB2_BUF_STATE_ERROR);
+	v4l2_m2m_buf_करोne(dst_buf, VB2_BUF_STATE_ERROR);
 	v4l2_m2m_job_finish(priv->m2m_dev, ctx->fh.m2m_ctx);
-}
+पूर्ण
 
 /*
  * Video ioctls
  */
-static int ipu_csc_scaler_querycap(struct file *file, void *priv,
-				   struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, IMX_CSC_SCALER_NAME, sizeof(cap->driver));
-	strscpy(cap->card, IMX_CSC_SCALER_NAME, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+अटल पूर्णांक ipu_csc_scaler_querycap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, IMX_CSC_SCALER_NAME, माप(cap->driver));
+	strscpy(cap->card, IMX_CSC_SCALER_NAME, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "platform:%s", IMX_CSC_SCALER_NAME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_enum_fmt(struct file *file, void *fh,
-				   struct v4l2_fmtdesc *f)
-{
+अटल पूर्णांक ipu_csc_scaler_क्रमागत_fmt(काष्ठा file *file, व्योम *fh,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
 	u32 fourcc;
-	int ret;
+	पूर्णांक ret;
 
-	ret = imx_media_enum_pixel_formats(&fourcc, f->index,
+	ret = imx_media_क्रमागत_pixel_क्रमmats(&fourcc, f->index,
 					   PIXFMT_SEL_YUV_RGB, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	f->pixelformat = fourcc;
+	f->pixelक्रमmat = fourcc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_g_fmt(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
-	struct ipu_csc_scaler_q_data *q_data;
+अटल पूर्णांक ipu_csc_scaler_g_fmt(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा ipu_csc_scaler_q_data *q_data;
 
 	q_data = get_q_data(ctx, f->type);
 
 	f->fmt.pix = q_data->cur_fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_try_fmt(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
-	struct ipu_csc_scaler_q_data *q_data = get_q_data(ctx, f->type);
-	struct ipu_image test_in, test_out;
-	enum v4l2_field field;
+अटल पूर्णांक ipu_csc_scaler_try_fmt(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा ipu_csc_scaler_q_data *q_data = get_q_data(ctx, f->type);
+	काष्ठा ipu_image test_in, test_out;
+	क्रमागत v4l2_field field;
 
 	field = f->fmt.pix.field;
-	if (field == V4L2_FIELD_ANY)
+	अगर (field == V4L2_FIELD_ANY)
 		field = V4L2_FIELD_NONE;
-	else if (field != V4L2_FIELD_NONE)
-		return -EINVAL;
+	अन्यथा अगर (field != V4L2_FIELD_NONE)
+		वापस -EINVAL;
 
-	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
-		struct ipu_csc_scaler_q_data *q_data_in =
+	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) अणु
+		काष्ठा ipu_csc_scaler_q_data *q_data_in =
 			get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
 
 		test_out.pix = f->fmt.pix;
 		test_in.pix = q_data_in->cur_fmt;
-	} else {
-		struct ipu_csc_scaler_q_data *q_data_out =
+	पूर्ण अन्यथा अणु
+		काष्ठा ipu_csc_scaler_q_data *q_data_out =
 			get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 
 		test_in.pix = f->fmt.pix;
 		test_out.pix = q_data_out->cur_fmt;
-	}
+	पूर्ण
 
 	ipu_image_convert_adjust(&test_in, &test_out, ctx->rot_mode);
 
 	f->fmt.pix = (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) ?
 		test_out.pix : test_in.pix;
 
-	if (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	अगर (f->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) अणु
 		f->fmt.pix.colorspace = q_data->cur_fmt.colorspace;
 		f->fmt.pix.ycbcr_enc = q_data->cur_fmt.ycbcr_enc;
 		f->fmt.pix.xfer_func = q_data->cur_fmt.xfer_func;
 		f->fmt.pix.quantization = q_data->cur_fmt.quantization;
-	} else if (f->fmt.pix.colorspace == V4L2_COLORSPACE_DEFAULT) {
+	पूर्ण अन्यथा अगर (f->fmt.pix.colorspace == V4L2_COLORSPACE_DEFAULT) अणु
 		f->fmt.pix.colorspace = V4L2_COLORSPACE_SRGB;
 		f->fmt.pix.ycbcr_enc = V4L2_YCBCR_ENC_DEFAULT;
 		f->fmt.pix.xfer_func = V4L2_XFER_FUNC_DEFAULT;
 		f->fmt.pix.quantization = V4L2_QUANTIZATION_DEFAULT;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_s_fmt(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct ipu_csc_scaler_q_data *q_data;
-	struct ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
-	struct vb2_queue *vq;
-	int ret;
+अटल पूर्णांक ipu_csc_scaler_s_fmt(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा ipu_csc_scaler_q_data *q_data;
+	काष्ठा ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (vb2_is_busy(vq)) {
+	अगर (vb2_is_busy(vq)) अणु
 		v4l2_err(ctx->priv->vdev.vfd->v4l2_dev, "%s: queue busy\n",
 			 __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	q_data = get_q_data(ctx, f->type);
 
 	ret = ipu_csc_scaler_try_fmt(file, priv, f);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	q_data->cur_fmt.width = f->fmt.pix.width;
 	q_data->cur_fmt.height = f->fmt.pix.height;
-	q_data->cur_fmt.pixelformat = f->fmt.pix.pixelformat;
+	q_data->cur_fmt.pixelक्रमmat = f->fmt.pix.pixelक्रमmat;
 	q_data->cur_fmt.field = f->fmt.pix.field;
 	q_data->cur_fmt.bytesperline = f->fmt.pix.bytesperline;
 	q_data->cur_fmt.sizeimage = f->fmt.pix.sizeimage;
@@ -271,7 +272,7 @@ static int ipu_csc_scaler_s_fmt(struct file *file, void *priv,
 	q_data->rect.width = q_data->cur_fmt.width;
 	q_data->rect.height = q_data->cur_fmt.height;
 
-	if (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
+	अगर (f->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) अणु
 		/* Set colorimetry on the output queue */
 		q_data->cur_fmt.colorspace = f->fmt.pix.colorspace;
 		q_data->cur_fmt.ycbcr_enc = f->fmt.pix.ycbcr_enc;
@@ -283,111 +284,111 @@ static int ipu_csc_scaler_s_fmt(struct file *file, void *priv,
 		q_data->cur_fmt.ycbcr_enc = f->fmt.pix.ycbcr_enc;
 		q_data->cur_fmt.xfer_func = f->fmt.pix.xfer_func;
 		q_data->cur_fmt.quantization = f->fmt.pix.quantization;
-	}
+	पूर्ण
 
 	/*
 	 * TODO: Setting colorimetry on the capture queue is currently not
 	 * supported by the V4L2 API
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_g_selection(struct file *file, void *priv,
-				      struct v4l2_selection *s)
-{
-	struct ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
-	struct ipu_csc_scaler_q_data *q_data;
+अटल पूर्णांक ipu_csc_scaler_g_selection(काष्ठा file *file, व्योम *priv,
+				      काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा ipu_csc_scaler_q_data *q_data;
 
-	switch (s->target) {
-	case V4L2_SEL_TGT_CROP:
-	case V4L2_SEL_TGT_CROP_DEFAULT:
-	case V4L2_SEL_TGT_CROP_BOUNDS:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			return -EINVAL;
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
+	हाल V4L2_SEL_TGT_CROP_DEFAULT:
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			वापस -EINVAL;
 		q_data = get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
-		break;
-	case V4L2_SEL_TGT_COMPOSE:
-	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE:
+	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			वापस -EINVAL;
 		q_data = get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (s->target == V4L2_SEL_TGT_CROP ||
-	    s->target == V4L2_SEL_TGT_COMPOSE) {
+	अगर (s->target == V4L2_SEL_TGT_CROP ||
+	    s->target == V4L2_SEL_TGT_COMPOSE) अणु
 		s->r = q_data->rect;
-	} else {
+	पूर्ण अन्यथा अणु
 		s->r.left = 0;
 		s->r.top = 0;
 		s->r.width = q_data->cur_fmt.width;
 		s->r.height = q_data->cur_fmt.height;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_s_selection(struct file *file, void *priv,
-				      struct v4l2_selection *s)
-{
-	struct ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
-	struct ipu_csc_scaler_q_data *q_data;
+अटल पूर्णांक ipu_csc_scaler_s_selection(काष्ठा file *file, व्योम *priv,
+				      काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = fh_to_ctx(priv);
+	काष्ठा ipu_csc_scaler_q_data *q_data;
 
-	switch (s->target) {
-	case V4L2_SEL_TGT_CROP:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-			return -EINVAL;
-		break;
-	case V4L2_SEL_TGT_COMPOSE:
-		if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+			वापस -EINVAL;
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE:
+		अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 	    s->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	q_data = get_q_data(ctx, s->type);
 
 	/* The input's frame width to the IC must be a multiple of 8 pixels
-	 * When performing resizing the frame width must be multiple of burst
+	 * When perक्रमming resizing the frame width must be multiple of burst
 	 * size - 8 or 16 pixels as defined by CB#_BURST_16 parameter.
 	 */
-	if (s->flags & V4L2_SEL_FLAG_GE)
+	अगर (s->flags & V4L2_SEL_FLAG_GE)
 		s->r.width = round_up(s->r.width, 8);
-	if (s->flags & V4L2_SEL_FLAG_LE)
-		s->r.width = round_down(s->r.width, 8);
-	s->r.width = clamp_t(unsigned int, s->r.width, 8,
-			     round_down(q_data->cur_fmt.width, 8));
-	s->r.height = clamp_t(unsigned int, s->r.height, 1,
+	अगर (s->flags & V4L2_SEL_FLAG_LE)
+		s->r.width = round_करोwn(s->r.width, 8);
+	s->r.width = clamp_t(अचिन्हित पूर्णांक, s->r.width, 8,
+			     round_करोwn(q_data->cur_fmt.width, 8));
+	s->r.height = clamp_t(अचिन्हित पूर्णांक, s->r.height, 1,
 			      q_data->cur_fmt.height);
-	s->r.left = clamp_t(unsigned int, s->r.left, 0,
+	s->r.left = clamp_t(अचिन्हित पूर्णांक, s->r.left, 0,
 			    q_data->cur_fmt.width - s->r.width);
-	s->r.top = clamp_t(unsigned int, s->r.top, 0,
+	s->r.top = clamp_t(अचिन्हित पूर्णांक, s->r.top, 0,
 			   q_data->cur_fmt.height - s->r.height);
 
-	/* V4L2_SEL_FLAG_KEEP_CONFIG is only valid for subdevices */
+	/* V4L2_SEL_FLAG_KEEP_CONFIG is only valid क्रम subdevices */
 	q_data->rect = s->r;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ioctl_ops ipu_csc_scaler_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops ipu_csc_scaler_ioctl_ops = अणु
 	.vidioc_querycap		= ipu_csc_scaler_querycap,
 
-	.vidioc_enum_fmt_vid_cap	= ipu_csc_scaler_enum_fmt,
+	.vidioc_क्रमागत_fmt_vid_cap	= ipu_csc_scaler_क्रमागत_fmt,
 	.vidioc_g_fmt_vid_cap		= ipu_csc_scaler_g_fmt,
 	.vidioc_try_fmt_vid_cap		= ipu_csc_scaler_try_fmt,
 	.vidioc_s_fmt_vid_cap		= ipu_csc_scaler_s_fmt,
 
-	.vidioc_enum_fmt_vid_out	= ipu_csc_scaler_enum_fmt,
+	.vidioc_क्रमागत_fmt_vid_out	= ipu_csc_scaler_क्रमागत_fmt,
 	.vidioc_g_fmt_vid_out		= ipu_csc_scaler_g_fmt,
 	.vidioc_try_fmt_vid_out		= ipu_csc_scaler_try_fmt,
 	.vidioc_s_fmt_vid_out		= ipu_csc_scaler_s_fmt,
@@ -409,21 +410,21 @@ static const struct v4l2_ioctl_ops ipu_csc_scaler_ioctl_ops = {
 
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
 /*
  * Queue operations
  */
 
-static int ipu_csc_scaler_queue_setup(struct vb2_queue *vq,
-				      unsigned int *nbuffers,
-				      unsigned int *nplanes,
-				      unsigned int sizes[],
-				      struct device *alloc_devs[])
-{
-	struct ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(vq);
-	struct ipu_csc_scaler_q_data *q_data;
-	unsigned int size, count = *nbuffers;
+अटल पूर्णांक ipu_csc_scaler_queue_setup(काष्ठा vb2_queue *vq,
+				      अचिन्हित पूर्णांक *nbuffers,
+				      अचिन्हित पूर्णांक *nplanes,
+				      अचिन्हित पूर्णांक sizes[],
+				      काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा ipu_csc_scaler_q_data *q_data;
+	अचिन्हित पूर्णांक size, count = *nbuffers;
 
 	q_data = get_q_data(ctx, vq->type);
 
@@ -431,8 +432,8 @@ static int ipu_csc_scaler_queue_setup(struct vb2_queue *vq,
 
 	*nbuffers = count;
 
-	if (*nplanes)
-		return sizes[0] < size ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < size ? -EINVAL : 0;
 
 	*nplanes = 1;
 	sizes[0] = size;
@@ -440,86 +441,86 @@ static int ipu_csc_scaler_queue_setup(struct vb2_queue *vq,
 	dev_dbg(ctx->priv->dev, "get %d buffer(s) of size %d each.\n",
 		count, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipu_csc_scaler_buf_prepare(struct vb2_buffer *vb)
-{
-	struct vb2_queue *vq = vb->vb2_queue;
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(vq);
-	struct ipu_csc_scaler_q_data *q_data;
-	unsigned long size;
+अटल पूर्णांक ipu_csc_scaler_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_queue *vq = vb->vb2_queue;
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा ipu_csc_scaler_q_data *q_data;
+	अचिन्हित दीर्घ size;
 
 	dev_dbg(ctx->priv->dev, "type: %d\n", vq->type);
 
-	if (V4L2_TYPE_IS_OUTPUT(vq->type)) {
-		if (vbuf->field == V4L2_FIELD_ANY)
+	अगर (V4L2_TYPE_IS_OUTPUT(vq->type)) अणु
+		अगर (vbuf->field == V4L2_FIELD_ANY)
 			vbuf->field = V4L2_FIELD_NONE;
-		if (vbuf->field != V4L2_FIELD_NONE) {
+		अगर (vbuf->field != V4L2_FIELD_NONE) अणु
 			dev_dbg(ctx->priv->dev, "%s: field isn't supported\n",
 				__func__);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	q_data = get_q_data(ctx, vq->type);
 	size = q_data->cur_fmt.sizeimage;
 
-	if (vb2_plane_size(vb, 0) < size) {
+	अगर (vb2_plane_size(vb, 0) < size) अणु
 		dev_dbg(ctx->priv->dev,
 			"%s: data will not fit into plane (%lu < %lu)\n",
 			__func__, vb2_plane_size(vb, 0), size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ipu_csc_scaler_buf_queue(struct vb2_buffer *vb)
-{
-	struct ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम ipu_csc_scaler_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, to_vb2_v4l2_buffer(vb));
-}
+पूर्ण
 
-static void ipu_image_from_q_data(struct ipu_image *im,
-				  struct ipu_csc_scaler_q_data *q_data)
-{
-	struct v4l2_pix_format *fmt = &q_data->cur_fmt;
+अटल व्योम ipu_image_from_q_data(काष्ठा ipu_image *im,
+				  काष्ठा ipu_csc_scaler_q_data *q_data)
+अणु
+	काष्ठा v4l2_pix_क्रमmat *fmt = &q_data->cur_fmt;
 
 	im->pix = *fmt;
-	if (fmt->ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
+	अगर (fmt->ycbcr_enc == V4L2_YCBCR_ENC_DEFAULT)
 		im->pix.ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->colorspace);
-	if (fmt->quantization == V4L2_QUANTIZATION_DEFAULT)
+	अगर (fmt->quantization == V4L2_QUANTIZATION_DEFAULT)
 		im->pix.ycbcr_enc = V4L2_MAP_YCBCR_ENC_DEFAULT(fmt->colorspace);
 	im->rect = q_data->rect;
-}
+पूर्ण
 
-static int ipu_csc_scaler_start_streaming(struct vb2_queue *q,
-					  unsigned int count)
-{
-	const enum ipu_ic_task ic_task = IC_TASK_POST_PROCESSOR;
-	struct ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(q);
-	struct ipu_csc_scaler_priv *priv = ctx->priv;
-	struct ipu_soc *ipu = priv->md->ipu[0];
-	struct ipu_csc_scaler_q_data *q_data;
-	struct vb2_queue *other_q;
-	struct ipu_image in, out;
+अटल पूर्णांक ipu_csc_scaler_start_streaming(काष्ठा vb2_queue *q,
+					  अचिन्हित पूर्णांक count)
+अणु
+	स्थिर क्रमागत ipu_ic_task ic_task = IC_TASK_POST_PROCESSOR;
+	काष्ठा ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(q);
+	काष्ठा ipu_csc_scaler_priv *priv = ctx->priv;
+	काष्ठा ipu_soc *ipu = priv->md->ipu[0];
+	काष्ठा ipu_csc_scaler_q_data *q_data;
+	काष्ठा vb2_queue *other_q;
+	काष्ठा ipu_image in, out;
 
 	other_q = v4l2_m2m_get_vq(ctx->fh.m2m_ctx,
 				  (q->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) ?
 				  V4L2_BUF_TYPE_VIDEO_OUTPUT :
 				  V4L2_BUF_TYPE_VIDEO_CAPTURE);
-	if (!vb2_is_streaming(other_q))
-		return 0;
+	अगर (!vb2_is_streaming(other_q))
+		वापस 0;
 
-	if (ctx->icc) {
+	अगर (ctx->icc) अणु
 		v4l2_warn(ctx->priv->vdev.vfd->v4l2_dev, "removing old ICC\n");
 		ipu_image_convert_unprepare(ctx->icc);
-	}
+	पूर्ण
 
 	q_data = get_q_data(ctx, V4L2_BUF_TYPE_VIDEO_OUTPUT);
 	ipu_image_from_q_data(&in, q_data);
@@ -530,124 +531,124 @@ static int ipu_csc_scaler_start_streaming(struct vb2_queue *q,
 	ctx->icc = ipu_image_convert_prepare(ipu, ic_task, &in, &out,
 					     ctx->rot_mode,
 					     ipu_ic_pp_complete, ctx);
-	if (IS_ERR(ctx->icc)) {
-		struct vb2_v4l2_buffer *buf;
-		int ret = PTR_ERR(ctx->icc);
+	अगर (IS_ERR(ctx->icc)) अणु
+		काष्ठा vb2_v4l2_buffer *buf;
+		पूर्णांक ret = PTR_ERR(ctx->icc);
 
-		ctx->icc = NULL;
+		ctx->icc = शून्य;
 		v4l2_err(ctx->priv->vdev.vfd->v4l2_dev, "%s: error %d\n",
 			 __func__, ret);
-		while ((buf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx)))
-			v4l2_m2m_buf_done(buf, VB2_BUF_STATE_QUEUED);
-		while ((buf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx)))
-			v4l2_m2m_buf_done(buf, VB2_BUF_STATE_QUEUED);
-		return ret;
-	}
+		जबतक ((buf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx)))
+			v4l2_m2m_buf_करोne(buf, VB2_BUF_STATE_QUEUED);
+		जबतक ((buf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx)))
+			v4l2_m2m_buf_करोne(buf, VB2_BUF_STATE_QUEUED);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ipu_csc_scaler_stop_streaming(struct vb2_queue *q)
-{
-	struct ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(q);
-	struct vb2_v4l2_buffer *buf;
+अटल व्योम ipu_csc_scaler_stop_streaming(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = vb2_get_drv_priv(q);
+	काष्ठा vb2_v4l2_buffer *buf;
 
-	if (ctx->icc) {
+	अगर (ctx->icc) अणु
 		ipu_image_convert_unprepare(ctx->icc);
-		ctx->icc = NULL;
-	}
+		ctx->icc = शून्य;
+	पूर्ण
 
 	ctx->sequence = 0;
 
-	if (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
-		while ((buf = v4l2_m2m_src_buf_remove(ctx->fh.m2m_ctx)))
-			v4l2_m2m_buf_done(buf, VB2_BUF_STATE_ERROR);
-	} else {
-		while ((buf = v4l2_m2m_dst_buf_remove(ctx->fh.m2m_ctx)))
-			v4l2_m2m_buf_done(buf, VB2_BUF_STATE_ERROR);
-	}
-}
+	अगर (q->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) अणु
+		जबतक ((buf = v4l2_m2m_src_buf_हटाओ(ctx->fh.m2m_ctx)))
+			v4l2_m2m_buf_करोne(buf, VB2_BUF_STATE_ERROR);
+	पूर्ण अन्यथा अणु
+		जबतक ((buf = v4l2_m2m_dst_buf_हटाओ(ctx->fh.m2m_ctx)))
+			v4l2_m2m_buf_करोne(buf, VB2_BUF_STATE_ERROR);
+	पूर्ण
+पूर्ण
 
-static const struct vb2_ops ipu_csc_scaler_qops = {
+अटल स्थिर काष्ठा vb2_ops ipu_csc_scaler_qops = अणु
 	.queue_setup		= ipu_csc_scaler_queue_setup,
 	.buf_prepare		= ipu_csc_scaler_buf_prepare,
 	.buf_queue		= ipu_csc_scaler_buf_queue,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
 	.start_streaming	= ipu_csc_scaler_start_streaming,
 	.stop_streaming		= ipu_csc_scaler_stop_streaming,
-};
+पूर्ण;
 
-static int ipu_csc_scaler_queue_init(void *priv, struct vb2_queue *src_vq,
-				     struct vb2_queue *dst_vq)
-{
-	struct ipu_csc_scaler_ctx *ctx = priv;
-	int ret;
+अटल पूर्णांक ipu_csc_scaler_queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+				     काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = priv;
+	पूर्णांक ret;
 
-	memset(src_vq, 0, sizeof(*src_vq));
+	स_रखो(src_vq, 0, माप(*src_vq));
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	src_vq->drv_priv = ctx;
-	src_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	src_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	src_vq->ops = &ipu_csc_scaler_qops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->lock = &ctx->priv->mutex;
 	src_vq->dev = ctx->priv->dev;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(dst_vq, 0, sizeof(*dst_vq));
+	स_रखो(dst_vq, 0, माप(*dst_vq));
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_DMABUF;
 	dst_vq->drv_priv = ctx;
-	dst_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	dst_vq->ops = &ipu_csc_scaler_qops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->lock = &ctx->priv->mutex;
 	dst_vq->dev = ctx->priv->dev;
 
-	return vb2_queue_init(dst_vq);
-}
+	वापस vb2_queue_init(dst_vq);
+पूर्ण
 
-static int ipu_csc_scaler_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct ipu_csc_scaler_ctx *ctx = container_of(ctrl->handler,
-						      struct ipu_csc_scaler_ctx,
+अटल पूर्णांक ipu_csc_scaler_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा ipu_csc_scaler_ctx *ctx = container_of(ctrl->handler,
+						      काष्ठा ipu_csc_scaler_ctx,
 						      ctrl_hdlr);
-	enum ipu_rotate_mode rot_mode;
-	int rotate;
+	क्रमागत ipu_rotate_mode rot_mode;
+	पूर्णांक rotate;
 	bool hflip, vflip;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	rotate = ctx->rotate;
 	hflip = ctx->hflip;
 	vflip = ctx->vflip;
 
-	switch (ctrl->id) {
-	case V4L2_CID_HFLIP:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_HFLIP:
 		hflip = ctrl->val;
-		break;
-	case V4L2_CID_VFLIP:
+		अवरोध;
+	हाल V4L2_CID_VFLIP:
 		vflip = ctrl->val;
-		break;
-	case V4L2_CID_ROTATE:
+		अवरोध;
+	हाल V4L2_CID_ROTATE:
 		rotate = ctrl->val;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = ipu_degrees_to_rot_mode(&rot_mode, rotate, hflip, vflip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (rot_mode != ctx->rot_mode) {
-		struct v4l2_pix_format *in_fmt, *out_fmt;
-		struct ipu_image test_in, test_out;
+	अगर (rot_mode != ctx->rot_mode) अणु
+		काष्ठा v4l2_pix_क्रमmat *in_fmt, *out_fmt;
+		काष्ठा ipu_image test_in, test_out;
 
 		in_fmt = &ctx->q_data[V4L2_M2M_SRC].cur_fmt;
 		out_fmt = &ctx->q_data[V4L2_M2M_DST].cur_fmt;
@@ -655,40 +656,40 @@ static int ipu_csc_scaler_s_ctrl(struct v4l2_ctrl *ctrl)
 		test_in.pix = *in_fmt;
 		test_out.pix = *out_fmt;
 
-		if (ipu_rot_mode_is_irt(rot_mode) !=
-		    ipu_rot_mode_is_irt(ctx->rot_mode)) {
-			/* Switch width & height to keep aspect ratio intact */
+		अगर (ipu_rot_mode_is_irt(rot_mode) !=
+		    ipu_rot_mode_is_irt(ctx->rot_mode)) अणु
+			/* Switch width & height to keep aspect ratio पूर्णांकact */
 			test_out.pix.width = out_fmt->height;
 			test_out.pix.height = out_fmt->width;
-		}
+		पूर्ण
 
 		ipu_image_convert_adjust(&test_in, &test_out, ctx->rot_mode);
 
-		/* Check if output format needs to be changed */
-		if (test_in.pix.width != in_fmt->width ||
+		/* Check अगर output क्रमmat needs to be changed */
+		अगर (test_in.pix.width != in_fmt->width ||
 		    test_in.pix.height != in_fmt->height ||
 		    test_in.pix.bytesperline != in_fmt->bytesperline ||
-		    test_in.pix.sizeimage != in_fmt->sizeimage) {
-			struct vb2_queue *out_q;
+		    test_in.pix.sizeimage != in_fmt->sizeimage) अणु
+			काष्ठा vb2_queue *out_q;
 
 			out_q = v4l2_m2m_get_vq(ctx->fh.m2m_ctx,
 						V4L2_BUF_TYPE_VIDEO_OUTPUT);
-			if (vb2_is_busy(out_q))
-				return -EBUSY;
-		}
+			अगर (vb2_is_busy(out_q))
+				वापस -EBUSY;
+		पूर्ण
 
-		/* Check if capture format needs to be changed */
-		if (test_out.pix.width != out_fmt->width ||
+		/* Check अगर capture क्रमmat needs to be changed */
+		अगर (test_out.pix.width != out_fmt->width ||
 		    test_out.pix.height != out_fmt->height ||
 		    test_out.pix.bytesperline != out_fmt->bytesperline ||
-		    test_out.pix.sizeimage != out_fmt->sizeimage) {
-			struct vb2_queue *cap_q;
+		    test_out.pix.sizeimage != out_fmt->sizeimage) अणु
+			काष्ठा vb2_queue *cap_q;
 
 			cap_q = v4l2_m2m_get_vq(ctx->fh.m2m_ctx,
 						V4L2_BUF_TYPE_VIDEO_CAPTURE);
-			if (vb2_is_busy(cap_q))
-				return -EBUSY;
-		}
+			अगर (vb2_is_busy(cap_q))
+				वापस -EBUSY;
+		पूर्ण
 
 		*in_fmt = test_in.pix;
 		*out_fmt = test_out.pix;
@@ -697,18 +698,18 @@ static int ipu_csc_scaler_s_ctrl(struct v4l2_ctrl *ctrl)
 		ctx->rotate = rotate;
 		ctx->hflip = hflip;
 		ctx->vflip = vflip;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ipu_csc_scaler_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ipu_csc_scaler_ctrl_ops = अणु
 	.s_ctrl = ipu_csc_scaler_s_ctrl,
-};
+पूर्ण;
 
-static int ipu_csc_scaler_init_controls(struct ipu_csc_scaler_ctx *ctx)
-{
-	struct v4l2_ctrl_handler *hdlr = &ctx->ctrl_hdlr;
+अटल पूर्णांक ipu_csc_scaler_init_controls(काष्ठा ipu_csc_scaler_ctx *ctx)
+अणु
+	काष्ठा v4l2_ctrl_handler *hdlr = &ctx->ctrl_hdlr;
 
 	v4l2_ctrl_handler_init(hdlr, 3);
 
@@ -719,169 +720,169 @@ static int ipu_csc_scaler_init_controls(struct ipu_csc_scaler_ctx *ctx)
 	v4l2_ctrl_new_std(hdlr, &ipu_csc_scaler_ctrl_ops, V4L2_CID_ROTATE,
 			  0, 270, 90, 0);
 
-	if (hdlr->error) {
-		v4l2_ctrl_handler_free(hdlr);
-		return hdlr->error;
-	}
+	अगर (hdlr->error) अणु
+		v4l2_ctrl_handler_मुक्त(hdlr);
+		वापस hdlr->error;
+	पूर्ण
 
 	v4l2_ctrl_handler_setup(hdlr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DEFAULT_WIDTH	720
-#define DEFAULT_HEIGHT	576
-static const struct ipu_csc_scaler_q_data ipu_csc_scaler_q_data_default = {
-	.cur_fmt = {
+#घोषणा DEFAULT_WIDTH	720
+#घोषणा DEFAULT_HEIGHT	576
+अटल स्थिर काष्ठा ipu_csc_scaler_q_data ipu_csc_scaler_q_data_शेष = अणु
+	.cur_fmt = अणु
 		.width = DEFAULT_WIDTH,
 		.height = DEFAULT_HEIGHT,
-		.pixelformat = V4L2_PIX_FMT_YUV420,
+		.pixelक्रमmat = V4L2_PIX_FMT_YUV420,
 		.field = V4L2_FIELD_NONE,
 		.bytesperline = DEFAULT_WIDTH,
 		.sizeimage = DEFAULT_WIDTH * DEFAULT_HEIGHT * 3 / 2,
 		.colorspace = V4L2_COLORSPACE_SRGB,
-	},
-	.rect = {
+	पूर्ण,
+	.rect = अणु
 		.width = DEFAULT_WIDTH,
 		.height = DEFAULT_HEIGHT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
  * File operations
  */
-static int ipu_csc_scaler_open(struct file *file)
-{
-	struct ipu_csc_scaler_priv *priv = video_drvdata(file);
-	struct ipu_csc_scaler_ctx *ctx = NULL;
-	int ret;
+अटल पूर्णांक ipu_csc_scaler_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा ipu_csc_scaler_priv *priv = video_drvdata(file);
+	काष्ठा ipu_csc_scaler_ctx *ctx = शून्य;
+	पूर्णांक ret;
 
-	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->rot_mode = IPU_ROTATE_NONE;
 
 	v4l2_fh_init(&ctx->fh, video_devdata(file));
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	v4l2_fh_add(&ctx->fh);
 	ctx->priv = priv;
 
 	ctx->fh.m2m_ctx = v4l2_m2m_ctx_init(priv->m2m_dev, ctx,
 					    &ipu_csc_scaler_queue_init);
-	if (IS_ERR(ctx->fh.m2m_ctx)) {
+	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
 		ret = PTR_ERR(ctx->fh.m2m_ctx);
-		goto err_ctx;
-	}
+		जाओ err_ctx;
+	पूर्ण
 
 	ret = ipu_csc_scaler_init_controls(ctx);
-	if (ret)
-		goto err_ctrls;
+	अगर (ret)
+		जाओ err_ctrls;
 
 	ctx->fh.ctrl_handler = &ctx->ctrl_hdlr;
 
-	ctx->q_data[V4L2_M2M_SRC] = ipu_csc_scaler_q_data_default;
-	ctx->q_data[V4L2_M2M_DST] = ipu_csc_scaler_q_data_default;
+	ctx->q_data[V4L2_M2M_SRC] = ipu_csc_scaler_q_data_शेष;
+	ctx->q_data[V4L2_M2M_DST] = ipu_csc_scaler_q_data_शेष;
 
 	dev_dbg(priv->dev, "Created instance %p, m2m_ctx: %p\n", ctx,
 		ctx->fh.m2m_ctx);
 
-	return 0;
+	वापस 0;
 
 err_ctrls:
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 err_ctx:
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
-	kfree(ctx);
-	return ret;
-}
+	v4l2_fh_निकास(&ctx->fh);
+	kमुक्त(ctx);
+	वापस ret;
+पूर्ण
 
-static int ipu_csc_scaler_release(struct file *file)
-{
-	struct ipu_csc_scaler_priv *priv = video_drvdata(file);
-	struct ipu_csc_scaler_ctx *ctx = fh_to_ctx(file->private_data);
+अटल पूर्णांक ipu_csc_scaler_release(काष्ठा file *file)
+अणु
+	काष्ठा ipu_csc_scaler_priv *priv = video_drvdata(file);
+	काष्ठा ipu_csc_scaler_ctx *ctx = fh_to_ctx(file->निजी_data);
 
 	dev_dbg(priv->dev, "Releasing instance %p\n", ctx);
 
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
-	kfree(ctx);
+	v4l2_fh_निकास(&ctx->fh);
+	kमुक्त(ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations ipu_csc_scaler_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations ipu_csc_scaler_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= ipu_csc_scaler_open,
+	.खोलो		= ipu_csc_scaler_खोलो,
 	.release	= ipu_csc_scaler_release,
 	.poll		= v4l2_m2m_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= v4l2_m2m_fop_mmap,
-};
+पूर्ण;
 
-static struct v4l2_m2m_ops m2m_ops = {
+अटल काष्ठा v4l2_m2m_ops m2m_ops = अणु
 	.device_run	= device_run,
-	.job_abort	= job_abort,
-};
+	.job_पात	= job_पात,
+पूर्ण;
 
-static void ipu_csc_scaler_video_device_release(struct video_device *vdev)
-{
-	struct ipu_csc_scaler_priv *priv = video_get_drvdata(vdev);
+अटल व्योम ipu_csc_scaler_video_device_release(काष्ठा video_device *vdev)
+अणु
+	काष्ठा ipu_csc_scaler_priv *priv = video_get_drvdata(vdev);
 
 	v4l2_m2m_release(priv->m2m_dev);
 	video_device_release(vdev);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static const struct video_device ipu_csc_scaler_videodev_template = {
+अटल स्थिर काष्ठा video_device ipu_csc_scaler_videodev_ढाँचा = अणु
 	.name		= "ipu_ic_pp csc/scaler",
 	.fops		= &ipu_csc_scaler_fops,
 	.ioctl_ops	= &ipu_csc_scaler_ioctl_ops,
 	.minor		= -1,
 	.release	= ipu_csc_scaler_video_device_release,
-	.vfl_dir	= VFL_DIR_M2M,
+	.vfl_dir	= VFL_सूची_M2M,
 	.device_caps	= V4L2_CAP_VIDEO_M2M | V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-int imx_media_csc_scaler_device_register(struct imx_media_video_dev *vdev)
-{
-	struct ipu_csc_scaler_priv *priv = vdev_to_priv(vdev);
-	struct video_device *vfd = vdev->vfd;
-	int ret;
+पूर्णांक imx_media_csc_scaler_device_रेजिस्टर(काष्ठा imx_media_video_dev *vdev)
+अणु
+	काष्ठा ipu_csc_scaler_priv *priv = vdev_to_priv(vdev);
+	काष्ठा video_device *vfd = vdev->vfd;
+	पूर्णांक ret;
 
 	vfd->v4l2_dev = &priv->md->v4l2_dev;
 
-	ret = video_register_device(vfd, VFL_TYPE_VIDEO, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, -1);
+	अगर (ret) अणु
 		v4l2_err(vfd->v4l2_dev, "Failed to register video device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	v4l2_info(vfd->v4l2_dev, "Registered %s as /dev/%s\n", vfd->name,
 		  video_device_node_name(vfd));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void imx_media_csc_scaler_device_unregister(struct imx_media_video_dev *vdev)
-{
-	struct ipu_csc_scaler_priv *priv = vdev_to_priv(vdev);
-	struct video_device *vfd = priv->vdev.vfd;
+व्योम imx_media_csc_scaler_device_unरेजिस्टर(काष्ठा imx_media_video_dev *vdev)
+अणु
+	काष्ठा ipu_csc_scaler_priv *priv = vdev_to_priv(vdev);
+	काष्ठा video_device *vfd = priv->vdev.vfd;
 
-	video_unregister_device(vfd);
-}
+	video_unरेजिस्टर_device(vfd);
+पूर्ण
 
-struct imx_media_video_dev *
-imx_media_csc_scaler_device_init(struct imx_media_dev *md)
-{
-	struct ipu_csc_scaler_priv *priv;
-	struct video_device *vfd;
-	int ret;
+काष्ठा imx_media_video_dev *
+imx_media_csc_scaler_device_init(काष्ठा imx_media_dev *md)
+अणु
+	काष्ठा ipu_csc_scaler_priv *priv;
+	काष्ठा video_device *vfd;
+	पूर्णांक ret;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return ERR_PTR(-ENOMEM);
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस ERR_PTR(-ENOMEM);
 
 	priv->md = md;
 	priv->dev = md->md.dev;
@@ -889,12 +890,12 @@ imx_media_csc_scaler_device_init(struct imx_media_dev *md)
 	mutex_init(&priv->mutex);
 
 	vfd = video_device_alloc();
-	if (!vfd) {
+	अगर (!vfd) अणु
 		ret = -ENOMEM;
-		goto err_vfd;
-	}
+		जाओ err_vfd;
+	पूर्ण
 
-	*vfd = ipu_csc_scaler_videodev_template;
+	*vfd = ipu_csc_scaler_videodev_ढाँचा;
 	vfd->lock = &priv->mutex;
 	priv->vdev.vfd = vfd;
 
@@ -903,21 +904,21 @@ imx_media_csc_scaler_device_init(struct imx_media_dev *md)
 	video_set_drvdata(vfd, priv);
 
 	priv->m2m_dev = v4l2_m2m_init(&m2m_ops);
-	if (IS_ERR(priv->m2m_dev)) {
+	अगर (IS_ERR(priv->m2m_dev)) अणु
 		ret = PTR_ERR(priv->m2m_dev);
 		v4l2_err(&md->v4l2_dev, "Failed to init mem2mem device: %d\n",
 			 ret);
-		goto err_m2m;
-	}
+		जाओ err_m2m;
+	पूर्ण
 
-	return &priv->vdev;
+	वापस &priv->vdev;
 
 err_m2m:
-	video_set_drvdata(vfd, NULL);
+	video_set_drvdata(vfd, शून्य);
 err_vfd:
-	kfree(priv);
-	return ERR_PTR(ret);
-}
+	kमुक्त(priv);
+	वापस ERR_PTR(ret);
+पूर्ण
 
 MODULE_DESCRIPTION("i.MX IPUv3 mem2mem scaler/CSC driver");
 MODULE_AUTHOR("Sascha Hauer <s.hauer@pengutronix.de>");

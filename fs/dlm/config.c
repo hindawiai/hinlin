@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -9,85 +10,85 @@
 *******************************************************************************
 ******************************************************************************/
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/configfs.h>
-#include <linux/slab.h>
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <linux/dlmconstants.h>
-#include <net/ipv6.h>
-#include <net/sock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/configfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/dlmस्थिरants.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/sock.h>
 
-#include "config.h"
-#include "lowcomms.h"
+#समावेश "config.h"
+#समावेश "lowcomms.h"
 
 /*
  * /config/dlm/<cluster>/spaces/<space>/nodes/<node>/nodeid
  * /config/dlm/<cluster>/spaces/<space>/nodes/<node>/weight
  * /config/dlm/<cluster>/comms/<comm>/nodeid
  * /config/dlm/<cluster>/comms/<comm>/local
- * /config/dlm/<cluster>/comms/<comm>/addr      (write only)
- * /config/dlm/<cluster>/comms/<comm>/addr_list (read only)
- * The <cluster> level is useless, but I haven't figured out how to avoid it.
+ * /config/dlm/<cluster>/comms/<comm>/addr      (ग_लिखो only)
+ * /config/dlm/<cluster>/comms/<comm>/addr_list (पढ़ो only)
+ * The <cluster> level is useless, but I haven't figured out how to aव्योम it.
  */
 
-static struct config_group *space_list;
-static struct config_group *comm_list;
-static struct dlm_comm *local_comm;
-static uint32_t dlm_comm_count;
+अटल काष्ठा config_group *space_list;
+अटल काष्ठा config_group *comm_list;
+अटल काष्ठा dlm_comm *local_comm;
+अटल uपूर्णांक32_t dlm_comm_count;
 
-struct dlm_clusters;
-struct dlm_cluster;
-struct dlm_spaces;
-struct dlm_space;
-struct dlm_comms;
-struct dlm_comm;
-struct dlm_nodes;
-struct dlm_node;
+काष्ठा dlm_clusters;
+काष्ठा dlm_cluster;
+काष्ठा dlm_spaces;
+काष्ठा dlm_space;
+काष्ठा dlm_comms;
+काष्ठा dlm_comm;
+काष्ठा dlm_nodes;
+काष्ठा dlm_node;
 
-static struct config_group *make_cluster(struct config_group *, const char *);
-static void drop_cluster(struct config_group *, struct config_item *);
-static void release_cluster(struct config_item *);
-static struct config_group *make_space(struct config_group *, const char *);
-static void drop_space(struct config_group *, struct config_item *);
-static void release_space(struct config_item *);
-static struct config_item *make_comm(struct config_group *, const char *);
-static void drop_comm(struct config_group *, struct config_item *);
-static void release_comm(struct config_item *);
-static struct config_item *make_node(struct config_group *, const char *);
-static void drop_node(struct config_group *, struct config_item *);
-static void release_node(struct config_item *);
+अटल काष्ठा config_group *make_cluster(काष्ठा config_group *, स्थिर अक्षर *);
+अटल व्योम drop_cluster(काष्ठा config_group *, काष्ठा config_item *);
+अटल व्योम release_cluster(काष्ठा config_item *);
+अटल काष्ठा config_group *make_space(काष्ठा config_group *, स्थिर अक्षर *);
+अटल व्योम drop_space(काष्ठा config_group *, काष्ठा config_item *);
+अटल व्योम release_space(काष्ठा config_item *);
+अटल काष्ठा config_item *make_comm(काष्ठा config_group *, स्थिर अक्षर *);
+अटल व्योम drop_comm(काष्ठा config_group *, काष्ठा config_item *);
+अटल व्योम release_comm(काष्ठा config_item *);
+अटल काष्ठा config_item *make_node(काष्ठा config_group *, स्थिर अक्षर *);
+अटल व्योम drop_node(काष्ठा config_group *, काष्ठा config_item *);
+अटल व्योम release_node(काष्ठा config_item *);
 
-static struct configfs_attribute *comm_attrs[];
-static struct configfs_attribute *node_attrs[];
+अटल काष्ठा configfs_attribute *comm_attrs[];
+अटल काष्ठा configfs_attribute *node_attrs[];
 
-struct dlm_cluster {
-	struct config_group group;
-	unsigned int cl_tcp_port;
-	unsigned int cl_buffer_size;
-	unsigned int cl_rsbtbl_size;
-	unsigned int cl_recover_timer;
-	unsigned int cl_toss_secs;
-	unsigned int cl_scan_secs;
-	unsigned int cl_log_debug;
-	unsigned int cl_log_info;
-	unsigned int cl_protocol;
-	unsigned int cl_mark;
-	unsigned int cl_timewarn_cs;
-	unsigned int cl_waitwarn_us;
-	unsigned int cl_new_rsb_count;
-	unsigned int cl_recover_callbacks;
-	char cl_cluster_name[DLM_LOCKSPACE_LEN];
-};
+काष्ठा dlm_cluster अणु
+	काष्ठा config_group group;
+	अचिन्हित पूर्णांक cl_tcp_port;
+	अचिन्हित पूर्णांक cl_buffer_size;
+	अचिन्हित पूर्णांक cl_rsbtbl_size;
+	अचिन्हित पूर्णांक cl_recover_समयr;
+	अचिन्हित पूर्णांक cl_toss_secs;
+	अचिन्हित पूर्णांक cl_scan_secs;
+	अचिन्हित पूर्णांक cl_log_debug;
+	अचिन्हित पूर्णांक cl_log_info;
+	अचिन्हित पूर्णांक cl_protocol;
+	अचिन्हित पूर्णांक cl_mark;
+	अचिन्हित पूर्णांक cl_समयwarn_cs;
+	अचिन्हित पूर्णांक cl_रुकोwarn_us;
+	अचिन्हित पूर्णांक cl_new_rsb_count;
+	अचिन्हित पूर्णांक cl_recover_callbacks;
+	अक्षर cl_cluster_name[DLM_LOCKSPACE_LEN];
+पूर्ण;
 
-static struct dlm_cluster *config_item_to_cluster(struct config_item *i)
-{
-	return i ? container_of(to_config_group(i), struct dlm_cluster, group) :
-		   NULL;
-}
+अटल काष्ठा dlm_cluster *config_item_to_cluster(काष्ठा config_item *i)
+अणु
+	वापस i ? container_of(to_config_group(i), काष्ठा dlm_cluster, group) :
+		   शून्य;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	CLUSTER_ATTR_TCP_PORT = 0,
 	CLUSTER_ATTR_BUFFER_SIZE,
 	CLUSTER_ATTR_RSBTBL_SIZE,
@@ -103,473 +104,473 @@ enum {
 	CLUSTER_ATTR_NEW_RSB_COUNT,
 	CLUSTER_ATTR_RECOVER_CALLBACKS,
 	CLUSTER_ATTR_CLUSTER_NAME,
-};
+पूर्ण;
 
-static ssize_t cluster_cluster_name_show(struct config_item *item, char *buf)
-{
-	struct dlm_cluster *cl = config_item_to_cluster(item);
-	return sprintf(buf, "%s\n", cl->cl_cluster_name);
-}
+अटल sमाप_प्रकार cluster_cluster_name_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	काष्ठा dlm_cluster *cl = config_item_to_cluster(item);
+	वापस प्र_लिखो(buf, "%s\n", cl->cl_cluster_name);
+पूर्ण
 
-static ssize_t cluster_cluster_name_store(struct config_item *item,
-					  const char *buf, size_t len)
-{
-	struct dlm_cluster *cl = config_item_to_cluster(item);
+अटल sमाप_प्रकार cluster_cluster_name_store(काष्ठा config_item *item,
+					  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा dlm_cluster *cl = config_item_to_cluster(item);
 
 	strlcpy(dlm_config.ci_cluster_name, buf,
-				sizeof(dlm_config.ci_cluster_name));
-	strlcpy(cl->cl_cluster_name, buf, sizeof(cl->cl_cluster_name));
-	return len;
-}
+				माप(dlm_config.ci_cluster_name));
+	strlcpy(cl->cl_cluster_name, buf, माप(cl->cl_cluster_name));
+	वापस len;
+पूर्ण
 
 CONFIGFS_ATTR(cluster_, cluster_name);
 
-static ssize_t cluster_set(struct dlm_cluster *cl, unsigned int *cl_field,
-			   int *info_field, int (*check_cb)(unsigned int x),
-			   const char *buf, size_t len)
-{
-	unsigned int x;
-	int rc;
+अटल sमाप_प्रकार cluster_set(काष्ठा dlm_cluster *cl, अचिन्हित पूर्णांक *cl_field,
+			   पूर्णांक *info_field, पूर्णांक (*check_cb)(अचिन्हित पूर्णांक x),
+			   स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक x;
+	पूर्णांक rc;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
-	rc = kstrtouint(buf, 0, &x);
-	if (rc)
-		return rc;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
+	rc = kstrtouपूर्णांक(buf, 0, &x);
+	अगर (rc)
+		वापस rc;
 
-	if (check_cb) {
+	अगर (check_cb) अणु
 		rc = check_cb(x);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	*cl_field = x;
 	*info_field = x;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-#define CLUSTER_ATTR(name, check_cb)                                          \
-static ssize_t cluster_##name##_store(struct config_item *item, \
-		const char *buf, size_t len) \
-{                                                                             \
-	struct dlm_cluster *cl = config_item_to_cluster(item);		      \
-	return cluster_set(cl, &cl->cl_##name, &dlm_config.ci_##name,         \
+#घोषणा CLUSTER_ATTR(name, check_cb)                                          \
+अटल sमाप_प्रकार cluster_##name##_store(काष्ठा config_item *item, \
+		स्थिर अक्षर *buf, माप_प्रकार len) \
+अणु                                                                             \
+	काष्ठा dlm_cluster *cl = config_item_to_cluster(item);		      \
+	वापस cluster_set(cl, &cl->cl_##name, &dlm_config.ci_##name,         \
 			   check_cb, buf, len);                               \
-}                                                                             \
-static ssize_t cluster_##name##_show(struct config_item *item, char *buf)     \
-{                                                                             \
-	struct dlm_cluster *cl = config_item_to_cluster(item);		      \
-	return snprintf(buf, PAGE_SIZE, "%u\n", cl->cl_##name);               \
-}                                                                             \
+पूर्ण                                                                             \
+अटल sमाप_प्रकार cluster_##name##_show(काष्ठा config_item *item, अक्षर *buf)     \
+अणु                                                                             \
+	काष्ठा dlm_cluster *cl = config_item_to_cluster(item);		      \
+	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", cl->cl_##name);               \
+पूर्ण                                                                             \
 CONFIGFS_ATTR(cluster_, name);
 
-static int dlm_check_protocol_and_dlm_running(unsigned int x)
-{
-	switch (x) {
-	case 0:
+अटल पूर्णांक dlm_check_protocol_and_dlm_running(अचिन्हित पूर्णांक x)
+अणु
+	चयन (x) अणु
+	हाल 0:
 		/* TCP */
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		/* SCTP */
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (dlm_allow_conn)
-		return -EBUSY;
+	अगर (dlm_allow_conn)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dlm_check_zero_and_dlm_running(unsigned int x)
-{
-	if (!x)
-		return -EINVAL;
+अटल पूर्णांक dlm_check_zero_and_dlm_running(अचिन्हित पूर्णांक x)
+अणु
+	अगर (!x)
+		वापस -EINVAL;
 
-	if (dlm_allow_conn)
-		return -EBUSY;
+	अगर (dlm_allow_conn)
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dlm_check_zero(unsigned int x)
-{
-	if (!x)
-		return -EINVAL;
+अटल पूर्णांक dlm_check_zero(अचिन्हित पूर्णांक x)
+अणु
+	अगर (!x)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dlm_check_buffer_size(unsigned int x)
-{
-	if (x < DEFAULT_BUFFER_SIZE)
-		return -EINVAL;
+अटल पूर्णांक dlm_check_buffer_size(अचिन्हित पूर्णांक x)
+अणु
+	अगर (x < DEFAULT_BUFFER_SIZE)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 CLUSTER_ATTR(tcp_port, dlm_check_zero_and_dlm_running);
 CLUSTER_ATTR(buffer_size, dlm_check_buffer_size);
 CLUSTER_ATTR(rsbtbl_size, dlm_check_zero);
-CLUSTER_ATTR(recover_timer, dlm_check_zero);
+CLUSTER_ATTR(recover_समयr, dlm_check_zero);
 CLUSTER_ATTR(toss_secs, dlm_check_zero);
 CLUSTER_ATTR(scan_secs, dlm_check_zero);
-CLUSTER_ATTR(log_debug, NULL);
-CLUSTER_ATTR(log_info, NULL);
+CLUSTER_ATTR(log_debug, शून्य);
+CLUSTER_ATTR(log_info, शून्य);
 CLUSTER_ATTR(protocol, dlm_check_protocol_and_dlm_running);
-CLUSTER_ATTR(mark, NULL);
-CLUSTER_ATTR(timewarn_cs, dlm_check_zero);
-CLUSTER_ATTR(waitwarn_us, NULL);
-CLUSTER_ATTR(new_rsb_count, NULL);
-CLUSTER_ATTR(recover_callbacks, NULL);
+CLUSTER_ATTR(mark, शून्य);
+CLUSTER_ATTR(समयwarn_cs, dlm_check_zero);
+CLUSTER_ATTR(रुकोwarn_us, शून्य);
+CLUSTER_ATTR(new_rsb_count, शून्य);
+CLUSTER_ATTR(recover_callbacks, शून्य);
 
-static struct configfs_attribute *cluster_attrs[] = {
+अटल काष्ठा configfs_attribute *cluster_attrs[] = अणु
 	[CLUSTER_ATTR_TCP_PORT] = &cluster_attr_tcp_port,
 	[CLUSTER_ATTR_BUFFER_SIZE] = &cluster_attr_buffer_size,
 	[CLUSTER_ATTR_RSBTBL_SIZE] = &cluster_attr_rsbtbl_size,
-	[CLUSTER_ATTR_RECOVER_TIMER] = &cluster_attr_recover_timer,
+	[CLUSTER_ATTR_RECOVER_TIMER] = &cluster_attr_recover_समयr,
 	[CLUSTER_ATTR_TOSS_SECS] = &cluster_attr_toss_secs,
 	[CLUSTER_ATTR_SCAN_SECS] = &cluster_attr_scan_secs,
 	[CLUSTER_ATTR_LOG_DEBUG] = &cluster_attr_log_debug,
 	[CLUSTER_ATTR_LOG_INFO] = &cluster_attr_log_info,
 	[CLUSTER_ATTR_PROTOCOL] = &cluster_attr_protocol,
 	[CLUSTER_ATTR_MARK] = &cluster_attr_mark,
-	[CLUSTER_ATTR_TIMEWARN_CS] = &cluster_attr_timewarn_cs,
-	[CLUSTER_ATTR_WAITWARN_US] = &cluster_attr_waitwarn_us,
+	[CLUSTER_ATTR_TIMEWARN_CS] = &cluster_attr_समयwarn_cs,
+	[CLUSTER_ATTR_WAITWARN_US] = &cluster_attr_रुकोwarn_us,
 	[CLUSTER_ATTR_NEW_RSB_COUNT] = &cluster_attr_new_rsb_count,
 	[CLUSTER_ATTR_RECOVER_CALLBACKS] = &cluster_attr_recover_callbacks,
 	[CLUSTER_ATTR_CLUSTER_NAME] = &cluster_attr_cluster_name,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	COMM_ATTR_NODEID = 0,
 	COMM_ATTR_LOCAL,
 	COMM_ATTR_ADDR,
 	COMM_ATTR_ADDR_LIST,
 	COMM_ATTR_MARK,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	NODE_ATTR_NODEID = 0,
 	NODE_ATTR_WEIGHT,
-};
+पूर्ण;
 
-struct dlm_clusters {
-	struct configfs_subsystem subsys;
-};
+काष्ठा dlm_clusters अणु
+	काष्ठा configfs_subप्रणाली subsys;
+पूर्ण;
 
-struct dlm_spaces {
-	struct config_group ss_group;
-};
+काष्ठा dlm_spaces अणु
+	काष्ठा config_group ss_group;
+पूर्ण;
 
-struct dlm_space {
-	struct config_group group;
-	struct list_head members;
-	struct mutex members_lock;
-	int members_count;
-	struct dlm_nodes *nds;
-};
+काष्ठा dlm_space अणु
+	काष्ठा config_group group;
+	काष्ठा list_head members;
+	काष्ठा mutex members_lock;
+	पूर्णांक members_count;
+	काष्ठा dlm_nodes *nds;
+पूर्ण;
 
-struct dlm_comms {
-	struct config_group cs_group;
-};
+काष्ठा dlm_comms अणु
+	काष्ठा config_group cs_group;
+पूर्ण;
 
-struct dlm_comm {
-	struct config_item item;
-	int seq;
-	int nodeid;
-	int local;
-	int addr_count;
-	unsigned int mark;
-	struct sockaddr_storage *addr[DLM_MAX_ADDR_COUNT];
-};
+काष्ठा dlm_comm अणु
+	काष्ठा config_item item;
+	पूर्णांक seq;
+	पूर्णांक nodeid;
+	पूर्णांक local;
+	पूर्णांक addr_count;
+	अचिन्हित पूर्णांक mark;
+	काष्ठा sockaddr_storage *addr[DLM_MAX_ADDR_COUNT];
+पूर्ण;
 
-struct dlm_nodes {
-	struct config_group ns_group;
-};
+काष्ठा dlm_nodes अणु
+	काष्ठा config_group ns_group;
+पूर्ण;
 
-struct dlm_node {
-	struct config_item item;
-	struct list_head list; /* space->members */
-	int nodeid;
-	int weight;
-	int new;
-	int comm_seq; /* copy of cm->seq when nd->nodeid is set */
-};
+काष्ठा dlm_node अणु
+	काष्ठा config_item item;
+	काष्ठा list_head list; /* space->members */
+	पूर्णांक nodeid;
+	पूर्णांक weight;
+	पूर्णांक new;
+	पूर्णांक comm_seq; /* copy of cm->seq when nd->nodeid is set */
+पूर्ण;
 
-static struct configfs_group_operations clusters_ops = {
+अटल काष्ठा configfs_group_operations clusters_ops = अणु
 	.make_group = make_cluster,
 	.drop_item = drop_cluster,
-};
+पूर्ण;
 
-static struct configfs_item_operations cluster_ops = {
+अटल काष्ठा configfs_item_operations cluster_ops = अणु
 	.release = release_cluster,
-};
+पूर्ण;
 
-static struct configfs_group_operations spaces_ops = {
+अटल काष्ठा configfs_group_operations spaces_ops = अणु
 	.make_group = make_space,
 	.drop_item = drop_space,
-};
+पूर्ण;
 
-static struct configfs_item_operations space_ops = {
+अटल काष्ठा configfs_item_operations space_ops = अणु
 	.release = release_space,
-};
+पूर्ण;
 
-static struct configfs_group_operations comms_ops = {
+अटल काष्ठा configfs_group_operations comms_ops = अणु
 	.make_item = make_comm,
 	.drop_item = drop_comm,
-};
+पूर्ण;
 
-static struct configfs_item_operations comm_ops = {
+अटल काष्ठा configfs_item_operations comm_ops = अणु
 	.release = release_comm,
-};
+पूर्ण;
 
-static struct configfs_group_operations nodes_ops = {
+अटल काष्ठा configfs_group_operations nodes_ops = अणु
 	.make_item = make_node,
 	.drop_item = drop_node,
-};
+पूर्ण;
 
-static struct configfs_item_operations node_ops = {
+अटल काष्ठा configfs_item_operations node_ops = अणु
 	.release = release_node,
-};
+पूर्ण;
 
-static const struct config_item_type clusters_type = {
+अटल स्थिर काष्ठा config_item_type clusters_type = अणु
 	.ct_group_ops = &clusters_ops,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type cluster_type = {
+अटल स्थिर काष्ठा config_item_type cluster_type = अणु
 	.ct_item_ops = &cluster_ops,
 	.ct_attrs = cluster_attrs,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type spaces_type = {
+अटल स्थिर काष्ठा config_item_type spaces_type = अणु
 	.ct_group_ops = &spaces_ops,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type space_type = {
+अटल स्थिर काष्ठा config_item_type space_type = अणु
 	.ct_item_ops = &space_ops,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type comms_type = {
+अटल स्थिर काष्ठा config_item_type comms_type = अणु
 	.ct_group_ops = &comms_ops,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type comm_type = {
+अटल स्थिर काष्ठा config_item_type comm_type = अणु
 	.ct_item_ops = &comm_ops,
 	.ct_attrs = comm_attrs,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type nodes_type = {
+अटल स्थिर काष्ठा config_item_type nodes_type = अणु
 	.ct_group_ops = &nodes_ops,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct config_item_type node_type = {
+अटल स्थिर काष्ठा config_item_type node_type = अणु
 	.ct_item_ops = &node_ops,
 	.ct_attrs = node_attrs,
 	.ct_owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct dlm_space *config_item_to_space(struct config_item *i)
-{
-	return i ? container_of(to_config_group(i), struct dlm_space, group) :
-		   NULL;
-}
+अटल काष्ठा dlm_space *config_item_to_space(काष्ठा config_item *i)
+अणु
+	वापस i ? container_of(to_config_group(i), काष्ठा dlm_space, group) :
+		   शून्य;
+पूर्ण
 
-static struct dlm_comm *config_item_to_comm(struct config_item *i)
-{
-	return i ? container_of(i, struct dlm_comm, item) : NULL;
-}
+अटल काष्ठा dlm_comm *config_item_to_comm(काष्ठा config_item *i)
+अणु
+	वापस i ? container_of(i, काष्ठा dlm_comm, item) : शून्य;
+पूर्ण
 
-static struct dlm_node *config_item_to_node(struct config_item *i)
-{
-	return i ? container_of(i, struct dlm_node, item) : NULL;
-}
+अटल काष्ठा dlm_node *config_item_to_node(काष्ठा config_item *i)
+अणु
+	वापस i ? container_of(i, काष्ठा dlm_node, item) : शून्य;
+पूर्ण
 
-static struct config_group *make_cluster(struct config_group *g,
-					 const char *name)
-{
-	struct dlm_cluster *cl = NULL;
-	struct dlm_spaces *sps = NULL;
-	struct dlm_comms *cms = NULL;
+अटल काष्ठा config_group *make_cluster(काष्ठा config_group *g,
+					 स्थिर अक्षर *name)
+अणु
+	काष्ठा dlm_cluster *cl = शून्य;
+	काष्ठा dlm_spaces *sps = शून्य;
+	काष्ठा dlm_comms *cms = शून्य;
 
-	cl = kzalloc(sizeof(struct dlm_cluster), GFP_NOFS);
-	sps = kzalloc(sizeof(struct dlm_spaces), GFP_NOFS);
-	cms = kzalloc(sizeof(struct dlm_comms), GFP_NOFS);
+	cl = kzalloc(माप(काष्ठा dlm_cluster), GFP_NOFS);
+	sps = kzalloc(माप(काष्ठा dlm_spaces), GFP_NOFS);
+	cms = kzalloc(माप(काष्ठा dlm_comms), GFP_NOFS);
 
-	if (!cl || !sps || !cms)
-		goto fail;
+	अगर (!cl || !sps || !cms)
+		जाओ fail;
 
 	config_group_init_type_name(&cl->group, name, &cluster_type);
 	config_group_init_type_name(&sps->ss_group, "spaces", &spaces_type);
 	config_group_init_type_name(&cms->cs_group, "comms", &comms_type);
 
-	configfs_add_default_group(&sps->ss_group, &cl->group);
-	configfs_add_default_group(&cms->cs_group, &cl->group);
+	configfs_add_शेष_group(&sps->ss_group, &cl->group);
+	configfs_add_शेष_group(&cms->cs_group, &cl->group);
 
 	cl->cl_tcp_port = dlm_config.ci_tcp_port;
 	cl->cl_buffer_size = dlm_config.ci_buffer_size;
 	cl->cl_rsbtbl_size = dlm_config.ci_rsbtbl_size;
-	cl->cl_recover_timer = dlm_config.ci_recover_timer;
+	cl->cl_recover_समयr = dlm_config.ci_recover_समयr;
 	cl->cl_toss_secs = dlm_config.ci_toss_secs;
 	cl->cl_scan_secs = dlm_config.ci_scan_secs;
 	cl->cl_log_debug = dlm_config.ci_log_debug;
 	cl->cl_log_info = dlm_config.ci_log_info;
 	cl->cl_protocol = dlm_config.ci_protocol;
-	cl->cl_timewarn_cs = dlm_config.ci_timewarn_cs;
-	cl->cl_waitwarn_us = dlm_config.ci_waitwarn_us;
+	cl->cl_समयwarn_cs = dlm_config.ci_समयwarn_cs;
+	cl->cl_रुकोwarn_us = dlm_config.ci_रुकोwarn_us;
 	cl->cl_new_rsb_count = dlm_config.ci_new_rsb_count;
 	cl->cl_recover_callbacks = dlm_config.ci_recover_callbacks;
-	memcpy(cl->cl_cluster_name, dlm_config.ci_cluster_name,
+	स_नकल(cl->cl_cluster_name, dlm_config.ci_cluster_name,
 	       DLM_LOCKSPACE_LEN);
 
 	space_list = &sps->ss_group;
 	comm_list = &cms->cs_group;
-	return &cl->group;
+	वापस &cl->group;
 
  fail:
-	kfree(cl);
-	kfree(sps);
-	kfree(cms);
-	return ERR_PTR(-ENOMEM);
-}
+	kमुक्त(cl);
+	kमुक्त(sps);
+	kमुक्त(cms);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-static void drop_cluster(struct config_group *g, struct config_item *i)
-{
-	struct dlm_cluster *cl = config_item_to_cluster(i);
+अटल व्योम drop_cluster(काष्ठा config_group *g, काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_cluster *cl = config_item_to_cluster(i);
 
-	configfs_remove_default_groups(&cl->group);
+	configfs_हटाओ_शेष_groups(&cl->group);
 
-	space_list = NULL;
-	comm_list = NULL;
+	space_list = शून्य;
+	comm_list = शून्य;
 
 	config_item_put(i);
-}
+पूर्ण
 
-static void release_cluster(struct config_item *i)
-{
-	struct dlm_cluster *cl = config_item_to_cluster(i);
-	kfree(cl);
-}
+अटल व्योम release_cluster(काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_cluster *cl = config_item_to_cluster(i);
+	kमुक्त(cl);
+पूर्ण
 
-static struct config_group *make_space(struct config_group *g, const char *name)
-{
-	struct dlm_space *sp = NULL;
-	struct dlm_nodes *nds = NULL;
+अटल काष्ठा config_group *make_space(काष्ठा config_group *g, स्थिर अक्षर *name)
+अणु
+	काष्ठा dlm_space *sp = शून्य;
+	काष्ठा dlm_nodes *nds = शून्य;
 
-	sp = kzalloc(sizeof(struct dlm_space), GFP_NOFS);
-	nds = kzalloc(sizeof(struct dlm_nodes), GFP_NOFS);
+	sp = kzalloc(माप(काष्ठा dlm_space), GFP_NOFS);
+	nds = kzalloc(माप(काष्ठा dlm_nodes), GFP_NOFS);
 
-	if (!sp || !nds)
-		goto fail;
+	अगर (!sp || !nds)
+		जाओ fail;
 
 	config_group_init_type_name(&sp->group, name, &space_type);
 
 	config_group_init_type_name(&nds->ns_group, "nodes", &nodes_type);
-	configfs_add_default_group(&nds->ns_group, &sp->group);
+	configfs_add_शेष_group(&nds->ns_group, &sp->group);
 
 	INIT_LIST_HEAD(&sp->members);
 	mutex_init(&sp->members_lock);
 	sp->members_count = 0;
 	sp->nds = nds;
-	return &sp->group;
+	वापस &sp->group;
 
  fail:
-	kfree(sp);
-	kfree(nds);
-	return ERR_PTR(-ENOMEM);
-}
+	kमुक्त(sp);
+	kमुक्त(nds);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-static void drop_space(struct config_group *g, struct config_item *i)
-{
-	struct dlm_space *sp = config_item_to_space(i);
+अटल व्योम drop_space(काष्ठा config_group *g, काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_space *sp = config_item_to_space(i);
 
-	/* assert list_empty(&sp->members) */
+	/* निश्चित list_empty(&sp->members) */
 
-	configfs_remove_default_groups(&sp->group);
+	configfs_हटाओ_शेष_groups(&sp->group);
 	config_item_put(i);
-}
+पूर्ण
 
-static void release_space(struct config_item *i)
-{
-	struct dlm_space *sp = config_item_to_space(i);
-	kfree(sp->nds);
-	kfree(sp);
-}
+अटल व्योम release_space(काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_space *sp = config_item_to_space(i);
+	kमुक्त(sp->nds);
+	kमुक्त(sp);
+पूर्ण
 
-static struct config_item *make_comm(struct config_group *g, const char *name)
-{
-	struct dlm_comm *cm;
+अटल काष्ठा config_item *make_comm(काष्ठा config_group *g, स्थिर अक्षर *name)
+अणु
+	काष्ठा dlm_comm *cm;
 
-	cm = kzalloc(sizeof(struct dlm_comm), GFP_NOFS);
-	if (!cm)
-		return ERR_PTR(-ENOMEM);
+	cm = kzalloc(माप(काष्ठा dlm_comm), GFP_NOFS);
+	अगर (!cm)
+		वापस ERR_PTR(-ENOMEM);
 
 	config_item_init_type_name(&cm->item, name, &comm_type);
 
 	cm->seq = dlm_comm_count++;
-	if (!cm->seq)
+	अगर (!cm->seq)
 		cm->seq = dlm_comm_count++;
 
 	cm->nodeid = -1;
 	cm->local = 0;
 	cm->addr_count = 0;
 	cm->mark = 0;
-	return &cm->item;
-}
+	वापस &cm->item;
+पूर्ण
 
-static void drop_comm(struct config_group *g, struct config_item *i)
-{
-	struct dlm_comm *cm = config_item_to_comm(i);
-	if (local_comm == cm)
-		local_comm = NULL;
-	dlm_lowcomms_close(cm->nodeid);
-	while (cm->addr_count--)
-		kfree(cm->addr[cm->addr_count]);
+अटल व्योम drop_comm(काष्ठा config_group *g, काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_comm *cm = config_item_to_comm(i);
+	अगर (local_comm == cm)
+		local_comm = शून्य;
+	dlm_lowcomms_बंद(cm->nodeid);
+	जबतक (cm->addr_count--)
+		kमुक्त(cm->addr[cm->addr_count]);
 	config_item_put(i);
-}
+पूर्ण
 
-static void release_comm(struct config_item *i)
-{
-	struct dlm_comm *cm = config_item_to_comm(i);
-	kfree(cm);
-}
+अटल व्योम release_comm(काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_comm *cm = config_item_to_comm(i);
+	kमुक्त(cm);
+पूर्ण
 
-static struct config_item *make_node(struct config_group *g, const char *name)
-{
-	struct dlm_space *sp = config_item_to_space(g->cg_item.ci_parent);
-	struct dlm_node *nd;
+अटल काष्ठा config_item *make_node(काष्ठा config_group *g, स्थिर अक्षर *name)
+अणु
+	काष्ठा dlm_space *sp = config_item_to_space(g->cg_item.ci_parent);
+	काष्ठा dlm_node *nd;
 
-	nd = kzalloc(sizeof(struct dlm_node), GFP_NOFS);
-	if (!nd)
-		return ERR_PTR(-ENOMEM);
+	nd = kzalloc(माप(काष्ठा dlm_node), GFP_NOFS);
+	अगर (!nd)
+		वापस ERR_PTR(-ENOMEM);
 
 	config_item_init_type_name(&nd->item, name, &node_type);
 	nd->nodeid = -1;
-	nd->weight = 1;  /* default weight of 1 if none is set */
-	nd->new = 1;     /* set to 0 once it's been read by dlm_nodeid_list() */
+	nd->weight = 1;  /* शेष weight of 1 अगर none is set */
+	nd->new = 1;     /* set to 0 once it's been पढ़ो by dlm_nodeid_list() */
 
 	mutex_lock(&sp->members_lock);
 	list_add(&nd->list, &sp->members);
 	sp->members_count++;
 	mutex_unlock(&sp->members_lock);
 
-	return &nd->item;
-}
+	वापस &nd->item;
+पूर्ण
 
-static void drop_node(struct config_group *g, struct config_item *i)
-{
-	struct dlm_space *sp = config_item_to_space(g->cg_item.ci_parent);
-	struct dlm_node *nd = config_item_to_node(i);
+अटल व्योम drop_node(काष्ठा config_group *g, काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_space *sp = config_item_to_space(g->cg_item.ci_parent);
+	काष्ठा dlm_node *nd = config_item_to_node(i);
 
 	mutex_lock(&sp->members_lock);
 	list_del(&nd->list);
@@ -577,175 +578,175 @@ static void drop_node(struct config_group *g, struct config_item *i)
 	mutex_unlock(&sp->members_lock);
 
 	config_item_put(i);
-}
+पूर्ण
 
-static void release_node(struct config_item *i)
-{
-	struct dlm_node *nd = config_item_to_node(i);
-	kfree(nd);
-}
+अटल व्योम release_node(काष्ठा config_item *i)
+अणु
+	काष्ठा dlm_node *nd = config_item_to_node(i);
+	kमुक्त(nd);
+पूर्ण
 
-static struct dlm_clusters clusters_root = {
-	.subsys = {
-		.su_group = {
-			.cg_item = {
+अटल काष्ठा dlm_clusters clusters_root = अणु
+	.subsys = अणु
+		.su_group = अणु
+			.cg_item = अणु
 				.ci_namebuf = "dlm",
 				.ci_type = &clusters_type,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-int __init dlm_config_init(void)
-{
+पूर्णांक __init dlm_config_init(व्योम)
+अणु
 	config_group_init(&clusters_root.subsys.su_group);
 	mutex_init(&clusters_root.subsys.su_mutex);
-	return configfs_register_subsystem(&clusters_root.subsys);
-}
+	वापस configfs_रेजिस्टर_subप्रणाली(&clusters_root.subsys);
+पूर्ण
 
-void dlm_config_exit(void)
-{
-	configfs_unregister_subsystem(&clusters_root.subsys);
-}
+व्योम dlm_config_निकास(व्योम)
+अणु
+	configfs_unरेजिस्टर_subप्रणाली(&clusters_root.subsys);
+पूर्ण
 
 /*
- * Functions for user space to read/write attributes
+ * Functions क्रम user space to पढ़ो/ग_लिखो attributes
  */
 
-static ssize_t comm_nodeid_show(struct config_item *item, char *buf)
-{
-	return sprintf(buf, "%d\n", config_item_to_comm(item)->nodeid);
-}
+अटल sमाप_प्रकार comm_nodeid_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", config_item_to_comm(item)->nodeid);
+पूर्ण
 
-static ssize_t comm_nodeid_store(struct config_item *item, const char *buf,
-				 size_t len)
-{
-	int rc = kstrtoint(buf, 0, &config_item_to_comm(item)->nodeid);
+अटल sमाप_प्रकार comm_nodeid_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+				 माप_प्रकार len)
+अणु
+	पूर्णांक rc = kstrtoपूर्णांक(buf, 0, &config_item_to_comm(item)->nodeid);
 
-	if (rc)
-		return rc;
-	return len;
-}
+	अगर (rc)
+		वापस rc;
+	वापस len;
+पूर्ण
 
-static ssize_t comm_local_show(struct config_item *item, char *buf)
-{
-	return sprintf(buf, "%d\n", config_item_to_comm(item)->local);
-}
+अटल sमाप_प्रकार comm_local_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", config_item_to_comm(item)->local);
+पूर्ण
 
-static ssize_t comm_local_store(struct config_item *item, const char *buf,
-				size_t len)
-{
-	struct dlm_comm *cm = config_item_to_comm(item);
-	int rc = kstrtoint(buf, 0, &cm->local);
+अटल sमाप_प्रकार comm_local_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+				माप_प्रकार len)
+अणु
+	काष्ठा dlm_comm *cm = config_item_to_comm(item);
+	पूर्णांक rc = kstrtoपूर्णांक(buf, 0, &cm->local);
 
-	if (rc)
-		return rc;
-	if (cm->local && !local_comm)
+	अगर (rc)
+		वापस rc;
+	अगर (cm->local && !local_comm)
 		local_comm = cm;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t comm_addr_store(struct config_item *item, const char *buf,
-		size_t len)
-{
-	struct dlm_comm *cm = config_item_to_comm(item);
-	struct sockaddr_storage *addr;
-	int rv;
+अटल sमाप_प्रकार comm_addr_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+		माप_प्रकार len)
+अणु
+	काष्ठा dlm_comm *cm = config_item_to_comm(item);
+	काष्ठा sockaddr_storage *addr;
+	पूर्णांक rv;
 
-	if (len != sizeof(struct sockaddr_storage))
-		return -EINVAL;
+	अगर (len != माप(काष्ठा sockaddr_storage))
+		वापस -EINVAL;
 
-	if (cm->addr_count >= DLM_MAX_ADDR_COUNT)
-		return -ENOSPC;
+	अगर (cm->addr_count >= DLM_MAX_ADDR_COUNT)
+		वापस -ENOSPC;
 
-	addr = kzalloc(sizeof(*addr), GFP_NOFS);
-	if (!addr)
-		return -ENOMEM;
+	addr = kzalloc(माप(*addr), GFP_NOFS);
+	अगर (!addr)
+		वापस -ENOMEM;
 
-	memcpy(addr, buf, len);
+	स_नकल(addr, buf, len);
 
 	rv = dlm_lowcomms_addr(cm->nodeid, addr, len);
-	if (rv) {
-		kfree(addr);
-		return rv;
-	}
+	अगर (rv) अणु
+		kमुक्त(addr);
+		वापस rv;
+	पूर्ण
 
 	cm->addr[cm->addr_count++] = addr;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t comm_addr_list_show(struct config_item *item, char *buf)
-{
-	struct dlm_comm *cm = config_item_to_comm(item);
-	ssize_t s;
-	ssize_t allowance;
-	int i;
-	struct sockaddr_storage *addr;
-	struct sockaddr_in *addr_in;
-	struct sockaddr_in6 *addr_in6;
+अटल sमाप_प्रकार comm_addr_list_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	काष्ठा dlm_comm *cm = config_item_to_comm(item);
+	sमाप_प्रकार s;
+	sमाप_प्रकार allowance;
+	पूर्णांक i;
+	काष्ठा sockaddr_storage *addr;
+	काष्ठा sockaddr_in *addr_in;
+	काष्ठा sockaddr_in6 *addr_in6;
 	
-	/* Taken from ip6_addr_string() defined in lib/vsprintf.c */
-	char buf0[sizeof("AF_INET6	xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255\n")];
+	/* Taken from ip6_addr_string() defined in lib/भम_लिखो.c */
+	अक्षर buf0[माप("AF_INET6	xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255\n")];
 	
 
 	/* Derived from SIMPLE_ATTR_SIZE of fs/configfs/file.c */
 	allowance = 4096;
 	buf[0] = '\0';
 
-	for (i = 0; i < cm->addr_count; i++) {
+	क्रम (i = 0; i < cm->addr_count; i++) अणु
 		addr = cm->addr[i];
 
-		switch(addr->ss_family) {
-		case AF_INET:
-			addr_in = (struct sockaddr_in *)addr;
-			s = sprintf(buf0, "AF_INET	%pI4\n", &addr_in->sin_addr.s_addr);
-			break;
-		case AF_INET6:
-			addr_in6 = (struct sockaddr_in6 *)addr;
-			s = sprintf(buf0, "AF_INET6	%pI6\n", &addr_in6->sin6_addr);
-			break;
-		default:
-			s = sprintf(buf0, "%s\n", "<UNKNOWN>");
-			break;
-		}
+		चयन(addr->ss_family) अणु
+		हाल AF_INET:
+			addr_in = (काष्ठा sockaddr_in *)addr;
+			s = प्र_लिखो(buf0, "AF_INET	%pI4\n", &addr_in->sin_addr.s_addr);
+			अवरोध;
+		हाल AF_INET6:
+			addr_in6 = (काष्ठा sockaddr_in6 *)addr;
+			s = प्र_लिखो(buf0, "AF_INET6	%pI6\n", &addr_in6->sin6_addr);
+			अवरोध;
+		शेष:
+			s = प्र_लिखो(buf0, "%s\n", "<UNKNOWN>");
+			अवरोध;
+		पूर्ण
 		allowance -= s;
-		if (allowance >= 0)
-			strcat(buf, buf0);
-		else {
+		अगर (allowance >= 0)
+			म_जोड़ो(buf, buf0);
+		अन्यथा अणु
 			allowance += s;
-			break;
-		}
-	}
-	return 4096 - allowance;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 4096 - allowance;
+पूर्ण
 
-static ssize_t comm_mark_show(struct config_item *item, char *buf)
-{
-	return sprintf(buf, "%u\n", config_item_to_comm(item)->mark);
-}
+अटल sमाप_प्रकार comm_mark_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", config_item_to_comm(item)->mark);
+पूर्ण
 
-static ssize_t comm_mark_store(struct config_item *item, const char *buf,
-			       size_t len)
-{
-	struct dlm_comm *comm;
-	unsigned int mark;
-	int rc;
+अटल sमाप_प्रकार comm_mark_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+			       माप_प्रकार len)
+अणु
+	काष्ठा dlm_comm *comm;
+	अचिन्हित पूर्णांक mark;
+	पूर्णांक rc;
 
-	rc = kstrtouint(buf, 0, &mark);
-	if (rc)
-		return rc;
+	rc = kstrtouपूर्णांक(buf, 0, &mark);
+	अगर (rc)
+		वापस rc;
 
-	if (mark == 0)
+	अगर (mark == 0)
 		mark = dlm_config.ci_mark;
 
 	comm = config_item_to_comm(item);
 	rc = dlm_lowcomms_nodes_set_mark(comm->nodeid, mark);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	comm->mark = mark;
-	return len;
-}
+	वापस len;
+पूर्ण
 
 CONFIGFS_ATTR(comm_, nodeid);
 CONFIGFS_ATTR(comm_, local);
@@ -753,143 +754,143 @@ CONFIGFS_ATTR(comm_, mark);
 CONFIGFS_ATTR_WO(comm_, addr);
 CONFIGFS_ATTR_RO(comm_, addr_list);
 
-static struct configfs_attribute *comm_attrs[] = {
+अटल काष्ठा configfs_attribute *comm_attrs[] = अणु
 	[COMM_ATTR_NODEID] = &comm_attr_nodeid,
 	[COMM_ATTR_LOCAL] = &comm_attr_local,
 	[COMM_ATTR_ADDR] = &comm_attr_addr,
 	[COMM_ATTR_ADDR_LIST] = &comm_attr_addr_list,
 	[COMM_ATTR_MARK] = &comm_attr_mark,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t node_nodeid_show(struct config_item *item, char *buf)
-{
-	return sprintf(buf, "%d\n", config_item_to_node(item)->nodeid);
-}
+अटल sमाप_प्रकार node_nodeid_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", config_item_to_node(item)->nodeid);
+पूर्ण
 
-static ssize_t node_nodeid_store(struct config_item *item, const char *buf,
-				 size_t len)
-{
-	struct dlm_node *nd = config_item_to_node(item);
-	uint32_t seq = 0;
-	int rc = kstrtoint(buf, 0, &nd->nodeid);
+अटल sमाप_प्रकार node_nodeid_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+				 माप_प्रकार len)
+अणु
+	काष्ठा dlm_node *nd = config_item_to_node(item);
+	uपूर्णांक32_t seq = 0;
+	पूर्णांक rc = kstrtoपूर्णांक(buf, 0, &nd->nodeid);
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	dlm_comm_seq(nd->nodeid, &seq);
 	nd->comm_seq = seq;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t node_weight_show(struct config_item *item, char *buf)
-{
-	return sprintf(buf, "%d\n", config_item_to_node(item)->weight);
-}
+अटल sमाप_प्रकार node_weight_show(काष्ठा config_item *item, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%d\n", config_item_to_node(item)->weight);
+पूर्ण
 
-static ssize_t node_weight_store(struct config_item *item, const char *buf,
-				 size_t len)
-{
-	int rc = kstrtoint(buf, 0, &config_item_to_node(item)->weight);
+अटल sमाप_प्रकार node_weight_store(काष्ठा config_item *item, स्थिर अक्षर *buf,
+				 माप_प्रकार len)
+अणु
+	पूर्णांक rc = kstrtoपूर्णांक(buf, 0, &config_item_to_node(item)->weight);
 
-	if (rc)
-		return rc;
-	return len;
-}
+	अगर (rc)
+		वापस rc;
+	वापस len;
+पूर्ण
 
 CONFIGFS_ATTR(node_, nodeid);
 CONFIGFS_ATTR(node_, weight);
 
-static struct configfs_attribute *node_attrs[] = {
+अटल काष्ठा configfs_attribute *node_attrs[] = अणु
 	[NODE_ATTR_NODEID] = &node_attr_nodeid,
 	[NODE_ATTR_WEIGHT] = &node_attr_weight,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * Functions for the dlm to get the info that's been configured
+ * Functions क्रम the dlm to get the info that's been configured
  */
 
-static struct dlm_space *get_space(char *name)
-{
-	struct config_item *i;
+अटल काष्ठा dlm_space *get_space(अक्षर *name)
+अणु
+	काष्ठा config_item *i;
 
-	if (!space_list)
-		return NULL;
+	अगर (!space_list)
+		वापस शून्य;
 
 	mutex_lock(&space_list->cg_subsys->su_mutex);
 	i = config_group_find_item(space_list, name);
 	mutex_unlock(&space_list->cg_subsys->su_mutex);
 
-	return config_item_to_space(i);
-}
+	वापस config_item_to_space(i);
+पूर्ण
 
-static void put_space(struct dlm_space *sp)
-{
+अटल व्योम put_space(काष्ठा dlm_space *sp)
+अणु
 	config_item_put(&sp->group.cg_item);
-}
+पूर्ण
 
-static struct dlm_comm *get_comm(int nodeid)
-{
-	struct config_item *i;
-	struct dlm_comm *cm = NULL;
-	int found = 0;
+अटल काष्ठा dlm_comm *get_comm(पूर्णांक nodeid)
+अणु
+	काष्ठा config_item *i;
+	काष्ठा dlm_comm *cm = शून्य;
+	पूर्णांक found = 0;
 
-	if (!comm_list)
-		return NULL;
+	अगर (!comm_list)
+		वापस शून्य;
 
 	mutex_lock(&clusters_root.subsys.su_mutex);
 
-	list_for_each_entry(i, &comm_list->cg_children, ci_entry) {
+	list_क्रम_each_entry(i, &comm_list->cg_children, ci_entry) अणु
 		cm = config_item_to_comm(i);
 
-		if (cm->nodeid != nodeid)
-			continue;
+		अगर (cm->nodeid != nodeid)
+			जारी;
 		found = 1;
 		config_item_get(i);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&clusters_root.subsys.su_mutex);
 
-	if (!found)
-		cm = NULL;
-	return cm;
-}
+	अगर (!found)
+		cm = शून्य;
+	वापस cm;
+पूर्ण
 
-static void put_comm(struct dlm_comm *cm)
-{
+अटल व्योम put_comm(काष्ठा dlm_comm *cm)
+अणु
 	config_item_put(&cm->item);
-}
+पूर्ण
 
-/* caller must free mem */
-int dlm_config_nodes(char *lsname, struct dlm_config_node **nodes_out,
-		     int *count_out)
-{
-	struct dlm_space *sp;
-	struct dlm_node *nd;
-	struct dlm_config_node *nodes, *node;
-	int rv, count;
+/* caller must मुक्त mem */
+पूर्णांक dlm_config_nodes(अक्षर *lsname, काष्ठा dlm_config_node **nodes_out,
+		     पूर्णांक *count_out)
+अणु
+	काष्ठा dlm_space *sp;
+	काष्ठा dlm_node *nd;
+	काष्ठा dlm_config_node *nodes, *node;
+	पूर्णांक rv, count;
 
 	sp = get_space(lsname);
-	if (!sp)
-		return -EEXIST;
+	अगर (!sp)
+		वापस -EEXIST;
 
 	mutex_lock(&sp->members_lock);
-	if (!sp->members_count) {
+	अगर (!sp->members_count) अणु
 		rv = -EINVAL;
-		printk(KERN_ERR "dlm: zero members_count\n");
-		goto out;
-	}
+		prपूर्णांकk(KERN_ERR "dlm: zero members_count\n");
+		जाओ out;
+	पूर्ण
 
 	count = sp->members_count;
 
-	nodes = kcalloc(count, sizeof(struct dlm_config_node), GFP_NOFS);
-	if (!nodes) {
+	nodes = kसुस्मृति(count, माप(काष्ठा dlm_config_node), GFP_NOFS);
+	अगर (!nodes) अणु
 		rv = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	node = nodes;
-	list_for_each_entry(nd, &sp->members, list) {
+	list_क्रम_each_entry(nd, &sp->members, list) अणु
 		node->nodeid = nd->nodeid;
 		node->weight = nd->weight;
 		node->new = nd->new;
@@ -897,7 +898,7 @@ int dlm_config_nodes(char *lsname, struct dlm_config_node **nodes_out,
 		node++;
 
 		nd->new = 0;
-	}
+	पूर्ण
 
 	*count_out = count;
 	*nodes_out = nodes;
@@ -905,66 +906,66 @@ int dlm_config_nodes(char *lsname, struct dlm_config_node **nodes_out,
  out:
 	mutex_unlock(&sp->members_lock);
 	put_space(sp);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-int dlm_comm_seq(int nodeid, uint32_t *seq)
-{
-	struct dlm_comm *cm = get_comm(nodeid);
-	if (!cm)
-		return -EEXIST;
+पूर्णांक dlm_comm_seq(पूर्णांक nodeid, uपूर्णांक32_t *seq)
+अणु
+	काष्ठा dlm_comm *cm = get_comm(nodeid);
+	अगर (!cm)
+		वापस -EEXIST;
 	*seq = cm->seq;
 	put_comm(cm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dlm_our_nodeid(void)
-{
-	return local_comm ? local_comm->nodeid : 0;
-}
+पूर्णांक dlm_our_nodeid(व्योम)
+अणु
+	वापस local_comm ? local_comm->nodeid : 0;
+पूर्ण
 
 /* num 0 is first addr, num 1 is second addr */
-int dlm_our_addr(struct sockaddr_storage *addr, int num)
-{
-	if (!local_comm)
-		return -1;
-	if (num + 1 > local_comm->addr_count)
-		return -1;
-	memcpy(addr, local_comm->addr[num], sizeof(*addr));
-	return 0;
-}
+पूर्णांक dlm_our_addr(काष्ठा sockaddr_storage *addr, पूर्णांक num)
+अणु
+	अगर (!local_comm)
+		वापस -1;
+	अगर (num + 1 > local_comm->addr_count)
+		वापस -1;
+	स_नकल(addr, local_comm->addr[num], माप(*addr));
+	वापस 0;
+पूर्ण
 
-/* Config file defaults */
-#define DEFAULT_TCP_PORT       21064
-#define DEFAULT_RSBTBL_SIZE     1024
-#define DEFAULT_RECOVER_TIMER      5
-#define DEFAULT_TOSS_SECS         10
-#define DEFAULT_SCAN_SECS          5
-#define DEFAULT_LOG_DEBUG          0
-#define DEFAULT_LOG_INFO           1
-#define DEFAULT_PROTOCOL           0
-#define DEFAULT_MARK               0
-#define DEFAULT_TIMEWARN_CS      500 /* 5 sec = 500 centiseconds */
-#define DEFAULT_WAITWARN_US	   0
-#define DEFAULT_NEW_RSB_COUNT    128
-#define DEFAULT_RECOVER_CALLBACKS  0
-#define DEFAULT_CLUSTER_NAME      ""
+/* Config file शेषs */
+#घोषणा DEFAULT_TCP_PORT       21064
+#घोषणा DEFAULT_RSBTBL_SIZE     1024
+#घोषणा DEFAULT_RECOVER_TIMER      5
+#घोषणा DEFAULT_TOSS_SECS         10
+#घोषणा DEFAULT_SCAN_SECS          5
+#घोषणा DEFAULT_LOG_DEBUG          0
+#घोषणा DEFAULT_LOG_INFO           1
+#घोषणा DEFAULT_PROTOCOL           0
+#घोषणा DEFAULT_MARK               0
+#घोषणा DEFAULT_TIMEWARN_CS      500 /* 5 sec = 500 centiseconds */
+#घोषणा DEFAULT_WAITWARN_US	   0
+#घोषणा DEFAULT_NEW_RSB_COUNT    128
+#घोषणा DEFAULT_RECOVER_CALLBACKS  0
+#घोषणा DEFAULT_CLUSTER_NAME      ""
 
-struct dlm_config_info dlm_config = {
+काष्ठा dlm_config_info dlm_config = अणु
 	.ci_tcp_port = DEFAULT_TCP_PORT,
 	.ci_buffer_size = DEFAULT_BUFFER_SIZE,
 	.ci_rsbtbl_size = DEFAULT_RSBTBL_SIZE,
-	.ci_recover_timer = DEFAULT_RECOVER_TIMER,
+	.ci_recover_समयr = DEFAULT_RECOVER_TIMER,
 	.ci_toss_secs = DEFAULT_TOSS_SECS,
 	.ci_scan_secs = DEFAULT_SCAN_SECS,
 	.ci_log_debug = DEFAULT_LOG_DEBUG,
 	.ci_log_info = DEFAULT_LOG_INFO,
 	.ci_protocol = DEFAULT_PROTOCOL,
 	.ci_mark = DEFAULT_MARK,
-	.ci_timewarn_cs = DEFAULT_TIMEWARN_CS,
-	.ci_waitwarn_us = DEFAULT_WAITWARN_US,
+	.ci_समयwarn_cs = DEFAULT_TIMEWARN_CS,
+	.ci_रुकोwarn_us = DEFAULT_WAITWARN_US,
 	.ci_new_rsb_count = DEFAULT_NEW_RSB_COUNT,
 	.ci_recover_callbacks = DEFAULT_RECOVER_CALLBACKS,
 	.ci_cluster_name = DEFAULT_CLUSTER_NAME
-};
+पूर्ण;
 

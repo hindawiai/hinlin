@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2013 Texas Instruments Inc.
  *
@@ -7,65 +8,65 @@
  * Archit Taneja, <archit@ti.com>
  */
 
-#ifndef __TI_VPDMA_H_
-#define __TI_VPDMA_H_
+#अगर_अघोषित __TI_VPDMA_H_
+#घोषणा __TI_VPDMA_H_
 
-#define VPDMA_MAX_NUM_LIST		8
+#घोषणा VPDMA_MAX_NUM_LIST		8
 /*
  * A vpdma_buf tracks the size, DMA address and mapping status of each
  * driver DMA area.
  */
-struct vpdma_buf {
-	void			*addr;
+काष्ठा vpdma_buf अणु
+	व्योम			*addr;
 	dma_addr_t		dma_addr;
-	size_t			size;
+	माप_प्रकार			size;
 	bool			mapped;
-};
+पूर्ण;
 
-struct vpdma_desc_list {
-	struct vpdma_buf buf;
-	void *next;
-	int type;
-};
+काष्ठा vpdma_desc_list अणु
+	काष्ठा vpdma_buf buf;
+	व्योम *next;
+	पूर्णांक type;
+पूर्ण;
 
-struct vpdma_data {
-	void __iomem		*base;
+काष्ठा vpdma_data अणु
+	व्योम __iomem		*base;
 
-	struct platform_device	*pdev;
+	काष्ठा platक्रमm_device	*pdev;
 
 	spinlock_t		lock;
 	bool			hwlist_used[VPDMA_MAX_NUM_LIST];
-	void			*hwlist_priv[VPDMA_MAX_NUM_LIST];
+	व्योम			*hwlist_priv[VPDMA_MAX_NUM_LIST];
 	/* callback to VPE driver when the firmware is loaded */
-	void (*cb)(struct platform_device *pdev);
-};
+	व्योम (*cb)(काष्ठा platक्रमm_device *pdev);
+पूर्ण;
 
-enum vpdma_data_format_type {
+क्रमागत vpdma_data_क्रमmat_type अणु
 	VPDMA_DATA_FMT_TYPE_YUV,
 	VPDMA_DATA_FMT_TYPE_RGB,
 	VPDMA_DATA_FMT_TYPE_MISC,
-};
+पूर्ण;
 
-struct vpdma_data_format {
-	enum vpdma_data_format_type type;
-	int data_type;
+काष्ठा vpdma_data_क्रमmat अणु
+	क्रमागत vpdma_data_क्रमmat_type type;
+	पूर्णांक data_type;
 	u8 depth;
-};
+पूर्ण;
 
-#define VPDMA_DESC_ALIGN		16	/* 16-byte descriptor alignment */
-#define VPDMA_STRIDE_ALIGN		16	/*
+#घोषणा VPDMA_DESC_ALIGN		16	/* 16-byte descriptor alignment */
+#घोषणा VPDMA_STRIDE_ALIGN		16	/*
 						 * line stride of source and dest
 						 * buffers should be 16 byte aligned
 						 */
-#define VPDMA_MAX_STRIDE		65520	/* Max line stride 16 byte aligned */
-#define VPDMA_DTD_DESC_SIZE		32	/* 8 words */
-#define VPDMA_CFD_CTD_DESC_SIZE		16	/* 4 words */
+#घोषणा VPDMA_MAX_STRIDE		65520	/* Max line stride 16 byte aligned */
+#घोषणा VPDMA_DTD_DESC_SIZE		32	/* 8 words */
+#घोषणा VPDMA_CFD_CTD_DESC_SIZE		16	/* 4 words */
 
-#define VPDMA_LIST_TYPE_NORMAL		0
-#define VPDMA_LIST_TYPE_SELF_MODIFYING	1
-#define VPDMA_LIST_TYPE_DOORBELL	2
+#घोषणा VPDMA_LIST_TYPE_NORMAL		0
+#घोषणा VPDMA_LIST_TYPE_SELF_MODIFYING	1
+#घोषणा VPDMA_LIST_TYPE_DOORBELL	2
 
-enum vpdma_yuv_formats {
+क्रमागत vpdma_yuv_क्रमmats अणु
 	VPDMA_DATA_FMT_Y444 = 0,
 	VPDMA_DATA_FMT_Y422,
 	VPDMA_DATA_FMT_Y420,
@@ -78,9 +79,9 @@ enum vpdma_yuv_formats {
 	VPDMA_DATA_FMT_CRY422,
 	VPDMA_DATA_FMT_CBY422,
 	VPDMA_DATA_FMT_YCB422,
-};
+पूर्ण;
 
-enum vpdma_rgb_formats {
+क्रमागत vpdma_rgb_क्रमmats अणु
 	VPDMA_DATA_FMT_RGB565 = 0,
 	VPDMA_DATA_FMT_ARGB16_1555,
 	VPDMA_DATA_FMT_ARGB16,
@@ -101,23 +102,23 @@ enum vpdma_rgb_formats {
 	VPDMA_DATA_FMT_ABGR32,
 	VPDMA_DATA_FMT_BGRA24,
 	VPDMA_DATA_FMT_BGRA32,
-};
+पूर्ण;
 
-enum vpdma_raw_formats {
+क्रमागत vpdma_raw_क्रमmats अणु
 	VPDMA_DATA_FMT_RAW8 = 0,
 	VPDMA_DATA_FMT_RAW16,
-};
+पूर्ण;
 
-enum vpdma_misc_formats {
+क्रमागत vpdma_misc_क्रमmats अणु
 	VPDMA_DATA_FMT_MV = 0,
-};
+पूर्ण;
 
-extern const struct vpdma_data_format vpdma_yuv_fmts[];
-extern const struct vpdma_data_format vpdma_rgb_fmts[];
-extern const struct vpdma_data_format vpdma_raw_fmts[];
-extern const struct vpdma_data_format vpdma_misc_fmts[];
+बाह्य स्थिर काष्ठा vpdma_data_क्रमmat vpdma_yuv_fmts[];
+बाह्य स्थिर काष्ठा vpdma_data_क्रमmat vpdma_rgb_fmts[];
+बाह्य स्थिर काष्ठा vpdma_data_क्रमmat vpdma_raw_fmts[];
+बाह्य स्थिर काष्ठा vpdma_data_क्रमmat vpdma_misc_fmts[];
 
-enum vpdma_frame_start_event {
+क्रमागत vpdma_frame_start_event अणु
 	VPDMA_FSEVENT_HDMI_FID = 0,
 	VPDMA_FSEVENT_DVO2_FID,
 	VPDMA_FSEVENT_HDCOMP_FID,
@@ -126,10 +127,10 @@ enum vpdma_frame_start_event {
 	VPDMA_FSEVENT_LM_FID1,
 	VPDMA_FSEVENT_LM_FID2,
 	VPDMA_FSEVENT_CHANNEL_ACTIVE,
-};
+पूर्ण;
 
 /* max width configurations */
-enum vpdma_max_width {
+क्रमागत vpdma_max_width अणु
 	MAX_OUT_WIDTH_UNLIMITED = 0,
 	MAX_OUT_WIDTH_REG1,
 	MAX_OUT_WIDTH_REG2,
@@ -138,10 +139,10 @@ enum vpdma_max_width {
 	MAX_OUT_WIDTH_768,
 	MAX_OUT_WIDTH_1280,
 	MAX_OUT_WIDTH_1920,
-};
+पूर्ण;
 
 /* max height configurations */
-enum vpdma_max_height {
+क्रमागत vpdma_max_height अणु
 	MAX_OUT_HEIGHT_UNLIMITED = 0,
 	MAX_OUT_HEIGHT_REG1,
 	MAX_OUT_HEIGHT_REG2,
@@ -150,12 +151,12 @@ enum vpdma_max_height {
 	MAX_OUT_HEIGHT_576,
 	MAX_OUT_HEIGHT_720,
 	MAX_OUT_HEIGHT_1080,
-};
+पूर्ण;
 
 /*
  * VPDMA channel numbers
  */
-enum vpdma_channel {
+क्रमागत vpdma_channel अणु
 	VPE_CHAN_LUMA1_IN,
 	VPE_CHAN_CHROMA1_IN,
 	VPE_CHAN_LUMA2_IN,
@@ -167,118 +168,118 @@ enum vpdma_channel {
 	VPE_CHAN_LUMA_OUT,
 	VPE_CHAN_CHROMA_OUT,
 	VPE_CHAN_RGB_OUT,
-};
+पूर्ण;
 
-#define VIP_CHAN_VIP2_OFFSET		70
-#define VIP_CHAN_MULT_PORTB_OFFSET	16
-#define VIP_CHAN_YUV_PORTB_OFFSET	2
-#define VIP_CHAN_RGB_PORTB_OFFSET	1
+#घोषणा VIP_CHAN_VIP2_OFFSET		70
+#घोषणा VIP_CHAN_MULT_PORTB_OFFSET	16
+#घोषणा VIP_CHAN_YUV_PORTB_OFFSET	2
+#घोषणा VIP_CHAN_RGB_PORTB_OFFSET	1
 
-#define VPDMA_MAX_CHANNELS		256
+#घोषणा VPDMA_MAX_CHANNELS		256
 
-/* flags for VPDMA data descriptors */
-#define VPDMA_DATA_ODD_LINE_SKIP	(1 << 0)
-#define VPDMA_DATA_EVEN_LINE_SKIP	(1 << 1)
-#define VPDMA_DATA_FRAME_1D		(1 << 2)
-#define VPDMA_DATA_MODE_TILED		(1 << 3)
+/* flags क्रम VPDMA data descriptors */
+#घोषणा VPDMA_DATA_ODD_LINE_SKIP	(1 << 0)
+#घोषणा VPDMA_DATA_EVEN_LINE_SKIP	(1 << 1)
+#घोषणा VPDMA_DATA_FRAME_1D		(1 << 2)
+#घोषणा VPDMA_DATA_MODE_TILED		(1 << 3)
 
 /*
- * client identifiers used for configuration descriptors
+ * client identअगरiers used क्रम configuration descriptors
  */
-#define CFD_MMR_CLIENT		0
-#define CFD_SC_CLIENT		4
+#घोषणा CFD_MMR_CLIENT		0
+#घोषणा CFD_SC_CLIENT		4
 
-/* Address data block header format */
-struct vpdma_adb_hdr {
+/* Address data block header क्रमmat */
+काष्ठा vpdma_adb_hdr अणु
 	u32			offset;
 	u32			nwords;
 	u32			reserved0;
 	u32			reserved1;
-};
+पूर्ण;
 
-/* helpers for creating ADB headers for config descriptors MMRs as client */
-#define ADB_ADDR(dma_buf, str, fld)	((dma_buf)->addr + offsetof(str, fld))
-#define MMR_ADB_ADDR(buf, str, fld)	ADB_ADDR(&(buf), struct str, fld)
+/* helpers क्रम creating ADB headers क्रम config descriptors MMRs as client */
+#घोषणा ADB_ADDR(dma_buf, str, fld)	((dma_buf)->addr + दुरत्व(str, fld))
+#घोषणा MMR_ADB_ADDR(buf, str, fld)	ADB_ADDR(&(buf), काष्ठा str, fld)
 
-#define VPDMA_SET_MMR_ADB_HDR(buf, str, hdr, regs, offset_a)	\
-	do {							\
-		struct vpdma_adb_hdr *h;			\
-		struct str *adb = NULL;				\
+#घोषणा VPDMA_SET_MMR_ADB_HDR(buf, str, hdr, regs, offset_a)	\
+	करो अणु							\
+		काष्ठा vpdma_adb_hdr *h;			\
+		काष्ठा str *adb = शून्य;				\
 		h = MMR_ADB_ADDR(buf, str, hdr);		\
 		h->offset = (offset_a);				\
-		h->nwords = sizeof(adb->regs) >> 2;		\
-	} while (0)
+		h->nwords = माप(adb->regs) >> 2;		\
+	पूर्ण जबतक (0)
 
 /* vpdma descriptor buffer allocation and management */
-int vpdma_alloc_desc_buf(struct vpdma_buf *buf, size_t size);
-void vpdma_free_desc_buf(struct vpdma_buf *buf);
-int vpdma_map_desc_buf(struct vpdma_data *vpdma, struct vpdma_buf *buf);
-void vpdma_unmap_desc_buf(struct vpdma_data *vpdma, struct vpdma_buf *buf);
+पूर्णांक vpdma_alloc_desc_buf(काष्ठा vpdma_buf *buf, माप_प्रकार size);
+व्योम vpdma_मुक्त_desc_buf(काष्ठा vpdma_buf *buf);
+पूर्णांक vpdma_map_desc_buf(काष्ठा vpdma_data *vpdma, काष्ठा vpdma_buf *buf);
+व्योम vpdma_unmap_desc_buf(काष्ठा vpdma_data *vpdma, काष्ठा vpdma_buf *buf);
 
 /* vpdma descriptor list funcs */
-int vpdma_create_desc_list(struct vpdma_desc_list *list, size_t size, int type);
-void vpdma_reset_desc_list(struct vpdma_desc_list *list);
-void vpdma_free_desc_list(struct vpdma_desc_list *list);
-int vpdma_submit_descs(struct vpdma_data *vpdma, struct vpdma_desc_list *list,
-		       int list_num);
-bool vpdma_list_busy(struct vpdma_data *vpdma, int list_num);
-void vpdma_update_dma_addr(struct vpdma_data *vpdma,
-	struct vpdma_desc_list *list, dma_addr_t dma_addr,
-	void *write_dtd, int drop, int idx);
+पूर्णांक vpdma_create_desc_list(काष्ठा vpdma_desc_list *list, माप_प्रकार size, पूर्णांक type);
+व्योम vpdma_reset_desc_list(काष्ठा vpdma_desc_list *list);
+व्योम vpdma_मुक्त_desc_list(काष्ठा vpdma_desc_list *list);
+पूर्णांक vpdma_submit_descs(काष्ठा vpdma_data *vpdma, काष्ठा vpdma_desc_list *list,
+		       पूर्णांक list_num);
+bool vpdma_list_busy(काष्ठा vpdma_data *vpdma, पूर्णांक list_num);
+व्योम vpdma_update_dma_addr(काष्ठा vpdma_data *vpdma,
+	काष्ठा vpdma_desc_list *list, dma_addr_t dma_addr,
+	व्योम *ग_लिखो_dtd, पूर्णांक drop, पूर्णांक idx);
 
 /* VPDMA hardware list funcs */
-int vpdma_hwlist_alloc(struct vpdma_data *vpdma, void *priv);
-void *vpdma_hwlist_get_priv(struct vpdma_data *vpdma, int list_num);
-void *vpdma_hwlist_release(struct vpdma_data *vpdma, int list_num);
+पूर्णांक vpdma_hwlist_alloc(काष्ठा vpdma_data *vpdma, व्योम *priv);
+व्योम *vpdma_hwlist_get_priv(काष्ठा vpdma_data *vpdma, पूर्णांक list_num);
+व्योम *vpdma_hwlist_release(काष्ठा vpdma_data *vpdma, पूर्णांक list_num);
 
-/* helpers for creating vpdma descriptors */
-void vpdma_add_cfd_block(struct vpdma_desc_list *list, int client,
-		struct vpdma_buf *blk, u32 dest_offset);
-void vpdma_add_cfd_adb(struct vpdma_desc_list *list, int client,
-		struct vpdma_buf *adb);
-void vpdma_add_sync_on_channel_ctd(struct vpdma_desc_list *list,
-		enum vpdma_channel chan);
-void vpdma_add_abort_channel_ctd(struct vpdma_desc_list *list,
-		int chan_num);
-void vpdma_add_out_dtd(struct vpdma_desc_list *list, int width,
-		int stride, const struct v4l2_rect *c_rect,
-		const struct vpdma_data_format *fmt, dma_addr_t dma_addr,
-		int max_w, int max_h, enum vpdma_channel chan, u32 flags);
-void vpdma_rawchan_add_out_dtd(struct vpdma_desc_list *list, int width,
-		int stride, const struct v4l2_rect *c_rect,
-		const struct vpdma_data_format *fmt, dma_addr_t dma_addr,
-		int max_w, int max_h, int raw_vpdma_chan, u32 flags);
+/* helpers क्रम creating vpdma descriptors */
+व्योम vpdma_add_cfd_block(काष्ठा vpdma_desc_list *list, पूर्णांक client,
+		काष्ठा vpdma_buf *blk, u32 dest_offset);
+व्योम vpdma_add_cfd_adb(काष्ठा vpdma_desc_list *list, पूर्णांक client,
+		काष्ठा vpdma_buf *adb);
+व्योम vpdma_add_sync_on_channel_ctd(काष्ठा vpdma_desc_list *list,
+		क्रमागत vpdma_channel chan);
+व्योम vpdma_add_पात_channel_ctd(काष्ठा vpdma_desc_list *list,
+		पूर्णांक chan_num);
+व्योम vpdma_add_out_dtd(काष्ठा vpdma_desc_list *list, पूर्णांक width,
+		पूर्णांक stride, स्थिर काष्ठा v4l2_rect *c_rect,
+		स्थिर काष्ठा vpdma_data_क्रमmat *fmt, dma_addr_t dma_addr,
+		पूर्णांक max_w, पूर्णांक max_h, क्रमागत vpdma_channel chan, u32 flags);
+व्योम vpdma_rawchan_add_out_dtd(काष्ठा vpdma_desc_list *list, पूर्णांक width,
+		पूर्णांक stride, स्थिर काष्ठा v4l2_rect *c_rect,
+		स्थिर काष्ठा vpdma_data_क्रमmat *fmt, dma_addr_t dma_addr,
+		पूर्णांक max_w, पूर्णांक max_h, पूर्णांक raw_vpdma_chan, u32 flags);
 
-void vpdma_add_in_dtd(struct vpdma_desc_list *list, int width,
-		int stride, const struct v4l2_rect *c_rect,
-		const struct vpdma_data_format *fmt, dma_addr_t dma_addr,
-		enum vpdma_channel chan, int field, u32 flags, int frame_width,
-		int frame_height, int start_h, int start_v);
-int vpdma_list_cleanup(struct vpdma_data *vpdma, int list_num,
-		int *channels, int size);
+व्योम vpdma_add_in_dtd(काष्ठा vpdma_desc_list *list, पूर्णांक width,
+		पूर्णांक stride, स्थिर काष्ठा v4l2_rect *c_rect,
+		स्थिर काष्ठा vpdma_data_क्रमmat *fmt, dma_addr_t dma_addr,
+		क्रमागत vpdma_channel chan, पूर्णांक field, u32 flags, पूर्णांक frame_width,
+		पूर्णांक frame_height, पूर्णांक start_h, पूर्णांक start_v);
+पूर्णांक vpdma_list_cleanup(काष्ठा vpdma_data *vpdma, पूर्णांक list_num,
+		पूर्णांक *channels, पूर्णांक size);
 
-/* vpdma list interrupt management */
-void vpdma_enable_list_complete_irq(struct vpdma_data *vpdma, int irq_num,
-		int list_num, bool enable);
-void vpdma_clear_list_stat(struct vpdma_data *vpdma, int irq_num,
-			   int list_num);
-unsigned int vpdma_get_list_stat(struct vpdma_data *vpdma, int irq_num);
-unsigned int vpdma_get_list_mask(struct vpdma_data *vpdma, int irq_num);
+/* vpdma list पूर्णांकerrupt management */
+व्योम vpdma_enable_list_complete_irq(काष्ठा vpdma_data *vpdma, पूर्णांक irq_num,
+		पूर्णांक list_num, bool enable);
+व्योम vpdma_clear_list_stat(काष्ठा vpdma_data *vpdma, पूर्णांक irq_num,
+			   पूर्णांक list_num);
+अचिन्हित पूर्णांक vpdma_get_list_stat(काष्ठा vpdma_data *vpdma, पूर्णांक irq_num);
+अचिन्हित पूर्णांक vpdma_get_list_mask(काष्ठा vpdma_data *vpdma, पूर्णांक irq_num);
 
 /* vpdma client configuration */
-void vpdma_set_line_mode(struct vpdma_data *vpdma, int line_mode,
-		enum vpdma_channel chan);
-void vpdma_set_frame_start_event(struct vpdma_data *vpdma,
-		enum vpdma_frame_start_event fs_event, enum vpdma_channel chan);
-void vpdma_set_max_size(struct vpdma_data *vpdma, int reg_addr,
+व्योम vpdma_set_line_mode(काष्ठा vpdma_data *vpdma, पूर्णांक line_mode,
+		क्रमागत vpdma_channel chan);
+व्योम vpdma_set_frame_start_event(काष्ठा vpdma_data *vpdma,
+		क्रमागत vpdma_frame_start_event fs_event, क्रमागत vpdma_channel chan);
+व्योम vpdma_set_max_size(काष्ठा vpdma_data *vpdma, पूर्णांक reg_addr,
 			u32 width, u32 height);
 
-void vpdma_set_bg_color(struct vpdma_data *vpdma,
-			struct vpdma_data_format *fmt, u32 color);
-void vpdma_dump_regs(struct vpdma_data *vpdma);
+व्योम vpdma_set_bg_color(काष्ठा vpdma_data *vpdma,
+			काष्ठा vpdma_data_क्रमmat *fmt, u32 color);
+व्योम vpdma_dump_regs(काष्ठा vpdma_data *vpdma);
 
-/* initialize vpdma, passed with VPE's platform device pointer */
-int vpdma_create(struct platform_device *pdev, struct vpdma_data *vpdma,
-		void (*cb)(struct platform_device *pdev));
+/* initialize vpdma, passed with VPE's platक्रमm device poपूर्णांकer */
+पूर्णांक vpdma_create(काष्ठा platक्रमm_device *pdev, काष्ठा vpdma_data *vpdma,
+		व्योम (*cb)(काष्ठा platक्रमm_device *pdev));
 
-#endif
+#पूर्ण_अगर

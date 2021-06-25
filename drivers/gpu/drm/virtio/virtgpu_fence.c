@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2015 Red Hat, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -23,61 +24,61 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <trace/events/dma_fence.h>
+#समावेश <trace/events/dma_fence.h>
 
-#include "virtgpu_drv.h"
+#समावेश "virtgpu_drv.h"
 
-#define to_virtio_gpu_fence(x) \
-	container_of(x, struct virtio_gpu_fence, f)
+#घोषणा to_virtio_gpu_fence(x) \
+	container_of(x, काष्ठा virtio_gpu_fence, f)
 
-static const char *virtio_gpu_get_driver_name(struct dma_fence *f)
-{
-	return "virtio_gpu";
-}
+अटल स्थिर अक्षर *virtio_gpu_get_driver_name(काष्ठा dma_fence *f)
+अणु
+	वापस "virtio_gpu";
+पूर्ण
 
-static const char *virtio_gpu_get_timeline_name(struct dma_fence *f)
-{
-	return "controlq";
-}
+अटल स्थिर अक्षर *virtio_gpu_get_समयline_name(काष्ठा dma_fence *f)
+अणु
+	वापस "controlq";
+पूर्ण
 
-static bool virtio_gpu_fence_signaled(struct dma_fence *f)
-{
-	/* leaked fence outside driver before completing
+अटल bool virtio_gpu_fence_संकेतed(काष्ठा dma_fence *f)
+अणु
+	/* leaked fence outside driver beक्रमe completing
 	 * initialization with virtio_gpu_fence_emit.
 	 */
 	WARN_ON_ONCE(f->seqno == 0);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void virtio_gpu_fence_value_str(struct dma_fence *f, char *str, int size)
-{
-	snprintf(str, size, "[%llu, %llu]", f->context, f->seqno);
-}
+अटल व्योम virtio_gpu_fence_value_str(काष्ठा dma_fence *f, अक्षर *str, पूर्णांक size)
+अणु
+	snम_लिखो(str, size, "[%llu, %llu]", f->context, f->seqno);
+पूर्ण
 
-static void virtio_gpu_timeline_value_str(struct dma_fence *f, char *str,
-					  int size)
-{
-	struct virtio_gpu_fence *fence = to_virtio_gpu_fence(f);
+अटल व्योम virtio_gpu_समयline_value_str(काष्ठा dma_fence *f, अक्षर *str,
+					  पूर्णांक size)
+अणु
+	काष्ठा virtio_gpu_fence *fence = to_virtio_gpu_fence(f);
 
-	snprintf(str, size, "%llu",
-		 (u64)atomic64_read(&fence->drv->last_fence_id));
-}
+	snम_लिखो(str, size, "%llu",
+		 (u64)atomic64_पढ़ो(&fence->drv->last_fence_id));
+पूर्ण
 
-static const struct dma_fence_ops virtio_gpu_fence_ops = {
+अटल स्थिर काष्ठा dma_fence_ops virtio_gpu_fence_ops = अणु
 	.get_driver_name     = virtio_gpu_get_driver_name,
-	.get_timeline_name   = virtio_gpu_get_timeline_name,
-	.signaled            = virtio_gpu_fence_signaled,
+	.get_समयline_name   = virtio_gpu_get_समयline_name,
+	.संकेतed            = virtio_gpu_fence_संकेतed,
 	.fence_value_str     = virtio_gpu_fence_value_str,
-	.timeline_value_str  = virtio_gpu_timeline_value_str,
-};
+	.समयline_value_str  = virtio_gpu_समयline_value_str,
+पूर्ण;
 
-struct virtio_gpu_fence *virtio_gpu_fence_alloc(struct virtio_gpu_device *vgdev)
-{
-	struct virtio_gpu_fence_driver *drv = &vgdev->fence_drv;
-	struct virtio_gpu_fence *fence = kzalloc(sizeof(struct virtio_gpu_fence),
+काष्ठा virtio_gpu_fence *virtio_gpu_fence_alloc(काष्ठा virtio_gpu_device *vgdev)
+अणु
+	काष्ठा virtio_gpu_fence_driver *drv = &vgdev->fence_drv;
+	काष्ठा virtio_gpu_fence *fence = kzalloc(माप(काष्ठा virtio_gpu_fence),
 							GFP_KERNEL);
-	if (!fence)
-		return fence;
+	अगर (!fence)
+		वापस fence;
 
 	fence->drv = drv;
 
@@ -88,15 +89,15 @@ struct virtio_gpu_fence *virtio_gpu_fence_alloc(struct virtio_gpu_device *vgdev)
 	dma_fence_init(&fence->f, &virtio_gpu_fence_ops, &drv->lock, drv->context,
 		       0);
 
-	return fence;
-}
+	वापस fence;
+पूर्ण
 
-void virtio_gpu_fence_emit(struct virtio_gpu_device *vgdev,
-			  struct virtio_gpu_ctrl_hdr *cmd_hdr,
-			  struct virtio_gpu_fence *fence)
-{
-	struct virtio_gpu_fence_driver *drv = &vgdev->fence_drv;
-	unsigned long irq_flags;
+व्योम virtio_gpu_fence_emit(काष्ठा virtio_gpu_device *vgdev,
+			  काष्ठा virtio_gpu_ctrl_hdr *cmd_hdr,
+			  काष्ठा virtio_gpu_fence *fence)
+अणु
+	काष्ठा virtio_gpu_fence_driver *drv = &vgdev->fence_drv;
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(&drv->lock, irq_flags);
 	fence->fence_id = fence->f.seqno = ++drv->current_fence_id;
@@ -108,44 +109,44 @@ void virtio_gpu_fence_emit(struct virtio_gpu_device *vgdev,
 
 	cmd_hdr->flags |= cpu_to_le32(VIRTIO_GPU_FLAG_FENCE);
 	cmd_hdr->fence_id = cpu_to_le64(fence->fence_id);
-}
+पूर्ण
 
-void virtio_gpu_fence_event_process(struct virtio_gpu_device *vgdev,
+व्योम virtio_gpu_fence_event_process(काष्ठा virtio_gpu_device *vgdev,
 				    u64 fence_id)
-{
-	struct virtio_gpu_fence_driver *drv = &vgdev->fence_drv;
-	struct virtio_gpu_fence *signaled, *curr, *tmp;
-	unsigned long irq_flags;
+अणु
+	काष्ठा virtio_gpu_fence_driver *drv = &vgdev->fence_drv;
+	काष्ठा virtio_gpu_fence *संकेतed, *curr, *पंचांगp;
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(&drv->lock, irq_flags);
 	atomic64_set(&vgdev->fence_drv.last_fence_id, fence_id);
-	list_for_each_entry_safe(curr, tmp, &drv->fences, node) {
-		if (fence_id != curr->fence_id)
-			continue;
+	list_क्रम_each_entry_safe(curr, पंचांगp, &drv->fences, node) अणु
+		अगर (fence_id != curr->fence_id)
+			जारी;
 
-		signaled = curr;
+		संकेतed = curr;
 
 		/*
 		 * Signal any fences with a strictly smaller sequence number
-		 * than the current signaled fence.
+		 * than the current संकेतed fence.
 		 */
-		list_for_each_entry_safe(curr, tmp, &drv->fences, node) {
+		list_क्रम_each_entry_safe(curr, पंचांगp, &drv->fences, node) अणु
 			/* dma-fence contexts must match */
-			if (signaled->f.context != curr->f.context)
-				continue;
+			अगर (संकेतed->f.context != curr->f.context)
+				जारी;
 
-			if (!dma_fence_is_later(&signaled->f, &curr->f))
-				continue;
+			अगर (!dma_fence_is_later(&संकेतed->f, &curr->f))
+				जारी;
 
-			dma_fence_signal_locked(&curr->f);
+			dma_fence_संकेत_locked(&curr->f);
 			list_del(&curr->node);
 			dma_fence_put(&curr->f);
-		}
+		पूर्ण
 
-		dma_fence_signal_locked(&signaled->f);
-		list_del(&signaled->node);
-		dma_fence_put(&signaled->f);
-		break;
-	}
+		dma_fence_संकेत_locked(&संकेतed->f);
+		list_del(&संकेतed->node);
+		dma_fence_put(&संकेतed->f);
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&drv->lock, irq_flags);
-}
+पूर्ण

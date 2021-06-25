@@ -1,17 +1,18 @@
-/* via-rhine.c: A Linux Ethernet device driver for VIA Rhine family chips. */
+<शैली गुरु>
+/* via-rhine.c: A Linux Ethernet device driver क्रम VIA Rhine family chips. */
 /*
 	Written 1998-2001 by Donald Becker.
 
-	Current Maintainer: Kevin Brace <kevinbrace@bracecomputerlab.com>
+	Current Maपूर्णांकainer: Kevin Brace <kevinbrace@bracecomputerlab.com>
 
 	This software may be used and distributed according to the terms of
 	the GNU General Public License (GPL), incorporated herein by reference.
 	Drivers based on or derived from this code fall under the GPL and must
 	retain the authorship, copyright and license notice.  This file is not
 	a complete program and may only be used when the entire operating
-	system is licensed under the GPL.
+	प्रणाली is licensed under the GPL.
 
-	This driver is designed for the VIA VT86C100A Rhine-I.
+	This driver is deचिन्हित क्रम the VIA VT86C100A Rhine-I.
 	It also works with the Rhine-II (6102) and Rhine-III (6105/6105L/6105LOM
 	and management NIC 6105M).
 
@@ -22,122 +23,122 @@
 
 
 	This driver contains some changes from the original Donald Becker
-	version. He may or may not be interested in bug reports on this
+	version. He may or may not be पूर्णांकerested in bug reports on this
 	code. You can find his versions at:
-	http://www.scyld.com/network/via-rhine.html
-	[link no longer provides useful info -jgarzik]
+	http://www.scyld.com/network/via-rhine.hपंचांगl
+	[link no दीर्घer provides useful info -jgarzik]
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define DRV_NAME	"via-rhine"
+#घोषणा DRV_NAME	"via-rhine"
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* A few user-configurable values.
-   These may be modified when a driver module is loaded. */
-static int debug = 0;
-#define RHINE_MSG_DEFAULT \
+   These may be modअगरied when a driver module is loaded. */
+अटल पूर्णांक debug = 0;
+#घोषणा RHINE_MSG_DEFAULT \
         (0x0000)
 
-/* Set the copy breakpoint for the copy-only-tiny-frames scheme.
+/* Set the copy अवरोधpoपूर्णांक क्रम the copy-only-tiny-frames scheme.
    Setting to > 1518 effectively disables this feature. */
-#if defined(__alpha__) || defined(__arm__) || defined(__hppa__) || \
+#अगर defined(__alpha__) || defined(__arm__) || defined(__hppa__) || \
 	defined(CONFIG_SPARC) || defined(__ia64__) ||		   \
 	defined(__sh__) || defined(__mips__)
-static int rx_copybreak = 1518;
-#else
-static int rx_copybreak;
-#endif
+अटल पूर्णांक rx_copyअवरोध = 1518;
+#अन्यथा
+अटल पूर्णांक rx_copyअवरोध;
+#पूर्ण_अगर
 
-/* Work-around for broken BIOSes: they are unable to get the chip back out of
-   power state D3 so PXE booting fails. bootparam(7): via-rhine.avoid_D3=1 */
-static bool avoid_D3;
+/* Work-around क्रम broken BIOSes: they are unable to get the chip back out of
+   घातer state D3 so PXE booting fails. bootparam(7): via-rhine.aव्योम_D3=1 */
+अटल bool aव्योम_D3;
 
 /*
- * In case you are looking for 'options[]' or 'full_duplex[]', they
+ * In हाल you are looking क्रम 'options[]' or 'full_duplex[]', they
  * are gone. Use ethtool(8) instead.
  */
 
 /* Maximum number of multicast addresses to filter (vs. rx-all-multicast).
    The Rhine has a 64 element 8390-like hash table. */
-static const int multicast_filter_limit = 32;
+अटल स्थिर पूर्णांक multicast_filter_limit = 32;
 
 
-/* Operational parameters that are set at compile time. */
+/* Operational parameters that are set at compile समय. */
 
-/* Keep the ring sizes a power of two for compile efficiency.
- * The compiler will convert <unsigned>'%'<2^N> into a bit mask.
+/* Keep the ring sizes a घातer of two क्रम compile efficiency.
+ * The compiler will convert <अचिन्हित>'%'<2^N> पूर्णांकo a bit mask.
  * Making the Tx ring too large decreases the effectiveness of channel
  * bonding and packet priority.
  * With BQL support, we can increase TX ring safely.
  * There are no ill effects from too-large receive rings.
  */
-#define TX_RING_SIZE	64
-#define TX_QUEUE_LEN	(TX_RING_SIZE - 6)	/* Limit ring entries actually used. */
-#define RX_RING_SIZE	64
+#घोषणा TX_RING_SIZE	64
+#घोषणा TX_QUEUE_LEN	(TX_RING_SIZE - 6)	/* Limit ring entries actually used. */
+#घोषणा RX_RING_SIZE	64
 
 /* Operational parameters that usually are not changed. */
 
-/* Time in jiffies before concluding the transmitter is hung. */
-#define TX_TIMEOUT	(2*HZ)
+/* Time in jअगरfies beक्रमe concluding the transmitter is hung. */
+#घोषणा TX_TIMEOUT	(2*HZ)
 
-#define PKT_BUF_SZ	1536	/* Size of each temporary Rx buffer.*/
+#घोषणा PKT_BUF_SZ	1536	/* Size of each temporary Rx buffer.*/
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
-#include <linux/crc32.h>
-#include <linux/if_vlan.h>
-#include <linux/bitops.h>
-#include <linux/workqueue.h>
-#include <asm/processor.h>	/* Processor type for cache alignment. */
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <linux/uaccess.h>
-#include <linux/dmi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/workqueue.h>
+#समावेश <यंत्र/processor.h>	/* Processor type क्रम cache alignment. */
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/dmi.h>
 
 MODULE_AUTHOR("Donald Becker <becker@scyld.com>");
 MODULE_DESCRIPTION("VIA Rhine PCI Fast Ethernet driver");
 MODULE_LICENSE("GPL");
 
-module_param(debug, int, 0);
-module_param(rx_copybreak, int, 0);
-module_param(avoid_D3, bool, 0);
+module_param(debug, पूर्णांक, 0);
+module_param(rx_copyअवरोध, पूर्णांक, 0);
+module_param(aव्योम_D3, bool, 0);
 MODULE_PARM_DESC(debug, "VIA Rhine debug message flags");
-MODULE_PARM_DESC(rx_copybreak, "VIA Rhine copy breakpoint for copy-only-tiny-frames");
-MODULE_PARM_DESC(avoid_D3, "Avoid power state D3 (work-around for broken BIOSes)");
+MODULE_PARM_DESC(rx_copyअवरोध, "VIA Rhine copy breakpoint for copy-only-tiny-frames");
+MODULE_PARM_DESC(aव्योम_D3, "Avoid power state D3 (work-around for broken BIOSes)");
 
-#define MCAM_SIZE	32
-#define VCAM_SIZE	32
+#घोषणा MCAM_SIZE	32
+#घोषणा VCAM_SIZE	32
 
 /*
 		Theory of Operation
 
 I. Board Compatibility
 
-This driver is designed for the VIA 86c100A Rhine-II PCI Fast Ethernet
+This driver is deचिन्हित क्रम the VIA 86c100A Rhine-II PCI Fast Ethernet
 controller.
 
-II. Board-specific settings
+II. Board-specअगरic settings
 
 Boards with this chip are functional only in a bus-master PCI slot.
 
@@ -151,74 +152,74 @@ III. Driver operation
 
 IIIa. Ring buffers
 
-This driver uses two statically allocated fixed-size descriptor lists
-formed into rings by a branch from the final descriptor to the beginning of
-the list. The ring sizes are set at compile time by RX/TX_RING_SIZE.
+This driver uses two अटलally allocated fixed-size descriptor lists
+क्रमmed पूर्णांकo rings by a branch from the final descriptor to the beginning of
+the list. The ring sizes are set at compile समय by RX/TX_RING_SIZE.
 
 IIIb/c. Transmit/Receive Structure
 
 This driver attempts to use a zero-copy receive and transmit scheme.
 
 Alas, all data buffers are required to start on a 32 bit boundary, so
-the driver must often copy transmit packets into bounce buffers.
+the driver must often copy transmit packets पूर्णांकo bounce buffers.
 
-The driver allocates full frame size skbuffs for the Rx ring buffers at
-open() time and passes the skb->data field to the chip as receive data
-buffers. When an incoming frame is less than RX_COPYBREAK bytes long,
+The driver allocates full frame size skbuffs क्रम the Rx ring buffers at
+खोलो() समय and passes the skb->data field to the chip as receive data
+buffers. When an incoming frame is less than RX_COPYBREAK bytes दीर्घ,
 a fresh skbuff is allocated and the frame is copied to the new skbuff.
 When the incoming frame is larger, the skbuff is passed directly up the
 protocol stack. Buffers consumed this way are replaced by newly allocated
 skbuffs in the last phase of rhine_rx().
 
 The RX_COPYBREAK value is chosen to trade-off the memory wasted by
-using a full-sized skbuff for small frames vs. the copying costs of larger
+using a full-sized skbuff क्रम small frames vs. the copying costs of larger
 frames. New boards are typically used in generously configured machines
 and the underfilled buffers have negligible impact compared to the benefit of
-a single allocation size, so the default value of zero results in never
-copying packets. When copying is done, the cost is usually mitigated by using
+a single allocation size, so the शेष value of zero results in never
+copying packets. When copying is करोne, the cost is usually mitigated by using
 a combined copy/checksum routine. Copying also preloads the cache, which is
 most useful with small frames.
 
 Since the VIA chips are only able to transfer data to buffers on 32 bit
 boundaries, the IP header at offset 14 in an ethernet frame isn't
-longword aligned for further processing. Copying these unaligned buffers
+दीर्घword aligned क्रम further processing. Copying these unaligned buffers
 has the beneficial effect of 16-byte aligning the IP header.
 
 IIId. Synchronization
 
-The driver runs as two independent, single-threaded flows of control. One
-is the send-packet routine, which enforces single-threaded use by the
-netdev_priv(dev)->lock spinlock. The other thread is the interrupt handler,
-which is single threaded by the hardware and interrupt handling software.
+The driver runs as two independent, single-thपढ़ोed flows of control. One
+is the send-packet routine, which enक्रमces single-thपढ़ोed use by the
+netdev_priv(dev)->lock spinlock. The other thपढ़ो is the पूर्णांकerrupt handler,
+which is single thपढ़ोed by the hardware and पूर्णांकerrupt handling software.
 
-The send packet thread has partial control over the Tx ring. It locks the
+The send packet thपढ़ो has partial control over the Tx ring. It locks the
 netdev_priv(dev)->lock whenever it's queuing a Tx packet. If the next slot in
 the ring is not available it stops the transmit queue by
-calling netif_stop_queue.
+calling netअगर_stop_queue.
 
-The interrupt handler has exclusive control over the Rx ring and records stats
+The पूर्णांकerrupt handler has exclusive control over the Rx ring and records stats
 from the Tx ring. After reaping the stats, it marks the Tx queue entry as
 empty by incrementing the dirty_tx mark. If at least half of the entries in
-the Rx ring are available the transmit queue is woken up if it was stopped.
+the Rx ring are available the transmit queue is woken up अगर it was stopped.
 
 IV. Notes
 
 IVb. References
 
 Preliminary VT86C100A manual from http://www.via.com.tw/
-http://www.scyld.com/expert/100mbps.html
-http://www.scyld.com/expert/NWay.html
-ftp://ftp.via.com.tw/public/lan/Products/NIC/VT86C100A/Datasheet/VT86C100A03.pdf
-ftp://ftp.via.com.tw/public/lan/Products/NIC/VT6102/Datasheet/VT6102_021.PDF
+http://www.scyld.com/expert/100mbps.hपंचांगl
+http://www.scyld.com/expert/NWay.hपंचांगl
+ftp://ftp.via.com.tw/खुला/lan/Products/NIC/VT86C100A/Datasheet/VT86C100A03.pdf
+ftp://ftp.via.com.tw/खुला/lan/Products/NIC/VT6102/Datasheet/VT6102_021.PDF
 
 
 IVc. Errata
 
-The VT86C100A manual is not reliable information.
-The 3043 chip does not handle unaligned transmit or receive buffers, resulting
-in significant performance degradation for bounce buffer copies on transmit
+The VT86C100A manual is not reliable inक्रमmation.
+The 3043 chip करोes not handle unaligned transmit or receive buffers, resulting
+in signअगरicant perक्रमmance degradation क्रम bounce buffer copies on transmit
 and unaligned IP headers on receive.
-The chip does not pad to minimum transmit length.
+The chip करोes not pad to minimum transmit length.
 
 */
 
@@ -229,7 +230,7 @@ The chip does not pad to minimum transmit length.
    second only the 1234 card.
 */
 
-enum rhine_revs {
+क्रमागत rhine_revs अणु
 	VT86C100A	= 0x00,
 	VTunknown0	= 0x20,
 	VT6102		= 0x40,
@@ -244,51 +245,51 @@ enum rhine_revs {
 	VT6107		= 0x8C,
 	VTunknown2	= 0x8E,
 	VT6105M		= 0x90,	/* Management adapter */
-};
+पूर्ण;
 
-enum rhine_quirks {
+क्रमागत rhine_quirks अणु
 	rqWOL		= 0x0001,	/* Wake-On-LAN support */
 	rqForceReset	= 0x0002,
-	rq6patterns	= 0x0040,	/* 6 instead of 4 patterns for WOL */
+	rq6patterns	= 0x0040,	/* 6 instead of 4 patterns क्रम WOL */
 	rqStatusWBRace	= 0x0080,	/* Tx Status Writeback Error possible */
 	rqRhineI	= 0x0100,	/* See comment below */
 	rqIntPHY	= 0x0200,	/* Integrated PHY */
 	rqMgmt		= 0x0400,	/* Management adapter */
 	rqNeedEnMMIO	= 0x0800,	/* Whether the core needs to be
-					 * switched from PIO mode to MMIO
+					 * चयनed from PIO mode to MMIO
 					 * (only applies to PCI)
 					 */
-};
+पूर्ण;
 /*
- * rqRhineI: VT86C100A (aka Rhine-I) uses different bits to enable
- * MMIO as well as for the collision counter and the Tx FIFO underflow
+ * rqRhineI: VT86C100A (aka Rhine-I) uses dअगरferent bits to enable
+ * MMIO as well as क्रम the collision counter and the Tx FIFO underflow
  * indicator. In addition, Tx and Rx buffers need to 4 byte aligned.
  */
 
-/* Beware of PCI posted writes */
-#define IOSYNC	do { ioread8(ioaddr + StationAddr); } while (0)
+/* Beware of PCI posted ग_लिखोs */
+#घोषणा IOSYNC	करो अणु ioपढ़ो8(ioaddr + StationAddr); पूर्ण जबतक (0)
 
-static const struct pci_device_id rhine_pci_tbl[] = {
-	{ 0x1106, 0x3043, PCI_ANY_ID, PCI_ANY_ID, },	/* VT86C100A */
-	{ 0x1106, 0x3065, PCI_ANY_ID, PCI_ANY_ID, },	/* VT6102 */
-	{ 0x1106, 0x3106, PCI_ANY_ID, PCI_ANY_ID, },	/* 6105{,L,LOM} */
-	{ 0x1106, 0x3053, PCI_ANY_ID, PCI_ANY_ID, },	/* VT6105M */
-	{ }	/* terminate list */
-};
+अटल स्थिर काष्ठा pci_device_id rhine_pci_tbl[] = अणु
+	अणु 0x1106, 0x3043, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,	/* VT86C100A */
+	अणु 0x1106, 0x3065, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,	/* VT6102 */
+	अणु 0x1106, 0x3106, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,	/* 6105अणु,L,LOMपूर्ण */
+	अणु 0x1106, 0x3053, PCI_ANY_ID, PCI_ANY_ID, पूर्ण,	/* VT6105M */
+	अणु पूर्ण	/* terminate list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, rhine_pci_tbl);
 
-/* OpenFirmware identifiers for platform-bus devices
+/* OpenFirmware identअगरiers क्रम platक्रमm-bus devices
  * The .data field is currently only used to store quirks
  */
-static u32 vt8500_quirks = rqWOL | rqForceReset | rq6patterns;
-static const struct of_device_id rhine_of_tbl[] = {
-	{ .compatible = "via,vt8500-rhine", .data = &vt8500_quirks },
-	{ }	/* terminate list */
-};
+अटल u32 vt8500_quirks = rqWOL | rqForceReset | rq6patterns;
+अटल स्थिर काष्ठा of_device_id rhine_of_tbl[] = अणु
+	अणु .compatible = "via,vt8500-rhine", .data = &vt8500_quirks पूर्ण,
+	अणु पूर्ण	/* terminate list */
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rhine_of_tbl);
 
-/* Offsets to the device registers. */
-enum register_offsets {
+/* Offsets to the device रेजिस्टरs. */
+क्रमागत रेजिस्टर_offsets अणु
 	StationAddr=0x00, RxConfig=0x06, TxConfig=0x07, ChipCmd=0x08,
 	ChipCmd1=0x09, TQWake=0x0A,
 	IntrStatus=0x0C, IntrEnable=0x0E,
@@ -303,16 +304,16 @@ enum register_offsets {
 	WOLcrSet=0xA0, PwcfgSet=0xA1, WOLcgSet=0xA3, WOLcrClr=0xA4,
 	WOLcrClr1=0xA6, WOLcgClr=0xA7,
 	PwrcsrSet=0xA8, PwrcsrSet1=0xA9, PwrcsrClr=0xAC, PwrcsrClr1=0xAD,
-};
+पूर्ण;
 
 /* Bits in ConfigD */
-enum backoff_bits {
-	BackOptional=0x01, BackModify=0x02,
-	BackCaptureEffect=0x04, BackRandom=0x08
-};
+क्रमागत backoff_bits अणु
+	BackOptional=0x01, BackModअगरy=0x02,
+	BackCaptureEffect=0x04, BackRanकरोm=0x08
+पूर्ण;
 
-/* Bits in the TxConfig (TCR) register */
-enum tcr_bits {
+/* Bits in the TxConfig (TCR) रेजिस्टर */
+क्रमागत tcr_bits अणु
 	TCR_PQEN=0x01,
 	TCR_LB0=0x02,		/* loopback[0] */
 	TCR_LB1=0x04,		/* loopback[1] */
@@ -321,38 +322,38 @@ enum tcr_bits {
 	TCR_RTFT0=0x20,
 	TCR_RTFT1=0x40,
 	TCR_RTSF=0x80,
-};
+पूर्ण;
 
-/* Bits in the CamCon (CAMC) register */
-enum camcon_bits {
+/* Bits in the CamCon (CAMC) रेजिस्टर */
+क्रमागत camcon_bits अणु
 	CAMC_CAMEN=0x01,
 	CAMC_VCAMSL=0x02,
 	CAMC_CAMWR=0x04,
 	CAMC_CAMRD=0x08,
-};
+पूर्ण;
 
-/* Bits in the PCIBusConfig1 (BCR1) register */
-enum bcr1_bits {
+/* Bits in the PCIBusConfig1 (BCR1) रेजिस्टर */
+क्रमागत bcr1_bits अणु
 	BCR1_POT0=0x01,
 	BCR1_POT1=0x02,
 	BCR1_POT2=0x04,
 	BCR1_CTFT0=0x08,
 	BCR1_CTFT1=0x10,
 	BCR1_CTSF=0x20,
-	BCR1_TXQNOBK=0x40,	/* for VT6105 */
-	BCR1_VIDFR=0x80,	/* for VT6105 */
-	BCR1_MED0=0x40,		/* for VT6102 */
-	BCR1_MED1=0x80,		/* for VT6102 */
-};
+	BCR1_TXQNOBK=0x40,	/* क्रम VT6105 */
+	BCR1_VIDFR=0x80,	/* क्रम VT6105 */
+	BCR1_MED0=0x40,		/* क्रम VT6102 */
+	BCR1_MED1=0x80,		/* क्रम VT6102 */
+पूर्ण;
 
 /* Registers we check that mmio and reg are the same. */
-static const int mmio_verify_registers[] = {
+अटल स्थिर पूर्णांक mmio_verअगरy_रेजिस्टरs[] = अणु
 	RxConfig, TxConfig, IntrEnable, ConfigA, ConfigB, ConfigC, ConfigD,
 	0
-};
+पूर्ण;
 
-/* Bits in the interrupt status/mask registers. */
-enum intr_status_bits {
+/* Bits in the पूर्णांकerrupt status/mask रेजिस्टरs. */
+क्रमागत पूर्णांकr_status_bits अणु
 	IntrRxDone	= 0x0001,
 	IntrTxDone	= 0x0002,
 	IntrRxErr	= 0x0004,
@@ -372,428 +373,428 @@ enum intr_status_bits {
 	IntrNormalSummary	= IntrRxDone | IntrTxDone,
 	IntrTxErrSummary	= IntrTxDescRace | IntrTxAborted | IntrTxError |
 				  IntrTxUnderrun,
-};
+पूर्ण;
 
 /* Bits in WOLcrSet/WOLcrClr and PwrcsrSet/PwrcsrClr */
-enum wol_bits {
+क्रमागत wol_bits अणु
 	WOLucast	= 0x10,
 	WOLmagic	= 0x20,
 	WOLbmcast	= 0x30,
 	WOLlnkon	= 0x40,
 	WOLlnkoff	= 0x80,
-};
+पूर्ण;
 
 /* The Rx and Tx buffer descriptors. */
-struct rx_desc {
+काष्ठा rx_desc अणु
 	__le32 rx_status;
 	__le32 desc_length; /* Chain flag, Buffer/frame length */
 	__le32 addr;
 	__le32 next_desc;
-};
-struct tx_desc {
+पूर्ण;
+काष्ठा tx_desc अणु
 	__le32 tx_status;
 	__le32 desc_length; /* Chain flag, Tx Config, Frame length */
 	__le32 addr;
 	__le32 next_desc;
-};
+पूर्ण;
 
-/* Initial value for tx_desc.desc_length, Buffer size goes to bits 0-10 */
-#define TXDESC		0x00e08000
+/* Initial value क्रम tx_desc.desc_length, Buffer size goes to bits 0-10 */
+#घोषणा TXDESC		0x00e08000
 
-enum rx_status_bits {
+क्रमागत rx_status_bits अणु
 	RxOK=0x8000, RxWholePkt=0x0300, RxErr=0x008F
-};
+पूर्ण;
 
 /* Bits in *_desc.*_status */
-enum desc_status_bits {
+क्रमागत desc_status_bits अणु
 	DescOwn=0x80000000
-};
+पूर्ण;
 
 /* Bits in *_desc.*_length */
-enum desc_length_bits {
+क्रमागत desc_length_bits अणु
 	DescTag=0x00010000
-};
+पूर्ण;
 
 /* Bits in ChipCmd. */
-enum chip_cmd_bits {
+क्रमागत chip_cmd_bits अणु
 	CmdInit=0x01, CmdStart=0x02, CmdStop=0x04, CmdRxOn=0x08,
 	CmdTxOn=0x10, Cmd1TxDemand=0x20, CmdRxDemand=0x40,
 	Cmd1EarlyRx=0x01, Cmd1EarlyTx=0x02, Cmd1FDuplex=0x04,
 	Cmd1NoTxPoll=0x08, Cmd1Reset=0x80,
-};
+पूर्ण;
 
-struct rhine_stats {
+काष्ठा rhine_stats अणु
 	u64		packets;
 	u64		bytes;
-	struct u64_stats_sync syncp;
-};
+	काष्ठा u64_stats_sync syncp;
+पूर्ण;
 
-struct rhine_private {
-	/* Bit mask for configured VLAN ids */
-	unsigned long active_vlans[BITS_TO_LONGS(VLAN_N_VID)];
+काष्ठा rhine_निजी अणु
+	/* Bit mask क्रम configured VLAN ids */
+	अचिन्हित दीर्घ active_vlans[BITS_TO_LONGS(VLAN_N_VID)];
 
 	/* Descriptor rings */
-	struct rx_desc *rx_ring;
-	struct tx_desc *tx_ring;
+	काष्ठा rx_desc *rx_ring;
+	काष्ठा tx_desc *tx_ring;
 	dma_addr_t rx_ring_dma;
 	dma_addr_t tx_ring_dma;
 
 	/* The addresses of receive-in-place skbuffs. */
-	struct sk_buff *rx_skbuff[RX_RING_SIZE];
+	काष्ठा sk_buff *rx_skbuff[RX_RING_SIZE];
 	dma_addr_t rx_skbuff_dma[RX_RING_SIZE];
 
-	/* The saved address of a sent-in-place packet/buffer, for later free(). */
-	struct sk_buff *tx_skbuff[TX_RING_SIZE];
+	/* The saved address of a sent-in-place packet/buffer, क्रम later मुक्त(). */
+	काष्ठा sk_buff *tx_skbuff[TX_RING_SIZE];
 	dma_addr_t tx_skbuff_dma[TX_RING_SIZE];
 
 	/* Tx bounce buffers (Rhine-I only) */
-	unsigned char *tx_buf[TX_RING_SIZE];
-	unsigned char *tx_bufs;
+	अचिन्हित अक्षर *tx_buf[TX_RING_SIZE];
+	अचिन्हित अक्षर *tx_bufs;
 	dma_addr_t tx_bufs_dma;
 
-	int irq;
-	long pioaddr;
-	struct net_device *dev;
-	struct napi_struct napi;
+	पूर्णांक irq;
+	दीर्घ pioaddr;
+	काष्ठा net_device *dev;
+	काष्ठा napi_काष्ठा napi;
 	spinlock_t lock;
-	struct mutex task_lock;
+	काष्ठा mutex task_lock;
 	bool task_enable;
-	struct work_struct slow_event_task;
-	struct work_struct reset_task;
+	काष्ठा work_काष्ठा slow_event_task;
+	काष्ठा work_काष्ठा reset_task;
 
 	u32 msg_enable;
 
-	/* Frequently used values: keep some adjacent for cache effect. */
+	/* Frequently used values: keep some adjacent क्रम cache effect. */
 	u32 quirks;
-	unsigned int cur_rx;
-	unsigned int cur_tx, dirty_tx;
-	unsigned int rx_buf_sz;		/* Based on MTU+slack. */
-	struct rhine_stats rx_stats;
-	struct rhine_stats tx_stats;
+	अचिन्हित पूर्णांक cur_rx;
+	अचिन्हित पूर्णांक cur_tx, dirty_tx;
+	अचिन्हित पूर्णांक rx_buf_sz;		/* Based on MTU+slack. */
+	काष्ठा rhine_stats rx_stats;
+	काष्ठा rhine_stats tx_stats;
 	u8 wolopts;
 
 	u8 tx_thresh, rx_thresh;
 
-	struct mii_if_info mii_if;
-	void __iomem *base;
-};
+	काष्ठा mii_अगर_info mii_अगर;
+	व्योम __iomem *base;
+पूर्ण;
 
-#define BYTE_REG_BITS_ON(x, p)      do { iowrite8((ioread8((p))|(x)), (p)); } while (0)
-#define WORD_REG_BITS_ON(x, p)      do { iowrite16((ioread16((p))|(x)), (p)); } while (0)
-#define DWORD_REG_BITS_ON(x, p)     do { iowrite32((ioread32((p))|(x)), (p)); } while (0)
+#घोषणा BYTE_REG_BITS_ON(x, p)      करो अणु ioग_लिखो8((ioपढ़ो8((p))|(x)), (p)); पूर्ण जबतक (0)
+#घोषणा WORD_REG_BITS_ON(x, p)      करो अणु ioग_लिखो16((ioपढ़ो16((p))|(x)), (p)); पूर्ण जबतक (0)
+#घोषणा DWORD_REG_BITS_ON(x, p)     करो अणु ioग_लिखो32((ioपढ़ो32((p))|(x)), (p)); पूर्ण जबतक (0)
 
-#define BYTE_REG_BITS_IS_ON(x, p)   (ioread8((p)) & (x))
-#define WORD_REG_BITS_IS_ON(x, p)   (ioread16((p)) & (x))
-#define DWORD_REG_BITS_IS_ON(x, p)  (ioread32((p)) & (x))
+#घोषणा BYTE_REG_BITS_IS_ON(x, p)   (ioपढ़ो8((p)) & (x))
+#घोषणा WORD_REG_BITS_IS_ON(x, p)   (ioपढ़ो16((p)) & (x))
+#घोषणा DWORD_REG_BITS_IS_ON(x, p)  (ioपढ़ो32((p)) & (x))
 
-#define BYTE_REG_BITS_OFF(x, p)     do { iowrite8(ioread8((p)) & (~(x)), (p)); } while (0)
-#define WORD_REG_BITS_OFF(x, p)     do { iowrite16(ioread16((p)) & (~(x)), (p)); } while (0)
-#define DWORD_REG_BITS_OFF(x, p)    do { iowrite32(ioread32((p)) & (~(x)), (p)); } while (0)
+#घोषणा BYTE_REG_BITS_OFF(x, p)     करो अणु ioग_लिखो8(ioपढ़ो8((p)) & (~(x)), (p)); पूर्ण जबतक (0)
+#घोषणा WORD_REG_BITS_OFF(x, p)     करो अणु ioग_लिखो16(ioपढ़ो16((p)) & (~(x)), (p)); पूर्ण जबतक (0)
+#घोषणा DWORD_REG_BITS_OFF(x, p)    करो अणु ioग_लिखो32(ioपढ़ो32((p)) & (~(x)), (p)); पूर्ण जबतक (0)
 
-#define BYTE_REG_BITS_SET(x, m, p)   do { iowrite8((ioread8((p)) & (~(m)))|(x), (p)); } while (0)
-#define WORD_REG_BITS_SET(x, m, p)   do { iowrite16((ioread16((p)) & (~(m)))|(x), (p)); } while (0)
-#define DWORD_REG_BITS_SET(x, m, p)  do { iowrite32((ioread32((p)) & (~(m)))|(x), (p)); } while (0)
+#घोषणा BYTE_REG_BITS_SET(x, m, p)   करो अणु ioग_लिखो8((ioपढ़ो8((p)) & (~(m)))|(x), (p)); पूर्ण जबतक (0)
+#घोषणा WORD_REG_BITS_SET(x, m, p)   करो अणु ioग_लिखो16((ioपढ़ो16((p)) & (~(m)))|(x), (p)); पूर्ण जबतक (0)
+#घोषणा DWORD_REG_BITS_SET(x, m, p)  करो अणु ioग_लिखो32((ioपढ़ो32((p)) & (~(m)))|(x), (p)); पूर्ण जबतक (0)
 
 
-static int  mdio_read(struct net_device *dev, int phy_id, int location);
-static void mdio_write(struct net_device *dev, int phy_id, int location, int value);
-static int  rhine_open(struct net_device *dev);
-static void rhine_reset_task(struct work_struct *work);
-static void rhine_slow_event_task(struct work_struct *work);
-static void rhine_tx_timeout(struct net_device *dev, unsigned int txqueue);
-static netdev_tx_t rhine_start_tx(struct sk_buff *skb,
-				  struct net_device *dev);
-static irqreturn_t rhine_interrupt(int irq, void *dev_instance);
-static void rhine_tx(struct net_device *dev);
-static int rhine_rx(struct net_device *dev, int limit);
-static void rhine_set_rx_mode(struct net_device *dev);
-static void rhine_get_stats64(struct net_device *dev,
-			      struct rtnl_link_stats64 *stats);
-static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
-static const struct ethtool_ops netdev_ethtool_ops;
-static int  rhine_close(struct net_device *dev);
-static int rhine_vlan_rx_add_vid(struct net_device *dev,
+अटल पूर्णांक  mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक location);
+अटल व्योम mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक location, पूर्णांक value);
+अटल पूर्णांक  rhine_खोलो(काष्ठा net_device *dev);
+अटल व्योम rhine_reset_task(काष्ठा work_काष्ठा *work);
+अटल व्योम rhine_slow_event_task(काष्ठा work_काष्ठा *work);
+अटल व्योम rhine_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue);
+अटल netdev_tx_t rhine_start_tx(काष्ठा sk_buff *skb,
+				  काष्ठा net_device *dev);
+अटल irqवापस_t rhine_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance);
+अटल व्योम rhine_tx(काष्ठा net_device *dev);
+अटल पूर्णांक rhine_rx(काष्ठा net_device *dev, पूर्णांक limit);
+अटल व्योम rhine_set_rx_mode(काष्ठा net_device *dev);
+अटल व्योम rhine_get_stats64(काष्ठा net_device *dev,
+			      काष्ठा rtnl_link_stats64 *stats);
+अटल पूर्णांक netdev_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
+अटल स्थिर काष्ठा ethtool_ops netdev_ethtool_ops;
+अटल पूर्णांक  rhine_बंद(काष्ठा net_device *dev);
+अटल पूर्णांक rhine_vlan_rx_add_vid(काष्ठा net_device *dev,
 				 __be16 proto, u16 vid);
-static int rhine_vlan_rx_kill_vid(struct net_device *dev,
+अटल पूर्णांक rhine_vlan_rx_समाप्त_vid(काष्ठा net_device *dev,
 				  __be16 proto, u16 vid);
-static void rhine_restart_tx(struct net_device *dev);
+अटल व्योम rhine_restart_tx(काष्ठा net_device *dev);
 
-static void rhine_wait_bit(struct rhine_private *rp, u8 reg, u8 mask, bool low)
-{
-	void __iomem *ioaddr = rp->base;
-	int i;
+अटल व्योम rhine_रुको_bit(काष्ठा rhine_निजी *rp, u8 reg, u8 mask, bool low)
+अणु
+	व्योम __iomem *ioaddr = rp->base;
+	पूर्णांक i;
 
-	for (i = 0; i < 1024; i++) {
-		bool has_mask_bits = !!(ioread8(ioaddr + reg) & mask);
+	क्रम (i = 0; i < 1024; i++) अणु
+		bool has_mask_bits = !!(ioपढ़ो8(ioaddr + reg) & mask);
 
-		if (low ^ has_mask_bits)
-			break;
+		अगर (low ^ has_mask_bits)
+			अवरोध;
 		udelay(10);
-	}
-	if (i > 64) {
-		netif_dbg(rp, hw, rp->dev, "%s bit wait (%02x/%02x) cycle "
+	पूर्ण
+	अगर (i > 64) अणु
+		netअगर_dbg(rp, hw, rp->dev, "%s bit wait (%02x/%02x) cycle "
 			  "count: %04d\n", low ? "low" : "high", reg, mask, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rhine_wait_bit_high(struct rhine_private *rp, u8 reg, u8 mask)
-{
-	rhine_wait_bit(rp, reg, mask, false);
-}
+अटल व्योम rhine_रुको_bit_high(काष्ठा rhine_निजी *rp, u8 reg, u8 mask)
+अणु
+	rhine_रुको_bit(rp, reg, mask, false);
+पूर्ण
 
-static void rhine_wait_bit_low(struct rhine_private *rp, u8 reg, u8 mask)
-{
-	rhine_wait_bit(rp, reg, mask, true);
-}
+अटल व्योम rhine_रुको_bit_low(काष्ठा rhine_निजी *rp, u8 reg, u8 mask)
+अणु
+	rhine_रुको_bit(rp, reg, mask, true);
+पूर्ण
 
-static u32 rhine_get_events(struct rhine_private *rp)
-{
-	void __iomem *ioaddr = rp->base;
-	u32 intr_status;
+अटल u32 rhine_get_events(काष्ठा rhine_निजी *rp)
+अणु
+	व्योम __iomem *ioaddr = rp->base;
+	u32 पूर्णांकr_status;
 
-	intr_status = ioread16(ioaddr + IntrStatus);
-	/* On Rhine-II, Bit 3 indicates Tx descriptor write-back race. */
-	if (rp->quirks & rqStatusWBRace)
-		intr_status |= ioread8(ioaddr + IntrStatus2) << 16;
-	return intr_status;
-}
+	पूर्णांकr_status = ioपढ़ो16(ioaddr + IntrStatus);
+	/* On Rhine-II, Bit 3 indicates Tx descriptor ग_लिखो-back race. */
+	अगर (rp->quirks & rqStatusWBRace)
+		पूर्णांकr_status |= ioपढ़ो8(ioaddr + IntrStatus2) << 16;
+	वापस पूर्णांकr_status;
+पूर्ण
 
-static void rhine_ack_events(struct rhine_private *rp, u32 mask)
-{
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_ack_events(काष्ठा rhine_निजी *rp, u32 mask)
+अणु
+	व्योम __iomem *ioaddr = rp->base;
 
-	if (rp->quirks & rqStatusWBRace)
-		iowrite8(mask >> 16, ioaddr + IntrStatus2);
-	iowrite16(mask, ioaddr + IntrStatus);
-}
+	अगर (rp->quirks & rqStatusWBRace)
+		ioग_लिखो8(mask >> 16, ioaddr + IntrStatus2);
+	ioग_लिखो16(mask, ioaddr + IntrStatus);
+पूर्ण
 
 /*
- * Get power related registers into sane state.
- * Notify user about past WOL event.
+ * Get घातer related रेजिस्टरs पूर्णांकo sane state.
+ * Notअगरy user about past WOL event.
  */
-static void rhine_power_init(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_घातer_init(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 	u16 wolstat;
 
-	if (rp->quirks & rqWOL) {
-		/* Make sure chip is in power state D0 */
-		iowrite8(ioread8(ioaddr + StickyHW) & 0xFC, ioaddr + StickyHW);
+	अगर (rp->quirks & rqWOL) अणु
+		/* Make sure chip is in घातer state D0 */
+		ioग_लिखो8(ioपढ़ो8(ioaddr + StickyHW) & 0xFC, ioaddr + StickyHW);
 
 		/* Disable "force PME-enable" */
-		iowrite8(0x80, ioaddr + WOLcgClr);
+		ioग_लिखो8(0x80, ioaddr + WOLcgClr);
 
-		/* Clear power-event config bits (WOL) */
-		iowrite8(0xFF, ioaddr + WOLcrClr);
+		/* Clear घातer-event config bits (WOL) */
+		ioग_लिखो8(0xFF, ioaddr + WOLcrClr);
 		/* More recent cards can manage two additional patterns */
-		if (rp->quirks & rq6patterns)
-			iowrite8(0x03, ioaddr + WOLcrClr1);
+		अगर (rp->quirks & rq6patterns)
+			ioग_लिखो8(0x03, ioaddr + WOLcrClr1);
 
-		/* Save power-event status bits */
-		wolstat = ioread8(ioaddr + PwrcsrSet);
-		if (rp->quirks & rq6patterns)
-			wolstat |= (ioread8(ioaddr + PwrcsrSet1) & 0x03) << 8;
+		/* Save घातer-event status bits */
+		wolstat = ioपढ़ो8(ioaddr + PwrcsrSet);
+		अगर (rp->quirks & rq6patterns)
+			wolstat |= (ioपढ़ो8(ioaddr + PwrcsrSet1) & 0x03) << 8;
 
-		/* Clear power-event status bits */
-		iowrite8(0xFF, ioaddr + PwrcsrClr);
-		if (rp->quirks & rq6patterns)
-			iowrite8(0x03, ioaddr + PwrcsrClr1);
+		/* Clear घातer-event status bits */
+		ioग_लिखो8(0xFF, ioaddr + PwrcsrClr);
+		अगर (rp->quirks & rq6patterns)
+			ioग_लिखो8(0x03, ioaddr + PwrcsrClr1);
 
-		if (wolstat) {
-			char *reason;
-			switch (wolstat) {
-			case WOLmagic:
+		अगर (wolstat) अणु
+			अक्षर *reason;
+			चयन (wolstat) अणु
+			हाल WOLmagic:
 				reason = "Magic packet";
-				break;
-			case WOLlnkon:
+				अवरोध;
+			हाल WOLlnkon:
 				reason = "Link went up";
-				break;
-			case WOLlnkoff:
+				अवरोध;
+			हाल WOLlnkoff:
 				reason = "Link went down";
-				break;
-			case WOLucast:
+				अवरोध;
+			हाल WOLucast:
 				reason = "Unicast packet";
-				break;
-			case WOLbmcast:
+				अवरोध;
+			हाल WOLbmcast:
 				reason = "Multicast/broadcast packet";
-				break;
-			default:
+				अवरोध;
+			शेष:
 				reason = "Unknown";
-			}
+			पूर्ण
 			netdev_info(dev, "Woke system up. Reason: %s\n",
 				    reason);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void rhine_chip_reset(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_chip_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 	u8 cmd1;
 
-	iowrite8(Cmd1Reset, ioaddr + ChipCmd1);
+	ioग_लिखो8(Cmd1Reset, ioaddr + ChipCmd1);
 	IOSYNC;
 
-	if (ioread8(ioaddr + ChipCmd1) & Cmd1Reset) {
+	अगर (ioपढ़ो8(ioaddr + ChipCmd1) & Cmd1Reset) अणु
 		netdev_info(dev, "Reset not complete yet. Trying harder.\n");
 
 		/* Force reset */
-		if (rp->quirks & rqForceReset)
-			iowrite8(0x40, ioaddr + MiscCmd);
+		अगर (rp->quirks & rqForceReset)
+			ioग_लिखो8(0x40, ioaddr + MiscCmd);
 
-		/* Reset can take somewhat longer (rare) */
-		rhine_wait_bit_low(rp, ChipCmd1, Cmd1Reset);
-	}
+		/* Reset can take somewhat दीर्घer (rare) */
+		rhine_रुको_bit_low(rp, ChipCmd1, Cmd1Reset);
+	पूर्ण
 
-	cmd1 = ioread8(ioaddr + ChipCmd1);
-	netif_info(rp, hw, dev, "Reset %s\n", (cmd1 & Cmd1Reset) ?
+	cmd1 = ioपढ़ो8(ioaddr + ChipCmd1);
+	netअगर_info(rp, hw, dev, "Reset %s\n", (cmd1 & Cmd1Reset) ?
 		   "failed" : "succeeded");
-}
+पूर्ण
 
-static void enable_mmio(long pioaddr, u32 quirks)
-{
-	int n;
+अटल व्योम enable_mmio(दीर्घ pioaddr, u32 quirks)
+अणु
+	पूर्णांक n;
 
-	if (quirks & rqNeedEnMMIO) {
-		if (quirks & rqRhineI) {
-			/* More recent docs say that this bit is reserved */
+	अगर (quirks & rqNeedEnMMIO) अणु
+		अगर (quirks & rqRhineI) अणु
+			/* More recent करोcs say that this bit is reserved */
 			n = inb(pioaddr + ConfigA) | 0x20;
 			outb(n, pioaddr + ConfigA);
-		} else {
+		पूर्ण अन्यथा अणु
 			n = inb(pioaddr + ConfigD) | 0x80;
 			outb(n, pioaddr + ConfigD);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int verify_mmio(struct device *hwdev,
-			      long pioaddr,
-			      void __iomem *ioaddr,
+अटल अंतरभूत पूर्णांक verअगरy_mmio(काष्ठा device *hwdev,
+			      दीर्घ pioaddr,
+			      व्योम __iomem *ioaddr,
 			      u32 quirks)
-{
-	if (quirks & rqNeedEnMMIO) {
-		int i = 0;
+अणु
+	अगर (quirks & rqNeedEnMMIO) अणु
+		पूर्णांक i = 0;
 
-		/* Check that selected MMIO registers match the PIO ones */
-		while (mmio_verify_registers[i]) {
-			int reg = mmio_verify_registers[i++];
-			unsigned char a = inb(pioaddr+reg);
-			unsigned char b = readb(ioaddr+reg);
+		/* Check that selected MMIO रेजिस्टरs match the PIO ones */
+		जबतक (mmio_verअगरy_रेजिस्टरs[i]) अणु
+			पूर्णांक reg = mmio_verअगरy_रेजिस्टरs[i++];
+			अचिन्हित अक्षर a = inb(pioaddr+reg);
+			अचिन्हित अक्षर b = पढ़ोb(ioaddr+reg);
 
-			if (a != b) {
+			अगर (a != b) अणु
 				dev_err(hwdev,
 					"MMIO do not match PIO [%02x] (%02x != %02x)\n",
 					reg, a, b);
-				return -EIO;
-			}
-		}
-	}
-	return 0;
-}
+				वापस -EIO;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Loads bytes 0x00-0x05, 0x6E-0x6F, 0x78-0x7B from EEPROM
- * (plus 0x6C for Rhine-I/II)
+ * (plus 0x6C क्रम Rhine-I/II)
  */
-static void rhine_reload_eeprom(long pioaddr, struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
-	int i;
+अटल व्योम rhine_reload_eeprom(दीर्घ pioaddr, काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
+	पूर्णांक i;
 
 	outb(0x20, pioaddr + MACRegEEcsr);
-	for (i = 0; i < 1024; i++) {
-		if (!(inb(pioaddr + MACRegEEcsr) & 0x20))
-			break;
-	}
-	if (i > 512)
+	क्रम (i = 0; i < 1024; i++) अणु
+		अगर (!(inb(pioaddr + MACRegEEcsr) & 0x20))
+			अवरोध;
+	पूर्ण
+	अगर (i > 512)
 		pr_info("%4d cycles used @ %s:%d\n", i, __func__, __LINE__);
 
 	/*
-	 * Reloading from EEPROM overwrites ConfigA-D, so we must re-enable
-	 * MMIO. If reloading EEPROM was done first this could be avoided, but
-	 * it is not known if that still works with the "win98-reboot" problem.
+	 * Reloading from EEPROM overग_लिखोs ConfigA-D, so we must re-enable
+	 * MMIO. If reloading EEPROM was करोne first this could be aव्योमed, but
+	 * it is not known अगर that still works with the "win98-reboot" problem.
 	 */
 	enable_mmio(pioaddr, rp->quirks);
 
 	/* Turn off EEPROM-controlled wake-up (magic packet) */
-	if (rp->quirks & rqWOL)
-		iowrite8(ioread8(ioaddr + ConfigA) & 0xFC, ioaddr + ConfigA);
+	अगर (rp->quirks & rqWOL)
+		ioग_लिखो8(ioपढ़ो8(ioaddr + ConfigA) & 0xFC, ioaddr + ConfigA);
 
-}
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void rhine_poll(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	const int irq = rp->irq;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम rhine_poll(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	स्थिर पूर्णांक irq = rp->irq;
 
 	disable_irq(irq);
-	rhine_interrupt(irq, dev);
+	rhine_पूर्णांकerrupt(irq, dev);
 	enable_irq(irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void rhine_kick_tx_threshold(struct rhine_private *rp)
-{
-	if (rp->tx_thresh < 0xe0) {
-		void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_kick_tx_threshold(काष्ठा rhine_निजी *rp)
+अणु
+	अगर (rp->tx_thresh < 0xe0) अणु
+		व्योम __iomem *ioaddr = rp->base;
 
 		rp->tx_thresh += 0x20;
 		BYTE_REG_BITS_SET(rp->tx_thresh, 0x80, ioaddr + TxConfig);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rhine_tx_err(struct rhine_private *rp, u32 status)
-{
-	struct net_device *dev = rp->dev;
+अटल व्योम rhine_tx_err(काष्ठा rhine_निजी *rp, u32 status)
+अणु
+	काष्ठा net_device *dev = rp->dev;
 
-	if (status & IntrTxAborted) {
-		netif_info(rp, tx_err, dev,
+	अगर (status & IntrTxAborted) अणु
+		netअगर_info(rp, tx_err, dev,
 			   "Abort %08x, frame dropped\n", status);
-	}
+	पूर्ण
 
-	if (status & IntrTxUnderrun) {
+	अगर (status & IntrTxUnderrun) अणु
 		rhine_kick_tx_threshold(rp);
-		netif_info(rp, tx_err ,dev, "Transmitter underrun, "
+		netअगर_info(rp, tx_err ,dev, "Transmitter underrun, "
 			   "Tx threshold now %02x\n", rp->tx_thresh);
-	}
+	पूर्ण
 
-	if (status & IntrTxDescRace)
-		netif_info(rp, tx_err, dev, "Tx descriptor write-back race\n");
+	अगर (status & IntrTxDescRace)
+		netअगर_info(rp, tx_err, dev, "Tx descriptor write-back race\n");
 
-	if ((status & IntrTxError) &&
-	    (status & (IntrTxAborted | IntrTxUnderrun | IntrTxDescRace)) == 0) {
+	अगर ((status & IntrTxError) &&
+	    (status & (IntrTxAborted | IntrTxUnderrun | IntrTxDescRace)) == 0) अणु
 		rhine_kick_tx_threshold(rp);
-		netif_info(rp, tx_err, dev, "Unspecified error. "
+		netअगर_info(rp, tx_err, dev, "Unspecified error. "
 			   "Tx threshold now %02x\n", rp->tx_thresh);
-	}
+	पूर्ण
 
 	rhine_restart_tx(dev);
-}
+पूर्ण
 
-static void rhine_update_rx_crc_and_missed_errord(struct rhine_private *rp)
-{
-	void __iomem *ioaddr = rp->base;
-	struct net_device_stats *stats = &rp->dev->stats;
+अटल व्योम rhine_update_rx_crc_and_missed_errord(काष्ठा rhine_निजी *rp)
+अणु
+	व्योम __iomem *ioaddr = rp->base;
+	काष्ठा net_device_stats *stats = &rp->dev->stats;
 
-	stats->rx_crc_errors    += ioread16(ioaddr + RxCRCErrs);
-	stats->rx_missed_errors += ioread16(ioaddr + RxMissed);
+	stats->rx_crc_errors    += ioपढ़ो16(ioaddr + RxCRCErrs);
+	stats->rx_missed_errors += ioपढ़ो16(ioaddr + RxMissed);
 
 	/*
-	 * Clears the "tally counters" for CRC errors and missed frames(?).
-	 * It has been reported that some chips need a write of 0 to clear
-	 * these, for others the counters are set to 1 when written to and
-	 * instead cleared when read. So we clear them both ways ...
+	 * Clears the "tally counters" क्रम CRC errors and missed frames(?).
+	 * It has been reported that some chips need a ग_लिखो of 0 to clear
+	 * these, क्रम others the counters are set to 1 when written to and
+	 * instead cleared when पढ़ो. So we clear them both ways ...
 	 */
-	iowrite32(0, ioaddr + RxMissed);
-	ioread16(ioaddr + RxCRCErrs);
-	ioread16(ioaddr + RxMissed);
-}
+	ioग_लिखो32(0, ioaddr + RxMissed);
+	ioपढ़ो16(ioaddr + RxCRCErrs);
+	ioपढ़ो16(ioaddr + RxMissed);
+पूर्ण
 
-#define RHINE_EVENT_NAPI_RX	(IntrRxDone | \
+#घोषणा RHINE_EVENT_NAPI_RX	(IntrRxDone | \
 				 IntrRxErr | \
 				 IntrRxEmpty | \
 				 IntrRxOverflow	| \
@@ -801,118 +802,118 @@ static void rhine_update_rx_crc_and_missed_errord(struct rhine_private *rp)
 				 IntrRxNoBuf | \
 				 IntrRxWakeUp)
 
-#define RHINE_EVENT_NAPI_TX_ERR	(IntrTxError | \
+#घोषणा RHINE_EVENT_NAPI_TX_ERR	(IntrTxError | \
 				 IntrTxAborted | \
 				 IntrTxUnderrun | \
 				 IntrTxDescRace)
-#define RHINE_EVENT_NAPI_TX	(IntrTxDone | RHINE_EVENT_NAPI_TX_ERR)
+#घोषणा RHINE_EVENT_NAPI_TX	(IntrTxDone | RHINE_EVENT_NAPI_TX_ERR)
 
-#define RHINE_EVENT_NAPI	(RHINE_EVENT_NAPI_RX | \
+#घोषणा RHINE_EVENT_NAPI	(RHINE_EVENT_NAPI_RX | \
 				 RHINE_EVENT_NAPI_TX | \
 				 IntrStatsMax)
-#define RHINE_EVENT_SLOW	(IntrPCIErr | IntrLinkChange)
-#define RHINE_EVENT		(RHINE_EVENT_NAPI | RHINE_EVENT_SLOW)
+#घोषणा RHINE_EVENT_SLOW	(IntrPCIErr | IntrLinkChange)
+#घोषणा RHINE_EVENT		(RHINE_EVENT_NAPI | RHINE_EVENT_SLOW)
 
-static int rhine_napipoll(struct napi_struct *napi, int budget)
-{
-	struct rhine_private *rp = container_of(napi, struct rhine_private, napi);
-	struct net_device *dev = rp->dev;
-	void __iomem *ioaddr = rp->base;
+अटल पूर्णांक rhine_napipoll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा rhine_निजी *rp = container_of(napi, काष्ठा rhine_निजी, napi);
+	काष्ठा net_device *dev = rp->dev;
+	व्योम __iomem *ioaddr = rp->base;
 	u16 enable_mask = RHINE_EVENT & 0xffff;
-	int work_done = 0;
+	पूर्णांक work_करोne = 0;
 	u32 status;
 
 	status = rhine_get_events(rp);
 	rhine_ack_events(rp, status & ~RHINE_EVENT_SLOW);
 
-	if (status & RHINE_EVENT_NAPI_RX)
-		work_done += rhine_rx(dev, budget);
+	अगर (status & RHINE_EVENT_NAPI_RX)
+		work_करोne += rhine_rx(dev, budget);
 
-	if (status & RHINE_EVENT_NAPI_TX) {
-		if (status & RHINE_EVENT_NAPI_TX_ERR) {
-			/* Avoid scavenging before Tx engine turned off */
-			rhine_wait_bit_low(rp, ChipCmd, CmdTxOn);
-			if (ioread8(ioaddr + ChipCmd) & CmdTxOn)
-				netif_warn(rp, tx_err, dev, "Tx still on\n");
-		}
+	अगर (status & RHINE_EVENT_NAPI_TX) अणु
+		अगर (status & RHINE_EVENT_NAPI_TX_ERR) अणु
+			/* Aव्योम scavenging beक्रमe Tx engine turned off */
+			rhine_रुको_bit_low(rp, ChipCmd, CmdTxOn);
+			अगर (ioपढ़ो8(ioaddr + ChipCmd) & CmdTxOn)
+				netअगर_warn(rp, tx_err, dev, "Tx still on\n");
+		पूर्ण
 
 		rhine_tx(dev);
 
-		if (status & RHINE_EVENT_NAPI_TX_ERR)
+		अगर (status & RHINE_EVENT_NAPI_TX_ERR)
 			rhine_tx_err(rp, status);
-	}
+	पूर्ण
 
-	if (status & IntrStatsMax) {
+	अगर (status & IntrStatsMax) अणु
 		spin_lock(&rp->lock);
 		rhine_update_rx_crc_and_missed_errord(rp);
 		spin_unlock(&rp->lock);
-	}
+	पूर्ण
 
-	if (status & RHINE_EVENT_SLOW) {
+	अगर (status & RHINE_EVENT_SLOW) अणु
 		enable_mask &= ~RHINE_EVENT_SLOW;
 		schedule_work(&rp->slow_event_task);
-	}
+	पूर्ण
 
-	if (work_done < budget) {
-		napi_complete_done(napi, work_done);
-		iowrite16(enable_mask, ioaddr + IntrEnable);
-	}
-	return work_done;
-}
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(napi, work_करोne);
+		ioग_लिखो16(enable_mask, ioaddr + IntrEnable);
+	पूर्ण
+	वापस work_करोne;
+पूर्ण
 
-static void rhine_hw_init(struct net_device *dev, long pioaddr)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल व्योम rhine_hw_init(काष्ठा net_device *dev, दीर्घ pioaddr)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
 	/* Reset the chip to erase previous misconfiguration. */
 	rhine_chip_reset(dev);
 
-	/* Rhine-I needs extra time to recuperate before EEPROM reload */
-	if (rp->quirks & rqRhineI)
+	/* Rhine-I needs extra समय to recuperate beक्रमe EEPROM reload */
+	अगर (rp->quirks & rqRhineI)
 		msleep(5);
 
 	/* Reload EEPROM controlled bytes cleared by soft reset */
-	if (dev_is_pci(dev->dev.parent))
+	अगर (dev_is_pci(dev->dev.parent))
 		rhine_reload_eeprom(pioaddr, dev);
-}
+पूर्ण
 
-static const struct net_device_ops rhine_netdev_ops = {
-	.ndo_open		 = rhine_open,
-	.ndo_stop		 = rhine_close,
-	.ndo_start_xmit		 = rhine_start_tx,
-	.ndo_get_stats64	 = rhine_get_stats64,
-	.ndo_set_rx_mode	 = rhine_set_rx_mode,
-	.ndo_validate_addr	 = eth_validate_addr,
-	.ndo_set_mac_address 	 = eth_mac_addr,
-	.ndo_do_ioctl		 = netdev_ioctl,
-	.ndo_tx_timeout 	 = rhine_tx_timeout,
-	.ndo_vlan_rx_add_vid	 = rhine_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	 = rhine_vlan_rx_kill_vid,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	 = rhine_poll,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops rhine_netdev_ops = अणु
+	.nकरो_खोलो		 = rhine_खोलो,
+	.nकरो_stop		 = rhine_बंद,
+	.nकरो_start_xmit		 = rhine_start_tx,
+	.nकरो_get_stats64	 = rhine_get_stats64,
+	.nकरो_set_rx_mode	 = rhine_set_rx_mode,
+	.nकरो_validate_addr	 = eth_validate_addr,
+	.nकरो_set_mac_address 	 = eth_mac_addr,
+	.nकरो_करो_ioctl		 = netdev_ioctl,
+	.nकरो_tx_समयout 	 = rhine_tx_समयout,
+	.nकरो_vlan_rx_add_vid	 = rhine_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	 = rhine_vlan_rx_समाप्त_vid,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	 = rhine_poll,
+#पूर्ण_अगर
+पूर्ण;
 
-static int rhine_init_one_common(struct device *hwdev, u32 quirks,
-				 long pioaddr, void __iomem *ioaddr, int irq)
-{
-	struct net_device *dev;
-	struct rhine_private *rp;
-	int i, rc, phy_id;
-	const char *name;
+अटल पूर्णांक rhine_init_one_common(काष्ठा device *hwdev, u32 quirks,
+				 दीर्घ pioaddr, व्योम __iomem *ioaddr, पूर्णांक irq)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा rhine_निजी *rp;
+	पूर्णांक i, rc, phy_id;
+	स्थिर अक्षर *name;
 
 	/* this should always be supported */
 	rc = dma_set_mask(hwdev, DMA_BIT_MASK(32));
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(hwdev, "32-bit DMA addresses not supported by the card!?\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	dev = alloc_etherdev(sizeof(struct rhine_private));
-	if (!dev) {
+	dev = alloc_etherdev(माप(काष्ठा rhine_निजी));
+	अगर (!dev) अणु
 		rc = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	SET_NETDEV_DEV(dev, hwdev);
 
 	rp = netdev_priv(dev);
@@ -921,70 +922,70 @@ static int rhine_init_one_common(struct device *hwdev, u32 quirks,
 	rp->pioaddr = pioaddr;
 	rp->base = ioaddr;
 	rp->irq = irq;
-	rp->msg_enable = netif_msg_init(debug, RHINE_MSG_DEFAULT);
+	rp->msg_enable = netअगर_msg_init(debug, RHINE_MSG_DEFAULT);
 
 	phy_id = rp->quirks & rqIntPHY ? 1 : 0;
 
 	u64_stats_init(&rp->tx_stats.syncp);
 	u64_stats_init(&rp->rx_stats.syncp);
 
-	/* Get chip registers into a sane state */
-	rhine_power_init(dev);
+	/* Get chip रेजिस्टरs पूर्णांकo a sane state */
+	rhine_घातer_init(dev);
 	rhine_hw_init(dev, pioaddr);
 
-	for (i = 0; i < 6; i++)
-		dev->dev_addr[i] = ioread8(ioaddr + StationAddr + i);
+	क्रम (i = 0; i < 6; i++)
+		dev->dev_addr[i] = ioपढ़ो8(ioaddr + StationAddr + i);
 
-	if (!is_valid_ether_addr(dev->dev_addr)) {
-		/* Report it and use a random ethernet address instead */
+	अगर (!is_valid_ether_addr(dev->dev_addr)) अणु
+		/* Report it and use a अक्रमom ethernet address instead */
 		netdev_err(dev, "Invalid MAC address: %pM\n", dev->dev_addr);
-		eth_hw_addr_random(dev);
+		eth_hw_addr_अक्रमom(dev);
 		netdev_info(dev, "Using random MAC address: %pM\n",
 			    dev->dev_addr);
-	}
+	पूर्ण
 
 	/* For Rhine-I/II, phy_id is loaded from EEPROM */
-	if (!phy_id)
-		phy_id = ioread8(ioaddr + 0x6C);
+	अगर (!phy_id)
+		phy_id = ioपढ़ो8(ioaddr + 0x6C);
 
 	spin_lock_init(&rp->lock);
 	mutex_init(&rp->task_lock);
 	INIT_WORK(&rp->reset_task, rhine_reset_task);
 	INIT_WORK(&rp->slow_event_task, rhine_slow_event_task);
 
-	rp->mii_if.dev = dev;
-	rp->mii_if.mdio_read = mdio_read;
-	rp->mii_if.mdio_write = mdio_write;
-	rp->mii_if.phy_id_mask = 0x1f;
-	rp->mii_if.reg_num_mask = 0x1f;
+	rp->mii_अगर.dev = dev;
+	rp->mii_अगर.mdio_पढ़ो = mdio_पढ़ो;
+	rp->mii_अगर.mdio_ग_लिखो = mdio_ग_लिखो;
+	rp->mii_अगर.phy_id_mask = 0x1f;
+	rp->mii_अगर.reg_num_mask = 0x1f;
 
-	/* The chip-specific entries in the device structure. */
+	/* The chip-specअगरic entries in the device काष्ठाure. */
 	dev->netdev_ops = &rhine_netdev_ops;
 	dev->ethtool_ops = &netdev_ethtool_ops;
-	dev->watchdog_timeo = TX_TIMEOUT;
+	dev->watchकरोg_समयo = TX_TIMEOUT;
 
-	netif_napi_add(dev, &rp->napi, rhine_napipoll, 64);
+	netअगर_napi_add(dev, &rp->napi, rhine_napipoll, 64);
 
-	if (rp->quirks & rqRhineI)
+	अगर (rp->quirks & rqRhineI)
 		dev->features |= NETIF_F_SG|NETIF_F_HW_CSUM;
 
-	if (rp->quirks & rqMgmt)
+	अगर (rp->quirks & rqMgmt)
 		dev->features |= NETIF_F_HW_VLAN_CTAG_TX |
 				 NETIF_F_HW_VLAN_CTAG_RX |
 				 NETIF_F_HW_VLAN_CTAG_FILTER;
 
-	/* dev->name not defined before register_netdev()! */
-	rc = register_netdev(dev);
-	if (rc)
-		goto err_out_free_netdev;
+	/* dev->name not defined beक्रमe रेजिस्टर_netdev()! */
+	rc = रेजिस्टर_netdev(dev);
+	अगर (rc)
+		जाओ err_out_मुक्त_netdev;
 
-	if (rp->quirks & rqRhineI)
+	अगर (rp->quirks & rqRhineI)
 		name = "Rhine";
-	else if (rp->quirks & rqStatusWBRace)
+	अन्यथा अगर (rp->quirks & rqStatusWBRace)
 		name = "Rhine II";
-	else if (rp->quirks & rqMgmt)
+	अन्यथा अगर (rp->quirks & rqMgmt)
 		name = "Rhine III (Management Adapter)";
-	else
+	अन्यथा
 		name = "Rhine III";
 
 	netdev_info(dev, "VIA %s at %p, %pM, IRQ %d\n",
@@ -992,85 +993,85 @@ static int rhine_init_one_common(struct device *hwdev, u32 quirks,
 
 	dev_set_drvdata(hwdev, dev);
 
-	{
+	अणु
 		u16 mii_cmd;
-		int mii_status = mdio_read(dev, phy_id, 1);
-		mii_cmd = mdio_read(dev, phy_id, MII_BMCR) & ~BMCR_ISOLATE;
-		mdio_write(dev, phy_id, MII_BMCR, mii_cmd);
-		if (mii_status != 0xffff && mii_status != 0x0000) {
-			rp->mii_if.advertising = mdio_read(dev, phy_id, 4);
+		पूर्णांक mii_status = mdio_पढ़ो(dev, phy_id, 1);
+		mii_cmd = mdio_पढ़ो(dev, phy_id, MII_BMCR) & ~BMCR_ISOLATE;
+		mdio_ग_लिखो(dev, phy_id, MII_BMCR, mii_cmd);
+		अगर (mii_status != 0xffff && mii_status != 0x0000) अणु
+			rp->mii_अगर.advertising = mdio_पढ़ो(dev, phy_id, 4);
 			netdev_info(dev,
 				    "MII PHY found at address %d, status 0x%04x advertising %04x Link %04x\n",
 				    phy_id,
-				    mii_status, rp->mii_if.advertising,
-				    mdio_read(dev, phy_id, 5));
+				    mii_status, rp->mii_अगर.advertising,
+				    mdio_पढ़ो(dev, phy_id, 5));
 
 			/* set IFF_RUNNING */
-			if (mii_status & BMSR_LSTATUS)
-				netif_carrier_on(dev);
-			else
-				netif_carrier_off(dev);
+			अगर (mii_status & BMSR_LSTATUS)
+				netअगर_carrier_on(dev);
+			अन्यथा
+				netअगर_carrier_off(dev);
 
-		}
-	}
-	rp->mii_if.phy_id = phy_id;
-	if (avoid_D3)
-		netif_info(rp, probe, dev, "No D3 power state at shutdown\n");
+		पूर्ण
+	पूर्ण
+	rp->mii_अगर.phy_id = phy_id;
+	अगर (aव्योम_D3)
+		netअगर_info(rp, probe, dev, "No D3 power state at shutdown\n");
 
-	return 0;
+	वापस 0;
 
-err_out_free_netdev:
-	free_netdev(dev);
+err_out_मुक्त_netdev:
+	मुक्त_netdev(dev);
 err_out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int rhine_init_one_pci(struct pci_dev *pdev,
-			      const struct pci_device_id *ent)
-{
-	struct device *hwdev = &pdev->dev;
-	int rc;
-	long pioaddr, memaddr;
-	void __iomem *ioaddr;
-	int io_size = pdev->revision < VTunknown0 ? 128 : 256;
+अटल पूर्णांक rhine_init_one_pci(काष्ठा pci_dev *pdev,
+			      स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा device *hwdev = &pdev->dev;
+	पूर्णांक rc;
+	दीर्घ pioaddr, memaddr;
+	व्योम __iomem *ioaddr;
+	पूर्णांक io_size = pdev->revision < VTunknown0 ? 128 : 256;
 
 /* This driver was written to use PCI memory space. Some early versions
  * of the Rhine may only work correctly with I/O space accesses.
- * TODO: determine for which revisions this is true and assign the flag
+ * TODO: determine क्रम which revisions this is true and assign the flag
  *	 in code as opposed to this Kconfig option (???)
  */
-#ifdef CONFIG_VIA_RHINE_MMIO
+#अगर_घोषित CONFIG_VIA_RHINE_MMIO
 	u32 quirks = rqNeedEnMMIO;
-#else
+#अन्यथा
 	u32 quirks = 0;
-#endif
+#पूर्ण_अगर
 
 	rc = pci_enable_device(pdev);
-	if (rc)
-		goto err_out;
+	अगर (rc)
+		जाओ err_out;
 
-	if (pdev->revision < VTunknown0) {
+	अगर (pdev->revision < VTunknown0) अणु
 		quirks |= rqRhineI;
-	} else if (pdev->revision >= VT6102) {
+	पूर्ण अन्यथा अगर (pdev->revision >= VT6102) अणु
 		quirks |= rqWOL | rqForceReset;
-		if (pdev->revision < VT6105) {
+		अगर (pdev->revision < VT6105) अणु
 			quirks |= rqStatusWBRace;
-		} else {
+		पूर्ण अन्यथा अणु
 			quirks |= rqIntPHY;
-			if (pdev->revision >= VT6105_B0)
+			अगर (pdev->revision >= VT6105_B0)
 				quirks |= rq6patterns;
-			if (pdev->revision >= VT6105M)
+			अगर (pdev->revision >= VT6105M)
 				quirks |= rqMgmt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* sanity check */
-	if ((pci_resource_len(pdev, 0) < io_size) ||
-	    (pci_resource_len(pdev, 1) < io_size)) {
+	अगर ((pci_resource_len(pdev, 0) < io_size) ||
+	    (pci_resource_len(pdev, 1) < io_size)) अणु
 		rc = -EIO;
 		dev_err(hwdev, "Insufficient PCI resources, aborting\n");
-		goto err_out_pci_disable;
-	}
+		जाओ err_out_pci_disable;
+	पूर्ण
 
 	pioaddr = pci_resource_start(pdev, 0);
 	memaddr = pci_resource_start(pdev, 1);
@@ -1078,408 +1079,408 @@ static int rhine_init_one_pci(struct pci_dev *pdev,
 	pci_set_master(pdev);
 
 	rc = pci_request_regions(pdev, DRV_NAME);
-	if (rc)
-		goto err_out_pci_disable;
+	अगर (rc)
+		जाओ err_out_pci_disable;
 
 	ioaddr = pci_iomap(pdev, (quirks & rqNeedEnMMIO ? 1 : 0), io_size);
-	if (!ioaddr) {
+	अगर (!ioaddr) अणु
 		rc = -EIO;
 		dev_err(hwdev,
 			"ioremap failed for device %s, region 0x%X @ 0x%lX\n",
 			dev_name(hwdev), io_size, memaddr);
-		goto err_out_free_res;
-	}
+		जाओ err_out_मुक्त_res;
+	पूर्ण
 
 	enable_mmio(pioaddr, quirks);
 
-	rc = verify_mmio(hwdev, pioaddr, ioaddr, quirks);
-	if (rc)
-		goto err_out_unmap;
+	rc = verअगरy_mmio(hwdev, pioaddr, ioaddr, quirks);
+	अगर (rc)
+		जाओ err_out_unmap;
 
 	rc = rhine_init_one_common(&pdev->dev, quirks,
 				   pioaddr, ioaddr, pdev->irq);
-	if (!rc)
-		return 0;
+	अगर (!rc)
+		वापस 0;
 
 err_out_unmap:
 	pci_iounmap(pdev, ioaddr);
-err_out_free_res:
+err_out_मुक्त_res:
 	pci_release_regions(pdev);
 err_out_pci_disable:
 	pci_disable_device(pdev);
 err_out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int rhine_init_one_platform(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	const u32 *quirks;
-	int irq;
-	void __iomem *ioaddr;
+अटल पूर्णांक rhine_init_one_platक्रमm(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर u32 *quirks;
+	पूर्णांक irq;
+	व्योम __iomem *ioaddr;
 
 	match = of_match_device(rhine_of_tbl, &pdev->dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
-	ioaddr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ioaddr))
-		return PTR_ERR(ioaddr);
+	ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ioaddr))
+		वापस PTR_ERR(ioaddr);
 
 	irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
-	if (!irq)
-		return -EINVAL;
+	अगर (!irq)
+		वापस -EINVAL;
 
 	quirks = match->data;
-	if (!quirks)
-		return -EINVAL;
+	अगर (!quirks)
+		वापस -EINVAL;
 
-	return rhine_init_one_common(&pdev->dev, *quirks,
-				     (long)ioaddr, ioaddr, irq);
-}
+	वापस rhine_init_one_common(&pdev->dev, *quirks,
+				     (दीर्घ)ioaddr, ioaddr, irq);
+पूर्ण
 
-static int alloc_ring(struct net_device* dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	void *ring;
+अटल पूर्णांक alloc_ring(काष्ठा net_device* dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	व्योम *ring;
 	dma_addr_t ring_dma;
 
 	ring = dma_alloc_coherent(hwdev,
-				  RX_RING_SIZE * sizeof(struct rx_desc) +
-				  TX_RING_SIZE * sizeof(struct tx_desc),
+				  RX_RING_SIZE * माप(काष्ठा rx_desc) +
+				  TX_RING_SIZE * माप(काष्ठा tx_desc),
 				  &ring_dma,
 				  GFP_ATOMIC);
-	if (!ring) {
+	अगर (!ring) अणु
 		netdev_err(dev, "Could not allocate DMA memory\n");
-		return -ENOMEM;
-	}
-	if (rp->quirks & rqRhineI) {
+		वापस -ENOMEM;
+	पूर्ण
+	अगर (rp->quirks & rqRhineI) अणु
 		rp->tx_bufs = dma_alloc_coherent(hwdev,
 						 PKT_BUF_SZ * TX_RING_SIZE,
 						 &rp->tx_bufs_dma,
 						 GFP_ATOMIC);
-		if (rp->tx_bufs == NULL) {
-			dma_free_coherent(hwdev,
-					  RX_RING_SIZE * sizeof(struct rx_desc) +
-					  TX_RING_SIZE * sizeof(struct tx_desc),
+		अगर (rp->tx_bufs == शून्य) अणु
+			dma_मुक्त_coherent(hwdev,
+					  RX_RING_SIZE * माप(काष्ठा rx_desc) +
+					  TX_RING_SIZE * माप(काष्ठा tx_desc),
 					  ring, ring_dma);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	rp->rx_ring = ring;
-	rp->tx_ring = ring + RX_RING_SIZE * sizeof(struct rx_desc);
+	rp->tx_ring = ring + RX_RING_SIZE * माप(काष्ठा rx_desc);
 	rp->rx_ring_dma = ring_dma;
-	rp->tx_ring_dma = ring_dma + RX_RING_SIZE * sizeof(struct rx_desc);
+	rp->tx_ring_dma = ring_dma + RX_RING_SIZE * माप(काष्ठा rx_desc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_ring(struct net_device* dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
+अटल व्योम मुक्त_ring(काष्ठा net_device* dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
 
-	dma_free_coherent(hwdev,
-			  RX_RING_SIZE * sizeof(struct rx_desc) +
-			  TX_RING_SIZE * sizeof(struct tx_desc),
+	dma_मुक्त_coherent(hwdev,
+			  RX_RING_SIZE * माप(काष्ठा rx_desc) +
+			  TX_RING_SIZE * माप(काष्ठा tx_desc),
 			  rp->rx_ring, rp->rx_ring_dma);
-	rp->tx_ring = NULL;
+	rp->tx_ring = शून्य;
 
-	if (rp->tx_bufs)
-		dma_free_coherent(hwdev, PKT_BUF_SZ * TX_RING_SIZE,
+	अगर (rp->tx_bufs)
+		dma_मुक्त_coherent(hwdev, PKT_BUF_SZ * TX_RING_SIZE,
 				  rp->tx_bufs, rp->tx_bufs_dma);
 
-	rp->tx_bufs = NULL;
+	rp->tx_bufs = शून्य;
 
-}
+पूर्ण
 
-struct rhine_skb_dma {
-	struct sk_buff *skb;
+काष्ठा rhine_skb_dma अणु
+	काष्ठा sk_buff *skb;
 	dma_addr_t dma;
-};
+पूर्ण;
 
-static inline int rhine_skb_dma_init(struct net_device *dev,
-				     struct rhine_skb_dma *sd)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	const int size = rp->rx_buf_sz;
+अटल अंतरभूत पूर्णांक rhine_skb_dma_init(काष्ठा net_device *dev,
+				     काष्ठा rhine_skb_dma *sd)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	स्थिर पूर्णांक size = rp->rx_buf_sz;
 
 	sd->skb = netdev_alloc_skb(dev, size);
-	if (!sd->skb)
-		return -ENOMEM;
+	अगर (!sd->skb)
+		वापस -ENOMEM;
 
 	sd->dma = dma_map_single(hwdev, sd->skb->data, size, DMA_FROM_DEVICE);
-	if (unlikely(dma_mapping_error(hwdev, sd->dma))) {
-		netif_err(rp, drv, dev, "Rx DMA mapping failure\n");
-		dev_kfree_skb_any(sd->skb);
-		return -EIO;
-	}
+	अगर (unlikely(dma_mapping_error(hwdev, sd->dma))) अणु
+		netअगर_err(rp, drv, dev, "Rx DMA mapping failure\n");
+		dev_kमुक्त_skb_any(sd->skb);
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rhine_reset_rbufs(struct rhine_private *rp)
-{
-	int i;
+अटल व्योम rhine_reset_rbufs(काष्ठा rhine_निजी *rp)
+अणु
+	पूर्णांक i;
 
 	rp->cur_rx = 0;
 
-	for (i = 0; i < RX_RING_SIZE; i++)
+	क्रम (i = 0; i < RX_RING_SIZE; i++)
 		rp->rx_ring[i].rx_status = cpu_to_le32(DescOwn);
-}
+पूर्ण
 
-static inline void rhine_skb_dma_nic_store(struct rhine_private *rp,
-					   struct rhine_skb_dma *sd, int entry)
-{
+अटल अंतरभूत व्योम rhine_skb_dma_nic_store(काष्ठा rhine_निजी *rp,
+					   काष्ठा rhine_skb_dma *sd, पूर्णांक entry)
+अणु
 	rp->rx_skbuff_dma[entry] = sd->dma;
 	rp->rx_skbuff[entry] = sd->skb;
 
 	rp->rx_ring[entry].addr = cpu_to_le32(sd->dma);
 	dma_wmb();
-}
+पूर्ण
 
-static void free_rbufs(struct net_device* dev);
+अटल व्योम मुक्त_rbufs(काष्ठा net_device* dev);
 
-static int alloc_rbufs(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक alloc_rbufs(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 	dma_addr_t next;
-	int rc, i;
+	पूर्णांक rc, i;
 
 	rp->rx_buf_sz = (dev->mtu <= 1500 ? PKT_BUF_SZ : dev->mtu + 32);
 	next = rp->rx_ring_dma;
 
 	/* Init the ring entries */
-	for (i = 0; i < RX_RING_SIZE; i++) {
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
 		rp->rx_ring[i].rx_status = 0;
 		rp->rx_ring[i].desc_length = cpu_to_le32(rp->rx_buf_sz);
-		next += sizeof(struct rx_desc);
+		next += माप(काष्ठा rx_desc);
 		rp->rx_ring[i].next_desc = cpu_to_le32(next);
-		rp->rx_skbuff[i] = NULL;
-	}
+		rp->rx_skbuff[i] = शून्य;
+	पूर्ण
 	/* Mark the last entry as wrapping the ring. */
 	rp->rx_ring[i-1].next_desc = cpu_to_le32(rp->rx_ring_dma);
 
 	/* Fill in the Rx buffers.  Handle allocation failure gracefully. */
-	for (i = 0; i < RX_RING_SIZE; i++) {
-		struct rhine_skb_dma sd;
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+		काष्ठा rhine_skb_dma sd;
 
 		rc = rhine_skb_dma_init(dev, &sd);
-		if (rc < 0) {
-			free_rbufs(dev);
-			goto out;
-		}
+		अगर (rc < 0) अणु
+			मुक्त_rbufs(dev);
+			जाओ out;
+		पूर्ण
 
 		rhine_skb_dma_nic_store(rp, &sd, i);
-	}
+	पूर्ण
 
 	rhine_reset_rbufs(rp);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void free_rbufs(struct net_device* dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	int i;
+अटल व्योम मुक्त_rbufs(काष्ठा net_device* dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	पूर्णांक i;
 
 	/* Free all the skbuffs in the Rx queue. */
-	for (i = 0; i < RX_RING_SIZE; i++) {
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
 		rp->rx_ring[i].rx_status = 0;
 		rp->rx_ring[i].addr = cpu_to_le32(0xBADF00D0); /* An invalid address. */
-		if (rp->rx_skbuff[i]) {
+		अगर (rp->rx_skbuff[i]) अणु
 			dma_unmap_single(hwdev,
 					 rp->rx_skbuff_dma[i],
 					 rp->rx_buf_sz, DMA_FROM_DEVICE);
-			dev_kfree_skb(rp->rx_skbuff[i]);
-		}
-		rp->rx_skbuff[i] = NULL;
-	}
-}
+			dev_kमुक्त_skb(rp->rx_skbuff[i]);
+		पूर्ण
+		rp->rx_skbuff[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-static void alloc_tbufs(struct net_device* dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल व्योम alloc_tbufs(काष्ठा net_device* dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 	dma_addr_t next;
-	int i;
+	पूर्णांक i;
 
 	rp->dirty_tx = rp->cur_tx = 0;
 	next = rp->tx_ring_dma;
-	for (i = 0; i < TX_RING_SIZE; i++) {
-		rp->tx_skbuff[i] = NULL;
+	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
+		rp->tx_skbuff[i] = शून्य;
 		rp->tx_ring[i].tx_status = 0;
 		rp->tx_ring[i].desc_length = cpu_to_le32(TXDESC);
-		next += sizeof(struct tx_desc);
+		next += माप(काष्ठा tx_desc);
 		rp->tx_ring[i].next_desc = cpu_to_le32(next);
-		if (rp->quirks & rqRhineI)
+		अगर (rp->quirks & rqRhineI)
 			rp->tx_buf[i] = &rp->tx_bufs[i * PKT_BUF_SZ];
-	}
+	पूर्ण
 	rp->tx_ring[i-1].next_desc = cpu_to_le32(rp->tx_ring_dma);
 
 	netdev_reset_queue(dev);
-}
+पूर्ण
 
-static void free_tbufs(struct net_device* dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	int i;
+अटल व्योम मुक्त_tbufs(काष्ठा net_device* dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	पूर्णांक i;
 
-	for (i = 0; i < TX_RING_SIZE; i++) {
+	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
 		rp->tx_ring[i].tx_status = 0;
 		rp->tx_ring[i].desc_length = cpu_to_le32(TXDESC);
 		rp->tx_ring[i].addr = cpu_to_le32(0xBADF00D0); /* An invalid address. */
-		if (rp->tx_skbuff[i]) {
-			if (rp->tx_skbuff_dma[i]) {
+		अगर (rp->tx_skbuff[i]) अणु
+			अगर (rp->tx_skbuff_dma[i]) अणु
 				dma_unmap_single(hwdev,
 						 rp->tx_skbuff_dma[i],
 						 rp->tx_skbuff[i]->len,
 						 DMA_TO_DEVICE);
-			}
-			dev_kfree_skb(rp->tx_skbuff[i]);
-		}
-		rp->tx_skbuff[i] = NULL;
-		rp->tx_buf[i] = NULL;
-	}
-}
+			पूर्ण
+			dev_kमुक्त_skb(rp->tx_skbuff[i]);
+		पूर्ण
+		rp->tx_skbuff[i] = शून्य;
+		rp->tx_buf[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-static void rhine_check_media(struct net_device *dev, unsigned int init_media)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_check_media(काष्ठा net_device *dev, अचिन्हित पूर्णांक init_media)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 
-	if (!rp->mii_if.force_media)
-		mii_check_media(&rp->mii_if, netif_msg_link(rp), init_media);
+	अगर (!rp->mii_अगर.क्रमce_media)
+		mii_check_media(&rp->mii_अगर, netअगर_msg_link(rp), init_media);
 
-	if (rp->mii_if.full_duplex)
-	    iowrite8(ioread8(ioaddr + ChipCmd1) | Cmd1FDuplex,
+	अगर (rp->mii_अगर.full_duplex)
+	    ioग_लिखो8(ioपढ़ो8(ioaddr + ChipCmd1) | Cmd1FDuplex,
 		   ioaddr + ChipCmd1);
-	else
-	    iowrite8(ioread8(ioaddr + ChipCmd1) & ~Cmd1FDuplex,
+	अन्यथा
+	    ioग_लिखो8(ioपढ़ो8(ioaddr + ChipCmd1) & ~Cmd1FDuplex,
 		   ioaddr + ChipCmd1);
 
-	netif_info(rp, link, dev, "force_media %d, carrier %d\n",
-		   rp->mii_if.force_media, netif_carrier_ok(dev));
-}
+	netअगर_info(rp, link, dev, "force_media %d, carrier %d\n",
+		   rp->mii_अगर.क्रमce_media, netअगर_carrier_ok(dev));
+पूर्ण
 
-/* Called after status of force_media possibly changed */
-static void rhine_set_carrier(struct mii_if_info *mii)
-{
-	struct net_device *dev = mii->dev;
-	struct rhine_private *rp = netdev_priv(dev);
+/* Called after status of क्रमce_media possibly changed */
+अटल व्योम rhine_set_carrier(काष्ठा mii_अगर_info *mii)
+अणु
+	काष्ठा net_device *dev = mii->dev;
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-	if (mii->force_media) {
-		/* autoneg is off: Link is always assumed to be up */
-		if (!netif_carrier_ok(dev))
-			netif_carrier_on(dev);
-	}
+	अगर (mii->क्रमce_media) अणु
+		/* स्वतःneg is off: Link is always assumed to be up */
+		अगर (!netअगर_carrier_ok(dev))
+			netअगर_carrier_on(dev);
+	पूर्ण
 
 	rhine_check_media(dev, 0);
 
-	netif_info(rp, link, dev, "force_media %d, carrier %d\n",
-		   mii->force_media, netif_carrier_ok(dev));
-}
+	netअगर_info(rp, link, dev, "force_media %d, carrier %d\n",
+		   mii->क्रमce_media, netअगर_carrier_ok(dev));
+पूर्ण
 
 /**
  * rhine_set_cam - set CAM multicast filters
- * @ioaddr: register block of this Rhine
+ * @ioaddr: रेजिस्टर block of this Rhine
  * @idx: multicast CAM index [0..MCAM_SIZE-1]
  * @addr: multicast address (6 bytes)
  *
- * Load addresses into multicast filters.
+ * Load addresses पूर्णांकo multicast filters.
  */
-static void rhine_set_cam(void __iomem *ioaddr, int idx, u8 *addr)
-{
-	int i;
+अटल व्योम rhine_set_cam(व्योम __iomem *ioaddr, पूर्णांक idx, u8 *addr)
+अणु
+	पूर्णांक i;
 
-	iowrite8(CAMC_CAMEN, ioaddr + CamCon);
+	ioग_लिखो8(CAMC_CAMEN, ioaddr + CamCon);
 	wmb();
 
 	/* Paranoid -- idx out of range should never happen */
 	idx &= (MCAM_SIZE - 1);
 
-	iowrite8((u8) idx, ioaddr + CamAddr);
+	ioग_लिखो8((u8) idx, ioaddr + CamAddr);
 
-	for (i = 0; i < 6; i++, addr++)
-		iowrite8(*addr, ioaddr + MulticastFilter0 + i);
+	क्रम (i = 0; i < 6; i++, addr++)
+		ioग_लिखो8(*addr, ioaddr + MulticastFilter0 + i);
 	udelay(10);
 	wmb();
 
-	iowrite8(CAMC_CAMWR | CAMC_CAMEN, ioaddr + CamCon);
+	ioग_लिखो8(CAMC_CAMWR | CAMC_CAMEN, ioaddr + CamCon);
 	udelay(10);
 
-	iowrite8(0, ioaddr + CamCon);
-}
+	ioग_लिखो8(0, ioaddr + CamCon);
+पूर्ण
 
 /**
  * rhine_set_vlan_cam - set CAM VLAN filters
- * @ioaddr: register block of this Rhine
+ * @ioaddr: रेजिस्टर block of this Rhine
  * @idx: VLAN CAM index [0..VCAM_SIZE-1]
  * @addr: VLAN ID (2 bytes)
  *
- * Load addresses into VLAN filters.
+ * Load addresses पूर्णांकo VLAN filters.
  */
-static void rhine_set_vlan_cam(void __iomem *ioaddr, int idx, u8 *addr)
-{
-	iowrite8(CAMC_CAMEN | CAMC_VCAMSL, ioaddr + CamCon);
+अटल व्योम rhine_set_vlan_cam(व्योम __iomem *ioaddr, पूर्णांक idx, u8 *addr)
+अणु
+	ioग_लिखो8(CAMC_CAMEN | CAMC_VCAMSL, ioaddr + CamCon);
 	wmb();
 
 	/* Paranoid -- idx out of range should never happen */
 	idx &= (VCAM_SIZE - 1);
 
-	iowrite8((u8) idx, ioaddr + CamAddr);
+	ioग_लिखो8((u8) idx, ioaddr + CamAddr);
 
-	iowrite16(*((u16 *) addr), ioaddr + MulticastFilter0 + 6);
+	ioग_लिखो16(*((u16 *) addr), ioaddr + MulticastFilter0 + 6);
 	udelay(10);
 	wmb();
 
-	iowrite8(CAMC_CAMWR | CAMC_CAMEN, ioaddr + CamCon);
+	ioग_लिखो8(CAMC_CAMWR | CAMC_CAMEN, ioaddr + CamCon);
 	udelay(10);
 
-	iowrite8(0, ioaddr + CamCon);
-}
+	ioग_लिखो8(0, ioaddr + CamCon);
+पूर्ण
 
 /**
  * rhine_set_cam_mask - set multicast CAM mask
- * @ioaddr: register block of this Rhine
+ * @ioaddr: रेजिस्टर block of this Rhine
  * @mask: multicast CAM mask
  *
  * Mask sets multicast filters active/inactive.
  */
-static void rhine_set_cam_mask(void __iomem *ioaddr, u32 mask)
-{
-	iowrite8(CAMC_CAMEN, ioaddr + CamCon);
+अटल व्योम rhine_set_cam_mask(व्योम __iomem *ioaddr, u32 mask)
+अणु
+	ioग_लिखो8(CAMC_CAMEN, ioaddr + CamCon);
 	wmb();
 
-	/* write mask */
-	iowrite32(mask, ioaddr + CamMask);
+	/* ग_लिखो mask */
+	ioग_लिखो32(mask, ioaddr + CamMask);
 
 	/* disable CAMEN */
-	iowrite8(0, ioaddr + CamCon);
-}
+	ioग_लिखो8(0, ioaddr + CamCon);
+पूर्ण
 
 /**
  * rhine_set_vlan_cam_mask - set VLAN CAM mask
- * @ioaddr: register block of this Rhine
+ * @ioaddr: रेजिस्टर block of this Rhine
  * @mask: VLAN CAM mask
  *
  * Mask sets VLAN filters active/inactive.
  */
-static void rhine_set_vlan_cam_mask(void __iomem *ioaddr, u32 mask)
-{
-	iowrite8(CAMC_CAMEN | CAMC_VCAMSL, ioaddr + CamCon);
+अटल व्योम rhine_set_vlan_cam_mask(व्योम __iomem *ioaddr, u32 mask)
+अणु
+	ioग_लिखो8(CAMC_CAMEN | CAMC_VCAMSL, ioaddr + CamCon);
 	wmb();
 
-	/* write mask */
-	iowrite32(mask, ioaddr + CamMask);
+	/* ग_लिखो mask */
+	ioग_लिखो32(mask, ioaddr + CamMask);
 
 	/* disable CAMEN */
-	iowrite8(0, ioaddr + CamCon);
-}
+	ioग_लिखो8(0, ioaddr + CamCon);
+पूर्ण
 
 /**
  * rhine_init_cam_filter - initialize CAM filters
@@ -1488,10 +1489,10 @@ static void rhine_set_vlan_cam_mask(void __iomem *ioaddr, u32 mask)
  * Initialize (disable) hardware VLAN and multicast support on this
  * Rhine.
  */
-static void rhine_init_cam_filter(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_init_cam_filter(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 
 	/* Disable all CAMs */
 	rhine_set_vlan_cam_mask(ioaddr, 0);
@@ -1500,341 +1501,341 @@ static void rhine_init_cam_filter(struct net_device *dev)
 	/* disable hardware VLAN support */
 	BYTE_REG_BITS_ON(TCR_PQEN, ioaddr + TxConfig);
 	BYTE_REG_BITS_OFF(BCR1_VIDFR, ioaddr + PCIBusConfig1);
-}
+पूर्ण
 
 /**
  * rhine_update_vcam - update VLAN CAM filters
- * @dev: rhine_private data of this Rhine
+ * @dev: rhine_निजी data of this Rhine
  *
  * Update VLAN CAM filters to match configuration change.
  */
-static void rhine_update_vcam(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_update_vcam(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 	u16 vid;
 	u32 vCAMmask = 0;	/* 32 vCAMs (6105M and better) */
-	unsigned int i = 0;
+	अचिन्हित पूर्णांक i = 0;
 
-	for_each_set_bit(vid, rp->active_vlans, VLAN_N_VID) {
+	क्रम_each_set_bit(vid, rp->active_vlans, VLAN_N_VID) अणु
 		rhine_set_vlan_cam(ioaddr, i, (u8 *)&vid);
 		vCAMmask |= 1 << i;
-		if (++i >= VCAM_SIZE)
-			break;
-	}
+		अगर (++i >= VCAM_SIZE)
+			अवरोध;
+	पूर्ण
 	rhine_set_vlan_cam_mask(ioaddr, vCAMmask);
-}
+पूर्ण
 
-static int rhine_vlan_rx_add_vid(struct net_device *dev, __be16 proto, u16 vid)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक rhine_vlan_rx_add_vid(काष्ठा net_device *dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
 	spin_lock_bh(&rp->lock);
 	set_bit(vid, rp->active_vlans);
 	rhine_update_vcam(dev);
 	spin_unlock_bh(&rp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rhine_vlan_rx_kill_vid(struct net_device *dev, __be16 proto, u16 vid)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक rhine_vlan_rx_समाप्त_vid(काष्ठा net_device *dev, __be16 proto, u16 vid)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
 	spin_lock_bh(&rp->lock);
 	clear_bit(vid, rp->active_vlans);
 	rhine_update_vcam(dev);
 	spin_unlock_bh(&rp->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void init_registers(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
-	int i;
+अटल व्योम init_रेजिस्टरs(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
+	पूर्णांक i;
 
-	for (i = 0; i < 6; i++)
-		iowrite8(dev->dev_addr[i], ioaddr + StationAddr + i);
+	क्रम (i = 0; i < 6; i++)
+		ioग_लिखो8(dev->dev_addr[i], ioaddr + StationAddr + i);
 
-	/* Initialize other registers. */
-	iowrite16(0x0006, ioaddr + PCIBusConfig);	/* Tune configuration??? */
+	/* Initialize other रेजिस्टरs. */
+	ioग_लिखो16(0x0006, ioaddr + PCIBusConfig);	/* Tune configuration??? */
 	/* Configure initial FIFO thresholds. */
-	iowrite8(0x20, ioaddr + TxConfig);
+	ioग_लिखो8(0x20, ioaddr + TxConfig);
 	rp->tx_thresh = 0x20;
 	rp->rx_thresh = 0x60;		/* Written in rhine_set_rx_mode(). */
 
-	iowrite32(rp->rx_ring_dma, ioaddr + RxRingPtr);
-	iowrite32(rp->tx_ring_dma, ioaddr + TxRingPtr);
+	ioग_लिखो32(rp->rx_ring_dma, ioaddr + RxRingPtr);
+	ioग_लिखो32(rp->tx_ring_dma, ioaddr + TxRingPtr);
 
 	rhine_set_rx_mode(dev);
 
-	if (rp->quirks & rqMgmt)
+	अगर (rp->quirks & rqMgmt)
 		rhine_init_cam_filter(dev);
 
 	napi_enable(&rp->napi);
 
-	iowrite16(RHINE_EVENT & 0xffff, ioaddr + IntrEnable);
+	ioग_लिखो16(RHINE_EVENT & 0xffff, ioaddr + IntrEnable);
 
-	iowrite16(CmdStart | CmdTxOn | CmdRxOn | (Cmd1NoTxPoll << 8),
+	ioग_लिखो16(CmdStart | CmdTxOn | CmdRxOn | (Cmd1NoTxPoll << 8),
 	       ioaddr + ChipCmd);
 	rhine_check_media(dev, 1);
-}
+पूर्ण
 
-/* Enable MII link status auto-polling (required for IntrLinkChange) */
-static void rhine_enable_linkmon(struct rhine_private *rp)
-{
-	void __iomem *ioaddr = rp->base;
+/* Enable MII link status स्वतः-polling (required क्रम IntrLinkChange) */
+अटल व्योम rhine_enable_linkmon(काष्ठा rhine_निजी *rp)
+अणु
+	व्योम __iomem *ioaddr = rp->base;
 
-	iowrite8(0, ioaddr + MIICmd);
-	iowrite8(MII_BMSR, ioaddr + MIIRegAddr);
-	iowrite8(0x80, ioaddr + MIICmd);
+	ioग_लिखो8(0, ioaddr + MIICmd);
+	ioग_लिखो8(MII_BMSR, ioaddr + MIIRegAddr);
+	ioग_लिखो8(0x80, ioaddr + MIICmd);
 
-	rhine_wait_bit_high(rp, MIIRegAddr, 0x20);
+	rhine_रुको_bit_high(rp, MIIRegAddr, 0x20);
 
-	iowrite8(MII_BMSR | 0x40, ioaddr + MIIRegAddr);
-}
+	ioग_लिखो8(MII_BMSR | 0x40, ioaddr + MIIRegAddr);
+पूर्ण
 
-/* Disable MII link status auto-polling (required for MDIO access) */
-static void rhine_disable_linkmon(struct rhine_private *rp)
-{
-	void __iomem *ioaddr = rp->base;
+/* Disable MII link status स्वतः-polling (required क्रम MDIO access) */
+अटल व्योम rhine_disable_linkmon(काष्ठा rhine_निजी *rp)
+अणु
+	व्योम __iomem *ioaddr = rp->base;
 
-	iowrite8(0, ioaddr + MIICmd);
+	ioग_लिखो8(0, ioaddr + MIICmd);
 
-	if (rp->quirks & rqRhineI) {
-		iowrite8(0x01, ioaddr + MIIRegAddr);	// MII_BMSR
+	अगर (rp->quirks & rqRhineI) अणु
+		ioग_लिखो8(0x01, ioaddr + MIIRegAddr);	// MII_BMSR
 
 		/* Can be called from ISR. Evil. */
 		mdelay(1);
 
-		/* 0x80 must be set immediately before turning it off */
-		iowrite8(0x80, ioaddr + MIICmd);
+		/* 0x80 must be set immediately beक्रमe turning it off */
+		ioग_लिखो8(0x80, ioaddr + MIICmd);
 
-		rhine_wait_bit_high(rp, MIIRegAddr, 0x20);
+		rhine_रुको_bit_high(rp, MIIRegAddr, 0x20);
 
 		/* Heh. Now clear 0x80 again. */
-		iowrite8(0, ioaddr + MIICmd);
-	}
-	else
-		rhine_wait_bit_high(rp, MIIRegAddr, 0x80);
-}
+		ioग_लिखो8(0, ioaddr + MIICmd);
+	पूर्ण
+	अन्यथा
+		rhine_रुको_bit_high(rp, MIIRegAddr, 0x80);
+पूर्ण
 
-/* Read and write over the MII Management Data I/O (MDIO) interface. */
+/* Read and ग_लिखो over the MII Management Data I/O (MDIO) पूर्णांकerface. */
 
-static int mdio_read(struct net_device *dev, int phy_id, int regnum)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
-	int result;
-
-	rhine_disable_linkmon(rp);
-
-	/* rhine_disable_linkmon already cleared MIICmd */
-	iowrite8(phy_id, ioaddr + MIIPhyAddr);
-	iowrite8(regnum, ioaddr + MIIRegAddr);
-	iowrite8(0x40, ioaddr + MIICmd);		/* Trigger read */
-	rhine_wait_bit_low(rp, MIICmd, 0x40);
-	result = ioread16(ioaddr + MIIData);
-
-	rhine_enable_linkmon(rp);
-	return result;
-}
-
-static void mdio_write(struct net_device *dev, int phy_id, int regnum, int value)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल पूर्णांक mdio_पढ़ो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक regnum)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
+	पूर्णांक result;
 
 	rhine_disable_linkmon(rp);
 
-	/* rhine_disable_linkmon already cleared MIICmd */
-	iowrite8(phy_id, ioaddr + MIIPhyAddr);
-	iowrite8(regnum, ioaddr + MIIRegAddr);
-	iowrite16(value, ioaddr + MIIData);
-	iowrite8(0x20, ioaddr + MIICmd);		/* Trigger write */
-	rhine_wait_bit_low(rp, MIICmd, 0x20);
+	/* rhine_disable_linkmon alपढ़ोy cleared MIICmd */
+	ioग_लिखो8(phy_id, ioaddr + MIIPhyAddr);
+	ioग_लिखो8(regnum, ioaddr + MIIRegAddr);
+	ioग_लिखो8(0x40, ioaddr + MIICmd);		/* Trigger पढ़ो */
+	rhine_रुको_bit_low(rp, MIICmd, 0x40);
+	result = ioपढ़ो16(ioaddr + MIIData);
 
 	rhine_enable_linkmon(rp);
-}
+	वापस result;
+पूर्ण
 
-static void rhine_task_disable(struct rhine_private *rp)
-{
+अटल व्योम mdio_ग_लिखो(काष्ठा net_device *dev, पूर्णांक phy_id, पूर्णांक regnum, पूर्णांक value)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
+
+	rhine_disable_linkmon(rp);
+
+	/* rhine_disable_linkmon alपढ़ोy cleared MIICmd */
+	ioग_लिखो8(phy_id, ioaddr + MIIPhyAddr);
+	ioग_लिखो8(regnum, ioaddr + MIIRegAddr);
+	ioग_लिखो16(value, ioaddr + MIIData);
+	ioग_लिखो8(0x20, ioaddr + MIICmd);		/* Trigger ग_लिखो */
+	rhine_रुको_bit_low(rp, MIICmd, 0x20);
+
+	rhine_enable_linkmon(rp);
+पूर्ण
+
+अटल व्योम rhine_task_disable(काष्ठा rhine_निजी *rp)
+अणु
 	mutex_lock(&rp->task_lock);
 	rp->task_enable = false;
 	mutex_unlock(&rp->task_lock);
 
 	cancel_work_sync(&rp->slow_event_task);
 	cancel_work_sync(&rp->reset_task);
-}
+पूर्ण
 
-static void rhine_task_enable(struct rhine_private *rp)
-{
+अटल व्योम rhine_task_enable(काष्ठा rhine_निजी *rp)
+अणु
 	mutex_lock(&rp->task_lock);
 	rp->task_enable = true;
 	mutex_unlock(&rp->task_lock);
-}
+पूर्ण
 
-static int rhine_open(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
-	int rc;
+अटल पूर्णांक rhine_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
+	पूर्णांक rc;
 
-	rc = request_irq(rp->irq, rhine_interrupt, IRQF_SHARED, dev->name, dev);
-	if (rc)
-		goto out;
+	rc = request_irq(rp->irq, rhine_पूर्णांकerrupt, IRQF_SHARED, dev->name, dev);
+	अगर (rc)
+		जाओ out;
 
-	netif_dbg(rp, ifup, dev, "%s() irq %d\n", __func__, rp->irq);
+	netअगर_dbg(rp, अगरup, dev, "%s() irq %d\n", __func__, rp->irq);
 
 	rc = alloc_ring(dev);
-	if (rc < 0)
-		goto out_free_irq;
+	अगर (rc < 0)
+		जाओ out_मुक्त_irq;
 
 	rc = alloc_rbufs(dev);
-	if (rc < 0)
-		goto out_free_ring;
+	अगर (rc < 0)
+		जाओ out_मुक्त_ring;
 
 	alloc_tbufs(dev);
 	enable_mmio(rp->pioaddr, rp->quirks);
-	rhine_power_init(dev);
+	rhine_घातer_init(dev);
 	rhine_chip_reset(dev);
 	rhine_task_enable(rp);
-	init_registers(dev);
+	init_रेजिस्टरs(dev);
 
-	netif_dbg(rp, ifup, dev, "%s() Done - status %04x MII status: %04x\n",
-		  __func__, ioread16(ioaddr + ChipCmd),
-		  mdio_read(dev, rp->mii_if.phy_id, MII_BMSR));
+	netअगर_dbg(rp, अगरup, dev, "%s() Done - status %04x MII status: %04x\n",
+		  __func__, ioपढ़ो16(ioaddr + ChipCmd),
+		  mdio_पढ़ो(dev, rp->mii_अगर.phy_id, MII_BMSR));
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
 out:
-	return rc;
+	वापस rc;
 
-out_free_ring:
-	free_ring(dev);
-out_free_irq:
-	free_irq(rp->irq, dev);
-	goto out;
-}
+out_मुक्त_ring:
+	मुक्त_ring(dev);
+out_मुक्त_irq:
+	मुक्त_irq(rp->irq, dev);
+	जाओ out;
+पूर्ण
 
-static void rhine_reset_task(struct work_struct *work)
-{
-	struct rhine_private *rp = container_of(work, struct rhine_private,
+अटल व्योम rhine_reset_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rhine_निजी *rp = container_of(work, काष्ठा rhine_निजी,
 						reset_task);
-	struct net_device *dev = rp->dev;
+	काष्ठा net_device *dev = rp->dev;
 
 	mutex_lock(&rp->task_lock);
 
-	if (!rp->task_enable)
-		goto out_unlock;
+	अगर (!rp->task_enable)
+		जाओ out_unlock;
 
 	napi_disable(&rp->napi);
-	netif_tx_disable(dev);
+	netअगर_tx_disable(dev);
 	spin_lock_bh(&rp->lock);
 
 	/* clear all descriptors */
-	free_tbufs(dev);
+	मुक्त_tbufs(dev);
 	alloc_tbufs(dev);
 
 	rhine_reset_rbufs(rp);
 
 	/* Reinitialize the hardware. */
 	rhine_chip_reset(dev);
-	init_registers(dev);
+	init_रेजिस्टरs(dev);
 
 	spin_unlock_bh(&rp->lock);
 
-	netif_trans_update(dev); /* prevent tx timeout */
+	netअगर_trans_update(dev); /* prevent tx समयout */
 	dev->stats.tx_errors++;
-	netif_wake_queue(dev);
+	netअगर_wake_queue(dev);
 
 out_unlock:
 	mutex_unlock(&rp->task_lock);
-}
+पूर्ण
 
-static void rhine_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 
 	netdev_warn(dev, "Transmit timed out, status %04x, PHY status %04x, resetting...\n",
-		    ioread16(ioaddr + IntrStatus),
-		    mdio_read(dev, rp->mii_if.phy_id, MII_BMSR));
+		    ioपढ़ो16(ioaddr + IntrStatus),
+		    mdio_पढ़ो(dev, rp->mii_अगर.phy_id, MII_BMSR));
 
 	schedule_work(&rp->reset_task);
-}
+पूर्ण
 
-static inline bool rhine_tx_queue_full(struct rhine_private *rp)
-{
-	return (rp->cur_tx - rp->dirty_tx) >= TX_QUEUE_LEN;
-}
+अटल अंतरभूत bool rhine_tx_queue_full(काष्ठा rhine_निजी *rp)
+अणु
+	वापस (rp->cur_tx - rp->dirty_tx) >= TX_QUEUE_LEN;
+पूर्ण
 
-static netdev_tx_t rhine_start_tx(struct sk_buff *skb,
-				  struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	void __iomem *ioaddr = rp->base;
-	unsigned entry;
+अटल netdev_tx_t rhine_start_tx(काष्ठा sk_buff *skb,
+				  काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	व्योम __iomem *ioaddr = rp->base;
+	अचिन्हित entry;
 
-	/* Caution: the write order is important here, set the field
+	/* Caution: the ग_लिखो order is important here, set the field
 	   with the "ownership" bits last. */
 
 	/* Calculate the next Tx descriptor entry. */
 	entry = rp->cur_tx % TX_RING_SIZE;
 
-	if (skb_padto(skb, ETH_ZLEN))
-		return NETDEV_TX_OK;
+	अगर (skb_padto(skb, ETH_ZLEN))
+		वापस NETDEV_TX_OK;
 
 	rp->tx_skbuff[entry] = skb;
 
-	if ((rp->quirks & rqRhineI) &&
-	    (((unsigned long)skb->data & 3) || skb_shinfo(skb)->nr_frags != 0 || skb->ip_summed == CHECKSUM_PARTIAL)) {
+	अगर ((rp->quirks & rqRhineI) &&
+	    (((अचिन्हित दीर्घ)skb->data & 3) || skb_shinfo(skb)->nr_frags != 0 || skb->ip_summed == CHECKSUM_PARTIAL)) अणु
 		/* Must use alignment buffer. */
-		if (skb->len > PKT_BUF_SZ) {
-			/* packet too long, drop it */
-			dev_kfree_skb_any(skb);
-			rp->tx_skbuff[entry] = NULL;
+		अगर (skb->len > PKT_BUF_SZ) अणु
+			/* packet too दीर्घ, drop it */
+			dev_kमुक्त_skb_any(skb);
+			rp->tx_skbuff[entry] = शून्य;
 			dev->stats.tx_dropped++;
-			return NETDEV_TX_OK;
-		}
+			वापस NETDEV_TX_OK;
+		पूर्ण
 
-		/* Padding is not copied and so must be redone. */
+		/* Padding is not copied and so must be reकरोne. */
 		skb_copy_and_csum_dev(skb, rp->tx_buf[entry]);
-		if (skb->len < ETH_ZLEN)
-			memset(rp->tx_buf[entry] + skb->len, 0,
+		अगर (skb->len < ETH_ZLEN)
+			स_रखो(rp->tx_buf[entry] + skb->len, 0,
 			       ETH_ZLEN - skb->len);
 		rp->tx_skbuff_dma[entry] = 0;
 		rp->tx_ring[entry].addr = cpu_to_le32(rp->tx_bufs_dma +
 						      (rp->tx_buf[entry] -
 						       rp->tx_bufs));
-	} else {
+	पूर्ण अन्यथा अणु
 		rp->tx_skbuff_dma[entry] =
 			dma_map_single(hwdev, skb->data, skb->len,
 				       DMA_TO_DEVICE);
-		if (dma_mapping_error(hwdev, rp->tx_skbuff_dma[entry])) {
-			dev_kfree_skb_any(skb);
+		अगर (dma_mapping_error(hwdev, rp->tx_skbuff_dma[entry])) अणु
+			dev_kमुक्त_skb_any(skb);
 			rp->tx_skbuff_dma[entry] = 0;
 			dev->stats.tx_dropped++;
-			return NETDEV_TX_OK;
-		}
+			वापस NETDEV_TX_OK;
+		पूर्ण
 		rp->tx_ring[entry].addr = cpu_to_le32(rp->tx_skbuff_dma[entry]);
-	}
+	पूर्ण
 
 	rp->tx_ring[entry].desc_length =
 		cpu_to_le32(TXDESC | (skb->len >= ETH_ZLEN ? skb->len : ETH_ZLEN));
 
-	if (unlikely(skb_vlan_tag_present(skb))) {
+	अगर (unlikely(skb_vlan_tag_present(skb))) अणु
 		u16 vid_pcp = skb_vlan_tag_get(skb);
 
-		/* drop CFI/DEI bit, register needs VID and PCP */
+		/* drop CFI/DEI bit, रेजिस्टर needs VID and PCP */
 		vid_pcp = (vid_pcp & VLAN_VID_MASK) |
 			  ((vid_pcp & VLAN_PRIO_MASK) >> 1);
 		rp->tx_ring[entry].tx_status = cpu_to_le32((vid_pcp) << 16);
 		/* request tagging */
 		rp->tx_ring[entry].desc_length |= cpu_to_le32(0x020000);
-	}
-	else
+	पूर्ण
+	अन्यथा
 		rp->tx_ring[entry].tx_status = 0;
 
 	netdev_sent_queue(dev, skb->len);
@@ -1845,145 +1846,145 @@ static netdev_tx_t rhine_start_tx(struct sk_buff *skb,
 
 	rp->cur_tx++;
 	/*
-	 * Nobody wants cur_tx write to rot for ages after the NIC will have
+	 * Nobody wants cur_tx ग_लिखो to rot क्रम ages after the NIC will have
 	 * seen the transmit request, especially as the transmit completion
 	 * handler could miss it.
 	 */
 	smp_wmb();
 
-	/* Non-x86 Todo: explicitly flush cache lines here. */
+	/* Non-x86 Toकरो: explicitly flush cache lines here. */
 
-	if (skb_vlan_tag_present(skb))
+	अगर (skb_vlan_tag_present(skb))
 		/* Tx queues are bits 7-0 (first Tx queue: bit 7) */
 		BYTE_REG_BITS_ON(1 << 7, ioaddr + TQWake);
 
 	/* Wake the potentially-idle transmit channel */
-	iowrite8(ioread8(ioaddr + ChipCmd1) | Cmd1TxDemand,
+	ioग_लिखो8(ioपढ़ो8(ioaddr + ChipCmd1) | Cmd1TxDemand,
 	       ioaddr + ChipCmd1);
 	IOSYNC;
 
 	/* dirty_tx may be pessimistically out-of-sync. See rhine_tx. */
-	if (rhine_tx_queue_full(rp)) {
-		netif_stop_queue(dev);
+	अगर (rhine_tx_queue_full(rp)) अणु
+		netअगर_stop_queue(dev);
 		smp_rmb();
 		/* Rejuvenate. */
-		if (!rhine_tx_queue_full(rp))
-			netif_wake_queue(dev);
-	}
+		अगर (!rhine_tx_queue_full(rp))
+			netअगर_wake_queue(dev);
+	पूर्ण
 
-	netif_dbg(rp, tx_queued, dev, "Transmit frame #%d queued in slot %d\n",
+	netअगर_dbg(rp, tx_queued, dev, "Transmit frame #%d queued in slot %d\n",
 		  rp->cur_tx - 1, entry);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void rhine_irq_disable(struct rhine_private *rp)
-{
-	iowrite16(0x0000, rp->base + IntrEnable);
-}
+अटल व्योम rhine_irq_disable(काष्ठा rhine_निजी *rp)
+अणु
+	ioग_लिखो16(0x0000, rp->base + IntrEnable);
+पूर्ण
 
-/* The interrupt handler does all of the Rx thread work and cleans up
-   after the Tx thread. */
-static irqreturn_t rhine_interrupt(int irq, void *dev_instance)
-{
-	struct net_device *dev = dev_instance;
-	struct rhine_private *rp = netdev_priv(dev);
+/* The पूर्णांकerrupt handler करोes all of the Rx thपढ़ो work and cleans up
+   after the Tx thपढ़ो. */
+अटल irqवापस_t rhine_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा net_device *dev = dev_instance;
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 	u32 status;
-	int handled = 0;
+	पूर्णांक handled = 0;
 
 	status = rhine_get_events(rp);
 
-	netif_dbg(rp, intr, dev, "Interrupt, status %08x\n", status);
+	netअगर_dbg(rp, पूर्णांकr, dev, "Interrupt, status %08x\n", status);
 
-	if (status & RHINE_EVENT) {
+	अगर (status & RHINE_EVENT) अणु
 		handled = 1;
 
 		rhine_irq_disable(rp);
 		napi_schedule(&rp->napi);
-	}
+	पूर्ण
 
-	if (status & ~(IntrLinkChange | IntrStatsMax | RHINE_EVENT_NAPI)) {
-		netif_err(rp, intr, dev, "Something Wicked happened! %08x\n",
+	अगर (status & ~(IntrLinkChange | IntrStatsMax | RHINE_EVENT_NAPI)) अणु
+		netअगर_err(rp, पूर्णांकr, dev, "Something Wicked happened! %08x\n",
 			  status);
-	}
+	पूर्ण
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-/* This routine is logically part of the interrupt handler, but isolated
-   for clarity. */
-static void rhine_tx(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	unsigned int pkts_compl = 0, bytes_compl = 0;
-	unsigned int dirty_tx = rp->dirty_tx;
-	unsigned int cur_tx;
-	struct sk_buff *skb;
+/* This routine is logically part of the पूर्णांकerrupt handler, but isolated
+   क्रम clarity. */
+अटल व्योम rhine_tx(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	अचिन्हित पूर्णांक pkts_compl = 0, bytes_compl = 0;
+	अचिन्हित पूर्णांक dirty_tx = rp->dirty_tx;
+	अचिन्हित पूर्णांक cur_tx;
+	काष्ठा sk_buff *skb;
 
 	/*
-	 * The race with rhine_start_tx does not matter here as long as the
-	 * driver enforces a value of cur_tx that was relevant when the
+	 * The race with rhine_start_tx करोes not matter here as दीर्घ as the
+	 * driver enक्रमces a value of cur_tx that was relevant when the
 	 * packet was scheduled to the network chipset.
 	 * Executive summary: smp_rmb() balances smp_wmb() in rhine_start_tx.
 	 */
 	smp_rmb();
 	cur_tx = rp->cur_tx;
 	/* find and cleanup dirty tx descriptors */
-	while (dirty_tx != cur_tx) {
-		unsigned int entry = dirty_tx % TX_RING_SIZE;
+	जबतक (dirty_tx != cur_tx) अणु
+		अचिन्हित पूर्णांक entry = dirty_tx % TX_RING_SIZE;
 		u32 txstatus = le32_to_cpu(rp->tx_ring[entry].tx_status);
 
-		netif_dbg(rp, tx_done, dev, "Tx scavenge %d status %08x\n",
+		netअगर_dbg(rp, tx_करोne, dev, "Tx scavenge %d status %08x\n",
 			  entry, txstatus);
-		if (txstatus & DescOwn)
-			break;
+		अगर (txstatus & DescOwn)
+			अवरोध;
 		skb = rp->tx_skbuff[entry];
-		if (txstatus & 0x8000) {
-			netif_dbg(rp, tx_done, dev,
+		अगर (txstatus & 0x8000) अणु
+			netअगर_dbg(rp, tx_करोne, dev,
 				  "Transmit error, Tx status %08x\n", txstatus);
 			dev->stats.tx_errors++;
-			if (txstatus & 0x0400)
+			अगर (txstatus & 0x0400)
 				dev->stats.tx_carrier_errors++;
-			if (txstatus & 0x0200)
-				dev->stats.tx_window_errors++;
-			if (txstatus & 0x0100)
-				dev->stats.tx_aborted_errors++;
-			if (txstatus & 0x0080)
+			अगर (txstatus & 0x0200)
+				dev->stats.tx_winकरोw_errors++;
+			अगर (txstatus & 0x0100)
+				dev->stats.tx_पातed_errors++;
+			अगर (txstatus & 0x0080)
 				dev->stats.tx_heartbeat_errors++;
-			if (((rp->quirks & rqRhineI) && txstatus & 0x0002) ||
-			    (txstatus & 0x0800) || (txstatus & 0x1000)) {
-				dev->stats.tx_fifo_errors++;
+			अगर (((rp->quirks & rqRhineI) && txstatus & 0x0002) ||
+			    (txstatus & 0x0800) || (txstatus & 0x1000)) अणु
+				dev->stats.tx_fअगरo_errors++;
 				rp->tx_ring[entry].tx_status = cpu_to_le32(DescOwn);
-				break; /* Keep the skb - we try again */
-			}
+				अवरोध; /* Keep the skb - we try again */
+			पूर्ण
 			/* Transmitter restarted in 'abnormal' handler. */
-		} else {
-			if (rp->quirks & rqRhineI)
+		पूर्ण अन्यथा अणु
+			अगर (rp->quirks & rqRhineI)
 				dev->stats.collisions += (txstatus >> 3) & 0x0F;
-			else
+			अन्यथा
 				dev->stats.collisions += txstatus & 0x0F;
-			netif_dbg(rp, tx_done, dev, "collisions: %1.1x:%1.1x\n",
+			netअगर_dbg(rp, tx_करोne, dev, "collisions: %1.1x:%1.1x\n",
 				  (txstatus >> 3) & 0xF, txstatus & 0xF);
 
 			u64_stats_update_begin(&rp->tx_stats.syncp);
 			rp->tx_stats.bytes += skb->len;
 			rp->tx_stats.packets++;
 			u64_stats_update_end(&rp->tx_stats.syncp);
-		}
+		पूर्ण
 		/* Free the original skb. */
-		if (rp->tx_skbuff_dma[entry]) {
+		अगर (rp->tx_skbuff_dma[entry]) अणु
 			dma_unmap_single(hwdev,
 					 rp->tx_skbuff_dma[entry],
 					 skb->len,
 					 DMA_TO_DEVICE);
-		}
+		पूर्ण
 		bytes_compl += skb->len;
 		pkts_compl++;
 		dev_consume_skb_any(skb);
-		rp->tx_skbuff[entry] = NULL;
+		rp->tx_skbuff[entry] = शून्य;
 		dirty_tx++;
-	}
+	पूर्ण
 
 	rp->dirty_tx = dirty_tx;
 	/* Pity we can't rely on the nearby BQL completion implicit barrier. */
@@ -1992,105 +1993,105 @@ static void rhine_tx(struct net_device *dev)
 	netdev_completed_queue(dev, pkts_compl, bytes_compl);
 
 	/* cur_tx may be optimistically out-of-sync. See rhine_start_tx. */
-	if (!rhine_tx_queue_full(rp) && netif_queue_stopped(dev)) {
-		netif_wake_queue(dev);
+	अगर (!rhine_tx_queue_full(rp) && netअगर_queue_stopped(dev)) अणु
+		netअगर_wake_queue(dev);
 		smp_rmb();
 		/* Rejuvenate. */
-		if (rhine_tx_queue_full(rp))
-			netif_stop_queue(dev);
-	}
-}
+		अगर (rhine_tx_queue_full(rp))
+			netअगर_stop_queue(dev);
+	पूर्ण
+पूर्ण
 
 /**
  * rhine_get_vlan_tci - extract TCI from Rx data buffer
- * @skb: pointer to sk_buff
+ * @skb: poपूर्णांकer to sk_buff
  * @data_size: used data area of the buffer including CRC
  *
  * If hardware VLAN tag extraction is enabled and the chip indicates a 802.1Q
  * packet, the extracted 802.1Q header (2 bytes TPID + 2 bytes TCI) is 4-byte
  * aligned following the CRC.
  */
-static inline u16 rhine_get_vlan_tci(struct sk_buff *skb, int data_size)
-{
+अटल अंतरभूत u16 rhine_get_vlan_tci(काष्ठा sk_buff *skb, पूर्णांक data_size)
+अणु
 	u8 *trailer = (u8 *)skb->data + ((data_size + 3) & ~3) + 2;
-	return be16_to_cpup((__be16 *)trailer);
-}
+	वापस be16_to_cpup((__be16 *)trailer);
+पूर्ण
 
-static inline void rhine_rx_vlan_tag(struct sk_buff *skb, struct rx_desc *desc,
-				     int data_size)
-{
+अटल अंतरभूत व्योम rhine_rx_vlan_tag(काष्ठा sk_buff *skb, काष्ठा rx_desc *desc,
+				     पूर्णांक data_size)
+अणु
 	dma_rmb();
-	if (unlikely(desc->desc_length & cpu_to_le32(DescTag))) {
+	अगर (unlikely(desc->desc_length & cpu_to_le32(DescTag))) अणु
 		u16 vlan_tci;
 
 		vlan_tci = rhine_get_vlan_tci(skb, data_size);
 		__vlan_hwaccel_put_tag(skb, htons(ETH_P_8021Q), vlan_tci);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Process up to limit frames from receive ring */
-static int rhine_rx(struct net_device *dev, int limit)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	struct device *hwdev = dev->dev.parent;
-	int entry = rp->cur_rx % RX_RING_SIZE;
-	int count;
+अटल पूर्णांक rhine_rx(काष्ठा net_device *dev, पूर्णांक limit)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	काष्ठा device *hwdev = dev->dev.parent;
+	पूर्णांक entry = rp->cur_rx % RX_RING_SIZE;
+	पूर्णांक count;
 
-	netif_dbg(rp, rx_status, dev, "%s(), entry %d status %08x\n", __func__,
+	netअगर_dbg(rp, rx_status, dev, "%s(), entry %d status %08x\n", __func__,
 		  entry, le32_to_cpu(rp->rx_ring[entry].rx_status));
 
 	/* If EOP is set on the next entry, it's a new packet. Send it up. */
-	for (count = 0; count < limit; ++count) {
-		struct rx_desc *desc = rp->rx_ring + entry;
+	क्रम (count = 0; count < limit; ++count) अणु
+		काष्ठा rx_desc *desc = rp->rx_ring + entry;
 		u32 desc_status = le32_to_cpu(desc->rx_status);
-		int data_size = desc_status >> 16;
+		पूर्णांक data_size = desc_status >> 16;
 
-		if (desc_status & DescOwn)
-			break;
+		अगर (desc_status & DescOwn)
+			अवरोध;
 
-		netif_dbg(rp, rx_status, dev, "%s() status %08x\n", __func__,
+		netअगर_dbg(rp, rx_status, dev, "%s() status %08x\n", __func__,
 			  desc_status);
 
-		if ((desc_status & (RxWholePkt | RxErr)) != RxWholePkt) {
-			if ((desc_status & RxWholePkt) != RxWholePkt) {
+		अगर ((desc_status & (RxWholePkt | RxErr)) != RxWholePkt) अणु
+			अगर ((desc_status & RxWholePkt) != RxWholePkt) अणु
 				netdev_warn(dev,
 	"Oversized Ethernet frame spanned multiple buffers, "
 	"entry %#x length %d status %08x!\n",
 					    entry, data_size,
 					    desc_status);
 				dev->stats.rx_length_errors++;
-			} else if (desc_status & RxErr) {
+			पूर्ण अन्यथा अगर (desc_status & RxErr) अणु
 				/* There was a error. */
-				netif_dbg(rp, rx_err, dev,
+				netअगर_dbg(rp, rx_err, dev,
 					  "%s() Rx error %08x\n", __func__,
 					  desc_status);
 				dev->stats.rx_errors++;
-				if (desc_status & 0x0030)
+				अगर (desc_status & 0x0030)
 					dev->stats.rx_length_errors++;
-				if (desc_status & 0x0048)
-					dev->stats.rx_fifo_errors++;
-				if (desc_status & 0x0004)
+				अगर (desc_status & 0x0048)
+					dev->stats.rx_fअगरo_errors++;
+				अगर (desc_status & 0x0004)
 					dev->stats.rx_frame_errors++;
-				if (desc_status & 0x0002) {
-					/* this can also be updated outside the interrupt handler */
+				अगर (desc_status & 0x0002) अणु
+					/* this can also be updated outside the पूर्णांकerrupt handler */
 					spin_lock(&rp->lock);
 					dev->stats.rx_crc_errors++;
 					spin_unlock(&rp->lock);
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* Length should omit the CRC */
-			int pkt_len = data_size - 4;
-			struct sk_buff *skb;
+			पूर्णांक pkt_len = data_size - 4;
+			काष्ठा sk_buff *skb;
 
-			/* Check if the packet is long enough to accept without
+			/* Check अगर the packet is दीर्घ enough to accept without
 			   copying to a minimally-sized skbuff. */
-			if (pkt_len < rx_copybreak) {
+			अगर (pkt_len < rx_copyअवरोध) अणु
 				skb = netdev_alloc_skb_ip_align(dev, pkt_len);
-				if (unlikely(!skb))
-					goto drop;
+				अगर (unlikely(!skb))
+					जाओ drop;
 
-				dma_sync_single_for_cpu(hwdev,
+				dma_sync_single_क्रम_cpu(hwdev,
 							rp->rx_skbuff_dma[entry],
 							rp->rx_buf_sz,
 							DMA_FROM_DEVICE);
@@ -2099,15 +2100,15 @@ static int rhine_rx(struct net_device *dev, int limit)
 						 rp->rx_skbuff[entry]->data,
 						 pkt_len);
 
-				dma_sync_single_for_device(hwdev,
+				dma_sync_single_क्रम_device(hwdev,
 							   rp->rx_skbuff_dma[entry],
 							   rp->rx_buf_sz,
 							   DMA_FROM_DEVICE);
-			} else {
-				struct rhine_skb_dma sd;
+			पूर्ण अन्यथा अणु
+				काष्ठा rhine_skb_dma sd;
 
-				if (unlikely(rhine_skb_dma_init(dev, &sd) < 0))
-					goto drop;
+				अगर (unlikely(rhine_skb_dma_init(dev, &sd) < 0))
+					जाओ drop;
 
 				skb = rp->rx_skbuff[entry];
 
@@ -2116,7 +2117,7 @@ static int rhine_rx(struct net_device *dev, int limit)
 						 rp->rx_buf_sz,
 						 DMA_FROM_DEVICE);
 				rhine_skb_dma_nic_store(rp, &sd, entry);
-			}
+			पूर्ण
 
 			skb_put(skb, pkt_len);
 
@@ -2124,94 +2125,94 @@ static int rhine_rx(struct net_device *dev, int limit)
 
 			skb->protocol = eth_type_trans(skb, dev);
 
-			netif_receive_skb(skb);
+			netअगर_receive_skb(skb);
 
 			u64_stats_update_begin(&rp->rx_stats.syncp);
 			rp->rx_stats.bytes += pkt_len;
 			rp->rx_stats.packets++;
 			u64_stats_update_end(&rp->rx_stats.syncp);
-		}
+		पूर्ण
 give_descriptor_to_nic:
 		desc->rx_status = cpu_to_le32(DescOwn);
 		entry = (++rp->cur_rx) % RX_RING_SIZE;
-	}
+	पूर्ण
 
-	return count;
+	वापस count;
 
 drop:
 	dev->stats.rx_dropped++;
-	goto give_descriptor_to_nic;
-}
+	जाओ give_descriptor_to_nic;
+पूर्ण
 
-static void rhine_restart_tx(struct net_device *dev) {
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
-	int entry = rp->dirty_tx % TX_RING_SIZE;
-	u32 intr_status;
+अटल व्योम rhine_restart_tx(काष्ठा net_device *dev) अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
+	पूर्णांक entry = rp->dirty_tx % TX_RING_SIZE;
+	u32 पूर्णांकr_status;
 
 	/*
-	 * If new errors occurred, we need to sort them out before doing Tx.
-	 * In that case the ISR will be back here RSN anyway.
+	 * If new errors occurred, we need to sort them out beक्रमe करोing Tx.
+	 * In that हाल the ISR will be back here RSN anyway.
 	 */
-	intr_status = rhine_get_events(rp);
+	पूर्णांकr_status = rhine_get_events(rp);
 
-	if ((intr_status & IntrTxErrSummary) == 0) {
+	अगर ((पूर्णांकr_status & IntrTxErrSummary) == 0) अणु
 
-		/* We know better than the chip where it should continue. */
-		iowrite32(rp->tx_ring_dma + entry * sizeof(struct tx_desc),
+		/* We know better than the chip where it should जारी. */
+		ioग_लिखो32(rp->tx_ring_dma + entry * माप(काष्ठा tx_desc),
 		       ioaddr + TxRingPtr);
 
-		iowrite8(ioread8(ioaddr + ChipCmd) | CmdTxOn,
+		ioग_लिखो8(ioपढ़ो8(ioaddr + ChipCmd) | CmdTxOn,
 		       ioaddr + ChipCmd);
 
-		if (rp->tx_ring[entry].desc_length & cpu_to_le32(0x020000))
+		अगर (rp->tx_ring[entry].desc_length & cpu_to_le32(0x020000))
 			/* Tx queues are bits 7-0 (first Tx queue: bit 7) */
 			BYTE_REG_BITS_ON(1 << 7, ioaddr + TQWake);
 
-		iowrite8(ioread8(ioaddr + ChipCmd1) | Cmd1TxDemand,
+		ioग_लिखो8(ioपढ़ो8(ioaddr + ChipCmd1) | Cmd1TxDemand,
 		       ioaddr + ChipCmd1);
 		IOSYNC;
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		/* This should never happen */
-		netif_warn(rp, tx_err, dev, "another error occurred %08x\n",
-			   intr_status);
-	}
+		netअगर_warn(rp, tx_err, dev, "another error occurred %08x\n",
+			   पूर्णांकr_status);
+	पूर्ण
 
-}
+पूर्ण
 
-static void rhine_slow_event_task(struct work_struct *work)
-{
-	struct rhine_private *rp =
-		container_of(work, struct rhine_private, slow_event_task);
-	struct net_device *dev = rp->dev;
-	u32 intr_status;
+अटल व्योम rhine_slow_event_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rhine_निजी *rp =
+		container_of(work, काष्ठा rhine_निजी, slow_event_task);
+	काष्ठा net_device *dev = rp->dev;
+	u32 पूर्णांकr_status;
 
 	mutex_lock(&rp->task_lock);
 
-	if (!rp->task_enable)
-		goto out_unlock;
+	अगर (!rp->task_enable)
+		जाओ out_unlock;
 
-	intr_status = rhine_get_events(rp);
-	rhine_ack_events(rp, intr_status & RHINE_EVENT_SLOW);
+	पूर्णांकr_status = rhine_get_events(rp);
+	rhine_ack_events(rp, पूर्णांकr_status & RHINE_EVENT_SLOW);
 
-	if (intr_status & IntrLinkChange)
+	अगर (पूर्णांकr_status & IntrLinkChange)
 		rhine_check_media(dev, 0);
 
-	if (intr_status & IntrPCIErr)
-		netif_warn(rp, hw, dev, "PCI error\n");
+	अगर (पूर्णांकr_status & IntrPCIErr)
+		netअगर_warn(rp, hw, dev, "PCI error\n");
 
-	iowrite16(RHINE_EVENT & 0xffff, rp->base + IntrEnable);
+	ioग_लिखो16(RHINE_EVENT & 0xffff, rp->base + IntrEnable);
 
 out_unlock:
 	mutex_unlock(&rp->task_lock);
-}
+पूर्ण
 
-static void
-rhine_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	unsigned int start;
+अटल व्योम
+rhine_get_stats64(काष्ठा net_device *dev, काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	अचिन्हित पूर्णांक start;
 
 	spin_lock_bh(&rp->lock);
 	rhine_update_rx_crc_and_missed_errord(rp);
@@ -2219,163 +2220,163 @@ rhine_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 
 	netdev_stats_to_stats64(stats, &dev->stats);
 
-	do {
+	करो अणु
 		start = u64_stats_fetch_begin_irq(&rp->rx_stats.syncp);
 		stats->rx_packets = rp->rx_stats.packets;
 		stats->rx_bytes = rp->rx_stats.bytes;
-	} while (u64_stats_fetch_retry_irq(&rp->rx_stats.syncp, start));
+	पूर्ण जबतक (u64_stats_fetch_retry_irq(&rp->rx_stats.syncp, start));
 
-	do {
+	करो अणु
 		start = u64_stats_fetch_begin_irq(&rp->tx_stats.syncp);
 		stats->tx_packets = rp->tx_stats.packets;
 		stats->tx_bytes = rp->tx_stats.bytes;
-	} while (u64_stats_fetch_retry_irq(&rp->tx_stats.syncp, start));
-}
+	पूर्ण जबतक (u64_stats_fetch_retry_irq(&rp->tx_stats.syncp, start));
+पूर्ण
 
-static void rhine_set_rx_mode(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_set_rx_mode(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 	u32 mc_filter[2];	/* Multicast hash filter */
 	u8 rx_mode = 0x0C;	/* Note: 0x02=accept runt, 0x01=accept errs */
-	struct netdev_hw_addr *ha;
+	काष्ठा netdev_hw_addr *ha;
 
-	if (dev->flags & IFF_PROMISC) {		/* Set promiscuous. */
+	अगर (dev->flags & IFF_PROMISC) अणु		/* Set promiscuous. */
 		rx_mode = 0x1C;
-		iowrite32(0xffffffff, ioaddr + MulticastFilter0);
-		iowrite32(0xffffffff, ioaddr + MulticastFilter1);
-	} else if ((netdev_mc_count(dev) > multicast_filter_limit) ||
-		   (dev->flags & IFF_ALLMULTI)) {
+		ioग_लिखो32(0xffffffff, ioaddr + MulticastFilter0);
+		ioग_लिखो32(0xffffffff, ioaddr + MulticastFilter1);
+	पूर्ण अन्यथा अगर ((netdev_mc_count(dev) > multicast_filter_limit) ||
+		   (dev->flags & IFF_ALLMULTI)) अणु
 		/* Too many to match, or accept all multicasts. */
-		iowrite32(0xffffffff, ioaddr + MulticastFilter0);
-		iowrite32(0xffffffff, ioaddr + MulticastFilter1);
-	} else if (rp->quirks & rqMgmt) {
-		int i = 0;
+		ioग_लिखो32(0xffffffff, ioaddr + MulticastFilter0);
+		ioग_लिखो32(0xffffffff, ioaddr + MulticastFilter1);
+	पूर्ण अन्यथा अगर (rp->quirks & rqMgmt) अणु
+		पूर्णांक i = 0;
 		u32 mCAMmask = 0;	/* 32 mCAMs (6105M and better) */
-		netdev_for_each_mc_addr(ha, dev) {
-			if (i == MCAM_SIZE)
-				break;
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
+			अगर (i == MCAM_SIZE)
+				अवरोध;
 			rhine_set_cam(ioaddr, i, ha->addr);
 			mCAMmask |= 1 << i;
 			i++;
-		}
+		पूर्ण
 		rhine_set_cam_mask(ioaddr, mCAMmask);
-	} else {
-		memset(mc_filter, 0, sizeof(mc_filter));
-		netdev_for_each_mc_addr(ha, dev) {
-			int bit_nr = ether_crc(ETH_ALEN, ha->addr) >> 26;
+	पूर्ण अन्यथा अणु
+		स_रखो(mc_filter, 0, माप(mc_filter));
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
+			पूर्णांक bit_nr = ether_crc(ETH_ALEN, ha->addr) >> 26;
 
 			mc_filter[bit_nr >> 5] |= 1 << (bit_nr & 31);
-		}
-		iowrite32(mc_filter[0], ioaddr + MulticastFilter0);
-		iowrite32(mc_filter[1], ioaddr + MulticastFilter1);
-	}
+		पूर्ण
+		ioग_लिखो32(mc_filter[0], ioaddr + MulticastFilter0);
+		ioग_लिखो32(mc_filter[1], ioaddr + MulticastFilter1);
+	पूर्ण
 	/* enable/disable VLAN receive filtering */
-	if (rp->quirks & rqMgmt) {
-		if (dev->flags & IFF_PROMISC)
+	अगर (rp->quirks & rqMgmt) अणु
+		अगर (dev->flags & IFF_PROMISC)
 			BYTE_REG_BITS_OFF(BCR1_VIDFR, ioaddr + PCIBusConfig1);
-		else
+		अन्यथा
 			BYTE_REG_BITS_ON(BCR1_VIDFR, ioaddr + PCIBusConfig1);
-	}
+	पूर्ण
 	BYTE_REG_BITS_ON(rx_mode, ioaddr + RxConfig);
-}
+पूर्ण
 
-static void netdev_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
-{
-	struct device *hwdev = dev->dev.parent;
+अटल व्योम netdev_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा device *hwdev = dev->dev.parent;
 
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->bus_info, dev_name(hwdev), sizeof(info->bus_info));
-}
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->bus_info, dev_name(hwdev), माप(info->bus_info));
+पूर्ण
 
-static int netdev_get_link_ksettings(struct net_device *dev,
-				     struct ethtool_link_ksettings *cmd)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-
-	mutex_lock(&rp->task_lock);
-	mii_ethtool_get_link_ksettings(&rp->mii_if, cmd);
-	mutex_unlock(&rp->task_lock);
-
-	return 0;
-}
-
-static int netdev_set_link_ksettings(struct net_device *dev,
-				     const struct ethtool_link_ksettings *cmd)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	int rc;
+अटल पूर्णांक netdev_get_link_ksettings(काष्ठा net_device *dev,
+				     काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
 	mutex_lock(&rp->task_lock);
-	rc = mii_ethtool_set_link_ksettings(&rp->mii_if, cmd);
-	rhine_set_carrier(&rp->mii_if);
+	mii_ethtool_get_link_ksettings(&rp->mii_अगर, cmd);
 	mutex_unlock(&rp->task_lock);
 
-	return rc;
-}
+	वापस 0;
+पूर्ण
 
-static int netdev_nway_reset(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक netdev_set_link_ksettings(काष्ठा net_device *dev,
+				     स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	पूर्णांक rc;
 
-	return mii_nway_restart(&rp->mii_if);
-}
+	mutex_lock(&rp->task_lock);
+	rc = mii_ethtool_set_link_ksettings(&rp->mii_अगर, cmd);
+	rhine_set_carrier(&rp->mii_अगर);
+	mutex_unlock(&rp->task_lock);
 
-static u32 netdev_get_link(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+	वापस rc;
+पूर्ण
 
-	return mii_link_ok(&rp->mii_if);
-}
+अटल पूर्णांक netdev_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-static u32 netdev_get_msglevel(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+	वापस mii_nway_restart(&rp->mii_अगर);
+पूर्ण
 
-	return rp->msg_enable;
-}
+अटल u32 netdev_get_link(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-static void netdev_set_msglevel(struct net_device *dev, u32 value)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+	वापस mii_link_ok(&rp->mii_अगर);
+पूर्ण
+
+अटल u32 netdev_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+
+	वापस rp->msg_enable;
+पूर्ण
+
+अटल व्योम netdev_set_msglevel(काष्ठा net_device *dev, u32 value)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
 	rp->msg_enable = value;
-}
+पूर्ण
 
-static void rhine_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल व्योम rhine_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-	if (!(rp->quirks & rqWOL))
-		return;
+	अगर (!(rp->quirks & rqWOL))
+		वापस;
 
 	spin_lock_irq(&rp->lock);
 	wol->supported = WAKE_PHY | WAKE_MAGIC |
 			 WAKE_UCAST | WAKE_MCAST | WAKE_BCAST;	/* Untested */
 	wol->wolopts = rp->wolopts;
 	spin_unlock_irq(&rp->lock);
-}
+पूर्ण
 
-static int rhine_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक rhine_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 	u32 support = WAKE_PHY | WAKE_MAGIC |
 		      WAKE_UCAST | WAKE_MCAST | WAKE_BCAST;	/* Untested */
 
-	if (!(rp->quirks & rqWOL))
-		return -EINVAL;
+	अगर (!(rp->quirks & rqWOL))
+		वापस -EINVAL;
 
-	if (wol->wolopts & ~support)
-		return -EINVAL;
+	अगर (wol->wolopts & ~support)
+		वापस -EINVAL;
 
 	spin_lock_irq(&rp->lock);
 	rp->wolopts = wol->wolopts;
 	spin_unlock_irq(&rp->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops netdev_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops netdev_ethtool_ops = अणु
 	.get_drvinfo		= netdev_get_drvinfo,
 	.nway_reset		= netdev_nway_reset,
 	.get_link		= netdev_get_link,
@@ -2385,250 +2386,250 @@ static const struct ethtool_ops netdev_ethtool_ops = {
 	.set_wol		= rhine_set_wol,
 	.get_link_ksettings	= netdev_get_link_ksettings,
 	.set_link_ksettings	= netdev_set_link_ksettings,
-};
+पूर्ण;
 
-static int netdev_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	int rc;
+अटल पूर्णांक netdev_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	पूर्णांक rc;
 
-	if (!netif_running(dev))
-		return -EINVAL;
+	अगर (!netअगर_running(dev))
+		वापस -EINVAL;
 
 	mutex_lock(&rp->task_lock);
-	rc = generic_mii_ioctl(&rp->mii_if, if_mii(rq), cmd, NULL);
-	rhine_set_carrier(&rp->mii_if);
+	rc = generic_mii_ioctl(&rp->mii_अगर, अगर_mii(rq), cmd, शून्य);
+	rhine_set_carrier(&rp->mii_अगर);
 	mutex_unlock(&rp->task_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int rhine_close(struct net_device *dev)
-{
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल पूर्णांक rhine_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 
 	rhine_task_disable(rp);
 	napi_disable(&rp->napi);
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	netif_dbg(rp, ifdown, dev, "Shutting down ethercard, status was %04x\n",
-		  ioread16(ioaddr + ChipCmd));
+	netअगर_dbg(rp, अगरकरोwn, dev, "Shutting down ethercard, status was %04x\n",
+		  ioपढ़ो16(ioaddr + ChipCmd));
 
-	/* Switch to loopback mode to avoid hardware races. */
-	iowrite8(rp->tx_thresh | 0x02, ioaddr + TxConfig);
+	/* Switch to loopback mode to aव्योम hardware races. */
+	ioग_लिखो8(rp->tx_thresh | 0x02, ioaddr + TxConfig);
 
 	rhine_irq_disable(rp);
 
 	/* Stop the chip's Tx and Rx processes. */
-	iowrite16(CmdStop, ioaddr + ChipCmd);
+	ioग_लिखो16(CmdStop, ioaddr + ChipCmd);
 
-	free_irq(rp->irq, dev);
-	free_rbufs(dev);
-	free_tbufs(dev);
-	free_ring(dev);
+	मुक्त_irq(rp->irq, dev);
+	मुक्त_rbufs(dev);
+	मुक्त_tbufs(dev);
+	मुक्त_ring(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void rhine_remove_one_pci(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct rhine_private *rp = netdev_priv(dev);
+अटल व्योम rhine_हटाओ_one_pci(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
 	pci_iounmap(pdev, rp->base);
 	pci_release_regions(pdev);
 
-	free_netdev(dev);
+	मुक्त_netdev(dev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int rhine_remove_one_platform(struct platform_device *pdev)
-{
-	struct net_device *dev = platform_get_drvdata(pdev);
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक rhine_हटाओ_one_platक्रमm(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
 	iounmap(rp->base);
 
-	free_netdev(dev);
+	मुक्त_netdev(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rhine_shutdown_pci(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct rhine_private *rp = netdev_priv(dev);
-	void __iomem *ioaddr = rp->base;
+अटल व्योम rhine_shutकरोwn_pci(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
+	व्योम __iomem *ioaddr = rp->base;
 
-	if (!(rp->quirks & rqWOL))
-		return; /* Nothing to do for non-WOL adapters */
+	अगर (!(rp->quirks & rqWOL))
+		वापस; /* Nothing to करो क्रम non-WOL adapters */
 
-	rhine_power_init(dev);
+	rhine_घातer_init(dev);
 
 	/* Make sure we use pattern 0, 1 and not 4, 5 */
-	if (rp->quirks & rq6patterns)
-		iowrite8(0x04, ioaddr + WOLcgClr);
+	अगर (rp->quirks & rq6patterns)
+		ioग_लिखो8(0x04, ioaddr + WOLcgClr);
 
 	spin_lock(&rp->lock);
 
-	if (rp->wolopts & WAKE_MAGIC) {
-		iowrite8(WOLmagic, ioaddr + WOLcrSet);
+	अगर (rp->wolopts & WAKE_MAGIC) अणु
+		ioग_लिखो8(WOLmagic, ioaddr + WOLcrSet);
 		/*
 		 * Turn EEPROM-controlled wake-up back on -- some hardware may
 		 * not cooperate otherwise.
 		 */
-		iowrite8(ioread8(ioaddr + ConfigA) | 0x03, ioaddr + ConfigA);
-	}
+		ioग_लिखो8(ioपढ़ो8(ioaddr + ConfigA) | 0x03, ioaddr + ConfigA);
+	पूर्ण
 
-	if (rp->wolopts & (WAKE_BCAST|WAKE_MCAST))
-		iowrite8(WOLbmcast, ioaddr + WOLcgSet);
+	अगर (rp->wolopts & (WAKE_BCAST|WAKE_MCAST))
+		ioग_लिखो8(WOLbmcast, ioaddr + WOLcgSet);
 
-	if (rp->wolopts & WAKE_PHY)
-		iowrite8(WOLlnkon | WOLlnkoff, ioaddr + WOLcrSet);
+	अगर (rp->wolopts & WAKE_PHY)
+		ioग_लिखो8(WOLlnkon | WOLlnkoff, ioaddr + WOLcrSet);
 
-	if (rp->wolopts & WAKE_UCAST)
-		iowrite8(WOLucast, ioaddr + WOLcrSet);
+	अगर (rp->wolopts & WAKE_UCAST)
+		ioग_लिखो8(WOLucast, ioaddr + WOLcrSet);
 
-	if (rp->wolopts) {
-		/* Enable legacy WOL (for old motherboards) */
-		iowrite8(0x01, ioaddr + PwcfgSet);
-		iowrite8(ioread8(ioaddr + StickyHW) | 0x04, ioaddr + StickyHW);
-	}
+	अगर (rp->wolopts) अणु
+		/* Enable legacy WOL (क्रम old motherboards) */
+		ioग_लिखो8(0x01, ioaddr + PwcfgSet);
+		ioग_लिखो8(ioपढ़ो8(ioaddr + StickyHW) | 0x04, ioaddr + StickyHW);
+	पूर्ण
 
 	spin_unlock(&rp->lock);
 
-	if (system_state == SYSTEM_POWER_OFF && !avoid_D3) {
-		iowrite8(ioread8(ioaddr + StickyHW) | 0x03, ioaddr + StickyHW);
+	अगर (प्रणाली_state == SYSTEM_POWER_OFF && !aव्योम_D3) अणु
+		ioग_लिखो8(ioपढ़ो8(ioaddr + StickyHW) | 0x03, ioaddr + StickyHW);
 
 		pci_wake_from_d3(pdev, true);
-		pci_set_power_state(pdev, PCI_D3hot);
-	}
-}
+		pci_set_घातer_state(pdev, PCI_D3hot);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int rhine_suspend(struct device *device)
-{
-	struct net_device *dev = dev_get_drvdata(device);
-	struct rhine_private *rp = netdev_priv(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rhine_suspend(काष्ठा device *device)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(device);
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-	if (!netif_running(dev))
-		return 0;
+	अगर (!netअगर_running(dev))
+		वापस 0;
 
 	rhine_task_disable(rp);
 	rhine_irq_disable(rp);
 	napi_disable(&rp->napi);
 
-	netif_device_detach(dev);
+	netअगर_device_detach(dev);
 
-	if (dev_is_pci(device))
-		rhine_shutdown_pci(to_pci_dev(device));
+	अगर (dev_is_pci(device))
+		rhine_shutकरोwn_pci(to_pci_dev(device));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rhine_resume(struct device *device)
-{
-	struct net_device *dev = dev_get_drvdata(device);
-	struct rhine_private *rp = netdev_priv(dev);
+अटल पूर्णांक rhine_resume(काष्ठा device *device)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(device);
+	काष्ठा rhine_निजी *rp = netdev_priv(dev);
 
-	if (!netif_running(dev))
-		return 0;
+	अगर (!netअगर_running(dev))
+		वापस 0;
 
 	enable_mmio(rp->pioaddr, rp->quirks);
-	rhine_power_init(dev);
-	free_tbufs(dev);
+	rhine_घातer_init(dev);
+	मुक्त_tbufs(dev);
 	alloc_tbufs(dev);
 	rhine_reset_rbufs(rp);
 	rhine_task_enable(rp);
 	spin_lock_bh(&rp->lock);
-	init_registers(dev);
+	init_रेजिस्टरs(dev);
 	spin_unlock_bh(&rp->lock);
 
-	netif_device_attach(dev);
+	netअगर_device_attach(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(rhine_pm_ops, rhine_suspend, rhine_resume);
-#define RHINE_PM_OPS	(&rhine_pm_ops)
+अटल SIMPLE_DEV_PM_OPS(rhine_pm_ops, rhine_suspend, rhine_resume);
+#घोषणा RHINE_PM_OPS	(&rhine_pm_ops)
 
-#else
+#अन्यथा
 
-#define RHINE_PM_OPS	NULL
+#घोषणा RHINE_PM_OPS	शून्य
 
-#endif /* !CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* !CONFIG_PM_SLEEP */
 
-static struct pci_driver rhine_driver_pci = {
+अटल काष्ठा pci_driver rhine_driver_pci = अणु
 	.name		= DRV_NAME,
 	.id_table	= rhine_pci_tbl,
 	.probe		= rhine_init_one_pci,
-	.remove		= rhine_remove_one_pci,
-	.shutdown	= rhine_shutdown_pci,
+	.हटाओ		= rhine_हटाओ_one_pci,
+	.shutकरोwn	= rhine_shutकरोwn_pci,
 	.driver.pm	= RHINE_PM_OPS,
-};
+पूर्ण;
 
-static struct platform_driver rhine_driver_platform = {
-	.probe		= rhine_init_one_platform,
-	.remove		= rhine_remove_one_platform,
-	.driver = {
+अटल काष्ठा platक्रमm_driver rhine_driver_platक्रमm = अणु
+	.probe		= rhine_init_one_platक्रमm,
+	.हटाओ		= rhine_हटाओ_one_platक्रमm,
+	.driver = अणु
 		.name	= DRV_NAME,
 		.of_match_table	= rhine_of_tbl,
 		.pm		= RHINE_PM_OPS,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct dmi_system_id rhine_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id rhine_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "EPIA-M",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_BIOS_VENDOR, "Award Software International, Inc."),
 			DMI_MATCH(DMI_BIOS_VERSION, "6.00 PG"),
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.ident = "KV7",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_BIOS_VENDOR, "Phoenix Technologies, LTD"),
 			DMI_MATCH(DMI_BIOS_VERSION, "6.00 PG"),
-		},
-	},
-	{ NULL }
-};
+		पूर्ण,
+	पूर्ण,
+	अणु शून्य पूर्ण
+पूर्ण;
 
-static int __init rhine_init(void)
-{
-	int ret_pci, ret_platform;
+अटल पूर्णांक __init rhine_init(व्योम)
+अणु
+	पूर्णांक ret_pci, ret_platक्रमm;
 
-/* when a module, this is printed whether or not devices are found in probe */
-	if (dmi_check_system(rhine_dmi_table)) {
-		/* these BIOSes fail at PXE boot if chip is in D3 */
-		avoid_D3 = true;
+/* when a module, this is prपूर्णांकed whether or not devices are found in probe */
+	अगर (dmi_check_प्रणाली(rhine_dmi_table)) अणु
+		/* these BIOSes fail at PXE boot अगर chip is in D3 */
+		aव्योम_D3 = true;
 		pr_warn("Broken BIOS detected, avoid_D3 enabled\n");
-	}
-	else if (avoid_D3)
+	पूर्ण
+	अन्यथा अगर (aव्योम_D3)
 		pr_info("avoid_D3 set\n");
 
-	ret_pci = pci_register_driver(&rhine_driver_pci);
-	ret_platform = platform_driver_register(&rhine_driver_platform);
-	if ((ret_pci < 0) && (ret_platform < 0))
-		return ret_pci;
+	ret_pci = pci_रेजिस्टर_driver(&rhine_driver_pci);
+	ret_platक्रमm = platक्रमm_driver_रेजिस्टर(&rhine_driver_platक्रमm);
+	अगर ((ret_pci < 0) && (ret_platक्रमm < 0))
+		वापस ret_pci;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void __exit rhine_cleanup(void)
-{
-	platform_driver_unregister(&rhine_driver_platform);
-	pci_unregister_driver(&rhine_driver_pci);
-}
+अटल व्योम __निकास rhine_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&rhine_driver_platक्रमm);
+	pci_unरेजिस्टर_driver(&rhine_driver_pci);
+पूर्ण
 
 
 module_init(rhine_init);
-module_exit(rhine_cleanup);
+module_निकास(rhine_cleanup);

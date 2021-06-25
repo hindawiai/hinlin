@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  fixup-tb0226.c, The TANBAC TB0226 specific PCI fixups.
+ *  fixup-tb0226.c, The TANBAC TB0226 specअगरic PCI fixups.
  *
  *  Copyright (C) 2002-2005  Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/init.h>
-#include <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
 
-#include <asm/vr41xx/giu.h>
-#include <asm/vr41xx/tb0226.h>
+#समावेश <यंत्र/vr41xx/giu.h>
+#समावेश <यंत्र/vr41xx/tb0226.h>
 
-int pcibios_map_irq(const struct pci_dev *dev, u8 slot, u8 pin)
-{
-	int irq = -1;
+पूर्णांक pcibios_map_irq(स्थिर काष्ठा pci_dev *dev, u8 slot, u8 pin)
+अणु
+	पूर्णांक irq = -1;
 
-	switch (slot) {
-	case 12:
+	चयन (slot) अणु
+	हाल 12:
 		vr41xx_set_irq_trigger(GD82559_1_PIN,
 				       IRQ_TRIGGER_LEVEL,
 				       IRQ_SIGNAL_THROUGH);
 		vr41xx_set_irq_level(GD82559_1_PIN, IRQ_LEVEL_LOW);
 		irq = GD82559_1_IRQ;
-		break;
-	case 13:
+		अवरोध;
+	हाल 13:
 		vr41xx_set_irq_trigger(GD82559_2_PIN,
 				       IRQ_TRIGGER_LEVEL,
 				       IRQ_SIGNAL_THROUGH);
 		vr41xx_set_irq_level(GD82559_2_PIN, IRQ_LEVEL_LOW);
 		irq = GD82559_2_IRQ;
-		break;
-	case 14:
-		switch (pin) {
-		case 1:
+		अवरोध;
+	हाल 14:
+		चयन (pin) अणु
+		हाल 1:
 			vr41xx_set_irq_trigger(UPD720100_INTA_PIN,
 					       IRQ_TRIGGER_LEVEL,
 					       IRQ_SIGNAL_THROUGH);
 			vr41xx_set_irq_level(UPD720100_INTA_PIN,
 					     IRQ_LEVEL_LOW);
 			irq = UPD720100_INTA_IRQ;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			vr41xx_set_irq_trigger(UPD720100_INTB_PIN,
 					       IRQ_TRIGGER_LEVEL,
 					       IRQ_SIGNAL_THROUGH);
 			vr41xx_set_irq_level(UPD720100_INTB_PIN,
 					     IRQ_LEVEL_LOW);
 			irq = UPD720100_INTB_IRQ;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			vr41xx_set_irq_trigger(UPD720100_INTC_PIN,
 					       IRQ_TRIGGER_LEVEL,
 					       IRQ_SIGNAL_THROUGH);
 			vr41xx_set_irq_level(UPD720100_INTC_PIN,
 					     IRQ_LEVEL_LOW);
 			irq = UPD720100_INTC_IRQ;
-			break;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-/* Do platform specific device initialization at pci_enable_device() time */
-int pcibios_plat_dev_init(struct pci_dev *dev)
-{
-	return 0;
-}
+/* Do platक्रमm specअगरic device initialization at pci_enable_device() समय */
+पूर्णांक pcibios_plat_dev_init(काष्ठा pci_dev *dev)
+अणु
+	वापस 0;
+पूर्ण

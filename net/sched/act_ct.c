@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /* -
  * net/sched/act_ct.c  Connection Tracking action
  *
  * Authors:   Paul Blakey <paulb@mellanox.com>
  *            Yossi Kuperman <yossiku@mellanox.com>
- *            Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
+ *            Marcelo Ricarकरो Leitner <marcelo.leitner@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/pkt_cls.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/rhashtable.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
-#include <net/act_api.h>
-#include <net/ip.h>
-#include <net/ipv6_frag.h>
-#include <uapi/linux/tc_act/tc_ct.h>
-#include <net/tc_act/tc_ct.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/pkt_cls.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/act_api.h>
+#समावेश <net/ip.h>
+#समावेश <net/ipv6_frag.h>
+#समावेश <uapi/linux/tc_act/tc_ct.h>
+#समावेश <net/tc_act/tc_ct.h>
 
-#include <net/netfilter/nf_flow_table.h>
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_zones.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_acct.h>
-#include <net/netfilter/ipv6/nf_defrag_ipv6.h>
-#include <uapi/linux/netfilter/nf_nat.h>
+#समावेश <net/netfilter/nf_flow_table.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_acct.h>
+#समावेश <net/netfilter/ipv6/nf_defrag_ipv6.h>
+#समावेश <uapi/linux/netfilter/nf_nat.h>
 
-static struct workqueue_struct *act_ct_wq;
-static struct rhashtable zones_ht;
-static DEFINE_MUTEX(zones_mutex);
+अटल काष्ठा workqueue_काष्ठा *act_ct_wq;
+अटल काष्ठा rhashtable zones_ht;
+अटल DEFINE_MUTEX(zones_mutex);
 
-struct tcf_ct_flow_table {
-	struct rhash_head node; /* In zones tables */
+काष्ठा tcf_ct_flow_table अणु
+	काष्ठा rhash_head node; /* In zones tables */
 
-	struct rcu_work rwork;
-	struct nf_flowtable nf_ft;
+	काष्ठा rcu_work rwork;
+	काष्ठा nf_flowtable nf_ft;
 	refcount_t ref;
 	u16 zone;
 
 	bool dying;
-};
+पूर्ण;
 
-static const struct rhashtable_params zones_params = {
-	.head_offset = offsetof(struct tcf_ct_flow_table, node),
-	.key_offset = offsetof(struct tcf_ct_flow_table, zone),
-	.key_len = sizeof_field(struct tcf_ct_flow_table, zone),
-	.automatic_shrinking = true,
-};
+अटल स्थिर काष्ठा rhashtable_params zones_params = अणु
+	.head_offset = दुरत्व(काष्ठा tcf_ct_flow_table, node),
+	.key_offset = दुरत्व(काष्ठा tcf_ct_flow_table, zone),
+	.key_len = माप_field(काष्ठा tcf_ct_flow_table, zone),
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-static struct flow_action_entry *
-tcf_ct_flow_table_flow_action_get_next(struct flow_action *flow_action)
-{
-	int i = flow_action->num_entries++;
+अटल काष्ठा flow_action_entry *
+tcf_ct_flow_table_flow_action_get_next(काष्ठा flow_action *flow_action)
+अणु
+	पूर्णांक i = flow_action->num_entries++;
 
-	return &flow_action->entries[i];
-}
+	वापस &flow_action->entries[i];
+पूर्ण
 
-static void tcf_ct_add_mangle_action(struct flow_action *action,
-				     enum flow_action_mangle_base htype,
+अटल व्योम tcf_ct_add_mangle_action(काष्ठा flow_action *action,
+				     क्रमागत flow_action_mangle_base htype,
 				     u32 offset,
 				     u32 mask,
 				     u32 val)
-{
-	struct flow_action_entry *entry;
+अणु
+	काष्ठा flow_action_entry *entry;
 
 	entry = tcf_ct_flow_table_flow_action_get_next(action);
 	entry->id = FLOW_ACTION_MANGLE;
@@ -78,230 +79,230 @@ static void tcf_ct_add_mangle_action(struct flow_action *action,
 	entry->mangle.mask = ~mask;
 	entry->mangle.offset = offset;
 	entry->mangle.val = val;
-}
+पूर्ण
 
-/* The following nat helper functions check if the inverted reverse tuple
- * (target) is different then the current dir tuple - meaning nat for ports
+/* The following nat helper functions check अगर the inverted reverse tuple
+ * (target) is dअगरferent then the current dir tuple - meaning nat क्रम ports
  * and/or ip is needed, and add the relevant mangle actions.
  */
-static void
-tcf_ct_flow_table_add_action_nat_ipv4(const struct nf_conntrack_tuple *tuple,
-				      struct nf_conntrack_tuple target,
-				      struct flow_action *action)
-{
-	if (memcmp(&target.src.u3, &tuple->src.u3, sizeof(target.src.u3)))
+अटल व्योम
+tcf_ct_flow_table_add_action_nat_ipv4(स्थिर काष्ठा nf_conntrack_tuple *tuple,
+				      काष्ठा nf_conntrack_tuple target,
+				      काष्ठा flow_action *action)
+अणु
+	अगर (स_भेद(&target.src.u3, &tuple->src.u3, माप(target.src.u3)))
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_IP4,
-					 offsetof(struct iphdr, saddr),
+					 दुरत्व(काष्ठा iphdr, saddr),
 					 0xFFFFFFFF,
 					 be32_to_cpu(target.src.u3.ip));
-	if (memcmp(&target.dst.u3, &tuple->dst.u3, sizeof(target.dst.u3)))
+	अगर (स_भेद(&target.dst.u3, &tuple->dst.u3, माप(target.dst.u3)))
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_IP4,
-					 offsetof(struct iphdr, daddr),
+					 दुरत्व(काष्ठा iphdr, daddr),
 					 0xFFFFFFFF,
 					 be32_to_cpu(target.dst.u3.ip));
-}
+पूर्ण
 
-static void
-tcf_ct_add_ipv6_addr_mangle_action(struct flow_action *action,
-				   union nf_inet_addr *addr,
+अटल व्योम
+tcf_ct_add_ipv6_addr_mangle_action(काष्ठा flow_action *action,
+				   जोड़ nf_inet_addr *addr,
 				   u32 offset)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(struct in6_addr) / sizeof(u32); i++)
+	क्रम (i = 0; i < माप(काष्ठा in6_addr) / माप(u32); i++)
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_IP6,
-					 i * sizeof(u32) + offset,
+					 i * माप(u32) + offset,
 					 0xFFFFFFFF, be32_to_cpu(addr->ip6[i]));
-}
+पूर्ण
 
-static void
-tcf_ct_flow_table_add_action_nat_ipv6(const struct nf_conntrack_tuple *tuple,
-				      struct nf_conntrack_tuple target,
-				      struct flow_action *action)
-{
-	if (memcmp(&target.src.u3, &tuple->src.u3, sizeof(target.src.u3)))
+अटल व्योम
+tcf_ct_flow_table_add_action_nat_ipv6(स्थिर काष्ठा nf_conntrack_tuple *tuple,
+				      काष्ठा nf_conntrack_tuple target,
+				      काष्ठा flow_action *action)
+अणु
+	अगर (स_भेद(&target.src.u3, &tuple->src.u3, माप(target.src.u3)))
 		tcf_ct_add_ipv6_addr_mangle_action(action, &target.src.u3,
-						   offsetof(struct ipv6hdr,
+						   दुरत्व(काष्ठा ipv6hdr,
 							    saddr));
-	if (memcmp(&target.dst.u3, &tuple->dst.u3, sizeof(target.dst.u3)))
+	अगर (स_भेद(&target.dst.u3, &tuple->dst.u3, माप(target.dst.u3)))
 		tcf_ct_add_ipv6_addr_mangle_action(action, &target.dst.u3,
-						   offsetof(struct ipv6hdr,
+						   दुरत्व(काष्ठा ipv6hdr,
 							    daddr));
-}
+पूर्ण
 
-static void
-tcf_ct_flow_table_add_action_nat_tcp(const struct nf_conntrack_tuple *tuple,
-				     struct nf_conntrack_tuple target,
-				     struct flow_action *action)
-{
+अटल व्योम
+tcf_ct_flow_table_add_action_nat_tcp(स्थिर काष्ठा nf_conntrack_tuple *tuple,
+				     काष्ठा nf_conntrack_tuple target,
+				     काष्ठा flow_action *action)
+अणु
 	__be16 target_src = target.src.u.tcp.port;
 	__be16 target_dst = target.dst.u.tcp.port;
 
-	if (target_src != tuple->src.u.tcp.port)
+	अगर (target_src != tuple->src.u.tcp.port)
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_TCP,
-					 offsetof(struct tcphdr, source),
+					 दुरत्व(काष्ठा tcphdr, source),
 					 0xFFFF, be16_to_cpu(target_src));
-	if (target_dst != tuple->dst.u.tcp.port)
+	अगर (target_dst != tuple->dst.u.tcp.port)
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_TCP,
-					 offsetof(struct tcphdr, dest),
+					 दुरत्व(काष्ठा tcphdr, dest),
 					 0xFFFF, be16_to_cpu(target_dst));
-}
+पूर्ण
 
-static void
-tcf_ct_flow_table_add_action_nat_udp(const struct nf_conntrack_tuple *tuple,
-				     struct nf_conntrack_tuple target,
-				     struct flow_action *action)
-{
+अटल व्योम
+tcf_ct_flow_table_add_action_nat_udp(स्थिर काष्ठा nf_conntrack_tuple *tuple,
+				     काष्ठा nf_conntrack_tuple target,
+				     काष्ठा flow_action *action)
+अणु
 	__be16 target_src = target.src.u.udp.port;
 	__be16 target_dst = target.dst.u.udp.port;
 
-	if (target_src != tuple->src.u.udp.port)
+	अगर (target_src != tuple->src.u.udp.port)
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_UDP,
-					 offsetof(struct udphdr, source),
+					 दुरत्व(काष्ठा udphdr, source),
 					 0xFFFF, be16_to_cpu(target_src));
-	if (target_dst != tuple->dst.u.udp.port)
+	अगर (target_dst != tuple->dst.u.udp.port)
 		tcf_ct_add_mangle_action(action, FLOW_ACT_MANGLE_HDR_TYPE_UDP,
-					 offsetof(struct udphdr, dest),
+					 दुरत्व(काष्ठा udphdr, dest),
 					 0xFFFF, be16_to_cpu(target_dst));
-}
+पूर्ण
 
-static void tcf_ct_flow_table_add_action_meta(struct nf_conn *ct,
-					      enum ip_conntrack_dir dir,
-					      struct flow_action *action)
-{
-	struct nf_conn_labels *ct_labels;
-	struct flow_action_entry *entry;
-	enum ip_conntrack_info ctinfo;
+अटल व्योम tcf_ct_flow_table_add_action_meta(काष्ठा nf_conn *ct,
+					      क्रमागत ip_conntrack_dir dir,
+					      काष्ठा flow_action *action)
+अणु
+	काष्ठा nf_conn_labels *ct_labels;
+	काष्ठा flow_action_entry *entry;
+	क्रमागत ip_conntrack_info ctinfo;
 	u32 *act_ct_labels;
 
 	entry = tcf_ct_flow_table_flow_action_get_next(action);
 	entry->id = FLOW_ACTION_CT_METADATA;
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
 	entry->ct_metadata.mark = ct->mark;
-#endif
-	ctinfo = dir == IP_CT_DIR_ORIGINAL ? IP_CT_ESTABLISHED :
+#पूर्ण_अगर
+	ctinfo = dir == IP_CT_सूची_ORIGINAL ? IP_CT_ESTABLISHED :
 					     IP_CT_ESTABLISHED_REPLY;
 	/* aligns with the CT reference on the SKB nf_ct_set */
-	entry->ct_metadata.cookie = (unsigned long)ct | ctinfo;
-	entry->ct_metadata.orig_dir = dir == IP_CT_DIR_ORIGINAL;
+	entry->ct_metadata.cookie = (अचिन्हित दीर्घ)ct | ctinfo;
+	entry->ct_metadata.orig_dir = dir == IP_CT_सूची_ORIGINAL;
 
 	act_ct_labels = entry->ct_metadata.labels;
 	ct_labels = nf_ct_labels_find(ct);
-	if (ct_labels)
-		memcpy(act_ct_labels, ct_labels->bits, NF_CT_LABELS_MAX_SIZE);
-	else
-		memset(act_ct_labels, 0, NF_CT_LABELS_MAX_SIZE);
-}
+	अगर (ct_labels)
+		स_नकल(act_ct_labels, ct_labels->bits, NF_CT_LABELS_MAX_SIZE);
+	अन्यथा
+		स_रखो(act_ct_labels, 0, NF_CT_LABELS_MAX_SIZE);
+पूर्ण
 
-static int tcf_ct_flow_table_add_action_nat(struct net *net,
-					    struct nf_conn *ct,
-					    enum ip_conntrack_dir dir,
-					    struct flow_action *action)
-{
-	const struct nf_conntrack_tuple *tuple = &ct->tuplehash[dir].tuple;
-	struct nf_conntrack_tuple target;
+अटल पूर्णांक tcf_ct_flow_table_add_action_nat(काष्ठा net *net,
+					    काष्ठा nf_conn *ct,
+					    क्रमागत ip_conntrack_dir dir,
+					    काष्ठा flow_action *action)
+अणु
+	स्थिर काष्ठा nf_conntrack_tuple *tuple = &ct->tuplehash[dir].tuple;
+	काष्ठा nf_conntrack_tuple target;
 
-	if (!(ct->status & IPS_NAT_MASK))
-		return 0;
+	अगर (!(ct->status & IPS_NAT_MASK))
+		वापस 0;
 
 	nf_ct_invert_tuple(&target, &ct->tuplehash[!dir].tuple);
 
-	switch (tuple->src.l3num) {
-	case NFPROTO_IPV4:
+	चयन (tuple->src.l3num) अणु
+	हाल NFPROTO_IPV4:
 		tcf_ct_flow_table_add_action_nat_ipv4(tuple, target,
 						      action);
-		break;
-	case NFPROTO_IPV6:
+		अवरोध;
+	हाल NFPROTO_IPV6:
 		tcf_ct_flow_table_add_action_nat_ipv6(tuple, target,
 						      action);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	switch (nf_ct_protonum(ct)) {
-	case IPPROTO_TCP:
+	चयन (nf_ct_protonum(ct)) अणु
+	हाल IPPROTO_TCP:
 		tcf_ct_flow_table_add_action_nat_tcp(tuple, target, action);
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		tcf_ct_flow_table_add_action_nat_udp(tuple, target, action);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_ct_flow_table_fill_actions(struct net *net,
-					  const struct flow_offload *flow,
-					  enum flow_offload_tuple_dir tdir,
-					  struct nf_flow_rule *flow_rule)
-{
-	struct flow_action *action = &flow_rule->rule->action;
-	int num_entries = action->num_entries;
-	struct nf_conn *ct = flow->ct;
-	enum ip_conntrack_dir dir;
-	int i, err;
+अटल पूर्णांक tcf_ct_flow_table_fill_actions(काष्ठा net *net,
+					  स्थिर काष्ठा flow_offload *flow,
+					  क्रमागत flow_offload_tuple_dir tdir,
+					  काष्ठा nf_flow_rule *flow_rule)
+अणु
+	काष्ठा flow_action *action = &flow_rule->rule->action;
+	पूर्णांक num_entries = action->num_entries;
+	काष्ठा nf_conn *ct = flow->ct;
+	क्रमागत ip_conntrack_dir dir;
+	पूर्णांक i, err;
 
-	switch (tdir) {
-	case FLOW_OFFLOAD_DIR_ORIGINAL:
-		dir = IP_CT_DIR_ORIGINAL;
-		break;
-	case FLOW_OFFLOAD_DIR_REPLY:
-		dir = IP_CT_DIR_REPLY;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	चयन (tdir) अणु
+	हाल FLOW_OFFLOAD_सूची_ORIGINAL:
+		dir = IP_CT_सूची_ORIGINAL;
+		अवरोध;
+	हाल FLOW_OFFLOAD_सूची_REPLY:
+		dir = IP_CT_सूची_REPLY;
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	err = tcf_ct_flow_table_add_action_nat(net, ct, dir, action);
-	if (err)
-		goto err_nat;
+	अगर (err)
+		जाओ err_nat;
 
 	tcf_ct_flow_table_add_action_meta(ct, dir, action);
-	return 0;
+	वापस 0;
 
 err_nat:
 	/* Clear filled actions */
-	for (i = num_entries; i < action->num_entries; i++)
-		memset(&action->entries[i], 0, sizeof(action->entries[i]));
+	क्रम (i = num_entries; i < action->num_entries; i++)
+		स_रखो(&action->entries[i], 0, माप(action->entries[i]));
 	action->num_entries = num_entries;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct nf_flowtable_type flowtable_ct = {
+अटल काष्ठा nf_flowtable_type flowtable_ct = अणु
 	.action		= tcf_ct_flow_table_fill_actions,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int tcf_ct_flow_table_get(struct tcf_ct_params *params)
-{
-	struct tcf_ct_flow_table *ct_ft;
-	int err = -ENOMEM;
+अटल पूर्णांक tcf_ct_flow_table_get(काष्ठा tcf_ct_params *params)
+अणु
+	काष्ठा tcf_ct_flow_table *ct_ft;
+	पूर्णांक err = -ENOMEM;
 
 	mutex_lock(&zones_mutex);
 	ct_ft = rhashtable_lookup_fast(&zones_ht, &params->zone, zones_params);
-	if (ct_ft && refcount_inc_not_zero(&ct_ft->ref))
-		goto out_unlock;
+	अगर (ct_ft && refcount_inc_not_zero(&ct_ft->ref))
+		जाओ out_unlock;
 
-	ct_ft = kzalloc(sizeof(*ct_ft), GFP_KERNEL);
-	if (!ct_ft)
-		goto err_alloc;
+	ct_ft = kzalloc(माप(*ct_ft), GFP_KERNEL);
+	अगर (!ct_ft)
+		जाओ err_alloc;
 	refcount_set(&ct_ft->ref, 1);
 
 	ct_ft->zone = params->zone;
 	err = rhashtable_insert_fast(&zones_ht, &ct_ft->node, zones_params);
-	if (err)
-		goto err_insert;
+	अगर (err)
+		जाओ err_insert;
 
 	ct_ft->nf_ft.type = &flowtable_ct;
 	ct_ft->nf_ft.flags |= NF_FLOWTABLE_HW_OFFLOAD |
 			      NF_FLOWTABLE_COUNTER;
 	err = nf_flow_table_init(&ct_ft->nf_ft);
-	if (err)
-		goto err_init;
+	अगर (err)
+		जाओ err_init;
 
 	__module_get(THIS_MODULE);
 out_unlock:
@@ -309,137 +310,137 @@ out_unlock:
 	params->nf_ft = &ct_ft->nf_ft;
 	mutex_unlock(&zones_mutex);
 
-	return 0;
+	वापस 0;
 
 err_init:
-	rhashtable_remove_fast(&zones_ht, &ct_ft->node, zones_params);
+	rhashtable_हटाओ_fast(&zones_ht, &ct_ft->node, zones_params);
 err_insert:
-	kfree(ct_ft);
+	kमुक्त(ct_ft);
 err_alloc:
 	mutex_unlock(&zones_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void tcf_ct_flow_table_cleanup_work(struct work_struct *work)
-{
-	struct tcf_ct_flow_table *ct_ft;
+अटल व्योम tcf_ct_flow_table_cleanup_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा tcf_ct_flow_table *ct_ft;
 
-	ct_ft = container_of(to_rcu_work(work), struct tcf_ct_flow_table,
+	ct_ft = container_of(to_rcu_work(work), काष्ठा tcf_ct_flow_table,
 			     rwork);
-	nf_flow_table_free(&ct_ft->nf_ft);
-	kfree(ct_ft);
+	nf_flow_table_मुक्त(&ct_ft->nf_ft);
+	kमुक्त(ct_ft);
 
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
-static void tcf_ct_flow_table_put(struct tcf_ct_params *params)
-{
-	struct tcf_ct_flow_table *ct_ft = params->ct_ft;
+अटल व्योम tcf_ct_flow_table_put(काष्ठा tcf_ct_params *params)
+अणु
+	काष्ठा tcf_ct_flow_table *ct_ft = params->ct_ft;
 
-	if (refcount_dec_and_test(&params->ct_ft->ref)) {
-		rhashtable_remove_fast(&zones_ht, &ct_ft->node, zones_params);
+	अगर (refcount_dec_and_test(&params->ct_ft->ref)) अणु
+		rhashtable_हटाओ_fast(&zones_ht, &ct_ft->node, zones_params);
 		INIT_RCU_WORK(&ct_ft->rwork, tcf_ct_flow_table_cleanup_work);
 		queue_rcu_work(act_ct_wq, &ct_ft->rwork);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tcf_ct_flow_table_add(struct tcf_ct_flow_table *ct_ft,
-				  struct nf_conn *ct,
+अटल व्योम tcf_ct_flow_table_add(काष्ठा tcf_ct_flow_table *ct_ft,
+				  काष्ठा nf_conn *ct,
 				  bool tcp)
-{
-	struct flow_offload *entry;
-	int err;
+अणु
+	काष्ठा flow_offload *entry;
+	पूर्णांक err;
 
-	if (test_and_set_bit(IPS_OFFLOAD_BIT, &ct->status))
-		return;
+	अगर (test_and_set_bit(IPS_OFFLOAD_BIT, &ct->status))
+		वापस;
 
 	entry = flow_offload_alloc(ct);
-	if (!entry) {
+	अगर (!entry) अणु
 		WARN_ON_ONCE(1);
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
-	if (tcp) {
+	अगर (tcp) अणु
 		ct->proto.tcp.seen[0].flags |= IP_CT_TCP_FLAG_BE_LIBERAL;
 		ct->proto.tcp.seen[1].flags |= IP_CT_TCP_FLAG_BE_LIBERAL;
-	}
+	पूर्ण
 
 	err = flow_offload_add(&ct_ft->nf_ft, entry);
-	if (err)
-		goto err_add;
+	अगर (err)
+		जाओ err_add;
 
-	return;
+	वापस;
 
 err_add:
-	flow_offload_free(entry);
+	flow_offload_मुक्त(entry);
 err_alloc:
 	clear_bit(IPS_OFFLOAD_BIT, &ct->status);
-}
+पूर्ण
 
-static void tcf_ct_flow_table_process_conn(struct tcf_ct_flow_table *ct_ft,
-					   struct nf_conn *ct,
-					   enum ip_conntrack_info ctinfo)
-{
+अटल व्योम tcf_ct_flow_table_process_conn(काष्ठा tcf_ct_flow_table *ct_ft,
+					   काष्ठा nf_conn *ct,
+					   क्रमागत ip_conntrack_info ctinfo)
+अणु
 	bool tcp = false;
 
-	if (ctinfo != IP_CT_ESTABLISHED && ctinfo != IP_CT_ESTABLISHED_REPLY)
-		return;
+	अगर (ctinfo != IP_CT_ESTABLISHED && ctinfo != IP_CT_ESTABLISHED_REPLY)
+		वापस;
 
-	switch (nf_ct_protonum(ct)) {
-	case IPPROTO_TCP:
+	चयन (nf_ct_protonum(ct)) अणु
+	हाल IPPROTO_TCP:
 		tcp = true;
-		if (ct->proto.tcp.state != TCP_CONNTRACK_ESTABLISHED)
-			return;
-		break;
-	case IPPROTO_UDP:
-		break;
-	default:
-		return;
-	}
+		अगर (ct->proto.tcp.state != TCP_CONNTRACK_ESTABLISHED)
+			वापस;
+		अवरोध;
+	हाल IPPROTO_UDP:
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	if (nf_ct_ext_exist(ct, NF_CT_EXT_HELPER) ||
+	अगर (nf_ct_ext_exist(ct, NF_CT_EXT_HELPER) ||
 	    ct->status & IPS_SEQ_ADJUST)
-		return;
+		वापस;
 
 	tcf_ct_flow_table_add(ct_ft, ct, tcp);
-}
+पूर्ण
 
-static bool
-tcf_ct_flow_table_fill_tuple_ipv4(struct sk_buff *skb,
-				  struct flow_offload_tuple *tuple,
-				  struct tcphdr **tcph)
-{
-	struct flow_ports *ports;
-	unsigned int thoff;
-	struct iphdr *iph;
+अटल bool
+tcf_ct_flow_table_fill_tuple_ipv4(काष्ठा sk_buff *skb,
+				  काष्ठा flow_offload_tuple *tuple,
+				  काष्ठा tcphdr **tcph)
+अणु
+	काष्ठा flow_ports *ports;
+	अचिन्हित पूर्णांक thoff;
+	काष्ठा iphdr *iph;
 
-	if (!pskb_network_may_pull(skb, sizeof(*iph)))
-		return false;
+	अगर (!pskb_network_may_pull(skb, माप(*iph)))
+		वापस false;
 
 	iph = ip_hdr(skb);
 	thoff = iph->ihl * 4;
 
-	if (ip_is_fragment(iph) ||
-	    unlikely(thoff != sizeof(struct iphdr)))
-		return false;
+	अगर (ip_is_fragment(iph) ||
+	    unlikely(thoff != माप(काष्ठा iphdr)))
+		वापस false;
 
-	if (iph->protocol != IPPROTO_TCP &&
+	अगर (iph->protocol != IPPROTO_TCP &&
 	    iph->protocol != IPPROTO_UDP)
-		return false;
+		वापस false;
 
-	if (iph->ttl <= 1)
-		return false;
+	अगर (iph->ttl <= 1)
+		वापस false;
 
-	if (!pskb_network_may_pull(skb, iph->protocol == IPPROTO_TCP ?
-					thoff + sizeof(struct tcphdr) :
-					thoff + sizeof(*ports)))
-		return false;
+	अगर (!pskb_network_may_pull(skb, iph->protocol == IPPROTO_TCP ?
+					thoff + माप(काष्ठा tcphdr) :
+					thoff + माप(*ports)))
+		वापस false;
 
 	iph = ip_hdr(skb);
-	if (iph->protocol == IPPROTO_TCP)
-		*tcph = (void *)(skb_network_header(skb) + thoff);
+	अगर (iph->protocol == IPPROTO_TCP)
+		*tcph = (व्योम *)(skb_network_header(skb) + thoff);
 
-	ports = (struct flow_ports *)(skb_network_header(skb) + thoff);
+	ports = (काष्ठा flow_ports *)(skb_network_header(skb) + thoff);
 	tuple->src_v4.s_addr = iph->saddr;
 	tuple->dst_v4.s_addr = iph->daddr;
 	tuple->src_port = ports->source;
@@ -447,41 +448,41 @@ tcf_ct_flow_table_fill_tuple_ipv4(struct sk_buff *skb,
 	tuple->l3proto = AF_INET;
 	tuple->l4proto = iph->protocol;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-tcf_ct_flow_table_fill_tuple_ipv6(struct sk_buff *skb,
-				  struct flow_offload_tuple *tuple,
-				  struct tcphdr **tcph)
-{
-	struct flow_ports *ports;
-	struct ipv6hdr *ip6h;
-	unsigned int thoff;
+अटल bool
+tcf_ct_flow_table_fill_tuple_ipv6(काष्ठा sk_buff *skb,
+				  काष्ठा flow_offload_tuple *tuple,
+				  काष्ठा tcphdr **tcph)
+अणु
+	काष्ठा flow_ports *ports;
+	काष्ठा ipv6hdr *ip6h;
+	अचिन्हित पूर्णांक thoff;
 
-	if (!pskb_network_may_pull(skb, sizeof(*ip6h)))
-		return false;
+	अगर (!pskb_network_may_pull(skb, माप(*ip6h)))
+		वापस false;
 
 	ip6h = ipv6_hdr(skb);
 
-	if (ip6h->nexthdr != IPPROTO_TCP &&
+	अगर (ip6h->nexthdr != IPPROTO_TCP &&
 	    ip6h->nexthdr != IPPROTO_UDP)
-		return false;
+		वापस false;
 
-	if (ip6h->hop_limit <= 1)
-		return false;
+	अगर (ip6h->hop_limit <= 1)
+		वापस false;
 
-	thoff = sizeof(*ip6h);
-	if (!pskb_network_may_pull(skb, ip6h->nexthdr == IPPROTO_TCP ?
-					thoff + sizeof(struct tcphdr) :
-					thoff + sizeof(*ports)))
-		return false;
+	thoff = माप(*ip6h);
+	अगर (!pskb_network_may_pull(skb, ip6h->nexthdr == IPPROTO_TCP ?
+					thoff + माप(काष्ठा tcphdr) :
+					thoff + माप(*ports)))
+		वापस false;
 
 	ip6h = ipv6_hdr(skb);
-	if (ip6h->nexthdr == IPPROTO_TCP)
-		*tcph = (void *)(skb_network_header(skb) + thoff);
+	अगर (ip6h->nexthdr == IPPROTO_TCP)
+		*tcph = (व्योम *)(skb_network_header(skb) + thoff);
 
-	ports = (struct flow_ports *)(skb_network_header(skb) + thoff);
+	ports = (काष्ठा flow_ports *)(skb_network_header(skb) + thoff);
 	tuple->src_v6 = ip6h->saddr;
 	tuple->dst_v6 = ip6h->daddr;
 	tuple->src_port = ports->source;
@@ -489,323 +490,323 @@ tcf_ct_flow_table_fill_tuple_ipv6(struct sk_buff *skb,
 	tuple->l3proto = AF_INET6;
 	tuple->l4proto = ip6h->nexthdr;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool tcf_ct_flow_table_lookup(struct tcf_ct_params *p,
-				     struct sk_buff *skb,
+अटल bool tcf_ct_flow_table_lookup(काष्ठा tcf_ct_params *p,
+				     काष्ठा sk_buff *skb,
 				     u8 family)
-{
-	struct nf_flowtable *nf_ft = &p->ct_ft->nf_ft;
-	struct flow_offload_tuple_rhash *tuplehash;
-	struct flow_offload_tuple tuple = {};
-	enum ip_conntrack_info ctinfo;
-	struct tcphdr *tcph = NULL;
-	struct flow_offload *flow;
-	struct nf_conn *ct;
+अणु
+	काष्ठा nf_flowtable *nf_ft = &p->ct_ft->nf_ft;
+	काष्ठा flow_offload_tuple_rhash *tuplehash;
+	काष्ठा flow_offload_tuple tuple = अणुपूर्ण;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा tcphdr *tcph = शून्य;
+	काष्ठा flow_offload *flow;
+	काष्ठा nf_conn *ct;
 	u8 dir;
 
 	/* Previously seen or loopback */
 	ct = nf_ct_get(skb, &ctinfo);
-	if ((ct && !nf_ct_is_template(ct)) || ctinfo == IP_CT_UNTRACKED)
-		return false;
+	अगर ((ct && !nf_ct_is_ढाँचा(ct)) || ctinfo == IP_CT_UNTRACKED)
+		वापस false;
 
-	switch (family) {
-	case NFPROTO_IPV4:
-		if (!tcf_ct_flow_table_fill_tuple_ipv4(skb, &tuple, &tcph))
-			return false;
-		break;
-	case NFPROTO_IPV6:
-		if (!tcf_ct_flow_table_fill_tuple_ipv6(skb, &tuple, &tcph))
-			return false;
-		break;
-	default:
-		return false;
-	}
+	चयन (family) अणु
+	हाल NFPROTO_IPV4:
+		अगर (!tcf_ct_flow_table_fill_tuple_ipv4(skb, &tuple, &tcph))
+			वापस false;
+		अवरोध;
+	हाल NFPROTO_IPV6:
+		अगर (!tcf_ct_flow_table_fill_tuple_ipv6(skb, &tuple, &tcph))
+			वापस false;
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
 	tuplehash = flow_offload_lookup(nf_ft, &tuple);
-	if (!tuplehash)
-		return false;
+	अगर (!tuplehash)
+		वापस false;
 
 	dir = tuplehash->tuple.dir;
-	flow = container_of(tuplehash, struct flow_offload, tuplehash[dir]);
+	flow = container_of(tuplehash, काष्ठा flow_offload, tuplehash[dir]);
 	ct = flow->ct;
 
-	if (tcph && (unlikely(tcph->fin || tcph->rst))) {
-		flow_offload_teardown(flow);
-		return false;
-	}
+	अगर (tcph && (unlikely(tcph->fin || tcph->rst))) अणु
+		flow_offload_tearकरोwn(flow);
+		वापस false;
+	पूर्ण
 
-	ctinfo = dir == FLOW_OFFLOAD_DIR_ORIGINAL ? IP_CT_ESTABLISHED :
+	ctinfo = dir == FLOW_OFFLOAD_सूची_ORIGINAL ? IP_CT_ESTABLISHED :
 						    IP_CT_ESTABLISHED_REPLY;
 
 	flow_offload_refresh(nf_ft, flow);
 	nf_conntrack_get(&ct->ct_general);
 	nf_ct_set(skb, ct, ctinfo);
-	if (nf_ft->flags & NF_FLOWTABLE_COUNTER)
+	अगर (nf_ft->flags & NF_FLOWTABLE_COUNTER)
 		nf_ct_acct_update(ct, dir, skb->len);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int tcf_ct_flow_tables_init(void)
-{
-	return rhashtable_init(&zones_ht, &zones_params);
-}
+अटल पूर्णांक tcf_ct_flow_tables_init(व्योम)
+अणु
+	वापस rhashtable_init(&zones_ht, &zones_params);
+पूर्ण
 
-static void tcf_ct_flow_tables_uninit(void)
-{
+अटल व्योम tcf_ct_flow_tables_uninit(व्योम)
+अणु
 	rhashtable_destroy(&zones_ht);
-}
+पूर्ण
 
-static struct tc_action_ops act_ct_ops;
-static unsigned int ct_net_id;
+अटल काष्ठा tc_action_ops act_ct_ops;
+अटल अचिन्हित पूर्णांक ct_net_id;
 
-struct tc_ct_action_net {
-	struct tc_action_net tn; /* Must be first */
+काष्ठा tc_ct_action_net अणु
+	काष्ठा tc_action_net tn; /* Must be first */
 	bool labels;
-};
+पूर्ण;
 
 /* Determine whether skb->_nfct is equal to the result of conntrack lookup. */
-static bool tcf_ct_skb_nfct_cached(struct net *net, struct sk_buff *skb,
-				   u16 zone_id, bool force)
-{
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+अटल bool tcf_ct_skb_nfct_cached(काष्ठा net *net, काष्ठा sk_buff *skb,
+				   u16 zone_id, bool क्रमce)
+अणु
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
-		return false;
-	if (!net_eq(net, read_pnet(&ct->ct_net)))
-		return false;
-	if (nf_ct_zone(ct)->id != zone_id)
-		return false;
+	अगर (!ct)
+		वापस false;
+	अगर (!net_eq(net, पढ़ो_pnet(&ct->ct_net)))
+		वापस false;
+	अगर (nf_ct_zone(ct)->id != zone_id)
+		वापस false;
 
 	/* Force conntrack entry direction. */
-	if (force && CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL) {
-		if (nf_ct_is_confirmed(ct))
-			nf_ct_kill(ct);
+	अगर (क्रमce && CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL) अणु
+		अगर (nf_ct_is_confirmed(ct))
+			nf_ct_समाप्त(ct);
 
 		nf_conntrack_put(&ct->ct_general);
-		nf_ct_set(skb, NULL, IP_CT_UNTRACKED);
+		nf_ct_set(skb, शून्य, IP_CT_UNTRACKED);
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Trim the skb to the length specified by the IP/IPv6 header,
+/* Trim the skb to the length specअगरied by the IP/IPv6 header,
  * removing any trailing lower-layer padding. This prepares the skb
- * for higher-layer processing that assumes skb->len excludes padding
+ * क्रम higher-layer processing that assumes skb->len excludes padding
  * (such as nf_ip_checksum). The caller needs to pull the skb to the
- * network header, and ensure ip_hdr/ipv6_hdr points to valid data.
+ * network header, and ensure ip_hdr/ipv6_hdr poपूर्णांकs to valid data.
  */
-static int tcf_ct_skb_network_trim(struct sk_buff *skb, int family)
-{
-	unsigned int len;
-	int err;
+अटल पूर्णांक tcf_ct_skb_network_trim(काष्ठा sk_buff *skb, पूर्णांक family)
+अणु
+	अचिन्हित पूर्णांक len;
+	पूर्णांक err;
 
-	switch (family) {
-	case NFPROTO_IPV4:
+	चयन (family) अणु
+	हाल NFPROTO_IPV4:
 		len = ntohs(ip_hdr(skb)->tot_len);
-		break;
-	case NFPROTO_IPV6:
-		len = sizeof(struct ipv6hdr)
+		अवरोध;
+	हाल NFPROTO_IPV6:
+		len = माप(काष्ठा ipv6hdr)
 			+ ntohs(ipv6_hdr(skb)->payload_len);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		len = skb->len;
-	}
+	पूर्ण
 
 	err = pskb_trim_rcsum(skb, len);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u8 tcf_ct_skb_nf_family(struct sk_buff *skb)
-{
+अटल u8 tcf_ct_skb_nf_family(काष्ठा sk_buff *skb)
+अणु
 	u8 family = NFPROTO_UNSPEC;
 
-	switch (skb_protocol(skb, true)) {
-	case htons(ETH_P_IP):
+	चयन (skb_protocol(skb, true)) अणु
+	हाल htons(ETH_P_IP):
 		family = NFPROTO_IPV4;
-		break;
-	case htons(ETH_P_IPV6):
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
 		family = NFPROTO_IPV6;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return family;
-}
+	वापस family;
+पूर्ण
 
-static int tcf_ct_ipv4_is_fragment(struct sk_buff *skb, bool *frag)
-{
-	unsigned int len;
+अटल पूर्णांक tcf_ct_ipv4_is_fragment(काष्ठा sk_buff *skb, bool *frag)
+अणु
+	अचिन्हित पूर्णांक len;
 
-	len =  skb_network_offset(skb) + sizeof(struct iphdr);
-	if (unlikely(skb->len < len))
-		return -EINVAL;
-	if (unlikely(!pskb_may_pull(skb, len)))
-		return -ENOMEM;
+	len =  skb_network_offset(skb) + माप(काष्ठा iphdr);
+	अगर (unlikely(skb->len < len))
+		वापस -EINVAL;
+	अगर (unlikely(!pskb_may_pull(skb, len)))
+		वापस -ENOMEM;
 
 	*frag = ip_is_fragment(ip_hdr(skb));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_ct_ipv6_is_fragment(struct sk_buff *skb, bool *frag)
-{
-	unsigned int flags = 0, len, payload_ofs = 0;
-	unsigned short frag_off;
-	int nexthdr;
+अटल पूर्णांक tcf_ct_ipv6_is_fragment(काष्ठा sk_buff *skb, bool *frag)
+अणु
+	अचिन्हित पूर्णांक flags = 0, len, payload_ofs = 0;
+	अचिन्हित लघु frag_off;
+	पूर्णांक nexthdr;
 
-	len =  skb_network_offset(skb) + sizeof(struct ipv6hdr);
-	if (unlikely(skb->len < len))
-		return -EINVAL;
-	if (unlikely(!pskb_may_pull(skb, len)))
-		return -ENOMEM;
+	len =  skb_network_offset(skb) + माप(काष्ठा ipv6hdr);
+	अगर (unlikely(skb->len < len))
+		वापस -EINVAL;
+	अगर (unlikely(!pskb_may_pull(skb, len)))
+		वापस -ENOMEM;
 
 	nexthdr = ipv6_find_hdr(skb, &payload_ofs, -1, &frag_off, &flags);
-	if (unlikely(nexthdr < 0))
-		return -EPROTO;
+	अगर (unlikely(nexthdr < 0))
+		वापस -EPROTO;
 
 	*frag = flags & IP6_FH_F_FRAG;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_ct_handle_fragments(struct net *net, struct sk_buff *skb,
+अटल पूर्णांक tcf_ct_handle_fragments(काष्ठा net *net, काष्ठा sk_buff *skb,
 				   u8 family, u16 zone, bool *defrag)
-{
-	enum ip_conntrack_info ctinfo;
-	struct qdisc_skb_cb cb;
-	struct nf_conn *ct;
-	int err = 0;
+अणु
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा qdisc_skb_cb cb;
+	काष्ठा nf_conn *ct;
+	पूर्णांक err = 0;
 	bool frag;
 
 	/* Previously seen (loopback)? Ignore. */
 	ct = nf_ct_get(skb, &ctinfo);
-	if ((ct && !nf_ct_is_template(ct)) || ctinfo == IP_CT_UNTRACKED)
-		return 0;
+	अगर ((ct && !nf_ct_is_ढाँचा(ct)) || ctinfo == IP_CT_UNTRACKED)
+		वापस 0;
 
-	if (family == NFPROTO_IPV4)
+	अगर (family == NFPROTO_IPV4)
 		err = tcf_ct_ipv4_is_fragment(skb, &frag);
-	else
+	अन्यथा
 		err = tcf_ct_ipv6_is_fragment(skb, &frag);
-	if (err || !frag)
-		return err;
+	अगर (err || !frag)
+		वापस err;
 
 	skb_get(skb);
 	cb = *qdisc_skb_cb(skb);
 
-	if (family == NFPROTO_IPV4) {
-		enum ip_defrag_users user = IP_DEFRAG_CONNTRACK_IN + zone;
+	अगर (family == NFPROTO_IPV4) अणु
+		क्रमागत ip_defrag_users user = IP_DEFRAG_CONNTRACK_IN + zone;
 
-		memset(IPCB(skb), 0, sizeof(struct inet_skb_parm));
+		स_रखो(IPCB(skb), 0, माप(काष्ठा inet_skb_parm));
 		local_bh_disable();
 		err = ip_defrag(net, skb, user);
 		local_bh_enable();
-		if (err && err != -EINPROGRESS)
-			return err;
+		अगर (err && err != -EINPROGRESS)
+			वापस err;
 
-		if (!err) {
+		अगर (!err) अणु
 			*defrag = true;
 			cb.mru = IPCB(skb)->frag_max_size;
-		}
-	} else { /* NFPROTO_IPV6 */
-#if IS_ENABLED(CONFIG_NF_DEFRAG_IPV6)
-		enum ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
+		पूर्ण
+	पूर्ण अन्यथा अणु /* NFPROTO_IPV6 */
+#अगर IS_ENABLED(CONFIG_NF_DEFRAG_IPV6)
+		क्रमागत ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
 
-		memset(IP6CB(skb), 0, sizeof(struct inet6_skb_parm));
+		स_रखो(IP6CB(skb), 0, माप(काष्ठा inet6_skb_parm));
 		err = nf_ct_frag6_gather(net, skb, user);
-		if (err && err != -EINPROGRESS)
-			goto out_free;
+		अगर (err && err != -EINPROGRESS)
+			जाओ out_मुक्त;
 
-		if (!err) {
+		अगर (!err) अणु
 			*defrag = true;
 			cb.mru = IP6CB(skb)->frag_max_size;
-		}
-#else
+		पूर्ण
+#अन्यथा
 		err = -EOPNOTSUPP;
-		goto out_free;
-#endif
-	}
+		जाओ out_मुक्त;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (err != -EINPROGRESS)
+	अगर (err != -EINPROGRESS)
 		*qdisc_skb_cb(skb) = cb;
 	skb_clear_hash(skb);
 	skb->ignore_df = 1;
-	return err;
+	वापस err;
 
-out_free:
-	kfree_skb(skb);
-	return err;
-}
+out_मुक्त:
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-static void tcf_ct_params_free(struct rcu_head *head)
-{
-	struct tcf_ct_params *params = container_of(head,
-						    struct tcf_ct_params, rcu);
+अटल व्योम tcf_ct_params_मुक्त(काष्ठा rcu_head *head)
+अणु
+	काष्ठा tcf_ct_params *params = container_of(head,
+						    काष्ठा tcf_ct_params, rcu);
 
 	tcf_ct_flow_table_put(params);
 
-	if (params->tmpl)
-		nf_conntrack_put(&params->tmpl->ct_general);
-	kfree(params);
-}
+	अगर (params->पंचांगpl)
+		nf_conntrack_put(&params->पंचांगpl->ct_general);
+	kमुक्त(params);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_NAT)
+#अगर IS_ENABLED(CONFIG_NF_NAT)
 /* Modelled after nf_nat_ipv[46]_fn().
- * range is only used for new, uninitialized NAT state.
+ * range is only used क्रम new, uninitialized NAT state.
  * Returns either NF_ACCEPT or NF_DROP.
  */
-static int ct_nat_execute(struct sk_buff *skb, struct nf_conn *ct,
-			  enum ip_conntrack_info ctinfo,
-			  const struct nf_nat_range2 *range,
-			  enum nf_nat_manip_type maniptype)
-{
+अटल पूर्णांक ct_nat_execute(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			  क्रमागत ip_conntrack_info ctinfo,
+			  स्थिर काष्ठा nf_nat_range2 *range,
+			  क्रमागत nf_nat_manip_type maniptype)
+अणु
 	__be16 proto = skb_protocol(skb, true);
-	int hooknum, err = NF_ACCEPT;
+	पूर्णांक hooknum, err = NF_ACCEPT;
 
 	/* See HOOK2MANIP(). */
-	if (maniptype == NF_NAT_MANIP_SRC)
+	अगर (maniptype == NF_NAT_MANIP_SRC)
 		hooknum = NF_INET_LOCAL_IN; /* Source NAT */
-	else
+	अन्यथा
 		hooknum = NF_INET_LOCAL_OUT; /* Destination NAT */
 
-	switch (ctinfo) {
-	case IP_CT_RELATED:
-	case IP_CT_RELATED_REPLY:
-		if (proto == htons(ETH_P_IP) &&
-		    ip_hdr(skb)->protocol == IPPROTO_ICMP) {
-			if (!nf_nat_icmp_reply_translation(skb, ct, ctinfo,
+	चयन (ctinfo) अणु
+	हाल IP_CT_RELATED:
+	हाल IP_CT_RELATED_REPLY:
+		अगर (proto == htons(ETH_P_IP) &&
+		    ip_hdr(skb)->protocol == IPPROTO_ICMP) अणु
+			अगर (!nf_nat_icmp_reply_translation(skb, ct, ctinfo,
 							   hooknum))
 				err = NF_DROP;
-			goto out;
-		} else if (IS_ENABLED(CONFIG_IPV6) && proto == htons(ETH_P_IPV6)) {
+			जाओ out;
+		पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IPV6) && proto == htons(ETH_P_IPV6)) अणु
 			__be16 frag_off;
 			u8 nexthdr = ipv6_hdr(skb)->nexthdr;
-			int hdrlen = ipv6_skip_exthdr(skb,
-						      sizeof(struct ipv6hdr),
+			पूर्णांक hdrlen = ipv6_skip_exthdr(skb,
+						      माप(काष्ठा ipv6hdr),
 						      &nexthdr, &frag_off);
 
-			if (hdrlen >= 0 && nexthdr == IPPROTO_ICMPV6) {
-				if (!nf_nat_icmpv6_reply_translation(skb, ct,
+			अगर (hdrlen >= 0 && nexthdr == IPPROTO_ICMPV6) अणु
+				अगर (!nf_nat_icmpv6_reply_translation(skb, ct,
 								     ctinfo,
 								     hooknum,
 								     hdrlen))
 					err = NF_DROP;
-				goto out;
-			}
-		}
-		/* Non-ICMP, fall thru to initialize if needed. */
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		/* Non-ICMP, fall thru to initialize अगर needed. */
 		fallthrough;
-	case IP_CT_NEW:
-		/* Seen it before?  This can happen for loopback, retrans,
+	हाल IP_CT_NEW:
+		/* Seen it beक्रमe?  This can happen क्रम loopback, retrans,
 		 * or local packets.
 		 */
-		if (!nf_nat_initialized(ct, maniptype)) {
+		अगर (!nf_nat_initialized(ct, maniptype)) अणु
 			/* Initialize according to the NAT action. */
 			err = (range && range->flags & NF_NAT_RANGE_MAP_IPS)
 				/* Action is set up to establish a new
@@ -813,131 +814,131 @@ static int ct_nat_execute(struct sk_buff *skb, struct nf_conn *ct,
 				 */
 				? nf_nat_setup_info(ct, range, maniptype)
 				: nf_nat_alloc_null_binding(ct, hooknum);
-			if (err != NF_ACCEPT)
-				goto out;
-		}
-		break;
+			अगर (err != NF_ACCEPT)
+				जाओ out;
+		पूर्ण
+		अवरोध;
 
-	case IP_CT_ESTABLISHED:
-	case IP_CT_ESTABLISHED_REPLY:
-		break;
+	हाल IP_CT_ESTABLISHED:
+	हाल IP_CT_ESTABLISHED_REPLY:
+		अवरोध;
 
-	default:
+	शेष:
 		err = NF_DROP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	err = nf_nat_packet(ct, ctinfo, hooknum, skb);
 out:
-	return err;
-}
-#endif /* CONFIG_NF_NAT */
+	वापस err;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NF_NAT */
 
-static void tcf_ct_act_set_mark(struct nf_conn *ct, u32 mark, u32 mask)
-{
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
+अटल व्योम tcf_ct_act_set_mark(काष्ठा nf_conn *ct, u32 mark, u32 mask)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
 	u32 new_mark;
 
-	if (!mask)
-		return;
+	अगर (!mask)
+		वापस;
 
 	new_mark = mark | (ct->mark & ~(mask));
-	if (ct->mark != new_mark) {
+	अगर (ct->mark != new_mark) अणु
 		ct->mark = new_mark;
-		if (nf_ct_is_confirmed(ct))
+		अगर (nf_ct_is_confirmed(ct))
 			nf_conntrack_event_cache(IPCT_MARK, ct);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void tcf_ct_act_set_labels(struct nf_conn *ct,
+अटल व्योम tcf_ct_act_set_labels(काष्ठा nf_conn *ct,
 				  u32 *labels,
 				  u32 *labels_m)
-{
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)
-	size_t labels_sz = sizeof_field(struct tcf_ct_params, labels);
+अणु
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)
+	माप_प्रकार labels_sz = माप_field(काष्ठा tcf_ct_params, labels);
 
-	if (!memchr_inv(labels_m, 0, labels_sz))
-		return;
+	अगर (!स_प्रथम_inv(labels_m, 0, labels_sz))
+		वापस;
 
 	nf_connlabels_replace(ct, labels, labels_m, 4);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static int tcf_ct_act_nat(struct sk_buff *skb,
-			  struct nf_conn *ct,
-			  enum ip_conntrack_info ctinfo,
-			  int ct_action,
-			  struct nf_nat_range2 *range,
+अटल पूर्णांक tcf_ct_act_nat(काष्ठा sk_buff *skb,
+			  काष्ठा nf_conn *ct,
+			  क्रमागत ip_conntrack_info ctinfo,
+			  पूर्णांक ct_action,
+			  काष्ठा nf_nat_range2 *range,
 			  bool commit)
-{
-#if IS_ENABLED(CONFIG_NF_NAT)
-	int err;
-	enum nf_nat_manip_type maniptype;
+अणु
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	पूर्णांक err;
+	क्रमागत nf_nat_manip_type maniptype;
 
-	if (!(ct_action & TCA_CT_ACT_NAT))
-		return NF_ACCEPT;
+	अगर (!(ct_action & TCA_CT_ACT_NAT))
+		वापस NF_ACCEPT;
 
-	/* Add NAT extension if not confirmed yet. */
-	if (!nf_ct_is_confirmed(ct) && !nf_ct_nat_ext_add(ct))
-		return NF_DROP;   /* Can't NAT. */
+	/* Add NAT extension अगर not confirmed yet. */
+	अगर (!nf_ct_is_confirmed(ct) && !nf_ct_nat_ext_add(ct))
+		वापस NF_DROP;   /* Can't NAT. */
 
-	if (ctinfo != IP_CT_NEW && (ct->status & IPS_NAT_MASK) &&
-	    (ctinfo != IP_CT_RELATED || commit)) {
-		/* NAT an established or related connection like before. */
-		if (CTINFO2DIR(ctinfo) == IP_CT_DIR_REPLY)
-			/* This is the REPLY direction for a connection
-			 * for which NAT was applied in the forward
+	अगर (ctinfo != IP_CT_NEW && (ct->status & IPS_NAT_MASK) &&
+	    (ctinfo != IP_CT_RELATED || commit)) अणु
+		/* NAT an established or related connection like beक्रमe. */
+		अगर (CTINFO2सूची(ctinfo) == IP_CT_सूची_REPLY)
+			/* This is the REPLY direction क्रम a connection
+			 * क्रम which NAT was applied in the क्रमward
 			 * direction.  Do the reverse NAT.
 			 */
 			maniptype = ct->status & IPS_SRC_NAT
 				? NF_NAT_MANIP_DST : NF_NAT_MANIP_SRC;
-		else
+		अन्यथा
 			maniptype = ct->status & IPS_SRC_NAT
 				? NF_NAT_MANIP_SRC : NF_NAT_MANIP_DST;
-	} else if (ct_action & TCA_CT_ACT_NAT_SRC) {
+	पूर्ण अन्यथा अगर (ct_action & TCA_CT_ACT_NAT_SRC) अणु
 		maniptype = NF_NAT_MANIP_SRC;
-	} else if (ct_action & TCA_CT_ACT_NAT_DST) {
+	पूर्ण अन्यथा अगर (ct_action & TCA_CT_ACT_NAT_DST) अणु
 		maniptype = NF_NAT_MANIP_DST;
-	} else {
-		return NF_ACCEPT;
-	}
+	पूर्ण अन्यथा अणु
+		वापस NF_ACCEPT;
+	पूर्ण
 
 	err = ct_nat_execute(skb, ct, ctinfo, range, maniptype);
-	if (err == NF_ACCEPT && ct->status & IPS_DST_NAT) {
-		if (ct->status & IPS_SRC_NAT) {
-			if (maniptype == NF_NAT_MANIP_SRC)
+	अगर (err == NF_ACCEPT && ct->status & IPS_DST_NAT) अणु
+		अगर (ct->status & IPS_SRC_NAT) अणु
+			अगर (maniptype == NF_NAT_MANIP_SRC)
 				maniptype = NF_NAT_MANIP_DST;
-			else
+			अन्यथा
 				maniptype = NF_NAT_MANIP_SRC;
 
 			err = ct_nat_execute(skb, ct, ctinfo, range,
 					     maniptype);
-		} else if (CTINFO2DIR(ctinfo) == IP_CT_DIR_ORIGINAL) {
-			err = ct_nat_execute(skb, ct, ctinfo, NULL,
+		पूर्ण अन्यथा अगर (CTINFO2सूची(ctinfo) == IP_CT_सूची_ORIGINAL) अणु
+			err = ct_nat_execute(skb, ct, ctinfo, शून्य,
 					     NF_NAT_MANIP_SRC);
-		}
-	}
-	return err;
-#else
-	return NF_ACCEPT;
-#endif
-}
+		पूर्ण
+	पूर्ण
+	वापस err;
+#अन्यथा
+	वापस NF_ACCEPT;
+#पूर्ण_अगर
+पूर्ण
 
-static int tcf_ct_act(struct sk_buff *skb, const struct tc_action *a,
-		      struct tcf_result *res)
-{
-	struct net *net = dev_net(skb->dev);
-	bool cached, commit, clear, force;
-	enum ip_conntrack_info ctinfo;
-	struct tcf_ct *c = to_ct(a);
-	struct nf_conn *tmpl = NULL;
-	struct nf_hook_state state;
-	int nh_ofs, err, retval;
-	struct tcf_ct_params *p;
+अटल पूर्णांक tcf_ct_act(काष्ठा sk_buff *skb, स्थिर काष्ठा tc_action *a,
+		      काष्ठा tcf_result *res)
+अणु
+	काष्ठा net *net = dev_net(skb->dev);
+	bool cached, commit, clear, क्रमce;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा tcf_ct *c = to_ct(a);
+	काष्ठा nf_conn *पंचांगpl = शून्य;
+	काष्ठा nf_hook_state state;
+	पूर्णांक nh_ofs, err, retval;
+	काष्ठा tcf_ct_params *p;
 	bool skip_add = false;
 	bool defrag = false;
-	struct nf_conn *ct;
+	काष्ठा nf_conn *ct;
 	u8 family;
 
 	p = rcu_dereference_bh(c->params);
@@ -945,25 +946,25 @@ static int tcf_ct_act(struct sk_buff *skb, const struct tc_action *a,
 	retval = READ_ONCE(c->tcf_action);
 	commit = p->ct_action & TCA_CT_ACT_COMMIT;
 	clear = p->ct_action & TCA_CT_ACT_CLEAR;
-	force = p->ct_action & TCA_CT_ACT_FORCE;
-	tmpl = p->tmpl;
+	क्रमce = p->ct_action & TCA_CT_ACT_FORCE;
+	पंचांगpl = p->पंचांगpl;
 
-	tcf_lastuse_update(&c->tcf_tm);
+	tcf_lastuse_update(&c->tcf_पंचांग);
 
-	if (clear) {
+	अगर (clear) अणु
 		qdisc_skb_cb(skb)->post_ct = false;
 		ct = nf_ct_get(skb, &ctinfo);
-		if (ct) {
+		अगर (ct) अणु
 			nf_conntrack_put(&ct->ct_general);
-			nf_ct_set(skb, NULL, IP_CT_UNTRACKED);
-		}
+			nf_ct_set(skb, शून्य, IP_CT_UNTRACKED);
+		पूर्ण
 
-		goto out_clear;
-	}
+		जाओ out_clear;
+	पूर्ण
 
 	family = tcf_ct_skb_nf_family(skb);
-	if (family == NFPROTO_UNSPEC)
-		goto drop;
+	अगर (family == NFPROTO_UNSPEC)
+		जाओ drop;
 
 	/* The conntrack module expects to be working at L3.
 	 * We also try to pull the IPv4/6 header to linear area
@@ -971,65 +972,65 @@ static int tcf_ct_act(struct sk_buff *skb, const struct tc_action *a,
 	nh_ofs = skb_network_offset(skb);
 	skb_pull_rcsum(skb, nh_ofs);
 	err = tcf_ct_handle_fragments(net, skb, family, p->zone, &defrag);
-	if (err == -EINPROGRESS) {
+	अगर (err == -EINPROGRESS) अणु
 		retval = TC_ACT_STOLEN;
-		goto out_clear;
-	}
-	if (err)
-		goto drop;
+		जाओ out_clear;
+	पूर्ण
+	अगर (err)
+		जाओ drop;
 
 	err = tcf_ct_skb_network_trim(skb, family);
-	if (err)
-		goto drop;
+	अगर (err)
+		जाओ drop;
 
 	/* If we are recirculating packets to match on ct fields and
-	 * committing with a separate ct action, then we don't need to
-	 * actually run the packet through conntrack twice unless it's for a
-	 * different zone.
+	 * committing with a separate ct action, then we करोn't need to
+	 * actually run the packet through conntrack twice unless it's क्रम a
+	 * dअगरferent zone.
 	 */
-	cached = tcf_ct_skb_nfct_cached(net, skb, p->zone, force);
-	if (!cached) {
-		if (tcf_ct_flow_table_lookup(p, skb, family)) {
+	cached = tcf_ct_skb_nfct_cached(net, skb, p->zone, क्रमce);
+	अगर (!cached) अणु
+		अगर (tcf_ct_flow_table_lookup(p, skb, family)) अणु
 			skip_add = true;
-			goto do_nat;
-		}
+			जाओ करो_nat;
+		पूर्ण
 
-		/* Associate skb with specified zone. */
-		if (tmpl) {
+		/* Associate skb with specअगरied zone. */
+		अगर (पंचांगpl) अणु
 			nf_conntrack_put(skb_nfct(skb));
-			nf_conntrack_get(&tmpl->ct_general);
-			nf_ct_set(skb, tmpl, IP_CT_NEW);
-		}
+			nf_conntrack_get(&पंचांगpl->ct_general);
+			nf_ct_set(skb, पंचांगpl, IP_CT_NEW);
+		पूर्ण
 
 		state.hook = NF_INET_PRE_ROUTING;
 		state.net = net;
 		state.pf = family;
 		err = nf_conntrack_in(skb, &state);
-		if (err != NF_ACCEPT)
-			goto out_push;
-	}
+		अगर (err != NF_ACCEPT)
+			जाओ out_push;
+	पूर्ण
 
-do_nat:
+करो_nat:
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
-		goto out_push;
+	अगर (!ct)
+		जाओ out_push;
 	nf_ct_deliver_cached_events(ct);
 
 	err = tcf_ct_act_nat(skb, ct, ctinfo, p->ct_action, &p->range, commit);
-	if (err != NF_ACCEPT)
-		goto drop;
+	अगर (err != NF_ACCEPT)
+		जाओ drop;
 
-	if (commit) {
+	अगर (commit) अणु
 		tcf_ct_act_set_mark(ct, p->mark, p->mark_mask);
 		tcf_ct_act_set_labels(ct, p->labels, p->labels_mask);
 
 		/* This will take care of sending queued events
-		 * even if the connection is already confirmed.
+		 * even अगर the connection is alपढ़ोy confirmed.
 		 */
 		nf_conntrack_confirm(skb);
-	}
+	पूर्ण
 
-	if (!skip_add)
+	अगर (!skip_add)
 		tcf_ct_flow_table_process_conn(p->ct_ft, ct, ctinfo);
 
 out_push:
@@ -1038,60 +1039,60 @@ out_push:
 	qdisc_skb_cb(skb)->post_ct = true;
 out_clear:
 	tcf_action_update_bstats(&c->common, skb);
-	if (defrag)
+	अगर (defrag)
 		qdisc_skb_cb(skb)->pkt_len = skb->len;
-	return retval;
+	वापस retval;
 
 drop:
 	tcf_action_inc_drop_qstats(&c->common);
-	return TC_ACT_SHOT;
-}
+	वापस TC_ACT_SHOT;
+पूर्ण
 
-static const struct nla_policy ct_policy[TCA_CT_MAX + 1] = {
-	[TCA_CT_ACTION] = { .type = NLA_U16 },
-	[TCA_CT_PARMS] = NLA_POLICY_EXACT_LEN(sizeof(struct tc_ct)),
-	[TCA_CT_ZONE] = { .type = NLA_U16 },
-	[TCA_CT_MARK] = { .type = NLA_U32 },
-	[TCA_CT_MARK_MASK] = { .type = NLA_U32 },
-	[TCA_CT_LABELS] = { .type = NLA_BINARY,
-			    .len = 128 / BITS_PER_BYTE },
-	[TCA_CT_LABELS_MASK] = { .type = NLA_BINARY,
-				 .len = 128 / BITS_PER_BYTE },
-	[TCA_CT_NAT_IPV4_MIN] = { .type = NLA_U32 },
-	[TCA_CT_NAT_IPV4_MAX] = { .type = NLA_U32 },
-	[TCA_CT_NAT_IPV6_MIN] = NLA_POLICY_EXACT_LEN(sizeof(struct in6_addr)),
-	[TCA_CT_NAT_IPV6_MAX] = NLA_POLICY_EXACT_LEN(sizeof(struct in6_addr)),
-	[TCA_CT_NAT_PORT_MIN] = { .type = NLA_U16 },
-	[TCA_CT_NAT_PORT_MAX] = { .type = NLA_U16 },
-};
+अटल स्थिर काष्ठा nla_policy ct_policy[TCA_CT_MAX + 1] = अणु
+	[TCA_CT_ACTION] = अणु .type = NLA_U16 पूर्ण,
+	[TCA_CT_PARMS] = NLA_POLICY_EXACT_LEN(माप(काष्ठा tc_ct)),
+	[TCA_CT_ZONE] = अणु .type = NLA_U16 पूर्ण,
+	[TCA_CT_MARK] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_CT_MARK_MASK] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_CT_LABELS] = अणु .type = NLA_BINARY,
+			    .len = 128 / BITS_PER_BYTE पूर्ण,
+	[TCA_CT_LABELS_MASK] = अणु .type = NLA_BINARY,
+				 .len = 128 / BITS_PER_BYTE पूर्ण,
+	[TCA_CT_NAT_IPV4_MIN] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_CT_NAT_IPV4_MAX] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_CT_NAT_IPV6_MIN] = NLA_POLICY_EXACT_LEN(माप(काष्ठा in6_addr)),
+	[TCA_CT_NAT_IPV6_MAX] = NLA_POLICY_EXACT_LEN(माप(काष्ठा in6_addr)),
+	[TCA_CT_NAT_PORT_MIN] = अणु .type = NLA_U16 पूर्ण,
+	[TCA_CT_NAT_PORT_MAX] = अणु .type = NLA_U16 पूर्ण,
+पूर्ण;
 
-static int tcf_ct_fill_params_nat(struct tcf_ct_params *p,
-				  struct tc_ct *parm,
-				  struct nlattr **tb,
-				  struct netlink_ext_ack *extack)
-{
-	struct nf_nat_range2 *range;
+अटल पूर्णांक tcf_ct_fill_params_nat(काष्ठा tcf_ct_params *p,
+				  काष्ठा tc_ct *parm,
+				  काष्ठा nlattr **tb,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nf_nat_range2 *range;
 
-	if (!(p->ct_action & TCA_CT_ACT_NAT))
-		return 0;
+	अगर (!(p->ct_action & TCA_CT_ACT_NAT))
+		वापस 0;
 
-	if (!IS_ENABLED(CONFIG_NF_NAT)) {
+	अगर (!IS_ENABLED(CONFIG_NF_NAT)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Netfilter nat isn't enabled in kernel");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!(p->ct_action & (TCA_CT_ACT_NAT_SRC | TCA_CT_ACT_NAT_DST)))
-		return 0;
+	अगर (!(p->ct_action & (TCA_CT_ACT_NAT_SRC | TCA_CT_ACT_NAT_DST)))
+		वापस 0;
 
-	if ((p->ct_action & TCA_CT_ACT_NAT_SRC) &&
-	    (p->ct_action & TCA_CT_ACT_NAT_DST)) {
+	अगर ((p->ct_action & TCA_CT_ACT_NAT_SRC) &&
+	    (p->ct_action & TCA_CT_ACT_NAT_DST)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "dnat and snat can't be enabled at the same time");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	range = &p->range;
-	if (tb[TCA_CT_NAT_IPV4_MIN]) {
-		struct nlattr *max_attr = tb[TCA_CT_NAT_IPV4_MAX];
+	अगर (tb[TCA_CT_NAT_IPV4_MIN]) अणु
+		काष्ठा nlattr *max_attr = tb[TCA_CT_NAT_IPV4_MAX];
 
 		p->ipv4_range = true;
 		range->flags |= NF_NAT_RANGE_MAP_IPS;
@@ -1101,8 +1102,8 @@ static int tcf_ct_fill_params_nat(struct tcf_ct_params *p,
 		range->max_addr.ip = max_attr ?
 				     nla_get_in_addr(max_attr) :
 				     range->min_addr.ip;
-	} else if (tb[TCA_CT_NAT_IPV6_MIN]) {
-		struct nlattr *max_attr = tb[TCA_CT_NAT_IPV6_MAX];
+	पूर्ण अन्यथा अगर (tb[TCA_CT_NAT_IPV6_MIN]) अणु
+		काष्ठा nlattr *max_attr = tb[TCA_CT_NAT_IPV6_MAX];
 
 		p->ipv4_range = false;
 		range->flags |= NF_NAT_RANGE_MAP_IPS;
@@ -1112,375 +1113,375 @@ static int tcf_ct_fill_params_nat(struct tcf_ct_params *p,
 		range->max_addr.in6 = max_attr ?
 				      nla_get_in6_addr(max_attr) :
 				      range->min_addr.in6;
-	}
+	पूर्ण
 
-	if (tb[TCA_CT_NAT_PORT_MIN]) {
+	अगर (tb[TCA_CT_NAT_PORT_MIN]) अणु
 		range->flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
 		range->min_proto.all = nla_get_be16(tb[TCA_CT_NAT_PORT_MIN]);
 
 		range->max_proto.all = tb[TCA_CT_NAT_PORT_MAX] ?
 				       nla_get_be16(tb[TCA_CT_NAT_PORT_MAX]) :
 				       range->min_proto.all;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tcf_ct_set_key_val(struct nlattr **tb,
-			       void *val, int val_type,
-			       void *mask, int mask_type,
-			       int len)
-{
-	if (!tb[val_type])
-		return;
-	nla_memcpy(val, tb[val_type], len);
+अटल व्योम tcf_ct_set_key_val(काष्ठा nlattr **tb,
+			       व्योम *val, पूर्णांक val_type,
+			       व्योम *mask, पूर्णांक mask_type,
+			       पूर्णांक len)
+अणु
+	अगर (!tb[val_type])
+		वापस;
+	nla_स_नकल(val, tb[val_type], len);
 
-	if (!mask)
-		return;
+	अगर (!mask)
+		वापस;
 
-	if (mask_type == TCA_CT_UNSPEC || !tb[mask_type])
-		memset(mask, 0xff, len);
-	else
-		nla_memcpy(mask, tb[mask_type], len);
-}
+	अगर (mask_type == TCA_CT_UNSPEC || !tb[mask_type])
+		स_रखो(mask, 0xff, len);
+	अन्यथा
+		nla_स_नकल(mask, tb[mask_type], len);
+पूर्ण
 
-static int tcf_ct_fill_params(struct net *net,
-			      struct tcf_ct_params *p,
-			      struct tc_ct *parm,
-			      struct nlattr **tb,
-			      struct netlink_ext_ack *extack)
-{
-	struct tc_ct_action_net *tn = net_generic(net, ct_net_id);
-	struct nf_conntrack_zone zone;
-	struct nf_conn *tmpl;
-	int err;
+अटल पूर्णांक tcf_ct_fill_params(काष्ठा net *net,
+			      काष्ठा tcf_ct_params *p,
+			      काष्ठा tc_ct *parm,
+			      काष्ठा nlattr **tb,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_ct_action_net *tn = net_generic(net, ct_net_id);
+	काष्ठा nf_conntrack_zone zone;
+	काष्ठा nf_conn *पंचांगpl;
+	पूर्णांक err;
 
 	p->zone = NF_CT_DEFAULT_ZONE_ID;
 
 	tcf_ct_set_key_val(tb,
 			   &p->ct_action, TCA_CT_ACTION,
-			   NULL, TCA_CT_UNSPEC,
-			   sizeof(p->ct_action));
+			   शून्य, TCA_CT_UNSPEC,
+			   माप(p->ct_action));
 
-	if (p->ct_action & TCA_CT_ACT_CLEAR)
-		return 0;
+	अगर (p->ct_action & TCA_CT_ACT_CLEAR)
+		वापस 0;
 
 	err = tcf_ct_fill_params_nat(p, parm, tb, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (tb[TCA_CT_MARK]) {
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)) {
+	अगर (tb[TCA_CT_MARK]) अणु
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Conntrack mark isn't enabled.");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		tcf_ct_set_key_val(tb,
 				   &p->mark, TCA_CT_MARK,
 				   &p->mark_mask, TCA_CT_MARK_MASK,
-				   sizeof(p->mark));
-	}
+				   माप(p->mark));
+	पूर्ण
 
-	if (tb[TCA_CT_LABELS]) {
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)) {
+	अगर (tb[TCA_CT_LABELS]) अणु
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Conntrack labels isn't enabled.");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		if (!tn->labels) {
+		अगर (!tn->labels) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Failed to set connlabel length");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 		tcf_ct_set_key_val(tb,
 				   p->labels, TCA_CT_LABELS,
 				   p->labels_mask, TCA_CT_LABELS_MASK,
-				   sizeof(p->labels));
-	}
+				   माप(p->labels));
+	पूर्ण
 
-	if (tb[TCA_CT_ZONE]) {
-		if (!IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)) {
+	अगर (tb[TCA_CT_ZONE]) अणु
+		अगर (!IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES)) अणु
 			NL_SET_ERR_MSG_MOD(extack, "Conntrack zones isn't enabled.");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
 		tcf_ct_set_key_val(tb,
 				   &p->zone, TCA_CT_ZONE,
-				   NULL, TCA_CT_UNSPEC,
-				   sizeof(p->zone));
-	}
+				   शून्य, TCA_CT_UNSPEC,
+				   माप(p->zone));
+	पूर्ण
 
-	nf_ct_zone_init(&zone, p->zone, NF_CT_DEFAULT_ZONE_DIR, 0);
-	tmpl = nf_ct_tmpl_alloc(net, &zone, GFP_KERNEL);
-	if (!tmpl) {
+	nf_ct_zone_init(&zone, p->zone, NF_CT_DEFAULT_ZONE_सूची, 0);
+	पंचांगpl = nf_ct_पंचांगpl_alloc(net, &zone, GFP_KERNEL);
+	अगर (!पंचांगpl) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Failed to allocate conntrack template");
-		return -ENOMEM;
-	}
-	__set_bit(IPS_CONFIRMED_BIT, &tmpl->status);
-	nf_conntrack_get(&tmpl->ct_general);
-	p->tmpl = tmpl;
+		वापस -ENOMEM;
+	पूर्ण
+	__set_bit(IPS_CONFIRMED_BIT, &पंचांगpl->status);
+	nf_conntrack_get(&पंचांगpl->ct_general);
+	p->पंचांगpl = पंचांगpl;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_ct_init(struct net *net, struct nlattr *nla,
-		       struct nlattr *est, struct tc_action **a,
-		       int replace, int bind, bool rtnl_held,
-		       struct tcf_proto *tp, u32 flags,
-		       struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, ct_net_id);
-	struct tcf_ct_params *params = NULL;
-	struct nlattr *tb[TCA_CT_MAX + 1];
-	struct tcf_chain *goto_ch = NULL;
-	struct tc_ct *parm;
-	struct tcf_ct *c;
-	int err, res = 0;
+अटल पूर्णांक tcf_ct_init(काष्ठा net *net, काष्ठा nlattr *nla,
+		       काष्ठा nlattr *est, काष्ठा tc_action **a,
+		       पूर्णांक replace, पूर्णांक bind, bool rtnl_held,
+		       काष्ठा tcf_proto *tp, u32 flags,
+		       काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, ct_net_id);
+	काष्ठा tcf_ct_params *params = शून्य;
+	काष्ठा nlattr *tb[TCA_CT_MAX + 1];
+	काष्ठा tcf_chain *जाओ_ch = शून्य;
+	काष्ठा tc_ct *parm;
+	काष्ठा tcf_ct *c;
+	पूर्णांक err, res = 0;
 	u32 index;
 
-	if (!nla) {
+	अगर (!nla) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Ct requires attributes to be passed");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = nla_parse_nested(tb, TCA_CT_MAX, nla, ct_policy, extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!tb[TCA_CT_PARMS]) {
+	अगर (!tb[TCA_CT_PARMS]) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Missing required ct parameters");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	parm = nla_data(tb[TCA_CT_PARMS]);
 	index = parm->index;
 	err = tcf_idr_check_alloc(tn, &index, a, bind);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!err) {
+	अगर (!err) अणु
 		err = tcf_idr_create_from_flags(tn, index, est, a,
 						&act_ct_ops, bind, flags);
-		if (err) {
+		अगर (err) अणु
 			tcf_idr_cleanup(tn, index);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 		res = ACT_P_CREATED;
-	} else {
-		if (bind)
-			return 0;
+	पूर्ण अन्यथा अणु
+		अगर (bind)
+			वापस 0;
 
-		if (!replace) {
+		अगर (!replace) अणु
 			tcf_idr_release(*a, bind);
-			return -EEXIST;
-		}
-	}
-	err = tcf_action_check_ctrlact(parm->action, tp, &goto_ch, extack);
-	if (err < 0)
-		goto cleanup;
+			वापस -EEXIST;
+		पूर्ण
+	पूर्ण
+	err = tcf_action_check_ctrlact(parm->action, tp, &जाओ_ch, extack);
+	अगर (err < 0)
+		जाओ cleanup;
 
 	c = to_ct(*a);
 
-	params = kzalloc(sizeof(*params), GFP_KERNEL);
-	if (unlikely(!params)) {
+	params = kzalloc(माप(*params), GFP_KERNEL);
+	अगर (unlikely(!params)) अणु
 		err = -ENOMEM;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	err = tcf_ct_fill_params(net, params, parm, tb, extack);
-	if (err)
-		goto cleanup;
+	अगर (err)
+		जाओ cleanup;
 
 	err = tcf_ct_flow_table_get(params);
-	if (err)
-		goto cleanup;
+	अगर (err)
+		जाओ cleanup;
 
 	spin_lock_bh(&c->tcf_lock);
-	goto_ch = tcf_action_set_ctrlact(*a, parm->action, goto_ch);
-	params = rcu_replace_pointer(c->params, params,
+	जाओ_ch = tcf_action_set_ctrlact(*a, parm->action, जाओ_ch);
+	params = rcu_replace_poपूर्णांकer(c->params, params,
 				     lockdep_is_held(&c->tcf_lock));
 	spin_unlock_bh(&c->tcf_lock);
 
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
-	if (params)
-		call_rcu(&params->rcu, tcf_ct_params_free);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
+	अगर (params)
+		call_rcu(&params->rcu, tcf_ct_params_मुक्त);
 
-	return res;
+	वापस res;
 
 cleanup:
-	if (goto_ch)
-		tcf_chain_put_by_act(goto_ch);
-	kfree(params);
+	अगर (जाओ_ch)
+		tcf_chain_put_by_act(जाओ_ch);
+	kमुक्त(params);
 	tcf_idr_release(*a, bind);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void tcf_ct_cleanup(struct tc_action *a)
-{
-	struct tcf_ct_params *params;
-	struct tcf_ct *c = to_ct(a);
+अटल व्योम tcf_ct_cleanup(काष्ठा tc_action *a)
+अणु
+	काष्ठा tcf_ct_params *params;
+	काष्ठा tcf_ct *c = to_ct(a);
 
-	params = rcu_dereference_protected(c->params, 1);
-	if (params)
-		call_rcu(&params->rcu, tcf_ct_params_free);
-}
+	params = rcu_dereference_रक्षित(c->params, 1);
+	अगर (params)
+		call_rcu(&params->rcu, tcf_ct_params_मुक्त);
+पूर्ण
 
-static int tcf_ct_dump_key_val(struct sk_buff *skb,
-			       void *val, int val_type,
-			       void *mask, int mask_type,
-			       int len)
-{
-	int err;
+अटल पूर्णांक tcf_ct_dump_key_val(काष्ठा sk_buff *skb,
+			       व्योम *val, पूर्णांक val_type,
+			       व्योम *mask, पूर्णांक mask_type,
+			       पूर्णांक len)
+अणु
+	पूर्णांक err;
 
-	if (mask && !memchr_inv(mask, 0, len))
-		return 0;
+	अगर (mask && !स_प्रथम_inv(mask, 0, len))
+		वापस 0;
 
 	err = nla_put(skb, val_type, len, val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (mask_type != TCA_CT_UNSPEC) {
+	अगर (mask_type != TCA_CT_UNSPEC) अणु
 		err = nla_put(skb, mask_type, len, mask);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcf_ct_dump_nat(struct sk_buff *skb, struct tcf_ct_params *p)
-{
-	struct nf_nat_range2 *range = &p->range;
+अटल पूर्णांक tcf_ct_dump_nat(काष्ठा sk_buff *skb, काष्ठा tcf_ct_params *p)
+अणु
+	काष्ठा nf_nat_range2 *range = &p->range;
 
-	if (!(p->ct_action & TCA_CT_ACT_NAT))
-		return 0;
+	अगर (!(p->ct_action & TCA_CT_ACT_NAT))
+		वापस 0;
 
-	if (!(p->ct_action & (TCA_CT_ACT_NAT_SRC | TCA_CT_ACT_NAT_DST)))
-		return 0;
+	अगर (!(p->ct_action & (TCA_CT_ACT_NAT_SRC | TCA_CT_ACT_NAT_DST)))
+		वापस 0;
 
-	if (range->flags & NF_NAT_RANGE_MAP_IPS) {
-		if (p->ipv4_range) {
-			if (nla_put_in_addr(skb, TCA_CT_NAT_IPV4_MIN,
+	अगर (range->flags & NF_NAT_RANGE_MAP_IPS) अणु
+		अगर (p->ipv4_range) अणु
+			अगर (nla_put_in_addr(skb, TCA_CT_NAT_IPV4_MIN,
 					    range->min_addr.ip))
-				return -1;
-			if (nla_put_in_addr(skb, TCA_CT_NAT_IPV4_MAX,
+				वापस -1;
+			अगर (nla_put_in_addr(skb, TCA_CT_NAT_IPV4_MAX,
 					    range->max_addr.ip))
-				return -1;
-		} else {
-			if (nla_put_in6_addr(skb, TCA_CT_NAT_IPV6_MIN,
+				वापस -1;
+		पूर्ण अन्यथा अणु
+			अगर (nla_put_in6_addr(skb, TCA_CT_NAT_IPV6_MIN,
 					     &range->min_addr.in6))
-				return -1;
-			if (nla_put_in6_addr(skb, TCA_CT_NAT_IPV6_MAX,
+				वापस -1;
+			अगर (nla_put_in6_addr(skb, TCA_CT_NAT_IPV6_MAX,
 					     &range->max_addr.in6))
-				return -1;
-		}
-	}
+				वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (range->flags & NF_NAT_RANGE_PROTO_SPECIFIED) {
-		if (nla_put_be16(skb, TCA_CT_NAT_PORT_MIN,
+	अगर (range->flags & NF_NAT_RANGE_PROTO_SPECIFIED) अणु
+		अगर (nla_put_be16(skb, TCA_CT_NAT_PORT_MIN,
 				 range->min_proto.all))
-			return -1;
-		if (nla_put_be16(skb, TCA_CT_NAT_PORT_MAX,
+			वापस -1;
+		अगर (nla_put_be16(skb, TCA_CT_NAT_PORT_MAX,
 				 range->max_proto.all))
-			return -1;
-	}
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int tcf_ct_dump(struct sk_buff *skb, struct tc_action *a,
-			      int bind, int ref)
-{
-	unsigned char *b = skb_tail_pointer(skb);
-	struct tcf_ct *c = to_ct(a);
-	struct tcf_ct_params *p;
+अटल अंतरभूत पूर्णांक tcf_ct_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *a,
+			      पूर्णांक bind, पूर्णांक ref)
+अणु
+	अचिन्हित अक्षर *b = skb_tail_poपूर्णांकer(skb);
+	काष्ठा tcf_ct *c = to_ct(a);
+	काष्ठा tcf_ct_params *p;
 
-	struct tc_ct opt = {
+	काष्ठा tc_ct opt = अणु
 		.index   = c->tcf_index,
-		.refcnt  = refcount_read(&c->tcf_refcnt) - ref,
-		.bindcnt = atomic_read(&c->tcf_bindcnt) - bind,
-	};
-	struct tcf_t t;
+		.refcnt  = refcount_पढ़ो(&c->tcf_refcnt) - ref,
+		.bindcnt = atomic_पढ़ो(&c->tcf_bindcnt) - bind,
+	पूर्ण;
+	काष्ठा tcf_t t;
 
 	spin_lock_bh(&c->tcf_lock);
-	p = rcu_dereference_protected(c->params,
+	p = rcu_dereference_रक्षित(c->params,
 				      lockdep_is_held(&c->tcf_lock));
 	opt.action = c->tcf_action;
 
-	if (tcf_ct_dump_key_val(skb,
+	अगर (tcf_ct_dump_key_val(skb,
 				&p->ct_action, TCA_CT_ACTION,
-				NULL, TCA_CT_UNSPEC,
-				sizeof(p->ct_action)))
-		goto nla_put_failure;
+				शून्य, TCA_CT_UNSPEC,
+				माप(p->ct_action)))
+		जाओ nla_put_failure;
 
-	if (p->ct_action & TCA_CT_ACT_CLEAR)
-		goto skip_dump;
+	अगर (p->ct_action & TCA_CT_ACT_CLEAR)
+		जाओ skip_dump;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
 	    tcf_ct_dump_key_val(skb,
 				&p->mark, TCA_CT_MARK,
 				&p->mark_mask, TCA_CT_MARK_MASK,
-				sizeof(p->mark)))
-		goto nla_put_failure;
+				माप(p->mark)))
+		जाओ nla_put_failure;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
 	    tcf_ct_dump_key_val(skb,
 				p->labels, TCA_CT_LABELS,
 				p->labels_mask, TCA_CT_LABELS_MASK,
-				sizeof(p->labels)))
-		goto nla_put_failure;
+				माप(p->labels)))
+		जाओ nla_put_failure;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    tcf_ct_dump_key_val(skb,
 				&p->zone, TCA_CT_ZONE,
-				NULL, TCA_CT_UNSPEC,
-				sizeof(p->zone)))
-		goto nla_put_failure;
+				शून्य, TCA_CT_UNSPEC,
+				माप(p->zone)))
+		जाओ nla_put_failure;
 
-	if (tcf_ct_dump_nat(skb, p))
-		goto nla_put_failure;
+	अगर (tcf_ct_dump_nat(skb, p))
+		जाओ nla_put_failure;
 
 skip_dump:
-	if (nla_put(skb, TCA_CT_PARMS, sizeof(opt), &opt))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_CT_PARMS, माप(opt), &opt))
+		जाओ nla_put_failure;
 
-	tcf_tm_dump(&t, &c->tcf_tm);
-	if (nla_put_64bit(skb, TCA_CT_TM, sizeof(t), &t, TCA_CT_PAD))
-		goto nla_put_failure;
+	tcf_पंचांग_dump(&t, &c->tcf_पंचांग);
+	अगर (nla_put_64bit(skb, TCA_CT_TM, माप(t), &t, TCA_CT_PAD))
+		जाओ nla_put_failure;
 	spin_unlock_bh(&c->tcf_lock);
 
-	return skb->len;
+	वापस skb->len;
 nla_put_failure:
 	spin_unlock_bh(&c->tcf_lock);
 	nlmsg_trim(skb, b);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int tcf_ct_walker(struct net *net, struct sk_buff *skb,
-			 struct netlink_callback *cb, int type,
-			 const struct tc_action_ops *ops,
-			 struct netlink_ext_ack *extack)
-{
-	struct tc_action_net *tn = net_generic(net, ct_net_id);
+अटल पूर्णांक tcf_ct_walker(काष्ठा net *net, काष्ठा sk_buff *skb,
+			 काष्ठा netlink_callback *cb, पूर्णांक type,
+			 स्थिर काष्ठा tc_action_ops *ops,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, ct_net_id);
 
-	return tcf_generic_walker(tn, skb, cb, type, ops, extack);
-}
+	वापस tcf_generic_walker(tn, skb, cb, type, ops, extack);
+पूर्ण
 
-static int tcf_ct_search(struct net *net, struct tc_action **a, u32 index)
-{
-	struct tc_action_net *tn = net_generic(net, ct_net_id);
+अटल पूर्णांक tcf_ct_search(काष्ठा net *net, काष्ठा tc_action **a, u32 index)
+अणु
+	काष्ठा tc_action_net *tn = net_generic(net, ct_net_id);
 
-	return tcf_idr_search(tn, a, index);
-}
+	वापस tcf_idr_search(tn, a, index);
+पूर्ण
 
-static void tcf_stats_update(struct tc_action *a, u64 bytes, u64 packets,
+अटल व्योम tcf_stats_update(काष्ठा tc_action *a, u64 bytes, u64 packets,
 			     u64 drops, u64 lastuse, bool hw)
-{
-	struct tcf_ct *c = to_ct(a);
+अणु
+	काष्ठा tcf_ct *c = to_ct(a);
 
 	tcf_action_update_stats(a, bytes, packets, drops, hw);
-	c->tcf_tm.lastuse = max_t(u64, c->tcf_tm.lastuse, lastuse);
-}
+	c->tcf_पंचांग.lastuse = max_t(u64, c->tcf_पंचांग.lastuse, lastuse);
+पूर्ण
 
-static struct tc_action_ops act_ct_ops = {
+अटल काष्ठा tc_action_ops act_ct_ops = अणु
 	.kind		=	"ct",
 	.id		=	TCA_ID_CT,
 	.owner		=	THIS_MODULE,
@@ -1491,84 +1492,84 @@ static struct tc_action_ops act_ct_ops = {
 	.walk		=	tcf_ct_walker,
 	.lookup		=	tcf_ct_search,
 	.stats_update	=	tcf_stats_update,
-	.size		=	sizeof(struct tcf_ct),
-};
+	.size		=	माप(काष्ठा tcf_ct),
+पूर्ण;
 
-static __net_init int ct_init_net(struct net *net)
-{
-	unsigned int n_bits = sizeof_field(struct tcf_ct_params, labels) * 8;
-	struct tc_ct_action_net *tn = net_generic(net, ct_net_id);
+अटल __net_init पूर्णांक ct_init_net(काष्ठा net *net)
+अणु
+	अचिन्हित पूर्णांक n_bits = माप_field(काष्ठा tcf_ct_params, labels) * 8;
+	काष्ठा tc_ct_action_net *tn = net_generic(net, ct_net_id);
 
-	if (nf_connlabels_get(net, n_bits - 1)) {
+	अगर (nf_connlabels_get(net, n_bits - 1)) अणु
 		tn->labels = false;
 		pr_err("act_ct: Failed to set connlabels length");
-	} else {
+	पूर्ण अन्यथा अणु
 		tn->labels = true;
-	}
+	पूर्ण
 
-	return tc_action_net_init(net, &tn->tn, &act_ct_ops);
-}
+	वापस tc_action_net_init(net, &tn->tn, &act_ct_ops);
+पूर्ण
 
-static void __net_exit ct_exit_net(struct list_head *net_list)
-{
-	struct net *net;
+अटल व्योम __net_निकास ct_निकास_net(काष्ठा list_head *net_list)
+अणु
+	काष्ठा net *net;
 
 	rtnl_lock();
-	list_for_each_entry(net, net_list, exit_list) {
-		struct tc_ct_action_net *tn = net_generic(net, ct_net_id);
+	list_क्रम_each_entry(net, net_list, निकास_list) अणु
+		काष्ठा tc_ct_action_net *tn = net_generic(net, ct_net_id);
 
-		if (tn->labels)
+		अगर (tn->labels)
 			nf_connlabels_put(net);
-	}
+	पूर्ण
 	rtnl_unlock();
 
-	tc_action_net_exit(net_list, ct_net_id);
-}
+	tc_action_net_निकास(net_list, ct_net_id);
+पूर्ण
 
-static struct pernet_operations ct_net_ops = {
+अटल काष्ठा pernet_operations ct_net_ops = अणु
 	.init = ct_init_net,
-	.exit_batch = ct_exit_net,
+	.निकास_batch = ct_निकास_net,
 	.id   = &ct_net_id,
-	.size = sizeof(struct tc_ct_action_net),
-};
+	.size = माप(काष्ठा tc_ct_action_net),
+पूर्ण;
 
-static int __init ct_init_module(void)
-{
-	int err;
+अटल पूर्णांक __init ct_init_module(व्योम)
+अणु
+	पूर्णांक err;
 
 	act_ct_wq = alloc_ordered_workqueue("act_ct_workqueue", 0);
-	if (!act_ct_wq)
-		return -ENOMEM;
+	अगर (!act_ct_wq)
+		वापस -ENOMEM;
 
 	err = tcf_ct_flow_tables_init();
-	if (err)
-		goto err_tbl_init;
+	अगर (err)
+		जाओ err_tbl_init;
 
-	err = tcf_register_action(&act_ct_ops, &ct_net_ops);
-	if (err)
-		goto err_register;
+	err = tcf_रेजिस्टर_action(&act_ct_ops, &ct_net_ops);
+	अगर (err)
+		जाओ err_रेजिस्टर;
 
-	static_branch_inc(&tcf_frag_xmit_count);
+	अटल_branch_inc(&tcf_frag_xmit_count);
 
-	return 0;
+	वापस 0;
 
-err_register:
+err_रेजिस्टर:
 	tcf_ct_flow_tables_uninit();
 err_tbl_init:
 	destroy_workqueue(act_ct_wq);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit ct_cleanup_module(void)
-{
-	static_branch_dec(&tcf_frag_xmit_count);
-	tcf_unregister_action(&act_ct_ops, &ct_net_ops);
+अटल व्योम __निकास ct_cleanup_module(व्योम)
+अणु
+	अटल_branch_dec(&tcf_frag_xmit_count);
+	tcf_unरेजिस्टर_action(&act_ct_ops, &ct_net_ops);
 	tcf_ct_flow_tables_uninit();
 	destroy_workqueue(act_ct_wq);
-}
+पूर्ण
 
 module_init(ct_init_module);
-module_exit(ct_cleanup_module);
+module_निकास(ct_cleanup_module);
 MODULE_AUTHOR("Paul Blakey <paulb@mellanox.com>");
 MODULE_AUTHOR("Yossi Kuperman <yossiku@mellanox.com>");
 MODULE_AUTHOR("Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>");

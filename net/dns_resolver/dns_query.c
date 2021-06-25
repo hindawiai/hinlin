@@ -1,10 +1,11 @@
-/* Upcall routine, designed to work as a key type and working through
+<शैली गुरु>
+/* Upcall routine, deचिन्हित to work as a key type and working through
  * /sbin/request-key to contact userspace when handling DNS queries.
  *
  * See Documentation/networking/dns_resolver.rst
  *
- *   Copyright (c) 2007 Igor Mammedov
- *   Author(s): Igor Mammedov (niallain@gmail.com)
+ *   Copyright (c) 2007 Igor Mammeकरोv
+ *   Author(s): Igor Mammeकरोv (niallain@gmail.com)
  *              Steve French (sfrench@us.ibm.com)
  *              Wang Lei (wang840925@gmail.com)
  *		David Howells (dhowells@redhat.com)
@@ -21,7 +22,7 @@
  *
  *	create dns_resolver afsdb:* * /sbin/dns.afsdb %k
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -29,95 +30,95 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, see <http://www.gnu.org/licenses/>.
+ *   aदीर्घ with this library; अगर not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/cred.h>
-#include <linux/dns_resolver.h>
-#include <linux/err.h>
-#include <net/net_namespace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/dns_resolver.h>
+#समावेश <linux/err.h>
+#समावेश <net/net_namespace.h>
 
-#include <keys/dns_resolver-type.h>
-#include <keys/user-type.h>
+#समावेश <keys/dns_resolver-type.h>
+#समावेश <keys/user-type.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 /**
  * dns_query - Query the DNS
  * @net: The network namespace to operate in.
- * @type: Query type (or NULL for straight host->IP lookup)
+ * @type: Query type (or शून्य क्रम straight host->IP lookup)
  * @name: Name to look up
  * @namelen: Length of name
- * @options: Request options (or NULL if no options)
- * @_result: Where to place the returned data (or NULL)
- * @_expiry: Where to store the result expiry time (or NULL)
+ * @options: Request options (or शून्य अगर no options)
+ * @_result: Where to place the वापसed data (or शून्य)
+ * @_expiry: Where to store the result expiry समय (or शून्य)
  * @invalidate: Always invalidate the key after use
  *
- * The data will be returned in the pointer at *result, if provided, and the
- * caller is responsible for freeing it.
+ * The data will be वापसed in the poपूर्णांकer at *result, अगर provided, and the
+ * caller is responsible क्रम मुक्तing it.
  *
- * The description should be of the form "[<query_type>:]<domain_name>", and
- * the options need to be appropriate for the query type requested.  If no
+ * The description should be of the क्रमm "[<query_type>:]<domain_name>", and
+ * the options need to be appropriate क्रम the query type requested.  If no
  * query_type is given, then the query is a straight hostname to IP address
  * lookup.
  *
- * The DNS resolution lookup is performed by upcalling to userspace by way of
+ * The DNS resolution lookup is perक्रमmed by upcalling to userspace by way of
  * requesting a key of type dns_resolver.
  *
  * Returns the size of the result on success, -ve error code otherwise.
  */
-int dns_query(struct net *net,
-	      const char *type, const char *name, size_t namelen,
-	      const char *options, char **_result, time64_t *_expiry,
+पूर्णांक dns_query(काष्ठा net *net,
+	      स्थिर अक्षर *type, स्थिर अक्षर *name, माप_प्रकार namelen,
+	      स्थिर अक्षर *options, अक्षर **_result, समय64_t *_expiry,
 	      bool invalidate)
-{
-	struct key *rkey;
-	struct user_key_payload *upayload;
-	const struct cred *saved_cred;
-	size_t typelen, desclen;
-	char *desc, *cp;
-	int ret, len;
+अणु
+	काष्ठा key *rkey;
+	काष्ठा user_key_payload *upayload;
+	स्थिर काष्ठा cred *saved_cred;
+	माप_प्रकार typelen, desclen;
+	अक्षर *desc, *cp;
+	पूर्णांक ret, len;
 
 	kenter("%s,%*.*s,%zu,%s",
-	       type, (int)namelen, (int)namelen, name, namelen, options);
+	       type, (पूर्णांक)namelen, (पूर्णांक)namelen, name, namelen, options);
 
-	if (!name || namelen == 0)
-		return -EINVAL;
+	अगर (!name || namelen == 0)
+		वापस -EINVAL;
 
-	/* construct the query key description as "[<type>:]<name>" */
+	/* स्थिरruct the query key description as "[<type>:]<name>" */
 	typelen = 0;
 	desclen = 0;
-	if (type) {
-		typelen = strlen(type);
-		if (typelen < 1)
-			return -EINVAL;
+	अगर (type) अणु
+		typelen = म_माप(type);
+		अगर (typelen < 1)
+			वापस -EINVAL;
 		desclen += typelen + 1;
-	}
+	पूर्ण
 
-	if (namelen < 3 || namelen > 255)
-		return -EINVAL;
+	अगर (namelen < 3 || namelen > 255)
+		वापस -EINVAL;
 	desclen += namelen + 1;
 
-	desc = kmalloc(desclen, GFP_KERNEL);
-	if (!desc)
-		return -ENOMEM;
+	desc = kदो_स्मृति(desclen, GFP_KERNEL);
+	अगर (!desc)
+		वापस -ENOMEM;
 
 	cp = desc;
-	if (type) {
-		memcpy(cp, type, typelen);
+	अगर (type) अणु
+		स_नकल(cp, type, typelen);
 		cp += typelen;
 		*cp++ = ':';
-	}
-	memcpy(cp, name, namelen);
+	पूर्ण
+	स_नकल(cp, name, namelen);
 	cp += namelen;
 	*cp = '\0';
 
-	if (!options)
+	अगर (!options)
 		options = "";
 	kdebug("call request_key(,%s,%s)", desc, options);
 
@@ -127,46 +128,46 @@ int dns_query(struct net *net,
 	saved_cred = override_creds(dns_resolver_cache);
 	rkey = request_key_net(&key_type_dns_resolver, desc, net, options);
 	revert_creds(saved_cred);
-	kfree(desc);
-	if (IS_ERR(rkey)) {
+	kमुक्त(desc);
+	अगर (IS_ERR(rkey)) अणु
 		ret = PTR_ERR(rkey);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	down_read(&rkey->sem);
+	करोwn_पढ़ो(&rkey->sem);
 	set_bit(KEY_FLAG_ROOT_CAN_INVAL, &rkey->flags);
 	rkey->perm |= KEY_USR_VIEW;
 
 	ret = key_validate(rkey);
-	if (ret < 0)
-		goto put;
+	अगर (ret < 0)
+		जाओ put;
 
-	/* If the DNS server gave an error, return that to the caller */
+	/* If the DNS server gave an error, वापस that to the caller */
 	ret = PTR_ERR(rkey->payload.data[dns_key_error]);
-	if (ret)
-		goto put;
+	अगर (ret)
+		जाओ put;
 
 	upayload = user_key_payload_locked(rkey);
 	len = upayload->datalen;
 
-	if (_result) {
+	अगर (_result) अणु
 		ret = -ENOMEM;
 		*_result = kmemdup_nul(upayload->data, len, GFP_KERNEL);
-		if (!*_result)
-			goto put;
-	}
+		अगर (!*_result)
+			जाओ put;
+	पूर्ण
 
-	if (_expiry)
+	अगर (_expiry)
 		*_expiry = rkey->expiry;
 
 	ret = len;
 put:
-	up_read(&rkey->sem);
-	if (invalidate)
+	up_पढ़ो(&rkey->sem);
+	अगर (invalidate)
 		key_invalidate(rkey);
 	key_put(rkey);
 out:
 	kleave(" = %d", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(dns_query);

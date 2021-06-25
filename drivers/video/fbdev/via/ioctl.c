@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 1998-2008 VIA Technologies, Inc. All Rights Reserved.
  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
 
  */
 
-#include "global.h"
+#समावेश "global.h"
 
-int viafb_ioctl_get_viafb_info(u_long arg)
-{
-	struct viafb_ioctl_info viainfo;
+पूर्णांक viafb_ioctl_get_viafb_info(u_दीर्घ arg)
+अणु
+	काष्ठा viafb_ioctl_info viainfo;
 
-	memset(&viainfo, 0, sizeof(struct viafb_ioctl_info));
+	स_रखो(&viainfo, 0, माप(काष्ठा viafb_ioctl_info));
 
 	viainfo.viafb_id = VIAID;
-	viainfo.vendor_id = PCI_VIA_VENDOR_ID;
+	viainfo.venकरोr_id = PCI_VIA_VENDOR_ID;
 
-	switch (viaparinfo->chip_info->gfx_chip_name) {
-	case UNICHROME_CLE266:
+	चयन (viaparinfo->chip_info->gfx_chip_name) अणु
+	हाल UNICHROME_CLE266:
 		viainfo.device_id = UNICHROME_CLE266_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_K400:
+	हाल UNICHROME_K400:
 		viainfo.device_id = UNICHROME_K400_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_K800:
+	हाल UNICHROME_K800:
 		viainfo.device_id = UNICHROME_K800_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_PM800:
+	हाल UNICHROME_PM800:
 		viainfo.device_id = UNICHROME_PM800_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_CN700:
+	हाल UNICHROME_CN700:
 		viainfo.device_id = UNICHROME_CN700_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_CX700:
+	हाल UNICHROME_CX700:
 		viainfo.device_id = UNICHROME_CX700_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_K8M890:
+	हाल UNICHROME_K8M890:
 		viainfo.device_id = UNICHROME_K8M890_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_P4M890:
+	हाल UNICHROME_P4M890:
 		viainfo.device_id = UNICHROME_P4M890_DID;
-		break;
+		अवरोध;
 
-	case UNICHROME_P4M900:
+	हाल UNICHROME_P4M900:
 		viainfo.device_id = UNICHROME_P4M900_DID;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	viainfo.version = VERSION_MAJOR;
 	viainfo.revision = VERSION_MINOR;
 
-	if (copy_to_user((void __user *)arg, &viainfo, sizeof(viainfo)))
-		return -EFAULT;
+	अगर (copy_to_user((व्योम __user *)arg, &viainfo, माप(viainfo)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Hot-Plug Priority: DVI > CRT*/
-int viafb_ioctl_hotplug(int hres, int vres, int bpp)
-{
-	int DVIsense, status = 0;
+पूर्णांक viafb_ioctl_hotplug(पूर्णांक hres, पूर्णांक vres, पूर्णांक bpp)
+अणु
+	पूर्णांक DVIsense, status = 0;
 	DEBUG_MSG(KERN_INFO "viafb_ioctl_hotplug!!\n");
 
-	if (viaparinfo->chip_info->tmds_chip_info.tmds_chip_name !=
-		NON_TMDS_TRANSMITTER) {
+	अगर (viaparinfo->chip_info->पंचांगds_chip_info.पंचांगds_chip_name !=
+		NON_TMDS_TRANSMITTER) अणु
 		DVIsense = viafb_dvi_sense();
 
-		if (DVIsense) {
+		अगर (DVIsense) अणु
 			DEBUG_MSG(KERN_INFO "DVI Attached...\n");
-			if (viafb_DeviceStatus != DVI_Device) {
+			अगर (viafb_DeviceStatus != DVI_Device) अणु
 				viafb_DVI_ON = 1;
 				viafb_CRT_ON = 0;
 				viafb_LCD_ON = 0;
 				viafb_DeviceStatus = DVI_Device;
 				viafb_set_iga_path();
-				return viafb_DeviceStatus;
-			}
+				वापस viafb_DeviceStatus;
+			पूर्ण
 			status = 1;
-		} else
+		पूर्ण अन्यथा
 			DEBUG_MSG(KERN_INFO "DVI De-attached...\n");
-	}
+	पूर्ण
 
-	if ((viafb_DeviceStatus != CRT_Device) && (status == 0)) {
+	अगर ((viafb_DeviceStatus != CRT_Device) && (status == 0)) अणु
 		viafb_CRT_ON = 1;
 		viafb_DVI_ON = 0;
 		viafb_LCD_ON = 0;
 
 		viafb_DeviceStatus = CRT_Device;
 		viafb_set_iga_path();
-		return viafb_DeviceStatus;
-	}
+		वापस viafb_DeviceStatus;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

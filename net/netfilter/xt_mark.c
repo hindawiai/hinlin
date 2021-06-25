@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *	xt_mark - Netfilter module to match NFMARK value
  *
  *	(C) 1999-2001 Marc Boucher <marc@mbsi.ca>
- *	Copyright © CC Computer Consultants GmbH, 2007 - 2008
- *	Jan Engelhardt <jengelh@medozas.de>
+ *	Copyright तऊ CC Computer Consultants GmbH, 2007 - 2008
+ *	Jan Engelhardt <jengelh@meकरोzas.de>
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
 
-#include <linux/netfilter/xt_mark.h>
-#include <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_mark.h>
+#समावेश <linux/netfilter/x_tables.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marc Boucher <marc@mbsi.ca>");
@@ -22,61 +23,61 @@ MODULE_ALIAS("ipt_MARK");
 MODULE_ALIAS("ip6t_MARK");
 MODULE_ALIAS("arpt_MARK");
 
-static unsigned int
-mark_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_mark_tginfo2 *info = par->targinfo;
+अटल अचिन्हित पूर्णांक
+mark_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_mark_tginfo2 *info = par->targinfo;
 
 	skb->mark = (skb->mark & ~info->mask) ^ info->mark;
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static bool
-mark_mt(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	const struct xt_mark_mtinfo1 *info = par->matchinfo;
+अटल bool
+mark_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_mark_mtinfo1 *info = par->matchinfo;
 
-	return ((skb->mark & info->mask) == info->mark) ^ info->invert;
-}
+	वापस ((skb->mark & info->mask) == info->mark) ^ info->invert;
+पूर्ण
 
-static struct xt_target mark_tg_reg __read_mostly = {
+अटल काष्ठा xt_target mark_tg_reg __पढ़ो_mostly = अणु
 	.name           = "MARK",
 	.revision       = 2,
 	.family         = NFPROTO_UNSPEC,
 	.target         = mark_tg,
-	.targetsize     = sizeof(struct xt_mark_tginfo2),
+	.tarमाला_लोize     = माप(काष्ठा xt_mark_tginfo2),
 	.me             = THIS_MODULE,
-};
+पूर्ण;
 
-static struct xt_match mark_mt_reg __read_mostly = {
+अटल काष्ठा xt_match mark_mt_reg __पढ़ो_mostly = अणु
 	.name           = "mark",
 	.revision       = 1,
 	.family         = NFPROTO_UNSPEC,
 	.match          = mark_mt,
-	.matchsize      = sizeof(struct xt_mark_mtinfo1),
+	.matchsize      = माप(काष्ठा xt_mark_mtinfo1),
 	.me             = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init mark_mt_init(void)
-{
-	int ret;
+अटल पूर्णांक __init mark_mt_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = xt_register_target(&mark_tg_reg);
-	if (ret < 0)
-		return ret;
-	ret = xt_register_match(&mark_mt_reg);
-	if (ret < 0) {
-		xt_unregister_target(&mark_tg_reg);
-		return ret;
-	}
-	return 0;
-}
+	ret = xt_रेजिस्टर_target(&mark_tg_reg);
+	अगर (ret < 0)
+		वापस ret;
+	ret = xt_रेजिस्टर_match(&mark_mt_reg);
+	अगर (ret < 0) अणु
+		xt_unरेजिस्टर_target(&mark_tg_reg);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __exit mark_mt_exit(void)
-{
-	xt_unregister_match(&mark_mt_reg);
-	xt_unregister_target(&mark_tg_reg);
-}
+अटल व्योम __निकास mark_mt_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_match(&mark_mt_reg);
+	xt_unरेजिस्टर_target(&mark_tg_reg);
+पूर्ण
 
 module_init(mark_mt_init);
-module_exit(mark_mt_exit);
+module_निकास(mark_mt_निकास);

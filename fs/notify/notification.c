@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2008 Red Hat, Inc., Eric Paris <eparis@redhat.com>
  */
 
 /*
- * Basic idea behind the notification queue: An fsnotify group (like inotify)
- * sends the userspace notification about events asynchronously some time after
- * the event happened.  When inotify gets an event it will need to add that
- * event to the group notify queue.  Since a single event might need to be on
+ * Basic idea behind the notअगरication queue: An fsnotअगरy group (like inotअगरy)
+ * sends the userspace notअगरication about events asynchronously some समय after
+ * the event happened.  When inotअगरy माला_लो an event it will need to add that
+ * event to the group notअगरy queue.  Since a single event might need to be on
  * multiple group's notification queues we can't add the event directly to each
  * queue and instead add a small "event_holder" to each queue.  This event_holder
- * has a pointer back to the original event.  Since the majority of events are
- * going to end up on one, and only one, notification queue we embed one
- * event_holder into each event.  This means we have a single allocation instead
- * of always needing two.  If the embedded event_holder is already in use by
- * another group a new event_holder (from fsnotify_event_holder_cachep) will be
+ * has a poपूर्णांकer back to the original event.  Since the majority of events are
+ * going to end up on one, and only one, notअगरication queue we embed one
+ * event_holder पूर्णांकo each event.  This means we have a single allocation instead
+ * of always needing two.  If the embedded event_holder is alपढ़ोy in use by
+ * another group a new event_holder (from fsnotअगरy_event_holder_cachep) will be
  * allocated and used.
  */
 
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/mount.h>
-#include <linux/mutex.h>
-#include <linux/namei.h>
-#include <linux/path.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/path.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-#include <linux/fsnotify_backend.h>
-#include "fsnotify.h"
+#समावेश <linux/fsnotअगरy_backend.h>
+#समावेश "fsnotify.h"
 
-static atomic_t fsnotify_sync_cookie = ATOMIC_INIT(0);
+अटल atomic_t fsnotअगरy_sync_cookie = ATOMIC_INIT(0);
 
 /**
- * fsnotify_get_cookie - return a unique cookie for use in synchronizing events.
- * Called from fsnotify_move, which is inlined into filesystem modules.
+ * fsnotअगरy_get_cookie - वापस a unique cookie क्रम use in synchronizing events.
+ * Called from fsnotअगरy_move, which is अंतरभूतd पूर्णांकo fileप्रणाली modules.
  */
-u32 fsnotify_get_cookie(void)
-{
-	return atomic_inc_return(&fsnotify_sync_cookie);
-}
-EXPORT_SYMBOL_GPL(fsnotify_get_cookie);
+u32 fsnotअगरy_get_cookie(व्योम)
+अणु
+	वापस atomic_inc_वापस(&fsnotअगरy_sync_cookie);
+पूर्ण
+EXPORT_SYMBOL_GPL(fsnotअगरy_get_cookie);
 
-void fsnotify_destroy_event(struct fsnotify_group *group,
-			    struct fsnotify_event *event)
-{
-	/* Overflow events are per-group and we don't want to free them */
-	if (!event || event == group->overflow_event)
-		return;
+व्योम fsnotअगरy_destroy_event(काष्ठा fsnotअगरy_group *group,
+			    काष्ठा fsnotअगरy_event *event)
+अणु
+	/* Overflow events are per-group and we करोn't want to मुक्त them */
+	अगर (!event || event == group->overflow_event)
+		वापस;
 	/*
 	 * If the event is still queued, we have a problem... Do an unreliable
-	 * lockless check first to avoid locking in the common case. The
-	 * locking may be necessary for permission events which got removed
-	 * from the list by a different CPU than the one freeing the event.
+	 * lockless check first to aव्योम locking in the common हाल. The
+	 * locking may be necessary क्रम permission events which got हटाओd
+	 * from the list by a dअगरferent CPU than the one मुक्तing the event.
 	 */
-	if (!list_empty(&event->list)) {
-		spin_lock(&group->notification_lock);
+	अगर (!list_empty(&event->list)) अणु
+		spin_lock(&group->notअगरication_lock);
 		WARN_ON(!list_empty(&event->list));
-		spin_unlock(&group->notification_lock);
-	}
-	group->ops->free_event(event);
-}
+		spin_unlock(&group->notअगरication_lock);
+	पूर्ण
+	group->ops->मुक्त_event(event);
+पूर्ण
 
 /*
- * Try to add an event to the notification queue.
+ * Try to add an event to the notअगरication queue.
  * The group can later pull this event off the queue to deal with.
  * The group can use the @merge hook to merge the event with a queued event.
- * The group can use the @insert hook to insert the event into hash table.
- * The function returns:
- * 0 if the event was added to a queue
- * 1 if the event was merged with some other queued event
- * 2 if the event was not queued - either the queue of events has overflown
- *   or the group is shutting down.
+ * The group can use the @insert hook to insert the event पूर्णांकo hash table.
+ * The function वापसs:
+ * 0 अगर the event was added to a queue
+ * 1 अगर the event was merged with some other queued event
+ * 2 अगर the event was not queued - either the queue of events has overflown
+ *   or the group is shutting करोwn.
  */
-int fsnotify_add_event(struct fsnotify_group *group,
-		       struct fsnotify_event *event,
-		       int (*merge)(struct fsnotify_group *,
-				    struct fsnotify_event *),
-		       void (*insert)(struct fsnotify_group *,
-				      struct fsnotify_event *))
-{
-	int ret = 0;
-	struct list_head *list = &group->notification_list;
+पूर्णांक fsnotअगरy_add_event(काष्ठा fsnotअगरy_group *group,
+		       काष्ठा fsnotअगरy_event *event,
+		       पूर्णांक (*merge)(काष्ठा fsnotअगरy_group *,
+				    काष्ठा fsnotअगरy_event *),
+		       व्योम (*insert)(काष्ठा fsnotअगरy_group *,
+				      काष्ठा fsnotअगरy_event *))
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा list_head *list = &group->notअगरication_list;
 
 	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
 
-	spin_lock(&group->notification_lock);
+	spin_lock(&group->notअगरication_lock);
 
-	if (group->shutdown) {
-		spin_unlock(&group->notification_lock);
-		return 2;
-	}
+	अगर (group->shutकरोwn) अणु
+		spin_unlock(&group->notअगरication_lock);
+		वापस 2;
+	पूर्ण
 
-	if (event == group->overflow_event ||
-	    group->q_len >= group->max_events) {
+	अगर (event == group->overflow_event ||
+	    group->q_len >= group->max_events) अणु
 		ret = 2;
-		/* Queue overflow event only if it isn't already queued */
-		if (!list_empty(&group->overflow_event->list)) {
-			spin_unlock(&group->notification_lock);
-			return ret;
-		}
+		/* Queue overflow event only अगर it isn't alपढ़ोy queued */
+		अगर (!list_empty(&group->overflow_event->list)) अणु
+			spin_unlock(&group->notअगरication_lock);
+			वापस ret;
+		पूर्ण
 		event = group->overflow_event;
-		goto queue;
-	}
+		जाओ queue;
+	पूर्ण
 
-	if (!list_empty(list) && merge) {
+	अगर (!list_empty(list) && merge) अणु
 		ret = merge(group, event);
-		if (ret) {
-			spin_unlock(&group->notification_lock);
-			return ret;
-		}
-	}
+		अगर (ret) अणु
+			spin_unlock(&group->notअगरication_lock);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 queue:
 	group->q_len++;
 	list_add_tail(&event->list, list);
-	if (insert)
+	अगर (insert)
 		insert(group, event);
-	spin_unlock(&group->notification_lock);
+	spin_unlock(&group->notअगरication_lock);
 
-	wake_up(&group->notification_waitq);
-	kill_fasync(&group->fsn_fa, SIGIO, POLL_IN);
-	return ret;
-}
+	wake_up(&group->notअगरication_रुकोq);
+	समाप्त_fasync(&group->fsn_fa, SIGIO, POLL_IN);
+	वापस ret;
+पूर्ण
 
-void fsnotify_remove_queued_event(struct fsnotify_group *group,
-				  struct fsnotify_event *event)
-{
-	assert_spin_locked(&group->notification_lock);
+व्योम fsnotअगरy_हटाओ_queued_event(काष्ठा fsnotअगरy_group *group,
+				  काष्ठा fsnotअगरy_event *event)
+अणु
+	निश्चित_spin_locked(&group->notअगरication_lock);
 	/*
-	 * We need to init list head for the case of overflow event so that
-	 * check in fsnotify_add_event() works
+	 * We need to init list head क्रम the हाल of overflow event so that
+	 * check in fsnotअगरy_add_event() works
 	 */
 	list_del_init(&event->list);
 	group->q_len--;
-}
+पूर्ण
 
 /*
- * Return the first event on the notification list without removing it.
- * Returns NULL if the list is empty.
+ * Return the first event on the notअगरication list without removing it.
+ * Returns शून्य अगर the list is empty.
  */
-struct fsnotify_event *fsnotify_peek_first_event(struct fsnotify_group *group)
-{
-	assert_spin_locked(&group->notification_lock);
+काष्ठा fsnotअगरy_event *fsnotअगरy_peek_first_event(काष्ठा fsnotअगरy_group *group)
+अणु
+	निश्चित_spin_locked(&group->notअगरication_lock);
 
-	if (fsnotify_notify_queue_is_empty(group))
-		return NULL;
+	अगर (fsnotअगरy_notअगरy_queue_is_empty(group))
+		वापस शून्य;
 
-	return list_first_entry(&group->notification_list,
-				struct fsnotify_event, list);
-}
+	वापस list_first_entry(&group->notअगरication_list,
+				काष्ठा fsnotअगरy_event, list);
+पूर्ण
 
 /*
- * Remove and return the first event from the notification list.  It is the
+ * Remove and वापस the first event from the notअगरication list.  It is the
  * responsibility of the caller to destroy the obtained event
  */
-struct fsnotify_event *fsnotify_remove_first_event(struct fsnotify_group *group)
-{
-	struct fsnotify_event *event = fsnotify_peek_first_event(group);
+काष्ठा fsnotअगरy_event *fsnotअगरy_हटाओ_first_event(काष्ठा fsnotअगरy_group *group)
+अणु
+	काष्ठा fsnotअगरy_event *event = fsnotअगरy_peek_first_event(group);
 
-	if (!event)
-		return NULL;
+	अगर (!event)
+		वापस शून्य;
 
 	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
 
-	fsnotify_remove_queued_event(group, event);
+	fsnotअगरy_हटाओ_queued_event(group, event);
 
-	return event;
-}
+	वापस event;
+पूर्ण
 
 /*
- * Called when a group is being torn down to clean up any outstanding
- * event notifications.
+ * Called when a group is being torn करोwn to clean up any outstanding
+ * event notअगरications.
  */
-void fsnotify_flush_notify(struct fsnotify_group *group)
-{
-	struct fsnotify_event *event;
+व्योम fsnotअगरy_flush_notअगरy(काष्ठा fsnotअगरy_group *group)
+अणु
+	काष्ठा fsnotअगरy_event *event;
 
-	spin_lock(&group->notification_lock);
-	while (!fsnotify_notify_queue_is_empty(group)) {
-		event = fsnotify_remove_first_event(group);
-		spin_unlock(&group->notification_lock);
-		fsnotify_destroy_event(group, event);
-		spin_lock(&group->notification_lock);
-	}
-	spin_unlock(&group->notification_lock);
-}
+	spin_lock(&group->notअगरication_lock);
+	जबतक (!fsnotअगरy_notअगरy_queue_is_empty(group)) अणु
+		event = fsnotअगरy_हटाओ_first_event(group);
+		spin_unlock(&group->notअगरication_lock);
+		fsnotअगरy_destroy_event(group, event);
+		spin_lock(&group->notअगरication_lock);
+	पूर्ण
+	spin_unlock(&group->notअगरication_lock);
+पूर्ण

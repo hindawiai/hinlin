@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* interrupt.h */
-#ifndef _LINUX_INTERRUPT_H
-#define _LINUX_INTERRUPT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* पूर्णांकerrupt.h */
+#अगर_अघोषित _LINUX_INTERRUPT_H
+#घोषणा _LINUX_INTERRUPT_H
 
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/cpumask.h>
-#include <linux/irqreturn.h>
-#include <linux/irqnr.h>
-#include <linux/hardirq.h>
-#include <linux/irqflags.h>
-#include <linux/hrtimer.h>
-#include <linux/kref.h>
-#include <linux/workqueue.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <linux/irqnr.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/workqueue.h>
 
-#include <linux/atomic.h>
-#include <asm/ptrace.h>
-#include <asm/irq.h>
-#include <asm/sections.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/sections.h>
 
 /*
  * These correspond to the IORESOURCE_IRQ_* defines in
- * linux/ioport.h to select the interrupt line behaviour.  When
- * requesting an interrupt without specifying a IRQF_TRIGGER, the
+ * linux/ioport.h to select the पूर्णांकerrupt line behaviour.  When
+ * requesting an पूर्णांकerrupt without specअगरying a IRQF_TRIGGER, the
  * setting should be assumed to be "as already configured", which
  * may be as per machine or firmware initialisation.
  */
-#define IRQF_TRIGGER_NONE	0x00000000
-#define IRQF_TRIGGER_RISING	0x00000001
-#define IRQF_TRIGGER_FALLING	0x00000002
-#define IRQF_TRIGGER_HIGH	0x00000004
-#define IRQF_TRIGGER_LOW	0x00000008
-#define IRQF_TRIGGER_MASK	(IRQF_TRIGGER_HIGH | IRQF_TRIGGER_LOW | \
+#घोषणा IRQF_TRIGGER_NONE	0x00000000
+#घोषणा IRQF_TRIGGER_RISING	0x00000001
+#घोषणा IRQF_TRIGGER_FALLING	0x00000002
+#घोषणा IRQF_TRIGGER_HIGH	0x00000004
+#घोषणा IRQF_TRIGGER_LOW	0x00000008
+#घोषणा IRQF_TRIGGER_MASK	(IRQF_TRIGGER_HIGH | IRQF_TRIGGER_LOW | \
 				 IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)
-#define IRQF_TRIGGER_PROBE	0x00000010
+#घोषणा IRQF_TRIGGER_PROBE	0x00000010
 
 /*
  * These flags used only by the kernel as part of the
@@ -41,389 +42,389 @@
  *
  * IRQF_SHARED - allow sharing the irq among several devices
  * IRQF_PROBE_SHARED - set by callers when they expect sharing mismatches to occur
- * IRQF_TIMER - Flag to mark this interrupt as timer interrupt
+ * IRQF_TIMER - Flag to mark this पूर्णांकerrupt as समयr पूर्णांकerrupt
  * IRQF_PERCPU - Interrupt is per cpu
- * IRQF_NOBALANCING - Flag to exclude this interrupt from irq balancing
- * IRQF_IRQPOLL - Interrupt is used for polling (only the interrupt that is
- *                registered first in a shared interrupt is considered for
- *                performance reasons)
+ * IRQF_NOBALANCING - Flag to exclude this पूर्णांकerrupt from irq balancing
+ * IRQF_IRQPOLL - Interrupt is used क्रम polling (only the पूर्णांकerrupt that is
+ *                रेजिस्टरed first in a shared पूर्णांकerrupt is considered क्रम
+ *                perक्रमmance reasons)
  * IRQF_ONESHOT - Interrupt is not reenabled after the hardirq handler finished.
- *                Used by threaded interrupts which need to keep the
- *                irq line disabled until the threaded handler has been run.
+ *                Used by thपढ़ोed पूर्णांकerrupts which need to keep the
+ *                irq line disabled until the thपढ़ोed handler has been run.
  * IRQF_NO_SUSPEND - Do not disable this IRQ during suspend.  Does not guarantee
- *                   that this interrupt will wake the system from a suspended
- *                   state.  See Documentation/power/suspend-and-interrupts.rst
- * IRQF_FORCE_RESUME - Force enable it on resume even if IRQF_NO_SUSPEND is set
- * IRQF_NO_THREAD - Interrupt cannot be threaded
+ *                   that this पूर्णांकerrupt will wake the प्रणाली from a suspended
+ *                   state.  See Documentation/घातer/suspend-and-पूर्णांकerrupts.rst
+ * IRQF_FORCE_RESUME - Force enable it on resume even अगर IRQF_NO_SUSPEND is set
+ * IRQF_NO_THREAD - Interrupt cannot be thपढ़ोed
  * IRQF_EARLY_RESUME - Resume IRQ early during syscore instead of at device
- *                resume time.
+ *                resume समय.
  * IRQF_COND_SUSPEND - If the IRQ is shared with a NO_SUSPEND user, execute this
- *                interrupt handler after suspending interrupts. For system
+ *                पूर्णांकerrupt handler after suspending पूर्णांकerrupts. For प्रणाली
  *                wakeup devices users need to implement wakeup detection in
- *                their interrupt handlers.
- * IRQF_NO_AUTOEN - Don't enable IRQ or NMI automatically when users request it.
+ *                their पूर्णांकerrupt handlers.
+ * IRQF_NO_AUTOEN - Don't enable IRQ or NMI स्वतःmatically when users request it.
  *                Users will enable it explicitly by enable_irq() or enable_nmi()
  *                later.
  */
-#define IRQF_SHARED		0x00000080
-#define IRQF_PROBE_SHARED	0x00000100
-#define __IRQF_TIMER		0x00000200
-#define IRQF_PERCPU		0x00000400
-#define IRQF_NOBALANCING	0x00000800
-#define IRQF_IRQPOLL		0x00001000
-#define IRQF_ONESHOT		0x00002000
-#define IRQF_NO_SUSPEND		0x00004000
-#define IRQF_FORCE_RESUME	0x00008000
-#define IRQF_NO_THREAD		0x00010000
-#define IRQF_EARLY_RESUME	0x00020000
-#define IRQF_COND_SUSPEND	0x00040000
-#define IRQF_NO_AUTOEN		0x00080000
+#घोषणा IRQF_SHARED		0x00000080
+#घोषणा IRQF_PROBE_SHARED	0x00000100
+#घोषणा __IRQF_TIMER		0x00000200
+#घोषणा IRQF_PERCPU		0x00000400
+#घोषणा IRQF_NOBALANCING	0x00000800
+#घोषणा IRQF_IRQPOLL		0x00001000
+#घोषणा IRQF_ONESHOT		0x00002000
+#घोषणा IRQF_NO_SUSPEND		0x00004000
+#घोषणा IRQF_FORCE_RESUME	0x00008000
+#घोषणा IRQF_NO_THREAD		0x00010000
+#घोषणा IRQF_EARLY_RESUME	0x00020000
+#घोषणा IRQF_COND_SUSPEND	0x00040000
+#घोषणा IRQF_NO_AUTOEN		0x00080000
 
-#define IRQF_TIMER		(__IRQF_TIMER | IRQF_NO_SUSPEND | IRQF_NO_THREAD)
+#घोषणा IRQF_TIMER		(__IRQF_TIMER | IRQF_NO_SUSPEND | IRQF_NO_THREAD)
 
 /*
- * These values can be returned by request_any_context_irq() and
- * describe the context the interrupt will be run in.
+ * These values can be वापसed by request_any_context_irq() and
+ * describe the context the पूर्णांकerrupt will be run in.
  *
- * IRQC_IS_HARDIRQ - interrupt runs in hardirq context
- * IRQC_IS_NESTED - interrupt runs in a nested threaded context
+ * IRQC_IS_HARसूचीQ - पूर्णांकerrupt runs in hardirq context
+ * IRQC_IS_NESTED - पूर्णांकerrupt runs in a nested thपढ़ोed context
  */
-enum {
-	IRQC_IS_HARDIRQ	= 0,
+क्रमागत अणु
+	IRQC_IS_HARसूचीQ	= 0,
 	IRQC_IS_NESTED,
-};
+पूर्ण;
 
-typedef irqreturn_t (*irq_handler_t)(int, void *);
+प्रकार irqवापस_t (*irq_handler_t)(पूर्णांक, व्योम *);
 
 /**
- * struct irqaction - per interrupt action descriptor
- * @handler:	interrupt handler function
+ * काष्ठा irqaction - per पूर्णांकerrupt action descriptor
+ * @handler:	पूर्णांकerrupt handler function
  * @name:	name of the device
- * @dev_id:	cookie to identify the device
- * @percpu_dev_id:	cookie to identify the device
- * @next:	pointer to the next irqaction for shared interrupts
- * @irq:	interrupt number
+ * @dev_id:	cookie to identअगरy the device
+ * @percpu_dev_id:	cookie to identअगरy the device
+ * @next:	poपूर्णांकer to the next irqaction क्रम shared पूर्णांकerrupts
+ * @irq:	पूर्णांकerrupt number
  * @flags:	flags (see IRQF_* above)
- * @thread_fn:	interrupt handler function for threaded interrupts
- * @thread:	thread pointer for threaded interrupts
- * @secondary:	pointer to secondary irqaction (force threading)
- * @thread_flags:	flags related to @thread
- * @thread_mask:	bitmask for keeping track of @thread activity
- * @dir:	pointer to the proc/irq/NN/name entry
+ * @thपढ़ो_fn:	पूर्णांकerrupt handler function क्रम thपढ़ोed पूर्णांकerrupts
+ * @thपढ़ो:	thपढ़ो poपूर्णांकer क्रम thपढ़ोed पूर्णांकerrupts
+ * @secondary:	poपूर्णांकer to secondary irqaction (क्रमce thपढ़ोing)
+ * @thपढ़ो_flags:	flags related to @thपढ़ो
+ * @thपढ़ो_mask:	biपंचांगask क्रम keeping track of @thपढ़ो activity
+ * @dir:	poपूर्णांकer to the proc/irq/NN/name entry
  */
-struct irqaction {
+काष्ठा irqaction अणु
 	irq_handler_t		handler;
-	void			*dev_id;
-	void __percpu		*percpu_dev_id;
-	struct irqaction	*next;
-	irq_handler_t		thread_fn;
-	struct task_struct	*thread;
-	struct irqaction	*secondary;
-	unsigned int		irq;
-	unsigned int		flags;
-	unsigned long		thread_flags;
-	unsigned long		thread_mask;
-	const char		*name;
-	struct proc_dir_entry	*dir;
-} ____cacheline_internodealigned_in_smp;
+	व्योम			*dev_id;
+	व्योम __percpu		*percpu_dev_id;
+	काष्ठा irqaction	*next;
+	irq_handler_t		thपढ़ो_fn;
+	काष्ठा task_काष्ठा	*thपढ़ो;
+	काष्ठा irqaction	*secondary;
+	अचिन्हित पूर्णांक		irq;
+	अचिन्हित पूर्णांक		flags;
+	अचिन्हित दीर्घ		thपढ़ो_flags;
+	अचिन्हित दीर्घ		thपढ़ो_mask;
+	स्थिर अक्षर		*name;
+	काष्ठा proc_dir_entry	*dir;
+पूर्ण ____cacheline_पूर्णांकernodealigned_in_smp;
 
-extern irqreturn_t no_action(int cpl, void *dev_id);
+बाह्य irqवापस_t no_action(पूर्णांक cpl, व्योम *dev_id);
 
 /*
- * If a (PCI) device interrupt is not connected we set dev->irq to
+ * If a (PCI) device पूर्णांकerrupt is not connected we set dev->irq to
  * IRQ_NOTCONNECTED. This causes request_irq() to fail with -ENOTCONN, so we
- * can distingiush that case from other error returns.
+ * can distingiush that हाल from other error वापसs.
  *
- * 0x80000000 is guaranteed to be outside the available range of interrupts
+ * 0x80000000 is guaranteed to be outside the available range of पूर्णांकerrupts
  * and easy to distinguish from other possible incorrect values.
  */
-#define IRQ_NOTCONNECTED	(1U << 31)
+#घोषणा IRQ_NOTCONNECTED	(1U << 31)
 
-extern int __must_check
-request_threaded_irq(unsigned int irq, irq_handler_t handler,
-		     irq_handler_t thread_fn,
-		     unsigned long flags, const char *name, void *dev);
+बाह्य पूर्णांक __must_check
+request_thपढ़ोed_irq(अचिन्हित पूर्णांक irq, irq_handler_t handler,
+		     irq_handler_t thपढ़ो_fn,
+		     अचिन्हित दीर्घ flags, स्थिर अक्षर *name, व्योम *dev);
 
 /**
- * request_irq - Add a handler for an interrupt line
- * @irq:	The interrupt line to allocate
+ * request_irq - Add a handler क्रम an पूर्णांकerrupt line
+ * @irq:	The पूर्णांकerrupt line to allocate
  * @handler:	Function to be called when the IRQ occurs.
- *		Primary handler for threaded interrupts
- *		If NULL, the default primary handler is installed
+ *		Primary handler क्रम thपढ़ोed पूर्णांकerrupts
+ *		If शून्य, the शेष primary handler is installed
  * @flags:	Handling flags
- * @name:	Name of the device generating this interrupt
+ * @name:	Name of the device generating this पूर्णांकerrupt
  * @dev:	A cookie passed to the handler function
  *
- * This call allocates an interrupt and establishes a handler; see
- * the documentation for request_threaded_irq() for details.
+ * This call allocates an पूर्णांकerrupt and establishes a handler; see
+ * the करोcumentation क्रम request_thपढ़ोed_irq() क्रम details.
  */
-static inline int __must_check
-request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags,
-	    const char *name, void *dev)
-{
-	return request_threaded_irq(irq, handler, NULL, flags, name, dev);
-}
+अटल अंतरभूत पूर्णांक __must_check
+request_irq(अचिन्हित पूर्णांक irq, irq_handler_t handler, अचिन्हित दीर्घ flags,
+	    स्थिर अक्षर *name, व्योम *dev)
+अणु
+	वापस request_thपढ़ोed_irq(irq, handler, शून्य, flags, name, dev);
+पूर्ण
 
-extern int __must_check
-request_any_context_irq(unsigned int irq, irq_handler_t handler,
-			unsigned long flags, const char *name, void *dev_id);
+बाह्य पूर्णांक __must_check
+request_any_context_irq(अचिन्हित पूर्णांक irq, irq_handler_t handler,
+			अचिन्हित दीर्घ flags, स्थिर अक्षर *name, व्योम *dev_id);
 
-extern int __must_check
-__request_percpu_irq(unsigned int irq, irq_handler_t handler,
-		     unsigned long flags, const char *devname,
-		     void __percpu *percpu_dev_id);
+बाह्य पूर्णांक __must_check
+__request_percpu_irq(अचिन्हित पूर्णांक irq, irq_handler_t handler,
+		     अचिन्हित दीर्घ flags, स्थिर अक्षर *devname,
+		     व्योम __percpu *percpu_dev_id);
 
-extern int __must_check
-request_nmi(unsigned int irq, irq_handler_t handler, unsigned long flags,
-	    const char *name, void *dev);
+बाह्य पूर्णांक __must_check
+request_nmi(अचिन्हित पूर्णांक irq, irq_handler_t handler, अचिन्हित दीर्घ flags,
+	    स्थिर अक्षर *name, व्योम *dev);
 
-static inline int __must_check
-request_percpu_irq(unsigned int irq, irq_handler_t handler,
-		   const char *devname, void __percpu *percpu_dev_id)
-{
-	return __request_percpu_irq(irq, handler, 0,
+अटल अंतरभूत पूर्णांक __must_check
+request_percpu_irq(अचिन्हित पूर्णांक irq, irq_handler_t handler,
+		   स्थिर अक्षर *devname, व्योम __percpu *percpu_dev_id)
+अणु
+	वापस __request_percpu_irq(irq, handler, 0,
 				    devname, percpu_dev_id);
-}
+पूर्ण
 
-extern int __must_check
-request_percpu_nmi(unsigned int irq, irq_handler_t handler,
-		   const char *devname, void __percpu *dev);
+बाह्य पूर्णांक __must_check
+request_percpu_nmi(अचिन्हित पूर्णांक irq, irq_handler_t handler,
+		   स्थिर अक्षर *devname, व्योम __percpu *dev);
 
-extern const void *free_irq(unsigned int, void *);
-extern void free_percpu_irq(unsigned int, void __percpu *);
+बाह्य स्थिर व्योम *मुक्त_irq(अचिन्हित पूर्णांक, व्योम *);
+बाह्य व्योम मुक्त_percpu_irq(अचिन्हित पूर्णांक, व्योम __percpu *);
 
-extern const void *free_nmi(unsigned int irq, void *dev_id);
-extern void free_percpu_nmi(unsigned int irq, void __percpu *percpu_dev_id);
+बाह्य स्थिर व्योम *मुक्त_nmi(अचिन्हित पूर्णांक irq, व्योम *dev_id);
+बाह्य व्योम मुक्त_percpu_nmi(अचिन्हित पूर्णांक irq, व्योम __percpu *percpu_dev_id);
 
-struct device;
+काष्ठा device;
 
-extern int __must_check
-devm_request_threaded_irq(struct device *dev, unsigned int irq,
-			  irq_handler_t handler, irq_handler_t thread_fn,
-			  unsigned long irqflags, const char *devname,
-			  void *dev_id);
+बाह्य पूर्णांक __must_check
+devm_request_thपढ़ोed_irq(काष्ठा device *dev, अचिन्हित पूर्णांक irq,
+			  irq_handler_t handler, irq_handler_t thपढ़ो_fn,
+			  अचिन्हित दीर्घ irqflags, स्थिर अक्षर *devname,
+			  व्योम *dev_id);
 
-static inline int __must_check
-devm_request_irq(struct device *dev, unsigned int irq, irq_handler_t handler,
-		 unsigned long irqflags, const char *devname, void *dev_id)
-{
-	return devm_request_threaded_irq(dev, irq, handler, NULL, irqflags,
+अटल अंतरभूत पूर्णांक __must_check
+devm_request_irq(काष्ठा device *dev, अचिन्हित पूर्णांक irq, irq_handler_t handler,
+		 अचिन्हित दीर्घ irqflags, स्थिर अक्षर *devname, व्योम *dev_id)
+अणु
+	वापस devm_request_thपढ़ोed_irq(dev, irq, handler, शून्य, irqflags,
 					 devname, dev_id);
-}
+पूर्ण
 
-extern int __must_check
-devm_request_any_context_irq(struct device *dev, unsigned int irq,
-		 irq_handler_t handler, unsigned long irqflags,
-		 const char *devname, void *dev_id);
+बाह्य पूर्णांक __must_check
+devm_request_any_context_irq(काष्ठा device *dev, अचिन्हित पूर्णांक irq,
+		 irq_handler_t handler, अचिन्हित दीर्घ irqflags,
+		 स्थिर अक्षर *devname, व्योम *dev_id);
 
-extern void devm_free_irq(struct device *dev, unsigned int irq, void *dev_id);
+बाह्य व्योम devm_मुक्त_irq(काष्ठा device *dev, अचिन्हित पूर्णांक irq, व्योम *dev_id);
 
 /*
- * On lockdep we dont want to enable hardirqs in hardirq
+ * On lockdep we करोnt want to enable hardirqs in hardirq
  * context. Use local_irq_enable_in_hardirq() to annotate
- * kernel code that has to do this nevertheless (pretty much
- * the only valid case is for old/broken hardware that is
+ * kernel code that has to करो this nevertheless (pretty much
+ * the only valid हाल is क्रम old/broken hardware that is
  * insanely slow).
  *
- * NOTE: in theory this might break fragile code that relies
- * on hardirq delivery - in practice we dont seem to have such
+ * NOTE: in theory this might अवरोध fragile code that relies
+ * on hardirq delivery - in practice we करोnt seem to have such
  * places left. So the only effect should be slightly increased
  * irqs-off latencies.
  */
-#ifdef CONFIG_LOCKDEP
-# define local_irq_enable_in_hardirq()	do { } while (0)
-#else
+#अगर_घोषित CONFIG_LOCKDEP
+# define local_irq_enable_in_hardirq()	करो अणु पूर्ण जबतक (0)
+#अन्यथा
 # define local_irq_enable_in_hardirq()	local_irq_enable()
-#endif
+#पूर्ण_अगर
 
-bool irq_has_action(unsigned int irq);
-extern void disable_irq_nosync(unsigned int irq);
-extern bool disable_hardirq(unsigned int irq);
-extern void disable_irq(unsigned int irq);
-extern void disable_percpu_irq(unsigned int irq);
-extern void enable_irq(unsigned int irq);
-extern void enable_percpu_irq(unsigned int irq, unsigned int type);
-extern bool irq_percpu_is_enabled(unsigned int irq);
-extern void irq_wake_thread(unsigned int irq, void *dev_id);
+bool irq_has_action(अचिन्हित पूर्णांक irq);
+बाह्य व्योम disable_irq_nosync(अचिन्हित पूर्णांक irq);
+बाह्य bool disable_hardirq(अचिन्हित पूर्णांक irq);
+बाह्य व्योम disable_irq(अचिन्हित पूर्णांक irq);
+बाह्य व्योम disable_percpu_irq(अचिन्हित पूर्णांक irq);
+बाह्य व्योम enable_irq(अचिन्हित पूर्णांक irq);
+बाह्य व्योम enable_percpu_irq(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक type);
+बाह्य bool irq_percpu_is_enabled(अचिन्हित पूर्णांक irq);
+बाह्य व्योम irq_wake_thपढ़ो(अचिन्हित पूर्णांक irq, व्योम *dev_id);
 
-extern void disable_nmi_nosync(unsigned int irq);
-extern void disable_percpu_nmi(unsigned int irq);
-extern void enable_nmi(unsigned int irq);
-extern void enable_percpu_nmi(unsigned int irq, unsigned int type);
-extern int prepare_percpu_nmi(unsigned int irq);
-extern void teardown_percpu_nmi(unsigned int irq);
+बाह्य व्योम disable_nmi_nosync(अचिन्हित पूर्णांक irq);
+बाह्य व्योम disable_percpu_nmi(अचिन्हित पूर्णांक irq);
+बाह्य व्योम enable_nmi(अचिन्हित पूर्णांक irq);
+बाह्य व्योम enable_percpu_nmi(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक type);
+बाह्य पूर्णांक prepare_percpu_nmi(अचिन्हित पूर्णांक irq);
+बाह्य व्योम tearकरोwn_percpu_nmi(अचिन्हित पूर्णांक irq);
 
-extern int irq_inject_interrupt(unsigned int irq);
+बाह्य पूर्णांक irq_inject_पूर्णांकerrupt(अचिन्हित पूर्णांक irq);
 
-/* The following three functions are for the core kernel use only. */
-extern void suspend_device_irqs(void);
-extern void resume_device_irqs(void);
-extern void rearm_wake_irq(unsigned int irq);
+/* The following three functions are क्रम the core kernel use only. */
+बाह्य व्योम suspend_device_irqs(व्योम);
+बाह्य व्योम resume_device_irqs(व्योम);
+बाह्य व्योम rearm_wake_irq(अचिन्हित पूर्णांक irq);
 
 /**
- * struct irq_affinity_notify - context for notification of IRQ affinity changes
- * @irq:		Interrupt to which notification applies
- * @kref:		Reference count, for internal use
- * @work:		Work item, for internal use
- * @notify:		Function to be called on change.  This will be
+ * काष्ठा irq_affinity_notअगरy - context क्रम notअगरication of IRQ affinity changes
+ * @irq:		Interrupt to which notअगरication applies
+ * @kref:		Reference count, क्रम पूर्णांकernal use
+ * @work:		Work item, क्रम पूर्णांकernal use
+ * @notअगरy:		Function to be called on change.  This will be
  *			called in process context.
  * @release:		Function to be called on release.  This will be
- *			called in process context.  Once registered, the
- *			structure must only be freed when this function is
+ *			called in process context.  Once रेजिस्टरed, the
+ *			काष्ठाure must only be मुक्तd when this function is
  *			called or later.
  */
-struct irq_affinity_notify {
-	unsigned int irq;
-	struct kref kref;
-	struct work_struct work;
-	void (*notify)(struct irq_affinity_notify *, const cpumask_t *mask);
-	void (*release)(struct kref *ref);
-};
+काष्ठा irq_affinity_notअगरy अणु
+	अचिन्हित पूर्णांक irq;
+	काष्ठा kref kref;
+	काष्ठा work_काष्ठा work;
+	व्योम (*notअगरy)(काष्ठा irq_affinity_notअगरy *, स्थिर cpumask_t *mask);
+	व्योम (*release)(काष्ठा kref *ref);
+पूर्ण;
 
-#define	IRQ_AFFINITY_MAX_SETS  4
+#घोषणा	IRQ_AFFINITY_MAX_SETS  4
 
 /**
- * struct irq_affinity - Description for automatic irq affinity assignements
+ * काष्ठा irq_affinity - Description क्रम स्वतःmatic irq affinity assignements
  * @pre_vectors:	Don't apply affinity to @pre_vectors at beginning of
  *			the MSI(-X) vector space
  * @post_vectors:	Don't apply affinity to @post_vectors at end of
  *			the MSI(-X) vector space
- * @nr_sets:		The number of interrupt sets for which affinity
- *			spreading is required
- * @set_size:		Array holding the size of each interrupt set
- * @calc_sets:		Callback for calculating the number and size
- *			of interrupt sets
- * @priv:		Private data for usage by @calc_sets, usually a
- *			pointer to driver/device specific data.
+ * @nr_sets:		The number of पूर्णांकerrupt sets क्रम which affinity
+ *			spपढ़ोing is required
+ * @set_size:		Array holding the size of each पूर्णांकerrupt set
+ * @calc_sets:		Callback क्रम calculating the number and size
+ *			of पूर्णांकerrupt sets
+ * @priv:		Private data क्रम usage by @calc_sets, usually a
+ *			poपूर्णांकer to driver/device specअगरic data.
  */
-struct irq_affinity {
-	unsigned int	pre_vectors;
-	unsigned int	post_vectors;
-	unsigned int	nr_sets;
-	unsigned int	set_size[IRQ_AFFINITY_MAX_SETS];
-	void		(*calc_sets)(struct irq_affinity *, unsigned int nvecs);
-	void		*priv;
-};
+काष्ठा irq_affinity अणु
+	अचिन्हित पूर्णांक	pre_vectors;
+	अचिन्हित पूर्णांक	post_vectors;
+	अचिन्हित पूर्णांक	nr_sets;
+	अचिन्हित पूर्णांक	set_size[IRQ_AFFINITY_MAX_SETS];
+	व्योम		(*calc_sets)(काष्ठा irq_affinity *, अचिन्हित पूर्णांक nvecs);
+	व्योम		*priv;
+पूर्ण;
 
 /**
- * struct irq_affinity_desc - Interrupt affinity descriptor
+ * काष्ठा irq_affinity_desc - Interrupt affinity descriptor
  * @mask:	cpumask to hold the affinity assignment
- * @is_managed: 1 if the interrupt is managed internally
+ * @is_managed: 1 अगर the पूर्णांकerrupt is managed पूर्णांकernally
  */
-struct irq_affinity_desc {
-	struct cpumask	mask;
-	unsigned int	is_managed : 1;
-};
+काष्ठा irq_affinity_desc अणु
+	काष्ठा cpumask	mask;
+	अचिन्हित पूर्णांक	is_managed : 1;
+पूर्ण;
 
-#if defined(CONFIG_SMP)
+#अगर defined(CONFIG_SMP)
 
-extern cpumask_var_t irq_default_affinity;
+बाह्य cpumask_var_t irq_शेष_affinity;
 
 /* Internal implementation. Use the helpers below */
-extern int __irq_set_affinity(unsigned int irq, const struct cpumask *cpumask,
-			      bool force);
+बाह्य पूर्णांक __irq_set_affinity(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *cpumask,
+			      bool क्रमce);
 
 /**
  * irq_set_affinity - Set the irq affinity of a given irq
  * @irq:	Interrupt to set affinity
  * @cpumask:	cpumask
  *
- * Fails if cpumask does not contain an online CPU
+ * Fails अगर cpumask करोes not contain an online CPU
  */
-static inline int
-irq_set_affinity(unsigned int irq, const struct cpumask *cpumask)
-{
-	return __irq_set_affinity(irq, cpumask, false);
-}
+अटल अंतरभूत पूर्णांक
+irq_set_affinity(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *cpumask)
+अणु
+	वापस __irq_set_affinity(irq, cpumask, false);
+पूर्ण
 
 /**
- * irq_force_affinity - Force the irq affinity of a given irq
+ * irq_क्रमce_affinity - Force the irq affinity of a given irq
  * @irq:	Interrupt to set affinity
  * @cpumask:	cpumask
  *
  * Same as irq_set_affinity, but without checking the mask against
  * online cpus.
  *
- * Solely for low level cpu hotplug code, where we need to make per
- * cpu interrupts affine before the cpu becomes online.
+ * Solely क्रम low level cpu hotplug code, where we need to make per
+ * cpu पूर्णांकerrupts affine beक्रमe the cpu becomes online.
  */
-static inline int
-irq_force_affinity(unsigned int irq, const struct cpumask *cpumask)
-{
-	return __irq_set_affinity(irq, cpumask, true);
-}
+अटल अंतरभूत पूर्णांक
+irq_क्रमce_affinity(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *cpumask)
+अणु
+	वापस __irq_set_affinity(irq, cpumask, true);
+पूर्ण
 
-extern int irq_can_set_affinity(unsigned int irq);
-extern int irq_select_affinity(unsigned int irq);
+बाह्य पूर्णांक irq_can_set_affinity(अचिन्हित पूर्णांक irq);
+बाह्य पूर्णांक irq_select_affinity(अचिन्हित पूर्णांक irq);
 
-extern int irq_set_affinity_hint(unsigned int irq, const struct cpumask *m);
-extern int irq_update_affinity_desc(unsigned int irq,
-				    struct irq_affinity_desc *affinity);
+बाह्य पूर्णांक irq_set_affinity_hपूर्णांक(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *m);
+बाह्य पूर्णांक irq_update_affinity_desc(अचिन्हित पूर्णांक irq,
+				    काष्ठा irq_affinity_desc *affinity);
 
-extern int
-irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify);
+बाह्य पूर्णांक
+irq_set_affinity_notअगरier(अचिन्हित पूर्णांक irq, काष्ठा irq_affinity_notअगरy *notअगरy);
 
-struct irq_affinity_desc *
-irq_create_affinity_masks(unsigned int nvec, struct irq_affinity *affd);
+काष्ठा irq_affinity_desc *
+irq_create_affinity_masks(अचिन्हित पूर्णांक nvec, काष्ठा irq_affinity *affd);
 
-unsigned int irq_calc_affinity_vectors(unsigned int minvec, unsigned int maxvec,
-				       const struct irq_affinity *affd);
+अचिन्हित पूर्णांक irq_calc_affinity_vectors(अचिन्हित पूर्णांक minvec, अचिन्हित पूर्णांक maxvec,
+				       स्थिर काष्ठा irq_affinity *affd);
 
-#else /* CONFIG_SMP */
+#अन्यथा /* CONFIG_SMP */
 
-static inline int irq_set_affinity(unsigned int irq, const struct cpumask *m)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक irq_set_affinity(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *m)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int irq_force_affinity(unsigned int irq, const struct cpumask *cpumask)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक irq_क्रमce_affinity(अचिन्हित पूर्णांक irq, स्थिर काष्ठा cpumask *cpumask)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int irq_can_set_affinity(unsigned int irq)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक irq_can_set_affinity(अचिन्हित पूर्णांक irq)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int irq_select_affinity(unsigned int irq)  { return 0; }
+अटल अंतरभूत पूर्णांक irq_select_affinity(अचिन्हित पूर्णांक irq)  अणु वापस 0; पूर्ण
 
-static inline int irq_set_affinity_hint(unsigned int irq,
-					const struct cpumask *m)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक irq_set_affinity_hपूर्णांक(अचिन्हित पूर्णांक irq,
+					स्थिर काष्ठा cpumask *m)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int irq_update_affinity_desc(unsigned int irq,
-					   struct irq_affinity_desc *affinity)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक irq_update_affinity_desc(अचिन्हित पूर्णांक irq,
+					   काष्ठा irq_affinity_desc *affinity)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int
-irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+irq_set_affinity_notअगरier(अचिन्हित पूर्णांक irq, काष्ठा irq_affinity_notअगरy *notअगरy)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct irq_affinity_desc *
-irq_create_affinity_masks(unsigned int nvec, struct irq_affinity *affd)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा irq_affinity_desc *
+irq_create_affinity_masks(अचिन्हित पूर्णांक nvec, काष्ठा irq_affinity *affd)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline unsigned int
-irq_calc_affinity_vectors(unsigned int minvec, unsigned int maxvec,
-			  const struct irq_affinity *affd)
-{
-	return maxvec;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+irq_calc_affinity_vectors(अचिन्हित पूर्णांक minvec, अचिन्हित पूर्णांक maxvec,
+			  स्थिर काष्ठा irq_affinity *affd)
+अणु
+	वापस maxvec;
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
 /*
  * Special lockdep variants of irq disabling/enabling.
- * These should be used for locking constructs that
+ * These should be used क्रम locking स्थिरructs that
  * know that a particular irq context which is disabled,
  * and which is the only irq-context user of a lock,
  * that it's safe to take the lock in the irq-disabled
@@ -432,114 +433,114 @@ irq_calc_affinity_vectors(unsigned int minvec, unsigned int maxvec,
  * On !CONFIG_LOCKDEP they are equivalent to the normal
  * irq disable/enable methods.
  */
-static inline void disable_irq_nosync_lockdep(unsigned int irq)
-{
+अटल अंतरभूत व्योम disable_irq_nosync_lockdep(अचिन्हित पूर्णांक irq)
+अणु
 	disable_irq_nosync(irq);
-#ifdef CONFIG_LOCKDEP
+#अगर_घोषित CONFIG_LOCKDEP
 	local_irq_disable();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void disable_irq_nosync_lockdep_irqsave(unsigned int irq, unsigned long *flags)
-{
+अटल अंतरभूत व्योम disable_irq_nosync_lockdep_irqsave(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ *flags)
+अणु
 	disable_irq_nosync(irq);
-#ifdef CONFIG_LOCKDEP
+#अगर_घोषित CONFIG_LOCKDEP
 	local_irq_save(*flags);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void disable_irq_lockdep(unsigned int irq)
-{
+अटल अंतरभूत व्योम disable_irq_lockdep(अचिन्हित पूर्णांक irq)
+अणु
 	disable_irq(irq);
-#ifdef CONFIG_LOCKDEP
+#अगर_घोषित CONFIG_LOCKDEP
 	local_irq_disable();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void enable_irq_lockdep(unsigned int irq)
-{
-#ifdef CONFIG_LOCKDEP
+अटल अंतरभूत व्योम enable_irq_lockdep(अचिन्हित पूर्णांक irq)
+अणु
+#अगर_घोषित CONFIG_LOCKDEP
 	local_irq_enable();
-#endif
+#पूर्ण_अगर
 	enable_irq(irq);
-}
+पूर्ण
 
-static inline void enable_irq_lockdep_irqrestore(unsigned int irq, unsigned long *flags)
-{
-#ifdef CONFIG_LOCKDEP
+अटल अंतरभूत व्योम enable_irq_lockdep_irqrestore(अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ *flags)
+अणु
+#अगर_घोषित CONFIG_LOCKDEP
 	local_irq_restore(*flags);
-#endif
+#पूर्ण_अगर
 	enable_irq(irq);
-}
+पूर्ण
 
 /* IRQ wakeup (PM) control: */
-extern int irq_set_irq_wake(unsigned int irq, unsigned int on);
+बाह्य पूर्णांक irq_set_irq_wake(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक on);
 
-static inline int enable_irq_wake(unsigned int irq)
-{
-	return irq_set_irq_wake(irq, 1);
-}
+अटल अंतरभूत पूर्णांक enable_irq_wake(अचिन्हित पूर्णांक irq)
+अणु
+	वापस irq_set_irq_wake(irq, 1);
+पूर्ण
 
-static inline int disable_irq_wake(unsigned int irq)
-{
-	return irq_set_irq_wake(irq, 0);
-}
+अटल अंतरभूत पूर्णांक disable_irq_wake(अचिन्हित पूर्णांक irq)
+अणु
+	वापस irq_set_irq_wake(irq, 0);
+पूर्ण
 
 /*
- * irq_get_irqchip_state/irq_set_irqchip_state specific flags
+ * irq_get_irqchip_state/irq_set_irqchip_state specअगरic flags
  */
-enum irqchip_irq_state {
-	IRQCHIP_STATE_PENDING,		/* Is interrupt pending? */
-	IRQCHIP_STATE_ACTIVE,		/* Is interrupt in progress? */
-	IRQCHIP_STATE_MASKED,		/* Is interrupt masked? */
+क्रमागत irqchip_irq_state अणु
+	IRQCHIP_STATE_PENDING,		/* Is पूर्णांकerrupt pending? */
+	IRQCHIP_STATE_ACTIVE,		/* Is पूर्णांकerrupt in progress? */
+	IRQCHIP_STATE_MASKED,		/* Is पूर्णांकerrupt masked? */
 	IRQCHIP_STATE_LINE_LEVEL,	/* Is IRQ line high? */
-};
+पूर्ण;
 
-extern int irq_get_irqchip_state(unsigned int irq, enum irqchip_irq_state which,
+बाह्य पूर्णांक irq_get_irqchip_state(अचिन्हित पूर्णांक irq, क्रमागत irqchip_irq_state which,
 				 bool *state);
-extern int irq_set_irqchip_state(unsigned int irq, enum irqchip_irq_state which,
+बाह्य पूर्णांक irq_set_irqchip_state(अचिन्हित पूर्णांक irq, क्रमागत irqchip_irq_state which,
 				 bool state);
 
-#ifdef CONFIG_IRQ_FORCED_THREADING
-# ifdef CONFIG_PREEMPT_RT
-#  define force_irqthreads	(true)
-# else
-extern bool force_irqthreads;
-# endif
-#else
-#define force_irqthreads	(0)
-#endif
+#अगर_घोषित CONFIG_IRQ_FORCED_THREADING
+# अगरdef CONFIG_PREEMPT_RT
+#  define क्रमce_irqthपढ़ोs	(true)
+# अन्यथा
+बाह्य bool क्रमce_irqthपढ़ोs;
+# endअगर
+#अन्यथा
+#घोषणा क्रमce_irqthपढ़ोs	(0)
+#पूर्ण_अगर
 
-#ifndef local_softirq_pending
+#अगर_अघोषित local_softirq_pending
 
-#ifndef local_softirq_pending_ref
-#define local_softirq_pending_ref irq_stat.__softirq_pending
-#endif
+#अगर_अघोषित local_softirq_pending_ref
+#घोषणा local_softirq_pending_ref irq_stat.__softirq_pending
+#पूर्ण_अगर
 
-#define local_softirq_pending()	(__this_cpu_read(local_softirq_pending_ref))
-#define set_softirq_pending(x)	(__this_cpu_write(local_softirq_pending_ref, (x)))
-#define or_softirq_pending(x)	(__this_cpu_or(local_softirq_pending_ref, (x)))
+#घोषणा local_softirq_pending()	(__this_cpu_पढ़ो(local_softirq_pending_ref))
+#घोषणा set_softirq_pending(x)	(__this_cpu_ग_लिखो(local_softirq_pending_ref, (x)))
+#घोषणा or_softirq_pending(x)	(__this_cpu_or(local_softirq_pending_ref, (x)))
 
-#endif /* local_softirq_pending */
+#पूर्ण_अगर /* local_softirq_pending */
 
 /* Some architectures might implement lazy enabling/disabling of
- * interrupts. In some cases, such as stop_machine, we might want
- * to ensure that after a local_irq_disable(), interrupts have
+ * पूर्णांकerrupts. In some हालs, such as stop_machine, we might want
+ * to ensure that after a local_irq_disable(), पूर्णांकerrupts have
  * really been disabled in hardware. Such architectures need to
  * implement the following hook.
  */
-#ifndef hard_irq_disable
-#define hard_irq_disable()	do { } while(0)
-#endif
+#अगर_अघोषित hard_irq_disable
+#घोषणा hard_irq_disable()	करो अणु पूर्ण जबतक(0)
+#पूर्ण_अगर
 
-/* PLEASE, avoid to allocate new softirqs, if you need not _really_ high
-   frequency threaded job scheduling. For almost all the purposes
+/* PLEASE, aव्योम to allocate new softirqs, अगर you need not _really_ high
+   frequency thपढ़ोed job scheduling. For almost all the purposes
    tasklets are more than enough. F.e. all serial device BHs et
    al. should be converted to tasklets, not to softirqs.
  */
 
-enum
-{
+क्रमागत
+अणु
 	HI_SOFTIRQ=0,
 	TIMER_SOFTIRQ,
 	NET_TX_SOFTIRQ,
@@ -552,258 +553,258 @@ enum
 	RCU_SOFTIRQ,    /* Preferable RCU should always be the last softirq */
 
 	NR_SOFTIRQS
-};
+पूर्ण;
 
-#define SOFTIRQ_STOP_IDLE_MASK (~(1 << RCU_SOFTIRQ))
+#घोषणा SOFTIRQ_STOP_IDLE_MASK (~(1 << RCU_SOFTIRQ))
 
 /* map softirq index to softirq name. update 'softirq_to_name' in
  * kernel/softirq.c when adding a new softirq.
  */
-extern const char * const softirq_to_name[NR_SOFTIRQS];
+बाह्य स्थिर अक्षर * स्थिर softirq_to_name[NR_SOFTIRQS];
 
 /* softirq mask and active fields moved to irq_cpustat_t in
- * asm/hardirq.h to get better cache usage.  KAO
+ * यंत्र/hardirq.h to get better cache usage.  KAO
  */
 
-struct softirq_action
-{
-	void	(*action)(struct softirq_action *);
-};
+काष्ठा softirq_action
+अणु
+	व्योम	(*action)(काष्ठा softirq_action *);
+पूर्ण;
 
-asmlinkage void do_softirq(void);
-asmlinkage void __do_softirq(void);
+यंत्रlinkage व्योम करो_softirq(व्योम);
+यंत्रlinkage व्योम __करो_softirq(व्योम);
 
-extern void open_softirq(int nr, void (*action)(struct softirq_action *));
-extern void softirq_init(void);
-extern void __raise_softirq_irqoff(unsigned int nr);
+बाह्य व्योम खोलो_softirq(पूर्णांक nr, व्योम (*action)(काष्ठा softirq_action *));
+बाह्य व्योम softirq_init(व्योम);
+बाह्य व्योम __उठाओ_softirq_irqoff(अचिन्हित पूर्णांक nr);
 
-extern void raise_softirq_irqoff(unsigned int nr);
-extern void raise_softirq(unsigned int nr);
+बाह्य व्योम उठाओ_softirq_irqoff(अचिन्हित पूर्णांक nr);
+बाह्य व्योम उठाओ_softirq(अचिन्हित पूर्णांक nr);
 
-DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
+DECLARE_PER_CPU(काष्ठा task_काष्ठा *, ksoftirqd);
 
-static inline struct task_struct *this_cpu_ksoftirqd(void)
-{
-	return this_cpu_read(ksoftirqd);
-}
+अटल अंतरभूत काष्ठा task_काष्ठा *this_cpu_ksoftirqd(व्योम)
+अणु
+	वापस this_cpu_पढ़ो(ksoftirqd);
+पूर्ण
 
-/* Tasklets --- multithreaded analogue of BHs.
+/* Tasklets --- multithपढ़ोed analogue of BHs.
 
-   This API is deprecated. Please consider using threaded IRQs instead:
+   This API is deprecated. Please consider using thपढ़ोed IRQs instead:
    https://lore.kernel.org/lkml/20200716081538.2sivhkj4hcyrusem@linutronix.de
 
-   Main feature differing them of generic softirqs: tasklet
+   Main feature dअगरfering them of generic softirqs: tasklet
    is running only on one CPU simultaneously.
 
-   Main feature differing them of BHs: different tasklets
-   may be run simultaneously on different CPUs.
+   Main feature dअगरfering them of BHs: dअगरferent tasklets
+   may be run simultaneously on dअगरferent CPUs.
 
    Properties:
    * If tasklet_schedule() is called, then tasklet is guaranteed
      to be executed on some cpu at least once after this.
-   * If the tasklet is already scheduled, but its execution is still not
+   * If the tasklet is alपढ़ोy scheduled, but its execution is still not
      started, it will be executed only once.
-   * If this tasklet is already running on another CPU (or schedule is called
-     from tasklet itself), it is rescheduled for later.
+   * If this tasklet is alपढ़ोy running on another CPU (or schedule is called
+     from tasklet itself), it is rescheduled क्रम later.
    * Tasklet is strictly serialized wrt itself, but not
-     wrt another tasklets. If client needs some intertask synchronization,
+     wrt another tasklets. If client needs some पूर्णांकertask synchronization,
      he makes it with spinlocks.
  */
 
-struct tasklet_struct
-{
-	struct tasklet_struct *next;
-	unsigned long state;
+काष्ठा tasklet_काष्ठा
+अणु
+	काष्ठा tasklet_काष्ठा *next;
+	अचिन्हित दीर्घ state;
 	atomic_t count;
 	bool use_callback;
-	union {
-		void (*func)(unsigned long data);
-		void (*callback)(struct tasklet_struct *t);
-	};
-	unsigned long data;
-};
+	जोड़ अणु
+		व्योम (*func)(अचिन्हित दीर्घ data);
+		व्योम (*callback)(काष्ठा tasklet_काष्ठा *t);
+	पूर्ण;
+	अचिन्हित दीर्घ data;
+पूर्ण;
 
-#define DECLARE_TASKLET(name, _callback)		\
-struct tasklet_struct name = {				\
+#घोषणा DECLARE_TASKLET(name, _callback)		\
+काष्ठा tasklet_काष्ठा name = अणु				\
 	.count = ATOMIC_INIT(0),			\
 	.callback = _callback,				\
 	.use_callback = true,				\
-}
+पूर्ण
 
-#define DECLARE_TASKLET_DISABLED(name, _callback)	\
-struct tasklet_struct name = {				\
+#घोषणा DECLARE_TASKLET_DISABLED(name, _callback)	\
+काष्ठा tasklet_काष्ठा name = अणु				\
 	.count = ATOMIC_INIT(1),			\
 	.callback = _callback,				\
 	.use_callback = true,				\
-}
+पूर्ण
 
-#define from_tasklet(var, callback_tasklet, tasklet_fieldname)	\
+#घोषणा from_tasklet(var, callback_tasklet, tasklet_fieldname)	\
 	container_of(callback_tasklet, typeof(*var), tasklet_fieldname)
 
-#define DECLARE_TASKLET_OLD(name, _func)		\
-struct tasklet_struct name = {				\
+#घोषणा DECLARE_TASKLET_OLD(name, _func)		\
+काष्ठा tasklet_काष्ठा name = अणु				\
 	.count = ATOMIC_INIT(0),			\
 	.func = _func,					\
-}
+पूर्ण
 
-#define DECLARE_TASKLET_DISABLED_OLD(name, _func)	\
-struct tasklet_struct name = {				\
+#घोषणा DECLARE_TASKLET_DISABLED_OLD(name, _func)	\
+काष्ठा tasklet_काष्ठा name = अणु				\
 	.count = ATOMIC_INIT(1),			\
 	.func = _func,					\
-}
+पूर्ण
 
-enum
-{
-	TASKLET_STATE_SCHED,	/* Tasklet is scheduled for execution */
+क्रमागत
+अणु
+	TASKLET_STATE_SCHED,	/* Tasklet is scheduled क्रम execution */
 	TASKLET_STATE_RUN	/* Tasklet is running (SMP only) */
-};
+पूर्ण;
 
-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
-static inline int tasklet_trylock(struct tasklet_struct *t)
-{
-	return !test_and_set_bit(TASKLET_STATE_RUN, &(t)->state);
-}
+#अगर defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
+अटल अंतरभूत पूर्णांक tasklet_trylock(काष्ठा tasklet_काष्ठा *t)
+अणु
+	वापस !test_and_set_bit(TASKLET_STATE_RUN, &(t)->state);
+पूर्ण
 
-void tasklet_unlock(struct tasklet_struct *t);
-void tasklet_unlock_wait(struct tasklet_struct *t);
-void tasklet_unlock_spin_wait(struct tasklet_struct *t);
+व्योम tasklet_unlock(काष्ठा tasklet_काष्ठा *t);
+व्योम tasklet_unlock_रुको(काष्ठा tasklet_काष्ठा *t);
+व्योम tasklet_unlock_spin_रुको(काष्ठा tasklet_काष्ठा *t);
 
-#else
-static inline int tasklet_trylock(struct tasklet_struct *t) { return 1; }
-static inline void tasklet_unlock(struct tasklet_struct *t) { }
-static inline void tasklet_unlock_wait(struct tasklet_struct *t) { }
-static inline void tasklet_unlock_spin_wait(struct tasklet_struct *t) { }
-#endif
+#अन्यथा
+अटल अंतरभूत पूर्णांक tasklet_trylock(काष्ठा tasklet_काष्ठा *t) अणु वापस 1; पूर्ण
+अटल अंतरभूत व्योम tasklet_unlock(काष्ठा tasklet_काष्ठा *t) अणु पूर्ण
+अटल अंतरभूत व्योम tasklet_unlock_रुको(काष्ठा tasklet_काष्ठा *t) अणु पूर्ण
+अटल अंतरभूत व्योम tasklet_unlock_spin_रुको(काष्ठा tasklet_काष्ठा *t) अणु पूर्ण
+#पूर्ण_अगर
 
-extern void __tasklet_schedule(struct tasklet_struct *t);
+बाह्य व्योम __tasklet_schedule(काष्ठा tasklet_काष्ठा *t);
 
-static inline void tasklet_schedule(struct tasklet_struct *t)
-{
-	if (!test_and_set_bit(TASKLET_STATE_SCHED, &t->state))
+अटल अंतरभूत व्योम tasklet_schedule(काष्ठा tasklet_काष्ठा *t)
+अणु
+	अगर (!test_and_set_bit(TASKLET_STATE_SCHED, &t->state))
 		__tasklet_schedule(t);
-}
+पूर्ण
 
-extern void __tasklet_hi_schedule(struct tasklet_struct *t);
+बाह्य व्योम __tasklet_hi_schedule(काष्ठा tasklet_काष्ठा *t);
 
-static inline void tasklet_hi_schedule(struct tasklet_struct *t)
-{
-	if (!test_and_set_bit(TASKLET_STATE_SCHED, &t->state))
+अटल अंतरभूत व्योम tasklet_hi_schedule(काष्ठा tasklet_काष्ठा *t)
+अणु
+	अगर (!test_and_set_bit(TASKLET_STATE_SCHED, &t->state))
 		__tasklet_hi_schedule(t);
-}
+पूर्ण
 
-static inline void tasklet_disable_nosync(struct tasklet_struct *t)
-{
+अटल अंतरभूत व्योम tasklet_disable_nosync(काष्ठा tasklet_काष्ठा *t)
+अणु
 	atomic_inc(&t->count);
 	smp_mb__after_atomic();
-}
+पूर्ण
 
 /*
  * Do not use in new code. Disabling tasklets from atomic contexts is
- * error prone and should be avoided.
+ * error prone and should be aव्योमed.
  */
-static inline void tasklet_disable_in_atomic(struct tasklet_struct *t)
-{
+अटल अंतरभूत व्योम tasklet_disable_in_atomic(काष्ठा tasklet_काष्ठा *t)
+अणु
 	tasklet_disable_nosync(t);
-	tasklet_unlock_spin_wait(t);
+	tasklet_unlock_spin_रुको(t);
 	smp_mb();
-}
+पूर्ण
 
-static inline void tasklet_disable(struct tasklet_struct *t)
-{
+अटल अंतरभूत व्योम tasklet_disable(काष्ठा tasklet_काष्ठा *t)
+अणु
 	tasklet_disable_nosync(t);
-	tasklet_unlock_wait(t);
+	tasklet_unlock_रुको(t);
 	smp_mb();
-}
+पूर्ण
 
-static inline void tasklet_enable(struct tasklet_struct *t)
-{
-	smp_mb__before_atomic();
+अटल अंतरभूत व्योम tasklet_enable(काष्ठा tasklet_काष्ठा *t)
+अणु
+	smp_mb__beक्रमe_atomic();
 	atomic_dec(&t->count);
-}
+पूर्ण
 
-extern void tasklet_kill(struct tasklet_struct *t);
-extern void tasklet_init(struct tasklet_struct *t,
-			 void (*func)(unsigned long), unsigned long data);
-extern void tasklet_setup(struct tasklet_struct *t,
-			  void (*callback)(struct tasklet_struct *));
+बाह्य व्योम tasklet_समाप्त(काष्ठा tasklet_काष्ठा *t);
+बाह्य व्योम tasklet_init(काष्ठा tasklet_काष्ठा *t,
+			 व्योम (*func)(अचिन्हित दीर्घ), अचिन्हित दीर्घ data);
+बाह्य व्योम tasklet_setup(काष्ठा tasklet_काष्ठा *t,
+			  व्योम (*callback)(काष्ठा tasklet_काष्ठा *));
 
 /*
- * Autoprobing for irqs:
+ * Autoprobing क्रम irqs:
  *
  * probe_irq_on() and probe_irq_off() provide robust primitives
- * for accurate IRQ probing during kernel initialization.  They are
- * reasonably simple to use, are not "fooled" by spurious interrupts,
- * and, unlike other attempts at IRQ probing, they do not get hung on
- * stuck interrupts (such as unused PS2 mouse interfaces on ASUS boards).
+ * क्रम accurate IRQ probing during kernel initialization.  They are
+ * reasonably simple to use, are not "fooled" by spurious पूर्णांकerrupts,
+ * and, unlike other attempts at IRQ probing, they करो not get hung on
+ * stuck पूर्णांकerrupts (such as unused PS2 mouse पूर्णांकerfaces on ASUS boards).
  *
  * For reasonably foolproof probing, use them as follows:
  *
- * 1. clear and/or mask the device's internal interrupt.
+ * 1. clear and/or mask the device's पूर्णांकernal पूर्णांकerrupt.
  * 2. sti();
- * 3. irqs = probe_irq_on();      // "take over" all unassigned idle IRQs
- * 4. enable the device and cause it to trigger an interrupt.
- * 5. wait for the device to interrupt, using non-intrusive polling or a delay.
+ * 3. irqs = probe_irq_on();      // "take over" all unasचिन्हित idle IRQs
+ * 4. enable the device and cause it to trigger an पूर्णांकerrupt.
+ * 5. रुको क्रम the device to पूर्णांकerrupt, using non-पूर्णांकrusive polling or a delay.
  * 6. irq = probe_irq_off(irqs);  // get IRQ number, 0=none, negative=multiple
- * 7. service the device to clear its pending interrupt.
- * 8. loop again if paranoia is required.
+ * 7. service the device to clear its pending पूर्णांकerrupt.
+ * 8. loop again अगर paranoia is required.
  *
- * probe_irq_on() returns a mask of allocated irq's.
+ * probe_irq_on() वापसs a mask of allocated irq's.
  *
  * probe_irq_off() takes the mask as a parameter,
- * and returns the irq number which occurred,
- * or zero if none occurred, or a negative irq number
- * if more than one irq occurred.
+ * and वापसs the irq number which occurred,
+ * or zero अगर none occurred, or a negative irq number
+ * अगर more than one irq occurred.
  */
 
-#if !defined(CONFIG_GENERIC_IRQ_PROBE) 
-static inline unsigned long probe_irq_on(void)
-{
-	return 0;
-}
-static inline int probe_irq_off(unsigned long val)
-{
-	return 0;
-}
-static inline unsigned int probe_irq_mask(unsigned long val)
-{
-	return 0;
-}
-#else
-extern unsigned long probe_irq_on(void);	/* returns 0 on failure */
-extern int probe_irq_off(unsigned long);	/* returns 0 or negative on failure */
-extern unsigned int probe_irq_mask(unsigned long);	/* returns mask of ISA interrupts */
-#endif
+#अगर !defined(CONFIG_GENERIC_IRQ_PROBE) 
+अटल अंतरभूत अचिन्हित दीर्घ probe_irq_on(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक probe_irq_off(अचिन्हित दीर्घ val)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत अचिन्हित पूर्णांक probe_irq_mask(अचिन्हित दीर्घ val)
+अणु
+	वापस 0;
+पूर्ण
+#अन्यथा
+बाह्य अचिन्हित दीर्घ probe_irq_on(व्योम);	/* वापसs 0 on failure */
+बाह्य पूर्णांक probe_irq_off(अचिन्हित दीर्घ);	/* वापसs 0 or negative on failure */
+बाह्य अचिन्हित पूर्णांक probe_irq_mask(अचिन्हित दीर्घ);	/* वापसs mask of ISA पूर्णांकerrupts */
+#पूर्ण_अगर
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 /* Initialize /proc/irq/ */
-extern void init_irq_proc(void);
-#else
-static inline void init_irq_proc(void)
-{
-}
-#endif
+बाह्य व्योम init_irq_proc(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम init_irq_proc(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_IRQ_TIMINGS
-void irq_timings_enable(void);
-void irq_timings_disable(void);
+#अगर_घोषित CONFIG_IRQ_TIMINGS
+व्योम irq_timings_enable(व्योम);
+व्योम irq_timings_disable(व्योम);
 u64 irq_timings_next_event(u64 now);
-#endif
+#पूर्ण_अगर
 
-struct seq_file;
-int show_interrupts(struct seq_file *p, void *v);
-int arch_show_interrupts(struct seq_file *p, int prec);
+काष्ठा seq_file;
+पूर्णांक show_पूर्णांकerrupts(काष्ठा seq_file *p, व्योम *v);
+पूर्णांक arch_show_पूर्णांकerrupts(काष्ठा seq_file *p, पूर्णांक prec);
 
-extern int early_irq_init(void);
-extern int arch_probe_nr_irqs(void);
-extern int arch_early_irq_init(void);
+बाह्य पूर्णांक early_irq_init(व्योम);
+बाह्य पूर्णांक arch_probe_nr_irqs(व्योम);
+बाह्य पूर्णांक arch_early_irq_init(व्योम);
 
 /*
- * We want to know which function is an entrypoint of a hardirq or a softirq.
+ * We want to know which function is an entrypoपूर्णांक of a hardirq or a softirq.
  */
-#ifndef __irq_entry
+#अगर_अघोषित __irq_entry
 # define __irq_entry	 __section(".irqentry.text")
-#endif
+#पूर्ण_अगर
 
-#define __softirq_entry  __section(".softirqentry.text")
+#घोषणा __softirq_entry  __section(".softirqentry.text")
 
-#endif
+#पूर्ण_अगर

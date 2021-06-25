@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_HEARTBEAT_H
-#define __ASM_SH_HEARTBEAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_HEARTBEAT_H
+#घोषणा __ASM_SH_HEARTBEAT_H
 
-#include <linux/timer.h>
+#समावेश <linux/समयr.h>
 
-#define HEARTBEAT_INVERTED	(1 << 0)
+#घोषणा HEARTBEAT_INVERTED	(1 << 0)
 
-struct heartbeat_data {
-	void __iomem *base;
-	unsigned char *bit_pos;
-	unsigned int nr_bits;
-	struct timer_list timer;
-	unsigned int regsize;
-	unsigned int mask;
-	unsigned long flags;
-};
+काष्ठा heartbeat_data अणु
+	व्योम __iomem *base;
+	अचिन्हित अक्षर *bit_pos;
+	अचिन्हित पूर्णांक nr_bits;
+	काष्ठा समयr_list समयr;
+	अचिन्हित पूर्णांक regsize;
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-#endif /* __ASM_SH_HEARTBEAT_H */
+#पूर्ण_अगर /* __ASM_SH_HEARTBEAT_H */

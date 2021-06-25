@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Parav Pandit <pandit.parav@gmail.com>
  */
 
-#ifndef _CGROUP_RDMA_H
-#define _CGROUP_RDMA_H
+#अगर_अघोषित _CGROUP_RDMA_H
+#घोषणा _CGROUP_RDMA_H
 
-#include <linux/cgroup.h>
+#समावेश <linux/cgroup.h>
 
-enum rdmacg_resource_type {
+क्रमागत rdmacg_resource_type अणु
 	RDMACG_RESOURCE_HCA_HANDLE,
 	RDMACG_RESOURCE_HCA_OBJECT,
 	RDMACG_RESOURCE_MAX,
-};
+पूर्ण;
 
-#ifdef CONFIG_CGROUP_RDMA
+#अगर_घोषित CONFIG_CGROUP_RDMA
 
-struct rdma_cgroup {
-	struct cgroup_subsys_state	css;
+काष्ठा rdma_cgroup अणु
+	काष्ठा cgroup_subsys_state	css;
 
 	/*
 	 * head to keep track of all resource pools
-	 * that belongs to this cgroup.
+	 * that beदीर्घs to this cgroup.
 	 */
-	struct list_head		rpools;
-};
+	काष्ठा list_head		rpools;
+पूर्ण;
 
-struct rdmacg_device {
-	struct list_head	dev_node;
-	struct list_head	rpools;
-	char			*name;
-};
+काष्ठा rdmacg_device अणु
+	काष्ठा list_head	dev_node;
+	काष्ठा list_head	rpools;
+	अक्षर			*name;
+पूर्ण;
 
 /*
- * APIs for RDMA/IB stack to publish when a device wants to
+ * APIs क्रम RDMA/IB stack to publish when a device wants to
  * participate in resource accounting
  */
-void rdmacg_register_device(struct rdmacg_device *device);
-void rdmacg_unregister_device(struct rdmacg_device *device);
+व्योम rdmacg_रेजिस्टर_device(काष्ठा rdmacg_device *device);
+व्योम rdmacg_unरेजिस्टर_device(काष्ठा rdmacg_device *device);
 
-/* APIs for RDMA/IB stack to charge/uncharge pool specific resources */
-int rdmacg_try_charge(struct rdma_cgroup **rdmacg,
-		      struct rdmacg_device *device,
-		      enum rdmacg_resource_type index);
-void rdmacg_uncharge(struct rdma_cgroup *cg,
-		     struct rdmacg_device *device,
-		     enum rdmacg_resource_type index);
-#endif	/* CONFIG_CGROUP_RDMA */
-#endif	/* _CGROUP_RDMA_H */
+/* APIs क्रम RDMA/IB stack to अक्षरge/unअक्षरge pool specअगरic resources */
+पूर्णांक rdmacg_try_अक्षरge(काष्ठा rdma_cgroup **rdmacg,
+		      काष्ठा rdmacg_device *device,
+		      क्रमागत rdmacg_resource_type index);
+व्योम rdmacg_unअक्षरge(काष्ठा rdma_cgroup *cg,
+		     काष्ठा rdmacg_device *device,
+		     क्रमागत rdmacg_resource_type index);
+#पूर्ण_अगर	/* CONFIG_CGROUP_RDMA */
+#पूर्ण_अगर	/* _CGROUP_RDMA_H */

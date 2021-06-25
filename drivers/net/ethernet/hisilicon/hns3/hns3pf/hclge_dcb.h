@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
-#ifndef __HCLGE_DCB_H__
-#define __HCLGE_DCB_H__
+#अगर_अघोषित __HCLGE_DCB_H__
+#घोषणा __HCLGE_DCB_H__
 
-#include "hclge_main.h"
+#समावेश "hclge_main.h"
 
-#ifdef CONFIG_HNS3_DCB
-void hclge_dcb_ops_set(struct hclge_dev *hdev);
-#else
-static inline void hclge_dcb_ops_set(struct hclge_dev *hdev) {}
-#endif
+#अगर_घोषित CONFIG_HNS3_DCB
+व्योम hclge_dcb_ops_set(काष्ठा hclge_dev *hdev);
+#अन्यथा
+अटल अंतरभूत व्योम hclge_dcb_ops_set(काष्ठा hclge_dev *hdev) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __HCLGE_DCB_H__ */
+#पूर्ण_अगर /* __HCLGE_DCB_H__ */

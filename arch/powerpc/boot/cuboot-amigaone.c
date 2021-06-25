@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Old U-boot compatibility for AmigaOne
+ * Old U-boot compatibility क्रम AmigaOne
  *
  * Author: Gerhard Pircher (gerhard_pircher@gmx.net)
  *
@@ -8,25 +9,25 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  */
 
-#include "ops.h"
-#include "stdio.h"
-#include "cuboot.h"
+#समावेश "ops.h"
+#समावेश "stdio.h"
+#समावेश "cuboot.h"
 
-#include "ppcboot.h"
+#समावेश "ppcboot.h"
 
-static bd_t bd;
+अटल bd_t bd;
 
-static void platform_fixups(void)
-{
+अटल व्योम platक्रमm_fixups(व्योम)
+अणु
 	dt_fixup_memory(bd.bi_memstart, bd.bi_memsize);
-	dt_fixup_cpu_clocks(bd.bi_intfreq, bd.bi_busfreq / 4, bd.bi_busfreq);
-}
+	dt_fixup_cpu_घड़ीs(bd.bi_पूर्णांकfreq, bd.bi_busfreq / 4, bd.bi_busfreq);
+पूर्ण
 
-void platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
-                   unsigned long r6, unsigned long r7)
-{
+व्योम platक्रमm_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4, अचिन्हित दीर्घ r5,
+                   अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7)
+अणु
 	CUBOOT_INIT();
 	fdt_init(_dtb_start);
 	serial_console_init();
-	platform_ops.fixups = platform_fixups;
-}
+	platक्रमm_ops.fixups = platक्रमm_fixups;
+पूर्ण

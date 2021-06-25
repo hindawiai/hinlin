@@ -1,954 +1,955 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * build-id.c
  *
  * build-id support
  *
  * Copyright (C) 2009, 2010 Red Hat Inc.
- * Copyright (C) 2009, 2010 Arnaldo Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2009, 2010 Arnalकरो Carvalho de Melo <acme@redhat.com>
  */
-#include "util.h" // lsdir(), mkdir_p(), rm_rf()
-#include <dirent.h>
-#include <errno.h>
-#include <stdio.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "util/copyfile.h"
-#include "dso.h"
-#include "build-id.h"
-#include "event.h"
-#include "namespaces.h"
-#include "map.h"
-#include "symbol.h"
-#include "thread.h"
-#include <linux/kernel.h>
-#include "debug.h"
-#include "session.h"
-#include "tool.h"
-#include "header.h"
-#include "vdso.h"
-#include "path.h"
-#include "probe-file.h"
-#include "strlist.h"
+#समावेश "util.h" // lsdir(), सूची_गढ़ो_p(), rm_rf()
+#समावेश <dirent.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश "util/copyfile.h"
+#समावेश "dso.h"
+#समावेश "build-id.h"
+#समावेश "event.h"
+#समावेश "namespaces.h"
+#समावेश "map.h"
+#समावेश "symbol.h"
+#समावेश "thread.h"
+#समावेश <linux/kernel.h>
+#समावेश "debug.h"
+#समावेश "session.h"
+#समावेश "tool.h"
+#समावेश "header.h"
+#समावेश "vdso.h"
+#समावेश "path.h"
+#समावेश "probe-file.h"
+#समावेश "strlist.h"
 
-#ifdef HAVE_DEBUGINFOD_SUPPORT
-#include <elfutils/debuginfod.h>
-#endif
+#अगर_घोषित HAVE_DEBUGINFOD_SUPPORT
+#समावेश <elfutils/debuginfod.h>
+#पूर्ण_अगर
 
-#include <linux/ctype.h>
-#include <linux/zalloc.h>
-#include <linux/string.h>
-#include <asm/bug.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/zभाग.स>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/bug.h>
 
-static bool no_buildid_cache;
+अटल bool no_buildid_cache;
 
-int build_id__mark_dso_hit(struct perf_tool *tool __maybe_unused,
-			   union perf_event *event,
-			   struct perf_sample *sample,
-			   struct evsel *evsel __maybe_unused,
-			   struct machine *machine)
-{
-	struct addr_location al;
-	struct thread *thread = machine__findnew_thread(machine, sample->pid,
+पूर्णांक build_id__mark_dso_hit(काष्ठा perf_tool *tool __maybe_unused,
+			   जोड़ perf_event *event,
+			   काष्ठा perf_sample *sample,
+			   काष्ठा evsel *evsel __maybe_unused,
+			   काष्ठा machine *machine)
+अणु
+	काष्ठा addr_location al;
+	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid,
 							sample->tid);
 
-	if (thread == NULL) {
+	अगर (thपढ़ो == शून्य) अणु
 		pr_err("problem processing %d event, skipping it.\n",
 			event->header.type);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (thread__find_map(thread, sample->cpumode, sample->ip, &al))
+	अगर (thपढ़ो__find_map(thपढ़ो, sample->cpumode, sample->ip, &al))
 		al.map->dso->hit = 1;
 
-	thread__put(thread);
-	return 0;
-}
+	thपढ़ो__put(thपढ़ो);
+	वापस 0;
+पूर्ण
 
-static int perf_event__exit_del_thread(struct perf_tool *tool __maybe_unused,
-				       union perf_event *event,
-				       struct perf_sample *sample
+अटल पूर्णांक perf_event__निकास_del_thपढ़ो(काष्ठा perf_tool *tool __maybe_unused,
+				       जोड़ perf_event *event,
+				       काष्ठा perf_sample *sample
 				       __maybe_unused,
-				       struct machine *machine)
-{
-	struct thread *thread = machine__findnew_thread(machine,
-							event->fork.pid,
-							event->fork.tid);
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(machine,
+							event->विभाजन.pid,
+							event->विभाजन.tid);
 
-	dump_printf("(%d:%d):(%d:%d)\n", event->fork.pid, event->fork.tid,
-		    event->fork.ppid, event->fork.ptid);
+	dump_म_लिखो("(%d:%d):(%d:%d)\n", event->विभाजन.pid, event->विभाजन.tid,
+		    event->विभाजन.ppid, event->विभाजन.ptid);
 
-	if (thread) {
-		machine__remove_thread(machine, thread);
-		thread__put(thread);
-	}
+	अगर (thपढ़ो) अणु
+		machine__हटाओ_thपढ़ो(machine, thपढ़ो);
+		thपढ़ो__put(thपढ़ो);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct perf_tool build_id__mark_dso_hit_ops = {
+काष्ठा perf_tool build_id__mark_dso_hit_ops = अणु
 	.sample	= build_id__mark_dso_hit,
 	.mmap	= perf_event__process_mmap,
 	.mmap2	= perf_event__process_mmap2,
-	.fork	= perf_event__process_fork,
-	.exit	= perf_event__exit_del_thread,
+	.विभाजन	= perf_event__process_विभाजन,
+	.निकास	= perf_event__निकास_del_thपढ़ो,
 	.attr		 = perf_event__process_attr,
 	.build_id	 = perf_event__process_build_id,
 	.ordered_events	 = true,
-};
+पूर्ण;
 
-int build_id__sprintf(const struct build_id *build_id, char *bf)
-{
-	char *bid = bf;
-	const u8 *raw = build_id->data;
-	size_t i;
+पूर्णांक build_id__प्र_लिखो(स्थिर काष्ठा build_id *build_id, अक्षर *bf)
+अणु
+	अक्षर *bid = bf;
+	स्थिर u8 *raw = build_id->data;
+	माप_प्रकार i;
 
 	bf[0] = 0x0;
 
-	for (i = 0; i < build_id->size; ++i) {
-		sprintf(bid, "%02x", *raw);
+	क्रम (i = 0; i < build_id->size; ++i) अणु
+		प्र_लिखो(bid, "%02x", *raw);
 		++raw;
 		bid += 2;
-	}
+	पूर्ण
 
-	return (bid - bf) + 1;
-}
+	वापस (bid - bf) + 1;
+पूर्ण
 
-int sysfs__sprintf_build_id(const char *root_dir, char *sbuild_id)
-{
-	char notes[PATH_MAX];
-	struct build_id bid;
-	int ret;
+पूर्णांक sysfs__प्र_लिखो_build_id(स्थिर अक्षर *root_dir, अक्षर *sbuild_id)
+अणु
+	अक्षर notes[PATH_MAX];
+	काष्ठा build_id bid;
+	पूर्णांक ret;
 
-	if (!root_dir)
+	अगर (!root_dir)
 		root_dir = "";
 
-	scnprintf(notes, sizeof(notes), "%s/sys/kernel/notes", root_dir);
+	scnम_लिखो(notes, माप(notes), "%s/sys/kernel/notes", root_dir);
 
-	ret = sysfs__read_build_id(notes, &bid);
-	if (ret < 0)
-		return ret;
+	ret = sysfs__पढ़ो_build_id(notes, &bid);
+	अगर (ret < 0)
+		वापस ret;
 
-	return build_id__sprintf(&bid, sbuild_id);
-}
+	वापस build_id__प्र_लिखो(&bid, sbuild_id);
+पूर्ण
 
-int filename__sprintf_build_id(const char *pathname, char *sbuild_id)
-{
-	struct build_id bid;
-	int ret;
+पूर्णांक filename__प्र_लिखो_build_id(स्थिर अक्षर *pathname, अक्षर *sbuild_id)
+अणु
+	काष्ठा build_id bid;
+	पूर्णांक ret;
 
-	ret = filename__read_build_id(pathname, &bid);
-	if (ret < 0)
-		return ret;
+	ret = filename__पढ़ो_build_id(pathname, &bid);
+	अगर (ret < 0)
+		वापस ret;
 
-	return build_id__sprintf(&bid, sbuild_id);
-}
+	वापस build_id__प्र_लिखो(&bid, sbuild_id);
+पूर्ण
 
-/* asnprintf consolidates asprintf and snprintf */
-static int asnprintf(char **strp, size_t size, const char *fmt, ...)
-{
-	va_list ap;
-	int ret;
+/* asnम_लिखो consolidates aप्र_लिखो and snम_लिखो */
+अटल पूर्णांक asnम_लिखो(अक्षर **strp, माप_प्रकार size, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
+	पूर्णांक ret;
 
-	if (!strp)
-		return -EINVAL;
+	अगर (!strp)
+		वापस -EINVAL;
 
-	va_start(ap, fmt);
-	if (*strp)
-		ret = vsnprintf(*strp, size, fmt, ap);
-	else
-		ret = vasprintf(strp, fmt, ap);
-	va_end(ap);
+	बहु_शुरू(ap, fmt);
+	अगर (*strp)
+		ret = vsnम_लिखो(*strp, size, fmt, ap);
+	अन्यथा
+		ret = vaप्र_लिखो(strp, fmt, ap);
+	बहु_पूर्ण(ap);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-char *build_id_cache__kallsyms_path(const char *sbuild_id, char *bf,
-				    size_t size)
-{
+अक्षर *build_id_cache__kallsyms_path(स्थिर अक्षर *sbuild_id, अक्षर *bf,
+				    माप_प्रकार size)
+अणु
 	bool retry_old = true;
 
-	snprintf(bf, size, "%s/%s/%s/kallsyms",
+	snम_लिखो(bf, size, "%s/%s/%s/kallsyms",
 		 buildid_dir, DSO__NAME_KALLSYMS, sbuild_id);
 retry:
-	if (!access(bf, F_OK))
-		return bf;
-	if (retry_old) {
+	अगर (!access(bf, F_OK))
+		वापस bf;
+	अगर (retry_old) अणु
 		/* Try old style kallsyms cache */
-		snprintf(bf, size, "%s/%s/%s",
+		snम_लिखो(bf, size, "%s/%s/%s",
 			 buildid_dir, DSO__NAME_KALLSYMS, sbuild_id);
 		retry_old = false;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-char *build_id_cache__linkname(const char *sbuild_id, char *bf, size_t size)
-{
-	char *tmp = bf;
-	int ret = asnprintf(&bf, size, "%s/.build-id/%.2s/%s", buildid_dir,
+अक्षर *build_id_cache__linkname(स्थिर अक्षर *sbuild_id, अक्षर *bf, माप_प्रकार size)
+अणु
+	अक्षर *पंचांगp = bf;
+	पूर्णांक ret = asnम_लिखो(&bf, size, "%s/.build-id/%.2s/%s", buildid_dir,
 			    sbuild_id, sbuild_id + 2);
-	if (ret < 0 || (tmp && size < (unsigned int)ret))
-		return NULL;
-	return bf;
-}
+	अगर (ret < 0 || (पंचांगp && size < (अचिन्हित पूर्णांक)ret))
+		वापस शून्य;
+	वापस bf;
+पूर्ण
 
-/* The caller is responsible to free the returned buffer. */
-char *build_id_cache__origname(const char *sbuild_id)
-{
-	char *linkname;
-	char buf[PATH_MAX];
-	char *ret = NULL, *p;
-	size_t offs = 5;	/* == strlen("../..") */
-	ssize_t len;
+/* The caller is responsible to मुक्त the वापसed buffer. */
+अक्षर *build_id_cache__origname(स्थिर अक्षर *sbuild_id)
+अणु
+	अक्षर *linkname;
+	अक्षर buf[PATH_MAX];
+	अक्षर *ret = शून्य, *p;
+	माप_प्रकार offs = 5;	/* == म_माप("../..") */
+	sमाप_प्रकार len;
 
-	linkname = build_id_cache__linkname(sbuild_id, NULL, 0);
-	if (!linkname)
-		return NULL;
+	linkname = build_id_cache__linkname(sbuild_id, शून्य, 0);
+	अगर (!linkname)
+		वापस शून्य;
 
-	len = readlink(linkname, buf, sizeof(buf) - 1);
-	if (len <= 0)
-		goto out;
+	len = पढ़ोlink(linkname, buf, माप(buf) - 1);
+	अगर (len <= 0)
+		जाओ out;
 	buf[len] = '\0';
 
 	/* The link should be "../..<origpath>/<sbuild_id>" */
-	p = strrchr(buf, '/');	/* Cut off the "/<sbuild_id>" */
-	if (p && (p > buf + offs)) {
+	p = म_खोजप(buf, '/');	/* Cut off the "/<sbuild_id>" */
+	अगर (p && (p > buf + offs)) अणु
 		*p = '\0';
-		if (buf[offs + 1] == '[')
+		अगर (buf[offs + 1] == '[')
 			offs++;	/*
 				 * This is a DSO name, like [kernel.kallsyms].
 				 * Skip the first '/', since this is not the
 				 * cache of a regular file.
 				 */
 		ret = strdup(buf + offs);	/* Skip "../..[/]" */
-	}
+	पूर्ण
 out:
-	free(linkname);
-	return ret;
-}
+	मुक्त(linkname);
+	वापस ret;
+पूर्ण
 
-/* Check if the given build_id cache is valid on current running system */
-static bool build_id_cache__valid_id(char *sbuild_id)
-{
-	char real_sbuild_id[SBUILD_ID_SIZE] = "";
-	char *pathname;
-	int ret = 0;
+/* Check अगर the given build_id cache is valid on current running प्रणाली */
+अटल bool build_id_cache__valid_id(अक्षर *sbuild_id)
+अणु
+	अक्षर real_sbuild_id[SBUILD_ID_SIZE] = "";
+	अक्षर *pathname;
+	पूर्णांक ret = 0;
 	bool result = false;
 
 	pathname = build_id_cache__origname(sbuild_id);
-	if (!pathname)
-		return false;
+	अगर (!pathname)
+		वापस false;
 
-	if (!strcmp(pathname, DSO__NAME_KALLSYMS))
-		ret = sysfs__sprintf_build_id("/", real_sbuild_id);
-	else if (pathname[0] == '/')
-		ret = filename__sprintf_build_id(pathname, real_sbuild_id);
-	else
+	अगर (!म_भेद(pathname, DSO__NAME_KALLSYMS))
+		ret = sysfs__प्र_लिखो_build_id("/", real_sbuild_id);
+	अन्यथा अगर (pathname[0] == '/')
+		ret = filename__प्र_लिखो_build_id(pathname, real_sbuild_id);
+	अन्यथा
 		ret = -EINVAL;	/* Should we support other special DSO cache? */
-	if (ret >= 0)
-		result = (strcmp(sbuild_id, real_sbuild_id) == 0);
-	free(pathname);
+	अगर (ret >= 0)
+		result = (म_भेद(sbuild_id, real_sbuild_id) == 0);
+	मुक्त(pathname);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static const char *build_id_cache__basename(bool is_kallsyms, bool is_vdso,
+अटल स्थिर अक्षर *build_id_cache__basename(bool is_kallsyms, bool is_vdso,
 					    bool is_debug)
-{
-	return is_kallsyms ? "kallsyms" : (is_vdso ? "vdso" : (is_debug ?
+अणु
+	वापस is_kallsyms ? "kallsyms" : (is_vdso ? "vdso" : (is_debug ?
 	    "debug" : "elf"));
-}
+पूर्ण
 
-char *__dso__build_id_filename(const struct dso *dso, char *bf, size_t size,
+अक्षर *__dso__build_id_filename(स्थिर काष्ठा dso *dso, अक्षर *bf, माप_प्रकार size,
 			       bool is_debug, bool is_kallsyms)
-{
-	bool is_vdso = dso__is_vdso((struct dso *)dso);
-	char sbuild_id[SBUILD_ID_SIZE];
-	char *linkname;
-	bool alloc = (bf == NULL);
-	int ret;
+अणु
+	bool is_vdso = dso__is_vdso((काष्ठा dso *)dso);
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
+	अक्षर *linkname;
+	bool alloc = (bf == शून्य);
+	पूर्णांक ret;
 
-	if (!dso->has_build_id)
-		return NULL;
+	अगर (!dso->has_build_id)
+		वापस शून्य;
 
-	build_id__sprintf(&dso->bid, sbuild_id);
-	linkname = build_id_cache__linkname(sbuild_id, NULL, 0);
-	if (!linkname)
-		return NULL;
+	build_id__प्र_लिखो(&dso->bid, sbuild_id);
+	linkname = build_id_cache__linkname(sbuild_id, शून्य, 0);
+	अगर (!linkname)
+		वापस शून्य;
 
-	/* Check if old style build_id cache */
-	if (is_regular_file(linkname))
-		ret = asnprintf(&bf, size, "%s", linkname);
-	else
-		ret = asnprintf(&bf, size, "%s/%s", linkname,
+	/* Check अगर old style build_id cache */
+	अगर (is_regular_file(linkname))
+		ret = asnम_लिखो(&bf, size, "%s", linkname);
+	अन्यथा
+		ret = asnम_लिखो(&bf, size, "%s/%s", linkname,
 			 build_id_cache__basename(is_kallsyms, is_vdso,
 						  is_debug));
-	if (ret < 0 || (!alloc && size < (unsigned int)ret))
-		bf = NULL;
-	free(linkname);
+	अगर (ret < 0 || (!alloc && size < (अचिन्हित पूर्णांक)ret))
+		bf = शून्य;
+	मुक्त(linkname);
 
-	return bf;
-}
+	वापस bf;
+पूर्ण
 
-char *dso__build_id_filename(const struct dso *dso, char *bf, size_t size,
+अक्षर *dso__build_id_filename(स्थिर काष्ठा dso *dso, अक्षर *bf, माप_प्रकार size,
 			     bool is_debug)
-{
-	bool is_kallsyms = dso__is_kallsyms((struct dso *)dso);
+अणु
+	bool is_kallsyms = dso__is_kallsyms((काष्ठा dso *)dso);
 
-	return __dso__build_id_filename(dso, bf, size, is_debug, is_kallsyms);
-}
+	वापस __dso__build_id_filename(dso, bf, size, is_debug, is_kallsyms);
+पूर्ण
 
-#define dsos__for_each_with_build_id(pos, head)	\
-	list_for_each_entry(pos, head, node)	\
-		if (!pos->has_build_id)		\
-			continue;		\
-		else
+#घोषणा dsos__क्रम_each_with_build_id(pos, head)	\
+	list_क्रम_each_entry(pos, head, node)	\
+		अगर (!pos->has_build_id)		\
+			जारी;		\
+		अन्यथा
 
-static int write_buildid(const char *name, size_t name_len, struct build_id *bid,
-			 pid_t pid, u16 misc, struct feat_fd *fd)
-{
-	int err;
-	struct perf_record_header_build_id b;
-	size_t len;
+अटल पूर्णांक ग_लिखो_buildid(स्थिर अक्षर *name, माप_प्रकार name_len, काष्ठा build_id *bid,
+			 pid_t pid, u16 misc, काष्ठा feat_fd *fd)
+अणु
+	पूर्णांक err;
+	काष्ठा perf_record_header_build_id b;
+	माप_प्रकार len;
 
 	len = name_len + 1;
 	len = PERF_ALIGN(len, NAME_ALIGN);
 
-	memset(&b, 0, sizeof(b));
-	memcpy(&b.data, bid->data, bid->size);
+	स_रखो(&b, 0, माप(b));
+	स_नकल(&b.data, bid->data, bid->size);
 	b.size = (u8) bid->size;
 	misc |= PERF_RECORD_MISC_BUILD_ID_SIZE;
 	b.pid = pid;
 	b.header.misc = misc;
-	b.header.size = sizeof(b) + len;
+	b.header.size = माप(b) + len;
 
-	err = do_write(fd, &b, sizeof(b));
-	if (err < 0)
-		return err;
+	err = करो_ग_लिखो(fd, &b, माप(b));
+	अगर (err < 0)
+		वापस err;
 
-	return write_padded(fd, name, name_len + 1, len);
-}
+	वापस ग_लिखो_padded(fd, name, name_len + 1, len);
+पूर्ण
 
-static int machine__write_buildid_table(struct machine *machine,
-					struct feat_fd *fd)
-{
-	int err = 0;
-	struct dso *pos;
+अटल पूर्णांक machine__ग_लिखो_buildid_table(काष्ठा machine *machine,
+					काष्ठा feat_fd *fd)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा dso *pos;
 	u16 kmisc = PERF_RECORD_MISC_KERNEL,
 	    umisc = PERF_RECORD_MISC_USER;
 
-	if (!machine__is_host(machine)) {
+	अगर (!machine__is_host(machine)) अणु
 		kmisc = PERF_RECORD_MISC_GUEST_KERNEL;
 		umisc = PERF_RECORD_MISC_GUEST_USER;
-	}
+	पूर्ण
 
-	dsos__for_each_with_build_id(pos, &machine->dsos.head) {
-		const char *name;
-		size_t name_len;
+	dsos__क्रम_each_with_build_id(pos, &machine->dsos.head) अणु
+		स्थिर अक्षर *name;
+		माप_प्रकार name_len;
 		bool in_kernel = false;
 
-		if (!pos->hit && !dso__is_vdso(pos))
-			continue;
+		अगर (!pos->hit && !dso__is_vdso(pos))
+			जारी;
 
-		if (dso__is_vdso(pos)) {
-			name = pos->short_name;
-			name_len = pos->short_name_len;
-		} else if (dso__is_kcore(pos)) {
+		अगर (dso__is_vdso(pos)) अणु
+			name = pos->लघु_name;
+			name_len = pos->लघु_name_len;
+		पूर्ण अन्यथा अगर (dso__is_kcore(pos)) अणु
 			name = machine->mmap_name;
-			name_len = strlen(name);
-		} else {
-			name = pos->long_name;
-			name_len = pos->long_name_len;
-		}
+			name_len = म_माप(name);
+		पूर्ण अन्यथा अणु
+			name = pos->दीर्घ_name;
+			name_len = pos->दीर्घ_name_len;
+		पूर्ण
 
 		in_kernel = pos->kernel ||
 				is_kernel_module(name,
 					PERF_RECORD_MISC_CPUMODE_UNKNOWN);
-		err = write_buildid(name, name_len, &pos->bid, machine->pid,
+		err = ग_लिखो_buildid(name, name_len, &pos->bid, machine->pid,
 				    in_kernel ? kmisc : umisc, fd);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int perf_session__write_buildid_table(struct perf_session *session,
-				      struct feat_fd *fd)
-{
-	struct rb_node *nd;
-	int err = machine__write_buildid_table(&session->machines.host, fd);
+पूर्णांक perf_session__ग_लिखो_buildid_table(काष्ठा perf_session *session,
+				      काष्ठा feat_fd *fd)
+अणु
+	काष्ठा rb_node *nd;
+	पूर्णांक err = machine__ग_लिखो_buildid_table(&session->machines.host, fd);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (nd = rb_first_cached(&session->machines.guests); nd;
-	     nd = rb_next(nd)) {
-		struct machine *pos = rb_entry(nd, struct machine, rb_node);
-		err = machine__write_buildid_table(pos, fd);
-		if (err)
-			break;
-	}
-	return err;
-}
+	क्रम (nd = rb_first_cached(&session->machines.guests); nd;
+	     nd = rb_next(nd)) अणु
+		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
+		err = machine__ग_लिखो_buildid_table(pos, fd);
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int __dsos__hit_all(struct list_head *head)
-{
-	struct dso *pos;
+अटल पूर्णांक __dsos__hit_all(काष्ठा list_head *head)
+अणु
+	काष्ठा dso *pos;
 
-	list_for_each_entry(pos, head, node)
+	list_क्रम_each_entry(pos, head, node)
 		pos->hit = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int machine__hit_all_dsos(struct machine *machine)
-{
-	return __dsos__hit_all(&machine->dsos.head);
-}
+अटल पूर्णांक machine__hit_all_dsos(काष्ठा machine *machine)
+अणु
+	वापस __dsos__hit_all(&machine->dsos.head);
+पूर्ण
 
-int dsos__hit_all(struct perf_session *session)
-{
-	struct rb_node *nd;
-	int err;
+पूर्णांक dsos__hit_all(काष्ठा perf_session *session)
+अणु
+	काष्ठा rb_node *nd;
+	पूर्णांक err;
 
 	err = machine__hit_all_dsos(&session->machines.host);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (nd = rb_first_cached(&session->machines.guests); nd;
-	     nd = rb_next(nd)) {
-		struct machine *pos = rb_entry(nd, struct machine, rb_node);
+	क्रम (nd = rb_first_cached(&session->machines.guests); nd;
+	     nd = rb_next(nd)) अणु
+		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
 
 		err = machine__hit_all_dsos(pos);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void disable_buildid_cache(void)
-{
+व्योम disable_buildid_cache(व्योम)
+अणु
 	no_buildid_cache = true;
-}
+पूर्ण
 
-static bool lsdir_bid_head_filter(const char *name __maybe_unused,
-				  struct dirent *d)
-{
-	return (strlen(d->d_name) == 2) &&
-		isxdigit(d->d_name[0]) && isxdigit(d->d_name[1]);
-}
+अटल bool lsdir_bid_head_filter(स्थिर अक्षर *name __maybe_unused,
+				  काष्ठा dirent *d)
+अणु
+	वापस (म_माप(d->d_name) == 2) &&
+		है_षष्ठादशक(d->d_name[0]) && है_षष्ठादशक(d->d_name[1]);
+पूर्ण
 
-static bool lsdir_bid_tail_filter(const char *name __maybe_unused,
-				  struct dirent *d)
-{
-	int i = 0;
-	while (isxdigit(d->d_name[i]) && i < SBUILD_ID_SIZE - 3)
+अटल bool lsdir_bid_tail_filter(स्थिर अक्षर *name __maybe_unused,
+				  काष्ठा dirent *d)
+अणु
+	पूर्णांक i = 0;
+	जबतक (है_षष्ठादशक(d->d_name[i]) && i < SBUILD_ID_SIZE - 3)
 		i++;
-	return (i >= SBUILD_ID_MIN_SIZE - 3) && (i <= SBUILD_ID_SIZE - 3) &&
+	वापस (i >= SBUILD_ID_MIN_SIZE - 3) && (i <= SBUILD_ID_SIZE - 3) &&
 		(d->d_name[i] == '\0');
-}
+पूर्ण
 
-struct strlist *build_id_cache__list_all(bool validonly)
-{
-	struct strlist *toplist, *linklist = NULL, *bidlist;
-	struct str_node *nd, *nd2;
-	char *topdir, *linkdir = NULL;
-	char sbuild_id[SBUILD_ID_SIZE];
+काष्ठा strlist *build_id_cache__list_all(bool valiकरोnly)
+अणु
+	काष्ठा strlist *toplist, *linklist = शून्य, *bidlist;
+	काष्ठा str_node *nd, *nd2;
+	अक्षर *topdir, *linkdir = शून्य;
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
 
-	/* for filename__ functions */
-	if (validonly)
-		symbol__init(NULL);
+	/* क्रम filename__ functions */
+	अगर (valiकरोnly)
+		symbol__init(शून्य);
 
 	/* Open the top-level directory */
-	if (asprintf(&topdir, "%s/.build-id/", buildid_dir) < 0)
-		return NULL;
+	अगर (aप्र_लिखो(&topdir, "%s/.build-id/", buildid_dir) < 0)
+		वापस शून्य;
 
-	bidlist = strlist__new(NULL, NULL);
-	if (!bidlist)
-		goto out;
+	bidlist = strlist__new(शून्य, शून्य);
+	अगर (!bidlist)
+		जाओ out;
 
 	toplist = lsdir(topdir, lsdir_bid_head_filter);
-	if (!toplist) {
-		pr_debug("Error in lsdir(%s): %d\n", topdir, errno);
-		/* If there is no buildid cache, return an empty list */
-		if (errno == ENOENT)
-			goto out;
-		goto err_out;
-	}
+	अगर (!toplist) अणु
+		pr_debug("Error in lsdir(%s): %d\n", topdir, त्रुटि_सं);
+		/* If there is no buildid cache, वापस an empty list */
+		अगर (त्रुटि_सं == ENOENT)
+			जाओ out;
+		जाओ err_out;
+	पूर्ण
 
-	strlist__for_each_entry(nd, toplist) {
-		if (asprintf(&linkdir, "%s/%s", topdir, nd->s) < 0)
-			goto err_out;
+	strlist__क्रम_each_entry(nd, toplist) अणु
+		अगर (aप्र_लिखो(&linkdir, "%s/%s", topdir, nd->s) < 0)
+			जाओ err_out;
 		/* Open the lower-level directory */
 		linklist = lsdir(linkdir, lsdir_bid_tail_filter);
-		if (!linklist) {
-			pr_debug("Error in lsdir(%s): %d\n", linkdir, errno);
-			goto err_out;
-		}
-		strlist__for_each_entry(nd2, linklist) {
-			if (snprintf(sbuild_id, SBUILD_ID_SIZE, "%s%s",
+		अगर (!linklist) अणु
+			pr_debug("Error in lsdir(%s): %d\n", linkdir, त्रुटि_सं);
+			जाओ err_out;
+		पूर्ण
+		strlist__क्रम_each_entry(nd2, linklist) अणु
+			अगर (snम_लिखो(sbuild_id, SBUILD_ID_SIZE, "%s%s",
 				     nd->s, nd2->s) > SBUILD_ID_SIZE - 1)
-				goto err_out;
-			if (validonly && !build_id_cache__valid_id(sbuild_id))
-				continue;
-			if (strlist__add(bidlist, sbuild_id) < 0)
-				goto err_out;
-		}
+				जाओ err_out;
+			अगर (valiकरोnly && !build_id_cache__valid_id(sbuild_id))
+				जारी;
+			अगर (strlist__add(bidlist, sbuild_id) < 0)
+				जाओ err_out;
+		पूर्ण
 		strlist__delete(linklist);
-		zfree(&linkdir);
-	}
+		zमुक्त(&linkdir);
+	पूर्ण
 
-out_free:
+out_मुक्त:
 	strlist__delete(toplist);
 out:
-	free(topdir);
+	मुक्त(topdir);
 
-	return bidlist;
+	वापस bidlist;
 
 err_out:
 	strlist__delete(linklist);
-	zfree(&linkdir);
+	zमुक्त(&linkdir);
 	strlist__delete(bidlist);
-	bidlist = NULL;
-	goto out_free;
-}
+	bidlist = शून्य;
+	जाओ out_मुक्त;
+पूर्ण
 
-static bool str_is_build_id(const char *maybe_sbuild_id, size_t len)
-{
-	size_t i;
+अटल bool str_is_build_id(स्थिर अक्षर *maybe_sbuild_id, माप_प्रकार len)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < len; i++) {
-		if (!isxdigit(maybe_sbuild_id[i]))
-			return false;
-	}
-	return true;
-}
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (!है_षष्ठादशक(maybe_sbuild_id[i]))
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /* Return the valid complete build-id */
-char *build_id_cache__complement(const char *incomplete_sbuild_id)
-{
-	struct strlist *bidlist;
-	struct str_node *nd, *cand = NULL;
-	char *sbuild_id = NULL;
-	size_t len = strlen(incomplete_sbuild_id);
+अक्षर *build_id_cache__complement(स्थिर अक्षर *incomplete_sbuild_id)
+अणु
+	काष्ठा strlist *bidlist;
+	काष्ठा str_node *nd, *cand = शून्य;
+	अक्षर *sbuild_id = शून्य;
+	माप_प्रकार len = म_माप(incomplete_sbuild_id);
 
-	if (len >= SBUILD_ID_SIZE ||
+	अगर (len >= SBUILD_ID_SIZE ||
 	    !str_is_build_id(incomplete_sbuild_id, len))
-		return NULL;
+		वापस शून्य;
 
 	bidlist = build_id_cache__list_all(true);
-	if (!bidlist)
-		return NULL;
+	अगर (!bidlist)
+		वापस शून्य;
 
-	strlist__for_each_entry(nd, bidlist) {
-		if (strncmp(nd->s, incomplete_sbuild_id, len) != 0)
-			continue;
-		if (cand) {	/* Error: There are more than 2 candidates. */
-			cand = NULL;
-			break;
-		}
+	strlist__क्रम_each_entry(nd, bidlist) अणु
+		अगर (म_भेदन(nd->s, incomplete_sbuild_id, len) != 0)
+			जारी;
+		अगर (cand) अणु	/* Error: There are more than 2 candidates. */
+			cand = शून्य;
+			अवरोध;
+		पूर्ण
 		cand = nd;
-	}
-	if (cand)
+	पूर्ण
+	अगर (cand)
 		sbuild_id = strdup(cand->s);
 	strlist__delete(bidlist);
 
-	return sbuild_id;
-}
+	वापस sbuild_id;
+पूर्ण
 
-char *build_id_cache__cachedir(const char *sbuild_id, const char *name,
-			       struct nsinfo *nsi, bool is_kallsyms,
+अक्षर *build_id_cache__cachedir(स्थिर अक्षर *sbuild_id, स्थिर अक्षर *name,
+			       काष्ठा nsinfo *nsi, bool is_kallsyms,
 			       bool is_vdso)
-{
-	char *realname = (char *)name, *filename;
+अणु
+	अक्षर *realname = (अक्षर *)name, *filename;
 	bool slash = is_kallsyms || is_vdso;
 
-	if (!slash) {
+	अगर (!slash) अणु
 		realname = nsinfo__realpath(name, nsi);
-		if (!realname)
-			return NULL;
-	}
+		अगर (!realname)
+			वापस शून्य;
+	पूर्ण
 
-	if (asprintf(&filename, "%s%s%s%s%s", buildid_dir, slash ? "/" : "",
+	अगर (aप्र_लिखो(&filename, "%s%s%s%s%s", buildid_dir, slash ? "/" : "",
 		     is_vdso ? DSO__NAME_VDSO : realname,
 		     sbuild_id ? "/" : "", sbuild_id ?: "") < 0)
-		filename = NULL;
+		filename = शून्य;
 
-	if (!slash)
-		free(realname);
+	अगर (!slash)
+		मुक्त(realname);
 
-	return filename;
-}
+	वापस filename;
+पूर्ण
 
-int build_id_cache__list_build_ids(const char *pathname, struct nsinfo *nsi,
-				   struct strlist **result)
-{
-	char *dir_name;
-	int ret = 0;
+पूर्णांक build_id_cache__list_build_ids(स्थिर अक्षर *pathname, काष्ठा nsinfo *nsi,
+				   काष्ठा strlist **result)
+अणु
+	अक्षर *dir_name;
+	पूर्णांक ret = 0;
 
-	dir_name = build_id_cache__cachedir(NULL, pathname, nsi, false, false);
-	if (!dir_name)
-		return -ENOMEM;
+	dir_name = build_id_cache__cachedir(शून्य, pathname, nsi, false, false);
+	अगर (!dir_name)
+		वापस -ENOMEM;
 
-	*result = lsdir(dir_name, lsdir_no_dot_filter);
-	if (!*result)
-		ret = -errno;
-	free(dir_name);
+	*result = lsdir(dir_name, lsdir_no_करोt_filter);
+	अगर (!*result)
+		ret = -त्रुटि_सं;
+	मुक्त(dir_name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if defined(HAVE_LIBELF_SUPPORT) && defined(HAVE_GELF_GETNOTE_SUPPORT)
-static int build_id_cache__add_sdt_cache(const char *sbuild_id,
-					  const char *realname,
-					  struct nsinfo *nsi)
-{
-	struct probe_cache *cache;
-	int ret;
-	struct nscookie nsc;
+#अगर defined(HAVE_LIBELF_SUPPORT) && defined(HAVE_GELF_GETNOTE_SUPPORT)
+अटल पूर्णांक build_id_cache__add_sdt_cache(स्थिर अक्षर *sbuild_id,
+					  स्थिर अक्षर *realname,
+					  काष्ठा nsinfo *nsi)
+अणु
+	काष्ठा probe_cache *cache;
+	पूर्णांक ret;
+	काष्ठा nscookie nsc;
 
 	cache = probe_cache__new(sbuild_id, nsi);
-	if (!cache)
-		return -1;
+	अगर (!cache)
+		वापस -1;
 
 	nsinfo__mountns_enter(nsi, &nsc);
 	ret = probe_cache__scan_sdt(cache, realname);
-	nsinfo__mountns_exit(&nsc);
-	if (ret >= 0) {
+	nsinfo__mountns_निकास(&nsc);
+	अगर (ret >= 0) अणु
 		pr_debug4("Found %d SDTs in %s\n", ret, realname);
-		if (probe_cache__commit(cache) < 0)
+		अगर (probe_cache__commit(cache) < 0)
 			ret = -1;
-	}
+	पूर्ण
 	probe_cache__delete(cache);
-	return ret;
-}
-#else
-#define build_id_cache__add_sdt_cache(sbuild_id, realname, nsi) (0)
-#endif
+	वापस ret;
+पूर्ण
+#अन्यथा
+#घोषणा build_id_cache__add_sdt_cache(sbuild_id, realname, nsi) (0)
+#पूर्ण_अगर
 
-static char *build_id_cache__find_debug(const char *sbuild_id,
-					struct nsinfo *nsi)
-{
-	char *realname = NULL;
-	char *debugfile;
-	struct nscookie nsc;
-	size_t len = 0;
+अटल अक्षर *build_id_cache__find_debug(स्थिर अक्षर *sbuild_id,
+					काष्ठा nsinfo *nsi)
+अणु
+	अक्षर *realname = शून्य;
+	अक्षर *debugfile;
+	काष्ठा nscookie nsc;
+	माप_प्रकार len = 0;
 
-	debugfile = calloc(1, PATH_MAX);
-	if (!debugfile)
-		goto out;
+	debugfile = सुस्मृति(1, PATH_MAX);
+	अगर (!debugfile)
+		जाओ out;
 
 	len = __symbol__join_symfs(debugfile, PATH_MAX,
 				   "/usr/lib/debug/.build-id/");
-	snprintf(debugfile + len, PATH_MAX - len, "%.2s/%s.debug", sbuild_id,
+	snम_लिखो(debugfile + len, PATH_MAX - len, "%.2s/%s.debug", sbuild_id,
 		 sbuild_id + 2);
 
 	nsinfo__mountns_enter(nsi, &nsc);
-	realname = realpath(debugfile, NULL);
-	if (realname && access(realname, R_OK))
-		zfree(&realname);
-	nsinfo__mountns_exit(&nsc);
+	realname = realpath(debugfile, शून्य);
+	अगर (realname && access(realname, R_OK))
+		zमुक्त(&realname);
+	nsinfo__mountns_निकास(&nsc);
 
-#ifdef HAVE_DEBUGINFOD_SUPPORT
-        if (realname == NULL) {
+#अगर_घोषित HAVE_DEBUGINFOD_SUPPORT
+        अगर (realname == शून्य) अणु
                 debuginfod_client* c = debuginfod_begin();
-                if (c != NULL) {
-                        int fd = debuginfod_find_debuginfo(c,
-                                                           (const unsigned char*)sbuild_id, 0,
+                अगर (c != शून्य) अणु
+                        पूर्णांक fd = debuginfod_find_debuginfo(c,
+                                                           (स्थिर अचिन्हित अक्षर*)sbuild_id, 0,
                                                            &realname);
-                        if (fd >= 0)
-                                close(fd); /* retaining reference by realname */
+                        अगर (fd >= 0)
+                                बंद(fd); /* retaining reference by realname */
                         debuginfod_end(c);
-                }
-        }
-#endif
+                पूर्ण
+        पूर्ण
+#पूर्ण_अगर
 
 out:
-	free(debugfile);
-	return realname;
-}
+	मुक्त(debugfile);
+	वापस realname;
+पूर्ण
 
-int
-build_id_cache__add(const char *sbuild_id, const char *name, const char *realname,
-		    struct nsinfo *nsi, bool is_kallsyms, bool is_vdso)
-{
-	const size_t size = PATH_MAX;
-	char *filename = NULL, *dir_name = NULL, *linkname = zalloc(size), *tmp;
-	char *debugfile = NULL;
-	int err = -1;
+पूर्णांक
+build_id_cache__add(स्थिर अक्षर *sbuild_id, स्थिर अक्षर *name, स्थिर अक्षर *realname,
+		    काष्ठा nsinfo *nsi, bool is_kallsyms, bool is_vdso)
+अणु
+	स्थिर माप_प्रकार size = PATH_MAX;
+	अक्षर *filename = शून्य, *dir_name = शून्य, *linkname = zalloc(size), *पंचांगp;
+	अक्षर *debugfile = शून्य;
+	पूर्णांक err = -1;
 
 	dir_name = build_id_cache__cachedir(sbuild_id, name, nsi, is_kallsyms,
 					    is_vdso);
-	if (!dir_name)
-		goto out_free;
+	अगर (!dir_name)
+		जाओ out_मुक्त;
 
 	/* Remove old style build-id cache */
-	if (is_regular_file(dir_name))
-		if (unlink(dir_name))
-			goto out_free;
+	अगर (is_regular_file(dir_name))
+		अगर (unlink(dir_name))
+			जाओ out_मुक्त;
 
-	if (mkdir_p(dir_name, 0755))
-		goto out_free;
+	अगर (सूची_गढ़ो_p(dir_name, 0755))
+		जाओ out_मुक्त;
 
-	/* Save the allocated buildid dirname */
-	if (asprintf(&filename, "%s/%s", dir_name,
+	/* Save the allocated buildid स_नाम */
+	अगर (aप्र_लिखो(&filename, "%s/%s", dir_name,
 		     build_id_cache__basename(is_kallsyms, is_vdso,
-		     false)) < 0) {
-		filename = NULL;
-		goto out_free;
-	}
+		     false)) < 0) अणु
+		filename = शून्य;
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (access(filename, F_OK)) {
-		if (is_kallsyms) {
-			if (copyfile("/proc/kallsyms", filename))
-				goto out_free;
-		} else if (nsi && nsi->need_setns) {
-			if (copyfile_ns(name, filename, nsi))
-				goto out_free;
-		} else if (link(realname, filename) && errno != EEXIST &&
+	अगर (access(filename, F_OK)) अणु
+		अगर (is_kallsyms) अणु
+			अगर (copyfile("/proc/kallsyms", filename))
+				जाओ out_मुक्त;
+		पूर्ण अन्यथा अगर (nsi && nsi->need_setns) अणु
+			अगर (copyfile_ns(name, filename, nsi))
+				जाओ out_मुक्त;
+		पूर्ण अन्यथा अगर (link(realname, filename) && त्रुटि_सं != EEXIST &&
 				copyfile(name, filename))
-			goto out_free;
-	}
+			जाओ out_मुक्त;
+	पूर्ण
 
 	/* Some binaries are stripped, but have .debug files with their symbol
-	 * table.  Check to see if we can locate one of those, since the elf
+	 * table.  Check to see अगर we can locate one of those, since the elf
 	 * file itself may not be very useful to users of our tools without a
 	 * symtab.
 	 */
-	if (!is_kallsyms && !is_vdso &&
-	    strncmp(".ko", name + strlen(name) - 3, 3)) {
+	अगर (!is_kallsyms && !is_vdso &&
+	    म_भेदन(".ko", name + म_माप(name) - 3, 3)) अणु
 		debugfile = build_id_cache__find_debug(sbuild_id, nsi);
-		if (debugfile) {
-			zfree(&filename);
-			if (asprintf(&filename, "%s/%s", dir_name,
-			    build_id_cache__basename(false, false, true)) < 0) {
-				filename = NULL;
-				goto out_free;
-			}
-			if (access(filename, F_OK)) {
-				if (nsi && nsi->need_setns) {
-					if (copyfile_ns(debugfile, filename,
+		अगर (debugfile) अणु
+			zमुक्त(&filename);
+			अगर (aप्र_लिखो(&filename, "%s/%s", dir_name,
+			    build_id_cache__basename(false, false, true)) < 0) अणु
+				filename = शून्य;
+				जाओ out_मुक्त;
+			पूर्ण
+			अगर (access(filename, F_OK)) अणु
+				अगर (nsi && nsi->need_setns) अणु
+					अगर (copyfile_ns(debugfile, filename,
 							nsi))
-						goto out_free;
-				} else if (link(debugfile, filename) &&
-						errno != EEXIST &&
+						जाओ out_मुक्त;
+				पूर्ण अन्यथा अगर (link(debugfile, filename) &&
+						त्रुटि_सं != EEXIST &&
 						copyfile(debugfile, filename))
-					goto out_free;
-			}
-		}
-	}
+					जाओ out_मुक्त;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!build_id_cache__linkname(sbuild_id, linkname, size))
-		goto out_free;
-	tmp = strrchr(linkname, '/');
-	*tmp = '\0';
+	अगर (!build_id_cache__linkname(sbuild_id, linkname, size))
+		जाओ out_मुक्त;
+	पंचांगp = म_खोजप(linkname, '/');
+	*पंचांगp = '\0';
 
-	if (access(linkname, X_OK) && mkdir_p(linkname, 0755))
-		goto out_free;
+	अगर (access(linkname, X_OK) && सूची_गढ़ो_p(linkname, 0755))
+		जाओ out_मुक्त;
 
-	*tmp = '/';
-	tmp = dir_name + strlen(buildid_dir) - 5;
-	memcpy(tmp, "../..", 5);
+	*पंचांगp = '/';
+	पंचांगp = dir_name + म_माप(buildid_dir) - 5;
+	स_नकल(पंचांगp, "../..", 5);
 
-	if (symlink(tmp, linkname) == 0) {
+	अगर (symlink(पंचांगp, linkname) == 0) अणु
 		err = 0;
-	} else if (errno == EEXIST) {
-		char path[PATH_MAX];
-		ssize_t len;
+	पूर्ण अन्यथा अगर (त्रुटि_सं == EEXIST) अणु
+		अक्षर path[PATH_MAX];
+		sमाप_प्रकार len;
 
-		len = readlink(linkname, path, sizeof(path) - 1);
-		if (len <= 0) {
+		len = पढ़ोlink(linkname, path, माप(path) - 1);
+		अगर (len <= 0) अणु
 			pr_err("Cant read link: %s\n", linkname);
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 		path[len] = '\0';
 
-		if (strcmp(tmp, path)) {
+		अगर (म_भेद(पंचांगp, path)) अणु
 			pr_debug("build <%s> already linked to %s\n",
 				 sbuild_id, linkname);
-		}
+		पूर्ण
 		err = 0;
-	}
+	पूर्ण
 
 	/* Update SDT cache : error is just warned */
-	if (realname &&
+	अगर (realname &&
 	    build_id_cache__add_sdt_cache(sbuild_id, realname, nsi) < 0)
 		pr_debug4("Failed to update/scan SDT cache for %s\n", realname);
 
-out_free:
-	free(filename);
-	free(debugfile);
-	free(dir_name);
-	free(linkname);
-	return err;
-}
+out_मुक्त:
+	मुक्त(filename);
+	मुक्त(debugfile);
+	मुक्त(dir_name);
+	मुक्त(linkname);
+	वापस err;
+पूर्ण
 
-int build_id_cache__add_s(const char *sbuild_id, const char *name,
-			  struct nsinfo *nsi, bool is_kallsyms, bool is_vdso)
-{
-	char *realname = NULL;
-	int err = -1;
+पूर्णांक build_id_cache__add_s(स्थिर अक्षर *sbuild_id, स्थिर अक्षर *name,
+			  काष्ठा nsinfo *nsi, bool is_kallsyms, bool is_vdso)
+अणु
+	अक्षर *realname = शून्य;
+	पूर्णांक err = -1;
 
-	if (!is_kallsyms) {
-		if (!is_vdso)
+	अगर (!is_kallsyms) अणु
+		अगर (!is_vdso)
 			realname = nsinfo__realpath(name, nsi);
-		else
-			realname = realpath(name, NULL);
-		if (!realname)
-			goto out_free;
-	}
+		अन्यथा
+			realname = realpath(name, शून्य);
+		अगर (!realname)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	err = build_id_cache__add(sbuild_id, name, realname, nsi, is_kallsyms, is_vdso);
 
-out_free:
-	if (!is_kallsyms)
-		free(realname);
-	return err;
-}
+out_मुक्त:
+	अगर (!is_kallsyms)
+		मुक्त(realname);
+	वापस err;
+पूर्ण
 
-static int build_id_cache__add_b(const struct build_id *bid,
-				 const char *name, struct nsinfo *nsi,
+अटल पूर्णांक build_id_cache__add_b(स्थिर काष्ठा build_id *bid,
+				 स्थिर अक्षर *name, काष्ठा nsinfo *nsi,
 				 bool is_kallsyms, bool is_vdso)
-{
-	char sbuild_id[SBUILD_ID_SIZE];
+अणु
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
 
-	build_id__sprintf(bid, sbuild_id);
+	build_id__प्र_लिखो(bid, sbuild_id);
 
-	return build_id_cache__add_s(sbuild_id, name, nsi, is_kallsyms,
+	वापस build_id_cache__add_s(sbuild_id, name, nsi, is_kallsyms,
 				     is_vdso);
-}
+पूर्ण
 
-bool build_id_cache__cached(const char *sbuild_id)
-{
+bool build_id_cache__cached(स्थिर अक्षर *sbuild_id)
+अणु
 	bool ret = false;
-	char *filename = build_id_cache__linkname(sbuild_id, NULL, 0);
+	अक्षर *filename = build_id_cache__linkname(sbuild_id, शून्य, 0);
 
-	if (filename && !access(filename, F_OK))
+	अगर (filename && !access(filename, F_OK))
 		ret = true;
-	free(filename);
+	मुक्त(filename);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int build_id_cache__remove_s(const char *sbuild_id)
-{
-	const size_t size = PATH_MAX;
-	char *filename = zalloc(size),
-	     *linkname = zalloc(size), *tmp;
-	int err = -1;
+पूर्णांक build_id_cache__हटाओ_s(स्थिर अक्षर *sbuild_id)
+अणु
+	स्थिर माप_प्रकार size = PATH_MAX;
+	अक्षर *filename = zalloc(size),
+	     *linkname = zalloc(size), *पंचांगp;
+	पूर्णांक err = -1;
 
-	if (filename == NULL || linkname == NULL)
-		goto out_free;
+	अगर (filename == शून्य || linkname == शून्य)
+		जाओ out_मुक्त;
 
-	if (!build_id_cache__linkname(sbuild_id, linkname, size))
-		goto out_free;
+	अगर (!build_id_cache__linkname(sbuild_id, linkname, size))
+		जाओ out_मुक्त;
 
-	if (access(linkname, F_OK))
-		goto out_free;
+	अगर (access(linkname, F_OK))
+		जाओ out_मुक्त;
 
-	if (readlink(linkname, filename, size - 1) < 0)
-		goto out_free;
+	अगर (पढ़ोlink(linkname, filename, size - 1) < 0)
+		जाओ out_मुक्त;
 
-	if (unlink(linkname))
-		goto out_free;
+	अगर (unlink(linkname))
+		जाओ out_मुक्त;
 
 	/*
-	 * Since the link is relative, we must make it absolute:
+	 * Since the link is relative, we must make it असलolute:
 	 */
-	tmp = strrchr(linkname, '/') + 1;
-	snprintf(tmp, size - (tmp - linkname), "%s", filename);
+	पंचांगp = म_खोजप(linkname, '/') + 1;
+	snम_लिखो(पंचांगp, size - (पंचांगp - linkname), "%s", filename);
 
-	if (rm_rf(linkname))
-		goto out_free;
+	अगर (rm_rf(linkname))
+		जाओ out_मुक्त;
 
 	err = 0;
-out_free:
-	free(filename);
-	free(linkname);
-	return err;
-}
+out_मुक्त:
+	मुक्त(filename);
+	मुक्त(linkname);
+	वापस err;
+पूर्ण
 
-static int dso__cache_build_id(struct dso *dso, struct machine *machine,
-			       void *priv __maybe_unused)
-{
+अटल पूर्णांक dso__cache_build_id(काष्ठा dso *dso, काष्ठा machine *machine,
+			       व्योम *priv __maybe_unused)
+अणु
 	bool is_kallsyms = dso__is_kallsyms(dso);
 	bool is_vdso = dso__is_vdso(dso);
-	const char *name = dso->long_name;
+	स्थिर अक्षर *name = dso->दीर्घ_name;
 
-	if (!dso->has_build_id)
-		return 0;
+	अगर (!dso->has_build_id)
+		वापस 0;
 
-	if (dso__is_kcore(dso)) {
+	अगर (dso__is_kcore(dso)) अणु
 		is_kallsyms = true;
 		name = machine->mmap_name;
-	}
-	return build_id_cache__add_b(&dso->bid, name, dso->nsinfo,
+	पूर्ण
+	वापस build_id_cache__add_b(&dso->bid, name, dso->nsinfo,
 				     is_kallsyms, is_vdso);
-}
+पूर्ण
 
-static int
-machines__for_each_dso(struct machines *machines, machine__dso_t fn, void *priv)
-{
-	int ret = machine__for_each_dso(&machines->host, fn, priv);
-	struct rb_node *nd;
+अटल पूर्णांक
+machines__क्रम_each_dso(काष्ठा machines *machines, machine__dso_t fn, व्योम *priv)
+अणु
+	पूर्णांक ret = machine__क्रम_each_dso(&machines->host, fn, priv);
+	काष्ठा rb_node *nd;
 
-	for (nd = rb_first_cached(&machines->guests); nd;
-	     nd = rb_next(nd)) {
-		struct machine *pos = rb_entry(nd, struct machine, rb_node);
+	क्रम (nd = rb_first_cached(&machines->guests); nd;
+	     nd = rb_next(nd)) अणु
+		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
 
-		ret |= machine__for_each_dso(pos, fn, priv);
-	}
-	return ret ? -1 : 0;
-}
+		ret |= machine__क्रम_each_dso(pos, fn, priv);
+	पूर्ण
+	वापस ret ? -1 : 0;
+पूर्ण
 
-int __perf_session__cache_build_ids(struct perf_session *session,
-				    machine__dso_t fn, void *priv)
-{
-	if (no_buildid_cache)
-		return 0;
+पूर्णांक __perf_session__cache_build_ids(काष्ठा perf_session *session,
+				    machine__dso_t fn, व्योम *priv)
+अणु
+	अगर (no_buildid_cache)
+		वापस 0;
 
-	if (mkdir(buildid_dir, 0755) != 0 && errno != EEXIST)
-		return -1;
+	अगर (सूची_गढ़ो(buildid_dir, 0755) != 0 && त्रुटि_सं != EEXIST)
+		वापस -1;
 
-	return machines__for_each_dso(&session->machines, fn, priv) ?  -1 : 0;
-}
+	वापस machines__क्रम_each_dso(&session->machines, fn, priv) ?  -1 : 0;
+पूर्ण
 
-int perf_session__cache_build_ids(struct perf_session *session)
-{
-	return __perf_session__cache_build_ids(session, dso__cache_build_id, NULL);
-}
+पूर्णांक perf_session__cache_build_ids(काष्ठा perf_session *session)
+अणु
+	वापस __perf_session__cache_build_ids(session, dso__cache_build_id, शून्य);
+पूर्ण
 
-static bool machine__read_build_ids(struct machine *machine, bool with_hits)
-{
-	return __dsos__read_build_ids(&machine->dsos.head, with_hits);
-}
+अटल bool machine__पढ़ो_build_ids(काष्ठा machine *machine, bool with_hits)
+अणु
+	वापस __dsos__पढ़ो_build_ids(&machine->dsos.head, with_hits);
+पूर्ण
 
-bool perf_session__read_build_ids(struct perf_session *session, bool with_hits)
-{
-	struct rb_node *nd;
-	bool ret = machine__read_build_ids(&session->machines.host, with_hits);
+bool perf_session__पढ़ो_build_ids(काष्ठा perf_session *session, bool with_hits)
+अणु
+	काष्ठा rb_node *nd;
+	bool ret = machine__पढ़ो_build_ids(&session->machines.host, with_hits);
 
-	for (nd = rb_first_cached(&session->machines.guests); nd;
-	     nd = rb_next(nd)) {
-		struct machine *pos = rb_entry(nd, struct machine, rb_node);
-		ret |= machine__read_build_ids(pos, with_hits);
-	}
+	क्रम (nd = rb_first_cached(&session->machines.guests); nd;
+	     nd = rb_next(nd)) अणु
+		काष्ठा machine *pos = rb_entry(nd, काष्ठा machine, rb_node);
+		ret |= machine__पढ़ो_build_ids(pos, with_hits);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void build_id__init(struct build_id *bid, const u8 *data, size_t size)
-{
+व्योम build_id__init(काष्ठा build_id *bid, स्थिर u8 *data, माप_प्रकार size)
+अणु
 	WARN_ON(size > BUILD_ID_SIZE);
-	memcpy(bid->data, data, size);
+	स_नकल(bid->data, data, size);
 	bid->size = size;
-}
+पूर्ण
 
-bool build_id__is_defined(const struct build_id *bid)
-{
-	return bid && bid->size ? !!memchr_inv(bid->data, 0, bid->size) : false;
-}
+bool build_id__is_defined(स्थिर काष्ठा build_id *bid)
+अणु
+	वापस bid && bid->size ? !!स_प्रथम_inv(bid->data, 0, bid->size) : false;
+पूर्ण

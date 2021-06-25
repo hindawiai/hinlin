@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-1.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-1.0+
 /*
- * Renesas USB driver R-Car Gen. 2 initialization and power control
+ * Renesas USB driver R-Car Gen. 2 initialization and घातer control
  *
  * Copyright (C) 2014 Ulrich Hecht
  * Copyright (C) 2019 Renesas Electronics Corporation
  */
 
-#include <linux/phy/phy.h>
-#include "common.h"
-#include "rcar2.h"
+#समावेश <linux/phy/phy.h>
+#समावेश "common.h"
+#समावेश "rcar2.h"
 
-static int usbhs_rcar2_hardware_init(struct platform_device *pdev)
-{
-	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
+अटल पूर्णांक usbhs_rcar2_hardware_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
 
-	if (IS_ENABLED(CONFIG_GENERIC_PHY)) {
-		struct phy *phy = phy_get(&pdev->dev, "usb");
+	अगर (IS_ENABLED(CONFIG_GENERIC_PHY)) अणु
+		काष्ठा phy *phy = phy_get(&pdev->dev, "usb");
 
-		if (IS_ERR(phy))
-			return PTR_ERR(phy);
+		अगर (IS_ERR(phy))
+			वापस PTR_ERR(phy);
 
 		priv->phy = phy;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 
-static int usbhs_rcar2_hardware_exit(struct platform_device *pdev)
-{
-	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
+अटल पूर्णांक usbhs_rcar2_hardware_निकास(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
 
-	if (priv->phy) {
+	अगर (priv->phy) अणु
 		phy_put(&pdev->dev, priv->phy);
-		priv->phy = NULL;
-	}
+		priv->phy = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhs_rcar2_power_ctrl(struct platform_device *pdev,
-				void __iomem *base, int enable)
-{
-	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
-	int retval = -ENODEV;
+अटल पूर्णांक usbhs_rcar2_घातer_ctrl(काष्ठा platक्रमm_device *pdev,
+				व्योम __iomem *base, पूर्णांक enable)
+अणु
+	काष्ठा usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
+	पूर्णांक retval = -ENODEV;
 
-	if (priv->phy) {
-		if (enable) {
+	अगर (priv->phy) अणु
+		अगर (enable) अणु
 			retval = phy_init(priv->phy);
 
-			if (!retval)
-				retval = phy_power_on(priv->phy);
-		} else {
-			phy_power_off(priv->phy);
-			phy_exit(priv->phy);
+			अगर (!retval)
+				retval = phy_घातer_on(priv->phy);
+		पूर्ण अन्यथा अणु
+			phy_घातer_off(priv->phy);
+			phy_निकास(priv->phy);
 			retval = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-const struct renesas_usbhs_platform_info usbhs_rcar_gen2_plat_info = {
-	.platform_callback = {
+स्थिर काष्ठा renesas_usbhs_platक्रमm_info usbhs_rcar_gen2_plat_info = अणु
+	.platक्रमm_callback = अणु
 		.hardware_init = usbhs_rcar2_hardware_init,
-		.hardware_exit = usbhs_rcar2_hardware_exit,
-		.power_ctrl = usbhs_rcar2_power_ctrl,
+		.hardware_निकास = usbhs_rcar2_hardware_निकास,
+		.घातer_ctrl = usbhs_rcar2_घातer_ctrl,
 		.get_id = usbhs_get_id_as_gadget,
-	},
-	.driver_param = {
+	पूर्ण,
+	.driver_param = अणु
 		.has_usb_dmac = 1,
 		.has_new_pipe_configs = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;

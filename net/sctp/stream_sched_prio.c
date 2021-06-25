@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright Red Hat Inc. 2017
  *
@@ -10,272 +11,272 @@
  * email addresched(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
- *    Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
+ * Written or modअगरied by:
+ *    Marcelo Ricarकरो Leitner <marcelo.leitner@gmail.com>
  */
 
-#include <linux/list.h>
-#include <net/sctp/sctp.h>
-#include <net/sctp/sm.h>
-#include <net/sctp/stream_sched.h>
+#समावेश <linux/list.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <net/sctp/sm.h>
+#समावेश <net/sctp/stream_sched.h>
 
 /* Priority handling
  * RFC DRAFT ndata section 3.4
  */
 
-static void sctp_sched_prio_unsched_all(struct sctp_stream *stream);
+अटल व्योम sctp_sched_prio_unsched_all(काष्ठा sctp_stream *stream);
 
-static struct sctp_stream_priorities *sctp_sched_prio_new_head(
-			struct sctp_stream *stream, int prio, gfp_t gfp)
-{
-	struct sctp_stream_priorities *p;
+अटल काष्ठा sctp_stream_priorities *sctp_sched_prio_new_head(
+			काष्ठा sctp_stream *stream, पूर्णांक prio, gfp_t gfp)
+अणु
+	काष्ठा sctp_stream_priorities *p;
 
-	p = kmalloc(sizeof(*p), gfp);
-	if (!p)
-		return NULL;
+	p = kदो_स्मृति(माप(*p), gfp);
+	अगर (!p)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&p->prio_sched);
 	INIT_LIST_HEAD(&p->active);
-	p->next = NULL;
+	p->next = शून्य;
 	p->prio = prio;
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static struct sctp_stream_priorities *sctp_sched_prio_get_head(
-			struct sctp_stream *stream, int prio, gfp_t gfp)
-{
-	struct sctp_stream_priorities *p;
-	int i;
+अटल काष्ठा sctp_stream_priorities *sctp_sched_prio_get_head(
+			काष्ठा sctp_stream *stream, पूर्णांक prio, gfp_t gfp)
+अणु
+	काष्ठा sctp_stream_priorities *p;
+	पूर्णांक i;
 
-	/* Look into scheduled priorities first, as they are sorted and
+	/* Look पूर्णांकo scheduled priorities first, as they are sorted and
 	 * we can find it fast IF it's scheduled.
 	 */
-	list_for_each_entry(p, &stream->prio_list, prio_sched) {
-		if (p->prio == prio)
-			return p;
-		if (p->prio > prio)
-			break;
-	}
+	list_क्रम_each_entry(p, &stream->prio_list, prio_sched) अणु
+		अगर (p->prio == prio)
+			वापस p;
+		अगर (p->prio > prio)
+			अवरोध;
+	पूर्ण
 
 	/* No luck. So we search on all streams now. */
-	for (i = 0; i < stream->outcnt; i++) {
-		if (!SCTP_SO(stream, i)->ext)
-			continue;
+	क्रम (i = 0; i < stream->outcnt; i++) अणु
+		अगर (!SCTP_SO(stream, i)->ext)
+			जारी;
 
 		p = SCTP_SO(stream, i)->ext->prio_head;
-		if (!p)
+		अगर (!p)
 			/* Means all other streams won't be initialized
 			 * as well.
 			 */
-			break;
-		if (p->prio == prio)
-			return p;
-	}
+			अवरोध;
+		अगर (p->prio == prio)
+			वापस p;
+	पूर्ण
 
 	/* If not even there, allocate a new one. */
-	return sctp_sched_prio_new_head(stream, prio, gfp);
-}
+	वापस sctp_sched_prio_new_head(stream, prio, gfp);
+पूर्ण
 
-static void sctp_sched_prio_next_stream(struct sctp_stream_priorities *p)
-{
-	struct list_head *pos;
+अटल व्योम sctp_sched_prio_next_stream(काष्ठा sctp_stream_priorities *p)
+अणु
+	काष्ठा list_head *pos;
 
 	pos = p->next->prio_list.next;
-	if (pos == &p->active)
+	अगर (pos == &p->active)
 		pos = pos->next;
-	p->next = list_entry(pos, struct sctp_stream_out_ext, prio_list);
-}
+	p->next = list_entry(pos, काष्ठा sctp_stream_out_ext, prio_list);
+पूर्ण
 
-static bool sctp_sched_prio_unsched(struct sctp_stream_out_ext *soute)
-{
+अटल bool sctp_sched_prio_unsched(काष्ठा sctp_stream_out_ext *soute)
+अणु
 	bool scheduled = false;
 
-	if (!list_empty(&soute->prio_list)) {
-		struct sctp_stream_priorities *prio_head = soute->prio_head;
+	अगर (!list_empty(&soute->prio_list)) अणु
+		काष्ठा sctp_stream_priorities *prio_head = soute->prio_head;
 
 		/* Scheduled */
 		scheduled = true;
 
-		if (prio_head->next == soute)
+		अगर (prio_head->next == soute)
 			/* Try to move to the next stream */
 			sctp_sched_prio_next_stream(prio_head);
 
 		list_del_init(&soute->prio_list);
 
-		/* Also unsched the priority if this was the last stream */
-		if (list_empty(&prio_head->active)) {
+		/* Also unsched the priority अगर this was the last stream */
+		अगर (list_empty(&prio_head->active)) अणु
 			list_del_init(&prio_head->prio_sched);
 			/* If there is no stream left, clear next */
-			prio_head->next = NULL;
-		}
-	}
+			prio_head->next = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return scheduled;
-}
+	वापस scheduled;
+पूर्ण
 
-static void sctp_sched_prio_sched(struct sctp_stream *stream,
-				  struct sctp_stream_out_ext *soute)
-{
-	struct sctp_stream_priorities *prio, *prio_head;
+अटल व्योम sctp_sched_prio_sched(काष्ठा sctp_stream *stream,
+				  काष्ठा sctp_stream_out_ext *soute)
+अणु
+	काष्ठा sctp_stream_priorities *prio, *prio_head;
 
 	prio_head = soute->prio_head;
 
-	/* Nothing to do if already scheduled */
-	if (!list_empty(&soute->prio_list))
-		return;
+	/* Nothing to करो अगर alपढ़ोy scheduled */
+	अगर (!list_empty(&soute->prio_list))
+		वापस;
 
 	/* Schedule the stream. If there is a next, we schedule the new
-	 * one before it, so it's the last in round robin order.
+	 * one beक्रमe it, so it's the last in round robin order.
 	 * If there isn't, we also have to schedule the priority.
 	 */
-	if (prio_head->next) {
+	अगर (prio_head->next) अणु
 		list_add(&soute->prio_list, prio_head->next->prio_list.prev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	list_add(&soute->prio_list, &prio_head->active);
 	prio_head->next = soute;
 
-	list_for_each_entry(prio, &stream->prio_list, prio_sched) {
-		if (prio->prio > prio_head->prio) {
+	list_क्रम_each_entry(prio, &stream->prio_list, prio_sched) अणु
+		अगर (prio->prio > prio_head->prio) अणु
 			list_add(&prio_head->prio_sched, prio->prio_sched.prev);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	list_add_tail(&prio_head->prio_sched, &stream->prio_list);
-}
+पूर्ण
 
-static int sctp_sched_prio_set(struct sctp_stream *stream, __u16 sid,
+अटल पूर्णांक sctp_sched_prio_set(काष्ठा sctp_stream *stream, __u16 sid,
 			       __u16 prio, gfp_t gfp)
-{
-	struct sctp_stream_out *sout = SCTP_SO(stream, sid);
-	struct sctp_stream_out_ext *soute = sout->ext;
-	struct sctp_stream_priorities *prio_head, *old;
+अणु
+	काष्ठा sctp_stream_out *sout = SCTP_SO(stream, sid);
+	काष्ठा sctp_stream_out_ext *soute = sout->ext;
+	काष्ठा sctp_stream_priorities *prio_head, *old;
 	bool reschedule = false;
-	int i;
+	पूर्णांक i;
 
 	prio_head = sctp_sched_prio_get_head(stream, prio, gfp);
-	if (!prio_head)
-		return -ENOMEM;
+	अगर (!prio_head)
+		वापस -ENOMEM;
 
 	reschedule = sctp_sched_prio_unsched(soute);
 	old = soute->prio_head;
 	soute->prio_head = prio_head;
-	if (reschedule)
+	अगर (reschedule)
 		sctp_sched_prio_sched(stream, soute);
 
-	if (!old)
-		/* Happens when we set the priority for the first time */
-		return 0;
+	अगर (!old)
+		/* Happens when we set the priority क्रम the first समय */
+		वापस 0;
 
-	for (i = 0; i < stream->outcnt; i++) {
+	क्रम (i = 0; i < stream->outcnt; i++) अणु
 		soute = SCTP_SO(stream, i)->ext;
-		if (soute && soute->prio_head == old)
-			/* It's still in use, nothing else to do here. */
-			return 0;
-	}
+		अगर (soute && soute->prio_head == old)
+			/* It's still in use, nothing अन्यथा to करो here. */
+			वापस 0;
+	पूर्ण
 
-	/* No hits, we are good to free it. */
-	kfree(old);
+	/* No hits, we are good to मुक्त it. */
+	kमुक्त(old);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_sched_prio_get(struct sctp_stream *stream, __u16 sid,
+अटल पूर्णांक sctp_sched_prio_get(काष्ठा sctp_stream *stream, __u16 sid,
 			       __u16 *value)
-{
+अणु
 	*value = SCTP_SO(stream, sid)->ext->prio_head->prio;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_sched_prio_init(struct sctp_stream *stream)
-{
+अटल पूर्णांक sctp_sched_prio_init(काष्ठा sctp_stream *stream)
+अणु
 	INIT_LIST_HEAD(&stream->prio_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_sched_prio_init_sid(struct sctp_stream *stream, __u16 sid,
+अटल पूर्णांक sctp_sched_prio_init_sid(काष्ठा sctp_stream *stream, __u16 sid,
 				    gfp_t gfp)
-{
+अणु
 	INIT_LIST_HEAD(&SCTP_SO(stream, sid)->ext->prio_list);
-	return sctp_sched_prio_set(stream, sid, 0, gfp);
-}
+	वापस sctp_sched_prio_set(stream, sid, 0, gfp);
+पूर्ण
 
-static void sctp_sched_prio_free(struct sctp_stream *stream)
-{
-	struct sctp_stream_priorities *prio, *n;
+अटल व्योम sctp_sched_prio_मुक्त(काष्ठा sctp_stream *stream)
+अणु
+	काष्ठा sctp_stream_priorities *prio, *n;
 	LIST_HEAD(list);
-	int i;
+	पूर्णांक i;
 
-	/* As we don't keep a list of priorities, to avoid multiple
-	 * frees we have to do it in 3 steps:
-	 *   1. unsched everyone, so the lists are free to use in 2.
+	/* As we करोn't keep a list of priorities, to aव्योम multiple
+	 * मुक्तs we have to करो it in 3 steps:
+	 *   1. unsched everyone, so the lists are मुक्त to use in 2.
 	 *   2. build the list of the priorities
-	 *   3. free the list
+	 *   3. मुक्त the list
 	 */
 	sctp_sched_prio_unsched_all(stream);
-	for (i = 0; i < stream->outcnt; i++) {
-		if (!SCTP_SO(stream, i)->ext)
-			continue;
+	क्रम (i = 0; i < stream->outcnt; i++) अणु
+		अगर (!SCTP_SO(stream, i)->ext)
+			जारी;
 		prio = SCTP_SO(stream, i)->ext->prio_head;
-		if (prio && list_empty(&prio->prio_sched))
+		अगर (prio && list_empty(&prio->prio_sched))
 			list_add(&prio->prio_sched, &list);
-	}
-	list_for_each_entry_safe(prio, n, &list, prio_sched) {
+	पूर्ण
+	list_क्रम_each_entry_safe(prio, n, &list, prio_sched) अणु
 		list_del_init(&prio->prio_sched);
-		kfree(prio);
-	}
-}
+		kमुक्त(prio);
+	पूर्ण
+पूर्ण
 
-static void sctp_sched_prio_enqueue(struct sctp_outq *q,
-				    struct sctp_datamsg *msg)
-{
-	struct sctp_stream *stream;
-	struct sctp_chunk *ch;
+अटल व्योम sctp_sched_prio_enqueue(काष्ठा sctp_outq *q,
+				    काष्ठा sctp_datamsg *msg)
+अणु
+	काष्ठा sctp_stream *stream;
+	काष्ठा sctp_chunk *ch;
 	__u16 sid;
 
-	ch = list_first_entry(&msg->chunks, struct sctp_chunk, frag_list);
+	ch = list_first_entry(&msg->chunks, काष्ठा sctp_chunk, frag_list);
 	sid = sctp_chunk_stream_no(ch);
 	stream = &q->asoc->stream;
 	sctp_sched_prio_sched(stream, SCTP_SO(stream, sid)->ext);
-}
+पूर्ण
 
-static struct sctp_chunk *sctp_sched_prio_dequeue(struct sctp_outq *q)
-{
-	struct sctp_stream *stream = &q->asoc->stream;
-	struct sctp_stream_priorities *prio;
-	struct sctp_stream_out_ext *soute;
-	struct sctp_chunk *ch = NULL;
+अटल काष्ठा sctp_chunk *sctp_sched_prio_dequeue(काष्ठा sctp_outq *q)
+अणु
+	काष्ठा sctp_stream *stream = &q->asoc->stream;
+	काष्ठा sctp_stream_priorities *prio;
+	काष्ठा sctp_stream_out_ext *soute;
+	काष्ठा sctp_chunk *ch = शून्य;
 
-	/* Bail out quickly if queue is empty */
-	if (list_empty(&q->out_chunk_list))
-		goto out;
+	/* Bail out quickly अगर queue is empty */
+	अगर (list_empty(&q->out_chunk_list))
+		जाओ out;
 
 	/* Find which chunk is next. It's easy, it's either the current
 	 * one or the first chunk on the next active stream.
 	 */
-	if (stream->out_curr) {
+	अगर (stream->out_curr) अणु
 		soute = stream->out_curr->ext;
-	} else {
+	पूर्ण अन्यथा अणु
 		prio = list_entry(stream->prio_list.next,
-				  struct sctp_stream_priorities, prio_sched);
+				  काष्ठा sctp_stream_priorities, prio_sched);
 		soute = prio->next;
-	}
-	ch = list_entry(soute->outq.next, struct sctp_chunk, stream_list);
+	पूर्ण
+	ch = list_entry(soute->outq.next, काष्ठा sctp_chunk, stream_list);
 	sctp_sched_dequeue_common(q, ch);
 
 out:
-	return ch;
-}
+	वापस ch;
+पूर्ण
 
-static void sctp_sched_prio_dequeue_done(struct sctp_outq *q,
-					 struct sctp_chunk *ch)
-{
-	struct sctp_stream_priorities *prio;
-	struct sctp_stream_out_ext *soute;
+अटल व्योम sctp_sched_prio_dequeue_करोne(काष्ठा sctp_outq *q,
+					 काष्ठा sctp_chunk *ch)
+अणु
+	काष्ठा sctp_stream_priorities *prio;
+	काष्ठा sctp_stream_out_ext *soute;
 	__u16 sid;
 
 	/* Last chunk on that msg, move to the next stream on
@@ -287,51 +288,51 @@ static void sctp_sched_prio_dequeue_done(struct sctp_outq *q,
 
 	sctp_sched_prio_next_stream(prio);
 
-	if (list_empty(&soute->outq))
+	अगर (list_empty(&soute->outq))
 		sctp_sched_prio_unsched(soute);
-}
+पूर्ण
 
-static void sctp_sched_prio_sched_all(struct sctp_stream *stream)
-{
-	struct sctp_association *asoc;
-	struct sctp_stream_out *sout;
-	struct sctp_chunk *ch;
+अटल व्योम sctp_sched_prio_sched_all(काष्ठा sctp_stream *stream)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_stream_out *sout;
+	काष्ठा sctp_chunk *ch;
 
-	asoc = container_of(stream, struct sctp_association, stream);
-	list_for_each_entry(ch, &asoc->outqueue.out_chunk_list, list) {
+	asoc = container_of(stream, काष्ठा sctp_association, stream);
+	list_क्रम_each_entry(ch, &asoc->outqueue.out_chunk_list, list) अणु
 		__u16 sid;
 
 		sid = sctp_chunk_stream_no(ch);
 		sout = SCTP_SO(stream, sid);
-		if (sout->ext)
+		अगर (sout->ext)
 			sctp_sched_prio_sched(stream, sout->ext);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sctp_sched_prio_unsched_all(struct sctp_stream *stream)
-{
-	struct sctp_stream_priorities *p, *tmp;
-	struct sctp_stream_out_ext *soute, *souttmp;
+अटल व्योम sctp_sched_prio_unsched_all(काष्ठा sctp_stream *stream)
+अणु
+	काष्ठा sctp_stream_priorities *p, *पंचांगp;
+	काष्ठा sctp_stream_out_ext *soute, *soutपंचांगp;
 
-	list_for_each_entry_safe(p, tmp, &stream->prio_list, prio_sched)
-		list_for_each_entry_safe(soute, souttmp, &p->active, prio_list)
+	list_क्रम_each_entry_safe(p, पंचांगp, &stream->prio_list, prio_sched)
+		list_क्रम_each_entry_safe(soute, soutपंचांगp, &p->active, prio_list)
 			sctp_sched_prio_unsched(soute);
-}
+पूर्ण
 
-static struct sctp_sched_ops sctp_sched_prio = {
+अटल काष्ठा sctp_sched_ops sctp_sched_prio = अणु
 	.set = sctp_sched_prio_set,
 	.get = sctp_sched_prio_get,
 	.init = sctp_sched_prio_init,
 	.init_sid = sctp_sched_prio_init_sid,
-	.free = sctp_sched_prio_free,
+	.मुक्त = sctp_sched_prio_मुक्त,
 	.enqueue = sctp_sched_prio_enqueue,
 	.dequeue = sctp_sched_prio_dequeue,
-	.dequeue_done = sctp_sched_prio_dequeue_done,
+	.dequeue_करोne = sctp_sched_prio_dequeue_करोne,
 	.sched_all = sctp_sched_prio_sched_all,
 	.unsched_all = sctp_sched_prio_unsched_all,
-};
+पूर्ण;
 
-void sctp_sched_ops_prio_init(void)
-{
-	sctp_sched_ops_register(SCTP_SS_PRIO, &sctp_sched_prio);
-}
+व्योम sctp_sched_ops_prio_init(व्योम)
+अणु
+	sctp_sched_ops_रेजिस्टर(SCTP_SS_PRIO, &sctp_sched_prio);
+पूर्ण

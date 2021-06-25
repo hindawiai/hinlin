@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * File operations for Coda.
+ * File operations क्रम Coda.
  * Original version: (C) 1996 Peter Braam 
- * Rewritten for Linux 2.1: (C) 1997 Carnegie Mellon University
+ * Rewritten क्रम Linux 2.1: (C) 1997 Carnegie Mellon University
  *
  * Carnegie Mellon encourages users of this code to contribute improvements
  * to the Coda project. Contact Peter Braam <coda@cs.cmu.edu>.
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/time.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/stat.h>
-#include <linux/cred.h>
-#include <linux/errno.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/uio.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/cred.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/uपन.स>
 
-#include <linux/coda.h>
-#include "coda_psdev.h"
-#include "coda_linux.h"
-#include "coda_int.h"
+#समावेश <linux/coda.h>
+#समावेश "coda_psdev.h"
+#समावेश "coda_linux.h"
+#समावेश "coda_int.h"
 
-struct coda_vm_ops {
+काष्ठा coda_vm_ops अणु
 	atomic_t refcnt;
-	struct file *coda_file;
-	const struct vm_operations_struct *host_vm_ops;
-	struct vm_operations_struct vm_ops;
-};
+	काष्ठा file *coda_file;
+	स्थिर काष्ठा vm_operations_काष्ठा *host_vm_ops;
+	काष्ठा vm_operations_काष्ठा vm_ops;
+पूर्ण;
 
-static ssize_t
-coda_file_read_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct file *coda_file = iocb->ki_filp;
-	struct inode *coda_inode = file_inode(coda_file);
-	struct coda_file_info *cfi = coda_ftoc(coda_file);
+अटल sमाप_प्रकार
+coda_file_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा file *coda_file = iocb->ki_filp;
+	काष्ठा inode *coda_inode = file_inode(coda_file);
+	काष्ठा coda_file_info *cfi = coda_ftoc(coda_file);
 	loff_t ki_pos = iocb->ki_pos;
-	size_t count = iov_iter_count(to);
-	ssize_t ret;
+	माप_प्रकार count = iov_iter_count(to);
+	sमाप_प्रकार ret;
 
-	ret = venus_access_intent(coda_inode->i_sb, coda_i2f(coda_inode),
-				  &cfi->cfi_access_intent,
+	ret = venus_access_पूर्णांकent(coda_inode->i_sb, coda_i2f(coda_inode),
+				  &cfi->cfi_access_पूर्णांकent,
 				  count, ki_pos, CODA_ACCESS_TYPE_READ);
-	if (ret)
-		goto finish_read;
+	अगर (ret)
+		जाओ finish_पढ़ो;
 
-	ret = vfs_iter_read(cfi->cfi_container, to, &iocb->ki_pos, 0);
+	ret = vfs_iter_पढ़ो(cfi->cfi_container, to, &iocb->ki_pos, 0);
 
-finish_read:
-	venus_access_intent(coda_inode->i_sb, coda_i2f(coda_inode),
-			    &cfi->cfi_access_intent,
+finish_पढ़ो:
+	venus_access_पूर्णांकent(coda_inode->i_sb, coda_i2f(coda_inode),
+			    &cfi->cfi_access_पूर्णांकent,
 			    count, ki_pos, CODA_ACCESS_TYPE_READ_FINISH);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-coda_file_write_iter(struct kiocb *iocb, struct iov_iter *to)
-{
-	struct file *coda_file = iocb->ki_filp;
-	struct inode *coda_inode = file_inode(coda_file);
-	struct coda_file_info *cfi = coda_ftoc(coda_file);
-	struct file *host_file = cfi->cfi_container;
+अटल sमाप_प्रकार
+coda_file_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *to)
+अणु
+	काष्ठा file *coda_file = iocb->ki_filp;
+	काष्ठा inode *coda_inode = file_inode(coda_file);
+	काष्ठा coda_file_info *cfi = coda_ftoc(coda_file);
+	काष्ठा file *host_file = cfi->cfi_container;
 	loff_t ki_pos = iocb->ki_pos;
-	size_t count = iov_iter_count(to);
-	ssize_t ret;
+	माप_प्रकार count = iov_iter_count(to);
+	sमाप_प्रकार ret;
 
-	ret = venus_access_intent(coda_inode->i_sb, coda_i2f(coda_inode),
-				  &cfi->cfi_access_intent,
+	ret = venus_access_पूर्णांकent(coda_inode->i_sb, coda_i2f(coda_inode),
+				  &cfi->cfi_access_पूर्णांकent,
 				  count, ki_pos, CODA_ACCESS_TYPE_WRITE);
-	if (ret)
-		goto finish_write;
+	अगर (ret)
+		जाओ finish_ग_लिखो;
 
-	file_start_write(host_file);
+	file_start_ग_लिखो(host_file);
 	inode_lock(coda_inode);
-	ret = vfs_iter_write(cfi->cfi_container, to, &iocb->ki_pos, 0);
+	ret = vfs_iter_ग_लिखो(cfi->cfi_container, to, &iocb->ki_pos, 0);
 	coda_inode->i_size = file_inode(host_file)->i_size;
 	coda_inode->i_blocks = (coda_inode->i_size + 511) >> 9;
-	coda_inode->i_mtime = coda_inode->i_ctime = current_time(coda_inode);
+	coda_inode->i_mसमय = coda_inode->i_स_समय = current_समय(coda_inode);
 	inode_unlock(coda_inode);
-	file_end_write(host_file);
+	file_end_ग_लिखो(host_file);
 
-finish_write:
-	venus_access_intent(coda_inode->i_sb, coda_i2f(coda_inode),
-			    &cfi->cfi_access_intent,
+finish_ग_लिखो:
+	venus_access_पूर्णांकent(coda_inode->i_sb, coda_i2f(coda_inode),
+			    &cfi->cfi_access_पूर्णांकent,
 			    count, ki_pos, CODA_ACCESS_TYPE_WRITE_FINISH);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-coda_vm_open(struct vm_area_struct *vma)
-{
-	struct coda_vm_ops *cvm_ops =
-		container_of(vma->vm_ops, struct coda_vm_ops, vm_ops);
+अटल व्योम
+coda_vm_खोलो(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा coda_vm_ops *cvm_ops =
+		container_of(vma->vm_ops, काष्ठा coda_vm_ops, vm_ops);
 
 	atomic_inc(&cvm_ops->refcnt);
 
-	if (cvm_ops->host_vm_ops && cvm_ops->host_vm_ops->open)
-		cvm_ops->host_vm_ops->open(vma);
-}
+	अगर (cvm_ops->host_vm_ops && cvm_ops->host_vm_ops->खोलो)
+		cvm_ops->host_vm_ops->खोलो(vma);
+पूर्ण
 
-static void
-coda_vm_close(struct vm_area_struct *vma)
-{
-	struct coda_vm_ops *cvm_ops =
-		container_of(vma->vm_ops, struct coda_vm_ops, vm_ops);
+अटल व्योम
+coda_vm_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा coda_vm_ops *cvm_ops =
+		container_of(vma->vm_ops, काष्ठा coda_vm_ops, vm_ops);
 
-	if (cvm_ops->host_vm_ops && cvm_ops->host_vm_ops->close)
-		cvm_ops->host_vm_ops->close(vma);
+	अगर (cvm_ops->host_vm_ops && cvm_ops->host_vm_ops->बंद)
+		cvm_ops->host_vm_ops->बंद(vma);
 
-	if (atomic_dec_and_test(&cvm_ops->refcnt)) {
+	अगर (atomic_dec_and_test(&cvm_ops->refcnt)) अणु
 		vma->vm_ops = cvm_ops->host_vm_ops;
 		fput(cvm_ops->coda_file);
-		kfree(cvm_ops);
-	}
-}
+		kमुक्त(cvm_ops);
+	पूर्ण
+पूर्ण
 
-static int
-coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
-{
-	struct inode *coda_inode = file_inode(coda_file);
-	struct coda_file_info *cfi = coda_ftoc(coda_file);
-	struct file *host_file = cfi->cfi_container;
-	struct inode *host_inode = file_inode(host_file);
-	struct coda_inode_info *cii;
-	struct coda_vm_ops *cvm_ops;
+अटल पूर्णांक
+coda_file_mmap(काष्ठा file *coda_file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा inode *coda_inode = file_inode(coda_file);
+	काष्ठा coda_file_info *cfi = coda_ftoc(coda_file);
+	काष्ठा file *host_file = cfi->cfi_container;
+	काष्ठा inode *host_inode = file_inode(host_file);
+	काष्ठा coda_inode_info *cii;
+	काष्ठा coda_vm_ops *cvm_ops;
 	loff_t ppos;
-	size_t count;
-	int ret;
+	माप_प्रकार count;
+	पूर्णांक ret;
 
-	if (!host_file->f_op->mmap)
-		return -ENODEV;
+	अगर (!host_file->f_op->mmap)
+		वापस -ENODEV;
 
-	if (WARN_ON(coda_file != vma->vm_file))
-		return -EIO;
+	अगर (WARN_ON(coda_file != vma->vm_file))
+		वापस -EIO;
 
 	count = vma->vm_end - vma->vm_start;
 	ppos = vma->vm_pgoff * PAGE_SIZE;
 
-	ret = venus_access_intent(coda_inode->i_sb, coda_i2f(coda_inode),
-				  &cfi->cfi_access_intent,
+	ret = venus_access_पूर्णांकent(coda_inode->i_sb, coda_i2f(coda_inode),
+				  &cfi->cfi_access_पूर्णांकent,
 				  count, ppos, CODA_ACCESS_TYPE_MMAP);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	cvm_ops = kmalloc(sizeof(struct coda_vm_ops), GFP_KERNEL);
-	if (!cvm_ops)
-		return -ENOMEM;
+	cvm_ops = kदो_स्मृति(माप(काष्ठा coda_vm_ops), GFP_KERNEL);
+	अगर (!cvm_ops)
+		वापस -ENOMEM;
 
 	cii = ITOC(coda_inode);
 	spin_lock(&cii->c_lock);
 	coda_file->f_mapping = host_file->f_mapping;
-	if (coda_inode->i_mapping == &coda_inode->i_data)
+	अगर (coda_inode->i_mapping == &coda_inode->i_data)
 		coda_inode->i_mapping = host_inode->i_mapping;
 
-	/* only allow additional mmaps as long as userspace isn't changing
+	/* only allow additional mmaps as दीर्घ as userspace isn't changing
 	 * the container file on us! */
-	else if (coda_inode->i_mapping != host_inode->i_mapping) {
+	अन्यथा अगर (coda_inode->i_mapping != host_inode->i_mapping) अणु
 		spin_unlock(&cii->c_lock);
-		kfree(cvm_ops);
-		return -EBUSY;
-	}
+		kमुक्त(cvm_ops);
+		वापस -EBUSY;
+	पूर्ण
 
 	/* keep track of how often the coda_inode/host_file has been mmapped */
 	cii->c_mapcount++;
@@ -174,75 +175,75 @@ coda_file_mmap(struct file *coda_file, struct vm_area_struct *vma)
 	vma->vm_file = get_file(host_file);
 	ret = call_mmap(vma->vm_file, vma);
 
-	if (ret) {
-		/* if call_mmap fails, our caller will put host_file so we
+	अगर (ret) अणु
+		/* अगर call_mmap fails, our caller will put host_file so we
 		 * should drop the reference to the coda_file that we got.
 		 */
 		fput(coda_file);
-		kfree(cvm_ops);
-	} else {
-		/* here we add redirects for the open/close vm_operations */
+		kमुक्त(cvm_ops);
+	पूर्ण अन्यथा अणु
+		/* here we add redirects क्रम the खोलो/बंद vm_operations */
 		cvm_ops->host_vm_ops = vma->vm_ops;
-		if (vma->vm_ops)
+		अगर (vma->vm_ops)
 			cvm_ops->vm_ops = *vma->vm_ops;
 
-		cvm_ops->vm_ops.open = coda_vm_open;
-		cvm_ops->vm_ops.close = coda_vm_close;
+		cvm_ops->vm_ops.खोलो = coda_vm_खोलो;
+		cvm_ops->vm_ops.बंद = coda_vm_बंद;
 		cvm_ops->coda_file = coda_file;
 		atomic_set(&cvm_ops->refcnt, 1);
 
 		vma->vm_ops = &cvm_ops->vm_ops;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int coda_open(struct inode *coda_inode, struct file *coda_file)
-{
-	struct file *host_file = NULL;
-	int error;
-	unsigned short flags = coda_file->f_flags & (~O_EXCL);
-	unsigned short coda_flags = coda_flags_to_cflags(flags);
-	struct coda_file_info *cfi;
+पूर्णांक coda_खोलो(काष्ठा inode *coda_inode, काष्ठा file *coda_file)
+अणु
+	काष्ठा file *host_file = शून्य;
+	पूर्णांक error;
+	अचिन्हित लघु flags = coda_file->f_flags & (~O_EXCL);
+	अचिन्हित लघु coda_flags = coda_flags_to_cflags(flags);
+	काष्ठा coda_file_info *cfi;
 
-	cfi = kmalloc(sizeof(struct coda_file_info), GFP_KERNEL);
-	if (!cfi)
-		return -ENOMEM;
+	cfi = kदो_स्मृति(माप(काष्ठा coda_file_info), GFP_KERNEL);
+	अगर (!cfi)
+		वापस -ENOMEM;
 
-	error = venus_open(coda_inode->i_sb, coda_i2f(coda_inode), coda_flags,
+	error = venus_खोलो(coda_inode->i_sb, coda_i2f(coda_inode), coda_flags,
 			   &host_file);
-	if (!host_file)
+	अगर (!host_file)
 		error = -EIO;
 
-	if (error) {
-		kfree(cfi);
-		return error;
-	}
+	अगर (error) अणु
+		kमुक्त(cfi);
+		वापस error;
+	पूर्ण
 
 	host_file->f_flags |= coda_file->f_flags & (O_APPEND | O_SYNC);
 
 	cfi->cfi_magic = CODA_MAGIC;
 	cfi->cfi_mapcount = 0;
 	cfi->cfi_container = host_file;
-	/* assume access intents are supported unless we hear otherwise */
-	cfi->cfi_access_intent = true;
+	/* assume access पूर्णांकents are supported unless we hear otherwise */
+	cfi->cfi_access_पूर्णांकent = true;
 
-	BUG_ON(coda_file->private_data != NULL);
-	coda_file->private_data = cfi;
-	return 0;
-}
+	BUG_ON(coda_file->निजी_data != शून्य);
+	coda_file->निजी_data = cfi;
+	वापस 0;
+पूर्ण
 
-int coda_release(struct inode *coda_inode, struct file *coda_file)
-{
-	unsigned short flags = (coda_file->f_flags) & (~O_EXCL);
-	unsigned short coda_flags = coda_flags_to_cflags(flags);
-	struct coda_file_info *cfi;
-	struct coda_inode_info *cii;
-	struct inode *host_inode;
-	int err;
+पूर्णांक coda_release(काष्ठा inode *coda_inode, काष्ठा file *coda_file)
+अणु
+	अचिन्हित लघु flags = (coda_file->f_flags) & (~O_EXCL);
+	अचिन्हित लघु coda_flags = coda_flags_to_cflags(flags);
+	काष्ठा coda_file_info *cfi;
+	काष्ठा coda_inode_info *cii;
+	काष्ठा inode *host_inode;
+	पूर्णांक err;
 
 	cfi = coda_ftoc(coda_file);
 
-	err = venus_close(coda_inode->i_sb, coda_i2f(coda_inode),
+	err = venus_बंद(coda_inode->i_sb, coda_i2f(coda_inode),
 			  coda_flags, coda_file->f_cred->fsuid);
 
 	host_inode = file_inode(cfi->cfi_container);
@@ -250,56 +251,56 @@ int coda_release(struct inode *coda_inode, struct file *coda_file)
 
 	/* did we mmap this file? */
 	spin_lock(&cii->c_lock);
-	if (coda_inode->i_mapping == &host_inode->i_data) {
+	अगर (coda_inode->i_mapping == &host_inode->i_data) अणु
 		cii->c_mapcount -= cfi->cfi_mapcount;
-		if (!cii->c_mapcount)
+		अगर (!cii->c_mapcount)
 			coda_inode->i_mapping = &coda_inode->i_data;
-	}
+	पूर्ण
 	spin_unlock(&cii->c_lock);
 
 	fput(cfi->cfi_container);
-	kfree(coda_file->private_data);
-	coda_file->private_data = NULL;
+	kमुक्त(coda_file->निजी_data);
+	coda_file->निजी_data = शून्य;
 
-	/* VFS fput ignores the return value from file_operations->release, so
-	 * there is no use returning an error here */
-	return 0;
-}
+	/* VFS fput ignores the वापस value from file_operations->release, so
+	 * there is no use वापसing an error here */
+	वापस 0;
+पूर्ण
 
-int coda_fsync(struct file *coda_file, loff_t start, loff_t end, int datasync)
-{
-	struct file *host_file;
-	struct inode *coda_inode = file_inode(coda_file);
-	struct coda_file_info *cfi;
-	int err;
+पूर्णांक coda_fsync(काष्ठा file *coda_file, loff_t start, loff_t end, पूर्णांक datasync)
+अणु
+	काष्ठा file *host_file;
+	काष्ठा inode *coda_inode = file_inode(coda_file);
+	काष्ठा coda_file_info *cfi;
+	पूर्णांक err;
 
-	if (!(S_ISREG(coda_inode->i_mode) || S_ISDIR(coda_inode->i_mode) ||
+	अगर (!(S_ISREG(coda_inode->i_mode) || S_ISसूची(coda_inode->i_mode) ||
 	      S_ISLNK(coda_inode->i_mode)))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	err = filemap_write_and_wait_range(coda_inode->i_mapping, start, end);
-	if (err)
-		return err;
+	err = filemap_ग_लिखो_and_रुको_range(coda_inode->i_mapping, start, end);
+	अगर (err)
+		वापस err;
 	inode_lock(coda_inode);
 
 	cfi = coda_ftoc(coda_file);
 	host_file = cfi->cfi_container;
 
 	err = vfs_fsync(host_file, datasync);
-	if (!err && !datasync)
+	अगर (!err && !datasync)
 		err = venus_fsync(coda_inode->i_sb, coda_i2f(coda_inode));
 	inode_unlock(coda_inode);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct file_operations coda_file_operations = {
+स्थिर काष्ठा file_operations coda_file_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read_iter	= coda_file_read_iter,
-	.write_iter	= coda_file_write_iter,
+	.पढ़ो_iter	= coda_file_पढ़ो_iter,
+	.ग_लिखो_iter	= coda_file_ग_लिखो_iter,
 	.mmap		= coda_file_mmap,
-	.open		= coda_open,
+	.खोलो		= coda_खोलो,
 	.release	= coda_release,
 	.fsync		= coda_fsync,
-	.splice_read	= generic_file_splice_read,
-};
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+पूर्ण;

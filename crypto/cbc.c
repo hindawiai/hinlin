@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * CBC: Cipher Block Chaining mode
  *
- * Copyright (c) 2006-2016 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2006-2016 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <crypto/algapi.h>
-#include <crypto/internal/cipher.h>
-#include <crypto/internal/skcipher.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/log2.h>
-#include <linux/module.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/cipher.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/module.h>
 
-static int crypto_cbc_encrypt_segment(struct skcipher_walk *walk,
-				      struct crypto_skcipher *skcipher)
-{
-	unsigned int bsize = crypto_skcipher_blocksize(skcipher);
-	void (*fn)(struct crypto_tfm *, u8 *, const u8 *);
-	unsigned int nbytes = walk->nbytes;
+अटल पूर्णांक crypto_cbc_encrypt_segment(काष्ठा skcipher_walk *walk,
+				      काष्ठा crypto_skcipher *skcipher)
+अणु
+	अचिन्हित पूर्णांक bsize = crypto_skcipher_blocksize(skcipher);
+	व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *);
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 	u8 *src = walk->src.virt.addr;
 	u8 *dst = walk->dst.virt.addr;
-	struct crypto_cipher *cipher;
-	struct crypto_tfm *tfm;
+	काष्ठा crypto_cipher *cipher;
+	काष्ठा crypto_tfm *tfm;
 	u8 *iv = walk->iv;
 
 	cipher = skcipher_cipher_simple(skcipher);
 	tfm = crypto_cipher_tfm(cipher);
 	fn = crypto_cipher_alg(cipher)->cia_encrypt;
 
-	do {
+	करो अणु
 		crypto_xor(iv, src, bsize);
 		fn(tfm, dst, iv);
-		memcpy(iv, dst, bsize);
+		स_नकल(iv, dst, bsize);
 
 		src += bsize;
 		dst += bsize;
-	} while ((nbytes -= bsize) >= bsize);
+	पूर्ण जबतक ((nbytes -= bsize) >= bsize);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int crypto_cbc_encrypt_inplace(struct skcipher_walk *walk,
-				      struct crypto_skcipher *skcipher)
-{
-	unsigned int bsize = crypto_skcipher_blocksize(skcipher);
-	void (*fn)(struct crypto_tfm *, u8 *, const u8 *);
-	unsigned int nbytes = walk->nbytes;
+अटल पूर्णांक crypto_cbc_encrypt_inplace(काष्ठा skcipher_walk *walk,
+				      काष्ठा crypto_skcipher *skcipher)
+अणु
+	अचिन्हित पूर्णांक bsize = crypto_skcipher_blocksize(skcipher);
+	व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *);
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 	u8 *src = walk->src.virt.addr;
-	struct crypto_cipher *cipher;
-	struct crypto_tfm *tfm;
+	काष्ठा crypto_cipher *cipher;
+	काष्ठा crypto_tfm *tfm;
 	u8 *iv = walk->iv;
 
 	cipher = skcipher_cipher_simple(skcipher);
 	tfm = crypto_cipher_tfm(cipher);
 	fn = crypto_cipher_alg(cipher)->cia_encrypt;
 
-	do {
+	करो अणु
 		crypto_xor(src, iv, bsize);
 		fn(tfm, src, src);
 		iv = src;
 
 		src += bsize;
-	} while ((nbytes -= bsize) >= bsize);
+	पूर्ण जबतक ((nbytes -= bsize) >= bsize);
 
-	memcpy(walk->iv, iv, bsize);
+	स_नकल(walk->iv, iv, bsize);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int crypto_cbc_encrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	struct skcipher_walk walk;
-	int err;
+अटल पूर्णांक crypto_cbc_encrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	काष्ठा skcipher_walk walk;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	while (walk.nbytes) {
-		if (walk.src.virt.addr == walk.dst.virt.addr)
+	जबतक (walk.nbytes) अणु
+		अगर (walk.src.virt.addr == walk.dst.virt.addr)
 			err = crypto_cbc_encrypt_inplace(&walk, skcipher);
-		else
+		अन्यथा
 			err = crypto_cbc_encrypt_segment(&walk, skcipher);
-		err = skcipher_walk_done(&walk, err);
-	}
+		err = skcipher_walk_करोne(&walk, err);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int crypto_cbc_decrypt_segment(struct skcipher_walk *walk,
-				      struct crypto_skcipher *skcipher)
-{
-	unsigned int bsize = crypto_skcipher_blocksize(skcipher);
-	void (*fn)(struct crypto_tfm *, u8 *, const u8 *);
-	unsigned int nbytes = walk->nbytes;
+अटल पूर्णांक crypto_cbc_decrypt_segment(काष्ठा skcipher_walk *walk,
+				      काष्ठा crypto_skcipher *skcipher)
+अणु
+	अचिन्हित पूर्णांक bsize = crypto_skcipher_blocksize(skcipher);
+	व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *);
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 	u8 *src = walk->src.virt.addr;
 	u8 *dst = walk->dst.virt.addr;
-	struct crypto_cipher *cipher;
-	struct crypto_tfm *tfm;
+	काष्ठा crypto_cipher *cipher;
+	काष्ठा crypto_tfm *tfm;
 	u8 *iv = walk->iv;
 
 	cipher = skcipher_cipher_simple(skcipher);
 	tfm = crypto_cipher_tfm(cipher);
 	fn = crypto_cipher_alg(cipher)->cia_decrypt;
 
-	do {
+	करो अणु
 		fn(tfm, dst, src);
 		crypto_xor(dst, iv, bsize);
 		iv = src;
 
 		src += bsize;
 		dst += bsize;
-	} while ((nbytes -= bsize) >= bsize);
+	पूर्ण जबतक ((nbytes -= bsize) >= bsize);
 
-	memcpy(walk->iv, iv, bsize);
+	स_नकल(walk->iv, iv, bsize);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int crypto_cbc_decrypt_inplace(struct skcipher_walk *walk,
-				      struct crypto_skcipher *skcipher)
-{
-	unsigned int bsize = crypto_skcipher_blocksize(skcipher);
-	void (*fn)(struct crypto_tfm *, u8 *, const u8 *);
-	unsigned int nbytes = walk->nbytes;
+अटल पूर्णांक crypto_cbc_decrypt_inplace(काष्ठा skcipher_walk *walk,
+				      काष्ठा crypto_skcipher *skcipher)
+अणु
+	अचिन्हित पूर्णांक bsize = crypto_skcipher_blocksize(skcipher);
+	व्योम (*fn)(काष्ठा crypto_tfm *, u8 *, स्थिर u8 *);
+	अचिन्हित पूर्णांक nbytes = walk->nbytes;
 	u8 *src = walk->src.virt.addr;
 	u8 last_iv[MAX_CIPHER_BLOCKSIZE];
-	struct crypto_cipher *cipher;
-	struct crypto_tfm *tfm;
+	काष्ठा crypto_cipher *cipher;
+	काष्ठा crypto_tfm *tfm;
 
 	cipher = skcipher_cipher_simple(skcipher);
 	tfm = crypto_cipher_tfm(cipher);
@@ -136,87 +137,87 @@ static int crypto_cbc_decrypt_inplace(struct skcipher_walk *walk,
 
 	/* Start of the last block. */
 	src += nbytes - (nbytes & (bsize - 1)) - bsize;
-	memcpy(last_iv, src, bsize);
+	स_नकल(last_iv, src, bsize);
 
-	for (;;) {
+	क्रम (;;) अणु
 		fn(tfm, src, src);
-		if ((nbytes -= bsize) < bsize)
-			break;
+		अगर ((nbytes -= bsize) < bsize)
+			अवरोध;
 		crypto_xor(src, src - bsize, bsize);
 		src -= bsize;
-	}
+	पूर्ण
 
 	crypto_xor(src, walk->iv, bsize);
-	memcpy(walk->iv, last_iv, bsize);
+	स_नकल(walk->iv, last_iv, bsize);
 
-	return nbytes;
-}
+	वापस nbytes;
+पूर्ण
 
-static int crypto_cbc_decrypt(struct skcipher_request *req)
-{
-	struct crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
-	struct skcipher_walk walk;
-	int err;
+अटल पूर्णांक crypto_cbc_decrypt(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *skcipher = crypto_skcipher_reqtfm(req);
+	काष्ठा skcipher_walk walk;
+	पूर्णांक err;
 
 	err = skcipher_walk_virt(&walk, req, false);
 
-	while (walk.nbytes) {
-		if (walk.src.virt.addr == walk.dst.virt.addr)
+	जबतक (walk.nbytes) अणु
+		अगर (walk.src.virt.addr == walk.dst.virt.addr)
 			err = crypto_cbc_decrypt_inplace(&walk, skcipher);
-		else
+		अन्यथा
 			err = crypto_cbc_decrypt_segment(&walk, skcipher);
-		err = skcipher_walk_done(&walk, err);
-	}
+		err = skcipher_walk_करोne(&walk, err);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int crypto_cbc_create(struct crypto_template *tmpl, struct rtattr **tb)
-{
-	struct skcipher_instance *inst;
-	struct crypto_alg *alg;
-	int err;
+अटल पूर्णांक crypto_cbc_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
+अणु
+	काष्ठा skcipher_instance *inst;
+	काष्ठा crypto_alg *alg;
+	पूर्णांक err;
 
-	inst = skcipher_alloc_instance_simple(tmpl, tb);
-	if (IS_ERR(inst))
-		return PTR_ERR(inst);
+	inst = skcipher_alloc_instance_simple(पंचांगpl, tb);
+	अगर (IS_ERR(inst))
+		वापस PTR_ERR(inst);
 
 	alg = skcipher_ialg_simple(inst);
 
 	err = -EINVAL;
-	if (!is_power_of_2(alg->cra_blocksize))
-		goto out_free_inst;
+	अगर (!is_घातer_of_2(alg->cra_blocksize))
+		जाओ out_मुक्त_inst;
 
 	inst->alg.encrypt = crypto_cbc_encrypt;
 	inst->alg.decrypt = crypto_cbc_decrypt;
 
-	err = skcipher_register_instance(tmpl, inst);
-	if (err) {
-out_free_inst:
-		inst->free(inst);
-	}
+	err = skcipher_रेजिस्टर_instance(पंचांगpl, inst);
+	अगर (err) अणु
+out_मुक्त_inst:
+		inst->मुक्त(inst);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct crypto_template crypto_cbc_tmpl = {
+अटल काष्ठा crypto_ढाँचा crypto_cbc_पंचांगpl = अणु
 	.name = "cbc",
 	.create = crypto_cbc_create,
 	.module = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init crypto_cbc_module_init(void)
-{
-	return crypto_register_template(&crypto_cbc_tmpl);
-}
+अटल पूर्णांक __init crypto_cbc_module_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_ढाँचा(&crypto_cbc_पंचांगpl);
+पूर्ण
 
-static void __exit crypto_cbc_module_exit(void)
-{
-	crypto_unregister_template(&crypto_cbc_tmpl);
-}
+अटल व्योम __निकास crypto_cbc_module_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_ढाँचा(&crypto_cbc_पंचांगpl);
+पूर्ण
 
 subsys_initcall(crypto_cbc_module_init);
-module_exit(crypto_cbc_module_exit);
+module_निकास(crypto_cbc_module_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("CBC block cipher mode of operation");

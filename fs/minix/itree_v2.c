@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/buffer_head.h>
-#include "minix.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/buffer_head.h>
+#समावेश "minix.h"
 
-enum {DIRECT = 7, DEPTH = 4};	/* Have triple indirect */
+क्रमागत अणुसूचीECT = 7, DEPTH = 4पूर्ण;	/* Have triple indirect */
 
-typedef u32 block_t;	/* 32 bit, host order */
+प्रकार u32 block_t;	/* 32 bit, host order */
 
-static inline unsigned long block_to_cpu(block_t n)
-{
-	return n;
-}
+अटल अंतरभूत अचिन्हित दीर्घ block_to_cpu(block_t n)
+अणु
+	वापस n;
+पूर्ण
 
-static inline block_t cpu_to_block(unsigned long n)
-{
-	return n;
-}
+अटल अंतरभूत block_t cpu_to_block(अचिन्हित दीर्घ n)
+अणु
+	वापस n;
+पूर्ण
 
-static inline block_t *i_data(struct inode *inode)
-{
-	return (block_t *)minix_i(inode)->u.i2_data;
-}
+अटल अंतरभूत block_t *i_data(काष्ठा inode *inode)
+अणु
+	वापस (block_t *)minix_i(inode)->u.i2_data;
+पूर्ण
 
-#define DIRCOUNT 7
-#define INDIRCOUNT(sb) (1 << ((sb)->s_blocksize_bits - 2))
+#घोषणा सूचीCOUNT 7
+#घोषणा INसूचीCOUNT(sb) (1 << ((sb)->s_blocksize_bits - 2))
 
-static int block_to_path(struct inode * inode, long block, int offsets[DEPTH])
-{
-	int n = 0;
-	struct super_block *sb = inode->i_sb;
+अटल पूर्णांक block_to_path(काष्ठा inode * inode, दीर्घ block, पूर्णांक offsets[DEPTH])
+अणु
+	पूर्णांक n = 0;
+	काष्ठा super_block *sb = inode->i_sb;
 
-	if (block < 0) {
-		printk("MINIX-fs: block_to_path: block %ld < 0 on dev %pg\n",
+	अगर (block < 0) अणु
+		prपूर्णांकk("MINIX-fs: block_to_path: block %ld < 0 on dev %pg\n",
 			block, sb->s_bdev);
-		return 0;
-	}
-	if ((u64)block * (u64)sb->s_blocksize >= sb->s_maxbytes)
-		return 0;
+		वापस 0;
+	पूर्ण
+	अगर ((u64)block * (u64)sb->s_blocksize >= sb->s_maxbytes)
+		वापस 0;
 
-	if (block < DIRCOUNT) {
+	अगर (block < सूचीCOUNT) अणु
 		offsets[n++] = block;
-	} else if ((block -= DIRCOUNT) < INDIRCOUNT(sb)) {
-		offsets[n++] = DIRCOUNT;
+	पूर्ण अन्यथा अगर ((block -= सूचीCOUNT) < INसूचीCOUNT(sb)) अणु
+		offsets[n++] = सूचीCOUNT;
 		offsets[n++] = block;
-	} else if ((block -= INDIRCOUNT(sb)) < INDIRCOUNT(sb) * INDIRCOUNT(sb)) {
-		offsets[n++] = DIRCOUNT + 1;
-		offsets[n++] = block / INDIRCOUNT(sb);
-		offsets[n++] = block % INDIRCOUNT(sb);
-	} else {
-		block -= INDIRCOUNT(sb) * INDIRCOUNT(sb);
-		offsets[n++] = DIRCOUNT + 2;
-		offsets[n++] = (block / INDIRCOUNT(sb)) / INDIRCOUNT(sb);
-		offsets[n++] = (block / INDIRCOUNT(sb)) % INDIRCOUNT(sb);
-		offsets[n++] = block % INDIRCOUNT(sb);
-	}
-	return n;
-}
+	पूर्ण अन्यथा अगर ((block -= INसूचीCOUNT(sb)) < INसूचीCOUNT(sb) * INसूचीCOUNT(sb)) अणु
+		offsets[n++] = सूचीCOUNT + 1;
+		offsets[n++] = block / INसूचीCOUNT(sb);
+		offsets[n++] = block % INसूचीCOUNT(sb);
+	पूर्ण अन्यथा अणु
+		block -= INसूचीCOUNT(sb) * INसूचीCOUNT(sb);
+		offsets[n++] = सूचीCOUNT + 2;
+		offsets[n++] = (block / INसूचीCOUNT(sb)) / INसूचीCOUNT(sb);
+		offsets[n++] = (block / INसूचीCOUNT(sb)) % INसूचीCOUNT(sb);
+		offsets[n++] = block % INसूचीCOUNT(sb);
+	पूर्ण
+	वापस n;
+पूर्ण
 
-#include "itree_common.c"
+#समावेश "itree_common.c"
 
-int V2_minix_get_block(struct inode * inode, long block,
-			struct buffer_head *bh_result, int create)
-{
-	return get_block(inode, block, bh_result, create);
-}
+पूर्णांक V2_minix_get_block(काष्ठा inode * inode, दीर्घ block,
+			काष्ठा buffer_head *bh_result, पूर्णांक create)
+अणु
+	वापस get_block(inode, block, bh_result, create);
+पूर्ण
 
-void V2_minix_truncate(struct inode * inode)
-{
+व्योम V2_minix_truncate(काष्ठा inode * inode)
+अणु
 	truncate(inode);
-}
+पूर्ण
 
-unsigned V2_minix_blocks(loff_t size, struct super_block *sb)
-{
-	return nblocks(size, sb);
-}
+अचिन्हित V2_minix_blocks(loff_t size, काष्ठा super_block *sb)
+अणु
+	वापस nblocks(size, sb);
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cell Internal Interrupt Controller
  *
@@ -16,313 +17,313 @@
  *   a non-active node to the active node)
  */
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/export.h>
-#include <linux/percpu.h>
-#include <linux/types.h>
-#include <linux/ioport.h>
-#include <linux/kernel_stat.h>
-#include <linux/pgtable.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/export.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/ptrace.h>
-#include <asm/machdep.h>
-#include <asm/cell-regs.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/cell-regs.h>
 
-#include "interrupt.h"
+#समावेश "interrupt.h"
 
-struct iic {
-	struct cbe_iic_thread_regs __iomem *regs;
+काष्ठा iic अणु
+	काष्ठा cbe_iic_thपढ़ो_regs __iomem *regs;
 	u8 target_id;
 	u8 eoi_stack[16];
-	int eoi_ptr;
-	struct device_node *node;
-};
+	पूर्णांक eoi_ptr;
+	काष्ठा device_node *node;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct iic, cpu_iic);
-#define IIC_NODE_COUNT	2
-static struct irq_domain *iic_host;
+अटल DEFINE_PER_CPU(काष्ठा iic, cpu_iic);
+#घोषणा IIC_NODE_COUNT	2
+अटल काष्ठा irq_करोमुख्य *iic_host;
 
 /* Convert between "pending" bits and hw irq number */
-static irq_hw_number_t iic_pending_to_hwnum(struct cbe_iic_pending_bits bits)
-{
-	unsigned char unit = bits.source & 0xf;
-	unsigned char node = bits.source >> 4;
-	unsigned char class = bits.class & 3;
+अटल irq_hw_number_t iic_pending_to_hwnum(काष्ठा cbe_iic_pending_bits bits)
+अणु
+	अचिन्हित अक्षर unit = bits.source & 0xf;
+	अचिन्हित अक्षर node = bits.source >> 4;
+	अचिन्हित अक्षर class = bits.class & 3;
 
 	/* Decode IPIs */
-	if (bits.flags & CBE_IIC_IRQ_IPI)
-		return IIC_IRQ_TYPE_IPI | (bits.prio >> 4);
-	else
-		return (node << IIC_IRQ_NODE_SHIFT) | (class << 4) | unit;
-}
+	अगर (bits.flags & CBE_IIC_IRQ_IPI)
+		वापस IIC_IRQ_TYPE_IPI | (bits.prio >> 4);
+	अन्यथा
+		वापस (node << IIC_IRQ_NODE_SHIFT) | (class << 4) | unit;
+पूर्ण
 
-static void iic_mask(struct irq_data *d)
-{
-}
+अटल व्योम iic_mask(काष्ठा irq_data *d)
+अणु
+पूर्ण
 
-static void iic_unmask(struct irq_data *d)
-{
-}
+अटल व्योम iic_unmask(काष्ठा irq_data *d)
+अणु
+पूर्ण
 
-static void iic_eoi(struct irq_data *d)
-{
-	struct iic *iic = this_cpu_ptr(&cpu_iic);
+अटल व्योम iic_eoi(काष्ठा irq_data *d)
+अणु
+	काष्ठा iic *iic = this_cpu_ptr(&cpu_iic);
 	out_be64(&iic->regs->prio, iic->eoi_stack[--iic->eoi_ptr]);
 	BUG_ON(iic->eoi_ptr < 0);
-}
+पूर्ण
 
-static struct irq_chip iic_chip = {
+अटल काष्ठा irq_chip iic_chip = अणु
 	.name = "CELL-IIC",
 	.irq_mask = iic_mask,
 	.irq_unmask = iic_unmask,
 	.irq_eoi = iic_eoi,
-};
+पूर्ण;
 
 
-static void iic_ioexc_eoi(struct irq_data *d)
-{
-}
+अटल व्योम iic_ioexc_eoi(काष्ठा irq_data *d)
+अणु
+पूर्ण
 
-static void iic_ioexc_cascade(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct cbe_iic_regs __iomem *node_iic =
-		(void __iomem *)irq_desc_get_handler_data(desc);
-	unsigned int irq = irq_desc_get_irq(desc);
-	unsigned int base = (irq & 0xffffff00) | IIC_IRQ_TYPE_IOEXC;
-	unsigned long bits, ack;
-	int cascade;
+अटल व्योम iic_ioexc_cascade(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा cbe_iic_regs __iomem *node_iic =
+		(व्योम __iomem *)irq_desc_get_handler_data(desc);
+	अचिन्हित पूर्णांक irq = irq_desc_get_irq(desc);
+	अचिन्हित पूर्णांक base = (irq & 0xffffff00) | IIC_IRQ_TYPE_IOEXC;
+	अचिन्हित दीर्घ bits, ack;
+	पूर्णांक cascade;
 
-	for (;;) {
+	क्रम (;;) अणु
 		bits = in_be64(&node_iic->iic_is);
-		if (bits == 0)
-			break;
-		/* pre-ack edge interrupts */
+		अगर (bits == 0)
+			अवरोध;
+		/* pre-ack edge पूर्णांकerrupts */
 		ack = bits & IIC_ISR_EDGE_MASK;
-		if (ack)
+		अगर (ack)
 			out_be64(&node_iic->iic_is, ack);
 		/* handle them */
-		for (cascade = 63; cascade >= 0; cascade--)
-			if (bits & (0x8000000000000000UL >> cascade)) {
-				unsigned int cirq =
+		क्रम (cascade = 63; cascade >= 0; cascade--)
+			अगर (bits & (0x8000000000000000UL >> cascade)) अणु
+				अचिन्हित पूर्णांक cirq =
 					irq_linear_revmap(iic_host,
 							  base | cascade);
-				if (cirq)
+				अगर (cirq)
 					generic_handle_irq(cirq);
-			}
-		/* post-ack level interrupts */
+			पूर्ण
+		/* post-ack level पूर्णांकerrupts */
 		ack = bits & ~IIC_ISR_EDGE_MASK;
-		if (ack)
+		अगर (ack)
 			out_be64(&node_iic->iic_is, ack);
-	}
+	पूर्ण
 	chip->irq_eoi(&desc->irq_data);
-}
+पूर्ण
 
 
-static struct irq_chip iic_ioexc_chip = {
+अटल काष्ठा irq_chip iic_ioexc_chip = अणु
 	.name = "CELL-IOEX",
 	.irq_mask = iic_mask,
 	.irq_unmask = iic_unmask,
 	.irq_eoi = iic_ioexc_eoi,
-};
+पूर्ण;
 
-/* Get an IRQ number from the pending state register of the IIC */
-static unsigned int iic_get_irq(void)
-{
-	struct cbe_iic_pending_bits pending;
-	struct iic *iic;
-	unsigned int virq;
+/* Get an IRQ number from the pending state रेजिस्टर of the IIC */
+अटल अचिन्हित पूर्णांक iic_get_irq(व्योम)
+अणु
+	काष्ठा cbe_iic_pending_bits pending;
+	काष्ठा iic *iic;
+	अचिन्हित पूर्णांक virq;
 
 	iic = this_cpu_ptr(&cpu_iic);
-	*(unsigned long *) &pending =
+	*(अचिन्हित दीर्घ *) &pending =
 		in_be64((u64 __iomem *) &iic->regs->pending_destr);
-	if (!(pending.flags & CBE_IIC_IRQ_VALID))
-		return 0;
+	अगर (!(pending.flags & CBE_IIC_IRQ_VALID))
+		वापस 0;
 	virq = irq_linear_revmap(iic_host, iic_pending_to_hwnum(pending));
-	if (!virq)
-		return 0;
+	अगर (!virq)
+		वापस 0;
 	iic->eoi_stack[++iic->eoi_ptr] = pending.prio;
 	BUG_ON(iic->eoi_ptr > 15);
-	return virq;
-}
+	वापस virq;
+पूर्ण
 
-void iic_setup_cpu(void)
-{
+व्योम iic_setup_cpu(व्योम)
+अणु
 	out_be64(&this_cpu_ptr(&cpu_iic)->regs->prio, 0xff);
-}
+पूर्ण
 
-u8 iic_get_target_id(int cpu)
-{
-	return per_cpu(cpu_iic, cpu).target_id;
-}
+u8 iic_get_target_id(पूर्णांक cpu)
+अणु
+	वापस per_cpu(cpu_iic, cpu).target_id;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(iic_get_target_id);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-/* Use the highest interrupt priorities for IPI */
-static inline int iic_msg_to_irq(int msg)
-{
-	return IIC_IRQ_TYPE_IPI + 0xf - msg;
-}
+/* Use the highest पूर्णांकerrupt priorities क्रम IPI */
+अटल अंतरभूत पूर्णांक iic_msg_to_irq(पूर्णांक msg)
+अणु
+	वापस IIC_IRQ_TYPE_IPI + 0xf - msg;
+पूर्ण
 
-void iic_message_pass(int cpu, int msg)
-{
+व्योम iic_message_pass(पूर्णांक cpu, पूर्णांक msg)
+अणु
 	out_be64(&per_cpu(cpu_iic, cpu).regs->generate, (0xf - msg) << 4);
-}
+पूर्ण
 
-static void iic_request_ipi(int msg)
-{
-	int virq;
+अटल व्योम iic_request_ipi(पूर्णांक msg)
+अणु
+	पूर्णांक virq;
 
 	virq = irq_create_mapping(iic_host, iic_msg_to_irq(msg));
-	if (!virq) {
-		printk(KERN_ERR
+	अगर (!virq) अणु
+		prपूर्णांकk(KERN_ERR
 		       "iic: failed to map IPI %s\n", smp_ipi_name[msg]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If smp_request_message_ipi encounters an error it will notify
-	 * the error.  If a message is not needed it will return non-zero.
+	 * If smp_request_message_ipi encounters an error it will notअगरy
+	 * the error.  If a message is not needed it will वापस non-zero.
 	 */
-	if (smp_request_message_ipi(virq, msg))
+	अगर (smp_request_message_ipi(virq, msg))
 		irq_dispose_mapping(virq);
-}
+पूर्ण
 
-void iic_request_IPIs(void)
-{
+व्योम iic_request_IPIs(व्योम)
+अणु
 	iic_request_ipi(PPC_MSG_CALL_FUNCTION);
 	iic_request_ipi(PPC_MSG_RESCHEDULE);
 	iic_request_ipi(PPC_MSG_TICK_BROADCAST);
 	iic_request_ipi(PPC_MSG_NMI_IPI);
-}
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
 
-static int iic_host_match(struct irq_domain *h, struct device_node *node,
-			  enum irq_domain_bus_token bus_token)
-{
-	return of_device_is_compatible(node,
+अटल पूर्णांक iic_host_match(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *node,
+			  क्रमागत irq_करोमुख्य_bus_token bus_token)
+अणु
+	वापस of_device_is_compatible(node,
 				    "IBM,CBEA-Internal-Interrupt-Controller");
-}
+पूर्ण
 
-static int iic_host_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक iic_host_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 			irq_hw_number_t hw)
-{
-	switch (hw & IIC_IRQ_TYPE_MASK) {
-	case IIC_IRQ_TYPE_IPI:
+अणु
+	चयन (hw & IIC_IRQ_TYPE_MASK) अणु
+	हाल IIC_IRQ_TYPE_IPI:
 		irq_set_chip_and_handler(virq, &iic_chip, handle_percpu_irq);
-		break;
-	case IIC_IRQ_TYPE_IOEXC:
+		अवरोध;
+	हाल IIC_IRQ_TYPE_IOEXC:
 		irq_set_chip_and_handler(virq, &iic_ioexc_chip,
 					 handle_edge_eoi_irq);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		irq_set_chip_and_handler(virq, &iic_chip, handle_edge_eoi_irq);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int iic_host_xlate(struct irq_domain *h, struct device_node *ct,
-			   const u32 *intspec, unsigned int intsize,
-			   irq_hw_number_t *out_hwirq, unsigned int *out_flags)
+अटल पूर्णांक iic_host_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *ct,
+			   स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			   irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_flags)
 
-{
-	unsigned int node, ext, unit, class;
-	const u32 *val;
+अणु
+	अचिन्हित पूर्णांक node, ext, unit, class;
+	स्थिर u32 *val;
 
-	if (!of_device_is_compatible(ct,
+	अगर (!of_device_is_compatible(ct,
 				     "IBM,CBEA-Internal-Interrupt-Controller"))
-		return -ENODEV;
-	if (intsize != 1)
-		return -ENODEV;
-	val = of_get_property(ct, "#interrupt-cells", NULL);
-	if (val == NULL || *val != 1)
-		return -ENODEV;
+		वापस -ENODEV;
+	अगर (पूर्णांकsize != 1)
+		वापस -ENODEV;
+	val = of_get_property(ct, "#interrupt-cells", शून्य);
+	अगर (val == शून्य || *val != 1)
+		वापस -ENODEV;
 
-	node = intspec[0] >> 24;
-	ext = (intspec[0] >> 16) & 0xff;
-	class = (intspec[0] >> 8) & 0xff;
-	unit = intspec[0] & 0xff;
+	node = पूर्णांकspec[0] >> 24;
+	ext = (पूर्णांकspec[0] >> 16) & 0xff;
+	class = (पूर्णांकspec[0] >> 8) & 0xff;
+	unit = पूर्णांकspec[0] & 0xff;
 
-	/* Check if node is in supported range */
-	if (node > 1)
-		return -EINVAL;
+	/* Check अगर node is in supported range */
+	अगर (node > 1)
+		वापस -EINVAL;
 
-	/* Build up interrupt number, special case for IO exceptions */
+	/* Build up पूर्णांकerrupt number, special हाल क्रम IO exceptions */
 	*out_hwirq = (node << IIC_IRQ_NODE_SHIFT);
-	if (unit == IIC_UNIT_IIC && class == 1)
+	अगर (unit == IIC_UNIT_IIC && class == 1)
 		*out_hwirq |= IIC_IRQ_TYPE_IOEXC | ext;
-	else
+	अन्यथा
 		*out_hwirq |= IIC_IRQ_TYPE_NORMAL |
 			(class << IIC_IRQ_CLASS_SHIFT) | unit;
 
 	/* Dummy flags, ignored by iic code */
 	*out_flags = IRQ_TYPE_EDGE_RISING;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops iic_host_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops iic_host_ops = अणु
 	.match = iic_host_match,
 	.map = iic_host_map,
 	.xlate = iic_host_xlate,
-};
+पूर्ण;
 
-static void __init init_one_iic(unsigned int hw_cpu, unsigned long addr,
-				struct device_node *node)
-{
+अटल व्योम __init init_one_iic(अचिन्हित पूर्णांक hw_cpu, अचिन्हित दीर्घ addr,
+				काष्ठा device_node *node)
+अणु
 	/* XXX FIXME: should locate the linux CPU number from the HW cpu
-	 * number properly. We are lucky for now
+	 * number properly. We are lucky क्रम now
 	 */
-	struct iic *iic = &per_cpu(cpu_iic, hw_cpu);
+	काष्ठा iic *iic = &per_cpu(cpu_iic, hw_cpu);
 
-	iic->regs = ioremap(addr, sizeof(struct cbe_iic_thread_regs));
-	BUG_ON(iic->regs == NULL);
+	iic->regs = ioremap(addr, माप(काष्ठा cbe_iic_thपढ़ो_regs));
+	BUG_ON(iic->regs == शून्य);
 
 	iic->target_id = ((hw_cpu & 2) << 3) | ((hw_cpu & 1) ? 0xf : 0xe);
 	iic->eoi_stack[0] = 0xff;
 	iic->node = of_node_get(node);
 	out_be64(&iic->regs->prio, 0);
 
-	printk(KERN_INFO "IIC for CPU %d target id 0x%x : %pOF\n",
+	prपूर्णांकk(KERN_INFO "IIC for CPU %d target id 0x%x : %pOF\n",
 	       hw_cpu, iic->target_id, node);
-}
+पूर्ण
 
-static int __init setup_iic(void)
-{
-	struct device_node *dn;
-	struct resource r0, r1;
-	unsigned int node, cascade, found = 0;
-	struct cbe_iic_regs __iomem *node_iic;
-	const u32 *np;
+अटल पूर्णांक __init setup_iic(व्योम)
+अणु
+	काष्ठा device_node *dn;
+	काष्ठा resource r0, r1;
+	अचिन्हित पूर्णांक node, cascade, found = 0;
+	काष्ठा cbe_iic_regs __iomem *node_iic;
+	स्थिर u32 *np;
 
-	for_each_node_by_name(dn, "interrupt-controller") {
-		if (!of_device_is_compatible(dn,
+	क्रम_each_node_by_name(dn, "interrupt-controller") अणु
+		अगर (!of_device_is_compatible(dn,
 				     "IBM,CBEA-Internal-Interrupt-Controller"))
-			continue;
-		np = of_get_property(dn, "ibm,interrupt-server-ranges", NULL);
-		if (np == NULL) {
-			printk(KERN_WARNING "IIC: CPU association not found\n");
+			जारी;
+		np = of_get_property(dn, "ibm,interrupt-server-ranges", शून्य);
+		अगर (np == शून्य) अणु
+			prपूर्णांकk(KERN_WARNING "IIC: CPU association not found\n");
 			of_node_put(dn);
-			return -ENODEV;
-		}
-		if (of_address_to_resource(dn, 0, &r0) ||
-		    of_address_to_resource(dn, 1, &r1)) {
-			printk(KERN_WARNING "IIC: Can't resolve addresses\n");
+			वापस -ENODEV;
+		पूर्ण
+		अगर (of_address_to_resource(dn, 0, &r0) ||
+		    of_address_to_resource(dn, 1, &r1)) अणु
+			prपूर्णांकk(KERN_WARNING "IIC: Can't resolve addresses\n");
 			of_node_put(dn);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		found++;
 		init_one_iic(np[0], r0.start, dn);
 		init_one_iic(np[1], r1.start, dn);
 
-		/* Setup cascade for IO exceptions. XXX cleanup tricks to get
+		/* Setup cascade क्रम IO exceptions. XXX cleanup tricks to get
 		 * node vs CPU etc...
 		 * Note that we configure the IIC_IRR here with a hard coded
 		 * priority of 1. We might want to improve that later.
@@ -333,61 +334,61 @@ static int __init setup_iic(void)
 		cascade |= 1 << IIC_IRQ_CLASS_SHIFT;
 		cascade |= IIC_UNIT_IIC;
 		cascade = irq_create_mapping(iic_host, cascade);
-		if (!cascade)
-			continue;
+		अगर (!cascade)
+			जारी;
 		/*
-		 * irq_data is a generic pointer that gets passed back
-		 * to us later, so the forced cast is fine.
+		 * irq_data is a generic poपूर्णांकer that माला_लो passed back
+		 * to us later, so the क्रमced cast is fine.
 		 */
-		irq_set_handler_data(cascade, (void __force *)node_iic);
+		irq_set_handler_data(cascade, (व्योम __क्रमce *)node_iic);
 		irq_set_chained_handler(cascade, iic_ioexc_cascade);
 		out_be64(&node_iic->iic_ir,
 			 (1 << 12)		/* priority */ |
 			 (node << 4)		/* dest node */ |
-			 IIC_UNIT_THREAD_0	/* route them to thread 0 */);
-		/* Flush pending (make sure it triggers if there is
+			 IIC_UNIT_THREAD_0	/* route them to thपढ़ो 0 */);
+		/* Flush pending (make sure it triggers अगर there is
 		 * anything pending
 		 */
 		out_be64(&node_iic->iic_is, 0xfffffffffffffffful);
-	}
+	पूर्ण
 
-	if (found)
-		return 0;
-	else
-		return -ENODEV;
-}
+	अगर (found)
+		वापस 0;
+	अन्यथा
+		वापस -ENODEV;
+पूर्ण
 
-void __init iic_init_IRQ(void)
-{
-	/* Setup an irq host data structure */
-	iic_host = irq_domain_add_linear(NULL, IIC_SOURCE_COUNT, &iic_host_ops,
-					 NULL);
-	BUG_ON(iic_host == NULL);
-	irq_set_default_host(iic_host);
+व्योम __init iic_init_IRQ(व्योम)
+अणु
+	/* Setup an irq host data काष्ठाure */
+	iic_host = irq_करोमुख्य_add_linear(शून्य, IIC_SOURCE_COUNT, &iic_host_ops,
+					 शून्य);
+	BUG_ON(iic_host == शून्य);
+	irq_set_शेष_host(iic_host);
 
 	/* Discover and initialize iics */
-	if (setup_iic() < 0)
+	अगर (setup_iic() < 0)
 		panic("IIC: Failed to initialize !\n");
 
-	/* Set master interrupt handling function */
+	/* Set master पूर्णांकerrupt handling function */
 	ppc_md.get_irq = iic_get_irq;
 
 	/* Enable on current CPU */
 	iic_setup_cpu();
-}
+पूर्ण
 
-void iic_set_interrupt_routing(int cpu, int thread, int priority)
-{
-	struct cbe_iic_regs __iomem *iic_regs = cbe_get_cpu_iic_regs(cpu);
+व्योम iic_set_पूर्णांकerrupt_routing(पूर्णांक cpu, पूर्णांक thपढ़ो, पूर्णांक priority)
+अणु
+	काष्ठा cbe_iic_regs __iomem *iic_regs = cbe_get_cpu_iic_regs(cpu);
 	u64 iic_ir = 0;
-	int node = cpu >> 1;
+	पूर्णांक node = cpu >> 1;
 
-	/* Set which node and thread will handle the next interrupt */
+	/* Set which node and thपढ़ो will handle the next पूर्णांकerrupt */
 	iic_ir |= CBE_IIC_IR_PRIO(priority) |
 		  CBE_IIC_IR_DEST_NODE(node);
-	if (thread == 0)
+	अगर (thपढ़ो == 0)
 		iic_ir |= CBE_IIC_IR_DEST_UNIT(CBE_IIC_IR_PT_0);
-	else
+	अन्यथा
 		iic_ir |= CBE_IIC_IR_DEST_UNIT(CBE_IIC_IR_PT_1);
 	out_be64(&iic_regs->iic_ir, iic_ir);
-}
+पूर्ण

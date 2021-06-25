@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Altivec XOR operations
  *
  * Copyright 2017 IBM Corp.
  */
 
-#include <linux/preempt.h>
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <asm/switch_to.h>
-#include <asm/xor_altivec.h>
-#include "xor_vmx.h"
+#समावेश <linux/preempt.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/चयन_to.h>
+#समावेश <यंत्र/xor_altivec.h>
+#समावेश "xor_vmx.h"
 
-void xor_altivec_2(unsigned long bytes, unsigned long *v1_in,
-		   unsigned long *v2_in)
-{
+व्योम xor_altivec_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *v1_in,
+		   अचिन्हित दीर्घ *v2_in)
+अणु
 	preempt_disable();
 	enable_kernel_altivec();
 	__xor_altivec_2(bytes, v1_in, v2_in);
 	disable_kernel_altivec();
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL(xor_altivec_2);
 
-void xor_altivec_3(unsigned long bytes,  unsigned long *v1_in,
-		   unsigned long *v2_in, unsigned long *v3_in)
-{
+व्योम xor_altivec_3(अचिन्हित दीर्घ bytes,  अचिन्हित दीर्घ *v1_in,
+		   अचिन्हित दीर्घ *v2_in, अचिन्हित दीर्घ *v3_in)
+अणु
 	preempt_disable();
 	enable_kernel_altivec();
 	__xor_altivec_3(bytes, v1_in, v2_in, v3_in);
 	disable_kernel_altivec();
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL(xor_altivec_3);
 
-void xor_altivec_4(unsigned long bytes,  unsigned long *v1_in,
-		   unsigned long *v2_in, unsigned long *v3_in,
-		   unsigned long *v4_in)
-{
+व्योम xor_altivec_4(अचिन्हित दीर्घ bytes,  अचिन्हित दीर्घ *v1_in,
+		   अचिन्हित दीर्घ *v2_in, अचिन्हित दीर्घ *v3_in,
+		   अचिन्हित दीर्घ *v4_in)
+अणु
 	preempt_disable();
 	enable_kernel_altivec();
 	__xor_altivec_4(bytes, v1_in, v2_in, v3_in, v4_in);
 	disable_kernel_altivec();
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL(xor_altivec_4);
 
-void xor_altivec_5(unsigned long bytes,  unsigned long *v1_in,
-		   unsigned long *v2_in, unsigned long *v3_in,
-		   unsigned long *v4_in, unsigned long *v5_in)
-{
+व्योम xor_altivec_5(अचिन्हित दीर्घ bytes,  अचिन्हित दीर्घ *v1_in,
+		   अचिन्हित दीर्घ *v2_in, अचिन्हित दीर्घ *v3_in,
+		   अचिन्हित दीर्घ *v4_in, अचिन्हित दीर्घ *v5_in)
+अणु
 	preempt_disable();
 	enable_kernel_altivec();
 	__xor_altivec_5(bytes, v1_in, v2_in, v3_in, v4_in, v5_in);
 	disable_kernel_altivec();
 	preempt_enable();
-}
+पूर्ण
 EXPORT_SYMBOL(xor_altivec_5);

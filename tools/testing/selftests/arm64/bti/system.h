@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2019  Arm Limited
  * Original author: Dave Martin <Dave.Martin@arm.com>
  */
 
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#अगर_अघोषित SYSTEM_H
+#घोषणा SYSTEM_H
 
-#include <linux/types.h>
-#include <linux/stddef.h>
+#समावेश <linux/types.h>
+#समावेश <linux/मानकघोष.स>
 
-typedef __kernel_size_t size_t;
-typedef __kernel_ssize_t ssize_t;
+प्रकार __kernel_माप_प्रकार माप_प्रकार;
+प्रकार __kernel_sमाप_प्रकार sमाप_प्रकार;
 
-#include <linux/errno.h>
-#include <asm/hwcap.h>
-#include <asm/ptrace.h>
-#include <asm/unistd.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <यंत्र/hwcap.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/unistd.h>
 
-#include "compiler.h"
+#समावेश "compiler.h"
 
-long syscall(int nr, ...);
+दीर्घ syscall(पूर्णांक nr, ...);
 
-void __noreturn exit(int n);
-ssize_t write(int fd, const void *buf, size_t size);
+व्योम __noवापस निकास(पूर्णांक n);
+sमाप_प्रकार ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार size);
 
-#endif /* ! SYSTEM_H */
+#पूर्ण_अगर /* ! SYSTEM_H */

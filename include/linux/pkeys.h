@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_PKEYS_H
-#define _LINUX_PKEYS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_PKEYS_H
+#घोषणा _LINUX_PKEYS_H
 
-#include <linux/mm.h>
+#समावेश <linux/mm.h>
 
-#ifdef CONFIG_ARCH_HAS_PKEYS
-#include <asm/pkeys.h>
-#else /* ! CONFIG_ARCH_HAS_PKEYS */
-#define arch_max_pkey() (1)
-#define execute_only_pkey(mm) (0)
-#define arch_override_mprotect_pkey(vma, prot, pkey) (0)
-#define PKEY_DEDICATED_EXECUTE_ONLY 0
-#define ARCH_VM_PKEY_FLAGS 0
+#अगर_घोषित CONFIG_ARCH_HAS_PKEYS
+#समावेश <यंत्र/pkeys.h>
+#अन्यथा /* ! CONFIG_ARCH_HAS_PKEYS */
+#घोषणा arch_max_pkey() (1)
+#घोषणा execute_only_pkey(mm) (0)
+#घोषणा arch_override_mprotect_pkey(vma, prot, pkey) (0)
+#घोषणा PKEY_DEDICATED_EXECUTE_ONLY 0
+#घोषणा ARCH_VM_PKEY_FLAGS 0
 
-static inline int vma_pkey(struct vm_area_struct *vma)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक vma_pkey(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool mm_pkey_is_allocated(struct mm_struct *mm, int pkey)
-{
-	return (pkey == 0);
-}
+अटल अंतरभूत bool mm_pkey_is_allocated(काष्ठा mm_काष्ठा *mm, पूर्णांक pkey)
+अणु
+	वापस (pkey == 0);
+पूर्ण
 
-static inline int mm_pkey_alloc(struct mm_struct *mm)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक mm_pkey_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस -1;
+पूर्ण
 
-static inline int mm_pkey_free(struct mm_struct *mm, int pkey)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक mm_pkey_मुक्त(काष्ठा mm_काष्ठा *mm, पूर्णांक pkey)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int arch_set_user_pkey_access(struct task_struct *tsk, int pkey,
-			unsigned long init_val)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक arch_set_user_pkey_access(काष्ठा task_काष्ठा *tsk, पूर्णांक pkey,
+			अचिन्हित दीर्घ init_val)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool arch_pkeys_enabled(void)
-{
-	return false;
-}
+अटल अंतरभूत bool arch_pkeys_enabled(व्योम)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void copy_init_pkru_to_fpregs(void)
-{
-}
+अटल अंतरभूत व्योम copy_init_pkru_to_fpregs(व्योम)
+अणु
+पूर्ण
 
-#endif /* ! CONFIG_ARCH_HAS_PKEYS */
+#पूर्ण_अगर /* ! CONFIG_ARCH_HAS_PKEYS */
 
-#endif /* _LINUX_PKEYS_H */
+#पूर्ण_अगर /* _LINUX_PKEYS_H */

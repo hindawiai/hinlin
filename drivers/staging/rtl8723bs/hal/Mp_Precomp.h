@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2013 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __MP_PRECOMP_H__
-#define __MP_PRECOMP_H__
+#अगर_अघोषित __MP_PRECOMP_H__
+#घोषणा __MP_PRECOMP_H__
 
-#include <drv_types.h>
-#include <hal_data.h>
+#समावेश <drv_types.h>
+#समावेश <hal_data.h>
 
-#define BT_TMP_BUF_SIZE	100
+#घोषणा BT_TMP_BUF_SIZE	100
 
-#define DCMD_Printf			DBG_BT_INFO
+#घोषणा DCMD_Prपूर्णांकf			DBG_BT_INFO
 
-#ifdef bEnable
-#undef bEnable
-#endif
+#अगर_घोषित bEnable
+#अघोषित bEnable
+#पूर्ण_अगर
 
-#include "HalBtcOutSrc.h"
-#include "HalBtc8723b1Ant.h"
-#include "HalBtc8723b2Ant.h"
+#समावेश "HalBtcOutSrc.h"
+#समावेश "HalBtc8723b1Ant.h"
+#समावेश "HalBtc8723b2Ant.h"
 
-#endif /*  __MP_PRECOMP_H__ */
+#पूर्ण_अगर /*  __MP_PRECOMP_H__ */

@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Definitions and declarations for MIPS MT support that are common between
+ * Definitions and declarations क्रम MIPS MT support that are common between
  * the VSMP, and AP/SP kernel models.
  */
-#ifndef __ASM_MIPS_MT_H
-#define __ASM_MIPS_MT_H
+#अगर_अघोषित __ASM_MIPS_MT_H
+#घोषणा __ASM_MIPS_MT_H
 
-#include <linux/cpumask.h>
+#समावेश <linux/cpumask.h>
 
 /*
  * How many VPEs and TCs is Linux allowed to use?  0 means no limit.
  */
-extern int tclimit;
-extern int vpelimit;
+बाह्य पूर्णांक tclimit;
+बाह्य पूर्णांक vpelimit;
 
-extern cpumask_t mt_fpu_cpumask;
-extern unsigned long mt_fpemul_threshold;
+बाह्य cpumask_t mt_fpu_cpumask;
+बाह्य अचिन्हित दीर्घ mt_fpemul_threshold;
 
-extern void mips_mt_regdump(unsigned long previous_mvpcontrol_value);
+बाह्य व्योम mips_mt_regdump(अचिन्हित दीर्घ previous_mvpcontrol_value);
 
-#ifdef CONFIG_MIPS_MT
-extern void mips_mt_set_cpuoptions(void);
-#else
-static inline void mips_mt_set_cpuoptions(void) { }
-#endif
+#अगर_घोषित CONFIG_MIPS_MT
+बाह्य व्योम mips_mt_set_cpuoptions(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम mips_mt_set_cpuoptions(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-struct class;
-extern struct class *mt_class;
+काष्ठा class;
+बाह्य काष्ठा class *mt_class;
 
-#endif /* __ASM_MIPS_MT_H */
+#पूर्ण_अगर /* __ASM_MIPS_MT_H */

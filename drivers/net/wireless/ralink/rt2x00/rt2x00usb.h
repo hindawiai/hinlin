@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	<http://rt2x00.serialmonkey.com>
@@ -7,46 +8,46 @@
 
 /*
 	Module: rt2x00usb
-	Abstract: Data structures for the rt2x00usb module.
+	Abstract: Data काष्ठाures क्रम the rt2x00usb module.
  */
 
-#ifndef RT2X00USB_H
-#define RT2X00USB_H
+#अगर_अघोषित RT2X00USB_H
+#घोषणा RT2X00USB_H
 
-#include <linux/usb.h>
+#समावेश <linux/usb.h>
 
-#define to_usb_device_intf(d) \
-({ \
-	struct usb_interface *intf = to_usb_interface(d); \
-	interface_to_usbdev(intf); \
-})
+#घोषणा to_usb_device_पूर्णांकf(d) \
+(अणु \
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = to_usb_पूर्णांकerface(d); \
+	पूर्णांकerface_to_usbdev(पूर्णांकf); \
+पूर्ण)
 
 /*
- * For USB vendor requests we need to pass a timeout time in ms, for this we
- * use the REGISTER_TIMEOUT, however when loading firmware or read EEPROM
- * a higher value is required. In that case we use the REGISTER_TIMEOUT_FIRMWARE
+ * For USB venकरोr requests we need to pass a समयout समय in ms, क्रम this we
+ * use the REGISTER_TIMEOUT, however when loading firmware or पढ़ो EEPROM
+ * a higher value is required. In that हाल we use the REGISTER_TIMEOUT_FIRMWARE
  * and EEPROM_TIMEOUT.
  */
-#define REGISTER_TIMEOUT		100
-#define REGISTER_TIMEOUT_FIRMWARE	1000
-#define EEPROM_TIMEOUT			2000
+#घोषणा REGISTER_TIMEOUT		100
+#घोषणा REGISTER_TIMEOUT_FIRMWARE	1000
+#घोषणा EEPROM_TIMEOUT			2000
 
 /*
  * Cache size
  */
-#define CSR_CACHE_SIZE			64
+#घोषणा CSR_CACHE_SIZE			64
 
 /*
  * USB request types.
  */
-#define USB_VENDOR_REQUEST	( USB_TYPE_VENDOR | USB_RECIP_DEVICE )
-#define USB_VENDOR_REQUEST_IN	( USB_DIR_IN | USB_VENDOR_REQUEST )
-#define USB_VENDOR_REQUEST_OUT	( USB_DIR_OUT | USB_VENDOR_REQUEST )
+#घोषणा USB_VENDOR_REQUEST	( USB_TYPE_VENDOR | USB_RECIP_DEVICE )
+#घोषणा USB_VENDOR_REQUEST_IN	( USB_सूची_IN | USB_VENDOR_REQUEST )
+#घोषणा USB_VENDOR_REQUEST_OUT	( USB_सूची_OUT | USB_VENDOR_REQUEST )
 
 /**
- * enum rt2x00usb_vendor_request: USB vendor commands.
+ * क्रमागत rt2x00usb_venकरोr_request: USB venकरोr commands.
  */
-enum rt2x00usb_vendor_request {
+क्रमागत rt2x00usb_venकरोr_request अणु
 	USB_DEVICE_MODE = 1,
 	USB_SINGLE_WRITE = 2,
 	USB_SINGLE_READ = 3,
@@ -56,12 +57,12 @@ enum rt2x00usb_vendor_request {
 	USB_EEPROM_READ = 9,
 	USB_LED_CONTROL = 10, /* RT73USB */
 	USB_RX_CONTROL = 12,
-};
+पूर्ण;
 
 /**
- * enum rt2x00usb_mode_offset: Device modes offset.
+ * क्रमागत rt2x00usb_mode_offset: Device modes offset.
  */
-enum rt2x00usb_mode_offset {
+क्रमागत rt2x00usb_mode_offset अणु
 	USB_MODE_RESET = 1,
 	USB_MODE_UNPLUG = 2,
 	USB_MODE_FUNCTION = 3,
@@ -70,290 +71,290 @@ enum rt2x00usb_mode_offset {
 	USB_MODE_FIRMWARE = 8,	/* RT73USB */
 	USB_MODE_WAKEUP = 9,	/* RT73USB */
 	USB_MODE_AUTORUN = 17, /* RT2800USB */
-};
+पूर्ण;
 
 /**
- * rt2x00usb_vendor_request - Send register command to device
- * @rt2x00dev: Pointer to &struct rt2x00_dev
- * @request: USB vendor command (See &enum rt2x00usb_vendor_request)
+ * rt2x00usb_venकरोr_request - Send रेजिस्टर command to device
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev
+ * @request: USB venकरोr command (See &क्रमागत rt2x00usb_venकरोr_request)
  * @requesttype: Request type &USB_VENDOR_REQUEST_*
- * @offset: Register offset to perform action on
- * @value: Value to write to device
- * @buffer: Buffer where information will be read/written to by device
+ * @offset: Register offset to perक्रमm action on
+ * @value: Value to ग_लिखो to device
+ * @buffer: Buffer where inक्रमmation will be पढ़ो/written to by device
  * @buffer_length: Size of &buffer
- * @timeout: Operation timeout
+ * @समयout: Operation समयout
  *
- * This is the main function to communicate with the device,
- * the &buffer argument _must_ either be NULL or point to
- * a buffer allocated by kmalloc. Failure to do so can lead
+ * This is the मुख्य function to communicate with the device,
+ * the &buffer argument _must_ either be शून्य or poपूर्णांक to
+ * a buffer allocated by kदो_स्मृति. Failure to करो so can lead
  * to unexpected behavior depending on the architecture.
  */
-int rt2x00usb_vendor_request(struct rt2x00_dev *rt2x00dev,
-			     const u8 request, const u8 requesttype,
-			     const u16 offset, const u16 value,
-			     void *buffer, const u16 buffer_length,
-			     const int timeout);
+पूर्णांक rt2x00usb_venकरोr_request(काष्ठा rt2x00_dev *rt2x00dev,
+			     स्थिर u8 request, स्थिर u8 requesttype,
+			     स्थिर u16 offset, स्थिर u16 value,
+			     व्योम *buffer, स्थिर u16 buffer_length,
+			     स्थिर पूर्णांक समयout);
 
 /**
- * rt2x00usb_vendor_request_buff - Send register command to device (buffered)
- * @rt2x00dev: Pointer to &struct rt2x00_dev
- * @request: USB vendor command (See &enum rt2x00usb_vendor_request)
+ * rt2x00usb_venकरोr_request_buff - Send रेजिस्टर command to device (buffered)
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev
+ * @request: USB venकरोr command (See &क्रमागत rt2x00usb_venकरोr_request)
  * @requesttype: Request type &USB_VENDOR_REQUEST_*
- * @offset: Register offset to perform action on
- * @buffer: Buffer where information will be read/written to by device
+ * @offset: Register offset to perक्रमm action on
+ * @buffer: Buffer where inक्रमmation will be पढ़ो/written to by device
  * @buffer_length: Size of &buffer
  *
- * This function will use a previously with kmalloc allocated cache
- * to communicate with the device. The contents of the buffer pointer
- * will be copied to this cache when writing, or read from the cache
- * when reading.
- * Buffers send to &rt2x00usb_vendor_request _must_ be allocated with
- * kmalloc. Hence the reason for using a previously allocated cache
+ * This function will use a previously with kदो_स्मृति allocated cache
+ * to communicate with the device. The contents of the buffer poपूर्णांकer
+ * will be copied to this cache when writing, or पढ़ो from the cache
+ * when पढ़ोing.
+ * Buffers send to &rt2x00usb_venकरोr_request _must_ be allocated with
+ * kदो_स्मृति. Hence the reason क्रम using a previously allocated cache
  * which has been allocated properly.
  */
-int rt2x00usb_vendor_request_buff(struct rt2x00_dev *rt2x00dev,
-				  const u8 request, const u8 requesttype,
-				  const u16 offset, void *buffer,
-				  const u16 buffer_length);
+पूर्णांक rt2x00usb_venकरोr_request_buff(काष्ठा rt2x00_dev *rt2x00dev,
+				  स्थिर u8 request, स्थिर u8 requesttype,
+				  स्थिर u16 offset, व्योम *buffer,
+				  स्थिर u16 buffer_length);
 
 /**
- * rt2x00usb_vendor_request_buff - Send register command to device (buffered)
- * @rt2x00dev: Pointer to &struct rt2x00_dev
- * @request: USB vendor command (See &enum rt2x00usb_vendor_request)
+ * rt2x00usb_venकरोr_request_buff - Send रेजिस्टर command to device (buffered)
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev
+ * @request: USB venकरोr command (See &क्रमागत rt2x00usb_venकरोr_request)
  * @requesttype: Request type &USB_VENDOR_REQUEST_*
- * @offset: Register offset to perform action on
- * @buffer: Buffer where information will be read/written to by device
+ * @offset: Register offset to perक्रमm action on
+ * @buffer: Buffer where inक्रमmation will be पढ़ो/written to by device
  * @buffer_length: Size of &buffer
- * @timeout: Operation timeout
+ * @समयout: Operation समयout
  *
- * A version of &rt2x00usb_vendor_request_buff which must be called
- * if the usb_cache_mutex is already held.
+ * A version of &rt2x00usb_venकरोr_request_buff which must be called
+ * अगर the usb_cache_mutex is alपढ़ोy held.
  */
-int rt2x00usb_vendor_req_buff_lock(struct rt2x00_dev *rt2x00dev,
-				   const u8 request, const u8 requesttype,
-				   const u16 offset, void *buffer,
-				   const u16 buffer_length, const int timeout);
+पूर्णांक rt2x00usb_venकरोr_req_buff_lock(काष्ठा rt2x00_dev *rt2x00dev,
+				   स्थिर u8 request, स्थिर u8 requesttype,
+				   स्थिर u16 offset, व्योम *buffer,
+				   स्थिर u16 buffer_length, स्थिर पूर्णांक समयout);
 
 /**
- * rt2x00usb_vendor_request_sw - Send single register command to device
- * @rt2x00dev: Pointer to &struct rt2x00_dev
- * @request: USB vendor command (See &enum rt2x00usb_vendor_request)
- * @offset: Register offset to perform action on
- * @value: Value to write to device
- * @timeout: Operation timeout
+ * rt2x00usb_venकरोr_request_sw - Send single रेजिस्टर command to device
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev
+ * @request: USB venकरोr command (See &क्रमागत rt2x00usb_venकरोr_request)
+ * @offset: Register offset to perक्रमm action on
+ * @value: Value to ग_लिखो to device
+ * @समयout: Operation समयout
  *
- * Simple wrapper around rt2x00usb_vendor_request to write a single
- * command to the device. Since we don't use the buffer argument we
- * don't have to worry about kmalloc here.
+ * Simple wrapper around rt2x00usb_venकरोr_request to ग_लिखो a single
+ * command to the device. Since we करोn't use the buffer argument we
+ * करोn't have to worry about kदो_स्मृति here.
  */
-static inline int rt2x00usb_vendor_request_sw(struct rt2x00_dev *rt2x00dev,
-					      const u8 request,
-					      const u16 offset,
-					      const u16 value,
-					      const int timeout)
-{
-	return rt2x00usb_vendor_request(rt2x00dev, request,
+अटल अंतरभूत पूर्णांक rt2x00usb_venकरोr_request_sw(काष्ठा rt2x00_dev *rt2x00dev,
+					      स्थिर u8 request,
+					      स्थिर u16 offset,
+					      स्थिर u16 value,
+					      स्थिर पूर्णांक समयout)
+अणु
+	वापस rt2x00usb_venकरोr_request(rt2x00dev, request,
 					USB_VENDOR_REQUEST_OUT, offset,
-					value, NULL, 0, timeout);
-}
+					value, शून्य, 0, समयout);
+पूर्ण
 
 /**
- * rt2x00usb_eeprom_read - Read eeprom from device
- * @rt2x00dev: Pointer to &struct rt2x00_dev
- * @eeprom: Pointer to eeprom array to store the information in
- * @length: Number of bytes to read from the eeprom
+ * rt2x00usb_eeprom_पढ़ो - Read eeprom from device
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev
+ * @eeprom: Poपूर्णांकer to eeprom array to store the inक्रमmation in
+ * @length: Number of bytes to पढ़ो from the eeprom
  *
- * Simple wrapper around rt2x00usb_vendor_request to read the eeprom
+ * Simple wrapper around rt2x00usb_venकरोr_request to पढ़ो the eeprom
  * from the device. Note that the eeprom argument _must_ be allocated using
- * kmalloc for correct handling inside the kernel USB layer.
+ * kदो_स्मृति क्रम correct handling inside the kernel USB layer.
  */
-static inline int rt2x00usb_eeprom_read(struct rt2x00_dev *rt2x00dev,
-					__le16 *eeprom, const u16 length)
-{
-	return rt2x00usb_vendor_request(rt2x00dev, USB_EEPROM_READ,
+अटल अंतरभूत पूर्णांक rt2x00usb_eeprom_पढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+					__le16 *eeprom, स्थिर u16 length)
+अणु
+	वापस rt2x00usb_venकरोr_request(rt2x00dev, USB_EEPROM_READ,
 					USB_VENDOR_REQUEST_IN, 0, 0,
 					eeprom, length, EEPROM_TIMEOUT);
-}
+पूर्ण
 
 /**
- * rt2x00usb_register_read - Read 32bit register word
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_पढ़ो - Read 32bit रेजिस्टर word
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
  *
- * This function is a simple wrapper for 32bit register access
- * through rt2x00usb_vendor_request_buff().
+ * This function is a simple wrapper क्रम 32bit रेजिस्टर access
+ * through rt2x00usb_venकरोr_request_buff().
  */
-static inline u32 rt2x00usb_register_read(struct rt2x00_dev *rt2x00dev,
-					  const unsigned int offset)
-{
+अटल अंतरभूत u32 rt2x00usb_रेजिस्टर_पढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+					  स्थिर अचिन्हित पूर्णांक offset)
+अणु
 	__le32 reg = 0;
-	rt2x00usb_vendor_request_buff(rt2x00dev, USB_MULTI_READ,
+	rt2x00usb_venकरोr_request_buff(rt2x00dev, USB_MULTI_READ,
 				      USB_VENDOR_REQUEST_IN, offset,
-				      &reg, sizeof(reg));
-	return le32_to_cpu(reg);
-}
+				      &reg, माप(reg));
+	वापस le32_to_cpu(reg);
+पूर्ण
 
 /**
- * rt2x00usb_register_read_lock - Read 32bit register word
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_पढ़ो_lock - Read 32bit रेजिस्टर word
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
  *
- * This function is a simple wrapper for 32bit register access
- * through rt2x00usb_vendor_req_buff_lock().
+ * This function is a simple wrapper क्रम 32bit रेजिस्टर access
+ * through rt2x00usb_venकरोr_req_buff_lock().
  */
-static inline u32 rt2x00usb_register_read_lock(struct rt2x00_dev *rt2x00dev,
-					       const unsigned int offset)
-{
+अटल अंतरभूत u32 rt2x00usb_रेजिस्टर_पढ़ो_lock(काष्ठा rt2x00_dev *rt2x00dev,
+					       स्थिर अचिन्हित पूर्णांक offset)
+अणु
 	__le32 reg = 0;
-	rt2x00usb_vendor_req_buff_lock(rt2x00dev, USB_MULTI_READ,
+	rt2x00usb_venकरोr_req_buff_lock(rt2x00dev, USB_MULTI_READ,
 				       USB_VENDOR_REQUEST_IN, offset,
-				       &reg, sizeof(reg), REGISTER_TIMEOUT);
-	return le32_to_cpu(reg);
-}
+				       &reg, माप(reg), REGISTER_TIMEOUT);
+	वापस le32_to_cpu(reg);
+पूर्ण
 
 /**
- * rt2x00usb_register_multiread - Read 32bit register words
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_multiपढ़ो - Read 32bit रेजिस्टर words
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
- * @value: Pointer to where register contents should be stored
+ * @value: Poपूर्णांकer to where रेजिस्टर contents should be stored
  * @length: Length of the data
  *
- * This function is a simple wrapper for 32bit register access
- * through rt2x00usb_vendor_request_buff().
+ * This function is a simple wrapper क्रम 32bit रेजिस्टर access
+ * through rt2x00usb_venकरोr_request_buff().
  */
-static inline void rt2x00usb_register_multiread(struct rt2x00_dev *rt2x00dev,
-						const unsigned int offset,
-						void *value, const u32 length)
-{
-	rt2x00usb_vendor_request_buff(rt2x00dev, USB_MULTI_READ,
+अटल अंतरभूत व्योम rt2x00usb_रेजिस्टर_multiपढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+						स्थिर अचिन्हित पूर्णांक offset,
+						व्योम *value, स्थिर u32 length)
+अणु
+	rt2x00usb_venकरोr_request_buff(rt2x00dev, USB_MULTI_READ,
 				      USB_VENDOR_REQUEST_IN, offset,
 				      value, length);
-}
+पूर्ण
 
 /**
- * rt2x00usb_register_write - Write 32bit register word
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_ग_लिखो - Write 32bit रेजिस्टर word
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
  * @value: Data which should be written
  *
- * This function is a simple wrapper for 32bit register access
- * through rt2x00usb_vendor_request_buff().
+ * This function is a simple wrapper क्रम 32bit रेजिस्टर access
+ * through rt2x00usb_venकरोr_request_buff().
  */
-static inline void rt2x00usb_register_write(struct rt2x00_dev *rt2x00dev,
-					    const unsigned int offset,
+अटल अंतरभूत व्योम rt2x00usb_रेजिस्टर_ग_लिखो(काष्ठा rt2x00_dev *rt2x00dev,
+					    स्थिर अचिन्हित पूर्णांक offset,
 					    u32 value)
-{
+अणु
 	__le32 reg = cpu_to_le32(value);
-	rt2x00usb_vendor_request_buff(rt2x00dev, USB_MULTI_WRITE,
+	rt2x00usb_venकरोr_request_buff(rt2x00dev, USB_MULTI_WRITE,
 				      USB_VENDOR_REQUEST_OUT, offset,
-				      &reg, sizeof(reg));
-}
+				      &reg, माप(reg));
+पूर्ण
 
 /**
- * rt2x00usb_register_write_lock - Write 32bit register word
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_ग_लिखो_lock - Write 32bit रेजिस्टर word
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
  * @value: Data which should be written
  *
- * This function is a simple wrapper for 32bit register access
- * through rt2x00usb_vendor_req_buff_lock().
+ * This function is a simple wrapper क्रम 32bit रेजिस्टर access
+ * through rt2x00usb_venकरोr_req_buff_lock().
  */
-static inline void rt2x00usb_register_write_lock(struct rt2x00_dev *rt2x00dev,
-						 const unsigned int offset,
+अटल अंतरभूत व्योम rt2x00usb_रेजिस्टर_ग_लिखो_lock(काष्ठा rt2x00_dev *rt2x00dev,
+						 स्थिर अचिन्हित पूर्णांक offset,
 						 u32 value)
-{
+अणु
 	__le32 reg = cpu_to_le32(value);
-	rt2x00usb_vendor_req_buff_lock(rt2x00dev, USB_MULTI_WRITE,
+	rt2x00usb_venकरोr_req_buff_lock(rt2x00dev, USB_MULTI_WRITE,
 				       USB_VENDOR_REQUEST_OUT, offset,
-				       &reg, sizeof(reg), REGISTER_TIMEOUT);
-}
+				       &reg, माप(reg), REGISTER_TIMEOUT);
+पूर्ण
 
 /**
- * rt2x00usb_register_multiwrite - Write 32bit register words
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_multiग_लिखो - Write 32bit रेजिस्टर words
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
  * @value: Data which should be written
  * @length: Length of the data
  *
- * This function is a simple wrapper for 32bit register access
- * through rt2x00usb_vendor_request_buff().
+ * This function is a simple wrapper क्रम 32bit रेजिस्टर access
+ * through rt2x00usb_venकरोr_request_buff().
  */
-static inline void rt2x00usb_register_multiwrite(struct rt2x00_dev *rt2x00dev,
-						 const unsigned int offset,
-						 const void *value,
-						 const u32 length)
-{
-	rt2x00usb_vendor_request_buff(rt2x00dev, USB_MULTI_WRITE,
+अटल अंतरभूत व्योम rt2x00usb_रेजिस्टर_multiग_लिखो(काष्ठा rt2x00_dev *rt2x00dev,
+						 स्थिर अचिन्हित पूर्णांक offset,
+						 स्थिर व्योम *value,
+						 स्थिर u32 length)
+अणु
+	rt2x00usb_venकरोr_request_buff(rt2x00dev, USB_MULTI_WRITE,
 				      USB_VENDOR_REQUEST_OUT, offset,
-				      (void *)value, length);
-}
+				      (व्योम *)value, length);
+पूर्ण
 
 /**
- * rt2x00usb_regbusy_read - Read from register with busy check
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_regbusy_पढ़ो - Read from रेजिस्टर with busy check
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
- * @field: Field to check if register is busy
- * @reg: Pointer to where register contents should be stored
+ * @field: Field to check अगर रेजिस्टर is busy
+ * @reg: Poपूर्णांकer to where रेजिस्टर contents should be stored
  *
- * This function will read the given register, and checks if the
- * register is busy. If it is, it will sleep for a couple of
- * microseconds before reading the register again. If the register
- * is not read after a certain timeout, this function will return
+ * This function will पढ़ो the given रेजिस्टर, and checks अगर the
+ * रेजिस्टर is busy. If it is, it will sleep क्रम a couple of
+ * microseconds beक्रमe पढ़ोing the रेजिस्टर again. If the रेजिस्टर
+ * is not पढ़ो after a certain समयout, this function will वापस
  * FALSE.
  */
-int rt2x00usb_regbusy_read(struct rt2x00_dev *rt2x00dev,
-			   const unsigned int offset,
-			   const struct rt2x00_field32 field,
+पूर्णांक rt2x00usb_regbusy_पढ़ो(काष्ठा rt2x00_dev *rt2x00dev,
+			   स्थिर अचिन्हित पूर्णांक offset,
+			   स्थिर काष्ठा rt2x00_field32 field,
 			   u32 *reg);
 
 /**
- * rt2x00usb_register_read_async - Asynchronously read 32bit register word
- * @rt2x00dev: Device pointer, see &struct rt2x00_dev.
+ * rt2x00usb_रेजिस्टर_पढ़ो_async - Asynchronously पढ़ो 32bit रेजिस्टर word
+ * @rt2x00dev: Device poपूर्णांकer, see &काष्ठा rt2x00_dev.
  * @offset: Register offset
- * @callback: Functon to call when read completes.
+ * @callback: Functon to call when पढ़ो completes.
  *
- * Submit a control URB to read a 32bit register. This safe to
+ * Submit a control URB to पढ़ो a 32bit रेजिस्टर. This safe to
  * be called from atomic context.  The callback will be called
  * when the URB completes. Otherwise the function is similar
- * to rt2x00usb_register_read().
- * When the callback function returns false, the memory will be cleaned up,
- * when it returns true, the urb will be fired again.
+ * to rt2x00usb_रेजिस्टर_पढ़ो().
+ * When the callback function वापसs false, the memory will be cleaned up,
+ * when it वापसs true, the urb will be fired again.
  */
-void rt2x00usb_register_read_async(struct rt2x00_dev *rt2x00dev,
-				   const unsigned int offset,
-				   bool (*callback)(struct rt2x00_dev*, int, u32));
+व्योम rt2x00usb_रेजिस्टर_पढ़ो_async(काष्ठा rt2x00_dev *rt2x00dev,
+				   स्थिर अचिन्हित पूर्णांक offset,
+				   bool (*callback)(काष्ठा rt2x00_dev*, पूर्णांक, u32));
 
 /*
  * Radio handlers
  */
-void rt2x00usb_disable_radio(struct rt2x00_dev *rt2x00dev);
+व्योम rt2x00usb_disable_radio(काष्ठा rt2x00_dev *rt2x00dev);
 
 /**
- * struct queue_entry_priv_usb: Per entry USB specific information
+ * काष्ठा queue_entry_priv_usb: Per entry USB specअगरic inक्रमmation
  *
- * @urb: Urb structure used for device communication.
+ * @urb: Urb काष्ठाure used क्रम device communication.
  */
-struct queue_entry_priv_usb {
-	struct urb *urb;
-};
+काष्ठा queue_entry_priv_usb अणु
+	काष्ठा urb *urb;
+पूर्ण;
 
 /**
- * struct queue_entry_priv_usb_bcn: Per TX entry USB specific information
+ * काष्ठा queue_entry_priv_usb_bcn: Per TX entry USB specअगरic inक्रमmation
  *
- * The first section should match &struct queue_entry_priv_usb exactly.
- * rt2500usb can use this structure to send a guardian byte when working
+ * The first section should match &काष्ठा queue_entry_priv_usb exactly.
+ * rt2500usb can use this काष्ठाure to send a guardian byte when working
  * with beacons.
  *
- * @urb: Urb structure used for device communication.
- * @guardian_data: Set to 0, used for sending the guardian data.
- * @guardian_urb: Urb structure used to send the guardian data.
+ * @urb: Urb काष्ठाure used क्रम device communication.
+ * @guardian_data: Set to 0, used क्रम sending the guardian data.
+ * @guardian_urb: Urb काष्ठाure used to send the guardian data.
  */
-struct queue_entry_priv_usb_bcn {
-	struct urb *urb;
+काष्ठा queue_entry_priv_usb_bcn अणु
+	काष्ठा urb *urb;
 
-	unsigned int guardian_data;
-	struct urb *guardian_urb;
-};
+	अचिन्हित पूर्णांक guardian_data;
+	काष्ठा urb *guardian_urb;
+पूर्ण;
 
 /**
  * rt2x00usb_kick_queue - Kick data queue
@@ -362,7 +363,7 @@ struct queue_entry_priv_usb_bcn {
  * This will walk through all entries of the queue and push all pending
  * frames to the hardware as a single burst.
  */
-void rt2x00usb_kick_queue(struct data_queue *queue);
+व्योम rt2x00usb_kick_queue(काष्ठा data_queue *queue);
 
 /**
  * rt2x00usb_flush_queue - Flush data queue
@@ -370,40 +371,40 @@ void rt2x00usb_kick_queue(struct data_queue *queue);
  * @drop: True to drop all pending frames.
  *
  * This will walk through all entries of the queue and will optionally
- * kill all URB's which were send to the device, or at least wait until
- * they have been returned from the device..
+ * समाप्त all URB's which were send to the device, or at least रुको until
+ * they have been वापसed from the device..
  */
-void rt2x00usb_flush_queue(struct data_queue *queue, bool drop);
+व्योम rt2x00usb_flush_queue(काष्ठा data_queue *queue, bool drop);
 
 /**
- * rt2x00usb_watchdog - Watchdog for USB communication
- * @rt2x00dev: Pointer to &struct rt2x00_dev
+ * rt2x00usb_watchकरोg - Watchकरोg क्रम USB communication
+ * @rt2x00dev: Poपूर्णांकer to &काष्ठा rt2x00_dev
  *
  * Check the health of the USB communication and determine
- * if timeouts have occurred. If this is the case, this function
+ * अगर समयouts have occurred. If this is the हाल, this function
  * will reset all communication to restore functionality again.
  */
-void rt2x00usb_watchdog(struct rt2x00_dev *rt2x00dev);
+व्योम rt2x00usb_watchकरोg(काष्ठा rt2x00_dev *rt2x00dev);
 
 /*
  * Device initialization handlers.
  */
-void rt2x00usb_clear_entry(struct queue_entry *entry);
-int rt2x00usb_initialize(struct rt2x00_dev *rt2x00dev);
-void rt2x00usb_uninitialize(struct rt2x00_dev *rt2x00dev);
+व्योम rt2x00usb_clear_entry(काष्ठा queue_entry *entry);
+पूर्णांक rt2x00usb_initialize(काष्ठा rt2x00_dev *rt2x00dev);
+व्योम rt2x00usb_uninitialize(काष्ठा rt2x00_dev *rt2x00dev);
 
 /*
  * USB driver handlers.
  */
-int rt2x00usb_probe(struct usb_interface *usb_intf,
-		    const struct rt2x00_ops *ops);
-void rt2x00usb_disconnect(struct usb_interface *usb_intf);
-#ifdef CONFIG_PM
-int rt2x00usb_suspend(struct usb_interface *usb_intf, pm_message_t state);
-int rt2x00usb_resume(struct usb_interface *usb_intf);
-#else
-#define rt2x00usb_suspend	NULL
-#define rt2x00usb_resume	NULL
-#endif /* CONFIG_PM */
+पूर्णांक rt2x00usb_probe(काष्ठा usb_पूर्णांकerface *usb_पूर्णांकf,
+		    स्थिर काष्ठा rt2x00_ops *ops);
+व्योम rt2x00usb_disconnect(काष्ठा usb_पूर्णांकerface *usb_पूर्णांकf);
+#अगर_घोषित CONFIG_PM
+पूर्णांक rt2x00usb_suspend(काष्ठा usb_पूर्णांकerface *usb_पूर्णांकf, pm_message_t state);
+पूर्णांक rt2x00usb_resume(काष्ठा usb_पूर्णांकerface *usb_पूर्णांकf);
+#अन्यथा
+#घोषणा rt2x00usb_suspend	शून्य
+#घोषणा rt2x00usb_resume	शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-#endif /* RT2X00USB_H */
+#पूर्ण_अगर /* RT2X00USB_H */

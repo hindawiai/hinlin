@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * PMC-Sierra SPC 8001 SAS/SATA based host adapters driver
  *
  * Copyright (c) 2008-2009 USI Co., Ltd.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce at minimum a disclaimer
  *    substantially similar to the "NO WARRANTY" disclaimer below
  *    ("Disclaimer") and any redistribution must be conditioned upon
- *    including a substantially similar Disclaimer requirement for further
+ *    including a substantially similar Disclaimer requirement क्रम further
  *    binary redistribution.
  * 3. Neither the names of the above-listed copyright holders nor the names
- *    of any contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    of any contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -38,52 +39,52 @@
  *
  */
 
-#ifndef _PM8001_CHIPS_H_
-#define _PM8001_CHIPS_H_
+#अगर_अघोषित _PM8001_CHIPS_H_
+#घोषणा _PM8001_CHIPS_H_
 
-static inline u32 pm8001_read_32(void *virt_addr)
-{
-	return *((u32 *)virt_addr);
-}
+अटल अंतरभूत u32 pm8001_पढ़ो_32(व्योम *virt_addr)
+अणु
+	वापस *((u32 *)virt_addr);
+पूर्ण
 
-static inline void pm8001_write_32(void *addr, u32 offset, __le32 val)
-{
+अटल अंतरभूत व्योम pm8001_ग_लिखो_32(व्योम *addr, u32 offset, __le32 val)
+अणु
 	*((__le32 *)(addr + offset)) = val;
-}
+पूर्ण
 
-static inline u32 pm8001_cr32(struct pm8001_hba_info *pm8001_ha, u32 bar,
+अटल अंतरभूत u32 pm8001_cr32(काष्ठा pm8001_hba_info *pm8001_ha, u32 bar,
 		u32 offset)
-{
-	return readl(pm8001_ha->io_mem[bar].memvirtaddr + offset);
-}
+अणु
+	वापस पढ़ोl(pm8001_ha->io_mem[bar].memvirtaddr + offset);
+पूर्ण
 
-static inline void pm8001_cw32(struct pm8001_hba_info *pm8001_ha, u32 bar,
+अटल अंतरभूत व्योम pm8001_cw32(काष्ठा pm8001_hba_info *pm8001_ha, u32 bar,
 		u32 addr, u32 val)
-{
-	writel(val, pm8001_ha->io_mem[bar].memvirtaddr + addr);
-}
-static inline u32 pm8001_mr32(void __iomem *addr, u32 offset)
-{
-	return readl(addr + offset);
-}
-static inline void pm8001_mw32(void __iomem *addr, u32 offset, u32 val)
-{
-	writel(val, addr + offset);
-}
-static inline u32 get_pci_bar_index(u32 pcibar)
-{
-		switch (pcibar) {
-		case 0x18:
-		case 0x1C:
-			return 1;
-		case 0x20:
-			return 2;
-		case 0x24:
-			return 3;
-		default:
-			return 0;
-	}
-}
+अणु
+	ग_लिखोl(val, pm8001_ha->io_mem[bar].memvirtaddr + addr);
+पूर्ण
+अटल अंतरभूत u32 pm8001_mr32(व्योम __iomem *addr, u32 offset)
+अणु
+	वापस पढ़ोl(addr + offset);
+पूर्ण
+अटल अंतरभूत व्योम pm8001_mw32(व्योम __iomem *addr, u32 offset, u32 val)
+अणु
+	ग_लिखोl(val, addr + offset);
+पूर्ण
+अटल अंतरभूत u32 get_pci_bar_index(u32 pcibar)
+अणु
+		चयन (pcibar) अणु
+		हाल 0x18:
+		हाल 0x1C:
+			वापस 1;
+		हाल 0x20:
+			वापस 2;
+		हाल 0x24:
+			वापस 3;
+		शेष:
+			वापस 0;
+	पूर्ण
+पूर्ण
 
-#endif  /* _PM8001_CHIPS_H_ */
+#पूर्ण_अगर  /* _PM8001_CHIPS_H_ */
 

@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2016 Broadcom
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include "spi-bcm-qspi.h"
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश "spi-bcm-qspi.h"
 
-static const struct of_device_id brcmstb_qspi_of_match[] = {
-	{ .compatible = "brcm,spi-brcmstb-qspi" },
-	{ .compatible = "brcm,spi-brcmstb-mspi" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id brcmstb_qspi_of_match[] = अणु
+	अणु .compatible = "brcm,spi-brcmstb-qspi" पूर्ण,
+	अणु .compatible = "brcm,spi-brcmstb-mspi" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, brcmstb_qspi_of_match);
 
-static int brcmstb_qspi_probe(struct platform_device *pdev)
-{
-	return bcm_qspi_probe(pdev, NULL);
-}
+अटल पूर्णांक brcmstb_qspi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस bcm_qspi_probe(pdev, शून्य);
+पूर्ण
 
-static int brcmstb_qspi_remove(struct platform_device *pdev)
-{
-	return bcm_qspi_remove(pdev);
-}
+अटल पूर्णांक brcmstb_qspi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस bcm_qspi_हटाओ(pdev);
+पूर्ण
 
-static struct platform_driver brcmstb_qspi_driver = {
+अटल काष्ठा platक्रमm_driver brcmstb_qspi_driver = अणु
 	.probe			= brcmstb_qspi_probe,
-	.remove			= brcmstb_qspi_remove,
-	.driver = {
+	.हटाओ			= brcmstb_qspi_हटाओ,
+	.driver = अणु
 		.name		= "brcmstb_qspi",
 		.pm		= &bcm_qspi_pm_ops,
 		.of_match_table = brcmstb_qspi_of_match,
-	}
-};
-module_platform_driver(brcmstb_qspi_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(brcmstb_qspi_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Kamal Dasu");

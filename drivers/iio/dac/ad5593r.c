@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AD5593R Digital <-> Analog converters driver
  *
@@ -6,130 +7,130 @@
  * Author: Paul Cercueil <paul.cercueil@analog.com>
  */
 
-#include "ad5592r-base.h"
+#समावेश "ad5592r-base.h"
 
-#include <linux/bitops.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
 
-#define AD5593R_MODE_CONF		(0 << 4)
-#define AD5593R_MODE_DAC_WRITE		(1 << 4)
-#define AD5593R_MODE_ADC_READBACK	(4 << 4)
-#define AD5593R_MODE_DAC_READBACK	(5 << 4)
-#define AD5593R_MODE_GPIO_READBACK	(6 << 4)
-#define AD5593R_MODE_REG_READBACK	(7 << 4)
+#घोषणा AD5593R_MODE_CONF		(0 << 4)
+#घोषणा AD5593R_MODE_DAC_WRITE		(1 << 4)
+#घोषणा AD5593R_MODE_ADC_READBACK	(4 << 4)
+#घोषणा AD5593R_MODE_DAC_READBACK	(5 << 4)
+#घोषणा AD5593R_MODE_GPIO_READBACK	(6 << 4)
+#घोषणा AD5593R_MODE_REG_READBACK	(7 << 4)
 
-static int ad5593r_write_dac(struct ad5592r_state *st, unsigned chan, u16 value)
-{
-	struct i2c_client *i2c = to_i2c_client(st->dev);
+अटल पूर्णांक ad5593r_ग_लिखो_dac(काष्ठा ad5592r_state *st, अचिन्हित chan, u16 value)
+अणु
+	काष्ठा i2c_client *i2c = to_i2c_client(st->dev);
 
-	return i2c_smbus_write_word_swapped(i2c,
+	वापस i2c_smbus_ग_लिखो_word_swapped(i2c,
 			AD5593R_MODE_DAC_WRITE | chan, value);
-}
+पूर्ण
 
-static int ad5593r_read_adc(struct ad5592r_state *st, unsigned chan, u16 *value)
-{
-	struct i2c_client *i2c = to_i2c_client(st->dev);
+अटल पूर्णांक ad5593r_पढ़ो_adc(काष्ठा ad5592r_state *st, अचिन्हित chan, u16 *value)
+अणु
+	काष्ठा i2c_client *i2c = to_i2c_client(st->dev);
 	s32 val;
 
-	val = i2c_smbus_write_word_swapped(i2c,
+	val = i2c_smbus_ग_लिखो_word_swapped(i2c,
 			AD5593R_MODE_CONF | AD5592R_REG_ADC_SEQ, BIT(chan));
-	if (val < 0)
-		return (int) val;
+	अगर (val < 0)
+		वापस (पूर्णांक) val;
 
-	val = i2c_smbus_read_word_swapped(i2c, AD5593R_MODE_ADC_READBACK);
-	if (val < 0)
-		return (int) val;
+	val = i2c_smbus_पढ़ो_word_swapped(i2c, AD5593R_MODE_ADC_READBACK);
+	अगर (val < 0)
+		वापस (पूर्णांक) val;
 
 	*value = (u16) val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad5593r_reg_write(struct ad5592r_state *st, u8 reg, u16 value)
-{
-	struct i2c_client *i2c = to_i2c_client(st->dev);
+अटल पूर्णांक ad5593r_reg_ग_लिखो(काष्ठा ad5592r_state *st, u8 reg, u16 value)
+अणु
+	काष्ठा i2c_client *i2c = to_i2c_client(st->dev);
 
-	return i2c_smbus_write_word_swapped(i2c,
+	वापस i2c_smbus_ग_लिखो_word_swapped(i2c,
 			AD5593R_MODE_CONF | reg, value);
-}
+पूर्ण
 
-static int ad5593r_reg_read(struct ad5592r_state *st, u8 reg, u16 *value)
-{
-	struct i2c_client *i2c = to_i2c_client(st->dev);
+अटल पूर्णांक ad5593r_reg_पढ़ो(काष्ठा ad5592r_state *st, u8 reg, u16 *value)
+अणु
+	काष्ठा i2c_client *i2c = to_i2c_client(st->dev);
 	s32 val;
 
-	val = i2c_smbus_read_word_swapped(i2c, AD5593R_MODE_REG_READBACK | reg);
-	if (val < 0)
-		return (int) val;
+	val = i2c_smbus_पढ़ो_word_swapped(i2c, AD5593R_MODE_REG_READBACK | reg);
+	अगर (val < 0)
+		वापस (पूर्णांक) val;
 
 	*value = (u16) val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ad5593r_gpio_read(struct ad5592r_state *st, u8 *value)
-{
-	struct i2c_client *i2c = to_i2c_client(st->dev);
+अटल पूर्णांक ad5593r_gpio_पढ़ो(काष्ठा ad5592r_state *st, u8 *value)
+अणु
+	काष्ठा i2c_client *i2c = to_i2c_client(st->dev);
 	s32 val;
 
-	val = i2c_smbus_read_word_swapped(i2c, AD5593R_MODE_GPIO_READBACK);
-	if (val < 0)
-		return (int) val;
+	val = i2c_smbus_पढ़ो_word_swapped(i2c, AD5593R_MODE_GPIO_READBACK);
+	अगर (val < 0)
+		वापस (पूर्णांक) val;
 
 	*value = (u8) val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ad5592r_rw_ops ad5593r_rw_ops = {
-	.write_dac = ad5593r_write_dac,
-	.read_adc = ad5593r_read_adc,
-	.reg_write = ad5593r_reg_write,
-	.reg_read = ad5593r_reg_read,
-	.gpio_read = ad5593r_gpio_read,
-};
+अटल स्थिर काष्ठा ad5592r_rw_ops ad5593r_rw_ops = अणु
+	.ग_लिखो_dac = ad5593r_ग_लिखो_dac,
+	.पढ़ो_adc = ad5593r_पढ़ो_adc,
+	.reg_ग_लिखो = ad5593r_reg_ग_लिखो,
+	.reg_पढ़ो = ad5593r_reg_पढ़ो,
+	.gpio_पढ़ो = ad5593r_gpio_पढ़ो,
+पूर्ण;
 
-static int ad5593r_i2c_probe(struct i2c_client *i2c,
-		const struct i2c_device_id *id)
-{
-	return ad5592r_probe(&i2c->dev, id->name, &ad5593r_rw_ops);
-}
+अटल पूर्णांक ad5593r_i2c_probe(काष्ठा i2c_client *i2c,
+		स्थिर काष्ठा i2c_device_id *id)
+अणु
+	वापस ad5592r_probe(&i2c->dev, id->name, &ad5593r_rw_ops);
+पूर्ण
 
-static int ad5593r_i2c_remove(struct i2c_client *i2c)
-{
-	return ad5592r_remove(&i2c->dev);
-}
+अटल पूर्णांक ad5593r_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	वापस ad5592r_हटाओ(&i2c->dev);
+पूर्ण
 
-static const struct i2c_device_id ad5593r_i2c_ids[] = {
-	{ .name = "ad5593r", },
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id ad5593r_i2c_ids[] = अणु
+	अणु .name = "ad5593r", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ad5593r_i2c_ids);
 
-static const struct of_device_id ad5593r_of_match[] = {
-	{ .compatible = "adi,ad5593r", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ad5593r_of_match[] = अणु
+	अणु .compatible = "adi,ad5593r", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ad5593r_of_match);
 
-static const struct acpi_device_id ad5593r_acpi_match[] = {
-	{"ADS5593", },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id ad5593r_acpi_match[] = अणु
+	अणु"ADS5593", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ad5593r_acpi_match);
 
-static struct i2c_driver ad5593r_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ad5593r_driver = अणु
+	.driver = अणु
 		.name = "ad5593r",
 		.of_match_table = ad5593r_of_match,
 		.acpi_match_table = ad5593r_acpi_match,
-	},
+	पूर्ण,
 	.probe = ad5593r_i2c_probe,
-	.remove = ad5593r_i2c_remove,
+	.हटाओ = ad5593r_i2c_हटाओ,
 	.id_table = ad5593r_i2c_ids,
-};
+पूर्ण;
 module_i2c_driver(ad5593r_driver);
 
 MODULE_AUTHOR("Paul Cercueil <paul.cercueil@analog.com>");

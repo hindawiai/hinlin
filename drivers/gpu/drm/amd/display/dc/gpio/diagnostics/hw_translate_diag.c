@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,19 +24,19 @@
  *
  */
 
-#include "dm_services.h"
-#include "hw_translate_diag.h"
-#include "include/gpio_types.h"
+#समावेश "dm_services.h"
+#समावेश "hw_translate_diag.h"
+#समावेश "include/gpio_types.h"
 
-#include "../hw_translate.h"
+#समावेश "../hw_translate.h"
 
 /* function table */
-static const struct hw_translate_funcs funcs = {
-	.offset_to_id = NULL,
-	.id_to_offset = NULL,
-};
+अटल स्थिर काष्ठा hw_translate_funcs funcs = अणु
+	.offset_to_id = शून्य,
+	.id_to_offset = शून्य,
+पूर्ण;
 
-void dal_hw_translate_diag_fpga_init(struct hw_translate *tr)
-{
+व्योम dal_hw_translate_diag_fpga_init(काष्ठा hw_translate *tr)
+अणु
 	tr->funcs = &funcs;
-}
+पूर्ण

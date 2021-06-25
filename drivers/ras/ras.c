@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2014 Intel Corporation
  *
  * Authors:
- *	Chen, Gong <gong.chen@linux.intel.com>
+ *	Chen, Gong <gong.chen@linux.पूर्णांकel.com>
  */
 
-#include <linux/init.h>
-#include <linux/ras.h>
-#include <linux/uuid.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ras.h>
+#समावेश <linux/uuid.h>
 
-#define CREATE_TRACE_POINTS
-#define TRACE_INCLUDE_PATH ../../include/ras
-#include <ras/ras_event.h>
+#घोषणा CREATE_TRACE_POINTS
+#घोषणा TRACE_INCLUDE_PATH ../../include/ras
+#समावेश <ras/ras_event.h>
 
-void log_non_standard_event(const guid_t *sec_type, const guid_t *fru_id,
-			    const char *fru_text, const u8 sev, const u8 *err,
-			    const u32 len)
-{
+व्योम log_non_standard_event(स्थिर guid_t *sec_type, स्थिर guid_t *fru_id,
+			    स्थिर अक्षर *fru_text, स्थिर u8 sev, स्थिर u8 *err,
+			    स्थिर u32 len)
+अणु
 	trace_non_standard_event(sec_type, fru_id, fru_text, sev, err, len);
-}
+पूर्ण
 
-void log_arm_hw_error(struct cper_sec_proc_arm *err)
-{
+व्योम log_arm_hw_error(काष्ठा cper_sec_proc_arm *err)
+अणु
 	trace_arm_event(err);
-}
+पूर्ण
 
-static int __init ras_init(void)
-{
-	int rc = 0;
+अटल पूर्णांक __init ras_init(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
 	ras_debugfs_init();
 	rc = ras_add_daemon_trace();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 subsys_initcall(ras_init);
 
-#if defined(CONFIG_ACPI_EXTLOG) || defined(CONFIG_ACPI_EXTLOG_MODULE)
+#अगर defined(CONFIG_ACPI_EXTLOG) || defined(CONFIG_ACPI_EXTLOG_MODULE)
 EXPORT_TRACEPOINT_SYMBOL_GPL(extlog_mem_event);
-#endif
+#पूर्ण_अगर
 EXPORT_TRACEPOINT_SYMBOL_GPL(mc_event);
 EXPORT_TRACEPOINT_SYMBOL_GPL(non_standard_event);
 EXPORT_TRACEPOINT_SYMBOL_GPL(arm_event);
 
-static int __init parse_ras_param(char *str)
-{
-#ifdef CONFIG_RAS_CEC
+अटल पूर्णांक __init parse_ras_param(अक्षर *str)
+अणु
+#अगर_घोषित CONFIG_RAS_CEC
 	parse_cec_param(str);
-#endif
+#पूर्ण_अगर
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("ras", parse_ras_param);

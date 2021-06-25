@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 
-#ifndef _ASM_ARC_KDEBUG_H
-#define _ASM_ARC_KDEBUG_H
+#अगर_अघोषित _ASM_ARC_KDEBUG_H
+#घोषणा _ASM_ARC_KDEBUG_H
 
-enum die_val {
+क्रमागत die_val अणु
 	DIE_UNUSED,
 	DIE_TRAP,
 	DIE_OOPS
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

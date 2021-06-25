@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * leds-regulator.c - LED class driver for regulator driven LEDs.
+ * leds-regulator.c - LED class driver क्रम regulator driven LEDs.
  *
  * Copyright (C) 2009 Antonio Ospite <ospite@studenti.unina.it>
  *
  * Inspired by leds-wm8350 driver.
  */
 
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/leds.h>
-#include <linux/leds-regulator.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/leds-regulator.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define to_regulator_led(led_cdev) \
-	container_of(led_cdev, struct regulator_led, cdev)
+#घोषणा to_regulator_led(led_cdev) \
+	container_of(led_cdev, काष्ठा regulator_led, cdev)
 
-struct regulator_led {
-	struct led_classdev cdev;
-	int enabled;
-	struct mutex mutex;
+काष्ठा regulator_led अणु
+	काष्ठा led_classdev cdev;
+	पूर्णांक enabled;
+	काष्ठा mutex mutex;
 
-	struct regulator *vcc;
-};
+	काष्ठा regulator *vcc;
+पूर्ण;
 
-static inline int led_regulator_get_max_brightness(struct regulator *supply)
-{
-	int ret;
-	int voltage = regulator_list_voltage(supply, 0);
+अटल अंतरभूत पूर्णांक led_regulator_get_max_brightness(काष्ठा regulator *supply)
+अणु
+	पूर्णांक ret;
+	पूर्णांक voltage = regulator_list_voltage(supply, 0);
 
-	if (voltage <= 0)
-		return 1;
+	अगर (voltage <= 0)
+		वापस 1;
 
-	/* even if regulator can't change voltages,
+	/* even अगर regulator can't change voltages,
 	 * we still assume it can change status
 	 * and the LED can be turned on and off.
 	 */
 	ret = regulator_set_voltage(supply, voltage, voltage);
-	if (ret < 0)
-		return 1;
+	अगर (ret < 0)
+		वापस 1;
 
-	return regulator_count_voltages(supply);
-}
+	वापस regulator_count_voltages(supply);
+पूर्ण
 
-static int led_regulator_get_voltage(struct regulator *supply,
-		enum led_brightness brightness)
-{
-	if (brightness == 0)
-		return -EINVAL;
+अटल पूर्णांक led_regulator_get_voltage(काष्ठा regulator *supply,
+		क्रमागत led_brightness brightness)
+अणु
+	अगर (brightness == 0)
+		वापस -EINVAL;
 
-	return regulator_list_voltage(supply, brightness - 1);
-}
+	वापस regulator_list_voltage(supply, brightness - 1);
+पूर्ण
 
 
-static void regulator_led_enable(struct regulator_led *led)
-{
-	int ret;
+अटल व्योम regulator_led_enable(काष्ठा regulator_led *led)
+अणु
+	पूर्णांक ret;
 
-	if (led->enabled)
-		return;
+	अगर (led->enabled)
+		वापस;
 
 	ret = regulator_enable(led->vcc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to enable vcc: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	led->enabled = 1;
-}
+पूर्ण
 
-static void regulator_led_disable(struct regulator_led *led)
-{
-	int ret;
+अटल व्योम regulator_led_disable(काष्ठा regulator_led *led)
+अणु
+	पूर्णांक ret;
 
-	if (!led->enabled)
-		return;
+	अगर (!led->enabled)
+		वापस;
 
 	ret = regulator_disable(led->vcc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to disable vcc: %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	led->enabled = 0;
-}
+पूर्ण
 
-static int regulator_led_brightness_set(struct led_classdev *led_cdev,
-					 enum led_brightness value)
-{
-	struct regulator_led *led = to_regulator_led(led_cdev);
-	int voltage;
-	int ret = 0;
+अटल पूर्णांक regulator_led_brightness_set(काष्ठा led_classdev *led_cdev,
+					 क्रमागत led_brightness value)
+अणु
+	काष्ठा regulator_led *led = to_regulator_led(led_cdev);
+	पूर्णांक voltage;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&led->mutex);
 
-	if (value == LED_OFF) {
+	अगर (value == LED_OFF) अणु
 		regulator_led_disable(led);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (led->cdev.max_brightness > 1) {
+	अगर (led->cdev.max_brightness > 1) अणु
 		voltage = led_regulator_get_voltage(led->vcc, value);
 		dev_dbg(led->cdev.dev, "brightness: %d voltage: %d\n",
 				value, voltage);
 
 		ret = regulator_set_voltage(led->vcc, voltage, voltage);
-		if (ret != 0)
+		अगर (ret != 0)
 			dev_err(led->cdev.dev, "Failed to set voltage %d: %d\n",
 				voltage, ret);
-	}
+	पूर्ण
 
 	regulator_led_enable(led);
 
 out:
 	mutex_unlock(&led->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int regulator_led_probe(struct platform_device *pdev)
-{
-	struct led_regulator_platform_data *pdata =
+अटल पूर्णांक regulator_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा led_regulator_platक्रमm_data *pdata =
 			dev_get_platdata(&pdev->dev);
-	struct regulator_led *led;
-	struct regulator *vcc;
-	int ret = 0;
+	काष्ठा regulator_led *led;
+	काष्ठा regulator *vcc;
+	पूर्णांक ret = 0;
 
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&pdev->dev, "no platform data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	vcc = devm_regulator_get_exclusive(&pdev->dev, "vled");
-	if (IS_ERR(vcc)) {
+	अगर (IS_ERR(vcc)) अणु
 		dev_err(&pdev->dev, "Cannot get vcc for %s\n", pdata->name);
-		return PTR_ERR(vcc);
-	}
+		वापस PTR_ERR(vcc);
+	पूर्ण
 
-	led = devm_kzalloc(&pdev->dev, sizeof(*led), GFP_KERNEL);
-	if (led == NULL)
-		return -ENOMEM;
+	led = devm_kzalloc(&pdev->dev, माप(*led), GFP_KERNEL);
+	अगर (led == शून्य)
+		वापस -ENOMEM;
 
 	led->cdev.max_brightness = led_regulator_get_max_brightness(vcc);
-	if (pdata->brightness > led->cdev.max_brightness) {
+	अगर (pdata->brightness > led->cdev.max_brightness) अणु
 		dev_err(&pdev->dev, "Invalid default brightness %d\n",
 				pdata->brightness);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	led->cdev.brightness_set_blocking = regulator_led_brightness_set;
 	led->cdev.name = pdata->name;
 	led->cdev.flags |= LED_CORE_SUSPENDRESUME;
 	led->vcc = vcc;
 
-	/* to handle correctly an already enabled regulator */
-	if (regulator_is_enabled(led->vcc))
+	/* to handle correctly an alपढ़ोy enabled regulator */
+	अगर (regulator_is_enabled(led->vcc))
 		led->enabled = 1;
 
 	mutex_init(&led->mutex);
 
-	platform_set_drvdata(pdev, led);
+	platक्रमm_set_drvdata(pdev, led);
 
-	ret = led_classdev_register(&pdev->dev, &led->cdev);
-	if (ret < 0)
-		return ret;
+	ret = led_classdev_रेजिस्टर(&pdev->dev, &led->cdev);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* to expose the default value to userspace */
+	/* to expose the शेष value to userspace */
 	led->cdev.brightness = pdata->brightness;
 
-	/* Set the default led status */
+	/* Set the शेष led status */
 	regulator_led_brightness_set(&led->cdev, led->cdev.brightness);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regulator_led_remove(struct platform_device *pdev)
-{
-	struct regulator_led *led = platform_get_drvdata(pdev);
+अटल पूर्णांक regulator_led_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regulator_led *led = platक्रमm_get_drvdata(pdev);
 
-	led_classdev_unregister(&led->cdev);
+	led_classdev_unरेजिस्टर(&led->cdev);
 	regulator_led_disable(led);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver regulator_led_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver regulator_led_driver = अणु
+	.driver = अणु
 		   .name  = "leds-regulator",
-		   },
+		   पूर्ण,
 	.probe  = regulator_led_probe,
-	.remove = regulator_led_remove,
-};
+	.हटाओ = regulator_led_हटाओ,
+पूर्ण;
 
-module_platform_driver(regulator_led_driver);
+module_platक्रमm_driver(regulator_led_driver);
 
 MODULE_AUTHOR("Antonio Ospite <ospite@studenti.unina.it>");
 MODULE_DESCRIPTION("Regulator driven LED driver");

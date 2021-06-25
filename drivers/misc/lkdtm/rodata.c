@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * This includes functions that are meant to live entirely in .rodata
  * (via objcopy tricks), to validate the non-executability of .rodata.
  */
-#include "lkdtm.h"
+#समावेश "lkdtm.h"
 
-void noinstr lkdtm_rodata_do_nothing(void)
-{
+व्योम noinstr lkdपंचांग_rodata_करो_nothing(व्योम)
+अणु
 	/* Does nothing. We just want an architecture agnostic "return". */
-}
+पूर्ण

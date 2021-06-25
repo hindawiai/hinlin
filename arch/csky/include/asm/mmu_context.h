@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_MMU_CONTEXT_H
-#define __ASM_CSKY_MMU_CONTEXT_H
+#अगर_अघोषित __ASM_CSKY_MMU_CONTEXT_H
+#घोषणा __ASM_CSKY_MMU_CONTEXT_H
 
-#include <asm-generic/mm_hooks.h>
-#include <asm/setup.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र-generic/mm_hooks.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <abi/ckmmu.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <abi/ckmmu.h>
 
-#define ASID_MASK		((1 << CONFIG_CPU_ASID_BITS) - 1)
-#define cpu_asid(mm)		(atomic64_read(&mm->context.asid) & ASID_MASK)
+#घोषणा ASID_MASK		((1 << CONFIG_CPU_ASID_BITS) - 1)
+#घोषणा cpu_asid(mm)		(atomic64_पढ़ो(&mm->context.asid) & ASID_MASK)
 
-#define init_new_context(tsk,mm)	({ atomic64_set(&(mm)->context.asid, 0); 0; })
+#घोषणा init_new_context(tsk,mm)	(अणु atomic64_set(&(mm)->context.asid, 0); 0; पूर्ण)
 
-void check_and_switch_context(struct mm_struct *mm, unsigned int cpu);
+व्योम check_and_चयन_context(काष्ठा mm_काष्ठा *mm, अचिन्हित पूर्णांक cpu);
 
-static inline void
-switch_mm(struct mm_struct *prev, struct mm_struct *next,
-	  struct task_struct *tsk)
-{
-	unsigned int cpu = smp_processor_id();
+अटल अंतरभूत व्योम
+चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+	  काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	if (prev != next)
-		check_and_switch_context(next, cpu);
+	अगर (prev != next)
+		check_and_चयन_context(next, cpu);
 
 	setup_pgd(next->pgd, next->context.asid.counter);
 
 	flush_icache_deferred(next);
-}
+पूर्ण
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#endif /* __ASM_CSKY_MMU_CONTEXT_H */
+#पूर्ण_अगर /* __ASM_CSKY_MMU_CONTEXT_H */

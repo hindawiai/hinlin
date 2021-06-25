@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * linux/include/linux/timeriomem-rng.h
+ * linux/include/linux/समयriomem-rng.h
  *
  * Copyright (c) 2009 Alexander Clouter <alex@digriz.org.uk>
  */
 
-#ifndef _LINUX_TIMERIOMEM_RNG_H
-#define _LINUX_TIMERIOMEM_RNG_H
+#अगर_अघोषित _LINUX_TIMERIOMEM_RNG_H
+#घोषणा _LINUX_TIMERIOMEM_RNG_H
 
-struct timeriomem_rng_data {
-	void __iomem		*address;
+काष्ठा समयriomem_rng_data अणु
+	व्योम __iomem		*address;
 
 	/* measures in usecs */
-	unsigned int		period;
+	अचिन्हित पूर्णांक		period;
 
-	/* bits of entropy per 1024 bits read */
-	unsigned int		quality;
-};
+	/* bits of entropy per 1024 bits पढ़ो */
+	अचिन्हित पूर्णांक		quality;
+पूर्ण;
 
-#endif /* _LINUX_TIMERIOMEM_RNG_H */
+#पूर्ण_अगर /* _LINUX_TIMERIOMEM_RNG_H */

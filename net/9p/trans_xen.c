@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * linux/fs/9p/trans_xen
  *
@@ -5,17 +6,17 @@
  *
  * Copyright (C) 2017 by Stefano Stabellini <stefano@aporeto.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -30,535 +31,535 @@
  * IN THE SOFTWARE.
  */
 
-#include <xen/events.h>
-#include <xen/grant_table.h>
-#include <xen/xen.h>
-#include <xen/xenbus.h>
-#include <xen/interface/io/9pfs.h>
+#समावेश <xen/events.h>
+#समावेश <xen/grant_table.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/पूर्णांकerface/io/9pfs.h>
 
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <net/9p/9p.h>
-#include <net/9p/client.h>
-#include <net/9p/transport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/9p/9p.h>
+#समावेश <net/9p/client.h>
+#समावेश <net/9p/transport.h>
 
-#define XEN_9PFS_NUM_RINGS 2
-#define XEN_9PFS_RING_ORDER 9
-#define XEN_9PFS_RING_SIZE(ring)  XEN_FLEX_RING_SIZE(ring->intf->ring_order)
+#घोषणा XEN_9PFS_NUM_RINGS 2
+#घोषणा XEN_9PFS_RING_ORDER 9
+#घोषणा XEN_9PFS_RING_SIZE(ring)  XEN_FLEX_RING_SIZE(ring->पूर्णांकf->ring_order)
 
-struct xen_9pfs_header {
-	uint32_t size;
-	uint8_t id;
-	uint16_t tag;
+काष्ठा xen_9pfs_header अणु
+	uपूर्णांक32_t size;
+	uपूर्णांक8_t id;
+	uपूर्णांक16_t tag;
 
-	/* uint8_t sdata[]; */
-} __attribute__((packed));
+	/* uपूर्णांक8_t sdata[]; */
+पूर्ण __attribute__((packed));
 
 /* One per ring, more than one per 9pfs share */
-struct xen_9pfs_dataring {
-	struct xen_9pfs_front_priv *priv;
+काष्ठा xen_9pfs_dataring अणु
+	काष्ठा xen_9pfs_front_priv *priv;
 
-	struct xen_9pfs_data_intf *intf;
+	काष्ठा xen_9pfs_data_पूर्णांकf *पूर्णांकf;
 	grant_ref_t ref;
-	int evtchn;
-	int irq;
+	पूर्णांक evtchn;
+	पूर्णांक irq;
 	/* protect a ring from concurrent accesses */
 	spinlock_t lock;
 
-	struct xen_9pfs_data data;
-	wait_queue_head_t wq;
-	struct work_struct work;
-};
+	काष्ठा xen_9pfs_data data;
+	रुको_queue_head_t wq;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
 /* One per 9pfs share */
-struct xen_9pfs_front_priv {
-	struct list_head list;
-	struct xenbus_device *dev;
-	char *tag;
-	struct p9_client *client;
+काष्ठा xen_9pfs_front_priv अणु
+	काष्ठा list_head list;
+	काष्ठा xenbus_device *dev;
+	अक्षर *tag;
+	काष्ठा p9_client *client;
 
-	int num_rings;
-	struct xen_9pfs_dataring *rings;
-};
+	पूर्णांक num_rings;
+	काष्ठा xen_9pfs_dataring *rings;
+पूर्ण;
 
-static LIST_HEAD(xen_9pfs_devs);
-static DEFINE_RWLOCK(xen_9pfs_lock);
+अटल LIST_HEAD(xen_9pfs_devs);
+अटल DEFINE_RWLOCK(xen_9pfs_lock);
 
-/* We don't currently allow canceling of requests */
-static int p9_xen_cancel(struct p9_client *client, struct p9_req_t *req)
-{
-	return 1;
-}
+/* We करोn't currently allow canceling of requests */
+अटल पूर्णांक p9_xen_cancel(काष्ठा p9_client *client, काष्ठा p9_req_t *req)
+अणु
+	वापस 1;
+पूर्ण
 
-static int p9_xen_create(struct p9_client *client, const char *addr, char *args)
-{
-	struct xen_9pfs_front_priv *priv;
+अटल पूर्णांक p9_xen_create(काष्ठा p9_client *client, स्थिर अक्षर *addr, अक्षर *args)
+अणु
+	काष्ठा xen_9pfs_front_priv *priv;
 
-	if (addr == NULL)
-		return -EINVAL;
+	अगर (addr == शून्य)
+		वापस -EINVAL;
 
-	read_lock(&xen_9pfs_lock);
-	list_for_each_entry(priv, &xen_9pfs_devs, list) {
-		if (!strcmp(priv->tag, addr)) {
+	पढ़ो_lock(&xen_9pfs_lock);
+	list_क्रम_each_entry(priv, &xen_9pfs_devs, list) अणु
+		अगर (!म_भेद(priv->tag, addr)) अणु
 			priv->client = client;
-			read_unlock(&xen_9pfs_lock);
-			return 0;
-		}
-	}
-	read_unlock(&xen_9pfs_lock);
-	return -EINVAL;
-}
+			पढ़ो_unlock(&xen_9pfs_lock);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&xen_9pfs_lock);
+	वापस -EINVAL;
+पूर्ण
 
-static void p9_xen_close(struct p9_client *client)
-{
-	struct xen_9pfs_front_priv *priv;
+अटल व्योम p9_xen_बंद(काष्ठा p9_client *client)
+अणु
+	काष्ठा xen_9pfs_front_priv *priv;
 
-	read_lock(&xen_9pfs_lock);
-	list_for_each_entry(priv, &xen_9pfs_devs, list) {
-		if (priv->client == client) {
-			priv->client = NULL;
-			read_unlock(&xen_9pfs_lock);
-			return;
-		}
-	}
-	read_unlock(&xen_9pfs_lock);
-}
+	पढ़ो_lock(&xen_9pfs_lock);
+	list_क्रम_each_entry(priv, &xen_9pfs_devs, list) अणु
+		अगर (priv->client == client) अणु
+			priv->client = शून्य;
+			पढ़ो_unlock(&xen_9pfs_lock);
+			वापस;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&xen_9pfs_lock);
+पूर्ण
 
-static bool p9_xen_write_todo(struct xen_9pfs_dataring *ring, RING_IDX size)
-{
+अटल bool p9_xen_ग_लिखो_toकरो(काष्ठा xen_9pfs_dataring *ring, RING_IDX size)
+अणु
 	RING_IDX cons, prod;
 
-	cons = ring->intf->out_cons;
-	prod = ring->intf->out_prod;
+	cons = ring->पूर्णांकf->out_cons;
+	prod = ring->पूर्णांकf->out_prod;
 	virt_mb();
 
-	return XEN_9PFS_RING_SIZE(ring) -
+	वापस XEN_9PFS_RING_SIZE(ring) -
 		xen_9pfs_queued(prod, cons, XEN_9PFS_RING_SIZE(ring)) >= size;
-}
+पूर्ण
 
-static int p9_xen_request(struct p9_client *client, struct p9_req_t *p9_req)
-{
-	struct xen_9pfs_front_priv *priv = NULL;
+अटल पूर्णांक p9_xen_request(काष्ठा p9_client *client, काष्ठा p9_req_t *p9_req)
+अणु
+	काष्ठा xen_9pfs_front_priv *priv = शून्य;
 	RING_IDX cons, prod, masked_cons, masked_prod;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 size = p9_req->tc.size;
-	struct xen_9pfs_dataring *ring;
-	int num;
+	काष्ठा xen_9pfs_dataring *ring;
+	पूर्णांक num;
 
-	read_lock(&xen_9pfs_lock);
-	list_for_each_entry(priv, &xen_9pfs_devs, list) {
-		if (priv->client == client)
-			break;
-	}
-	read_unlock(&xen_9pfs_lock);
-	if (!priv || priv->client != client)
-		return -EINVAL;
+	पढ़ो_lock(&xen_9pfs_lock);
+	list_क्रम_each_entry(priv, &xen_9pfs_devs, list) अणु
+		अगर (priv->client == client)
+			अवरोध;
+	पूर्ण
+	पढ़ो_unlock(&xen_9pfs_lock);
+	अगर (!priv || priv->client != client)
+		वापस -EINVAL;
 
 	num = p9_req->tc.tag % priv->num_rings;
 	ring = &priv->rings[num];
 
 again:
-	while (wait_event_killable(ring->wq,
-				   p9_xen_write_todo(ring, size)) != 0)
+	जबतक (रुको_event_समाप्तable(ring->wq,
+				   p9_xen_ग_लिखो_toकरो(ring, size)) != 0)
 		;
 
 	spin_lock_irqsave(&ring->lock, flags);
-	cons = ring->intf->out_cons;
-	prod = ring->intf->out_prod;
+	cons = ring->पूर्णांकf->out_cons;
+	prod = ring->पूर्णांकf->out_prod;
 	virt_mb();
 
-	if (XEN_9PFS_RING_SIZE(ring) -
-	    xen_9pfs_queued(prod, cons, XEN_9PFS_RING_SIZE(ring)) < size) {
+	अगर (XEN_9PFS_RING_SIZE(ring) -
+	    xen_9pfs_queued(prod, cons, XEN_9PFS_RING_SIZE(ring)) < size) अणु
 		spin_unlock_irqrestore(&ring->lock, flags);
-		goto again;
-	}
+		जाओ again;
+	पूर्ण
 
 	masked_prod = xen_9pfs_mask(prod, XEN_9PFS_RING_SIZE(ring));
 	masked_cons = xen_9pfs_mask(cons, XEN_9PFS_RING_SIZE(ring));
 
-	xen_9pfs_write_packet(ring->data.out, p9_req->tc.sdata, size,
+	xen_9pfs_ग_लिखो_packet(ring->data.out, p9_req->tc.sdata, size,
 			      &masked_prod, masked_cons,
 			      XEN_9PFS_RING_SIZE(ring));
 
 	p9_req->status = REQ_STATUS_SENT;
-	virt_wmb();			/* write ring before updating pointer */
+	virt_wmb();			/* ग_लिखो ring beक्रमe updating poपूर्णांकer */
 	prod += size;
-	ring->intf->out_prod = prod;
+	ring->पूर्णांकf->out_prod = prod;
 	spin_unlock_irqrestore(&ring->lock, flags);
-	notify_remote_via_irq(ring->irq);
+	notअगरy_remote_via_irq(ring->irq);
 	p9_req_put(p9_req);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void p9_xen_response(struct work_struct *work)
-{
-	struct xen_9pfs_front_priv *priv;
-	struct xen_9pfs_dataring *ring;
+अटल व्योम p9_xen_response(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा xen_9pfs_front_priv *priv;
+	काष्ठा xen_9pfs_dataring *ring;
 	RING_IDX cons, prod, masked_cons, masked_prod;
-	struct xen_9pfs_header h;
-	struct p9_req_t *req;
-	int status;
+	काष्ठा xen_9pfs_header h;
+	काष्ठा p9_req_t *req;
+	पूर्णांक status;
 
-	ring = container_of(work, struct xen_9pfs_dataring, work);
+	ring = container_of(work, काष्ठा xen_9pfs_dataring, work);
 	priv = ring->priv;
 
-	while (1) {
-		cons = ring->intf->in_cons;
-		prod = ring->intf->in_prod;
+	जबतक (1) अणु
+		cons = ring->पूर्णांकf->in_cons;
+		prod = ring->पूर्णांकf->in_prod;
 		virt_rmb();
 
-		if (xen_9pfs_queued(prod, cons, XEN_9PFS_RING_SIZE(ring)) <
-		    sizeof(h)) {
-			notify_remote_via_irq(ring->irq);
-			return;
-		}
+		अगर (xen_9pfs_queued(prod, cons, XEN_9PFS_RING_SIZE(ring)) <
+		    माप(h)) अणु
+			notअगरy_remote_via_irq(ring->irq);
+			वापस;
+		पूर्ण
 
 		masked_prod = xen_9pfs_mask(prod, XEN_9PFS_RING_SIZE(ring));
 		masked_cons = xen_9pfs_mask(cons, XEN_9PFS_RING_SIZE(ring));
 
-		/* First, read just the header */
-		xen_9pfs_read_packet(&h, ring->data.in, sizeof(h),
+		/* First, पढ़ो just the header */
+		xen_9pfs_पढ़ो_packet(&h, ring->data.in, माप(h),
 				     masked_prod, &masked_cons,
 				     XEN_9PFS_RING_SIZE(ring));
 
 		req = p9_tag_lookup(priv->client, h.tag);
-		if (!req || req->status != REQ_STATUS_SENT) {
+		अगर (!req || req->status != REQ_STATUS_SENT) अणु
 			dev_warn(&priv->dev->dev, "Wrong req tag=%x\n", h.tag);
 			cons += h.size;
 			virt_mb();
-			ring->intf->in_cons = cons;
-			continue;
-		}
+			ring->पूर्णांकf->in_cons = cons;
+			जारी;
+		पूर्ण
 
-		memcpy(&req->rc, &h, sizeof(h));
+		स_नकल(&req->rc, &h, माप(h));
 		req->rc.offset = 0;
 
 		masked_cons = xen_9pfs_mask(cons, XEN_9PFS_RING_SIZE(ring));
-		/* Then, read the whole packet (including the header) */
-		xen_9pfs_read_packet(req->rc.sdata, ring->data.in, h.size,
+		/* Then, पढ़ो the whole packet (including the header) */
+		xen_9pfs_पढ़ो_packet(req->rc.sdata, ring->data.in, h.size,
 				     masked_prod, &masked_cons,
 				     XEN_9PFS_RING_SIZE(ring));
 
 		virt_mb();
 		cons += h.size;
-		ring->intf->in_cons = cons;
+		ring->पूर्णांकf->in_cons = cons;
 
 		status = (req->status != REQ_STATUS_ERROR) ?
 			REQ_STATUS_RCVD : REQ_STATUS_ERROR;
 
 		p9_client_cb(priv->client, req, status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t xen_9pfs_front_event_handler(int irq, void *r)
-{
-	struct xen_9pfs_dataring *ring = r;
+अटल irqवापस_t xen_9pfs_front_event_handler(पूर्णांक irq, व्योम *r)
+अणु
+	काष्ठा xen_9pfs_dataring *ring = r;
 
-	if (!ring || !ring->priv->client) {
-		/* ignore spurious interrupt */
-		return IRQ_HANDLED;
-	}
+	अगर (!ring || !ring->priv->client) अणु
+		/* ignore spurious पूर्णांकerrupt */
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	wake_up_interruptible(&ring->wq);
+	wake_up_पूर्णांकerruptible(&ring->wq);
 	schedule_work(&ring->work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct p9_trans_module p9_xen_trans = {
+अटल काष्ठा p9_trans_module p9_xen_trans = अणु
 	.name = "xen",
 	.maxsize = 1 << (XEN_9PFS_RING_ORDER + XEN_PAGE_SHIFT - 2),
 	.def = 1,
 	.create = p9_xen_create,
-	.close = p9_xen_close,
+	.बंद = p9_xen_बंद,
 	.request = p9_xen_request,
 	.cancel = p9_xen_cancel,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct xenbus_device_id xen_9pfs_front_ids[] = {
-	{ "9pfs" },
-	{ "" }
-};
+अटल स्थिर काष्ठा xenbus_device_id xen_9pfs_front_ids[] = अणु
+	अणु "9pfs" पूर्ण,
+	अणु "" पूर्ण
+पूर्ण;
 
-static void xen_9pfs_front_free(struct xen_9pfs_front_priv *priv)
-{
-	int i, j;
+अटल व्योम xen_9pfs_front_मुक्त(काष्ठा xen_9pfs_front_priv *priv)
+अणु
+	पूर्णांक i, j;
 
-	write_lock(&xen_9pfs_lock);
+	ग_लिखो_lock(&xen_9pfs_lock);
 	list_del(&priv->list);
-	write_unlock(&xen_9pfs_lock);
+	ग_लिखो_unlock(&xen_9pfs_lock);
 
-	for (i = 0; i < priv->num_rings; i++) {
-		if (!priv->rings[i].intf)
-			break;
-		if (priv->rings[i].irq > 0)
+	क्रम (i = 0; i < priv->num_rings; i++) अणु
+		अगर (!priv->rings[i].पूर्णांकf)
+			अवरोध;
+		अगर (priv->rings[i].irq > 0)
 			unbind_from_irqhandler(priv->rings[i].irq, priv->dev);
-		if (priv->rings[i].data.in) {
-			for (j = 0;
-			     j < (1 << priv->rings[i].intf->ring_order);
-			     j++) {
+		अगर (priv->rings[i].data.in) अणु
+			क्रम (j = 0;
+			     j < (1 << priv->rings[i].पूर्णांकf->ring_order);
+			     j++) अणु
 				grant_ref_t ref;
 
-				ref = priv->rings[i].intf->ref[j];
-				gnttab_end_foreign_access(ref, 0, 0);
-			}
-			free_pages((unsigned long)priv->rings[i].data.in,
-				   priv->rings[i].intf->ring_order -
+				ref = priv->rings[i].पूर्णांकf->ref[j];
+				gnttab_end_क्रमeign_access(ref, 0, 0);
+			पूर्ण
+			मुक्त_pages((अचिन्हित दीर्घ)priv->rings[i].data.in,
+				   priv->rings[i].पूर्णांकf->ring_order -
 				   (PAGE_SHIFT - XEN_PAGE_SHIFT));
-		}
-		gnttab_end_foreign_access(priv->rings[i].ref, 0, 0);
-		free_page((unsigned long)priv->rings[i].intf);
-	}
-	kfree(priv->rings);
-	kfree(priv->tag);
-	kfree(priv);
-}
+		पूर्ण
+		gnttab_end_क्रमeign_access(priv->rings[i].ref, 0, 0);
+		मुक्त_page((अचिन्हित दीर्घ)priv->rings[i].पूर्णांकf);
+	पूर्ण
+	kमुक्त(priv->rings);
+	kमुक्त(priv->tag);
+	kमुक्त(priv);
+पूर्ण
 
-static int xen_9pfs_front_remove(struct xenbus_device *dev)
-{
-	struct xen_9pfs_front_priv *priv = dev_get_drvdata(&dev->dev);
+अटल पूर्णांक xen_9pfs_front_हटाओ(काष्ठा xenbus_device *dev)
+अणु
+	काष्ठा xen_9pfs_front_priv *priv = dev_get_drvdata(&dev->dev);
 
-	dev_set_drvdata(&dev->dev, NULL);
-	xen_9pfs_front_free(priv);
-	return 0;
-}
+	dev_set_drvdata(&dev->dev, शून्य);
+	xen_9pfs_front_मुक्त(priv);
+	वापस 0;
+पूर्ण
 
-static int xen_9pfs_front_alloc_dataring(struct xenbus_device *dev,
-					 struct xen_9pfs_dataring *ring,
-					 unsigned int order)
-{
-	int i = 0;
-	int ret = -ENOMEM;
-	void *bytes = NULL;
+अटल पूर्णांक xen_9pfs_front_alloc_dataring(काष्ठा xenbus_device *dev,
+					 काष्ठा xen_9pfs_dataring *ring,
+					 अचिन्हित पूर्णांक order)
+अणु
+	पूर्णांक i = 0;
+	पूर्णांक ret = -ENOMEM;
+	व्योम *bytes = शून्य;
 
-	init_waitqueue_head(&ring->wq);
+	init_रुकोqueue_head(&ring->wq);
 	spin_lock_init(&ring->lock);
 	INIT_WORK(&ring->work, p9_xen_response);
 
-	ring->intf = (struct xen_9pfs_data_intf *)get_zeroed_page(GFP_KERNEL);
-	if (!ring->intf)
-		return ret;
-	ret = gnttab_grant_foreign_access(dev->otherend_id,
-					  virt_to_gfn(ring->intf), 0);
-	if (ret < 0)
-		goto out;
+	ring->पूर्णांकf = (काष्ठा xen_9pfs_data_पूर्णांकf *)get_zeroed_page(GFP_KERNEL);
+	अगर (!ring->पूर्णांकf)
+		वापस ret;
+	ret = gnttab_grant_क्रमeign_access(dev->otherend_id,
+					  virt_to_gfn(ring->पूर्णांकf), 0);
+	अगर (ret < 0)
+		जाओ out;
 	ring->ref = ret;
-	bytes = (void *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	bytes = (व्योम *)__get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO,
 			order - (PAGE_SHIFT - XEN_PAGE_SHIFT));
-	if (!bytes) {
+	अगर (!bytes) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
-	for (; i < (1 << order); i++) {
-		ret = gnttab_grant_foreign_access(
+		जाओ out;
+	पूर्ण
+	क्रम (; i < (1 << order); i++) अणु
+		ret = gnttab_grant_क्रमeign_access(
 				dev->otherend_id, virt_to_gfn(bytes) + i, 0);
-		if (ret < 0)
-			goto out;
-		ring->intf->ref[i] = ret;
-	}
-	ring->intf->ring_order = order;
+		अगर (ret < 0)
+			जाओ out;
+		ring->पूर्णांकf->ref[i] = ret;
+	पूर्ण
+	ring->पूर्णांकf->ring_order = order;
 	ring->data.in = bytes;
 	ring->data.out = bytes + XEN_FLEX_RING_SIZE(order);
 
 	ret = xenbus_alloc_evtchn(dev, &ring->evtchn);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	ring->irq = bind_evtchn_to_irqhandler(ring->evtchn,
 					      xen_9pfs_front_event_handler,
 					      0, "xen_9pfs-frontend", ring);
-	if (ring->irq >= 0)
-		return 0;
+	अगर (ring->irq >= 0)
+		वापस 0;
 
-	xenbus_free_evtchn(dev, ring->evtchn);
+	xenbus_मुक्त_evtchn(dev, ring->evtchn);
 	ret = ring->irq;
 out:
-	if (bytes) {
-		for (i--; i >= 0; i--)
-			gnttab_end_foreign_access(ring->intf->ref[i], 0, 0);
-		free_pages((unsigned long)bytes,
-			   ring->intf->ring_order -
+	अगर (bytes) अणु
+		क्रम (i--; i >= 0; i--)
+			gnttab_end_क्रमeign_access(ring->पूर्णांकf->ref[i], 0, 0);
+		मुक्त_pages((अचिन्हित दीर्घ)bytes,
+			   ring->पूर्णांकf->ring_order -
 			   (PAGE_SHIFT - XEN_PAGE_SHIFT));
-	}
-	gnttab_end_foreign_access(ring->ref, 0, 0);
-	free_page((unsigned long)ring->intf);
-	return ret;
-}
+	पूर्ण
+	gnttab_end_क्रमeign_access(ring->ref, 0, 0);
+	मुक्त_page((अचिन्हित दीर्घ)ring->पूर्णांकf);
+	वापस ret;
+पूर्ण
 
-static int xen_9pfs_front_probe(struct xenbus_device *dev,
-				const struct xenbus_device_id *id)
-{
-	int ret, i;
-	struct xenbus_transaction xbt;
-	struct xen_9pfs_front_priv *priv = NULL;
-	char *versions;
-	unsigned int max_rings, max_ring_order, len = 0;
+अटल पूर्णांक xen_9pfs_front_probe(काष्ठा xenbus_device *dev,
+				स्थिर काष्ठा xenbus_device_id *id)
+अणु
+	पूर्णांक ret, i;
+	काष्ठा xenbus_transaction xbt;
+	काष्ठा xen_9pfs_front_priv *priv = शून्य;
+	अक्षर *versions;
+	अचिन्हित पूर्णांक max_rings, max_ring_order, len = 0;
 
-	versions = xenbus_read(XBT_NIL, dev->otherend, "versions", &len);
-	if (IS_ERR(versions))
-		return PTR_ERR(versions);
-	if (strcmp(versions, "1")) {
-		kfree(versions);
-		return -EINVAL;
-	}
-	kfree(versions);
-	max_rings = xenbus_read_unsigned(dev->otherend, "max-rings", 0);
-	if (max_rings < XEN_9PFS_NUM_RINGS)
-		return -EINVAL;
-	max_ring_order = xenbus_read_unsigned(dev->otherend,
+	versions = xenbus_पढ़ो(XBT_NIL, dev->otherend, "versions", &len);
+	अगर (IS_ERR(versions))
+		वापस PTR_ERR(versions);
+	अगर (म_भेद(versions, "1")) अणु
+		kमुक्त(versions);
+		वापस -EINVAL;
+	पूर्ण
+	kमुक्त(versions);
+	max_rings = xenbus_पढ़ो_अचिन्हित(dev->otherend, "max-rings", 0);
+	अगर (max_rings < XEN_9PFS_NUM_RINGS)
+		वापस -EINVAL;
+	max_ring_order = xenbus_पढ़ो_अचिन्हित(dev->otherend,
 					      "max-ring-page-order", 0);
-	if (max_ring_order > XEN_9PFS_RING_ORDER)
+	अगर (max_ring_order > XEN_9PFS_RING_ORDER)
 		max_ring_order = XEN_9PFS_RING_ORDER;
-	if (p9_xen_trans.maxsize > XEN_FLEX_RING_SIZE(max_ring_order))
+	अगर (p9_xen_trans.maxsize > XEN_FLEX_RING_SIZE(max_ring_order))
 		p9_xen_trans.maxsize = XEN_FLEX_RING_SIZE(max_ring_order) / 2;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = dev;
 	priv->num_rings = XEN_9PFS_NUM_RINGS;
-	priv->rings = kcalloc(priv->num_rings, sizeof(*priv->rings),
+	priv->rings = kसुस्मृति(priv->num_rings, माप(*priv->rings),
 			      GFP_KERNEL);
-	if (!priv->rings) {
-		kfree(priv);
-		return -ENOMEM;
-	}
+	अगर (!priv->rings) अणु
+		kमुक्त(priv);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < priv->num_rings; i++) {
+	क्रम (i = 0; i < priv->num_rings; i++) अणु
 		priv->rings[i].priv = priv;
 		ret = xen_9pfs_front_alloc_dataring(dev, &priv->rings[i],
 						    max_ring_order);
-		if (ret < 0)
-			goto error;
-	}
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
  again:
 	ret = xenbus_transaction_start(&xbt);
-	if (ret) {
+	अगर (ret) अणु
 		xenbus_dev_fatal(dev, ret, "starting transaction");
-		goto error;
-	}
-	ret = xenbus_printf(xbt, dev->nodename, "version", "%u", 1);
-	if (ret)
-		goto error_xenbus;
-	ret = xenbus_printf(xbt, dev->nodename, "num-rings", "%u",
+		जाओ error;
+	पूर्ण
+	ret = xenbus_म_लिखो(xbt, dev->nodename, "version", "%u", 1);
+	अगर (ret)
+		जाओ error_xenbus;
+	ret = xenbus_म_लिखो(xbt, dev->nodename, "num-rings", "%u",
 			    priv->num_rings);
-	if (ret)
-		goto error_xenbus;
-	for (i = 0; i < priv->num_rings; i++) {
-		char str[16];
+	अगर (ret)
+		जाओ error_xenbus;
+	क्रम (i = 0; i < priv->num_rings; i++) अणु
+		अक्षर str[16];
 
 		BUILD_BUG_ON(XEN_9PFS_NUM_RINGS > 9);
-		sprintf(str, "ring-ref%d", i);
-		ret = xenbus_printf(xbt, dev->nodename, str, "%d",
+		प्र_लिखो(str, "ring-ref%d", i);
+		ret = xenbus_म_लिखो(xbt, dev->nodename, str, "%d",
 				    priv->rings[i].ref);
-		if (ret)
-			goto error_xenbus;
+		अगर (ret)
+			जाओ error_xenbus;
 
-		sprintf(str, "event-channel-%d", i);
-		ret = xenbus_printf(xbt, dev->nodename, str, "%u",
+		प्र_लिखो(str, "event-channel-%d", i);
+		ret = xenbus_म_लिखो(xbt, dev->nodename, str, "%u",
 				    priv->rings[i].evtchn);
-		if (ret)
-			goto error_xenbus;
-	}
-	priv->tag = xenbus_read(xbt, dev->nodename, "tag", NULL);
-	if (IS_ERR(priv->tag)) {
+		अगर (ret)
+			जाओ error_xenbus;
+	पूर्ण
+	priv->tag = xenbus_पढ़ो(xbt, dev->nodename, "tag", शून्य);
+	अगर (IS_ERR(priv->tag)) अणु
 		ret = PTR_ERR(priv->tag);
-		goto error_xenbus;
-	}
+		जाओ error_xenbus;
+	पूर्ण
 	ret = xenbus_transaction_end(xbt, 0);
-	if (ret) {
-		if (ret == -EAGAIN)
-			goto again;
+	अगर (ret) अणु
+		अगर (ret == -EAGAIN)
+			जाओ again;
 		xenbus_dev_fatal(dev, ret, "completing transaction");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	write_lock(&xen_9pfs_lock);
+	ग_लिखो_lock(&xen_9pfs_lock);
 	list_add_tail(&priv->list, &xen_9pfs_devs);
-	write_unlock(&xen_9pfs_lock);
+	ग_लिखो_unlock(&xen_9pfs_lock);
 	dev_set_drvdata(&dev->dev, priv);
-	xenbus_switch_state(dev, XenbusStateInitialised);
+	xenbus_चयन_state(dev, XenbusStateInitialised);
 
-	return 0;
+	वापस 0;
 
  error_xenbus:
 	xenbus_transaction_end(xbt, 1);
 	xenbus_dev_fatal(dev, ret, "writing xenstore");
  error:
-	dev_set_drvdata(&dev->dev, NULL);
-	xen_9pfs_front_free(priv);
-	return ret;
-}
+	dev_set_drvdata(&dev->dev, शून्य);
+	xen_9pfs_front_मुक्त(priv);
+	वापस ret;
+पूर्ण
 
-static int xen_9pfs_front_resume(struct xenbus_device *dev)
-{
+अटल पूर्णांक xen_9pfs_front_resume(काष्ठा xenbus_device *dev)
+अणु
 	dev_warn(&dev->dev, "suspend/resume unsupported\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xen_9pfs_front_changed(struct xenbus_device *dev,
-				   enum xenbus_state backend_state)
-{
-	switch (backend_state) {
-	case XenbusStateReconfiguring:
-	case XenbusStateReconfigured:
-	case XenbusStateInitialising:
-	case XenbusStateInitialised:
-	case XenbusStateUnknown:
-		break;
+अटल व्योम xen_9pfs_front_changed(काष्ठा xenbus_device *dev,
+				   क्रमागत xenbus_state backend_state)
+अणु
+	चयन (backend_state) अणु
+	हाल XenbusStateReconfiguring:
+	हाल XenbusStateReconfigured:
+	हाल XenbusStateInitialising:
+	हाल XenbusStateInitialised:
+	हाल XenbusStateUnknown:
+		अवरोध;
 
-	case XenbusStateInitWait:
-		break;
+	हाल XenbusStateInitWait:
+		अवरोध;
 
-	case XenbusStateConnected:
-		xenbus_switch_state(dev, XenbusStateConnected);
-		break;
+	हाल XenbusStateConnected:
+		xenbus_चयन_state(dev, XenbusStateConnected);
+		अवरोध;
 
-	case XenbusStateClosed:
-		if (dev->state == XenbusStateClosed)
-			break;
+	हाल XenbusStateClosed:
+		अगर (dev->state == XenbusStateClosed)
+			अवरोध;
 		fallthrough;	/* Missed the backend's CLOSING state */
-	case XenbusStateClosing:
-		xenbus_frontend_closed(dev);
-		break;
-	}
-}
+	हाल XenbusStateClosing:
+		xenbus_frontend_बंदd(dev);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static struct xenbus_driver xen_9pfs_front_driver = {
+अटल काष्ठा xenbus_driver xen_9pfs_front_driver = अणु
 	.ids = xen_9pfs_front_ids,
 	.probe = xen_9pfs_front_probe,
-	.remove = xen_9pfs_front_remove,
+	.हटाओ = xen_9pfs_front_हटाओ,
 	.resume = xen_9pfs_front_resume,
 	.otherend_changed = xen_9pfs_front_changed,
-};
+पूर्ण;
 
-static int p9_trans_xen_init(void)
-{
-	int rc;
+अटल पूर्णांक p9_trans_xen_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	if (!xen_domain())
-		return -ENODEV;
+	अगर (!xen_करोमुख्य())
+		वापस -ENODEV;
 
 	pr_info("Initialising Xen transport for 9pfs\n");
 
-	v9fs_register_trans(&p9_xen_trans);
-	rc = xenbus_register_frontend(&xen_9pfs_front_driver);
-	if (rc)
-		v9fs_unregister_trans(&p9_xen_trans);
+	v9fs_रेजिस्टर_trans(&p9_xen_trans);
+	rc = xenbus_रेजिस्टर_frontend(&xen_9pfs_front_driver);
+	अगर (rc)
+		v9fs_unरेजिस्टर_trans(&p9_xen_trans);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 module_init(p9_trans_xen_init);
 
-static void p9_trans_xen_exit(void)
-{
-	v9fs_unregister_trans(&p9_xen_trans);
-	return xenbus_unregister_driver(&xen_9pfs_front_driver);
-}
-module_exit(p9_trans_xen_exit);
+अटल व्योम p9_trans_xen_निकास(व्योम)
+अणु
+	v9fs_unरेजिस्टर_trans(&p9_xen_trans);
+	वापस xenbus_unरेजिस्टर_driver(&xen_9pfs_front_driver);
+पूर्ण
+module_निकास(p9_trans_xen_निकास);
 
 MODULE_AUTHOR("Stefano Stabellini <stefano@aporeto.com>");
 MODULE_DESCRIPTION("Xen Transport for 9P");

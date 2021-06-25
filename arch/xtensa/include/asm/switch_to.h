@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _XTENSA_SWITCH_TO_H
-#define _XTENSA_SWITCH_TO_H
+#अगर_अघोषित _XTENSA_SWITCH_TO_H
+#घोषणा _XTENSA_SWITCH_TO_H
 
-/* * switch_to(n) should switch tasks to task nr n, first
- * checking that n isn't the current task, in which case it does nothing.
+/* * चयन_to(n) should चयन tasks to task nr n, first
+ * checking that n isn't the current task, in which हाल it करोes nothing.
  */
-extern void *_switch_to(void *last, void *next);
+बाह्य व्योम *_चयन_to(व्योम *last, व्योम *next);
 
-#define switch_to(prev,next,last)		\
-do {						\
-	(last) = _switch_to(prev, next);	\
-} while(0)
+#घोषणा चयन_to(prev,next,last)		\
+करो अणु						\
+	(last) = _चयन_to(prev, next);	\
+पूर्ण जबतक(0)
 
-#endif /* _XTENSA_SWITCH_TO_H */
+#पूर्ण_अगर /* _XTENSA_SWITCH_TO_H */

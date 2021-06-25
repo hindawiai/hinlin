@@ -1,277 +1,278 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/*  Diffie-Hellman Key Agreement Method [RFC2631]
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/*  Dअगरfie-Hellman Key Agreement Method [RFC2631]
  *
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
+ * Authors: Salvatore Benedetto <salvatore.benedetto@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <crypto/internal/kpp.h>
-#include <crypto/kpp.h>
-#include <crypto/dh.h>
-#include <linux/fips.h>
-#include <linux/mpi.h>
+#समावेश <linux/module.h>
+#समावेश <crypto/पूर्णांकernal/kpp.h>
+#समावेश <crypto/kpp.h>
+#समावेश <crypto/dh.h>
+#समावेश <linux/fips.h>
+#समावेश <linux/mpi.h>
 
-struct dh_ctx {
+काष्ठा dh_ctx अणु
 	MPI p;	/* Value is guaranteed to be set. */
 	MPI q;	/* Value is optional. */
 	MPI g;	/* Value is guaranteed to be set. */
 	MPI xa;	/* Value is guaranteed to be set. */
-};
+पूर्ण;
 
-static void dh_clear_ctx(struct dh_ctx *ctx)
-{
-	mpi_free(ctx->p);
-	mpi_free(ctx->q);
-	mpi_free(ctx->g);
-	mpi_free(ctx->xa);
-	memset(ctx, 0, sizeof(*ctx));
-}
+अटल व्योम dh_clear_ctx(काष्ठा dh_ctx *ctx)
+अणु
+	mpi_मुक्त(ctx->p);
+	mpi_मुक्त(ctx->q);
+	mpi_मुक्त(ctx->g);
+	mpi_मुक्त(ctx->xa);
+	स_रखो(ctx, 0, माप(*ctx));
+पूर्ण
 
 /*
- * If base is g we compute the public key
+ * If base is g we compute the खुला key
  *	ya = g^xa mod p; [RFC2631 sec 2.1.1]
- * else if base if the counterpart public key we compute the shared secret
+ * अन्यथा अगर base अगर the counterpart खुला key we compute the shared secret
  *	ZZ = yb^xa mod p; [RFC2631 sec 2.1.1]
  */
-static int _compute_val(const struct dh_ctx *ctx, MPI base, MPI val)
-{
+अटल पूर्णांक _compute_val(स्थिर काष्ठा dh_ctx *ctx, MPI base, MPI val)
+अणु
 	/* val = base^xa mod p */
-	return mpi_powm(val, base, ctx->xa, ctx->p);
-}
+	वापस mpi_घातm(val, base, ctx->xa, ctx->p);
+पूर्ण
 
-static inline struct dh_ctx *dh_get_ctx(struct crypto_kpp *tfm)
-{
-	return kpp_tfm_ctx(tfm);
-}
+अटल अंतरभूत काष्ठा dh_ctx *dh_get_ctx(काष्ठा crypto_kpp *tfm)
+अणु
+	वापस kpp_tfm_ctx(tfm);
+पूर्ण
 
-static int dh_check_params_length(unsigned int p_len)
-{
-	return (p_len < 1536) ? -EINVAL : 0;
-}
+अटल पूर्णांक dh_check_params_length(अचिन्हित पूर्णांक p_len)
+अणु
+	वापस (p_len < 1536) ? -EINVAL : 0;
+पूर्ण
 
-static int dh_set_params(struct dh_ctx *ctx, struct dh *params)
-{
-	if (dh_check_params_length(params->p_size << 3))
-		return -EINVAL;
+अटल पूर्णांक dh_set_params(काष्ठा dh_ctx *ctx, काष्ठा dh *params)
+अणु
+	अगर (dh_check_params_length(params->p_size << 3))
+		वापस -EINVAL;
 
-	ctx->p = mpi_read_raw_data(params->p, params->p_size);
-	if (!ctx->p)
-		return -EINVAL;
+	ctx->p = mpi_पढ़ो_raw_data(params->p, params->p_size);
+	अगर (!ctx->p)
+		वापस -EINVAL;
 
-	if (params->q && params->q_size) {
-		ctx->q = mpi_read_raw_data(params->q, params->q_size);
-		if (!ctx->q)
-			return -EINVAL;
-	}
+	अगर (params->q && params->q_size) अणु
+		ctx->q = mpi_पढ़ो_raw_data(params->q, params->q_size);
+		अगर (!ctx->q)
+			वापस -EINVAL;
+	पूर्ण
 
-	ctx->g = mpi_read_raw_data(params->g, params->g_size);
-	if (!ctx->g)
-		return -EINVAL;
+	ctx->g = mpi_पढ़ो_raw_data(params->g, params->g_size);
+	अगर (!ctx->g)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dh_set_secret(struct crypto_kpp *tfm, const void *buf,
-			 unsigned int len)
-{
-	struct dh_ctx *ctx = dh_get_ctx(tfm);
-	struct dh params;
+अटल पूर्णांक dh_set_secret(काष्ठा crypto_kpp *tfm, स्थिर व्योम *buf,
+			 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा dh_ctx *ctx = dh_get_ctx(tfm);
+	काष्ठा dh params;
 
-	/* Free the old MPI key if any */
+	/* Free the old MPI key अगर any */
 	dh_clear_ctx(ctx);
 
-	if (crypto_dh_decode_key(buf, len, &params) < 0)
-		goto err_clear_ctx;
+	अगर (crypto_dh_decode_key(buf, len, &params) < 0)
+		जाओ err_clear_ctx;
 
-	if (dh_set_params(ctx, &params) < 0)
-		goto err_clear_ctx;
+	अगर (dh_set_params(ctx, &params) < 0)
+		जाओ err_clear_ctx;
 
-	ctx->xa = mpi_read_raw_data(params.key, params.key_size);
-	if (!ctx->xa)
-		goto err_clear_ctx;
+	ctx->xa = mpi_पढ़ो_raw_data(params.key, params.key_size);
+	अगर (!ctx->xa)
+		जाओ err_clear_ctx;
 
-	return 0;
+	वापस 0;
 
 err_clear_ctx:
 	dh_clear_ctx(ctx);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * SP800-56A public key verification:
+ * SP800-56A खुला key verअगरication:
  *
- * * If Q is provided as part of the domain paramenters, a full validation
- *   according to SP800-56A section 5.6.2.3.1 is performed.
+ * * If Q is provided as part of the करोमुख्य paramenters, a full validation
+ *   according to SP800-56A section 5.6.2.3.1 is perक्रमmed.
  *
  * * If Q is not provided, a partial validation according to SP800-56A section
- *   5.6.2.3.2 is performed.
+ *   5.6.2.3.2 is perक्रमmed.
  */
-static int dh_is_pubkey_valid(struct dh_ctx *ctx, MPI y)
-{
-	if (unlikely(!ctx->p))
-		return -EINVAL;
+अटल पूर्णांक dh_is_pubkey_valid(काष्ठा dh_ctx *ctx, MPI y)
+अणु
+	अगर (unlikely(!ctx->p))
+		वापस -EINVAL;
 
 	/*
-	 * Step 1: Verify that 2 <= y <= p - 2.
+	 * Step 1: Verअगरy that 2 <= y <= p - 2.
 	 *
 	 * The upper limit check is actually y < p instead of y < p - 1
 	 * as the mpi_sub_ui function is yet missing.
 	 */
-	if (mpi_cmp_ui(y, 1) < 1 || mpi_cmp(y, ctx->p) >= 0)
-		return -EINVAL;
+	अगर (mpi_cmp_ui(y, 1) < 1 || mpi_cmp(y, ctx->p) >= 0)
+		वापस -EINVAL;
 
-	/* Step 2: Verify that 1 = y^q mod p */
-	if (ctx->q) {
+	/* Step 2: Verअगरy that 1 = y^q mod p */
+	अगर (ctx->q) अणु
 		MPI val = mpi_alloc(0);
-		int ret;
+		पूर्णांक ret;
 
-		if (!val)
-			return -ENOMEM;
+		अगर (!val)
+			वापस -ENOMEM;
 
-		ret = mpi_powm(val, y, ctx->q, ctx->p);
+		ret = mpi_घातm(val, y, ctx->q, ctx->p);
 
-		if (ret) {
-			mpi_free(val);
-			return ret;
-		}
+		अगर (ret) अणु
+			mpi_मुक्त(val);
+			वापस ret;
+		पूर्ण
 
 		ret = mpi_cmp_ui(val, 1);
 
-		mpi_free(val);
+		mpi_मुक्त(val);
 
-		if (ret != 0)
-			return -EINVAL;
-	}
+		अगर (ret != 0)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dh_compute_value(struct kpp_request *req)
-{
-	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-	struct dh_ctx *ctx = dh_get_ctx(tfm);
+अटल पूर्णांक dh_compute_value(काष्ठा kpp_request *req)
+अणु
+	काष्ठा crypto_kpp *tfm = crypto_kpp_reqtfm(req);
+	काष्ठा dh_ctx *ctx = dh_get_ctx(tfm);
 	MPI base, val = mpi_alloc(0);
-	int ret = 0;
-	int sign;
+	पूर्णांक ret = 0;
+	पूर्णांक sign;
 
-	if (!val)
-		return -ENOMEM;
+	अगर (!val)
+		वापस -ENOMEM;
 
-	if (unlikely(!ctx->xa)) {
+	अगर (unlikely(!ctx->xa)) अणु
 		ret = -EINVAL;
-		goto err_free_val;
-	}
+		जाओ err_मुक्त_val;
+	पूर्ण
 
-	if (req->src) {
-		base = mpi_read_raw_from_sgl(req->src, req->src_len);
-		if (!base) {
+	अगर (req->src) अणु
+		base = mpi_पढ़ो_raw_from_sgl(req->src, req->src_len);
+		अगर (!base) अणु
 			ret = -EINVAL;
-			goto err_free_val;
-		}
+			जाओ err_मुक्त_val;
+		पूर्ण
 		ret = dh_is_pubkey_valid(ctx, base);
-		if (ret)
-			goto err_free_base;
-	} else {
+		अगर (ret)
+			जाओ err_मुक्त_base;
+	पूर्ण अन्यथा अणु
 		base = ctx->g;
-	}
+	पूर्ण
 
 	ret = _compute_val(ctx, base, val);
-	if (ret)
-		goto err_free_base;
+	अगर (ret)
+		जाओ err_मुक्त_base;
 
-	if (fips_enabled) {
+	अगर (fips_enabled) अणु
 		/* SP800-56A rev3 5.7.1.1 check: Validation of shared secret */
-		if (req->src) {
+		अगर (req->src) अणु
 			MPI pone;
 
 			/* z <= 1 */
-			if (mpi_cmp_ui(val, 1) < 1) {
+			अगर (mpi_cmp_ui(val, 1) < 1) अणु
 				ret = -EBADMSG;
-				goto err_free_base;
-			}
+				जाओ err_मुक्त_base;
+			पूर्ण
 
 			/* z == p - 1 */
 			pone = mpi_alloc(0);
 
-			if (!pone) {
+			अगर (!pone) अणु
 				ret = -ENOMEM;
-				goto err_free_base;
-			}
+				जाओ err_मुक्त_base;
+			पूर्ण
 
 			ret = mpi_sub_ui(pone, ctx->p, 1);
-			if (!ret && !mpi_cmp(pone, val))
+			अगर (!ret && !mpi_cmp(pone, val))
 				ret = -EBADMSG;
 
-			mpi_free(pone);
+			mpi_मुक्त(pone);
 
-			if (ret)
-				goto err_free_base;
+			अगर (ret)
+				जाओ err_मुक्त_base;
 
 		/* SP800-56A rev 3 5.6.2.1.3 key check */
-		} else {
-			if (dh_is_pubkey_valid(ctx, val)) {
+		पूर्ण अन्यथा अणु
+			अगर (dh_is_pubkey_valid(ctx, val)) अणु
 				ret = -EAGAIN;
-				goto err_free_val;
-			}
-		}
-	}
+				जाओ err_मुक्त_val;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	ret = mpi_write_to_sgl(val, req->dst, req->dst_len, &sign);
-	if (ret)
-		goto err_free_base;
+	ret = mpi_ग_लिखो_to_sgl(val, req->dst, req->dst_len, &sign);
+	अगर (ret)
+		जाओ err_मुक्त_base;
 
-	if (sign < 0)
+	अगर (sign < 0)
 		ret = -EBADMSG;
-err_free_base:
-	if (req->src)
-		mpi_free(base);
-err_free_val:
-	mpi_free(val);
-	return ret;
-}
+err_मुक्त_base:
+	अगर (req->src)
+		mpi_मुक्त(base);
+err_मुक्त_val:
+	mpi_मुक्त(val);
+	वापस ret;
+पूर्ण
 
-static unsigned int dh_max_size(struct crypto_kpp *tfm)
-{
-	struct dh_ctx *ctx = dh_get_ctx(tfm);
+अटल अचिन्हित पूर्णांक dh_max_size(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा dh_ctx *ctx = dh_get_ctx(tfm);
 
-	return mpi_get_size(ctx->p);
-}
+	वापस mpi_get_size(ctx->p);
+पूर्ण
 
-static void dh_exit_tfm(struct crypto_kpp *tfm)
-{
-	struct dh_ctx *ctx = dh_get_ctx(tfm);
+अटल व्योम dh_निकास_tfm(काष्ठा crypto_kpp *tfm)
+अणु
+	काष्ठा dh_ctx *ctx = dh_get_ctx(tfm);
 
 	dh_clear_ctx(ctx);
-}
+पूर्ण
 
-static struct kpp_alg dh = {
+अटल काष्ठा kpp_alg dh = अणु
 	.set_secret = dh_set_secret,
-	.generate_public_key = dh_compute_value,
+	.generate_खुला_key = dh_compute_value,
 	.compute_shared_secret = dh_compute_value,
 	.max_size = dh_max_size,
-	.exit = dh_exit_tfm,
-	.base = {
+	.निकास = dh_निकास_tfm,
+	.base = अणु
 		.cra_name = "dh",
 		.cra_driver_name = "dh-generic",
 		.cra_priority = 100,
 		.cra_module = THIS_MODULE,
-		.cra_ctxsize = sizeof(struct dh_ctx),
-	},
-};
+		.cra_ctxsize = माप(काष्ठा dh_ctx),
+	पूर्ण,
+पूर्ण;
 
-static int dh_init(void)
-{
-	return crypto_register_kpp(&dh);
-}
+अटल पूर्णांक dh_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_kpp(&dh);
+पूर्ण
 
-static void dh_exit(void)
-{
-	crypto_unregister_kpp(&dh);
-}
+अटल व्योम dh_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_kpp(&dh);
+पूर्ण
 
 subsys_initcall(dh_init);
-module_exit(dh_exit);
+module_निकास(dh_निकास);
 MODULE_ALIAS_CRYPTO("dh");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("DH generic algorithm");

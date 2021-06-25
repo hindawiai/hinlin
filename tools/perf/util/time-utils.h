@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TIME_UTILS_H_
-#define _TIME_UTILS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TIME_UTILS_H_
+#घोषणा _TIME_UTILS_H_
 
-#include <stddef.h>
-#include <time.h>
-#include <linux/types.h>
+#समावेश <मानकघोष.स>
+#समावेश <समय.स>
+#समावेश <linux/types.h>
 
-struct perf_time_interval {
+काष्ठा perf_समय_पूर्णांकerval अणु
 	u64 start, end;
-};
+पूर्ण;
 
-int parse_nsec_time(const char *str, u64 *ptime);
+पूर्णांक parse_nsec_समय(स्थिर अक्षर *str, u64 *pसमय);
 
-int perf_time__parse_str(struct perf_time_interval *ptime, const char *ostr);
+पूर्णांक perf_समय__parse_str(काष्ठा perf_समय_पूर्णांकerval *pसमय, स्थिर अक्षर *ostr);
 
-int perf_time__percent_parse_str(struct perf_time_interval *ptime_buf, int num,
-				 const char *ostr, u64 start, u64 end);
+पूर्णांक perf_समय__percent_parse_str(काष्ठा perf_समय_पूर्णांकerval *pसमय_buf, पूर्णांक num,
+				 स्थिर अक्षर *ostr, u64 start, u64 end);
 
-struct perf_time_interval *perf_time__range_alloc(const char *ostr, int *size);
+काष्ठा perf_समय_पूर्णांकerval *perf_समय__range_alloc(स्थिर अक्षर *ostr, पूर्णांक *size);
 
-bool perf_time__skip_sample(struct perf_time_interval *ptime, u64 timestamp);
+bool perf_समय__skip_sample(काष्ठा perf_समय_पूर्णांकerval *pसमय, u64 बारtamp);
 
-bool perf_time__ranges_skip_sample(struct perf_time_interval *ptime_buf,
-				   int num, u64 timestamp);
+bool perf_समय__ranges_skip_sample(काष्ठा perf_समय_पूर्णांकerval *pसमय_buf,
+				   पूर्णांक num, u64 बारtamp);
 
-struct perf_session;
+काष्ठा perf_session;
 
-int perf_time__parse_for_ranges_reltime(const char *str, struct perf_session *session,
-				struct perf_time_interval **ranges,
-				int *range_size, int *range_num,
-				bool reltime);
+पूर्णांक perf_समय__parse_क्रम_ranges_relसमय(स्थिर अक्षर *str, काष्ठा perf_session *session,
+				काष्ठा perf_समय_पूर्णांकerval **ranges,
+				पूर्णांक *range_size, पूर्णांक *range_num,
+				bool relसमय);
 
-int perf_time__parse_for_ranges(const char *str, struct perf_session *session,
-				struct perf_time_interval **ranges,
-				int *range_size, int *range_num);
+पूर्णांक perf_समय__parse_क्रम_ranges(स्थिर अक्षर *str, काष्ठा perf_session *session,
+				काष्ठा perf_समय_पूर्णांकerval **ranges,
+				पूर्णांक *range_size, पूर्णांक *range_num);
 
-int timestamp__scnprintf_usec(u64 timestamp, char *buf, size_t sz);
-int timestamp__scnprintf_nsec(u64 timestamp, char *buf, size_t sz);
+पूर्णांक बारtamp__scnम_लिखो_usec(u64 बारtamp, अक्षर *buf, माप_प्रकार sz);
+पूर्णांक बारtamp__scnम_लिखो_nsec(u64 बारtamp, अक्षर *buf, माप_प्रकार sz);
 
-int fetch_current_timestamp(char *buf, size_t sz);
+पूर्णांक fetch_current_बारtamp(अक्षर *buf, माप_प्रकार sz);
 
-static inline unsigned long long rdclock(void)
-{
-	struct timespec ts;
+अटल अंतरभूत अचिन्हित दीर्घ दीर्घ rdघड़ी(व्योम)
+अणु
+	काष्ठा बारpec ts;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	return ts.tv_sec * 1000000000ULL + ts.tv_nsec;
-}
+	घड़ी_समय_लो(CLOCK_MONOTONIC, &ts);
+	वापस ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

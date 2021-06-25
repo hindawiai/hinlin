@@ -1,85 +1,86 @@
+<शैली गुरु>
 /*
  * S32C1I selftest.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2016 Cadence Design Systems Inc.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/traps.h>
+#समावेश <यंत्र/traps.h>
 
-#if XCHAL_HAVE_S32C1I
+#अगर XCHAL_HAVE_S32C1I
 
-static int __initdata rcw_word, rcw_probe_pc, rcw_exc;
+अटल पूर्णांक __initdata rcw_word, rcw_probe_pc, rcw_exc;
 
 /*
- * Basic atomic compare-and-swap, that records PC of S32C1I for probing.
+ * Basic atomic compare-and-swap, that records PC of S32C1I क्रम probing.
  *
  * If *v == cmp, set *v = set.  Return previous *v.
  */
-static inline int probed_compare_swap(int *v, int cmp, int set)
-{
-	int tmp;
+अटल अंतरभूत पूर्णांक probed_compare_swap(पूर्णांक *v, पूर्णांक cmp, पूर्णांक set)
+अणु
+	पूर्णांक पंचांगp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 			"	movi	%1, 1f\n"
 			"	s32i	%1, %4, 0\n"
 			"	wsr	%2, scompare1\n"
 			"1:	s32c1i	%0, %3, 0\n"
-			: "=a" (set), "=&a" (tmp)
+			: "=a" (set), "=&a" (पंचांगp)
 			: "a" (cmp), "a" (v), "a" (&rcw_probe_pc), "0" (set)
 			: "memory"
 			);
-	return set;
-}
+	वापस set;
+पूर्ण
 
 /* Handle probed exception */
 
-static void __init do_probed_exception(struct pt_regs *regs,
-				       unsigned long exccause)
-{
-	if (regs->pc == rcw_probe_pc) {	/* exception on s32c1i ? */
-		regs->pc += 3;		/* skip the s32c1i instruction */
+अटल व्योम __init करो_probed_exception(काष्ठा pt_regs *regs,
+				       अचिन्हित दीर्घ exccause)
+अणु
+	अगर (regs->pc == rcw_probe_pc) अणु	/* exception on s32c1i ? */
+		regs->pc += 3;		/* skip the s32c1i inकाष्ठाion */
 		rcw_exc = exccause;
-	} else {
-		do_unhandled(regs, exccause);
-	}
-}
+	पूर्ण अन्यथा अणु
+		करो_unhandled(regs, exccause);
+	पूर्ण
+पूर्ण
 
 /* Simple test of S32C1I (soc bringup assist) */
 
-static int __init check_s32c1i(void)
-{
-	int n, cause1, cause2;
-	void *handbus, *handdata, *handaddr; /* temporarily saved handlers */
+अटल पूर्णांक __init check_s32c1i(व्योम)
+अणु
+	पूर्णांक n, cause1, cause2;
+	व्योम *handbus, *handdata, *handaddr; /* temporarily saved handlers */
 
 	rcw_probe_pc = 0;
 	handbus  = trap_set_handler(EXCCAUSE_LOAD_STORE_ERROR,
-			do_probed_exception);
+			करो_probed_exception);
 	handdata = trap_set_handler(EXCCAUSE_LOAD_STORE_DATA_ERROR,
-			do_probed_exception);
+			करो_probed_exception);
 	handaddr = trap_set_handler(EXCCAUSE_LOAD_STORE_ADDR_ERROR,
-			do_probed_exception);
+			करो_probed_exception);
 
-	/* First try an S32C1I that does not store: */
+	/* First try an S32C1I that करोes not store: */
 	rcw_exc = 0;
 	rcw_word = 1;
 	n = probed_compare_swap(&rcw_word, 0, 2);
 	cause1 = rcw_exc;
 
 	/* took exception? */
-	if (cause1 != 0) {
+	अगर (cause1 != 0) अणु
 		/* unclean exception? */
-		if (n != 2 || rcw_word != 1)
+		अगर (n != 2 || rcw_word != 1)
 			panic("S32C1I exception error");
-	} else if (rcw_word != 1 || n != 1) {
+	पूर्ण अन्यथा अगर (rcw_word != 1 || n != 1) अणु
 		panic("S32C1I compare error");
-	}
+	पूर्ण
 
 	/* Then an S32C1I that stores: */
 	rcw_exc = 0;
@@ -87,42 +88,42 @@ static int __init check_s32c1i(void)
 	n = probed_compare_swap(&rcw_word, 0x1234567, 0xabcde);
 	cause2 = rcw_exc;
 
-	if (cause2 != 0) {
+	अगर (cause2 != 0) अणु
 		/* unclean exception? */
-		if (n != 0xabcde || rcw_word != 0x1234567)
+		अगर (n != 0xabcde || rcw_word != 0x1234567)
 			panic("S32C1I exception error (b)");
-	} else if (rcw_word != 0xabcde || n != 0x1234567) {
+	पूर्ण अन्यथा अगर (rcw_word != 0xabcde || n != 0x1234567) अणु
 		panic("S32C1I store error");
-	}
+	पूर्ण
 
-	/* Verify consistency of exceptions: */
-	if (cause1 || cause2) {
+	/* Verअगरy consistency of exceptions: */
+	अगर (cause1 || cause2) अणु
 		pr_warn("S32C1I took exception %d, %d\n", cause1, cause2);
-		/* If emulation of S32C1I upon bus error gets implemented,
-		 * we can get rid of this panic for single core (not SMP)
+		/* If emulation of S32C1I upon bus error माला_लो implemented,
+		 * we can get rid of this panic क्रम single core (not SMP)
 		 */
 		panic("S32C1I exceptions not currently supported");
-	}
-	if (cause1 != cause2)
+	पूर्ण
+	अगर (cause1 != cause2)
 		panic("inconsistent S32C1I exceptions");
 
 	trap_set_handler(EXCCAUSE_LOAD_STORE_ERROR, handbus);
 	trap_set_handler(EXCCAUSE_LOAD_STORE_DATA_ERROR, handdata);
 	trap_set_handler(EXCCAUSE_LOAD_STORE_ADDR_ERROR, handaddr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* XCHAL_HAVE_S32C1I */
+#अन्यथा /* XCHAL_HAVE_S32C1I */
 
 /* This condition should not occur with a commercially deployed processor.
- * Display reminder for early engr test or demo chips / FPGA bitstreams
+ * Display reminder क्रम early engr test or demo chips / FPGA bitstreams
  */
-static int __init check_s32c1i(void)
-{
+अटल पूर्णांक __init check_s32c1i(व्योम)
+अणु
 	pr_warn("Processor configuration lacks atomic compare-and-swap support!\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* XCHAL_HAVE_S32C1I */
+#पूर्ण_अगर /* XCHAL_HAVE_S32C1I */
 
 early_initcall(check_s32c1i);

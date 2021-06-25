@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * wmi.h - ACPI WMI interface
+ * wmi.h - ACPI WMI पूर्णांकerface
  *
  * Copyright (c) 2015 Andrew Lutomirski
  */
 
-#ifndef _LINUX_WMI_H
-#define _LINUX_WMI_H
+#अगर_अघोषित _LINUX_WMI_H
+#घोषणा _LINUX_WMI_H
 
-#include <linux/device.h>
-#include <linux/acpi.h>
-#include <linux/mod_devicetable.h>
-#include <uapi/linux/wmi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <uapi/linux/wmi.h>
 
-struct wmi_device {
-	struct device dev;
+काष्ठा wmi_device अणु
+	काष्ठा device dev;
 
-	 /* True for data blocks implementing the Set Control Method */
+	 /* True क्रम data blocks implementing the Set Control Method */
 	bool setable;
-};
+पूर्ण;
 
 /* evaluate the ACPI method associated with this device */
-extern acpi_status wmidev_evaluate_method(struct wmi_device *wdev,
+बाह्य acpi_status wmidev_evaluate_method(काष्ठा wmi_device *wdev,
 					  u8 instance, u32 method_id,
-					  const struct acpi_buffer *in,
-					  struct acpi_buffer *out);
+					  स्थिर काष्ठा acpi_buffer *in,
+					  काष्ठा acpi_buffer *out);
 
-/* Caller must kfree the result. */
-extern union acpi_object *wmidev_block_query(struct wmi_device *wdev,
+/* Caller must kमुक्त the result. */
+बाह्य जोड़ acpi_object *wmidev_block_query(काष्ठा wmi_device *wdev,
 					     u8 instance);
 
-extern int set_required_buffer_size(struct wmi_device *wdev, u64 length);
+बाह्य पूर्णांक set_required_buffer_size(काष्ठा wmi_device *wdev, u64 length);
 
-struct wmi_driver {
-	struct device_driver driver;
-	const struct wmi_device_id *id_table;
+काष्ठा wmi_driver अणु
+	काष्ठा device_driver driver;
+	स्थिर काष्ठा wmi_device_id *id_table;
 
-	int (*probe)(struct wmi_device *wdev, const void *context);
-	void (*remove)(struct wmi_device *wdev);
-	void (*notify)(struct wmi_device *device, union acpi_object *data);
-	long (*filter_callback)(struct wmi_device *wdev, unsigned int cmd,
-				struct wmi_ioctl_buffer *arg);
-};
+	पूर्णांक (*probe)(काष्ठा wmi_device *wdev, स्थिर व्योम *context);
+	व्योम (*हटाओ)(काष्ठा wmi_device *wdev);
+	व्योम (*notअगरy)(काष्ठा wmi_device *device, जोड़ acpi_object *data);
+	दीर्घ (*filter_callback)(काष्ठा wmi_device *wdev, अचिन्हित पूर्णांक cmd,
+				काष्ठा wmi_ioctl_buffer *arg);
+पूर्ण;
 
-extern int __must_check __wmi_driver_register(struct wmi_driver *driver,
-					      struct module *owner);
-extern void wmi_driver_unregister(struct wmi_driver *driver);
-#define wmi_driver_register(driver) __wmi_driver_register((driver), THIS_MODULE)
+बाह्य पूर्णांक __must_check __wmi_driver_रेजिस्टर(काष्ठा wmi_driver *driver,
+					      काष्ठा module *owner);
+बाह्य व्योम wmi_driver_unरेजिस्टर(काष्ठा wmi_driver *driver);
+#घोषणा wmi_driver_रेजिस्टर(driver) __wmi_driver_रेजिस्टर((driver), THIS_MODULE)
 
-#define module_wmi_driver(__wmi_driver) \
-	module_driver(__wmi_driver, wmi_driver_register, \
-		      wmi_driver_unregister)
+#घोषणा module_wmi_driver(__wmi_driver) \
+	module_driver(__wmi_driver, wmi_driver_रेजिस्टर, \
+		      wmi_driver_unरेजिस्टर)
 
-#endif
+#पूर्ण_अगर

@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * budget-ci.c: driver for the SAA7146 based Budget DVB cards
+ * budget-ci.c: driver क्रम the SAA7146 based Budget DVB cards
  *
  * Compiled from various sources by Michael Hunold <michael@mihu.de>
  *
  *     msp430 IR support contributed by Jack Thomasson <jkt@Helius.COM>
  *     partially based on the Siemens DVB driver by Ralph+Marcus Metzler
  *
- * CI interface support (c) 2004 Andrew de Quincey <adq_dvb@lidskialf.net>
+ * CI पूर्णांकerface support (c) 2004 Andrew de Quincey <adq_dvb@lidskialf.net>
  *
  * the project's page is at https://linuxtv.org
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <media/rc-core.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <media/rc-core.h>
 
-#include "budget.h"
+#समावेश "budget.h"
 
-#include <media/dvb_ca_en50221.h>
-#include "stv0299.h"
-#include "stv0297.h"
-#include "tda1004x.h"
-#include "stb0899_drv.h"
-#include "stb0899_reg.h"
-#include "stb0899_cfg.h"
-#include "stb6100.h"
-#include "stb6100_cfg.h"
-#include "lnbp21.h"
-#include "bsbe1.h"
-#include "bsru6.h"
-#include "tda1002x.h"
-#include "tda827x.h"
-#include "bsbe1-d01a.h"
+#समावेश <media/dvb_ca_en50221.h>
+#समावेश "stv0299.h"
+#समावेश "stv0297.h"
+#समावेश "tda1004x.h"
+#समावेश "stb0899_drv.h"
+#समावेश "stb0899_reg.h"
+#समावेश "stb0899_cfg.h"
+#समावेश "stb6100.h"
+#समावेश "stb6100_cfg.h"
+#समावेश "lnbp21.h"
+#समावेश "bsbe1.h"
+#समावेश "bsru6.h"
+#समावेश "tda1002x.h"
+#समावेश "tda827x.h"
+#समावेश "bsbe1-d01a.h"
 
-#define MODULE_NAME "budget_ci"
+#घोषणा MODULE_NAME "budget_ci"
 
 /*
  * Regarding DEBIADDR_IR:
- * Some CI modules hang if random addresses are read.
- * Using address 0x4000 for the IR read means that we
- * use the same address as for CI version, which should
- * be a safe default.
+ * Some CI modules hang अगर अक्रमom addresses are पढ़ो.
+ * Using address 0x4000 क्रम the IR पढ़ो means that we
+ * use the same address as क्रम CI version, which should
+ * be a safe शेष.
  */
-#define DEBIADDR_IR		0x4000
-#define DEBIADDR_CICONTROL	0x0000
-#define DEBIADDR_CIVERSION	0x4000
-#define DEBIADDR_IO		0x1000
-#define DEBIADDR_ATTR		0x3000
+#घोषणा DEBIADDR_IR		0x4000
+#घोषणा DEBIADDR_CICONTROL	0x0000
+#घोषणा DEBIADDR_CIVERSION	0x4000
+#घोषणा DEBIADDR_IO		0x1000
+#घोषणा DEBIADDR_ATTR		0x3000
 
-#define CICONTROL_RESET		0x01
-#define CICONTROL_ENABLETS	0x02
-#define CICONTROL_CAMDETECT	0x08
+#घोषणा CICONTROL_RESET		0x01
+#घोषणा CICONTROL_ENABLETS	0x02
+#घोषणा CICONTROL_CAMDETECT	0x08
 
-#define DEBICICTL		0x00420000
-#define DEBICICAM		0x02420000
+#घोषणा DEBICICTL		0x00420000
+#घोषणा DEBICICAM		0x02420000
 
-#define SLOTSTATUS_NONE		1
-#define SLOTSTATUS_PRESENT	2
-#define SLOTSTATUS_RESET	4
-#define SLOTSTATUS_READY	8
-#define SLOTSTATUS_OCCUPIED	(SLOTSTATUS_PRESENT|SLOTSTATUS_RESET|SLOTSTATUS_READY)
+#घोषणा SLOTSTATUS_NONE		1
+#घोषणा SLOTSTATUS_PRESENT	2
+#घोषणा SLOTSTATUS_RESET	4
+#घोषणा SLOTSTATUS_READY	8
+#घोषणा SLOTSTATUS_OCCUPIED	(SLOTSTATUS_PRESENT|SLOTSTATUS_RESET|SLOTSTATUS_READY)
 
 /* RC5 device wildcard */
-#define IR_DEVICE_ANY		255
+#घोषणा IR_DEVICE_ANY		255
 
-static int rc5_device = -1;
-module_param(rc5_device, int, 0644);
+अटल पूर्णांक rc5_device = -1;
+module_param(rc5_device, पूर्णांक, 0644);
 MODULE_PARM_DESC(rc5_device, "only IR commands to given RC5 device (device = 0 - 31, any device = 255, default: autodetect)");
 
-static int ir_debug;
-module_param(ir_debug, int, 0644);
+अटल पूर्णांक ir_debug;
+module_param(ir_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(ir_debug, "enable debugging information for IR decoding");
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
-struct budget_ci_ir {
-	struct rc_dev *dev;
-	struct tasklet_struct msp430_irq_tasklet;
-	char name[72]; /* 40 + 32 for (struct saa7146_dev).name */
-	char phys[32];
-	int rc5_device;
+काष्ठा budget_ci_ir अणु
+	काष्ठा rc_dev *dev;
+	काष्ठा tasklet_काष्ठा msp430_irq_tasklet;
+	अक्षर name[72]; /* 40 + 32 क्रम (काष्ठा saa7146_dev).name */
+	अक्षर phys[32];
+	पूर्णांक rc5_device;
 	u32 ir_key;
 	bool have_command;
-	bool full_rc5;		/* Outputs a full RC5 code */
-};
+	bool full_rc5;		/* Outमाला_दो a full RC5 code */
+पूर्ण;
 
-struct budget_ci {
-	struct budget budget;
-	struct tasklet_struct ciintf_irq_tasklet;
-	int slot_status;
-	int ci_irq;
-	struct dvb_ca_en50221 ca;
-	struct budget_ci_ir ir;
-	u8 tuner_pll_address; /* used for philips_tdm1316l configs */
-};
+काष्ठा budget_ci अणु
+	काष्ठा budget budget;
+	काष्ठा tasklet_काष्ठा ciपूर्णांकf_irq_tasklet;
+	पूर्णांक slot_status;
+	पूर्णांक ci_irq;
+	काष्ठा dvb_ca_en50221 ca;
+	काष्ठा budget_ci_ir ir;
+	u8 tuner_pll_address; /* used क्रम philips_tdm1316l configs */
+पूर्ण;
 
-static void msp430_ir_interrupt(struct tasklet_struct *t)
-{
-	struct budget_ci_ir *ir = from_tasklet(ir, t, msp430_irq_tasklet);
-	struct budget_ci *budget_ci = container_of(ir, typeof(*budget_ci), ir);
-	struct rc_dev *dev = budget_ci->ir.dev;
-	u32 command = ttpci_budget_debiread(&budget_ci->budget, DEBINOSWAP, DEBIADDR_IR, 2, 1, 0) >> 8;
+अटल व्योम msp430_ir_पूर्णांकerrupt(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा budget_ci_ir *ir = from_tasklet(ir, t, msp430_irq_tasklet);
+	काष्ठा budget_ci *budget_ci = container_of(ir, typeof(*budget_ci), ir);
+	काष्ठा rc_dev *dev = budget_ci->ir.dev;
+	u32 command = ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBINOSWAP, DEBIADDR_IR, 2, 1, 0) >> 8;
 
 	/*
-	 * The msp430 chip can generate two different bytes, command and device
+	 * The msp430 chip can generate two dअगरferent bytes, command and device
 	 *
 	 * type1: X1CCCCCC, C = command bits (0 - 63)
 	 * type2: X0TDDDDD, D = device bits (0 - 31), T = RC5 toggle bit
 	 *
-	 * Each signal from the remote control can generate one or more command
+	 * Each संकेत from the remote control can generate one or more command
 	 * bytes and one or more device bytes. For the repeated bytes, the
 	 * highest bit (X) is set. The first command byte is always generated
-	 * before the first device byte. Other than that, no specific order
-	 * seems to apply. To make life interesting, bytes can also be lost.
+	 * beक्रमe the first device byte. Other than that, no specअगरic order
+	 * seems to apply. To make lअगरe पूर्णांकeresting, bytes can also be lost.
 	 *
 	 * Only when we have a command and device byte, a keypress is
 	 * generated.
 	 */
 
-	if (ir_debug)
-		printk("budget_ci: received byte 0x%02x\n", command);
+	अगर (ir_debug)
+		prपूर्णांकk("budget_ci: received byte 0x%02x\n", command);
 
 	/* Remove repeat bit, we use every command */
 	command = command & 0x7f;
 
 	/* Is this a RC5 command byte? */
-	if (command & 0x40) {
+	अगर (command & 0x40) अणु
 		budget_ci->ir.have_command = true;
 		budget_ci->ir.ir_key = command & 0x3f;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* It's a RC5 device byte */
-	if (!budget_ci->ir.have_command)
-		return;
+	अगर (!budget_ci->ir.have_command)
+		वापस;
 	budget_ci->ir.have_command = false;
 
-	if (budget_ci->ir.rc5_device != IR_DEVICE_ANY &&
+	अगर (budget_ci->ir.rc5_device != IR_DEVICE_ANY &&
 	    budget_ci->ir.rc5_device != (command & 0x1f))
-		return;
+		वापस;
 
-	if (budget_ci->ir.full_rc5) {
-		rc_keydown(dev, RC_PROTO_RC5,
+	अगर (budget_ci->ir.full_rc5) अणु
+		rc_keyकरोwn(dev, RC_PROTO_RC5,
 			   RC_SCANCODE_RC5(budget_ci->ir.rc5_device, budget_ci->ir.ir_key),
 			   !!(command & 0x20));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* FIXME: We should generate complete scancodes for all devices */
-	rc_keydown(dev, RC_PROTO_UNKNOWN, budget_ci->ir.ir_key,
+	/* FIXME: We should generate complete scancodes क्रम all devices */
+	rc_keyकरोwn(dev, RC_PROTO_UNKNOWN, budget_ci->ir.ir_key,
 		   !!(command & 0x20));
-}
+पूर्ण
 
-static int msp430_ir_init(struct budget_ci *budget_ci)
-{
-	struct saa7146_dev *saa = budget_ci->budget.dev;
-	struct rc_dev *dev;
-	int error;
+अटल पूर्णांक msp430_ir_init(काष्ठा budget_ci *budget_ci)
+अणु
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
+	काष्ठा rc_dev *dev;
+	पूर्णांक error;
 
 	dev = rc_allocate_device(RC_DRIVER_SCANCODE);
-	if (!dev) {
-		printk(KERN_ERR "budget_ci: IR interface initialisation failed\n");
-		return -ENOMEM;
-	}
+	अगर (!dev) अणु
+		prपूर्णांकk(KERN_ERR "budget_ci: IR interface initialisation failed\n");
+		वापस -ENOMEM;
+	पूर्ण
 
-	snprintf(budget_ci->ir.name, sizeof(budget_ci->ir.name),
+	snम_लिखो(budget_ci->ir.name, माप(budget_ci->ir.name),
 		 "Budget-CI dvb ir receiver %s", saa->name);
-	snprintf(budget_ci->ir.phys, sizeof(budget_ci->ir.phys),
+	snम_लिखो(budget_ci->ir.phys, माप(budget_ci->ir.phys),
 		 "pci-%s/ir0", pci_name(saa->pci));
 
 	dev->driver_name = MODULE_NAME;
@@ -178,396 +179,396 @@ static int msp430_ir_init(struct budget_ci *budget_ci)
 	dev->input_phys = budget_ci->ir.phys;
 	dev->input_id.bustype = BUS_PCI;
 	dev->input_id.version = 1;
-	if (saa->pci->subsystem_vendor) {
-		dev->input_id.vendor = saa->pci->subsystem_vendor;
-		dev->input_id.product = saa->pci->subsystem_device;
-	} else {
-		dev->input_id.vendor = saa->pci->vendor;
+	अगर (saa->pci->subप्रणाली_venकरोr) अणु
+		dev->input_id.venकरोr = saa->pci->subप्रणाली_venकरोr;
+		dev->input_id.product = saa->pci->subप्रणाली_device;
+	पूर्ण अन्यथा अणु
+		dev->input_id.venकरोr = saa->pci->venकरोr;
 		dev->input_id.product = saa->pci->device;
-	}
+	पूर्ण
 	dev->dev.parent = &saa->pci->dev;
 
-	if (rc5_device < 0)
+	अगर (rc5_device < 0)
 		budget_ci->ir.rc5_device = IR_DEVICE_ANY;
-	else
+	अन्यथा
 		budget_ci->ir.rc5_device = rc5_device;
 
 	/* Select keymap and address */
-	switch (budget_ci->budget.dev->pci->subsystem_device) {
-	case 0x100c:
-	case 0x100f:
-	case 0x1011:
-	case 0x1012:
+	चयन (budget_ci->budget.dev->pci->subप्रणाली_device) अणु
+	हाल 0x100c:
+	हाल 0x100f:
+	हाल 0x1011:
+	हाल 0x1012:
 		/* The hauppauge keymap is a superset of these remotes */
 		dev->map_name = RC_MAP_HAUPPAUGE;
 		budget_ci->ir.full_rc5 = true;
 
-		if (rc5_device < 0)
+		अगर (rc5_device < 0)
 			budget_ci->ir.rc5_device = 0x1f;
-		break;
-	case 0x1010:
-	case 0x1017:
-	case 0x1019:
-	case 0x101a:
-	case 0x101b:
-		/* for the Technotrend 1500 bundled remote */
+		अवरोध;
+	हाल 0x1010:
+	हाल 0x1017:
+	हाल 0x1019:
+	हाल 0x101a:
+	हाल 0x101b:
+		/* क्रम the Technotrend 1500 bundled remote */
 		dev->map_name = RC_MAP_TT_1500;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* unknown remote */
 		dev->map_name = RC_MAP_BUDGET_CI_OLD;
-		break;
-	}
-	if (!budget_ci->ir.full_rc5)
+		अवरोध;
+	पूर्ण
+	अगर (!budget_ci->ir.full_rc5)
 		dev->scancode_mask = 0xff;
 
-	error = rc_register_device(dev);
-	if (error) {
-		printk(KERN_ERR "budget_ci: could not init driver for IR device (code %d)\n", error);
-		rc_free_device(dev);
-		return error;
-	}
+	error = rc_रेजिस्टर_device(dev);
+	अगर (error) अणु
+		prपूर्णांकk(KERN_ERR "budget_ci: could not init driver for IR device (code %d)\n", error);
+		rc_मुक्त_device(dev);
+		वापस error;
+	पूर्ण
 
 	budget_ci->ir.dev = dev;
 
-	tasklet_setup(&budget_ci->ir.msp430_irq_tasklet, msp430_ir_interrupt);
+	tasklet_setup(&budget_ci->ir.msp430_irq_tasklet, msp430_ir_पूर्णांकerrupt);
 
 	SAA7146_IER_ENABLE(saa, MASK_06);
 	saa7146_setgpio(saa, 3, SAA7146_GPIO_IRQHI);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void msp430_ir_deinit(struct budget_ci *budget_ci)
-{
-	struct saa7146_dev *saa = budget_ci->budget.dev;
+अटल व्योम msp430_ir_deinit(काष्ठा budget_ci *budget_ci)
+अणु
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
 
 	SAA7146_IER_DISABLE(saa, MASK_06);
 	saa7146_setgpio(saa, 3, SAA7146_GPIO_INPUT);
-	tasklet_kill(&budget_ci->ir.msp430_irq_tasklet);
+	tasklet_समाप्त(&budget_ci->ir.msp430_irq_tasklet);
 
-	rc_unregister_device(budget_ci->ir.dev);
-}
+	rc_unरेजिस्टर_device(budget_ci->ir.dev);
+पूर्ण
 
-static int ciintf_read_attribute_mem(struct dvb_ca_en50221 *ca, int slot, int address)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
+अटल पूर्णांक ciपूर्णांकf_पढ़ो_attribute_mem(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot, पूर्णांक address)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
-	return ttpci_budget_debiread(&budget_ci->budget, DEBICICAM,
+	वापस ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICAM,
 				     DEBIADDR_ATTR | (address & 0xfff), 1, 1, 0);
-}
+पूर्ण
 
-static int ciintf_write_attribute_mem(struct dvb_ca_en50221 *ca, int slot, int address, u8 value)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
+अटल पूर्णांक ciपूर्णांकf_ग_लिखो_attribute_mem(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot, पूर्णांक address, u8 value)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
-	return ttpci_budget_debiwrite(&budget_ci->budget, DEBICICAM,
+	वापस ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICAM,
 				      DEBIADDR_ATTR | (address & 0xfff), 1, value, 1, 0);
-}
+पूर्ण
 
-static int ciintf_read_cam_control(struct dvb_ca_en50221 *ca, int slot, u8 address)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
+अटल पूर्णांक ciपूर्णांकf_पढ़ो_cam_control(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot, u8 address)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
-	return ttpci_budget_debiread(&budget_ci->budget, DEBICICAM,
+	वापस ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICAM,
 				     DEBIADDR_IO | (address & 3), 1, 1, 0);
-}
+पूर्ण
 
-static int ciintf_write_cam_control(struct dvb_ca_en50221 *ca, int slot, u8 address, u8 value)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
+अटल पूर्णांक ciपूर्णांकf_ग_लिखो_cam_control(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot, u8 address, u8 value)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
-	return ttpci_budget_debiwrite(&budget_ci->budget, DEBICICAM,
+	वापस ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICAM,
 				      DEBIADDR_IO | (address & 3), 1, value, 1, 0);
-}
+पूर्ण
 
-static int ciintf_slot_reset(struct dvb_ca_en50221 *ca, int slot)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
-	struct saa7146_dev *saa = budget_ci->budget.dev;
+अटल पूर्णांक ciपूर्णांकf_slot_reset(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
-	if (budget_ci->ci_irq) {
-		// trigger on RISING edge during reset so we know when READY is re-asserted
+	अगर (budget_ci->ci_irq) अणु
+		// trigger on RISING edge during reset so we know when READY is re-निश्चितed
 		saa7146_setgpio(saa, 0, SAA7146_GPIO_IRQHI);
-	}
+	पूर्ण
 	budget_ci->slot_status = SLOTSTATUS_RESET;
-	ttpci_budget_debiwrite(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 0, 1, 0);
+	ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 0, 1, 0);
 	msleep(1);
-	ttpci_budget_debiwrite(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
+	ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
 			       CICONTROL_RESET, 1, 0);
 
 	saa7146_setgpio(saa, 1, SAA7146_GPIO_OUTHI);
 	ttpci_budget_set_video_port(saa, BUDGET_VIDEO_PORTB);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ciintf_slot_shutdown(struct dvb_ca_en50221 *ca, int slot)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
-	struct saa7146_dev *saa = budget_ci->budget.dev;
+अटल पूर्णांक ciपूर्णांकf_slot_shutकरोwn(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
 	saa7146_setgpio(saa, 1, SAA7146_GPIO_OUTHI);
 	ttpci_budget_set_video_port(saa, BUDGET_VIDEO_PORTB);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ciintf_slot_ts_enable(struct dvb_ca_en50221 *ca, int slot)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
-	struct saa7146_dev *saa = budget_ci->budget.dev;
-	int tmp;
+अटल पूर्णांक ciपूर्णांकf_slot_ts_enable(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
+	पूर्णांक पंचांगp;
 
-	if (slot != 0)
-		return -EINVAL;
+	अगर (slot != 0)
+		वापस -EINVAL;
 
 	saa7146_setgpio(saa, 1, SAA7146_GPIO_OUTLO);
 
-	tmp = ttpci_budget_debiread(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
-	ttpci_budget_debiwrite(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
-			       tmp | CICONTROL_ENABLETS, 1, 0);
+	पंचांगp = ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
+	ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
+			       पंचांगp | CICONTROL_ENABLETS, 1, 0);
 
 	ttpci_budget_set_video_port(saa, BUDGET_VIDEO_PORTA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ciintf_interrupt(struct tasklet_struct *t)
-{
-	struct budget_ci *budget_ci = from_tasklet(budget_ci, t,
-						   ciintf_irq_tasklet);
-	struct saa7146_dev *saa = budget_ci->budget.dev;
-	unsigned int flags;
+अटल व्योम ciपूर्णांकf_पूर्णांकerrupt(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा budget_ci *budget_ci = from_tasklet(budget_ci, t,
+						   ciपूर्णांकf_irq_tasklet);
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
+	अचिन्हित पूर्णांक flags;
 
-	// ensure we don't get spurious IRQs during initialisation
-	if (!budget_ci->budget.ci_present)
-		return;
+	// ensure we करोn't get spurious IRQs during initialisation
+	अगर (!budget_ci->budget.ci_present)
+		वापस;
 
-	// read the CAM status
-	flags = ttpci_budget_debiread(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
-	if (flags & CICONTROL_CAMDETECT) {
+	// पढ़ो the CAM status
+	flags = ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
+	अगर (flags & CICONTROL_CAMDETECT) अणु
 
-		// GPIO should be set to trigger on falling edge if a CAM is present
+		// GPIO should be set to trigger on falling edge अगर a CAM is present
 		saa7146_setgpio(saa, 0, SAA7146_GPIO_IRQLO);
 
-		if (budget_ci->slot_status & SLOTSTATUS_NONE) {
+		अगर (budget_ci->slot_status & SLOTSTATUS_NONE) अणु
 			// CAM insertion IRQ
 			budget_ci->slot_status = SLOTSTATUS_PRESENT;
 			dvb_ca_en50221_camchange_irq(&budget_ci->ca, 0,
 						     DVB_CA_EN50221_CAMCHANGE_INSERTED);
 
-		} else if (budget_ci->slot_status & SLOTSTATUS_RESET) {
-			// CAM ready (reset completed)
+		पूर्ण अन्यथा अगर (budget_ci->slot_status & SLOTSTATUS_RESET) अणु
+			// CAM पढ़ोy (reset completed)
 			budget_ci->slot_status = SLOTSTATUS_READY;
-			dvb_ca_en50221_camready_irq(&budget_ci->ca, 0);
+			dvb_ca_en50221_camपढ़ोy_irq(&budget_ci->ca, 0);
 
-		} else if (budget_ci->slot_status & SLOTSTATUS_READY) {
+		पूर्ण अन्यथा अगर (budget_ci->slot_status & SLOTSTATUS_READY) अणु
 			// FR/DA IRQ
 			dvb_ca_en50221_frda_irq(&budget_ci->ca, 0);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
-		// trigger on rising edge if a CAM is not present - when a CAM is inserted, we
+		// trigger on rising edge अगर a CAM is not present - when a CAM is inserted, we
 		// only want to get the IRQ when it sets READY. If we trigger on the falling edge,
-		// the CAM might not actually be ready yet.
+		// the CAM might not actually be पढ़ोy yet.
 		saa7146_setgpio(saa, 0, SAA7146_GPIO_IRQHI);
 
-		// generate a CAM removal IRQ if we haven't already
-		if (budget_ci->slot_status & SLOTSTATUS_OCCUPIED) {
+		// generate a CAM removal IRQ अगर we haven't alपढ़ोy
+		अगर (budget_ci->slot_status & SLOTSTATUS_OCCUPIED) अणु
 			// CAM removal IRQ
 			budget_ci->slot_status = SLOTSTATUS_NONE;
 			dvb_ca_en50221_camchange_irq(&budget_ci->ca, 0,
 						     DVB_CA_EN50221_CAMCHANGE_REMOVED);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ciintf_poll_slot_status(struct dvb_ca_en50221 *ca, int slot, int open)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) ca->data;
-	unsigned int flags;
+अटल पूर्णांक ciपूर्णांकf_poll_slot_status(काष्ठा dvb_ca_en50221 *ca, पूर्णांक slot, पूर्णांक खोलो)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) ca->data;
+	अचिन्हित पूर्णांक flags;
 
-	// ensure we don't get spurious IRQs during initialisation
-	if (!budget_ci->budget.ci_present)
-		return -EINVAL;
+	// ensure we करोn't get spurious IRQs during initialisation
+	अगर (!budget_ci->budget.ci_present)
+		वापस -EINVAL;
 
-	// read the CAM status
-	flags = ttpci_budget_debiread(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
-	if (flags & CICONTROL_CAMDETECT) {
-		// mark it as present if it wasn't before
-		if (budget_ci->slot_status & SLOTSTATUS_NONE) {
+	// पढ़ो the CAM status
+	flags = ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
+	अगर (flags & CICONTROL_CAMDETECT) अणु
+		// mark it as present अगर it wasn't beक्रमe
+		अगर (budget_ci->slot_status & SLOTSTATUS_NONE) अणु
 			budget_ci->slot_status = SLOTSTATUS_PRESENT;
-		}
+		पूर्ण
 
-		// during a RESET, we check if we can read from IO memory to see when CAM is ready
-		if (budget_ci->slot_status & SLOTSTATUS_RESET) {
-			if (ciintf_read_attribute_mem(ca, slot, 0) == 0x1d) {
+		// during a RESET, we check अगर we can पढ़ो from IO memory to see when CAM is पढ़ोy
+		अगर (budget_ci->slot_status & SLOTSTATUS_RESET) अणु
+			अगर (ciपूर्णांकf_पढ़ो_attribute_mem(ca, slot, 0) == 0x1d) अणु
 				budget_ci->slot_status = SLOTSTATUS_READY;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		budget_ci->slot_status = SLOTSTATUS_NONE;
-	}
+	पूर्ण
 
-	if (budget_ci->slot_status != SLOTSTATUS_NONE) {
-		if (budget_ci->slot_status & SLOTSTATUS_READY) {
-			return DVB_CA_EN50221_POLL_CAM_PRESENT | DVB_CA_EN50221_POLL_CAM_READY;
-		}
-		return DVB_CA_EN50221_POLL_CAM_PRESENT;
-	}
+	अगर (budget_ci->slot_status != SLOTSTATUS_NONE) अणु
+		अगर (budget_ci->slot_status & SLOTSTATUS_READY) अणु
+			वापस DVB_CA_EN50221_POLL_CAM_PRESENT | DVB_CA_EN50221_POLL_CAM_READY;
+		पूर्ण
+		वापस DVB_CA_EN50221_POLL_CAM_PRESENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ciintf_init(struct budget_ci *budget_ci)
-{
-	struct saa7146_dev *saa = budget_ci->budget.dev;
-	int flags;
-	int result;
-	int ci_version;
-	int ca_flags;
+अटल पूर्णांक ciपूर्णांकf_init(काष्ठा budget_ci *budget_ci)
+अणु
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
+	पूर्णांक flags;
+	पूर्णांक result;
+	पूर्णांक ci_version;
+	पूर्णांक ca_flags;
 
-	memset(&budget_ci->ca, 0, sizeof(struct dvb_ca_en50221));
+	स_रखो(&budget_ci->ca, 0, माप(काष्ठा dvb_ca_en50221));
 
 	// enable DEBI pins
-	saa7146_write(saa, MC1, MASK_27 | MASK_11);
+	saa7146_ग_लिखो(saa, MC1, MASK_27 | MASK_11);
 
-	// test if it is there
-	ci_version = ttpci_budget_debiread(&budget_ci->budget, DEBICICTL, DEBIADDR_CIVERSION, 1, 1, 0);
-	if ((ci_version & 0xa0) != 0xa0) {
+	// test अगर it is there
+	ci_version = ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICTL, DEBIADDR_CIVERSION, 1, 1, 0);
+	अगर ((ci_version & 0xa0) != 0xa0) अणु
 		result = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	// determine whether a CAM is present or not
-	flags = ttpci_budget_debiread(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
+	flags = ttpci_budget_debiपढ़ो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 1, 0);
 	budget_ci->slot_status = SLOTSTATUS_NONE;
-	if (flags & CICONTROL_CAMDETECT)
+	अगर (flags & CICONTROL_CAMDETECT)
 		budget_ci->slot_status = SLOTSTATUS_PRESENT;
 
-	// version 0xa2 of the CI firmware doesn't generate interrupts
-	if (ci_version == 0xa2) {
+	// version 0xa2 of the CI firmware करोesn't generate पूर्णांकerrupts
+	अगर (ci_version == 0xa2) अणु
 		ca_flags = 0;
 		budget_ci->ci_irq = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ca_flags = DVB_CA_EN50221_FLAG_IRQ_CAMCHANGE |
 				DVB_CA_EN50221_FLAG_IRQ_FR |
 				DVB_CA_EN50221_FLAG_IRQ_DA;
 		budget_ci->ci_irq = 1;
-	}
+	पूर्ण
 
-	// register CI interface
+	// रेजिस्टर CI पूर्णांकerface
 	budget_ci->ca.owner = THIS_MODULE;
-	budget_ci->ca.read_attribute_mem = ciintf_read_attribute_mem;
-	budget_ci->ca.write_attribute_mem = ciintf_write_attribute_mem;
-	budget_ci->ca.read_cam_control = ciintf_read_cam_control;
-	budget_ci->ca.write_cam_control = ciintf_write_cam_control;
-	budget_ci->ca.slot_reset = ciintf_slot_reset;
-	budget_ci->ca.slot_shutdown = ciintf_slot_shutdown;
-	budget_ci->ca.slot_ts_enable = ciintf_slot_ts_enable;
-	budget_ci->ca.poll_slot_status = ciintf_poll_slot_status;
+	budget_ci->ca.पढ़ो_attribute_mem = ciपूर्णांकf_पढ़ो_attribute_mem;
+	budget_ci->ca.ग_लिखो_attribute_mem = ciपूर्णांकf_ग_लिखो_attribute_mem;
+	budget_ci->ca.पढ़ो_cam_control = ciपूर्णांकf_पढ़ो_cam_control;
+	budget_ci->ca.ग_लिखो_cam_control = ciपूर्णांकf_ग_लिखो_cam_control;
+	budget_ci->ca.slot_reset = ciपूर्णांकf_slot_reset;
+	budget_ci->ca.slot_shutकरोwn = ciपूर्णांकf_slot_shutकरोwn;
+	budget_ci->ca.slot_ts_enable = ciपूर्णांकf_slot_ts_enable;
+	budget_ci->ca.poll_slot_status = ciपूर्णांकf_poll_slot_status;
 	budget_ci->ca.data = budget_ci;
-	if ((result = dvb_ca_en50221_init(&budget_ci->budget.dvb_adapter,
+	अगर ((result = dvb_ca_en50221_init(&budget_ci->budget.dvb_adapter,
 					  &budget_ci->ca,
-					  ca_flags, 1)) != 0) {
-		printk("budget_ci: CI interface detected, but initialisation failed.\n");
-		goto error;
-	}
+					  ca_flags, 1)) != 0) अणु
+		prपूर्णांकk("budget_ci: CI interface detected, but initialisation failed.\n");
+		जाओ error;
+	पूर्ण
 
 	// Setup CI slot IRQ
-	if (budget_ci->ci_irq) {
-		tasklet_setup(&budget_ci->ciintf_irq_tasklet, ciintf_interrupt);
-		if (budget_ci->slot_status != SLOTSTATUS_NONE) {
+	अगर (budget_ci->ci_irq) अणु
+		tasklet_setup(&budget_ci->ciपूर्णांकf_irq_tasklet, ciपूर्णांकf_पूर्णांकerrupt);
+		अगर (budget_ci->slot_status != SLOTSTATUS_NONE) अणु
 			saa7146_setgpio(saa, 0, SAA7146_GPIO_IRQLO);
-		} else {
+		पूर्ण अन्यथा अणु
 			saa7146_setgpio(saa, 0, SAA7146_GPIO_IRQHI);
-		}
+		पूर्ण
 		SAA7146_IER_ENABLE(saa, MASK_03);
-	}
+	पूर्ण
 
-	// enable interface
-	ttpci_budget_debiwrite(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
+	// enable पूर्णांकerface
+	ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
 			       CICONTROL_RESET, 1, 0);
 
 	// success!
-	printk("budget_ci: CI interface initialised\n");
+	prपूर्णांकk("budget_ci: CI interface initialised\n");
 	budget_ci->budget.ci_present = 1;
 
-	// forge a fake CI IRQ so the CAM state is setup correctly
-	if (budget_ci->ci_irq) {
+	// क्रमge a fake CI IRQ so the CAM state is setup correctly
+	अगर (budget_ci->ci_irq) अणु
 		flags = DVB_CA_EN50221_CAMCHANGE_REMOVED;
-		if (budget_ci->slot_status != SLOTSTATUS_NONE)
+		अगर (budget_ci->slot_status != SLOTSTATUS_NONE)
 			flags = DVB_CA_EN50221_CAMCHANGE_INSERTED;
 		dvb_ca_en50221_camchange_irq(&budget_ci->ca, 0, flags);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	saa7146_write(saa, MC1, MASK_27);
-	return result;
-}
+	saa7146_ग_लिखो(saa, MC1, MASK_27);
+	वापस result;
+पूर्ण
 
-static void ciintf_deinit(struct budget_ci *budget_ci)
-{
-	struct saa7146_dev *saa = budget_ci->budget.dev;
+अटल व्योम ciपूर्णांकf_deinit(काष्ठा budget_ci *budget_ci)
+अणु
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
 
-	// disable CI interrupts
-	if (budget_ci->ci_irq) {
+	// disable CI पूर्णांकerrupts
+	अगर (budget_ci->ci_irq) अणु
 		SAA7146_IER_DISABLE(saa, MASK_03);
 		saa7146_setgpio(saa, 0, SAA7146_GPIO_INPUT);
-		tasklet_kill(&budget_ci->ciintf_irq_tasklet);
-	}
+		tasklet_समाप्त(&budget_ci->ciपूर्णांकf_irq_tasklet);
+	पूर्ण
 
-	// reset interface
-	ttpci_budget_debiwrite(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 0, 1, 0);
+	// reset पूर्णांकerface
+	ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1, 0, 1, 0);
 	msleep(1);
-	ttpci_budget_debiwrite(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
+	ttpci_budget_debiग_लिखो(&budget_ci->budget, DEBICICTL, DEBIADDR_CICONTROL, 1,
 			       CICONTROL_RESET, 1, 0);
 
-	// disable TS data stream to CI interface
+	// disable TS data stream to CI पूर्णांकerface
 	saa7146_setgpio(saa, 1, SAA7146_GPIO_INPUT);
 
 	// release the CA device
 	dvb_ca_en50221_release(&budget_ci->ca);
 
 	// disable DEBI pins
-	saa7146_write(saa, MC1, MASK_27);
-}
+	saa7146_ग_लिखो(saa, MC1, MASK_27);
+पूर्ण
 
-static void budget_ci_irq(struct saa7146_dev *dev, u32 * isr)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) dev->ext_priv;
+अटल व्योम budget_ci_irq(काष्ठा saa7146_dev *dev, u32 * isr)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) dev->ext_priv;
 
-	dprintk(8, "dev: %p, budget_ci: %p\n", dev, budget_ci);
+	dprपूर्णांकk(8, "dev: %p, budget_ci: %p\n", dev, budget_ci);
 
-	if (*isr & MASK_06)
+	अगर (*isr & MASK_06)
 		tasklet_schedule(&budget_ci->ir.msp430_irq_tasklet);
 
-	if (*isr & MASK_10)
+	अगर (*isr & MASK_10)
 		ttpci_budget_irq10_handler(dev, isr);
 
-	if ((*isr & MASK_03) && (budget_ci->budget.ci_present) && (budget_ci->ci_irq))
-		tasklet_schedule(&budget_ci->ciintf_irq_tasklet);
-}
+	अगर ((*isr & MASK_03) && (budget_ci->budget.ci_present) && (budget_ci->ci_irq))
+		tasklet_schedule(&budget_ci->ciपूर्णांकf_irq_tasklet);
+पूर्ण
 
-static u8 philips_su1278_tt_inittab[] = {
+अटल u8 philips_su1278_tt_inittab[] = अणु
 	0x01, 0x0f,
 	0x02, 0x30,
 	0x03, 0x00,
@@ -611,77 +612,77 @@ static u8 philips_su1278_tt_inittab[] = {
 	0x33, 0xfc,
 	0x34, 0x93,
 	0xff, 0xff
-};
+पूर्ण;
 
-static int philips_su1278_tt_set_symbol_rate(struct dvb_frontend *fe, u32 srate, u32 ratio)
-{
-	stv0299_writereg(fe, 0x0e, 0x44);
-	if (srate >= 10000000) {
-		stv0299_writereg(fe, 0x13, 0x97);
-		stv0299_writereg(fe, 0x14, 0x95);
-		stv0299_writereg(fe, 0x15, 0xc9);
-		stv0299_writereg(fe, 0x17, 0x8c);
-		stv0299_writereg(fe, 0x1a, 0xfe);
-		stv0299_writereg(fe, 0x1c, 0x7f);
-		stv0299_writereg(fe, 0x2d, 0x09);
-	} else {
-		stv0299_writereg(fe, 0x13, 0x99);
-		stv0299_writereg(fe, 0x14, 0x8d);
-		stv0299_writereg(fe, 0x15, 0xce);
-		stv0299_writereg(fe, 0x17, 0x43);
-		stv0299_writereg(fe, 0x1a, 0x1d);
-		stv0299_writereg(fe, 0x1c, 0x12);
-		stv0299_writereg(fe, 0x2d, 0x05);
-	}
-	stv0299_writereg(fe, 0x0e, 0x23);
-	stv0299_writereg(fe, 0x0f, 0x94);
-	stv0299_writereg(fe, 0x10, 0x39);
-	stv0299_writereg(fe, 0x15, 0xc9);
+अटल पूर्णांक philips_su1278_tt_set_symbol_rate(काष्ठा dvb_frontend *fe, u32 srate, u32 ratio)
+अणु
+	stv0299_ग_लिखोreg(fe, 0x0e, 0x44);
+	अगर (srate >= 10000000) अणु
+		stv0299_ग_लिखोreg(fe, 0x13, 0x97);
+		stv0299_ग_लिखोreg(fe, 0x14, 0x95);
+		stv0299_ग_लिखोreg(fe, 0x15, 0xc9);
+		stv0299_ग_लिखोreg(fe, 0x17, 0x8c);
+		stv0299_ग_लिखोreg(fe, 0x1a, 0xfe);
+		stv0299_ग_लिखोreg(fe, 0x1c, 0x7f);
+		stv0299_ग_लिखोreg(fe, 0x2d, 0x09);
+	पूर्ण अन्यथा अणु
+		stv0299_ग_लिखोreg(fe, 0x13, 0x99);
+		stv0299_ग_लिखोreg(fe, 0x14, 0x8d);
+		stv0299_ग_लिखोreg(fe, 0x15, 0xce);
+		stv0299_ग_लिखोreg(fe, 0x17, 0x43);
+		stv0299_ग_लिखोreg(fe, 0x1a, 0x1d);
+		stv0299_ग_लिखोreg(fe, 0x1c, 0x12);
+		stv0299_ग_लिखोreg(fe, 0x2d, 0x05);
+	पूर्ण
+	stv0299_ग_लिखोreg(fe, 0x0e, 0x23);
+	stv0299_ग_लिखोreg(fe, 0x0f, 0x94);
+	stv0299_ग_लिखोreg(fe, 0x10, 0x39);
+	stv0299_ग_लिखोreg(fe, 0x15, 0xc9);
 
-	stv0299_writereg(fe, 0x1f, (ratio >> 16) & 0xff);
-	stv0299_writereg(fe, 0x20, (ratio >> 8) & 0xff);
-	stv0299_writereg(fe, 0x21, (ratio) & 0xf0);
+	stv0299_ग_लिखोreg(fe, 0x1f, (ratio >> 16) & 0xff);
+	stv0299_ग_लिखोreg(fe, 0x20, (ratio >> 8) & 0xff);
+	stv0299_ग_लिखोreg(fe, 0x21, (ratio) & 0xf0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int philips_su1278_tt_tuner_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct budget_ci *budget_ci = (struct budget_ci *) fe->dvb->priv;
-	u32 div;
+अटल पूर्णांक philips_su1278_tt_tuner_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) fe->dvb->priv;
+	u32 भाग;
 	u8 buf[4];
-	struct i2c_msg msg = {.addr = 0x60,.flags = 0,.buf = buf,.len = sizeof(buf) };
+	काष्ठा i2c_msg msg = अणु.addr = 0x60,.flags = 0,.buf = buf,.len = माप(buf) पूर्ण;
 
-	if ((p->frequency < 950000) || (p->frequency > 2150000))
-		return -EINVAL;
+	अगर ((p->frequency < 950000) || (p->frequency > 2150000))
+		वापस -EINVAL;
 
-	div = (p->frequency + (500 - 1)) / 500;	/* round correctly */
-	buf[0] = (div >> 8) & 0x7f;
-	buf[1] = div & 0xff;
-	buf[2] = 0x80 | ((div & 0x18000) >> 10) | 2;
+	भाग = (p->frequency + (500 - 1)) / 500;	/* round correctly */
+	buf[0] = (भाग >> 8) & 0x7f;
+	buf[1] = भाग & 0xff;
+	buf[2] = 0x80 | ((भाग & 0x18000) >> 10) | 2;
 	buf[3] = 0x20;
 
-	if (p->symbol_rate < 4000000)
+	अगर (p->symbol_rate < 4000000)
 		buf[3] |= 1;
 
-	if (p->frequency < 1250000)
+	अगर (p->frequency < 1250000)
 		buf[3] |= 0;
-	else if (p->frequency < 1550000)
+	अन्यथा अगर (p->frequency < 1550000)
 		buf[3] |= 0x40;
-	else if (p->frequency < 2050000)
+	अन्यथा अगर (p->frequency < 2050000)
 		buf[3] |= 0x80;
-	else if (p->frequency < 2150000)
+	अन्यथा अगर (p->frequency < 2150000)
 		buf[3] |= 0xC0;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	if (i2c_transfer(&budget_ci->budget.i2c_adap, &msg, 1) != 1)
-		return -EIO;
-	return 0;
-}
+	अगर (i2c_transfer(&budget_ci->budget.i2c_adap, &msg, 1) != 1)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
-static const struct stv0299_config philips_su1278_tt_config = {
+अटल स्थिर काष्ठा stv0299_config philips_su1278_tt_config = अणु
 
 	.demod_address = 0x68,
 	.inittab = philips_su1278_tt_inittab,
@@ -692,108 +693,108 @@ static const struct stv0299_config philips_su1278_tt_config = {
 	.volt13_op0_op1 = STV0299_VOLT13_OP1,
 	.min_delay_ms = 50,
 	.set_symbol_rate = philips_su1278_tt_set_symbol_rate,
-};
+पूर्ण;
 
 
 
-static int philips_tdm1316l_tuner_init(struct dvb_frontend *fe)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) fe->dvb->priv;
-	static u8 td1316_init[] = { 0x0b, 0xf5, 0x85, 0xab };
-	static u8 disable_mc44BC374c[] = { 0x1d, 0x74, 0xa0, 0x68 };
-	struct i2c_msg tuner_msg = {.addr = budget_ci->tuner_pll_address,.flags = 0,.buf = td1316_init,.len =
-			sizeof(td1316_init) };
+अटल पूर्णांक philips_tdm1316l_tuner_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) fe->dvb->priv;
+	अटल u8 td1316_init[] = अणु 0x0b, 0xf5, 0x85, 0xab पूर्ण;
+	अटल u8 disable_mc44BC374c[] = अणु 0x1d, 0x74, 0xa0, 0x68 पूर्ण;
+	काष्ठा i2c_msg tuner_msg = अणु.addr = budget_ci->tuner_pll_address,.flags = 0,.buf = td1316_init,.len =
+			माप(td1316_init) पूर्ण;
 
 	// setup PLL configuration
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	if (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
-		return -EIO;
+	अगर (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
+		वापस -EIO;
 	msleep(1);
 
-	// disable the mc44BC374c (do not check for errors)
+	// disable the mc44BC374c (करो not check क्रम errors)
 	tuner_msg.addr = 0x65;
 	tuner_msg.buf = disable_mc44BC374c;
-	tuner_msg.len = sizeof(disable_mc44BC374c);
-	if (fe->ops.i2c_gate_ctrl)
+	tuner_msg.len = माप(disable_mc44BC374c);
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	if (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1) {
-		if (fe->ops.i2c_gate_ctrl)
+	अगर (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1) अणु
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 		i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int philips_tdm1316l_tuner_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct budget_ci *budget_ci = (struct budget_ci *) fe->dvb->priv;
+अटल पूर्णांक philips_tdm1316l_tuner_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) fe->dvb->priv;
 	u8 tuner_buf[4];
-	struct i2c_msg tuner_msg = {.addr = budget_ci->tuner_pll_address,.flags = 0,.buf = tuner_buf,.len = sizeof(tuner_buf) };
-	int tuner_frequency = 0;
+	काष्ठा i2c_msg tuner_msg = अणु.addr = budget_ci->tuner_pll_address,.flags = 0,.buf = tuner_buf,.len = माप(tuner_buf) पूर्ण;
+	पूर्णांक tuner_frequency = 0;
 	u8 band, cp, filter;
 
-	// determine charge pump
+	// determine अक्षरge pump
 	tuner_frequency = p->frequency + 36130000;
-	if (tuner_frequency < 87000000)
-		return -EINVAL;
-	else if (tuner_frequency < 130000000)
+	अगर (tuner_frequency < 87000000)
+		वापस -EINVAL;
+	अन्यथा अगर (tuner_frequency < 130000000)
 		cp = 3;
-	else if (tuner_frequency < 160000000)
+	अन्यथा अगर (tuner_frequency < 160000000)
 		cp = 5;
-	else if (tuner_frequency < 200000000)
+	अन्यथा अगर (tuner_frequency < 200000000)
 		cp = 6;
-	else if (tuner_frequency < 290000000)
+	अन्यथा अगर (tuner_frequency < 290000000)
 		cp = 3;
-	else if (tuner_frequency < 420000000)
+	अन्यथा अगर (tuner_frequency < 420000000)
 		cp = 5;
-	else if (tuner_frequency < 480000000)
+	अन्यथा अगर (tuner_frequency < 480000000)
 		cp = 6;
-	else if (tuner_frequency < 620000000)
+	अन्यथा अगर (tuner_frequency < 620000000)
 		cp = 3;
-	else if (tuner_frequency < 830000000)
+	अन्यथा अगर (tuner_frequency < 830000000)
 		cp = 5;
-	else if (tuner_frequency < 895000000)
+	अन्यथा अगर (tuner_frequency < 895000000)
 		cp = 7;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	// determine band
-	if (p->frequency < 49000000)
-		return -EINVAL;
-	else if (p->frequency < 159000000)
+	अगर (p->frequency < 49000000)
+		वापस -EINVAL;
+	अन्यथा अगर (p->frequency < 159000000)
 		band = 1;
-	else if (p->frequency < 444000000)
+	अन्यथा अगर (p->frequency < 444000000)
 		band = 2;
-	else if (p->frequency < 861000000)
+	अन्यथा अगर (p->frequency < 861000000)
 		band = 4;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	// setup PLL filter and TDA9889
-	switch (p->bandwidth_hz) {
-	case 6000000:
-		tda1004x_writereg(fe, 0x0C, 0x14);
+	चयन (p->bandwidth_hz) अणु
+	हाल 6000000:
+		tda1004x_ग_लिखोreg(fe, 0x0C, 0x14);
 		filter = 0;
-		break;
+		अवरोध;
 
-	case 7000000:
-		tda1004x_writereg(fe, 0x0C, 0x80);
+	हाल 7000000:
+		tda1004x_ग_लिखोreg(fe, 0x0C, 0x80);
 		filter = 0;
-		break;
+		अवरोध;
 
-	case 8000000:
-		tda1004x_writereg(fe, 0x0C, 0x14);
+	हाल 8000000:
+		tda1004x_ग_लिखोreg(fe, 0x0C, 0x14);
 		filter = 1;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	// calculate divisor
+	// calculate भागisor
 	// ((36130000+((1000000/6)/2)) + Finput)/(1000000/6)
 	tuner_frequency = (((p->frequency / 1000) * 6) + 217280) / 1000;
 
@@ -803,95 +804,95 @@ static int philips_tdm1316l_tuner_set_params(struct dvb_frontend *fe)
 	tuner_buf[2] = 0xca;
 	tuner_buf[3] = (cp << 5) | (filter << 3) | band;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	if (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
-		return -EIO;
+	अगर (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
+		वापस -EIO;
 
 	msleep(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int philips_tdm1316l_request_firmware(struct dvb_frontend *fe,
-					     const struct firmware **fw, char *name)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) fe->dvb->priv;
+अटल पूर्णांक philips_tdm1316l_request_firmware(काष्ठा dvb_frontend *fe,
+					     स्थिर काष्ठा firmware **fw, अक्षर *name)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) fe->dvb->priv;
 
-	return request_firmware(fw, name, &budget_ci->budget.dev->pci->dev);
-}
+	वापस request_firmware(fw, name, &budget_ci->budget.dev->pci->dev);
+पूर्ण
 
-static struct tda1004x_config philips_tdm1316l_config = {
+अटल काष्ठा tda1004x_config philips_tdm1316l_config = अणु
 
 	.demod_address = 0x8,
 	.invert = 0,
 	.invert_oclk = 0,
 	.xtal_freq = TDA10046_XTAL_4M,
 	.agc_config = TDA10046_AGC_DEFAULT,
-	.if_freq = TDA10046_FREQ_3617,
+	.अगर_freq = TDA10046_FREQ_3617,
 	.request_firmware = philips_tdm1316l_request_firmware,
-};
+पूर्ण;
 
-static struct tda1004x_config philips_tdm1316l_config_invert = {
+अटल काष्ठा tda1004x_config philips_tdm1316l_config_invert = अणु
 
 	.demod_address = 0x8,
 	.invert = 1,
 	.invert_oclk = 0,
 	.xtal_freq = TDA10046_XTAL_4M,
 	.agc_config = TDA10046_AGC_DEFAULT,
-	.if_freq = TDA10046_FREQ_3617,
+	.अगर_freq = TDA10046_FREQ_3617,
 	.request_firmware = philips_tdm1316l_request_firmware,
-};
+पूर्ण;
 
-static int dvbc_philips_tdm1316l_tuner_set_params(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct budget_ci *budget_ci = (struct budget_ci *) fe->dvb->priv;
+अटल पूर्णांक dvbc_philips_tdm1316l_tuner_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) fe->dvb->priv;
 	u8 tuner_buf[5];
-	struct i2c_msg tuner_msg = {.addr = budget_ci->tuner_pll_address,
+	काष्ठा i2c_msg tuner_msg = अणु.addr = budget_ci->tuner_pll_address,
 				    .flags = 0,
 				    .buf = tuner_buf,
-				    .len = sizeof(tuner_buf) };
-	int tuner_frequency = 0;
+				    .len = माप(tuner_buf) पूर्ण;
+	पूर्णांक tuner_frequency = 0;
 	u8 band, cp, filter;
 
-	// determine charge pump
+	// determine अक्षरge pump
 	tuner_frequency = p->frequency + 36125000;
-	if (tuner_frequency < 87000000)
-		return -EINVAL;
-	else if (tuner_frequency < 130000000) {
+	अगर (tuner_frequency < 87000000)
+		वापस -EINVAL;
+	अन्यथा अगर (tuner_frequency < 130000000) अणु
 		cp = 3;
 		band = 1;
-	} else if (tuner_frequency < 160000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 160000000) अणु
 		cp = 5;
 		band = 1;
-	} else if (tuner_frequency < 200000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 200000000) अणु
 		cp = 6;
 		band = 1;
-	} else if (tuner_frequency < 290000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 290000000) अणु
 		cp = 3;
 		band = 2;
-	} else if (tuner_frequency < 420000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 420000000) अणु
 		cp = 5;
 		band = 2;
-	} else if (tuner_frequency < 480000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 480000000) अणु
 		cp = 6;
 		band = 2;
-	} else if (tuner_frequency < 620000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 620000000) अणु
 		cp = 3;
 		band = 4;
-	} else if (tuner_frequency < 830000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 830000000) अणु
 		cp = 5;
 		band = 4;
-	} else if (tuner_frequency < 895000000) {
+	पूर्ण अन्यथा अगर (tuner_frequency < 895000000) अणु
 		cp = 7;
 		band = 4;
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	// assume PLL filter should always be 8MHz for the moment.
+	// assume PLL filter should always be 8MHz क्रम the moment.
 	filter = 1;
 
-	// calculate divisor
+	// calculate भागisor
 	tuner_frequency = (p->frequency + 36125000 + (62500/2)) / 62500;
 
 	// setup tuner buffer
@@ -901,24 +902,24 @@ static int dvbc_philips_tdm1316l_tuner_set_params(struct dvb_frontend *fe)
 	tuner_buf[3] = (cp << 5) | (filter << 3) | band;
 	tuner_buf[4] = 0x80;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	if (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
-		return -EIO;
+	अगर (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
+		वापस -EIO;
 
 	msleep(50);
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
-	if (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
-		return -EIO;
+	अगर (i2c_transfer(&budget_ci->budget.i2c_adap, &tuner_msg, 1) != 1)
+		वापस -EIO;
 
 	msleep(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 dvbc_philips_tdm1316l_inittab[] = {
+अटल u8 dvbc_philips_tdm1316l_inittab[] = अणु
 	0x80, 0x01,
 	0x80, 0x00,
 	0x81, 0x01,
@@ -1009,16 +1010,16 @@ static u8 dvbc_philips_tdm1316l_inittab[] = {
 	0x53, 0x13,
 	0x59, 0x08,
 	0xff, 0xff,
-};
+पूर्ण;
 
-static struct stv0297_config dvbc_philips_tdm1316l_config = {
+अटल काष्ठा stv0297_config dvbc_philips_tdm1316l_config = अणु
 	.demod_address = 0x1c,
 	.inittab = dvbc_philips_tdm1316l_inittab,
 	.invert = 0,
-	.stop_during_read = 1,
-};
+	.stop_during_पढ़ो = 1,
+पूर्ण;
 
-static struct tda10023_config tda10023_config = {
+अटल काष्ठा tda10023_config tda10023_config = अणु
 	.demod_address = 0xc,
 	.invert = 0,
 	.xtal = 16000000,
@@ -1026,241 +1027,241 @@ static struct tda10023_config tda10023_config = {
 	.pll_p = 3,
 	.pll_n = 1,
 	.deltaf = 0xa511,
-};
+पूर्ण;
 
-static struct tda827x_config tda827x_config = {
+अटल काष्ठा tda827x_config tda827x_config = अणु
 	.config = 0,
-};
+पूर्ण;
 
 /* TT S2-3200 DVB-S (STB0899) Inittab */
-static const struct stb0899_s1_reg tt3200_stb0899_s1_init_1[] = {
+अटल स्थिर काष्ठा stb0899_s1_reg tt3200_stb0899_s1_init_1[] = अणु
 
-	{ STB0899_DEV_ID		, 0x81 },
-	{ STB0899_DISCNTRL1		, 0x32 },
-	{ STB0899_DISCNTRL2		, 0x80 },
-	{ STB0899_DISRX_ST0		, 0x04 },
-	{ STB0899_DISRX_ST1		, 0x00 },
-	{ STB0899_DISPARITY		, 0x00 },
-	{ STB0899_DISSTATUS		, 0x20 },
-	{ STB0899_DISF22		, 0x8c },
-	{ STB0899_DISF22RX		, 0x9a },
-	{ STB0899_SYSREG		, 0x0b },
-	{ STB0899_ACRPRESC		, 0x11 },
-	{ STB0899_ACRDIV1		, 0x0a },
-	{ STB0899_ACRDIV2		, 0x05 },
-	{ STB0899_DACR1			, 0x00 },
-	{ STB0899_DACR2			, 0x00 },
-	{ STB0899_OUTCFG		, 0x00 },
-	{ STB0899_MODECFG		, 0x00 },
-	{ STB0899_IRQSTATUS_3		, 0x30 },
-	{ STB0899_IRQSTATUS_2		, 0x00 },
-	{ STB0899_IRQSTATUS_1		, 0x00 },
-	{ STB0899_IRQSTATUS_0		, 0x00 },
-	{ STB0899_IRQMSK_3		, 0xf3 },
-	{ STB0899_IRQMSK_2		, 0xfc },
-	{ STB0899_IRQMSK_1		, 0xff },
-	{ STB0899_IRQMSK_0		, 0xff },
-	{ STB0899_IRQCFG		, 0x00 },
-	{ STB0899_I2CCFG		, 0x88 },
-	{ STB0899_I2CRPT		, 0x48 }, /* 12k Pullup, Repeater=16, Stop=disabled */
-	{ STB0899_IOPVALUE5		, 0x00 },
-	{ STB0899_IOPVALUE4		, 0x20 },
-	{ STB0899_IOPVALUE3		, 0xc9 },
-	{ STB0899_IOPVALUE2		, 0x90 },
-	{ STB0899_IOPVALUE1		, 0x40 },
-	{ STB0899_IOPVALUE0		, 0x00 },
-	{ STB0899_GPIO00CFG		, 0x82 },
-	{ STB0899_GPIO01CFG		, 0x82 },
-	{ STB0899_GPIO02CFG		, 0x82 },
-	{ STB0899_GPIO03CFG		, 0x82 },
-	{ STB0899_GPIO04CFG		, 0x82 },
-	{ STB0899_GPIO05CFG		, 0x82 },
-	{ STB0899_GPIO06CFG		, 0x82 },
-	{ STB0899_GPIO07CFG		, 0x82 },
-	{ STB0899_GPIO08CFG		, 0x82 },
-	{ STB0899_GPIO09CFG		, 0x82 },
-	{ STB0899_GPIO10CFG		, 0x82 },
-	{ STB0899_GPIO11CFG		, 0x82 },
-	{ STB0899_GPIO12CFG		, 0x82 },
-	{ STB0899_GPIO13CFG		, 0x82 },
-	{ STB0899_GPIO14CFG		, 0x82 },
-	{ STB0899_GPIO15CFG		, 0x82 },
-	{ STB0899_GPIO16CFG		, 0x82 },
-	{ STB0899_GPIO17CFG		, 0x82 },
-	{ STB0899_GPIO18CFG		, 0x82 },
-	{ STB0899_GPIO19CFG		, 0x82 },
-	{ STB0899_GPIO20CFG		, 0x82 },
-	{ STB0899_SDATCFG		, 0xb8 },
-	{ STB0899_SCLTCFG		, 0xba },
-	{ STB0899_AGCRFCFG		, 0x1c }, /* 0x11 */
-	{ STB0899_GPIO22		, 0x82 }, /* AGCBB2CFG */
-	{ STB0899_GPIO21		, 0x91 }, /* AGCBB1CFG */
-	{ STB0899_DIRCLKCFG		, 0x82 },
-	{ STB0899_CLKOUT27CFG		, 0x7e },
-	{ STB0899_STDBYCFG		, 0x82 },
-	{ STB0899_CS0CFG		, 0x82 },
-	{ STB0899_CS1CFG		, 0x82 },
-	{ STB0899_DISEQCOCFG		, 0x20 },
-	{ STB0899_GPIO32CFG		, 0x82 },
-	{ STB0899_GPIO33CFG		, 0x82 },
-	{ STB0899_GPIO34CFG		, 0x82 },
-	{ STB0899_GPIO35CFG		, 0x82 },
-	{ STB0899_GPIO36CFG		, 0x82 },
-	{ STB0899_GPIO37CFG		, 0x82 },
-	{ STB0899_GPIO38CFG		, 0x82 },
-	{ STB0899_GPIO39CFG		, 0x82 },
-	{ STB0899_NCOARSE		, 0x15 }, /* 0x15 = 27 Mhz Clock, F/3 = 198MHz, F/6 = 99MHz */
-	{ STB0899_SYNTCTRL		, 0x02 }, /* 0x00 = CLK from CLKI, 0x02 = CLK from XTALI */
-	{ STB0899_FILTCTRL		, 0x00 },
-	{ STB0899_SYSCTRL		, 0x00 },
-	{ STB0899_STOPCLK1		, 0x20 },
-	{ STB0899_STOPCLK2		, 0x00 },
-	{ STB0899_INTBUFSTATUS		, 0x00 },
-	{ STB0899_INTBUFCTRL		, 0x0a },
-	{ 0xffff			, 0xff },
-};
+	अणु STB0899_DEV_ID		, 0x81 पूर्ण,
+	अणु STB0899_DISCNTRL1		, 0x32 पूर्ण,
+	अणु STB0899_DISCNTRL2		, 0x80 पूर्ण,
+	अणु STB0899_DISRX_ST0		, 0x04 पूर्ण,
+	अणु STB0899_DISRX_ST1		, 0x00 पूर्ण,
+	अणु STB0899_DISPARITY		, 0x00 पूर्ण,
+	अणु STB0899_DISSTATUS		, 0x20 पूर्ण,
+	अणु STB0899_DISF22		, 0x8c पूर्ण,
+	अणु STB0899_DISF22RX		, 0x9a पूर्ण,
+	अणु STB0899_SYSREG		, 0x0b पूर्ण,
+	अणु STB0899_ACRPRESC		, 0x11 पूर्ण,
+	अणु STB0899_ACRDIV1		, 0x0a पूर्ण,
+	अणु STB0899_ACRDIV2		, 0x05 पूर्ण,
+	अणु STB0899_DACR1			, 0x00 पूर्ण,
+	अणु STB0899_DACR2			, 0x00 पूर्ण,
+	अणु STB0899_OUTCFG		, 0x00 पूर्ण,
+	अणु STB0899_MODECFG		, 0x00 पूर्ण,
+	अणु STB0899_IRQSTATUS_3		, 0x30 पूर्ण,
+	अणु STB0899_IRQSTATUS_2		, 0x00 पूर्ण,
+	अणु STB0899_IRQSTATUS_1		, 0x00 पूर्ण,
+	अणु STB0899_IRQSTATUS_0		, 0x00 पूर्ण,
+	अणु STB0899_IRQMSK_3		, 0xf3 पूर्ण,
+	अणु STB0899_IRQMSK_2		, 0xfc पूर्ण,
+	अणु STB0899_IRQMSK_1		, 0xff पूर्ण,
+	अणु STB0899_IRQMSK_0		, 0xff पूर्ण,
+	अणु STB0899_IRQCFG		, 0x00 पूर्ण,
+	अणु STB0899_I2CCFG		, 0x88 पूर्ण,
+	अणु STB0899_I2CRPT		, 0x48 पूर्ण, /* 12k Pullup, Repeater=16, Stop=disabled */
+	अणु STB0899_IOPVALUE5		, 0x00 पूर्ण,
+	अणु STB0899_IOPVALUE4		, 0x20 पूर्ण,
+	अणु STB0899_IOPVALUE3		, 0xc9 पूर्ण,
+	अणु STB0899_IOPVALUE2		, 0x90 पूर्ण,
+	अणु STB0899_IOPVALUE1		, 0x40 पूर्ण,
+	अणु STB0899_IOPVALUE0		, 0x00 पूर्ण,
+	अणु STB0899_GPIO00CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO01CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO02CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO03CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO04CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO05CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO06CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO07CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO08CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO09CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO10CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO11CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO12CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO13CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO14CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO15CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO16CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO17CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO18CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO19CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO20CFG		, 0x82 पूर्ण,
+	अणु STB0899_SDATCFG		, 0xb8 पूर्ण,
+	अणु STB0899_SCLTCFG		, 0xba पूर्ण,
+	अणु STB0899_AGCRFCFG		, 0x1c पूर्ण, /* 0x11 */
+	अणु STB0899_GPIO22		, 0x82 पूर्ण, /* AGCBB2CFG */
+	अणु STB0899_GPIO21		, 0x91 पूर्ण, /* AGCBB1CFG */
+	अणु STB0899_सूचीCLKCFG		, 0x82 पूर्ण,
+	अणु STB0899_CLKOUT27CFG		, 0x7e पूर्ण,
+	अणु STB0899_STDBYCFG		, 0x82 पूर्ण,
+	अणु STB0899_CS0CFG		, 0x82 पूर्ण,
+	अणु STB0899_CS1CFG		, 0x82 पूर्ण,
+	अणु STB0899_DISEQCOCFG		, 0x20 पूर्ण,
+	अणु STB0899_GPIO32CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO33CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO34CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO35CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO36CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO37CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO38CFG		, 0x82 पूर्ण,
+	अणु STB0899_GPIO39CFG		, 0x82 पूर्ण,
+	अणु STB0899_NCOARSE		, 0x15 पूर्ण, /* 0x15 = 27 Mhz Clock, F/3 = 198MHz, F/6 = 99MHz */
+	अणु STB0899_SYNTCTRL		, 0x02 पूर्ण, /* 0x00 = CLK from CLKI, 0x02 = CLK from XTALI */
+	अणु STB0899_FILTCTRL		, 0x00 पूर्ण,
+	अणु STB0899_SYSCTRL		, 0x00 पूर्ण,
+	अणु STB0899_STOPCLK1		, 0x20 पूर्ण,
+	अणु STB0899_STOPCLK2		, 0x00 पूर्ण,
+	अणु STB0899_INTBUFSTATUS		, 0x00 पूर्ण,
+	अणु STB0899_INTBUFCTRL		, 0x0a पूर्ण,
+	अणु 0xffff			, 0xff पूर्ण,
+पूर्ण;
 
-static const struct stb0899_s1_reg tt3200_stb0899_s1_init_3[] = {
-	{ STB0899_DEMOD			, 0x00 },
-	{ STB0899_RCOMPC		, 0xc9 },
-	{ STB0899_AGC1CN		, 0x41 },
-	{ STB0899_AGC1REF		, 0x10 },
-	{ STB0899_RTC			, 0x7a },
-	{ STB0899_TMGCFG		, 0x4e },
-	{ STB0899_AGC2REF		, 0x34 },
-	{ STB0899_TLSR			, 0x84 },
-	{ STB0899_CFD			, 0xc7 },
-	{ STB0899_ACLC			, 0x87 },
-	{ STB0899_BCLC			, 0x94 },
-	{ STB0899_EQON			, 0x41 },
-	{ STB0899_LDT			, 0xdd },
-	{ STB0899_LDT2			, 0xc9 },
-	{ STB0899_EQUALREF		, 0xb4 },
-	{ STB0899_TMGRAMP		, 0x10 },
-	{ STB0899_TMGTHD		, 0x30 },
-	{ STB0899_IDCCOMP		, 0xfb },
-	{ STB0899_QDCCOMP		, 0x03 },
-	{ STB0899_POWERI		, 0x3b },
-	{ STB0899_POWERQ		, 0x3d },
-	{ STB0899_RCOMP			, 0x81 },
-	{ STB0899_AGCIQIN		, 0x80 },
-	{ STB0899_AGC2I1		, 0x04 },
-	{ STB0899_AGC2I2		, 0xf5 },
-	{ STB0899_TLIR			, 0x25 },
-	{ STB0899_RTF			, 0x80 },
-	{ STB0899_DSTATUS		, 0x00 },
-	{ STB0899_LDI			, 0xca },
-	{ STB0899_CFRM			, 0xf1 },
-	{ STB0899_CFRL			, 0xf3 },
-	{ STB0899_NIRM			, 0x2a },
-	{ STB0899_NIRL			, 0x05 },
-	{ STB0899_ISYMB			, 0x17 },
-	{ STB0899_QSYMB			, 0xfa },
-	{ STB0899_SFRH			, 0x2f },
-	{ STB0899_SFRM			, 0x68 },
-	{ STB0899_SFRL			, 0x40 },
-	{ STB0899_SFRUPH		, 0x2f },
-	{ STB0899_SFRUPM		, 0x68 },
-	{ STB0899_SFRUPL		, 0x40 },
-	{ STB0899_EQUAI1		, 0xfd },
-	{ STB0899_EQUAQ1		, 0x04 },
-	{ STB0899_EQUAI2		, 0x0f },
-	{ STB0899_EQUAQ2		, 0xff },
-	{ STB0899_EQUAI3		, 0xdf },
-	{ STB0899_EQUAQ3		, 0xfa },
-	{ STB0899_EQUAI4		, 0x37 },
-	{ STB0899_EQUAQ4		, 0x0d },
-	{ STB0899_EQUAI5		, 0xbd },
-	{ STB0899_EQUAQ5		, 0xf7 },
-	{ STB0899_DSTATUS2		, 0x00 },
-	{ STB0899_VSTATUS		, 0x00 },
-	{ STB0899_VERROR		, 0xff },
-	{ STB0899_IQSWAP		, 0x2a },
-	{ STB0899_ECNT1M		, 0x00 },
-	{ STB0899_ECNT1L		, 0x00 },
-	{ STB0899_ECNT2M		, 0x00 },
-	{ STB0899_ECNT2L		, 0x00 },
-	{ STB0899_ECNT3M		, 0x00 },
-	{ STB0899_ECNT3L		, 0x00 },
-	{ STB0899_FECAUTO1		, 0x06 },
-	{ STB0899_FECM			, 0x01 },
-	{ STB0899_VTH12			, 0xf0 },
-	{ STB0899_VTH23			, 0xa0 },
-	{ STB0899_VTH34			, 0x78 },
-	{ STB0899_VTH56			, 0x4e },
-	{ STB0899_VTH67			, 0x48 },
-	{ STB0899_VTH78			, 0x38 },
-	{ STB0899_PRVIT			, 0xff },
-	{ STB0899_VITSYNC		, 0x19 },
-	{ STB0899_RSULC			, 0xb1 }, /* DVB = 0xb1, DSS = 0xa1 */
-	{ STB0899_TSULC			, 0x42 },
-	{ STB0899_RSLLC			, 0x40 },
-	{ STB0899_TSLPL			, 0x12 },
-	{ STB0899_TSCFGH		, 0x0c },
-	{ STB0899_TSCFGM		, 0x00 },
-	{ STB0899_TSCFGL		, 0x0c },
-	{ STB0899_TSOUT			, 0x4d }, /* 0x0d for CAM */
-	{ STB0899_RSSYNCDEL		, 0x00 },
-	{ STB0899_TSINHDELH		, 0x02 },
-	{ STB0899_TSINHDELM		, 0x00 },
-	{ STB0899_TSINHDELL		, 0x00 },
-	{ STB0899_TSLLSTKM		, 0x00 },
-	{ STB0899_TSLLSTKL		, 0x00 },
-	{ STB0899_TSULSTKM		, 0x00 },
-	{ STB0899_TSULSTKL		, 0xab },
-	{ STB0899_PCKLENUL		, 0x00 },
-	{ STB0899_PCKLENLL		, 0xcc },
-	{ STB0899_RSPCKLEN		, 0xcc },
-	{ STB0899_TSSTATUS		, 0x80 },
-	{ STB0899_ERRCTRL1		, 0xb6 },
-	{ STB0899_ERRCTRL2		, 0x96 },
-	{ STB0899_ERRCTRL3		, 0x89 },
-	{ STB0899_DMONMSK1		, 0x27 },
-	{ STB0899_DMONMSK0		, 0x03 },
-	{ STB0899_DEMAPVIT		, 0x5c },
-	{ STB0899_PLPARM		, 0x1f },
-	{ STB0899_PDELCTRL		, 0x48 },
-	{ STB0899_PDELCTRL2		, 0x00 },
-	{ STB0899_BBHCTRL1		, 0x00 },
-	{ STB0899_BBHCTRL2		, 0x00 },
-	{ STB0899_HYSTTHRESH		, 0x77 },
-	{ STB0899_MATCSTM		, 0x00 },
-	{ STB0899_MATCSTL		, 0x00 },
-	{ STB0899_UPLCSTM		, 0x00 },
-	{ STB0899_UPLCSTL		, 0x00 },
-	{ STB0899_DFLCSTM		, 0x00 },
-	{ STB0899_DFLCSTL		, 0x00 },
-	{ STB0899_SYNCCST		, 0x00 },
-	{ STB0899_SYNCDCSTM		, 0x00 },
-	{ STB0899_SYNCDCSTL		, 0x00 },
-	{ STB0899_ISI_ENTRY		, 0x00 },
-	{ STB0899_ISI_BIT_EN		, 0x00 },
-	{ STB0899_MATSTRM		, 0x00 },
-	{ STB0899_MATSTRL		, 0x00 },
-	{ STB0899_UPLSTRM		, 0x00 },
-	{ STB0899_UPLSTRL		, 0x00 },
-	{ STB0899_DFLSTRM		, 0x00 },
-	{ STB0899_DFLSTRL		, 0x00 },
-	{ STB0899_SYNCSTR		, 0x00 },
-	{ STB0899_SYNCDSTRM		, 0x00 },
-	{ STB0899_SYNCDSTRL		, 0x00 },
-	{ STB0899_CFGPDELSTATUS1	, 0x10 },
-	{ STB0899_CFGPDELSTATUS2	, 0x00 },
-	{ STB0899_BBFERRORM		, 0x00 },
-	{ STB0899_BBFERRORL		, 0x00 },
-	{ STB0899_UPKTERRORM		, 0x00 },
-	{ STB0899_UPKTERRORL		, 0x00 },
-	{ 0xffff			, 0xff },
-};
+अटल स्थिर काष्ठा stb0899_s1_reg tt3200_stb0899_s1_init_3[] = अणु
+	अणु STB0899_DEMOD			, 0x00 पूर्ण,
+	अणु STB0899_RCOMPC		, 0xc9 पूर्ण,
+	अणु STB0899_AGC1CN		, 0x41 पूर्ण,
+	अणु STB0899_AGC1REF		, 0x10 पूर्ण,
+	अणु STB0899_RTC			, 0x7a पूर्ण,
+	अणु STB0899_TMGCFG		, 0x4e पूर्ण,
+	अणु STB0899_AGC2REF		, 0x34 पूर्ण,
+	अणु STB0899_TLSR			, 0x84 पूर्ण,
+	अणु STB0899_CFD			, 0xc7 पूर्ण,
+	अणु STB0899_ACLC			, 0x87 पूर्ण,
+	अणु STB0899_BCLC			, 0x94 पूर्ण,
+	अणु STB0899_EQON			, 0x41 पूर्ण,
+	अणु STB0899_LDT			, 0xdd पूर्ण,
+	अणु STB0899_LDT2			, 0xc9 पूर्ण,
+	अणु STB0899_EQUALREF		, 0xb4 पूर्ण,
+	अणु STB0899_TMGRAMP		, 0x10 पूर्ण,
+	अणु STB0899_TMGTHD		, 0x30 पूर्ण,
+	अणु STB0899_IDCCOMP		, 0xfb पूर्ण,
+	अणु STB0899_QDCCOMP		, 0x03 पूर्ण,
+	अणु STB0899_POWERI		, 0x3b पूर्ण,
+	अणु STB0899_POWERQ		, 0x3d पूर्ण,
+	अणु STB0899_RCOMP			, 0x81 पूर्ण,
+	अणु STB0899_AGCIQIN		, 0x80 पूर्ण,
+	अणु STB0899_AGC2I1		, 0x04 पूर्ण,
+	अणु STB0899_AGC2I2		, 0xf5 पूर्ण,
+	अणु STB0899_TLIR			, 0x25 पूर्ण,
+	अणु STB0899_RTF			, 0x80 पूर्ण,
+	अणु STB0899_DSTATUS		, 0x00 पूर्ण,
+	अणु STB0899_LDI			, 0xca पूर्ण,
+	अणु STB0899_CFRM			, 0xf1 पूर्ण,
+	अणु STB0899_CFRL			, 0xf3 पूर्ण,
+	अणु STB0899_NIRM			, 0x2a पूर्ण,
+	अणु STB0899_NIRL			, 0x05 पूर्ण,
+	अणु STB0899_ISYMB			, 0x17 पूर्ण,
+	अणु STB0899_QSYMB			, 0xfa पूर्ण,
+	अणु STB0899_SFRH			, 0x2f पूर्ण,
+	अणु STB0899_SFRM			, 0x68 पूर्ण,
+	अणु STB0899_SFRL			, 0x40 पूर्ण,
+	अणु STB0899_SFRUPH		, 0x2f पूर्ण,
+	अणु STB0899_SFRUPM		, 0x68 पूर्ण,
+	अणु STB0899_SFRUPL		, 0x40 पूर्ण,
+	अणु STB0899_EQUAI1		, 0xfd पूर्ण,
+	अणु STB0899_EQUAQ1		, 0x04 पूर्ण,
+	अणु STB0899_EQUAI2		, 0x0f पूर्ण,
+	अणु STB0899_EQUAQ2		, 0xff पूर्ण,
+	अणु STB0899_EQUAI3		, 0xdf पूर्ण,
+	अणु STB0899_EQUAQ3		, 0xfa पूर्ण,
+	अणु STB0899_EQUAI4		, 0x37 पूर्ण,
+	अणु STB0899_EQUAQ4		, 0x0d पूर्ण,
+	अणु STB0899_EQUAI5		, 0xbd पूर्ण,
+	अणु STB0899_EQUAQ5		, 0xf7 पूर्ण,
+	अणु STB0899_DSTATUS2		, 0x00 पूर्ण,
+	अणु STB0899_VSTATUS		, 0x00 पूर्ण,
+	अणु STB0899_VERROR		, 0xff पूर्ण,
+	अणु STB0899_IQSWAP		, 0x2a पूर्ण,
+	अणु STB0899_ECNT1M		, 0x00 पूर्ण,
+	अणु STB0899_ECNT1L		, 0x00 पूर्ण,
+	अणु STB0899_ECNT2M		, 0x00 पूर्ण,
+	अणु STB0899_ECNT2L		, 0x00 पूर्ण,
+	अणु STB0899_ECNT3M		, 0x00 पूर्ण,
+	अणु STB0899_ECNT3L		, 0x00 पूर्ण,
+	अणु STB0899_FECAUTO1		, 0x06 पूर्ण,
+	अणु STB0899_FECM			, 0x01 पूर्ण,
+	अणु STB0899_VTH12			, 0xf0 पूर्ण,
+	अणु STB0899_VTH23			, 0xa0 पूर्ण,
+	अणु STB0899_VTH34			, 0x78 पूर्ण,
+	अणु STB0899_VTH56			, 0x4e पूर्ण,
+	अणु STB0899_VTH67			, 0x48 पूर्ण,
+	अणु STB0899_VTH78			, 0x38 पूर्ण,
+	अणु STB0899_PRVIT			, 0xff पूर्ण,
+	अणु STB0899_VITSYNC		, 0x19 पूर्ण,
+	अणु STB0899_RSULC			, 0xb1 पूर्ण, /* DVB = 0xb1, DSS = 0xa1 */
+	अणु STB0899_TSULC			, 0x42 पूर्ण,
+	अणु STB0899_RSLLC			, 0x40 पूर्ण,
+	अणु STB0899_TSLPL			, 0x12 पूर्ण,
+	अणु STB0899_TSCFGH		, 0x0c पूर्ण,
+	अणु STB0899_TSCFGM		, 0x00 पूर्ण,
+	अणु STB0899_TSCFGL		, 0x0c पूर्ण,
+	अणु STB0899_TSOUT			, 0x4d पूर्ण, /* 0x0d क्रम CAM */
+	अणु STB0899_RSSYNCDEL		, 0x00 पूर्ण,
+	अणु STB0899_TSINHDELH		, 0x02 पूर्ण,
+	अणु STB0899_TSINHDELM		, 0x00 पूर्ण,
+	अणु STB0899_TSINHDELL		, 0x00 पूर्ण,
+	अणु STB0899_TSLLSTKM		, 0x00 पूर्ण,
+	अणु STB0899_TSLLSTKL		, 0x00 पूर्ण,
+	अणु STB0899_TSULSTKM		, 0x00 पूर्ण,
+	अणु STB0899_TSULSTKL		, 0xab पूर्ण,
+	अणु STB0899_PCKLENUL		, 0x00 पूर्ण,
+	अणु STB0899_PCKLENLL		, 0xcc पूर्ण,
+	अणु STB0899_RSPCKLEN		, 0xcc पूर्ण,
+	अणु STB0899_TSSTATUS		, 0x80 पूर्ण,
+	अणु STB0899_ERRCTRL1		, 0xb6 पूर्ण,
+	अणु STB0899_ERRCTRL2		, 0x96 पूर्ण,
+	अणु STB0899_ERRCTRL3		, 0x89 पूर्ण,
+	अणु STB0899_DMONMSK1		, 0x27 पूर्ण,
+	अणु STB0899_DMONMSK0		, 0x03 पूर्ण,
+	अणु STB0899_DEMAPVIT		, 0x5c पूर्ण,
+	अणु STB0899_PLPARM		, 0x1f पूर्ण,
+	अणु STB0899_PDELCTRL		, 0x48 पूर्ण,
+	अणु STB0899_PDELCTRL2		, 0x00 पूर्ण,
+	अणु STB0899_BBHCTRL1		, 0x00 पूर्ण,
+	अणु STB0899_BBHCTRL2		, 0x00 पूर्ण,
+	अणु STB0899_HYSTTHRESH		, 0x77 पूर्ण,
+	अणु STB0899_MATCSTM		, 0x00 पूर्ण,
+	अणु STB0899_MATCSTL		, 0x00 पूर्ण,
+	अणु STB0899_UPLCSTM		, 0x00 पूर्ण,
+	अणु STB0899_UPLCSTL		, 0x00 पूर्ण,
+	अणु STB0899_DFLCSTM		, 0x00 पूर्ण,
+	अणु STB0899_DFLCSTL		, 0x00 पूर्ण,
+	अणु STB0899_SYNCCST		, 0x00 पूर्ण,
+	अणु STB0899_SYNCDCSTM		, 0x00 पूर्ण,
+	अणु STB0899_SYNCDCSTL		, 0x00 पूर्ण,
+	अणु STB0899_ISI_ENTRY		, 0x00 पूर्ण,
+	अणु STB0899_ISI_BIT_EN		, 0x00 पूर्ण,
+	अणु STB0899_MATSTRM		, 0x00 पूर्ण,
+	अणु STB0899_MATSTRL		, 0x00 पूर्ण,
+	अणु STB0899_UPLSTRM		, 0x00 पूर्ण,
+	अणु STB0899_UPLSTRL		, 0x00 पूर्ण,
+	अणु STB0899_DFLSTRM		, 0x00 पूर्ण,
+	अणु STB0899_DFLSTRL		, 0x00 पूर्ण,
+	अणु STB0899_SYNCSTR		, 0x00 पूर्ण,
+	अणु STB0899_SYNCDSTRM		, 0x00 पूर्ण,
+	अणु STB0899_SYNCDSTRL		, 0x00 पूर्ण,
+	अणु STB0899_CFGPDELSTATUS1	, 0x10 पूर्ण,
+	अणु STB0899_CFGPDELSTATUS2	, 0x00 पूर्ण,
+	अणु STB0899_BBFERRORM		, 0x00 पूर्ण,
+	अणु STB0899_BBFERRORL		, 0x00 पूर्ण,
+	अणु STB0899_UPKTERRORM		, 0x00 पूर्ण,
+	अणु STB0899_UPKTERRORL		, 0x00 पूर्ण,
+	अणु 0xffff			, 0xff पूर्ण,
+पूर्ण;
 
-static struct stb0899_config tt3200_config = {
+अटल काष्ठा stb0899_config tt3200_config = अणु
 	.init_dev		= tt3200_stb0899_s1_init_1,
 	.init_s2_demod		= stb0899_s2_init_2,
 	.init_s1_demod		= tt3200_stb0899_s1_init_3,
 	.init_s2_fec		= stb0899_s2_init_4,
 	.init_tst		= stb0899_s1_init_5,
 
-	.postproc		= NULL,
+	.postproc		= शून्य,
 
 	.demod_address		= 0x68,
 
@@ -1278,10 +1279,10 @@ static struct stb0899_config tt3200_config = {
 	.uwp_threshold_acq	= STB0899_DVBS2_UWP_THRESHOLD_ACQ,
 	.uwp_threshold_track	= STB0899_DVBS2_UWP_THRESHOLD_TRACK,
 	.uwp_threshold_sof	= STB0899_DVBS2_UWP_THRESHOLD_SOF,
-	.sof_search_timeout	= STB0899_DVBS2_SOF_SEARCH_TIMEOUT,
+	.sof_search_समयout	= STB0899_DVBS2_SOF_SEARCH_TIMEOUT,
 
 	.btr_nco_bits		= STB0899_DVBS2_BTR_NCO_BITS,
-	.btr_gain_shift_offset	= STB0899_DVBS2_BTR_GAIN_SHIFT_OFFSET,
+	.btr_gain_shअगरt_offset	= STB0899_DVBS2_BTR_GAIN_SHIFT_OFFSET,
 	.crl_nco_bits		= STB0899_DVBS2_CRL_NCO_BITS,
 	.ldpc_max_iter		= STB0899_DVBS2_LDPC_MAX_ITER,
 
@@ -1289,118 +1290,118 @@ static struct stb0899_config tt3200_config = {
 	.tuner_set_frequency	= stb6100_set_frequency,
 	.tuner_set_bandwidth	= stb6100_set_bandwidth,
 	.tuner_get_bandwidth	= stb6100_get_bandwidth,
-	.tuner_set_rfsiggain	= NULL
-};
+	.tuner_set_rfsiggain	= शून्य
+पूर्ण;
 
-static struct stb6100_config tt3200_stb6100_config = {
+अटल काष्ठा stb6100_config tt3200_stb6100_config = अणु
 	.tuner_address	= 0x60,
-	.refclock	= 27000000,
-};
+	.refघड़ी	= 27000000,
+पूर्ण;
 
-static void frontend_init(struct budget_ci *budget_ci)
-{
-	switch (budget_ci->budget.dev->pci->subsystem_device) {
-	case 0x100c:		// Hauppauge/TT Nova-CI budget (stv0299/ALPS BSRU6(tsa5059))
+अटल व्योम frontend_init(काष्ठा budget_ci *budget_ci)
+अणु
+	चयन (budget_ci->budget.dev->pci->subप्रणाली_device) अणु
+	हाल 0x100c:		// Hauppauge/TT Nova-CI budget (stv0299/ALPS BSRU6(tsa5059))
 		budget_ci->budget.dvb_frontend =
 			dvb_attach(stv0299_attach, &alps_bsru6_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
+		अगर (budget_ci->budget.dvb_frontend) अणु
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.set_params = alps_bsru6_tuner_set_params;
 			budget_ci->budget.dvb_frontend->tuner_priv = &budget_ci->budget.i2c_adap;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 0x100f:		// Hauppauge/TT Nova-CI budget (stv0299b/Philips su1278(tsa5059))
+	हाल 0x100f:		// Hauppauge/TT Nova-CI budget (stv0299b/Philips su1278(tsa5059))
 		budget_ci->budget.dvb_frontend =
 			dvb_attach(stv0299_attach, &philips_su1278_tt_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
+		अगर (budget_ci->budget.dvb_frontend) अणु
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.set_params = philips_su1278_tt_tuner_set_params;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 0x1010:		// TT DVB-C CI budget (stv0297/Philips tdm1316l(tda6651tt))
+	हाल 0x1010:		// TT DVB-C CI budget (stv0297/Philips tdm1316l(tda6651tt))
 		budget_ci->tuner_pll_address = 0x61;
 		budget_ci->budget.dvb_frontend =
 			dvb_attach(stv0297_attach, &dvbc_philips_tdm1316l_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
+		अगर (budget_ci->budget.dvb_frontend) अणु
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.set_params = dvbc_philips_tdm1316l_tuner_set_params;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 0x1011:		// Hauppauge/TT Nova-T budget (tda10045/Philips tdm1316l(tda6651tt) + TDA9889)
+	हाल 0x1011:		// Hauppauge/TT Nova-T budget (tda10045/Philips tdm1316l(tda6651tt) + TDA9889)
 		budget_ci->tuner_pll_address = 0x63;
 		budget_ci->budget.dvb_frontend =
 			dvb_attach(tda10045_attach, &philips_tdm1316l_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
+		अगर (budget_ci->budget.dvb_frontend) अणु
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.init = philips_tdm1316l_tuner_init;
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.set_params = philips_tdm1316l_tuner_set_params;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 0x1012:		// TT DVB-T CI budget (tda10046/Philips tdm1316l(tda6651tt))
+	हाल 0x1012:		// TT DVB-T CI budget (tda10046/Philips tdm1316l(tda6651tt))
 		budget_ci->tuner_pll_address = 0x60;
 		budget_ci->budget.dvb_frontend =
 			dvb_attach(tda10046_attach, &philips_tdm1316l_config_invert, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
+		अगर (budget_ci->budget.dvb_frontend) अणु
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.init = philips_tdm1316l_tuner_init;
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.set_params = philips_tdm1316l_tuner_set_params;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 0x1017:		// TT S-1500 PCI
+	हाल 0x1017:		// TT S-1500 PCI
 		budget_ci->budget.dvb_frontend = dvb_attach(stv0299_attach, &alps_bsbe1_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
+		अगर (budget_ci->budget.dvb_frontend) अणु
 			budget_ci->budget.dvb_frontend->ops.tuner_ops.set_params = alps_bsbe1_tuner_set_params;
 			budget_ci->budget.dvb_frontend->tuner_priv = &budget_ci->budget.i2c_adap;
 
-			budget_ci->budget.dvb_frontend->ops.dishnetwork_send_legacy_command = NULL;
-			if (dvb_attach(lnbp21_attach, budget_ci->budget.dvb_frontend, &budget_ci->budget.i2c_adap, LNBP21_LLC, 0) == NULL) {
-				printk("%s: No LNBP21 found!\n", __func__);
+			budget_ci->budget.dvb_frontend->ops.dishnetwork_send_legacy_command = शून्य;
+			अगर (dvb_attach(lnbp21_attach, budget_ci->budget.dvb_frontend, &budget_ci->budget.i2c_adap, LNBP21_LLC, 0) == शून्य) अणु
+				prपूर्णांकk("%s: No LNBP21 found!\n", __func__);
 				dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-				budget_ci->budget.dvb_frontend = NULL;
-			}
-		}
-		break;
+				budget_ci->budget.dvb_frontend = शून्य;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case 0x101a: /* TT Budget-C-1501 (philips tda10023/philips tda8274A) */
+	हाल 0x101a: /* TT Budget-C-1501 (philips tda10023/philips tda8274A) */
 		budget_ci->budget.dvb_frontend = dvb_attach(tda10023_attach, &tda10023_config, &budget_ci->budget.i2c_adap, 0x48);
-		if (budget_ci->budget.dvb_frontend) {
-			if (dvb_attach(tda827x_attach, budget_ci->budget.dvb_frontend, 0x61, &budget_ci->budget.i2c_adap, &tda827x_config) == NULL) {
-				printk(KERN_ERR "%s: No tda827x found!\n", __func__);
+		अगर (budget_ci->budget.dvb_frontend) अणु
+			अगर (dvb_attach(tda827x_attach, budget_ci->budget.dvb_frontend, 0x61, &budget_ci->budget.i2c_adap, &tda827x_config) == शून्य) अणु
+				prपूर्णांकk(KERN_ERR "%s: No tda827x found!\n", __func__);
 				dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-				budget_ci->budget.dvb_frontend = NULL;
-			}
-		}
-		break;
+				budget_ci->budget.dvb_frontend = शून्य;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case 0x101b: /* TT S-1500B (BSBE1-D01A - STV0288/STB6000/LNBP21) */
+	हाल 0x101b: /* TT S-1500B (BSBE1-D01A - STV0288/STB6000/LNBP21) */
 		budget_ci->budget.dvb_frontend = dvb_attach(stv0288_attach, &stv0288_bsbe1_d01a_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
-			if (dvb_attach(stb6000_attach, budget_ci->budget.dvb_frontend, 0x63, &budget_ci->budget.i2c_adap)) {
-				if (!dvb_attach(lnbp21_attach, budget_ci->budget.dvb_frontend, &budget_ci->budget.i2c_adap, 0, 0)) {
-					printk(KERN_ERR "%s: No LNBP21 found!\n", __func__);
+		अगर (budget_ci->budget.dvb_frontend) अणु
+			अगर (dvb_attach(stb6000_attach, budget_ci->budget.dvb_frontend, 0x63, &budget_ci->budget.i2c_adap)) अणु
+				अगर (!dvb_attach(lnbp21_attach, budget_ci->budget.dvb_frontend, &budget_ci->budget.i2c_adap, 0, 0)) अणु
+					prपूर्णांकk(KERN_ERR "%s: No LNBP21 found!\n", __func__);
 					dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-					budget_ci->budget.dvb_frontend = NULL;
-				}
-			} else {
-				printk(KERN_ERR "%s: No STB6000 found!\n", __func__);
+					budget_ci->budget.dvb_frontend = शून्य;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				prपूर्णांकk(KERN_ERR "%s: No STB6000 found!\n", __func__);
 				dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-				budget_ci->budget.dvb_frontend = NULL;
-			}
-		}
-		break;
+				budget_ci->budget.dvb_frontend = शून्य;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case 0x1019:		// TT S2-3200 PCI
+	हाल 0x1019:		// TT S2-3200 PCI
 		/*
-		 * NOTE! on some STB0899 versions, the internal PLL takes a longer time
-		 * to settle, aka LOCK. On the older revisions of the chip, we don't see
-		 * this, as a result on the newer chips the entire clock tree, will not
+		 * NOTE! on some STB0899 versions, the पूर्णांकernal PLL takes a दीर्घer समय
+		 * to settle, aka LOCK. On the older revisions of the chip, we करोn't see
+		 * this, as a result on the newer chips the entire घड़ी tree, will not
 		 * be stable after a freshly POWER 'ed up situation.
-		 * In this case, we should RESET the STB0899 (Active LOW) and wait for
+		 * In this हाल, we should RESET the STB0899 (Active LOW) and रुको क्रम
 		 * PLL stabilization.
 		 *
 		 * On the TT S2 3200 and clones, the STB0899 demodulator's RESETB is
@@ -1408,114 +1409,114 @@ static void frontend_init(struct budget_ci *budget_ci)
 		 */
 		/* Reset Demodulator */
 		saa7146_setgpio(budget_ci->budget.dev, 2, SAA7146_GPIO_OUTLO);
-		/* Wait for everything to die */
+		/* Wait क्रम everything to die */
 		msleep(50);
 		/* Pull it up out of Reset state */
 		saa7146_setgpio(budget_ci->budget.dev, 2, SAA7146_GPIO_OUTHI);
-		/* Wait for PLL to stabilize */
+		/* Wait क्रम PLL to stabilize */
 		msleep(250);
 		/*
 		 * PLL state should be stable now. Ideally, we should check
-		 * for PLL LOCK status. But well, never mind!
+		 * क्रम PLL LOCK status. But well, never mind!
 		 */
 		budget_ci->budget.dvb_frontend = dvb_attach(stb0899_attach, &tt3200_config, &budget_ci->budget.i2c_adap);
-		if (budget_ci->budget.dvb_frontend) {
-			if (dvb_attach(stb6100_attach, budget_ci->budget.dvb_frontend, &tt3200_stb6100_config, &budget_ci->budget.i2c_adap)) {
-				if (!dvb_attach(lnbp21_attach, budget_ci->budget.dvb_frontend, &budget_ci->budget.i2c_adap, 0, 0)) {
-					printk("%s: No LNBP21 found!\n", __func__);
+		अगर (budget_ci->budget.dvb_frontend) अणु
+			अगर (dvb_attach(stb6100_attach, budget_ci->budget.dvb_frontend, &tt3200_stb6100_config, &budget_ci->budget.i2c_adap)) अणु
+				अगर (!dvb_attach(lnbp21_attach, budget_ci->budget.dvb_frontend, &budget_ci->budget.i2c_adap, 0, 0)) अणु
+					prपूर्णांकk("%s: No LNBP21 found!\n", __func__);
 					dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-					budget_ci->budget.dvb_frontend = NULL;
-				}
-			} else {
+					budget_ci->budget.dvb_frontend = शून्य;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 					dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-					budget_ci->budget.dvb_frontend = NULL;
-			}
-		}
-		break;
+					budget_ci->budget.dvb_frontend = शून्य;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	}
+	पूर्ण
 
-	if (budget_ci->budget.dvb_frontend == NULL) {
-		printk("budget-ci: A frontend driver was not found for device [%04x:%04x] subsystem [%04x:%04x]\n",
-		       budget_ci->budget.dev->pci->vendor,
+	अगर (budget_ci->budget.dvb_frontend == शून्य) अणु
+		prपूर्णांकk("budget-ci: A frontend driver was not found for device [%04x:%04x] subsystem [%04x:%04x]\n",
+		       budget_ci->budget.dev->pci->venकरोr,
 		       budget_ci->budget.dev->pci->device,
-		       budget_ci->budget.dev->pci->subsystem_vendor,
-		       budget_ci->budget.dev->pci->subsystem_device);
-	} else {
-		if (dvb_register_frontend
-		    (&budget_ci->budget.dvb_adapter, budget_ci->budget.dvb_frontend)) {
-			printk("budget-ci: Frontend registration failed!\n");
+		       budget_ci->budget.dev->pci->subप्रणाली_venकरोr,
+		       budget_ci->budget.dev->pci->subप्रणाली_device);
+	पूर्ण अन्यथा अणु
+		अगर (dvb_रेजिस्टर_frontend
+		    (&budget_ci->budget.dvb_adapter, budget_ci->budget.dvb_frontend)) अणु
+			prपूर्णांकk("budget-ci: Frontend registration failed!\n");
 			dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-			budget_ci->budget.dvb_frontend = NULL;
-		}
-	}
-}
+			budget_ci->budget.dvb_frontend = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int budget_ci_attach(struct saa7146_dev *dev, struct saa7146_pci_extension_data *info)
-{
-	struct budget_ci *budget_ci;
-	int err;
+अटल पूर्णांक budget_ci_attach(काष्ठा saa7146_dev *dev, काष्ठा saa7146_pci_extension_data *info)
+अणु
+	काष्ठा budget_ci *budget_ci;
+	पूर्णांक err;
 
-	budget_ci = kzalloc(sizeof(struct budget_ci), GFP_KERNEL);
-	if (!budget_ci) {
+	budget_ci = kzalloc(माप(काष्ठा budget_ci), GFP_KERNEL);
+	अगर (!budget_ci) अणु
 		err = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
-	dprintk(2, "budget_ci: %p\n", budget_ci);
+	dprपूर्णांकk(2, "budget_ci: %p\n", budget_ci);
 
 	dev->ext_priv = budget_ci;
 
 	err = ttpci_budget_init(&budget_ci->budget, dev, info, THIS_MODULE,
 				adapter_nr);
-	if (err)
-		goto out2;
+	अगर (err)
+		जाओ out2;
 
 	err = msp430_ir_init(budget_ci);
-	if (err)
-		goto out3;
+	अगर (err)
+		जाओ out3;
 
-	ciintf_init(budget_ci);
+	ciपूर्णांकf_init(budget_ci);
 
 	budget_ci->budget.dvb_adapter.priv = budget_ci;
 	frontend_init(budget_ci);
 
 	ttpci_budget_init_hooks(&budget_ci->budget);
 
-	return 0;
+	वापस 0;
 
 out3:
 	ttpci_budget_deinit(&budget_ci->budget);
 out2:
-	kfree(budget_ci);
+	kमुक्त(budget_ci);
 out1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int budget_ci_detach(struct saa7146_dev *dev)
-{
-	struct budget_ci *budget_ci = (struct budget_ci *) dev->ext_priv;
-	struct saa7146_dev *saa = budget_ci->budget.dev;
-	int err;
+अटल पूर्णांक budget_ci_detach(काष्ठा saa7146_dev *dev)
+अणु
+	काष्ठा budget_ci *budget_ci = (काष्ठा budget_ci *) dev->ext_priv;
+	काष्ठा saa7146_dev *saa = budget_ci->budget.dev;
+	पूर्णांक err;
 
-	if (budget_ci->budget.ci_present)
-		ciintf_deinit(budget_ci);
+	अगर (budget_ci->budget.ci_present)
+		ciपूर्णांकf_deinit(budget_ci);
 	msp430_ir_deinit(budget_ci);
-	if (budget_ci->budget.dvb_frontend) {
-		dvb_unregister_frontend(budget_ci->budget.dvb_frontend);
+	अगर (budget_ci->budget.dvb_frontend) अणु
+		dvb_unरेजिस्टर_frontend(budget_ci->budget.dvb_frontend);
 		dvb_frontend_detach(budget_ci->budget.dvb_frontend);
-	}
+	पूर्ण
 	err = ttpci_budget_deinit(&budget_ci->budget);
 
-	// disable frontend and CI interface
+	// disable frontend and CI पूर्णांकerface
 	saa7146_setgpio(saa, 2, SAA7146_GPIO_INPUT);
 
-	kfree(budget_ci);
+	kमुक्त(budget_ci);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct saa7146_extension budget_extension;
+अटल काष्ठा saa7146_extension budget_extension;
 
 MAKE_BUDGET_INFO(ttbs2, "TT-Budget/S-1500 PCI", BUDGET_TT);
 MAKE_BUDGET_INFO(ttbci, "TT-Budget/WinTV-NOVA-CI PCI", BUDGET_TT_HW_DISEQC);
@@ -1526,7 +1527,7 @@ MAKE_BUDGET_INFO(ttc1501, "TT-Budget C-1501 PCI", BUDGET_TT);
 MAKE_BUDGET_INFO(tt3200, "TT-Budget S2-3200 PCI", BUDGET_TT);
 MAKE_BUDGET_INFO(ttbs1500b, "TT-Budget S-1500B PCI", BUDGET_TT);
 
-static const struct pci_device_id pci_tbl[] = {
+अटल स्थिर काष्ठा pci_device_id pci_tbl[] = अणु
 	MAKE_EXTENSION_PCI(ttbci, 0x13c2, 0x100c),
 	MAKE_EXTENSION_PCI(ttbci, 0x13c2, 0x100f),
 	MAKE_EXTENSION_PCI(ttbcci, 0x13c2, 0x1010),
@@ -1536,14 +1537,14 @@ static const struct pci_device_id pci_tbl[] = {
 	MAKE_EXTENSION_PCI(ttc1501, 0x13c2, 0x101a),
 	MAKE_EXTENSION_PCI(tt3200, 0x13c2, 0x1019),
 	MAKE_EXTENSION_PCI(ttbs1500b, 0x13c2, 0x101b),
-	{
-	 .vendor = 0,
-	 }
-};
+	अणु
+	 .venकरोr = 0,
+	 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, pci_tbl);
 
-static struct saa7146_extension budget_extension = {
+अटल काष्ठा saa7146_extension budget_extension = अणु
 	.name = "budget_ci dvb",
 	.flags = SAA7146_USE_I2C_IRQ,
 
@@ -1554,20 +1555,20 @@ static struct saa7146_extension budget_extension = {
 
 	.irq_mask = MASK_03 | MASK_06 | MASK_10,
 	.irq_func = budget_ci_irq,
-};
+पूर्ण;
 
-static int __init budget_ci_init(void)
-{
-	return saa7146_register_extension(&budget_extension);
-}
+अटल पूर्णांक __init budget_ci_init(व्योम)
+अणु
+	वापस saa7146_रेजिस्टर_extension(&budget_extension);
+पूर्ण
 
-static void __exit budget_ci_exit(void)
-{
-	saa7146_unregister_extension(&budget_extension);
-}
+अटल व्योम __निकास budget_ci_निकास(व्योम)
+अणु
+	saa7146_unरेजिस्टर_extension(&budget_extension);
+पूर्ण
 
 module_init(budget_ci_init);
-module_exit(budget_ci_exit);
+module_निकास(budget_ci_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Michael Hunold, Jack Thomasson, Andrew de Quincey, others");

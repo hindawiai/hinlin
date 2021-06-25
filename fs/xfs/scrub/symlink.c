@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_log_format.h"
-#include "xfs_inode.h"
-#include "xfs_symlink.h"
-#include "scrub/scrub.h"
-#include "scrub/common.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_symlink.h"
+#समावेश "scrub/scrub.h"
+#समावेश "scrub/common.h"
 
 /* Set us up to scrub a symbolic link. */
-int
+पूर्णांक
 xchk_setup_symlink(
-	struct xfs_scrub	*sc)
-{
+	काष्ठा xfs_scrub	*sc)
+अणु
 	/* Allocate the buffer without the inode lock held. */
 	sc->buf = kvzalloc(XFS_SYMLINK_MAXLEN + 1, GFP_KERNEL);
-	if (!sc->buf)
-		return -ENOMEM;
+	अगर (!sc->buf)
+		वापस -ENOMEM;
 
-	return xchk_setup_inode_contents(sc, 0);
-}
+	वापस xchk_setup_inode_contents(sc, 0);
+पूर्ण
 
 /* Symbolic links. */
 
-int
+पूर्णांक
 xchk_symlink(
-	struct xfs_scrub	*sc)
-{
-	struct xfs_inode	*ip = sc->ip;
-	struct xfs_ifork	*ifp;
+	काष्ठा xfs_scrub	*sc)
+अणु
+	काष्ठा xfs_inode	*ip = sc->ip;
+	काष्ठा xfs_अगरork	*अगरp;
 	loff_t			len;
-	int			error = 0;
+	पूर्णांक			error = 0;
 
-	if (!S_ISLNK(VFS_I(ip)->i_mode))
-		return -ENOENT;
-	ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	अगर (!S_ISLNK(VFS_I(ip)->i_mode))
+		वापस -ENOENT;
+	अगरp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
 	len = ip->i_disk_size;
 
 	/* Plausible size? */
-	if (len > XFS_SYMLINK_MAXLEN || len <= 0) {
+	अगर (len > XFS_SYMLINK_MAXLEN || len <= 0) अणु
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Inline symlink? */
-	if (ifp->if_format == XFS_DINODE_FMT_LOCAL) {
-		if (len > XFS_IFORK_DSIZE(ip) ||
-		    len > strnlen(ifp->if_u1.if_data, XFS_IFORK_DSIZE(ip)))
+	अगर (अगरp->अगर_क्रमmat == XFS_DINODE_FMT_LOCAL) अणु
+		अगर (len > XFS_IFORK_DSIZE(ip) ||
+		    len > strnlen(अगरp->अगर_u1.अगर_data, XFS_IFORK_DSIZE(ip)))
 			xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Remote symlink; must read the contents. */
-	error = xfs_readlink_bmap_ilocked(sc->ip, sc->buf);
-	if (!xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error))
-		goto out;
-	if (strnlen(sc->buf, XFS_SYMLINK_MAXLEN) < len)
+	/* Remote symlink; must पढ़ो the contents. */
+	error = xfs_पढ़ोlink_bmap_ilocked(sc->ip, sc->buf);
+	अगर (!xchk_fblock_process_error(sc, XFS_DATA_FORK, 0, &error))
+		जाओ out;
+	अगर (strnlen(sc->buf, XFS_SYMLINK_MAXLEN) < len)
 		xchk_fblock_set_corrupt(sc, XFS_DATA_FORK, 0);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण

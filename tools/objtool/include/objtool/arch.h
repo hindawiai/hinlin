@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#ifndef _ARCH_H
-#define _ARCH_H
+#अगर_अघोषित _ARCH_H
+#घोषणा _ARCH_H
 
-#include <stdbool.h>
-#include <linux/list.h>
-#include <objtool/objtool.h>
-#include <objtool/cfi.h>
+#समावेश <stdbool.h>
+#समावेश <linux/list.h>
+#समावेश <objtool/objtool.h>
+#समावेश <objtool/cfi.h>
 
-enum insn_type {
+क्रमागत insn_type अणु
 	INSN_JUMP_CONDITIONAL,
 	INSN_JUMP_UNCONDITIONAL,
 	INSN_JUMP_DYNAMIC,
@@ -27,66 +28,66 @@ enum insn_type {
 	INSN_STD,
 	INSN_CLD,
 	INSN_OTHER,
-};
+पूर्ण;
 
-enum op_dest_type {
+क्रमागत op_dest_type अणु
 	OP_DEST_REG,
-	OP_DEST_REG_INDIRECT,
+	OP_DEST_REG_INसूचीECT,
 	OP_DEST_MEM,
 	OP_DEST_PUSH,
 	OP_DEST_PUSHF,
-};
+पूर्ण;
 
-struct op_dest {
-	enum op_dest_type type;
-	unsigned char reg;
-	int offset;
-};
+काष्ठा op_dest अणु
+	क्रमागत op_dest_type type;
+	अचिन्हित अक्षर reg;
+	पूर्णांक offset;
+पूर्ण;
 
-enum op_src_type {
+क्रमागत op_src_type अणु
 	OP_SRC_REG,
-	OP_SRC_REG_INDIRECT,
+	OP_SRC_REG_INसूचीECT,
 	OP_SRC_CONST,
 	OP_SRC_POP,
 	OP_SRC_POPF,
 	OP_SRC_ADD,
 	OP_SRC_AND,
-};
+पूर्ण;
 
-struct op_src {
-	enum op_src_type type;
-	unsigned char reg;
-	int offset;
-};
+काष्ठा op_src अणु
+	क्रमागत op_src_type type;
+	अचिन्हित अक्षर reg;
+	पूर्णांक offset;
+पूर्ण;
 
-struct stack_op {
-	struct op_dest dest;
-	struct op_src src;
-	struct list_head list;
-};
+काष्ठा stack_op अणु
+	काष्ठा op_dest dest;
+	काष्ठा op_src src;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct instruction;
+काष्ठा inकाष्ठाion;
 
-void arch_initial_func_cfi_state(struct cfi_init_state *state);
+व्योम arch_initial_func_cfi_state(काष्ठा cfi_init_state *state);
 
-int arch_decode_instruction(const struct elf *elf, const struct section *sec,
-			    unsigned long offset, unsigned int maxlen,
-			    unsigned int *len, enum insn_type *type,
-			    unsigned long *immediate,
-			    struct list_head *ops_list);
+पूर्णांक arch_decode_inकाष्ठाion(स्थिर काष्ठा elf *elf, स्थिर काष्ठा section *sec,
+			    अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक maxlen,
+			    अचिन्हित पूर्णांक *len, क्रमागत insn_type *type,
+			    अचिन्हित दीर्घ *immediate,
+			    काष्ठा list_head *ops_list);
 
-bool arch_callee_saved_reg(unsigned char reg);
+bool arch_callee_saved_reg(अचिन्हित अक्षर reg);
 
-unsigned long arch_jump_destination(struct instruction *insn);
+अचिन्हित दीर्घ arch_jump_destination(काष्ठा inकाष्ठाion *insn);
 
-unsigned long arch_dest_reloc_offset(int addend);
+अचिन्हित दीर्घ arch_dest_reloc_offset(पूर्णांक addend);
 
-const char *arch_nop_insn(int len);
+स्थिर अक्षर *arch_nop_insn(पूर्णांक len);
 
-int arch_decode_hint_reg(struct instruction *insn, u8 sp_reg);
+पूर्णांक arch_decode_hपूर्णांक_reg(काष्ठा inकाष्ठाion *insn, u8 sp_reg);
 
-bool arch_is_retpoline(struct symbol *sym);
+bool arch_is_retpoline(काष्ठा symbol *sym);
 
-int arch_rewrite_retpolines(struct objtool_file *file);
+पूर्णांक arch_reग_लिखो_retpolines(काष्ठा objtool_file *file);
 
-#endif /* _ARCH_H */
+#पूर्ण_अगर /* _ARCH_H */

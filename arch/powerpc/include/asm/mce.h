@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Machine check exception header file.
  *
@@ -6,37 +7,37 @@
  * Author: Mahesh Salgaonkar <mahesh@linux.vnet.ibm.com>
  */
 
-#ifndef __ASM_PPC64_MCE_H__
-#define __ASM_PPC64_MCE_H__
+#अगर_अघोषित __ASM_PPC64_MCE_H__
+#घोषणा __ASM_PPC64_MCE_H__
 
-#include <linux/bitops.h>
+#समावेश <linux/bitops.h>
 
-enum MCE_Version {
+क्रमागत MCE_Version अणु
 	MCE_V1 = 1,
-};
+पूर्ण;
 
-enum MCE_Severity {
+क्रमागत MCE_Severity अणु
 	MCE_SEV_NO_ERROR = 0,
 	MCE_SEV_WARNING = 1,
 	MCE_SEV_SEVERE = 2,
 	MCE_SEV_FATAL = 3,
-};
+पूर्ण;
 
-enum MCE_Disposition {
+क्रमागत MCE_Disposition अणु
 	MCE_DISPOSITION_RECOVERED = 0,
 	MCE_DISPOSITION_NOT_RECOVERED = 1,
-};
+पूर्ण;
 
-enum MCE_Initiator {
+क्रमागत MCE_Initiator अणु
 	MCE_INITIATOR_UNKNOWN = 0,
 	MCE_INITIATOR_CPU = 1,
 	MCE_INITIATOR_PCI = 2,
 	MCE_INITIATOR_ISA = 3,
 	MCE_INITIATOR_MEMORY= 4,
 	MCE_INITIATOR_POWERMGM = 5,
-};
+पूर्ण;
 
-enum MCE_ErrorType {
+क्रमागत MCE_ErrorType अणु
 	MCE_ERROR_TYPE_UNKNOWN = 0,
 	MCE_ERROR_TYPE_UE = 1,
 	MCE_ERROR_TYPE_SLB = 2,
@@ -47,49 +48,49 @@ enum MCE_ErrorType {
 	MCE_ERROR_TYPE_LINK = 7,
 	MCE_ERROR_TYPE_DCACHE = 8,
 	MCE_ERROR_TYPE_ICACHE = 9,
-};
+पूर्ण;
 
-enum MCE_ErrorClass {
+क्रमागत MCE_ErrorClass अणु
 	MCE_ECLASS_UNKNOWN = 0,
 	MCE_ECLASS_HARDWARE,
 	MCE_ECLASS_HARD_INDETERMINATE,
 	MCE_ECLASS_SOFTWARE,
 	MCE_ECLASS_SOFT_INDETERMINATE,
-};
+पूर्ण;
 
-enum MCE_UeErrorType {
+क्रमागत MCE_UeErrorType अणु
 	MCE_UE_ERROR_INDETERMINATE = 0,
 	MCE_UE_ERROR_IFETCH = 1,
 	MCE_UE_ERROR_PAGE_TABLE_WALK_IFETCH = 2,
 	MCE_UE_ERROR_LOAD_STORE = 3,
 	MCE_UE_ERROR_PAGE_TABLE_WALK_LOAD_STORE = 4,
-};
+पूर्ण;
 
-enum MCE_SlbErrorType {
+क्रमागत MCE_SlbErrorType अणु
 	MCE_SLB_ERROR_INDETERMINATE = 0,
 	MCE_SLB_ERROR_PARITY = 1,
 	MCE_SLB_ERROR_MULTIHIT = 2,
-};
+पूर्ण;
 
-enum MCE_EratErrorType {
+क्रमागत MCE_EratErrorType अणु
 	MCE_ERAT_ERROR_INDETERMINATE = 0,
 	MCE_ERAT_ERROR_PARITY = 1,
 	MCE_ERAT_ERROR_MULTIHIT = 2,
-};
+पूर्ण;
 
-enum MCE_TlbErrorType {
+क्रमागत MCE_TlbErrorType अणु
 	MCE_TLB_ERROR_INDETERMINATE = 0,
 	MCE_TLB_ERROR_PARITY = 1,
 	MCE_TLB_ERROR_MULTIHIT = 2,
-};
+पूर्ण;
 
-enum MCE_UserErrorType {
+क्रमागत MCE_UserErrorType अणु
 	MCE_USER_ERROR_INDETERMINATE = 0,
 	MCE_USER_ERROR_TLBIE = 1,
 	MCE_USER_ERROR_SCV = 2,
-};
+पूर्ण;
 
-enum MCE_RaErrorType {
+क्रमागत MCE_RaErrorType अणु
 	MCE_RA_ERROR_INDETERMINATE = 0,
 	MCE_RA_ERROR_IFETCH = 1,
 	MCE_RA_ERROR_IFETCH_FOREIGN = 2,
@@ -100,33 +101,33 @@ enum MCE_RaErrorType {
 	MCE_RA_ERROR_PAGE_TABLE_WALK_LOAD_STORE = 7,
 	MCE_RA_ERROR_PAGE_TABLE_WALK_LOAD_STORE_FOREIGN = 8,
 	MCE_RA_ERROR_LOAD_STORE_FOREIGN = 9,
-};
+पूर्ण;
 
-enum MCE_LinkErrorType {
+क्रमागत MCE_LinkErrorType अणु
 	MCE_LINK_ERROR_INDETERMINATE = 0,
 	MCE_LINK_ERROR_IFETCH_TIMEOUT = 1,
 	MCE_LINK_ERROR_PAGE_TABLE_WALK_IFETCH_TIMEOUT = 2,
 	MCE_LINK_ERROR_LOAD_TIMEOUT = 3,
 	MCE_LINK_ERROR_STORE_TIMEOUT = 4,
 	MCE_LINK_ERROR_PAGE_TABLE_WALK_LOAD_STORE_TIMEOUT = 5,
-};
+पूर्ण;
 
-struct machine_check_event {
-	enum MCE_Version	version:8;
+काष्ठा machine_check_event अणु
+	क्रमागत MCE_Version	version:8;
 	u8			in_use;
-	enum MCE_Severity	severity:8;
-	enum MCE_Initiator	initiator:8;
-	enum MCE_ErrorType	error_type:8;
-	enum MCE_ErrorClass	error_class:8;
-	enum MCE_Disposition	disposition:8;
+	क्रमागत MCE_Severity	severity:8;
+	क्रमागत MCE_Initiator	initiator:8;
+	क्रमागत MCE_ErrorType	error_type:8;
+	क्रमागत MCE_ErrorClass	error_class:8;
+	क्रमागत MCE_Disposition	disposition:8;
 	bool			sync_error;
 	u16			cpu;
 	u64			gpr3;
 	u64			srr0;
 	u64			srr1;
-	union {
-		struct {
-			enum MCE_UeErrorType ue_error_type:8;
+	जोड़ अणु
+		काष्ठा अणु
+			क्रमागत MCE_UeErrorType ue_error_type:8;
 			u8		effective_address_provided;
 			u8		physical_address_provided;
 			u8		ignore_event;
@@ -134,122 +135,122 @@ struct machine_check_event {
 			u64		effective_address;
 			u64		physical_address;
 			u8		reserved_2[8];
-		} ue_error;
+		पूर्ण ue_error;
 
-		struct {
-			enum MCE_SlbErrorType slb_error_type:8;
+		काष्ठा अणु
+			क्रमागत MCE_SlbErrorType slb_error_type:8;
 			u8		effective_address_provided;
 			u8		reserved_1[6];
 			u64		effective_address;
 			u8		reserved_2[16];
-		} slb_error;
+		पूर्ण slb_error;
 
-		struct {
-			enum MCE_EratErrorType erat_error_type:8;
+		काष्ठा अणु
+			क्रमागत MCE_EratErrorType erat_error_type:8;
 			u8		effective_address_provided;
 			u8		reserved_1[6];
 			u64		effective_address;
 			u8		reserved_2[16];
-		} erat_error;
+		पूर्ण erat_error;
 
-		struct {
-			enum MCE_TlbErrorType tlb_error_type:8;
+		काष्ठा अणु
+			क्रमागत MCE_TlbErrorType tlb_error_type:8;
 			u8		effective_address_provided;
 			u8		reserved_1[6];
 			u64		effective_address;
 			u8		reserved_2[16];
-		} tlb_error;
+		पूर्ण tlb_error;
 
-		struct {
-			enum MCE_UserErrorType user_error_type:8;
+		काष्ठा अणु
+			क्रमागत MCE_UserErrorType user_error_type:8;
 			u8		effective_address_provided;
 			u8		reserved_1[6];
 			u64		effective_address;
 			u8		reserved_2[16];
-		} user_error;
+		पूर्ण user_error;
 
-		struct {
-			enum MCE_RaErrorType ra_error_type:8;
+		काष्ठा अणु
+			क्रमागत MCE_RaErrorType ra_error_type:8;
 			u8		effective_address_provided;
 			u8		reserved_1[6];
 			u64		effective_address;
 			u8		reserved_2[16];
-		} ra_error;
+		पूर्ण ra_error;
 
-		struct {
-			enum MCE_LinkErrorType link_error_type:8;
+		काष्ठा अणु
+			क्रमागत MCE_LinkErrorType link_error_type:8;
 			u8		effective_address_provided;
 			u8		reserved_1[6];
 			u64		effective_address;
 			u8		reserved_2[16];
-		} link_error;
-	} u;
-};
+		पूर्ण link_error;
+	पूर्ण u;
+पूर्ण;
 
-struct mce_error_info {
-	enum MCE_ErrorType error_type:8;
-	union {
-		enum MCE_UeErrorType ue_error_type:8;
-		enum MCE_SlbErrorType slb_error_type:8;
-		enum MCE_EratErrorType erat_error_type:8;
-		enum MCE_TlbErrorType tlb_error_type:8;
-		enum MCE_UserErrorType user_error_type:8;
-		enum MCE_RaErrorType ra_error_type:8;
-		enum MCE_LinkErrorType link_error_type:8;
-	} u;
-	enum MCE_Severity	severity:8;
-	enum MCE_Initiator	initiator:8;
-	enum MCE_ErrorClass	error_class:8;
+काष्ठा mce_error_info अणु
+	क्रमागत MCE_ErrorType error_type:8;
+	जोड़ अणु
+		क्रमागत MCE_UeErrorType ue_error_type:8;
+		क्रमागत MCE_SlbErrorType slb_error_type:8;
+		क्रमागत MCE_EratErrorType erat_error_type:8;
+		क्रमागत MCE_TlbErrorType tlb_error_type:8;
+		क्रमागत MCE_UserErrorType user_error_type:8;
+		क्रमागत MCE_RaErrorType ra_error_type:8;
+		क्रमागत MCE_LinkErrorType link_error_type:8;
+	पूर्ण u;
+	क्रमागत MCE_Severity	severity:8;
+	क्रमागत MCE_Initiator	initiator:8;
+	क्रमागत MCE_ErrorClass	error_class:8;
 	bool			sync_error;
 	bool			ignore_event;
-};
+पूर्ण;
 
-#define MAX_MC_EVT	10
+#घोषणा MAX_MC_EVT	10
 
-struct mce_info {
-	int mce_nest_count;
-	struct machine_check_event mce_event[MAX_MC_EVT];
-	/* Queue for delayed MCE events. */
-	int mce_queue_count;
-	struct machine_check_event mce_event_queue[MAX_MC_EVT];
-	/* Queue for delayed MCE UE events. */
-	int mce_ue_count;
-	struct machine_check_event  mce_ue_event_queue[MAX_MC_EVT];
-};
+काष्ठा mce_info अणु
+	पूर्णांक mce_nest_count;
+	काष्ठा machine_check_event mce_event[MAX_MC_EVT];
+	/* Queue क्रम delayed MCE events. */
+	पूर्णांक mce_queue_count;
+	काष्ठा machine_check_event mce_event_queue[MAX_MC_EVT];
+	/* Queue क्रम delayed MCE UE events. */
+	पूर्णांक mce_ue_count;
+	काष्ठा machine_check_event  mce_ue_event_queue[MAX_MC_EVT];
+पूर्ण;
 
-/* Release flags for get_mce_event() */
-#define MCE_EVENT_RELEASE	true
-#define MCE_EVENT_DONTRELEASE	false
+/* Release flags क्रम get_mce_event() */
+#घोषणा MCE_EVENT_RELEASE	true
+#घोषणा MCE_EVENT_DONTRELEASE	false
 
-struct pt_regs;
-struct notifier_block;
+काष्ठा pt_regs;
+काष्ठा notअगरier_block;
 
-extern void save_mce_event(struct pt_regs *regs, long handled,
-			   struct mce_error_info *mce_err, uint64_t nip,
-			   uint64_t addr, uint64_t phys_addr);
-extern int get_mce_event(struct machine_check_event *mce, bool release);
-extern void release_mce_event(void);
-extern void machine_check_queue_event(void);
-extern void machine_check_print_event_info(struct machine_check_event *evt,
+बाह्य व्योम save_mce_event(काष्ठा pt_regs *regs, दीर्घ handled,
+			   काष्ठा mce_error_info *mce_err, uपूर्णांक64_t nip,
+			   uपूर्णांक64_t addr, uपूर्णांक64_t phys_addr);
+बाह्य पूर्णांक get_mce_event(काष्ठा machine_check_event *mce, bool release);
+बाह्य व्योम release_mce_event(व्योम);
+बाह्य व्योम machine_check_queue_event(व्योम);
+बाह्य व्योम machine_check_prपूर्णांक_event_info(काष्ठा machine_check_event *evt,
 					   bool user_mode, bool in_guest);
-unsigned long addr_to_pfn(struct pt_regs *regs, unsigned long addr);
-extern void mce_common_process_ue(struct pt_regs *regs,
-				  struct mce_error_info *mce_err);
-int mce_register_notifier(struct notifier_block *nb);
-int mce_unregister_notifier(struct notifier_block *nb);
-#ifdef CONFIG_PPC_BOOK3S_64
-void flush_and_reload_slb(void);
-void flush_erat(void);
-long __machine_check_early_realmode_p7(struct pt_regs *regs);
-long __machine_check_early_realmode_p8(struct pt_regs *regs);
-long __machine_check_early_realmode_p9(struct pt_regs *regs);
-long __machine_check_early_realmode_p10(struct pt_regs *regs);
-#endif /* CONFIG_PPC_BOOK3S_64 */
+अचिन्हित दीर्घ addr_to_pfn(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr);
+बाह्य व्योम mce_common_process_ue(काष्ठा pt_regs *regs,
+				  काष्ठा mce_error_info *mce_err);
+पूर्णांक mce_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+पूर्णांक mce_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+व्योम flush_and_reload_slb(व्योम);
+व्योम flush_erat(व्योम);
+दीर्घ __machine_check_early_realmode_p7(काष्ठा pt_regs *regs);
+दीर्घ __machine_check_early_realmode_p8(काष्ठा pt_regs *regs);
+दीर्घ __machine_check_early_realmode_p9(काष्ठा pt_regs *regs);
+दीर्घ __machine_check_early_realmode_p10(काष्ठा pt_regs *regs);
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
-#ifdef CONFIG_PPC_BOOK3S_64
-void mce_init(void);
-#else
-static inline void mce_init(void) { };
-#endif /* CONFIG_PPC_BOOK3S_64 */
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+व्योम mce_init(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम mce_init(व्योम) अणु पूर्ण;
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */
 
-#endif /* __ASM_PPC64_MCE_H__ */
+#पूर्ण_अगर /* __ASM_PPC64_MCE_H__ */

@@ -1,1284 +1,1285 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/fs/read_write.c
+ *  linux/fs/पढ़ो_ग_लिखो.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linux/slab.h>
-#include <linux/stat.h>
-#include <linux/sched/xacct.h>
-#include <linux/fcntl.h>
-#include <linux/file.h>
-#include <linux/uio.h>
-#include <linux/fsnotify.h>
-#include <linux/security.h>
-#include <linux/export.h>
-#include <linux/syscalls.h>
-#include <linux/pagemap.h>
-#include <linux/splice.h>
-#include <linux/compat.h>
-#include <linux/mount.h>
-#include <linux/fs.h>
-#include "internal.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/sched/xacct.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/file.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/security.h>
+#समावेश <linux/export.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/splice.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/fs.h>
+#समावेश "internal.h"
 
-#include <linux/uaccess.h>
-#include <asm/unistd.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unistd.h>
 
-const struct file_operations generic_ro_fops = {
+स्थिर काष्ठा file_operations generic_ro_fops = अणु
 	.llseek		= generic_file_llseek,
-	.read_iter	= generic_file_read_iter,
-	.mmap		= generic_file_readonly_mmap,
-	.splice_read	= generic_file_splice_read,
-};
+	.पढ़ो_iter	= generic_file_पढ़ो_iter,
+	.mmap		= generic_file_पढ़ोonly_mmap,
+	.splice_पढ़ो	= generic_file_splice_पढ़ो,
+पूर्ण;
 
 EXPORT_SYMBOL(generic_ro_fops);
 
-static inline bool unsigned_offsets(struct file *file)
-{
-	return file->f_mode & FMODE_UNSIGNED_OFFSET;
-}
+अटल अंतरभूत bool अचिन्हित_offsets(काष्ठा file *file)
+अणु
+	वापस file->f_mode & FMODE_UNSIGNED_OFFSET;
+पूर्ण
 
 /**
- * vfs_setpos - update the file offset for lseek
- * @file:	file structure in question
+ * vfs_setpos - update the file offset क्रम lseek
+ * @file:	file काष्ठाure in question
  * @offset:	file offset to seek to
  * @maxsize:	maximum file size
  *
- * This is a low-level filesystem helper for updating the file offset to
- * the value specified by @offset if the given offset is valid and it is
+ * This is a low-level fileप्रणाली helper क्रम updating the file offset to
+ * the value specअगरied by @offset अगर the given offset is valid and it is
  * not equal to the current file offset.
  *
- * Return the specified offset on success and -EINVAL on invalid offset.
+ * Return the specअगरied offset on success and -EINVAL on invalid offset.
  */
-loff_t vfs_setpos(struct file *file, loff_t offset, loff_t maxsize)
-{
-	if (offset < 0 && !unsigned_offsets(file))
-		return -EINVAL;
-	if (offset > maxsize)
-		return -EINVAL;
+loff_t vfs_setpos(काष्ठा file *file, loff_t offset, loff_t maxsize)
+अणु
+	अगर (offset < 0 && !अचिन्हित_offsets(file))
+		वापस -EINVAL;
+	अगर (offset > maxsize)
+		वापस -EINVAL;
 
-	if (offset != file->f_pos) {
+	अगर (offset != file->f_pos) अणु
 		file->f_pos = offset;
 		file->f_version = 0;
-	}
-	return offset;
-}
+	पूर्ण
+	वापस offset;
+पूर्ण
 EXPORT_SYMBOL(vfs_setpos);
 
 /**
- * generic_file_llseek_size - generic llseek implementation for regular files
- * @file:	file structure to seek on
+ * generic_file_llseek_size - generic llseek implementation क्रम regular files
+ * @file:	file काष्ठाure to seek on
  * @offset:	file offset to seek to
  * @whence:	type of seek
- * @size:	max size of this file in file system
- * @eof:	offset used for SEEK_END position
+ * @size:	max size of this file in file प्रणाली
+ * @eof:	offset used क्रम अंत_से position
  *
  * This is a variant of generic_file_llseek that allows passing in a custom
- * maximum file size and a custom EOF position, for e.g. hashed directories
+ * maximum file size and a custom खातापूर्ण position, क्रम e.g. hashed directories
  *
  * Synchronization:
- * SEEK_SET and SEEK_END are unsynchronized (but atomic on 64bit platforms)
- * SEEK_CUR is synchronized against other SEEK_CURs, but not read/writes.
- * read/writes behave like SEEK_SET against seeks.
+ * शुरू_से and अंत_से are unsynchronized (but atomic on 64bit platक्रमms)
+ * प्रस्तुत_से is synchronized against other प्रस्तुत_सेs, but not पढ़ो/ग_लिखोs.
+ * पढ़ो/ग_लिखोs behave like शुरू_से against seeks.
  */
 loff_t
-generic_file_llseek_size(struct file *file, loff_t offset, int whence,
+generic_file_llseek_size(काष्ठा file *file, loff_t offset, पूर्णांक whence,
 		loff_t maxsize, loff_t eof)
-{
-	switch (whence) {
-	case SEEK_END:
+अणु
+	चयन (whence) अणु
+	हाल अंत_से:
 		offset += eof;
-		break;
-	case SEEK_CUR:
+		अवरोध;
+	हाल प्रस्तुत_से:
 		/*
-		 * Here we special-case the lseek(fd, 0, SEEK_CUR)
-		 * position-querying operation.  Avoid rewriting the "same"
-		 * f_pos value back to the file because a concurrent read(),
-		 * write() or lseek() might have altered it
+		 * Here we special-हाल the lseek(fd, 0, प्रस्तुत_से)
+		 * position-querying operation.  Aव्योम rewriting the "same"
+		 * f_pos value back to the file because a concurrent पढ़ो(),
+		 * ग_लिखो() or lseek() might have altered it
 		 */
-		if (offset == 0)
-			return file->f_pos;
+		अगर (offset == 0)
+			वापस file->f_pos;
 		/*
-		 * f_lock protects against read/modify/write race with other
-		 * SEEK_CURs. Note that parallel writes and reads behave
-		 * like SEEK_SET.
+		 * f_lock protects against पढ़ो/modअगरy/ग_लिखो race with other
+		 * प्रस्तुत_सेs. Note that parallel ग_लिखोs and पढ़ोs behave
+		 * like शुरू_से.
 		 */
 		spin_lock(&file->f_lock);
 		offset = vfs_setpos(file, file->f_pos + offset, maxsize);
 		spin_unlock(&file->f_lock);
-		return offset;
-	case SEEK_DATA:
+		वापस offset;
+	हाल SEEK_DATA:
 		/*
-		 * In the generic case the entire file is data, so as long as
+		 * In the generic हाल the entire file is data, so as दीर्घ as
 		 * offset isn't at the end of the file then the offset is data.
 		 */
-		if ((unsigned long long)offset >= eof)
-			return -ENXIO;
-		break;
-	case SEEK_HOLE:
+		अगर ((अचिन्हित दीर्घ दीर्घ)offset >= eof)
+			वापस -ENXIO;
+		अवरोध;
+	हाल SEEK_HOLE:
 		/*
-		 * There is a virtual hole at the end of the file, so as long as
-		 * offset isn't i_size or larger, return i_size.
+		 * There is a भव hole at the end of the file, so as दीर्घ as
+		 * offset isn't i_size or larger, वापस i_size.
 		 */
-		if ((unsigned long long)offset >= eof)
-			return -ENXIO;
+		अगर ((अचिन्हित दीर्घ दीर्घ)offset >= eof)
+			वापस -ENXIO;
 		offset = eof;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return vfs_setpos(file, offset, maxsize);
-}
+	वापस vfs_setpos(file, offset, maxsize);
+पूर्ण
 EXPORT_SYMBOL(generic_file_llseek_size);
 
 /**
- * generic_file_llseek - generic llseek implementation for regular files
- * @file:	file structure to seek on
+ * generic_file_llseek - generic llseek implementation क्रम regular files
+ * @file:	file काष्ठाure to seek on
  * @offset:	file offset to seek to
  * @whence:	type of seek
  *
- * This is a generic implemenation of ->llseek useable for all normal local
- * filesystems.  It just updates the file offset to the value specified by
+ * This is a generic implemenation of ->llseek useable क्रम all normal local
+ * fileप्रणालीs.  It just updates the file offset to the value specअगरied by
  * @offset and @whence.
  */
-loff_t generic_file_llseek(struct file *file, loff_t offset, int whence)
-{
-	struct inode *inode = file->f_mapping->host;
+loff_t generic_file_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
 
-	return generic_file_llseek_size(file, offset, whence,
+	वापस generic_file_llseek_size(file, offset, whence,
 					inode->i_sb->s_maxbytes,
-					i_size_read(inode));
-}
+					i_size_पढ़ो(inode));
+पूर्ण
 EXPORT_SYMBOL(generic_file_llseek);
 
 /**
- * fixed_size_llseek - llseek implementation for fixed-sized devices
- * @file:	file structure to seek on
+ * fixed_size_llseek - llseek implementation क्रम fixed-sized devices
+ * @file:	file काष्ठाure to seek on
  * @offset:	file offset to seek to
  * @whence:	type of seek
  * @size:	size of the file
  *
  */
-loff_t fixed_size_llseek(struct file *file, loff_t offset, int whence, loff_t size)
-{
-	switch (whence) {
-	case SEEK_SET: case SEEK_CUR: case SEEK_END:
-		return generic_file_llseek_size(file, offset, whence,
+loff_t fixed_size_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence, loff_t size)
+अणु
+	चयन (whence) अणु
+	हाल शुरू_से: हाल प्रस्तुत_से: हाल अंत_से:
+		वापस generic_file_llseek_size(file, offset, whence,
 						size, size);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(fixed_size_llseek);
 
 /**
- * no_seek_end_llseek - llseek implementation for fixed-sized devices
- * @file:	file structure to seek on
+ * no_seek_end_llseek - llseek implementation क्रम fixed-sized devices
+ * @file:	file काष्ठाure to seek on
  * @offset:	file offset to seek to
  * @whence:	type of seek
  *
  */
-loff_t no_seek_end_llseek(struct file *file, loff_t offset, int whence)
-{
-	switch (whence) {
-	case SEEK_SET: case SEEK_CUR:
-		return generic_file_llseek_size(file, offset, whence,
+loff_t no_seek_end_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	चयन (whence) अणु
+	हाल शुरू_से: हाल प्रस्तुत_से:
+		वापस generic_file_llseek_size(file, offset, whence,
 						OFFSET_MAX, 0);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(no_seek_end_llseek);
 
 /**
- * no_seek_end_llseek_size - llseek implementation for fixed-sized devices
- * @file:	file structure to seek on
+ * no_seek_end_llseek_size - llseek implementation क्रम fixed-sized devices
+ * @file:	file काष्ठाure to seek on
  * @offset:	file offset to seek to
  * @whence:	type of seek
  * @size:	maximal offset allowed
  *
  */
-loff_t no_seek_end_llseek_size(struct file *file, loff_t offset, int whence, loff_t size)
-{
-	switch (whence) {
-	case SEEK_SET: case SEEK_CUR:
-		return generic_file_llseek_size(file, offset, whence,
+loff_t no_seek_end_llseek_size(काष्ठा file *file, loff_t offset, पूर्णांक whence, loff_t size)
+अणु
+	चयन (whence) अणु
+	हाल शुरू_से: हाल प्रस्तुत_से:
+		वापस generic_file_llseek_size(file, offset, whence,
 						size, 0);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(no_seek_end_llseek_size);
 
 /**
- * noop_llseek - No Operation Performed llseek implementation
- * @file:	file structure to seek on
+ * noop_llseek - No Operation Perक्रमmed llseek implementation
+ * @file:	file काष्ठाure to seek on
  * @offset:	file offset to seek to
  * @whence:	type of seek
  *
- * This is an implementation of ->llseek useable for the rare special case when
+ * This is an implementation of ->llseek useable क्रम the rare special हाल when
  * userspace expects the seek to succeed but the (device) file is actually not
- * able to perform the seek. In this case you use noop_llseek() instead of
- * falling back to the default implementation of ->llseek.
+ * able to perक्रमm the seek. In this हाल you use noop_llseek() instead of
+ * falling back to the शेष implementation of ->llseek.
  */
-loff_t noop_llseek(struct file *file, loff_t offset, int whence)
-{
-	return file->f_pos;
-}
+loff_t noop_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	वापस file->f_pos;
+पूर्ण
 EXPORT_SYMBOL(noop_llseek);
 
-loff_t no_llseek(struct file *file, loff_t offset, int whence)
-{
-	return -ESPIPE;
-}
+loff_t no_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	वापस -ESPIPE;
+पूर्ण
 EXPORT_SYMBOL(no_llseek);
 
-loff_t default_llseek(struct file *file, loff_t offset, int whence)
-{
-	struct inode *inode = file_inode(file);
+loff_t शेष_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	काष्ठा inode *inode = file_inode(file);
 	loff_t retval;
 
 	inode_lock(inode);
-	switch (whence) {
-		case SEEK_END:
-			offset += i_size_read(inode);
-			break;
-		case SEEK_CUR:
-			if (offset == 0) {
+	चयन (whence) अणु
+		हाल अंत_से:
+			offset += i_size_पढ़ो(inode);
+			अवरोध;
+		हाल प्रस्तुत_से:
+			अगर (offset == 0) अणु
 				retval = file->f_pos;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			offset += file->f_pos;
-			break;
-		case SEEK_DATA:
+			अवरोध;
+		हाल SEEK_DATA:
 			/*
-			 * In the generic case the entire file is data, so as
-			 * long as offset isn't at the end of the file then the
+			 * In the generic हाल the entire file is data, so as
+			 * दीर्घ as offset isn't at the end of the file then the
 			 * offset is data.
 			 */
-			if (offset >= inode->i_size) {
+			अगर (offset >= inode->i_size) अणु
 				retval = -ENXIO;
-				goto out;
-			}
-			break;
-		case SEEK_HOLE:
+				जाओ out;
+			पूर्ण
+			अवरोध;
+		हाल SEEK_HOLE:
 			/*
-			 * There is a virtual hole at the end of the file, so
-			 * as long as offset isn't i_size or larger, return
+			 * There is a भव hole at the end of the file, so
+			 * as दीर्घ as offset isn't i_size or larger, वापस
 			 * i_size.
 			 */
-			if (offset >= inode->i_size) {
+			अगर (offset >= inode->i_size) अणु
 				retval = -ENXIO;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			offset = inode->i_size;
-			break;
-	}
+			अवरोध;
+	पूर्ण
 	retval = -EINVAL;
-	if (offset >= 0 || unsigned_offsets(file)) {
-		if (offset != file->f_pos) {
+	अगर (offset >= 0 || अचिन्हित_offsets(file)) अणु
+		अगर (offset != file->f_pos) अणु
 			file->f_pos = offset;
 			file->f_version = 0;
-		}
+		पूर्ण
 		retval = offset;
-	}
+	पूर्ण
 out:
 	inode_unlock(inode);
-	return retval;
-}
-EXPORT_SYMBOL(default_llseek);
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL(शेष_llseek);
 
-loff_t vfs_llseek(struct file *file, loff_t offset, int whence)
-{
-	loff_t (*fn)(struct file *, loff_t, int);
+loff_t vfs_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	loff_t (*fn)(काष्ठा file *, loff_t, पूर्णांक);
 
 	fn = no_llseek;
-	if (file->f_mode & FMODE_LSEEK) {
-		if (file->f_op->llseek)
+	अगर (file->f_mode & FMODE_LSEEK) अणु
+		अगर (file->f_op->llseek)
 			fn = file->f_op->llseek;
-	}
-	return fn(file, offset, whence);
-}
+	पूर्ण
+	वापस fn(file, offset, whence);
+पूर्ण
 EXPORT_SYMBOL(vfs_llseek);
 
-static off_t ksys_lseek(unsigned int fd, off_t offset, unsigned int whence)
-{
+अटल off_t ksys_lseek(अचिन्हित पूर्णांक fd, off_t offset, अचिन्हित पूर्णांक whence)
+अणु
 	off_t retval;
-	struct fd f = fdget_pos(fd);
-	if (!f.file)
-		return -EBADF;
+	काष्ठा fd f = fdget_pos(fd);
+	अगर (!f.file)
+		वापस -EBADF;
 
 	retval = -EINVAL;
-	if (whence <= SEEK_MAX) {
+	अगर (whence <= SEEK_MAX) अणु
 		loff_t res = vfs_llseek(f.file, offset, whence);
 		retval = res;
-		if (res != (loff_t)retval)
-			retval = -EOVERFLOW;	/* LFS: should only happen on 32 bit platforms */
-	}
+		अगर (res != (loff_t)retval)
+			retval = -EOVERFLOW;	/* LFS: should only happen on 32 bit platक्रमms */
+	पूर्ण
 	fdput_pos(f);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-SYSCALL_DEFINE3(lseek, unsigned int, fd, off_t, offset, unsigned int, whence)
-{
-	return ksys_lseek(fd, offset, whence);
-}
+SYSCALL_DEFINE3(lseek, अचिन्हित पूर्णांक, fd, off_t, offset, अचिन्हित पूर्णांक, whence)
+अणु
+	वापस ksys_lseek(fd, offset, whence);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE3(lseek, unsigned int, fd, compat_off_t, offset, unsigned int, whence)
-{
-	return ksys_lseek(fd, offset, whence);
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE3(lseek, अचिन्हित पूर्णांक, fd, compat_off_t, offset, अचिन्हित पूर्णांक, whence)
+अणु
+	वापस ksys_lseek(fd, offset, whence);
+पूर्ण
+#पूर्ण_अगर
 
-#if !defined(CONFIG_64BIT) || defined(CONFIG_COMPAT) || \
+#अगर !defined(CONFIG_64BIT) || defined(CONFIG_COMPAT) || \
 	defined(__ARCH_WANT_SYS_LLSEEK)
-SYSCALL_DEFINE5(llseek, unsigned int, fd, unsigned long, offset_high,
-		unsigned long, offset_low, loff_t __user *, result,
-		unsigned int, whence)
-{
-	int retval;
-	struct fd f = fdget_pos(fd);
+SYSCALL_DEFINE5(llseek, अचिन्हित पूर्णांक, fd, अचिन्हित दीर्घ, offset_high,
+		अचिन्हित दीर्घ, offset_low, loff_t __user *, result,
+		अचिन्हित पूर्णांक, whence)
+अणु
+	पूर्णांक retval;
+	काष्ठा fd f = fdget_pos(fd);
 	loff_t offset;
 
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
 	retval = -EINVAL;
-	if (whence > SEEK_MAX)
-		goto out_putf;
+	अगर (whence > SEEK_MAX)
+		जाओ out_putf;
 
 	offset = vfs_llseek(f.file, ((loff_t) offset_high << 32) | offset_low,
 			whence);
 
-	retval = (int)offset;
-	if (offset >= 0) {
+	retval = (पूर्णांक)offset;
+	अगर (offset >= 0) अणु
 		retval = -EFAULT;
-		if (!copy_to_user(result, &offset, sizeof(offset)))
+		अगर (!copy_to_user(result, &offset, माप(offset)))
 			retval = 0;
-	}
+	पूर्ण
 out_putf:
 	fdput_pos(f);
-	return retval;
-}
-#endif
+	वापस retval;
+पूर्ण
+#पूर्ण_अगर
 
-int rw_verify_area(int read_write, struct file *file, const loff_t *ppos, size_t count)
-{
-	struct inode *inode;
-	int retval = -EINVAL;
+पूर्णांक rw_verअगरy_area(पूर्णांक पढ़ो_ग_लिखो, काष्ठा file *file, स्थिर loff_t *ppos, माप_प्रकार count)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक retval = -EINVAL;
 
 	inode = file_inode(file);
-	if (unlikely((ssize_t) count < 0))
-		return retval;
+	अगर (unlikely((sमाप_प्रकार) count < 0))
+		वापस retval;
 
 	/*
-	 * ranged mandatory locking does not apply to streams - it makes sense
-	 * only for files where position has a meaning.
+	 * ranged mandatory locking करोes not apply to streams - it makes sense
+	 * only क्रम files where position has a meaning.
 	 */
-	if (ppos) {
+	अगर (ppos) अणु
 		loff_t pos = *ppos;
 
-		if (unlikely(pos < 0)) {
-			if (!unsigned_offsets(file))
-				return retval;
-			if (count >= -pos) /* both values are in 0..LLONG_MAX */
-				return -EOVERFLOW;
-		} else if (unlikely((loff_t) (pos + count) < 0)) {
-			if (!unsigned_offsets(file))
-				return retval;
-		}
+		अगर (unlikely(pos < 0)) अणु
+			अगर (!अचिन्हित_offsets(file))
+				वापस retval;
+			अगर (count >= -pos) /* both values are in 0..Lदीर्घ_उच्च */
+				वापस -EOVERFLOW;
+		पूर्ण अन्यथा अगर (unlikely((loff_t) (pos + count) < 0)) अणु
+			अगर (!अचिन्हित_offsets(file))
+				वापस retval;
+		पूर्ण
 
-		if (unlikely(inode->i_flctx && mandatory_lock(inode))) {
+		अगर (unlikely(inode->i_flctx && mandatory_lock(inode))) अणु
 			retval = locks_mandatory_area(inode, file, pos, pos + count - 1,
-					read_write == READ ? F_RDLCK : F_WRLCK);
-			if (retval < 0)
-				return retval;
-		}
-	}
+					पढ़ो_ग_लिखो == READ ? F_RDLCK : F_WRLCK);
+			अगर (retval < 0)
+				वापस retval;
+		पूर्ण
+	पूर्ण
 
-	return security_file_permission(file,
-				read_write == READ ? MAY_READ : MAY_WRITE);
-}
+	वापस security_file_permission(file,
+				पढ़ो_ग_लिखो == READ ? MAY_READ : MAY_WRITE);
+पूर्ण
 
-static ssize_t new_sync_read(struct file *filp, char __user *buf, size_t len, loff_t *ppos)
-{
-	struct iovec iov = { .iov_base = buf, .iov_len = len };
-	struct kiocb kiocb;
-	struct iov_iter iter;
-	ssize_t ret;
+अटल sमाप_प्रकार new_sync_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा iovec iov = अणु .iov_base = buf, .iov_len = len पूर्ण;
+	काष्ठा kiocb kiocb;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
 
 	init_sync_kiocb(&kiocb, filp);
 	kiocb.ki_pos = (ppos ? *ppos : 0);
 	iov_iter_init(&iter, READ, &iov, 1, len);
 
-	ret = call_read_iter(filp, &kiocb, &iter);
+	ret = call_पढ़ो_iter(filp, &kiocb, &iter);
 	BUG_ON(ret == -EIOCBQUEUED);
-	if (ppos)
+	अगर (ppos)
 		*ppos = kiocb.ki_pos;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int warn_unsupported(struct file *file, const char *op)
-{
+अटल पूर्णांक warn_unsupported(काष्ठा file *file, स्थिर अक्षर *op)
+अणु
 	pr_warn_ratelimited(
 		"kernel %s not supported for file %pD4 (pid: %d comm: %.20s)\n",
 		op, file, current->pid, current->comm);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-ssize_t __kernel_read(struct file *file, void *buf, size_t count, loff_t *pos)
-{
-	struct kvec iov = {
+sमाप_प्रकार __kernel_पढ़ो(काष्ठा file *file, व्योम *buf, माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा kvec iov = अणु
 		.iov_base	= buf,
-		.iov_len	= min_t(size_t, count, MAX_RW_COUNT),
-	};
-	struct kiocb kiocb;
-	struct iov_iter iter;
-	ssize_t ret;
+		.iov_len	= min_t(माप_प्रकार, count, MAX_RW_COUNT),
+	पूर्ण;
+	काष्ठा kiocb kiocb;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
 
-	if (WARN_ON_ONCE(!(file->f_mode & FMODE_READ)))
-		return -EINVAL;
-	if (!(file->f_mode & FMODE_CAN_READ))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(!(file->f_mode & FMODE_READ)))
+		वापस -EINVAL;
+	अगर (!(file->f_mode & FMODE_CAN_READ))
+		वापस -EINVAL;
 	/*
-	 * Also fail if ->read_iter and ->read are both wired up as that
+	 * Also fail अगर ->पढ़ो_iter and ->पढ़ो are both wired up as that
 	 * implies very convoluted semantics.
 	 */
-	if (unlikely(!file->f_op->read_iter || file->f_op->read))
-		return warn_unsupported(file, "read");
+	अगर (unlikely(!file->f_op->पढ़ो_iter || file->f_op->पढ़ो))
+		वापस warn_unsupported(file, "read");
 
 	init_sync_kiocb(&kiocb, file);
 	kiocb.ki_pos = pos ? *pos : 0;
 	iov_iter_kvec(&iter, READ, &iov, 1, iov.iov_len);
-	ret = file->f_op->read_iter(&kiocb, &iter);
-	if (ret > 0) {
-		if (pos)
+	ret = file->f_op->पढ़ो_iter(&kiocb, &iter);
+	अगर (ret > 0) अणु
+		अगर (pos)
 			*pos = kiocb.ki_pos;
-		fsnotify_access(file);
-		add_rchar(current, ret);
-	}
+		fsnotअगरy_access(file);
+		add_rअक्षर(current, ret);
+	पूर्ण
 	inc_syscr(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-ssize_t kernel_read(struct file *file, void *buf, size_t count, loff_t *pos)
-{
-	ssize_t ret;
+sमाप_प्रकार kernel_पढ़ो(काष्ठा file *file, व्योम *buf, माप_प्रकार count, loff_t *pos)
+अणु
+	sमाप_प्रकार ret;
 
-	ret = rw_verify_area(READ, file, pos, count);
-	if (ret)
-		return ret;
-	return __kernel_read(file, buf, count, pos);
-}
-EXPORT_SYMBOL(kernel_read);
+	ret = rw_verअगरy_area(READ, file, pos, count);
+	अगर (ret)
+		वापस ret;
+	वापस __kernel_पढ़ो(file, buf, count, pos);
+पूर्ण
+EXPORT_SYMBOL(kernel_पढ़ो);
 
-ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
-{
-	ssize_t ret;
+sमाप_प्रकार vfs_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count, loff_t *pos)
+अणु
+	sमाप_प्रकार ret;
 
-	if (!(file->f_mode & FMODE_READ))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_READ))
-		return -EINVAL;
-	if (unlikely(!access_ok(buf, count)))
-		return -EFAULT;
+	अगर (!(file->f_mode & FMODE_READ))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_READ))
+		वापस -EINVAL;
+	अगर (unlikely(!access_ok(buf, count)))
+		वापस -EFAULT;
 
-	ret = rw_verify_area(READ, file, pos, count);
-	if (ret)
-		return ret;
-	if (count > MAX_RW_COUNT)
+	ret = rw_verअगरy_area(READ, file, pos, count);
+	अगर (ret)
+		वापस ret;
+	अगर (count > MAX_RW_COUNT)
 		count =  MAX_RW_COUNT;
 
-	if (file->f_op->read)
-		ret = file->f_op->read(file, buf, count, pos);
-	else if (file->f_op->read_iter)
-		ret = new_sync_read(file, buf, count, pos);
-	else
+	अगर (file->f_op->पढ़ो)
+		ret = file->f_op->पढ़ो(file, buf, count, pos);
+	अन्यथा अगर (file->f_op->पढ़ो_iter)
+		ret = new_sync_पढ़ो(file, buf, count, pos);
+	अन्यथा
 		ret = -EINVAL;
-	if (ret > 0) {
-		fsnotify_access(file);
-		add_rchar(current, ret);
-	}
+	अगर (ret > 0) अणु
+		fsnotअगरy_access(file);
+		add_rअक्षर(current, ret);
+	पूर्ण
 	inc_syscr(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t new_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos)
-{
-	struct iovec iov = { .iov_base = (void __user *)buf, .iov_len = len };
-	struct kiocb kiocb;
-	struct iov_iter iter;
-	ssize_t ret;
+अटल sमाप_प्रकार new_sync_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf, माप_प्रकार len, loff_t *ppos)
+अणु
+	काष्ठा iovec iov = अणु .iov_base = (व्योम __user *)buf, .iov_len = len पूर्ण;
+	काष्ठा kiocb kiocb;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
 
 	init_sync_kiocb(&kiocb, filp);
 	kiocb.ki_pos = (ppos ? *ppos : 0);
 	iov_iter_init(&iter, WRITE, &iov, 1, len);
 
-	ret = call_write_iter(filp, &kiocb, &iter);
+	ret = call_ग_लिखो_iter(filp, &kiocb, &iter);
 	BUG_ON(ret == -EIOCBQUEUED);
-	if (ret > 0 && ppos)
+	अगर (ret > 0 && ppos)
 		*ppos = kiocb.ki_pos;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* caller is responsible for file_start_write/file_end_write */
-ssize_t __kernel_write(struct file *file, const void *buf, size_t count, loff_t *pos)
-{
-	struct kvec iov = {
-		.iov_base	= (void *)buf,
-		.iov_len	= min_t(size_t, count, MAX_RW_COUNT),
-	};
-	struct kiocb kiocb;
-	struct iov_iter iter;
-	ssize_t ret;
+/* caller is responsible क्रम file_start_ग_लिखो/file_end_ग_लिखो */
+sमाप_प्रकार __kernel_ग_लिखो(काष्ठा file *file, स्थिर व्योम *buf, माप_प्रकार count, loff_t *pos)
+अणु
+	काष्ठा kvec iov = अणु
+		.iov_base	= (व्योम *)buf,
+		.iov_len	= min_t(माप_प्रकार, count, MAX_RW_COUNT),
+	पूर्ण;
+	काष्ठा kiocb kiocb;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
 
-	if (WARN_ON_ONCE(!(file->f_mode & FMODE_WRITE)))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_WRITE))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(!(file->f_mode & FMODE_WRITE)))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_WRITE))
+		वापस -EINVAL;
 	/*
-	 * Also fail if ->write_iter and ->write are both wired up as that
+	 * Also fail अगर ->ग_लिखो_iter and ->ग_लिखो are both wired up as that
 	 * implies very convoluted semantics.
 	 */
-	if (unlikely(!file->f_op->write_iter || file->f_op->write))
-		return warn_unsupported(file, "write");
+	अगर (unlikely(!file->f_op->ग_लिखो_iter || file->f_op->ग_लिखो))
+		वापस warn_unsupported(file, "write");
 
 	init_sync_kiocb(&kiocb, file);
 	kiocb.ki_pos = pos ? *pos : 0;
 	iov_iter_kvec(&iter, WRITE, &iov, 1, iov.iov_len);
-	ret = file->f_op->write_iter(&kiocb, &iter);
-	if (ret > 0) {
-		if (pos)
+	ret = file->f_op->ग_लिखो_iter(&kiocb, &iter);
+	अगर (ret > 0) अणु
+		अगर (pos)
 			*pos = kiocb.ki_pos;
-		fsnotify_modify(file);
-		add_wchar(current, ret);
-	}
+		fsnotअगरy_modअगरy(file);
+		add_wअक्षर(current, ret);
+	पूर्ण
 	inc_syscw(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 /*
  * This "EXPORT_SYMBOL_GPL()" is more of a "EXPORT_SYMBOL_DONTUSE()",
- * but autofs is one of the few internal kernel users that actually
+ * but स्वतःfs is one of the few पूर्णांकernal kernel users that actually
  * wants this _and_ can be built as a module. So we need to export
- * this symbol for autofs, even though it really isn't appropriate
- * for any other kernel modules.
+ * this symbol क्रम स्वतःfs, even though it really isn't appropriate
+ * क्रम any other kernel modules.
  */
-EXPORT_SYMBOL_GPL(__kernel_write);
+EXPORT_SYMBOL_GPL(__kernel_ग_लिखो);
 
-ssize_t kernel_write(struct file *file, const void *buf, size_t count,
+sमाप_प्रकार kernel_ग_लिखो(काष्ठा file *file, स्थिर व्योम *buf, माप_प्रकार count,
 			    loff_t *pos)
-{
-	ssize_t ret;
+अणु
+	sमाप_प्रकार ret;
 
-	ret = rw_verify_area(WRITE, file, pos, count);
-	if (ret)
-		return ret;
+	ret = rw_verअगरy_area(WRITE, file, pos, count);
+	अगर (ret)
+		वापस ret;
 
-	file_start_write(file);
-	ret =  __kernel_write(file, buf, count, pos);
-	file_end_write(file);
-	return ret;
-}
-EXPORT_SYMBOL(kernel_write);
+	file_start_ग_लिखो(file);
+	ret =  __kernel_ग_लिखो(file, buf, count, pos);
+	file_end_ग_लिखो(file);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(kernel_ग_लिखो);
 
-ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
-{
-	ssize_t ret;
+sमाप_प्रकार vfs_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf, माप_प्रकार count, loff_t *pos)
+अणु
+	sमाप_प्रकार ret;
 
-	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_WRITE))
-		return -EINVAL;
-	if (unlikely(!access_ok(buf, count)))
-		return -EFAULT;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_WRITE))
+		वापस -EINVAL;
+	अगर (unlikely(!access_ok(buf, count)))
+		वापस -EFAULT;
 
-	ret = rw_verify_area(WRITE, file, pos, count);
-	if (ret)
-		return ret;
-	if (count > MAX_RW_COUNT)
+	ret = rw_verअगरy_area(WRITE, file, pos, count);
+	अगर (ret)
+		वापस ret;
+	अगर (count > MAX_RW_COUNT)
 		count =  MAX_RW_COUNT;
-	file_start_write(file);
-	if (file->f_op->write)
-		ret = file->f_op->write(file, buf, count, pos);
-	else if (file->f_op->write_iter)
-		ret = new_sync_write(file, buf, count, pos);
-	else
+	file_start_ग_लिखो(file);
+	अगर (file->f_op->ग_लिखो)
+		ret = file->f_op->ग_लिखो(file, buf, count, pos);
+	अन्यथा अगर (file->f_op->ग_लिखो_iter)
+		ret = new_sync_ग_लिखो(file, buf, count, pos);
+	अन्यथा
 		ret = -EINVAL;
-	if (ret > 0) {
-		fsnotify_modify(file);
-		add_wchar(current, ret);
-	}
+	अगर (ret > 0) अणु
+		fsnotअगरy_modअगरy(file);
+		add_wअक्षर(current, ret);
+	पूर्ण
 	inc_syscw(current);
-	file_end_write(file);
-	return ret;
-}
+	file_end_ग_लिखो(file);
+	वापस ret;
+पूर्ण
 
-/* file_ppos returns &file->f_pos or NULL if file is stream */
-static inline loff_t *file_ppos(struct file *file)
-{
-	return file->f_mode & FMODE_STREAM ? NULL : &file->f_pos;
-}
+/* file_ppos वापसs &file->f_pos or शून्य अगर file is stream */
+अटल अंतरभूत loff_t *file_ppos(काष्ठा file *file)
+अणु
+	वापस file->f_mode & FMODE_STREAM ? शून्य : &file->f_pos;
+पूर्ण
 
-ssize_t ksys_read(unsigned int fd, char __user *buf, size_t count)
-{
-	struct fd f = fdget_pos(fd);
-	ssize_t ret = -EBADF;
+sमाप_प्रकार ksys_पढ़ो(अचिन्हित पूर्णांक fd, अक्षर __user *buf, माप_प्रकार count)
+अणु
+	काष्ठा fd f = fdget_pos(fd);
+	sमाप_प्रकार ret = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		loff_t pos, *ppos = file_ppos(f.file);
-		if (ppos) {
+		अगर (ppos) अणु
 			pos = *ppos;
 			ppos = &pos;
-		}
-		ret = vfs_read(f.file, buf, count, ppos);
-		if (ret >= 0 && ppos)
+		पूर्ण
+		ret = vfs_पढ़ो(f.file, buf, count, ppos);
+		अगर (ret >= 0 && ppos)
 			f.file->f_pos = pos;
 		fdput_pos(f);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
-{
-	return ksys_read(fd, buf, count);
-}
+SYSCALL_DEFINE3(पढ़ो, अचिन्हित पूर्णांक, fd, अक्षर __user *, buf, माप_प्रकार, count)
+अणु
+	वापस ksys_पढ़ो(fd, buf, count);
+पूर्ण
 
-ssize_t ksys_write(unsigned int fd, const char __user *buf, size_t count)
-{
-	struct fd f = fdget_pos(fd);
-	ssize_t ret = -EBADF;
+sमाप_प्रकार ksys_ग_लिखो(अचिन्हित पूर्णांक fd, स्थिर अक्षर __user *buf, माप_प्रकार count)
+अणु
+	काष्ठा fd f = fdget_pos(fd);
+	sमाप_प्रकार ret = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		loff_t pos, *ppos = file_ppos(f.file);
-		if (ppos) {
+		अगर (ppos) अणु
 			pos = *ppos;
 			ppos = &pos;
-		}
-		ret = vfs_write(f.file, buf, count, ppos);
-		if (ret >= 0 && ppos)
+		पूर्ण
+		ret = vfs_ग_लिखो(f.file, buf, count, ppos);
+		अगर (ret >= 0 && ppos)
 			f.file->f_pos = pos;
 		fdput_pos(f);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf,
-		size_t, count)
-{
-	return ksys_write(fd, buf, count);
-}
+SYSCALL_DEFINE3(ग_लिखो, अचिन्हित पूर्णांक, fd, स्थिर अक्षर __user *, buf,
+		माप_प्रकार, count)
+अणु
+	वापस ksys_ग_लिखो(fd, buf, count);
+पूर्ण
 
-ssize_t ksys_pread64(unsigned int fd, char __user *buf, size_t count,
+sमाप_प्रकार ksys_pपढ़ो64(अचिन्हित पूर्णांक fd, अक्षर __user *buf, माप_प्रकार count,
 		     loff_t pos)
-{
-	struct fd f;
-	ssize_t ret = -EBADF;
+अणु
+	काष्ठा fd f;
+	sमाप_प्रकार ret = -EBADF;
 
-	if (pos < 0)
-		return -EINVAL;
-
-	f = fdget(fd);
-	if (f.file) {
-		ret = -ESPIPE;
-		if (f.file->f_mode & FMODE_PREAD)
-			ret = vfs_read(f.file, buf, count, &pos);
-		fdput(f);
-	}
-
-	return ret;
-}
-
-SYSCALL_DEFINE4(pread64, unsigned int, fd, char __user *, buf,
-			size_t, count, loff_t, pos)
-{
-	return ksys_pread64(fd, buf, count, pos);
-}
-
-ssize_t ksys_pwrite64(unsigned int fd, const char __user *buf,
-		      size_t count, loff_t pos)
-{
-	struct fd f;
-	ssize_t ret = -EBADF;
-
-	if (pos < 0)
-		return -EINVAL;
+	अगर (pos < 0)
+		वापस -EINVAL;
 
 	f = fdget(fd);
-	if (f.file) {
+	अगर (f.file) अणु
 		ret = -ESPIPE;
-		if (f.file->f_mode & FMODE_PWRITE)  
-			ret = vfs_write(f.file, buf, count, &pos);
+		अगर (f.file->f_mode & FMODE_PREAD)
+			ret = vfs_पढ़ो(f.file, buf, count, &pos);
 		fdput(f);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE4(pwrite64, unsigned int, fd, const char __user *, buf,
-			 size_t, count, loff_t, pos)
-{
-	return ksys_pwrite64(fd, buf, count, pos);
-}
+SYSCALL_DEFINE4(pपढ़ो64, अचिन्हित पूर्णांक, fd, अक्षर __user *, buf,
+			माप_प्रकार, count, loff_t, pos)
+अणु
+	वापस ksys_pपढ़ो64(fd, buf, count, pos);
+पूर्ण
 
-static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
-		loff_t *ppos, int type, rwf_t flags)
-{
-	struct kiocb kiocb;
-	ssize_t ret;
+sमाप_प्रकार ksys_pग_लिखो64(अचिन्हित पूर्णांक fd, स्थिर अक्षर __user *buf,
+		      माप_प्रकार count, loff_t pos)
+अणु
+	काष्ठा fd f;
+	sमाप_प्रकार ret = -EBADF;
+
+	अगर (pos < 0)
+		वापस -EINVAL;
+
+	f = fdget(fd);
+	अगर (f.file) अणु
+		ret = -ESPIPE;
+		अगर (f.file->f_mode & FMODE_PWRITE)  
+			ret = vfs_ग_लिखो(f.file, buf, count, &pos);
+		fdput(f);
+	पूर्ण
+
+	वापस ret;
+पूर्ण
+
+SYSCALL_DEFINE4(pग_लिखो64, अचिन्हित पूर्णांक, fd, स्थिर अक्षर __user *, buf,
+			 माप_प्रकार, count, loff_t, pos)
+अणु
+	वापस ksys_pग_लिखो64(fd, buf, count, pos);
+पूर्ण
+
+अटल sमाप_प्रकार करो_iter_पढ़ोv_ग_लिखोv(काष्ठा file *filp, काष्ठा iov_iter *iter,
+		loff_t *ppos, पूर्णांक type, rwf_t flags)
+अणु
+	काष्ठा kiocb kiocb;
+	sमाप_प्रकार ret;
 
 	init_sync_kiocb(&kiocb, filp);
 	ret = kiocb_set_rw_flags(&kiocb, flags);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	kiocb.ki_pos = (ppos ? *ppos : 0);
 
-	if (type == READ)
-		ret = call_read_iter(filp, &kiocb, iter);
-	else
-		ret = call_write_iter(filp, &kiocb, iter);
+	अगर (type == READ)
+		ret = call_पढ़ो_iter(filp, &kiocb, iter);
+	अन्यथा
+		ret = call_ग_लिखो_iter(filp, &kiocb, iter);
 	BUG_ON(ret == -EIOCBQUEUED);
-	if (ppos)
+	अगर (ppos)
 		*ppos = kiocb.ki_pos;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Do it by hand, with file-ops */
-static ssize_t do_loop_readv_writev(struct file *filp, struct iov_iter *iter,
-		loff_t *ppos, int type, rwf_t flags)
-{
-	ssize_t ret = 0;
+अटल sमाप_प्रकार करो_loop_पढ़ोv_ग_लिखोv(काष्ठा file *filp, काष्ठा iov_iter *iter,
+		loff_t *ppos, पूर्णांक type, rwf_t flags)
+अणु
+	sमाप_प्रकार ret = 0;
 
-	if (flags & ~RWF_HIPRI)
-		return -EOPNOTSUPP;
+	अगर (flags & ~RWF_HIPRI)
+		वापस -EOPNOTSUPP;
 
-	while (iov_iter_count(iter)) {
-		struct iovec iovec = iov_iter_iovec(iter);
-		ssize_t nr;
+	जबतक (iov_iter_count(iter)) अणु
+		काष्ठा iovec iovec = iov_iter_iovec(iter);
+		sमाप_प्रकार nr;
 
-		if (type == READ) {
-			nr = filp->f_op->read(filp, iovec.iov_base,
+		अगर (type == READ) अणु
+			nr = filp->f_op->पढ़ो(filp, iovec.iov_base,
 					      iovec.iov_len, ppos);
-		} else {
-			nr = filp->f_op->write(filp, iovec.iov_base,
+		पूर्ण अन्यथा अणु
+			nr = filp->f_op->ग_लिखो(filp, iovec.iov_base,
 					       iovec.iov_len, ppos);
-		}
+		पूर्ण
 
-		if (nr < 0) {
-			if (!ret)
+		अगर (nr < 0) अणु
+			अगर (!ret)
 				ret = nr;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		ret += nr;
-		if (nr != iovec.iov_len)
-			break;
+		अगर (nr != iovec.iov_len)
+			अवरोध;
 		iov_iter_advance(iter, nr);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t do_iter_read(struct file *file, struct iov_iter *iter,
+अटल sमाप_प्रकार करो_iter_पढ़ो(काष्ठा file *file, काष्ठा iov_iter *iter,
 		loff_t *pos, rwf_t flags)
-{
-	size_t tot_len;
-	ssize_t ret = 0;
+अणु
+	माप_प्रकार tot_len;
+	sमाप_प्रकार ret = 0;
 
-	if (!(file->f_mode & FMODE_READ))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_READ))
-		return -EINVAL;
-
-	tot_len = iov_iter_count(iter);
-	if (!tot_len)
-		goto out;
-	ret = rw_verify_area(READ, file, pos, tot_len);
-	if (ret < 0)
-		return ret;
-
-	if (file->f_op->read_iter)
-		ret = do_iter_readv_writev(file, iter, pos, READ, flags);
-	else
-		ret = do_loop_readv_writev(file, iter, pos, READ, flags);
-out:
-	if (ret >= 0)
-		fsnotify_access(file);
-	return ret;
-}
-
-ssize_t vfs_iocb_iter_read(struct file *file, struct kiocb *iocb,
-			   struct iov_iter *iter)
-{
-	size_t tot_len;
-	ssize_t ret = 0;
-
-	if (!file->f_op->read_iter)
-		return -EINVAL;
-	if (!(file->f_mode & FMODE_READ))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_READ))
-		return -EINVAL;
+	अगर (!(file->f_mode & FMODE_READ))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_READ))
+		वापस -EINVAL;
 
 	tot_len = iov_iter_count(iter);
-	if (!tot_len)
-		goto out;
-	ret = rw_verify_area(READ, file, &iocb->ki_pos, tot_len);
-	if (ret < 0)
-		return ret;
+	अगर (!tot_len)
+		जाओ out;
+	ret = rw_verअगरy_area(READ, file, pos, tot_len);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = call_read_iter(file, iocb, iter);
+	अगर (file->f_op->पढ़ो_iter)
+		ret = करो_iter_पढ़ोv_ग_लिखोv(file, iter, pos, READ, flags);
+	अन्यथा
+		ret = करो_loop_पढ़ोv_ग_लिखोv(file, iter, pos, READ, flags);
 out:
-	if (ret >= 0)
-		fsnotify_access(file);
-	return ret;
-}
-EXPORT_SYMBOL(vfs_iocb_iter_read);
+	अगर (ret >= 0)
+		fsnotअगरy_access(file);
+	वापस ret;
+पूर्ण
 
-ssize_t vfs_iter_read(struct file *file, struct iov_iter *iter, loff_t *ppos,
+sमाप_प्रकार vfs_iocb_iter_पढ़ो(काष्ठा file *file, काष्ठा kiocb *iocb,
+			   काष्ठा iov_iter *iter)
+अणु
+	माप_प्रकार tot_len;
+	sमाप_प्रकार ret = 0;
+
+	अगर (!file->f_op->पढ़ो_iter)
+		वापस -EINVAL;
+	अगर (!(file->f_mode & FMODE_READ))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_READ))
+		वापस -EINVAL;
+
+	tot_len = iov_iter_count(iter);
+	अगर (!tot_len)
+		जाओ out;
+	ret = rw_verअगरy_area(READ, file, &iocb->ki_pos, tot_len);
+	अगर (ret < 0)
+		वापस ret;
+
+	ret = call_पढ़ो_iter(file, iocb, iter);
+out:
+	अगर (ret >= 0)
+		fsnotअगरy_access(file);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(vfs_iocb_iter_पढ़ो);
+
+sमाप_प्रकार vfs_iter_पढ़ो(काष्ठा file *file, काष्ठा iov_iter *iter, loff_t *ppos,
 		rwf_t flags)
-{
-	if (!file->f_op->read_iter)
-		return -EINVAL;
-	return do_iter_read(file, iter, ppos, flags);
-}
-EXPORT_SYMBOL(vfs_iter_read);
+अणु
+	अगर (!file->f_op->पढ़ो_iter)
+		वापस -EINVAL;
+	वापस करो_iter_पढ़ो(file, iter, ppos, flags);
+पूर्ण
+EXPORT_SYMBOL(vfs_iter_पढ़ो);
 
-static ssize_t do_iter_write(struct file *file, struct iov_iter *iter,
+अटल sमाप_प्रकार करो_iter_ग_लिखो(काष्ठा file *file, काष्ठा iov_iter *iter,
 		loff_t *pos, rwf_t flags)
-{
-	size_t tot_len;
-	ssize_t ret = 0;
+अणु
+	माप_प्रकार tot_len;
+	sमाप_प्रकार ret = 0;
 
-	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_WRITE))
-		return -EINVAL;
-
-	tot_len = iov_iter_count(iter);
-	if (!tot_len)
-		return 0;
-	ret = rw_verify_area(WRITE, file, pos, tot_len);
-	if (ret < 0)
-		return ret;
-
-	if (file->f_op->write_iter)
-		ret = do_iter_readv_writev(file, iter, pos, WRITE, flags);
-	else
-		ret = do_loop_readv_writev(file, iter, pos, WRITE, flags);
-	if (ret > 0)
-		fsnotify_modify(file);
-	return ret;
-}
-
-ssize_t vfs_iocb_iter_write(struct file *file, struct kiocb *iocb,
-			    struct iov_iter *iter)
-{
-	size_t tot_len;
-	ssize_t ret = 0;
-
-	if (!file->f_op->write_iter)
-		return -EINVAL;
-	if (!(file->f_mode & FMODE_WRITE))
-		return -EBADF;
-	if (!(file->f_mode & FMODE_CAN_WRITE))
-		return -EINVAL;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_WRITE))
+		वापस -EINVAL;
 
 	tot_len = iov_iter_count(iter);
-	if (!tot_len)
-		return 0;
-	ret = rw_verify_area(WRITE, file, &iocb->ki_pos, tot_len);
-	if (ret < 0)
-		return ret;
+	अगर (!tot_len)
+		वापस 0;
+	ret = rw_verअगरy_area(WRITE, file, pos, tot_len);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = call_write_iter(file, iocb, iter);
-	if (ret > 0)
-		fsnotify_modify(file);
+	अगर (file->f_op->ग_लिखो_iter)
+		ret = करो_iter_पढ़ोv_ग_लिखोv(file, iter, pos, WRITE, flags);
+	अन्यथा
+		ret = करो_loop_पढ़ोv_ग_लिखोv(file, iter, pos, WRITE, flags);
+	अगर (ret > 0)
+		fsnotअगरy_modअगरy(file);
+	वापस ret;
+पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(vfs_iocb_iter_write);
+sमाप_प्रकार vfs_iocb_iter_ग_लिखो(काष्ठा file *file, काष्ठा kiocb *iocb,
+			    काष्ठा iov_iter *iter)
+अणु
+	माप_प्रकार tot_len;
+	sमाप_प्रकार ret = 0;
 
-ssize_t vfs_iter_write(struct file *file, struct iov_iter *iter, loff_t *ppos,
+	अगर (!file->f_op->ग_लिखो_iter)
+		वापस -EINVAL;
+	अगर (!(file->f_mode & FMODE_WRITE))
+		वापस -EBADF;
+	अगर (!(file->f_mode & FMODE_CAN_WRITE))
+		वापस -EINVAL;
+
+	tot_len = iov_iter_count(iter);
+	अगर (!tot_len)
+		वापस 0;
+	ret = rw_verअगरy_area(WRITE, file, &iocb->ki_pos, tot_len);
+	अगर (ret < 0)
+		वापस ret;
+
+	ret = call_ग_लिखो_iter(file, iocb, iter);
+	अगर (ret > 0)
+		fsnotअगरy_modअगरy(file);
+
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(vfs_iocb_iter_ग_लिखो);
+
+sमाप_प्रकार vfs_iter_ग_लिखो(काष्ठा file *file, काष्ठा iov_iter *iter, loff_t *ppos,
 		rwf_t flags)
-{
-	if (!file->f_op->write_iter)
-		return -EINVAL;
-	return do_iter_write(file, iter, ppos, flags);
-}
-EXPORT_SYMBOL(vfs_iter_write);
+अणु
+	अगर (!file->f_op->ग_लिखो_iter)
+		वापस -EINVAL;
+	वापस करो_iter_ग_लिखो(file, iter, ppos, flags);
+पूर्ण
+EXPORT_SYMBOL(vfs_iter_ग_लिखो);
 
-static ssize_t vfs_readv(struct file *file, const struct iovec __user *vec,
-		  unsigned long vlen, loff_t *pos, rwf_t flags)
-{
-	struct iovec iovstack[UIO_FASTIOV];
-	struct iovec *iov = iovstack;
-	struct iov_iter iter;
-	ssize_t ret;
+अटल sमाप_प्रकार vfs_पढ़ोv(काष्ठा file *file, स्थिर काष्ठा iovec __user *vec,
+		  अचिन्हित दीर्घ vlen, loff_t *pos, rwf_t flags)
+अणु
+	काष्ठा iovec iovstack[UIO_FASTIOV];
+	काष्ठा iovec *iov = iovstack;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
 
 	ret = import_iovec(READ, vec, vlen, ARRAY_SIZE(iovstack), &iov, &iter);
-	if (ret >= 0) {
-		ret = do_iter_read(file, &iter, pos, flags);
-		kfree(iov);
-	}
+	अगर (ret >= 0) अणु
+		ret = करो_iter_पढ़ो(file, &iter, pos, flags);
+		kमुक्त(iov);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t vfs_writev(struct file *file, const struct iovec __user *vec,
-		   unsigned long vlen, loff_t *pos, rwf_t flags)
-{
-	struct iovec iovstack[UIO_FASTIOV];
-	struct iovec *iov = iovstack;
-	struct iov_iter iter;
-	ssize_t ret;
+अटल sमाप_प्रकार vfs_ग_लिखोv(काष्ठा file *file, स्थिर काष्ठा iovec __user *vec,
+		   अचिन्हित दीर्घ vlen, loff_t *pos, rwf_t flags)
+अणु
+	काष्ठा iovec iovstack[UIO_FASTIOV];
+	काष्ठा iovec *iov = iovstack;
+	काष्ठा iov_iter iter;
+	sमाप_प्रकार ret;
 
 	ret = import_iovec(WRITE, vec, vlen, ARRAY_SIZE(iovstack), &iov, &iter);
-	if (ret >= 0) {
-		file_start_write(file);
-		ret = do_iter_write(file, &iter, pos, flags);
-		file_end_write(file);
-		kfree(iov);
-	}
-	return ret;
-}
+	अगर (ret >= 0) अणु
+		file_start_ग_लिखो(file);
+		ret = करो_iter_ग_लिखो(file, &iter, pos, flags);
+		file_end_ग_लिखो(file);
+		kमुक्त(iov);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static ssize_t do_readv(unsigned long fd, const struct iovec __user *vec,
-			unsigned long vlen, rwf_t flags)
-{
-	struct fd f = fdget_pos(fd);
-	ssize_t ret = -EBADF;
+अटल sमाप_प्रकार करो_पढ़ोv(अचिन्हित दीर्घ fd, स्थिर काष्ठा iovec __user *vec,
+			अचिन्हित दीर्घ vlen, rwf_t flags)
+अणु
+	काष्ठा fd f = fdget_pos(fd);
+	sमाप_प्रकार ret = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		loff_t pos, *ppos = file_ppos(f.file);
-		if (ppos) {
+		अगर (ppos) अणु
 			pos = *ppos;
 			ppos = &pos;
-		}
-		ret = vfs_readv(f.file, vec, vlen, ppos, flags);
-		if (ret >= 0 && ppos)
+		पूर्ण
+		ret = vfs_पढ़ोv(f.file, vec, vlen, ppos, flags);
+		अगर (ret >= 0 && ppos)
 			f.file->f_pos = pos;
 		fdput_pos(f);
-	}
+	पूर्ण
 
-	if (ret > 0)
-		add_rchar(current, ret);
+	अगर (ret > 0)
+		add_rअक्षर(current, ret);
 	inc_syscr(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t do_writev(unsigned long fd, const struct iovec __user *vec,
-			 unsigned long vlen, rwf_t flags)
-{
-	struct fd f = fdget_pos(fd);
-	ssize_t ret = -EBADF;
+अटल sमाप_प्रकार करो_ग_लिखोv(अचिन्हित दीर्घ fd, स्थिर काष्ठा iovec __user *vec,
+			 अचिन्हित दीर्घ vlen, rwf_t flags)
+अणु
+	काष्ठा fd f = fdget_pos(fd);
+	sमाप_प्रकार ret = -EBADF;
 
-	if (f.file) {
+	अगर (f.file) अणु
 		loff_t pos, *ppos = file_ppos(f.file);
-		if (ppos) {
+		अगर (ppos) अणु
 			pos = *ppos;
 			ppos = &pos;
-		}
-		ret = vfs_writev(f.file, vec, vlen, ppos, flags);
-		if (ret >= 0 && ppos)
+		पूर्ण
+		ret = vfs_ग_लिखोv(f.file, vec, vlen, ppos, flags);
+		अगर (ret >= 0 && ppos)
 			f.file->f_pos = pos;
 		fdput_pos(f);
-	}
+	पूर्ण
 
-	if (ret > 0)
-		add_wchar(current, ret);
+	अगर (ret > 0)
+		add_wअक्षर(current, ret);
 	inc_syscw(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline loff_t pos_from_hilo(unsigned long high, unsigned long low)
-{
-#define HALF_LONG_BITS (BITS_PER_LONG / 2)
-	return (((loff_t)high << HALF_LONG_BITS) << HALF_LONG_BITS) | low;
-}
+अटल अंतरभूत loff_t pos_from_hilo(अचिन्हित दीर्घ high, अचिन्हित दीर्घ low)
+अणु
+#घोषणा HALF_LONG_BITS (BITS_PER_LONG / 2)
+	वापस (((loff_t)high << HALF_LONG_BITS) << HALF_LONG_BITS) | low;
+पूर्ण
 
-static ssize_t do_preadv(unsigned long fd, const struct iovec __user *vec,
-			 unsigned long vlen, loff_t pos, rwf_t flags)
-{
-	struct fd f;
-	ssize_t ret = -EBADF;
+अटल sमाप_प्रकार करो_pपढ़ोv(अचिन्हित दीर्घ fd, स्थिर काष्ठा iovec __user *vec,
+			 अचिन्हित दीर्घ vlen, loff_t pos, rwf_t flags)
+अणु
+	काष्ठा fd f;
+	sमाप_प्रकार ret = -EBADF;
 
-	if (pos < 0)
-		return -EINVAL;
+	अगर (pos < 0)
+		वापस -EINVAL;
 
 	f = fdget(fd);
-	if (f.file) {
+	अगर (f.file) अणु
 		ret = -ESPIPE;
-		if (f.file->f_mode & FMODE_PREAD)
-			ret = vfs_readv(f.file, vec, vlen, &pos, flags);
+		अगर (f.file->f_mode & FMODE_PREAD)
+			ret = vfs_पढ़ोv(f.file, vec, vlen, &pos, flags);
 		fdput(f);
-	}
+	पूर्ण
 
-	if (ret > 0)
-		add_rchar(current, ret);
+	अगर (ret > 0)
+		add_rअक्षर(current, ret);
 	inc_syscr(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t do_pwritev(unsigned long fd, const struct iovec __user *vec,
-			  unsigned long vlen, loff_t pos, rwf_t flags)
-{
-	struct fd f;
-	ssize_t ret = -EBADF;
+अटल sमाप_प्रकार करो_pग_लिखोv(अचिन्हित दीर्घ fd, स्थिर काष्ठा iovec __user *vec,
+			  अचिन्हित दीर्घ vlen, loff_t pos, rwf_t flags)
+अणु
+	काष्ठा fd f;
+	sमाप_प्रकार ret = -EBADF;
 
-	if (pos < 0)
-		return -EINVAL;
+	अगर (pos < 0)
+		वापस -EINVAL;
 
 	f = fdget(fd);
-	if (f.file) {
+	अगर (f.file) अणु
 		ret = -ESPIPE;
-		if (f.file->f_mode & FMODE_PWRITE)
-			ret = vfs_writev(f.file, vec, vlen, &pos, flags);
+		अगर (f.file->f_mode & FMODE_PWRITE)
+			ret = vfs_ग_लिखोv(f.file, vec, vlen, &pos, flags);
 		fdput(f);
-	}
+	पूर्ण
 
-	if (ret > 0)
-		add_wchar(current, ret);
+	अगर (ret > 0)
+		add_wअक्षर(current, ret);
 	inc_syscw(current);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE3(readv, unsigned long, fd, const struct iovec __user *, vec,
-		unsigned long, vlen)
-{
-	return do_readv(fd, vec, vlen, 0);
-}
+SYSCALL_DEFINE3(पढ़ोv, अचिन्हित दीर्घ, fd, स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen)
+अणु
+	वापस करो_पढ़ोv(fd, vec, vlen, 0);
+पूर्ण
 
-SYSCALL_DEFINE3(writev, unsigned long, fd, const struct iovec __user *, vec,
-		unsigned long, vlen)
-{
-	return do_writev(fd, vec, vlen, 0);
-}
+SYSCALL_DEFINE3(ग_लिखोv, अचिन्हित दीर्घ, fd, स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen)
+अणु
+	वापस करो_ग_लिखोv(fd, vec, vlen, 0);
+पूर्ण
 
-SYSCALL_DEFINE5(preadv, unsigned long, fd, const struct iovec __user *, vec,
-		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h)
-{
+SYSCALL_DEFINE5(pपढ़ोv, अचिन्हित दीर्घ, fd, स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, अचिन्हित दीर्घ, pos_l, अचिन्हित दीर्घ, pos_h)
+अणु
 	loff_t pos = pos_from_hilo(pos_h, pos_l);
 
-	return do_preadv(fd, vec, vlen, pos, 0);
-}
+	वापस करो_pपढ़ोv(fd, vec, vlen, pos, 0);
+पूर्ण
 
-SYSCALL_DEFINE6(preadv2, unsigned long, fd, const struct iovec __user *, vec,
-		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h,
+SYSCALL_DEFINE6(pपढ़ोv2, अचिन्हित दीर्घ, fd, स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, अचिन्हित दीर्घ, pos_l, अचिन्हित दीर्घ, pos_h,
 		rwf_t, flags)
-{
+अणु
 	loff_t pos = pos_from_hilo(pos_h, pos_l);
 
-	if (pos == -1)
-		return do_readv(fd, vec, vlen, flags);
+	अगर (pos == -1)
+		वापस करो_पढ़ोv(fd, vec, vlen, flags);
 
-	return do_preadv(fd, vec, vlen, pos, flags);
-}
+	वापस करो_pपढ़ोv(fd, vec, vlen, pos, flags);
+पूर्ण
 
-SYSCALL_DEFINE5(pwritev, unsigned long, fd, const struct iovec __user *, vec,
-		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h)
-{
+SYSCALL_DEFINE5(pग_लिखोv, अचिन्हित दीर्घ, fd, स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, अचिन्हित दीर्घ, pos_l, अचिन्हित दीर्घ, pos_h)
+अणु
 	loff_t pos = pos_from_hilo(pos_h, pos_l);
 
-	return do_pwritev(fd, vec, vlen, pos, 0);
-}
+	वापस करो_pग_लिखोv(fd, vec, vlen, pos, 0);
+पूर्ण
 
-SYSCALL_DEFINE6(pwritev2, unsigned long, fd, const struct iovec __user *, vec,
-		unsigned long, vlen, unsigned long, pos_l, unsigned long, pos_h,
+SYSCALL_DEFINE6(pग_लिखोv2, अचिन्हित दीर्घ, fd, स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, अचिन्हित दीर्घ, pos_l, अचिन्हित दीर्घ, pos_h,
 		rwf_t, flags)
-{
+अणु
 	loff_t pos = pos_from_hilo(pos_h, pos_l);
 
-	if (pos == -1)
-		return do_writev(fd, vec, vlen, flags);
+	अगर (pos == -1)
+		वापस करो_ग_लिखोv(fd, vec, vlen, flags);
 
-	return do_pwritev(fd, vec, vlen, pos, flags);
-}
+	वापस करो_pग_लिखोv(fd, vec, vlen, pos, flags);
+पूर्ण
 
 /*
  * Various compat syscalls.  Note that they all pretend to take a native
  * iovec - import_iovec will properly treat those as compat_iovecs based on
  * in_compat_syscall().
  */
-#ifdef CONFIG_COMPAT
-#ifdef __ARCH_WANT_COMPAT_SYS_PREADV64
-COMPAT_SYSCALL_DEFINE4(preadv64, unsigned long, fd,
-		const struct iovec __user *, vec,
-		unsigned long, vlen, loff_t, pos)
-{
-	return do_preadv(fd, vec, vlen, pos, 0);
-}
-#endif
+#अगर_घोषित CONFIG_COMPAT
+#अगर_घोषित __ARCH_WANT_COMPAT_SYS_PREADV64
+COMPAT_SYSCALL_DEFINE4(pपढ़ोv64, अचिन्हित दीर्घ, fd,
+		स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, loff_t, pos)
+अणु
+	वापस करो_pपढ़ोv(fd, vec, vlen, pos, 0);
+पूर्ण
+#पूर्ण_अगर
 
-COMPAT_SYSCALL_DEFINE5(preadv, compat_ulong_t, fd,
-		const struct iovec __user *, vec,
-		compat_ulong_t, vlen, u32, pos_low, u32, pos_high)
-{
+COMPAT_SYSCALL_DEFINE5(pपढ़ोv, compat_uदीर्घ_t, fd,
+		स्थिर काष्ठा iovec __user *, vec,
+		compat_uदीर्घ_t, vlen, u32, pos_low, u32, pos_high)
+अणु
 	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
 
-	return do_preadv(fd, vec, vlen, pos, 0);
-}
+	वापस करो_pपढ़ोv(fd, vec, vlen, pos, 0);
+पूर्ण
 
-#ifdef __ARCH_WANT_COMPAT_SYS_PREADV64V2
-COMPAT_SYSCALL_DEFINE5(preadv64v2, unsigned long, fd,
-		const struct iovec __user *, vec,
-		unsigned long, vlen, loff_t, pos, rwf_t, flags)
-{
-	if (pos == -1)
-		return do_readv(fd, vec, vlen, flags);
-	return do_preadv(fd, vec, vlen, pos, flags);
-}
-#endif
+#अगर_घोषित __ARCH_WANT_COMPAT_SYS_PREADV64V2
+COMPAT_SYSCALL_DEFINE5(pपढ़ोv64v2, अचिन्हित दीर्घ, fd,
+		स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, loff_t, pos, rwf_t, flags)
+अणु
+	अगर (pos == -1)
+		वापस करो_पढ़ोv(fd, vec, vlen, flags);
+	वापस करो_pपढ़ोv(fd, vec, vlen, pos, flags);
+पूर्ण
+#पूर्ण_अगर
 
-COMPAT_SYSCALL_DEFINE6(preadv2, compat_ulong_t, fd,
-		const struct iovec __user *, vec,
-		compat_ulong_t, vlen, u32, pos_low, u32, pos_high,
+COMPAT_SYSCALL_DEFINE6(pपढ़ोv2, compat_uदीर्घ_t, fd,
+		स्थिर काष्ठा iovec __user *, vec,
+		compat_uदीर्घ_t, vlen, u32, pos_low, u32, pos_high,
 		rwf_t, flags)
-{
+अणु
 	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
 
-	if (pos == -1)
-		return do_readv(fd, vec, vlen, flags);
-	return do_preadv(fd, vec, vlen, pos, flags);
-}
+	अगर (pos == -1)
+		वापस करो_पढ़ोv(fd, vec, vlen, flags);
+	वापस करो_pपढ़ोv(fd, vec, vlen, pos, flags);
+पूर्ण
 
-#ifdef __ARCH_WANT_COMPAT_SYS_PWRITEV64
-COMPAT_SYSCALL_DEFINE4(pwritev64, unsigned long, fd,
-		const struct iovec __user *, vec,
-		unsigned long, vlen, loff_t, pos)
-{
-	return do_pwritev(fd, vec, vlen, pos, 0);
-}
-#endif
+#अगर_घोषित __ARCH_WANT_COMPAT_SYS_PWRITEV64
+COMPAT_SYSCALL_DEFINE4(pग_लिखोv64, अचिन्हित दीर्घ, fd,
+		स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, loff_t, pos)
+अणु
+	वापस करो_pग_लिखोv(fd, vec, vlen, pos, 0);
+पूर्ण
+#पूर्ण_अगर
 
-COMPAT_SYSCALL_DEFINE5(pwritev, compat_ulong_t, fd,
-		const struct iovec __user *,vec,
-		compat_ulong_t, vlen, u32, pos_low, u32, pos_high)
-{
+COMPAT_SYSCALL_DEFINE5(pग_लिखोv, compat_uदीर्घ_t, fd,
+		स्थिर काष्ठा iovec __user *,vec,
+		compat_uदीर्घ_t, vlen, u32, pos_low, u32, pos_high)
+अणु
 	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
 
-	return do_pwritev(fd, vec, vlen, pos, 0);
-}
+	वापस करो_pग_लिखोv(fd, vec, vlen, pos, 0);
+पूर्ण
 
-#ifdef __ARCH_WANT_COMPAT_SYS_PWRITEV64V2
-COMPAT_SYSCALL_DEFINE5(pwritev64v2, unsigned long, fd,
-		const struct iovec __user *, vec,
-		unsigned long, vlen, loff_t, pos, rwf_t, flags)
-{
-	if (pos == -1)
-		return do_writev(fd, vec, vlen, flags);
-	return do_pwritev(fd, vec, vlen, pos, flags);
-}
-#endif
+#अगर_घोषित __ARCH_WANT_COMPAT_SYS_PWRITEV64V2
+COMPAT_SYSCALL_DEFINE5(pग_लिखोv64v2, अचिन्हित दीर्घ, fd,
+		स्थिर काष्ठा iovec __user *, vec,
+		अचिन्हित दीर्घ, vlen, loff_t, pos, rwf_t, flags)
+अणु
+	अगर (pos == -1)
+		वापस करो_ग_लिखोv(fd, vec, vlen, flags);
+	वापस करो_pग_लिखोv(fd, vec, vlen, pos, flags);
+पूर्ण
+#पूर्ण_अगर
 
-COMPAT_SYSCALL_DEFINE6(pwritev2, compat_ulong_t, fd,
-		const struct iovec __user *,vec,
-		compat_ulong_t, vlen, u32, pos_low, u32, pos_high, rwf_t, flags)
-{
+COMPAT_SYSCALL_DEFINE6(pग_लिखोv2, compat_uदीर्घ_t, fd,
+		स्थिर काष्ठा iovec __user *,vec,
+		compat_uदीर्घ_t, vlen, u32, pos_low, u32, pos_high, rwf_t, flags)
+अणु
 	loff_t pos = ((loff_t)pos_high << 32) | pos_low;
 
-	if (pos == -1)
-		return do_writev(fd, vec, vlen, flags);
-	return do_pwritev(fd, vec, vlen, pos, flags);
-}
-#endif /* CONFIG_COMPAT */
+	अगर (pos == -1)
+		वापस करो_ग_लिखोv(fd, vec, vlen, flags);
+	वापस करो_pग_लिखोv(fd, vec, vlen, pos, flags);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
-static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
-		  	   size_t count, loff_t max)
-{
-	struct fd in, out;
-	struct inode *in_inode, *out_inode;
-	struct pipe_inode_info *opipe;
+अटल sमाप_प्रकार करो_sendfile(पूर्णांक out_fd, पूर्णांक in_fd, loff_t *ppos,
+		  	   माप_प्रकार count, loff_t max)
+अणु
+	काष्ठा fd in, out;
+	काष्ठा inode *in_inode, *out_inode;
+	काष्ठा pipe_inode_info *opipe;
 	loff_t pos;
 	loff_t out_pos;
-	ssize_t retval;
-	int fl;
+	sमाप_प्रकार retval;
+	पूर्णांक fl;
 
 	/*
-	 * Get input file, and verify that it is ok..
+	 * Get input file, and verअगरy that it is ok..
 	 */
 	retval = -EBADF;
 	in = fdget(in_fd);
-	if (!in.file)
-		goto out;
-	if (!(in.file->f_mode & FMODE_READ))
-		goto fput_in;
+	अगर (!in.file)
+		जाओ out;
+	अगर (!(in.file->f_mode & FMODE_READ))
+		जाओ fput_in;
 	retval = -ESPIPE;
-	if (!ppos) {
+	अगर (!ppos) अणु
 		pos = in.file->f_pos;
-	} else {
+	पूर्ण अन्यथा अणु
 		pos = *ppos;
-		if (!(in.file->f_mode & FMODE_PREAD))
-			goto fput_in;
-	}
-	retval = rw_verify_area(READ, in.file, &pos, count);
-	if (retval < 0)
-		goto fput_in;
-	if (count > MAX_RW_COUNT)
+		अगर (!(in.file->f_mode & FMODE_PREAD))
+			जाओ fput_in;
+	पूर्ण
+	retval = rw_verअगरy_area(READ, in.file, &pos, count);
+	अगर (retval < 0)
+		जाओ fput_in;
+	अगर (count > MAX_RW_COUNT)
 		count =  MAX_RW_COUNT;
 
 	/*
-	 * Get output file, and verify that it is ok..
+	 * Get output file, and verअगरy that it is ok..
 	 */
 	retval = -EBADF;
 	out = fdget(out_fd);
-	if (!out.file)
-		goto fput_in;
-	if (!(out.file->f_mode & FMODE_WRITE))
-		goto fput_out;
+	अगर (!out.file)
+		जाओ fput_in;
+	अगर (!(out.file->f_mode & FMODE_WRITE))
+		जाओ fput_out;
 	in_inode = file_inode(in.file);
 	out_inode = file_inode(out.file);
 	out_pos = out.file->f_pos;
 
-	if (!max)
+	अगर (!max)
 		max = min(in_inode->i_sb->s_maxbytes, out_inode->i_sb->s_maxbytes);
 
-	if (unlikely(pos + count > max)) {
+	अगर (unlikely(pos + count > max)) अणु
 		retval = -EOVERFLOW;
-		if (pos >= max)
-			goto fput_out;
+		अगर (pos >= max)
+			जाओ fput_out;
 		count = max - pos;
-	}
+	पूर्ण
 
 	fl = 0;
-#if 0
+#अगर 0
 	/*
 	 * We need to debate whether we can enable this or not. The
-	 * man page documents EAGAIN return for the output at least,
-	 * and the application is arguably buggy if it doesn't expect
+	 * man page करोcuments EAGAIN वापस क्रम the output at least,
+	 * and the application is arguably buggy अगर it करोesn't expect
 	 * EAGAIN on a non-blocking file descriptor.
 	 */
-	if (in.file->f_flags & O_NONBLOCK)
+	अगर (in.file->f_flags & O_NONBLOCK)
 		fl = SPLICE_F_NONBLOCK;
-#endif
+#पूर्ण_अगर
 	opipe = get_pipe_info(out.file, true);
-	if (!opipe) {
-		retval = rw_verify_area(WRITE, out.file, &out_pos, count);
-		if (retval < 0)
-			goto fput_out;
-		file_start_write(out.file);
-		retval = do_splice_direct(in.file, &pos, out.file, &out_pos,
+	अगर (!opipe) अणु
+		retval = rw_verअगरy_area(WRITE, out.file, &out_pos, count);
+		अगर (retval < 0)
+			जाओ fput_out;
+		file_start_ग_लिखो(out.file);
+		retval = करो_splice_direct(in.file, &pos, out.file, &out_pos,
 					  count, fl);
-		file_end_write(out.file);
-	} else {
+		file_end_ग_लिखो(out.file);
+	पूर्ण अन्यथा अणु
 		retval = splice_file_to_pipe(in.file, opipe, &pos, count, fl);
-	}
+	पूर्ण
 
-	if (retval > 0) {
-		add_rchar(current, retval);
-		add_wchar(current, retval);
-		fsnotify_access(in.file);
-		fsnotify_modify(out.file);
+	अगर (retval > 0) अणु
+		add_rअक्षर(current, retval);
+		add_wअक्षर(current, retval);
+		fsnotअगरy_access(in.file);
+		fsnotअगरy_modअगरy(out.file);
 		out.file->f_pos = out_pos;
-		if (ppos)
+		अगर (ppos)
 			*ppos = pos;
-		else
+		अन्यथा
 			in.file->f_pos = pos;
-	}
+	पूर्ण
 
 	inc_syscr(current);
 	inc_syscw(current);
-	if (pos > max)
+	अगर (pos > max)
 		retval = -EOVERFLOW;
 
 fput_out:
@@ -1286,408 +1287,408 @@ fput_out:
 fput_in:
 	fdput(in);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-SYSCALL_DEFINE4(sendfile, int, out_fd, int, in_fd, off_t __user *, offset, size_t, count)
-{
+SYSCALL_DEFINE4(sendfile, पूर्णांक, out_fd, पूर्णांक, in_fd, off_t __user *, offset, माप_प्रकार, count)
+अणु
 	loff_t pos;
 	off_t off;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (offset) {
-		if (unlikely(get_user(off, offset)))
-			return -EFAULT;
+	अगर (offset) अणु
+		अगर (unlikely(get_user(off, offset)))
+			वापस -EFAULT;
 		pos = off;
-		ret = do_sendfile(out_fd, in_fd, &pos, count, MAX_NON_LFS);
-		if (unlikely(put_user(pos, offset)))
-			return -EFAULT;
-		return ret;
-	}
+		ret = करो_sendfile(out_fd, in_fd, &pos, count, MAX_NON_LFS);
+		अगर (unlikely(put_user(pos, offset)))
+			वापस -EFAULT;
+		वापस ret;
+	पूर्ण
 
-	return do_sendfile(out_fd, in_fd, NULL, count, 0);
-}
+	वापस करो_sendfile(out_fd, in_fd, शून्य, count, 0);
+पूर्ण
 
-SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd, loff_t __user *, offset, size_t, count)
-{
+SYSCALL_DEFINE4(sendfile64, पूर्णांक, out_fd, पूर्णांक, in_fd, loff_t __user *, offset, माप_प्रकार, count)
+अणु
 	loff_t pos;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (offset) {
-		if (unlikely(copy_from_user(&pos, offset, sizeof(loff_t))))
-			return -EFAULT;
-		ret = do_sendfile(out_fd, in_fd, &pos, count, 0);
-		if (unlikely(put_user(pos, offset)))
-			return -EFAULT;
-		return ret;
-	}
+	अगर (offset) अणु
+		अगर (unlikely(copy_from_user(&pos, offset, माप(loff_t))))
+			वापस -EFAULT;
+		ret = करो_sendfile(out_fd, in_fd, &pos, count, 0);
+		अगर (unlikely(put_user(pos, offset)))
+			वापस -EFAULT;
+		वापस ret;
+	पूर्ण
 
-	return do_sendfile(out_fd, in_fd, NULL, count, 0);
-}
+	वापस करो_sendfile(out_fd, in_fd, शून्य, count, 0);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE4(sendfile, int, out_fd, int, in_fd,
-		compat_off_t __user *, offset, compat_size_t, count)
-{
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE4(sendfile, पूर्णांक, out_fd, पूर्णांक, in_fd,
+		compat_off_t __user *, offset, compat_माप_प्रकार, count)
+अणु
 	loff_t pos;
 	off_t off;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (offset) {
-		if (unlikely(get_user(off, offset)))
-			return -EFAULT;
+	अगर (offset) अणु
+		अगर (unlikely(get_user(off, offset)))
+			वापस -EFAULT;
 		pos = off;
-		ret = do_sendfile(out_fd, in_fd, &pos, count, MAX_NON_LFS);
-		if (unlikely(put_user(pos, offset)))
-			return -EFAULT;
-		return ret;
-	}
+		ret = करो_sendfile(out_fd, in_fd, &pos, count, MAX_NON_LFS);
+		अगर (unlikely(put_user(pos, offset)))
+			वापस -EFAULT;
+		वापस ret;
+	पूर्ण
 
-	return do_sendfile(out_fd, in_fd, NULL, count, 0);
-}
+	वापस करो_sendfile(out_fd, in_fd, शून्य, count, 0);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE4(sendfile64, int, out_fd, int, in_fd,
-		compat_loff_t __user *, offset, compat_size_t, count)
-{
+COMPAT_SYSCALL_DEFINE4(sendfile64, पूर्णांक, out_fd, पूर्णांक, in_fd,
+		compat_loff_t __user *, offset, compat_माप_प्रकार, count)
+अणु
 	loff_t pos;
-	ssize_t ret;
+	sमाप_प्रकार ret;
 
-	if (offset) {
-		if (unlikely(copy_from_user(&pos, offset, sizeof(loff_t))))
-			return -EFAULT;
-		ret = do_sendfile(out_fd, in_fd, &pos, count, 0);
-		if (unlikely(put_user(pos, offset)))
-			return -EFAULT;
-		return ret;
-	}
+	अगर (offset) अणु
+		अगर (unlikely(copy_from_user(&pos, offset, माप(loff_t))))
+			वापस -EFAULT;
+		ret = करो_sendfile(out_fd, in_fd, &pos, count, 0);
+		अगर (unlikely(put_user(pos, offset)))
+			वापस -EFAULT;
+		वापस ret;
+	पूर्ण
 
-	return do_sendfile(out_fd, in_fd, NULL, count, 0);
-}
-#endif
+	वापस करो_sendfile(out_fd, in_fd, शून्य, count, 0);
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * generic_copy_file_range - copy data between two files
- * @file_in:	file structure to read from
- * @pos_in:	file offset to read from
- * @file_out:	file structure to write data to
- * @pos_out:	file offset to write data to
+ * @file_in:	file काष्ठाure to पढ़ो from
+ * @pos_in:	file offset to पढ़ो from
+ * @file_out:	file काष्ठाure to ग_लिखो data to
+ * @pos_out:	file offset to ग_लिखो data to
  * @len:	amount of data to copy
  * @flags:	copy flags
  *
- * This is a generic filesystem helper to copy data from one file to another.
- * It has no constraints on the source or destination file owners - the files
- * can belong to different superblocks and different filesystem types. Short
+ * This is a generic fileप्रणाली helper to copy data from one file to another.
+ * It has no स्थिरraपूर्णांकs on the source or destination file owners - the files
+ * can beदीर्घ to dअगरferent superblocks and dअगरferent fileप्रणाली types. Short
  * copies are allowed.
  *
- * This should be called from the @file_out filesystem, as per the
+ * This should be called from the @file_out fileप्रणाली, as per the
  * ->copy_file_range() method.
  *
  * Returns the number of bytes copied or a negative error indicating the
  * failure.
  */
 
-ssize_t generic_copy_file_range(struct file *file_in, loff_t pos_in,
-				struct file *file_out, loff_t pos_out,
-				size_t len, unsigned int flags)
-{
-	return do_splice_direct(file_in, &pos_in, file_out, &pos_out,
+sमाप_प्रकार generic_copy_file_range(काष्ठा file *file_in, loff_t pos_in,
+				काष्ठा file *file_out, loff_t pos_out,
+				माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	वापस करो_splice_direct(file_in, &pos_in, file_out, &pos_out,
 				len > MAX_RW_COUNT ? MAX_RW_COUNT : len, 0);
-}
+पूर्ण
 EXPORT_SYMBOL(generic_copy_file_range);
 
-static ssize_t do_copy_file_range(struct file *file_in, loff_t pos_in,
-				  struct file *file_out, loff_t pos_out,
-				  size_t len, unsigned int flags)
-{
+अटल sमाप_प्रकार करो_copy_file_range(काष्ठा file *file_in, loff_t pos_in,
+				  काष्ठा file *file_out, loff_t pos_out,
+				  माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
 	/*
-	 * Although we now allow filesystems to handle cross sb copy, passing
-	 * a file of the wrong filesystem type to filesystem driver can result
-	 * in an attempt to dereference the wrong type of ->private_data, so
-	 * avoid doing that until we really have a good reason.  NFS defines
-	 * several different file_system_type structures, but they all end up
-	 * using the same ->copy_file_range() function pointer.
+	 * Although we now allow fileप्रणालीs to handle cross sb copy, passing
+	 * a file of the wrong fileप्रणाली type to fileप्रणाली driver can result
+	 * in an attempt to dereference the wrong type of ->निजी_data, so
+	 * aव्योम करोing that until we really have a good reason.  NFS defines
+	 * several dअगरferent file_प्रणाली_type काष्ठाures, but they all end up
+	 * using the same ->copy_file_range() function poपूर्णांकer.
 	 */
-	if (file_out->f_op->copy_file_range &&
+	अगर (file_out->f_op->copy_file_range &&
 	    file_out->f_op->copy_file_range == file_in->f_op->copy_file_range)
-		return file_out->f_op->copy_file_range(file_in, pos_in,
+		वापस file_out->f_op->copy_file_range(file_in, pos_in,
 						       file_out, pos_out,
 						       len, flags);
 
-	return generic_copy_file_range(file_in, pos_in, file_out, pos_out, len,
+	वापस generic_copy_file_range(file_in, pos_in, file_out, pos_out, len,
 				       flags);
-}
+पूर्ण
 
 /*
- * Performs necessary checks before doing a file copy
+ * Perक्रमms necessary checks beक्रमe करोing a file copy
  *
  * Can adjust amount of bytes to copy via @req_count argument.
- * Returns appropriate error code that caller should return or
- * zero in case the copy should be allowed.
+ * Returns appropriate error code that caller should वापस or
+ * zero in हाल the copy should be allowed.
  */
-static int generic_copy_file_checks(struct file *file_in, loff_t pos_in,
-				    struct file *file_out, loff_t pos_out,
-				    size_t *req_count, unsigned int flags)
-{
-	struct inode *inode_in = file_inode(file_in);
-	struct inode *inode_out = file_inode(file_out);
-	uint64_t count = *req_count;
+अटल पूर्णांक generic_copy_file_checks(काष्ठा file *file_in, loff_t pos_in,
+				    काष्ठा file *file_out, loff_t pos_out,
+				    माप_प्रकार *req_count, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode_in = file_inode(file_in);
+	काष्ठा inode *inode_out = file_inode(file_out);
+	uपूर्णांक64_t count = *req_count;
 	loff_t size_in;
-	int ret;
+	पूर्णांक ret;
 
 	ret = generic_file_rw_checks(file_in, file_out);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Don't touch certain kinds of inodes */
-	if (IS_IMMUTABLE(inode_out))
-		return -EPERM;
+	अगर (IS_IMMUTABLE(inode_out))
+		वापस -EPERM;
 
-	if (IS_SWAPFILE(inode_in) || IS_SWAPFILE(inode_out))
-		return -ETXTBSY;
+	अगर (IS_SWAPखाता(inode_in) || IS_SWAPखाता(inode_out))
+		वापस -ETXTBSY;
 
-	/* Ensure offsets don't wrap. */
-	if (pos_in + count < pos_in || pos_out + count < pos_out)
-		return -EOVERFLOW;
+	/* Ensure offsets करोn't wrap. */
+	अगर (pos_in + count < pos_in || pos_out + count < pos_out)
+		वापस -EOVERFLOW;
 
-	/* Shorten the copy to EOF */
-	size_in = i_size_read(inode_in);
-	if (pos_in >= size_in)
+	/* Shorten the copy to खातापूर्ण */
+	size_in = i_size_पढ़ो(inode_in);
+	अगर (pos_in >= size_in)
 		count = 0;
-	else
-		count = min(count, size_in - (uint64_t)pos_in);
+	अन्यथा
+		count = min(count, size_in - (uपूर्णांक64_t)pos_in);
 
-	ret = generic_write_check_limits(file_out, pos_out, &count);
-	if (ret)
-		return ret;
+	ret = generic_ग_लिखो_check_limits(file_out, pos_out, &count);
+	अगर (ret)
+		वापस ret;
 
 	/* Don't allow overlapped copying within the same file. */
-	if (inode_in == inode_out &&
+	अगर (inode_in == inode_out &&
 	    pos_out + count > pos_in &&
 	    pos_out < pos_in + count)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	*req_count = count;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * copy_file_range() differs from regular file read and write in that it
- * specifically allows return partial success.  When it does so is up to
+ * copy_file_range() dअगरfers from regular file पढ़ो and ग_लिखो in that it
+ * specअगरically allows वापस partial success.  When it करोes so is up to
  * the copy_file_range method.
  */
-ssize_t vfs_copy_file_range(struct file *file_in, loff_t pos_in,
-			    struct file *file_out, loff_t pos_out,
-			    size_t len, unsigned int flags)
-{
-	ssize_t ret;
+sमाप_प्रकार vfs_copy_file_range(काष्ठा file *file_in, loff_t pos_in,
+			    काष्ठा file *file_out, loff_t pos_out,
+			    माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	sमाप_प्रकार ret;
 
-	if (flags != 0)
-		return -EINVAL;
+	अगर (flags != 0)
+		वापस -EINVAL;
 
 	ret = generic_copy_file_checks(file_in, pos_in, file_out, pos_out, &len,
 				       flags);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
-	ret = rw_verify_area(READ, file_in, &pos_in, len);
-	if (unlikely(ret))
-		return ret;
+	ret = rw_verअगरy_area(READ, file_in, &pos_in, len);
+	अगर (unlikely(ret))
+		वापस ret;
 
-	ret = rw_verify_area(WRITE, file_out, &pos_out, len);
-	if (unlikely(ret))
-		return ret;
+	ret = rw_verअगरy_area(WRITE, file_out, &pos_out, len);
+	अगर (unlikely(ret))
+		वापस ret;
 
-	if (len == 0)
-		return 0;
+	अगर (len == 0)
+		वापस 0;
 
-	file_start_write(file_out);
+	file_start_ग_लिखो(file_out);
 
 	/*
-	 * Try cloning first, this is supported by more file systems, and
-	 * more efficient if both clone and copy are supported (e.g. NFS).
+	 * Try cloning first, this is supported by more file प्रणालीs, and
+	 * more efficient अगर both clone and copy are supported (e.g. NFS).
 	 */
-	if (file_in->f_op->remap_file_range &&
-	    file_inode(file_in)->i_sb == file_inode(file_out)->i_sb) {
+	अगर (file_in->f_op->remap_file_range &&
+	    file_inode(file_in)->i_sb == file_inode(file_out)->i_sb) अणु
 		loff_t cloned;
 
 		cloned = file_in->f_op->remap_file_range(file_in, pos_in,
 				file_out, pos_out,
 				min_t(loff_t, MAX_RW_COUNT, len),
-				REMAP_FILE_CAN_SHORTEN);
-		if (cloned > 0) {
+				REMAP_खाता_CAN_SHORTEN);
+		अगर (cloned > 0) अणु
 			ret = cloned;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	ret = do_copy_file_range(file_in, pos_in, file_out, pos_out, len,
+	ret = करो_copy_file_range(file_in, pos_in, file_out, pos_out, len,
 				flags);
 	WARN_ON_ONCE(ret == -EOPNOTSUPP);
-done:
-	if (ret > 0) {
-		fsnotify_access(file_in);
-		add_rchar(current, ret);
-		fsnotify_modify(file_out);
-		add_wchar(current, ret);
-	}
+करोne:
+	अगर (ret > 0) अणु
+		fsnotअगरy_access(file_in);
+		add_rअक्षर(current, ret);
+		fsnotअगरy_modअगरy(file_out);
+		add_wअक्षर(current, ret);
+	पूर्ण
 
 	inc_syscr(current);
 	inc_syscw(current);
 
-	file_end_write(file_out);
+	file_end_ग_लिखो(file_out);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vfs_copy_file_range);
 
-SYSCALL_DEFINE6(copy_file_range, int, fd_in, loff_t __user *, off_in,
-		int, fd_out, loff_t __user *, off_out,
-		size_t, len, unsigned int, flags)
-{
+SYSCALL_DEFINE6(copy_file_range, पूर्णांक, fd_in, loff_t __user *, off_in,
+		पूर्णांक, fd_out, loff_t __user *, off_out,
+		माप_प्रकार, len, अचिन्हित पूर्णांक, flags)
+अणु
 	loff_t pos_in;
 	loff_t pos_out;
-	struct fd f_in;
-	struct fd f_out;
-	ssize_t ret = -EBADF;
+	काष्ठा fd f_in;
+	काष्ठा fd f_out;
+	sमाप_प्रकार ret = -EBADF;
 
 	f_in = fdget(fd_in);
-	if (!f_in.file)
-		goto out2;
+	अगर (!f_in.file)
+		जाओ out2;
 
 	f_out = fdget(fd_out);
-	if (!f_out.file)
-		goto out1;
+	अगर (!f_out.file)
+		जाओ out1;
 
 	ret = -EFAULT;
-	if (off_in) {
-		if (copy_from_user(&pos_in, off_in, sizeof(loff_t)))
-			goto out;
-	} else {
+	अगर (off_in) अणु
+		अगर (copy_from_user(&pos_in, off_in, माप(loff_t)))
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		pos_in = f_in.file->f_pos;
-	}
+	पूर्ण
 
-	if (off_out) {
-		if (copy_from_user(&pos_out, off_out, sizeof(loff_t)))
-			goto out;
-	} else {
+	अगर (off_out) अणु
+		अगर (copy_from_user(&pos_out, off_out, माप(loff_t)))
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		pos_out = f_out.file->f_pos;
-	}
+	पूर्ण
 
 	ret = vfs_copy_file_range(f_in.file, pos_in, f_out.file, pos_out, len,
 				  flags);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		pos_in += ret;
 		pos_out += ret;
 
-		if (off_in) {
-			if (copy_to_user(off_in, &pos_in, sizeof(loff_t)))
+		अगर (off_in) अणु
+			अगर (copy_to_user(off_in, &pos_in, माप(loff_t)))
 				ret = -EFAULT;
-		} else {
+		पूर्ण अन्यथा अणु
 			f_in.file->f_pos = pos_in;
-		}
+		पूर्ण
 
-		if (off_out) {
-			if (copy_to_user(off_out, &pos_out, sizeof(loff_t)))
+		अगर (off_out) अणु
+			अगर (copy_to_user(off_out, &pos_out, माप(loff_t)))
 				ret = -EFAULT;
-		} else {
+		पूर्ण अन्यथा अणु
 			f_out.file->f_pos = pos_out;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	fdput(f_out);
 out1:
 	fdput(f_in);
 out2:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Don't operate on ranges the page cache doesn't support, and don't exceed the
- * LFS limits.  If pos is under the limit it becomes a short access.  If it
- * exceeds the limit we return -EFBIG.
+ * LFS limits.  If pos is under the limit it becomes a लघु access.  If it
+ * exceeds the limit we वापस -EFBIG.
  */
-int generic_write_check_limits(struct file *file, loff_t pos, loff_t *count)
-{
-	struct inode *inode = file->f_mapping->host;
+पूर्णांक generic_ग_लिखो_check_limits(काष्ठा file *file, loff_t pos, loff_t *count)
+अणु
+	काष्ठा inode *inode = file->f_mapping->host;
 	loff_t max_size = inode->i_sb->s_maxbytes;
 	loff_t limit = rlimit(RLIMIT_FSIZE);
 
-	if (limit != RLIM_INFINITY) {
-		if (pos >= limit) {
+	अगर (limit != RLIM_अनन्त) अणु
+		अगर (pos >= limit) अणु
 			send_sig(SIGXFSZ, current, 0);
-			return -EFBIG;
-		}
+			वापस -EFBIG;
+		पूर्ण
 		*count = min(*count, limit - pos);
-	}
+	पूर्ण
 
-	if (!(file->f_flags & O_LARGEFILE))
+	अगर (!(file->f_flags & O_LARGEखाता))
 		max_size = MAX_NON_LFS;
 
-	if (unlikely(pos >= max_size))
-		return -EFBIG;
+	अगर (unlikely(pos >= max_size))
+		वापस -EFBIG;
 
 	*count = min(*count, max_size - pos);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Performs necessary checks before doing a write
+ * Perक्रमms necessary checks beक्रमe करोing a ग_लिखो
  *
- * Can adjust writing position or amount of bytes to write.
- * Returns appropriate error code that caller should return or
- * zero in case that write should be allowed.
+ * Can adjust writing position or amount of bytes to ग_लिखो.
+ * Returns appropriate error code that caller should वापस or
+ * zero in हाल that ग_लिखो should be allowed.
  */
-ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = file->f_mapping->host;
+sमाप_प्रकार generic_ग_लिखो_checks(काष्ठा kiocb *iocb, काष्ठा iov_iter *from)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *inode = file->f_mapping->host;
 	loff_t count;
-	int ret;
+	पूर्णांक ret;
 
-	if (IS_SWAPFILE(inode))
-		return -ETXTBSY;
+	अगर (IS_SWAPखाता(inode))
+		वापस -ETXTBSY;
 
-	if (!iov_iter_count(from))
-		return 0;
+	अगर (!iov_iter_count(from))
+		वापस 0;
 
-	/* FIXME: this is for backwards compatibility with 2.4 */
-	if (iocb->ki_flags & IOCB_APPEND)
-		iocb->ki_pos = i_size_read(inode);
+	/* FIXME: this is क्रम backwards compatibility with 2.4 */
+	अगर (iocb->ki_flags & IOCB_APPEND)
+		iocb->ki_pos = i_size_पढ़ो(inode);
 
-	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
-		return -EINVAL;
+	अगर ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_सूचीECT))
+		वापस -EINVAL;
 
 	count = iov_iter_count(from);
-	ret = generic_write_check_limits(file, iocb->ki_pos, &count);
-	if (ret)
-		return ret;
+	ret = generic_ग_लिखो_check_limits(file, iocb->ki_pos, &count);
+	अगर (ret)
+		वापस ret;
 
 	iov_iter_truncate(from, count);
-	return iov_iter_count(from);
-}
-EXPORT_SYMBOL(generic_write_checks);
+	वापस iov_iter_count(from);
+पूर्ण
+EXPORT_SYMBOL(generic_ग_लिखो_checks);
 
 /*
- * Performs common checks before doing a file copy/clone
+ * Perक्रमms common checks beक्रमe करोing a file copy/clone
  * from @file_in to @file_out.
  */
-int generic_file_rw_checks(struct file *file_in, struct file *file_out)
-{
-	struct inode *inode_in = file_inode(file_in);
-	struct inode *inode_out = file_inode(file_out);
+पूर्णांक generic_file_rw_checks(काष्ठा file *file_in, काष्ठा file *file_out)
+अणु
+	काष्ठा inode *inode_in = file_inode(file_in);
+	काष्ठा inode *inode_out = file_inode(file_out);
 
 	/* Don't copy dirs, pipes, sockets... */
-	if (S_ISDIR(inode_in->i_mode) || S_ISDIR(inode_out->i_mode))
-		return -EISDIR;
-	if (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
-		return -EINVAL;
+	अगर (S_ISसूची(inode_in->i_mode) || S_ISसूची(inode_out->i_mode))
+		वापस -EISसूची;
+	अगर (!S_ISREG(inode_in->i_mode) || !S_ISREG(inode_out->i_mode))
+		वापस -EINVAL;
 
-	if (!(file_in->f_mode & FMODE_READ) ||
+	अगर (!(file_in->f_mode & FMODE_READ) ||
 	    !(file_out->f_mode & FMODE_WRITE) ||
 	    (file_out->f_flags & O_APPEND))
-		return -EBADF;
+		वापस -EBADF;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

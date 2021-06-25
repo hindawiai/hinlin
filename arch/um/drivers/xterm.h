@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* 
  * Copyright (C) 2002 Jeff Dike (jdike@karaya.com)
  */
 
-#ifndef __XTERM_H__
-#define __XTERM_H__
+#अगर_अघोषित __XTERM_H__
+#घोषणा __XTERM_H__
 
-extern int xterm_fd(int socket, int *pid_out);
+बाह्य पूर्णांक xterm_fd(पूर्णांक socket, पूर्णांक *pid_out);
 
-#endif
+#पूर्ण_अगर
 

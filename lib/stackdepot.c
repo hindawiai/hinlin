@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic stack depot for storing stack traces.
+ * Generic stack depot क्रम storing stack traces.
  *
  * Some debugging tools need to save stack traces of certain events which can
  * be later presented to the user. For example, KASAN needs to safe alloc and
- * free stacks for each object, but storing two stack traces per object
- * requires too much memory (e.g. SLUB_DEBUG needs 256 bytes per object for
+ * मुक्त stacks क्रम each object, but storing two stack traces per object
+ * requires too much memory (e.g. SLUB_DEBUG needs 256 bytes per object क्रम
  * that).
  *
- * Instead, stack depot maintains a hashtable of unique stacktraces. Since alloc
- * and free stacks repeat a lot, we save about 100x space.
- * Stacks are never removed from depot, so we store them contiguously one after
+ * Instead, stack depot मुख्यtains a hashtable of unique stacktraces. Since alloc
+ * and मुक्त stacks repeat a lot, we save about 100x space.
+ * Stacks are never हटाओd from depot, so we store them contiguously one after
  * another in a contiguos memory allocation.
  *
  * Author: Alexander Potapenko <glider@google.com>
@@ -19,102 +20,102 @@
  * Based on code by Dmitry Chernenkov.
  */
 
-#include <linux/gfp.h>
-#include <linux/interrupt.h>
-#include <linux/jhash.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/percpu.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/stacktrace.h>
-#include <linux/stackdepot.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/memblock.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/stackdepot.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/memblock.h>
 
-#define DEPOT_STACK_BITS (sizeof(depot_stack_handle_t) * 8)
+#घोषणा DEPOT_STACK_BITS (माप(depot_stack_handle_t) * 8)
 
-#define STACK_ALLOC_NULL_PROTECTION_BITS 1
-#define STACK_ALLOC_ORDER 2 /* 'Slab' size order for stack depot, 4 pages */
-#define STACK_ALLOC_SIZE (1LL << (PAGE_SHIFT + STACK_ALLOC_ORDER))
-#define STACK_ALLOC_ALIGN 4
-#define STACK_ALLOC_OFFSET_BITS (STACK_ALLOC_ORDER + PAGE_SHIFT - \
+#घोषणा STACK_ALLOC_शून्य_PROTECTION_BITS 1
+#घोषणा STACK_ALLOC_ORDER 2 /* 'Slab' size order क्रम stack depot, 4 pages */
+#घोषणा STACK_ALLOC_SIZE (1LL << (PAGE_SHIFT + STACK_ALLOC_ORDER))
+#घोषणा STACK_ALLOC_ALIGN 4
+#घोषणा STACK_ALLOC_OFFSET_BITS (STACK_ALLOC_ORDER + PAGE_SHIFT - \
 					STACK_ALLOC_ALIGN)
-#define STACK_ALLOC_INDEX_BITS (DEPOT_STACK_BITS - \
-		STACK_ALLOC_NULL_PROTECTION_BITS - STACK_ALLOC_OFFSET_BITS)
-#define STACK_ALLOC_SLABS_CAP 8192
-#define STACK_ALLOC_MAX_SLABS \
+#घोषणा STACK_ALLOC_INDEX_BITS (DEPOT_STACK_BITS - \
+		STACK_ALLOC_शून्य_PROTECTION_BITS - STACK_ALLOC_OFFSET_BITS)
+#घोषणा STACK_ALLOC_SLABS_CAP 8192
+#घोषणा STACK_ALLOC_MAX_SLABS \
 	(((1LL << (STACK_ALLOC_INDEX_BITS)) < STACK_ALLOC_SLABS_CAP) ? \
 	 (1LL << (STACK_ALLOC_INDEX_BITS)) : STACK_ALLOC_SLABS_CAP)
 
-/* The compact structure to store the reference to stacks. */
-union handle_parts {
+/* The compact काष्ठाure to store the reference to stacks. */
+जोड़ handle_parts अणु
 	depot_stack_handle_t handle;
-	struct {
+	काष्ठा अणु
 		u32 slabindex : STACK_ALLOC_INDEX_BITS;
 		u32 offset : STACK_ALLOC_OFFSET_BITS;
-		u32 valid : STACK_ALLOC_NULL_PROTECTION_BITS;
-	};
-};
+		u32 valid : STACK_ALLOC_शून्य_PROTECTION_BITS;
+	पूर्ण;
+पूर्ण;
 
-struct stack_record {
-	struct stack_record *next;	/* Link in the hashtable */
+काष्ठा stack_record अणु
+	काष्ठा stack_record *next;	/* Link in the hashtable */
 	u32 hash;			/* Hash in the hastable */
 	u32 size;			/* Number of frames in the stack */
-	union handle_parts handle;
-	unsigned long entries[];	/* Variable-sized array of entries. */
-};
+	जोड़ handle_parts handle;
+	अचिन्हित दीर्घ entries[];	/* Variable-sized array of entries. */
+पूर्ण;
 
-static void *stack_slabs[STACK_ALLOC_MAX_SLABS];
+अटल व्योम *stack_sद_असल[STACK_ALLOC_MAX_SLABS];
 
-static int depot_index;
-static int next_slab_inited;
-static size_t depot_offset;
-static DEFINE_RAW_SPINLOCK(depot_lock);
+अटल पूर्णांक depot_index;
+अटल पूर्णांक next_slab_inited;
+अटल माप_प्रकार depot_offset;
+अटल DEFINE_RAW_SPINLOCK(depot_lock);
 
-static bool init_stack_slab(void **prealloc)
-{
-	if (!*prealloc)
-		return false;
+अटल bool init_stack_slab(व्योम **pपुनः_स्मृति)
+अणु
+	अगर (!*pपुनः_स्मृति)
+		वापस false;
 	/*
 	 * This smp_load_acquire() pairs with smp_store_release() to
 	 * |next_slab_inited| below and in depot_alloc_stack().
 	 */
-	if (smp_load_acquire(&next_slab_inited))
-		return true;
-	if (stack_slabs[depot_index] == NULL) {
-		stack_slabs[depot_index] = *prealloc;
-		*prealloc = NULL;
-	} else {
-		/* If this is the last depot slab, do not touch the next one. */
-		if (depot_index + 1 < STACK_ALLOC_MAX_SLABS) {
-			stack_slabs[depot_index + 1] = *prealloc;
-			*prealloc = NULL;
-		}
+	अगर (smp_load_acquire(&next_slab_inited))
+		वापस true;
+	अगर (stack_sद_असल[depot_index] == शून्य) अणु
+		stack_sद_असल[depot_index] = *pपुनः_स्मृति;
+		*pपुनः_स्मृति = शून्य;
+	पूर्ण अन्यथा अणु
+		/* If this is the last depot slab, करो not touch the next one. */
+		अगर (depot_index + 1 < STACK_ALLOC_MAX_SLABS) अणु
+			stack_sद_असल[depot_index + 1] = *pपुनः_स्मृति;
+			*pपुनः_स्मृति = शून्य;
+		पूर्ण
 		/*
 		 * This smp_store_release pairs with smp_load_acquire() from
 		 * |next_slab_inited| above and in stack_depot_save().
 		 */
 		smp_store_release(&next_slab_inited, 1);
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /* Allocation of a new stack in raw storage */
-static struct stack_record *depot_alloc_stack(unsigned long *entries, int size,
-		u32 hash, void **prealloc, gfp_t alloc_flags)
-{
-	struct stack_record *stack;
-	size_t required_size = struct_size(stack, entries, size);
+अटल काष्ठा stack_record *depot_alloc_stack(अचिन्हित दीर्घ *entries, पूर्णांक size,
+		u32 hash, व्योम **pपुनः_स्मृति, gfp_t alloc_flags)
+अणु
+	काष्ठा stack_record *stack;
+	माप_प्रकार required_size = काष्ठा_size(stack, entries, size);
 
 	required_size = ALIGN(required_size, 1 << STACK_ALLOC_ALIGN);
 
-	if (unlikely(depot_offset + required_size > STACK_ALLOC_SIZE)) {
-		if (unlikely(depot_index + 1 >= STACK_ALLOC_MAX_SLABS)) {
+	अगर (unlikely(depot_offset + required_size > STACK_ALLOC_SIZE)) अणु
+		अगर (unlikely(depot_index + 1 >= STACK_ALLOC_MAX_SLABS)) अणु
 			WARN_ONCE(1, "Stack depot reached limit capacity");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		depot_index++;
 		depot_offset = 0;
 		/*
@@ -122,153 +123,153 @@ static struct stack_record *depot_alloc_stack(unsigned long *entries, int size,
 		 * |next_slab_inited| in stack_depot_save() and
 		 * init_stack_slab().
 		 */
-		if (depot_index + 1 < STACK_ALLOC_MAX_SLABS)
+		अगर (depot_index + 1 < STACK_ALLOC_MAX_SLABS)
 			smp_store_release(&next_slab_inited, 0);
-	}
-	init_stack_slab(prealloc);
-	if (stack_slabs[depot_index] == NULL)
-		return NULL;
+	पूर्ण
+	init_stack_slab(pपुनः_स्मृति);
+	अगर (stack_sद_असल[depot_index] == शून्य)
+		वापस शून्य;
 
-	stack = stack_slabs[depot_index] + depot_offset;
+	stack = stack_sद_असल[depot_index] + depot_offset;
 
 	stack->hash = hash;
 	stack->size = size;
 	stack->handle.slabindex = depot_index;
 	stack->handle.offset = depot_offset >> STACK_ALLOC_ALIGN;
 	stack->handle.valid = 1;
-	memcpy(stack->entries, entries, flex_array_size(stack, entries, size));
+	स_नकल(stack->entries, entries, flex_array_size(stack, entries, size));
 	depot_offset += required_size;
 
-	return stack;
-}
+	वापस stack;
+पूर्ण
 
-#define STACK_HASH_SIZE (1L << CONFIG_STACK_HASH_ORDER)
-#define STACK_HASH_MASK (STACK_HASH_SIZE - 1)
-#define STACK_HASH_SEED 0x9747b28c
+#घोषणा STACK_HASH_SIZE (1L << CONFIG_STACK_HASH_ORDER)
+#घोषणा STACK_HASH_MASK (STACK_HASH_SIZE - 1)
+#घोषणा STACK_HASH_SEED 0x9747b28c
 
-static bool stack_depot_disable;
-static struct stack_record **stack_table;
+अटल bool stack_depot_disable;
+अटल काष्ठा stack_record **stack_table;
 
-static int __init is_stack_depot_disabled(char *str)
-{
-	int ret;
+अटल पूर्णांक __init is_stack_depot_disabled(अक्षर *str)
+अणु
+	पूर्णांक ret;
 
 	ret = kstrtobool(str, &stack_depot_disable);
-	if (!ret && stack_depot_disable) {
+	अगर (!ret && stack_depot_disable) अणु
 		pr_info("Stack Depot is disabled\n");
-		stack_table = NULL;
-	}
-	return 0;
-}
+		stack_table = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 early_param("stack_depot_disable", is_stack_depot_disabled);
 
-int __init stack_depot_init(void)
-{
-	if (!stack_depot_disable) {
-		size_t size = (STACK_HASH_SIZE * sizeof(struct stack_record *));
-		int i;
+पूर्णांक __init stack_depot_init(व्योम)
+अणु
+	अगर (!stack_depot_disable) अणु
+		माप_प्रकार size = (STACK_HASH_SIZE * माप(काष्ठा stack_record *));
+		पूर्णांक i;
 
 		stack_table = memblock_alloc(size, size);
-		for (i = 0; i < STACK_HASH_SIZE;  i++)
-			stack_table[i] = NULL;
-	}
-	return 0;
-}
+		क्रम (i = 0; i < STACK_HASH_SIZE;  i++)
+			stack_table[i] = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Calculate hash for a stack */
-static inline u32 hash_stack(unsigned long *entries, unsigned int size)
-{
-	return jhash2((u32 *)entries,
-		      array_size(size,  sizeof(*entries)) / sizeof(u32),
+/* Calculate hash क्रम a stack */
+अटल अंतरभूत u32 hash_stack(अचिन्हित दीर्घ *entries, अचिन्हित पूर्णांक size)
+अणु
+	वापस jhash2((u32 *)entries,
+		      array_size(size,  माप(*entries)) / माप(u32),
 		      STACK_HASH_SEED);
-}
+पूर्ण
 
-/* Use our own, non-instrumented version of memcmp().
+/* Use our own, non-instrumented version of स_भेद().
  *
- * We actually don't care about the order, just the equality.
+ * We actually करोn't care about the order, just the equality.
  */
-static inline
-int stackdepot_memcmp(const unsigned long *u1, const unsigned long *u2,
-			unsigned int n)
-{
-	for ( ; n-- ; u1++, u2++) {
-		if (*u1 != *u2)
-			return 1;
-	}
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक stackdepot_स_भेद(स्थिर अचिन्हित दीर्घ *u1, स्थिर अचिन्हित दीर्घ *u2,
+			अचिन्हित पूर्णांक n)
+अणु
+	क्रम ( ; n-- ; u1++, u2++) अणु
+		अगर (*u1 != *u2)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Find a stack that is equal to the one stored in entries in the hash */
-static inline struct stack_record *find_stack(struct stack_record *bucket,
-					     unsigned long *entries, int size,
+अटल अंतरभूत काष्ठा stack_record *find_stack(काष्ठा stack_record *bucket,
+					     अचिन्हित दीर्घ *entries, पूर्णांक size,
 					     u32 hash)
-{
-	struct stack_record *found;
+अणु
+	काष्ठा stack_record *found;
 
-	for (found = bucket; found; found = found->next) {
-		if (found->hash == hash &&
+	क्रम (found = bucket; found; found = found->next) अणु
+		अगर (found->hash == hash &&
 		    found->size == size &&
-		    !stackdepot_memcmp(entries, found->entries, size))
-			return found;
-	}
-	return NULL;
-}
+		    !stackdepot_स_भेद(entries, found->entries, size))
+			वापस found;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * stack_depot_fetch - Fetch stack entries from a depot
  *
- * @handle:		Stack depot handle which was returned from
+ * @handle:		Stack depot handle which was वापसed from
  *			stack_depot_save().
- * @entries:		Pointer to store the entries address
+ * @entries:		Poपूर्णांकer to store the entries address
  *
- * Return: The number of trace entries for this depot.
+ * Return: The number of trace entries क्रम this depot.
  */
-unsigned int stack_depot_fetch(depot_stack_handle_t handle,
-			       unsigned long **entries)
-{
-	union handle_parts parts = { .handle = handle };
-	void *slab;
-	size_t offset = parts.offset << STACK_ALLOC_ALIGN;
-	struct stack_record *stack;
+अचिन्हित पूर्णांक stack_depot_fetch(depot_stack_handle_t handle,
+			       अचिन्हित दीर्घ **entries)
+अणु
+	जोड़ handle_parts parts = अणु .handle = handle पूर्ण;
+	व्योम *slab;
+	माप_प्रकार offset = parts.offset << STACK_ALLOC_ALIGN;
+	काष्ठा stack_record *stack;
 
-	*entries = NULL;
-	if (parts.slabindex > depot_index) {
+	*entries = शून्य;
+	अगर (parts.slabindex > depot_index) अणु
 		WARN(1, "slab index %d out of bounds (%d) for stack id %08x\n",
 			parts.slabindex, depot_index, handle);
-		return 0;
-	}
-	slab = stack_slabs[parts.slabindex];
-	if (!slab)
-		return 0;
+		वापस 0;
+	पूर्ण
+	slab = stack_sद_असल[parts.slabindex];
+	अगर (!slab)
+		वापस 0;
 	stack = slab + offset;
 
 	*entries = stack->entries;
-	return stack->size;
-}
+	वापस stack->size;
+पूर्ण
 EXPORT_SYMBOL_GPL(stack_depot_fetch);
 
 /**
  * stack_depot_save - Save a stack trace from an array
  *
- * @entries:		Pointer to storage array
+ * @entries:		Poपूर्णांकer to storage array
  * @nr_entries:		Size of the storage array
  * @alloc_flags:	Allocation gfp flags
  *
- * Return: The handle of the stack struct stored in depot
+ * Return: The handle of the stack काष्ठा stored in depot
  */
-depot_stack_handle_t stack_depot_save(unsigned long *entries,
-				      unsigned int nr_entries,
+depot_stack_handle_t stack_depot_save(अचिन्हित दीर्घ *entries,
+				      अचिन्हित पूर्णांक nr_entries,
 				      gfp_t alloc_flags)
-{
-	struct stack_record *found = NULL, **bucket;
+अणु
+	काष्ठा stack_record *found = शून्य, **bucket;
 	depot_stack_handle_t retval = 0;
-	struct page *page = NULL;
-	void *prealloc = NULL;
-	unsigned long flags;
+	काष्ठा page *page = शून्य;
+	व्योम *pपुनः_स्मृति = शून्य;
+	अचिन्हित दीर्घ flags;
 	u32 hash;
 
-	if (unlikely(nr_entries == 0) || stack_depot_disable)
-		goto fast_exit;
+	अगर (unlikely(nr_entries == 0) || stack_depot_disable)
+		जाओ fast_निकास;
 
 	hash = hash_stack(entries, nr_entries);
 	bucket = &stack_table[hash & STACK_HASH_MASK];
@@ -280,20 +281,20 @@ depot_stack_handle_t stack_depot_save(unsigned long *entries,
 	 */
 	found = find_stack(smp_load_acquire(bucket), entries,
 			   nr_entries, hash);
-	if (found)
-		goto exit;
+	अगर (found)
+		जाओ निकास;
 
 	/*
-	 * Check if the current or the next stack slab need to be initialized.
-	 * If so, allocate the memory - we won't be able to do that under the
+	 * Check अगर the current or the next stack slab need to be initialized.
+	 * If so, allocate the memory - we won't be able to करो that under the
 	 * lock.
 	 *
 	 * The smp_load_acquire() here pairs with smp_store_release() to
 	 * |next_slab_inited| in depot_alloc_stack() and init_stack_slab().
 	 */
-	if (unlikely(!smp_load_acquire(&next_slab_inited))) {
+	अगर (unlikely(!smp_load_acquire(&next_slab_inited))) अणु
 		/*
-		 * Zero out zone modifiers, as we don't have specific zone
+		 * Zero out zone modअगरiers, as we करोn't have specअगरic zone
 		 * requirements. Keep the flags related to allocation in atomic
 		 * contexts and I/O.
 		 */
@@ -301,18 +302,18 @@ depot_stack_handle_t stack_depot_save(unsigned long *entries,
 		alloc_flags &= (GFP_ATOMIC | GFP_KERNEL);
 		alloc_flags |= __GFP_NOWARN;
 		page = alloc_pages(alloc_flags, STACK_ALLOC_ORDER);
-		if (page)
-			prealloc = page_address(page);
-	}
+		अगर (page)
+			pपुनः_स्मृति = page_address(page);
+	पूर्ण
 
 	raw_spin_lock_irqsave(&depot_lock, flags);
 
 	found = find_stack(*bucket, entries, nr_entries, hash);
-	if (!found) {
-		struct stack_record *new =
+	अगर (!found) अणु
+		काष्ठा stack_record *new =
 			depot_alloc_stack(entries, nr_entries,
-					  hash, &prealloc, alloc_flags);
-		if (new) {
+					  hash, &pपुनः_स्मृति, alloc_flags);
+		अगर (new) अणु
 			new->next = *bucket;
 			/*
 			 * This smp_store_release() pairs with
@@ -320,47 +321,47 @@ depot_stack_handle_t stack_depot_save(unsigned long *entries,
 			 */
 			smp_store_release(bucket, new);
 			found = new;
-		}
-	} else if (prealloc) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (pपुनः_स्मृति) अणु
 		/*
 		 * We didn't need to store this stack trace, but let's keep
-		 * the preallocated memory for the future.
+		 * the pपुनः_स्मृतिated memory क्रम the future.
 		 */
-		WARN_ON(!init_stack_slab(&prealloc));
-	}
+		WARN_ON(!init_stack_slab(&pपुनः_स्मृति));
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&depot_lock, flags);
-exit:
-	if (prealloc) {
-		/* Nobody used this memory, ok to free it. */
-		free_pages((unsigned long)prealloc, STACK_ALLOC_ORDER);
-	}
-	if (found)
+निकास:
+	अगर (pपुनः_स्मृति) अणु
+		/* Nobody used this memory, ok to मुक्त it. */
+		मुक्त_pages((अचिन्हित दीर्घ)pपुनः_स्मृति, STACK_ALLOC_ORDER);
+	पूर्ण
+	अगर (found)
 		retval = found->handle.handle;
-fast_exit:
-	return retval;
-}
+fast_निकास:
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(stack_depot_save);
 
-static inline int in_irqentry_text(unsigned long ptr)
-{
-	return (ptr >= (unsigned long)&__irqentry_text_start &&
-		ptr < (unsigned long)&__irqentry_text_end) ||
-		(ptr >= (unsigned long)&__softirqentry_text_start &&
-		 ptr < (unsigned long)&__softirqentry_text_end);
-}
+अटल अंतरभूत पूर्णांक in_irqentry_text(अचिन्हित दीर्घ ptr)
+अणु
+	वापस (ptr >= (अचिन्हित दीर्घ)&__irqentry_text_start &&
+		ptr < (अचिन्हित दीर्घ)&__irqentry_text_end) ||
+		(ptr >= (अचिन्हित दीर्घ)&__softirqentry_text_start &&
+		 ptr < (अचिन्हित दीर्घ)&__softirqentry_text_end);
+पूर्ण
 
-unsigned int filter_irq_stacks(unsigned long *entries,
-					     unsigned int nr_entries)
-{
-	unsigned int i;
+अचिन्हित पूर्णांक filter_irq_stacks(अचिन्हित दीर्घ *entries,
+					     अचिन्हित पूर्णांक nr_entries)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < nr_entries; i++) {
-		if (in_irqentry_text(entries[i])) {
-			/* Include the irqentry function into the stack. */
-			return i + 1;
-		}
-	}
-	return nr_entries;
-}
+	क्रम (i = 0; i < nr_entries; i++) अणु
+		अगर (in_irqentry_text(entries[i])) अणु
+			/* Include the irqentry function पूर्णांकo the stack. */
+			वापस i + 1;
+		पूर्ण
+	पूर्ण
+	वापस nr_entries;
+पूर्ण
 EXPORT_SYMBOL_GPL(filter_irq_stacks);

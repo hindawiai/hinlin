@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2015-2020, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/clk/tegra.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/slab.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clk/tegra.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-#define CLK_SOURCE_EMC 0x19c
-#define  CLK_SOURCE_EMC_2X_CLK_SRC GENMASK(31, 29)
-#define  CLK_SOURCE_EMC_MC_EMC_SAME_FREQ BIT(16)
-#define  CLK_SOURCE_EMC_2X_CLK_DIVISOR GENMASK(7, 0)
+#घोषणा CLK_SOURCE_EMC 0x19c
+#घोषणा  CLK_SOURCE_EMC_2X_CLK_SRC GENMASK(31, 29)
+#घोषणा  CLK_SOURCE_EMC_MC_EMC_SAME_FREQ BIT(16)
+#घोषणा  CLK_SOURCE_EMC_2X_CLK_DIVISOR GENMASK(7, 0)
 
-#define CLK_SRC_PLLM 0
-#define CLK_SRC_PLLC 1
-#define CLK_SRC_PLLP 2
-#define CLK_SRC_CLK_M 3
-#define CLK_SRC_PLLM_UD 4
-#define CLK_SRC_PLLMB_UD 5
-#define CLK_SRC_PLLMB 6
-#define CLK_SRC_PLLP_UD 7
+#घोषणा CLK_SRC_PLLM 0
+#घोषणा CLK_SRC_PLLC 1
+#घोषणा CLK_SRC_PLLP 2
+#घोषणा CLK_SRC_CLK_M 3
+#घोषणा CLK_SRC_PLLM_UD 4
+#घोषणा CLK_SRC_PLLMB_UD 5
+#घोषणा CLK_SRC_PLLMB 6
+#घोषणा CLK_SRC_PLLP_UD 7
 
-struct tegra210_clk_emc {
-	struct clk_hw hw;
-	void __iomem *regs;
+काष्ठा tegra210_clk_emc अणु
+	काष्ठा clk_hw hw;
+	व्योम __iomem *regs;
 
-	struct tegra210_clk_emc_provider *provider;
+	काष्ठा tegra210_clk_emc_provider *provider;
 
-	struct clk *parents[8];
-};
+	काष्ठा clk *parents[8];
+पूर्ण;
 
-static inline struct tegra210_clk_emc *
-to_tegra210_clk_emc(struct clk_hw *hw)
-{
-	return container_of(hw, struct tegra210_clk_emc, hw);
-}
+अटल अंतरभूत काष्ठा tegra210_clk_emc *
+to_tegra210_clk_emc(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा tegra210_clk_emc, hw);
+पूर्ण
 
-static const char *tegra210_clk_emc_parents[] = {
+अटल स्थिर अक्षर *tegra210_clk_emc_parents[] = अणु
 	"pll_m", "pll_c", "pll_p", "clk_m", "pll_m_ud", "pll_mb_ud",
 	"pll_mb", "pll_p_ud",
-};
+पूर्ण;
 
-static u8 tegra210_clk_emc_get_parent(struct clk_hw *hw)
-{
-	struct tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
+अटल u8 tegra210_clk_emc_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
 	u32 value;
 	u8 src;
 
-	value = readl_relaxed(emc->regs + CLK_SOURCE_EMC);
+	value = पढ़ोl_relaxed(emc->regs + CLK_SOURCE_EMC);
 	src = FIELD_GET(CLK_SOURCE_EMC_2X_CLK_SRC, value);
 
-	return src;
-}
+	वापस src;
+पूर्ण
 
-static unsigned long tegra210_clk_emc_recalc_rate(struct clk_hw *hw,
-						  unsigned long parent_rate)
-{
-	struct tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
-	u32 value, div;
+अटल अचिन्हित दीर्घ tegra210_clk_emc_recalc_rate(काष्ठा clk_hw *hw,
+						  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
+	u32 value, भाग;
 
 	/*
 	 * CCF assumes that neither the parent nor its rate will change during
 	 * ->set_rate(), so the parent rate passed in here was cached from the
-	 * parent before the ->set_rate() call.
+	 * parent beक्रमe the ->set_rate() call.
 	 *
-	 * This can lead to wrong results being reported for the EMC clock if
+	 * This can lead to wrong results being reported क्रम the EMC घड़ी अगर
 	 * the parent and/or parent rate have changed as part of the EMC rate
-	 * change sequence. Fix this by overriding the parent clock with what
+	 * change sequence. Fix this by overriding the parent घड़ी with what
 	 * we know to be the correct value after the rate change.
 	 */
 	parent_rate = clk_hw_get_rate(clk_hw_get_parent(hw));
 
-	value = readl_relaxed(emc->regs + CLK_SOURCE_EMC);
+	value = पढ़ोl_relaxed(emc->regs + CLK_SOURCE_EMC);
 
-	div = FIELD_GET(CLK_SOURCE_EMC_2X_CLK_DIVISOR, value);
-	div += 2;
+	भाग = FIELD_GET(CLK_SOURCE_EMC_2X_CLK_DIVISOR, value);
+	भाग += 2;
 
-	return DIV_ROUND_UP(parent_rate * 2, div);
-}
+	वापस DIV_ROUND_UP(parent_rate * 2, भाग);
+पूर्ण
 
-static long tegra210_clk_emc_round_rate(struct clk_hw *hw, unsigned long rate,
-					unsigned long *prate)
-{
-	struct tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
-	struct tegra210_clk_emc_provider *provider = emc->provider;
-	unsigned int i;
+अटल दीर्घ tegra210_clk_emc_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+					अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
+	काष्ठा tegra210_clk_emc_provider *provider = emc->provider;
+	अचिन्हित पूर्णांक i;
 
-	if (!provider || !provider->configs || provider->num_configs == 0)
-		return clk_hw_get_rate(hw);
+	अगर (!provider || !provider->configs || provider->num_configs == 0)
+		वापस clk_hw_get_rate(hw);
 
-	for (i = 0; i < provider->num_configs; i++) {
-		if (provider->configs[i].rate >= rate)
-			return provider->configs[i].rate;
-	}
+	क्रम (i = 0; i < provider->num_configs; i++) अणु
+		अगर (provider->configs[i].rate >= rate)
+			वापस provider->configs[i].rate;
+	पूर्ण
 
-	return provider->configs[i - 1].rate;
-}
+	वापस provider->configs[i - 1].rate;
+पूर्ण
 
-static struct clk *tegra210_clk_emc_find_parent(struct tegra210_clk_emc *emc,
+अटल काष्ठा clk *tegra210_clk_emc_find_parent(काष्ठा tegra210_clk_emc *emc,
 						u8 index)
-{
-	struct clk_hw *parent = clk_hw_get_parent_by_index(&emc->hw, index);
-	const char *name = clk_hw_get_name(parent);
+अणु
+	काष्ठा clk_hw *parent = clk_hw_get_parent_by_index(&emc->hw, index);
+	स्थिर अक्षर *name = clk_hw_get_name(parent);
 
 	/* XXX implement cache? */
 
-	return __clk_lookup(name);
-}
+	वापस __clk_lookup(name);
+पूर्ण
 
-static int tegra210_clk_emc_set_rate(struct clk_hw *hw, unsigned long rate,
-				     unsigned long parent_rate)
-{
-	struct tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
-	struct tegra210_clk_emc_provider *provider = emc->provider;
-	struct tegra210_clk_emc_config *config;
-	struct device *dev = provider->dev;
-	struct clk_hw *old, *new, *parent;
+अटल पूर्णांक tegra210_clk_emc_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
+	काष्ठा tegra210_clk_emc_provider *provider = emc->provider;
+	काष्ठा tegra210_clk_emc_config *config;
+	काष्ठा device *dev = provider->dev;
+	काष्ठा clk_hw *old, *new, *parent;
 	u8 old_idx, new_idx, index;
-	struct clk *clk;
-	unsigned int i;
-	int err;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (!provider->configs || provider->num_configs == 0)
-		return -EINVAL;
+	अगर (!provider->configs || provider->num_configs == 0)
+		वापस -EINVAL;
 
-	for (i = 0; i < provider->num_configs; i++) {
-		if (provider->configs[i].rate >= rate) {
+	क्रम (i = 0; i < provider->num_configs; i++) अणु
+		अगर (provider->configs[i].rate >= rate) अणु
 			config = &provider->configs[i];
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == provider->num_configs)
+	अगर (i == provider->num_configs)
 		config = &provider->configs[i - 1];
 
 	old_idx = tegra210_clk_emc_get_parent(hw);
@@ -147,132 +148,132 @@ static int tegra210_clk_emc_set_rate(struct clk_hw *hw, unsigned long rate,
 	old = clk_hw_get_parent_by_index(hw, old_idx);
 	new = clk_hw_get_parent_by_index(hw, new_idx);
 
-	/* if the rate has changed... */
-	if (config->parent_rate != clk_hw_get_rate(old)) {
-		/* ... but the clock source remains the same ... */
-		if (new_idx == old_idx) {
-			/* ... switch to the alternative clock source. */
-			switch (new_idx) {
-			case CLK_SRC_PLLM:
+	/* अगर the rate has changed... */
+	अगर (config->parent_rate != clk_hw_get_rate(old)) अणु
+		/* ... but the घड़ी source reमुख्यs the same ... */
+		अगर (new_idx == old_idx) अणु
+			/* ... चयन to the alternative घड़ी source. */
+			चयन (new_idx) अणु
+			हाल CLK_SRC_PLLM:
 				new_idx = CLK_SRC_PLLMB;
-				break;
+				अवरोध;
 
-			case CLK_SRC_PLLM_UD:
+			हाल CLK_SRC_PLLM_UD:
 				new_idx = CLK_SRC_PLLMB_UD;
-				break;
+				अवरोध;
 
-			case CLK_SRC_PLLMB_UD:
+			हाल CLK_SRC_PLLMB_UD:
 				new_idx = CLK_SRC_PLLM_UD;
-				break;
+				अवरोध;
 
-			case CLK_SRC_PLLMB:
+			हाल CLK_SRC_PLLMB:
 				new_idx = CLK_SRC_PLLM;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/*
 			 * This should never happen because we can't deal with
 			 * it.
 			 */
-			if (WARN_ON(new_idx == old_idx))
-				return -EINVAL;
+			अगर (WARN_ON(new_idx == old_idx))
+				वापस -EINVAL;
 
 			new = clk_hw_get_parent_by_index(hw, new_idx);
-		}
+		पूर्ण
 
 		index = new_idx;
 		parent = new;
-	} else {
+	पूर्ण अन्यथा अणु
 		index = old_idx;
 		parent = old;
-	}
+	पूर्ण
 
 	clk = tegra210_clk_emc_find_parent(emc, index);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		err = PTR_ERR(clk);
 		dev_err(dev, "failed to get parent clock for index %u: %d\n",
 			index, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* set the new parent clock to the required rate */
-	if (clk_get_rate(clk) != config->parent_rate) {
+	/* set the new parent घड़ी to the required rate */
+	अगर (clk_get_rate(clk) != config->parent_rate) अणु
 		err = clk_set_rate(clk, config->parent_rate);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "failed to set rate %lu Hz for %pC: %d\n",
 				config->parent_rate, clk, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* enable the new parent clock */
-	if (parent != old) {
+	/* enable the new parent घड़ी */
+	अगर (parent != old) अणु
 		err = clk_prepare_enable(clk);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "failed to enable parent clock %pC: %d\n",
 				clk, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	/* update the EMC source configuration to reflect the new parent */
 	config->value &= ~CLK_SOURCE_EMC_2X_CLK_SRC;
 	config->value |= FIELD_PREP(CLK_SOURCE_EMC_2X_CLK_SRC, index);
 
 	/*
-	 * Finally, switch the EMC programming with both old and new parent
-	 * clocks enabled.
+	 * Finally, चयन the EMC programming with both old and new parent
+	 * घड़ीs enabled.
 	 */
 	err = provider->set_rate(dev, config);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to set EMC rate to %lu Hz: %d\n", rate,
 			err);
 
 		/*
-		 * If we're unable to switch to the new EMC frequency, we no
-		 * longer need the new parent to be enabled.
+		 * If we're unable to चयन to the new EMC frequency, we no
+		 * दीर्घer need the new parent to be enabled.
 		 */
-		if (parent != old)
+		अगर (parent != old)
 			clk_disable_unprepare(clk);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* reparent to new parent clock and disable the old parent clock */
-	if (parent != old) {
+	/* reparent to new parent घड़ी and disable the old parent घड़ी */
+	अगर (parent != old) अणु
 		clk = tegra210_clk_emc_find_parent(emc, old_idx);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			err = PTR_ERR(clk);
 			dev_err(dev,
 				"failed to get parent clock for index %u: %d\n",
 				old_idx, err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		clk_hw_reparent(hw, parent);
 		clk_disable_unprepare(clk);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct clk_ops tegra210_clk_emc_ops = {
+अटल स्थिर काष्ठा clk_ops tegra210_clk_emc_ops = अणु
 	.get_parent = tegra210_clk_emc_get_parent,
 	.recalc_rate = tegra210_clk_emc_recalc_rate,
 	.round_rate = tegra210_clk_emc_round_rate,
 	.set_rate = tegra210_clk_emc_set_rate,
-};
+पूर्ण;
 
-struct clk *tegra210_clk_register_emc(struct device_node *np,
-				      void __iomem *regs)
-{
-	struct tegra210_clk_emc *emc;
-	struct clk_init_data init;
-	struct clk *clk;
+काष्ठा clk *tegra210_clk_रेजिस्टर_emc(काष्ठा device_node *np,
+				      व्योम __iomem *regs)
+अणु
+	काष्ठा tegra210_clk_emc *emc;
+	काष्ठा clk_init_data init;
+	काष्ठा clk *clk;
 
-	emc = kzalloc(sizeof(*emc), GFP_KERNEL);
-	if (!emc)
-		return ERR_PTR(-ENOMEM);
+	emc = kzalloc(माप(*emc), GFP_KERNEL);
+	अगर (!emc)
+		वापस ERR_PTR(-ENOMEM);
 
 	emc->regs = regs;
 
@@ -283,89 +284,89 @@ struct clk *tegra210_clk_register_emc(struct device_node *np,
 	init.num_parents = ARRAY_SIZE(tegra210_clk_emc_parents);
 	emc->hw.init = &init;
 
-	clk = clk_register(NULL, &emc->hw);
-	if (IS_ERR(clk)) {
-		kfree(emc);
-		return clk;
-	}
+	clk = clk_रेजिस्टर(शून्य, &emc->hw);
+	अगर (IS_ERR(clk)) अणु
+		kमुक्त(emc);
+		वापस clk;
+	पूर्ण
 
-	return clk;
-}
+	वापस clk;
+पूर्ण
 
-int tegra210_clk_emc_attach(struct clk *clk,
-			    struct tegra210_clk_emc_provider *provider)
-{
-	struct clk_hw *hw = __clk_get_hw(clk);
-	struct tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
-	struct device *dev = provider->dev;
-	unsigned int i;
-	int err;
+पूर्णांक tegra210_clk_emc_attach(काष्ठा clk *clk,
+			    काष्ठा tegra210_clk_emc_provider *provider)
+अणु
+	काष्ठा clk_hw *hw = __clk_get_hw(clk);
+	काष्ठा tegra210_clk_emc *emc = to_tegra210_clk_emc(hw);
+	काष्ठा device *dev = provider->dev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	if (!try_module_get(provider->owner))
-		return -ENODEV;
+	अगर (!try_module_get(provider->owner))
+		वापस -ENODEV;
 
-	for (i = 0; i < provider->num_configs; i++) {
-		struct tegra210_clk_emc_config *config = &provider->configs[i];
-		struct clk_hw *parent;
+	क्रम (i = 0; i < provider->num_configs; i++) अणु
+		काष्ठा tegra210_clk_emc_config *config = &provider->configs[i];
+		काष्ठा clk_hw *parent;
 		bool same_freq;
-		u8 div, src;
+		u8 भाग, src;
 
-		div = FIELD_GET(CLK_SOURCE_EMC_2X_CLK_DIVISOR, config->value);
+		भाग = FIELD_GET(CLK_SOURCE_EMC_2X_CLK_DIVISOR, config->value);
 		src = FIELD_GET(CLK_SOURCE_EMC_2X_CLK_SRC, config->value);
 
-		/* do basic sanity checking on the EMC timings */
-		if (div & 0x1) {
+		/* करो basic sanity checking on the EMC timings */
+		अगर (भाग & 0x1) अणु
 			dev_err(dev, "invalid odd divider %u for rate %lu Hz\n",
-				div, config->rate);
+				भाग, config->rate);
 			err = -EINVAL;
-			goto put;
-		}
+			जाओ put;
+		पूर्ण
 
 		same_freq = config->value & CLK_SOURCE_EMC_MC_EMC_SAME_FREQ;
 
-		if (same_freq != config->same_freq) {
+		अगर (same_freq != config->same_freq) अणु
 			dev_err(dev,
 				"ambiguous EMC to MC ratio for rate %lu Hz\n",
 				config->rate);
 			err = -EINVAL;
-			goto put;
-		}
+			जाओ put;
+		पूर्ण
 
 		parent = clk_hw_get_parent_by_index(hw, src);
 		config->parent = src;
 
-		if (src == CLK_SRC_PLLM || src == CLK_SRC_PLLM_UD) {
-			config->parent_rate = config->rate * (1 + div / 2);
-		} else {
-			unsigned long rate = config->rate * (1 + div / 2);
+		अगर (src == CLK_SRC_PLLM || src == CLK_SRC_PLLM_UD) अणु
+			config->parent_rate = config->rate * (1 + भाग / 2);
+		पूर्ण अन्यथा अणु
+			अचिन्हित दीर्घ rate = config->rate * (1 + भाग / 2);
 
 			config->parent_rate = clk_hw_get_rate(parent);
 
-			if (config->parent_rate != rate) {
+			अगर (config->parent_rate != rate) अणु
 				dev_err(dev,
 					"rate %lu Hz does not match input\n",
 					config->rate);
 				err = -EINVAL;
-				goto put;
-			}
-		}
-	}
+				जाओ put;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	emc->provider = provider;
 
-	return 0;
+	वापस 0;
 
 put:
 	module_put(provider->owner);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra210_clk_emc_attach);
 
-void tegra210_clk_emc_detach(struct clk *clk)
-{
-	struct tegra210_clk_emc *emc = to_tegra210_clk_emc(__clk_get_hw(clk));
+व्योम tegra210_clk_emc_detach(काष्ठा clk *clk)
+अणु
+	काष्ठा tegra210_clk_emc *emc = to_tegra210_clk_emc(__clk_get_hw(clk));
 
 	module_put(emc->provider->owner);
-	emc->provider = NULL;
-}
+	emc->provider = शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(tegra210_clk_emc_detach);

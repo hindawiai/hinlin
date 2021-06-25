@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * NXP PTN3460 DP/LVDS bridge driver
  *
  * Copyright (C) 2013 Google, Inc.
  */
 
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_print.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#define PTN3460_EDID_ADDR			0x0
-#define PTN3460_EDID_EMULATION_ADDR		0x84
-#define PTN3460_EDID_ENABLE_EMULATION		0
-#define PTN3460_EDID_EMULATION_SELECTION	1
-#define PTN3460_EDID_SRAM_LOAD_ADDR		0x85
+#घोषणा PTN3460_EDID_ADDR			0x0
+#घोषणा PTN3460_EDID_EMULATION_ADDR		0x84
+#घोषणा PTN3460_EDID_ENABLE_EMULATION		0
+#घोषणा PTN3460_EDID_EMULATION_SELECTION	1
+#घोषणा PTN3460_EDID_SRAM_LOAD_ADDR		0x85
 
-struct ptn3460_bridge {
-	struct drm_connector connector;
-	struct i2c_client *client;
-	struct drm_bridge bridge;
-	struct drm_bridge *panel_bridge;
-	struct gpio_desc *gpio_pd_n;
-	struct gpio_desc *gpio_rst_n;
+काष्ठा ptn3460_bridge अणु
+	काष्ठा drm_connector connector;
+	काष्ठा i2c_client *client;
+	काष्ठा drm_bridge bridge;
+	काष्ठा drm_bridge *panel_bridge;
+	काष्ठा gpio_desc *gpio_pd_n;
+	काष्ठा gpio_desc *gpio_rst_n;
 	u32 edid_emulation;
 	bool enabled;
-};
+पूर्ण;
 
-static inline struct ptn3460_bridge *
-		bridge_to_ptn3460(struct drm_bridge *bridge)
-{
-	return container_of(bridge, struct ptn3460_bridge, bridge);
-}
+अटल अंतरभूत काष्ठा ptn3460_bridge *
+		bridge_to_ptn3460(काष्ठा drm_bridge *bridge)
+अणु
+	वापस container_of(bridge, काष्ठा ptn3460_bridge, bridge);
+पूर्ण
 
-static inline struct ptn3460_bridge *
-		connector_to_ptn3460(struct drm_connector *connector)
-{
-	return container_of(connector, struct ptn3460_bridge, connector);
-}
+अटल अंतरभूत काष्ठा ptn3460_bridge *
+		connector_to_ptn3460(काष्ठा drm_connector *connector)
+अणु
+	वापस container_of(connector, काष्ठा ptn3460_bridge, connector);
+पूर्ण
 
-static int ptn3460_read_bytes(struct ptn3460_bridge *ptn_bridge, char addr,
-		u8 *buf, int len)
-{
-	int ret;
+अटल पूर्णांक ptn3460_पढ़ो_bytes(काष्ठा ptn3460_bridge *ptn_bridge, अक्षर addr,
+		u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक ret;
 
 	ret = i2c_master_send(ptn_bridge->client, &addr, 1);
-	if (ret <= 0) {
+	अगर (ret <= 0) अणु
 		DRM_ERROR("Failed to send i2c command, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = i2c_master_recv(ptn_bridge->client, buf, len);
-	if (ret <= 0) {
+	अगर (ret <= 0) अणु
 		DRM_ERROR("Failed to recv i2c data, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptn3460_write_byte(struct ptn3460_bridge *ptn_bridge, char addr,
-		char val)
-{
-	int ret;
-	char buf[2];
+अटल पूर्णांक ptn3460_ग_लिखो_byte(काष्ठा ptn3460_bridge *ptn_bridge, अक्षर addr,
+		अक्षर val)
+अणु
+	पूर्णांक ret;
+	अक्षर buf[2];
 
 	buf[0] = addr;
 	buf[1] = val;
 
 	ret = i2c_master_send(ptn_bridge->client, buf, ARRAY_SIZE(buf));
-	if (ret <= 0) {
+	अगर (ret <= 0) अणु
 		DRM_ERROR("Failed to send i2c command, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptn3460_select_edid(struct ptn3460_bridge *ptn_bridge)
-{
-	int ret;
-	char val;
+अटल पूर्णांक ptn3460_select_edid(काष्ठा ptn3460_bridge *ptn_bridge)
+अणु
+	पूर्णांक ret;
+	अक्षर val;
 
-	/* Load the selected edid into SRAM (accessed at PTN3460_EDID_ADDR) */
-	ret = ptn3460_write_byte(ptn_bridge, PTN3460_EDID_SRAM_LOAD_ADDR,
+	/* Load the selected edid पूर्णांकo SRAM (accessed at PTN3460_EDID_ADDR) */
+	ret = ptn3460_ग_लिखो_byte(ptn_bridge, PTN3460_EDID_SRAM_LOAD_ADDR,
 			ptn_bridge->edid_emulation);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to transfer EDID to sram, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Enable EDID emulation and select the desired EDID */
 	val = 1 << PTN3460_EDID_ENABLE_EMULATION |
 		ptn_bridge->edid_emulation << PTN3460_EDID_EMULATION_SELECTION;
 
-	ret = ptn3460_write_byte(ptn_bridge, PTN3460_EDID_EMULATION_ADDR, val);
-	if (ret) {
+	ret = ptn3460_ग_लिखो_byte(ptn_bridge, PTN3460_EDID_EMULATION_ADDR, val);
+	अगर (ret) अणु
 		DRM_ERROR("Failed to write EDID value, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ptn3460_pre_enable(struct drm_bridge *bridge)
-{
-	struct ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
-	int ret;
+अटल व्योम ptn3460_pre_enable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
+	पूर्णांक ret;
 
-	if (ptn_bridge->enabled)
-		return;
+	अगर (ptn_bridge->enabled)
+		वापस;
 
 	gpiod_set_value(ptn_bridge->gpio_pd_n, 1);
 
@@ -127,187 +128,187 @@ static void ptn3460_pre_enable(struct drm_bridge *bridge)
 	gpiod_set_value(ptn_bridge->gpio_rst_n, 1);
 
 	/*
-	 * There's a bug in the PTN chip where it falsely asserts hotplug before
-	 * it is fully functional. We're forced to wait for the maximum start up
-	 * time specified in the chip's datasheet to make sure we're really up.
+	 * There's a bug in the PTN chip where it falsely निश्चितs hotplug beक्रमe
+	 * it is fully functional. We're क्रमced to रुको क्रम the maximum start up
+	 * समय specअगरied in the chip's datasheet to make sure we're really up.
 	 */
 	msleep(90);
 
 	ret = ptn3460_select_edid(ptn_bridge);
-	if (ret)
+	अगर (ret)
 		DRM_ERROR("Select EDID failed ret=%d\n", ret);
 
 	ptn_bridge->enabled = true;
-}
+पूर्ण
 
-static void ptn3460_disable(struct drm_bridge *bridge)
-{
-	struct ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
+अटल व्योम ptn3460_disable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
 
-	if (!ptn_bridge->enabled)
-		return;
+	अगर (!ptn_bridge->enabled)
+		वापस;
 
 	ptn_bridge->enabled = false;
 
 	gpiod_set_value(ptn_bridge->gpio_rst_n, 1);
 	gpiod_set_value(ptn_bridge->gpio_pd_n, 0);
-}
+पूर्ण
 
 
-static struct edid *ptn3460_get_edid(struct drm_bridge *bridge,
-				     struct drm_connector *connector)
-{
-	struct ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
-	bool power_off;
+अटल काष्ठा edid *ptn3460_get_edid(काष्ठा drm_bridge *bridge,
+				     काष्ठा drm_connector *connector)
+अणु
+	काष्ठा ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
+	bool घातer_off;
 	u8 *edid;
-	int ret;
+	पूर्णांक ret;
 
-	power_off = !ptn_bridge->enabled;
+	घातer_off = !ptn_bridge->enabled;
 	ptn3460_pre_enable(&ptn_bridge->bridge);
 
-	edid = kmalloc(EDID_LENGTH, GFP_KERNEL);
-	if (!edid) {
+	edid = kदो_स्मृति(EDID_LENGTH, GFP_KERNEL);
+	अगर (!edid) अणु
 		DRM_ERROR("Failed to allocate EDID\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = ptn3460_read_bytes(ptn_bridge, PTN3460_EDID_ADDR, edid,
+	ret = ptn3460_पढ़ो_bytes(ptn_bridge, PTN3460_EDID_ADDR, edid,
 				 EDID_LENGTH);
-	if (ret) {
-		kfree(edid);
-		edid = NULL;
-		goto out;
-	}
+	अगर (ret) अणु
+		kमुक्त(edid);
+		edid = शून्य;
+		जाओ out;
+	पूर्ण
 
 out:
-	if (power_off)
+	अगर (घातer_off)
 		ptn3460_disable(&ptn_bridge->bridge);
 
-	return (struct edid *)edid;
-}
+	वापस (काष्ठा edid *)edid;
+पूर्ण
 
-static int ptn3460_connector_get_modes(struct drm_connector *connector)
-{
-	struct ptn3460_bridge *ptn_bridge = connector_to_ptn3460(connector);
-	struct edid *edid;
-	int num_modes;
+अटल पूर्णांक ptn3460_connector_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा ptn3460_bridge *ptn_bridge = connector_to_ptn3460(connector);
+	काष्ठा edid *edid;
+	पूर्णांक num_modes;
 
 	edid = ptn3460_get_edid(&ptn_bridge->bridge, connector);
 	drm_connector_update_edid_property(connector, edid);
 	num_modes = drm_add_edid_modes(connector, edid);
-	kfree(edid);
+	kमुक्त(edid);
 
-	return num_modes;
-}
+	वापस num_modes;
+पूर्ण
 
-static const struct drm_connector_helper_funcs ptn3460_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs ptn3460_connector_helper_funcs = अणु
 	.get_modes = ptn3460_connector_get_modes,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs ptn3460_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs ptn3460_connector_funcs = अणु
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = drm_connector_cleanup,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static int ptn3460_bridge_attach(struct drm_bridge *bridge,
-				 enum drm_bridge_attach_flags flags)
-{
-	struct ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
-	int ret;
+अटल पूर्णांक ptn3460_bridge_attach(काष्ठा drm_bridge *bridge,
+				 क्रमागत drm_bridge_attach_flags flags)
+अणु
+	काष्ठा ptn3460_bridge *ptn_bridge = bridge_to_ptn3460(bridge);
+	पूर्णांक ret;
 
-	/* Let this driver create connector if requested */
+	/* Let this driver create connector अगर requested */
 	ret = drm_bridge_attach(bridge->encoder, ptn_bridge->panel_bridge,
 				bridge, flags | DRM_BRIDGE_ATTACH_NO_CONNECTOR);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)
-		return 0;
+	अगर (flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR)
+		वापस 0;
 
-	if (!bridge->encoder) {
+	अगर (!bridge->encoder) अणु
 		DRM_ERROR("Parent encoder object not found");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ptn_bridge->connector.polled = DRM_CONNECTOR_POLL_HPD;
 	ret = drm_connector_init(bridge->dev, &ptn_bridge->connector,
 			&ptn3460_connector_funcs, DRM_MODE_CONNECTOR_LVDS);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to initialize connector with drm\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	drm_connector_helper_add(&ptn_bridge->connector,
 					&ptn3460_connector_helper_funcs);
-	drm_connector_register(&ptn_bridge->connector);
+	drm_connector_रेजिस्टर(&ptn_bridge->connector);
 	drm_connector_attach_encoder(&ptn_bridge->connector,
 							bridge->encoder);
 
 	drm_helper_hpd_irq_event(ptn_bridge->connector.dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct drm_bridge_funcs ptn3460_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs ptn3460_bridge_funcs = अणु
 	.pre_enable = ptn3460_pre_enable,
 	.disable = ptn3460_disable,
 	.attach = ptn3460_bridge_attach,
 	.get_edid = ptn3460_get_edid,
-};
+पूर्ण;
 
-static int ptn3460_probe(struct i2c_client *client,
-				const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct ptn3460_bridge *ptn_bridge;
-	struct drm_bridge *panel_bridge;
-	struct drm_panel *panel;
-	int ret;
+अटल पूर्णांक ptn3460_probe(काष्ठा i2c_client *client,
+				स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा ptn3460_bridge *ptn_bridge;
+	काष्ठा drm_bridge *panel_bridge;
+	काष्ठा drm_panel *panel;
+	पूर्णांक ret;
 
-	ptn_bridge = devm_kzalloc(dev, sizeof(*ptn_bridge), GFP_KERNEL);
-	if (!ptn_bridge) {
-		return -ENOMEM;
-	}
+	ptn_bridge = devm_kzalloc(dev, माप(*ptn_bridge), GFP_KERNEL);
+	अगर (!ptn_bridge) अणु
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = drm_of_find_panel_or_bridge(dev->of_node, 0, 0, &panel, NULL);
-	if (ret)
-		return ret;
+	ret = drm_of_find_panel_or_bridge(dev->of_node, 0, 0, &panel, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	panel_bridge = devm_drm_panel_bridge_add(dev, panel);
-	if (IS_ERR(panel_bridge))
-		return PTR_ERR(panel_bridge);
+	अगर (IS_ERR(panel_bridge))
+		वापस PTR_ERR(panel_bridge);
 
 	ptn_bridge->panel_bridge = panel_bridge;
 	ptn_bridge->client = client;
 
 	ptn_bridge->gpio_pd_n = devm_gpiod_get(&client->dev, "powerdown",
 					       GPIOD_OUT_HIGH);
-	if (IS_ERR(ptn_bridge->gpio_pd_n)) {
+	अगर (IS_ERR(ptn_bridge->gpio_pd_n)) अणु
 		ret = PTR_ERR(ptn_bridge->gpio_pd_n);
 		dev_err(dev, "cannot get gpio_pd_n %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Request the reset pin low to avoid the bridge being
+	 * Request the reset pin low to aव्योम the bridge being
 	 * initialized prematurely
 	 */
 	ptn_bridge->gpio_rst_n = devm_gpiod_get(&client->dev, "reset",
 						GPIOD_OUT_LOW);
-	if (IS_ERR(ptn_bridge->gpio_rst_n)) {
+	अगर (IS_ERR(ptn_bridge->gpio_rst_n)) अणु
 		ret = PTR_ERR(ptn_bridge->gpio_rst_n);
 		DRM_ERROR("cannot get gpio_rst_n %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = of_property_read_u32(dev->of_node, "edid-emulation",
+	ret = of_property_पढ़ो_u32(dev->of_node, "edid-emulation",
 			&ptn_bridge->edid_emulation);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Can't read EDID emulation value\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ptn_bridge->bridge.funcs = &ptn3460_bridge_funcs;
 	ptn_bridge->bridge.ops = DRM_BRIDGE_OP_EDID;
@@ -317,39 +318,39 @@ static int ptn3460_probe(struct i2c_client *client,
 
 	i2c_set_clientdata(client, ptn_bridge);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptn3460_remove(struct i2c_client *client)
-{
-	struct ptn3460_bridge *ptn_bridge = i2c_get_clientdata(client);
+अटल पूर्णांक ptn3460_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ptn3460_bridge *ptn_bridge = i2c_get_clientdata(client);
 
-	drm_bridge_remove(&ptn_bridge->bridge);
+	drm_bridge_हटाओ(&ptn_bridge->bridge);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id ptn3460_i2c_table[] = {
-	{"ptn3460", 0},
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id ptn3460_i2c_table[] = अणु
+	अणु"ptn3460", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ptn3460_i2c_table);
 
-static const struct of_device_id ptn3460_match[] = {
-	{ .compatible = "nxp,ptn3460" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ptn3460_match[] = अणु
+	अणु .compatible = "nxp,ptn3460" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ptn3460_match);
 
-static struct i2c_driver ptn3460_driver = {
+अटल काष्ठा i2c_driver ptn3460_driver = अणु
 	.id_table	= ptn3460_i2c_table,
 	.probe		= ptn3460_probe,
-	.remove		= ptn3460_remove,
-	.driver		= {
+	.हटाओ		= ptn3460_हटाओ,
+	.driver		= अणु
 		.name	= "nxp,ptn3460",
 		.of_match_table = ptn3460_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_i2c_driver(ptn3460_driver);
 
 MODULE_AUTHOR("Sean Paul <seanpaul@chromium.org>");

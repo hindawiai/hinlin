@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright 2009-2015 Freescale Semiconductor, Inc. and others
  *
@@ -6,8 +7,8 @@
  * Jason ported to M54418TWR and MVFA5 (VF610).
  * Authors: Stefan Agner <stefan.agner@toradex.com>
  *          Bill Pringlemeir <bpringlemeir@nbsps.com>
- *          Shaohui Xie <b21989@freescale.com>
- *          Jason Jin <Jason.jin@freescale.com>
+ *          Shaohui Xie <b21989@मुक्तscale.com>
+ *          Jason Jin <Jason.jin@मुक्तscale.com>
  *
  * Based on original driver mpc5121_nfc.c.
  *
@@ -19,143 +20,143 @@
  * - HW ECC: Only 24 and 32-bit error correction implemented.
  */
 
-#include <linux/module.h>
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/swab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/swab.h>
 
-#define	DRV_NAME		"vf610_nfc"
+#घोषणा	DRV_NAME		"vf610_nfc"
 
 /* Register Offsets */
-#define NFC_FLASH_CMD1			0x3F00
-#define NFC_FLASH_CMD2			0x3F04
-#define NFC_COL_ADDR			0x3F08
-#define NFC_ROW_ADDR			0x3F0c
-#define NFC_ROW_ADDR_INC		0x3F14
-#define NFC_FLASH_STATUS1		0x3F18
-#define NFC_FLASH_STATUS2		0x3F1c
-#define NFC_CACHE_SWAP			0x3F28
-#define NFC_SECTOR_SIZE			0x3F2c
-#define NFC_FLASH_CONFIG		0x3F30
-#define NFC_IRQ_STATUS			0x3F38
+#घोषणा NFC_FLASH_CMD1			0x3F00
+#घोषणा NFC_FLASH_CMD2			0x3F04
+#घोषणा NFC_COL_ADDR			0x3F08
+#घोषणा NFC_ROW_ADDR			0x3F0c
+#घोषणा NFC_ROW_ADDR_INC		0x3F14
+#घोषणा NFC_FLASH_STATUS1		0x3F18
+#घोषणा NFC_FLASH_STATUS2		0x3F1c
+#घोषणा NFC_CACHE_SWAP			0x3F28
+#घोषणा NFC_SECTOR_SIZE			0x3F2c
+#घोषणा NFC_FLASH_CONFIG		0x3F30
+#घोषणा NFC_IRQ_STATUS			0x3F38
 
-/* Addresses for NFC MAIN RAM BUFFER areas */
-#define NFC_MAIN_AREA(n)		((n) *  0x1000)
+/* Addresses क्रम NFC MAIN RAM BUFFER areas */
+#घोषणा NFC_MAIN_AREA(n)		((n) *  0x1000)
 
-#define PAGE_2K				0x0800
-#define OOB_64				0x0040
-#define OOB_MAX				0x0100
+#घोषणा PAGE_2K				0x0800
+#घोषणा OOB_64				0x0040
+#घोषणा OOB_MAX				0x0100
 
 /* NFC_CMD2[CODE] controller cycle bit masks */
-#define COMMAND_CMD_BYTE1		BIT(14)
-#define COMMAND_CAR_BYTE1		BIT(13)
-#define COMMAND_CAR_BYTE2		BIT(12)
-#define COMMAND_RAR_BYTE1		BIT(11)
-#define COMMAND_RAR_BYTE2		BIT(10)
-#define COMMAND_RAR_BYTE3		BIT(9)
-#define COMMAND_NADDR_BYTES(x)		GENMASK(13, 13 - (x) + 1)
-#define COMMAND_WRITE_DATA		BIT(8)
-#define COMMAND_CMD_BYTE2		BIT(7)
-#define COMMAND_RB_HANDSHAKE		BIT(6)
-#define COMMAND_READ_DATA		BIT(5)
-#define COMMAND_CMD_BYTE3		BIT(4)
-#define COMMAND_READ_STATUS		BIT(3)
-#define COMMAND_READ_ID			BIT(2)
+#घोषणा COMMAND_CMD_BYTE1		BIT(14)
+#घोषणा COMMAND_CAR_BYTE1		BIT(13)
+#घोषणा COMMAND_CAR_BYTE2		BIT(12)
+#घोषणा COMMAND_RAR_BYTE1		BIT(11)
+#घोषणा COMMAND_RAR_BYTE2		BIT(10)
+#घोषणा COMMAND_RAR_BYTE3		BIT(9)
+#घोषणा COMMAND_NADDR_BYTES(x)		GENMASK(13, 13 - (x) + 1)
+#घोषणा COMMAND_WRITE_DATA		BIT(8)
+#घोषणा COMMAND_CMD_BYTE2		BIT(7)
+#घोषणा COMMAND_RB_HANDSHAKE		BIT(6)
+#घोषणा COMMAND_READ_DATA		BIT(5)
+#घोषणा COMMAND_CMD_BYTE3		BIT(4)
+#घोषणा COMMAND_READ_STATUS		BIT(3)
+#घोषणा COMMAND_READ_ID			BIT(2)
 
 /* NFC ECC mode define */
-#define ECC_BYPASS			0
-#define ECC_45_BYTE			6
-#define ECC_60_BYTE			7
+#घोषणा ECC_BYPASS			0
+#घोषणा ECC_45_BYTE			6
+#घोषणा ECC_60_BYTE			7
 
 /*** Register Mask and bit definitions */
 
 /* NFC_FLASH_CMD1 Field */
-#define CMD_BYTE2_MASK				0xFF000000
-#define CMD_BYTE2_SHIFT				24
+#घोषणा CMD_BYTE2_MASK				0xFF000000
+#घोषणा CMD_BYTE2_SHIFT				24
 
 /* NFC_FLASH_CM2 Field */
-#define CMD_BYTE1_MASK				0xFF000000
-#define CMD_BYTE1_SHIFT				24
-#define CMD_CODE_MASK				0x00FFFF00
-#define CMD_CODE_SHIFT				8
-#define BUFNO_MASK				0x00000006
-#define BUFNO_SHIFT				1
-#define START_BIT				BIT(0)
+#घोषणा CMD_BYTE1_MASK				0xFF000000
+#घोषणा CMD_BYTE1_SHIFT				24
+#घोषणा CMD_CODE_MASK				0x00FFFF00
+#घोषणा CMD_CODE_SHIFT				8
+#घोषणा BUFNO_MASK				0x00000006
+#घोषणा BUFNO_SHIFT				1
+#घोषणा START_BIT				BIT(0)
 
 /* NFC_COL_ADDR Field */
-#define COL_ADDR_MASK				0x0000FFFF
-#define COL_ADDR_SHIFT				0
-#define COL_ADDR(pos, val)			(((val) & 0xFF) << (8 * (pos)))
+#घोषणा COL_ADDR_MASK				0x0000FFFF
+#घोषणा COL_ADDR_SHIFT				0
+#घोषणा COL_ADDR(pos, val)			(((val) & 0xFF) << (8 * (pos)))
 
 /* NFC_ROW_ADDR Field */
-#define ROW_ADDR_MASK				0x00FFFFFF
-#define ROW_ADDR_SHIFT				0
-#define ROW_ADDR(pos, val)			(((val) & 0xFF) << (8 * (pos)))
+#घोषणा ROW_ADDR_MASK				0x00FFFFFF
+#घोषणा ROW_ADDR_SHIFT				0
+#घोषणा ROW_ADDR(pos, val)			(((val) & 0xFF) << (8 * (pos)))
 
-#define ROW_ADDR_CHIP_SEL_RB_MASK		0xF0000000
-#define ROW_ADDR_CHIP_SEL_RB_SHIFT		28
-#define ROW_ADDR_CHIP_SEL_MASK			0x0F000000
-#define ROW_ADDR_CHIP_SEL_SHIFT			24
+#घोषणा ROW_ADDR_CHIP_SEL_RB_MASK		0xF0000000
+#घोषणा ROW_ADDR_CHIP_SEL_RB_SHIFT		28
+#घोषणा ROW_ADDR_CHIP_SEL_MASK			0x0F000000
+#घोषणा ROW_ADDR_CHIP_SEL_SHIFT			24
 
 /* NFC_FLASH_STATUS2 Field */
-#define STATUS_BYTE1_MASK			0x000000FF
+#घोषणा STATUS_BYTE1_MASK			0x000000FF
 
 /* NFC_FLASH_CONFIG Field */
-#define CONFIG_ECC_SRAM_ADDR_MASK		0x7FC00000
-#define CONFIG_ECC_SRAM_ADDR_SHIFT		22
-#define CONFIG_ECC_SRAM_REQ_BIT			BIT(21)
-#define CONFIG_DMA_REQ_BIT			BIT(20)
-#define CONFIG_ECC_MODE_MASK			0x000E0000
-#define CONFIG_ECC_MODE_SHIFT			17
-#define CONFIG_FAST_FLASH_BIT			BIT(16)
-#define CONFIG_16BIT				BIT(7)
-#define CONFIG_BOOT_MODE_BIT			BIT(6)
-#define CONFIG_ADDR_AUTO_INCR_BIT		BIT(5)
-#define CONFIG_BUFNO_AUTO_INCR_BIT		BIT(4)
-#define CONFIG_PAGE_CNT_MASK			0xF
-#define CONFIG_PAGE_CNT_SHIFT			0
+#घोषणा CONFIG_ECC_SRAM_ADDR_MASK		0x7FC00000
+#घोषणा CONFIG_ECC_SRAM_ADDR_SHIFT		22
+#घोषणा CONFIG_ECC_SRAM_REQ_BIT			BIT(21)
+#घोषणा CONFIG_DMA_REQ_BIT			BIT(20)
+#घोषणा CONFIG_ECC_MODE_MASK			0x000E0000
+#घोषणा CONFIG_ECC_MODE_SHIFT			17
+#घोषणा CONFIG_FAST_FLASH_BIT			BIT(16)
+#घोषणा CONFIG_16BIT				BIT(7)
+#घोषणा CONFIG_BOOT_MODE_BIT			BIT(6)
+#घोषणा CONFIG_ADDR_AUTO_INCR_BIT		BIT(5)
+#घोषणा CONFIG_BUFNO_AUTO_INCR_BIT		BIT(4)
+#घोषणा CONFIG_PAGE_CNT_MASK			0xF
+#घोषणा CONFIG_PAGE_CNT_SHIFT			0
 
 /* NFC_IRQ_STATUS Field */
-#define IDLE_IRQ_BIT				BIT(29)
-#define IDLE_EN_BIT				BIT(20)
-#define CMD_DONE_CLEAR_BIT			BIT(18)
-#define IDLE_CLEAR_BIT				BIT(17)
+#घोषणा IDLE_IRQ_BIT				BIT(29)
+#घोषणा IDLE_EN_BIT				BIT(20)
+#घोषणा CMD_DONE_CLEAR_BIT			BIT(18)
+#घोषणा IDLE_CLEAR_BIT				BIT(17)
 
 /*
- * ECC status - seems to consume 8 bytes (double word). The documented
+ * ECC status - seems to consume 8 bytes (द्विगुन word). The करोcumented
  * status byte is located in the lowest byte of the second word (which is
  * the 4th or 7th byte depending on endianness).
  * Calculate an offset to store the ECC status at the end of the buffer.
  */
-#define ECC_SRAM_ADDR		(PAGE_2K + OOB_MAX - 8)
+#घोषणा ECC_SRAM_ADDR		(PAGE_2K + OOB_MAX - 8)
 
-#define ECC_STATUS		0x4
-#define ECC_STATUS_MASK		0x80
-#define ECC_STATUS_ERR_COUNT	0x3F
+#घोषणा ECC_STATUS		0x4
+#घोषणा ECC_STATUS_MASK		0x80
+#घोषणा ECC_STATUS_ERR_COUNT	0x3F
 
-enum vf610_nfc_variant {
+क्रमागत vf610_nfc_variant अणु
 	NFC_VFC610 = 1,
-};
+पूर्ण;
 
-struct vf610_nfc {
-	struct nand_controller base;
-	struct nand_chip chip;
-	struct device *dev;
-	void __iomem *regs;
-	struct completion cmd_done;
+काष्ठा vf610_nfc अणु
+	काष्ठा nand_controller base;
+	काष्ठा nand_chip chip;
+	काष्ठा device *dev;
+	व्योम __iomem *regs;
+	काष्ठा completion cmd_करोne;
 	/* Status and ID are in alternate locations. */
-	enum vf610_nfc_variant variant;
-	struct clk *clk;
+	क्रमागत vf610_nfc_variant variant;
+	काष्ठा clk *clk;
 	/*
 	 * Indicate that user data is accessed (full page/oob). This is
 	 * useful to indicate the driver whether to swap byte endianness.
@@ -163,247 +164,247 @@ struct vf610_nfc {
 	 */
 	bool data_access;
 	u32 ecc_mode;
-};
+पूर्ण;
 
-static inline struct vf610_nfc *chip_to_nfc(struct nand_chip *chip)
-{
-	return container_of(chip, struct vf610_nfc, chip);
-}
+अटल अंतरभूत काष्ठा vf610_nfc *chip_to_nfc(काष्ठा nand_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा vf610_nfc, chip);
+पूर्ण
 
-static inline u32 vf610_nfc_read(struct vf610_nfc *nfc, uint reg)
-{
-	return readl(nfc->regs + reg);
-}
+अटल अंतरभूत u32 vf610_nfc_पढ़ो(काष्ठा vf610_nfc *nfc, uपूर्णांक reg)
+अणु
+	वापस पढ़ोl(nfc->regs + reg);
+पूर्ण
 
-static inline void vf610_nfc_write(struct vf610_nfc *nfc, uint reg, u32 val)
-{
-	writel(val, nfc->regs + reg);
-}
+अटल अंतरभूत व्योम vf610_nfc_ग_लिखो(काष्ठा vf610_nfc *nfc, uपूर्णांक reg, u32 val)
+अणु
+	ग_लिखोl(val, nfc->regs + reg);
+पूर्ण
 
-static inline void vf610_nfc_set(struct vf610_nfc *nfc, uint reg, u32 bits)
-{
-	vf610_nfc_write(nfc, reg, vf610_nfc_read(nfc, reg) | bits);
-}
+अटल अंतरभूत व्योम vf610_nfc_set(काष्ठा vf610_nfc *nfc, uपूर्णांक reg, u32 bits)
+अणु
+	vf610_nfc_ग_लिखो(nfc, reg, vf610_nfc_पढ़ो(nfc, reg) | bits);
+पूर्ण
 
-static inline void vf610_nfc_clear(struct vf610_nfc *nfc, uint reg, u32 bits)
-{
-	vf610_nfc_write(nfc, reg, vf610_nfc_read(nfc, reg) & ~bits);
-}
+अटल अंतरभूत व्योम vf610_nfc_clear(काष्ठा vf610_nfc *nfc, uपूर्णांक reg, u32 bits)
+अणु
+	vf610_nfc_ग_लिखो(nfc, reg, vf610_nfc_पढ़ो(nfc, reg) & ~bits);
+पूर्ण
 
-static inline void vf610_nfc_set_field(struct vf610_nfc *nfc, u32 reg,
-				       u32 mask, u32 shift, u32 val)
-{
-	vf610_nfc_write(nfc, reg,
-			(vf610_nfc_read(nfc, reg) & (~mask)) | val << shift);
-}
+अटल अंतरभूत व्योम vf610_nfc_set_field(काष्ठा vf610_nfc *nfc, u32 reg,
+				       u32 mask, u32 shअगरt, u32 val)
+अणु
+	vf610_nfc_ग_लिखो(nfc, reg,
+			(vf610_nfc_पढ़ो(nfc, reg) & (~mask)) | val << shअगरt);
+पूर्ण
 
-static inline bool vf610_nfc_kernel_is_little_endian(void)
-{
-#ifdef __LITTLE_ENDIAN
-	return true;
-#else
-	return false;
-#endif
-}
+अटल अंतरभूत bool vf610_nfc_kernel_is_little_endian(व्योम)
+अणु
+#अगर_घोषित __LITTLE_ENDIAN
+	वापस true;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
 /**
- * Read accessor for internal SRAM buffer
+ * Read accessor क्रम पूर्णांकernal SRAM buffer
  * @dst: destination address in regular memory
  * @src: source address in SRAM buffer
  * @len: bytes to copy
- * @fix_endian: Fix endianness if required
+ * @fix_endian: Fix endianness अगर required
  *
- * Use this accessor for the internal SRAM buffers. On the ARM
+ * Use this accessor क्रम the पूर्णांकernal SRAM buffers. On the ARM
  * Freescale Vybrid SoC it's known that the driver can treat
- * the SRAM buffer as if it's memory. Other platform might need
- * to treat the buffers differently.
+ * the SRAM buffer as अगर it's memory. Other platक्रमm might need
+ * to treat the buffers dअगरferently.
  *
- * The controller stores bytes from the NAND chip internally in big
- * endianness. On little endian platforms such as Vybrid this leads
+ * The controller stores bytes from the न_अंकD chip पूर्णांकernally in big
+ * endianness. On little endian platक्रमms such as Vybrid this leads
  * to reversed byte order.
- * For performance reason (and earlier probably due to unawareness)
- * the driver avoids correcting endianness where it has control over
- * write and read side (e.g. page wise data access).
+ * For perक्रमmance reason (and earlier probably due to unawareness)
+ * the driver aव्योमs correcting endianness where it has control over
+ * ग_लिखो and पढ़ो side (e.g. page wise data access).
  */
-static inline void vf610_nfc_rd_from_sram(void *dst, const void __iomem *src,
-					  size_t len, bool fix_endian)
-{
-	if (vf610_nfc_kernel_is_little_endian() && fix_endian) {
-		unsigned int i;
+अटल अंतरभूत व्योम vf610_nfc_rd_from_sram(व्योम *dst, स्थिर व्योम __iomem *src,
+					  माप_प्रकार len, bool fix_endian)
+अणु
+	अगर (vf610_nfc_kernel_is_little_endian() && fix_endian) अणु
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < len; i += 4) {
-			u32 val = swab32(__raw_readl(src + i));
+		क्रम (i = 0; i < len; i += 4) अणु
+			u32 val = swab32(__raw_पढ़ोl(src + i));
 
-			memcpy(dst + i, &val, min(sizeof(val), len - i));
-		}
-	} else {
-		memcpy_fromio(dst, src, len);
-	}
-}
+			स_नकल(dst + i, &val, min(माप(val), len - i));
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		स_नकल_fromio(dst, src, len);
+	पूर्ण
+पूर्ण
 
 /**
- * Write accessor for internal SRAM buffer
+ * Write accessor क्रम पूर्णांकernal SRAM buffer
  * @dst: destination address in SRAM buffer
  * @src: source address in regular memory
  * @len: bytes to copy
- * @fix_endian: Fix endianness if required
+ * @fix_endian: Fix endianness अगर required
  *
- * Use this accessor for the internal SRAM buffers. On the ARM
+ * Use this accessor क्रम the पूर्णांकernal SRAM buffers. On the ARM
  * Freescale Vybrid SoC it's known that the driver can treat
- * the SRAM buffer as if it's memory. Other platform might need
- * to treat the buffers differently.
+ * the SRAM buffer as अगर it's memory. Other platक्रमm might need
+ * to treat the buffers dअगरferently.
  *
- * The controller stores bytes from the NAND chip internally in big
- * endianness. On little endian platforms such as Vybrid this leads
+ * The controller stores bytes from the न_अंकD chip पूर्णांकernally in big
+ * endianness. On little endian platक्रमms such as Vybrid this leads
  * to reversed byte order.
- * For performance reason (and earlier probably due to unawareness)
- * the driver avoids correcting endianness where it has control over
- * write and read side (e.g. page wise data access).
+ * For perक्रमmance reason (and earlier probably due to unawareness)
+ * the driver aव्योमs correcting endianness where it has control over
+ * ग_लिखो and पढ़ो side (e.g. page wise data access).
  */
-static inline void vf610_nfc_wr_to_sram(void __iomem *dst, const void *src,
-					size_t len, bool fix_endian)
-{
-	if (vf610_nfc_kernel_is_little_endian() && fix_endian) {
-		unsigned int i;
+अटल अंतरभूत व्योम vf610_nfc_wr_to_sram(व्योम __iomem *dst, स्थिर व्योम *src,
+					माप_प्रकार len, bool fix_endian)
+अणु
+	अगर (vf610_nfc_kernel_is_little_endian() && fix_endian) अणु
+		अचिन्हित पूर्णांक i;
 
-		for (i = 0; i < len; i += 4) {
+		क्रम (i = 0; i < len; i += 4) अणु
 			u32 val;
 
-			memcpy(&val, src + i, min(sizeof(val), len - i));
-			__raw_writel(swab32(val), dst + i);
-		}
-	} else {
-		memcpy_toio(dst, src, len);
-	}
-}
+			स_नकल(&val, src + i, min(माप(val), len - i));
+			__raw_ग_लिखोl(swab32(val), dst + i);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		स_नकल_toio(dst, src, len);
+	पूर्ण
+पूर्ण
 
-/* Clear flags for upcoming command */
-static inline void vf610_nfc_clear_status(struct vf610_nfc *nfc)
-{
-	u32 tmp = vf610_nfc_read(nfc, NFC_IRQ_STATUS);
+/* Clear flags क्रम upcoming command */
+अटल अंतरभूत व्योम vf610_nfc_clear_status(काष्ठा vf610_nfc *nfc)
+अणु
+	u32 पंचांगp = vf610_nfc_पढ़ो(nfc, NFC_IRQ_STATUS);
 
-	tmp |= CMD_DONE_CLEAR_BIT | IDLE_CLEAR_BIT;
-	vf610_nfc_write(nfc, NFC_IRQ_STATUS, tmp);
-}
+	पंचांगp |= CMD_DONE_CLEAR_BIT | IDLE_CLEAR_BIT;
+	vf610_nfc_ग_लिखो(nfc, NFC_IRQ_STATUS, पंचांगp);
+पूर्ण
 
-static void vf610_nfc_done(struct vf610_nfc *nfc)
-{
-	unsigned long timeout = msecs_to_jiffies(100);
+अटल व्योम vf610_nfc_करोne(काष्ठा vf610_nfc *nfc)
+अणु
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(100);
 
 	/*
-	 * Barrier is needed after this write. This write need
-	 * to be done before reading the next register the first
-	 * time.
-	 * vf610_nfc_set implicates such a barrier by using writel
-	 * to write to the register.
+	 * Barrier is needed after this ग_लिखो. This ग_लिखो need
+	 * to be करोne beक्रमe पढ़ोing the next रेजिस्टर the first
+	 * समय.
+	 * vf610_nfc_set implicates such a barrier by using ग_लिखोl
+	 * to ग_लिखो to the रेजिस्टर.
 	 */
 	vf610_nfc_set(nfc, NFC_IRQ_STATUS, IDLE_EN_BIT);
 	vf610_nfc_set(nfc, NFC_FLASH_CMD2, START_BIT);
 
-	if (!wait_for_completion_timeout(&nfc->cmd_done, timeout))
+	अगर (!रुको_क्रम_completion_समयout(&nfc->cmd_करोne, समयout))
 		dev_warn(nfc->dev, "Timeout while waiting for BUSY.\n");
 
 	vf610_nfc_clear_status(nfc);
-}
+पूर्ण
 
-static irqreturn_t vf610_nfc_irq(int irq, void *data)
-{
-	struct vf610_nfc *nfc = data;
+अटल irqवापस_t vf610_nfc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा vf610_nfc *nfc = data;
 
 	vf610_nfc_clear(nfc, NFC_IRQ_STATUS, IDLE_EN_BIT);
-	complete(&nfc->cmd_done);
+	complete(&nfc->cmd_करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static inline void vf610_nfc_ecc_mode(struct vf610_nfc *nfc, int ecc_mode)
-{
+अटल अंतरभूत व्योम vf610_nfc_ecc_mode(काष्ठा vf610_nfc *nfc, पूर्णांक ecc_mode)
+अणु
 	vf610_nfc_set_field(nfc, NFC_FLASH_CONFIG,
 			    CONFIG_ECC_MODE_MASK,
 			    CONFIG_ECC_MODE_SHIFT, ecc_mode);
-}
+पूर्ण
 
-static inline void vf610_nfc_run(struct vf610_nfc *nfc, u32 col, u32 row,
+अटल अंतरभूत व्योम vf610_nfc_run(काष्ठा vf610_nfc *nfc, u32 col, u32 row,
 				 u32 cmd1, u32 cmd2, u32 trfr_sz)
-{
+अणु
 	vf610_nfc_set_field(nfc, NFC_COL_ADDR, COL_ADDR_MASK,
 			    COL_ADDR_SHIFT, col);
 
 	vf610_nfc_set_field(nfc, NFC_ROW_ADDR, ROW_ADDR_MASK,
 			    ROW_ADDR_SHIFT, row);
 
-	vf610_nfc_write(nfc, NFC_SECTOR_SIZE, trfr_sz);
-	vf610_nfc_write(nfc, NFC_FLASH_CMD1, cmd1);
-	vf610_nfc_write(nfc, NFC_FLASH_CMD2, cmd2);
+	vf610_nfc_ग_लिखो(nfc, NFC_SECTOR_SIZE, trfr_sz);
+	vf610_nfc_ग_लिखो(nfc, NFC_FLASH_CMD1, cmd1);
+	vf610_nfc_ग_लिखो(nfc, NFC_FLASH_CMD2, cmd2);
 
 	dev_dbg(nfc->dev,
 		"col 0x%04x, row 0x%08x, cmd1 0x%08x, cmd2 0x%08x, len %d\n",
 		col, row, cmd1, cmd2, trfr_sz);
 
-	vf610_nfc_done(nfc);
-}
+	vf610_nfc_करोne(nfc);
+पूर्ण
 
-static inline const struct nand_op_instr *
-vf610_get_next_instr(const struct nand_subop *subop, int *op_id)
-{
-	if (*op_id + 1 >= subop->ninstrs)
-		return NULL;
+अटल अंतरभूत स्थिर काष्ठा nand_op_instr *
+vf610_get_next_instr(स्थिर काष्ठा nand_subop *subop, पूर्णांक *op_id)
+अणु
+	अगर (*op_id + 1 >= subop->ninstrs)
+		वापस शून्य;
 
 	(*op_id)++;
 
-	return &subop->instrs[*op_id];
-}
+	वापस &subop->instrs[*op_id];
+पूर्ण
 
-static int vf610_nfc_cmd(struct nand_chip *chip,
-			 const struct nand_subop *subop)
-{
-	const struct nand_op_instr *instr;
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	int op_id = -1, trfr_sz = 0, offset = 0;
+अटल पूर्णांक vf610_nfc_cmd(काष्ठा nand_chip *chip,
+			 स्थिर काष्ठा nand_subop *subop)
+अणु
+	स्थिर काष्ठा nand_op_instr *instr;
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	पूर्णांक op_id = -1, trfr_sz = 0, offset = 0;
 	u32 col = 0, row = 0, cmd1 = 0, cmd2 = 0, code = 0;
-	bool force8bit = false;
+	bool क्रमce8bit = false;
 
 	/*
 	 * Some ops are optional, but the hardware requires the operations
 	 * to be in this exact order.
-	 * The op parser enforces the order and makes sure that there isn't
-	 * a read and write element in a single operation.
+	 * The op parser enक्रमces the order and makes sure that there isn't
+	 * a पढ़ो and ग_लिखो element in a single operation.
 	 */
 	instr = vf610_get_next_instr(subop, &op_id);
-	if (!instr)
-		return -EINVAL;
+	अगर (!instr)
+		वापस -EINVAL;
 
-	if (instr && instr->type == NAND_OP_CMD_INSTR) {
+	अगर (instr && instr->type == न_अंकD_OP_CMD_INSTR) अणु
 		cmd2 |= instr->ctx.cmd.opcode << CMD_BYTE1_SHIFT;
 		code |= COMMAND_CMD_BYTE1;
 
 		instr = vf610_get_next_instr(subop, &op_id);
-	}
+	पूर्ण
 
-	if (instr && instr->type == NAND_OP_ADDR_INSTR) {
-		int naddrs = nand_subop_get_num_addr_cyc(subop, op_id);
-		int i = nand_subop_get_addr_start_off(subop, op_id);
+	अगर (instr && instr->type == न_अंकD_OP_ADDR_INSTR) अणु
+		पूर्णांक naddrs = nand_subop_get_num_addr_cyc(subop, op_id);
+		पूर्णांक i = nand_subop_get_addr_start_off(subop, op_id);
 
-		for (; i < naddrs; i++) {
+		क्रम (; i < naddrs; i++) अणु
 			u8 val = instr->ctx.addr.addrs[i];
 
-			if (i < 2)
+			अगर (i < 2)
 				col |= COL_ADDR(i, val);
-			else
+			अन्यथा
 				row |= ROW_ADDR(i - 2, val);
-		}
+		पूर्ण
 		code |= COMMAND_NADDR_BYTES(naddrs);
 
 		instr = vf610_get_next_instr(subop, &op_id);
-	}
+	पूर्ण
 
-	if (instr && instr->type == NAND_OP_DATA_OUT_INSTR) {
+	अगर (instr && instr->type == न_अंकD_OP_DATA_OUT_INSTR) अणु
 		trfr_sz = nand_subop_get_data_len(subop, op_id);
 		offset = nand_subop_get_data_start_off(subop, op_id);
-		force8bit = instr->ctx.data.force_8bit;
+		क्रमce8bit = instr->ctx.data.क्रमce_8bit;
 
 		/*
-		 * Don't fix endianness on page access for historical reasons.
+		 * Don't fix endianness on page access क्रम historical reasons.
 		 * See comment in vf610_nfc_wr_to_sram
 		 */
 		vf610_nfc_wr_to_sram(nfc->regs + NFC_MAIN_AREA(0) + offset,
@@ -412,156 +413,156 @@ static int vf610_nfc_cmd(struct nand_chip *chip,
 		code |= COMMAND_WRITE_DATA;
 
 		instr = vf610_get_next_instr(subop, &op_id);
-	}
+	पूर्ण
 
-	if (instr && instr->type == NAND_OP_CMD_INSTR) {
+	अगर (instr && instr->type == न_अंकD_OP_CMD_INSTR) अणु
 		cmd1 |= instr->ctx.cmd.opcode << CMD_BYTE2_SHIFT;
 		code |= COMMAND_CMD_BYTE2;
 
 		instr = vf610_get_next_instr(subop, &op_id);
-	}
+	पूर्ण
 
-	if (instr && instr->type == NAND_OP_WAITRDY_INSTR) {
+	अगर (instr && instr->type == न_अंकD_OP_WAITRDY_INSTR) अणु
 		code |= COMMAND_RB_HANDSHAKE;
 
 		instr = vf610_get_next_instr(subop, &op_id);
-	}
+	पूर्ण
 
-	if (instr && instr->type == NAND_OP_DATA_IN_INSTR) {
+	अगर (instr && instr->type == न_अंकD_OP_DATA_IN_INSTR) अणु
 		trfr_sz = nand_subop_get_data_len(subop, op_id);
 		offset = nand_subop_get_data_start_off(subop, op_id);
-		force8bit = instr->ctx.data.force_8bit;
+		क्रमce8bit = instr->ctx.data.क्रमce_8bit;
 
 		code |= COMMAND_READ_DATA;
-	}
+	पूर्ण
 
-	if (force8bit && (chip->options & NAND_BUSWIDTH_16))
+	अगर (क्रमce8bit && (chip->options & न_अंकD_BUSWIDTH_16))
 		vf610_nfc_clear(nfc, NFC_FLASH_CONFIG, CONFIG_16BIT);
 
 	cmd2 |= code << CMD_CODE_SHIFT;
 
 	vf610_nfc_run(nfc, col, row, cmd1, cmd2, trfr_sz);
 
-	if (instr && instr->type == NAND_OP_DATA_IN_INSTR) {
+	अगर (instr && instr->type == न_अंकD_OP_DATA_IN_INSTR) अणु
 		/*
-		 * Don't fix endianness on page access for historical reasons.
+		 * Don't fix endianness on page access क्रम historical reasons.
 		 * See comment in vf610_nfc_rd_from_sram
 		 */
 		vf610_nfc_rd_from_sram(instr->ctx.data.buf.in + offset,
 				       nfc->regs + NFC_MAIN_AREA(0) + offset,
 				       trfr_sz, !nfc->data_access);
-	}
+	पूर्ण
 
-	if (force8bit && (chip->options & NAND_BUSWIDTH_16))
+	अगर (क्रमce8bit && (chip->options & न_अंकD_BUSWIDTH_16))
 		vf610_nfc_set(nfc, NFC_FLASH_CONFIG, CONFIG_16BIT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_op_parser vf610_nfc_op_parser = NAND_OP_PARSER(
-	NAND_OP_PARSER_PATTERN(vf610_nfc_cmd,
-		NAND_OP_PARSER_PAT_CMD_ELEM(true),
-		NAND_OP_PARSER_PAT_ADDR_ELEM(true, 5),
-		NAND_OP_PARSER_PAT_DATA_OUT_ELEM(true, PAGE_2K + OOB_MAX),
-		NAND_OP_PARSER_PAT_CMD_ELEM(true),
-		NAND_OP_PARSER_PAT_WAITRDY_ELEM(true)),
-	NAND_OP_PARSER_PATTERN(vf610_nfc_cmd,
-		NAND_OP_PARSER_PAT_CMD_ELEM(true),
-		NAND_OP_PARSER_PAT_ADDR_ELEM(true, 5),
-		NAND_OP_PARSER_PAT_CMD_ELEM(true),
-		NAND_OP_PARSER_PAT_WAITRDY_ELEM(true),
-		NAND_OP_PARSER_PAT_DATA_IN_ELEM(true, PAGE_2K + OOB_MAX)),
+अटल स्थिर काष्ठा nand_op_parser vf610_nfc_op_parser = न_अंकD_OP_PARSER(
+	न_अंकD_OP_PARSER_PATTERN(vf610_nfc_cmd,
+		न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
+		न_अंकD_OP_PARSER_PAT_ADDR_ELEM(true, 5),
+		न_अंकD_OP_PARSER_PAT_DATA_OUT_ELEM(true, PAGE_2K + OOB_MAX),
+		न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
+		न_अंकD_OP_PARSER_PAT_WAITRDY_ELEM(true)),
+	न_अंकD_OP_PARSER_PATTERN(vf610_nfc_cmd,
+		न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
+		न_अंकD_OP_PARSER_PAT_ADDR_ELEM(true, 5),
+		न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
+		न_अंकD_OP_PARSER_PAT_WAITRDY_ELEM(true),
+		न_अंकD_OP_PARSER_PAT_DATA_IN_ELEM(true, PAGE_2K + OOB_MAX)),
 	);
 
 /*
  * This function supports Vybrid only (MPC5125 would have full RB and four CS)
  */
-static void vf610_nfc_select_target(struct nand_chip *chip, unsigned int cs)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	u32 tmp;
+अटल व्योम vf610_nfc_select_target(काष्ठा nand_chip *chip, अचिन्हित पूर्णांक cs)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	u32 पंचांगp;
 
 	/* Vybrid only (MPC5125 would have full RB and four CS) */
-	if (nfc->variant != NFC_VFC610)
-		return;
+	अगर (nfc->variant != NFC_VFC610)
+		वापस;
 
-	tmp = vf610_nfc_read(nfc, NFC_ROW_ADDR);
-	tmp &= ~(ROW_ADDR_CHIP_SEL_RB_MASK | ROW_ADDR_CHIP_SEL_MASK);
-	tmp |= 1 << ROW_ADDR_CHIP_SEL_RB_SHIFT;
-	tmp |= BIT(cs) << ROW_ADDR_CHIP_SEL_SHIFT;
+	पंचांगp = vf610_nfc_पढ़ो(nfc, NFC_ROW_ADDR);
+	पंचांगp &= ~(ROW_ADDR_CHIP_SEL_RB_MASK | ROW_ADDR_CHIP_SEL_MASK);
+	पंचांगp |= 1 << ROW_ADDR_CHIP_SEL_RB_SHIFT;
+	पंचांगp |= BIT(cs) << ROW_ADDR_CHIP_SEL_SHIFT;
 
-	vf610_nfc_write(nfc, NFC_ROW_ADDR, tmp);
-}
+	vf610_nfc_ग_लिखो(nfc, NFC_ROW_ADDR, पंचांगp);
+पूर्ण
 
-static int vf610_nfc_exec_op(struct nand_chip *chip,
-			     const struct nand_operation *op,
+अटल पूर्णांक vf610_nfc_exec_op(काष्ठा nand_chip *chip,
+			     स्थिर काष्ठा nand_operation *op,
 			     bool check_only)
-{
-	if (!check_only)
+अणु
+	अगर (!check_only)
 		vf610_nfc_select_target(chip, op->cs);
 
-	return nand_op_parser_exec_op(chip, &vf610_nfc_op_parser, op,
+	वापस nand_op_parser_exec_op(chip, &vf610_nfc_op_parser, op,
 				      check_only);
-}
+पूर्ण
 
-static inline int vf610_nfc_correct_data(struct nand_chip *chip, uint8_t *dat,
-					 uint8_t *oob, int page)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल अंतरभूत पूर्णांक vf610_nfc_correct_data(काष्ठा nand_chip *chip, uपूर्णांक8_t *dat,
+					 uपूर्णांक8_t *oob, पूर्णांक page)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 	u32 ecc_status_off = NFC_MAIN_AREA(0) + ECC_SRAM_ADDR + ECC_STATUS;
 	u8 ecc_status;
 	u8 ecc_count;
-	int flips_threshold = nfc->chip.ecc.strength / 2;
+	पूर्णांक flips_threshold = nfc->chip.ecc.strength / 2;
 
-	ecc_status = vf610_nfc_read(nfc, ecc_status_off) & 0xff;
+	ecc_status = vf610_nfc_पढ़ो(nfc, ecc_status_off) & 0xff;
 	ecc_count = ecc_status & ECC_STATUS_ERR_COUNT;
 
-	if (!(ecc_status & ECC_STATUS_MASK))
-		return ecc_count;
+	अगर (!(ecc_status & ECC_STATUS_MASK))
+		वापस ecc_count;
 
 	nfc->data_access = true;
-	nand_read_oob_op(&nfc->chip, page, 0, oob, mtd->oobsize);
+	nand_पढ़ो_oob_op(&nfc->chip, page, 0, oob, mtd->oobsize);
 	nfc->data_access = false;
 
 	/*
 	 * On an erased page, bit count (including OOB) should be zero or
 	 * at least less then half of the ECC strength.
 	 */
-	return nand_check_erased_ecc_chunk(dat, nfc->chip.ecc.size, oob,
-					   mtd->oobsize, NULL, 0,
+	वापस nand_check_erased_ecc_chunk(dat, nfc->chip.ecc.size, oob,
+					   mtd->oobsize, शून्य, 0,
 					   flips_threshold);
-}
+पूर्ण
 
-static void vf610_nfc_fill_row(struct nand_chip *chip, int page, u32 *code,
+अटल व्योम vf610_nfc_fill_row(काष्ठा nand_chip *chip, पूर्णांक page, u32 *code,
 			       u32 *row)
-{
+अणु
 	*row = ROW_ADDR(0, page & 0xff) | ROW_ADDR(1, page >> 8);
 	*code |= COMMAND_RAR_BYTE1 | COMMAND_RAR_BYTE2;
 
-	if (chip->options & NAND_ROW_ADDR_3) {
+	अगर (chip->options & न_अंकD_ROW_ADDR_3) अणु
 		*row |= ROW_ADDR(2, page >> 16);
 		*code |= COMMAND_RAR_BYTE3;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vf610_nfc_read_page(struct nand_chip *chip, uint8_t *buf,
-			       int oob_required, int page)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int trfr_sz = mtd->writesize + mtd->oobsize;
+अटल पूर्णांक vf610_nfc_पढ़ो_page(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+			       पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक trfr_sz = mtd->ग_लिखोsize + mtd->oobsize;
 	u32 row = 0, cmd1 = 0, cmd2 = 0, code = 0;
-	int stat;
+	पूर्णांक stat;
 
 	vf610_nfc_select_target(chip, chip->cur_cs);
 
-	cmd2 |= NAND_CMD_READ0 << CMD_BYTE1_SHIFT;
+	cmd2 |= न_अंकD_CMD_READ0 << CMD_BYTE1_SHIFT;
 	code |= COMMAND_CMD_BYTE1 | COMMAND_CAR_BYTE1 | COMMAND_CAR_BYTE2;
 
 	vf610_nfc_fill_row(chip, page, &code, &row);
 
-	cmd1 |= NAND_CMD_READSTART << CMD_BYTE2_SHIFT;
+	cmd1 |= न_अंकD_CMD_READSTART << CMD_BYTE2_SHIFT;
 	code |= COMMAND_CMD_BYTE2 | COMMAND_RB_HANDSHAKE | COMMAND_READ_DATA;
 
 	cmd2 |= code << CMD_CODE_SHIFT;
@@ -571,54 +572,54 @@ static int vf610_nfc_read_page(struct nand_chip *chip, uint8_t *buf,
 	vf610_nfc_ecc_mode(nfc, ECC_BYPASS);
 
 	/*
-	 * Don't fix endianness on page access for historical reasons.
+	 * Don't fix endianness on page access क्रम historical reasons.
 	 * See comment in vf610_nfc_rd_from_sram
 	 */
 	vf610_nfc_rd_from_sram(buf, nfc->regs + NFC_MAIN_AREA(0),
-			       mtd->writesize, false);
-	if (oob_required)
+			       mtd->ग_लिखोsize, false);
+	अगर (oob_required)
 		vf610_nfc_rd_from_sram(chip->oob_poi,
 				       nfc->regs + NFC_MAIN_AREA(0) +
-						   mtd->writesize,
+						   mtd->ग_लिखोsize,
 				       mtd->oobsize, false);
 
 	stat = vf610_nfc_correct_data(chip, buf, chip->oob_poi, page);
 
-	if (stat < 0) {
+	अगर (stat < 0) अणु
 		mtd->ecc_stats.failed++;
-		return 0;
-	} else {
+		वापस 0;
+	पूर्ण अन्यथा अणु
 		mtd->ecc_stats.corrected += stat;
-		return stat;
-	}
-}
+		वापस stat;
+	पूर्ण
+पूर्ण
 
-static int vf610_nfc_write_page(struct nand_chip *chip, const uint8_t *buf,
-				int oob_required, int page)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int trfr_sz = mtd->writesize + mtd->oobsize;
+अटल पूर्णांक vf610_nfc_ग_लिखो_page(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+				पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक trfr_sz = mtd->ग_लिखोsize + mtd->oobsize;
 	u32 row = 0, cmd1 = 0, cmd2 = 0, code = 0;
 	u8 status;
-	int ret;
+	पूर्णांक ret;
 
 	vf610_nfc_select_target(chip, chip->cur_cs);
 
-	cmd2 |= NAND_CMD_SEQIN << CMD_BYTE1_SHIFT;
+	cmd2 |= न_अंकD_CMD_SEQIN << CMD_BYTE1_SHIFT;
 	code |= COMMAND_CMD_BYTE1 | COMMAND_CAR_BYTE1 | COMMAND_CAR_BYTE2;
 
 	vf610_nfc_fill_row(chip, page, &code, &row);
 
-	cmd1 |= NAND_CMD_PAGEPROG << CMD_BYTE2_SHIFT;
+	cmd1 |= न_अंकD_CMD_PAGEPROG << CMD_BYTE2_SHIFT;
 	code |= COMMAND_CMD_BYTE2 | COMMAND_WRITE_DATA;
 
 	/*
-	 * Don't fix endianness on page access for historical reasons.
+	 * Don't fix endianness on page access क्रम historical reasons.
 	 * See comment in vf610_nfc_wr_to_sram
 	 */
 	vf610_nfc_wr_to_sram(nfc->regs + NFC_MAIN_AREA(0), buf,
-			     mtd->writesize, false);
+			     mtd->ग_लिखोsize, false);
 
 	code |= COMMAND_RB_HANDSHAKE;
 	cmd2 |= code << CMD_CODE_SHIFT;
@@ -628,85 +629,85 @@ static int vf610_nfc_write_page(struct nand_chip *chip, const uint8_t *buf,
 	vf610_nfc_ecc_mode(nfc, ECC_BYPASS);
 
 	ret = nand_status_op(chip, &status);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (status & NAND_STATUS_FAIL)
-		return -EIO;
+	अगर (status & न_अंकD_STATUS_FAIL)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vf610_nfc_read_page_raw(struct nand_chip *chip, u8 *buf,
-				   int oob_required, int page)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	int ret;
+अटल पूर्णांक vf610_nfc_पढ़ो_page_raw(काष्ठा nand_chip *chip, u8 *buf,
+				   पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	पूर्णांक ret;
 
 	nfc->data_access = true;
-	ret = nand_read_page_raw(chip, buf, oob_required, page);
+	ret = nand_पढ़ो_page_raw(chip, buf, oob_required, page);
 	nfc->data_access = false;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vf610_nfc_write_page_raw(struct nand_chip *chip, const u8 *buf,
-				    int oob_required, int page)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	int ret;
+अटल पूर्णांक vf610_nfc_ग_लिखो_page_raw(काष्ठा nand_chip *chip, स्थिर u8 *buf,
+				    पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	पूर्णांक ret;
 
 	nfc->data_access = true;
-	ret = nand_prog_page_begin_op(chip, page, 0, buf, mtd->writesize);
-	if (!ret && oob_required)
-		ret = nand_write_data_op(chip, chip->oob_poi, mtd->oobsize,
+	ret = nand_prog_page_begin_op(chip, page, 0, buf, mtd->ग_लिखोsize);
+	अगर (!ret && oob_required)
+		ret = nand_ग_लिखो_data_op(chip, chip->oob_poi, mtd->oobsize,
 					 false);
 	nfc->data_access = false;
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
-static int vf610_nfc_read_oob(struct nand_chip *chip, int page)
-{
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	int ret;
+अटल पूर्णांक vf610_nfc_पढ़ो_oob(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	पूर्णांक ret;
 
 	nfc->data_access = true;
-	ret = nand_read_oob_std(chip, page);
+	ret = nand_पढ़ो_oob_std(chip, page);
 	nfc->data_access = false;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vf610_nfc_write_oob(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
-	int ret;
+अटल पूर्णांक vf610_nfc_ग_लिखो_oob(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
+	पूर्णांक ret;
 
 	nfc->data_access = true;
-	ret = nand_prog_page_begin_op(chip, page, mtd->writesize,
+	ret = nand_prog_page_begin_op(chip, page, mtd->ग_लिखोsize,
 				      chip->oob_poi, mtd->oobsize);
 	nfc->data_access = false;
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
-static const struct of_device_id vf610_nfc_dt_ids[] = {
-	{ .compatible = "fsl,vf610-nfc", .data = (void *)NFC_VFC610 },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id vf610_nfc_dt_ids[] = अणु
+	अणु .compatible = "fsl,vf610-nfc", .data = (व्योम *)NFC_VFC610 पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, vf610_nfc_dt_ids);
 
-static void vf610_nfc_preinit_controller(struct vf610_nfc *nfc)
-{
+अटल व्योम vf610_nfc_preinit_controller(काष्ठा vf610_nfc *nfc)
+अणु
 	vf610_nfc_clear(nfc, NFC_FLASH_CONFIG, CONFIG_16BIT);
 	vf610_nfc_clear(nfc, NFC_FLASH_CONFIG, CONFIG_ADDR_AUTO_INCR_BIT);
 	vf610_nfc_clear(nfc, NFC_FLASH_CONFIG, CONFIG_BUFNO_AUTO_INCR_BIT);
@@ -715,19 +716,19 @@ static void vf610_nfc_preinit_controller(struct vf610_nfc *nfc)
 	vf610_nfc_set(nfc, NFC_FLASH_CONFIG, CONFIG_FAST_FLASH_BIT);
 	vf610_nfc_ecc_mode(nfc, ECC_BYPASS);
 
-	/* Disable virtual pages, only one elementary transfer unit */
+	/* Disable भव pages, only one elementary transfer unit */
 	vf610_nfc_set_field(nfc, NFC_FLASH_CONFIG, CONFIG_PAGE_CNT_MASK,
 			    CONFIG_PAGE_CNT_SHIFT, 1);
-}
+पूर्ण
 
-static void vf610_nfc_init_controller(struct vf610_nfc *nfc)
-{
-	if (nfc->chip.options & NAND_BUSWIDTH_16)
+अटल व्योम vf610_nfc_init_controller(काष्ठा vf610_nfc *nfc)
+अणु
+	अगर (nfc->chip.options & न_अंकD_BUSWIDTH_16)
 		vf610_nfc_set(nfc, NFC_FLASH_CONFIG, CONFIG_16BIT);
-	else
+	अन्यथा
 		vf610_nfc_clear(nfc, NFC_FLASH_CONFIG, CONFIG_16BIT);
 
-	if (nfc->chip.ecc.engine_type == NAND_ECC_ENGINE_TYPE_ON_HOST) {
+	अगर (nfc->chip.ecc.engine_type == न_अंकD_ECC_ENGINE_TYPE_ON_HOST) अणु
 		/* Set ECC status offset in SRAM */
 		vf610_nfc_set_field(nfc, NFC_FLASH_CONFIG,
 				    CONFIG_ECC_SRAM_ADDR_MASK,
@@ -736,88 +737,88 @@ static void vf610_nfc_init_controller(struct vf610_nfc *nfc)
 
 		/* Enable ECC status in SRAM */
 		vf610_nfc_set(nfc, NFC_FLASH_CONFIG, CONFIG_ECC_SRAM_REQ_BIT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vf610_nfc_attach_chip(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct vf610_nfc *nfc = chip_to_nfc(chip);
+अटल पूर्णांक vf610_nfc_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा vf610_nfc *nfc = chip_to_nfc(chip);
 
 	vf610_nfc_init_controller(nfc);
 
 	/* Bad block options. */
-	if (chip->bbt_options & NAND_BBT_USE_FLASH)
-		chip->bbt_options |= NAND_BBT_NO_OOB;
+	अगर (chip->bbt_options & न_अंकD_BBT_USE_FLASH)
+		chip->bbt_options |= न_अंकD_BBT_NO_OOB;
 
 	/* Single buffer only, max 256 OOB minus ECC status */
-	if (mtd->writesize + mtd->oobsize > PAGE_2K + OOB_MAX - 8) {
+	अगर (mtd->ग_लिखोsize + mtd->oobsize > PAGE_2K + OOB_MAX - 8) अणु
 		dev_err(nfc->dev, "Unsupported flash page size\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST)
-		return 0;
+	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST)
+		वापस 0;
 
-	if (mtd->writesize != PAGE_2K && mtd->oobsize < 64) {
+	अगर (mtd->ग_लिखोsize != PAGE_2K && mtd->oobsize < 64) अणु
 		dev_err(nfc->dev, "Unsupported flash with hwecc\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	if (chip->ecc.size != mtd->writesize) {
+	अगर (chip->ecc.size != mtd->ग_लिखोsize) अणु
 		dev_err(nfc->dev, "Step size needs to be page size\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* Only 64 byte ECC layouts known */
-	if (mtd->oobsize > 64)
+	अगर (mtd->oobsize > 64)
 		mtd->oobsize = 64;
 
-	/* Use default large page ECC layout defined in NAND core */
+	/* Use शेष large page ECC layout defined in न_अंकD core */
 	mtd_set_ooblayout(mtd, nand_get_large_page_ooblayout());
-	if (chip->ecc.strength == 32) {
+	अगर (chip->ecc.strength == 32) अणु
 		nfc->ecc_mode = ECC_60_BYTE;
 		chip->ecc.bytes = 60;
-	} else if (chip->ecc.strength == 24) {
+	पूर्ण अन्यथा अगर (chip->ecc.strength == 24) अणु
 		nfc->ecc_mode = ECC_45_BYTE;
 		chip->ecc.bytes = 45;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(nfc->dev, "Unsupported ECC strength\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	chip->ecc.read_page = vf610_nfc_read_page;
-	chip->ecc.write_page = vf610_nfc_write_page;
-	chip->ecc.read_page_raw = vf610_nfc_read_page_raw;
-	chip->ecc.write_page_raw = vf610_nfc_write_page_raw;
-	chip->ecc.read_oob = vf610_nfc_read_oob;
-	chip->ecc.write_oob = vf610_nfc_write_oob;
+	chip->ecc.पढ़ो_page = vf610_nfc_पढ़ो_page;
+	chip->ecc.ग_लिखो_page = vf610_nfc_ग_लिखो_page;
+	chip->ecc.पढ़ो_page_raw = vf610_nfc_पढ़ो_page_raw;
+	chip->ecc.ग_लिखो_page_raw = vf610_nfc_ग_लिखो_page_raw;
+	chip->ecc.पढ़ो_oob = vf610_nfc_पढ़ो_oob;
+	chip->ecc.ग_लिखो_oob = vf610_nfc_ग_लिखो_oob;
 
 	chip->ecc.size = PAGE_2K;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops vf610_nfc_controller_ops = {
+अटल स्थिर काष्ठा nand_controller_ops vf610_nfc_controller_ops = अणु
 	.attach_chip = vf610_nfc_attach_chip,
 	.exec_op = vf610_nfc_exec_op,
 
-};
+पूर्ण;
 
-static int vf610_nfc_probe(struct platform_device *pdev)
-{
-	struct vf610_nfc *nfc;
-	struct resource *res;
-	struct mtd_info *mtd;
-	struct nand_chip *chip;
-	struct device_node *child;
-	const struct of_device_id *of_id;
-	int err;
-	int irq;
+अटल पूर्णांक vf610_nfc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vf610_nfc *nfc;
+	काष्ठा resource *res;
+	काष्ठा mtd_info *mtd;
+	काष्ठा nand_chip *chip;
+	काष्ठा device_node *child;
+	स्थिर काष्ठा of_device_id *of_id;
+	पूर्णांक err;
+	पूर्णांक irq;
 
-	nfc = devm_kzalloc(&pdev->dev, sizeof(*nfc), GFP_KERNEL);
-	if (!nfc)
-		return -ENOMEM;
+	nfc = devm_kzalloc(&pdev->dev, माप(*nfc), GFP_KERNEL);
+	अगर (!nfc)
+		वापस -ENOMEM;
 
 	nfc->dev = &pdev->dev;
 	chip = &nfc->chip;
@@ -827,63 +828,63 @@ static int vf610_nfc_probe(struct platform_device *pdev)
 	mtd->dev.parent = nfc->dev;
 	mtd->name = DRV_NAME;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0)
-		return -EINVAL;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq <= 0)
+		वापस -EINVAL;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	nfc->regs = devm_ioremap_resource(nfc->dev, res);
-	if (IS_ERR(nfc->regs))
-		return PTR_ERR(nfc->regs);
+	अगर (IS_ERR(nfc->regs))
+		वापस PTR_ERR(nfc->regs);
 
-	nfc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(nfc->clk))
-		return PTR_ERR(nfc->clk);
+	nfc->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(nfc->clk))
+		वापस PTR_ERR(nfc->clk);
 
 	err = clk_prepare_enable(nfc->clk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(nfc->dev, "Unable to enable clock!\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	of_id = of_match_device(vf610_nfc_dt_ids, &pdev->dev);
-	if (!of_id) {
+	अगर (!of_id) अणु
 		err = -ENODEV;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
-	nfc->variant = (enum vf610_nfc_variant)of_id->data;
+	nfc->variant = (क्रमागत vf610_nfc_variant)of_id->data;
 
-	for_each_available_child_of_node(nfc->dev->of_node, child) {
-		if (of_device_is_compatible(child, "fsl,vf610-nfc-nandcs")) {
+	क्रम_each_available_child_of_node(nfc->dev->of_node, child) अणु
+		अगर (of_device_is_compatible(child, "fsl,vf610-nfc-nandcs")) अणु
 
-			if (nand_get_flash_node(chip)) {
+			अगर (nand_get_flash_node(chip)) अणु
 				dev_err(nfc->dev,
 					"Only one NAND chip supported!\n");
 				err = -EINVAL;
 				of_node_put(child);
-				goto err_disable_clk;
-			}
+				जाओ err_disable_clk;
+			पूर्ण
 
 			nand_set_flash_node(chip, child);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!nand_get_flash_node(chip)) {
+	अगर (!nand_get_flash_node(chip)) अणु
 		dev_err(nfc->dev, "NAND chip sub-node missing!\n");
 		err = -ENODEV;
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
-	chip->options |= NAND_NO_SUBPAGE_WRITE;
+	chip->options |= न_अंकD_NO_SUBPAGE_WRITE;
 
-	init_completion(&nfc->cmd_done);
+	init_completion(&nfc->cmd_करोne);
 
 	err = devm_request_irq(nfc->dev, irq, vf610_nfc_irq, 0, DRV_NAME, nfc);
-	if (err) {
+	अगर (err) अणु
 		dev_err(nfc->dev, "Error requesting IRQ!\n");
-		goto err_disable_clk;
-	}
+		जाओ err_disable_clk;
+	पूर्ण
 
 	vf610_nfc_preinit_controller(nfc);
 
@@ -891,76 +892,76 @@ static int vf610_nfc_probe(struct platform_device *pdev)
 	nfc->base.ops = &vf610_nfc_controller_ops;
 	chip->controller = &nfc->base;
 
-	/* Scan the NAND chip */
+	/* Scan the न_अंकD chip */
 	err = nand_scan(chip, 1);
-	if (err)
-		goto err_disable_clk;
+	अगर (err)
+		जाओ err_disable_clk;
 
-	platform_set_drvdata(pdev, nfc);
+	platक्रमm_set_drvdata(pdev, nfc);
 
 	/* Register device in MTD */
-	err = mtd_device_register(mtd, NULL, 0);
-	if (err)
-		goto err_cleanup_nand;
-	return 0;
+	err = mtd_device_रेजिस्टर(mtd, शून्य, 0);
+	अगर (err)
+		जाओ err_cleanup_nand;
+	वापस 0;
 
 err_cleanup_nand:
 	nand_cleanup(chip);
 err_disable_clk:
 	clk_disable_unprepare(nfc->clk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vf610_nfc_remove(struct platform_device *pdev)
-{
-	struct vf610_nfc *nfc = platform_get_drvdata(pdev);
-	struct nand_chip *chip = &nfc->chip;
-	int ret;
+अटल पूर्णांक vf610_nfc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vf610_nfc *nfc = platक्रमm_get_drvdata(pdev);
+	काष्ठा nand_chip *chip = &nfc->chip;
+	पूर्णांक ret;
 
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 	nand_cleanup(chip);
 	clk_disable_unprepare(nfc->clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int vf610_nfc_suspend(struct device *dev)
-{
-	struct vf610_nfc *nfc = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक vf610_nfc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा vf610_nfc *nfc = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(nfc->clk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vf610_nfc_resume(struct device *dev)
-{
-	struct vf610_nfc *nfc = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक vf610_nfc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा vf610_nfc *nfc = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	err = clk_prepare_enable(nfc->clk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	vf610_nfc_preinit_controller(nfc);
 	vf610_nfc_init_controller(nfc);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(vf610_nfc_pm_ops, vf610_nfc_suspend, vf610_nfc_resume);
+अटल SIMPLE_DEV_PM_OPS(vf610_nfc_pm_ops, vf610_nfc_suspend, vf610_nfc_resume);
 
-static struct platform_driver vf610_nfc_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver vf610_nfc_driver = अणु
+	.driver		= अणु
 		.name	= DRV_NAME,
 		.of_match_table = vf610_nfc_dt_ids,
 		.pm	= &vf610_nfc_pm_ops,
-	},
+	पूर्ण,
 	.probe		= vf610_nfc_probe,
-	.remove		= vf610_nfc_remove,
-};
+	.हटाओ		= vf610_nfc_हटाओ,
+पूर्ण;
 
-module_platform_driver(vf610_nfc_driver);
+module_platक्रमm_driver(vf610_nfc_driver);
 
 MODULE_AUTHOR("Stefan Agner <stefan.agner@toradex.com>");
 MODULE_DESCRIPTION("Freescale VF610/MPC5125 NFC MTD NAND driver");

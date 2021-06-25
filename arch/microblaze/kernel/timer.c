@@ -1,326 +1,327 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2007-2013 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2012-2013 Xilinx, Inc.
  * Copyright (C) 2007-2009 PetaLogix
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/sched/clock.h>
-#include <linux/sched_clock.h>
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/timecounter.h>
-#include <asm/cpuinfo.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/समयcounter.h>
+#समावेश <यंत्र/cpuinfo.h>
 
-static void __iomem *timer_baseaddr;
+अटल व्योम __iomem *समयr_baseaddr;
 
-static unsigned int freq_div_hz;
-static unsigned int timer_clock_freq;
+अटल अचिन्हित पूर्णांक freq_भाग_hz;
+अटल अचिन्हित पूर्णांक समयr_घड़ी_freq;
 
-#define TCSR0	(0x00)
-#define TLR0	(0x04)
-#define TCR0	(0x08)
-#define TCSR1	(0x10)
-#define TLR1	(0x14)
-#define TCR1	(0x18)
+#घोषणा TCSR0	(0x00)
+#घोषणा TLR0	(0x04)
+#घोषणा TCR0	(0x08)
+#घोषणा TCSR1	(0x10)
+#घोषणा TLR1	(0x14)
+#घोषणा TCR1	(0x18)
 
-#define TCSR_MDT	(1<<0)
-#define TCSR_UDT	(1<<1)
-#define TCSR_GENT	(1<<2)
-#define TCSR_CAPT	(1<<3)
-#define TCSR_ARHT	(1<<4)
-#define TCSR_LOAD	(1<<5)
-#define TCSR_ENIT	(1<<6)
-#define TCSR_ENT	(1<<7)
-#define TCSR_TINT	(1<<8)
-#define TCSR_PWMA	(1<<9)
-#define TCSR_ENALL	(1<<10)
+#घोषणा TCSR_MDT	(1<<0)
+#घोषणा TCSR_UDT	(1<<1)
+#घोषणा TCSR_GENT	(1<<2)
+#घोषणा TCSR_CAPT	(1<<3)
+#घोषणा TCSR_ARHT	(1<<4)
+#घोषणा TCSR_LOAD	(1<<5)
+#घोषणा TCSR_ENIT	(1<<6)
+#घोषणा TCSR_ENT	(1<<7)
+#घोषणा TCSR_TINT	(1<<8)
+#घोषणा TCSR_PWMA	(1<<9)
+#घोषणा TCSR_ENALL	(1<<10)
 
-static unsigned int (*read_fn)(void __iomem *);
-static void (*write_fn)(u32, void __iomem *);
+अटल अचिन्हित पूर्णांक (*पढ़ो_fn)(व्योम __iomem *);
+अटल व्योम (*ग_लिखो_fn)(u32, व्योम __iomem *);
 
-static void timer_write32(u32 val, void __iomem *addr)
-{
-	iowrite32(val, addr);
-}
+अटल व्योम समयr_ग_लिखो32(u32 val, व्योम __iomem *addr)
+अणु
+	ioग_लिखो32(val, addr);
+पूर्ण
 
-static unsigned int timer_read32(void __iomem *addr)
-{
-	return ioread32(addr);
-}
+अटल अचिन्हित पूर्णांक समयr_पढ़ो32(व्योम __iomem *addr)
+अणु
+	वापस ioपढ़ो32(addr);
+पूर्ण
 
-static void timer_write32_be(u32 val, void __iomem *addr)
-{
-	iowrite32be(val, addr);
-}
+अटल व्योम समयr_ग_लिखो32_be(u32 val, व्योम __iomem *addr)
+अणु
+	ioग_लिखो32be(val, addr);
+पूर्ण
 
-static unsigned int timer_read32_be(void __iomem *addr)
-{
-	return ioread32be(addr);
-}
+अटल अचिन्हित पूर्णांक समयr_पढ़ो32_be(व्योम __iomem *addr)
+अणु
+	वापस ioपढ़ो32be(addr);
+पूर्ण
 
-static inline void xilinx_timer0_stop(void)
-{
-	write_fn(read_fn(timer_baseaddr + TCSR0) & ~TCSR_ENT,
-		 timer_baseaddr + TCSR0);
-}
+अटल अंतरभूत व्योम xilinx_समयr0_stop(व्योम)
+अणु
+	ग_लिखो_fn(पढ़ो_fn(समयr_baseaddr + TCSR0) & ~TCSR_ENT,
+		 समयr_baseaddr + TCSR0);
+पूर्ण
 
-static inline void xilinx_timer0_start_periodic(unsigned long load_val)
-{
-	if (!load_val)
+अटल अंतरभूत व्योम xilinx_समयr0_start_periodic(अचिन्हित दीर्घ load_val)
+अणु
+	अगर (!load_val)
 		load_val = 1;
-	/* loading value to timer reg */
-	write_fn(load_val, timer_baseaddr + TLR0);
+	/* loading value to समयr reg */
+	ग_लिखो_fn(load_val, समयr_baseaddr + TLR0);
 
 	/* load the initial value */
-	write_fn(TCSR_LOAD, timer_baseaddr + TCSR0);
+	ग_लिखो_fn(TCSR_LOAD, समयr_baseaddr + TCSR0);
 
-	/* see timer data sheet for detail
-	 * !ENALL - don't enable 'em all
+	/* see समयr data sheet क्रम detail
+	 * !ENALL - करोn't enable 'em all
 	 * !PWMA - disable pwm
-	 * TINT - clear interrupt status
-	 * ENT- enable timer itself
-	 * ENIT - enable interrupt
+	 * TINT - clear पूर्णांकerrupt status
+	 * ENT- enable समयr itself
+	 * ENIT - enable पूर्णांकerrupt
 	 * !LOAD - clear the bit to let go
-	 * ARHT - auto reload
-	 * !CAPT - no external trigger
-	 * !GENT - no external signal
-	 * UDT - set the timer as down counter
+	 * ARHT - स्वतः reload
+	 * !CAPT - no बाह्यal trigger
+	 * !GENT - no बाह्यal संकेत
+	 * UDT - set the समयr as करोwn counter
 	 * !MDT0 - generate mode
 	 */
-	write_fn(TCSR_TINT|TCSR_ENIT|TCSR_ENT|TCSR_ARHT|TCSR_UDT,
-		 timer_baseaddr + TCSR0);
-}
+	ग_लिखो_fn(TCSR_TINT|TCSR_ENIT|TCSR_ENT|TCSR_ARHT|TCSR_UDT,
+		 समयr_baseaddr + TCSR0);
+पूर्ण
 
-static inline void xilinx_timer0_start_oneshot(unsigned long load_val)
-{
-	if (!load_val)
+अटल अंतरभूत व्योम xilinx_समयr0_start_oneshot(अचिन्हित दीर्घ load_val)
+अणु
+	अगर (!load_val)
 		load_val = 1;
-	/* loading value to timer reg */
-	write_fn(load_val, timer_baseaddr + TLR0);
+	/* loading value to समयr reg */
+	ग_लिखो_fn(load_val, समयr_baseaddr + TLR0);
 
 	/* load the initial value */
-	write_fn(TCSR_LOAD, timer_baseaddr + TCSR0);
+	ग_लिखो_fn(TCSR_LOAD, समयr_baseaddr + TCSR0);
 
-	write_fn(TCSR_TINT|TCSR_ENIT|TCSR_ENT|TCSR_ARHT|TCSR_UDT,
-		 timer_baseaddr + TCSR0);
-}
+	ग_लिखो_fn(TCSR_TINT|TCSR_ENIT|TCSR_ENT|TCSR_ARHT|TCSR_UDT,
+		 समयr_baseaddr + TCSR0);
+पूर्ण
 
-static int xilinx_timer_set_next_event(unsigned long delta,
-					struct clock_event_device *dev)
-{
+अटल पूर्णांक xilinx_समयr_set_next_event(अचिन्हित दीर्घ delta,
+					काष्ठा घड़ी_event_device *dev)
+अणु
 	pr_debug("%s: next event, delta %x\n", __func__, (u32)delta);
-	xilinx_timer0_start_oneshot(delta);
-	return 0;
-}
+	xilinx_समयr0_start_oneshot(delta);
+	वापस 0;
+पूर्ण
 
-static int xilinx_timer_shutdown(struct clock_event_device *evt)
-{
+अटल पूर्णांक xilinx_समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
 	pr_info("%s\n", __func__);
-	xilinx_timer0_stop();
-	return 0;
-}
+	xilinx_समयr0_stop();
+	वापस 0;
+पूर्ण
 
-static int xilinx_timer_set_periodic(struct clock_event_device *evt)
-{
+अटल पूर्णांक xilinx_समयr_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
 	pr_info("%s\n", __func__);
-	xilinx_timer0_start_periodic(freq_div_hz);
-	return 0;
-}
+	xilinx_समयr0_start_periodic(freq_भाग_hz);
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device clockevent_xilinx_timer = {
+अटल काष्ठा घड़ी_event_device घड़ीevent_xilinx_समयr = अणु
 	.name			= "xilinx_clockevent",
 	.features		= CLOCK_EVT_FEAT_ONESHOT |
 				  CLOCK_EVT_FEAT_PERIODIC,
-	.shift			= 8,
+	.shअगरt			= 8,
 	.rating			= 300,
-	.set_next_event		= xilinx_timer_set_next_event,
-	.set_state_shutdown	= xilinx_timer_shutdown,
-	.set_state_periodic	= xilinx_timer_set_periodic,
-};
+	.set_next_event		= xilinx_समयr_set_next_event,
+	.set_state_shutकरोwn	= xilinx_समयr_shutकरोwn,
+	.set_state_periodic	= xilinx_समयr_set_periodic,
+पूर्ण;
 
-static inline void timer_ack(void)
-{
-	write_fn(read_fn(timer_baseaddr + TCSR0), timer_baseaddr + TCSR0);
-}
+अटल अंतरभूत व्योम समयr_ack(व्योम)
+अणु
+	ग_लिखो_fn(पढ़ो_fn(समयr_baseaddr + TCSR0), समयr_baseaddr + TCSR0);
+पूर्ण
 
-static irqreturn_t timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = &clockevent_xilinx_timer;
-	timer_ack();
+अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = &घड़ीevent_xilinx_समयr;
+	समयr_ack();
 	evt->event_handler(evt);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static __init int xilinx_clockevent_init(void)
-{
-	clockevent_xilinx_timer.mult =
-		div_sc(timer_clock_freq, NSEC_PER_SEC,
-				clockevent_xilinx_timer.shift);
-	clockevent_xilinx_timer.max_delta_ns =
-		clockevent_delta2ns((u32)~0, &clockevent_xilinx_timer);
-	clockevent_xilinx_timer.max_delta_ticks = (u32)~0;
-	clockevent_xilinx_timer.min_delta_ns =
-		clockevent_delta2ns(1, &clockevent_xilinx_timer);
-	clockevent_xilinx_timer.min_delta_ticks = 1;
-	clockevent_xilinx_timer.cpumask = cpumask_of(0);
-	clockevents_register_device(&clockevent_xilinx_timer);
+अटल __init पूर्णांक xilinx_घड़ीevent_init(व्योम)
+अणु
+	घड़ीevent_xilinx_समयr.mult =
+		भाग_sc(समयr_घड़ी_freq, NSEC_PER_SEC,
+				घड़ीevent_xilinx_समयr.shअगरt);
+	घड़ीevent_xilinx_समयr.max_delta_ns =
+		घड़ीevent_delta2ns((u32)~0, &घड़ीevent_xilinx_समयr);
+	घड़ीevent_xilinx_समयr.max_delta_ticks = (u32)~0;
+	घड़ीevent_xilinx_समयr.min_delta_ns =
+		घड़ीevent_delta2ns(1, &घड़ीevent_xilinx_समयr);
+	घड़ीevent_xilinx_समयr.min_delta_ticks = 1;
+	घड़ीevent_xilinx_समयr.cpumask = cpumask_of(0);
+	घड़ीevents_रेजिस्टर_device(&घड़ीevent_xilinx_समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u64 xilinx_clock_read(void)
-{
-	return read_fn(timer_baseaddr + TCR1);
-}
+अटल u64 xilinx_घड़ी_पढ़ो(व्योम)
+अणु
+	वापस पढ़ो_fn(समयr_baseaddr + TCR1);
+पूर्ण
 
-static u64 xilinx_read(struct clocksource *cs)
-{
-	/* reading actual value of timer 1 */
-	return (u64)xilinx_clock_read();
-}
+अटल u64 xilinx_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	/* पढ़ोing actual value of समयr 1 */
+	वापस (u64)xilinx_घड़ी_पढ़ो();
+पूर्ण
 
-static struct timecounter xilinx_tc = {
-	.cc = NULL,
-};
+अटल काष्ठा समयcounter xilinx_tc = अणु
+	.cc = शून्य,
+पूर्ण;
 
-static u64 xilinx_cc_read(const struct cyclecounter *cc)
-{
-	return xilinx_read(NULL);
-}
+अटल u64 xilinx_cc_पढ़ो(स्थिर काष्ठा cyclecounter *cc)
+अणु
+	वापस xilinx_पढ़ो(शून्य);
+पूर्ण
 
-static struct cyclecounter xilinx_cc = {
-	.read = xilinx_cc_read,
+अटल काष्ठा cyclecounter xilinx_cc = अणु
+	.पढ़ो = xilinx_cc_पढ़ो,
 	.mask = CLOCKSOURCE_MASK(32),
-	.shift = 8,
-};
+	.shअगरt = 8,
+पूर्ण;
 
-static int __init init_xilinx_timecounter(void)
-{
-	xilinx_cc.mult = div_sc(timer_clock_freq, NSEC_PER_SEC,
-				xilinx_cc.shift);
+अटल पूर्णांक __init init_xilinx_समयcounter(व्योम)
+अणु
+	xilinx_cc.mult = भाग_sc(समयr_घड़ी_freq, NSEC_PER_SEC,
+				xilinx_cc.shअगरt);
 
-	timecounter_init(&xilinx_tc, &xilinx_cc, sched_clock());
+	समयcounter_init(&xilinx_tc, &xilinx_cc, sched_घड़ी());
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clocksource clocksource_microblaze = {
+अटल काष्ठा घड़ीsource घड़ीsource_microblaze = अणु
 	.name		= "xilinx_clocksource",
 	.rating		= 300,
-	.read		= xilinx_read,
+	.पढ़ो		= xilinx_पढ़ो,
 	.mask		= CLOCKSOURCE_MASK(32),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
-static int __init xilinx_clocksource_init(void)
-{
-	int ret;
+अटल पूर्णांक __init xilinx_घड़ीsource_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = clocksource_register_hz(&clocksource_microblaze,
-				      timer_clock_freq);
-	if (ret) {
+	ret = घड़ीsource_रेजिस्टर_hz(&घड़ीsource_microblaze,
+				      समयr_घड़ी_freq);
+	अगर (ret) अणु
 		pr_err("failed to register clocksource");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* stop timer1 */
-	write_fn(read_fn(timer_baseaddr + TCSR1) & ~TCSR_ENT,
-		 timer_baseaddr + TCSR1);
-	/* start timer1 - up counting without interrupt */
-	write_fn(TCSR_TINT|TCSR_ENT|TCSR_ARHT, timer_baseaddr + TCSR1);
+	/* stop समयr1 */
+	ग_लिखो_fn(पढ़ो_fn(समयr_baseaddr + TCSR1) & ~TCSR_ENT,
+		 समयr_baseaddr + TCSR1);
+	/* start समयr1 - up counting without पूर्णांकerrupt */
+	ग_लिखो_fn(TCSR_TINT|TCSR_ENT|TCSR_ARHT, समयr_baseaddr + TCSR1);
 
-	/* register timecounter - for ftrace support */
-	return init_xilinx_timecounter();
-}
+	/* रेजिस्टर समयcounter - क्रम ftrace support */
+	वापस init_xilinx_समयcounter();
+पूर्ण
 
-static int __init xilinx_timer_init(struct device_node *timer)
-{
-	struct clk *clk;
-	static int initialized;
+अटल पूर्णांक __init xilinx_समयr_init(काष्ठा device_node *समयr)
+अणु
+	काष्ठा clk *clk;
+	अटल पूर्णांक initialized;
 	u32 irq;
-	u32 timer_num = 1;
-	int ret;
+	u32 समयr_num = 1;
+	पूर्णांक ret;
 
-	if (initialized)
-		return -EINVAL;
+	अगर (initialized)
+		वापस -EINVAL;
 
 	initialized = 1;
 
-	timer_baseaddr = of_iomap(timer, 0);
-	if (!timer_baseaddr) {
+	समयr_baseaddr = of_iomap(समयr, 0);
+	अगर (!समयr_baseaddr) अणु
 		pr_err("ERROR: invalid timer base address\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	write_fn = timer_write32;
-	read_fn = timer_read32;
+	ग_लिखो_fn = समयr_ग_लिखो32;
+	पढ़ो_fn = समयr_पढ़ो32;
 
-	write_fn(TCSR_MDT, timer_baseaddr + TCSR0);
-	if (!(read_fn(timer_baseaddr + TCSR0) & TCSR_MDT)) {
-		write_fn = timer_write32_be;
-		read_fn = timer_read32_be;
-	}
+	ग_लिखो_fn(TCSR_MDT, समयr_baseaddr + TCSR0);
+	अगर (!(पढ़ो_fn(समयr_baseaddr + TCSR0) & TCSR_MDT)) अणु
+		ग_लिखो_fn = समयr_ग_लिखो32_be;
+		पढ़ो_fn = समयr_पढ़ो32_be;
+	पूर्ण
 
-	irq = irq_of_parse_and_map(timer, 0);
-	if (irq <= 0) {
+	irq = irq_of_parse_and_map(समयr, 0);
+	अगर (irq <= 0) अणु
 		pr_err("Failed to parse and map irq");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	of_property_read_u32(timer, "xlnx,one-timer-only", &timer_num);
-	if (timer_num) {
+	of_property_पढ़ो_u32(समयr, "xlnx,one-timer-only", &समयr_num);
+	अगर (समयr_num) अणु
 		pr_err("Please enable two timers in HW\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pr_info("%pOF: irq=%d\n", timer, irq);
+	pr_info("%pOF: irq=%d\n", समयr, irq);
 
-	clk = of_clk_get(timer, 0);
-	if (IS_ERR(clk)) {
+	clk = of_clk_get(समयr, 0);
+	अगर (IS_ERR(clk)) अणु
 		pr_err("ERROR: timer CCF input clock not found\n");
-		/* If there is clock-frequency property than use it */
-		of_property_read_u32(timer, "clock-frequency",
-				    &timer_clock_freq);
-	} else {
-		timer_clock_freq = clk_get_rate(clk);
-	}
+		/* If there is घड़ी-frequency property than use it */
+		of_property_पढ़ो_u32(समयr, "clock-frequency",
+				    &समयr_घड़ी_freq);
+	पूर्ण अन्यथा अणु
+		समयr_घड़ी_freq = clk_get_rate(clk);
+	पूर्ण
 
-	if (!timer_clock_freq) {
+	अगर (!समयr_घड़ी_freq) अणु
 		pr_err("ERROR: Using CPU clock frequency\n");
-		timer_clock_freq = cpuinfo.cpu_clock_freq;
-	}
+		समयr_घड़ी_freq = cpuinfo.cpu_घड़ी_freq;
+	पूर्ण
 
-	freq_div_hz = timer_clock_freq / HZ;
+	freq_भाग_hz = समयr_घड़ी_freq / HZ;
 
-	ret = request_irq(irq, timer_interrupt, IRQF_TIMER, "timer",
-			  &clockevent_xilinx_timer);
-	if (ret) {
+	ret = request_irq(irq, समयr_पूर्णांकerrupt, IRQF_TIMER, "timer",
+			  &घड़ीevent_xilinx_समयr);
+	अगर (ret) अणु
 		pr_err("Failed to setup IRQ");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = xilinx_clocksource_init();
-	if (ret)
-		return ret;
+	ret = xilinx_घड़ीsource_init();
+	अगर (ret)
+		वापस ret;
 
-	ret = xilinx_clockevent_init();
-	if (ret)
-		return ret;
+	ret = xilinx_घड़ीevent_init();
+	अगर (ret)
+		वापस ret;
 
-	sched_clock_register(xilinx_clock_read, 32, timer_clock_freq);
+	sched_घड़ी_रेजिस्टर(xilinx_घड़ी_पढ़ो, 32, समयr_घड़ी_freq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-TIMER_OF_DECLARE(xilinx_timer, "xlnx,xps-timer-1.00.a",
-		       xilinx_timer_init);
+TIMER_OF_DECLARE(xilinx_समयr, "xlnx,xps-timer-1.00.a",
+		       xilinx_समयr_init);

@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTL8723BS_XMIT_C_
+#घोषणा _RTL8723BS_XMIT_C_
 
-#include <drv_types.h>
-#include <rtw_debug.h>
-#include <rtl8723b_hal.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_debug.h>
+#समावेश <rtl8723b_hal.h>
 
-static u8 rtw_sdio_wait_enough_TxOQT_space(struct adapter *padapter, u8 agg_num)
-{
+अटल u8 rtw_sdio_रुको_enough_TxOQT_space(काष्ठा adapter *padapter, u8 agg_num)
+अणु
 	u32 n = 0;
-	struct hal_com_data *pHalData = GET_HAL_DATA(padapter);
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(padapter);
 
-	while (pHalData->SdioTxOQTFreeSpace < agg_num) {
-		if (
+	जबतक (pHalData->SdioTxOQTFreeSpace < agg_num) अणु
+		अगर (
 			(padapter->bSurpriseRemoved) ||
 			(padapter->bDriverStopped)
 		)
-			return false;
+			वापस false;
 
 		HalQueryTxOQTBufferStatus8723BSdio(padapter);
 
-		if ((++n % 60) == 0) {
+		अगर ((++n % 60) == 0) अणु
 			msleep(1);
 			/* yield(); */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pHalData->SdioTxOQTFreeSpace -= agg_num;
 
-	/* if (n > 1) */
+	/* अगर (n > 1) */
 	/* 	++priv->pshare->nr_out_of_txoqt_space; */
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static s32 rtl8723_dequeue_writeport(struct adapter *padapter)
-{
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	struct dvobj_priv *pdvobjpriv = adapter_to_dvobj(padapter);
-	struct xmit_buf *pxmitbuf;
-	struct adapter *pri_padapter = padapter;
+अटल s32 rtl8723_dequeue_ग_लिखोport(काष्ठा adapter *padapter)
+अणु
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	काष्ठा dvobj_priv *pdvobjpriv = adapter_to_dvobj(padapter);
+	काष्ठा xmit_buf *pxmitbuf;
+	काष्ठा adapter *pri_padapter = padapter;
 	s32 ret = 0;
 	u8 PageIdx = 0;
 	u32 deviceId;
@@ -52,115 +53,115 @@ static s32 rtl8723_dequeue_writeport(struct adapter *padapter)
 
 	ret = ret || check_fwstate(pmlmepriv, _FW_UNDER_SURVEY);
 
-	if (ret)
+	अगर (ret)
 		pxmitbuf = dequeue_pending_xmitbuf_under_survey(pxmitpriv);
-	else
+	अन्यथा
 		pxmitbuf = dequeue_pending_xmitbuf(pxmitpriv);
 
-	if (!pxmitbuf)
-		return true;
+	अगर (!pxmitbuf)
+		वापस true;
 
 	deviceId = ffaddr2deviceId(pdvobjpriv, pxmitbuf->ff_hwaddr);
 
-	/*  translate fifo addr to queue index */
-	switch (deviceId) {
-	case WLAN_TX_HIQ_DEVICE_ID:
+	/*  translate fअगरo addr to queue index */
+	चयन (deviceId) अणु
+	हाल WLAN_TX_HIQ_DEVICE_ID:
 		PageIdx = HI_QUEUE_IDX;
-		break;
+		अवरोध;
 
-	case WLAN_TX_MIQ_DEVICE_ID:
+	हाल WLAN_TX_MIQ_DEVICE_ID:
 		PageIdx = MID_QUEUE_IDX;
-		break;
+		अवरोध;
 
-	case WLAN_TX_LOQ_DEVICE_ID:
+	हाल WLAN_TX_LOQ_DEVICE_ID:
 		PageIdx = LOW_QUEUE_IDX;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-query_free_page:
-	/*  check if hardware tx fifo page is enough */
-	if (!rtw_hal_sdio_query_tx_freepage(pri_padapter, PageIdx, pxmitbuf->pg_num)) {
-		if (!bUpdatePageNum) {
+query_मुक्त_page:
+	/*  check अगर hardware tx fअगरo page is enough */
+	अगर (!rtw_hal_sdio_query_tx_मुक्तpage(pri_padapter, PageIdx, pxmitbuf->pg_num)) अणु
+		अगर (!bUpdatePageNum) अणु
 			/*  Total number of page is NOT available, so update current FIFO status */
 			HalQueryTxBufferStatus8723BSdio(padapter);
 			bUpdatePageNum = true;
-			goto query_free_page;
-		} else {
+			जाओ query_मुक्त_page;
+		पूर्ण अन्यथा अणु
 			bUpdatePageNum = false;
 			enqueue_pending_xmitbuf_to_head(pxmitpriv, pxmitbuf);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	if (
+	अगर (
 		(padapter->bSurpriseRemoved) ||
 		(padapter->bDriverStopped)
 	)
-		goto free_xmitbuf;
+		जाओ मुक्त_xmitbuf;
 
-	if (rtw_sdio_wait_enough_TxOQT_space(padapter, pxmitbuf->agg_num) == false)
-		goto free_xmitbuf;
+	अगर (rtw_sdio_रुको_enough_TxOQT_space(padapter, pxmitbuf->agg_num) == false)
+		जाओ मुक्त_xmitbuf;
 
-	traffic_check_for_leave_lps(padapter, true, pxmitbuf->agg_num);
+	traffic_check_क्रम_leave_lps(padapter, true, pxmitbuf->agg_num);
 
-	rtw_write_port(padapter, deviceId, pxmitbuf->len, (u8 *)pxmitbuf);
+	rtw_ग_लिखो_port(padapter, deviceId, pxmitbuf->len, (u8 *)pxmitbuf);
 
-	rtw_hal_sdio_update_tx_freepage(pri_padapter, PageIdx, pxmitbuf->pg_num);
+	rtw_hal_sdio_update_tx_मुक्तpage(pri_padapter, PageIdx, pxmitbuf->pg_num);
 
-free_xmitbuf:
-	/* rtw_free_xmitframe(pxmitpriv, pframe); */
-	/* pxmitbuf->priv_data = NULL; */
-	rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
+मुक्त_xmitbuf:
+	/* rtw_मुक्त_xmitframe(pxmitpriv, pframe); */
+	/* pxmitbuf->priv_data = शून्य; */
+	rtw_मुक्त_xmitbuf(pxmitpriv, pxmitbuf);
 
-	return _FAIL;
-}
+	वापस _FAIL;
+पूर्ण
 
 /*
  * Description
- *Transmit xmitbuf to hardware tx fifo
+ *Transmit xmitbuf to hardware tx fअगरo
  *
  * Return
  *_SUCCESS	ok
  *_FAIL		something error
  */
-s32 rtl8723bs_xmit_buf_handler(struct adapter *padapter)
-{
-	struct xmit_priv *pxmitpriv;
+s32 rtl8723bs_xmit_buf_handler(काष्ठा adapter *padapter)
+अणु
+	काष्ठा xmit_priv *pxmitpriv;
 	u8 queue_empty, queue_pending;
 	s32 ret;
 
 
 	pxmitpriv = &padapter->xmitpriv;
 
-	if (wait_for_completion_interruptible(&pxmitpriv->xmit_comp)) {
+	अगर (रुको_क्रम_completion_पूर्णांकerruptible(&pxmitpriv->xmit_comp)) अणु
 		netdev_emerg(padapter->pnetdev,
 			     "%s: down SdioXmitBufSema fail!\n", __func__);
-		return _FAIL;
-	}
+		वापस _FAIL;
+	पूर्ण
 
 	ret = (padapter->bDriverStopped) || (padapter->bSurpriseRemoved);
-	if (ret)
-		return _FAIL;
+	अगर (ret)
+		वापस _FAIL;
 
 	queue_pending = check_pending_xmitbuf(pxmitpriv);
 
-	if (!queue_pending)
-		return _SUCCESS;
+	अगर (!queue_pending)
+		वापस _SUCCESS;
 
-	ret = rtw_register_tx_alive(padapter);
-	if (ret != _SUCCESS) {
-		return _SUCCESS;
-	}
+	ret = rtw_रेजिस्टर_tx_alive(padapter);
+	अगर (ret != _SUCCESS) अणु
+		वापस _SUCCESS;
+	पूर्ण
 
-	do {
-		queue_empty = rtl8723_dequeue_writeport(padapter);
+	करो अणु
+		queue_empty = rtl8723_dequeue_ग_लिखोport(padapter);
 /* 	dump secondary adapter xmitbuf */
-	} while (!queue_empty);
+	पूर्ण जबतक (!queue_empty);
 
-	rtw_unregister_tx_alive(padapter);
+	rtw_unरेजिस्टर_tx_alive(padapter);
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
 /*
  * Description:
@@ -168,55 +169,55 @@ s32 rtl8723bs_xmit_buf_handler(struct adapter *padapter)
  *
  * Return:
  *0	Success
- *-1	Hardware resource(TX FIFO) not ready
- *-2	Software resource(xmitbuf) not ready
+ *-1	Hardware resource(TX FIFO) not पढ़ोy
+ *-2	Software resource(xmitbuf) not पढ़ोy
  */
-static s32 xmit_xmitframes(struct adapter *padapter, struct xmit_priv *pxmitpriv)
-{
+अटल s32 xmit_xmitframes(काष्ठा adapter *padapter, काष्ठा xmit_priv *pxmitpriv)
+अणु
 	s32 err, ret;
 	u32 k = 0;
-	struct hw_xmit *hwxmits, *phwxmit;
+	काष्ठा hw_xmit *hwxmits, *phwxmit;
 	u8 idx, hwentry;
-	struct tx_servq *ptxservq;
-	struct list_head *sta_plist, *sta_phead, *frame_plist, *frame_phead;
-	struct xmit_frame *pxmitframe;
-	struct __queue *pframe_queue;
-	struct xmit_buf *pxmitbuf;
+	काष्ठा tx_servq *ptxservq;
+	काष्ठा list_head *sta_plist, *sta_phead, *frame_plist, *frame_phead;
+	काष्ठा xmit_frame *pxmitframe;
+	काष्ठा __queue *pframe_queue;
+	काष्ठा xmit_buf *pxmitbuf;
 	u32 txlen, max_xmit_len;
 	u8 txdesc_size = TXDESC_SIZE;
-	int inx[4];
+	पूर्णांक inx[4];
 
 	err = 0;
 	hwxmits = pxmitpriv->hwxmits;
 	hwentry = pxmitpriv->hwxmit_entry;
-	ptxservq = NULL;
-	pxmitframe = NULL;
-	pframe_queue = NULL;
-	pxmitbuf = NULL;
+	ptxservq = शून्य;
+	pxmitframe = शून्य;
+	pframe_queue = शून्य;
+	pxmitbuf = शून्य;
 
-	if (padapter->registrypriv.wifi_spec == 1) {
-		for (idx = 0; idx < 4; idx++)
+	अगर (padapter->registrypriv.wअगरi_spec == 1) अणु
+		क्रम (idx = 0; idx < 4; idx++)
 			inx[idx] = pxmitpriv->wmm_para_seq[idx];
-	} else {
+	पूर्ण अन्यथा अणु
 		inx[0] = 0;
 		inx[1] = 1;
 		inx[2] = 2;
 		inx[3] = 3;
-	}
+	पूर्ण
 
 	/*  0(VO), 1(VI), 2(BE), 3(BK) */
-	for (idx = 0; idx < hwentry; idx++) {
+	क्रम (idx = 0; idx < hwentry; idx++) अणु
 		phwxmit = hwxmits + inx[idx];
 
-		if (
+		अगर (
 			(check_pending_xmitbuf(pxmitpriv)) &&
 			(padapter->mlmepriv.LinkDetectInfo.bHigherBusyTxTraffic)
-		) {
-			if ((phwxmit->accnt > 0) && (phwxmit->accnt < 5)) {
+		) अणु
+			अगर ((phwxmit->accnt > 0) && (phwxmit->accnt < 5)) अणु
 				err = -2;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		max_xmit_len = rtw_hal_get_sdio_tx_max_length(padapter, inx[idx]);
 
@@ -224,136 +225,136 @@ static s32 xmit_xmitframes(struct adapter *padapter, struct xmit_priv *pxmitpriv
 
 		sta_phead = get_list_head(phwxmit->sta_queue);
 		sta_plist = get_next(sta_phead);
-		/* because stop_sta_xmit may delete sta_plist at any time */
-		/* so we should add lock here, or while loop can not exit */
-		while (sta_phead != sta_plist) {
-			ptxservq = container_of(sta_plist, struct tx_servq, tx_pending);
+		/* because stop_sta_xmit may delete sta_plist at any समय */
+		/* so we should add lock here, or जबतक loop can not निकास */
+		जबतक (sta_phead != sta_plist) अणु
+			ptxservq = container_of(sta_plist, काष्ठा tx_servq, tx_pending);
 			sta_plist = get_next(sta_plist);
 
 			pframe_queue = &ptxservq->sta_pending;
 
 			frame_phead = get_list_head(pframe_queue);
 
-			while (list_empty(frame_phead) == false) {
+			जबतक (list_empty(frame_phead) == false) अणु
 				frame_plist = get_next(frame_phead);
-				pxmitframe = container_of(frame_plist, struct xmit_frame, list);
+				pxmitframe = container_of(frame_plist, काष्ठा xmit_frame, list);
 
 				/*  check xmit_buf size enough or not */
 				txlen = txdesc_size + rtw_wlan_pkt_size(pxmitframe);
-				if (!pxmitbuf ||
+				अगर (!pxmitbuf ||
 					((_RND(pxmitbuf->len, 8) + txlen) > max_xmit_len) ||
-					(k >= (rtw_hal_sdio_max_txoqt_free_space(padapter) - 1))
-				) {
-					if (pxmitbuf) {
-						/* pxmitbuf->priv_data will be NULL, and will crash here */
-						if (pxmitbuf->len > 0 &&
-						    pxmitbuf->priv_data) {
-							struct xmit_frame *pframe;
-							pframe = (struct xmit_frame *)pxmitbuf->priv_data;
+					(k >= (rtw_hal_sdio_max_txoqt_मुक्त_space(padapter) - 1))
+				) अणु
+					अगर (pxmitbuf) अणु
+						/* pxmitbuf->priv_data will be शून्य, and will crash here */
+						अगर (pxmitbuf->len > 0 &&
+						    pxmitbuf->priv_data) अणु
+							काष्ठा xmit_frame *pframe;
+							pframe = (काष्ठा xmit_frame *)pxmitbuf->priv_data;
 							pframe->agg_num = k;
 							pxmitbuf->agg_num = k;
 							rtl8723b_update_txdesc(pframe, pframe->buf_addr);
-							rtw_free_xmitframe(pxmitpriv, pframe);
-							pxmitbuf->priv_data = NULL;
+							rtw_मुक्त_xmitframe(pxmitpriv, pframe);
+							pxmitbuf->priv_data = शून्य;
 							enqueue_pending_xmitbuf(pxmitpriv, pxmitbuf);
 							/* can not yield under lock */
 							/* yield(); */
-						} else
-							rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
-					}
+						पूर्ण अन्यथा
+							rtw_मुक्त_xmitbuf(pxmitpriv, pxmitbuf);
+					पूर्ण
 
 					pxmitbuf = rtw_alloc_xmitbuf(pxmitpriv);
-					if (!pxmitbuf) {
-#ifdef DBG_XMIT_BUF
+					अगर (!pxmitbuf) अणु
+#अगर_घोषित DBG_XMIT_BUF
 						netdev_err(padapter->pnetdev,
 							   "%s: xmit_buf is not enough!\n",
 							   __func__);
-#endif
+#पूर्ण_अगर
 						err = -2;
 						complete(&(pxmitpriv->xmit_comp));
-						break;
-					}
+						अवरोध;
+					पूर्ण
 					k = 0;
-				}
+				पूर्ण
 
-				/*  ok to send, remove frame from queue */
-				if (check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE) == true)
-					if (
+				/*  ok to send, हटाओ frame from queue */
+				अगर (check_fwstate(&padapter->mlmepriv, WIFI_AP_STATE) == true)
+					अगर (
 						(pxmitframe->attrib.psta->state & WIFI_SLEEP_STATE) &&
 						(pxmitframe->attrib.triggered == 0)
 					)
-						break;
+						अवरोध;
 
 				list_del_init(&pxmitframe->list);
 				ptxservq->qcnt--;
 				phwxmit->accnt--;
 
-				if (k == 0) {
+				अगर (k == 0) अणु
 					pxmitbuf->ff_hwaddr = rtw_get_ff_hwaddr(pxmitframe);
 					pxmitbuf->priv_data = (u8 *)pxmitframe;
-				}
+				पूर्ण
 
 				/*  coalesce the xmitframe to xmitbuf */
 				pxmitframe->pxmitbuf = pxmitbuf;
 				pxmitframe->buf_addr = pxmitbuf->ptail;
 
 				ret = rtw_xmitframe_coalesce(padapter, pxmitframe->pkt, pxmitframe);
-				if (ret == _FAIL) {
+				अगर (ret == _FAIL) अणु
 					netdev_err(padapter->pnetdev,
 						   "%s: coalesce FAIL!",
 						   __func__);
-					/*  Todo: error handler */
-				} else {
+					/*  Toकरो: error handler */
+				पूर्ण अन्यथा अणु
 					k++;
-					if (k != 1)
+					अगर (k != 1)
 						rtl8723b_update_txdesc(pxmitframe, pxmitframe->buf_addr);
 					rtw_count_tx_stats(padapter, pxmitframe, pxmitframe->attrib.last_txcmdsz);
 
 					txlen = txdesc_size + pxmitframe->attrib.last_txcmdsz;
 					pxmitframe->pg_num = (txlen + 127) / 128;
 					pxmitbuf->pg_num += (txlen + 127) / 128;
-				    /* if (k != 1) */
-					/* 	((struct xmit_frame*)pxmitbuf->priv_data)->pg_num += pxmitframe->pg_num; */
+				    /* अगर (k != 1) */
+					/* 	((काष्ठा xmit_frame*)pxmitbuf->priv_data)->pg_num += pxmitframe->pg_num; */
 					pxmitbuf->ptail += _RND(txlen, 8); /*  round to 8 bytes alignment */
 					pxmitbuf->len = _RND(pxmitbuf->len, 8) + txlen;
-				}
+				पूर्ण
 
-				if (k != 1)
-					rtw_free_xmitframe(pxmitpriv, pxmitframe);
-				pxmitframe = NULL;
-			}
+				अगर (k != 1)
+					rtw_मुक्त_xmitframe(pxmitpriv, pxmitframe);
+				pxmitframe = शून्य;
+			पूर्ण
 
-			if (list_empty(&pframe_queue->queue))
+			अगर (list_empty(&pframe_queue->queue))
 				list_del_init(&ptxservq->tx_pending);
 
-			if (err)
-				break;
-		}
+			अगर (err)
+				अवरोध;
+		पूर्ण
 		spin_unlock_bh(&pxmitpriv->lock);
 
-		/*  dump xmit_buf to hw tx fifo */
-		if (pxmitbuf) {
-			if (pxmitbuf->len > 0) {
-				struct xmit_frame *pframe;
-				pframe = (struct xmit_frame *)pxmitbuf->priv_data;
+		/*  dump xmit_buf to hw tx fअगरo */
+		अगर (pxmitbuf) अणु
+			अगर (pxmitbuf->len > 0) अणु
+				काष्ठा xmit_frame *pframe;
+				pframe = (काष्ठा xmit_frame *)pxmitbuf->priv_data;
 				pframe->agg_num = k;
 				pxmitbuf->agg_num = k;
 				rtl8723b_update_txdesc(pframe, pframe->buf_addr);
-				rtw_free_xmitframe(pxmitpriv, pframe);
-				pxmitbuf->priv_data = NULL;
+				rtw_मुक्त_xmitframe(pxmitpriv, pframe);
+				pxmitbuf->priv_data = शून्य;
 				enqueue_pending_xmitbuf(pxmitpriv, pxmitbuf);
 				yield();
-			} else
-				rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
-			pxmitbuf = NULL;
-		}
+			पूर्ण अन्यथा
+				rtw_मुक्त_xmitbuf(pxmitpriv, pxmitbuf);
+			pxmitbuf = शून्य;
+		पूर्ण
 
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Description
@@ -363,92 +364,92 @@ static s32 xmit_xmitframes(struct adapter *padapter, struct xmit_priv *pxmitpriv
  *_SUCCESS	ok
  *_FAIL		something error
  */
-static s32 rtl8723bs_xmit_handler(struct adapter *padapter)
-{
-	struct xmit_priv *pxmitpriv;
+अटल s32 rtl8723bs_xmit_handler(काष्ठा adapter *padapter)
+अणु
+	काष्ठा xmit_priv *pxmitpriv;
 	s32 ret;
 
 
 	pxmitpriv = &padapter->xmitpriv;
 
-	if (wait_for_completion_interruptible(&pxmitpriv->SdioXmitStart)) {
+	अगर (रुको_क्रम_completion_पूर्णांकerruptible(&pxmitpriv->SdioXmitStart)) अणु
 		netdev_emerg(padapter->pnetdev, "%s: SdioXmitStart fail!\n",
 			     __func__);
-		return _FAIL;
-	}
+		वापस _FAIL;
+	पूर्ण
 
 next:
-	if (
+	अगर (
 		(padapter->bDriverStopped) ||
 		(padapter->bSurpriseRemoved)
 	)
-		return _FAIL;
+		वापस _FAIL;
 
 	spin_lock_bh(&pxmitpriv->lock);
 	ret = rtw_txframes_pending(padapter);
 	spin_unlock_bh(&pxmitpriv->lock);
-	if (ret == 0) {
-		return _SUCCESS;
-	}
+	अगर (ret == 0) अणु
+		वापस _SUCCESS;
+	पूर्ण
 
-	/*  dequeue frame and write to hardware */
+	/*  dequeue frame and ग_लिखो to hardware */
 
 	ret = xmit_xmitframes(padapter, pxmitpriv);
-	if (ret == -2) {
+	अगर (ret == -2) अणु
 		/* here sleep 1ms will cause big TP loss of TX */
 		/* from 50+ to 40+ */
-		if (padapter->registrypriv.wifi_spec)
+		अगर (padapter->registrypriv.wअगरi_spec)
 			msleep(1);
-		else
+		अन्यथा
 			yield();
-		goto next;
-	}
+		जाओ next;
+	पूर्ण
 
 	spin_lock_bh(&pxmitpriv->lock);
 	ret = rtw_txframes_pending(padapter);
 	spin_unlock_bh(&pxmitpriv->lock);
-	if (ret == 1) {
-		goto next;
-	}
+	अगर (ret == 1) अणु
+		जाओ next;
+	पूर्ण
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
-int rtl8723bs_xmit_thread(void *context)
-{
+पूर्णांक rtl8723bs_xmit_thपढ़ो(व्योम *context)
+अणु
 	s32 ret;
-	struct adapter *padapter;
-	struct xmit_priv *pxmitpriv;
-	u8 thread_name[20];
+	काष्ठा adapter *padapter;
+	काष्ठा xmit_priv *pxmitpriv;
+	u8 thपढ़ो_name[20];
 
 	ret = _SUCCESS;
 	padapter = context;
 	pxmitpriv = &padapter->xmitpriv;
 
-	rtw_sprintf(thread_name, 20, "RTWHALXT-%s", ADPT_ARG(padapter));
-	thread_enter(thread_name);
+	rtw_प्र_लिखो(thपढ़ो_name, 20, "RTWHALXT-%s", ADPT_ARG(padapter));
+	thपढ़ो_enter(thपढ़ो_name);
 
-	do {
+	करो अणु
 		ret = rtl8723bs_xmit_handler(padapter);
-		if (signal_pending(current)) {
-			flush_signals(current);
-		}
-	} while (_SUCCESS == ret);
+		अगर (संकेत_pending(current)) अणु
+			flush_संकेतs(current);
+		पूर्ण
+	पूर्ण जबतक (_SUCCESS == ret);
 
 	complete(&pxmitpriv->SdioXmitTerminate);
 
-	thread_exit();
-}
+	thपढ़ो_निकास();
+पूर्ण
 
 s32 rtl8723bs_mgnt_xmit(
-	struct adapter *padapter, struct xmit_frame *pmgntframe
+	काष्ठा adapter *padapter, काष्ठा xmit_frame *pmgntframe
 )
-{
+अणु
 	s32 ret = _SUCCESS;
-	struct pkt_attrib *pattrib;
-	struct xmit_buf *pxmitbuf;
-	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
-	struct dvobj_priv *pdvobjpriv = adapter_to_dvobj(padapter);
+	काष्ठा pkt_attrib *pattrib;
+	काष्ठा xmit_buf *pxmitbuf;
+	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	काष्ठा dvobj_priv *pdvobjpriv = adapter_to_dvobj(padapter);
 	u8 *pframe = (u8 *)(pmgntframe->buf_addr) + TXDESC_OFFSET;
 	u8 txdesc_size = TXDESC_SIZE;
 
@@ -464,21 +465,21 @@ s32 rtl8723bs_mgnt_xmit(
 
 	rtw_count_tx_stats(padapter, pmgntframe, pattrib->last_txcmdsz);
 
-	rtw_free_xmitframe(pxmitpriv, pmgntframe);
+	rtw_मुक्त_xmitframe(pxmitpriv, pmgntframe);
 
-	pxmitbuf->priv_data = NULL;
+	pxmitbuf->priv_data = शून्य;
 
-	if (GetFrameSubType(pframe) == WIFI_BEACON) { /* dump beacon directly */
-		ret = rtw_write_port(padapter, pdvobjpriv->Queue2Pipe[pxmitbuf->ff_hwaddr], pxmitbuf->len, (u8 *)pxmitbuf);
-		if (ret != _SUCCESS)
-			rtw_sctx_done_err(&pxmitbuf->sctx, RTW_SCTX_DONE_WRITE_PORT_ERR);
+	अगर (GetFrameSubType(pframe) == WIFI_BEACON) अणु /* dump beacon directly */
+		ret = rtw_ग_लिखो_port(padapter, pdvobjpriv->Queue2Pipe[pxmitbuf->ff_hwaddr], pxmitbuf->len, (u8 *)pxmitbuf);
+		अगर (ret != _SUCCESS)
+			rtw_sctx_करोne_err(&pxmitbuf->sctx, RTW_SCTX_DONE_WRITE_PORT_ERR);
 
-		rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
-	} else
+		rtw_मुक्त_xmitbuf(pxmitpriv, pxmitbuf);
+	पूर्ण अन्यथा
 		enqueue_pending_xmitbuf(pxmitpriv, pxmitbuf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Description:
@@ -489,71 +490,71 @@ s32 rtl8723bs_mgnt_xmit(
  *false	enqueue, temporary can't transmit packets to hardware
  */
 s32 rtl8723bs_hal_xmit(
-	struct adapter *padapter, struct xmit_frame *pxmitframe
+	काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe
 )
-{
-	struct xmit_priv *pxmitpriv;
+अणु
+	काष्ठा xmit_priv *pxmitpriv;
 	s32 err;
 
 
 	pxmitframe->attrib.qsel = pxmitframe->attrib.priority;
 	pxmitpriv = &padapter->xmitpriv;
 
-	if (
+	अगर (
 		(pxmitframe->frame_tag == DATA_FRAMETAG) &&
 		(pxmitframe->attrib.ether_type != 0x0806) &&
 		(pxmitframe->attrib.ether_type != 0x888e) &&
 		(pxmitframe->attrib.dhcp_pkt != 1)
-	) {
-		if (padapter->mlmepriv.LinkDetectInfo.bBusyTraffic)
+	) अणु
+		अगर (padapter->mlmepriv.LinkDetectInfo.bBusyTraffic)
 			rtw_issue_addbareq_cmd(padapter, pxmitframe);
-	}
+	पूर्ण
 
 	spin_lock_bh(&pxmitpriv->lock);
 	err = rtw_xmitframe_enqueue(padapter, pxmitframe);
 	spin_unlock_bh(&pxmitpriv->lock);
-	if (err != _SUCCESS) {
-		rtw_free_xmitframe(pxmitpriv, pxmitframe);
+	अगर (err != _SUCCESS) अणु
+		rtw_मुक्त_xmitframe(pxmitpriv, pxmitframe);
 
 		pxmitpriv->tx_drop++;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	complete(&pxmitpriv->SdioXmitStart);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 s32	rtl8723bs_hal_xmitframe_enqueue(
-	struct adapter *padapter, struct xmit_frame *pxmitframe
+	काष्ठा adapter *padapter, काष्ठा xmit_frame *pxmitframe
 )
-{
-	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+अणु
+	काष्ठा xmit_priv *pxmitpriv = &padapter->xmitpriv;
 	s32 err;
 
 	err = rtw_xmitframe_enqueue(padapter, pxmitframe);
-	if (err != _SUCCESS) {
-		rtw_free_xmitframe(pxmitpriv, pxmitframe);
+	अगर (err != _SUCCESS) अणु
+		rtw_मुक्त_xmitframe(pxmitpriv, pxmitframe);
 
 		pxmitpriv->tx_drop++;
-	} else {
+	पूर्ण अन्यथा अणु
 		complete(&pxmitpriv->SdioXmitStart);
-	}
+	पूर्ण
 
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
 /*
  * Return
- *_SUCCESS	start thread ok
- *_FAIL		start thread fail
+ *_SUCCESS	start thपढ़ो ok
+ *_FAIL		start thपढ़ो fail
  *
  */
-s32 rtl8723bs_init_xmit_priv(struct adapter *padapter)
-{
-	struct xmit_priv *xmitpriv = &padapter->xmitpriv;
-	struct hal_com_data *phal;
+s32 rtl8723bs_init_xmit_priv(काष्ठा adapter *padapter)
+अणु
+	काष्ठा xmit_priv *xmitpriv = &padapter->xmitpriv;
+	काष्ठा hal_com_data *phal;
 
 
 	phal = GET_HAL_DATA(padapter);
@@ -562,40 +563,40 @@ s32 rtl8723bs_init_xmit_priv(struct adapter *padapter)
 	init_completion(&xmitpriv->SdioXmitStart);
 	init_completion(&xmitpriv->SdioXmitTerminate);
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
-void rtl8723bs_free_xmit_priv(struct adapter *padapter)
-{
-	struct xmit_priv *pxmitpriv;
-	struct xmit_buf *pxmitbuf;
-	struct __queue *pqueue;
-	struct list_head *plist, *phead;
-	struct list_head tmplist;
+व्योम rtl8723bs_मुक्त_xmit_priv(काष्ठा adapter *padapter)
+अणु
+	काष्ठा xmit_priv *pxmitpriv;
+	काष्ठा xmit_buf *pxmitbuf;
+	काष्ठा __queue *pqueue;
+	काष्ठा list_head *plist, *phead;
+	काष्ठा list_head पंचांगplist;
 
 
 	pxmitpriv = &padapter->xmitpriv;
 	pqueue = &pxmitpriv->pending_xmitbuf_queue;
 	phead = get_list_head(pqueue);
-	INIT_LIST_HEAD(&tmplist);
+	INIT_LIST_HEAD(&पंचांगplist);
 
 	spin_lock_bh(&pqueue->lock);
-	if (!list_empty(&pqueue->queue)) {
-		/*  Insert tmplist to end of queue, and delete phead */
-		/*  then tmplist become head of queue. */
-		list_add_tail(&tmplist, phead);
+	अगर (!list_empty(&pqueue->queue)) अणु
+		/*  Insert पंचांगplist to end of queue, and delete phead */
+		/*  then पंचांगplist become head of queue. */
+		list_add_tail(&पंचांगplist, phead);
 		list_del_init(phead);
-	}
+	पूर्ण
 	spin_unlock_bh(&pqueue->lock);
 
-	phead = &tmplist;
-	while (list_empty(phead) == false) {
+	phead = &पंचांगplist;
+	जबतक (list_empty(phead) == false) अणु
 		plist = get_next(phead);
 		list_del_init(plist);
 
-		pxmitbuf = container_of(plist, struct xmit_buf, list);
-		rtw_free_xmitframe(pxmitpriv, (struct xmit_frame *)pxmitbuf->priv_data);
-		pxmitbuf->priv_data = NULL;
-		rtw_free_xmitbuf(pxmitpriv, pxmitbuf);
-	}
-}
+		pxmitbuf = container_of(plist, काष्ठा xmit_buf, list);
+		rtw_मुक्त_xmitframe(pxmitpriv, (काष्ठा xmit_frame *)pxmitbuf->priv_data);
+		pxmitbuf->priv_data = शून्य;
+		rtw_मुक्त_xmitbuf(pxmitpriv, pxmitbuf);
+	पूर्ण
+पूर्ण

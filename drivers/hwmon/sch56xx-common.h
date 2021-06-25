@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /***************************************************************************
  *   Copyright (C) 2010-2012 Hans de Goede <hdegoede@redhat.com>           *
  *                                                                         *
  ***************************************************************************/
 
-#include <linux/mutex.h>
+#समावेश <linux/mutex.h>
 
-struct sch56xx_watchdog_data;
+काष्ठा sch56xx_watchकरोg_data;
 
-int sch56xx_read_virtual_reg(u16 addr, u16 reg);
-int sch56xx_write_virtual_reg(u16 addr, u16 reg, u8 val);
-int sch56xx_read_virtual_reg16(u16 addr, u16 reg);
-int sch56xx_read_virtual_reg12(u16 addr, u16 msb_reg, u16 lsn_reg,
-			       int high_nibble);
+पूर्णांक sch56xx_पढ़ो_भव_reg(u16 addr, u16 reg);
+पूर्णांक sch56xx_ग_लिखो_भव_reg(u16 addr, u16 reg, u8 val);
+पूर्णांक sch56xx_पढ़ो_भव_reg16(u16 addr, u16 reg);
+पूर्णांक sch56xx_पढ़ो_भव_reg12(u16 addr, u16 msb_reg, u16 lsn_reg,
+			       पूर्णांक high_nibble);
 
-struct sch56xx_watchdog_data *sch56xx_watchdog_register(struct device *parent,
-	u16 addr, u32 revision, struct mutex *io_lock, int check_enabled);
-void sch56xx_watchdog_unregister(struct sch56xx_watchdog_data *data);
+काष्ठा sch56xx_watchकरोg_data *sch56xx_watchकरोg_रेजिस्टर(काष्ठा device *parent,
+	u16 addr, u32 revision, काष्ठा mutex *io_lock, पूर्णांक check_enabled);
+व्योम sch56xx_watchकरोg_unरेजिस्टर(काष्ठा sch56xx_watchकरोg_data *data);

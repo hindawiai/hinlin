@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 Maxime Ripard
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/spinlock.h>
 
-#include "ccu_frac.h"
+#समावेश "ccu_frac.h"
 
-bool ccu_frac_helper_is_enabled(struct ccu_common *common,
-				struct ccu_frac_internal *cf)
-{
-	if (!(common->features & CCU_FEATURE_FRACTIONAL))
-		return false;
+bool ccu_frac_helper_is_enabled(काष्ठा ccu_common *common,
+				काष्ठा ccu_frac_पूर्णांकernal *cf)
+अणु
+	अगर (!(common->features & CCU_FEATURE_FRACTIONAL))
+		वापस false;
 
-	return !(readl(common->base + common->reg) & cf->enable);
-}
+	वापस !(पढ़ोl(common->base + common->reg) & cf->enable);
+पूर्ण
 
-void ccu_frac_helper_enable(struct ccu_common *common,
-			    struct ccu_frac_internal *cf)
-{
-	unsigned long flags;
+व्योम ccu_frac_helper_enable(काष्ठा ccu_common *common,
+			    काष्ठा ccu_frac_पूर्णांकernal *cf)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
-	if (!(common->features & CCU_FEATURE_FRACTIONAL))
-		return;
+	अगर (!(common->features & CCU_FEATURE_FRACTIONAL))
+		वापस;
 
 	spin_lock_irqsave(common->lock, flags);
-	reg = readl(common->base + common->reg);
-	writel(reg & ~cf->enable, common->base + common->reg);
+	reg = पढ़ोl(common->base + common->reg);
+	ग_लिखोl(reg & ~cf->enable, common->base + common->reg);
 	spin_unlock_irqrestore(common->lock, flags);
-}
+पूर्ण
 
-void ccu_frac_helper_disable(struct ccu_common *common,
-			     struct ccu_frac_internal *cf)
-{
-	unsigned long flags;
+व्योम ccu_frac_helper_disable(काष्ठा ccu_common *common,
+			     काष्ठा ccu_frac_पूर्णांकernal *cf)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 
-	if (!(common->features & CCU_FEATURE_FRACTIONAL))
-		return;
+	अगर (!(common->features & CCU_FEATURE_FRACTIONAL))
+		वापस;
 
 	spin_lock_irqsave(common->lock, flags);
-	reg = readl(common->base + common->reg);
-	writel(reg | cf->enable, common->base + common->reg);
+	reg = पढ़ोl(common->base + common->reg);
+	ग_लिखोl(reg | cf->enable, common->base + common->reg);
 	spin_unlock_irqrestore(common->lock, flags);
-}
+पूर्ण
 
-bool ccu_frac_helper_has_rate(struct ccu_common *common,
-			      struct ccu_frac_internal *cf,
-			      unsigned long rate)
-{
-	if (!(common->features & CCU_FEATURE_FRACTIONAL))
-		return false;
+bool ccu_frac_helper_has_rate(काष्ठा ccu_common *common,
+			      काष्ठा ccu_frac_पूर्णांकernal *cf,
+			      अचिन्हित दीर्घ rate)
+अणु
+	अगर (!(common->features & CCU_FEATURE_FRACTIONAL))
+		वापस false;
 
-	return (cf->rates[0] == rate) || (cf->rates[1] == rate);
-}
+	वापस (cf->rates[0] == rate) || (cf->rates[1] == rate);
+पूर्ण
 
-unsigned long ccu_frac_helper_read_rate(struct ccu_common *common,
-					struct ccu_frac_internal *cf)
-{
+अचिन्हित दीर्घ ccu_frac_helper_पढ़ो_rate(काष्ठा ccu_common *common,
+					काष्ठा ccu_frac_पूर्णांकernal *cf)
+अणु
 	u32 reg;
 
 	pr_debug("%s: Read fractional\n", clk_hw_get_name(&common->hw));
 
-	if (!(common->features & CCU_FEATURE_FRACTIONAL))
-		return 0;
+	अगर (!(common->features & CCU_FEATURE_FRACTIONAL))
+		वापस 0;
 
 	pr_debug("%s: clock is fractional (rates %lu and %lu)\n",
 		 clk_hw_get_name(&common->hw), cf->rates[0], cf->rates[1]);
 
-	reg = readl(common->base + common->reg);
+	reg = पढ़ोl(common->base + common->reg);
 
 	pr_debug("%s: clock reg is 0x%x (select is 0x%x)\n",
 		 clk_hw_get_name(&common->hw), reg, cf->select);
 
-	return (reg & cf->select) ? cf->rates[1] : cf->rates[0];
-}
+	वापस (reg & cf->select) ? cf->rates[1] : cf->rates[0];
+पूर्ण
 
-int ccu_frac_helper_set_rate(struct ccu_common *common,
-			     struct ccu_frac_internal *cf,
-			     unsigned long rate, u32 lock)
-{
-	unsigned long flags;
+पूर्णांक ccu_frac_helper_set_rate(काष्ठा ccu_common *common,
+			     काष्ठा ccu_frac_पूर्णांकernal *cf,
+			     अचिन्हित दीर्घ rate, u32 lock)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 reg, sel;
 
-	if (!(common->features & CCU_FEATURE_FRACTIONAL))
-		return -EINVAL;
+	अगर (!(common->features & CCU_FEATURE_FRACTIONAL))
+		वापस -EINVAL;
 
-	if (cf->rates[0] == rate)
+	अगर (cf->rates[0] == rate)
 		sel = 0;
-	else if (cf->rates[1] == rate)
+	अन्यथा अगर (cf->rates[1] == rate)
 		sel = cf->select;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	spin_lock_irqsave(common->lock, flags);
-	reg = readl(common->base + common->reg);
+	reg = पढ़ोl(common->base + common->reg);
 	reg &= ~cf->select;
-	writel(reg | sel, common->base + common->reg);
+	ग_लिखोl(reg | sel, common->base + common->reg);
 	spin_unlock_irqrestore(common->lock, flags);
 
-	ccu_helper_wait_for_lock(common, lock);
+	ccu_helper_रुको_क्रम_lock(common, lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __DRBD_STRINGS_H
-#define __DRBD_STRINGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __DRBD_STRINGS_H
+#घोषणा __DRBD_STRINGS_H
 
-extern const char *drbd_conn_str(enum drbd_conns);
-extern const char *drbd_role_str(enum drbd_role);
-extern const char *drbd_disk_str(enum drbd_disk_state);
-extern const char *drbd_set_st_err_str(enum drbd_state_rv);
+बाह्य स्थिर अक्षर *drbd_conn_str(क्रमागत drbd_conns);
+बाह्य स्थिर अक्षर *drbd_role_str(क्रमागत drbd_role);
+बाह्य स्थिर अक्षर *drbd_disk_str(क्रमागत drbd_disk_state);
+बाह्य स्थिर अक्षर *drbd_set_st_err_str(क्रमागत drbd_state_rv);
 
-#endif  /* __DRBD_STRINGS_H */
+#पूर्ण_अगर  /* __DRBD_STRINGS_H */

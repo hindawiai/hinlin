@@ -1,328 +1,329 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* ZD1211 USB-WLAN driver for Linux
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* ZD1211 USB-WLAN driver क्रम Linux
  *
  * Copyright (C) 2005-2007 Ulrich Kunitz <kune@deine-taler.de>
  * Copyright (C) 2006-2007 Daniel Drake <dsd@gentoo.org>
  */
 
-/* This file implements all the hardware specific functions for the ZD1211
- * and ZD1211B chips. Support for the ZD1211B was possible after Timothy
+/* This file implements all the hardware specअगरic functions क्रम the ZD1211
+ * and ZD1211B chips. Support क्रम the ZD1211B was possible after Timothy
  * Legge sent me a ZD1211B device. Thank you Tim. -- Uli
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
 
-#include "zd_def.h"
-#include "zd_chip.h"
-#include "zd_mac.h"
-#include "zd_rf.h"
+#समावेश "zd_def.h"
+#समावेश "zd_chip.h"
+#समावेश "zd_mac.h"
+#समावेश "zd_rf.h"
 
-void zd_chip_init(struct zd_chip *chip,
-	         struct ieee80211_hw *hw,
-		 struct usb_interface *intf)
-{
-	memset(chip, 0, sizeof(*chip));
+व्योम zd_chip_init(काष्ठा zd_chip *chip,
+	         काष्ठा ieee80211_hw *hw,
+		 काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	स_रखो(chip, 0, माप(*chip));
 	mutex_init(&chip->mutex);
-	zd_usb_init(&chip->usb, hw, intf);
+	zd_usb_init(&chip->usb, hw, पूर्णांकf);
 	zd_rf_init(&chip->rf);
-}
+पूर्ण
 
-void zd_chip_clear(struct zd_chip *chip)
-{
+व्योम zd_chip_clear(काष्ठा zd_chip *chip)
+अणु
 	ZD_ASSERT(!mutex_is_locked(&chip->mutex));
 	zd_usb_clear(&chip->usb);
 	zd_rf_clear(&chip->rf);
 	mutex_destroy(&chip->mutex);
-	ZD_MEMCLEAR(chip, sizeof(*chip));
-}
+	ZD_MEMCLEAR(chip, माप(*chip));
+पूर्ण
 
-static int scnprint_mac_oui(struct zd_chip *chip, char *buffer, size_t size)
-{
+अटल पूर्णांक scnprपूर्णांक_mac_oui(काष्ठा zd_chip *chip, अक्षर *buffer, माप_प्रकार size)
+अणु
 	u8 *addr = zd_mac_get_perm_addr(zd_chip_to_mac(chip));
-	return scnprintf(buffer, size, "%3phD", addr);
-}
+	वापस scnम_लिखो(buffer, size, "%3phD", addr);
+पूर्ण
 
-/* Prints an identifier line, which will support debugging. */
-static int scnprint_id(struct zd_chip *chip, char *buffer, size_t size)
-{
-	int i = 0;
+/* Prपूर्णांकs an identअगरier line, which will support debugging. */
+अटल पूर्णांक scnprपूर्णांक_id(काष्ठा zd_chip *chip, अक्षर *buffer, माप_प्रकार size)
+अणु
+	पूर्णांक i = 0;
 
-	i = scnprintf(buffer, size, "zd1211%s chip ",
+	i = scnम_लिखो(buffer, size, "zd1211%s chip ",
 		      zd_chip_is_zd1211b(chip) ? "b" : "");
-	i += zd_usb_scnprint_id(&chip->usb, buffer+i, size-i);
-	i += scnprintf(buffer+i, size-i, " ");
-	i += scnprint_mac_oui(chip, buffer+i, size-i);
-	i += scnprintf(buffer+i, size-i, " ");
-	i += zd_rf_scnprint_id(&chip->rf, buffer+i, size-i);
-	i += scnprintf(buffer+i, size-i, " pa%1x %c%c%c%c%c", chip->pa_type,
+	i += zd_usb_scnprपूर्णांक_id(&chip->usb, buffer+i, size-i);
+	i += scnम_लिखो(buffer+i, size-i, " ");
+	i += scnprपूर्णांक_mac_oui(chip, buffer+i, size-i);
+	i += scnम_लिखो(buffer+i, size-i, " ");
+	i += zd_rf_scnprपूर्णांक_id(&chip->rf, buffer+i, size-i);
+	i += scnम_लिखो(buffer+i, size-i, " pa%1x %c%c%c%c%c", chip->pa_type,
 		chip->patch_cck_gain ? 'g' : '-',
 		chip->patch_cr157 ? '7' : '-',
 		chip->patch_6m_band_edge ? '6' : '-',
 		chip->new_phy_layout ? 'N' : '-',
 		chip->al2230s_bit ? 'S' : '-');
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void print_id(struct zd_chip *chip)
-{
-	char buffer[80];
+अटल व्योम prपूर्णांक_id(काष्ठा zd_chip *chip)
+अणु
+	अक्षर buffer[80];
 
-	scnprint_id(chip, buffer, sizeof(buffer));
-	buffer[sizeof(buffer)-1] = 0;
+	scnprपूर्णांक_id(chip, buffer, माप(buffer));
+	buffer[माप(buffer)-1] = 0;
 	dev_info(zd_chip_dev(chip), "%s\n", buffer);
-}
+पूर्ण
 
-static zd_addr_t inc_addr(zd_addr_t addr)
-{
+अटल zd_addr_t inc_addr(zd_addr_t addr)
+अणु
 	u16 a = (u16)addr;
-	/* Control registers use byte addressing, but everything else uses word
+	/* Control रेजिस्टरs use byte addressing, but everything अन्यथा uses word
 	 * addressing. */
-	if ((a & 0xf000) == CR_START)
+	अगर ((a & 0xf000) == CR_START)
 		a += 2;
-	else
+	अन्यथा
 		a += 1;
-	return (zd_addr_t)a;
-}
+	वापस (zd_addr_t)a;
+पूर्ण
 
 /* Read a variable number of 32-bit values. Parameter count is not allowed to
  * exceed USB_MAX_IOREAD32_COUNT.
  */
-int zd_ioread32v_locked(struct zd_chip *chip, u32 *values, const zd_addr_t *addr,
-		 unsigned int count)
-{
-	int r;
-	int i;
+पूर्णांक zd_ioपढ़ो32v_locked(काष्ठा zd_chip *chip, u32 *values, स्थिर zd_addr_t *addr,
+		 अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
+	पूर्णांक i;
 	zd_addr_t a16[USB_MAX_IOREAD32_COUNT * 2];
 	u16 v16[USB_MAX_IOREAD32_COUNT * 2];
-	unsigned int count16;
+	अचिन्हित पूर्णांक count16;
 
-	if (count > USB_MAX_IOREAD32_COUNT)
-		return -EINVAL;
+	अगर (count > USB_MAX_IOREAD32_COUNT)
+		वापस -EINVAL;
 
-	/* Use stack for values and addresses. */
+	/* Use stack क्रम values and addresses. */
 	count16 = 2 * count;
-	BUG_ON(count16 * sizeof(zd_addr_t) > sizeof(a16));
-	BUG_ON(count16 * sizeof(u16) > sizeof(v16));
+	BUG_ON(count16 * माप(zd_addr_t) > माप(a16));
+	BUG_ON(count16 * माप(u16) > माप(v16));
 
-	for (i = 0; i < count; i++) {
-		int j = 2*i;
-		/* We read the high word always first. */
+	क्रम (i = 0; i < count; i++) अणु
+		पूर्णांक j = 2*i;
+		/* We पढ़ो the high word always first. */
 		a16[j] = inc_addr(addr[i]);
 		a16[j+1] = addr[i];
-	}
+	पूर्ण
 
-	r = zd_ioread16v_locked(chip, v16, a16, count16);
-	if (r) {
+	r = zd_ioपढ़ो16v_locked(chip, v16, a16, count16);
+	अगर (r) अणु
 		dev_dbg_f(zd_chip_dev(chip),
 			  "error: %s. Error number %d\n", __func__, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		int j = 2*i;
+	क्रम (i = 0; i < count; i++) अणु
+		पूर्णांक j = 2*i;
 		values[i] = (v16[j] << 16) | v16[j+1];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int _zd_iowrite32v_async_locked(struct zd_chip *chip,
-				       const struct zd_ioreq32 *ioreqs,
-				       unsigned int count)
-{
-	int i, j, r;
-	struct zd_ioreq16 ioreqs16[USB_MAX_IOWRITE32_COUNT * 2];
-	unsigned int count16;
+अटल पूर्णांक _zd_ioग_लिखो32v_async_locked(काष्ठा zd_chip *chip,
+				       स्थिर काष्ठा zd_ioreq32 *ioreqs,
+				       अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक i, j, r;
+	काष्ठा zd_ioreq16 ioreqs16[USB_MAX_IOWRITE32_COUNT * 2];
+	अचिन्हित पूर्णांक count16;
 
-	/* Use stack for values and addresses. */
+	/* Use stack क्रम values and addresses. */
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 
-	if (count == 0)
-		return 0;
-	if (count > USB_MAX_IOWRITE32_COUNT)
-		return -EINVAL;
+	अगर (count == 0)
+		वापस 0;
+	अगर (count > USB_MAX_IOWRITE32_COUNT)
+		वापस -EINVAL;
 
 	count16 = 2 * count;
-	BUG_ON(count16 * sizeof(struct zd_ioreq16) > sizeof(ioreqs16));
+	BUG_ON(count16 * माप(काष्ठा zd_ioreq16) > माप(ioreqs16));
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		j = 2*i;
-		/* We write the high word always first. */
+		/* We ग_लिखो the high word always first. */
 		ioreqs16[j].value   = ioreqs[i].value >> 16;
 		ioreqs16[j].addr    = inc_addr(ioreqs[i].addr);
 		ioreqs16[j+1].value = ioreqs[i].value;
 		ioreqs16[j+1].addr  = ioreqs[i].addr;
-	}
+	पूर्ण
 
-	r = zd_usb_iowrite16v_async(&chip->usb, ioreqs16, count16);
-#ifdef DEBUG
-	if (r) {
+	r = zd_usb_ioग_लिखो16v_async(&chip->usb, ioreqs16, count16);
+#अगर_घोषित DEBUG
+	अगर (r) अणु
 		dev_dbg_f(zd_chip_dev(chip),
 			  "error %d in zd_usb_write16v\n", r);
-	}
-#endif /* DEBUG */
-	return r;
-}
+	पूर्ण
+#पूर्ण_अगर /* DEBUG */
+	वापस r;
+पूर्ण
 
-int _zd_iowrite32v_locked(struct zd_chip *chip, const struct zd_ioreq32 *ioreqs,
-			  unsigned int count)
-{
-	int r;
+पूर्णांक _zd_ioग_लिखो32v_locked(काष्ठा zd_chip *chip, स्थिर काष्ठा zd_ioreq32 *ioreqs,
+			  अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
 
-	zd_usb_iowrite16v_async_start(&chip->usb);
-	r = _zd_iowrite32v_async_locked(chip, ioreqs, count);
-	if (r) {
-		zd_usb_iowrite16v_async_end(&chip->usb, 0);
-		return r;
-	}
-	return zd_usb_iowrite16v_async_end(&chip->usb, 50 /* ms */);
-}
+	zd_usb_ioग_लिखो16v_async_start(&chip->usb);
+	r = _zd_ioग_लिखो32v_async_locked(chip, ioreqs, count);
+	अगर (r) अणु
+		zd_usb_ioग_लिखो16v_async_end(&chip->usb, 0);
+		वापस r;
+	पूर्ण
+	वापस zd_usb_ioग_लिखो16v_async_end(&chip->usb, 50 /* ms */);
+पूर्ण
 
-int zd_iowrite16a_locked(struct zd_chip *chip,
-                  const struct zd_ioreq16 *ioreqs, unsigned int count)
-{
-	int r;
-	unsigned int i, j, t, max;
+पूर्णांक zd_ioग_लिखो16a_locked(काष्ठा zd_chip *chip,
+                  स्थिर काष्ठा zd_ioreq16 *ioreqs, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक i, j, t, max;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	zd_usb_iowrite16v_async_start(&chip->usb);
+	zd_usb_ioग_लिखो16v_async_start(&chip->usb);
 
-	for (i = 0; i < count; i += j + t) {
+	क्रम (i = 0; i < count; i += j + t) अणु
 		t = 0;
 		max = count-i;
-		if (max > USB_MAX_IOWRITE16_COUNT)
+		अगर (max > USB_MAX_IOWRITE16_COUNT)
 			max = USB_MAX_IOWRITE16_COUNT;
-		for (j = 0; j < max; j++) {
-			if (!ioreqs[i+j].addr) {
+		क्रम (j = 0; j < max; j++) अणु
+			अगर (!ioreqs[i+j].addr) अणु
 				t = 1;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		r = zd_usb_iowrite16v_async(&chip->usb, &ioreqs[i], j);
-		if (r) {
-			zd_usb_iowrite16v_async_end(&chip->usb, 0);
+		r = zd_usb_ioग_लिखो16v_async(&chip->usb, &ioreqs[i], j);
+		अगर (r) अणु
+			zd_usb_ioग_लिखो16v_async_end(&chip->usb, 0);
 			dev_dbg_f(zd_chip_dev(chip),
 				  "error zd_usb_iowrite16v. Error number %d\n",
 				  r);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	return zd_usb_iowrite16v_async_end(&chip->usb, 50 /* ms */);
-}
+	वापस zd_usb_ioग_लिखो16v_async_end(&chip->usb, 50 /* ms */);
+पूर्ण
 
-/* Writes a variable number of 32 bit registers. The functions will split
- * that in several USB requests. A split can be forced by inserting an IO
+/* Writes a variable number of 32 bit रेजिस्टरs. The functions will split
+ * that in several USB requests. A split can be क्रमced by inserting an IO
  * request with an zero address field.
  */
-int zd_iowrite32a_locked(struct zd_chip *chip,
-	          const struct zd_ioreq32 *ioreqs, unsigned int count)
-{
-	int r;
-	unsigned int i, j, t, max;
+पूर्णांक zd_ioग_लिखो32a_locked(काष्ठा zd_chip *chip,
+	          स्थिर काष्ठा zd_ioreq32 *ioreqs, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक i, j, t, max;
 
-	zd_usb_iowrite16v_async_start(&chip->usb);
+	zd_usb_ioग_लिखो16v_async_start(&chip->usb);
 
-	for (i = 0; i < count; i += j + t) {
+	क्रम (i = 0; i < count; i += j + t) अणु
 		t = 0;
 		max = count-i;
-		if (max > USB_MAX_IOWRITE32_COUNT)
+		अगर (max > USB_MAX_IOWRITE32_COUNT)
 			max = USB_MAX_IOWRITE32_COUNT;
-		for (j = 0; j < max; j++) {
-			if (!ioreqs[i+j].addr) {
+		क्रम (j = 0; j < max; j++) अणु
+			अगर (!ioreqs[i+j].addr) अणु
 				t = 1;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		r = _zd_iowrite32v_async_locked(chip, &ioreqs[i], j);
-		if (r) {
-			zd_usb_iowrite16v_async_end(&chip->usb, 0);
+		r = _zd_ioग_लिखो32v_async_locked(chip, &ioreqs[i], j);
+		अगर (r) अणु
+			zd_usb_ioग_लिखो16v_async_end(&chip->usb, 0);
 			dev_dbg_f(zd_chip_dev(chip),
 				"error _%s. Error number %d\n", __func__,
 				r);
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
-	return zd_usb_iowrite16v_async_end(&chip->usb, 50 /* ms */);
-}
+	वापस zd_usb_ioग_लिखो16v_async_end(&chip->usb, 50 /* ms */);
+पूर्ण
 
-int zd_ioread16(struct zd_chip *chip, zd_addr_t addr, u16 *value)
-{
-	int r;
-
-	mutex_lock(&chip->mutex);
-	r = zd_ioread16_locked(chip, value, addr);
-	mutex_unlock(&chip->mutex);
-	return r;
-}
-
-int zd_ioread32(struct zd_chip *chip, zd_addr_t addr, u32 *value)
-{
-	int r;
+पूर्णांक zd_ioपढ़ो16(काष्ठा zd_chip *chip, zd_addr_t addr, u16 *value)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_ioread32_locked(chip, value, addr);
+	r = zd_ioपढ़ो16_locked(chip, value, addr);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_iowrite16(struct zd_chip *chip, zd_addr_t addr, u16 value)
-{
-	int r;
+पूर्णांक zd_ioपढ़ो32(काष्ठा zd_chip *chip, zd_addr_t addr, u32 *value)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_iowrite16_locked(chip, value, addr);
+	r = zd_ioपढ़ो32_locked(chip, value, addr);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_iowrite32(struct zd_chip *chip, zd_addr_t addr, u32 value)
-{
-	int r;
+पूर्णांक zd_ioग_लिखो16(काष्ठा zd_chip *chip, zd_addr_t addr, u16 value)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_iowrite32_locked(chip, value, addr);
+	r = zd_ioग_लिखो16_locked(chip, value, addr);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_ioread32v(struct zd_chip *chip, const zd_addr_t *addresses,
-	          u32 *values, unsigned int count)
-{
-	int r;
+पूर्णांक zd_ioग_लिखो32(काष्ठा zd_chip *chip, zd_addr_t addr, u32 value)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_ioread32v_locked(chip, values, addresses, count);
+	r = zd_ioग_लिखो32_locked(chip, value, addr);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_iowrite32a(struct zd_chip *chip, const struct zd_ioreq32 *ioreqs,
-	          unsigned int count)
-{
-	int r;
+पूर्णांक zd_ioपढ़ो32v(काष्ठा zd_chip *chip, स्थिर zd_addr_t *addresses,
+	          u32 *values, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_iowrite32a_locked(chip, ioreqs, count);
+	r = zd_ioपढ़ो32v_locked(chip, values, addresses, count);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int read_pod(struct zd_chip *chip, u8 *rf_type)
-{
-	int r;
+पूर्णांक zd_ioग_लिखो32a(काष्ठा zd_chip *chip, स्थिर काष्ठा zd_ioreq32 *ioreqs,
+	          अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
+
+	mutex_lock(&chip->mutex);
+	r = zd_ioग_लिखो32a_locked(chip, ioreqs, count);
+	mutex_unlock(&chip->mutex);
+	वापस r;
+पूर्ण
+
+अटल पूर्णांक पढ़ो_pod(काष्ठा zd_chip *chip, u8 *rf_type)
+अणु
+	पूर्णांक r;
 	u32 value;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	r = zd_ioread32_locked(chip, &value, E2P_POD);
-	if (r)
-		goto error;
+	r = zd_ioपढ़ो32_locked(chip, &value, E2P_POD);
+	अगर (r)
+		जाओ error;
 	dev_dbg_f(zd_chip_dev(chip), "E2P_POD %#010x\n", value);
 
 	/* FIXME: AL2230 handling (Bit 7 in POD) */
@@ -335,10 +336,10 @@ static int read_pod(struct zd_chip *chip, u8 *rf_type)
 	chip->al2230s_bit = (value >> 7) & 0x1;
 	chip->link_led = ((value >> 4) & 1) ? LED1 : LED2;
 	chip->supports_tx_led = 1;
-	if (value & (1 << 24)) { /* LED scenario */
-		if (value & (1 << 29))
+	अगर (value & (1 << 24)) अणु /* LED scenario */
+		अगर (value & (1 << 29))
 			chip->supports_tx_led = 0;
-	}
+	पूर्ण
 
 	dev_dbg_f(zd_chip_dev(chip),
 		"RF %s %#01x PA type %#01x patch CCK %d patch CR157 %d "
@@ -349,7 +350,7 @@ static int read_pod(struct zd_chip *chip, u8 *rf_type)
 		chip->new_phy_layout,
 		chip->link_led == LED1 ? 1 : 2,
 		chip->supports_tx_led);
-	return 0;
+	वापस 0;
 error:
 	*rf_type = 0;
 	chip->pa_type = 0;
@@ -357,17 +358,17 @@ error:
 	chip->patch_cr157 = 0;
 	chip->patch_6m_band_edge = 0;
 	chip->new_phy_layout = 0;
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int zd_write_mac_addr_common(struct zd_chip *chip, const u8 *mac_addr,
-				    const struct zd_ioreq32 *in_reqs,
-				    const char *type)
-{
-	int r;
-	struct zd_ioreq32 reqs[2] = {in_reqs[0], in_reqs[1]};
+अटल पूर्णांक zd_ग_लिखो_mac_addr_common(काष्ठा zd_chip *chip, स्थिर u8 *mac_addr,
+				    स्थिर काष्ठा zd_ioreq32 *in_reqs,
+				    स्थिर अक्षर *type)
+अणु
+	पूर्णांक r;
+	काष्ठा zd_ioreq32 reqs[2] = अणुin_reqs[0], in_reqs[1]पूर्ण;
 
-	if (mac_addr) {
+	अगर (mac_addr) अणु
 		reqs[0].value = (mac_addr[3] << 24)
 			      | (mac_addr[2] << 16)
 			      | (mac_addr[1] <<  8)
@@ -375,496 +376,496 @@ static int zd_write_mac_addr_common(struct zd_chip *chip, const u8 *mac_addr,
 		reqs[1].value = (mac_addr[5] <<  8)
 			      |  mac_addr[4];
 		dev_dbg_f(zd_chip_dev(chip), "%s addr %pM\n", type, mac_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg_f(zd_chip_dev(chip), "set NULL %s\n", type);
-	}
+	पूर्ण
 
 	mutex_lock(&chip->mutex);
-	r = zd_iowrite32a_locked(chip, reqs, ARRAY_SIZE(reqs));
+	r = zd_ioग_लिखो32a_locked(chip, reqs, ARRAY_SIZE(reqs));
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-/* MAC address: if custom mac addresses are to be used CR_MAC_ADDR_P1 and
+/* MAC address: अगर custom mac addresses are to be used CR_MAC_ADDR_P1 and
  *              CR_MAC_ADDR_P2 must be overwritten
  */
-int zd_write_mac_addr(struct zd_chip *chip, const u8 *mac_addr)
-{
-	static const struct zd_ioreq32 reqs[2] = {
-		[0] = { .addr = CR_MAC_ADDR_P1 },
-		[1] = { .addr = CR_MAC_ADDR_P2 },
-	};
+पूर्णांक zd_ग_लिखो_mac_addr(काष्ठा zd_chip *chip, स्थिर u8 *mac_addr)
+अणु
+	अटल स्थिर काष्ठा zd_ioreq32 reqs[2] = अणु
+		[0] = अणु .addr = CR_MAC_ADDR_P1 पूर्ण,
+		[1] = अणु .addr = CR_MAC_ADDR_P2 पूर्ण,
+	पूर्ण;
 
-	return zd_write_mac_addr_common(chip, mac_addr, reqs, "mac");
-}
+	वापस zd_ग_लिखो_mac_addr_common(chip, mac_addr, reqs, "mac");
+पूर्ण
 
-int zd_write_bssid(struct zd_chip *chip, const u8 *bssid)
-{
-	static const struct zd_ioreq32 reqs[2] = {
-		[0] = { .addr = CR_BSSID_P1 },
-		[1] = { .addr = CR_BSSID_P2 },
-	};
+पूर्णांक zd_ग_लिखो_bssid(काष्ठा zd_chip *chip, स्थिर u8 *bssid)
+अणु
+	अटल स्थिर काष्ठा zd_ioreq32 reqs[2] = अणु
+		[0] = अणु .addr = CR_BSSID_P1 पूर्ण,
+		[1] = अणु .addr = CR_BSSID_P2 पूर्ण,
+	पूर्ण;
 
-	return zd_write_mac_addr_common(chip, bssid, reqs, "bssid");
-}
+	वापस zd_ग_लिखो_mac_addr_common(chip, bssid, reqs, "bssid");
+पूर्ण
 
-int zd_read_regdomain(struct zd_chip *chip, u8 *regdomain)
-{
-	int r;
+पूर्णांक zd_पढ़ो_regकरोमुख्य(काष्ठा zd_chip *chip, u8 *regकरोमुख्य)
+अणु
+	पूर्णांक r;
 	u32 value;
 
 	mutex_lock(&chip->mutex);
-	r = zd_ioread32_locked(chip, &value, E2P_SUBID);
+	r = zd_ioपढ़ो32_locked(chip, &value, E2P_SUBID);
 	mutex_unlock(&chip->mutex);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	*regdomain = value >> 16;
-	dev_dbg_f(zd_chip_dev(chip), "regdomain: %#04x\n", *regdomain);
+	*regकरोमुख्य = value >> 16;
+	dev_dbg_f(zd_chip_dev(chip), "regdomain: %#04x\n", *regकरोमुख्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int read_values(struct zd_chip *chip, u8 *values, size_t count,
+अटल पूर्णांक पढ़ो_values(काष्ठा zd_chip *chip, u8 *values, माप_प्रकार count,
 	               zd_addr_t e2p_addr, u32 guard)
-{
-	int r;
-	int i;
+अणु
+	पूर्णांक r;
+	पूर्णांक i;
 	u32 v;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	for (i = 0;;) {
-		r = zd_ioread32_locked(chip, &v,
+	क्रम (i = 0;;) अणु
+		r = zd_ioपढ़ो32_locked(chip, &v,
 			               (zd_addr_t)((u16)e2p_addr+i/2));
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 		v -= guard;
-		if (i+4 < count) {
+		अगर (i+4 < count) अणु
 			values[i++] = v;
 			values[i++] = v >>  8;
 			values[i++] = v >> 16;
 			values[i++] = v >> 24;
-			continue;
-		}
-		for (;i < count; i++)
+			जारी;
+		पूर्ण
+		क्रम (;i < count; i++)
 			values[i] = v >> (8*(i%3));
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int read_pwr_cal_values(struct zd_chip *chip)
-{
-	return read_values(chip, chip->pwr_cal_values,
+अटल पूर्णांक पढ़ो_pwr_cal_values(काष्ठा zd_chip *chip)
+अणु
+	वापस पढ़ो_values(chip, chip->pwr_cal_values,
 		        E2P_CHANNEL_COUNT, E2P_PWR_CAL_VALUE1,
 			0);
-}
+पूर्ण
 
-static int read_pwr_int_values(struct zd_chip *chip)
-{
-	return read_values(chip, chip->pwr_int_values,
+अटल पूर्णांक पढ़ो_pwr_पूर्णांक_values(काष्ठा zd_chip *chip)
+अणु
+	वापस पढ़ो_values(chip, chip->pwr_पूर्णांक_values,
 		        E2P_CHANNEL_COUNT, E2P_PWR_INT_VALUE1,
 			E2P_PWR_INT_GUARD);
-}
+पूर्ण
 
-static int read_ofdm_cal_values(struct zd_chip *chip)
-{
-	int r;
-	int i;
-	static const zd_addr_t addresses[] = {
+अटल पूर्णांक पढ़ो_ofdm_cal_values(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+	पूर्णांक i;
+	अटल स्थिर zd_addr_t addresses[] = अणु
 		E2P_36M_CAL_VALUE1,
 		E2P_48M_CAL_VALUE1,
 		E2P_54M_CAL_VALUE1,
-	};
+	पूर्ण;
 
-	for (i = 0; i < 3; i++) {
-		r = read_values(chip, chip->ofdm_cal_values[i],
+	क्रम (i = 0; i < 3; i++) अणु
+		r = पढ़ो_values(chip, chip->ofdm_cal_values[i],
 				E2P_CHANNEL_COUNT, addresses[i], 0);
-		if (r)
-			return r;
-	}
-	return 0;
-}
+		अगर (r)
+			वापस r;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int read_cal_int_tables(struct zd_chip *chip)
-{
-	int r;
+अटल पूर्णांक पढ़ो_cal_पूर्णांक_tables(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
-	r = read_pwr_cal_values(chip);
-	if (r)
-		return r;
-	r = read_pwr_int_values(chip);
-	if (r)
-		return r;
-	r = read_ofdm_cal_values(chip);
-	if (r)
-		return r;
-	return 0;
-}
+	r = पढ़ो_pwr_cal_values(chip);
+	अगर (r)
+		वापस r;
+	r = पढ़ो_pwr_पूर्णांक_values(chip);
+	अगर (r)
+		वापस r;
+	r = पढ़ो_ofdm_cal_values(chip);
+	अगर (r)
+		वापस r;
+	वापस 0;
+पूर्ण
 
-/* phy means physical registers */
-int zd_chip_lock_phy_regs(struct zd_chip *chip)
-{
-	int r;
-	u32 tmp;
+/* phy means physical रेजिस्टरs */
+पूर्णांक zd_chip_lock_phy_regs(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+	u32 पंचांगp;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	r = zd_ioread32_locked(chip, &tmp, CR_REG1);
-	if (r) {
+	r = zd_ioपढ़ो32_locked(chip, &पंचांगp, CR_REG1);
+	अगर (r) अणु
 		dev_err(zd_chip_dev(chip), "error ioread32(CR_REG1): %d\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	tmp &= ~UNLOCK_PHY_REGS;
+	पंचांगp &= ~UNLOCK_PHY_REGS;
 
-	r = zd_iowrite32_locked(chip, tmp, CR_REG1);
-	if (r)
+	r = zd_ioग_लिखो32_locked(chip, पंचांगp, CR_REG1);
+	अगर (r)
 		dev_err(zd_chip_dev(chip), "error iowrite32(CR_REG1): %d\n", r);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_chip_unlock_phy_regs(struct zd_chip *chip)
-{
-	int r;
-	u32 tmp;
+पूर्णांक zd_chip_unlock_phy_regs(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+	u32 पंचांगp;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	r = zd_ioread32_locked(chip, &tmp, CR_REG1);
-	if (r) {
+	r = zd_ioपढ़ो32_locked(chip, &पंचांगp, CR_REG1);
+	अगर (r) अणु
 		dev_err(zd_chip_dev(chip),
 			"error ioread32(CR_REG1): %d\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	tmp |= UNLOCK_PHY_REGS;
+	पंचांगp |= UNLOCK_PHY_REGS;
 
-	r = zd_iowrite32_locked(chip, tmp, CR_REG1);
-	if (r)
+	r = zd_ioग_लिखो32_locked(chip, पंचांगp, CR_REG1);
+	अगर (r)
 		dev_err(zd_chip_dev(chip), "error iowrite32(CR_REG1): %d\n", r);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-/* ZD_CR157 can be optionally patched by the EEPROM for original ZD1211 */
-static int patch_cr157(struct zd_chip *chip)
-{
-	int r;
+/* ZD_CR157 can be optionally patched by the EEPROM क्रम original ZD1211 */
+अटल पूर्णांक patch_cr157(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 	u16 value;
 
-	if (!chip->patch_cr157)
-		return 0;
+	अगर (!chip->patch_cr157)
+		वापस 0;
 
-	r = zd_ioread16_locked(chip, &value, E2P_PHY_REG);
-	if (r)
-		return r;
+	r = zd_ioपढ़ो16_locked(chip, &value, E2P_PHY_REG);
+	अगर (r)
+		वापस r;
 
 	dev_dbg_f(zd_chip_dev(chip), "patching value %x\n", value >> 8);
-	return zd_iowrite32_locked(chip, value >> 8, ZD_CR157);
-}
+	वापस zd_ioग_लिखो32_locked(chip, value >> 8, ZD_CR157);
+पूर्ण
 
 /*
- * 6M band edge can be optionally overwritten for certain RF's
- * Vendor driver says: for FCC regulation, enabled per HWFeature 6M band edge
- * bit (for AL2230, AL2230S)
+ * 6M band edge can be optionally overwritten क्रम certain RF's
+ * Venकरोr driver says: क्रम FCC regulation, enabled per HWFeature 6M band edge
+ * bit (क्रम AL2230, AL2230S)
  */
-static int patch_6m_band_edge(struct zd_chip *chip, u8 channel)
-{
+अटल पूर्णांक patch_6m_band_edge(काष्ठा zd_chip *chip, u8 channel)
+अणु
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	if (!chip->patch_6m_band_edge)
-		return 0;
+	अगर (!chip->patch_6m_band_edge)
+		वापस 0;
 
-	return zd_rf_patch_6m_band_edge(&chip->rf, channel);
-}
+	वापस zd_rf_patch_6m_band_edge(&chip->rf, channel);
+पूर्ण
 
 /* Generic implementation of 6M band edge patching, used by most RFs via
  * zd_rf_generic_patch_6m() */
-int zd_chip_generic_patch_6m_band(struct zd_chip *chip, int channel)
-{
-	struct zd_ioreq16 ioreqs[] = {
-		{ ZD_CR128, 0x14 }, { ZD_CR129, 0x12 }, { ZD_CR130, 0x10 },
-		{ ZD_CR47,  0x1e },
-	};
+पूर्णांक zd_chip_generic_patch_6m_band(काष्ठा zd_chip *chip, पूर्णांक channel)
+अणु
+	काष्ठा zd_ioreq16 ioreqs[] = अणु
+		अणु ZD_CR128, 0x14 पूर्ण, अणु ZD_CR129, 0x12 पूर्ण, अणु ZD_CR130, 0x10 पूर्ण,
+		अणु ZD_CR47,  0x1e पूर्ण,
+	पूर्ण;
 
-	/* FIXME: Channel 11 is not the edge for all regulatory domains. */
-	if (channel == 1 || channel == 11)
+	/* FIXME: Channel 11 is not the edge क्रम all regulatory करोमुख्यs. */
+	अगर (channel == 1 || channel == 11)
 		ioreqs[0].value = 0x12;
 
 	dev_dbg_f(zd_chip_dev(chip), "patching for channel %d\n", channel);
-	return zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-}
+	वापस zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+पूर्ण
 
-static int zd1211_hw_reset_phy(struct zd_chip *chip)
-{
-	static const struct zd_ioreq16 ioreqs[] = {
-		{ ZD_CR0,   0x0a }, { ZD_CR1,   0x06 }, { ZD_CR2,   0x26 },
-		{ ZD_CR3,   0x38 }, { ZD_CR4,   0x80 }, { ZD_CR9,   0xa0 },
-		{ ZD_CR10,  0x81 }, { ZD_CR11,  0x00 }, { ZD_CR12,  0x7f },
-		{ ZD_CR13,  0x8c }, { ZD_CR14,  0x80 }, { ZD_CR15,  0x3d },
-		{ ZD_CR16,  0x20 }, { ZD_CR17,  0x1e }, { ZD_CR18,  0x0a },
-		{ ZD_CR19,  0x48 }, { ZD_CR20,  0x0c }, { ZD_CR21,  0x0c },
-		{ ZD_CR22,  0x23 }, { ZD_CR23,  0x90 }, { ZD_CR24,  0x14 },
-		{ ZD_CR25,  0x40 }, { ZD_CR26,  0x10 }, { ZD_CR27,  0x19 },
-		{ ZD_CR28,  0x7f }, { ZD_CR29,  0x80 }, { ZD_CR30,  0x4b },
-		{ ZD_CR31,  0x60 }, { ZD_CR32,  0x43 }, { ZD_CR33,  0x08 },
-		{ ZD_CR34,  0x06 }, { ZD_CR35,  0x0a }, { ZD_CR36,  0x00 },
-		{ ZD_CR37,  0x00 }, { ZD_CR38,  0x38 }, { ZD_CR39,  0x0c },
-		{ ZD_CR40,  0x84 }, { ZD_CR41,  0x2a }, { ZD_CR42,  0x80 },
-		{ ZD_CR43,  0x10 }, { ZD_CR44,  0x12 }, { ZD_CR46,  0xff },
-		{ ZD_CR47,  0x1E }, { ZD_CR48,  0x26 }, { ZD_CR49,  0x5b },
-		{ ZD_CR64,  0xd0 }, { ZD_CR65,  0x04 }, { ZD_CR66,  0x58 },
-		{ ZD_CR67,  0xc9 }, { ZD_CR68,  0x88 }, { ZD_CR69,  0x41 },
-		{ ZD_CR70,  0x23 }, { ZD_CR71,  0x10 }, { ZD_CR72,  0xff },
-		{ ZD_CR73,  0x32 }, { ZD_CR74,  0x30 }, { ZD_CR75,  0x65 },
-		{ ZD_CR76,  0x41 }, { ZD_CR77,  0x1b }, { ZD_CR78,  0x30 },
-		{ ZD_CR79,  0x68 }, { ZD_CR80,  0x64 }, { ZD_CR81,  0x64 },
-		{ ZD_CR82,  0x00 }, { ZD_CR83,  0x00 }, { ZD_CR84,  0x00 },
-		{ ZD_CR85,  0x02 }, { ZD_CR86,  0x00 }, { ZD_CR87,  0x00 },
-		{ ZD_CR88,  0xff }, { ZD_CR89,  0xfc }, { ZD_CR90,  0x00 },
-		{ ZD_CR91,  0x00 }, { ZD_CR92,  0x00 }, { ZD_CR93,  0x08 },
-		{ ZD_CR94,  0x00 }, { ZD_CR95,  0x00 }, { ZD_CR96,  0xff },
-		{ ZD_CR97,  0xe7 }, { ZD_CR98,  0x00 }, { ZD_CR99,  0x00 },
-		{ ZD_CR100, 0x00 }, { ZD_CR101, 0xae }, { ZD_CR102, 0x02 },
-		{ ZD_CR103, 0x00 }, { ZD_CR104, 0x03 }, { ZD_CR105, 0x65 },
-		{ ZD_CR106, 0x04 }, { ZD_CR107, 0x00 }, { ZD_CR108, 0x0a },
-		{ ZD_CR109, 0xaa }, { ZD_CR110, 0xaa }, { ZD_CR111, 0x25 },
-		{ ZD_CR112, 0x25 }, { ZD_CR113, 0x00 }, { ZD_CR119, 0x1e },
-		{ ZD_CR125, 0x90 }, { ZD_CR126, 0x00 }, { ZD_CR127, 0x00 },
-		{ },
-		{ ZD_CR5,   0x00 }, { ZD_CR6,   0x00 }, { ZD_CR7,   0x00 },
-		{ ZD_CR8,   0x00 }, { ZD_CR9,   0x20 }, { ZD_CR12,  0xf0 },
-		{ ZD_CR20,  0x0e }, { ZD_CR21,  0x0e }, { ZD_CR27,  0x10 },
-		{ ZD_CR44,  0x33 }, { ZD_CR47,  0x1E }, { ZD_CR83,  0x24 },
-		{ ZD_CR84,  0x04 }, { ZD_CR85,  0x00 }, { ZD_CR86,  0x0C },
-		{ ZD_CR87,  0x12 }, { ZD_CR88,  0x0C }, { ZD_CR89,  0x00 },
-		{ ZD_CR90,  0x10 }, { ZD_CR91,  0x08 }, { ZD_CR93,  0x00 },
-		{ ZD_CR94,  0x01 }, { ZD_CR95,  0x00 }, { ZD_CR96,  0x50 },
-		{ ZD_CR97,  0x37 }, { ZD_CR98,  0x35 }, { ZD_CR101, 0x13 },
-		{ ZD_CR102, 0x27 }, { ZD_CR103, 0x27 }, { ZD_CR104, 0x18 },
-		{ ZD_CR105, 0x12 }, { ZD_CR109, 0x27 }, { ZD_CR110, 0x27 },
-		{ ZD_CR111, 0x27 }, { ZD_CR112, 0x27 }, { ZD_CR113, 0x27 },
-		{ ZD_CR114, 0x27 }, { ZD_CR115, 0x26 }, { ZD_CR116, 0x24 },
-		{ ZD_CR117, 0xfc }, { ZD_CR118, 0xfa }, { ZD_CR120, 0x4f },
-		{ ZD_CR125, 0xaa }, { ZD_CR127, 0x03 }, { ZD_CR128, 0x14 },
-		{ ZD_CR129, 0x12 }, { ZD_CR130, 0x10 }, { ZD_CR131, 0x0C },
-		{ ZD_CR136, 0xdf }, { ZD_CR137, 0x40 }, { ZD_CR138, 0xa0 },
-		{ ZD_CR139, 0xb0 }, { ZD_CR140, 0x99 }, { ZD_CR141, 0x82 },
-		{ ZD_CR142, 0x54 }, { ZD_CR143, 0x1c }, { ZD_CR144, 0x6c },
-		{ ZD_CR147, 0x07 }, { ZD_CR148, 0x4c }, { ZD_CR149, 0x50 },
-		{ ZD_CR150, 0x0e }, { ZD_CR151, 0x18 }, { ZD_CR160, 0xfe },
-		{ ZD_CR161, 0xee }, { ZD_CR162, 0xaa }, { ZD_CR163, 0xfa },
-		{ ZD_CR164, 0xfa }, { ZD_CR165, 0xea }, { ZD_CR166, 0xbe },
-		{ ZD_CR167, 0xbe }, { ZD_CR168, 0x6a }, { ZD_CR169, 0xba },
-		{ ZD_CR170, 0xba }, { ZD_CR171, 0xba },
+अटल पूर्णांक zd1211_hw_reset_phy(काष्ठा zd_chip *chip)
+अणु
+	अटल स्थिर काष्ठा zd_ioreq16 ioreqs[] = अणु
+		अणु ZD_CR0,   0x0a पूर्ण, अणु ZD_CR1,   0x06 पूर्ण, अणु ZD_CR2,   0x26 पूर्ण,
+		अणु ZD_CR3,   0x38 पूर्ण, अणु ZD_CR4,   0x80 पूर्ण, अणु ZD_CR9,   0xa0 पूर्ण,
+		अणु ZD_CR10,  0x81 पूर्ण, अणु ZD_CR11,  0x00 पूर्ण, अणु ZD_CR12,  0x7f पूर्ण,
+		अणु ZD_CR13,  0x8c पूर्ण, अणु ZD_CR14,  0x80 पूर्ण, अणु ZD_CR15,  0x3d पूर्ण,
+		अणु ZD_CR16,  0x20 पूर्ण, अणु ZD_CR17,  0x1e पूर्ण, अणु ZD_CR18,  0x0a पूर्ण,
+		अणु ZD_CR19,  0x48 पूर्ण, अणु ZD_CR20,  0x0c पूर्ण, अणु ZD_CR21,  0x0c पूर्ण,
+		अणु ZD_CR22,  0x23 पूर्ण, अणु ZD_CR23,  0x90 पूर्ण, अणु ZD_CR24,  0x14 पूर्ण,
+		अणु ZD_CR25,  0x40 पूर्ण, अणु ZD_CR26,  0x10 पूर्ण, अणु ZD_CR27,  0x19 पूर्ण,
+		अणु ZD_CR28,  0x7f पूर्ण, अणु ZD_CR29,  0x80 पूर्ण, अणु ZD_CR30,  0x4b पूर्ण,
+		अणु ZD_CR31,  0x60 पूर्ण, अणु ZD_CR32,  0x43 पूर्ण, अणु ZD_CR33,  0x08 पूर्ण,
+		अणु ZD_CR34,  0x06 पूर्ण, अणु ZD_CR35,  0x0a पूर्ण, अणु ZD_CR36,  0x00 पूर्ण,
+		अणु ZD_CR37,  0x00 पूर्ण, अणु ZD_CR38,  0x38 पूर्ण, अणु ZD_CR39,  0x0c पूर्ण,
+		अणु ZD_CR40,  0x84 पूर्ण, अणु ZD_CR41,  0x2a पूर्ण, अणु ZD_CR42,  0x80 पूर्ण,
+		अणु ZD_CR43,  0x10 पूर्ण, अणु ZD_CR44,  0x12 पूर्ण, अणु ZD_CR46,  0xff पूर्ण,
+		अणु ZD_CR47,  0x1E पूर्ण, अणु ZD_CR48,  0x26 पूर्ण, अणु ZD_CR49,  0x5b पूर्ण,
+		अणु ZD_CR64,  0xd0 पूर्ण, अणु ZD_CR65,  0x04 पूर्ण, अणु ZD_CR66,  0x58 पूर्ण,
+		अणु ZD_CR67,  0xc9 पूर्ण, अणु ZD_CR68,  0x88 पूर्ण, अणु ZD_CR69,  0x41 पूर्ण,
+		अणु ZD_CR70,  0x23 पूर्ण, अणु ZD_CR71,  0x10 पूर्ण, अणु ZD_CR72,  0xff पूर्ण,
+		अणु ZD_CR73,  0x32 पूर्ण, अणु ZD_CR74,  0x30 पूर्ण, अणु ZD_CR75,  0x65 पूर्ण,
+		अणु ZD_CR76,  0x41 पूर्ण, अणु ZD_CR77,  0x1b पूर्ण, अणु ZD_CR78,  0x30 पूर्ण,
+		अणु ZD_CR79,  0x68 पूर्ण, अणु ZD_CR80,  0x64 पूर्ण, अणु ZD_CR81,  0x64 पूर्ण,
+		अणु ZD_CR82,  0x00 पूर्ण, अणु ZD_CR83,  0x00 पूर्ण, अणु ZD_CR84,  0x00 पूर्ण,
+		अणु ZD_CR85,  0x02 पूर्ण, अणु ZD_CR86,  0x00 पूर्ण, अणु ZD_CR87,  0x00 पूर्ण,
+		अणु ZD_CR88,  0xff पूर्ण, अणु ZD_CR89,  0xfc पूर्ण, अणु ZD_CR90,  0x00 पूर्ण,
+		अणु ZD_CR91,  0x00 पूर्ण, अणु ZD_CR92,  0x00 पूर्ण, अणु ZD_CR93,  0x08 पूर्ण,
+		अणु ZD_CR94,  0x00 पूर्ण, अणु ZD_CR95,  0x00 पूर्ण, अणु ZD_CR96,  0xff पूर्ण,
+		अणु ZD_CR97,  0xe7 पूर्ण, अणु ZD_CR98,  0x00 पूर्ण, अणु ZD_CR99,  0x00 पूर्ण,
+		अणु ZD_CR100, 0x00 पूर्ण, अणु ZD_CR101, 0xae पूर्ण, अणु ZD_CR102, 0x02 पूर्ण,
+		अणु ZD_CR103, 0x00 पूर्ण, अणु ZD_CR104, 0x03 पूर्ण, अणु ZD_CR105, 0x65 पूर्ण,
+		अणु ZD_CR106, 0x04 पूर्ण, अणु ZD_CR107, 0x00 पूर्ण, अणु ZD_CR108, 0x0a पूर्ण,
+		अणु ZD_CR109, 0xaa पूर्ण, अणु ZD_CR110, 0xaa पूर्ण, अणु ZD_CR111, 0x25 पूर्ण,
+		अणु ZD_CR112, 0x25 पूर्ण, अणु ZD_CR113, 0x00 पूर्ण, अणु ZD_CR119, 0x1e पूर्ण,
+		अणु ZD_CR125, 0x90 पूर्ण, अणु ZD_CR126, 0x00 पूर्ण, अणु ZD_CR127, 0x00 पूर्ण,
+		अणु पूर्ण,
+		अणु ZD_CR5,   0x00 पूर्ण, अणु ZD_CR6,   0x00 पूर्ण, अणु ZD_CR7,   0x00 पूर्ण,
+		अणु ZD_CR8,   0x00 पूर्ण, अणु ZD_CR9,   0x20 पूर्ण, अणु ZD_CR12,  0xf0 पूर्ण,
+		अणु ZD_CR20,  0x0e पूर्ण, अणु ZD_CR21,  0x0e पूर्ण, अणु ZD_CR27,  0x10 पूर्ण,
+		अणु ZD_CR44,  0x33 पूर्ण, अणु ZD_CR47,  0x1E पूर्ण, अणु ZD_CR83,  0x24 पूर्ण,
+		अणु ZD_CR84,  0x04 पूर्ण, अणु ZD_CR85,  0x00 पूर्ण, अणु ZD_CR86,  0x0C पूर्ण,
+		अणु ZD_CR87,  0x12 पूर्ण, अणु ZD_CR88,  0x0C पूर्ण, अणु ZD_CR89,  0x00 पूर्ण,
+		अणु ZD_CR90,  0x10 पूर्ण, अणु ZD_CR91,  0x08 पूर्ण, अणु ZD_CR93,  0x00 पूर्ण,
+		अणु ZD_CR94,  0x01 पूर्ण, अणु ZD_CR95,  0x00 पूर्ण, अणु ZD_CR96,  0x50 पूर्ण,
+		अणु ZD_CR97,  0x37 पूर्ण, अणु ZD_CR98,  0x35 पूर्ण, अणु ZD_CR101, 0x13 पूर्ण,
+		अणु ZD_CR102, 0x27 पूर्ण, अणु ZD_CR103, 0x27 पूर्ण, अणु ZD_CR104, 0x18 पूर्ण,
+		अणु ZD_CR105, 0x12 पूर्ण, अणु ZD_CR109, 0x27 पूर्ण, अणु ZD_CR110, 0x27 पूर्ण,
+		अणु ZD_CR111, 0x27 पूर्ण, अणु ZD_CR112, 0x27 पूर्ण, अणु ZD_CR113, 0x27 पूर्ण,
+		अणु ZD_CR114, 0x27 पूर्ण, अणु ZD_CR115, 0x26 पूर्ण, अणु ZD_CR116, 0x24 पूर्ण,
+		अणु ZD_CR117, 0xfc पूर्ण, अणु ZD_CR118, 0xfa पूर्ण, अणु ZD_CR120, 0x4f पूर्ण,
+		अणु ZD_CR125, 0xaa पूर्ण, अणु ZD_CR127, 0x03 पूर्ण, अणु ZD_CR128, 0x14 पूर्ण,
+		अणु ZD_CR129, 0x12 पूर्ण, अणु ZD_CR130, 0x10 पूर्ण, अणु ZD_CR131, 0x0C पूर्ण,
+		अणु ZD_CR136, 0xdf पूर्ण, अणु ZD_CR137, 0x40 पूर्ण, अणु ZD_CR138, 0xa0 पूर्ण,
+		अणु ZD_CR139, 0xb0 पूर्ण, अणु ZD_CR140, 0x99 पूर्ण, अणु ZD_CR141, 0x82 पूर्ण,
+		अणु ZD_CR142, 0x54 पूर्ण, अणु ZD_CR143, 0x1c पूर्ण, अणु ZD_CR144, 0x6c पूर्ण,
+		अणु ZD_CR147, 0x07 पूर्ण, अणु ZD_CR148, 0x4c पूर्ण, अणु ZD_CR149, 0x50 पूर्ण,
+		अणु ZD_CR150, 0x0e पूर्ण, अणु ZD_CR151, 0x18 पूर्ण, अणु ZD_CR160, 0xfe पूर्ण,
+		अणु ZD_CR161, 0xee पूर्ण, अणु ZD_CR162, 0xaa पूर्ण, अणु ZD_CR163, 0xfa पूर्ण,
+		अणु ZD_CR164, 0xfa पूर्ण, अणु ZD_CR165, 0xea पूर्ण, अणु ZD_CR166, 0xbe पूर्ण,
+		अणु ZD_CR167, 0xbe पूर्ण, अणु ZD_CR168, 0x6a पूर्ण, अणु ZD_CR169, 0xba पूर्ण,
+		अणु ZD_CR170, 0xba पूर्ण, अणु ZD_CR171, 0xba पूर्ण,
 		/* Note: ZD_CR204 must lead the ZD_CR203 */
-		{ ZD_CR204, 0x7d },
-		{ },
-		{ ZD_CR203, 0x30 },
-	};
+		अणु ZD_CR204, 0x7d पूर्ण,
+		अणु पूर्ण,
+		अणु ZD_CR203, 0x30 पूर्ण,
+	पूर्ण;
 
-	int r, t;
+	पूर्णांक r, t;
 
 	dev_dbg_f(zd_chip_dev(chip), "\n");
 
 	r = zd_chip_lock_phy_regs(chip);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	r = zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-	if (r)
-		goto unlock;
+	r = zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+	अगर (r)
+		जाओ unlock;
 
 	r = patch_cr157(chip);
 unlock:
 	t = zd_chip_unlock_phy_regs(chip);
-	if (t && !r)
+	अगर (t && !r)
 		r = t;
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int zd1211b_hw_reset_phy(struct zd_chip *chip)
-{
-	static const struct zd_ioreq16 ioreqs[] = {
-		{ ZD_CR0,   0x14 }, { ZD_CR1,   0x06 }, { ZD_CR2,   0x26 },
-		{ ZD_CR3,   0x38 }, { ZD_CR4,   0x80 }, { ZD_CR9,   0xe0 },
-		{ ZD_CR10,  0x81 },
-		/* power control { { ZD_CR11,  1 << 6 }, */
-		{ ZD_CR11,  0x00 },
-		{ ZD_CR12,  0xf0 }, { ZD_CR13,  0x8c }, { ZD_CR14,  0x80 },
-		{ ZD_CR15,  0x3d }, { ZD_CR16,  0x20 }, { ZD_CR17,  0x1e },
-		{ ZD_CR18,  0x0a }, { ZD_CR19,  0x48 },
-		{ ZD_CR20,  0x10 }, /* Org:0x0E, ComTrend:RalLink AP */
-		{ ZD_CR21,  0x0e }, { ZD_CR22,  0x23 }, { ZD_CR23,  0x90 },
-		{ ZD_CR24,  0x14 }, { ZD_CR25,  0x40 }, { ZD_CR26,  0x10 },
-		{ ZD_CR27,  0x10 }, { ZD_CR28,  0x7f }, { ZD_CR29,  0x80 },
-		{ ZD_CR30,  0x4b }, /* ASIC/FWT, no jointly decoder */
-		{ ZD_CR31,  0x60 }, { ZD_CR32,  0x43 }, { ZD_CR33,  0x08 },
-		{ ZD_CR34,  0x06 }, { ZD_CR35,  0x0a }, { ZD_CR36,  0x00 },
-		{ ZD_CR37,  0x00 }, { ZD_CR38,  0x38 }, { ZD_CR39,  0x0c },
-		{ ZD_CR40,  0x84 }, { ZD_CR41,  0x2a }, { ZD_CR42,  0x80 },
-		{ ZD_CR43,  0x10 }, { ZD_CR44,  0x33 }, { ZD_CR46,  0xff },
-		{ ZD_CR47,  0x1E }, { ZD_CR48,  0x26 }, { ZD_CR49,  0x5b },
-		{ ZD_CR64,  0xd0 }, { ZD_CR65,  0x04 }, { ZD_CR66,  0x58 },
-		{ ZD_CR67,  0xc9 }, { ZD_CR68,  0x88 }, { ZD_CR69,  0x41 },
-		{ ZD_CR70,  0x23 }, { ZD_CR71,  0x10 }, { ZD_CR72,  0xff },
-		{ ZD_CR73,  0x32 }, { ZD_CR74,  0x30 }, { ZD_CR75,  0x65 },
-		{ ZD_CR76,  0x41 }, { ZD_CR77,  0x1b }, { ZD_CR78,  0x30 },
-		{ ZD_CR79,  0xf0 }, { ZD_CR80,  0x64 }, { ZD_CR81,  0x64 },
-		{ ZD_CR82,  0x00 }, { ZD_CR83,  0x24 }, { ZD_CR84,  0x04 },
-		{ ZD_CR85,  0x00 }, { ZD_CR86,  0x0c }, { ZD_CR87,  0x12 },
-		{ ZD_CR88,  0x0c }, { ZD_CR89,  0x00 }, { ZD_CR90,  0x58 },
-		{ ZD_CR91,  0x04 }, { ZD_CR92,  0x00 }, { ZD_CR93,  0x00 },
-		{ ZD_CR94,  0x01 },
-		{ ZD_CR95,  0x20 }, /* ZD1211B */
-		{ ZD_CR96,  0x50 }, { ZD_CR97,  0x37 }, { ZD_CR98,  0x35 },
-		{ ZD_CR99,  0x00 }, { ZD_CR100, 0x01 }, { ZD_CR101, 0x13 },
-		{ ZD_CR102, 0x27 }, { ZD_CR103, 0x27 }, { ZD_CR104, 0x18 },
-		{ ZD_CR105, 0x12 }, { ZD_CR106, 0x04 }, { ZD_CR107, 0x00 },
-		{ ZD_CR108, 0x0a }, { ZD_CR109, 0x27 }, { ZD_CR110, 0x27 },
-		{ ZD_CR111, 0x27 }, { ZD_CR112, 0x27 }, { ZD_CR113, 0x27 },
-		{ ZD_CR114, 0x27 }, { ZD_CR115, 0x26 }, { ZD_CR116, 0x24 },
-		{ ZD_CR117, 0xfc }, { ZD_CR118, 0xfa }, { ZD_CR119, 0x1e },
-		{ ZD_CR125, 0x90 }, { ZD_CR126, 0x00 }, { ZD_CR127, 0x00 },
-		{ ZD_CR128, 0x14 }, { ZD_CR129, 0x12 }, { ZD_CR130, 0x10 },
-		{ ZD_CR131, 0x0c }, { ZD_CR136, 0xdf }, { ZD_CR137, 0xa0 },
-		{ ZD_CR138, 0xa8 }, { ZD_CR139, 0xb4 }, { ZD_CR140, 0x98 },
-		{ ZD_CR141, 0x82 }, { ZD_CR142, 0x53 }, { ZD_CR143, 0x1c },
-		{ ZD_CR144, 0x6c }, { ZD_CR147, 0x07 }, { ZD_CR148, 0x40 },
-		{ ZD_CR149, 0x40 }, /* Org:0x50 ComTrend:RalLink AP */
-		{ ZD_CR150, 0x14 }, /* Org:0x0E ComTrend:RalLink AP */
-		{ ZD_CR151, 0x18 }, { ZD_CR159, 0x70 }, { ZD_CR160, 0xfe },
-		{ ZD_CR161, 0xee }, { ZD_CR162, 0xaa }, { ZD_CR163, 0xfa },
-		{ ZD_CR164, 0xfa }, { ZD_CR165, 0xea }, { ZD_CR166, 0xbe },
-		{ ZD_CR167, 0xbe }, { ZD_CR168, 0x6a }, { ZD_CR169, 0xba },
-		{ ZD_CR170, 0xba }, { ZD_CR171, 0xba },
+अटल पूर्णांक zd1211b_hw_reset_phy(काष्ठा zd_chip *chip)
+अणु
+	अटल स्थिर काष्ठा zd_ioreq16 ioreqs[] = अणु
+		अणु ZD_CR0,   0x14 पूर्ण, अणु ZD_CR1,   0x06 पूर्ण, अणु ZD_CR2,   0x26 पूर्ण,
+		अणु ZD_CR3,   0x38 पूर्ण, अणु ZD_CR4,   0x80 पूर्ण, अणु ZD_CR9,   0xe0 पूर्ण,
+		अणु ZD_CR10,  0x81 पूर्ण,
+		/* घातer control अणु अणु ZD_CR11,  1 << 6 पूर्ण, */
+		अणु ZD_CR11,  0x00 पूर्ण,
+		अणु ZD_CR12,  0xf0 पूर्ण, अणु ZD_CR13,  0x8c पूर्ण, अणु ZD_CR14,  0x80 पूर्ण,
+		अणु ZD_CR15,  0x3d पूर्ण, अणु ZD_CR16,  0x20 पूर्ण, अणु ZD_CR17,  0x1e पूर्ण,
+		अणु ZD_CR18,  0x0a पूर्ण, अणु ZD_CR19,  0x48 पूर्ण,
+		अणु ZD_CR20,  0x10 पूर्ण, /* Org:0x0E, ComTrend:RalLink AP */
+		अणु ZD_CR21,  0x0e पूर्ण, अणु ZD_CR22,  0x23 पूर्ण, अणु ZD_CR23,  0x90 पूर्ण,
+		अणु ZD_CR24,  0x14 पूर्ण, अणु ZD_CR25,  0x40 पूर्ण, अणु ZD_CR26,  0x10 पूर्ण,
+		अणु ZD_CR27,  0x10 पूर्ण, अणु ZD_CR28,  0x7f पूर्ण, अणु ZD_CR29,  0x80 पूर्ण,
+		अणु ZD_CR30,  0x4b पूर्ण, /* ASIC/FWT, no joपूर्णांकly decoder */
+		अणु ZD_CR31,  0x60 पूर्ण, अणु ZD_CR32,  0x43 पूर्ण, अणु ZD_CR33,  0x08 पूर्ण,
+		अणु ZD_CR34,  0x06 पूर्ण, अणु ZD_CR35,  0x0a पूर्ण, अणु ZD_CR36,  0x00 पूर्ण,
+		अणु ZD_CR37,  0x00 पूर्ण, अणु ZD_CR38,  0x38 पूर्ण, अणु ZD_CR39,  0x0c पूर्ण,
+		अणु ZD_CR40,  0x84 पूर्ण, अणु ZD_CR41,  0x2a पूर्ण, अणु ZD_CR42,  0x80 पूर्ण,
+		अणु ZD_CR43,  0x10 पूर्ण, अणु ZD_CR44,  0x33 पूर्ण, अणु ZD_CR46,  0xff पूर्ण,
+		अणु ZD_CR47,  0x1E पूर्ण, अणु ZD_CR48,  0x26 पूर्ण, अणु ZD_CR49,  0x5b पूर्ण,
+		अणु ZD_CR64,  0xd0 पूर्ण, अणु ZD_CR65,  0x04 पूर्ण, अणु ZD_CR66,  0x58 पूर्ण,
+		अणु ZD_CR67,  0xc9 पूर्ण, अणु ZD_CR68,  0x88 पूर्ण, अणु ZD_CR69,  0x41 पूर्ण,
+		अणु ZD_CR70,  0x23 पूर्ण, अणु ZD_CR71,  0x10 पूर्ण, अणु ZD_CR72,  0xff पूर्ण,
+		अणु ZD_CR73,  0x32 पूर्ण, अणु ZD_CR74,  0x30 पूर्ण, अणु ZD_CR75,  0x65 पूर्ण,
+		अणु ZD_CR76,  0x41 पूर्ण, अणु ZD_CR77,  0x1b पूर्ण, अणु ZD_CR78,  0x30 पूर्ण,
+		अणु ZD_CR79,  0xf0 पूर्ण, अणु ZD_CR80,  0x64 पूर्ण, अणु ZD_CR81,  0x64 पूर्ण,
+		अणु ZD_CR82,  0x00 पूर्ण, अणु ZD_CR83,  0x24 पूर्ण, अणु ZD_CR84,  0x04 पूर्ण,
+		अणु ZD_CR85,  0x00 पूर्ण, अणु ZD_CR86,  0x0c पूर्ण, अणु ZD_CR87,  0x12 पूर्ण,
+		अणु ZD_CR88,  0x0c पूर्ण, अणु ZD_CR89,  0x00 पूर्ण, अणु ZD_CR90,  0x58 पूर्ण,
+		अणु ZD_CR91,  0x04 पूर्ण, अणु ZD_CR92,  0x00 पूर्ण, अणु ZD_CR93,  0x00 पूर्ण,
+		अणु ZD_CR94,  0x01 पूर्ण,
+		अणु ZD_CR95,  0x20 पूर्ण, /* ZD1211B */
+		अणु ZD_CR96,  0x50 पूर्ण, अणु ZD_CR97,  0x37 पूर्ण, अणु ZD_CR98,  0x35 पूर्ण,
+		अणु ZD_CR99,  0x00 पूर्ण, अणु ZD_CR100, 0x01 पूर्ण, अणु ZD_CR101, 0x13 पूर्ण,
+		अणु ZD_CR102, 0x27 पूर्ण, अणु ZD_CR103, 0x27 पूर्ण, अणु ZD_CR104, 0x18 पूर्ण,
+		अणु ZD_CR105, 0x12 पूर्ण, अणु ZD_CR106, 0x04 पूर्ण, अणु ZD_CR107, 0x00 पूर्ण,
+		अणु ZD_CR108, 0x0a पूर्ण, अणु ZD_CR109, 0x27 पूर्ण, अणु ZD_CR110, 0x27 पूर्ण,
+		अणु ZD_CR111, 0x27 पूर्ण, अणु ZD_CR112, 0x27 पूर्ण, अणु ZD_CR113, 0x27 पूर्ण,
+		अणु ZD_CR114, 0x27 पूर्ण, अणु ZD_CR115, 0x26 पूर्ण, अणु ZD_CR116, 0x24 पूर्ण,
+		अणु ZD_CR117, 0xfc पूर्ण, अणु ZD_CR118, 0xfa पूर्ण, अणु ZD_CR119, 0x1e पूर्ण,
+		अणु ZD_CR125, 0x90 पूर्ण, अणु ZD_CR126, 0x00 पूर्ण, अणु ZD_CR127, 0x00 पूर्ण,
+		अणु ZD_CR128, 0x14 पूर्ण, अणु ZD_CR129, 0x12 पूर्ण, अणु ZD_CR130, 0x10 पूर्ण,
+		अणु ZD_CR131, 0x0c पूर्ण, अणु ZD_CR136, 0xdf पूर्ण, अणु ZD_CR137, 0xa0 पूर्ण,
+		अणु ZD_CR138, 0xa8 पूर्ण, अणु ZD_CR139, 0xb4 पूर्ण, अणु ZD_CR140, 0x98 पूर्ण,
+		अणु ZD_CR141, 0x82 पूर्ण, अणु ZD_CR142, 0x53 पूर्ण, अणु ZD_CR143, 0x1c पूर्ण,
+		अणु ZD_CR144, 0x6c पूर्ण, अणु ZD_CR147, 0x07 पूर्ण, अणु ZD_CR148, 0x40 पूर्ण,
+		अणु ZD_CR149, 0x40 पूर्ण, /* Org:0x50 ComTrend:RalLink AP */
+		अणु ZD_CR150, 0x14 पूर्ण, /* Org:0x0E ComTrend:RalLink AP */
+		अणु ZD_CR151, 0x18 पूर्ण, अणु ZD_CR159, 0x70 पूर्ण, अणु ZD_CR160, 0xfe पूर्ण,
+		अणु ZD_CR161, 0xee पूर्ण, अणु ZD_CR162, 0xaa पूर्ण, अणु ZD_CR163, 0xfa पूर्ण,
+		अणु ZD_CR164, 0xfa पूर्ण, अणु ZD_CR165, 0xea पूर्ण, अणु ZD_CR166, 0xbe पूर्ण,
+		अणु ZD_CR167, 0xbe पूर्ण, अणु ZD_CR168, 0x6a पूर्ण, अणु ZD_CR169, 0xba पूर्ण,
+		अणु ZD_CR170, 0xba पूर्ण, अणु ZD_CR171, 0xba पूर्ण,
 		/* Note: ZD_CR204 must lead the ZD_CR203 */
-		{ ZD_CR204, 0x7d },
-		{},
-		{ ZD_CR203, 0x30 },
-	};
+		अणु ZD_CR204, 0x7d पूर्ण,
+		अणुपूर्ण,
+		अणु ZD_CR203, 0x30 पूर्ण,
+	पूर्ण;
 
-	int r, t;
+	पूर्णांक r, t;
 
 	dev_dbg_f(zd_chip_dev(chip), "\n");
 
 	r = zd_chip_lock_phy_regs(chip);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	r = zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+	r = zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
 	t = zd_chip_unlock_phy_regs(chip);
-	if (t && !r)
+	अगर (t && !r)
 		r = t;
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int hw_reset_phy(struct zd_chip *chip)
-{
-	return zd_chip_is_zd1211b(chip) ? zd1211b_hw_reset_phy(chip) :
+अटल पूर्णांक hw_reset_phy(काष्ठा zd_chip *chip)
+अणु
+	वापस zd_chip_is_zd1211b(chip) ? zd1211b_hw_reset_phy(chip) :
 		                  zd1211_hw_reset_phy(chip);
-}
+पूर्ण
 
-static int zd1211_hw_init_hmac(struct zd_chip *chip)
-{
-	static const struct zd_ioreq32 ioreqs[] = {
-		{ CR_ZD1211_RETRY_MAX,		ZD1211_RETRY_COUNT },
-		{ CR_RX_THRESHOLD,		0x000c0640 },
-	};
-
-	dev_dbg_f(zd_chip_dev(chip), "\n");
-	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	return zd_iowrite32a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-}
-
-static int zd1211b_hw_init_hmac(struct zd_chip *chip)
-{
-	static const struct zd_ioreq32 ioreqs[] = {
-		{ CR_ZD1211B_RETRY_MAX,		ZD1211B_RETRY_COUNT },
-		{ CR_ZD1211B_CWIN_MAX_MIN_AC0,	0x007f003f },
-		{ CR_ZD1211B_CWIN_MAX_MIN_AC1,	0x007f003f },
-		{ CR_ZD1211B_CWIN_MAX_MIN_AC2,  0x003f001f },
-		{ CR_ZD1211B_CWIN_MAX_MIN_AC3,  0x001f000f },
-		{ CR_ZD1211B_AIFS_CTL1,		0x00280028 },
-		{ CR_ZD1211B_AIFS_CTL2,		0x008C003C },
-		{ CR_ZD1211B_TXOP,		0x01800824 },
-		{ CR_RX_THRESHOLD,		0x000c0eff, },
-	};
+अटल पूर्णांक zd1211_hw_init_hmac(काष्ठा zd_chip *chip)
+अणु
+	अटल स्थिर काष्ठा zd_ioreq32 ioreqs[] = अणु
+		अणु CR_ZD1211_RETRY_MAX,		ZD1211_RETRY_COUNT पूर्ण,
+		अणु CR_RX_THRESHOLD,		0x000c0640 पूर्ण,
+	पूर्ण;
 
 	dev_dbg_f(zd_chip_dev(chip), "\n");
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	return zd_iowrite32a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-}
+	वापस zd_ioग_लिखो32a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+पूर्ण
 
-static int hw_init_hmac(struct zd_chip *chip)
-{
-	int r;
-	static const struct zd_ioreq32 ioreqs[] = {
-		{ CR_ACK_TIMEOUT_EXT,		0x20 },
-		{ CR_ADDA_MBIAS_WARMTIME,	0x30000808 },
-		{ CR_SNIFFER_ON,		0 },
-		{ CR_RX_FILTER,			STA_RX_FILTER },
-		{ CR_GROUP_HASH_P1,		0x00 },
-		{ CR_GROUP_HASH_P2,		0x80000000 },
-		{ CR_REG1,			0xa4 },
-		{ CR_ADDA_PWR_DWN,		0x7f },
-		{ CR_BCN_PLCP_CFG,		0x00f00401 },
-		{ CR_PHY_DELAY,			0x00 },
-		{ CR_ACK_TIMEOUT_EXT,		0x80 },
-		{ CR_ADDA_PWR_DWN,		0x00 },
-		{ CR_ACK_TIME_80211,		0x100 },
-		{ CR_RX_PE_DELAY,		0x70 },
-		{ CR_PS_CTRL,			0x10000000 },
-		{ CR_RTS_CTS_RATE,		0x02030203 },
-		{ CR_AFTER_PNP,			0x1 },
-		{ CR_WEP_PROTECT,		0x114 },
-		{ CR_IFS_VALUE,			IFS_VALUE_DEFAULT },
-		{ CR_CAM_MODE,			MODE_AP_WDS},
-	};
+अटल पूर्णांक zd1211b_hw_init_hmac(काष्ठा zd_chip *chip)
+अणु
+	अटल स्थिर काष्ठा zd_ioreq32 ioreqs[] = अणु
+		अणु CR_ZD1211B_RETRY_MAX,		ZD1211B_RETRY_COUNT पूर्ण,
+		अणु CR_ZD1211B_CWIN_MAX_MIN_AC0,	0x007f003f पूर्ण,
+		अणु CR_ZD1211B_CWIN_MAX_MIN_AC1,	0x007f003f पूर्ण,
+		अणु CR_ZD1211B_CWIN_MAX_MIN_AC2,  0x003f001f पूर्ण,
+		अणु CR_ZD1211B_CWIN_MAX_MIN_AC3,  0x001f000f पूर्ण,
+		अणु CR_ZD1211B_AIFS_CTL1,		0x00280028 पूर्ण,
+		अणु CR_ZD1211B_AIFS_CTL2,		0x008C003C पूर्ण,
+		अणु CR_ZD1211B_TXOP,		0x01800824 पूर्ण,
+		अणु CR_RX_THRESHOLD,		0x000c0eff, पूर्ण,
+	पूर्ण;
+
+	dev_dbg_f(zd_chip_dev(chip), "\n");
+	ZD_ASSERT(mutex_is_locked(&chip->mutex));
+	वापस zd_ioग_लिखो32a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+पूर्ण
+
+अटल पूर्णांक hw_init_hmac(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+	अटल स्थिर काष्ठा zd_ioreq32 ioreqs[] = अणु
+		अणु CR_ACK_TIMEOUT_EXT,		0x20 पूर्ण,
+		अणु CR_ADDA_MBIAS_WARMTIME,	0x30000808 पूर्ण,
+		अणु CR_SNIFFER_ON,		0 पूर्ण,
+		अणु CR_RX_FILTER,			STA_RX_FILTER पूर्ण,
+		अणु CR_GROUP_HASH_P1,		0x00 पूर्ण,
+		अणु CR_GROUP_HASH_P2,		0x80000000 पूर्ण,
+		अणु CR_REG1,			0xa4 पूर्ण,
+		अणु CR_ADDA_PWR_DWN,		0x7f पूर्ण,
+		अणु CR_BCN_PLCP_CFG,		0x00f00401 पूर्ण,
+		अणु CR_PHY_DELAY,			0x00 पूर्ण,
+		अणु CR_ACK_TIMEOUT_EXT,		0x80 पूर्ण,
+		अणु CR_ADDA_PWR_DWN,		0x00 पूर्ण,
+		अणु CR_ACK_TIME_80211,		0x100 पूर्ण,
+		अणु CR_RX_PE_DELAY,		0x70 पूर्ण,
+		अणु CR_PS_CTRL,			0x10000000 पूर्ण,
+		अणु CR_RTS_CTS_RATE,		0x02030203 पूर्ण,
+		अणु CR_AFTER_PNP,			0x1 पूर्ण,
+		अणु CR_WEP_PROTECT,		0x114 पूर्ण,
+		अणु CR_IFS_VALUE,			IFS_VALUE_DEFAULT पूर्ण,
+		अणु CR_CAM_MODE,			MODE_AP_WDSपूर्ण,
+	पूर्ण;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	r = zd_iowrite32a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-	if (r)
-		return r;
+	r = zd_ioग_लिखो32a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+	अगर (r)
+		वापस r;
 
-	return zd_chip_is_zd1211b(chip) ?
+	वापस zd_chip_is_zd1211b(chip) ?
 		zd1211b_hw_init_hmac(chip) : zd1211_hw_init_hmac(chip);
-}
+पूर्ण
 
-struct aw_pt_bi {
+काष्ठा aw_pt_bi अणु
 	u32 atim_wnd_period;
 	u32 pre_tbtt;
-	u32 beacon_interval;
-};
+	u32 beacon_पूर्णांकerval;
+पूर्ण;
 
-static int get_aw_pt_bi(struct zd_chip *chip, struct aw_pt_bi *s)
-{
-	int r;
-	static const zd_addr_t aw_pt_bi_addr[] =
-		{ CR_ATIM_WND_PERIOD, CR_PRE_TBTT, CR_BCN_INTERVAL };
+अटल पूर्णांक get_aw_pt_bi(काष्ठा zd_chip *chip, काष्ठा aw_pt_bi *s)
+अणु
+	पूर्णांक r;
+	अटल स्थिर zd_addr_t aw_pt_bi_addr[] =
+		अणु CR_ATIM_WND_PERIOD, CR_PRE_TBTT, CR_BCN_INTERVAL पूर्ण;
 	u32 values[3];
 
-	r = zd_ioread32v_locked(chip, values, (const zd_addr_t *)aw_pt_bi_addr,
+	r = zd_ioपढ़ो32v_locked(chip, values, (स्थिर zd_addr_t *)aw_pt_bi_addr,
 		         ARRAY_SIZE(aw_pt_bi_addr));
-	if (r) {
-		memset(s, 0, sizeof(*s));
-		return r;
-	}
+	अगर (r) अणु
+		स_रखो(s, 0, माप(*s));
+		वापस r;
+	पूर्ण
 
 	s->atim_wnd_period = values[0];
 	s->pre_tbtt = values[1];
-	s->beacon_interval = values[2];
-	return 0;
-}
+	s->beacon_पूर्णांकerval = values[2];
+	वापस 0;
+पूर्ण
 
-static int set_aw_pt_bi(struct zd_chip *chip, struct aw_pt_bi *s)
-{
-	struct zd_ioreq32 reqs[3];
-	u16 b_interval = s->beacon_interval & 0xffff;
+अटल पूर्णांक set_aw_pt_bi(काष्ठा zd_chip *chip, काष्ठा aw_pt_bi *s)
+अणु
+	काष्ठा zd_ioreq32 reqs[3];
+	u16 b_पूर्णांकerval = s->beacon_पूर्णांकerval & 0xffff;
 
-	if (b_interval <= 5)
-		b_interval = 5;
-	if (s->pre_tbtt < 4 || s->pre_tbtt >= b_interval)
-		s->pre_tbtt = b_interval - 1;
-	if (s->atim_wnd_period >= s->pre_tbtt)
+	अगर (b_पूर्णांकerval <= 5)
+		b_पूर्णांकerval = 5;
+	अगर (s->pre_tbtt < 4 || s->pre_tbtt >= b_पूर्णांकerval)
+		s->pre_tbtt = b_पूर्णांकerval - 1;
+	अगर (s->atim_wnd_period >= s->pre_tbtt)
 		s->atim_wnd_period = s->pre_tbtt - 1;
 
 	reqs[0].addr = CR_ATIM_WND_PERIOD;
@@ -872,332 +873,332 @@ static int set_aw_pt_bi(struct zd_chip *chip, struct aw_pt_bi *s)
 	reqs[1].addr = CR_PRE_TBTT;
 	reqs[1].value = s->pre_tbtt;
 	reqs[2].addr = CR_BCN_INTERVAL;
-	reqs[2].value = (s->beacon_interval & ~0xffff) | b_interval;
+	reqs[2].value = (s->beacon_पूर्णांकerval & ~0xffff) | b_पूर्णांकerval;
 
-	return zd_iowrite32a_locked(chip, reqs, ARRAY_SIZE(reqs));
-}
+	वापस zd_ioग_लिखो32a_locked(chip, reqs, ARRAY_SIZE(reqs));
+पूर्ण
 
 
-static int set_beacon_interval(struct zd_chip *chip, u16 interval,
-			       u8 dtim_period, int type)
-{
-	int r;
-	struct aw_pt_bi s;
-	u32 b_interval, mode_flag;
+अटल पूर्णांक set_beacon_पूर्णांकerval(काष्ठा zd_chip *chip, u16 पूर्णांकerval,
+			       u8 dtim_period, पूर्णांक type)
+अणु
+	पूर्णांक r;
+	काष्ठा aw_pt_bi s;
+	u32 b_पूर्णांकerval, mode_flag;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 
-	if (interval > 0) {
-		switch (type) {
-		case NL80211_IFTYPE_ADHOC:
-		case NL80211_IFTYPE_MESH_POINT:
+	अगर (पूर्णांकerval > 0) अणु
+		चयन (type) अणु
+		हाल NL80211_IFTYPE_ADHOC:
+		हाल NL80211_IFTYPE_MESH_POINT:
 			mode_flag = BCN_MODE_IBSS;
-			break;
-		case NL80211_IFTYPE_AP:
+			अवरोध;
+		हाल NL80211_IFTYPE_AP:
 			mode_flag = BCN_MODE_AP;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mode_flag = 0;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dtim_period = 0;
 		mode_flag = 0;
-	}
+	पूर्ण
 
-	b_interval = mode_flag | (dtim_period << 16) | interval;
+	b_पूर्णांकerval = mode_flag | (dtim_period << 16) | पूर्णांकerval;
 
-	r = zd_iowrite32_locked(chip, b_interval, CR_BCN_INTERVAL);
-	if (r)
-		return r;
+	r = zd_ioग_लिखो32_locked(chip, b_पूर्णांकerval, CR_BCN_INTERVAL);
+	अगर (r)
+		वापस r;
 	r = get_aw_pt_bi(chip, &s);
-	if (r)
-		return r;
-	return set_aw_pt_bi(chip, &s);
-}
+	अगर (r)
+		वापस r;
+	वापस set_aw_pt_bi(chip, &s);
+पूर्ण
 
-int zd_set_beacon_interval(struct zd_chip *chip, u16 interval, u8 dtim_period,
-			   int type)
-{
-	int r;
+पूर्णांक zd_set_beacon_पूर्णांकerval(काष्ठा zd_chip *chip, u16 पूर्णांकerval, u8 dtim_period,
+			   पूर्णांक type)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = set_beacon_interval(chip, interval, dtim_period, type);
+	r = set_beacon_पूर्णांकerval(chip, पूर्णांकerval, dtim_period, type);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int hw_init(struct zd_chip *chip)
-{
-	int r;
+अटल पूर्णांक hw_init(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	dev_dbg_f(zd_chip_dev(chip), "\n");
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 	r = hw_reset_phy(chip);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = hw_init_hmac(chip);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return set_beacon_interval(chip, 100, 0, NL80211_IFTYPE_UNSPECIFIED);
-}
+	वापस set_beacon_पूर्णांकerval(chip, 100, 0, NL80211_IFTYPE_UNSPECIFIED);
+पूर्ण
 
-static zd_addr_t fw_reg_addr(struct zd_chip *chip, u16 offset)
-{
-	return (zd_addr_t)((u16)chip->fw_regs_base + offset);
-}
+अटल zd_addr_t fw_reg_addr(काष्ठा zd_chip *chip, u16 offset)
+अणु
+	वापस (zd_addr_t)((u16)chip->fw_regs_base + offset);
+पूर्ण
 
-#ifdef DEBUG
-static int dump_cr(struct zd_chip *chip, const zd_addr_t addr,
-	           const char *addr_string)
-{
-	int r;
+#अगर_घोषित DEBUG
+अटल पूर्णांक dump_cr(काष्ठा zd_chip *chip, स्थिर zd_addr_t addr,
+	           स्थिर अक्षर *addr_string)
+अणु
+	पूर्णांक r;
 	u32 value;
 
-	r = zd_ioread32_locked(chip, &value, addr);
-	if (r) {
+	r = zd_ioपढ़ो32_locked(chip, &value, addr);
+	अगर (r) अणु
 		dev_dbg_f(zd_chip_dev(chip),
 			"error reading %s. Error number %d\n", addr_string, r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	dev_dbg_f(zd_chip_dev(chip), "%s %#010x\n",
-		addr_string, (unsigned int)value);
-	return 0;
-}
+		addr_string, (अचिन्हित पूर्णांक)value);
+	वापस 0;
+पूर्ण
 
-static int test_init(struct zd_chip *chip)
-{
-	int r;
+अटल पूर्णांक test_init(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	r = dump_cr(chip, CR_AFTER_PNP, "CR_AFTER_PNP");
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	r = dump_cr(chip, CR_GPI_EN, "CR_GPI_EN");
-	if (r)
-		return r;
-	return dump_cr(chip, CR_INTERRUPT, "CR_INTERRUPT");
-}
+	अगर (r)
+		वापस r;
+	वापस dump_cr(chip, CR_INTERRUPT, "CR_INTERRUPT");
+पूर्ण
 
-static void dump_fw_registers(struct zd_chip *chip)
-{
-	const zd_addr_t addr[4] = {
+अटल व्योम dump_fw_रेजिस्टरs(काष्ठा zd_chip *chip)
+अणु
+	स्थिर zd_addr_t addr[4] = अणु
 		fw_reg_addr(chip, FW_REG_FIRMWARE_VER),
 		fw_reg_addr(chip, FW_REG_USB_SPEED),
 		fw_reg_addr(chip, FW_REG_FIX_TX_RATE),
 		fw_reg_addr(chip, FW_REG_LED_LINK_STATUS),
-	};
+	पूर्ण;
 
-	int r;
+	पूर्णांक r;
 	u16 values[4];
 
-	r = zd_ioread16v_locked(chip, values, (const zd_addr_t*)addr,
+	r = zd_ioपढ़ो16v_locked(chip, values, (स्थिर zd_addr_t*)addr,
 		         ARRAY_SIZE(addr));
-	if (r) {
+	अगर (r) अणु
 		dev_dbg_f(zd_chip_dev(chip), "error %d zd_ioread16v_locked\n",
 			 r);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_dbg_f(zd_chip_dev(chip), "FW_FIRMWARE_VER %#06hx\n", values[0]);
 	dev_dbg_f(zd_chip_dev(chip), "FW_USB_SPEED %#06hx\n", values[1]);
 	dev_dbg_f(zd_chip_dev(chip), "FW_FIX_TX_RATE %#06hx\n", values[2]);
 	dev_dbg_f(zd_chip_dev(chip), "FW_LINK_STATUS %#06hx\n", values[3]);
-}
-#endif /* DEBUG */
+पूर्ण
+#पूर्ण_अगर /* DEBUG */
 
-static int print_fw_version(struct zd_chip *chip)
-{
-	struct wiphy *wiphy = zd_chip_to_mac(chip)->hw->wiphy;
-	int r;
+अटल पूर्णांक prपूर्णांक_fw_version(काष्ठा zd_chip *chip)
+अणु
+	काष्ठा wiphy *wiphy = zd_chip_to_mac(chip)->hw->wiphy;
+	पूर्णांक r;
 	u16 version;
 
-	r = zd_ioread16_locked(chip, &version,
+	r = zd_ioपढ़ो16_locked(chip, &version,
 		fw_reg_addr(chip, FW_REG_FIRMWARE_VER));
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	dev_info(zd_chip_dev(chip),"firmware version %04hx\n", version);
 
-	snprintf(wiphy->fw_version, sizeof(wiphy->fw_version),
+	snम_लिखो(wiphy->fw_version, माप(wiphy->fw_version),
 			"%04hx", version);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_mandatory_rates(struct zd_chip *chip, int gmode)
-{
+अटल पूर्णांक set_mandatory_rates(काष्ठा zd_chip *chip, पूर्णांक gmode)
+अणु
 	u32 rates;
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
 	/* This sets the mandatory rates, which only depend from the standard
 	 * that the device is supporting. Until further notice we should try
-	 * to support 802.11g also for full speed USB.
+	 * to support 802.11g also क्रम full speed USB.
 	 */
-	if (!gmode)
+	अगर (!gmode)
 		rates = CR_RATE_1M|CR_RATE_2M|CR_RATE_5_5M|CR_RATE_11M;
-	else
+	अन्यथा
 		rates = CR_RATE_1M|CR_RATE_2M|CR_RATE_5_5M|CR_RATE_11M|
 			CR_RATE_6M|CR_RATE_12M|CR_RATE_24M;
 
-	return zd_iowrite32_locked(chip, rates, CR_MANDATORY_RATE_TBL);
-}
+	वापस zd_ioग_लिखो32_locked(chip, rates, CR_MANDATORY_RATE_TBL);
+पूर्ण
 
-int zd_chip_set_rts_cts_rate_locked(struct zd_chip *chip,
-				    int preamble)
-{
+पूर्णांक zd_chip_set_rts_cts_rate_locked(काष्ठा zd_chip *chip,
+				    पूर्णांक preamble)
+अणु
 	u32 value = 0;
 
 	dev_dbg_f(zd_chip_dev(chip), "preamble=%x\n", preamble);
 	value |= preamble << RTSCTS_SH_RTS_PMB_TYPE;
 	value |= preamble << RTSCTS_SH_CTS_PMB_TYPE;
 
-	/* We always send 11M RTS/self-CTS messages, like the vendor driver. */
+	/* We always send 11M RTS/self-CTS messages, like the venकरोr driver. */
 	value |= ZD_PURE_RATE(ZD_CCK_RATE_11M) << RTSCTS_SH_RTS_RATE;
 	value |= ZD_RX_CCK << RTSCTS_SH_RTS_MOD_TYPE;
 	value |= ZD_PURE_RATE(ZD_CCK_RATE_11M) << RTSCTS_SH_CTS_RATE;
 	value |= ZD_RX_CCK << RTSCTS_SH_CTS_MOD_TYPE;
 
-	return zd_iowrite32_locked(chip, value, CR_RTS_CTS_RATE);
-}
+	वापस zd_ioग_लिखो32_locked(chip, value, CR_RTS_CTS_RATE);
+पूर्ण
 
-int zd_chip_enable_hwint(struct zd_chip *chip)
-{
-	int r;
-
-	mutex_lock(&chip->mutex);
-	r = zd_iowrite32_locked(chip, HWINT_ENABLED, CR_INTERRUPT);
-	mutex_unlock(&chip->mutex);
-	return r;
-}
-
-static int disable_hwint(struct zd_chip *chip)
-{
-	return zd_iowrite32_locked(chip, HWINT_DISABLED, CR_INTERRUPT);
-}
-
-int zd_chip_disable_hwint(struct zd_chip *chip)
-{
-	int r;
+पूर्णांक zd_chip_enable_hwपूर्णांक(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = disable_hwint(chip);
+	r = zd_ioग_लिखो32_locked(chip, HWINT_ENABLED, CR_INTERRUPT);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int read_fw_regs_offset(struct zd_chip *chip)
-{
-	int r;
+अटल पूर्णांक disable_hwपूर्णांक(काष्ठा zd_chip *chip)
+अणु
+	वापस zd_ioग_लिखो32_locked(chip, HWINT_DISABLED, CR_INTERRUPT);
+पूर्ण
+
+पूर्णांक zd_chip_disable_hwपूर्णांक(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+
+	mutex_lock(&chip->mutex);
+	r = disable_hwपूर्णांक(chip);
+	mutex_unlock(&chip->mutex);
+	वापस r;
+पूर्ण
+
+अटल पूर्णांक पढ़ो_fw_regs_offset(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	r = zd_ioread16_locked(chip, (u16*)&chip->fw_regs_base,
+	r = zd_ioपढ़ो16_locked(chip, (u16*)&chip->fw_regs_base,
 		               FWRAW_REGS_ADDR);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 	dev_dbg_f(zd_chip_dev(chip), "fw_regs_base: %#06hx\n",
 		  (u16)chip->fw_regs_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Read mac address using pre-firmware interface */
-int zd_chip_read_mac_addr_fw(struct zd_chip *chip, u8 *addr)
-{
+/* Read mac address using pre-firmware पूर्णांकerface */
+पूर्णांक zd_chip_पढ़ो_mac_addr_fw(काष्ठा zd_chip *chip, u8 *addr)
+अणु
 	dev_dbg_f(zd_chip_dev(chip), "\n");
-	return zd_usb_read_fw(&chip->usb, E2P_MAC_ADDR_P1, addr,
+	वापस zd_usb_पढ़ो_fw(&chip->usb, E2P_MAC_ADDR_P1, addr,
 		ETH_ALEN);
-}
+पूर्ण
 
-int zd_chip_init_hw(struct zd_chip *chip)
-{
-	int r;
+पूर्णांक zd_chip_init_hw(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 	u8 rf_type;
 
 	dev_dbg_f(zd_chip_dev(chip), "\n");
 
 	mutex_lock(&chip->mutex);
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	r = test_init(chip);
-	if (r)
-		goto out;
-#endif
-	r = zd_iowrite32_locked(chip, 1, CR_AFTER_PNP);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
+#पूर्ण_अगर
+	r = zd_ioग_लिखो32_locked(chip, 1, CR_AFTER_PNP);
+	अगर (r)
+		जाओ out;
 
-	r = read_fw_regs_offset(chip);
-	if (r)
-		goto out;
+	r = पढ़ो_fw_regs_offset(chip);
+	अगर (r)
+		जाओ out;
 
 	/* GPI is always disabled, also in the other driver.
 	 */
-	r = zd_iowrite32_locked(chip, 0, CR_GPI_EN);
-	if (r)
-		goto out;
-	r = zd_iowrite32_locked(chip, CWIN_SIZE, CR_CWMIN_CWMAX);
-	if (r)
-		goto out;
-	/* Currently we support IEEE 802.11g for full and high speed USB.
-	 * It might be discussed, whether we should support pure b mode for
+	r = zd_ioग_लिखो32_locked(chip, 0, CR_GPI_EN);
+	अगर (r)
+		जाओ out;
+	r = zd_ioग_लिखो32_locked(chip, CWIN_SIZE, CR_CWMIN_CWMAX);
+	अगर (r)
+		जाओ out;
+	/* Currently we support IEEE 802.11g क्रम full and high speed USB.
+	 * It might be discussed, whether we should support pure b mode क्रम
 	 * full speed USB.
 	 */
 	r = set_mandatory_rates(chip, 1);
-	if (r)
-		goto out;
-	/* Disabling interrupts is certainly a smart thing here.
+	अगर (r)
+		जाओ out;
+	/* Disabling पूर्णांकerrupts is certainly a smart thing here.
 	 */
-	r = disable_hwint(chip);
-	if (r)
-		goto out;
-	r = read_pod(chip, &rf_type);
-	if (r)
-		goto out;
+	r = disable_hwपूर्णांक(chip);
+	अगर (r)
+		जाओ out;
+	r = पढ़ो_pod(chip, &rf_type);
+	अगर (r)
+		जाओ out;
 	r = hw_init(chip);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 	r = zd_rf_init_hw(&chip->rf, rf_type);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	r = print_fw_version(chip);
-	if (r)
-		goto out;
+	r = prपूर्णांक_fw_version(chip);
+	अगर (r)
+		जाओ out;
 
-#ifdef DEBUG
-	dump_fw_registers(chip);
+#अगर_घोषित DEBUG
+	dump_fw_रेजिस्टरs(chip);
 	r = test_init(chip);
-	if (r)
-		goto out;
-#endif /* DEBUG */
+	अगर (r)
+		जाओ out;
+#पूर्ण_अगर /* DEBUG */
 
-	r = read_cal_int_tables(chip);
-	if (r)
-		goto out;
+	r = पढ़ो_cal_पूर्णांक_tables(chip);
+	अगर (r)
+		जाओ out;
 
-	print_id(chip);
+	prपूर्णांक_id(chip);
 out:
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int update_pwr_int(struct zd_chip *chip, u8 channel)
-{
-	u8 value = chip->pwr_int_values[channel - 1];
-	return zd_iowrite16_locked(chip, value, ZD_CR31);
-}
+अटल पूर्णांक update_pwr_पूर्णांक(काष्ठा zd_chip *chip, u8 channel)
+अणु
+	u8 value = chip->pwr_पूर्णांक_values[channel - 1];
+	वापस zd_ioग_लिखो16_locked(chip, value, ZD_CR31);
+पूर्ण
 
-static int update_pwr_cal(struct zd_chip *chip, u8 channel)
-{
+अटल पूर्णांक update_pwr_cal(काष्ठा zd_chip *chip, u8 channel)
+अणु
 	u8 value = chip->pwr_cal_values[channel-1];
-	return zd_iowrite16_locked(chip, value, ZD_CR68);
-}
+	वापस zd_ioग_लिखो16_locked(chip, value, ZD_CR68);
+पूर्ण
 
-static int update_ofdm_cal(struct zd_chip *chip, u8 channel)
-{
-	struct zd_ioreq16 ioreqs[3];
+अटल पूर्णांक update_ofdm_cal(काष्ठा zd_chip *chip, u8 channel)
+अणु
+	काष्ठा zd_ioreq16 ioreqs[3];
 
 	ioreqs[0].addr = ZD_CR67;
 	ioreqs[0].value = chip->ofdm_cal_values[OFDM_36M_INDEX][channel-1];
@@ -1206,172 +1207,172 @@ static int update_ofdm_cal(struct zd_chip *chip, u8 channel)
 	ioreqs[2].addr = ZD_CR65;
 	ioreqs[2].value = chip->ofdm_cal_values[OFDM_54M_INDEX][channel-1];
 
-	return zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-}
+	वापस zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+पूर्ण
 
-static int update_channel_integration_and_calibration(struct zd_chip *chip,
+अटल पूर्णांक update_channel_पूर्णांकegration_and_calibration(काष्ठा zd_chip *chip,
 	                                              u8 channel)
-{
-	int r;
+अणु
+	पूर्णांक r;
 
-	if (!zd_rf_should_update_pwr_int(&chip->rf))
-		return 0;
+	अगर (!zd_rf_should_update_pwr_पूर्णांक(&chip->rf))
+		वापस 0;
 
-	r = update_pwr_int(chip, channel);
-	if (r)
-		return r;
-	if (zd_chip_is_zd1211b(chip)) {
-		static const struct zd_ioreq16 ioreqs[] = {
-			{ ZD_CR69, 0x28 },
-			{},
-			{ ZD_CR69, 0x2a },
-		};
+	r = update_pwr_पूर्णांक(chip, channel);
+	अगर (r)
+		वापस r;
+	अगर (zd_chip_is_zd1211b(chip)) अणु
+		अटल स्थिर काष्ठा zd_ioreq16 ioreqs[] = अणु
+			अणु ZD_CR69, 0x28 पूर्ण,
+			अणुपूर्ण,
+			अणु ZD_CR69, 0x2a पूर्ण,
+		पूर्ण;
 
 		r = update_ofdm_cal(chip, channel);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 		r = update_pwr_cal(chip, channel);
-		if (r)
-			return r;
-		r = zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+		r = zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* The CCK baseband gain can be optionally patched by the EEPROM */
-static int patch_cck_gain(struct zd_chip *chip)
-{
-	int r;
+अटल पूर्णांक patch_cck_gain(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 	u32 value;
 
-	if (!chip->patch_cck_gain || !zd_rf_should_patch_cck_gain(&chip->rf))
-		return 0;
+	अगर (!chip->patch_cck_gain || !zd_rf_should_patch_cck_gain(&chip->rf))
+		वापस 0;
 
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	r = zd_ioread32_locked(chip, &value, E2P_PHY_REG);
-	if (r)
-		return r;
+	r = zd_ioपढ़ो32_locked(chip, &value, E2P_PHY_REG);
+	अगर (r)
+		वापस r;
 	dev_dbg_f(zd_chip_dev(chip), "patching value %x\n", value & 0xff);
-	return zd_iowrite16_locked(chip, value & 0xff, ZD_CR47);
-}
+	वापस zd_ioग_लिखो16_locked(chip, value & 0xff, ZD_CR47);
+पूर्ण
 
-int zd_chip_set_channel(struct zd_chip *chip, u8 channel)
-{
-	int r, t;
+पूर्णांक zd_chip_set_channel(काष्ठा zd_chip *chip, u8 channel)
+अणु
+	पूर्णांक r, t;
 
 	mutex_lock(&chip->mutex);
 	r = zd_chip_lock_phy_regs(chip);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 	r = zd_rf_set_channel(&chip->rf, channel);
-	if (r)
-		goto unlock;
-	r = update_channel_integration_and_calibration(chip, channel);
-	if (r)
-		goto unlock;
+	अगर (r)
+		जाओ unlock;
+	r = update_channel_पूर्णांकegration_and_calibration(chip, channel);
+	अगर (r)
+		जाओ unlock;
 	r = patch_cck_gain(chip);
-	if (r)
-		goto unlock;
+	अगर (r)
+		जाओ unlock;
 	r = patch_6m_band_edge(chip, channel);
-	if (r)
-		goto unlock;
-	r = zd_iowrite32_locked(chip, 0, CR_CONFIG_PHILIPS);
+	अगर (r)
+		जाओ unlock;
+	r = zd_ioग_लिखो32_locked(chip, 0, CR_CONFIG_PHILIPS);
 unlock:
 	t = zd_chip_unlock_phy_regs(chip);
-	if (t && !r)
+	अगर (t && !r)
 		r = t;
 out:
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-u8 zd_chip_get_channel(struct zd_chip *chip)
-{
+u8 zd_chip_get_channel(काष्ठा zd_chip *chip)
+अणु
 	u8 channel;
 
 	mutex_lock(&chip->mutex);
 	channel = chip->rf.channel;
 	mutex_unlock(&chip->mutex);
-	return channel;
-}
+	वापस channel;
+पूर्ण
 
-int zd_chip_control_leds(struct zd_chip *chip, enum led_status status)
-{
-	const zd_addr_t a[] = {
+पूर्णांक zd_chip_control_leds(काष्ठा zd_chip *chip, क्रमागत led_status status)
+अणु
+	स्थिर zd_addr_t a[] = अणु
 		fw_reg_addr(chip, FW_REG_LED_LINK_STATUS),
 		CR_LED,
-	};
+	पूर्ण;
 
-	int r;
+	पूर्णांक r;
 	u16 v[ARRAY_SIZE(a)];
-	struct zd_ioreq16 ioreqs[ARRAY_SIZE(a)] = {
-		[0] = { fw_reg_addr(chip, FW_REG_LED_LINK_STATUS) },
-		[1] = { CR_LED },
-	};
+	काष्ठा zd_ioreq16 ioreqs[ARRAY_SIZE(a)] = अणु
+		[0] = अणु fw_reg_addr(chip, FW_REG_LED_LINK_STATUS) पूर्ण,
+		[1] = अणु CR_LED पूर्ण,
+	पूर्ण;
 	u16 other_led;
 
 	mutex_lock(&chip->mutex);
-	r = zd_ioread16v_locked(chip, v, (const zd_addr_t *)a, ARRAY_SIZE(a));
-	if (r)
-		goto out;
+	r = zd_ioपढ़ो16v_locked(chip, v, (स्थिर zd_addr_t *)a, ARRAY_SIZE(a));
+	अगर (r)
+		जाओ out;
 
 	other_led = chip->link_led == LED1 ? LED2 : LED1;
 
-	switch (status) {
-	case ZD_LED_OFF:
+	चयन (status) अणु
+	हाल ZD_LED_OFF:
 		ioreqs[0].value = FW_LINK_OFF;
 		ioreqs[1].value = v[1] & ~(LED1|LED2);
-		break;
-	case ZD_LED_SCANNING:
+		अवरोध;
+	हाल ZD_LED_SCANNING:
 		ioreqs[0].value = FW_LINK_OFF;
 		ioreqs[1].value = v[1] & ~other_led;
-		if ((u32)ktime_get_seconds() % 3 == 0) {
+		अगर ((u32)kसमय_get_seconds() % 3 == 0) अणु
 			ioreqs[1].value &= ~chip->link_led;
-		} else {
+		पूर्ण अन्यथा अणु
 			ioreqs[1].value |= chip->link_led;
-		}
-		break;
-	case ZD_LED_ASSOCIATED:
+		पूर्ण
+		अवरोध;
+	हाल ZD_LED_ASSOCIATED:
 		ioreqs[0].value = FW_LINK_TX;
 		ioreqs[1].value = v[1] & ~other_led;
 		ioreqs[1].value |= chip->link_led;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (v[0] != ioreqs[0].value || v[1] != ioreqs[1].value) {
-		r = zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-		if (r)
-			goto out;
-	}
+	अगर (v[0] != ioreqs[0].value || v[1] != ioreqs[1].value) अणु
+		r = zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+		अगर (r)
+			जाओ out;
+	पूर्ण
 	r = 0;
 out:
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_chip_set_basic_rates(struct zd_chip *chip, u16 cr_rates)
-{
-	int r;
+पूर्णांक zd_chip_set_basic_rates(काष्ठा zd_chip *chip, u16 cr_rates)
+अणु
+	पूर्णांक r;
 
-	if (cr_rates & ~(CR_RATES_80211B|CR_RATES_80211G))
-		return -EINVAL;
+	अगर (cr_rates & ~(CR_RATES_80211B|CR_RATES_80211G))
+		वापस -EINVAL;
 
 	mutex_lock(&chip->mutex);
-	r = zd_iowrite32_locked(chip, cr_rates, CR_BASIC_RATE_TBL);
+	r = zd_ioग_लिखो32_locked(chip, cr_rates, CR_BASIC_RATE_TBL);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline u8 zd_rate_from_ofdm_plcp_header(const void *rx_frame)
-{
-	return ZD_OFDM | zd_ofdm_plcp_header_rate(rx_frame);
-}
+अटल अंतरभूत u8 zd_rate_from_ofdm_plcp_header(स्थिर व्योम *rx_frame)
+अणु
+	वापस ZD_OFDM | zd_ofdm_plcp_header_rate(rx_frame);
+पूर्ण
 
 /**
  * zd_rx_rate - report zd-rate
@@ -1381,167 +1382,167 @@ static inline u8 zd_rate_from_ofdm_plcp_header(const void *rx_frame)
  * This function converts the rate as encoded in the received packet to the
  * zd-rate, we are using on other places in the driver.
  */
-u8 zd_rx_rate(const void *rx_frame, const struct rx_status *status)
-{
+u8 zd_rx_rate(स्थिर व्योम *rx_frame, स्थिर काष्ठा rx_status *status)
+अणु
 	u8 zd_rate;
-	if (status->frame_status & ZD_RX_OFDM) {
+	अगर (status->frame_status & ZD_RX_OFDM) अणु
 		zd_rate = zd_rate_from_ofdm_plcp_header(rx_frame);
-	} else {
-		switch (zd_cck_plcp_header_signal(rx_frame)) {
-		case ZD_CCK_PLCP_SIGNAL_1M:
+	पूर्ण अन्यथा अणु
+		चयन (zd_cck_plcp_header_संकेत(rx_frame)) अणु
+		हाल ZD_CCK_PLCP_SIGNAL_1M:
 			zd_rate = ZD_CCK_RATE_1M;
-			break;
-		case ZD_CCK_PLCP_SIGNAL_2M:
+			अवरोध;
+		हाल ZD_CCK_PLCP_SIGNAL_2M:
 			zd_rate = ZD_CCK_RATE_2M;
-			break;
-		case ZD_CCK_PLCP_SIGNAL_5M5:
+			अवरोध;
+		हाल ZD_CCK_PLCP_SIGNAL_5M5:
 			zd_rate = ZD_CCK_RATE_5_5M;
-			break;
-		case ZD_CCK_PLCP_SIGNAL_11M:
+			अवरोध;
+		हाल ZD_CCK_PLCP_SIGNAL_11M:
 			zd_rate = ZD_CCK_RATE_11M;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			zd_rate = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return zd_rate;
-}
+	वापस zd_rate;
+पूर्ण
 
-int zd_chip_switch_radio_on(struct zd_chip *chip)
-{
-	int r;
-
-	mutex_lock(&chip->mutex);
-	r = zd_switch_radio_on(&chip->rf);
-	mutex_unlock(&chip->mutex);
-	return r;
-}
-
-int zd_chip_switch_radio_off(struct zd_chip *chip)
-{
-	int r;
+पूर्णांक zd_chip_चयन_radio_on(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_switch_radio_off(&chip->rf);
+	r = zd_चयन_radio_on(&chip->rf);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int zd_chip_enable_int(struct zd_chip *chip)
-{
-	int r;
+पूर्णांक zd_chip_चयन_radio_off(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
-	r = zd_usb_enable_int(&chip->usb);
+	r = zd_चयन_radio_off(&chip->rf);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void zd_chip_disable_int(struct zd_chip *chip)
-{
+पूर्णांक zd_chip_enable_पूर्णांक(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+
 	mutex_lock(&chip->mutex);
-	zd_usb_disable_int(&chip->usb);
+	r = zd_usb_enable_पूर्णांक(&chip->usb);
+	mutex_unlock(&chip->mutex);
+	वापस r;
+पूर्ण
+
+व्योम zd_chip_disable_पूर्णांक(काष्ठा zd_chip *chip)
+अणु
+	mutex_lock(&chip->mutex);
+	zd_usb_disable_पूर्णांक(&chip->usb);
 	mutex_unlock(&chip->mutex);
 
-	/* cancel pending interrupt work */
-	cancel_work_sync(&zd_chip_to_mac(chip)->process_intr);
-}
+	/* cancel pending पूर्णांकerrupt work */
+	cancel_work_sync(&zd_chip_to_mac(chip)->process_पूर्णांकr);
+पूर्ण
 
-int zd_chip_enable_rxtx(struct zd_chip *chip)
-{
-	int r;
+पूर्णांक zd_chip_enable_rxtx(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
 
 	mutex_lock(&chip->mutex);
 	zd_usb_enable_tx(&chip->usb);
 	r = zd_usb_enable_rx(&chip->usb);
-	zd_tx_watchdog_enable(&chip->usb);
+	zd_tx_watchकरोg_enable(&chip->usb);
 	mutex_unlock(&chip->mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void zd_chip_disable_rxtx(struct zd_chip *chip)
-{
+व्योम zd_chip_disable_rxtx(काष्ठा zd_chip *chip)
+अणु
 	mutex_lock(&chip->mutex);
-	zd_tx_watchdog_disable(&chip->usb);
+	zd_tx_watchकरोg_disable(&chip->usb);
 	zd_usb_disable_rx(&chip->usb);
 	zd_usb_disable_tx(&chip->usb);
 	mutex_unlock(&chip->mutex);
-}
+पूर्ण
 
-int zd_rfwritev_locked(struct zd_chip *chip,
-	               const u32* values, unsigned int count, u8 bits)
-{
-	int r;
-	unsigned int i;
+पूर्णांक zd_rख_डालोv_locked(काष्ठा zd_chip *chip,
+	               स्थिर u32* values, अचिन्हित पूर्णांक count, u8 bits)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		r = zd_rfwrite_locked(chip, values[i], bits);
-		if (r)
-			return r;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		r = zd_rख_डालो_locked(chip, values[i], bits);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * We can optionally program the RF directly through CR regs, if supported by
+ * We can optionally program the RF directly through CR regs, अगर supported by
  * the hardware. This is much faster than the older method.
  */
-int zd_rfwrite_cr_locked(struct zd_chip *chip, u32 value)
-{
-	const struct zd_ioreq16 ioreqs[] = {
-		{ ZD_CR244, (value >> 16) & 0xff },
-		{ ZD_CR243, (value >>  8) & 0xff },
-		{ ZD_CR242,  value        & 0xff },
-	};
+पूर्णांक zd_rख_डालो_cr_locked(काष्ठा zd_chip *chip, u32 value)
+अणु
+	स्थिर काष्ठा zd_ioreq16 ioreqs[] = अणु
+		अणु ZD_CR244, (value >> 16) & 0xff पूर्ण,
+		अणु ZD_CR243, (value >>  8) & 0xff पूर्ण,
+		अणु ZD_CR242,  value        & 0xff पूर्ण,
+	पूर्ण;
 	ZD_ASSERT(mutex_is_locked(&chip->mutex));
-	return zd_iowrite16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
-}
+	वापस zd_ioग_लिखो16a_locked(chip, ioreqs, ARRAY_SIZE(ioreqs));
+पूर्ण
 
-int zd_rfwritev_cr_locked(struct zd_chip *chip,
-	                  const u32 *values, unsigned int count)
-{
-	int r;
-	unsigned int i;
+पूर्णांक zd_rख_डालोv_cr_locked(काष्ठा zd_chip *chip,
+	                  स्थिर u32 *values, अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		r = zd_rfwrite_cr_locked(chip, values[i]);
-		if (r)
-			return r;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		r = zd_rख_डालो_cr_locked(chip, values[i]);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int zd_chip_set_multicast_hash(struct zd_chip *chip,
-	                       struct zd_mc_hash *hash)
-{
-	const struct zd_ioreq32 ioreqs[] = {
-		{ CR_GROUP_HASH_P1, hash->low },
-		{ CR_GROUP_HASH_P2, hash->high },
-	};
+पूर्णांक zd_chip_set_multicast_hash(काष्ठा zd_chip *chip,
+	                       काष्ठा zd_mc_hash *hash)
+अणु
+	स्थिर काष्ठा zd_ioreq32 ioreqs[] = अणु
+		अणु CR_GROUP_HASH_P1, hash->low पूर्ण,
+		अणु CR_GROUP_HASH_P2, hash->high पूर्ण,
+	पूर्ण;
 
-	return zd_iowrite32a(chip, ioreqs, ARRAY_SIZE(ioreqs));
-}
+	वापस zd_ioग_लिखो32a(chip, ioreqs, ARRAY_SIZE(ioreqs));
+पूर्ण
 
-u64 zd_chip_get_tsf(struct zd_chip *chip)
-{
-	int r;
-	static const zd_addr_t aw_pt_bi_addr[] =
-		{ CR_TSF_LOW_PART, CR_TSF_HIGH_PART };
+u64 zd_chip_get_tsf(काष्ठा zd_chip *chip)
+अणु
+	पूर्णांक r;
+	अटल स्थिर zd_addr_t aw_pt_bi_addr[] =
+		अणु CR_TSF_LOW_PART, CR_TSF_HIGH_PART पूर्ण;
 	u32 values[2];
 	u64 tsf;
 
 	mutex_lock(&chip->mutex);
-	r = zd_ioread32v_locked(chip, values, (const zd_addr_t *)aw_pt_bi_addr,
+	r = zd_ioपढ़ो32v_locked(chip, values, (स्थिर zd_addr_t *)aw_pt_bi_addr,
 	                        ARRAY_SIZE(aw_pt_bi_addr));
 	mutex_unlock(&chip->mutex);
-	if (r)
-		return 0;
+	अगर (r)
+		वापस 0;
 
 	tsf = values[1];
 	tsf = (tsf << 32) | values[0];
 
-	return tsf;
-}
+	वापस tsf;
+पूर्ण

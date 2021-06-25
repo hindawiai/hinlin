@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2015
  * Authors: Yannick Fertre <yannick.fertre@st.com>
  *          Hugues Fruchet <hugues.fruchet@st.com>
  */
 
-#ifndef HVA_MEM_H
-#define HVA_MEM_H
+#अगर_अघोषित HVA_MEM_H
+#घोषणा HVA_MEM_H
 
 /**
- * struct hva_buffer - hva buffer
+ * काष्ठा hva_buffer - hva buffer
  *
  * @name:  name of requester
- * @paddr: physical address (for hardware)
- * @vaddr: virtual address (kernel can read/write)
+ * @paddr: physical address (क्रम hardware)
+ * @vaddr: भव address (kernel can पढ़ो/ग_लिखो)
  * @size:  size of buffer
  */
-struct hva_buffer {
-	const char		*name;
+काष्ठा hva_buffer अणु
+	स्थिर अक्षर		*name;
 	dma_addr_t		paddr;
-	void			*vaddr;
+	व्योम			*vaddr;
 	u32			size;
-};
+पूर्ण;
 
-int hva_mem_alloc(struct hva_ctx *ctx,
+पूर्णांक hva_mem_alloc(काष्ठा hva_ctx *ctx,
 		  __u32 size,
-		  const char *name,
-		  struct hva_buffer **buf);
+		  स्थिर अक्षर *name,
+		  काष्ठा hva_buffer **buf);
 
-void hva_mem_free(struct hva_ctx *ctx,
-		  struct hva_buffer *buf);
+व्योम hva_mem_मुक्त(काष्ठा hva_ctx *ctx,
+		  काष्ठा hva_buffer *buf);
 
-#endif /* HVA_MEM_H */
+#पूर्ण_अगर /* HVA_MEM_H */

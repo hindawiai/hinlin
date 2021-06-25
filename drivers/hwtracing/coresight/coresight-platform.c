@@ -1,303 +1,304 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/acpi.h>
-#include <linux/types.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_graph.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/amba/bus.h>
-#include <linux/coresight.h>
-#include <linux/cpumask.h>
-#include <asm/smp_plat.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/cpumask.h>
+#समावेश <यंत्र/smp_plat.h>
 
-#include "coresight-priv.h"
+#समावेश "coresight-priv.h"
 /*
- * coresight_alloc_conns: Allocate connections record for each output
+ * coresight_alloc_conns: Allocate connections record क्रम each output
  * port from the device.
  */
-static int coresight_alloc_conns(struct device *dev,
-				 struct coresight_platform_data *pdata)
-{
-	if (pdata->nr_outport) {
-		pdata->conns = devm_kcalloc(dev, pdata->nr_outport,
-					    sizeof(*pdata->conns), GFP_KERNEL);
-		if (!pdata->conns)
-			return -ENOMEM;
-	}
+अटल पूर्णांक coresight_alloc_conns(काष्ठा device *dev,
+				 काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	अगर (pdata->nr_outport) अणु
+		pdata->conns = devm_kसुस्मृति(dev, pdata->nr_outport,
+					    माप(*pdata->conns), GFP_KERNEL);
+		अगर (!pdata->conns)
+			वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct device *
-coresight_find_device_by_fwnode(struct fwnode_handle *fwnode)
-{
-	struct device *dev = NULL;
+अटल काष्ठा device *
+coresight_find_device_by_fwnode(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा device *dev = शून्य;
 
 	/*
 	 * If we have a non-configurable replicator, it will be found on the
-	 * platform bus.
+	 * platक्रमm bus.
 	 */
-	dev = bus_find_device_by_fwnode(&platform_bus_type, fwnode);
-	if (dev)
-		return dev;
+	dev = bus_find_device_by_fwnode(&platक्रमm_bus_type, fwnode);
+	अगर (dev)
+		वापस dev;
 
 	/*
 	 * We have a configurable component - circle through the AMBA bus
-	 * looking for the device that matches the endpoint node.
+	 * looking क्रम the device that matches the endpoपूर्णांक node.
 	 */
-	return bus_find_device_by_fwnode(&amba_bustype, fwnode);
-}
+	वापस bus_find_device_by_fwnode(&amba_bustype, fwnode);
+पूर्ण
 
 /*
- * Find a registered coresight device from a device fwnode.
+ * Find a रेजिस्टरed coresight device from a device fwnode.
  * The node info is associated with the AMBA parent, but the
  * csdev keeps a copy so iterate round the coresight bus to
  * find the device.
  */
-struct coresight_device *
-coresight_find_csdev_by_fwnode(struct fwnode_handle *r_fwnode)
-{
-	struct device *dev;
-	struct coresight_device *csdev = NULL;
+काष्ठा coresight_device *
+coresight_find_csdev_by_fwnode(काष्ठा fwnode_handle *r_fwnode)
+अणु
+	काष्ठा device *dev;
+	काष्ठा coresight_device *csdev = शून्य;
 
 	dev = bus_find_device_by_fwnode(&coresight_bustype, r_fwnode);
-	if (dev) {
+	अगर (dev) अणु
 		csdev = to_coresight_device(dev);
 		put_device(dev);
-	}
-	return csdev;
-}
+	पूर्ण
+	वापस csdev;
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_find_csdev_by_fwnode);
 
-#ifdef CONFIG_OF
-static inline bool of_coresight_legacy_ep_is_input(struct device_node *ep)
-{
-	return of_property_read_bool(ep, "slave-mode");
-}
+#अगर_घोषित CONFIG_OF
+अटल अंतरभूत bool of_coresight_legacy_ep_is_input(काष्ठा device_node *ep)
+अणु
+	वापस of_property_पढ़ो_bool(ep, "slave-mode");
+पूर्ण
 
-static void of_coresight_get_ports_legacy(const struct device_node *node,
-					  int *nr_inport, int *nr_outport)
-{
-	struct device_node *ep = NULL;
-	struct of_endpoint endpoint;
-	int in = 0, out = 0;
+अटल व्योम of_coresight_get_ports_legacy(स्थिर काष्ठा device_node *node,
+					  पूर्णांक *nr_inport, पूर्णांक *nr_outport)
+अणु
+	काष्ठा device_node *ep = शून्य;
+	काष्ठा of_endpoपूर्णांक endpoपूर्णांक;
+	पूर्णांक in = 0, out = 0;
 
 	/*
-	 * Avoid warnings in of_graph_get_next_endpoint()
-	 * if the device doesn't have any graph connections
+	 * Aव्योम warnings in of_graph_get_next_endpoपूर्णांक()
+	 * अगर the device करोesn't have any graph connections
 	 */
-	if (!of_graph_is_present(node))
-		return;
-	do {
-		ep = of_graph_get_next_endpoint(node, ep);
-		if (!ep)
-			break;
+	अगर (!of_graph_is_present(node))
+		वापस;
+	करो अणु
+		ep = of_graph_get_next_endpoपूर्णांक(node, ep);
+		अगर (!ep)
+			अवरोध;
 
-		if (of_graph_parse_endpoint(ep, &endpoint))
-			continue;
+		अगर (of_graph_parse_endpoपूर्णांक(ep, &endpoपूर्णांक))
+			जारी;
 
-		if (of_coresight_legacy_ep_is_input(ep)) {
-			in = (endpoint.port + 1 > in) ?
-				endpoint.port + 1 : in;
-		} else {
-			out = (endpoint.port + 1) > out ?
-				endpoint.port + 1 : out;
-		}
+		अगर (of_coresight_legacy_ep_is_input(ep)) अणु
+			in = (endpoपूर्णांक.port + 1 > in) ?
+				endpoपूर्णांक.port + 1 : in;
+		पूर्ण अन्यथा अणु
+			out = (endpoपूर्णांक.port + 1) > out ?
+				endpoपूर्णांक.port + 1 : out;
+		पूर्ण
 
-	} while (ep);
+	पूर्ण जबतक (ep);
 
 	*nr_inport = in;
 	*nr_outport = out;
-}
+पूर्ण
 
-static struct device_node *of_coresight_get_port_parent(struct device_node *ep)
-{
-	struct device_node *parent = of_graph_get_port_parent(ep);
+अटल काष्ठा device_node *of_coresight_get_port_parent(काष्ठा device_node *ep)
+अणु
+	काष्ठा device_node *parent = of_graph_get_port_parent(ep);
 
 	/*
-	 * Skip one-level up to the real device node, if we
+	 * Skip one-level up to the real device node, अगर we
 	 * are using the new bindings.
 	 */
-	if (of_node_name_eq(parent, "in-ports") ||
+	अगर (of_node_name_eq(parent, "in-ports") ||
 	    of_node_name_eq(parent, "out-ports"))
 		parent = of_get_next_parent(parent);
 
-	return parent;
-}
+	वापस parent;
+पूर्ण
 
-static inline struct device_node *
-of_coresight_get_input_ports_node(const struct device_node *node)
-{
-	return of_get_child_by_name(node, "in-ports");
-}
+अटल अंतरभूत काष्ठा device_node *
+of_coresight_get_input_ports_node(स्थिर काष्ठा device_node *node)
+अणु
+	वापस of_get_child_by_name(node, "in-ports");
+पूर्ण
 
-static inline struct device_node *
-of_coresight_get_output_ports_node(const struct device_node *node)
-{
-	return of_get_child_by_name(node, "out-ports");
-}
+अटल अंतरभूत काष्ठा device_node *
+of_coresight_get_output_ports_node(स्थिर काष्ठा device_node *node)
+अणु
+	वापस of_get_child_by_name(node, "out-ports");
+पूर्ण
 
-static inline int
-of_coresight_count_ports(struct device_node *port_parent)
-{
-	int i = 0;
-	struct device_node *ep = NULL;
-	struct of_endpoint endpoint;
+अटल अंतरभूत पूर्णांक
+of_coresight_count_ports(काष्ठा device_node *port_parent)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा device_node *ep = शून्य;
+	काष्ठा of_endpoपूर्णांक endpoपूर्णांक;
 
-	while ((ep = of_graph_get_next_endpoint(port_parent, ep))) {
+	जबतक ((ep = of_graph_get_next_endpoपूर्णांक(port_parent, ep))) अणु
 		/* Defer error handling to parsing */
-		if (of_graph_parse_endpoint(ep, &endpoint))
-			continue;
-		if (endpoint.port + 1 > i)
-			i = endpoint.port + 1;
-	}
+		अगर (of_graph_parse_endpoपूर्णांक(ep, &endpoपूर्णांक))
+			जारी;
+		अगर (endpoपूर्णांक.port + 1 > i)
+			i = endpoपूर्णांक.port + 1;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void of_coresight_get_ports(const struct device_node *node,
-				   int *nr_inport, int *nr_outport)
-{
-	struct device_node *input_ports = NULL, *output_ports = NULL;
+अटल व्योम of_coresight_get_ports(स्थिर काष्ठा device_node *node,
+				   पूर्णांक *nr_inport, पूर्णांक *nr_outport)
+अणु
+	काष्ठा device_node *input_ports = शून्य, *output_ports = शून्य;
 
 	input_ports = of_coresight_get_input_ports_node(node);
 	output_ports = of_coresight_get_output_ports_node(node);
 
-	if (input_ports || output_ports) {
-		if (input_ports) {
+	अगर (input_ports || output_ports) अणु
+		अगर (input_ports) अणु
 			*nr_inport = of_coresight_count_ports(input_ports);
 			of_node_put(input_ports);
-		}
-		if (output_ports) {
+		पूर्ण
+		अगर (output_ports) अणु
 			*nr_outport = of_coresight_count_ports(output_ports);
 			of_node_put(output_ports);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Fall back to legacy DT bindings parsing */
 		of_coresight_get_ports_legacy(node, nr_inport, nr_outport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int of_coresight_get_cpu(struct device *dev)
-{
-	int cpu;
-	struct device_node *dn;
+अटल पूर्णांक of_coresight_get_cpu(काष्ठा device *dev)
+अणु
+	पूर्णांक cpu;
+	काष्ठा device_node *dn;
 
-	if (!dev->of_node)
-		return -ENODEV;
+	अगर (!dev->of_node)
+		वापस -ENODEV;
 
 	dn = of_parse_phandle(dev->of_node, "cpu", 0);
-	if (!dn)
-		return -ENODEV;
+	अगर (!dn)
+		वापस -ENODEV;
 
 	cpu = of_cpu_node_to_id(dn);
 	of_node_put(dn);
 
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
 /*
- * of_coresight_parse_endpoint : Parse the given output endpoint @ep
- * and fill the connection information in @conn
+ * of_coresight_parse_endpoपूर्णांक : Parse the given output endpoपूर्णांक @ep
+ * and fill the connection inक्रमmation in @conn
  *
  * Parses the local port, remote device name and the remote port.
  *
  * Returns :
  *	 0	- If the parsing completed without any fatal errors.
- *	-Errno	- Fatal error, abort the scanning.
+ *	-Errno	- Fatal error, पात the scanning.
  */
-static int of_coresight_parse_endpoint(struct device *dev,
-				       struct device_node *ep,
-				       struct coresight_platform_data *pdata)
-{
-	int ret = 0;
-	struct of_endpoint endpoint, rendpoint;
-	struct device_node *rparent = NULL;
-	struct device_node *rep = NULL;
-	struct device *rdev = NULL;
-	struct fwnode_handle *rdev_fwnode;
-	struct coresight_connection *conn;
+अटल पूर्णांक of_coresight_parse_endpoपूर्णांक(काष्ठा device *dev,
+				       काष्ठा device_node *ep,
+				       काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा of_endpoपूर्णांक endpoपूर्णांक, rendpoपूर्णांक;
+	काष्ठा device_node *rparent = शून्य;
+	काष्ठा device_node *rep = शून्य;
+	काष्ठा device *rdev = शून्य;
+	काष्ठा fwnode_handle *rdev_fwnode;
+	काष्ठा coresight_connection *conn;
 
-	do {
+	करो अणु
 		/* Parse the local port details */
-		if (of_graph_parse_endpoint(ep, &endpoint))
-			break;
+		अगर (of_graph_parse_endpoपूर्णांक(ep, &endpoपूर्णांक))
+			अवरोध;
 		/*
-		 * Get a handle on the remote endpoint and the device it is
+		 * Get a handle on the remote endpoपूर्णांक and the device it is
 		 * attached to.
 		 */
-		rep = of_graph_get_remote_endpoint(ep);
-		if (!rep)
-			break;
+		rep = of_graph_get_remote_endpoपूर्णांक(ep);
+		अगर (!rep)
+			अवरोध;
 		rparent = of_coresight_get_port_parent(rep);
-		if (!rparent)
-			break;
-		if (of_graph_parse_endpoint(rep, &rendpoint))
-			break;
+		अगर (!rparent)
+			अवरोध;
+		अगर (of_graph_parse_endpoपूर्णांक(rep, &rendpoपूर्णांक))
+			अवरोध;
 
 		rdev_fwnode = of_fwnode_handle(rparent);
 		/* If the remote device is not available, defer probing */
 		rdev = coresight_find_device_by_fwnode(rdev_fwnode);
-		if (!rdev) {
+		अगर (!rdev) अणु
 			ret = -EPROBE_DEFER;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		conn = &pdata->conns[endpoint.port];
-		if (conn->child_fwnode) {
+		conn = &pdata->conns[endpoपूर्णांक.port];
+		अगर (conn->child_fwnode) अणु
 			dev_warn(dev, "Duplicate output port %d\n",
-				 endpoint.port);
+				 endpoपूर्णांक.port);
 			ret = -EINVAL;
-			break;
-		}
-		conn->outport = endpoint.port;
+			अवरोध;
+		पूर्ण
+		conn->outport = endpoपूर्णांक.port;
 		/*
 		 * Hold the refcount to the target device. This could be
 		 * released via:
-		 * 1) coresight_release_platform_data() if the probe fails or
-		 *    this device is unregistered.
+		 * 1) coresight_release_platक्रमm_data() अगर the probe fails or
+		 *    this device is unरेजिस्टरed.
 		 * 2) While removing the target device via
-		 *    coresight_remove_match()
+		 *    coresight_हटाओ_match()
 		 */
 		conn->child_fwnode = fwnode_handle_get(rdev_fwnode);
-		conn->child_port = rendpoint.port;
+		conn->child_port = rendpoपूर्णांक.port;
 		/* Connection record updated */
-	} while (0);
+	पूर्ण जबतक (0);
 
 	of_node_put(rparent);
 	of_node_put(rep);
 	put_device(rdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int of_get_coresight_platform_data(struct device *dev,
-					  struct coresight_platform_data *pdata)
-{
-	int ret = 0;
-	struct device_node *ep = NULL;
-	const struct device_node *parent = NULL;
+अटल पूर्णांक of_get_coresight_platक्रमm_data(काष्ठा device *dev,
+					  काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा device_node *ep = शून्य;
+	स्थिर काष्ठा device_node *parent = शून्य;
 	bool legacy_binding = false;
-	struct device_node *node = dev->of_node;
+	काष्ठा device_node *node = dev->of_node;
 
-	/* Get the number of input and output port for this component */
+	/* Get the number of input and output port क्रम this component */
 	of_coresight_get_ports(node, &pdata->nr_inport, &pdata->nr_outport);
 
-	/* If there are no output connections, we are done */
-	if (!pdata->nr_outport)
-		return 0;
+	/* If there are no output connections, we are करोne */
+	अगर (!pdata->nr_outport)
+		वापस 0;
 
 	ret = coresight_alloc_conns(dev, pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	parent = of_coresight_get_output_ports_node(node);
 	/*
@@ -305,565 +306,565 @@ static int of_get_coresight_platform_data(struct device *dev,
 	 * under the device and we need to filter out the input
 	 * ports.
 	 */
-	if (!parent) {
+	अगर (!parent) अणु
 		legacy_binding = true;
 		parent = node;
 		dev_warn_once(dev, "Uses obsolete Coresight DT bindings\n");
-	}
+	पूर्ण
 
 	/* Iterate through each output port to discover topology */
-	while ((ep = of_graph_get_next_endpoint(parent, ep))) {
+	जबतक ((ep = of_graph_get_next_endpoपूर्णांक(parent, ep))) अणु
 		/*
 		 * Legacy binding mixes input/output ports under the
-		 * same parent. So, skip the input ports if we are dealing
+		 * same parent. So, skip the input ports अगर we are dealing
 		 * with legacy binding, as they processed with their
 		 * connected output ports.
 		 */
-		if (legacy_binding && of_coresight_legacy_ep_is_input(ep))
-			continue;
+		अगर (legacy_binding && of_coresight_legacy_ep_is_input(ep))
+			जारी;
 
-		ret = of_coresight_parse_endpoint(dev, ep, pdata);
-		if (ret)
-			return ret;
-	}
+		ret = of_coresight_parse_endpoपूर्णांक(dev, ep, pdata);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
-#else
-static inline int
-of_get_coresight_platform_data(struct device *dev,
-			       struct coresight_platform_data *pdata)
-{
-	return -ENOENT;
-}
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+of_get_coresight_platक्रमm_data(काष्ठा device *dev,
+			       काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	वापस -ENOENT;
+पूर्ण
 
-static inline int of_coresight_get_cpu(struct device *dev)
-{
-	return -ENODEV;
-}
-#endif
+अटल अंतरभूत पूर्णांक of_coresight_get_cpu(काष्ठा device *dev)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 
-#include <acpi/actypes.h>
-#include <acpi/processor.h>
+#समावेश <acpi/actypes.h>
+#समावेश <acpi/processor.h>
 
 /* ACPI Graph _DSD UUID : "ab02a46b-74c7-45a2-bd68-f7d344ef2153" */
-static const guid_t acpi_graph_uuid = GUID_INIT(0xab02a46b, 0x74c7, 0x45a2,
+अटल स्थिर guid_t acpi_graph_uuid = GUID_INIT(0xab02a46b, 0x74c7, 0x45a2,
 						0xbd, 0x68, 0xf7, 0xd3,
 						0x44, 0xef, 0x21, 0x53);
 /* Coresight ACPI Graph UUID : "3ecbc8b6-1d0e-4fb3-8107-e627f805c6cd" */
-static const guid_t coresight_graph_uuid = GUID_INIT(0x3ecbc8b6, 0x1d0e, 0x4fb3,
+अटल स्थिर guid_t coresight_graph_uuid = GUID_INIT(0x3ecbc8b6, 0x1d0e, 0x4fb3,
 						     0x81, 0x07, 0xe6, 0x27,
 						     0xf8, 0x05, 0xc6, 0xcd);
-#define ACPI_CORESIGHT_LINK_SLAVE	0
-#define ACPI_CORESIGHT_LINK_MASTER	1
+#घोषणा ACPI_CORESIGHT_LINK_SLAVE	0
+#घोषणा ACPI_CORESIGHT_LINK_MASTER	1
 
-static inline bool is_acpi_guid(const union acpi_object *obj)
-{
-	return (obj->type == ACPI_TYPE_BUFFER) && (obj->buffer.length == 16);
-}
+अटल अंतरभूत bool is_acpi_guid(स्थिर जोड़ acpi_object *obj)
+अणु
+	वापस (obj->type == ACPI_TYPE_BUFFER) && (obj->buffer.length == 16);
+पूर्ण
 
 /*
- * acpi_guid_matches	- Checks if the given object is a GUID object and
+ * acpi_guid_matches	- Checks अगर the given object is a GUID object and
  * that it matches the supplied the GUID.
  */
-static inline bool acpi_guid_matches(const union acpi_object *obj,
-				   const guid_t *guid)
-{
-	return is_acpi_guid(obj) &&
-	       guid_equal((guid_t *)obj->buffer.pointer, guid);
-}
+अटल अंतरभूत bool acpi_guid_matches(स्थिर जोड़ acpi_object *obj,
+				   स्थिर guid_t *guid)
+अणु
+	वापस is_acpi_guid(obj) &&
+	       guid_equal((guid_t *)obj->buffer.poपूर्णांकer, guid);
+पूर्ण
 
-static inline bool is_acpi_dsd_graph_guid(const union acpi_object *obj)
-{
-	return acpi_guid_matches(obj, &acpi_graph_uuid);
-}
+अटल अंतरभूत bool is_acpi_dsd_graph_guid(स्थिर जोड़ acpi_object *obj)
+अणु
+	वापस acpi_guid_matches(obj, &acpi_graph_uuid);
+पूर्ण
 
-static inline bool is_acpi_coresight_graph_guid(const union acpi_object *obj)
-{
-	return acpi_guid_matches(obj, &coresight_graph_uuid);
-}
+अटल अंतरभूत bool is_acpi_coresight_graph_guid(स्थिर जोड़ acpi_object *obj)
+अणु
+	वापस acpi_guid_matches(obj, &coresight_graph_uuid);
+पूर्ण
 
-static inline bool is_acpi_coresight_graph(const union acpi_object *obj)
-{
-	const union acpi_object *graphid, *guid, *links;
+अटल अंतरभूत bool is_acpi_coresight_graph(स्थिर जोड़ acpi_object *obj)
+अणु
+	स्थिर जोड़ acpi_object *graphid, *guid, *links;
 
-	if (obj->type != ACPI_TYPE_PACKAGE ||
+	अगर (obj->type != ACPI_TYPE_PACKAGE ||
 	    obj->package.count < 3)
-		return false;
+		वापस false;
 
 	graphid = &obj->package.elements[0];
 	guid = &obj->package.elements[1];
 	links = &obj->package.elements[2];
 
-	if (graphid->type != ACPI_TYPE_INTEGER ||
+	अगर (graphid->type != ACPI_TYPE_INTEGER ||
 	    links->type != ACPI_TYPE_INTEGER)
-		return false;
+		वापस false;
 
-	return is_acpi_coresight_graph_guid(guid);
-}
+	वापस is_acpi_coresight_graph_guid(guid);
+पूर्ण
 
 /*
- * acpi_validate_dsd_graph	- Make sure the given _DSD graph conforms
- * to the ACPI _DSD Graph specification.
+ * acpi_validate_dsd_graph	- Make sure the given _DSD graph conक्रमms
+ * to the ACPI _DSD Graph specअगरication.
  *
- * ACPI Devices Graph property has the following format:
- *  {
+ * ACPI Devices Graph property has the following क्रमmat:
+ *  अणु
  *	Revision	- Integer, must be 0
  *	NumberOfGraphs	- Integer, N indicating the following list.
  *	Graph[1],
  *	 ...
  *	Graph[N]
- *  }
+ *  पूर्ण
  *
- * And each Graph entry has the following format:
- *  {
- *	GraphID		- Integer, identifying a graph the device belongs to.
- *	UUID		- UUID identifying the specification that governs
+ * And each Graph entry has the following क्रमmat:
+ *  अणु
+ *	GraphID		- Integer, identअगरying a graph the device beदीर्घs to.
+ *	UUID		- UUID identअगरying the specअगरication that governs
  *			  this graph. (e.g, see is_acpi_coresight_graph())
  *	NumberOfLinks	- Number "N" of connections on this node of the graph.
  *	Links[1]
  *	...
  *	Links[N]
- *  }
+ *  पूर्ण
  *
- * Where each "Links" entry has the following format:
+ * Where each "Links" entry has the following क्रमmat:
  *
- * {
+ * अणु
  *	SourcePortAddress	- Integer
  *	DestinationPortAddress	- Integer
  *	DestinationDeviceName	- Reference to another device
- *	( --- CoreSight specific extensions below ---)
- *	DirectionOfFlow		- Integer 1 for output(master)
- *				  0 for input(slave)
- * }
+ *	( --- CoreSight specअगरic extensions below ---)
+ *	DirectionOfFlow		- Integer 1 क्रम output(master)
+ *				  0 क्रम input(slave)
+ * पूर्ण
  *
  * e.g:
  * For a Funnel device
  *
- * Device(MFUN) {
+ * Device(MFUN) अणु
  *   ...
  *
- *   Name (_DSD, Package() {
- *	// DSD Package contains tuples of {  Proeprty_Type_UUID, Package() }
+ *   Name (_DSD, Package() अणु
+ *	// DSD Package contains tuples of अणु  Proeprty_Type_UUID, Package() पूर्ण
  *	ToUUID("daffd814-6eba-4d8c-8a91-bc9bbf4aa301"), //Std. Property UUID
- *	Package() {
- *		Package(2) { "property-name", <property-value> }
- *	},
+ *	Package() अणु
+ *		Package(2) अणु "property-name", <property-value> पूर्ण
+ *	पूर्ण,
  *
  *	ToUUID("ab02a46b-74c7-45a2-bd68-f7d344ef2153"), // ACPI Graph UUID
- *	Package() {
+ *	Package() अणु
  *	  0,		// Revision
  *	  1,		// NumberOfGraphs.
- *	  Package() {	// Graph[0] Package
+ *	  Package() अणु	// Graph[0] Package
  *	     1,		// GraphID
  *	     // Coresight Graph UUID
  *	     ToUUID("3ecbc8b6-1d0e-4fb3-8107-e627f805c6cd"),
  *	     3,		// NumberOfLinks aka ports
  *	     // Link[0]: Output_0 -> Replicator:Input_0
- *	     Package () { 0, 0, \_SB_.RPL0, 1 },
+ *	     Package () अणु 0, 0, \_SB_.RPL0, 1 पूर्ण,
  *	     // Link[1]: Input_0 <- Cluster0_Funnel0:Output_0
- *	     Package () { 0, 0, \_SB_.CLU0.FUN0, 0 },
+ *	     Package () अणु 0, 0, \_SB_.CLU0.FUN0, 0 पूर्ण,
  *	     // Link[2]: Input_1 <- Cluster1_Funnel0:Output_0
- *	      Package () { 1, 0, \_SB_.CLU1.FUN0, 0 },
- *	  }	// End of Graph[0] Package
+ *	      Package () अणु 1, 0, \_SB_.CLU1.FUN0, 0 पूर्ण,
+ *	  पूर्ण	// End of Graph[0] Package
  *
- *	}, // End of ACPI Graph Property
- *  })
+ *	पूर्ण, // End of ACPI Graph Property
+ *  पूर्ण)
  */
-static inline bool acpi_validate_dsd_graph(const union acpi_object *graph)
-{
-	int i, n;
-	const union acpi_object *rev, *nr_graphs;
+अटल अंतरभूत bool acpi_validate_dsd_graph(स्थिर जोड़ acpi_object *graph)
+अणु
+	पूर्णांक i, n;
+	स्थिर जोड़ acpi_object *rev, *nr_graphs;
 
 	/* The graph must contain at least the Revision and Number of Graphs */
-	if (graph->package.count < 2)
-		return false;
+	अगर (graph->package.count < 2)
+		वापस false;
 
 	rev = &graph->package.elements[0];
 	nr_graphs = &graph->package.elements[1];
 
-	if (rev->type != ACPI_TYPE_INTEGER ||
+	अगर (rev->type != ACPI_TYPE_INTEGER ||
 	    nr_graphs->type != ACPI_TYPE_INTEGER)
-		return false;
+		वापस false;
 
 	/* We only support revision 0 */
-	if (rev->integer.value != 0)
-		return false;
+	अगर (rev->पूर्णांकeger.value != 0)
+		वापस false;
 
-	n = nr_graphs->integer.value;
+	n = nr_graphs->पूर्णांकeger.value;
 	/* CoreSight devices are only part of a single Graph */
-	if (n != 1)
-		return false;
+	अगर (n != 1)
+		वापस false;
 
 	/* Make sure the ACPI graph package has right number of elements */
-	if (graph->package.count != (n + 2))
-		return false;
+	अगर (graph->package.count != (n + 2))
+		वापस false;
 
 	/*
 	 * Each entry must be a graph package with at least 3 members :
-	 * { GraphID, UUID, NumberOfLinks(n), Links[.],... }
+	 * अणु GraphID, UUID, NumberOfLinks(n), Links[.],... पूर्ण
 	 */
-	for (i = 2; i < n + 2; i++) {
-		const union acpi_object *obj = &graph->package.elements[i];
+	क्रम (i = 2; i < n + 2; i++) अणु
+		स्थिर जोड़ acpi_object *obj = &graph->package.elements[i];
 
-		if (obj->type != ACPI_TYPE_PACKAGE ||
+		अगर (obj->type != ACPI_TYPE_PACKAGE ||
 		    obj->package.count < 3)
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* acpi_get_dsd_graph	- Find the _DSD Graph property for the given device. */
-static const union acpi_object *
-acpi_get_dsd_graph(struct acpi_device *adev)
-{
-	int i;
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER };
+/* acpi_get_dsd_graph	- Find the _DSD Graph property क्रम the given device. */
+अटल स्थिर जोड़ acpi_object *
+acpi_get_dsd_graph(काष्ठा acpi_device *adev)
+अणु
+	पूर्णांक i;
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER पूर्ण;
 	acpi_status status;
-	const union acpi_object *dsd;
+	स्थिर जोड़ acpi_object *dsd;
 
-	status = acpi_evaluate_object_typed(adev->handle, "_DSD", NULL,
+	status = acpi_evaluate_object_typed(adev->handle, "_DSD", शून्य,
 					    &buf, ACPI_TYPE_PACKAGE);
-	if (ACPI_FAILURE(status))
-		return NULL;
+	अगर (ACPI_FAILURE(status))
+		वापस शून्य;
 
-	dsd = buf.pointer;
+	dsd = buf.poपूर्णांकer;
 
 	/*
-	 * _DSD property consists tuples { Prop_UUID, Package() }
+	 * _DSD property consists tuples अणु Prop_UUID, Package() पूर्ण
 	 * Iterate through all the packages and find the Graph.
 	 */
-	for (i = 0; i + 1 < dsd->package.count; i += 2) {
-		const union acpi_object *guid, *package;
+	क्रम (i = 0; i + 1 < dsd->package.count; i += 2) अणु
+		स्थिर जोड़ acpi_object *guid, *package;
 
 		guid = &dsd->package.elements[i];
 		package = &dsd->package.elements[i + 1];
 
 		/* All _DSD elements must have a UUID and a Package */
-		if (!is_acpi_guid(guid) || package->type != ACPI_TYPE_PACKAGE)
-			break;
+		अगर (!is_acpi_guid(guid) || package->type != ACPI_TYPE_PACKAGE)
+			अवरोध;
 		/* Skip the non-Graph _DSD packages */
-		if (!is_acpi_dsd_graph_guid(guid))
-			continue;
-		if (acpi_validate_dsd_graph(package))
-			return package;
-		/* Invalid graph format, continue */
+		अगर (!is_acpi_dsd_graph_guid(guid))
+			जारी;
+		अगर (acpi_validate_dsd_graph(package))
+			वापस package;
+		/* Invalid graph क्रमmat, जारी */
 		dev_warn(&adev->dev, "Invalid Graph _DSD property\n");
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline bool
-acpi_validate_coresight_graph(const union acpi_object *cs_graph)
-{
-	int nlinks;
+अटल अंतरभूत bool
+acpi_validate_coresight_graph(स्थिर जोड़ acpi_object *cs_graph)
+अणु
+	पूर्णांक nlinks;
 
-	nlinks = cs_graph->package.elements[2].integer.value;
+	nlinks = cs_graph->package.elements[2].पूर्णांकeger.value;
 	/*
 	 * Graph must have the following fields :
-	 * { GraphID, GraphUUID, NumberOfLinks, Links... }
+	 * अणु GraphID, GraphUUID, NumberOfLinks, Links... पूर्ण
 	 */
-	if (cs_graph->package.count != (nlinks + 3))
-		return false;
+	अगर (cs_graph->package.count != (nlinks + 3))
+		वापस false;
 	/* The links are validated in acpi_coresight_parse_link() */
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * acpi_get_coresight_graph	- Parse the device _DSD tables and find
  * the Graph property matching the CoreSight Graphs.
  *
- * Returns the pointer to the CoreSight Graph Package when found. Otherwise
- * returns NULL.
+ * Returns the poपूर्णांकer to the CoreSight Graph Package when found. Otherwise
+ * वापसs शून्य.
  */
-static const union acpi_object *
-acpi_get_coresight_graph(struct acpi_device *adev)
-{
-	const union acpi_object *graph_list, *graph;
-	int i, nr_graphs;
+अटल स्थिर जोड़ acpi_object *
+acpi_get_coresight_graph(काष्ठा acpi_device *adev)
+अणु
+	स्थिर जोड़ acpi_object *graph_list, *graph;
+	पूर्णांक i, nr_graphs;
 
 	graph_list = acpi_get_dsd_graph(adev);
-	if (!graph_list)
-		return graph_list;
+	अगर (!graph_list)
+		वापस graph_list;
 
-	nr_graphs = graph_list->package.elements[1].integer.value;
+	nr_graphs = graph_list->package.elements[1].पूर्णांकeger.value;
 
-	for (i = 2; i < nr_graphs + 2; i++) {
+	क्रम (i = 2; i < nr_graphs + 2; i++) अणु
 		graph = &graph_list->package.elements[i];
-		if (!is_acpi_coresight_graph(graph))
-			continue;
-		if (acpi_validate_coresight_graph(graph))
-			return graph;
-		/* Invalid graph format */
-		break;
-	}
+		अगर (!is_acpi_coresight_graph(graph))
+			जारी;
+		अगर (acpi_validate_coresight_graph(graph))
+			वापस graph;
+		/* Invalid graph क्रमmat */
+		अवरोध;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * acpi_coresight_parse_link	- Parse the given Graph connection
- * of the device and populate the coresight_connection for an output
+ * of the device and populate the coresight_connection क्रम an output
  * connection.
  *
- * CoreSight Graph specification mandates that the direction of the data
- * flow must be specified in the link. i.e,
+ * CoreSight Graph specअगरication mandates that the direction of the data
+ * flow must be specअगरied in the link. i.e,
  *
  *	SourcePortAddress,	// Integer
  *	DestinationPortAddress,	// Integer
  *	DestinationDeviceName,	// Reference to another device
- *	DirectionOfFlow,	// 1 for output(master), 0 for input(slave)
+ *	DirectionOfFlow,	// 1 क्रम output(master), 0 क्रम input(slave)
  *
  * Returns the direction of the data flow [ Input(slave) or Output(master) ]
  * upon success.
  * Returns an negative error number otherwise.
  */
-static int acpi_coresight_parse_link(struct acpi_device *adev,
-				     const union acpi_object *link,
-				     struct coresight_connection *conn)
-{
-	int rc, dir;
-	const union acpi_object *fields;
-	struct acpi_device *r_adev;
-	struct device *rdev;
+अटल पूर्णांक acpi_coresight_parse_link(काष्ठा acpi_device *adev,
+				     स्थिर जोड़ acpi_object *link,
+				     काष्ठा coresight_connection *conn)
+अणु
+	पूर्णांक rc, dir;
+	स्थिर जोड़ acpi_object *fields;
+	काष्ठा acpi_device *r_adev;
+	काष्ठा device *rdev;
 
-	if (link->type != ACPI_TYPE_PACKAGE ||
+	अगर (link->type != ACPI_TYPE_PACKAGE ||
 	    link->package.count != 4)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	fields = link->package.elements;
 
-	if (fields[0].type != ACPI_TYPE_INTEGER ||
+	अगर (fields[0].type != ACPI_TYPE_INTEGER ||
 	    fields[1].type != ACPI_TYPE_INTEGER ||
 	    fields[2].type != ACPI_TYPE_LOCAL_REFERENCE ||
 	    fields[3].type != ACPI_TYPE_INTEGER)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	rc = acpi_bus_get_device(fields[2].reference.handle, &r_adev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	dir = fields[3].integer.value;
-	if (dir == ACPI_CORESIGHT_LINK_MASTER) {
-		conn->outport = fields[0].integer.value;
-		conn->child_port = fields[1].integer.value;
+	dir = fields[3].पूर्णांकeger.value;
+	अगर (dir == ACPI_CORESIGHT_LINK_MASTER) अणु
+		conn->outport = fields[0].पूर्णांकeger.value;
+		conn->child_port = fields[1].पूर्णांकeger.value;
 		rdev = coresight_find_device_by_fwnode(&r_adev->fwnode);
-		if (!rdev)
-			return -EPROBE_DEFER;
+		अगर (!rdev)
+			वापस -EPROBE_DEFER;
 		/*
 		 * Hold the refcount to the target device. This could be
 		 * released via:
-		 * 1) coresight_release_platform_data() if the probe fails or
-		 *    this device is unregistered.
+		 * 1) coresight_release_platक्रमm_data() अगर the probe fails or
+		 *    this device is unरेजिस्टरed.
 		 * 2) While removing the target device via
-		 *    coresight_remove_match().
+		 *    coresight_हटाओ_match().
 		 */
 		conn->child_fwnode = fwnode_handle_get(&r_adev->fwnode);
-	} else if (dir == ACPI_CORESIGHT_LINK_SLAVE) {
+	पूर्ण अन्यथा अगर (dir == ACPI_CORESIGHT_LINK_SLAVE) अणु
 		/*
-		 * We are only interested in the port number
-		 * for the input ports at this component.
+		 * We are only पूर्णांकerested in the port number
+		 * क्रम the input ports at this component.
 		 * Store the port number in child_port.
 		 */
-		conn->child_port = fields[0].integer.value;
-	} else {
+		conn->child_port = fields[0].पूर्णांकeger.value;
+	पूर्ण अन्यथा अणु
 		/* Invalid direction */
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return dir;
-}
+	वापस dir;
+पूर्ण
 
 /*
  * acpi_coresight_parse_graph	- Parse the _DSD CoreSight graph
- * connection information and populate the supplied coresight_platform_data
+ * connection inक्रमmation and populate the supplied coresight_platक्रमm_data
  * instance.
  */
-static int acpi_coresight_parse_graph(struct acpi_device *adev,
-				      struct coresight_platform_data *pdata)
-{
-	int rc, i, nlinks;
-	const union acpi_object *graph;
-	struct coresight_connection *conns, *ptr;
+अटल पूर्णांक acpi_coresight_parse_graph(काष्ठा acpi_device *adev,
+				      काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	पूर्णांक rc, i, nlinks;
+	स्थिर जोड़ acpi_object *graph;
+	काष्ठा coresight_connection *conns, *ptr;
 
 	pdata->nr_inport = pdata->nr_outport = 0;
 	graph = acpi_get_coresight_graph(adev);
-	if (!graph)
-		return -ENOENT;
+	अगर (!graph)
+		वापस -ENOENT;
 
-	nlinks = graph->package.elements[2].integer.value;
-	if (!nlinks)
-		return 0;
+	nlinks = graph->package.elements[2].पूर्णांकeger.value;
+	अगर (!nlinks)
+		वापस 0;
 
 	/*
-	 * To avoid scanning the table twice (once for finding the number of
-	 * output links and then later for parsing the output links),
-	 * cache the links information in one go and then later copy
+	 * To aव्योम scanning the table twice (once क्रम finding the number of
+	 * output links and then later क्रम parsing the output links),
+	 * cache the links inक्रमmation in one go and then later copy
 	 * it to the pdata.
 	 */
-	conns = devm_kcalloc(&adev->dev, nlinks, sizeof(*conns), GFP_KERNEL);
-	if (!conns)
-		return -ENOMEM;
+	conns = devm_kसुस्मृति(&adev->dev, nlinks, माप(*conns), GFP_KERNEL);
+	अगर (!conns)
+		वापस -ENOMEM;
 	ptr = conns;
-	for (i = 0; i < nlinks; i++) {
-		const union acpi_object *link = &graph->package.elements[3 + i];
-		int dir;
+	क्रम (i = 0; i < nlinks; i++) अणु
+		स्थिर जोड़ acpi_object *link = &graph->package.elements[3 + i];
+		पूर्णांक dir;
 
 		dir = acpi_coresight_parse_link(adev, link, ptr);
-		if (dir < 0)
-			return dir;
+		अगर (dir < 0)
+			वापस dir;
 
-		if (dir == ACPI_CORESIGHT_LINK_MASTER) {
-			if (ptr->outport >= pdata->nr_outport)
+		अगर (dir == ACPI_CORESIGHT_LINK_MASTER) अणु
+			अगर (ptr->outport >= pdata->nr_outport)
 				pdata->nr_outport = ptr->outport + 1;
 			ptr++;
-		} else {
+		पूर्ण अन्यथा अणु
 			WARN_ON(pdata->nr_inport == ptr->child_port + 1);
 			/*
-			 * We do not track input port connections for a device.
+			 * We करो not track input port connections क्रम a device.
 			 * However we need the highest port number described,
 			 * which can be recorded now and reuse this connection
-			 * record for an output connection. Hence, do not move
-			 * the ptr for input connections
+			 * record क्रम an output connection. Hence, करो not move
+			 * the ptr क्रम input connections
 			 */
-			if (ptr->child_port >= pdata->nr_inport)
+			अगर (ptr->child_port >= pdata->nr_inport)
 				pdata->nr_inport = ptr->child_port + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rc = coresight_alloc_conns(&adev->dev, pdata);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Copy the connection information to the final location */
-	for (i = 0; conns + i < ptr; i++) {
-		int port = conns[i].outport;
+	/* Copy the connection inक्रमmation to the final location */
+	क्रम (i = 0; conns + i < ptr; i++) अणु
+		पूर्णांक port = conns[i].outport;
 
 		/* Duplicate output port */
 		WARN_ON(pdata->conns[port].child_fwnode);
 		pdata->conns[port] = conns[i];
-	}
+	पूर्ण
 
-	devm_kfree(&adev->dev, conns);
-	return 0;
-}
+	devm_kमुक्त(&adev->dev, conns);
+	वापस 0;
+पूर्ण
 
 /*
  * acpi_handle_to_logical_cpuid - Map a given acpi_handle to the
  * logical CPU id of the corresponding CPU device.
  *
- * Returns the logical CPU id when found. Otherwise returns >= nr_cpus_id.
+ * Returns the logical CPU id when found. Otherwise वापसs >= nr_cpus_id.
  */
-static int
+अटल पूर्णांक
 acpi_handle_to_logical_cpuid(acpi_handle handle)
-{
-	int i;
-	struct acpi_processor *pr;
+अणु
+	पूर्णांक i;
+	काष्ठा acpi_processor *pr;
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		pr = per_cpu(processors, i);
-		if (pr && pr->handle == handle)
-			break;
-	}
+		अगर (pr && pr->handle == handle)
+			अवरोध;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
  * acpi_coresigh_get_cpu - Find the logical CPU id of the CPU associated
  * with this coresight device. With ACPI bindings, the CoreSight components
  * are listed as child device of the associated CPU.
  *
- * Returns the logical CPU id when found. Otherwise returns 0.
+ * Returns the logical CPU id when found. Otherwise वापसs 0.
  */
-static int acpi_coresight_get_cpu(struct device *dev)
-{
-	int cpu;
+अटल पूर्णांक acpi_coresight_get_cpu(काष्ठा device *dev)
+अणु
+	पूर्णांक cpu;
 	acpi_handle cpu_handle;
 	acpi_status status;
-	struct acpi_device *adev = ACPI_COMPANION(dev);
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
 
-	if (!adev)
-		return -ENODEV;
+	अगर (!adev)
+		वापस -ENODEV;
 	status = acpi_get_parent(adev->handle, &cpu_handle);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
 	cpu = acpi_handle_to_logical_cpuid(cpu_handle);
-	if (cpu >= nr_cpu_ids)
-		return -ENODEV;
-	return cpu;
-}
+	अगर (cpu >= nr_cpu_ids)
+		वापस -ENODEV;
+	वापस cpu;
+पूर्ण
 
-static int
-acpi_get_coresight_platform_data(struct device *dev,
-				 struct coresight_platform_data *pdata)
-{
-	struct acpi_device *adev;
+अटल पूर्णांक
+acpi_get_coresight_platक्रमm_data(काष्ठा device *dev,
+				 काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	काष्ठा acpi_device *adev;
 
 	adev = ACPI_COMPANION(dev);
-	if (!adev)
-		return -EINVAL;
+	अगर (!adev)
+		वापस -EINVAL;
 
-	return acpi_coresight_parse_graph(adev, pdata);
-}
+	वापस acpi_coresight_parse_graph(adev, pdata);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline int
-acpi_get_coresight_platform_data(struct device *dev,
-				 struct coresight_platform_data *pdata)
-{
-	return -ENOENT;
-}
+अटल अंतरभूत पूर्णांक
+acpi_get_coresight_platक्रमm_data(काष्ठा device *dev,
+				 काष्ठा coresight_platक्रमm_data *pdata)
+अणु
+	वापस -ENOENT;
+पूर्ण
 
-static inline int acpi_coresight_get_cpu(struct device *dev)
-{
-	return -ENODEV;
-}
-#endif
+अटल अंतरभूत पूर्णांक acpi_coresight_get_cpu(काष्ठा device *dev)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-int coresight_get_cpu(struct device *dev)
-{
-	if (is_of_node(dev->fwnode))
-		return of_coresight_get_cpu(dev);
-	else if (is_acpi_device_node(dev->fwnode))
-		return acpi_coresight_get_cpu(dev);
-	return 0;
-}
+पूर्णांक coresight_get_cpu(काष्ठा device *dev)
+अणु
+	अगर (is_of_node(dev->fwnode))
+		वापस of_coresight_get_cpu(dev);
+	अन्यथा अगर (is_acpi_device_node(dev->fwnode))
+		वापस acpi_coresight_get_cpu(dev);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(coresight_get_cpu);
 
-struct coresight_platform_data *
-coresight_get_platform_data(struct device *dev)
-{
-	int ret = -ENOENT;
-	struct coresight_platform_data *pdata = NULL;
-	struct fwnode_handle *fwnode = dev_fwnode(dev);
+काष्ठा coresight_platक्रमm_data *
+coresight_get_platक्रमm_data(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -ENOENT;
+	काष्ठा coresight_platक्रमm_data *pdata = शून्य;
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
 
-	if (IS_ERR_OR_NULL(fwnode))
-		goto error;
+	अगर (IS_ERR_OR_शून्य(fwnode))
+		जाओ error;
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata) {
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (is_of_node(fwnode))
-		ret = of_get_coresight_platform_data(dev, pdata);
-	else if (is_acpi_device_node(fwnode))
-		ret = acpi_get_coresight_platform_data(dev, pdata);
+	अगर (is_of_node(fwnode))
+		ret = of_get_coresight_platक्रमm_data(dev, pdata);
+	अन्यथा अगर (is_acpi_device_node(fwnode))
+		ret = acpi_get_coresight_platक्रमm_data(dev, pdata);
 
-	if (!ret)
-		return pdata;
+	अगर (!ret)
+		वापस pdata;
 error:
-	if (!IS_ERR_OR_NULL(pdata))
-		/* Cleanup the connection information */
-		coresight_release_platform_data(NULL, pdata);
-	return ERR_PTR(ret);
-}
-EXPORT_SYMBOL_GPL(coresight_get_platform_data);
+	अगर (!IS_ERR_OR_शून्य(pdata))
+		/* Cleanup the connection inक्रमmation */
+		coresight_release_platक्रमm_data(शून्य, pdata);
+	वापस ERR_PTR(ret);
+पूर्ण
+EXPORT_SYMBOL_GPL(coresight_get_platक्रमm_data);

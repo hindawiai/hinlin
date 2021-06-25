@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus connections
  *
@@ -6,179 +7,179 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#include <linux/workqueue.h>
-#include <linux/greybus.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/greybus.h>
 
-#include "greybus_trace.h"
+#समावेश "greybus_trace.h"
 
-#define GB_CONNECTION_CPORT_QUIESCE_TIMEOUT	1000
+#घोषणा GB_CONNECTION_CPORT_QUIESCE_TIMEOUT	1000
 
-static void gb_connection_kref_release(struct kref *kref);
+अटल व्योम gb_connection_kref_release(काष्ठा kref *kref);
 
-static DEFINE_SPINLOCK(gb_connections_lock);
-static DEFINE_MUTEX(gb_connection_mutex);
+अटल DEFINE_SPINLOCK(gb_connections_lock);
+अटल DEFINE_MUTEX(gb_connection_mutex);
 
 /* Caller holds gb_connection_mutex. */
-static bool gb_connection_cport_in_use(struct gb_interface *intf, u16 cport_id)
-{
-	struct gb_host_device *hd = intf->hd;
-	struct gb_connection *connection;
+अटल bool gb_connection_cport_in_use(काष्ठा gb_पूर्णांकerface *पूर्णांकf, u16 cport_id)
+अणु
+	काष्ठा gb_host_device *hd = पूर्णांकf->hd;
+	काष्ठा gb_connection *connection;
 
-	list_for_each_entry(connection, &hd->connections, hd_links) {
-		if (connection->intf == intf &&
-		    connection->intf_cport_id == cport_id)
-			return true;
-	}
+	list_क्रम_each_entry(connection, &hd->connections, hd_links) अणु
+		अगर (connection->पूर्णांकf == पूर्णांकf &&
+		    connection->पूर्णांकf_cport_id == cport_id)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void gb_connection_get(struct gb_connection *connection)
-{
+अटल व्योम gb_connection_get(काष्ठा gb_connection *connection)
+अणु
 	kref_get(&connection->kref);
 
 	trace_gb_connection_get(connection);
-}
+पूर्ण
 
-static void gb_connection_put(struct gb_connection *connection)
-{
+अटल व्योम gb_connection_put(काष्ठा gb_connection *connection)
+अणु
 	trace_gb_connection_put(connection);
 
 	kref_put(&connection->kref, gb_connection_kref_release);
-}
+पूर्ण
 
 /*
- * Returns a reference-counted pointer to the connection if found.
+ * Returns a reference-counted poपूर्णांकer to the connection अगर found.
  */
-static struct gb_connection *
-gb_connection_hd_find(struct gb_host_device *hd, u16 cport_id)
-{
-	struct gb_connection *connection;
-	unsigned long flags;
+अटल काष्ठा gb_connection *
+gb_connection_hd_find(काष्ठा gb_host_device *hd, u16 cport_id)
+अणु
+	काष्ठा gb_connection *connection;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gb_connections_lock, flags);
-	list_for_each_entry(connection, &hd->connections, hd_links)
-		if (connection->hd_cport_id == cport_id) {
+	list_क्रम_each_entry(connection, &hd->connections, hd_links)
+		अगर (connection->hd_cport_id == cport_id) अणु
 			gb_connection_get(connection);
-			goto found;
-		}
-	connection = NULL;
+			जाओ found;
+		पूर्ण
+	connection = शून्य;
 found:
 	spin_unlock_irqrestore(&gb_connections_lock, flags);
 
-	return connection;
-}
+	वापस connection;
+पूर्ण
 
 /*
  * Callback from the host driver to let us know that data has been
  * received on the bundle.
  */
-void greybus_data_rcvd(struct gb_host_device *hd, u16 cport_id,
-		       u8 *data, size_t length)
-{
-	struct gb_connection *connection;
+व्योम greybus_data_rcvd(काष्ठा gb_host_device *hd, u16 cport_id,
+		       u8 *data, माप_प्रकार length)
+अणु
+	काष्ठा gb_connection *connection;
 
 	trace_gb_hd_in(hd);
 
 	connection = gb_connection_hd_find(hd, cport_id);
-	if (!connection) {
+	अगर (!connection) अणु
 		dev_err(&hd->dev,
 			"nonexistent connection (%zu bytes dropped)\n", length);
-		return;
-	}
+		वापस;
+	पूर्ण
 	gb_connection_recv(connection, data, length);
 	gb_connection_put(connection);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(greybus_data_rcvd);
 
-static void gb_connection_kref_release(struct kref *kref)
-{
-	struct gb_connection *connection;
+अटल व्योम gb_connection_kref_release(काष्ठा kref *kref)
+अणु
+	काष्ठा gb_connection *connection;
 
-	connection = container_of(kref, struct gb_connection, kref);
+	connection = container_of(kref, काष्ठा gb_connection, kref);
 
 	trace_gb_connection_release(connection);
 
-	kfree(connection);
-}
+	kमुक्त(connection);
+पूर्ण
 
-static void gb_connection_init_name(struct gb_connection *connection)
-{
+अटल व्योम gb_connection_init_name(काष्ठा gb_connection *connection)
+अणु
 	u16 hd_cport_id = connection->hd_cport_id;
 	u16 cport_id = 0;
-	u8 intf_id = 0;
+	u8 पूर्णांकf_id = 0;
 
-	if (connection->intf) {
-		intf_id = connection->intf->interface_id;
-		cport_id = connection->intf_cport_id;
-	}
+	अगर (connection->पूर्णांकf) अणु
+		पूर्णांकf_id = connection->पूर्णांकf->पूर्णांकerface_id;
+		cport_id = connection->पूर्णांकf_cport_id;
+	पूर्ण
 
-	snprintf(connection->name, sizeof(connection->name),
-		 "%u/%u:%u", hd_cport_id, intf_id, cport_id);
-}
+	snम_लिखो(connection->name, माप(connection->name),
+		 "%u/%u:%u", hd_cport_id, पूर्णांकf_id, cport_id);
+पूर्ण
 
 /*
  * _gb_connection_create() - create a Greybus connection
  * @hd:			host device of the connection
- * @hd_cport_id:	host-device cport id, or -1 for dynamic allocation
- * @intf:		remote interface, or NULL for static connections
- * @bundle:		remote-interface bundle (may be NULL)
- * @cport_id:		remote-interface cport id, or 0 for static connections
- * @handler:		request handler (may be NULL)
+ * @hd_cport_id:	host-device cport id, or -1 क्रम dynamic allocation
+ * @पूर्णांकf:		remote पूर्णांकerface, or शून्य क्रम अटल connections
+ * @bundle:		remote-पूर्णांकerface bundle (may be शून्य)
+ * @cport_id:		remote-पूर्णांकerface cport id, or 0 क्रम अटल connections
+ * @handler:		request handler (may be शून्य)
  * @flags:		connection flags
  *
  * Create a Greybus connection, representing the bidirectional link
  * between a CPort on a (local) Greybus host device and a CPort on
- * another Greybus interface.
+ * another Greybus पूर्णांकerface.
  *
- * A connection also maintains the state of operations sent over the
+ * A connection also मुख्यtains the state of operations sent over the
  * connection.
  *
  * Serialised against concurrent create and destroy using the
  * gb_connection_mutex.
  *
- * Return: A pointer to the new connection if successful, or an ERR_PTR
+ * Return: A poपूर्णांकer to the new connection अगर successful, or an ERR_PTR
  * otherwise.
  */
-static struct gb_connection *
-_gb_connection_create(struct gb_host_device *hd, int hd_cport_id,
-		      struct gb_interface *intf,
-		      struct gb_bundle *bundle, int cport_id,
+अटल काष्ठा gb_connection *
+_gb_connection_create(काष्ठा gb_host_device *hd, पूर्णांक hd_cport_id,
+		      काष्ठा gb_पूर्णांकerface *पूर्णांकf,
+		      काष्ठा gb_bundle *bundle, पूर्णांक cport_id,
 		      gb_request_handler_t handler,
-		      unsigned long flags)
-{
-	struct gb_connection *connection;
-	int ret;
+		      अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा gb_connection *connection;
+	पूर्णांक ret;
 
 	mutex_lock(&gb_connection_mutex);
 
-	if (intf && gb_connection_cport_in_use(intf, cport_id)) {
-		dev_err(&intf->dev, "cport %u already in use\n", cport_id);
+	अगर (पूर्णांकf && gb_connection_cport_in_use(पूर्णांकf, cport_id)) अणु
+		dev_err(&पूर्णांकf->dev, "cport %u already in use\n", cport_id);
 		ret = -EBUSY;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
 	ret = gb_hd_cport_allocate(hd, hd_cport_id, flags);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&hd->dev, "failed to allocate cport: %d\n", ret);
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 	hd_cport_id = ret;
 
-	connection = kzalloc(sizeof(*connection), GFP_KERNEL);
-	if (!connection) {
+	connection = kzalloc(माप(*connection), GFP_KERNEL);
+	अगर (!connection) अणु
 		ret = -ENOMEM;
-		goto err_hd_cport_release;
-	}
+		जाओ err_hd_cport_release;
+	पूर्ण
 
 	connection->hd_cport_id = hd_cport_id;
-	connection->intf_cport_id = cport_id;
+	connection->पूर्णांकf_cport_id = cport_id;
 	connection->hd = hd;
-	connection->intf = intf;
+	connection->पूर्णांकf = पूर्णांकf;
 	connection->bundle = bundle;
 	connection->handler = handler;
 	connection->flags = flags;
-	if (intf && (intf->quirks & GB_INTERFACE_QUIRK_NO_CPORT_FEATURES))
+	अगर (पूर्णांकf && (पूर्णांकf->quirks & GB_INTERFACE_QUIRK_NO_CPORT_FEATURES))
 		connection->flags |= GB_CONNECTION_FLAG_NO_FLOWCTRL;
 	connection->state = GB_CONNECTION_STATE_DISABLED;
 
@@ -189,10 +190,10 @@ _gb_connection_create(struct gb_host_device *hd, int hd_cport_id,
 
 	connection->wq = alloc_workqueue("%s:%d", WQ_UNBOUND, 1,
 					 dev_name(&hd->dev), hd_cport_id);
-	if (!connection->wq) {
+	अगर (!connection->wq) अणु
 		ret = -ENOMEM;
-		goto err_free_connection;
-	}
+		जाओ err_मुक्त_connection;
+	पूर्ण
 
 	kref_init(&connection->kref);
 
@@ -201,9 +202,9 @@ _gb_connection_create(struct gb_host_device *hd, int hd_cport_id,
 	spin_lock_irq(&gb_connections_lock);
 	list_add(&connection->hd_links, &hd->connections);
 
-	if (bundle)
+	अगर (bundle)
 		list_add(&connection->bundle_links, &bundle->connections);
-	else
+	अन्यथा
 		INIT_LIST_HEAD(&connection->bundle_links);
 
 	spin_unlock_irq(&gb_connections_lock);
@@ -212,334 +213,334 @@ _gb_connection_create(struct gb_host_device *hd, int hd_cport_id,
 
 	trace_gb_connection_create(connection);
 
-	return connection;
+	वापस connection;
 
-err_free_connection:
-	kfree(connection);
+err_मुक्त_connection:
+	kमुक्त(connection);
 err_hd_cport_release:
 	gb_hd_cport_release(hd, hd_cport_id);
 err_unlock:
 	mutex_unlock(&gb_connection_mutex);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-struct gb_connection *
-gb_connection_create_static(struct gb_host_device *hd, u16 hd_cport_id,
+काष्ठा gb_connection *
+gb_connection_create_अटल(काष्ठा gb_host_device *hd, u16 hd_cport_id,
 			    gb_request_handler_t handler)
-{
-	return _gb_connection_create(hd, hd_cport_id, NULL, NULL, 0, handler,
+अणु
+	वापस _gb_connection_create(hd, hd_cport_id, शून्य, शून्य, 0, handler,
 				     GB_CONNECTION_FLAG_HIGH_PRIO);
-}
+पूर्ण
 
-struct gb_connection *
-gb_connection_create_control(struct gb_interface *intf)
-{
-	return _gb_connection_create(intf->hd, -1, intf, NULL, 0, NULL,
+काष्ठा gb_connection *
+gb_connection_create_control(काष्ठा gb_पूर्णांकerface *पूर्णांकf)
+अणु
+	वापस _gb_connection_create(पूर्णांकf->hd, -1, पूर्णांकf, शून्य, 0, शून्य,
 				     GB_CONNECTION_FLAG_CONTROL |
 				     GB_CONNECTION_FLAG_HIGH_PRIO);
-}
+पूर्ण
 
-struct gb_connection *
-gb_connection_create(struct gb_bundle *bundle, u16 cport_id,
+काष्ठा gb_connection *
+gb_connection_create(काष्ठा gb_bundle *bundle, u16 cport_id,
 		     gb_request_handler_t handler)
-{
-	struct gb_interface *intf = bundle->intf;
+अणु
+	काष्ठा gb_पूर्णांकerface *पूर्णांकf = bundle->पूर्णांकf;
 
-	return _gb_connection_create(intf->hd, -1, intf, bundle, cport_id,
+	वापस _gb_connection_create(पूर्णांकf->hd, -1, पूर्णांकf, bundle, cport_id,
 				     handler, 0);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_create);
 
-struct gb_connection *
-gb_connection_create_flags(struct gb_bundle *bundle, u16 cport_id,
+काष्ठा gb_connection *
+gb_connection_create_flags(काष्ठा gb_bundle *bundle, u16 cport_id,
 			   gb_request_handler_t handler,
-			   unsigned long flags)
-{
-	struct gb_interface *intf = bundle->intf;
+			   अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा gb_पूर्णांकerface *पूर्णांकf = bundle->पूर्णांकf;
 
-	if (WARN_ON_ONCE(flags & GB_CONNECTION_FLAG_CORE_MASK))
+	अगर (WARN_ON_ONCE(flags & GB_CONNECTION_FLAG_CORE_MASK))
 		flags &= ~GB_CONNECTION_FLAG_CORE_MASK;
 
-	return _gb_connection_create(intf->hd, -1, intf, bundle, cport_id,
+	वापस _gb_connection_create(पूर्णांकf->hd, -1, पूर्णांकf, bundle, cport_id,
 				     handler, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_create_flags);
 
-struct gb_connection *
-gb_connection_create_offloaded(struct gb_bundle *bundle, u16 cport_id,
-			       unsigned long flags)
-{
+काष्ठा gb_connection *
+gb_connection_create_offloaded(काष्ठा gb_bundle *bundle, u16 cport_id,
+			       अचिन्हित दीर्घ flags)
+अणु
 	flags |= GB_CONNECTION_FLAG_OFFLOADED;
 
-	return gb_connection_create_flags(bundle, cport_id, NULL, flags);
-}
+	वापस gb_connection_create_flags(bundle, cport_id, शून्य, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_create_offloaded);
 
-static int gb_connection_hd_cport_enable(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+अटल पूर्णांक gb_connection_hd_cport_enable(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->cport_enable)
-		return 0;
+	अगर (!hd->driver->cport_enable)
+		वापस 0;
 
 	ret = hd->driver->cport_enable(hd, connection->hd_cport_id,
 				       connection->flags);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to enable host cport: %d\n",
 			connection->name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gb_connection_hd_cport_disable(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+अटल व्योम gb_connection_hd_cport_disable(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->cport_disable)
-		return;
+	अगर (!hd->driver->cport_disable)
+		वापस;
 
 	ret = hd->driver->cport_disable(hd, connection->hd_cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to disable host cport: %d\n",
 			connection->name, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gb_connection_hd_cport_connected(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+अटल पूर्णांक gb_connection_hd_cport_connected(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->cport_connected)
-		return 0;
+	अगर (!hd->driver->cport_connected)
+		वापस 0;
 
 	ret = hd->driver->cport_connected(hd, connection->hd_cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to set connected state: %d\n",
 			connection->name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_connection_hd_cport_flush(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+अटल पूर्णांक gb_connection_hd_cport_flush(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->cport_flush)
-		return 0;
+	अगर (!hd->driver->cport_flush)
+		वापस 0;
 
 	ret = hd->driver->cport_flush(hd, connection->hd_cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to flush host cport: %d\n",
 			connection->name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_connection_hd_cport_quiesce(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	size_t peer_space;
-	int ret;
+अटल पूर्णांक gb_connection_hd_cport_quiesce(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	माप_प्रकार peer_space;
+	पूर्णांक ret;
 
-	if (!hd->driver->cport_quiesce)
-		return 0;
+	अगर (!hd->driver->cport_quiesce)
+		वापस 0;
 
-	peer_space = sizeof(struct gb_operation_msg_hdr) +
-			sizeof(struct gb_cport_shutdown_request);
+	peer_space = माप(काष्ठा gb_operation_msg_hdr) +
+			माप(काष्ठा gb_cport_shutकरोwn_request);
 
-	if (connection->mode_switch)
-		peer_space += sizeof(struct gb_operation_msg_hdr);
+	अगर (connection->mode_चयन)
+		peer_space += माप(काष्ठा gb_operation_msg_hdr);
 
 	ret = hd->driver->cport_quiesce(hd, connection->hd_cport_id,
 					peer_space,
 					GB_CONNECTION_CPORT_QUIESCE_TIMEOUT);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to quiesce host cport: %d\n",
 			connection->name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_connection_hd_cport_clear(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+अटल पूर्णांक gb_connection_hd_cport_clear(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->cport_clear)
-		return 0;
+	अगर (!hd->driver->cport_clear)
+		वापस 0;
 
 	ret = hd->driver->cport_clear(hd, connection->hd_cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to clear host cport: %d\n",
 			connection->name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Request the SVC to create a connection from AP's cport to interface's
  * cport.
  */
-static int
-gb_connection_svc_connection_create(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	struct gb_interface *intf;
+अटल पूर्णांक
+gb_connection_svc_connection_create(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	काष्ठा gb_पूर्णांकerface *पूर्णांकf;
 	u8 cport_flags;
-	int ret;
+	पूर्णांक ret;
 
-	if (gb_connection_is_static(connection))
-		return 0;
+	अगर (gb_connection_is_अटल(connection))
+		वापस 0;
 
-	intf = connection->intf;
+	पूर्णांकf = connection->पूर्णांकf;
 
 	/*
 	 * Enable either E2EFC or CSD, unless no flow control is requested.
 	 */
 	cport_flags = GB_SVC_CPORT_FLAG_CSV_N;
-	if (gb_connection_flow_control_disabled(connection)) {
+	अगर (gb_connection_flow_control_disabled(connection)) अणु
 		cport_flags |= GB_SVC_CPORT_FLAG_CSD_N;
-	} else if (gb_connection_e2efc_enabled(connection)) {
+	पूर्ण अन्यथा अगर (gb_connection_e2efc_enabled(connection)) अणु
 		cport_flags |= GB_SVC_CPORT_FLAG_CSD_N |
 				GB_SVC_CPORT_FLAG_E2EFC;
-	}
+	पूर्ण
 
 	ret = gb_svc_connection_create(hd->svc,
-				       hd->svc->ap_intf_id,
+				       hd->svc->ap_पूर्णांकf_id,
 				       connection->hd_cport_id,
-				       intf->interface_id,
-				       connection->intf_cport_id,
+				       पूर्णांकf->पूर्णांकerface_id,
+				       connection->पूर्णांकf_cport_id,
 				       cport_flags);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: failed to create svc connection: %d\n",
 			connection->name, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-gb_connection_svc_connection_destroy(struct gb_connection *connection)
-{
-	if (gb_connection_is_static(connection))
-		return;
+अटल व्योम
+gb_connection_svc_connection_destroy(काष्ठा gb_connection *connection)
+अणु
+	अगर (gb_connection_is_अटल(connection))
+		वापस;
 
 	gb_svc_connection_destroy(connection->hd->svc,
-				  connection->hd->svc->ap_intf_id,
+				  connection->hd->svc->ap_पूर्णांकf_id,
 				  connection->hd_cport_id,
-				  connection->intf->interface_id,
-				  connection->intf_cport_id);
-}
+				  connection->पूर्णांकf->पूर्णांकerface_id,
+				  connection->पूर्णांकf_cport_id);
+पूर्ण
 
-/* Inform Interface about active CPorts */
-static int gb_connection_control_connected(struct gb_connection *connection)
-{
-	struct gb_control *control;
-	u16 cport_id = connection->intf_cport_id;
-	int ret;
+/* Inक्रमm Interface about active CPorts */
+अटल पूर्णांक gb_connection_control_connected(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_control *control;
+	u16 cport_id = connection->पूर्णांकf_cport_id;
+	पूर्णांक ret;
 
-	if (gb_connection_is_static(connection))
-		return 0;
+	अगर (gb_connection_is_अटल(connection))
+		वापस 0;
 
-	if (gb_connection_is_control(connection))
-		return 0;
+	अगर (gb_connection_is_control(connection))
+		वापस 0;
 
-	control = connection->intf->control;
+	control = connection->पूर्णांकf->control;
 
 	ret = gb_control_connected_operation(control, cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&connection->bundle->dev,
 			"failed to connect cport: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-gb_connection_control_disconnecting(struct gb_connection *connection)
-{
-	struct gb_control *control;
-	u16 cport_id = connection->intf_cport_id;
-	int ret;
+अटल व्योम
+gb_connection_control_disconnecting(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_control *control;
+	u16 cport_id = connection->पूर्णांकf_cport_id;
+	पूर्णांक ret;
 
-	if (gb_connection_is_static(connection))
-		return;
+	अगर (gb_connection_is_अटल(connection))
+		वापस;
 
-	control = connection->intf->control;
+	control = connection->पूर्णांकf->control;
 
 	ret = gb_control_disconnecting_operation(control, cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: failed to send disconnecting: %d\n",
 			connection->name, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-gb_connection_control_disconnected(struct gb_connection *connection)
-{
-	struct gb_control *control;
-	u16 cport_id = connection->intf_cport_id;
-	int ret;
+अटल व्योम
+gb_connection_control_disconnected(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_control *control;
+	u16 cport_id = connection->पूर्णांकf_cport_id;
+	पूर्णांक ret;
 
-	if (gb_connection_is_static(connection))
-		return;
+	अगर (gb_connection_is_अटल(connection))
+		वापस;
 
-	control = connection->intf->control;
+	control = connection->पूर्णांकf->control;
 
-	if (gb_connection_is_control(connection)) {
-		if (connection->mode_switch) {
-			ret = gb_control_mode_switch_operation(control);
-			if (ret) {
+	अगर (gb_connection_is_control(connection)) अणु
+		अगर (connection->mode_चयन) अणु
+			ret = gb_control_mode_चयन_operation(control);
+			अगर (ret) अणु
 				/*
-				 * Allow mode switch to time out waiting for
+				 * Allow mode चयन to समय out रुकोing क्रम
 				 * mailbox event.
 				 */
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ret = gb_control_disconnected_operation(control, cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&connection->bundle->dev,
 			 "failed to disconnect cport: %d\n", ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gb_connection_shutdown_operation(struct gb_connection *connection,
+अटल पूर्णांक gb_connection_shutकरोwn_operation(काष्ठा gb_connection *connection,
 					    u8 phase)
-{
-	struct gb_cport_shutdown_request *req;
-	struct gb_operation *operation;
-	int ret;
+अणु
+	काष्ठा gb_cport_shutकरोwn_request *req;
+	काष्ठा gb_operation *operation;
+	पूर्णांक ret;
 
 	operation = gb_operation_create_core(connection,
 					     GB_REQUEST_TYPE_CPORT_SHUTDOWN,
-					     sizeof(*req), 0, 0,
+					     माप(*req), 0, 0,
 					     GFP_KERNEL);
-	if (!operation)
-		return -ENOMEM;
+	अगर (!operation)
+		वापस -ENOMEM;
 
 	req = operation->request->payload;
 	req->phase = phase;
@@ -548,49 +549,49 @@ static int gb_connection_shutdown_operation(struct gb_connection *connection,
 
 	gb_operation_put(operation);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_connection_cport_shutdown(struct gb_connection *connection,
+अटल पूर्णांक gb_connection_cport_shutकरोwn(काष्ठा gb_connection *connection,
 					u8 phase)
-{
-	struct gb_host_device *hd = connection->hd;
-	const struct gb_hd_driver *drv = hd->driver;
-	int ret;
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	स्थिर काष्ठा gb_hd_driver *drv = hd->driver;
+	पूर्णांक ret;
 
-	if (gb_connection_is_static(connection))
-		return 0;
+	अगर (gb_connection_is_अटल(connection))
+		वापस 0;
 
-	if (gb_connection_is_offloaded(connection)) {
-		if (!drv->cport_shutdown)
-			return 0;
+	अगर (gb_connection_is_offloaded(connection)) अणु
+		अगर (!drv->cport_shutकरोwn)
+			वापस 0;
 
-		ret = drv->cport_shutdown(hd, connection->hd_cport_id, phase,
+		ret = drv->cport_shutकरोwn(hd, connection->hd_cport_id, phase,
 					  GB_OPERATION_TIMEOUT_DEFAULT);
-	} else {
-		ret = gb_connection_shutdown_operation(connection, phase);
-	}
+	पूर्ण अन्यथा अणु
+		ret = gb_connection_shutकरोwn_operation(connection, phase);
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&hd->dev, "%s: failed to send cport shutdown (phase %d): %d\n",
 			connection->name, phase, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gb_connection_cport_shutdown_phase_1(struct gb_connection *connection)
-{
-	return gb_connection_cport_shutdown(connection, 1);
-}
+अटल पूर्णांक
+gb_connection_cport_shutकरोwn_phase_1(काष्ठा gb_connection *connection)
+अणु
+	वापस gb_connection_cport_shutकरोwn(connection, 1);
+पूर्ण
 
-static int
-gb_connection_cport_shutdown_phase_2(struct gb_connection *connection)
-{
-	return gb_connection_cport_shutdown(connection, 2);
-}
+अटल पूर्णांक
+gb_connection_cport_shutकरोwn_phase_2(काष्ठा gb_connection *connection)
+अणु
+	वापस gb_connection_cport_shutकरोwn(connection, 2);
+पूर्ण
 
 /*
  * Cancel all active operations on a connection.
@@ -598,116 +599,116 @@ gb_connection_cport_shutdown_phase_2(struct gb_connection *connection)
  * Locking: Called with connection lock held and state set to DISABLED or
  * DISCONNECTING.
  */
-static void gb_connection_cancel_operations(struct gb_connection *connection,
-					    int errno)
+अटल व्योम gb_connection_cancel_operations(काष्ठा gb_connection *connection,
+					    पूर्णांक त्रुटि_सं)
 	__must_hold(&connection->lock)
-{
-	struct gb_operation *operation;
+अणु
+	काष्ठा gb_operation *operation;
 
-	while (!list_empty(&connection->operations)) {
+	जबतक (!list_empty(&connection->operations)) अणु
 		operation = list_last_entry(&connection->operations,
-					    struct gb_operation, links);
+					    काष्ठा gb_operation, links);
 		gb_operation_get(operation);
 		spin_unlock_irq(&connection->lock);
 
-		if (gb_operation_is_incoming(operation))
-			gb_operation_cancel_incoming(operation, errno);
-		else
-			gb_operation_cancel(operation, errno);
+		अगर (gb_operation_is_incoming(operation))
+			gb_operation_cancel_incoming(operation, त्रुटि_सं);
+		अन्यथा
+			gb_operation_cancel(operation, त्रुटि_सं);
 
 		gb_operation_put(operation);
 
 		spin_lock_irq(&connection->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Cancel all active incoming operations on a connection.
  *
  * Locking: Called with connection lock held and state set to ENABLED_TX.
  */
-static void
-gb_connection_flush_incoming_operations(struct gb_connection *connection,
-					int errno)
+अटल व्योम
+gb_connection_flush_incoming_operations(काष्ठा gb_connection *connection,
+					पूर्णांक त्रुटि_सं)
 	__must_hold(&connection->lock)
-{
-	struct gb_operation *operation;
+अणु
+	काष्ठा gb_operation *operation;
 	bool incoming;
 
-	while (!list_empty(&connection->operations)) {
+	जबतक (!list_empty(&connection->operations)) अणु
 		incoming = false;
-		list_for_each_entry(operation, &connection->operations,
-				    links) {
-			if (gb_operation_is_incoming(operation)) {
+		list_क्रम_each_entry(operation, &connection->operations,
+				    links) अणु
+			अगर (gb_operation_is_incoming(operation)) अणु
 				gb_operation_get(operation);
 				incoming = true;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (!incoming)
-			break;
+		अगर (!incoming)
+			अवरोध;
 
 		spin_unlock_irq(&connection->lock);
 
 		/* FIXME: flush, not cancel? */
-		gb_operation_cancel_incoming(operation, errno);
+		gb_operation_cancel_incoming(operation, त्रुटि_सं);
 		gb_operation_put(operation);
 
 		spin_lock_irq(&connection->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * _gb_connection_enable() - enable a connection
  * @connection:		connection to enable
  * @rx:			whether to enable incoming requests
  *
- * Connection-enable helper for DISABLED->ENABLED, DISABLED->ENABLED_TX, and
+ * Connection-enable helper क्रम DISABLED->ENABLED, DISABLED->ENABLED_TX, and
  * ENABLED_TX->ENABLED state transitions.
  *
  * Locking: Caller holds connection->mutex.
  */
-static int _gb_connection_enable(struct gb_connection *connection, bool rx)
-{
-	int ret;
+अटल पूर्णांक _gb_connection_enable(काष्ठा gb_connection *connection, bool rx)
+अणु
+	पूर्णांक ret;
 
 	/* Handle ENABLED_TX -> ENABLED transitions. */
-	if (connection->state == GB_CONNECTION_STATE_ENABLED_TX) {
-		if (!(connection->handler && rx))
-			return 0;
+	अगर (connection->state == GB_CONNECTION_STATE_ENABLED_TX) अणु
+		अगर (!(connection->handler && rx))
+			वापस 0;
 
 		spin_lock_irq(&connection->lock);
 		connection->state = GB_CONNECTION_STATE_ENABLED;
 		spin_unlock_irq(&connection->lock);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = gb_connection_hd_cport_enable(connection);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = gb_connection_svc_connection_create(connection);
-	if (ret)
-		goto err_hd_cport_clear;
+	अगर (ret)
+		जाओ err_hd_cport_clear;
 
 	ret = gb_connection_hd_cport_connected(connection);
-	if (ret)
-		goto err_svc_connection_destroy;
+	अगर (ret)
+		जाओ err_svc_connection_destroy;
 
 	spin_lock_irq(&connection->lock);
-	if (connection->handler && rx)
+	अगर (connection->handler && rx)
 		connection->state = GB_CONNECTION_STATE_ENABLED;
-	else
+	अन्यथा
 		connection->state = GB_CONNECTION_STATE_ENABLED_TX;
 	spin_unlock_irq(&connection->lock);
 
 	ret = gb_connection_control_connected(connection);
-	if (ret)
-		goto err_control_disconnecting;
+	अगर (ret)
+		जाओ err_control_disconnecting;
 
-	return 0;
+	वापस 0;
 
 err_control_disconnecting:
 	spin_lock_irq(&connection->lock);
@@ -715,13 +716,13 @@ err_control_disconnecting:
 	gb_connection_cancel_operations(connection, -ESHUTDOWN);
 	spin_unlock_irq(&connection->lock);
 
-	/* Transmit queue should already be empty. */
+	/* Transmit queue should alपढ़ोy be empty. */
 	gb_connection_hd_cport_flush(connection);
 
 	gb_connection_control_disconnecting(connection);
-	gb_connection_cport_shutdown_phase_1(connection);
+	gb_connection_cport_shutकरोwn_phase_1(connection);
 	gb_connection_hd_cport_quiesce(connection);
-	gb_connection_cport_shutdown_phase_2(connection);
+	gb_connection_cport_shutकरोwn_phase_2(connection);
 	gb_connection_control_disconnected(connection);
 	connection->state = GB_CONNECTION_STATE_DISABLED;
 err_svc_connection_destroy:
@@ -731,63 +732,63 @@ err_hd_cport_clear:
 
 	gb_connection_hd_cport_disable(connection);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int gb_connection_enable(struct gb_connection *connection)
-{
-	int ret = 0;
+पूर्णांक gb_connection_enable(काष्ठा gb_connection *connection)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&connection->mutex);
 
-	if (connection->state == GB_CONNECTION_STATE_ENABLED)
-		goto out_unlock;
+	अगर (connection->state == GB_CONNECTION_STATE_ENABLED)
+		जाओ out_unlock;
 
 	ret = _gb_connection_enable(connection, true);
-	if (!ret)
+	अगर (!ret)
 		trace_gb_connection_enable(connection);
 
 out_unlock:
 	mutex_unlock(&connection->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_enable);
 
-int gb_connection_enable_tx(struct gb_connection *connection)
-{
-	int ret = 0;
+पूर्णांक gb_connection_enable_tx(काष्ठा gb_connection *connection)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&connection->mutex);
 
-	if (connection->state == GB_CONNECTION_STATE_ENABLED) {
+	अगर (connection->state == GB_CONNECTION_STATE_ENABLED) अणु
 		ret = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (connection->state == GB_CONNECTION_STATE_ENABLED_TX)
-		goto out_unlock;
+	अगर (connection->state == GB_CONNECTION_STATE_ENABLED_TX)
+		जाओ out_unlock;
 
 	ret = _gb_connection_enable(connection, false);
-	if (!ret)
+	अगर (!ret)
 		trace_gb_connection_enable(connection);
 
 out_unlock:
 	mutex_unlock(&connection->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_enable_tx);
 
-void gb_connection_disable_rx(struct gb_connection *connection)
-{
+व्योम gb_connection_disable_rx(काष्ठा gb_connection *connection)
+अणु
 	mutex_lock(&connection->mutex);
 
 	spin_lock_irq(&connection->lock);
-	if (connection->state != GB_CONNECTION_STATE_ENABLED) {
+	अगर (connection->state != GB_CONNECTION_STATE_ENABLED) अणु
 		spin_unlock_irq(&connection->lock);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	connection->state = GB_CONNECTION_STATE_ENABLED_TX;
 	gb_connection_flush_incoming_operations(connection, -ESHUTDOWN);
 	spin_unlock_irq(&connection->lock);
@@ -796,30 +797,30 @@ void gb_connection_disable_rx(struct gb_connection *connection)
 
 out_unlock:
 	mutex_unlock(&connection->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_disable_rx);
 
-void gb_connection_mode_switch_prepare(struct gb_connection *connection)
-{
-	connection->mode_switch = true;
-}
+व्योम gb_connection_mode_चयन_prepare(काष्ठा gb_connection *connection)
+अणु
+	connection->mode_चयन = true;
+पूर्ण
 
-void gb_connection_mode_switch_complete(struct gb_connection *connection)
-{
+व्योम gb_connection_mode_चयन_complete(काष्ठा gb_connection *connection)
+अणु
 	gb_connection_svc_connection_destroy(connection);
 	gb_connection_hd_cport_clear(connection);
 
 	gb_connection_hd_cport_disable(connection);
 
-	connection->mode_switch = false;
-}
+	connection->mode_चयन = false;
+पूर्ण
 
-void gb_connection_disable(struct gb_connection *connection)
-{
+व्योम gb_connection_disable(काष्ठा gb_connection *connection)
+अणु
 	mutex_lock(&connection->mutex);
 
-	if (connection->state == GB_CONNECTION_STATE_DISABLED)
-		goto out_unlock;
+	अगर (connection->state == GB_CONNECTION_STATE_DISABLED)
+		जाओ out_unlock;
 
 	trace_gb_connection_disable(connection);
 
@@ -831,33 +832,33 @@ void gb_connection_disable(struct gb_connection *connection)
 	gb_connection_hd_cport_flush(connection);
 
 	gb_connection_control_disconnecting(connection);
-	gb_connection_cport_shutdown_phase_1(connection);
+	gb_connection_cport_shutकरोwn_phase_1(connection);
 	gb_connection_hd_cport_quiesce(connection);
-	gb_connection_cport_shutdown_phase_2(connection);
+	gb_connection_cport_shutकरोwn_phase_2(connection);
 	gb_connection_control_disconnected(connection);
 
 	connection->state = GB_CONNECTION_STATE_DISABLED;
 
-	/* control-connection tear down is deferred when mode switching */
-	if (!connection->mode_switch) {
+	/* control-connection tear करोwn is deferred when mode चयनing */
+	अगर (!connection->mode_चयन) अणु
 		gb_connection_svc_connection_destroy(connection);
 		gb_connection_hd_cport_clear(connection);
 
 		gb_connection_hd_cport_disable(connection);
-	}
+	पूर्ण
 
 out_unlock:
 	mutex_unlock(&connection->mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_disable);
 
 /* Disable a connection without communicating with the remote end. */
-void gb_connection_disable_forced(struct gb_connection *connection)
-{
+व्योम gb_connection_disable_क्रमced(काष्ठा gb_connection *connection)
+अणु
 	mutex_lock(&connection->mutex);
 
-	if (connection->state == GB_CONNECTION_STATE_DISABLED)
-		goto out_unlock;
+	अगर (connection->state == GB_CONNECTION_STATE_DISABLED)
+		जाओ out_unlock;
 
 	trace_gb_connection_disable(connection);
 
@@ -874,16 +875,16 @@ void gb_connection_disable_forced(struct gb_connection *connection)
 	gb_connection_hd_cport_disable(connection);
 out_unlock:
 	mutex_unlock(&connection->mutex);
-}
-EXPORT_SYMBOL_GPL(gb_connection_disable_forced);
+पूर्ण
+EXPORT_SYMBOL_GPL(gb_connection_disable_क्रमced);
 
-/* Caller must have disabled the connection before destroying it. */
-void gb_connection_destroy(struct gb_connection *connection)
-{
-	if (!connection)
-		return;
+/* Caller must have disabled the connection beक्रमe destroying it. */
+व्योम gb_connection_destroy(काष्ठा gb_connection *connection)
+अणु
+	अगर (!connection)
+		वापस;
 
-	if (WARN_ON(connection->state != GB_CONNECTION_STATE_DISABLED))
+	अगर (WARN_ON(connection->state != GB_CONNECTION_STATE_DISABLED))
 		gb_connection_disable(connection);
 
 	mutex_lock(&gb_connection_mutex);
@@ -901,39 +902,39 @@ void gb_connection_destroy(struct gb_connection *connection)
 	mutex_unlock(&gb_connection_mutex);
 
 	gb_connection_put(connection);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_destroy);
 
-void gb_connection_latency_tag_enable(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+व्योम gb_connection_latency_tag_enable(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->latency_tag_enable)
-		return;
+	अगर (!hd->driver->latency_tag_enable)
+		वापस;
 
 	ret = hd->driver->latency_tag_enable(hd, connection->hd_cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: failed to enable latency tag: %d\n",
 			connection->name, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_latency_tag_enable);
 
-void gb_connection_latency_tag_disable(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
-	int ret;
+व्योम gb_connection_latency_tag_disable(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	पूर्णांक ret;
 
-	if (!hd->driver->latency_tag_disable)
-		return;
+	अगर (!hd->driver->latency_tag_disable)
+		वापस;
 
 	ret = hd->driver->latency_tag_disable(hd, connection->hd_cport_id);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: failed to disable latency tag: %d\n",
 			connection->name, ret);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_connection_latency_tag_disable);

@@ -1,91 +1,92 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef _RTW_RECV_H_
-#define _RTW_RECV_H_
+#अगर_अघोषित _RTW_RECV_H_
+#घोषणा _RTW_RECV_H_
 
-#include <osdep_service.h>
-#include <drv_types.h>
+#समावेश <osdep_service.h>
+#समावेश <drv_types.h>
 
-#define NR_RECVFRAME 256
+#घोषणा NR_RECVFRAME 256
 
-#define RXFRAME_ALIGN	8
-#define RXFRAME_ALIGN_SZ	(1 << RXFRAME_ALIGN)
+#घोषणा RXFRAME_ALIGN	8
+#घोषणा RXFRAME_ALIGN_SZ	(1 << RXFRAME_ALIGN)
 
-#define MAX_RXFRAME_CNT	512
-#define MAX_RX_NUMBLKS		(32)
-#define RECVFRAME_HDR_ALIGN 128
+#घोषणा MAX_RXFRAME_CNT	512
+#घोषणा MAX_RX_NUMBLKS		(32)
+#घोषणा RECVFRAME_HDR_ALIGN 128
 
-#define SNAP_SIZE sizeof(struct ieee80211_snap_hdr)
+#घोषणा SNAP_SIZE माप(काष्ठा ieee80211_snap_hdr)
 
-#define MAX_SUBFRAME_COUNT	64
+#घोषणा MAX_SUBFRAME_COUNT	64
 
-/* for Rx reordering buffer control */
-struct recv_reorder_ctrl {
-	struct adapter	*padapter;
+/* क्रम Rx reordering buffer control */
+काष्ठा recv_reorder_ctrl अणु
+	काष्ठा adapter	*padapter;
 	bool enable;
 	u16 indicate_seq;/* wstart_b, init_value=0xffff */
 	u16 wend_b;
 	u8 wsize_b;
-	struct __queue pending_recvframe_queue;
-	struct timer_list reordering_ctrl_timer;
-};
+	काष्ठा __queue pending_recvframe_queue;
+	काष्ठा समयr_list reordering_ctrl_समयr;
+पूर्ण;
 
-struct	stainfo_rxcache	{
+काष्ठा	stainfo_rxcache	अणु
 	u16	tid_rxseq[16];
 /*
- *	unsigned short	tid0_rxseq;
- *	unsigned short	tid1_rxseq;
- *	unsigned short	tid2_rxseq;
- *	unsigned short	tid3_rxseq;
- *	unsigned short	tid4_rxseq;
- *	unsigned short	tid5_rxseq;
- *	unsigned short	tid6_rxseq;
- *	unsigned short	tid7_rxseq;
- *	unsigned short	tid8_rxseq;
- *	unsigned short	tid9_rxseq;
- *	unsigned short	tid10_rxseq;
- *	unsigned short	tid11_rxseq;
- *	unsigned short	tid12_rxseq;
- *	unsigned short	tid13_rxseq;
- *	unsigned short	tid14_rxseq;
- *	unsigned short	tid15_rxseq;
+ *	अचिन्हित लघु	tid0_rxseq;
+ *	अचिन्हित लघु	tid1_rxseq;
+ *	अचिन्हित लघु	tid2_rxseq;
+ *	अचिन्हित लघु	tid3_rxseq;
+ *	अचिन्हित लघु	tid4_rxseq;
+ *	अचिन्हित लघु	tid5_rxseq;
+ *	अचिन्हित लघु	tid6_rxseq;
+ *	अचिन्हित लघु	tid7_rxseq;
+ *	अचिन्हित लघु	tid8_rxseq;
+ *	अचिन्हित लघु	tid9_rxseq;
+ *	अचिन्हित लघु	tid10_rxseq;
+ *	अचिन्हित लघु	tid11_rxseq;
+ *	अचिन्हित लघु	tid12_rxseq;
+ *	अचिन्हित लघु	tid13_rxseq;
+ *	अचिन्हित लघु	tid14_rxseq;
+ *	अचिन्हित लघु	tid15_rxseq;
  */
-};
+पूर्ण;
 
-struct signal_stat {
+काष्ठा संकेत_stat अणु
 	u8	update_req;		/* used to indicate */
 	u8	avg_val;		/* avg of valid elements */
 	u32	total_num;		/* num of valid elements */
 	u32	total_val;		/* sum of valid elements */
-};
+पूर्ण;
 
-#define MAX_PATH_NUM_92CS		3
+#घोषणा MAX_PATH_NUM_92CS		3
 
-struct phy_info {
+काष्ठा phy_info अणु
 	u8	RxPWDBAll;
 	u8	SignalQuality;	 /*  in 0-100 index. */
 	u8	RxMIMOSignalQuality[MAX_PATH_NUM_92CS]; /* EVM */
 	u8	RxMIMOSignalStrength[MAX_PATH_NUM_92CS];/*  in 0~100 index */
 	s8	RxPower; /*  in dBm Translate from PWdB */
-/*  Real power in dBm for this packet, no beautification and aggregation.
- * Keep this raw info to be used for the other procedures.
+/*  Real घातer in dBm क्रम this packet, no beautअगरication and aggregation.
+ * Keep this raw info to be used क्रम the other procedures.
  */
-	s8	recvpower;
+	s8	recvघातer;
 	u8	BTRxRSSIPercentage;
 	u8	SignalStrength; /*  in 0-100 index. */
 	u8	RxPwr[MAX_PATH_NUM_92CS];/* per-path's pwdb */
 	u8	RxSNR[MAX_PATH_NUM_92CS];/* per-path's SNR */
-};
+पूर्ण;
 
-struct rx_pkt_attrib {
+काष्ठा rx_pkt_attrib अणु
 	u16	pkt_len;
 	u8	physt;
 	u8	drvinfo_sz;
-	u8	shift_sz;
+	u8	shअगरt_sz;
 	u8	hdrlen; /* the WLAN Header Len */
 	u8	to_fr_ds;
 	u8	amsdu;
@@ -125,82 +126,82 @@ struct rx_pkt_attrib {
 	u8	pkt_rpt_type;
 	u32	MacIDValidEntry[2];	/*  64 bits present 64 entry. */
 
-	struct phy_info phy_info;
-};
+	काष्ठा phy_info phy_info;
+पूर्ण;
 
-/* These definition is used for Rx packet reordering. */
-#define SN_LESS(a, b)		(((a - b) & 0x800) != 0)
-#define SN_EQUAL(a, b)	(a == b)
-#define REORDER_WAIT_TIME	(50) /*  (ms) */
+/* These definition is used क्रम Rx packet reordering. */
+#घोषणा SN_LESS(a, b)		(((a - b) & 0x800) != 0)
+#घोषणा SN_EQUAL(a, b)	(a == b)
+#घोषणा REORDER_WAIT_TIME	(50) /*  (ms) */
 
-#define RXDESC_SIZE	24
-#define RXDESC_OFFSET RXDESC_SIZE
+#घोषणा RXDESC_SIZE	24
+#घोषणा RXDESC_OFFSET RXDESC_SIZE
 
-struct recv_stat {
+काष्ठा recv_stat अणु
 	__le32 rxdw0;
 	__le32 rxdw1;
 	__le32 rxdw2;
 	__le32 rxdw3;
 	__le32 rxdw4;
 	__le32 rxdw5;
-};
+पूर्ण;
 
 /*
  * accesser of recv_priv: rtw_recv_entry(dispatch / passive level);
- * recv_thread(passive) ; returnpkt(dispatch)
+ * recv_thपढ़ो(passive) ; वापसpkt(dispatch)
  * ; halt(passive) ;
  *
  * using enter_critical section to protect
  */
-struct recv_priv {
-	struct __queue free_recv_queue;
-	struct __queue recv_pending_queue;
-	struct __queue uc_swdec_pending_queue;
-	void *pallocated_frame_buf;
-	struct adapter	*adapter;
+काष्ठा recv_priv अणु
+	काष्ठा __queue मुक्त_recv_queue;
+	काष्ठा __queue recv_pending_queue;
+	काष्ठा __queue uc_swdec_pending_queue;
+	व्योम *pallocated_frame_buf;
+	काष्ठा adapter	*adapter;
 	u32	bIsAnyNonBEPkts;
 	u64	rx_bytes;
 	u64	rx_pkts;
 	u64	rx_drop;
 	u64	last_rx_bytes;
 
-	struct tasklet_struct irq_prepare_beacon_tasklet;
-	struct tasklet_struct recv_tasklet;
-	struct sk_buff_head free_recv_skb_queue;
-	struct sk_buff_head rx_skb_queue;
-	struct recv_buf *precv_buf;    /*  4 alignment */
-	struct __queue free_recv_buf_queue;
-	/* For display the phy information */
+	काष्ठा tasklet_काष्ठा irq_prepare_beacon_tasklet;
+	काष्ठा tasklet_काष्ठा recv_tasklet;
+	काष्ठा sk_buff_head मुक्त_recv_skb_queue;
+	काष्ठा sk_buff_head rx_skb_queue;
+	काष्ठा recv_buf *precv_buf;    /*  4 alignment */
+	काष्ठा __queue मुक्त_recv_buf_queue;
+	/* For display the phy inक्रमmation */
 	s8 rssi;
 	s8 rxpwdb;
-	u8 signal_strength;
-	u8 signal_qual;
+	u8 संकेत_strength;
+	u8 संकेत_qual;
 	u8 noise;
 	s8 RxRssi[2];
 
-	struct timer_list signal_stat_timer;
-	u32 signal_stat_sampling_interval;
-	struct signal_stat signal_qual_data;
-	struct signal_stat signal_strength_data;
-};
+	काष्ठा समयr_list संकेत_stat_समयr;
+	u32 संकेत_stat_sampling_पूर्णांकerval;
+	काष्ठा संकेत_stat संकेत_qual_data;
+	काष्ठा संकेत_stat संकेत_strength_data;
+पूर्ण;
 
-#define rtw_set_signal_stat_timer(recvpriv)			\
-	mod_timer(&(recvpriv)->signal_stat_timer, jiffies +	\
-		  msecs_to_jiffies((recvpriv)->signal_stat_sampling_interval))
+#घोषणा rtw_set_संकेत_stat_समयr(recvpriv)			\
+	mod_समयr(&(recvpriv)->संकेत_stat_समयr, jअगरfies +	\
+		  msecs_to_jअगरfies((recvpriv)->संकेत_stat_sampling_पूर्णांकerval))
 
-struct sta_recv_priv {
+काष्ठा sta_recv_priv अणु
 	spinlock_t lock;
-	int	option;
-	struct __queue defrag_q; /* keeping the fragment frame until defrag */
-	struct	stainfo_rxcache rxcache;
-};
+	पूर्णांक	option;
+	काष्ठा __queue defrag_q; /* keeping the fragment frame until defrag */
+	काष्ठा	stainfo_rxcache rxcache;
+पूर्ण;
 
-struct recv_buf {
-	struct adapter *adapter;
-	struct urb *purb;
-	struct sk_buff *pskb;
+काष्ठा recv_buf अणु
+	काष्ठा adapter *adapter;
+	काष्ठा urb *purb;
+	काष्ठा sk_buff *pskb;
 	u8	reuse;
-};
+पूर्ण;
 
 /*
  *	head  ----->
@@ -214,50 +215,50 @@ struct recv_buf {
  *
  *	end   ----->
  *
- *	len = (unsigned int )(tail - data);
+ *	len = (अचिन्हित पूर्णांक )(tail - data);
  *
  */
-struct recv_frame {
-	struct list_head list;
-	struct sk_buff	 *pkt;
-	struct adapter  *adapter;
-	struct rx_pkt_attrib attrib;
-	struct sta_info *psta;
-	/* for A-MPDU Rx reordering buffer control */
-	struct recv_reorder_ctrl *preorder_ctrl;
-};
+काष्ठा recv_frame अणु
+	काष्ठा list_head list;
+	काष्ठा sk_buff	 *pkt;
+	काष्ठा adapter  *adapter;
+	काष्ठा rx_pkt_attrib attrib;
+	काष्ठा sta_info *psta;
+	/* क्रम A-MPDU Rx reordering buffer control */
+	काष्ठा recv_reorder_ctrl *preorder_ctrl;
+पूर्ण;
 
-struct recv_frame *_rtw_alloc_recvframe(struct __queue *pfree_recv_queue);
-struct recv_frame *rtw_alloc_recvframe(struct __queue *pfree_recv_queue);
-void rtw_init_recvframe(struct recv_frame *precvframe,
-			struct recv_priv *precvpriv);
-int  rtw_free_recvframe(struct recv_frame *precvframe,
-			struct __queue *pfree_recv_queue);
-#define rtw_dequeue_recvframe(queue) rtw_alloc_recvframe(queue)
-int _rtw_enqueue_recvframe(struct recv_frame *precvframe,
-			   struct __queue *queue);
-int rtw_enqueue_recvframe(struct recv_frame *precvframe, struct __queue *queue);
-void rtw_free_recvframe_queue(struct __queue *pframequeue,
-			      struct __queue *pfree_recv_queue);
-u32 rtw_free_uc_swdec_pending_queue(struct adapter *adapter);
+काष्ठा recv_frame *_rtw_alloc_recvframe(काष्ठा __queue *pमुक्त_recv_queue);
+काष्ठा recv_frame *rtw_alloc_recvframe(काष्ठा __queue *pमुक्त_recv_queue);
+व्योम rtw_init_recvframe(काष्ठा recv_frame *precvframe,
+			काष्ठा recv_priv *precvpriv);
+पूर्णांक  rtw_मुक्त_recvframe(काष्ठा recv_frame *precvframe,
+			काष्ठा __queue *pमुक्त_recv_queue);
+#घोषणा rtw_dequeue_recvframe(queue) rtw_alloc_recvframe(queue)
+पूर्णांक _rtw_enqueue_recvframe(काष्ठा recv_frame *precvframe,
+			   काष्ठा __queue *queue);
+पूर्णांक rtw_enqueue_recvframe(काष्ठा recv_frame *precvframe, काष्ठा __queue *queue);
+व्योम rtw_मुक्त_recvframe_queue(काष्ठा __queue *pframequeue,
+			      काष्ठा __queue *pमुक्त_recv_queue);
+u32 rtw_मुक्त_uc_swdec_pending_queue(काष्ठा adapter *adapter);
 
-void rtw_reordering_ctrl_timeout_handler(struct timer_list *t);
+व्योम rtw_reordering_ctrl_समयout_handler(काष्ठा समयr_list *t);
 
-static inline s32 translate_percentage_to_dbm(u32 sig_stren_index)
-{
-	s32	power; /*  in dBm. */
+अटल अंतरभूत s32 translate_percentage_to_dbm(u32 sig_stren_index)
+अणु
+	s32	घातer; /*  in dBm. */
 
 	/*  Translate to dBm (x=0.5y-95). */
-	power = (s32)((sig_stren_index + 1) >> 1);
-	power -= 95;
+	घातer = (s32)((sig_stren_index + 1) >> 1);
+	घातer -= 95;
 
-	return power;
-}
+	वापस घातer;
+पूर्ण
 
-struct sta_info;
+काष्ठा sta_info;
 
-void _rtw_init_sta_recv_priv(struct sta_recv_priv *psta_recvpriv);
+व्योम _rtw_init_sta_recv_priv(काष्ठा sta_recv_priv *psta_recvpriv);
 
-void  mgt_dispatcher(struct adapter *padapter, struct recv_frame *precv_frame);
+व्योम  mgt_dispatcher(काष्ठा adapter *padapter, काष्ठा recv_frame *precv_frame);
 
-#endif
+#पूर्ण_अगर

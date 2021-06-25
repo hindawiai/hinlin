@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
@@ -7,157 +8,157 @@
 
 /* File aq_ptp.h: Declaration of PTP functions.
  */
-#ifndef AQ_PTP_H
-#define AQ_PTP_H
+#अगर_अघोषित AQ_PTP_H
+#घोषणा AQ_PTP_H
 
-#include <linux/net_tstamp.h>
+#समावेश <linux/net_tstamp.h>
 
-#include "aq_ring.h"
+#समावेश "aq_ring.h"
 
-#define PTP_8TC_RING_IDX             8
-#define PTP_4TC_RING_IDX            16
-#define PTP_HWST_RING_IDX           31
+#घोषणा PTP_8TC_RING_IDX             8
+#घोषणा PTP_4TC_RING_IDX            16
+#घोषणा PTP_HWST_RING_IDX           31
 
 /* Index must to be 8 (8 TCs) or 16 (4 TCs).
  * It depends from Traffic Class mode.
  */
-static inline unsigned int aq_ptp_ring_idx(const enum aq_tc_mode tc_mode)
-{
-	if (tc_mode == AQ_TC_MODE_8TCS)
-		return PTP_8TC_RING_IDX;
+अटल अंतरभूत अचिन्हित पूर्णांक aq_ptp_ring_idx(स्थिर क्रमागत aq_tc_mode tc_mode)
+अणु
+	अगर (tc_mode == AQ_TC_MODE_8TCS)
+		वापस PTP_8TC_RING_IDX;
 
-	return PTP_4TC_RING_IDX;
-}
+	वापस PTP_4TC_RING_IDX;
+पूर्ण
 
-#if IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
+#अगर IS_REACHABLE(CONFIG_PTP_1588_CLOCK)
 
 /* Common functions */
-int aq_ptp_init(struct aq_nic_s *aq_nic, unsigned int idx_vec);
+पूर्णांक aq_ptp_init(काष्ठा aq_nic_s *aq_nic, अचिन्हित पूर्णांक idx_vec);
 
-void aq_ptp_unregister(struct aq_nic_s *aq_nic);
-void aq_ptp_free(struct aq_nic_s *aq_nic);
+व्योम aq_ptp_unरेजिस्टर(काष्ठा aq_nic_s *aq_nic);
+व्योम aq_ptp_मुक्त(काष्ठा aq_nic_s *aq_nic);
 
-int aq_ptp_irq_alloc(struct aq_nic_s *aq_nic);
-void aq_ptp_irq_free(struct aq_nic_s *aq_nic);
+पूर्णांक aq_ptp_irq_alloc(काष्ठा aq_nic_s *aq_nic);
+व्योम aq_ptp_irq_मुक्त(काष्ठा aq_nic_s *aq_nic);
 
-int aq_ptp_ring_alloc(struct aq_nic_s *aq_nic);
-void aq_ptp_ring_free(struct aq_nic_s *aq_nic);
+पूर्णांक aq_ptp_ring_alloc(काष्ठा aq_nic_s *aq_nic);
+व्योम aq_ptp_ring_मुक्त(काष्ठा aq_nic_s *aq_nic);
 
-int aq_ptp_ring_init(struct aq_nic_s *aq_nic);
-int aq_ptp_ring_start(struct aq_nic_s *aq_nic);
-void aq_ptp_ring_stop(struct aq_nic_s *aq_nic);
-void aq_ptp_ring_deinit(struct aq_nic_s *aq_nic);
+पूर्णांक aq_ptp_ring_init(काष्ठा aq_nic_s *aq_nic);
+पूर्णांक aq_ptp_ring_start(काष्ठा aq_nic_s *aq_nic);
+व्योम aq_ptp_ring_stop(काष्ठा aq_nic_s *aq_nic);
+व्योम aq_ptp_ring_deinit(काष्ठा aq_nic_s *aq_nic);
 
-void aq_ptp_service_task(struct aq_nic_s *aq_nic);
+व्योम aq_ptp_service_task(काष्ठा aq_nic_s *aq_nic);
 
-void aq_ptp_tm_offset_set(struct aq_nic_s *aq_nic, unsigned int mbps);
+व्योम aq_ptp_पंचांग_offset_set(काष्ठा aq_nic_s *aq_nic, अचिन्हित पूर्णांक mbps);
 
-void aq_ptp_clock_init(struct aq_nic_s *aq_nic);
+व्योम aq_ptp_घड़ी_init(काष्ठा aq_nic_s *aq_nic);
 
 /* Traffic processing functions */
-int aq_ptp_xmit(struct aq_nic_s *aq_nic, struct sk_buff *skb);
-void aq_ptp_tx_hwtstamp(struct aq_nic_s *aq_nic, u64 timestamp);
+पूर्णांक aq_ptp_xmit(काष्ठा aq_nic_s *aq_nic, काष्ठा sk_buff *skb);
+व्योम aq_ptp_tx_hwtstamp(काष्ठा aq_nic_s *aq_nic, u64 बारtamp);
 
-/* Must be to check available of PTP before call */
-void aq_ptp_hwtstamp_config_get(struct aq_ptp_s *aq_ptp,
-				struct hwtstamp_config *config);
-int aq_ptp_hwtstamp_config_set(struct aq_ptp_s *aq_ptp,
-			       struct hwtstamp_config *config);
+/* Must be to check available of PTP beक्रमe call */
+व्योम aq_ptp_hwtstamp_config_get(काष्ठा aq_ptp_s *aq_ptp,
+				काष्ठा hwtstamp_config *config);
+पूर्णांक aq_ptp_hwtstamp_config_set(काष्ठा aq_ptp_s *aq_ptp,
+			       काष्ठा hwtstamp_config *config);
 
-/* Return either ring is belong to PTP or not*/
-bool aq_ptp_ring(struct aq_nic_s *aq_nic, struct aq_ring_s *ring);
+/* Return either ring is beदीर्घ to PTP or not*/
+bool aq_ptp_ring(काष्ठा aq_nic_s *aq_nic, काष्ठा aq_ring_s *ring);
 
-u16 aq_ptp_extract_ts(struct aq_nic_s *aq_nic, struct sk_buff *skb, u8 *p,
-		      unsigned int len);
+u16 aq_ptp_extract_ts(काष्ठा aq_nic_s *aq_nic, काष्ठा sk_buff *skb, u8 *p,
+		      अचिन्हित पूर्णांक len);
 
-struct ptp_clock *aq_ptp_get_ptp_clock(struct aq_ptp_s *aq_ptp);
+काष्ठा ptp_घड़ी *aq_ptp_get_ptp_घड़ी(काष्ठा aq_ptp_s *aq_ptp);
 
-int aq_ptp_link_change(struct aq_nic_s *aq_nic);
+पूर्णांक aq_ptp_link_change(काष्ठा aq_nic_s *aq_nic);
 
 /* PTP ring statistics */
-int aq_ptp_get_ring_cnt(struct aq_nic_s *aq_nic, const enum atl_ring_type ring_type);
-u64 *aq_ptp_get_stats(struct aq_nic_s *aq_nic, u64 *data);
+पूर्णांक aq_ptp_get_ring_cnt(काष्ठा aq_nic_s *aq_nic, स्थिर क्रमागत atl_ring_type ring_type);
+u64 *aq_ptp_get_stats(काष्ठा aq_nic_s *aq_nic, u64 *data);
 
-#else
+#अन्यथा
 
-static inline int aq_ptp_init(struct aq_nic_s *aq_nic, unsigned int idx_vec)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक aq_ptp_init(काष्ठा aq_nic_s *aq_nic, अचिन्हित पूर्णांक idx_vec)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void aq_ptp_unregister(struct aq_nic_s *aq_nic) {}
+अटल अंतरभूत व्योम aq_ptp_unरेजिस्टर(काष्ठा aq_nic_s *aq_nic) अणुपूर्ण
 
-static inline void aq_ptp_free(struct aq_nic_s *aq_nic)
-{
-}
+अटल अंतरभूत व्योम aq_ptp_मुक्त(काष्ठा aq_nic_s *aq_nic)
+अणु
+पूर्ण
 
-static inline int aq_ptp_irq_alloc(struct aq_nic_s *aq_nic)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक aq_ptp_irq_alloc(काष्ठा aq_nic_s *aq_nic)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void aq_ptp_irq_free(struct aq_nic_s *aq_nic)
-{
-}
+अटल अंतरभूत व्योम aq_ptp_irq_मुक्त(काष्ठा aq_nic_s *aq_nic)
+अणु
+पूर्ण
 
-static inline int aq_ptp_ring_alloc(struct aq_nic_s *aq_nic)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक aq_ptp_ring_alloc(काष्ठा aq_nic_s *aq_nic)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void aq_ptp_ring_free(struct aq_nic_s *aq_nic) {}
+अटल अंतरभूत व्योम aq_ptp_ring_मुक्त(काष्ठा aq_nic_s *aq_nic) अणुपूर्ण
 
-static inline int aq_ptp_ring_init(struct aq_nic_s *aq_nic)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक aq_ptp_ring_init(काष्ठा aq_nic_s *aq_nic)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int aq_ptp_ring_start(struct aq_nic_s *aq_nic)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक aq_ptp_ring_start(काष्ठा aq_nic_s *aq_nic)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void aq_ptp_ring_stop(struct aq_nic_s *aq_nic) {}
-static inline void aq_ptp_ring_deinit(struct aq_nic_s *aq_nic) {}
-static inline void aq_ptp_service_task(struct aq_nic_s *aq_nic) {}
-static inline void aq_ptp_tm_offset_set(struct aq_nic_s *aq_nic,
-					unsigned int mbps) {}
-static inline void aq_ptp_clock_init(struct aq_nic_s *aq_nic) {}
-static inline int aq_ptp_xmit(struct aq_nic_s *aq_nic, struct sk_buff *skb)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत व्योम aq_ptp_ring_stop(काष्ठा aq_nic_s *aq_nic) अणुपूर्ण
+अटल अंतरभूत व्योम aq_ptp_ring_deinit(काष्ठा aq_nic_s *aq_nic) अणुपूर्ण
+अटल अंतरभूत व्योम aq_ptp_service_task(काष्ठा aq_nic_s *aq_nic) अणुपूर्ण
+अटल अंतरभूत व्योम aq_ptp_पंचांग_offset_set(काष्ठा aq_nic_s *aq_nic,
+					अचिन्हित पूर्णांक mbps) अणुपूर्ण
+अटल अंतरभूत व्योम aq_ptp_घड़ी_init(काष्ठा aq_nic_s *aq_nic) अणुपूर्ण
+अटल अंतरभूत पूर्णांक aq_ptp_xmit(काष्ठा aq_nic_s *aq_nic, काष्ठा sk_buff *skb)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void aq_ptp_tx_hwtstamp(struct aq_nic_s *aq_nic, u64 timestamp) {}
-static inline void aq_ptp_hwtstamp_config_get(struct aq_ptp_s *aq_ptp,
-					      struct hwtstamp_config *config) {}
-static inline int aq_ptp_hwtstamp_config_set(struct aq_ptp_s *aq_ptp,
-					     struct hwtstamp_config *config)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम aq_ptp_tx_hwtstamp(काष्ठा aq_nic_s *aq_nic, u64 बारtamp) अणुपूर्ण
+अटल अंतरभूत व्योम aq_ptp_hwtstamp_config_get(काष्ठा aq_ptp_s *aq_ptp,
+					      काष्ठा hwtstamp_config *config) अणुपूर्ण
+अटल अंतरभूत पूर्णांक aq_ptp_hwtstamp_config_set(काष्ठा aq_ptp_s *aq_ptp,
+					     काष्ठा hwtstamp_config *config)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool aq_ptp_ring(struct aq_nic_s *aq_nic, struct aq_ring_s *ring)
-{
-	return false;
-}
+अटल अंतरभूत bool aq_ptp_ring(काष्ठा aq_nic_s *aq_nic, काष्ठा aq_ring_s *ring)
+अणु
+	वापस false;
+पूर्ण
 
-static inline u16 aq_ptp_extract_ts(struct aq_nic_s *aq_nic,
-				    struct sk_buff *skb, u8 *p,
-				    unsigned int len)
-{
-	return 0;
-}
+अटल अंतरभूत u16 aq_ptp_extract_ts(काष्ठा aq_nic_s *aq_nic,
+				    काष्ठा sk_buff *skb, u8 *p,
+				    अचिन्हित पूर्णांक len)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct ptp_clock *aq_ptp_get_ptp_clock(struct aq_ptp_s *aq_ptp)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा ptp_घड़ी *aq_ptp_get_ptp_घड़ी(काष्ठा aq_ptp_s *aq_ptp)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int aq_ptp_link_change(struct aq_nic_s *aq_nic)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत पूर्णांक aq_ptp_link_change(काष्ठा aq_nic_s *aq_nic)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* AQ_PTP_H */
+#पूर्ण_अगर /* AQ_PTP_H */

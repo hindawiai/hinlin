@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2017  Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -18,36 +19,36 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#if !defined (_vega10_ENUM_HEADER)
-#define _vega10_ENUM_HEADER
+#अगर !defined (_vega10_ENUM_HEADER)
+#घोषणा _vega10_ENUM_HEADER
 
-#ifndef _DRIVER_BUILD
-#ifndef GL_ZERO
-#define GL__ZERO                      BLEND_ZERO
-#define GL__ONE                       BLEND_ONE
-#define GL__SRC_COLOR                 BLEND_SRC_COLOR
-#define GL__ONE_MINUS_SRC_COLOR       BLEND_ONE_MINUS_SRC_COLOR
-#define GL__DST_COLOR                 BLEND_DST_COLOR
-#define GL__ONE_MINUS_DST_COLOR       BLEND_ONE_MINUS_DST_COLOR
-#define GL__SRC_ALPHA                 BLEND_SRC_ALPHA
-#define GL__ONE_MINUS_SRC_ALPHA       BLEND_ONE_MINUS_SRC_ALPHA
-#define GL__DST_ALPHA                 BLEND_DST_ALPHA
-#define GL__ONE_MINUS_DST_ALPHA       BLEND_ONE_MINUS_DST_ALPHA
-#define GL__SRC_ALPHA_SATURATE        BLEND_SRC_ALPHA_SATURATE
-#define GL__CONSTANT_COLOR            BLEND_CONSTANT_COLOR
-#define GL__ONE_MINUS_CONSTANT_COLOR  BLEND_ONE_MINUS_CONSTANT_COLOR
-#define GL__CONSTANT_ALPHA            BLEND_CONSTANT_ALPHA
-#define GL__ONE_MINUS_CONSTANT_ALPHA  BLEND_ONE_MINUS_CONSTANT_ALPHA
-#endif
-#endif
+#अगर_अघोषित _DRIVER_BUILD
+#अगर_अघोषित GL_ZERO
+#घोषणा GL__ZERO                      BLEND_ZERO
+#घोषणा GL__ONE                       BLEND_ONE
+#घोषणा GL__SRC_COLOR                 BLEND_SRC_COLOR
+#घोषणा GL__ONE_MINUS_SRC_COLOR       BLEND_ONE_MINUS_SRC_COLOR
+#घोषणा GL__DST_COLOR                 BLEND_DST_COLOR
+#घोषणा GL__ONE_MINUS_DST_COLOR       BLEND_ONE_MINUS_DST_COLOR
+#घोषणा GL__SRC_ALPHA                 BLEND_SRC_ALPHA
+#घोषणा GL__ONE_MINUS_SRC_ALPHA       BLEND_ONE_MINUS_SRC_ALPHA
+#घोषणा GL__DST_ALPHA                 BLEND_DST_ALPHA
+#घोषणा GL__ONE_MINUS_DST_ALPHA       BLEND_ONE_MINUS_DST_ALPHA
+#घोषणा GL__SRC_ALPHA_SATURATE        BLEND_SRC_ALPHA_SATURATE
+#घोषणा GL__CONSTANT_COLOR            BLEND_CONSTANT_COLOR
+#घोषणा GL__ONE_MINUS_CONSTANT_COLOR  BLEND_ONE_MINUS_CONSTANT_COLOR
+#घोषणा GL__CONSTANT_ALPHA            BLEND_CONSTANT_ALPHA
+#घोषणा GL__ONE_MINUS_CONSTANT_ALPHA  BLEND_ONE_MINUS_CONSTANT_ALPHA
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 /*******************************************************
  * GDS DATA_TYPE Enums
  *******************************************************/
 
-#ifndef ENUMS_GDS_PERFCOUNT_SELECT_H
-#define ENUMS_GDS_PERFCOUNT_SELECT_H
-typedef enum GDS_PERFCOUNT_SELECT {
+#अगर_अघोषित ENUMS_GDS_PERFCOUNT_SELECT_H
+#घोषणा ENUMS_GDS_PERFCOUNT_SELECT_H
+प्रकार क्रमागत GDS_PERFCOUNT_SELECT अणु
  GDS_PERF_SEL_DS_ADDR_CONFL = 0,
  GDS_PERF_SEL_DS_BANK_CONFL = 1,
  GDS_PERF_SEL_WBUF_FLUSH = 2,
@@ -169,87 +170,87 @@ typedef enum GDS_PERFCOUNT_SELECT {
  GDS_PERF_SEL_SE3_SH1_GDS_SHORT_OP = 118,
  GDS_PERF_SEL_GWS_RELEASED = 119,
  GDS_PERF_SEL_GWS_BYPASS = 120,
-} GDS_PERFCOUNT_SELECT;
-#endif /*ENUMS_GDS_PERFCOUNT_SELECT_H*/
+पूर्ण GDS_PERFCOUNT_SELECT;
+#पूर्ण_अगर /*ENUMS_GDS_PERFCOUNT_SELECT_H*/
 
 /*******************************************************
  * Chip Enums
  *******************************************************/
 
 /*
- * MEM_PWR_FORCE_CTRL enum
+ * MEM_PWR_FORCE_CTRL क्रमागत
  */
 
-typedef enum MEM_PWR_FORCE_CTRL {
+प्रकार क्रमागत MEM_PWR_FORCE_CTRL अणु
 NO_FORCE_REQUEST                         = 0x00000000,
 FORCE_LIGHT_SLEEP_REQUEST                = 0x00000001,
 FORCE_DEEP_SLEEP_REQUEST                 = 0x00000002,
 FORCE_SHUT_DOWN_REQUEST                  = 0x00000003,
-} MEM_PWR_FORCE_CTRL;
+पूर्ण MEM_PWR_FORCE_CTRL;
 
 /*
- * MEM_PWR_FORCE_CTRL2 enum
+ * MEM_PWR_FORCE_CTRL2 क्रमागत
  */
 
-typedef enum MEM_PWR_FORCE_CTRL2 {
+प्रकार क्रमागत MEM_PWR_FORCE_CTRL2 अणु
 NO_FORCE_REQ                             = 0x00000000,
 FORCE_LIGHT_SLEEP_REQ                    = 0x00000001,
-} MEM_PWR_FORCE_CTRL2;
+पूर्ण MEM_PWR_FORCE_CTRL2;
 
 /*
- * MEM_PWR_DIS_CTRL enum
+ * MEM_PWR_DIS_CTRL क्रमागत
  */
 
-typedef enum MEM_PWR_DIS_CTRL {
+प्रकार क्रमागत MEM_PWR_DIS_CTRL अणु
 ENABLE_MEM_PWR_CTRL                      = 0x00000000,
 DISABLE_MEM_PWR_CTRL                     = 0x00000001,
-} MEM_PWR_DIS_CTRL;
+पूर्ण MEM_PWR_DIS_CTRL;
 
 /*
- * MEM_PWR_SEL_CTRL enum
+ * MEM_PWR_SEL_CTRL क्रमागत
  */
 
-typedef enum MEM_PWR_SEL_CTRL {
+प्रकार क्रमागत MEM_PWR_SEL_CTRL अणु
 DYNAMIC_SHUT_DOWN_ENABLE                 = 0x00000000,
 DYNAMIC_DEEP_SLEEP_ENABLE                = 0x00000001,
 DYNAMIC_LIGHT_SLEEP_ENABLE               = 0x00000002,
-} MEM_PWR_SEL_CTRL;
+पूर्ण MEM_PWR_SEL_CTRL;
 
 /*
- * MEM_PWR_SEL_CTRL2 enum
+ * MEM_PWR_SEL_CTRL2 क्रमागत
  */
 
-typedef enum MEM_PWR_SEL_CTRL2 {
+प्रकार क्रमागत MEM_PWR_SEL_CTRL2 अणु
 DYNAMIC_DEEP_SLEEP_EN                    = 0x00000000,
 DYNAMIC_LIGHT_SLEEP_EN                   = 0x00000001,
-} MEM_PWR_SEL_CTRL2;
+पूर्ण MEM_PWR_SEL_CTRL2;
 
 /*
- * RowSize enum
+ * RowSize क्रमागत
  */
 
-typedef enum RowSize {
+प्रकार क्रमागत RowSize अणु
 ADDR_CONFIG_1KB_ROW                      = 0x00000000,
 ADDR_CONFIG_2KB_ROW                      = 0x00000001,
 ADDR_CONFIG_4KB_ROW                      = 0x00000002,
-} RowSize;
+पूर्ण RowSize;
 
 /*
- * SurfaceEndian enum
+ * SurfaceEndian क्रमागत
  */
 
-typedef enum SurfaceEndian {
+प्रकार क्रमागत SurfaceEndian अणु
 ENDIAN_NONE                              = 0x00000000,
 ENDIAN_8IN16                             = 0x00000001,
 ENDIAN_8IN32                             = 0x00000002,
 ENDIAN_8IN64                             = 0x00000003,
-} SurfaceEndian;
+पूर्ण SurfaceEndian;
 
 /*
- * ArrayMode enum
+ * ArrayMode क्रमागत
  */
 
-typedef enum ArrayMode {
+प्रकार क्रमागत ArrayMode अणु
 ARRAY_LINEAR_GENERAL                     = 0x00000000,
 ARRAY_LINEAR_ALIGNED                     = 0x00000001,
 ARRAY_1D_TILED_THIN1                     = 0x00000002,
@@ -266,143 +267,143 @@ ARRAY_3D_TILED_THIN1                     = 0x0000000c,
 ARRAY_3D_TILED_THICK                     = 0x0000000d,
 ARRAY_3D_TILED_XTHICK                    = 0x0000000e,
 ARRAY_PRT_3D_TILED_THICK                 = 0x0000000f,
-} ArrayMode;
+पूर्ण ArrayMode;
 
 /*
- * NumPipes enum
+ * NumPipes क्रमागत
  */
 
-typedef enum NumPipes {
+प्रकार क्रमागत NumPipes अणु
 ADDR_CONFIG_1_PIPE                       = 0x00000000,
 ADDR_CONFIG_2_PIPE                       = 0x00000001,
 ADDR_CONFIG_4_PIPE                       = 0x00000002,
 ADDR_CONFIG_8_PIPE                       = 0x00000003,
 ADDR_CONFIG_16_PIPE                      = 0x00000004,
 ADDR_CONFIG_32_PIPE                      = 0x00000005,
-} NumPipes;
+पूर्ण NumPipes;
 
 /*
- * NumBanksConfig enum
+ * NumBanksConfig क्रमागत
  */
 
-typedef enum NumBanksConfig {
+प्रकार क्रमागत NumBanksConfig अणु
 ADDR_CONFIG_1_BANK                       = 0x00000000,
 ADDR_CONFIG_2_BANK                       = 0x00000001,
 ADDR_CONFIG_4_BANK                       = 0x00000002,
 ADDR_CONFIG_8_BANK                       = 0x00000003,
 ADDR_CONFIG_16_BANK                      = 0x00000004,
-} NumBanksConfig;
+पूर्ण NumBanksConfig;
 
 /*
- * PipeInterleaveSize enum
+ * PipeInterleaveSize क्रमागत
  */
 
-typedef enum PipeInterleaveSize {
+प्रकार क्रमागत PipeInterleaveSize अणु
 ADDR_CONFIG_PIPE_INTERLEAVE_256B         = 0x00000000,
 ADDR_CONFIG_PIPE_INTERLEAVE_512B         = 0x00000001,
 ADDR_CONFIG_PIPE_INTERLEAVE_1KB          = 0x00000002,
 ADDR_CONFIG_PIPE_INTERLEAVE_2KB          = 0x00000003,
-} PipeInterleaveSize;
+पूर्ण PipeInterleaveSize;
 
 /*
- * BankInterleaveSize enum
+ * BankInterleaveSize क्रमागत
  */
 
-typedef enum BankInterleaveSize {
+प्रकार क्रमागत BankInterleaveSize अणु
 ADDR_CONFIG_BANK_INTERLEAVE_1            = 0x00000000,
 ADDR_CONFIG_BANK_INTERLEAVE_2            = 0x00000001,
 ADDR_CONFIG_BANK_INTERLEAVE_4            = 0x00000002,
 ADDR_CONFIG_BANK_INTERLEAVE_8            = 0x00000003,
-} BankInterleaveSize;
+पूर्ण BankInterleaveSize;
 
 /*
- * NumShaderEngines enum
+ * NumShaderEngines क्रमागत
  */
 
-typedef enum NumShaderEngines {
+प्रकार क्रमागत NumShaderEngines अणु
 ADDR_CONFIG_1_SHADER_ENGINE              = 0x00000000,
 ADDR_CONFIG_2_SHADER_ENGINE              = 0x00000001,
 ADDR_CONFIG_4_SHADER_ENGINE              = 0x00000002,
 ADDR_CONFIG_8_SHADER_ENGINE              = 0x00000003,
-} NumShaderEngines;
+पूर्ण NumShaderEngines;
 
 /*
- * NumRbPerShaderEngine enum
+ * NumRbPerShaderEngine क्रमागत
  */
 
-typedef enum NumRbPerShaderEngine {
+प्रकार क्रमागत NumRbPerShaderEngine अणु
 ADDR_CONFIG_1_RB_PER_SHADER_ENGINE       = 0x00000000,
 ADDR_CONFIG_2_RB_PER_SHADER_ENGINE       = 0x00000001,
 ADDR_CONFIG_4_RB_PER_SHADER_ENGINE       = 0x00000002,
-} NumRbPerShaderEngine;
+पूर्ण NumRbPerShaderEngine;
 
 /*
- * NumGPUs enum
+ * NumGPUs क्रमागत
  */
 
-typedef enum NumGPUs {
+प्रकार क्रमागत NumGPUs अणु
 ADDR_CONFIG_1_GPU                        = 0x00000000,
 ADDR_CONFIG_2_GPU                        = 0x00000001,
 ADDR_CONFIG_4_GPU                        = 0x00000002,
 ADDR_CONFIG_8_GPU                        = 0x00000003,
-} NumGPUs;
+पूर्ण NumGPUs;
 
 /*
- * NumMaxCompressedFragments enum
+ * NumMaxCompressedFragments क्रमागत
  */
 
-typedef enum NumMaxCompressedFragments {
+प्रकार क्रमागत NumMaxCompressedFragments अणु
 ADDR_CONFIG_1_MAX_COMPRESSED_FRAGMENTS   = 0x00000000,
 ADDR_CONFIG_2_MAX_COMPRESSED_FRAGMENTS   = 0x00000001,
 ADDR_CONFIG_4_MAX_COMPRESSED_FRAGMENTS   = 0x00000002,
 ADDR_CONFIG_8_MAX_COMPRESSED_FRAGMENTS   = 0x00000003,
-} NumMaxCompressedFragments;
+पूर्ण NumMaxCompressedFragments;
 
 /*
- * ShaderEngineTileSize enum
+ * ShaderEngineTileSize क्रमागत
  */
 
-typedef enum ShaderEngineTileSize {
+प्रकार क्रमागत ShaderEngineTileSize अणु
 ADDR_CONFIG_SE_TILE_16                   = 0x00000000,
 ADDR_CONFIG_SE_TILE_32                   = 0x00000001,
-} ShaderEngineTileSize;
+पूर्ण ShaderEngineTileSize;
 
 /*
- * MultiGPUTileSize enum
+ * MultiGPUTileSize क्रमागत
  */
 
-typedef enum MultiGPUTileSize {
+प्रकार क्रमागत MultiGPUTileSize अणु
 ADDR_CONFIG_GPU_TILE_16                  = 0x00000000,
 ADDR_CONFIG_GPU_TILE_32                  = 0x00000001,
 ADDR_CONFIG_GPU_TILE_64                  = 0x00000002,
 ADDR_CONFIG_GPU_TILE_128                 = 0x00000003,
-} MultiGPUTileSize;
+पूर्ण MultiGPUTileSize;
 
 /*
- * NumLowerPipes enum
+ * NumLowerPipes क्रमागत
  */
 
-typedef enum NumLowerPipes {
+प्रकार क्रमागत NumLowerPipes अणु
 ADDR_CONFIG_1_LOWER_PIPES                = 0x00000000,
 ADDR_CONFIG_2_LOWER_PIPES                = 0x00000001,
-} NumLowerPipes;
+पूर्ण NumLowerPipes;
 
 /*
- * ColorTransform enum
+ * ColorTransक्रमm क्रमागत
  */
 
-typedef enum ColorTransform {
+प्रकार क्रमागत ColorTransक्रमm अणु
 DCC_CT_AUTO                              = 0x00000000,
 DCC_CT_NONE                              = 0x00000001,
 ABGR_TO_A_BG_G_RB                        = 0x00000002,
 BGRA_TO_BG_G_RB_A                        = 0x00000003,
-} ColorTransform;
+पूर्ण ColorTransक्रमm;
 
 /*
- * CompareRef enum
+ * CompareRef क्रमागत
  */
 
-typedef enum CompareRef {
+प्रकार क्रमागत CompareRef अणु
 REF_NEVER                                = 0x00000000,
 REF_LESS                                 = 0x00000001,
 REF_EQUAL                                = 0x00000002,
@@ -411,22 +412,22 @@ REF_GREATER                              = 0x00000004,
 REF_NOTEQUAL                             = 0x00000005,
 REF_GEQUAL                               = 0x00000006,
 REF_ALWAYS                               = 0x00000007,
-} CompareRef;
+पूर्ण CompareRef;
 
 /*
- * ReadSize enum
+ * ReadSize क्रमागत
  */
 
-typedef enum ReadSize {
+प्रकार क्रमागत ReadSize अणु
 READ_256_BITS                            = 0x00000000,
 READ_512_BITS                            = 0x00000001,
-} ReadSize;
+पूर्ण ReadSize;
 
 /*
- * DepthFormat enum
+ * DepthFormat क्रमागत
  */
 
-typedef enum DepthFormat {
+प्रकार क्रमागत DepthFormat अणु
 DEPTH_INVALID                            = 0x00000000,
 DEPTH_16                                 = 0x00000001,
 DEPTH_X8_24                              = 0x00000002,
@@ -435,33 +436,33 @@ DEPTH_X8_24_FLOAT                        = 0x00000004,
 DEPTH_8_24_FLOAT                         = 0x00000005,
 DEPTH_32_FLOAT                           = 0x00000006,
 DEPTH_X24_8_32_FLOAT                     = 0x00000007,
-} DepthFormat;
+पूर्ण DepthFormat;
 
 /*
- * ZFormat enum
+ * ZFormat क्रमागत
  */
 
-typedef enum ZFormat {
+प्रकार क्रमागत ZFormat अणु
 Z_INVALID                                = 0x00000000,
 Z_16                                     = 0x00000001,
 Z_24                                     = 0x00000002,
 Z_32_FLOAT                               = 0x00000003,
-} ZFormat;
+पूर्ण ZFormat;
 
 /*
- * StencilFormat enum
+ * StencilFormat क्रमागत
  */
 
-typedef enum StencilFormat {
+प्रकार क्रमागत StencilFormat अणु
 STENCIL_INVALID                          = 0x00000000,
 STENCIL_8                                = 0x00000001,
-} StencilFormat;
+पूर्ण StencilFormat;
 
 /*
- * CmaskMode enum
+ * CmaskMode क्रमागत
  */
 
-typedef enum CmaskMode {
+प्रकार क्रमागत CmaskMode अणु
 CMASK_CLEAR_NONE                         = 0x00000000,
 CMASK_CLEAR_ONE                          = 0x00000001,
 CMASK_CLEAR_ALL                          = 0x00000002,
@@ -478,13 +479,13 @@ CMASK_ALPHAX_FRAG1                       = 0x0000000c,
 CMASK_ALPHAX_FRAG2                       = 0x0000000d,
 CMASK_ALPHAX_FRAG4                       = 0x0000000e,
 CMASK_ALPHAX_FRAGS                       = 0x0000000f,
-} CmaskMode;
+पूर्ण CmaskMode;
 
 /*
- * QuadExportFormat enum
+ * QuadExportFormat क्रमागत
  */
 
-typedef enum QuadExportFormat {
+प्रकार क्रमागत QuadExportFormat अणु
 EXPORT_UNUSED                            = 0x00000000,
 EXPORT_32_R                              = 0x00000001,
 EXPORT_32_GR                             = 0x00000002,
@@ -497,26 +498,26 @@ EXPORT_32BPP_8PIX                        = 0x00000008,
 EXPORT_16_16_UNSIGNED_8PIX               = 0x00000009,
 EXPORT_16_16_SIGNED_8PIX                 = 0x0000000a,
 EXPORT_16_16_FLOAT_8PIX                  = 0x0000000b,
-} QuadExportFormat;
+पूर्ण QuadExportFormat;
 
 /*
- * QuadExportFormatOld enum
+ * QuadExportFormatOld क्रमागत
  */
 
-typedef enum QuadExportFormatOld {
+प्रकार क्रमागत QuadExportFormatOld अणु
 EXPORT_4P_32BPC_ABGR                     = 0x00000000,
 EXPORT_4P_16BPC_ABGR                     = 0x00000001,
 EXPORT_4P_32BPC_GR                       = 0x00000002,
 EXPORT_4P_32BPC_AR                       = 0x00000003,
 EXPORT_2P_32BPC_ABGR                     = 0x00000004,
 EXPORT_8P_32BPC_R                        = 0x00000005,
-} QuadExportFormatOld;
+पूर्ण QuadExportFormatOld;
 
 /*
- * ColorFormat enum
+ * ColorFormat क्रमागत
  */
 
-typedef enum ColorFormat {
+प्रकार क्रमागत ColorFormat अणु
 COLOR_INVALID                            = 0x00000000,
 COLOR_8                                  = 0x00000001,
 COLOR_16                                 = 0x00000002,
@@ -549,13 +550,13 @@ COLOR_RESERVED_28                        = 0x0000001c,
 COLOR_RESERVED_29                        = 0x0000001d,
 COLOR_RESERVED_30                        = 0x0000001e,
 COLOR_2_10_10_10_6E4                     = 0x0000001f,
-} ColorFormat;
+पूर्ण ColorFormat;
 
 /*
- * SurfaceFormat enum
+ * SurfaceFormat क्रमागत
  */
 
-typedef enum SurfaceFormat {
+प्रकार क्रमागत SurfaceFormat अणु
 FMT_INVALID                              = 0x00000000,
 FMT_8                                    = 0x00000001,
 FMT_16                                   = 0x00000002,
@@ -620,13 +621,13 @@ FMT_APC6                                 = 0x0000003c,
 FMT_APC7                                 = 0x0000003d,
 FMT_CTX1                                 = 0x0000003e,
 FMT_RESERVED_63                          = 0x0000003f,
-} SurfaceFormat;
+पूर्ण SurfaceFormat;
 
 /*
- * BUF_DATA_FORMAT enum
+ * BUF_DATA_FORMAT क्रमागत
  */
 
-typedef enum BUF_DATA_FORMAT {
+प्रकार क्रमागत BUF_DATA_FORMAT अणु
 BUF_DATA_FORMAT_INVALID                  = 0x00000000,
 BUF_DATA_FORMAT_8                        = 0x00000001,
 BUF_DATA_FORMAT_16                       = 0x00000002,
@@ -643,13 +644,13 @@ BUF_DATA_FORMAT_16_16_16_16              = 0x0000000c,
 BUF_DATA_FORMAT_32_32_32                 = 0x0000000d,
 BUF_DATA_FORMAT_32_32_32_32              = 0x0000000e,
 BUF_DATA_FORMAT_RESERVED_15              = 0x0000000f,
-} BUF_DATA_FORMAT;
+पूर्ण BUF_DATA_FORMAT;
 
 /*
- * IMG_DATA_FORMAT enum
+ * IMG_DATA_FORMAT क्रमागत
  */
 
-typedef enum IMG_DATA_FORMAT {
+प्रकार क्रमागत IMG_DATA_FORMAT अणु
 IMG_DATA_FORMAT_INVALID                  = 0x00000000,
 IMG_DATA_FORMAT_8                        = 0x00000001,
 IMG_DATA_FORMAT_16                       = 0x00000002,
@@ -714,13 +715,13 @@ IMG_DATA_FORMAT_RESERVED_60              = 0x0000003c,
 IMG_DATA_FORMAT_8_AS_32                  = 0x0000003d,
 IMG_DATA_FORMAT_8_AS_32_32               = 0x0000003e,
 IMG_DATA_FORMAT_32_AS_32_32_32_32        = 0x0000003f,
-} IMG_DATA_FORMAT;
+पूर्ण IMG_DATA_FORMAT;
 
 /*
- * BUF_NUM_FORMAT enum
+ * BUF_NUM_FORMAT क्रमागत
  */
 
-typedef enum BUF_NUM_FORMAT {
+प्रकार क्रमागत BUF_NUM_FORMAT अणु
 BUF_NUM_FORMAT_UNORM                     = 0x00000000,
 BUF_NUM_FORMAT_SNORM                     = 0x00000001,
 BUF_NUM_FORMAT_USCALED                   = 0x00000002,
@@ -729,13 +730,13 @@ BUF_NUM_FORMAT_UINT                      = 0x00000004,
 BUF_NUM_FORMAT_SINT                      = 0x00000005,
 BUF_NUM_FORMAT_UNORM_UINT                = 0x00000006,
 BUF_NUM_FORMAT_FLOAT                     = 0x00000007,
-} BUF_NUM_FORMAT;
+पूर्ण BUF_NUM_FORMAT;
 
 /*
- * IMG_NUM_FORMAT enum
+ * IMG_NUM_FORMAT क्रमागत
  */
 
-typedef enum IMG_NUM_FORMAT {
+प्रकार क्रमागत IMG_NUM_FORMAT अणु
 IMG_NUM_FORMAT_UNORM                     = 0x00000000,
 IMG_NUM_FORMAT_SNORM                     = 0x00000001,
 IMG_NUM_FORMAT_USCALED                   = 0x00000002,
@@ -752,13 +753,13 @@ IMG_NUM_FORMAT_RESERVED_12               = 0x0000000c,
 IMG_NUM_FORMAT_RESERVED_13               = 0x0000000d,
 IMG_NUM_FORMAT_RESERVED_14               = 0x0000000e,
 IMG_NUM_FORMAT_RESERVED_15               = 0x0000000f,
-} IMG_NUM_FORMAT;
+पूर्ण IMG_NUM_FORMAT;
 
 /*
- * IMG_NUM_FORMAT_FMASK enum
+ * IMG_NUM_FORMAT_FMASK क्रमागत
  */
 
-typedef enum IMG_NUM_FORMAT_FMASK {
+प्रकार क्रमागत IMG_NUM_FORMAT_FMASK अणु
 IMG_NUM_FORMAT_FMASK_8_2_1               = 0x00000000,
 IMG_NUM_FORMAT_FMASK_8_4_1               = 0x00000001,
 IMG_NUM_FORMAT_FMASK_8_8_1               = 0x00000002,
@@ -775,13 +776,13 @@ IMG_NUM_FORMAT_FMASK_64_16_8             = 0x0000000c,
 IMG_NUM_FORMAT_FMASK_RESERVED_13         = 0x0000000d,
 IMG_NUM_FORMAT_FMASK_RESERVED_14         = 0x0000000e,
 IMG_NUM_FORMAT_FMASK_RESERVED_15         = 0x0000000f,
-} IMG_NUM_FORMAT_FMASK;
+पूर्ण IMG_NUM_FORMAT_FMASK;
 
 /*
- * IMG_NUM_FORMAT_N_IN_16 enum
+ * IMG_NUM_FORMAT_N_IN_16 क्रमागत
  */
 
-typedef enum IMG_NUM_FORMAT_N_IN_16 {
+प्रकार क्रमागत IMG_NUM_FORMAT_N_IN_16 अणु
 IMG_NUM_FORMAT_N_IN_16_RESERVED_0        = 0x00000000,
 IMG_NUM_FORMAT_N_IN_16_UNORM_10          = 0x00000001,
 IMG_NUM_FORMAT_N_IN_16_UNORM_9           = 0x00000002,
@@ -798,13 +799,13 @@ IMG_NUM_FORMAT_N_IN_16_RESERVED_12       = 0x0000000c,
 IMG_NUM_FORMAT_N_IN_16_RESERVED_13       = 0x0000000d,
 IMG_NUM_FORMAT_N_IN_16_RESERVED_14       = 0x0000000e,
 IMG_NUM_FORMAT_N_IN_16_RESERVED_15       = 0x0000000f,
-} IMG_NUM_FORMAT_N_IN_16;
+पूर्ण IMG_NUM_FORMAT_N_IN_16;
 
 /*
- * IMG_NUM_FORMAT_ASTC_2D enum
+ * IMG_NUM_FORMAT_ASTC_2D क्रमागत
  */
 
-typedef enum IMG_NUM_FORMAT_ASTC_2D {
+प्रकार क्रमागत IMG_NUM_FORMAT_ASTC_2D अणु
 IMG_NUM_FORMAT_ASTC_2D_4x4               = 0x00000000,
 IMG_NUM_FORMAT_ASTC_2D_5x4               = 0x00000001,
 IMG_NUM_FORMAT_ASTC_2D_5x5               = 0x00000002,
@@ -821,13 +822,13 @@ IMG_NUM_FORMAT_ASTC_2D_12x10             = 0x0000000c,
 IMG_NUM_FORMAT_ASTC_2D_12x12             = 0x0000000d,
 IMG_NUM_FORMAT_ASTC_2D_RESERVED_14       = 0x0000000e,
 IMG_NUM_FORMAT_ASTC_2D_RESERVED_15       = 0x0000000f,
-} IMG_NUM_FORMAT_ASTC_2D;
+पूर्ण IMG_NUM_FORMAT_ASTC_2D;
 
 /*
- * IMG_NUM_FORMAT_ASTC_3D enum
+ * IMG_NUM_FORMAT_ASTC_3D क्रमागत
  */
 
-typedef enum IMG_NUM_FORMAT_ASTC_3D {
+प्रकार क्रमागत IMG_NUM_FORMAT_ASTC_3D अणु
 IMG_NUM_FORMAT_ASTC_3D_3x3x3             = 0x00000000,
 IMG_NUM_FORMAT_ASTC_3D_4x3x3             = 0x00000001,
 IMG_NUM_FORMAT_ASTC_3D_4x4x3             = 0x00000002,
@@ -844,43 +845,43 @@ IMG_NUM_FORMAT_ASTC_3D_RESERVED_12       = 0x0000000c,
 IMG_NUM_FORMAT_ASTC_3D_RESERVED_13       = 0x0000000d,
 IMG_NUM_FORMAT_ASTC_3D_RESERVED_14       = 0x0000000e,
 IMG_NUM_FORMAT_ASTC_3D_RESERVED_15       = 0x0000000f,
-} IMG_NUM_FORMAT_ASTC_3D;
+पूर्ण IMG_NUM_FORMAT_ASTC_3D;
 
 /*
- * TileType enum
+ * TileType क्रमागत
  */
 
-typedef enum TileType {
+प्रकार क्रमागत TileType अणु
 ARRAY_COLOR_TILE                         = 0x00000000,
 ARRAY_DEPTH_TILE                         = 0x00000001,
-} TileType;
+पूर्ण TileType;
 
 /*
- * NonDispTilingOrder enum
+ * NonDispTilingOrder क्रमागत
  */
 
-typedef enum NonDispTilingOrder {
+प्रकार क्रमागत NonDispTilingOrder अणु
 ADDR_SURF_MICRO_TILING_DISPLAY           = 0x00000000,
 ADDR_SURF_MICRO_TILING_NON_DISPLAY       = 0x00000001,
-} NonDispTilingOrder;
+पूर्ण NonDispTilingOrder;
 
 /*
- * MicroTileMode enum
+ * MicroTileMode क्रमागत
  */
 
-typedef enum MicroTileMode {
+प्रकार क्रमागत MicroTileMode अणु
 ADDR_SURF_DISPLAY_MICRO_TILING           = 0x00000000,
 ADDR_SURF_THIN_MICRO_TILING              = 0x00000001,
 ADDR_SURF_DEPTH_MICRO_TILING             = 0x00000002,
 ADDR_SURF_ROTATED_MICRO_TILING           = 0x00000003,
 ADDR_SURF_THICK_MICRO_TILING             = 0x00000004,
-} MicroTileMode;
+पूर्ण MicroTileMode;
 
 /*
- * TileSplit enum
+ * TileSplit क्रमागत
  */
 
-typedef enum TileSplit {
+प्रकार क्रमागत TileSplit अणु
 ADDR_SURF_TILE_SPLIT_64B                 = 0x00000000,
 ADDR_SURF_TILE_SPLIT_128B                = 0x00000001,
 ADDR_SURF_TILE_SPLIT_256B                = 0x00000002,
@@ -888,24 +889,24 @@ ADDR_SURF_TILE_SPLIT_512B                = 0x00000003,
 ADDR_SURF_TILE_SPLIT_1KB                 = 0x00000004,
 ADDR_SURF_TILE_SPLIT_2KB                 = 0x00000005,
 ADDR_SURF_TILE_SPLIT_4KB                 = 0x00000006,
-} TileSplit;
+पूर्ण TileSplit;
 
 /*
- * SampleSplit enum
+ * SampleSplit क्रमागत
  */
 
-typedef enum SampleSplit {
+प्रकार क्रमागत SampleSplit अणु
 ADDR_SURF_SAMPLE_SPLIT_1                 = 0x00000000,
 ADDR_SURF_SAMPLE_SPLIT_2                 = 0x00000001,
 ADDR_SURF_SAMPLE_SPLIT_4                 = 0x00000002,
 ADDR_SURF_SAMPLE_SPLIT_8                 = 0x00000003,
-} SampleSplit;
+पूर्ण SampleSplit;
 
 /*
- * PipeConfig enum
+ * PipeConfig क्रमागत
  */
 
-typedef enum PipeConfig {
+प्रकार क्रमागत PipeConfig अणु
 ADDR_SURF_P2                             = 0x00000000,
 ADDR_SURF_P2_RESERVED0                   = 0x00000001,
 ADDR_SURF_P2_RESERVED1                   = 0x00000002,
@@ -924,129 +925,129 @@ ADDR_SURF_P8_32x64_32x32                 = 0x0000000e,
 ADDR_SURF_P8_RESERVED0                   = 0x0000000f,
 ADDR_SURF_P16_32x32_8x16                 = 0x00000010,
 ADDR_SURF_P16_32x32_16x16                = 0x00000011,
-} PipeConfig;
+पूर्ण PipeConfig;
 
 /*
- * SeEnable enum
+ * SeEnable क्रमागत
  */
 
-typedef enum SeEnable {
+प्रकार क्रमागत SeEnable अणु
 ADDR_CONFIG_DISABLE_SE                   = 0x00000000,
 ADDR_CONFIG_ENABLE_SE                    = 0x00000001,
-} SeEnable;
+पूर्ण SeEnable;
 
 /*
- * NumBanks enum
+ * NumBanks क्रमागत
  */
 
-typedef enum NumBanks {
+प्रकार क्रमागत NumBanks अणु
 ADDR_SURF_2_BANK                         = 0x00000000,
 ADDR_SURF_4_BANK                         = 0x00000001,
 ADDR_SURF_8_BANK                         = 0x00000002,
 ADDR_SURF_16_BANK                        = 0x00000003,
-} NumBanks;
+पूर्ण NumBanks;
 
 /*
- * BankWidth enum
+ * BankWidth क्रमागत
  */
 
-typedef enum BankWidth {
+प्रकार क्रमागत BankWidth अणु
 ADDR_SURF_BANK_WIDTH_1                   = 0x00000000,
 ADDR_SURF_BANK_WIDTH_2                   = 0x00000001,
 ADDR_SURF_BANK_WIDTH_4                   = 0x00000002,
 ADDR_SURF_BANK_WIDTH_8                   = 0x00000003,
-} BankWidth;
+पूर्ण BankWidth;
 
 /*
- * BankHeight enum
+ * BankHeight क्रमागत
  */
 
-typedef enum BankHeight {
+प्रकार क्रमागत BankHeight अणु
 ADDR_SURF_BANK_HEIGHT_1                  = 0x00000000,
 ADDR_SURF_BANK_HEIGHT_2                  = 0x00000001,
 ADDR_SURF_BANK_HEIGHT_4                  = 0x00000002,
 ADDR_SURF_BANK_HEIGHT_8                  = 0x00000003,
-} BankHeight;
+पूर्ण BankHeight;
 
 /*
- * BankWidthHeight enum
+ * BankWidthHeight क्रमागत
  */
 
-typedef enum BankWidthHeight {
+प्रकार क्रमागत BankWidthHeight अणु
 ADDR_SURF_BANK_WH_1                      = 0x00000000,
 ADDR_SURF_BANK_WH_2                      = 0x00000001,
 ADDR_SURF_BANK_WH_4                      = 0x00000002,
 ADDR_SURF_BANK_WH_8                      = 0x00000003,
-} BankWidthHeight;
+पूर्ण BankWidthHeight;
 
 /*
- * MacroTileAspect enum
+ * MacroTileAspect क्रमागत
  */
 
-typedef enum MacroTileAspect {
+प्रकार क्रमागत MacroTileAspect अणु
 ADDR_SURF_MACRO_ASPECT_1                 = 0x00000000,
 ADDR_SURF_MACRO_ASPECT_2                 = 0x00000001,
 ADDR_SURF_MACRO_ASPECT_4                 = 0x00000002,
 ADDR_SURF_MACRO_ASPECT_8                 = 0x00000003,
-} MacroTileAspect;
+पूर्ण MacroTileAspect;
 
 /*
- * GATCL1RequestType enum
+ * GATCL1RequestType क्रमागत
  */
 
-typedef enum GATCL1RequestType {
+प्रकार क्रमागत GATCL1RequestType अणु
 GATCL1_TYPE_NORMAL                       = 0x00000000,
 GATCL1_TYPE_SHOOTDOWN                    = 0x00000001,
 GATCL1_TYPE_BYPASS                       = 0x00000002,
-} GATCL1RequestType;
+पूर्ण GATCL1RequestType;
 
 /*
- * UTCL1RequestType enum
+ * UTCL1RequestType क्रमागत
  */
 
-typedef enum UTCL1RequestType {
+प्रकार क्रमागत UTCL1RequestType अणु
 UTCL1_TYPE_NORMAL                        = 0x00000000,
 UTCL1_TYPE_SHOOTDOWN                     = 0x00000001,
 UTCL1_TYPE_BYPASS                        = 0x00000002,
-} UTCL1RequestType;
+पूर्ण UTCL1RequestType;
 
 /*
- * UTCL1FaultType enum
+ * UTCL1FaultType क्रमागत
  */
 
-typedef enum UTCL1FaultType {
+प्रकार क्रमागत UTCL1FaultType अणु
 UTCL1_XNACK_SUCCESS                      = 0x00000000,
 UTCL1_XNACK_RETRY                        = 0x00000001,
 UTCL1_XNACK_PRT                          = 0x00000002,
 UTCL1_XNACK_NO_RETRY                     = 0x00000003,
-} UTCL1FaultType;
+पूर्ण UTCL1FaultType;
 
 /*
- * TCC_CACHE_POLICIES enum
+ * TCC_CACHE_POLICIES क्रमागत
  */
 
-typedef enum TCC_CACHE_POLICIES {
+प्रकार क्रमागत TCC_CACHE_POLICIES अणु
 TCC_CACHE_POLICY_LRU                     = 0x00000000,
 TCC_CACHE_POLICY_STREAM                  = 0x00000001,
-} TCC_CACHE_POLICIES;
+पूर्ण TCC_CACHE_POLICIES;
 
 /*
- * MTYPE enum
+ * MTYPE क्रमागत
  */
 
-typedef enum MTYPE {
+प्रकार क्रमागत MTYPE अणु
 MTYPE_NC                                 = 0x00000000,
 MTYPE_WC                                 = 0x00000001,
 MTYPE_RW                                 = 0x00000001,
 MTYPE_CC                                 = 0x00000002,
 MTYPE_UC                                 = 0x00000003,
-} MTYPE;
+पूर्ण MTYPE;
 
 /*
- * RMI_CID enum
+ * RMI_CID क्रमागत
  */
 
-typedef enum RMI_CID {
+प्रकार क्रमागत RMI_CID अणु
 RMI_CID_CC                               = 0x00000000,
 RMI_CID_FC                               = 0x00000001,
 RMI_CID_CM                               = 0x00000002,
@@ -1055,17 +1056,17 @@ RMI_CID_Z                                = 0x00000004,
 RMI_CID_S                                = 0x00000005,
 RMI_CID_TILE                             = 0x00000006,
 RMI_CID_ZPCPSD                           = 0x00000007,
-} RMI_CID;
+पूर्ण RMI_CID;
 
 /*
- * PERFMON_COUNTER_MODE enum
+ * PERFMON_COUNTER_MODE क्रमागत
  */
 
-typedef enum PERFMON_COUNTER_MODE {
+प्रकार क्रमागत PERFMON_COUNTER_MODE अणु
 PERFMON_COUNTER_MODE_ACCUM               = 0x00000000,
 PERFMON_COUNTER_MODE_ACTIVE_CYCLES       = 0x00000001,
 PERFMON_COUNTER_MODE_MAX                 = 0x00000002,
-PERFMON_COUNTER_MODE_DIRTY               = 0x00000003,
+PERFMON_COUNTER_MODE_सूचीTY               = 0x00000003,
 PERFMON_COUNTER_MODE_SAMPLE              = 0x00000004,
 PERFMON_COUNTER_MODE_CYCLES_SINCE_FIRST_EVENT  = 0x00000005,
 PERFMON_COUNTER_MODE_CYCLES_SINCE_LAST_EVENT  = 0x00000006,
@@ -1073,13 +1074,13 @@ PERFMON_COUNTER_MODE_CYCLES_GE_HI        = 0x00000007,
 PERFMON_COUNTER_MODE_CYCLES_EQ_HI        = 0x00000008,
 PERFMON_COUNTER_MODE_INACTIVE_CYCLES     = 0x00000009,
 PERFMON_COUNTER_MODE_RESERVED            = 0x0000000f,
-} PERFMON_COUNTER_MODE;
+पूर्ण PERFMON_COUNTER_MODE;
 
 /*
- * PERFMON_SPM_MODE enum
+ * PERFMON_SPM_MODE क्रमागत
  */
 
-typedef enum PERFMON_SPM_MODE {
+प्रकार क्रमागत PERFMON_SPM_MODE अणु
 PERFMON_SPM_MODE_OFF                     = 0x00000000,
 PERFMON_SPM_MODE_16BIT_CLAMP             = 0x00000001,
 PERFMON_SPM_MODE_16BIT_NO_CLAMP          = 0x00000002,
@@ -1091,92 +1092,92 @@ PERFMON_SPM_MODE_RESERVED_7              = 0x00000007,
 PERFMON_SPM_MODE_TEST_MODE_0             = 0x00000008,
 PERFMON_SPM_MODE_TEST_MODE_1             = 0x00000009,
 PERFMON_SPM_MODE_TEST_MODE_2             = 0x0000000a,
-} PERFMON_SPM_MODE;
+पूर्ण PERFMON_SPM_MODE;
 
 /*
- * SurfaceTiling enum
+ * SurfaceTiling क्रमागत
  */
 
-typedef enum SurfaceTiling {
+प्रकार क्रमागत SurfaceTiling अणु
 ARRAY_LINEAR                             = 0x00000000,
 ARRAY_TILED                              = 0x00000001,
-} SurfaceTiling;
+पूर्ण SurfaceTiling;
 
 /*
- * SurfaceArray enum
+ * SurfaceArray क्रमागत
  */
 
-typedef enum SurfaceArray {
+प्रकार क्रमागत SurfaceArray अणु
 ARRAY_1D                                 = 0x00000000,
 ARRAY_2D                                 = 0x00000001,
 ARRAY_3D                                 = 0x00000002,
 ARRAY_3D_SLICE                           = 0x00000003,
-} SurfaceArray;
+पूर्ण SurfaceArray;
 
 /*
- * ColorArray enum
+ * ColorArray क्रमागत
  */
 
-typedef enum ColorArray {
+प्रकार क्रमागत ColorArray अणु
 ARRAY_2D_ALT_COLOR                       = 0x00000000,
 ARRAY_2D_COLOR                           = 0x00000001,
 ARRAY_3D_SLICE_COLOR                     = 0x00000003,
-} ColorArray;
+पूर्ण ColorArray;
 
 /*
- * DepthArray enum
+ * DepthArray क्रमागत
  */
 
-typedef enum DepthArray {
+प्रकार क्रमागत DepthArray अणु
 ARRAY_2D_ALT_DEPTH                       = 0x00000000,
 ARRAY_2D_DEPTH                           = 0x00000001,
-} DepthArray;
+पूर्ण DepthArray;
 
 /*
- * ENUM_NUM_SIMD_PER_CU enum
+ * ENUM_NUM_SIMD_PER_CU क्रमागत
  */
 
-typedef enum ENUM_NUM_SIMD_PER_CU {
+प्रकार क्रमागत ENUM_NUM_SIMD_PER_CU अणु
 NUM_SIMD_PER_CU                          = 0x00000004,
-} ENUM_NUM_SIMD_PER_CU;
+पूर्ण ENUM_NUM_SIMD_PER_CU;
 
 /*
- * DSM_ENABLE_ERROR_INJECT enum
+ * DSM_ENABLE_ERROR_INJECT क्रमागत
  */
 
-typedef enum DSM_ENABLE_ERROR_INJECT {
+प्रकार क्रमागत DSM_ENABLE_ERROR_INJECT अणु
 DSM_ENABLE_ERROR_INJECT_FED_IN           = 0x00000000,
 DSM_ENABLE_ERROR_INJECT_SINGLE           = 0x00000001,
 DSM_ENABLE_ERROR_INJECT_DOUBLE           = 0x00000002,
 DSM_ENABLE_ERROR_INJECT_DOUBLE_LIMITED   = 0x00000003,
-} DSM_ENABLE_ERROR_INJECT;
+पूर्ण DSM_ENABLE_ERROR_INJECT;
 
 /*
- * DSM_SELECT_INJECT_DELAY enum
+ * DSM_SELECT_INJECT_DELAY क्रमागत
  */
 
-typedef enum DSM_SELECT_INJECT_DELAY {
+प्रकार क्रमागत DSM_SELECT_INJECT_DELAY अणु
 DSM_SELECT_INJECT_DELAY_NO_DELAY         = 0x00000000,
 DSM_SELECT_INJECT_DELAY_DELAY_ERROR      = 0x00000001,
-} DSM_SELECT_INJECT_DELAY;
+पूर्ण DSM_SELECT_INJECT_DELAY;
 
 /*
- * SWIZZLE_TYPE_ENUM enum
+ * SWIZZLE_TYPE_ENUM क्रमागत
  */
 
-typedef enum SWIZZLE_TYPE_ENUM {
+प्रकार क्रमागत SWIZZLE_TYPE_ENUM अणु
 SW_Z                                     = 0x00000000,
 SW_S                                     = 0x00000001,
 SW_D                                     = 0x00000002,
 SW_R                                     = 0x00000003,
 SW_L                                     = 0x00000004,
-} SWIZZLE_TYPE_ENUM;
+पूर्ण SWIZZLE_TYPE_ENUM;
 
 /*
- * TC_MICRO_TILE_MODE enum
+ * TC_MICRO_TILE_MODE क्रमागत
  */
 
-typedef enum TC_MICRO_TILE_MODE {
+प्रकार क्रमागत TC_MICRO_TILE_MODE अणु
 MICRO_TILE_MODE_LINEAR                   = 0x00000000,
 MICRO_TILE_MODE_ROTATED                  = 0x00000001,
 MICRO_TILE_MODE_STD_2D                   = 0x00000002,
@@ -1185,13 +1186,13 @@ MICRO_TILE_MODE_DISPLAY_2D               = 0x00000004,
 MICRO_TILE_MODE_DISPLAY_3D               = 0x00000005,
 MICRO_TILE_MODE_Z_2D                     = 0x00000006,
 MICRO_TILE_MODE_Z_3D                     = 0x00000007,
-} TC_MICRO_TILE_MODE;
+पूर्ण TC_MICRO_TILE_MODE;
 
 /*
- * SWIZZLE_MODE_ENUM enum
+ * SWIZZLE_MODE_ENUM क्रमागत
  */
 
-typedef enum SWIZZLE_MODE_ENUM {
+प्रकार क्रमागत SWIZZLE_MODE_ENUM अणु
 SW_LINEAR                                = 0x00000000,
 SW_256B_S                                = 0x00000001,
 SW_256B_D                                = 0x00000002,
@@ -1228,42 +1229,42 @@ SW_RESERVED_12                           = 0x00000020,
 SW_RESERVED_13                           = 0x00000021,
 SW_RESERVED_14                           = 0x00000022,
 SW_RESERVED_15                           = 0x00000023,
-} SWIZZLE_MODE_ENUM;
+पूर्ण SWIZZLE_MODE_ENUM;
 
 /*
- * PipeTiling enum
+ * PipeTiling क्रमागत
  */
 
-typedef enum PipeTiling {
+प्रकार क्रमागत PipeTiling अणु
 CONFIG_1_PIPE                            = 0x00000000,
 CONFIG_2_PIPE                            = 0x00000001,
 CONFIG_4_PIPE                            = 0x00000002,
 CONFIG_8_PIPE                            = 0x00000003,
-} PipeTiling;
+पूर्ण PipeTiling;
 
 /*
- * BankTiling enum
+ * BankTiling क्रमागत
  */
 
-typedef enum BankTiling {
+प्रकार क्रमागत BankTiling अणु
 CONFIG_4_BANK                            = 0x00000000,
 CONFIG_8_BANK                            = 0x00000001,
-} BankTiling;
+पूर्ण BankTiling;
 
 /*
- * GroupInterleave enum
+ * GroupInterleave क्रमागत
  */
 
-typedef enum GroupInterleave {
+प्रकार क्रमागत GroupInterleave अणु
 CONFIG_256B_GROUP                        = 0x00000000,
 CONFIG_512B_GROUP                        = 0x00000001,
-} GroupInterleave;
+पूर्ण GroupInterleave;
 
 /*
- * RowTiling enum
+ * RowTiling क्रमागत
  */
 
-typedef enum RowTiling {
+प्रकार क्रमागत RowTiling अणु
 CONFIG_1KB_ROW                           = 0x00000000,
 CONFIG_2KB_ROW                           = 0x00000001,
 CONFIG_4KB_ROW                           = 0x00000002,
@@ -1272,141 +1273,141 @@ CONFIG_1KB_ROW_OPT                       = 0x00000004,
 CONFIG_2KB_ROW_OPT                       = 0x00000005,
 CONFIG_4KB_ROW_OPT                       = 0x00000006,
 CONFIG_8KB_ROW_OPT                       = 0x00000007,
-} RowTiling;
+पूर्ण RowTiling;
 
 /*
- * BankSwapBytes enum
+ * BankSwapBytes क्रमागत
  */
 
-typedef enum BankSwapBytes {
+प्रकार क्रमागत BankSwapBytes अणु
 CONFIG_128B_SWAPS                        = 0x00000000,
 CONFIG_256B_SWAPS                        = 0x00000001,
 CONFIG_512B_SWAPS                        = 0x00000002,
 CONFIG_1KB_SWAPS                         = 0x00000003,
-} BankSwapBytes;
+पूर्ण BankSwapBytes;
 
 /*
- * SampleSplitBytes enum
+ * SampleSplitBytes क्रमागत
  */
 
-typedef enum SampleSplitBytes {
+प्रकार क्रमागत SampleSplitBytes अणु
 CONFIG_1KB_SPLIT                         = 0x00000000,
 CONFIG_2KB_SPLIT                         = 0x00000001,
 CONFIG_4KB_SPLIT                         = 0x00000002,
 CONFIG_8KB_SPLIT                         = 0x00000003,
-} SampleSplitBytes;
+पूर्ण SampleSplitBytes;
 
 /*******************************************************
  * AZSTREAM Enums
  *******************************************************/
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_STATUS_NOT_SET  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_STATUS_SET  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_STATUS_NOT_SET  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_STATUS_SET  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS_NOT_SET  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS_SET  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_BUFFER_COMPLETION_INTERRUPT_STATUS;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_TRAFFIC_PRIORITY enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_TRAFFIC_PRIORITY क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_TRAFFIC_PRIORITY {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_TRAFFIC_PRIORITY अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_NO_TRAFFIC_PRIORITY  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_YES_TRAFFIC_PRIORITY  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_TRAFFIC_PRIORITY;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_TRAFFIC_PRIORITY;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLE enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLE क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLE {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLE अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_DISABLED  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLED  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLE;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_DESCRIPTOR_ERROR_INTERRUPT_ENABLE;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLE enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLE क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLE {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLE अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_DISABLED  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLED  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLE;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_FIFO_ERROR_INTERRUPT_ENABLE;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE_INTERRUPT_DISABLED  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE_INTERRUPT_ENABLED  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_INTERRUPT_ON_COMPLETION_ENABLE;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RUN enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RUN क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RUN {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RUN अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_NOT_RUN  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_DO_RUN  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RUN;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RUN;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RESET enum
+ * OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RESET क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RESET {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RESET अणु
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_NOT_RESET  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_IS_RESET  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RESET;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_CONTROL_AND_STATUS_STREAM_RESET;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE enum
+ * OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE अणु
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE_48KHZ  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE_44P1KHZ  = 0x00000001,
-} OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_RATE;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE enum
+ * OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE अणु
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE_BY1  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE_BY2  = 0x00000001,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE_BY3_RESERVED  = 0x00000002,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE_BY4  = 0x00000003,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE_RESERVED  = 0x00000004,
-} OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_MULTIPLE;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR enum
+ * OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR अणु
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY1  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY2_RESERVED  = 0x00000001,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY3  = 0x00000002,
@@ -1415,26 +1416,26 @@ OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY5_RESERVED  = 0x00000004,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY6_RESERVED  = 0x00000005,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY7_RESERVED  = 0x00000006,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR_BY8_RESERVED  = 0x00000007,
-} OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_FORMAT_SAMPLE_BASE_DIVISOR;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE enum
+ * OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE अणु
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE_8_RESERVED  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE_16  = 0x00000001,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE_20  = 0x00000002,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE_24  = 0x00000003,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE_32_RESERVED  = 0x00000004,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE_RESERVED  = 0x00000005,
-} OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_FORMAT_BITS_PER_SAMPLE;
 
 /*
- * OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS enum
+ * OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS क्रमागत
  */
 
-typedef enum OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS {
+प्रकार क्रमागत OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS अणु
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_1  = 0x00000000,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_2  = 0x00000001,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_3  = 0x00000002,
@@ -1451,513 +1452,513 @@ OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_13_RESERVED  = 0x0000000c,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_14_RESERVED  = 0x0000000d,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_15_RESERVED  = 0x0000000e,
 OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS_16_RESERVED  = 0x0000000f,
-} OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS;
+पूर्ण OUTPUT_STREAM_DESCRIPTOR_FORMAT_NUMBER_OF_CHANNELS;
 
 /*******************************************************
  * BLNDV Enums
  *******************************************************/
 
 /*
- * BLNDV_CONTROL_BLND_MODE enum
+ * BLNDV_CONTROL_BLND_MODE क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_MODE {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_MODE अणु
 BLNDV_CONTROL_BLND_MODE_CURRENT_PIPE_ONLY = 0x00000000,
 BLNDV_CONTROL_BLND_MODE_OTHER_PIPE_ONLY  = 0x00000001,
 BLNDV_CONTROL_BLND_MODE_ALPHA_BLENDING_MODE = 0x00000002,
 BLNDV_CONTROL_BLND_MODE_OTHER_STEREO_TYPE = 0x00000003,
-} BLNDV_CONTROL_BLND_MODE;
+पूर्ण BLNDV_CONTROL_BLND_MODE;
 
 /*
- * BLNDV_CONTROL_BLND_STEREO_TYPE enum
+ * BLNDV_CONTROL_BLND_STEREO_TYPE क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_STEREO_TYPE {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_STEREO_TYPE अणु
 BLNDV_CONTROL_BLND_STEREO_TYPE_NON_SINGLE_PIPE_STEREO = 0x00000000,
 BLNDV_CONTROL_BLND_STEREO_TYPE_SIDE_BY_SIDE_SINGLE_PIPE_STEREO = 0x00000001,
 BLNDV_CONTROL_BLND_STEREO_TYPE_TOP_BOTTOM_SINGLE_PIPE_STEREO = 0x00000002,
 BLNDV_CONTROL_BLND_STEREO_TYPE_UNUSED    = 0x00000003,
-} BLNDV_CONTROL_BLND_STEREO_TYPE;
+पूर्ण BLNDV_CONTROL_BLND_STEREO_TYPE;
 
 /*
- * BLNDV_CONTROL_BLND_STEREO_POLARITY enum
+ * BLNDV_CONTROL_BLND_STEREO_POLARITY क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_STEREO_POLARITY {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_STEREO_POLARITY अणु
 BLNDV_CONTROL_BLND_STEREO_POLARITY_LOW   = 0x00000000,
 BLNDV_CONTROL_BLND_STEREO_POLARITY_HIGH  = 0x00000001,
-} BLNDV_CONTROL_BLND_STEREO_POLARITY;
+पूर्ण BLNDV_CONTROL_BLND_STEREO_POLARITY;
 
 /*
- * BLNDV_CONTROL_BLND_FEEDTHROUGH_EN enum
+ * BLNDV_CONTROL_BLND_FEEDTHROUGH_EN क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_FEEDTHROUGH_EN {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_FEEDTHROUGH_EN अणु
 BLNDV_CONTROL_BLND_FEEDTHROUGH_EN_FALSE  = 0x00000000,
 BLNDV_CONTROL_BLND_FEEDTHROUGH_EN_TRUE   = 0x00000001,
-} BLNDV_CONTROL_BLND_FEEDTHROUGH_EN;
+पूर्ण BLNDV_CONTROL_BLND_FEEDTHROUGH_EN;
 
 /*
- * BLNDV_CONTROL_BLND_ALPHA_MODE enum
+ * BLNDV_CONTROL_BLND_ALPHA_MODE क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_ALPHA_MODE {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_ALPHA_MODE अणु
 BLNDV_CONTROL_BLND_ALPHA_MODE_CURRENT_PIXEL_ALPHA = 0x00000000,
 BLNDV_CONTROL_BLND_ALPHA_MODE_PIXEL_ALPHA_COMBINED_GLOBAL_GAIN = 0x00000001,
 BLNDV_CONTROL_BLND_ALPHA_MODE_GLOBAL_ALPHA_ONLY = 0x00000002,
 BLNDV_CONTROL_BLND_ALPHA_MODE_UNUSED     = 0x00000003,
-} BLNDV_CONTROL_BLND_ALPHA_MODE;
+पूर्ण BLNDV_CONTROL_BLND_ALPHA_MODE;
 
 /*
- * BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY enum
+ * BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY अणु
 BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY_FALSE  = 0x00000000,
 BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY_TRUE  = 0x00000001,
-} BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY;
+पूर्ण BLNDV_CONTROL_BLND_ACTIVE_OVERLAP_ONLY;
 
 /*
- * BLNDV_CONTROL_BLND_MULTIPLIED_MODE enum
+ * BLNDV_CONTROL_BLND_MULTIPLIED_MODE क्रमागत
  */
 
-typedef enum BLNDV_CONTROL_BLND_MULTIPLIED_MODE {
+प्रकार क्रमागत BLNDV_CONTROL_BLND_MULTIPLIED_MODE अणु
 BLNDV_CONTROL_BLND_MULTIPLIED_MODE_FALSE = 0x00000000,
 BLNDV_CONTROL_BLND_MULTIPLIED_MODE_TRUE  = 0x00000001,
-} BLNDV_CONTROL_BLND_MULTIPLIED_MODE;
+पूर्ण BLNDV_CONTROL_BLND_MULTIPLIED_MODE;
 
 /*
- * BLNDV_SM_CONTROL2_SM_MODE enum
+ * BLNDV_SM_CONTROL2_SM_MODE क्रमागत
  */
 
-typedef enum BLNDV_SM_CONTROL2_SM_MODE {
+प्रकार क्रमागत BLNDV_SM_CONTROL2_SM_MODE अणु
 BLNDV_SM_CONTROL2_SM_MODE_SINGLE_PLANE   = 0x00000000,
 BLNDV_SM_CONTROL2_SM_MODE_ROW_SUBSAMPLING = 0x00000002,
 BLNDV_SM_CONTROL2_SM_MODE_COLUMN_SUBSAMPLING = 0x00000004,
 BLNDV_SM_CONTROL2_SM_MODE_CHECKERBOARD_SUBSAMPLING = 0x00000006,
-} BLNDV_SM_CONTROL2_SM_MODE;
+पूर्ण BLNDV_SM_CONTROL2_SM_MODE;
 
 /*
- * BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE enum
+ * BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE क्रमागत
  */
 
-typedef enum BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE {
+प्रकार क्रमागत BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE अणु
 BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE_FALSE = 0x00000000,
 BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE_TRUE = 0x00000001,
-} BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE;
+पूर्ण BLNDV_SM_CONTROL2_SM_FRAME_ALTERNATE;
 
 /*
- * BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE enum
+ * BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE क्रमागत
  */
 
-typedef enum BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE {
+प्रकार क्रमागत BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE अणु
 BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE_FALSE = 0x00000000,
 BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE_TRUE = 0x00000001,
-} BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE;
+पूर्ण BLNDV_SM_CONTROL2_SM_FIELD_ALTERNATE;
 
 /*
- * BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL enum
+ * BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL क्रमागत
  */
 
-typedef enum BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL {
+प्रकार क्रमागत BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL अणु
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_NO_FORCE = 0x00000000,
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_RESERVED = 0x00000001,
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_FORCE_LOW = 0x00000002,
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_FORCE_HIGH = 0x00000003,
-} BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL;
+पूर्ण BLNDV_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL;
 
 /*
- * BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL enum
+ * BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL क्रमागत
  */
 
-typedef enum BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL {
+प्रकार क्रमागत BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL अणु
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_NO_FORCE = 0x00000000,
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_RESERVED = 0x00000001,
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_FORCE_LOW = 0x00000002,
 BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_FORCE_HIGH = 0x00000003,
-} BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL;
+पूर्ण BLNDV_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL;
 
 /*
- * BLNDV_CONTROL2_PTI_ENABLE enum
+ * BLNDV_CONTROL2_PTI_ENABLE क्रमागत
  */
 
-typedef enum BLNDV_CONTROL2_PTI_ENABLE {
+प्रकार क्रमागत BLNDV_CONTROL2_PTI_ENABLE अणु
 BLNDV_CONTROL2_PTI_ENABLE_FALSE          = 0x00000000,
 BLNDV_CONTROL2_PTI_ENABLE_TRUE           = 0x00000001,
-} BLNDV_CONTROL2_PTI_ENABLE;
+पूर्ण BLNDV_CONTROL2_PTI_ENABLE;
 
 /*
- * BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN enum
+ * BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN क्रमागत
  */
 
-typedef enum BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN {
+प्रकार क्रमागत BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN अणु
 BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN_FALSE = 0x00000000,
 BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN_TRUE = 0x00000001,
-} BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN;
+पूर्ण BLNDV_CONTROL2_BLND_SUPERAA_DEGAMMA_EN;
 
 /*
- * BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN enum
+ * BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN क्रमागत
  */
 
-typedef enum BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN {
+प्रकार क्रमागत BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN अणु
 BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN_FALSE = 0x00000000,
 BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN_TRUE = 0x00000001,
-} BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN;
+पूर्ण BLNDV_CONTROL2_BLND_SUPERAA_REGAMMA_EN;
 
 /*
- * BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK enum
+ * BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK क्रमागत
  */
 
-typedef enum BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK {
+प्रकार क्रमागत BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK अणु
 BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK_FALSE = 0x00000000,
 BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK_TRUE = 0x00000001,
-} BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK;
+पूर्ण BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK;
 
 /*
- * BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK enum
+ * BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK क्रमागत
  */
 
-typedef enum BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK {
+प्रकार क्रमागत BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK अणु
 BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK_FALSE = 0x00000000,
 BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK_TRUE = 0x00000001,
-} BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK;
+पूर्ण BLNDV_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK enum
+ * BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK अणु
 BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK enum
+ * BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK अणु
 BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK enum
+ * BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK अणु
 BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK enum
+ * BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK अणु
 BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK enum
+ * BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK अणु
 BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK enum
+ * BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK अणु
 BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK;
 
 /*
- * BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE enum
+ * BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE क्रमागत
  */
 
-typedef enum BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE {
+प्रकार क्रमागत BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE अणु
 BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE_FALSE = 0x00000000,
 BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE_TRUE = 0x00000001,
-} BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE;
+पूर्ण BLNDV_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE;
 
 /*
- * BLNDV_DEBUG_BLND_CNV_MUX_SELECT enum
+ * BLNDV_DEBUG_BLND_CNV_MUX_SELECT क्रमागत
  */
 
-typedef enum BLNDV_DEBUG_BLND_CNV_MUX_SELECT {
+प्रकार क्रमागत BLNDV_DEBUG_BLND_CNV_MUX_SELECT अणु
 BLNDV_DEBUG_BLND_CNV_MUX_SELECT_LOW      = 0x00000000,
 BLNDV_DEBUG_BLND_CNV_MUX_SELECT_HIGH     = 0x00000001,
-} BLNDV_DEBUG_BLND_CNV_MUX_SELECT;
+पूर्ण BLNDV_DEBUG_BLND_CNV_MUX_SELECT;
 
 /*
- * BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN enum
+ * BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN क्रमागत
  */
 
-typedef enum BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN {
+प्रकार क्रमागत BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN अणु
 BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN_FALSE = 0x00000000,
 BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN_TRUE = 0x00000001,
-} BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN;
+पूर्ण BLNDV_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN;
 
 /*******************************************************
  * LBV Enums
  *******************************************************/
 
 /*
- * LBV_PIXEL_DEPTH enum
+ * LBV_PIXEL_DEPTH क्रमागत
  */
 
-typedef enum LBV_PIXEL_DEPTH {
+प्रकार क्रमागत LBV_PIXEL_DEPTH अणु
 PIXEL_DEPTH_30BPP                        = 0x00000000,
 PIXEL_DEPTH_24BPP                        = 0x00000001,
 PIXEL_DEPTH_18BPP                        = 0x00000002,
 PIXEL_DEPTH_38BPP                        = 0x00000003,
-} LBV_PIXEL_DEPTH;
+पूर्ण LBV_PIXEL_DEPTH;
 
 /*
- * LBV_PIXEL_EXPAN_MODE enum
+ * LBV_PIXEL_EXPAN_MODE क्रमागत
  */
 
-typedef enum LBV_PIXEL_EXPAN_MODE {
+प्रकार क्रमागत LBV_PIXEL_EXPAN_MODE अणु
 PIXEL_EXPAN_MODE_ZERO_EXP                = 0x00000000,
 PIXEL_EXPAN_MODE_DYN_EXP                 = 0x00000001,
-} LBV_PIXEL_EXPAN_MODE;
+पूर्ण LBV_PIXEL_EXPAN_MODE;
 
 /*
- * LBV_INTERLEAVE_EN enum
+ * LBV_INTERLEAVE_EN क्रमागत
  */
 
-typedef enum LBV_INTERLEAVE_EN {
+प्रकार क्रमागत LBV_INTERLEAVE_EN अणु
 INTERLEAVE_DIS                           = 0x00000000,
 INTERLEAVE_EN                            = 0x00000001,
-} LBV_INTERLEAVE_EN;
+पूर्ण LBV_INTERLEAVE_EN;
 
 /*
- * LBV_PIXEL_REDUCE_MODE enum
+ * LBV_PIXEL_REDUCE_MODE क्रमागत
  */
 
-typedef enum LBV_PIXEL_REDUCE_MODE {
+प्रकार क्रमागत LBV_PIXEL_REDUCE_MODE अणु
 PIXEL_REDUCE_MODE_TRUNCATION             = 0x00000000,
 PIXEL_REDUCE_MODE_ROUNDING               = 0x00000001,
-} LBV_PIXEL_REDUCE_MODE;
+पूर्ण LBV_PIXEL_REDUCE_MODE;
 
 /*
- * LBV_DYNAMIC_PIXEL_DEPTH enum
+ * LBV_DYNAMIC_PIXEL_DEPTH क्रमागत
  */
 
-typedef enum LBV_DYNAMIC_PIXEL_DEPTH {
+प्रकार क्रमागत LBV_DYNAMIC_PIXEL_DEPTH अणु
 DYNAMIC_PIXEL_DEPTH_36BPP                = 0x00000000,
 DYNAMIC_PIXEL_DEPTH_30BPP                = 0x00000001,
-} LBV_DYNAMIC_PIXEL_DEPTH;
+पूर्ण LBV_DYNAMIC_PIXEL_DEPTH;
 
 /*
- * LBV_DITHER_EN enum
+ * LBV_DITHER_EN क्रमागत
  */
 
-typedef enum LBV_DITHER_EN {
+प्रकार क्रमागत LBV_DITHER_EN अणु
 DITHER_DIS                               = 0x00000000,
 DITHER_EN                                = 0x00000001,
-} LBV_DITHER_EN;
+पूर्ण LBV_DITHER_EN;
 
 /*
- * LBV_DOWNSCALE_PREFETCH_EN enum
+ * LBV_DOWNSCALE_PREFETCH_EN क्रमागत
  */
 
-typedef enum LBV_DOWNSCALE_PREFETCH_EN {
+प्रकार क्रमागत LBV_DOWNSCALE_PREFETCH_EN अणु
 DOWNSCALE_PREFETCH_DIS                   = 0x00000000,
 DOWNSCALE_PREFETCH_EN                    = 0x00000001,
-} LBV_DOWNSCALE_PREFETCH_EN;
+पूर्ण LBV_DOWNSCALE_PREFETCH_EN;
 
 /*
- * LBV_MEMORY_CONFIG enum
+ * LBV_MEMORY_CONFIG क्रमागत
  */
 
-typedef enum LBV_MEMORY_CONFIG {
+प्रकार क्रमागत LBV_MEMORY_CONFIG अणु
 MEMORY_CONFIG_0                          = 0x00000000,
 MEMORY_CONFIG_1                          = 0x00000001,
 MEMORY_CONFIG_2                          = 0x00000002,
 MEMORY_CONFIG_3                          = 0x00000003,
-} LBV_MEMORY_CONFIG;
+पूर्ण LBV_MEMORY_CONFIG;
 
 /*
- * LBV_SYNC_RESET_SEL2 enum
+ * LBV_SYNC_RESET_SEL2 क्रमागत
  */
 
-typedef enum LBV_SYNC_RESET_SEL2 {
+प्रकार क्रमागत LBV_SYNC_RESET_SEL2 अणु
 SYNC_RESET_SEL2_VBLANK                   = 0x00000000,
 SYNC_RESET_SEL2_VSYNC                    = 0x00000001,
-} LBV_SYNC_RESET_SEL2;
+पूर्ण LBV_SYNC_RESET_SEL2;
 
 /*
- * LBV_SYNC_DURATION enum
+ * LBV_SYNC_DURATION क्रमागत
  */
 
-typedef enum LBV_SYNC_DURATION {
+प्रकार क्रमागत LBV_SYNC_DURATION अणु
 SYNC_DURATION_16                         = 0x00000000,
 SYNC_DURATION_32                         = 0x00000001,
 SYNC_DURATION_64                         = 0x00000002,
 SYNC_DURATION_128                        = 0x00000003,
-} LBV_SYNC_DURATION;
+पूर्ण LBV_SYNC_DURATION;
 
 /*******************************************************
  * CRTC Enums
  *******************************************************/
 
 /*
- * CRTC_CONTROL_CRTC_START_POINT_CNTL enum
+ * CRTC_CONTROL_CRTC_START_POINT_CNTL क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_START_POINT_CNTL {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_START_POINT_CNTL अणु
 CRTC_CONTROL_CRTC_START_POINT_CNTL_NORMAL = 0x00000000,
 CRTC_CONTROL_CRTC_START_POINT_CNTL_DP    = 0x00000001,
-} CRTC_CONTROL_CRTC_START_POINT_CNTL;
+पूर्ण CRTC_CONTROL_CRTC_START_POINT_CNTL;
 
 /*
- * CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL enum
+ * CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL अणु
 CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL_NORMAL = 0x00000000,
 CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL_DP   = 0x00000001,
-} CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL;
+पूर्ण CRTC_CONTROL_CRTC_FIELD_NUMBER_CNTL;
 
 /*
- * CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL enum
+ * CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL अणु
 CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL_DISABLE  = 0x00000000,
 CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL_DISABLE_CURRENT  = 0x00000001,
 CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL_RESERVED  = 0x00000002,
 CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL_DISABLE_FIRST  = 0x00000003,
-} CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL;
+पूर्ण CRTC_CONTROL_CRTC_DISABLE_POINT_CNTL;
 
 /*
- * CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY enum
+ * CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY अणु
 CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY_FALSE  = 0x00000000,
 CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY_TRUE  = 0x00000001,
-} CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY;
+पूर्ण CRTC_CONTROL_CRTC_FIELD_NUMBER_POLARITY;
 
 /*
- * CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE enum
+ * CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE अणु
 CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE_FALSE  = 0x00000000,
 CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE_TRUE  = 0x00000001,
-} CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE;
+पूर्ण CRTC_CONTROL_CRTC_DISP_READ_REQUEST_DISABLE;
 
 /*
- * CRTC_CONTROL_CRTC_SOF_PULL_EN enum
+ * CRTC_CONTROL_CRTC_SOF_PULL_EN क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_SOF_PULL_EN {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_SOF_PULL_EN अणु
 CRTC_CONTROL_CRTC_SOF_PULL_EN_FALSE      = 0x00000000,
 CRTC_CONTROL_CRTC_SOF_PULL_EN_TRUE       = 0x00000001,
-} CRTC_CONTROL_CRTC_SOF_PULL_EN;
+पूर्ण CRTC_CONTROL_CRTC_SOF_PULL_EN;
 
 /*
- * CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL enum
+ * CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL क्रमागत
  */
 
-typedef enum CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL {
+प्रकार क्रमागत CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL अणु
 CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL_FALSE  = 0x00000000,
 CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL_TRUE  = 0x00000001,
-} CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL;
+पूर्ण CRTC_H_SYNC_B_CNTL_CRTC_H_SYNC_B_POL;
 
 /*
- * CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL enum
+ * CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL क्रमागत
  */
 
-typedef enum CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL {
+प्रकार क्रमागत CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL अणु
 CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL_FALSE  = 0x00000000,
 CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL_TRUE  = 0x00000001,
-} CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL;
+पूर्ण CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MAX_SEL;
 
 /*
- * CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL enum
+ * CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL क्रमागत
  */
 
-typedef enum CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL {
+प्रकार क्रमागत CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL अणु
 CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL_FALSE  = 0x00000000,
 CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL_TRUE  = 0x00000001,
-} CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL;
+पूर्ण CRTC_V_TOTAL_CONTROL_CRTC_V_TOTAL_MIN_SEL;
 
 /*
- * CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN enum
+ * CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN क्रमागत
  */
 
-typedef enum CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN {
+प्रकार क्रमागत CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN अणु
 CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN_FALSE  = 0x00000000,
 CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN_TRUE  = 0x00000001,
-} CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN;
+पूर्ण CRTC_V_TOTAL_CONTROL_CRTC_SET_V_TOTAL_MIN_MASK_EN;
 
 /*
- * CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC enum
+ * CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC क्रमागत
  */
 
-typedef enum CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC {
+प्रकार क्रमागत CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC अणु
 CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC_DISABLE = 0x00000000,
 CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC_ENABLE  = 0x00000001,
-} CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC;
+पूर्ण CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_TO_MASTER_VSYNC;
 
 /*
- * CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT enum
+ * CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT क्रमागत
  */
 
-typedef enum CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT {
+प्रकार क्रमागत CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT अणु
 CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT_DISABLE = 0x00000000,
 CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT_ENABLE  = 0x00000001,
-} CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT;
+पूर्ण CRTC_V_TOTAL_CONTROL_CRTC_FORCE_LOCK_ON_EVENT;
 
 /*
- * CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK enum
+ * CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK क्रमागत
  */
 
-typedef enum CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK {
+प्रकार क्रमागत CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK अणु
 CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK_FALSE = 0x00000000,
 CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK_TRUE  = 0x00000001,
-} CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK;
+पूर्ण CRTC_V_TOTAL_INT_STATUS_CRTC_SET_V_TOTAL_MIN_EVENT_OCCURED_ACK;
 
 /*
- * CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR enum
+ * CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR क्रमागत
  */
 
-typedef enum CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR {
+प्रकार क्रमागत CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR अणु
 CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR_FALSE = 0x00000000,
 CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR_TRUE  = 0x00000001,
-} CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR;
+पूर्ण CRTC_VSYNC_NOM_INT_STATUS_CRTC_VSYNC_NOM_INT_CLEAR;
 
 /*
- * CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL enum
+ * CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL क्रमागत
  */
 
-typedef enum CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL {
+प्रकार क्रमागत CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL अणु
 CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL_FALSE  = 0x00000000,
 CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL_TRUE  = 0x00000001,
-} CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL;
+पूर्ण CRTC_V_SYNC_B_CNTL_CRTC_V_SYNC_B_POL;
 
 /*
- * CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN enum
+ * CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN क्रमागत
  */
 
-typedef enum CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN {
+प्रकार क्रमागत CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN अणु
 CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN_FALSE  = 0x00000000,
 CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN_TRUE  = 0x00000001,
-} CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN;
+पूर्ण CRTC_DTMTEST_CNTL_CRTC_DTMTEST_CRTC_EN;
 
 /*
- * CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT enum
+ * CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT क्रमागत
  */
 
-typedef enum CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT {
+प्रकार क्रमागत CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT अणु
 CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_VSYNCA_OTHER  = 0x00000001,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_HSYNCA_OTHER  = 0x00000002,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_GENERICF  = 0x00000005,
@@ -1978,13 +1979,13 @@ CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_GENERICA  = 0x00000014,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_GENERICB  = 0x00000015,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_IGSL_ALLOW  = 0x00000016,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT_MANUAL_FLOW  = 0x00000017,
-} CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT;
+पूर्ण CRTC_TRIGA_CNTL_CRTC_TRIGA_SOURCE_SELECT;
 
 /*
- * CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT enum
+ * CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT क्रमागत
  */
 
-typedef enum CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT {
+प्रकार क्रमागत CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT अणु
 CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_INTERLACE  = 0x00000001,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_GENERICA  = 0x00000002,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_GENERICB  = 0x00000003,
@@ -1992,31 +1993,31 @@ CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_HSYNCA  = 0x00000004,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_HSYNCB  = 0x00000005,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_VIDEO  = 0x00000006,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT_GENERICC  = 0x00000007,
-} CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT;
+पूर्ण CRTC_TRIGA_CNTL_CRTC_TRIGA_POLARITY_SELECT;
 
 /*
- * CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN enum
+ * CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN क्रमागत
  */
 
-typedef enum CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN {
+प्रकार क्रमागत CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN अणु
 CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN_FALSE  = 0x00000000,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN_TRUE  = 0x00000001,
-} CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN;
+पूर्ण CRTC_TRIGA_CNTL_CRTC_TRIGA_RESYNC_BYPASS_EN;
 
 /*
- * CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR enum
+ * CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR क्रमागत
  */
 
-typedef enum CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR {
+प्रकार क्रमागत CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR अणु
 CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR_FALSE   = 0x00000000,
 CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR_TRUE    = 0x00000001,
-} CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR;
+पूर्ण CRTC_TRIGA_CNTL_CRTC_TRIGA_CLEAR;
 
 /*
- * CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT enum
+ * CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT क्रमागत
  */
 
-typedef enum CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT {
+प्रकार क्रमागत CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT अणु
 CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_VSYNCA_OTHER  = 0x00000001,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_HSYNCA_OTHER  = 0x00000002,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_GENERICF  = 0x00000005,
@@ -2037,13 +2038,13 @@ CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_GENERICA  = 0x00000014,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_GENERICB  = 0x00000015,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_IGSL_ALLOW  = 0x00000016,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT_MANUAL_FLOW  = 0x00000017,
-} CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT;
+पूर्ण CRTC_TRIGB_CNTL_CRTC_TRIGB_SOURCE_SELECT;
 
 /*
- * CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT enum
+ * CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT क्रमागत
  */
 
-typedef enum CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT {
+प्रकार क्रमागत CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT अणु
 CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_INTERLACE  = 0x00000001,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_GENERICA  = 0x00000002,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_GENERICB  = 0x00000003,
@@ -2051,69 +2052,69 @@ CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_HSYNCA  = 0x00000004,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_HSYNCB  = 0x00000005,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_VIDEO  = 0x00000006,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT_GENERICC  = 0x00000007,
-} CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT;
+पूर्ण CRTC_TRIGB_CNTL_CRTC_TRIGB_POLARITY_SELECT;
 
 /*
- * CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN enum
+ * CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN क्रमागत
  */
 
-typedef enum CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN {
+प्रकार क्रमागत CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN अणु
 CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN_FALSE  = 0x00000000,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN_TRUE  = 0x00000001,
-} CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN;
+पूर्ण CRTC_TRIGB_CNTL_CRTC_TRIGB_RESYNC_BYPASS_EN;
 
 /*
- * CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR enum
+ * CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR क्रमागत
  */
 
-typedef enum CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR {
+प्रकार क्रमागत CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR अणु
 CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR_FALSE   = 0x00000000,
 CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR_TRUE    = 0x00000001,
-} CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR;
+पूर्ण CRTC_TRIGB_CNTL_CRTC_TRIGB_CLEAR;
 
 /*
- * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE enum
+ * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE क्रमागत
  */
 
-typedef enum CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE {
+प्रकार क्रमागत CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE अणु
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE_DISABLE  = 0x00000000,
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE_HCOUNT  = 0x00000001,
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE_HCOUNT_VCOUNT  = 0x00000002,
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE_RESERVED  = 0x00000003,
-} CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE;
+पूर्ण CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_MODE;
 
 /*
- * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK enum
+ * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK क्रमागत
  */
 
-typedef enum CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK {
+प्रकार क्रमागत CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK अणु
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK_FALSE  = 0x00000000,
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK_TRUE  = 0x00000001,
-} CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK;
+पूर्ण CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CHECK;
 
 /*
- * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL enum
+ * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL क्रमागत
  */
 
-typedef enum CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL {
+प्रकार क्रमागत CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL अणु
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL_FALSE  = 0x00000000,
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL_TRUE  = 0x00000001,
-} CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL;
+पूर्ण CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_TRIG_SEL;
 
 /*
- * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR enum
+ * CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR क्रमागत
  */
 
-typedef enum CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR {
+प्रकार क्रमागत CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR अणु
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR_FALSE = 0x00000000,
 CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR_TRUE  = 0x00000001,
-} CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR;
+पूर्ण CRTC_FORCE_COUNT_NOW_CNTL_CRTC_FORCE_COUNT_NOW_CLEAR;
 
 /*
- * CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT enum
+ * CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT क्रमागत
  */
 
-typedef enum CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT {
+प्रकार क्रमागत CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT अणु
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_LOGIC0  = 0x00000000,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_GENERICF  = 0x00000001,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_GENERICE  = 0x00000002,
@@ -2130,435 +2131,435 @@ CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_GENERICB  = 0x0000000c,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_GENERICA  = 0x0000000d,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_GENERICD  = 0x0000000e,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT_GENERICC  = 0x0000000f,
-} CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT;
+पूर्ण CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_SOURCE_SELECT;
 
 /*
- * CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY enum
+ * CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY क्रमागत
  */
 
-typedef enum CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY {
+प्रकार क्रमागत CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY अणु
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY_FALSE  = 0x00000000,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY_TRUE  = 0x00000001,
-} CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY;
+पूर्ण CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_POLARITY;
 
 /*
- * CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY enum
+ * CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY क्रमागत
  */
 
-typedef enum CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY {
+प्रकार क्रमागत CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY अणु
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY_FALSE  = 0x00000000,
 CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY_TRUE  = 0x00000001,
-} CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY;
+पूर्ण CRTC_FLOW_CONTROL_CRTC_FLOW_CONTROL_GRANULARITY;
 
 /*
- * CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE enum
+ * CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE क्रमागत
  */
 
-typedef enum CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE {
+प्रकार क्रमागत CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE अणु
 CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE_NO  = 0x00000000,
 CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE_RIGHT  = 0x00000001,
 CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE_LEFT  = 0x00000002,
 CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE_RESERVED  = 0x00000003,
-} CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE;
+पूर्ण CRTC_STEREO_FORCE_NEXT_EYE_CRTC_STEREO_FORCE_NEXT_EYE;
 
 /*
- * CRTC_CONTROL_CRTC_MASTER_EN enum
+ * CRTC_CONTROL_CRTC_MASTER_EN क्रमागत
  */
 
-typedef enum CRTC_CONTROL_CRTC_MASTER_EN {
+प्रकार क्रमागत CRTC_CONTROL_CRTC_MASTER_EN अणु
 CRTC_CONTROL_CRTC_MASTER_EN_FALSE        = 0x00000000,
 CRTC_CONTROL_CRTC_MASTER_EN_TRUE         = 0x00000001,
-} CRTC_CONTROL_CRTC_MASTER_EN;
+पूर्ण CRTC_CONTROL_CRTC_MASTER_EN;
 
 /*
- * CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN enum
+ * CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN क्रमागत
  */
 
-typedef enum CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN {
+प्रकार क्रमागत CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN अणु
 CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN_FALSE  = 0x00000000,
 CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN_TRUE  = 0x00000001,
-} CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN;
+पूर्ण CRTC_BLANK_CONTROL_CRTC_BLANK_DATA_EN;
 
 /*
- * CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE enum
+ * CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE क्रमागत
  */
 
-typedef enum CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE {
+प्रकार क्रमागत CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE अणु
 CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE_FALSE  = 0x00000000,
 CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE_TRUE  = 0x00000001,
-} CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE;
+पूर्ण CRTC_BLANK_CONTROL_CRTC_BLANK_DE_MODE;
 
 /*
- * CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE enum
+ * CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE क्रमागत
  */
 
-typedef enum CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE {
+प्रकार क्रमागत CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE अणु
 CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE_FALSE  = 0x00000000,
 CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE_TRUE  = 0x00000001,
-} CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE;
+पूर्ण CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_ENABLE;
 
 /*
- * CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD enum
+ * CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD क्रमागत
  */
 
-typedef enum CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD {
+प्रकार क्रमागत CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD अणु
 CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD_NOT  = 0x00000000,
 CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD_ODD  = 0x00000001,
 CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD_EVEN  = 0x00000002,
 CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD_NOT2  = 0x00000003,
-} CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD;
+पूर्ण CRTC_INTERLACE_CONTROL_CRTC_INTERLACE_FORCE_NEXT_FIELD;
 
 /*
- * CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY enum
+ * CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY क्रमागत
  */
 
-typedef enum CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY {
+प्रकार क्रमागत CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY अणु
 CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY_FALSE  = 0x00000000,
 CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY_TRUE  = 0x00000001,
-} CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY;
+पूर्ण CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_INDICATION_OUTPUT_POLARITY;
 
 /*
- * CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT enum
+ * CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT क्रमागत
  */
 
-typedef enum CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT {
+प्रकार क्रमागत CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT अणु
 CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT_FALSE  = 0x00000000,
 CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT_TRUE  = 0x00000001,
-} CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT;
+पूर्ण CRTC_FIELD_INDICATION_CONTROL_CRTC_FIELD_ALIGNMENT;
 
 /*
- * CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN enum
+ * CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN क्रमागत
  */
 
-typedef enum CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN {
+प्रकार क्रमागत CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN अणु
 CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN_FALSE  = 0x00000000,
 CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN_TRUE  = 0x00000001,
-} CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN;
+पूर्ण CRTC_COUNT_CONTROL_CRTC_HORZ_COUNT_BY2_EN;
 
 /*
- * CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE enum
+ * CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE क्रमागत
  */
 
-typedef enum CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE {
+प्रकार क्रमागत CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE अणु
 CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_FALSE = 0x00000000,
 CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_TRUE  = 0x00000001,
-} CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE;
+पूर्ण CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE_CRTC_MANUAL_FORCE_VSYNC_NEXT_LINE;
 
 /*
- * CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR enum
+ * CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR क्रमागत
  */
 
-typedef enum CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR {
+प्रकार क्रमागत CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR अणु
 CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR_FALSE = 0x00000000,
 CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR_TRUE  = 0x00000001,
-} CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR;
+पूर्ण CRTC_VERT_SYNC_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_CLEAR;
 
 /*
- * CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE enum
+ * CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE क्रमागत
  */
 
-typedef enum CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE {
+प्रकार क्रमागत CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE अणु
 CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE_DISABLE  = 0x00000000,
 CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE_TRIGGERA  = 0x00000001,
 CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE_TRIGGERB  = 0x00000002,
 CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE_RESERVED  = 0x00000003,
-} CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE;
+पूर्ण CRTC_VERT_SYNC_CONTROL_CRTC_AUTO_FORCE_VSYNC_MODE;
 
 /*
- * CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY enum
+ * CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY क्रमागत
  */
 
-typedef enum CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY {
+प्रकार क्रमागत CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY अणु
 CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY_FALSE  = 0x00000000,
 CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY_TRUE  = 0x00000001,
-} CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY;
+पूर्ण CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_OUTPUT_POLARITY;
 
 /*
- * CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY enum
+ * CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY क्रमागत
  */
 
-typedef enum CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY {
+प्रकार क्रमागत CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY अणु
 CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY_FALSE  = 0x00000000,
 CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY_TRUE  = 0x00000001,
-} CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY;
+पूर्ण CRTC_STEREO_CONTROL_CRTC_STEREO_SYNC_SELECT_POLARITY;
 
 /*
- * CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY enum
+ * CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY क्रमागत
  */
 
-typedef enum CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY {
+प्रकार क्रमागत CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY अणु
 CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY_FALSE  = 0x00000000,
 CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY_TRUE  = 0x00000001,
-} CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY;
+पूर्ण CRTC_STEREO_CONTROL_CRTC_STEREO_EYE_FLAG_POLARITY;
 
 /*
- * CRTC_STEREO_CONTROL_CRTC_STEREO_EN enum
+ * CRTC_STEREO_CONTROL_CRTC_STEREO_EN क्रमागत
  */
 
-typedef enum CRTC_STEREO_CONTROL_CRTC_STEREO_EN {
+प्रकार क्रमागत CRTC_STEREO_CONTROL_CRTC_STEREO_EN अणु
 CRTC_STEREO_CONTROL_CRTC_STEREO_EN_FALSE  = 0x00000000,
 CRTC_STEREO_CONTROL_CRTC_STEREO_EN_TRUE  = 0x00000001,
-} CRTC_STEREO_CONTROL_CRTC_STEREO_EN;
+पूर्ण CRTC_STEREO_CONTROL_CRTC_STEREO_EN;
 
 /*
- * CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR enum
+ * CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR क्रमागत
  */
 
-typedef enum CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR {
+प्रकार क्रमागत CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR अणु
 CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR_FALSE = 0x00000000,
 CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR_TRUE  = 0x00000001,
-} CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR;
+पूर्ण CRTC_SNAPSHOT_STATUS_CRTC_SNAPSHOT_CLEAR;
 
 /*
- * CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL enum
+ * CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL क्रमागत
  */
 
-typedef enum CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL {
+प्रकार क्रमागत CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL अणु
 CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL_DISABLE  = 0x00000000,
 CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL_TRIGGERA  = 0x00000001,
 CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL_TRIGGERB  = 0x00000002,
 CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL_RESERVED  = 0x00000003,
-} CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL;
+पूर्ण CRTC_SNAPSHOT_CONTROL_CRTC_AUTO_SNAPSHOT_TRIG_SEL;
 
 /*
- * CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY enum
+ * CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY क्रमागत
  */
 
-typedef enum CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY {
+प्रकार क्रमागत CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY अणु
 CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY_FALSE = 0x00000000,
 CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY_TRUE  = 0x00000001,
-} CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY;
+पूर्ण CRTC_START_LINE_CONTROL_CRTC_PROGRESSIVE_START_LINE_EARLY;
 
 /*
- * CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY enum
+ * CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY क्रमागत
  */
 
-typedef enum CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY {
+प्रकार क्रमागत CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY अणु
 CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY_FALSE = 0x00000000,
 CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY_TRUE  = 0x00000001,
-} CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY;
+पूर्ण CRTC_START_LINE_CONTROL_CRTC_INTERLACE_START_LINE_EARLY;
 
 /*
- * CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN enum
+ * CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN क्रमागत
  */
 
-typedef enum CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN {
+प्रकार क्रमागत CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN अणु
 CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN_FALSE  = 0x00000000,
 CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN_TRUE  = 0x00000001,
-} CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN;
+पूर्ण CRTC_START_LINE_CONTROL_CRTC_LEGACY_REQUESTOR_EN;
 
 /*
- * CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN enum
+ * CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN क्रमागत
  */
 
-typedef enum CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN {
+प्रकार क्रमागत CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN अणु
 CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN_FALSE  = 0x00000000,
 CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN_TRUE  = 0x00000001,
-} CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN;
+पूर्ण CRTC_START_LINE_CONTROL_CRTC_PREFETCH_EN;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_SNAPSHOT_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_V_UPDATE_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_FORCE_COUNT_NOW_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_FORCE_VSYNC_NEXT_LINE_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_TRIGA_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_TRIGB_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_VSYNC_NOM_INT_TYPE;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK अणु
 CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_MSK;
 
 /*
- * CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE enum
+ * CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE {
+प्रकार क्रमागत CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE अणु
 CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE_FALSE  = 0x00000000,
 CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE;
+पूर्ण CRTC_INTERRUPT_CONTROL_CRTC_GSL_VSYNC_GAP_INT_TYPE;
 
 /*
- * CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK enum
+ * CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK क्रमागत
  */
 
-typedef enum CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK {
+प्रकार क्रमागत CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK अणु
 CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK_FALSE  = 0x00000000,
 CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK_TRUE   = 0x00000001,
-} CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK;
+पूर्ण CRTC_UPDATE_LOCK_CRTC_UPDATE_LOCK;
 
 /*
- * CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY enum
+ * CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY क्रमागत
  */
 
-typedef enum CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY {
+प्रकार क्रमागत CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY अणु
 CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY_FALSE  = 0x00000000,
 CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY_TRUE  = 0x00000001,
-} CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY;
+पूर्ण CRTC_DOUBLE_BUFFER_CONTROL_CRTC_UPDATE_INSTANTLY;
 
 /*
- * CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN enum
+ * CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN क्रमागत
  */
 
-typedef enum CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN {
+प्रकार क्रमागत CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN अणु
 CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN_FALSE  = 0x00000000,
 CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN_TRUE  = 0x00000001,
-} CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN;
+पूर्ण CRTC_DOUBLE_BUFFER_CONTROL_CRTC_BLANK_DATA_DOUBLE_BUFFER_EN;
 
 /*
- * CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE enum
+ * CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE क्रमागत
  */
 
-typedef enum CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE {
+प्रकार क्रमागत CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE अणु
 CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE_0  = 0x00000000,
 CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE_1  = 0x00000001,
-} CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE;
+पूर्ण CRTC_DOUBLE_BUFFER_CONTROL_CRTC_RANGE_TIMING_DBUF_UPDATE_MODE;
 
 /*
- * CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE enum
+ * CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE क्रमागत
  */
 
-typedef enum CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE {
+प्रकार क्रमागत CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE अणु
 CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE_FALSE  = 0x00000000,
 CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE_TRUE  = 0x00000001,
-} CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE;
+पूर्ण CRTC_VGA_PARAMETER_CAPTURE_MODE_CRTC_VGA_PARAMETER_CAPTURE_MODE;
 
 /*
- * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN enum
+ * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN क्रमागत
  */
 
-typedef enum CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN {
+प्रकार क्रमागत CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN अणु
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN_FALSE  = 0x00000000,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN_TRUE  = 0x00000001,
-} CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN;
+पूर्ण CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_EN;
 
 /*
- * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE enum
+ * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE क्रमागत
  */
 
-typedef enum CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE {
+प्रकार क्रमागत CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE अणु
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_RGB  = 0x00000000,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_YCBCR601  = 0x00000001,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_YCBCR709  = 0x00000002,
@@ -2567,258 +2568,258 @@ CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_HBARS  = 0x00000004,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_SRRGB  = 0x00000005,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_DRRGB  = 0x00000006,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE_XRBIAS  = 0x00000007,
-} CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE;
+पूर्ण CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_MODE;
 
 /*
- * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE enum
+ * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE क्रमागत
  */
 
-typedef enum CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE {
+प्रकार क्रमागत CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE अणु
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE_FALSE  = 0x00000000,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE_TRUE  = 0x00000001,
-} CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE;
+पूर्ण CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_DYNAMIC_RANGE;
 
 /*
- * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT enum
+ * CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT क्रमागत
  */
 
-typedef enum CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT {
+प्रकार क्रमागत CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT अणु
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT_6BPC  = 0x00000000,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT_8BPC  = 0x00000001,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT_10BPC  = 0x00000002,
 CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT_RESERVED  = 0x00000003,
-} CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT;
+पूर्ण CRTC_TEST_PATTERN_CONTROL_CRTC_TEST_PATTERN_COLOR_FORMAT;
 
 /*
- * MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK enum
+ * MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK क्रमागत
  */
 
-typedef enum MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK {
+प्रकार क्रमागत MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK अणु
 MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK_FALSE  = 0x00000000,
 MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK_TRUE  = 0x00000001,
-} MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK;
+पूर्ण MASTER_UPDATE_LOCK_MASTER_UPDATE_LOCK;
 
 /*
- * MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK enum
+ * MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK क्रमागत
  */
 
-typedef enum MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK {
+प्रकार क्रमागत MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK अणु
 MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK_FALSE  = 0x00000000,
 MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK_TRUE  = 0x00000001,
-} MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK;
+पूर्ण MASTER_UPDATE_LOCK_GSL_CONTROL_MASTER_UPDATE_LOCK;
 
 /*
- * MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK enum
+ * MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK क्रमागत
  */
 
-typedef enum MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK {
+प्रकार क्रमागत MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK अणु
 MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK_FALSE  = 0x00000000,
 MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK_TRUE  = 0x00000001,
-} MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK;
+पूर्ण MASTER_UPDATE_LOCK_UNDERFLOW_UPDATE_LOCK;
 
 /*
- * MASTER_UPDATE_MODE_MASTER_UPDATE_MODE enum
+ * MASTER_UPDATE_MODE_MASTER_UPDATE_MODE क्रमागत
  */
 
-typedef enum MASTER_UPDATE_MODE_MASTER_UPDATE_MODE {
+प्रकार क्रमागत MASTER_UPDATE_MODE_MASTER_UPDATE_MODE अणु
 MASTER_UPDATE_MODE_MASTER_UPDATE_MODE_BETWEEN  = 0x00000000,
 MASTER_UPDATE_MODE_MASTER_UPDATE_MODE_HSYNCA  = 0x00000001,
 MASTER_UPDATE_MODE_MASTER_UPDATE_MODE_VSYNCA  = 0x00000002,
 MASTER_UPDATE_MODE_MASTER_UPDATE_MODE_BEFORE  = 0x00000003,
-} MASTER_UPDATE_MODE_MASTER_UPDATE_MODE;
+पूर्ण MASTER_UPDATE_MODE_MASTER_UPDATE_MODE;
 
 /*
- * MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE enum
+ * MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE क्रमागत
  */
 
-typedef enum MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE {
+प्रकार क्रमागत MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE अणु
 MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE_BOTH  = 0x00000000,
 MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE_EVEN  = 0x00000001,
 MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE_ODD  = 0x00000002,
 MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE_RESERVED  = 0x00000003,
-} MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE;
+पूर्ण MASTER_UPDATE_MODE_MASTER_UPDATE_INTERLACED_MODE;
 
 /*
- * CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE enum
+ * CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE क्रमागत
  */
 
-typedef enum CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE {
+प्रकार क्रमागत CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE अणु
 CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE_DISABLE  = 0x00000000,
 CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE_DEBUG  = 0x00000001,
 CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE_NORMAL  = 0x00000002,
-} CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE;
+पूर्ण CRTC_MVP_INBAND_CNTL_INSERT_CRTC_MVP_INBAND_OUT_MODE;
 
 /*
- * CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR enum
+ * CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR क्रमागत
  */
 
-typedef enum CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR {
+प्रकार क्रमागत CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR अणु
 CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR_FALSE = 0x00000000,
 CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR_TRUE  = 0x00000001,
-} CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR;
+पूर्ण CRTC_MVP_STATUS_CRTC_FLIP_NOW_CLEAR;
 
 /*
- * CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR enum
+ * CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR क्रमागत
  */
 
-typedef enum CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR {
+प्रकार क्रमागत CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR अणु
 CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR_FALSE = 0x00000000,
 CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR_TRUE  = 0x00000001,
-} CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR;
+पूर्ण CRTC_MVP_STATUS_CRTC_AFR_HSYNC_SWITCH_DONE_CLEAR;
 
 /*
- * CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR enum
+ * CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR क्रमागत
  */
 
-typedef enum CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR {
+प्रकार क्रमागत CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR अणु
 CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR_FALSE = 0x00000000,
 CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR_TRUE  = 0x00000001,
-} CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR;
+पूर्ण CRTC_V_UPDATE_INT_STATUS_CRTC_V_UPDATE_INT_CLEAR;
 
 /*
- * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY enum
+ * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY अणु
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY_FALSE  = 0x00000000,
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY;
+पूर्ण CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_OUTPUT_POLARITY;
 
 /*
- * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE enum
+ * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE अणु
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE_FALSE = 0x00000000,
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE;
+पूर्ण CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_ENABLE;
 
 /*
- * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR enum
+ * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR अणु
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR_FALSE = 0x00000000,
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR;
+पूर्ण CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_CLEAR;
 
 /*
- * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE enum
+ * CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE अणु
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE_FALSE  = 0x00000000,
 CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE;
+पूर्ण CRTC_VERTICAL_INTERRUPT0_CONTROL_CRTC_VERTICAL_INTERRUPT0_INT_TYPE;
 
 /*
- * CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR enum
+ * CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR अणु
 CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR_CLEAR_FALSE = 0x00000000,
 CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR;
+पूर्ण CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_CLEAR;
 
 /*
- * CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE enum
+ * CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE अणु
 CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE_FALSE = 0x00000000,
 CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE;
+पूर्ण CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_ENABLE;
 
 /*
- * CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE enum
+ * CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE अणु
 CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE_FALSE  = 0x00000000,
 CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE;
+पूर्ण CRTC_VERTICAL_INTERRUPT1_CONTROL_CRTC_VERTICAL_INTERRUPT1_INT_TYPE;
 
 /*
- * CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR enum
+ * CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR अणु
 CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR_CLEAR_FALSE = 0x00000000,
 CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR;
+पूर्ण CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_CLEAR;
 
 /*
- * CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE enum
+ * CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE अणु
 CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE_FALSE = 0x00000000,
 CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE;
+पूर्ण CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_ENABLE;
 
 /*
- * CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE enum
+ * CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE {
+प्रकार क्रमागत CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE अणु
 CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE_FALSE  = 0x00000000,
 CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE;
+पूर्ण CRTC_VERTICAL_INTERRUPT2_CONTROL_CRTC_VERTICAL_INTERRUPT2_INT_TYPE;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRC_EN enum
+ * CRTC_CRC_CNTL_CRTC_CRC_EN क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRC_EN {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRC_EN अणु
 CRTC_CRC_CNTL_CRTC_CRC_EN_FALSE          = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRC_EN_TRUE           = 0x00000001,
-} CRTC_CRC_CNTL_CRTC_CRC_EN;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRC_EN;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRC_CONT_EN enum
+ * CRTC_CRC_CNTL_CRTC_CRC_CONT_EN क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRC_CONT_EN {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRC_CONT_EN अणु
 CRTC_CRC_CNTL_CRTC_CRC_CONT_EN_FALSE     = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRC_CONT_EN_TRUE      = 0x00000001,
-} CRTC_CRC_CNTL_CRTC_CRC_CONT_EN;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRC_CONT_EN;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE enum
+ * CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE अणु
 CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE_LEFT  = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE_RIGHT  = 0x00000001,
 CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE_BOTH_EYES  = 0x00000002,
 CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE_BOTH_FIELDS  = 0x00000003,
-} CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRC_STEREO_MODE;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE enum
+ * CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE अणु
 CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE_TOP  = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE_BOTTOM  = 0x00000001,
 CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE_BOTH_BOTTOM  = 0x00000002,
 CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE_BOTH_FIELD  = 0x00000003,
-} CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRC_INTERLACE_MODE;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS enum
+ * CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS अणु
 CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS_FALSE = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS_TRUE  = 0x00000001,
-} CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRC_USE_NEW_AND_REPEATED_PIXELS;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT enum
+ * CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT अणु
 CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_UAB  = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_UA_B  = 0x00000001,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_U_AB  = 0x00000002,
@@ -2827,13 +2828,13 @@ CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_IAB  = 0x00000004,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_IA_B  = 0x00000005,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_I_AB  = 0x00000006,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT_I_A_B  = 0x00000007,
-} CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRTC_CRC0_SELECT;
 
 /*
- * CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT enum
+ * CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT क्रमागत
  */
 
-typedef enum CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT {
+प्रकार क्रमागत CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT अणु
 CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_UAB  = 0x00000000,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_UA_B  = 0x00000001,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_U_AB  = 0x00000002,
@@ -2842,125 +2843,125 @@ CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_IAB  = 0x00000004,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_IA_B  = 0x00000005,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_I_AB  = 0x00000006,
 CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT_I_A_B  = 0x00000007,
-} CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT;
+पूर्ण CRTC_CRC_CNTL_CRTC_CRTC_CRC1_SELECT;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE_DISABLE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE_ONESHOT  = 0x00000001,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE_CONTINUOUS  = 0x00000002,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE_RESERVED  = 0x00000003,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HCOUNT_MODE_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW_1pixel  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW_2pixel  = 0x00000001,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW_3pixel  = 0x00000002,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW_4pixel  = 0x00000003,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_JITTER_FILTERING_WINDOW;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE_FALSE = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_WINDOW_UPDATE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_VSYNC_POLARITY;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_HSYNC_POLARITY;
 
 /*
- * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE enum
+ * CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE अणु
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE;
+पूर्ण CRTC_EXT_TIMING_SYNC_CONTROL_CRTC_EXT_TIMING_SYNC_INTERLACE_MODE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR enum
+ * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR अणु
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR_FALSE = 0x00000000,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR;
+पूर्ण CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_CLEAR;
 
 /*
- * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE enum
+ * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE अणु
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE;
+पूर्ण CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_INT_TYPE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT enum
+ * CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT अणु
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT_1FRAME  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT_2FRAME  = 0x00000001,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT_4FRAME  = 0x00000002,
@@ -2969,168 +2970,168 @@ CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUN
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT_32FRAME  = 0x00000005,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT_64FRAME  = 0x00000006,
 CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT_128FRAME  = 0x00000007,
-} CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT;
+पूर्ण CRTC_EXT_TIMING_SYNC_LOSS_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_LOSS_FRAME_COUNT;
 
 /*
- * CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR enum
+ * CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR अणु
 CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR_FALSE = 0x00000000,
 CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR;
+पूर्ण CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_CLEAR;
 
 /*
- * CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE enum
+ * CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE अणु
 CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE;
+पूर्ण CRTC_EXT_TIMING_SYNC_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_INT_TYPE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE enum
+ * CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE अणु
 CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE;
+पूर्ण CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_ENABLE;
 
 /*
- * CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR enum
+ * CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR अणु
 CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR_FALSE = 0x00000000,
 CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR;
+पूर्ण CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_CLEAR;
 
 /*
- * CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE enum
+ * CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE {
+प्रकार क्रमागत CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE अणु
 CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE_FALSE  = 0x00000000,
 CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE;
+पूर्ण CRTC_EXT_TIMING_SYNC_SIGNAL_INTERRUPT_CONTROL_CRTC_EXT_TIMING_SYNC_SIGNAL_INT_TYPE;
 
 /*
- * CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE enum
+ * CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE क्रमागत
  */
 
-typedef enum CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE {
+प्रकार क्रमागत CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE अणु
 CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE_FALSE  = 0x00000000,
 CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE_TRUE  = 0x00000001,
-} CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE;
+पूर्ण CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_ENABLE;
 
 /*
- * CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR enum
+ * CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR क्रमागत
  */
 
-typedef enum CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR {
+प्रकार क्रमागत CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR अणु
 CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR_FALSE = 0x00000000,
 CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR_TRUE  = 0x00000001,
-} CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR;
+पूर्ण CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_CLEAR;
 
 /*
- * CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE enum
+ * CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE क्रमागत
  */
 
-typedef enum CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE {
+प्रकार क्रमागत CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE अणु
 CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE_FALSE  = 0x00000000,
 CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE_TRUE  = 0x00000001,
-} CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE;
+पूर्ण CRTC_STATIC_SCREEN_CONTROL_CRTC_CPU_SS_INT_TYPE;
 
 /*
- * CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE enum
+ * CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE क्रमागत
  */
 
-typedef enum CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE {
+प्रकार क्रमागत CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE अणु
 CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_FALSE  = 0x00000000,
 CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_TRUE  = 0x00000001,
-} CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE;
+पूर्ण CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE;
 
 /*
- * CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE enum
+ * CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE क्रमागत
  */
 
-typedef enum CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE {
+प्रकार क्रमागत CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE अणु
 CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE_OFF  = 0x00000000,
 CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE_ON  = 0x00000001,
-} CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE;
+पूर्ण CRTC_STATIC_SCREEN_CONTROL_CRTC_STATIC_SCREEN_OVERRIDE_VALUE;
 
 /*
- * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN enum
+ * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN क्रमागत
  */
 
-typedef enum CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN {
+प्रकार क्रमागत CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN अणु
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_FALSE  = 0x00000000,
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_TRUE  = 0x00000001,
-} CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN;
+पूर्ण CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN;
 
 /*
- * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB enum
+ * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB क्रमागत
  */
 
-typedef enum CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB {
+प्रकार क्रमागत CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB अणु
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB_FALSE  = 0x00000000,
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB_TRUE  = 0x00000001,
-} CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB;
+पूर्ण CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_EN_DB;
 
 /*
- * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE enum
+ * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE क्रमागत
  */
 
-typedef enum CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE {
+प्रकार क्रमागत CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE अणु
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE_BLOCK_BOTH  = 0x00000000,
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE_BLOCK_INTERLACE  = 0x00000001,
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE_BLOCK_PROGRASSIVE  = 0x00000002,
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE_RESERVED  = 0x00000003,
-} CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE;
+पूर्ण CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_V_UPDATE_MODE;
 
 /*
- * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR enum
+ * CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR क्रमागत
  */
 
-typedef enum CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR {
+प्रकार क्रमागत CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR अणु
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR_FALSE  = 0x00000000,
 CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR_TRUE  = 0x00000001,
-} CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR;
+पूर्ण CRTC_3D_STRUCTURE_CONTROL_CRTC_3D_STRUCTURE_STEREO_SEL_OVR;
 
 /*
- * CRTC_V_SYNC_A_POL enum
+ * CRTC_V_SYNC_A_POL क्रमागत
  */
 
-typedef enum CRTC_V_SYNC_A_POL {
+प्रकार क्रमागत CRTC_V_SYNC_A_POL अणु
 CRTC_V_SYNC_A_POL_HIGH                   = 0x00000000,
 CRTC_V_SYNC_A_POL_LOW                    = 0x00000001,
-} CRTC_V_SYNC_A_POL;
+पूर्ण CRTC_V_SYNC_A_POL;
 
 /*
- * CRTC_H_SYNC_A_POL enum
+ * CRTC_H_SYNC_A_POL क्रमागत
  */
 
-typedef enum CRTC_H_SYNC_A_POL {
+प्रकार क्रमागत CRTC_H_SYNC_A_POL अणु
 CRTC_H_SYNC_A_POL_HIGH                   = 0x00000000,
 CRTC_H_SYNC_A_POL_LOW                    = 0x00000001,
-} CRTC_H_SYNC_A_POL;
+पूर्ण CRTC_H_SYNC_A_POL;
 
 /*
- * CRTC_HORZ_REPETITION_COUNT enum
+ * CRTC_HORZ_REPETITION_COUNT क्रमागत
  */
 
-typedef enum CRTC_HORZ_REPETITION_COUNT {
+प्रकार क्रमागत CRTC_HORZ_REPETITION_COUNT अणु
 CRTC_HORZ_REPETITION_COUNT_0             = 0x00000000,
 CRTC_HORZ_REPETITION_COUNT_1             = 0x00000001,
 CRTC_HORZ_REPETITION_COUNT_2             = 0x00000002,
@@ -3147,167 +3148,167 @@ CRTC_HORZ_REPETITION_COUNT_12            = 0x0000000c,
 CRTC_HORZ_REPETITION_COUNT_13            = 0x0000000d,
 CRTC_HORZ_REPETITION_COUNT_14            = 0x0000000e,
 CRTC_HORZ_REPETITION_COUNT_15            = 0x0000000f,
-} CRTC_HORZ_REPETITION_COUNT;
+पूर्ण CRTC_HORZ_REPETITION_COUNT;
 
 /*
- * CRTC_DRR_MODE_DBUF_UPDATE_MODE enum
+ * CRTC_DRR_MODE_DBUF_UPDATE_MODE क्रमागत
  */
 
-typedef enum CRTC_DRR_MODE_DBUF_UPDATE_MODE {
+प्रकार क्रमागत CRTC_DRR_MODE_DBUF_UPDATE_MODE अणु
 CRTC_DRR_MODE_DBUF_UPDATE_MODE_00_IMMEDIATE  = 0x00000000,
 CRTC_DRR_MODE_DBUF_UPDATE_MODE_01_MANUAL  = 0x00000001,
 CRTC_DRR_MODE_DBUF_UPDATE_MODE_10_DBUF   = 0x00000002,
 CRTC_DRR_MODE_DBUF_UPDATE_MODE_11_SYNCED_DBUF  = 0x00000003,
-} CRTC_DRR_MODE_DBUF_UPDATE_MODE;
+पूर्ण CRTC_DRR_MODE_DBUF_UPDATE_MODE;
 
 /*******************************************************
  * FMT Enums
  *******************************************************/
 
 /*
- * FMT_CONTROL_PIXEL_ENCODING enum
+ * FMT_CONTROL_PIXEL_ENCODING क्रमागत
  */
 
-typedef enum FMT_CONTROL_PIXEL_ENCODING {
+प्रकार क्रमागत FMT_CONTROL_PIXEL_ENCODING अणु
 FMT_CONTROL_PIXEL_ENCODING_RGB444_OR_YCBCR444  = 0x00000000,
 FMT_CONTROL_PIXEL_ENCODING_YCBCR422      = 0x00000001,
 FMT_CONTROL_PIXEL_ENCODING_YCBCR420      = 0x00000002,
 FMT_CONTROL_PIXEL_ENCODING_RESERVED      = 0x00000003,
-} FMT_CONTROL_PIXEL_ENCODING;
+पूर्ण FMT_CONTROL_PIXEL_ENCODING;
 
 /*
- * FMT_CONTROL_SUBSAMPLING_MODE enum
+ * FMT_CONTROL_SUBSAMPLING_MODE क्रमागत
  */
 
-typedef enum FMT_CONTROL_SUBSAMPLING_MODE {
+प्रकार क्रमागत FMT_CONTROL_SUBSAMPLING_MODE अणु
 FMT_CONTROL_SUBSAMPLING_MODE_DROP        = 0x00000000,
 FMT_CONTROL_SUBSAMPLING_MODE_AVERAGE     = 0x00000001,
 FMT_CONTROL_SUBSAMPLING_MOME_3_TAP       = 0x00000002,
 FMT_CONTROL_SUBSAMPLING_MOME_RESERVED    = 0x00000003,
-} FMT_CONTROL_SUBSAMPLING_MODE;
+पूर्ण FMT_CONTROL_SUBSAMPLING_MODE;
 
 /*
- * FMT_CONTROL_SUBSAMPLING_ORDER enum
+ * FMT_CONTROL_SUBSAMPLING_ORDER क्रमागत
  */
 
-typedef enum FMT_CONTROL_SUBSAMPLING_ORDER {
+प्रकार क्रमागत FMT_CONTROL_SUBSAMPLING_ORDER अणु
 FMT_CONTROL_SUBSAMPLING_ORDER_CB_BEFORE_CR  = 0x00000000,
 FMT_CONTROL_SUBSAMPLING_ORDER_CR_BEFORE_CB  = 0x00000001,
-} FMT_CONTROL_SUBSAMPLING_ORDER;
+पूर्ण FMT_CONTROL_SUBSAMPLING_ORDER;
 
 /*
- * FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS enum
+ * FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS क्रमागत
  */
 
-typedef enum FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS {
+प्रकार क्रमागत FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS अणु
 FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS_DISABLE  = 0x00000000,
 FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS_ENABLE  = 0x00000001,
-} FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS;
+पूर्ण FMT_CONTROL_CBCR_BIT_REDUCTION_BYPASS;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE enum
+ * FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE अणु
 FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE_TRUNCATION  = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE_ROUNDING  = 0x00000001,
-} FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE;
+पूर्ण FMT_BIT_DEPTH_CONTROL_TRUNCATE_MODE;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH enum
+ * FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH अणु
 FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH_18BPP  = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH_24BPP  = 0x00000001,
 FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH_30BPP  = 0x00000002,
-} FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH;
+पूर्ण FMT_BIT_DEPTH_CONTROL_TRUNCATE_DEPTH;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH enum
+ * FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH अणु
 FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH_18BPP  = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH_24BPP  = 0x00000001,
 FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH_30BPP  = 0x00000002,
-} FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH;
+पूर्ण FMT_BIT_DEPTH_CONTROL_SPATIAL_DITHER_DEPTH;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH enum
+ * FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH अणु
 FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH_18BPP  = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH_24BPP  = 0x00000001,
 FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH_30BPP  = 0x00000002,
-} FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH;
+पूर्ण FMT_BIT_DEPTH_CONTROL_TEMPORAL_DITHER_DEPTH;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL enum
+ * FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL अणु
 FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL_GREY_LEVEL2  = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL_GREY_LEVEL4  = 0x00000001,
-} FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL;
+पूर्ण FMT_BIT_DEPTH_CONTROL_TEMPORAL_LEVEL;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_25FRC_SEL enum
+ * FMT_BIT_DEPTH_CONTROL_25FRC_SEL क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_25FRC_SEL {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_25FRC_SEL अणु
 FMT_BIT_DEPTH_CONTROL_25FRC_SEL_Ei       = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_25FRC_SEL_Fi       = 0x00000001,
 FMT_BIT_DEPTH_CONTROL_25FRC_SEL_Gi       = 0x00000002,
 FMT_BIT_DEPTH_CONTROL_25FRC_SEL_RESERVED  = 0x00000003,
-} FMT_BIT_DEPTH_CONTROL_25FRC_SEL;
+पूर्ण FMT_BIT_DEPTH_CONTROL_25FRC_SEL;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_50FRC_SEL enum
+ * FMT_BIT_DEPTH_CONTROL_50FRC_SEL क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_50FRC_SEL {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_50FRC_SEL अणु
 FMT_BIT_DEPTH_CONTROL_50FRC_SEL_A        = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_50FRC_SEL_B        = 0x00000001,
 FMT_BIT_DEPTH_CONTROL_50FRC_SEL_C        = 0x00000002,
 FMT_BIT_DEPTH_CONTROL_50FRC_SEL_D        = 0x00000003,
-} FMT_BIT_DEPTH_CONTROL_50FRC_SEL;
+पूर्ण FMT_BIT_DEPTH_CONTROL_50FRC_SEL;
 
 /*
- * FMT_BIT_DEPTH_CONTROL_75FRC_SEL enum
+ * FMT_BIT_DEPTH_CONTROL_75FRC_SEL क्रमागत
  */
 
-typedef enum FMT_BIT_DEPTH_CONTROL_75FRC_SEL {
+प्रकार क्रमागत FMT_BIT_DEPTH_CONTROL_75FRC_SEL अणु
 FMT_BIT_DEPTH_CONTROL_75FRC_SEL_E        = 0x00000000,
 FMT_BIT_DEPTH_CONTROL_75FRC_SEL_F        = 0x00000001,
 FMT_BIT_DEPTH_CONTROL_75FRC_SEL_G        = 0x00000002,
 FMT_BIT_DEPTH_CONTROL_75FRC_SEL_RESERVED  = 0x00000003,
-} FMT_BIT_DEPTH_CONTROL_75FRC_SEL;
+पूर्ण FMT_BIT_DEPTH_CONTROL_75FRC_SEL;
 
 /*
- * FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT enum
+ * FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT क्रमागत
  */
 
-typedef enum FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT {
+प्रकार क्रमागत FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT अणु
 FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT_LEGACY_HARDCODED_PATTERN  = 0x00000000,
 FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT_PROGRAMMABLE_PATTERN  = 0x00000001,
-} FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT;
+पूर्ण FMT_TEMPORAL_DITHER_PATTERN_CONTROL_SELECT;
 
 /*
- * FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0 enum
+ * FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0 क्रमागत
  */
 
-typedef enum FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0 {
+प्रकार क्रमागत FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0 अणु
 FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0_BGR  = 0x00000000,
 FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0_RGB  = 0x00000001,
-} FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0;
+पूर्ण FMT_TEMPORAL_DITHER_PATTERN_CONTROL_RGB1_BGR0;
 
 /*
- * FMT_CLAMP_CNTL_COLOR_FORMAT enum
+ * FMT_CLAMP_CNTL_COLOR_FORMAT क्रमागत
  */
 
-typedef enum FMT_CLAMP_CNTL_COLOR_FORMAT {
+प्रकार क्रमागत FMT_CLAMP_CNTL_COLOR_FORMAT अणु
 FMT_CLAMP_CNTL_COLOR_FORMAT_6BPC         = 0x00000000,
 FMT_CLAMP_CNTL_COLOR_FORMAT_8BPC         = 0x00000001,
 FMT_CLAMP_CNTL_COLOR_FORMAT_10BPC        = 0x00000002,
@@ -3316,611 +3317,611 @@ FMT_CLAMP_CNTL_COLOR_FORMAT_RESERVED1    = 0x00000004,
 FMT_CLAMP_CNTL_COLOR_FORMAT_RESERVED2    = 0x00000005,
 FMT_CLAMP_CNTL_COLOR_FORMAT_RESERVED3    = 0x00000006,
 FMT_CLAMP_CNTL_COLOR_FORMAT_PROGRAMMABLE  = 0x00000007,
-} FMT_CLAMP_CNTL_COLOR_FORMAT;
+पूर्ण FMT_CLAMP_CNTL_COLOR_FORMAT;
 
 /*
- * FMT_CRC_CNTL_CONT_EN enum
+ * FMT_CRC_CNTL_CONT_EN क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_CONT_EN {
+प्रकार क्रमागत FMT_CRC_CNTL_CONT_EN अणु
 FMT_CRC_CNTL_CONT_EN_ONE_SHOT            = 0x00000000,
 FMT_CRC_CNTL_CONT_EN_CONT                = 0x00000001,
-} FMT_CRC_CNTL_CONT_EN;
+पूर्ण FMT_CRC_CNTL_CONT_EN;
 
 /*
- * FMT_CRC_CNTL_INCLUDE_OVERSCAN enum
+ * FMT_CRC_CNTL_INCLUDE_OVERSCAN क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_INCLUDE_OVERSCAN {
+प्रकार क्रमागत FMT_CRC_CNTL_INCLUDE_OVERSCAN अणु
 FMT_CRC_CNTL_INCLUDE_OVERSCAN_NOT_INCLUDE  = 0x00000000,
 FMT_CRC_CNTL_INCLUDE_OVERSCAN_INCLUDE    = 0x00000001,
-} FMT_CRC_CNTL_INCLUDE_OVERSCAN;
+पूर्ण FMT_CRC_CNTL_INCLUDE_OVERSCAN;
 
 /*
- * FMT_CRC_CNTL_ONLY_BLANKB enum
+ * FMT_CRC_CNTL_ONLY_BLANKB क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_ONLY_BLANKB {
+प्रकार क्रमागत FMT_CRC_CNTL_ONLY_BLANKB अणु
 FMT_CRC_CNTL_ONLY_BLANKB_ENTIRE_FIELD    = 0x00000000,
 FMT_CRC_CNTL_ONLY_BLANKB_NON_BLANK       = 0x00000001,
-} FMT_CRC_CNTL_ONLY_BLANKB;
+पूर्ण FMT_CRC_CNTL_ONLY_BLANKB;
 
 /*
- * FMT_CRC_CNTL_PSR_MODE_ENABLE enum
+ * FMT_CRC_CNTL_PSR_MODE_ENABLE क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_PSR_MODE_ENABLE {
+प्रकार क्रमागत FMT_CRC_CNTL_PSR_MODE_ENABLE अणु
 FMT_CRC_CNTL_PSR_MODE_ENABLE_NORMAL      = 0x00000000,
 FMT_CRC_CNTL_PSR_MODE_ENABLE_EDP_PSR_CRC  = 0x00000001,
-} FMT_CRC_CNTL_PSR_MODE_ENABLE;
+पूर्ण FMT_CRC_CNTL_PSR_MODE_ENABLE;
 
 /*
- * FMT_CRC_CNTL_INTERLACE_MODE enum
+ * FMT_CRC_CNTL_INTERLACE_MODE क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_INTERLACE_MODE {
+प्रकार क्रमागत FMT_CRC_CNTL_INTERLACE_MODE अणु
 FMT_CRC_CNTL_INTERLACE_MODE_TOP          = 0x00000000,
 FMT_CRC_CNTL_INTERLACE_MODE_BOTTOM       = 0x00000001,
 FMT_CRC_CNTL_INTERLACE_MODE_BOTH_BOTTOM  = 0x00000002,
 FMT_CRC_CNTL_INTERLACE_MODE_BOTH_EACH    = 0x00000003,
-} FMT_CRC_CNTL_INTERLACE_MODE;
+पूर्ण FMT_CRC_CNTL_INTERLACE_MODE;
 
 /*
- * FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE enum
+ * FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE {
+प्रकार क्रमागत FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE अणु
 FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE_ALL     = 0x00000000,
 FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE_ODD_EVEN  = 0x00000001,
-} FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE;
+पूर्ण FMT_CRC_CNTL_EVEN_ODD_PIX_ENABLE;
 
 /*
- * FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT enum
+ * FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT क्रमागत
  */
 
-typedef enum FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT {
+प्रकार क्रमागत FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT अणु
 FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT_EVEN    = 0x00000000,
 FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT_ODD     = 0x00000001,
-} FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT;
+पूर्ण FMT_CRC_CNTL_EVEN_ODD_PIX_SELECT;
 
 /*
- * FMT_DEBUG_CNTL_COLOR_SELECT enum
+ * FMT_DEBUG_CNTL_COLOR_SELECT क्रमागत
  */
 
-typedef enum FMT_DEBUG_CNTL_COLOR_SELECT {
+प्रकार क्रमागत FMT_DEBUG_CNTL_COLOR_SELECT अणु
 FMT_DEBUG_CNTL_COLOR_SELECT_BLUE         = 0x00000000,
 FMT_DEBUG_CNTL_COLOR_SELECT_GREEN        = 0x00000001,
 FMT_DEBUG_CNTL_COLOR_SELECT_RED1         = 0x00000002,
 FMT_DEBUG_CNTL_COLOR_SELECT_RED2         = 0x00000003,
-} FMT_DEBUG_CNTL_COLOR_SELECT;
+पूर्ण FMT_DEBUG_CNTL_COLOR_SELECT;
 
 /*
- * FMT_SPATIAL_DITHER_MODE enum
+ * FMT_SPATIAL_DITHER_MODE क्रमागत
  */
 
-typedef enum FMT_SPATIAL_DITHER_MODE {
+प्रकार क्रमागत FMT_SPATIAL_DITHER_MODE अणु
 FMT_SPATIAL_DITHER_MODE_0                = 0x00000000,
 FMT_SPATIAL_DITHER_MODE_1                = 0x00000001,
 FMT_SPATIAL_DITHER_MODE_2                = 0x00000002,
 FMT_SPATIAL_DITHER_MODE_3                = 0x00000003,
-} FMT_SPATIAL_DITHER_MODE;
+पूर्ण FMT_SPATIAL_DITHER_MODE;
 
 /*
- * FMT_STEREOSYNC_OVR_POL enum
+ * FMT_STEREOSYNC_OVR_POL क्रमागत
  */
 
-typedef enum FMT_STEREOSYNC_OVR_POL {
+प्रकार क्रमागत FMT_STEREOSYNC_OVR_POL अणु
 FMT_STEREOSYNC_OVR_POL_INVERTED          = 0x00000000,
 FMT_STEREOSYNC_OVR_POL_NOT_INVERTED      = 0x00000001,
-} FMT_STEREOSYNC_OVR_POL;
+पूर्ण FMT_STEREOSYNC_OVR_POL;
 
 /*
- * FMT_DYNAMIC_EXP_MODE enum
+ * FMT_DYNAMIC_EXP_MODE क्रमागत
  */
 
-typedef enum FMT_DYNAMIC_EXP_MODE {
+प्रकार क्रमागत FMT_DYNAMIC_EXP_MODE अणु
 FMT_DYNAMIC_EXP_MODE_10to12              = 0x00000000,
 FMT_DYNAMIC_EXP_MODE_8to12               = 0x00000001,
-} FMT_DYNAMIC_EXP_MODE;
+पूर्ण FMT_DYNAMIC_EXP_MODE;
 
 /*******************************************************
  * HPD Enums
  *******************************************************/
 
 /*
- * HPD_INT_CONTROL_ACK enum
+ * HPD_INT_CONTROL_ACK क्रमागत
  */
 
-typedef enum HPD_INT_CONTROL_ACK {
+प्रकार क्रमागत HPD_INT_CONTROL_ACK अणु
 HPD_INT_CONTROL_ACK_0                    = 0x00000000,
 HPD_INT_CONTROL_ACK_1                    = 0x00000001,
-} HPD_INT_CONTROL_ACK;
+पूर्ण HPD_INT_CONTROL_ACK;
 
 /*
- * HPD_INT_CONTROL_POLARITY enum
+ * HPD_INT_CONTROL_POLARITY क्रमागत
  */
 
-typedef enum HPD_INT_CONTROL_POLARITY {
+प्रकार क्रमागत HPD_INT_CONTROL_POLARITY अणु
 HPD_INT_CONTROL_GEN_INT_ON_DISCON        = 0x00000000,
 HPD_INT_CONTROL_GEN_INT_ON_CON           = 0x00000001,
-} HPD_INT_CONTROL_POLARITY;
+पूर्ण HPD_INT_CONTROL_POLARITY;
 
 /*
- * HPD_INT_CONTROL_RX_INT_ACK enum
+ * HPD_INT_CONTROL_RX_INT_ACK क्रमागत
  */
 
-typedef enum HPD_INT_CONTROL_RX_INT_ACK {
+प्रकार क्रमागत HPD_INT_CONTROL_RX_INT_ACK अणु
 HPD_INT_CONTROL_RX_INT_ACK_0             = 0x00000000,
 HPD_INT_CONTROL_RX_INT_ACK_1             = 0x00000001,
-} HPD_INT_CONTROL_RX_INT_ACK;
+पूर्ण HPD_INT_CONTROL_RX_INT_ACK;
 
 /*******************************************************
  * LB Enums
  *******************************************************/
 
 /*
- * LB_DATA_FORMAT_PIXEL_DEPTH enum
+ * LB_DATA_FORMAT_PIXEL_DEPTH क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_PIXEL_DEPTH {
+प्रकार क्रमागत LB_DATA_FORMAT_PIXEL_DEPTH अणु
 LB_DATA_FORMAT_PIXEL_DEPTH_30BPP         = 0x00000000,
 LB_DATA_FORMAT_PIXEL_DEPTH_24BPP         = 0x00000001,
 LB_DATA_FORMAT_PIXEL_DEPTH_18BPP         = 0x00000002,
 LB_DATA_FORMAT_PIXEL_DEPTH_36BPP         = 0x00000003,
-} LB_DATA_FORMAT_PIXEL_DEPTH;
+पूर्ण LB_DATA_FORMAT_PIXEL_DEPTH;
 
 /*
- * LB_DATA_FORMAT_PIXEL_EXPAN_MODE enum
+ * LB_DATA_FORMAT_PIXEL_EXPAN_MODE क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_PIXEL_EXPAN_MODE {
+प्रकार क्रमागत LB_DATA_FORMAT_PIXEL_EXPAN_MODE अणु
 LB_DATA_FORMAT_PIXEL_EXPAN_MODE_ZERO_PIXEL_EXPANSION = 0x00000000,
 LB_DATA_FORMAT_PIXEL_EXPAN_MODE_DYNAMIC_PIXEL_EXPANSION = 0x00000001,
-} LB_DATA_FORMAT_PIXEL_EXPAN_MODE;
+पूर्ण LB_DATA_FORMAT_PIXEL_EXPAN_MODE;
 
 /*
- * LB_DATA_FORMAT_PIXEL_REDUCE_MODE enum
+ * LB_DATA_FORMAT_PIXEL_REDUCE_MODE क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_PIXEL_REDUCE_MODE {
+प्रकार क्रमागत LB_DATA_FORMAT_PIXEL_REDUCE_MODE अणु
 LB_DATA_FORMAT_PIXEL_REDUCE_MODE_TRUNCATION = 0x00000000,
 LB_DATA_FORMAT_PIXEL_REDUCE_MODE_ROUNDING = 0x00000001,
-} LB_DATA_FORMAT_PIXEL_REDUCE_MODE;
+पूर्ण LB_DATA_FORMAT_PIXEL_REDUCE_MODE;
 
 /*
- * LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH enum
+ * LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH {
+प्रकार क्रमागत LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH अणु
 LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH_36BPP = 0x00000000,
 LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH_30BPP = 0x00000001,
-} LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH;
+पूर्ण LB_DATA_FORMAT_DYNAMIC_PIXEL_DEPTH;
 
 /*
- * LB_DATA_FORMAT_INTERLEAVE_EN enum
+ * LB_DATA_FORMAT_INTERLEAVE_EN क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_INTERLEAVE_EN {
+प्रकार क्रमागत LB_DATA_FORMAT_INTERLEAVE_EN अणु
 LB_DATA_FORMAT_INTERLEAVE_DISABLE        = 0x00000000,
 LB_DATA_FORMAT_INTERLEAVE_ENABLE         = 0x00000001,
-} LB_DATA_FORMAT_INTERLEAVE_EN;
+पूर्ण LB_DATA_FORMAT_INTERLEAVE_EN;
 
 /*
- * LB_DATA_FORMAT_REQUEST_MODE enum
+ * LB_DATA_FORMAT_REQUEST_MODE क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_REQUEST_MODE {
+प्रकार क्रमागत LB_DATA_FORMAT_REQUEST_MODE अणु
 LB_DATA_FORMAT_REQUEST_MODE_NORMAL       = 0x00000000,
 LB_DATA_FORMAT_REQUEST_MODE_START_OF_LINE  = 0x00000001,
-} LB_DATA_FORMAT_REQUEST_MODE;
+पूर्ण LB_DATA_FORMAT_REQUEST_MODE;
 
 /*
- * LB_DATA_FORMAT_ALPHA_EN enum
+ * LB_DATA_FORMAT_ALPHA_EN क्रमागत
  */
 
-typedef enum LB_DATA_FORMAT_ALPHA_EN {
+प्रकार क्रमागत LB_DATA_FORMAT_ALPHA_EN अणु
 LB_DATA_FORMAT_ALPHA_DISABLE             = 0x00000000,
 LB_DATA_FORMAT_ALPHA_ENABLE              = 0x00000001,
-} LB_DATA_FORMAT_ALPHA_EN;
+पूर्ण LB_DATA_FORMAT_ALPHA_EN;
 
 /*
- * LB_VLINE_START_END_VLINE_INV enum
+ * LB_VLINE_START_END_VLINE_INV क्रमागत
  */
 
-typedef enum LB_VLINE_START_END_VLINE_INV {
+प्रकार क्रमागत LB_VLINE_START_END_VLINE_INV अणु
 LB_VLINE_START_END_VLINE_NORMAL          = 0x00000000,
 LB_VLINE_START_END_VLINE_INVERSE         = 0x00000001,
-} LB_VLINE_START_END_VLINE_INV;
+पूर्ण LB_VLINE_START_END_VLINE_INV;
 
 /*
- * LB_VLINE2_START_END_VLINE2_INV enum
+ * LB_VLINE2_START_END_VLINE2_INV क्रमागत
  */
 
-typedef enum LB_VLINE2_START_END_VLINE2_INV {
+प्रकार क्रमागत LB_VLINE2_START_END_VLINE2_INV अणु
 LB_VLINE2_START_END_VLINE2_NORMAL        = 0x00000000,
 LB_VLINE2_START_END_VLINE2_INVERSE       = 0x00000001,
-} LB_VLINE2_START_END_VLINE2_INV;
+पूर्ण LB_VLINE2_START_END_VLINE2_INV;
 
 /*
- * LB_INTERRUPT_MASK_VBLANK_INTERRUPT_MASK enum
+ * LB_INTERRUPT_MASK_VBLANK_INTERRUPT_MASK क्रमागत
  */
 
-typedef enum LB_INTERRUPT_MASK_VBLANK_INTERRUPT_MASK {
+प्रकार क्रमागत LB_INTERRUPT_MASK_VBLANK_INTERRUPT_MASK अणु
 LB_INTERRUPT_MASK_VBLANK_INTERRUPT_DISABLE = 0x00000000,
 LB_INTERRUPT_MASK_VBLANK_INTERRUPT_ENABLE = 0x00000001,
-} LB_INTERRUPT_MASK_VBLANK_INTERRUPT_MASK;
+पूर्ण LB_INTERRUPT_MASK_VBLANK_INTERRUPT_MASK;
 
 /*
- * LB_INTERRUPT_MASK_VLINE_INTERRUPT_MASK enum
+ * LB_INTERRUPT_MASK_VLINE_INTERRUPT_MASK क्रमागत
  */
 
-typedef enum LB_INTERRUPT_MASK_VLINE_INTERRUPT_MASK {
+प्रकार क्रमागत LB_INTERRUPT_MASK_VLINE_INTERRUPT_MASK अणु
 LB_INTERRUPT_MASK_VLINE_INTERRUPT_DISABLE = 0x00000000,
 LB_INTERRUPT_MASK_VLINE_INTERRUPT_ENABLE = 0x00000001,
-} LB_INTERRUPT_MASK_VLINE_INTERRUPT_MASK;
+पूर्ण LB_INTERRUPT_MASK_VLINE_INTERRUPT_MASK;
 
 /*
- * LB_INTERRUPT_MASK_VLINE2_INTERRUPT_MASK enum
+ * LB_INTERRUPT_MASK_VLINE2_INTERRUPT_MASK क्रमागत
  */
 
-typedef enum LB_INTERRUPT_MASK_VLINE2_INTERRUPT_MASK {
+प्रकार क्रमागत LB_INTERRUPT_MASK_VLINE2_INTERRUPT_MASK अणु
 LB_INTERRUPT_MASK_VLINE2_INTERRUPT_DISABLE = 0x00000000,
 LB_INTERRUPT_MASK_VLINE2_INTERRUPT_ENABLE = 0x00000001,
-} LB_INTERRUPT_MASK_VLINE2_INTERRUPT_MASK;
+पूर्ण LB_INTERRUPT_MASK_VLINE2_INTERRUPT_MASK;
 
 /*
- * LB_VLINE_STATUS_VLINE_ACK enum
+ * LB_VLINE_STATUS_VLINE_ACK क्रमागत
  */
 
-typedef enum LB_VLINE_STATUS_VLINE_ACK {
+प्रकार क्रमागत LB_VLINE_STATUS_VLINE_ACK अणु
 LB_VLINE_STATUS_VLINE_NORMAL             = 0x00000000,
 LB_VLINE_STATUS_VLINE_CLEAR              = 0x00000001,
-} LB_VLINE_STATUS_VLINE_ACK;
+पूर्ण LB_VLINE_STATUS_VLINE_ACK;
 
 /*
- * LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE enum
+ * LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE क्रमागत
  */
 
-typedef enum LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE {
+प्रकार क्रमागत LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE अणु
 LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE_LEVEL_BASED  = 0x00000000,
 LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE_PULSE_BASED  = 0x00000001,
-} LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE;
+पूर्ण LB_VLINE_STATUS_VLINE_INTERRUPT_TYPE;
 
 /*
- * LB_VLINE2_STATUS_VLINE2_ACK enum
+ * LB_VLINE2_STATUS_VLINE2_ACK क्रमागत
  */
 
-typedef enum LB_VLINE2_STATUS_VLINE2_ACK {
+प्रकार क्रमागत LB_VLINE2_STATUS_VLINE2_ACK अणु
 LB_VLINE2_STATUS_VLINE2_NORMAL           = 0x00000000,
 LB_VLINE2_STATUS_VLINE2_CLEAR            = 0x00000001,
-} LB_VLINE2_STATUS_VLINE2_ACK;
+पूर्ण LB_VLINE2_STATUS_VLINE2_ACK;
 
 /*
- * LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE enum
+ * LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE क्रमागत
  */
 
-typedef enum LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE {
+प्रकार क्रमागत LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE अणु
 LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE_LEVEL_BASED  = 0x00000000,
 LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE_PULSE_BASED  = 0x00000001,
-} LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE;
+पूर्ण LB_VLINE2_STATUS_VLINE2_INTERRUPT_TYPE;
 
 /*
- * LB_VBLANK_STATUS_VBLANK_ACK enum
+ * LB_VBLANK_STATUS_VBLANK_ACK क्रमागत
  */
 
-typedef enum LB_VBLANK_STATUS_VBLANK_ACK {
+प्रकार क्रमागत LB_VBLANK_STATUS_VBLANK_ACK अणु
 LB_VBLANK_STATUS_VBLANK_NORMAL           = 0x00000000,
 LB_VBLANK_STATUS_VBLANK_CLEAR            = 0x00000001,
-} LB_VBLANK_STATUS_VBLANK_ACK;
+पूर्ण LB_VBLANK_STATUS_VBLANK_ACK;
 
 /*
- * LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE enum
+ * LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE क्रमागत
  */
 
-typedef enum LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE {
+प्रकार क्रमागत LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE अणु
 LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE_LEVEL_BASED  = 0x00000000,
 LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE_PULSE_BASED  = 0x00000001,
-} LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE;
+पूर्ण LB_VBLANK_STATUS_VBLANK_INTERRUPT_TYPE;
 
 /*
- * LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL enum
+ * LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL क्रमागत
  */
 
-typedef enum LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL {
+प्रकार क्रमागत LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL अणु
 LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL_DISABLE  = 0x00000000,
 LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL_FROM_VSYNC_VBLANK  = 0x00000001,
 LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL_FROM_POWERDOWN_RESET  = 0x00000002,
 LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL_FROM_VSYNC_VBLANK_POWERDOWN_RESET  = 0x00000003,
-} LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL;
+पूर्ण LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL;
 
 /*
- * LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2 enum
+ * LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2 क्रमागत
  */
 
-typedef enum LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2 {
+प्रकार क्रमागत LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2 अणु
 LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2_USE_VBLANK  = 0x00000000,
 LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2_USE_VSYNC  = 0x00000001,
-} LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2;
+पूर्ण LB_SYNC_RESET_SEL_LB_SYNC_RESET_SEL2;
 
 /*
- * LB_SYNC_RESET_SEL_LB_SYNC_DURATION enum
+ * LB_SYNC_RESET_SEL_LB_SYNC_DURATION क्रमागत
  */
 
-typedef enum LB_SYNC_RESET_SEL_LB_SYNC_DURATION {
+प्रकार क्रमागत LB_SYNC_RESET_SEL_LB_SYNC_DURATION अणु
 LB_SYNC_RESET_SEL_LB_SYNC_DURATION_16_CLOCKS = 0x00000000,
 LB_SYNC_RESET_SEL_LB_SYNC_DURATION_32_CLOCKS = 0x00000001,
 LB_SYNC_RESET_SEL_LB_SYNC_DURATION_64_CLOCKS = 0x00000002,
 LB_SYNC_RESET_SEL_LB_SYNC_DURATION_128_CLOCKS = 0x00000003,
-} LB_SYNC_RESET_SEL_LB_SYNC_DURATION;
+पूर्ण LB_SYNC_RESET_SEL_LB_SYNC_DURATION;
 
 /*
- * LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_EN enum
+ * LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_EN क्रमागत
  */
 
-typedef enum LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_EN {
+प्रकार क्रमागत LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_EN अणु
 LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_DISABLE = 0x00000000,
 LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_ENABLE = 0x00000001,
-} LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_EN;
+पूर्ण LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_EN;
 
 /*
- * LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REP_EN enum
+ * LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REP_EN क्रमागत
  */
 
-typedef enum LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REP_EN {
+प्रकार क्रमागत LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REP_EN अणु
 LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REPLACEMENT_DISABLE = 0x00000000,
 LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REPLACEMENT_ENABLE = 0x00000001,
-} LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REP_EN;
+पूर्ण LB_KEYER_COLOR_CTRL_LB_KEYER_COLOR_REP_EN;
 
 /*
- * LB_BUFFER_STATUS_LB_BUFFER_EMPTY_ACK enum
+ * LB_BUFFER_STATUS_LB_BUFFER_EMPTY_ACK क्रमागत
  */
 
-typedef enum LB_BUFFER_STATUS_LB_BUFFER_EMPTY_ACK {
+प्रकार क्रमागत LB_BUFFER_STATUS_LB_BUFFER_EMPTY_ACK अणु
 LB_BUFFER_STATUS_LB_BUFFER_EMPTY_NORMAL  = 0x00000000,
 LB_BUFFER_STATUS_LB_BUFFER_EMPTY_RESET   = 0x00000001,
-} LB_BUFFER_STATUS_LB_BUFFER_EMPTY_ACK;
+पूर्ण LB_BUFFER_STATUS_LB_BUFFER_EMPTY_ACK;
 
 /*
- * LB_BUFFER_STATUS_LB_BUFFER_FULL_ACK enum
+ * LB_BUFFER_STATUS_LB_BUFFER_FULL_ACK क्रमागत
  */
 
-typedef enum LB_BUFFER_STATUS_LB_BUFFER_FULL_ACK {
+प्रकार क्रमागत LB_BUFFER_STATUS_LB_BUFFER_FULL_ACK अणु
 LB_BUFFER_STATUS_LB_BUFFER_FULL_NORMAL   = 0x00000000,
 LB_BUFFER_STATUS_LB_BUFFER_FULL_RESET    = 0x00000001,
-} LB_BUFFER_STATUS_LB_BUFFER_FULL_ACK;
+पूर्ण LB_BUFFER_STATUS_LB_BUFFER_FULL_ACK;
 
 /*
- * LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE enum
+ * LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE क्रमागत
  */
 
-typedef enum LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE {
+प्रकार क्रमागत LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE अणु
 LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE_REAL_FLIP  = 0x00000002,
 LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE_DUMMY_FLIP  = 0x00000003,
-} LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE;
+पूर्ण LB_MVP_AFR_FLIP_MODE_MVP_AFR_FLIP_MODE;
 
 /*
- * LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET enum
+ * LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET क्रमागत
  */
 
-typedef enum LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET {
+प्रकार क्रमागत LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET अणु
 LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_NORMAL = 0x00000000,
 LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACTIVE  = 0x00000001,
-} LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET;
+पूर्ण LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET;
 
 /*
- * LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK enum
+ * LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK क्रमागत
  */
 
-typedef enum LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK {
+प्रकार क्रमागत LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK अणु
 LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK_NOT_USED0 = 0x00000000,
 LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK_NOT_USED1 = 0x00000001,
-} LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK;
+पूर्ण LB_MVP_AFR_FLIP_FIFO_CNTL_MVP_AFR_FLIP_FIFO_RESET_ACK;
 
 /*
- * LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE enum
+ * LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE क्रमागत
  */
 
-typedef enum LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE {
+प्रकार क्रमागत LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE अणु
 LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE_NO_INSERT  = 0x00000000,
 LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE_DEBUG  = 0x00000001,
 LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE_HSYNC_MODE  = 0x00000002,
-} LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE;
+पूर्ण LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_LINE_NUM_INSERT_MODE;
 
 /*
- * LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_ENABLE enum
+ * LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_ENABLE क्रमागत
  */
 
-typedef enum LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_ENABLE {
+प्रकार क्रमागत LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_ENABLE अणु
 LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_DISABLE  = 0x00000000,
 LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_EN  = 0x00000001,
-} LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_ENABLE;
+पूर्ण LB_MVP_FLIP_LINE_NUM_INSERT_MVP_FLIP_AUTO_ENABLE;
 
 /*
- * LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE enum
+ * LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE क्रमागत
  */
 
-typedef enum LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE {
+प्रकार क्रमागत LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE अणु
 ALPHA_LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE_MASTER  = 0x00000001,
 ALPHA_LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE_SLAVE  = 0x00000002,
-} LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE;
+पूर्ण LB_DC_MVP_LB_CONTROL_MVP_SWAP_LOCK_IN_MODE;
 
 /*
- * LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL enum
+ * LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL क्रमागत
  */
 
-typedef enum LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL {
+प्रकार क्रमागत LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL अणु
 LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL_NOT_USED0 = 0x00000000,
 LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL_NOT_USED1 = 0x00000001,
-} LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL;
+पूर्ण LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_SEL;
 
 /*
- * LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ONE enum
+ * LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ONE क्रमागत
  */
 
-typedef enum LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ONE {
+प्रकार क्रमागत LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ONE अणु
 LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_NO_FORCE_ONE = 0x00000000,
 LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_TO_ONE  = 0x00000001,
-} LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ONE;
+पूर्ण LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ONE;
 
 /*
- * LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ZERO enum
+ * LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ZERO क्रमागत
  */
 
-typedef enum LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ZERO {
+प्रकार क्रमागत LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ZERO अणु
 LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_NO_FORCE_ZERO = 0x00000000,
 LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_TO_ZERO  = 0x00000001,
-} LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ZERO;
+पूर्ण LB_DC_MVP_LB_CONTROL_DC_MVP_SWAP_LOCK_OUT_FORCE_ZERO;
 
 /*
- * LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN enum
+ * LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN क्रमागत
  */
 
-typedef enum LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN {
+प्रकार क्रमागत LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN अणु
 LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN_NOT_USED0 = 0x00000000,
 LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN_NOT_USED1 = 0x00000001,
-} LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN;
+पूर्ण LB_TEST_DEBUG_INDEX_LB_TEST_DEBUG_WRITE_EN;
 
 /*******************************************************
  * DIG Enums
  *******************************************************/
 
 /*
- * HDMI_KEEPOUT_MODE enum
+ * HDMI_KEEPOUT_MODE क्रमागत
  */
 
-typedef enum HDMI_KEEPOUT_MODE {
+प्रकार क्रमागत HDMI_KEEPOUT_MODE अणु
 HDMI_KEEPOUT_0_650PIX_AFTER_VSYNC        = 0x00000000,
 HDMI_KEEPOUT_509_650PIX_AFTER_VSYNC      = 0x00000001,
-} HDMI_KEEPOUT_MODE;
+पूर्ण HDMI_KEEPOUT_MODE;
 
 /*
- * HDMI_DATA_SCRAMBLE_EN enum
+ * HDMI_DATA_SCRAMBLE_EN क्रमागत
  */
 
-typedef enum HDMI_DATA_SCRAMBLE_EN {
+प्रकार क्रमागत HDMI_DATA_SCRAMBLE_EN अणु
 HDMI_DATA_SCRAMBLE_DISABLE               = 0x00000000,
 HDMI_DATA_SCRAMBLE_ENABLE                = 0x00000001,
-} HDMI_DATA_SCRAMBLE_EN;
+पूर्ण HDMI_DATA_SCRAMBLE_EN;
 
 /*
- * HDMI_CLOCK_CHANNEL_RATE enum
+ * HDMI_CLOCK_CHANNEL_RATE क्रमागत
  */
 
-typedef enum HDMI_CLOCK_CHANNEL_RATE {
+प्रकार क्रमागत HDMI_CLOCK_CHANNEL_RATE अणु
 HDMI_CLOCK_CHANNEL_FREQ_EQUAL_TO_CHAR_RATE  = 0x00000000,
 HDMI_CLOCK_CHANNEL_FREQ_QUARTER_TO_CHAR_RATE  = 0x00000001,
-} HDMI_CLOCK_CHANNEL_RATE;
+पूर्ण HDMI_CLOCK_CHANNEL_RATE;
 
 /*
- * HDMI_NO_EXTRA_NULL_PACKET_FILLED enum
+ * HDMI_NO_EXTRA_शून्य_PACKET_FILLED क्रमागत
  */
 
-typedef enum HDMI_NO_EXTRA_NULL_PACKET_FILLED {
-HDMI_EXTRA_NULL_PACKET_FILLED_ENABLE     = 0x00000000,
-HDMI_EXTRA_NULL_PACKET_FILLED_DISABLE    = 0x00000001,
-} HDMI_NO_EXTRA_NULL_PACKET_FILLED;
+प्रकार क्रमागत HDMI_NO_EXTRA_शून्य_PACKET_FILLED अणु
+HDMI_EXTRA_शून्य_PACKET_FILLED_ENABLE     = 0x00000000,
+HDMI_EXTRA_शून्य_PACKET_FILLED_DISABLE    = 0x00000001,
+पूर्ण HDMI_NO_EXTRA_शून्य_PACKET_FILLED;
 
 /*
- * HDMI_PACKET_GEN_VERSION enum
+ * HDMI_PACKET_GEN_VERSION क्रमागत
  */
 
-typedef enum HDMI_PACKET_GEN_VERSION {
+प्रकार क्रमागत HDMI_PACKET_GEN_VERSION अणु
 HDMI_PACKET_GEN_VERSION_OLD              = 0x00000000,
 HDMI_PACKET_GEN_VERSION_NEW              = 0x00000001,
-} HDMI_PACKET_GEN_VERSION;
+पूर्ण HDMI_PACKET_GEN_VERSION;
 
 /*
- * HDMI_ERROR_ACK enum
+ * HDMI_ERROR_ACK क्रमागत
  */
 
-typedef enum HDMI_ERROR_ACK {
+प्रकार क्रमागत HDMI_ERROR_ACK अणु
 HDMI_ERROR_ACK_INT                       = 0x00000000,
 HDMI_ERROR_NOT_ACK                       = 0x00000001,
-} HDMI_ERROR_ACK;
+पूर्ण HDMI_ERROR_ACK;
 
 /*
- * HDMI_ERROR_MASK enum
+ * HDMI_ERROR_MASK क्रमागत
  */
 
-typedef enum HDMI_ERROR_MASK {
+प्रकार क्रमागत HDMI_ERROR_MASK अणु
 HDMI_ERROR_MASK_INT                      = 0x00000000,
 HDMI_ERROR_NOT_MASK                      = 0x00000001,
-} HDMI_ERROR_MASK;
+पूर्ण HDMI_ERROR_MASK;
 
 /*
- * HDMI_DEEP_COLOR_DEPTH enum
+ * HDMI_DEEP_COLOR_DEPTH क्रमागत
  */
 
-typedef enum HDMI_DEEP_COLOR_DEPTH {
+प्रकार क्रमागत HDMI_DEEP_COLOR_DEPTH अणु
 HDMI_DEEP_COLOR_DEPTH_24BPP              = 0x00000000,
 HDMI_DEEP_COLOR_DEPTH_30BPP              = 0x00000001,
 HDMI_DEEP_COLOR_DEPTH_36BPP              = 0x00000002,
 HDMI_DEEP_COLOR_DEPTH_RESERVED           = 0x00000003,
-} HDMI_DEEP_COLOR_DEPTH;
+पूर्ण HDMI_DEEP_COLOR_DEPTH;
 
 /*
- * HDMI_AUDIO_DELAY_EN enum
+ * HDMI_AUDIO_DELAY_EN क्रमागत
  */
 
-typedef enum HDMI_AUDIO_DELAY_EN {
+प्रकार क्रमागत HDMI_AUDIO_DELAY_EN अणु
 HDMI_AUDIO_DELAY_DISABLE                 = 0x00000000,
 HDMI_AUDIO_DELAY_58CLK                   = 0x00000001,
 HDMI_AUDIO_DELAY_56CLK                   = 0x00000002,
 HDMI_AUDIO_DELAY_RESERVED                = 0x00000003,
-} HDMI_AUDIO_DELAY_EN;
+पूर्ण HDMI_AUDIO_DELAY_EN;
 
 /*
- * HDMI_AUDIO_SEND_MAX_PACKETS enum
+ * HDMI_AUDIO_SEND_MAX_PACKETS क्रमागत
  */
 
-typedef enum HDMI_AUDIO_SEND_MAX_PACKETS {
+प्रकार क्रमागत HDMI_AUDIO_SEND_MAX_PACKETS अणु
 HDMI_NOT_SEND_MAX_AUDIO_PACKETS          = 0x00000000,
 HDMI_SEND_MAX_AUDIO_PACKETS              = 0x00000001,
-} HDMI_AUDIO_SEND_MAX_PACKETS;
+पूर्ण HDMI_AUDIO_SEND_MAX_PACKETS;
 
 /*
- * HDMI_ACR_SEND enum
+ * HDMI_ACR_SEND क्रमागत
  */
 
-typedef enum HDMI_ACR_SEND {
+प्रकार क्रमागत HDMI_ACR_SEND अणु
 HDMI_ACR_NOT_SEND                        = 0x00000000,
 HDMI_ACR_PKT_SEND                        = 0x00000001,
-} HDMI_ACR_SEND;
+पूर्ण HDMI_ACR_SEND;
 
 /*
- * HDMI_ACR_CONT enum
+ * HDMI_ACR_CONT क्रमागत
  */
 
-typedef enum HDMI_ACR_CONT {
+प्रकार क्रमागत HDMI_ACR_CONT अणु
 HDMI_ACR_CONT_DISABLE                    = 0x00000000,
 HDMI_ACR_CONT_ENABLE                     = 0x00000001,
-} HDMI_ACR_CONT;
+पूर्ण HDMI_ACR_CONT;
 
 /*
- * HDMI_ACR_SELECT enum
+ * HDMI_ACR_SELECT क्रमागत
  */
 
-typedef enum HDMI_ACR_SELECT {
+प्रकार क्रमागत HDMI_ACR_SELECT अणु
 HDMI_ACR_SELECT_HW                       = 0x00000000,
 HDMI_ACR_SELECT_32K                      = 0x00000001,
 HDMI_ACR_SELECT_44K                      = 0x00000002,
 HDMI_ACR_SELECT_48K                      = 0x00000003,
-} HDMI_ACR_SELECT;
+पूर्ण HDMI_ACR_SELECT;
 
 /*
- * HDMI_ACR_SOURCE enum
+ * HDMI_ACR_SOURCE क्रमागत
  */
 
-typedef enum HDMI_ACR_SOURCE {
+प्रकार क्रमागत HDMI_ACR_SOURCE अणु
 HDMI_ACR_SOURCE_HW                       = 0x00000000,
 HDMI_ACR_SOURCE_SW                       = 0x00000001,
-} HDMI_ACR_SOURCE;
+पूर्ण HDMI_ACR_SOURCE;
 
 /*
- * HDMI_ACR_N_MULTIPLE enum
+ * HDMI_ACR_N_MULTIPLE क्रमागत
  */
 
-typedef enum HDMI_ACR_N_MULTIPLE {
+प्रकार क्रमागत HDMI_ACR_N_MULTIPLE अणु
 HDMI_ACR_0_MULTIPLE_RESERVED             = 0x00000000,
 HDMI_ACR_1_MULTIPLE                      = 0x00000001,
 HDMI_ACR_2_MULTIPLE                      = 0x00000002,
@@ -3929,242 +3930,242 @@ HDMI_ACR_4_MULTIPLE                      = 0x00000004,
 HDMI_ACR_5_MULTIPLE_RESERVED             = 0x00000005,
 HDMI_ACR_6_MULTIPLE_RESERVED             = 0x00000006,
 HDMI_ACR_7_MULTIPLE_RESERVED             = 0x00000007,
-} HDMI_ACR_N_MULTIPLE;
+पूर्ण HDMI_ACR_N_MULTIPLE;
 
 /*
- * HDMI_ACR_AUDIO_PRIORITY enum
+ * HDMI_ACR_AUDIO_PRIORITY क्रमागत
  */
 
-typedef enum HDMI_ACR_AUDIO_PRIORITY {
+प्रकार क्रमागत HDMI_ACR_AUDIO_PRIORITY अणु
 HDMI_ACR_PKT_HIGH_PRIORITY_THAN_AUDIO_SAMPLE  = 0x00000000,
 HDMI_AUDIO_SAMPLE_HIGH_PRIORITY_THAN_ACR_PKT  = 0x00000001,
-} HDMI_ACR_AUDIO_PRIORITY;
+पूर्ण HDMI_ACR_AUDIO_PRIORITY;
 
 /*
- * HDMI_NULL_SEND enum
+ * HDMI_शून्य_SEND क्रमागत
  */
 
-typedef enum HDMI_NULL_SEND {
-HDMI_NULL_NOT_SEND                       = 0x00000000,
-HDMI_NULL_PKT_SEND                       = 0x00000001,
-} HDMI_NULL_SEND;
+प्रकार क्रमागत HDMI_शून्य_SEND अणु
+HDMI_शून्य_NOT_SEND                       = 0x00000000,
+HDMI_शून्य_PKT_SEND                       = 0x00000001,
+पूर्ण HDMI_शून्य_SEND;
 
 /*
- * HDMI_GC_SEND enum
+ * HDMI_GC_SEND क्रमागत
  */
 
-typedef enum HDMI_GC_SEND {
+प्रकार क्रमागत HDMI_GC_SEND अणु
 HDMI_GC_NOT_SEND                         = 0x00000000,
 HDMI_GC_PKT_SEND                         = 0x00000001,
-} HDMI_GC_SEND;
+पूर्ण HDMI_GC_SEND;
 
 /*
- * HDMI_GC_CONT enum
+ * HDMI_GC_CONT क्रमागत
  */
 
-typedef enum HDMI_GC_CONT {
+प्रकार क्रमागत HDMI_GC_CONT अणु
 HDMI_GC_CONT_DISABLE                     = 0x00000000,
 HDMI_GC_CONT_ENABLE                      = 0x00000001,
-} HDMI_GC_CONT;
+पूर्ण HDMI_GC_CONT;
 
 /*
- * HDMI_ISRC_SEND enum
+ * HDMI_ISRC_SEND क्रमागत
  */
 
-typedef enum HDMI_ISRC_SEND {
+प्रकार क्रमागत HDMI_ISRC_SEND अणु
 HDMI_ISRC_NOT_SEND                       = 0x00000000,
 HDMI_ISRC_PKT_SEND                       = 0x00000001,
-} HDMI_ISRC_SEND;
+पूर्ण HDMI_ISRC_SEND;
 
 /*
- * HDMI_ISRC_CONT enum
+ * HDMI_ISRC_CONT क्रमागत
  */
 
-typedef enum HDMI_ISRC_CONT {
+प्रकार क्रमागत HDMI_ISRC_CONT अणु
 HDMI_ISRC_CONT_DISABLE                   = 0x00000000,
 HDMI_ISRC_CONT_ENABLE                    = 0x00000001,
-} HDMI_ISRC_CONT;
+पूर्ण HDMI_ISRC_CONT;
 
 /*
- * HDMI_AVI_INFO_SEND enum
+ * HDMI_AVI_INFO_SEND क्रमागत
  */
 
-typedef enum HDMI_AVI_INFO_SEND {
+प्रकार क्रमागत HDMI_AVI_INFO_SEND अणु
 HDMI_AVI_INFO_NOT_SEND                   = 0x00000000,
 HDMI_AVI_INFO_PKT_SEND                   = 0x00000001,
-} HDMI_AVI_INFO_SEND;
+पूर्ण HDMI_AVI_INFO_SEND;
 
 /*
- * HDMI_AVI_INFO_CONT enum
+ * HDMI_AVI_INFO_CONT क्रमागत
  */
 
-typedef enum HDMI_AVI_INFO_CONT {
+प्रकार क्रमागत HDMI_AVI_INFO_CONT अणु
 HDMI_AVI_INFO_CONT_DISABLE               = 0x00000000,
 HDMI_AVI_INFO_CONT_ENABLE                = 0x00000001,
-} HDMI_AVI_INFO_CONT;
+पूर्ण HDMI_AVI_INFO_CONT;
 
 /*
- * HDMI_AUDIO_INFO_SEND enum
+ * HDMI_AUDIO_INFO_SEND क्रमागत
  */
 
-typedef enum HDMI_AUDIO_INFO_SEND {
+प्रकार क्रमागत HDMI_AUDIO_INFO_SEND अणु
 HDMI_AUDIO_INFO_NOT_SEND                 = 0x00000000,
 HDMI_AUDIO_INFO_PKT_SEND                 = 0x00000001,
-} HDMI_AUDIO_INFO_SEND;
+पूर्ण HDMI_AUDIO_INFO_SEND;
 
 /*
- * HDMI_AUDIO_INFO_CONT enum
+ * HDMI_AUDIO_INFO_CONT क्रमागत
  */
 
-typedef enum HDMI_AUDIO_INFO_CONT {
+प्रकार क्रमागत HDMI_AUDIO_INFO_CONT अणु
 HDMI_AUDIO_INFO_CONT_DISABLE             = 0x00000000,
 HDMI_AUDIO_INFO_CONT_ENABLE              = 0x00000001,
-} HDMI_AUDIO_INFO_CONT;
+पूर्ण HDMI_AUDIO_INFO_CONT;
 
 /*
- * HDMI_MPEG_INFO_SEND enum
+ * HDMI_MPEG_INFO_SEND क्रमागत
  */
 
-typedef enum HDMI_MPEG_INFO_SEND {
+प्रकार क्रमागत HDMI_MPEG_INFO_SEND अणु
 HDMI_MPEG_INFO_NOT_SEND                  = 0x00000000,
 HDMI_MPEG_INFO_PKT_SEND                  = 0x00000001,
-} HDMI_MPEG_INFO_SEND;
+पूर्ण HDMI_MPEG_INFO_SEND;
 
 /*
- * HDMI_MPEG_INFO_CONT enum
+ * HDMI_MPEG_INFO_CONT क्रमागत
  */
 
-typedef enum HDMI_MPEG_INFO_CONT {
+प्रकार क्रमागत HDMI_MPEG_INFO_CONT अणु
 HDMI_MPEG_INFO_CONT_DISABLE              = 0x00000000,
 HDMI_MPEG_INFO_CONT_ENABLE               = 0x00000001,
-} HDMI_MPEG_INFO_CONT;
+पूर्ण HDMI_MPEG_INFO_CONT;
 
 /*
- * HDMI_GENERIC0_SEND enum
+ * HDMI_GENERIC0_SEND क्रमागत
  */
 
-typedef enum HDMI_GENERIC0_SEND {
+प्रकार क्रमागत HDMI_GENERIC0_SEND अणु
 HDMI_GENERIC0_NOT_SEND                   = 0x00000000,
 HDMI_GENERIC0_PKT_SEND                   = 0x00000001,
-} HDMI_GENERIC0_SEND;
+पूर्ण HDMI_GENERIC0_SEND;
 
 /*
- * HDMI_GENERIC0_CONT enum
+ * HDMI_GENERIC0_CONT क्रमागत
  */
 
-typedef enum HDMI_GENERIC0_CONT {
+प्रकार क्रमागत HDMI_GENERIC0_CONT अणु
 HDMI_GENERIC0_CONT_DISABLE               = 0x00000000,
 HDMI_GENERIC0_CONT_ENABLE                = 0x00000001,
-} HDMI_GENERIC0_CONT;
+पूर्ण HDMI_GENERIC0_CONT;
 
 /*
- * HDMI_GENERIC1_SEND enum
+ * HDMI_GENERIC1_SEND क्रमागत
  */
 
-typedef enum HDMI_GENERIC1_SEND {
+प्रकार क्रमागत HDMI_GENERIC1_SEND अणु
 HDMI_GENERIC1_NOT_SEND                   = 0x00000000,
 HDMI_GENERIC1_PKT_SEND                   = 0x00000001,
-} HDMI_GENERIC1_SEND;
+पूर्ण HDMI_GENERIC1_SEND;
 
 /*
- * HDMI_GENERIC1_CONT enum
+ * HDMI_GENERIC1_CONT क्रमागत
  */
 
-typedef enum HDMI_GENERIC1_CONT {
+प्रकार क्रमागत HDMI_GENERIC1_CONT अणु
 HDMI_GENERIC1_CONT_DISABLE               = 0x00000000,
 HDMI_GENERIC1_CONT_ENABLE                = 0x00000001,
-} HDMI_GENERIC1_CONT;
+पूर्ण HDMI_GENERIC1_CONT;
 
 /*
- * HDMI_GC_AVMUTE_CONT enum
+ * HDMI_GC_AVMUTE_CONT क्रमागत
  */
 
-typedef enum HDMI_GC_AVMUTE_CONT {
+प्रकार क्रमागत HDMI_GC_AVMUTE_CONT अणु
 HDMI_GC_AVMUTE_CONT_DISABLE              = 0x00000000,
 HDMI_GC_AVMUTE_CONT_ENABLE               = 0x00000001,
-} HDMI_GC_AVMUTE_CONT;
+पूर्ण HDMI_GC_AVMUTE_CONT;
 
 /*
- * HDMI_PACKING_PHASE_OVERRIDE enum
+ * HDMI_PACKING_PHASE_OVERRIDE क्रमागत
  */
 
-typedef enum HDMI_PACKING_PHASE_OVERRIDE {
+प्रकार क्रमागत HDMI_PACKING_PHASE_OVERRIDE अणु
 HDMI_PACKING_PHASE_SET_BY_HW             = 0x00000000,
 HDMI_PACKING_PHASE_SET_BY_SW             = 0x00000001,
-} HDMI_PACKING_PHASE_OVERRIDE;
+पूर्ण HDMI_PACKING_PHASE_OVERRIDE;
 
 /*
- * HDMI_GENERIC2_SEND enum
+ * HDMI_GENERIC2_SEND क्रमागत
  */
 
-typedef enum HDMI_GENERIC2_SEND {
+प्रकार क्रमागत HDMI_GENERIC2_SEND अणु
 HDMI_GENERIC2_NOT_SEND                   = 0x00000000,
 HDMI_GENERIC2_PKT_SEND                   = 0x00000001,
-} HDMI_GENERIC2_SEND;
+पूर्ण HDMI_GENERIC2_SEND;
 
 /*
- * HDMI_GENERIC2_CONT enum
+ * HDMI_GENERIC2_CONT क्रमागत
  */
 
-typedef enum HDMI_GENERIC2_CONT {
+प्रकार क्रमागत HDMI_GENERIC2_CONT अणु
 HDMI_GENERIC2_CONT_DISABLE               = 0x00000000,
 HDMI_GENERIC2_CONT_ENABLE                = 0x00000001,
-} HDMI_GENERIC2_CONT;
+पूर्ण HDMI_GENERIC2_CONT;
 
 /*
- * HDMI_GENERIC3_SEND enum
+ * HDMI_GENERIC3_SEND क्रमागत
  */
 
-typedef enum HDMI_GENERIC3_SEND {
+प्रकार क्रमागत HDMI_GENERIC3_SEND अणु
 HDMI_GENERIC3_NOT_SEND                   = 0x00000000,
 HDMI_GENERIC3_PKT_SEND                   = 0x00000001,
-} HDMI_GENERIC3_SEND;
+पूर्ण HDMI_GENERIC3_SEND;
 
 /*
- * HDMI_GENERIC3_CONT enum
+ * HDMI_GENERIC3_CONT क्रमागत
  */
 
-typedef enum HDMI_GENERIC3_CONT {
+प्रकार क्रमागत HDMI_GENERIC3_CONT अणु
 HDMI_GENERIC3_CONT_DISABLE               = 0x00000000,
 HDMI_GENERIC3_CONT_ENABLE                = 0x00000001,
-} HDMI_GENERIC3_CONT;
+पूर्ण HDMI_GENERIC3_CONT;
 
 /*
- * TMDS_PIXEL_ENCODING enum
+ * TMDS_PIXEL_ENCODING क्रमागत
  */
 
-typedef enum TMDS_PIXEL_ENCODING {
+प्रकार क्रमागत TMDS_PIXEL_ENCODING अणु
 TMDS_PIXEL_ENCODING_444_OR_420           = 0x00000000,
 TMDS_PIXEL_ENCODING_422                  = 0x00000001,
-} TMDS_PIXEL_ENCODING;
+पूर्ण TMDS_PIXEL_ENCODING;
 
 /*
- * TMDS_COLOR_FORMAT enum
+ * TMDS_COLOR_FORMAT क्रमागत
  */
 
-typedef enum TMDS_COLOR_FORMAT {
+प्रकार क्रमागत TMDS_COLOR_FORMAT अणु
 TMDS_COLOR_FORMAT__24BPP__TWIN30BPP_MSB__DUAL48BPP  = 0x00000000,
 TMDS_COLOR_FORMAT_TWIN30BPP_LSB          = 0x00000001,
 TMDS_COLOR_FORMAT_DUAL30BPP              = 0x00000002,
 TMDS_COLOR_FORMAT_RESERVED               = 0x00000003,
-} TMDS_COLOR_FORMAT;
+पूर्ण TMDS_COLOR_FORMAT;
 
 /*
- * TMDS_STEREOSYNC_CTL_SEL_REG enum
+ * TMDS_STEREOSYNC_CTL_SEL_REG क्रमागत
  */
 
-typedef enum TMDS_STEREOSYNC_CTL_SEL_REG {
+प्रकार क्रमागत TMDS_STEREOSYNC_CTL_SEL_REG अणु
 TMDS_STEREOSYNC_CTL0                     = 0x00000000,
 TMDS_STEREOSYNC_CTL1                     = 0x00000001,
 TMDS_STEREOSYNC_CTL2                     = 0x00000002,
 TMDS_STEREOSYNC_CTL3                     = 0x00000003,
-} TMDS_STEREOSYNC_CTL_SEL_REG;
+पूर्ण TMDS_STEREOSYNC_CTL_SEL_REG;
 
 /*
- * TMDS_CTL0_DATA_SEL enum
+ * TMDS_CTL0_DATA_SEL क्रमागत
  */
 
-typedef enum TMDS_CTL0_DATA_SEL {
+प्रकार क्रमागत TMDS_CTL0_DATA_SEL अणु
 TMDS_CTL0_DATA_SEL0_RESERVED             = 0x00000000,
 TMDS_CTL0_DATA_SEL1_DISPLAY_ENABLE       = 0x00000001,
 TMDS_CTL0_DATA_SEL2_VSYNC                = 0x00000002,
@@ -4173,42 +4174,42 @@ TMDS_CTL0_DATA_SEL4_HSYNC                = 0x00000004,
 TMDS_CTL0_DATA_SEL5_SEL7_RESERVED        = 0x00000005,
 TMDS_CTL0_DATA_SEL8_RANDOM_DATA          = 0x00000006,
 TMDS_CTL0_DATA_SEL9_SEL15_RANDOM_DATA    = 0x00000007,
-} TMDS_CTL0_DATA_SEL;
+पूर्ण TMDS_CTL0_DATA_SEL;
 
 /*
- * TMDS_CTL0_DATA_INVERT enum
+ * TMDS_CTL0_DATA_INVERT क्रमागत
  */
 
-typedef enum TMDS_CTL0_DATA_INVERT {
+प्रकार क्रमागत TMDS_CTL0_DATA_INVERT अणु
 TMDS_CTL0_DATA_NORMAL                    = 0x00000000,
 TMDS_CTL0_DATA_INVERT_EN                 = 0x00000001,
-} TMDS_CTL0_DATA_INVERT;
+पूर्ण TMDS_CTL0_DATA_INVERT;
 
 /*
- * TMDS_CTL0_DATA_MODULATION enum
+ * TMDS_CTL0_DATA_MODULATION क्रमागत
  */
 
-typedef enum TMDS_CTL0_DATA_MODULATION {
+प्रकार क्रमागत TMDS_CTL0_DATA_MODULATION अणु
 TMDS_CTL0_DATA_MODULATION_DISABLE        = 0x00000000,
 TMDS_CTL0_DATA_MODULATION_BIT0           = 0x00000001,
 TMDS_CTL0_DATA_MODULATION_BIT1           = 0x00000002,
 TMDS_CTL0_DATA_MODULATION_BIT2           = 0x00000003,
-} TMDS_CTL0_DATA_MODULATION;
+पूर्ण TMDS_CTL0_DATA_MODULATION;
 
 /*
- * TMDS_CTL0_PATTERN_OUT_EN enum
+ * TMDS_CTL0_PATTERN_OUT_EN क्रमागत
  */
 
-typedef enum TMDS_CTL0_PATTERN_OUT_EN {
+प्रकार क्रमागत TMDS_CTL0_PATTERN_OUT_EN अणु
 TMDS_CTL0_PATTERN_OUT_DISABLE            = 0x00000000,
 TMDS_CTL0_PATTERN_OUT_ENABLE             = 0x00000001,
-} TMDS_CTL0_PATTERN_OUT_EN;
+पूर्ण TMDS_CTL0_PATTERN_OUT_EN;
 
 /*
- * TMDS_CTL1_DATA_SEL enum
+ * TMDS_CTL1_DATA_SEL क्रमागत
  */
 
-typedef enum TMDS_CTL1_DATA_SEL {
+प्रकार क्रमागत TMDS_CTL1_DATA_SEL अणु
 TMDS_CTL1_DATA_SEL0_RESERVED             = 0x00000000,
 TMDS_CTL1_DATA_SEL1_DISPLAY_ENABLE       = 0x00000001,
 TMDS_CTL1_DATA_SEL2_VSYNC                = 0x00000002,
@@ -4217,42 +4218,42 @@ TMDS_CTL1_DATA_SEL4_HSYNC                = 0x00000004,
 TMDS_CTL1_DATA_SEL5_SEL7_RESERVED        = 0x00000005,
 TMDS_CTL1_DATA_SEL8_BLANK_TIME           = 0x00000006,
 TMDS_CTL1_DATA_SEL9_SEL15_RESERVED       = 0x00000007,
-} TMDS_CTL1_DATA_SEL;
+पूर्ण TMDS_CTL1_DATA_SEL;
 
 /*
- * TMDS_CTL1_DATA_INVERT enum
+ * TMDS_CTL1_DATA_INVERT क्रमागत
  */
 
-typedef enum TMDS_CTL1_DATA_INVERT {
+प्रकार क्रमागत TMDS_CTL1_DATA_INVERT अणु
 TMDS_CTL1_DATA_NORMAL                    = 0x00000000,
 TMDS_CTL1_DATA_INVERT_EN                 = 0x00000001,
-} TMDS_CTL1_DATA_INVERT;
+पूर्ण TMDS_CTL1_DATA_INVERT;
 
 /*
- * TMDS_CTL1_DATA_MODULATION enum
+ * TMDS_CTL1_DATA_MODULATION क्रमागत
  */
 
-typedef enum TMDS_CTL1_DATA_MODULATION {
+प्रकार क्रमागत TMDS_CTL1_DATA_MODULATION अणु
 TMDS_CTL1_DATA_MODULATION_DISABLE        = 0x00000000,
 TMDS_CTL1_DATA_MODULATION_BIT0           = 0x00000001,
 TMDS_CTL1_DATA_MODULATION_BIT1           = 0x00000002,
 TMDS_CTL1_DATA_MODULATION_BIT2           = 0x00000003,
-} TMDS_CTL1_DATA_MODULATION;
+पूर्ण TMDS_CTL1_DATA_MODULATION;
 
 /*
- * TMDS_CTL1_PATTERN_OUT_EN enum
+ * TMDS_CTL1_PATTERN_OUT_EN क्रमागत
  */
 
-typedef enum TMDS_CTL1_PATTERN_OUT_EN {
+प्रकार क्रमागत TMDS_CTL1_PATTERN_OUT_EN अणु
 TMDS_CTL1_PATTERN_OUT_DISABLE            = 0x00000000,
 TMDS_CTL1_PATTERN_OUT_ENABLE             = 0x00000001,
-} TMDS_CTL1_PATTERN_OUT_EN;
+पूर्ण TMDS_CTL1_PATTERN_OUT_EN;
 
 /*
- * TMDS_CTL2_DATA_SEL enum
+ * TMDS_CTL2_DATA_SEL क्रमागत
  */
 
-typedef enum TMDS_CTL2_DATA_SEL {
+प्रकार क्रमागत TMDS_CTL2_DATA_SEL अणु
 TMDS_CTL2_DATA_SEL0_RESERVED             = 0x00000000,
 TMDS_CTL2_DATA_SEL1_DISPLAY_ENABLE       = 0x00000001,
 TMDS_CTL2_DATA_SEL2_VSYNC                = 0x00000002,
@@ -4261,71 +4262,71 @@ TMDS_CTL2_DATA_SEL4_HSYNC                = 0x00000004,
 TMDS_CTL2_DATA_SEL5_SEL7_RESERVED        = 0x00000005,
 TMDS_CTL2_DATA_SEL8_BLANK_TIME           = 0x00000006,
 TMDS_CTL2_DATA_SEL9_SEL15_RESERVED       = 0x00000007,
-} TMDS_CTL2_DATA_SEL;
+पूर्ण TMDS_CTL2_DATA_SEL;
 
 /*
- * TMDS_CTL2_DATA_INVERT enum
+ * TMDS_CTL2_DATA_INVERT क्रमागत
  */
 
-typedef enum TMDS_CTL2_DATA_INVERT {
+प्रकार क्रमागत TMDS_CTL2_DATA_INVERT अणु
 TMDS_CTL2_DATA_NORMAL                    = 0x00000000,
 TMDS_CTL2_DATA_INVERT_EN                 = 0x00000001,
-} TMDS_CTL2_DATA_INVERT;
+पूर्ण TMDS_CTL2_DATA_INVERT;
 
 /*
- * TMDS_CTL2_DATA_MODULATION enum
+ * TMDS_CTL2_DATA_MODULATION क्रमागत
  */
 
-typedef enum TMDS_CTL2_DATA_MODULATION {
+प्रकार क्रमागत TMDS_CTL2_DATA_MODULATION अणु
 TMDS_CTL2_DATA_MODULATION_DISABLE        = 0x00000000,
 TMDS_CTL2_DATA_MODULATION_BIT0           = 0x00000001,
 TMDS_CTL2_DATA_MODULATION_BIT1           = 0x00000002,
 TMDS_CTL2_DATA_MODULATION_BIT2           = 0x00000003,
-} TMDS_CTL2_DATA_MODULATION;
+पूर्ण TMDS_CTL2_DATA_MODULATION;
 
 /*
- * TMDS_CTL2_PATTERN_OUT_EN enum
+ * TMDS_CTL2_PATTERN_OUT_EN क्रमागत
  */
 
-typedef enum TMDS_CTL2_PATTERN_OUT_EN {
+प्रकार क्रमागत TMDS_CTL2_PATTERN_OUT_EN अणु
 TMDS_CTL2_PATTERN_OUT_DISABLE            = 0x00000000,
 TMDS_CTL2_PATTERN_OUT_ENABLE             = 0x00000001,
-} TMDS_CTL2_PATTERN_OUT_EN;
+पूर्ण TMDS_CTL2_PATTERN_OUT_EN;
 
 /*
- * TMDS_CTL3_DATA_INVERT enum
+ * TMDS_CTL3_DATA_INVERT क्रमागत
  */
 
-typedef enum TMDS_CTL3_DATA_INVERT {
+प्रकार क्रमागत TMDS_CTL3_DATA_INVERT अणु
 TMDS_CTL3_DATA_NORMAL                    = 0x00000000,
 TMDS_CTL3_DATA_INVERT_EN                 = 0x00000001,
-} TMDS_CTL3_DATA_INVERT;
+पूर्ण TMDS_CTL3_DATA_INVERT;
 
 /*
- * TMDS_CTL3_DATA_MODULATION enum
+ * TMDS_CTL3_DATA_MODULATION क्रमागत
  */
 
-typedef enum TMDS_CTL3_DATA_MODULATION {
+प्रकार क्रमागत TMDS_CTL3_DATA_MODULATION अणु
 TMDS_CTL3_DATA_MODULATION_DISABLE        = 0x00000000,
 TMDS_CTL3_DATA_MODULATION_BIT0           = 0x00000001,
 TMDS_CTL3_DATA_MODULATION_BIT1           = 0x00000002,
 TMDS_CTL3_DATA_MODULATION_BIT2           = 0x00000003,
-} TMDS_CTL3_DATA_MODULATION;
+पूर्ण TMDS_CTL3_DATA_MODULATION;
 
 /*
- * TMDS_CTL3_PATTERN_OUT_EN enum
+ * TMDS_CTL3_PATTERN_OUT_EN क्रमागत
  */
 
-typedef enum TMDS_CTL3_PATTERN_OUT_EN {
+प्रकार क्रमागत TMDS_CTL3_PATTERN_OUT_EN अणु
 TMDS_CTL3_PATTERN_OUT_DISABLE            = 0x00000000,
 TMDS_CTL3_PATTERN_OUT_ENABLE             = 0x00000001,
-} TMDS_CTL3_PATTERN_OUT_EN;
+पूर्ण TMDS_CTL3_PATTERN_OUT_EN;
 
 /*
- * TMDS_CTL3_DATA_SEL enum
+ * TMDS_CTL3_DATA_SEL क्रमागत
  */
 
-typedef enum TMDS_CTL3_DATA_SEL {
+प्रकार क्रमागत TMDS_CTL3_DATA_SEL अणु
 TMDS_CTL3_DATA_SEL0_RESERVED             = 0x00000000,
 TMDS_CTL3_DATA_SEL1_DISPLAY_ENABLE       = 0x00000001,
 TMDS_CTL3_DATA_SEL2_VSYNC                = 0x00000002,
@@ -4334,221 +4335,221 @@ TMDS_CTL3_DATA_SEL4_HSYNC                = 0x00000004,
 TMDS_CTL3_DATA_SEL5_SEL7_RESERVED        = 0x00000005,
 TMDS_CTL3_DATA_SEL8_BLANK_TIME           = 0x00000006,
 TMDS_CTL3_DATA_SEL9_SEL15_RESERVED       = 0x00000007,
-} TMDS_CTL3_DATA_SEL;
+पूर्ण TMDS_CTL3_DATA_SEL;
 
 /*
- * DIG_FE_CNTL_SOURCE_SELECT enum
+ * DIG_FE_CNTL_SOURCE_SELECT क्रमागत
  */
 
-typedef enum DIG_FE_CNTL_SOURCE_SELECT {
+प्रकार क्रमागत DIG_FE_CNTL_SOURCE_SELECT अणु
 DIG_FE_SOURCE_FROM_FMT0                  = 0x00000000,
 DIG_FE_SOURCE_FROM_FMT1                  = 0x00000001,
 DIG_FE_SOURCE_FROM_FMT2                  = 0x00000002,
 DIG_FE_SOURCE_FROM_FMT3                  = 0x00000003,
 DIG_FE_SOURCE_FROM_FMT4                  = 0x00000004,
 DIG_FE_SOURCE_FROM_FMT5                  = 0x00000005,
-} DIG_FE_CNTL_SOURCE_SELECT;
+पूर्ण DIG_FE_CNTL_SOURCE_SELECT;
 
 /*
- * DIG_FE_CNTL_STEREOSYNC_SELECT enum
+ * DIG_FE_CNTL_STEREOSYNC_SELECT क्रमागत
  */
 
-typedef enum DIG_FE_CNTL_STEREOSYNC_SELECT {
+प्रकार क्रमागत DIG_FE_CNTL_STEREOSYNC_SELECT अणु
 DIG_FE_STEREOSYNC_FROM_FMT0              = 0x00000000,
 DIG_FE_STEREOSYNC_FROM_FMT1              = 0x00000001,
 DIG_FE_STEREOSYNC_FROM_FMT2              = 0x00000002,
 DIG_FE_STEREOSYNC_FROM_FMT3              = 0x00000003,
 DIG_FE_STEREOSYNC_FROM_FMT4              = 0x00000004,
 DIG_FE_STEREOSYNC_FROM_FMT5              = 0x00000005,
-} DIG_FE_CNTL_STEREOSYNC_SELECT;
+पूर्ण DIG_FE_CNTL_STEREOSYNC_SELECT;
 
 /*
- * DIG_FIFO_READ_CLOCK_SRC enum
+ * DIG_FIFO_READ_CLOCK_SRC क्रमागत
  */
 
-typedef enum DIG_FIFO_READ_CLOCK_SRC {
+प्रकार क्रमागत DIG_FIFO_READ_CLOCK_SRC अणु
 DIG_FIFO_READ_CLOCK_SRC_FROM_DCCG        = 0x00000000,
 DIG_FIFO_READ_CLOCK_SRC_FROM_DISPLAY_PIPE  = 0x00000001,
-} DIG_FIFO_READ_CLOCK_SRC;
+पूर्ण DIG_FIFO_READ_CLOCK_SRC;
 
 /*
- * DIG_OUTPUT_CRC_CNTL_LINK_SEL enum
+ * DIG_OUTPUT_CRC_CNTL_LINK_SEL क्रमागत
  */
 
-typedef enum DIG_OUTPUT_CRC_CNTL_LINK_SEL {
+प्रकार क्रमागत DIG_OUTPUT_CRC_CNTL_LINK_SEL अणु
 DIG_OUTPUT_CRC_ON_LINK0                  = 0x00000000,
 DIG_OUTPUT_CRC_ON_LINK1                  = 0x00000001,
-} DIG_OUTPUT_CRC_CNTL_LINK_SEL;
+पूर्ण DIG_OUTPUT_CRC_CNTL_LINK_SEL;
 
 /*
- * DIG_OUTPUT_CRC_DATA_SEL enum
+ * DIG_OUTPUT_CRC_DATA_SEL क्रमागत
  */
 
-typedef enum DIG_OUTPUT_CRC_DATA_SEL {
+प्रकार क्रमागत DIG_OUTPUT_CRC_DATA_SEL अणु
 DIG_OUTPUT_CRC_FOR_FULLFRAME             = 0x00000000,
 DIG_OUTPUT_CRC_FOR_ACTIVEONLY            = 0x00000001,
 DIG_OUTPUT_CRC_FOR_VBI                   = 0x00000002,
 DIG_OUTPUT_CRC_FOR_AUDIO                 = 0x00000003,
-} DIG_OUTPUT_CRC_DATA_SEL;
+पूर्ण DIG_OUTPUT_CRC_DATA_SEL;
 
 /*
- * DIG_TEST_PATTERN_TEST_PATTERN_OUT_EN enum
+ * DIG_TEST_PATTERN_TEST_PATTERN_OUT_EN क्रमागत
  */
 
-typedef enum DIG_TEST_PATTERN_TEST_PATTERN_OUT_EN {
+प्रकार क्रमागत DIG_TEST_PATTERN_TEST_PATTERN_OUT_EN अणु
 DIG_IN_NORMAL_OPERATION                  = 0x00000000,
 DIG_IN_DEBUG_MODE                        = 0x00000001,
-} DIG_TEST_PATTERN_TEST_PATTERN_OUT_EN;
+पूर्ण DIG_TEST_PATTERN_TEST_PATTERN_OUT_EN;
 
 /*
- * DIG_TEST_PATTERN_HALF_CLOCK_PATTERN_SEL enum
+ * DIG_TEST_PATTERN_HALF_CLOCK_PATTERN_SEL क्रमागत
  */
 
-typedef enum DIG_TEST_PATTERN_HALF_CLOCK_PATTERN_SEL {
+प्रकार क्रमागत DIG_TEST_PATTERN_HALF_CLOCK_PATTERN_SEL अणु
 DIG_10BIT_TEST_PATTERN                   = 0x00000000,
 DIG_ALTERNATING_TEST_PATTERN             = 0x00000001,
-} DIG_TEST_PATTERN_HALF_CLOCK_PATTERN_SEL;
+पूर्ण DIG_TEST_PATTERN_HALF_CLOCK_PATTERN_SEL;
 
 /*
- * DIG_TEST_PATTERN_RANDOM_PATTERN_OUT_EN enum
+ * DIG_TEST_PATTERN_RANDOM_PATTERN_OUT_EN क्रमागत
  */
 
-typedef enum DIG_TEST_PATTERN_RANDOM_PATTERN_OUT_EN {
+प्रकार क्रमागत DIG_TEST_PATTERN_RANDOM_PATTERN_OUT_EN अणु
 DIG_TEST_PATTERN_NORMAL                  = 0x00000000,
 DIG_TEST_PATTERN_RANDOM                  = 0x00000001,
-} DIG_TEST_PATTERN_RANDOM_PATTERN_OUT_EN;
+पूर्ण DIG_TEST_PATTERN_RANDOM_PATTERN_OUT_EN;
 
 /*
- * DIG_TEST_PATTERN_RANDOM_PATTERN_RESET enum
+ * DIG_TEST_PATTERN_RANDOM_PATTERN_RESET क्रमागत
  */
 
-typedef enum DIG_TEST_PATTERN_RANDOM_PATTERN_RESET {
+प्रकार क्रमागत DIG_TEST_PATTERN_RANDOM_PATTERN_RESET अणु
 DIG_RANDOM_PATTERN_ENABLED               = 0x00000000,
 DIG_RANDOM_PATTERN_RESETED               = 0x00000001,
-} DIG_TEST_PATTERN_RANDOM_PATTERN_RESET;
+पूर्ण DIG_TEST_PATTERN_RANDOM_PATTERN_RESET;
 
 /*
- * DIG_TEST_PATTERN_EXTERNAL_RESET_EN enum
+ * DIG_TEST_PATTERN_EXTERNAL_RESET_EN क्रमागत
  */
 
-typedef enum DIG_TEST_PATTERN_EXTERNAL_RESET_EN {
+प्रकार क्रमागत DIG_TEST_PATTERN_EXTERNAL_RESET_EN अणु
 DIG_TEST_PATTERN_EXTERNAL_RESET_ENABLE   = 0x00000000,
 DIG_TEST_PATTERN_EXTERNAL_RESET_BY_EXT_SIG  = 0x00000001,
-} DIG_TEST_PATTERN_EXTERNAL_RESET_EN;
+पूर्ण DIG_TEST_PATTERN_EXTERNAL_RESET_EN;
 
 /*
- * DIG_RANDOM_PATTERN_SEED_RAN_PAT enum
+ * DIG_RANDOM_PATTERN_SEED_RAN_PAT क्रमागत
  */
 
-typedef enum DIG_RANDOM_PATTERN_SEED_RAN_PAT {
+प्रकार क्रमागत DIG_RANDOM_PATTERN_SEED_RAN_PAT अणु
 DIG_RANDOM_PATTERN_SEED_RAN_PAT_ALL_PIXELS  = 0x00000000,
 DIG_RANDOM_PATTERN_SEED_RAN_PAT_DE_HIGH  = 0x00000001,
-} DIG_RANDOM_PATTERN_SEED_RAN_PAT;
+पूर्ण DIG_RANDOM_PATTERN_SEED_RAN_PAT;
 
 /*
- * DIG_FIFO_STATUS_USE_OVERWRITE_LEVEL enum
+ * DIG_FIFO_STATUS_USE_OVERWRITE_LEVEL क्रमागत
  */
 
-typedef enum DIG_FIFO_STATUS_USE_OVERWRITE_LEVEL {
+प्रकार क्रमागत DIG_FIFO_STATUS_USE_OVERWRITE_LEVEL अणु
 DIG_FIFO_USE_OVERWRITE_LEVEL             = 0x00000000,
 DIG_FIFO_USE_CAL_AVERAGE_LEVEL           = 0x00000001,
-} DIG_FIFO_STATUS_USE_OVERWRITE_LEVEL;
+पूर्ण DIG_FIFO_STATUS_USE_OVERWRITE_LEVEL;
 
 /*
- * DIG_FIFO_ERROR_ACK enum
+ * DIG_FIFO_ERROR_ACK क्रमागत
  */
 
-typedef enum DIG_FIFO_ERROR_ACK {
+प्रकार क्रमागत DIG_FIFO_ERROR_ACK अणु
 DIG_FIFO_ERROR_ACK_INT                   = 0x00000000,
 DIG_FIFO_ERROR_NOT_ACK                   = 0x00000001,
-} DIG_FIFO_ERROR_ACK;
+पूर्ण DIG_FIFO_ERROR_ACK;
 
 /*
- * DIG_FIFO_STATUS_FORCE_RECAL_AVERAGE enum
+ * DIG_FIFO_STATUS_FORCE_RECAL_AVERAGE क्रमागत
  */
 
-typedef enum DIG_FIFO_STATUS_FORCE_RECAL_AVERAGE {
+प्रकार क्रमागत DIG_FIFO_STATUS_FORCE_RECAL_AVERAGE अणु
 DIG_FIFO_NOT_FORCE_RECAL_AVERAGE         = 0x00000000,
 DIG_FIFO_FORCE_RECAL_AVERAGE_LEVEL       = 0x00000001,
-} DIG_FIFO_STATUS_FORCE_RECAL_AVERAGE;
+पूर्ण DIG_FIFO_STATUS_FORCE_RECAL_AVERAGE;
 
 /*
- * DIG_FIFO_STATUS_FORCE_RECOMP_MINMAX enum
+ * DIG_FIFO_STATUS_FORCE_RECOMP_MINMAX क्रमागत
  */
 
-typedef enum DIG_FIFO_STATUS_FORCE_RECOMP_MINMAX {
+प्रकार क्रमागत DIG_FIFO_STATUS_FORCE_RECOMP_MINMAX अणु
 DIG_FIFO_NOT_FORCE_RECOMP_MINMAX         = 0x00000000,
 DIG_FIFO_FORCE_RECOMP_MINMAX             = 0x00000001,
-} DIG_FIFO_STATUS_FORCE_RECOMP_MINMAX;
+पूर्ण DIG_FIFO_STATUS_FORCE_RECOMP_MINMAX;
 
 /*
- * AFMT_INTERRUPT_STATUS_CHG_MASK enum
+ * AFMT_INTERRUPT_STATUS_CHG_MASK क्रमागत
  */
 
-typedef enum AFMT_INTERRUPT_STATUS_CHG_MASK {
+प्रकार क्रमागत AFMT_INTERRUPT_STATUS_CHG_MASK अणु
 AFMT_INTERRUPT_DISABLE                   = 0x00000000,
 AFMT_INTERRUPT_ENABLE                    = 0x00000001,
-} AFMT_INTERRUPT_STATUS_CHG_MASK;
+पूर्ण AFMT_INTERRUPT_STATUS_CHG_MASK;
 
 /*
- * HDMI_GC_AVMUTE enum
+ * HDMI_GC_AVMUTE क्रमागत
  */
 
-typedef enum HDMI_GC_AVMUTE {
+प्रकार क्रमागत HDMI_GC_AVMUTE अणु
 HDMI_GC_AVMUTE_SET                       = 0x00000000,
 HDMI_GC_AVMUTE_UNSET                     = 0x00000001,
-} HDMI_GC_AVMUTE;
+पूर्ण HDMI_GC_AVMUTE;
 
 /*
- * HDMI_DEFAULT_PAHSE enum
+ * HDMI_DEFAULT_PAHSE क्रमागत
  */
 
-typedef enum HDMI_DEFAULT_PAHSE {
+प्रकार क्रमागत HDMI_DEFAULT_PAHSE अणु
 HDMI_DEFAULT_PHASE_IS_0                  = 0x00000000,
 HDMI_DEFAULT_PHASE_IS_1                  = 0x00000001,
-} HDMI_DEFAULT_PAHSE;
+पूर्ण HDMI_DEFAULT_PAHSE;
 
 /*
- * AFMT_AUDIO_PACKET_CONTROL2_AUDIO_LAYOUT_OVRD enum
+ * AFMT_AUDIO_PACKET_CONTROL2_AUDIO_LAYOUT_OVRD क्रमागत
  */
 
-typedef enum AFMT_AUDIO_PACKET_CONTROL2_AUDIO_LAYOUT_OVRD {
+प्रकार क्रमागत AFMT_AUDIO_PACKET_CONTROL2_AUDIO_LAYOUT_OVRD अणु
 AFMT_AUDIO_LAYOUT_DETERMINED_BY_AZ_AUDIO_CHANNEL_STATUS  = 0x00000000,
 AFMT_AUDIO_LAYOUT_OVRD_BY_REGISTER       = 0x00000001,
-} AFMT_AUDIO_PACKET_CONTROL2_AUDIO_LAYOUT_OVRD;
+पूर्ण AFMT_AUDIO_PACKET_CONTROL2_AUDIO_LAYOUT_OVRD;
 
 /*
- * AUDIO_LAYOUT_SELECT enum
+ * AUDIO_LAYOUT_SELECT क्रमागत
  */
 
-typedef enum AUDIO_LAYOUT_SELECT {
+प्रकार क्रमागत AUDIO_LAYOUT_SELECT अणु
 AUDIO_LAYOUT_0                           = 0x00000000,
 AUDIO_LAYOUT_1                           = 0x00000001,
-} AUDIO_LAYOUT_SELECT;
+पूर्ण AUDIO_LAYOUT_SELECT;
 
 /*
- * AFMT_AUDIO_CRC_CONTROL_CONT enum
+ * AFMT_AUDIO_CRC_CONTROL_CONT क्रमागत
  */
 
-typedef enum AFMT_AUDIO_CRC_CONTROL_CONT {
+प्रकार क्रमागत AFMT_AUDIO_CRC_CONTROL_CONT अणु
 AFMT_AUDIO_CRC_ONESHOT                   = 0x00000000,
 AFMT_AUDIO_CRC_AUTO_RESTART              = 0x00000001,
-} AFMT_AUDIO_CRC_CONTROL_CONT;
+पूर्ण AFMT_AUDIO_CRC_CONTROL_CONT;
 
 /*
- * AFMT_AUDIO_CRC_CONTROL_SOURCE enum
+ * AFMT_AUDIO_CRC_CONTROL_SOURCE क्रमागत
  */
 
-typedef enum AFMT_AUDIO_CRC_CONTROL_SOURCE {
+प्रकार क्रमागत AFMT_AUDIO_CRC_CONTROL_SOURCE अणु
 AFMT_AUDIO_CRC_SOURCE_FROM_FIFO_INPUT    = 0x00000000,
 AFMT_AUDIO_CRC_SOURCE_FROM_FIFO_OUTPUT   = 0x00000001,
-} AFMT_AUDIO_CRC_CONTROL_SOURCE;
+पूर्ण AFMT_AUDIO_CRC_CONTROL_SOURCE;
 
 /*
- * AFMT_AUDIO_CRC_CONTROL_CH_SEL enum
+ * AFMT_AUDIO_CRC_CONTROL_CH_SEL क्रमागत
  */
 
-typedef enum AFMT_AUDIO_CRC_CONTROL_CH_SEL {
+प्रकार क्रमागत AFMT_AUDIO_CRC_CONTROL_CH_SEL अणु
 AFMT_AUDIO_CRC_CH0_SIG                   = 0x00000000,
 AFMT_AUDIO_CRC_CH1_SIG                   = 0x00000001,
 AFMT_AUDIO_CRC_CH2_SIG                   = 0x00000002,
@@ -4565,49 +4566,49 @@ AFMT_AUDIO_CRC_RESERVED_12               = 0x0000000c,
 AFMT_AUDIO_CRC_RESERVED_13               = 0x0000000d,
 AFMT_AUDIO_CRC_RESERVED_14               = 0x0000000e,
 AFMT_AUDIO_CRC_AUDIO_SAMPLE_COUNT        = 0x0000000f,
-} AFMT_AUDIO_CRC_CONTROL_CH_SEL;
+पूर्ण AFMT_AUDIO_CRC_CONTROL_CH_SEL;
 
 /*
- * AFMT_RAMP_CONTROL0_SIGN enum
+ * AFMT_RAMP_CONTROL0_SIGN क्रमागत
  */
 
-typedef enum AFMT_RAMP_CONTROL0_SIGN {
+प्रकार क्रमागत AFMT_RAMP_CONTROL0_SIGN अणु
 AFMT_RAMP_SIGNED                         = 0x00000000,
 AFMT_RAMP_UNSIGNED                       = 0x00000001,
-} AFMT_RAMP_CONTROL0_SIGN;
+पूर्ण AFMT_RAMP_CONTROL0_SIGN;
 
 /*
- * AFMT_AUDIO_PACKET_CONTROL_AUDIO_SAMPLE_SEND enum
+ * AFMT_AUDIO_PACKET_CONTROL_AUDIO_SAMPLE_SEND क्रमागत
  */
 
-typedef enum AFMT_AUDIO_PACKET_CONTROL_AUDIO_SAMPLE_SEND {
+प्रकार क्रमागत AFMT_AUDIO_PACKET_CONTROL_AUDIO_SAMPLE_SEND अणु
 AFMT_AUDIO_PACKET_SENT_DISABLED          = 0x00000000,
 AFMT_AUDIO_PACKET_SENT_ENABLED           = 0x00000001,
-} AFMT_AUDIO_PACKET_CONTROL_AUDIO_SAMPLE_SEND;
+पूर्ण AFMT_AUDIO_PACKET_CONTROL_AUDIO_SAMPLE_SEND;
 
 /*
- * AFMT_AUDIO_PACKET_CONTROL_RESET_FIFO_WHEN_AUDIO_DIS enum
+ * AFMT_AUDIO_PACKET_CONTROL_RESET_FIFO_WHEN_AUDIO_DIS क्रमागत
  */
 
-typedef enum AFMT_AUDIO_PACKET_CONTROL_RESET_FIFO_WHEN_AUDIO_DIS {
+प्रकार क्रमागत AFMT_AUDIO_PACKET_CONTROL_RESET_FIFO_WHEN_AUDIO_DIS अणु
 AFMT_NOT_RESET_AUDIO_FIFO_WHEN_AUDIO_DISABLED_RESERVED  = 0x00000000,
 AFMT_RESET_AUDIO_FIFO_WHEN_AUDIO_DISABLED  = 0x00000001,
-} AFMT_AUDIO_PACKET_CONTROL_RESET_FIFO_WHEN_AUDIO_DIS;
+पूर्ण AFMT_AUDIO_PACKET_CONTROL_RESET_FIFO_WHEN_AUDIO_DIS;
 
 /*
- * AFMT_INFOFRAME_CONTROL0_AUDIO_INFO_SOURCE enum
+ * AFMT_INFOFRAME_CONTROL0_AUDIO_INFO_SOURCE क्रमागत
  */
 
-typedef enum AFMT_INFOFRAME_CONTROL0_AUDIO_INFO_SOURCE {
+प्रकार क्रमागत AFMT_INFOFRAME_CONTROL0_AUDIO_INFO_SOURCE अणु
 AFMT_INFOFRAME_SOURCE_FROM_AZALIA_BLOCK  = 0x00000000,
 AFMT_INFOFRAME_SOURCE_FROM_AFMT_REGISTERS  = 0x00000001,
-} AFMT_INFOFRAME_CONTROL0_AUDIO_INFO_SOURCE;
+पूर्ण AFMT_INFOFRAME_CONTROL0_AUDIO_INFO_SOURCE;
 
 /*
- * AFMT_AUDIO_SRC_CONTROL_SELECT enum
+ * AFMT_AUDIO_SRC_CONTROL_SELECT क्रमागत
  */
 
-typedef enum AFMT_AUDIO_SRC_CONTROL_SELECT {
+प्रकार क्रमागत AFMT_AUDIO_SRC_CONTROL_SELECT अणु
 AFMT_AUDIO_SRC_FROM_AZ_STREAM0           = 0x00000000,
 AFMT_AUDIO_SRC_FROM_AZ_STREAM1           = 0x00000001,
 AFMT_AUDIO_SRC_FROM_AZ_STREAM2           = 0x00000002,
@@ -4615,13 +4616,13 @@ AFMT_AUDIO_SRC_FROM_AZ_STREAM3           = 0x00000003,
 AFMT_AUDIO_SRC_FROM_AZ_STREAM4           = 0x00000004,
 AFMT_AUDIO_SRC_FROM_AZ_STREAM5           = 0x00000005,
 AFMT_AUDIO_SRC_RESERVED                  = 0x00000006,
-} AFMT_AUDIO_SRC_CONTROL_SELECT;
+पूर्ण AFMT_AUDIO_SRC_CONTROL_SELECT;
 
 /*
- * DIG_BE_CNTL_MODE enum
+ * DIG_BE_CNTL_MODE क्रमागत
  */
 
-typedef enum DIG_BE_CNTL_MODE {
+प्रकार क्रमागत DIG_BE_CNTL_MODE अणु
 DIG_BE_DP_SST_MODE                       = 0x00000000,
 DIG_BE_RESERVED1                         = 0x00000001,
 DIG_BE_TMDS_DVI_MODE                     = 0x00000002,
@@ -4630,270 +4631,270 @@ DIG_BE_SDVO_RESERVED                     = 0x00000004,
 DIG_BE_DP_MST_MODE                       = 0x00000005,
 DIG_BE_RESERVED2                         = 0x00000006,
 DIG_BE_RESERVED3                         = 0x00000007,
-} DIG_BE_CNTL_MODE;
+पूर्ण DIG_BE_CNTL_MODE;
 
 /*
- * DIG_BE_CNTL_HPD_SELECT enum
+ * DIG_BE_CNTL_HPD_SELECT क्रमागत
  */
 
-typedef enum DIG_BE_CNTL_HPD_SELECT {
+प्रकार क्रमागत DIG_BE_CNTL_HPD_SELECT अणु
 DIG_BE_CNTL_HPD1                         = 0x00000000,
 DIG_BE_CNTL_HPD2                         = 0x00000001,
 DIG_BE_CNTL_HPD3                         = 0x00000002,
 DIG_BE_CNTL_HPD4                         = 0x00000003,
 DIG_BE_CNTL_HPD5                         = 0x00000004,
 DIG_BE_CNTL_HPD6                         = 0x00000005,
-} DIG_BE_CNTL_HPD_SELECT;
+पूर्ण DIG_BE_CNTL_HPD_SELECT;
 
 /*
- * LVTMA_RANDOM_PATTERN_SEED_RAN_PAT enum
+ * LVTMA_RANDOM_PATTERN_SEED_RAN_PAT क्रमागत
  */
 
-typedef enum LVTMA_RANDOM_PATTERN_SEED_RAN_PAT {
+प्रकार क्रमागत LVTMA_RANDOM_PATTERN_SEED_RAN_PAT अणु
 LVTMA_RANDOM_PATTERN_SEED_ALL_PIXELS     = 0x00000000,
 LVTMA_RANDOM_PATTERN_SEED_ONLY_DE_HIGH   = 0x00000001,
-} LVTMA_RANDOM_PATTERN_SEED_RAN_PAT;
+पूर्ण LVTMA_RANDOM_PATTERN_SEED_RAN_PAT;
 
 /*
- * TMDS_SYNC_PHASE enum
+ * TMDS_SYNC_PHASE क्रमागत
  */
 
-typedef enum TMDS_SYNC_PHASE {
+प्रकार क्रमागत TMDS_SYNC_PHASE अणु
 TMDS_NOT_SYNC_PHASE_ON_FRAME_START       = 0x00000000,
 TMDS_SYNC_PHASE_ON_FRAME_START           = 0x00000001,
-} TMDS_SYNC_PHASE;
+पूर्ण TMDS_SYNC_PHASE;
 
 /*
- * TMDS_DATA_SYNCHRONIZATION_DSINTSEL enum
+ * TMDS_DATA_SYNCHRONIZATION_DSINTSEL क्रमागत
  */
 
-typedef enum TMDS_DATA_SYNCHRONIZATION_DSINTSEL {
+प्रकार क्रमागत TMDS_DATA_SYNCHRONIZATION_DSINTSEL अणु
 TMDS_DATA_SYNCHRONIZATION_DSINTSEL_PCLK_TMDS  = 0x00000000,
 TMDS_DATA_SYNCHRONIZATION_DSINTSEL_TMDS_PLL  = 0x00000001,
-} TMDS_DATA_SYNCHRONIZATION_DSINTSEL;
+पूर्ण TMDS_DATA_SYNCHRONIZATION_DSINTSEL;
 
 /*
- * TMDS_TRANSMITTER_ENABLE_HPD_MASK enum
+ * TMDS_TRANSMITTER_ENABLE_HPD_MASK क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_ENABLE_HPD_MASK {
+प्रकार क्रमागत TMDS_TRANSMITTER_ENABLE_HPD_MASK अणु
 TMDS_TRANSMITTER_HPD_MASK_NOT_OVERRIDE   = 0x00000000,
 TMDS_TRANSMITTER_HPD_MASK_OVERRIDE       = 0x00000001,
-} TMDS_TRANSMITTER_ENABLE_HPD_MASK;
+पूर्ण TMDS_TRANSMITTER_ENABLE_HPD_MASK;
 
 /*
- * TMDS_TRANSMITTER_ENABLE_LNKCEN_HPD_MASK enum
+ * TMDS_TRANSMITTER_ENABLE_LNKCEN_HPD_MASK क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_ENABLE_LNKCEN_HPD_MASK {
+प्रकार क्रमागत TMDS_TRANSMITTER_ENABLE_LNKCEN_HPD_MASK अणु
 TMDS_TRANSMITTER_LNKCEN_HPD_MASK_NOT_OVERRIDE  = 0x00000000,
 TMDS_TRANSMITTER_LNKCEN_HPD_MASK_OVERRIDE  = 0x00000001,
-} TMDS_TRANSMITTER_ENABLE_LNKCEN_HPD_MASK;
+पूर्ण TMDS_TRANSMITTER_ENABLE_LNKCEN_HPD_MASK;
 
 /*
- * TMDS_TRANSMITTER_ENABLE_LNKDEN_HPD_MASK enum
+ * TMDS_TRANSMITTER_ENABLE_LNKDEN_HPD_MASK क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_ENABLE_LNKDEN_HPD_MASK {
+प्रकार क्रमागत TMDS_TRANSMITTER_ENABLE_LNKDEN_HPD_MASK अणु
 TMDS_TRANSMITTER_LNKDEN_HPD_MASK_NOT_OVERRIDE  = 0x00000000,
 TMDS_TRANSMITTER_LNKDEN_HPD_MASK_OVERRIDE  = 0x00000001,
-} TMDS_TRANSMITTER_ENABLE_LNKDEN_HPD_MASK;
+पूर्ण TMDS_TRANSMITTER_ENABLE_LNKDEN_HPD_MASK;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_PLL_ENABLE_HPD_MASK enum
+ * TMDS_TRANSMITTER_CONTROL_PLL_ENABLE_HPD_MASK क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_PLL_ENABLE_HPD_MASK {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_PLL_ENABLE_HPD_MASK अणु
 TMDS_TRANSMITTER_HPD_NOT_OVERRIDE_PLL_ENABLE  = 0x00000000,
 TMDS_TRANSMITTER_HPD_OVERRIDE_PLL_ENABLE_ON_DISCON  = 0x00000001,
 TMDS_TRANSMITTER_HPD_OVERRIDE_PLL_ENABLE_ON_CON  = 0x00000002,
 TMDS_TRANSMITTER_HPD_OVERRIDE_PLL_ENABLE  = 0x00000003,
-} TMDS_TRANSMITTER_CONTROL_PLL_ENABLE_HPD_MASK;
+पूर्ण TMDS_TRANSMITTER_CONTROL_PLL_ENABLE_HPD_MASK;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_IDSCKSELA enum
+ * TMDS_TRANSMITTER_CONTROL_IDSCKSELA क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_IDSCKSELA {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_IDSCKSELA अणु
 TMDS_TRANSMITTER_IDSCKSELA_USE_IPIXCLK   = 0x00000000,
 TMDS_TRANSMITTER_IDSCKSELA_USE_IDCLK     = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_IDSCKSELA;
+पूर्ण TMDS_TRANSMITTER_CONTROL_IDSCKSELA;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_IDSCKSELB enum
+ * TMDS_TRANSMITTER_CONTROL_IDSCKSELB क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_IDSCKSELB {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_IDSCKSELB अणु
 TMDS_TRANSMITTER_IDSCKSELB_USE_IPIXCLK   = 0x00000000,
 TMDS_TRANSMITTER_IDSCKSELB_USE_IDCLK     = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_IDSCKSELB;
+पूर्ण TMDS_TRANSMITTER_CONTROL_IDSCKSELB;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_PLL_PWRUP_SEQ_EN enum
+ * TMDS_TRANSMITTER_CONTROL_PLL_PWRUP_SEQ_EN क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_PLL_PWRUP_SEQ_EN {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_PLL_PWRUP_SEQ_EN अणु
 TMDS_TRANSMITTER_PLL_PWRUP_SEQ_DISABLE   = 0x00000000,
 TMDS_TRANSMITTER_PLL_PWRUP_SEQ_ENABLE    = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_PLL_PWRUP_SEQ_EN;
+पूर्ण TMDS_TRANSMITTER_CONTROL_PLL_PWRUP_SEQ_EN;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_PLL_RESET_HPD_MASK enum
+ * TMDS_TRANSMITTER_CONTROL_PLL_RESET_HPD_MASK क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_PLL_RESET_HPD_MASK {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_PLL_RESET_HPD_MASK अणु
 TMDS_TRANSMITTER_PLL_NOT_RST_ON_HPD      = 0x00000000,
 TMDS_TRANSMITTER_PLL_RST_ON_HPD          = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_PLL_RESET_HPD_MASK;
+पूर्ण TMDS_TRANSMITTER_CONTROL_PLL_RESET_HPD_MASK;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_TMCLK_FROM_PADS enum
+ * TMDS_TRANSMITTER_CONTROL_TMCLK_FROM_PADS क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_TMCLK_FROM_PADS {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_TMCLK_FROM_PADS अणु
 TMDS_TRANSMITTER_TMCLK_FROM_TMDS_TMCLK   = 0x00000000,
 TMDS_TRANSMITTER_TMCLK_FROM_PADS         = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_TMCLK_FROM_PADS;
+पूर्ण TMDS_TRANSMITTER_CONTROL_TMCLK_FROM_PADS;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_TDCLK_FROM_PADS enum
+ * TMDS_TRANSMITTER_CONTROL_TDCLK_FROM_PADS क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_TDCLK_FROM_PADS {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_TDCLK_FROM_PADS अणु
 TMDS_TRANSMITTER_TDCLK_FROM_TMDS_TDCLK   = 0x00000000,
 TMDS_TRANSMITTER_TDCLK_FROM_PADS         = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_TDCLK_FROM_PADS;
+पूर्ण TMDS_TRANSMITTER_CONTROL_TDCLK_FROM_PADS;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_PLLSEL_OVERWRITE_EN enum
+ * TMDS_TRANSMITTER_CONTROL_PLLSEL_OVERWRITE_EN क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_PLLSEL_OVERWRITE_EN {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_PLLSEL_OVERWRITE_EN अणु
 TMDS_TRANSMITTER_PLLSEL_BY_HW            = 0x00000000,
 TMDS_TRANSMITTER_PLLSEL_OVERWRITE_BY_SW  = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_PLLSEL_OVERWRITE_EN;
+पूर्ण TMDS_TRANSMITTER_CONTROL_PLLSEL_OVERWRITE_EN;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_BYPASS_PLLA enum
+ * TMDS_TRANSMITTER_CONTROL_BYPASS_PLLA क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_BYPASS_PLLA {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_BYPASS_PLLA अणु
 TMDS_TRANSMITTER_BYPASS_PLLA_COHERENT    = 0x00000000,
 TMDS_TRANSMITTER_BYPASS_PLLA_INCOHERENT  = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_BYPASS_PLLA;
+पूर्ण TMDS_TRANSMITTER_CONTROL_BYPASS_PLLA;
 
 /*
- * TMDS_TRANSMITTER_CONTROL_BYPASS_PLLB enum
+ * TMDS_TRANSMITTER_CONTROL_BYPASS_PLLB क्रमागत
  */
 
-typedef enum TMDS_TRANSMITTER_CONTROL_BYPASS_PLLB {
+प्रकार क्रमागत TMDS_TRANSMITTER_CONTROL_BYPASS_PLLB अणु
 TMDS_TRANSMITTER_BYPASS_PLLB_COHERENT    = 0x00000000,
 TMDS_TRANSMITTER_BYPASS_PLLB_INCOHERENT  = 0x00000001,
-} TMDS_TRANSMITTER_CONTROL_BYPASS_PLLB;
+पूर्ण TMDS_TRANSMITTER_CONTROL_BYPASS_PLLB;
 
 /*
- * TMDS_REG_TEST_OUTPUTA_CNTLA enum
+ * TMDS_REG_TEST_OUTPUTA_CNTLA क्रमागत
  */
 
-typedef enum TMDS_REG_TEST_OUTPUTA_CNTLA {
+प्रकार क्रमागत TMDS_REG_TEST_OUTPUTA_CNTLA अणु
 TMDS_REG_TEST_OUTPUTA_CNTLA_OTDATA0      = 0x00000000,
 TMDS_REG_TEST_OUTPUTA_CNTLA_OTDATA1      = 0x00000001,
 TMDS_REG_TEST_OUTPUTA_CNTLA_OTDATA2      = 0x00000002,
 TMDS_REG_TEST_OUTPUTA_CNTLA_NA           = 0x00000003,
-} TMDS_REG_TEST_OUTPUTA_CNTLA;
+पूर्ण TMDS_REG_TEST_OUTPUTA_CNTLA;
 
 /*
- * TMDS_REG_TEST_OUTPUTB_CNTLB enum
+ * TMDS_REG_TEST_OUTPUTB_CNTLB क्रमागत
  */
 
-typedef enum TMDS_REG_TEST_OUTPUTB_CNTLB {
+प्रकार क्रमागत TMDS_REG_TEST_OUTPUTB_CNTLB अणु
 TMDS_REG_TEST_OUTPUTB_CNTLB_OTDATB0      = 0x00000000,
 TMDS_REG_TEST_OUTPUTB_CNTLB_OTDATB1      = 0x00000001,
 TMDS_REG_TEST_OUTPUTB_CNTLB_OTDATB2      = 0x00000002,
 TMDS_REG_TEST_OUTPUTB_CNTLB_NA           = 0x00000003,
-} TMDS_REG_TEST_OUTPUTB_CNTLB;
+पूर्ण TMDS_REG_TEST_OUTPUTB_CNTLB;
 
 /*******************************************************
  * DCP Enums
  *******************************************************/
 
 /*
- * DCP_GRPH_ENABLE enum
+ * DCP_GRPH_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_ENABLE {
+प्रकार क्रमागत DCP_GRPH_ENABLE अणु
 DCP_GRPH_ENABLE_FALSE                    = 0x00000000,
 DCP_GRPH_ENABLE_TRUE                     = 0x00000001,
-} DCP_GRPH_ENABLE;
+पूर्ण DCP_GRPH_ENABLE;
 
 /*
- * DCP_GRPH_KEYER_ALPHA_SEL enum
+ * DCP_GRPH_KEYER_ALPHA_SEL क्रमागत
  */
 
-typedef enum DCP_GRPH_KEYER_ALPHA_SEL {
+प्रकार क्रमागत DCP_GRPH_KEYER_ALPHA_SEL अणु
 DCP_GRPH_KEYER_ALPHA_SEL_FALSE           = 0x00000000,
 DCP_GRPH_KEYER_ALPHA_SEL_TRUE            = 0x00000001,
-} DCP_GRPH_KEYER_ALPHA_SEL;
+पूर्ण DCP_GRPH_KEYER_ALPHA_SEL;
 
 /*
- * DCP_GRPH_DEPTH enum
+ * DCP_GRPH_DEPTH क्रमागत
  */
 
-typedef enum DCP_GRPH_DEPTH {
+प्रकार क्रमागत DCP_GRPH_DEPTH अणु
 DCP_GRPH_DEPTH_8BPP                      = 0x00000000,
 DCP_GRPH_DEPTH_16BPP                     = 0x00000001,
 DCP_GRPH_DEPTH_32BPP                     = 0x00000002,
 DCP_GRPH_DEPTH_64BPP                     = 0x00000003,
-} DCP_GRPH_DEPTH;
+पूर्ण DCP_GRPH_DEPTH;
 
 /*
- * DCP_GRPH_NUM_BANKS enum
+ * DCP_GRPH_NUM_BANKS क्रमागत
  */
 
-typedef enum DCP_GRPH_NUM_BANKS {
+प्रकार क्रमागत DCP_GRPH_NUM_BANKS अणु
 DCP_GRPH_NUM_BANKS_1BANK                 = 0x00000000,
 DCP_GRPH_NUM_BANKS_2BANK                 = 0x00000001,
 DCP_GRPH_NUM_BANKS_4BANK                 = 0x00000002,
 DCP_GRPH_NUM_BANKS_8BANK                 = 0x00000003,
 DCP_GRPH_NUM_BANKS_16BANK                = 0x00000004,
-} DCP_GRPH_NUM_BANKS;
+पूर्ण DCP_GRPH_NUM_BANKS;
 
 /*
- * DCP_GRPH_NUM_PIPES enum
+ * DCP_GRPH_NUM_PIPES क्रमागत
  */
 
-typedef enum DCP_GRPH_NUM_PIPES {
+प्रकार क्रमागत DCP_GRPH_NUM_PIPES अणु
 DCP_GRPH_NUM_PIPES_1PIPE                 = 0x00000000,
 DCP_GRPH_NUM_PIPES_2PIPE                 = 0x00000001,
 DCP_GRPH_NUM_PIPES_4PIPE                 = 0x00000002,
 DCP_GRPH_NUM_PIPES_8PIPE                 = 0x00000003,
-} DCP_GRPH_NUM_PIPES;
+पूर्ण DCP_GRPH_NUM_PIPES;
 
 /*
- * DCP_GRPH_FORMAT enum
+ * DCP_GRPH_FORMAT क्रमागत
  */
 
-typedef enum DCP_GRPH_FORMAT {
+प्रकार क्रमागत DCP_GRPH_FORMAT अणु
 DCP_GRPH_FORMAT_8BPP                     = 0x00000000,
 DCP_GRPH_FORMAT_16BPP                    = 0x00000001,
 DCP_GRPH_FORMAT_32BPP                    = 0x00000002,
 DCP_GRPH_FORMAT_64BPP                    = 0x00000003,
-} DCP_GRPH_FORMAT;
+पूर्ण DCP_GRPH_FORMAT;
 
 /*
- * DCP_GRPH_ADDRESS_TRANSLATION_ENABLE enum
+ * DCP_GRPH_ADDRESS_TRANSLATION_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_ADDRESS_TRANSLATION_ENABLE {
+प्रकार क्रमागत DCP_GRPH_ADDRESS_TRANSLATION_ENABLE अणु
 DCP_GRPH_ADDRESS_TRANSLATION_ENABLE_FALSE  = 0x00000000,
 DCP_GRPH_ADDRESS_TRANSLATION_ENABLE_TRUE  = 0x00000001,
-} DCP_GRPH_ADDRESS_TRANSLATION_ENABLE;
+पूर्ण DCP_GRPH_ADDRESS_TRANSLATION_ENABLE;
 
 /*
- * DCP_GRPH_SW_MODE enum
+ * DCP_GRPH_SW_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_SW_MODE {
+प्रकार क्रमागत DCP_GRPH_SW_MODE अणु
 DCP_GRPH_SW_MODE_0                       = 0x00000000,
 DCP_GRPH_SW_MODE_2                       = 0x00000002,
 DCP_GRPH_SW_MODE_3                       = 0x00000003,
@@ -4903,230 +4904,230 @@ DCP_GRPH_SW_MODE_26                      = 0x0000001a,
 DCP_GRPH_SW_MODE_27                      = 0x0000001b,
 DCP_GRPH_SW_MODE_30                      = 0x0000001e,
 DCP_GRPH_SW_MODE_31                      = 0x0000001f,
-} DCP_GRPH_SW_MODE;
+पूर्ण DCP_GRPH_SW_MODE;
 
 /*
- * DCP_GRPH_COLOR_EXPANSION_MODE enum
+ * DCP_GRPH_COLOR_EXPANSION_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_COLOR_EXPANSION_MODE {
+प्रकार क्रमागत DCP_GRPH_COLOR_EXPANSION_MODE अणु
 DCP_GRPH_COLOR_EXPANSION_MODE_DEXP       = 0x00000000,
 DCP_GRPH_COLOR_EXPANSION_MODE_ZEXP       = 0x00000001,
-} DCP_GRPH_COLOR_EXPANSION_MODE;
+पूर्ण DCP_GRPH_COLOR_EXPANSION_MODE;
 
 /*
- * DCP_GRPH_LUT_10BIT_BYPASS_EN enum
+ * DCP_GRPH_LUT_10BIT_BYPASS_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_LUT_10BIT_BYPASS_EN {
+प्रकार क्रमागत DCP_GRPH_LUT_10BIT_BYPASS_EN अणु
 DCP_GRPH_LUT_10BIT_BYPASS_EN_FALSE       = 0x00000000,
 DCP_GRPH_LUT_10BIT_BYPASS_EN_TRUE        = 0x00000001,
-} DCP_GRPH_LUT_10BIT_BYPASS_EN;
+पूर्ण DCP_GRPH_LUT_10BIT_BYPASS_EN;
 
 /*
- * DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN enum
+ * DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN {
+प्रकार क्रमागत DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN अणु
 DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN_FALSE  = 0x00000000,
 DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN_TRUE  = 0x00000001,
-} DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN;
+पूर्ण DCP_GRPH_LUT_10BIT_BYPASS_DBL_BUF_EN;
 
 /*
- * DCP_GRPH_ENDIAN_SWAP enum
+ * DCP_GRPH_ENDIAN_SWAP क्रमागत
  */
 
-typedef enum DCP_GRPH_ENDIAN_SWAP {
+प्रकार क्रमागत DCP_GRPH_ENDIAN_SWAP अणु
 DCP_GRPH_ENDIAN_SWAP_NONE                = 0x00000000,
 DCP_GRPH_ENDIAN_SWAP_8IN16               = 0x00000001,
 DCP_GRPH_ENDIAN_SWAP_8IN32               = 0x00000002,
 DCP_GRPH_ENDIAN_SWAP_8IN64               = 0x00000003,
-} DCP_GRPH_ENDIAN_SWAP;
+पूर्ण DCP_GRPH_ENDIAN_SWAP;
 
 /*
- * DCP_GRPH_RED_CROSSBAR enum
+ * DCP_GRPH_RED_CROSSBAR क्रमागत
  */
 
-typedef enum DCP_GRPH_RED_CROSSBAR {
+प्रकार क्रमागत DCP_GRPH_RED_CROSSBAR अणु
 DCP_GRPH_RED_CROSSBAR_FROM_R             = 0x00000000,
 DCP_GRPH_RED_CROSSBAR_FROM_G             = 0x00000001,
 DCP_GRPH_RED_CROSSBAR_FROM_B             = 0x00000002,
 DCP_GRPH_RED_CROSSBAR_FROM_A             = 0x00000003,
-} DCP_GRPH_RED_CROSSBAR;
+पूर्ण DCP_GRPH_RED_CROSSBAR;
 
 /*
- * DCP_GRPH_GREEN_CROSSBAR enum
+ * DCP_GRPH_GREEN_CROSSBAR क्रमागत
  */
 
-typedef enum DCP_GRPH_GREEN_CROSSBAR {
+प्रकार क्रमागत DCP_GRPH_GREEN_CROSSBAR अणु
 DCP_GRPH_GREEN_CROSSBAR_FROM_G           = 0x00000000,
 DCP_GRPH_GREEN_CROSSBAR_FROM_B           = 0x00000001,
 DCP_GRPH_GREEN_CROSSBAR_FROM_A           = 0x00000002,
 DCP_GRPH_GREEN_CROSSBAR_FROM_R           = 0x00000003,
-} DCP_GRPH_GREEN_CROSSBAR;
+पूर्ण DCP_GRPH_GREEN_CROSSBAR;
 
 /*
- * DCP_GRPH_BLUE_CROSSBAR enum
+ * DCP_GRPH_BLUE_CROSSBAR क्रमागत
  */
 
-typedef enum DCP_GRPH_BLUE_CROSSBAR {
+प्रकार क्रमागत DCP_GRPH_BLUE_CROSSBAR अणु
 DCP_GRPH_BLUE_CROSSBAR_FROM_B            = 0x00000000,
 DCP_GRPH_BLUE_CROSSBAR_FROM_A            = 0x00000001,
 DCP_GRPH_BLUE_CROSSBAR_FROM_R            = 0x00000002,
 DCP_GRPH_BLUE_CROSSBAR_FROM_G            = 0x00000003,
-} DCP_GRPH_BLUE_CROSSBAR;
+पूर्ण DCP_GRPH_BLUE_CROSSBAR;
 
 /*
- * DCP_GRPH_ALPHA_CROSSBAR enum
+ * DCP_GRPH_ALPHA_CROSSBAR क्रमागत
  */
 
-typedef enum DCP_GRPH_ALPHA_CROSSBAR {
+प्रकार क्रमागत DCP_GRPH_ALPHA_CROSSBAR अणु
 DCP_GRPH_ALPHA_CROSSBAR_FROM_A           = 0x00000000,
 DCP_GRPH_ALPHA_CROSSBAR_FROM_R           = 0x00000001,
 DCP_GRPH_ALPHA_CROSSBAR_FROM_G           = 0x00000002,
 DCP_GRPH_ALPHA_CROSSBAR_FROM_B           = 0x00000003,
-} DCP_GRPH_ALPHA_CROSSBAR;
+पूर्ण DCP_GRPH_ALPHA_CROSSBAR;
 
 /*
- * DCP_GRPH_PRIMARY_DFQ_ENABLE enum
+ * DCP_GRPH_PRIMARY_DFQ_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_PRIMARY_DFQ_ENABLE {
+प्रकार क्रमागत DCP_GRPH_PRIMARY_DFQ_ENABLE अणु
 DCP_GRPH_PRIMARY_DFQ_ENABLE_FALSE        = 0x00000000,
 DCP_GRPH_PRIMARY_DFQ_ENABLE_TRUE         = 0x00000001,
-} DCP_GRPH_PRIMARY_DFQ_ENABLE;
+पूर्ण DCP_GRPH_PRIMARY_DFQ_ENABLE;
 
 /*
- * DCP_GRPH_SECONDARY_DFQ_ENABLE enum
+ * DCP_GRPH_SECONDARY_DFQ_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_SECONDARY_DFQ_ENABLE {
+प्रकार क्रमागत DCP_GRPH_SECONDARY_DFQ_ENABLE अणु
 DCP_GRPH_SECONDARY_DFQ_ENABLE_FALSE      = 0x00000000,
 DCP_GRPH_SECONDARY_DFQ_ENABLE_TRUE       = 0x00000001,
-} DCP_GRPH_SECONDARY_DFQ_ENABLE;
+पूर्ण DCP_GRPH_SECONDARY_DFQ_ENABLE;
 
 /*
- * DCP_GRPH_INPUT_GAMMA_MODE enum
+ * DCP_GRPH_INPUT_GAMMA_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_INPUT_GAMMA_MODE {
+प्रकार क्रमागत DCP_GRPH_INPUT_GAMMA_MODE अणु
 DCP_GRPH_INPUT_GAMMA_MODE_LUT            = 0x00000000,
 DCP_GRPH_INPUT_GAMMA_MODE_BYPASS         = 0x00000001,
-} DCP_GRPH_INPUT_GAMMA_MODE;
+पूर्ण DCP_GRPH_INPUT_GAMMA_MODE;
 
 /*
- * DCP_GRPH_MODE_UPDATE_PENDING enum
+ * DCP_GRPH_MODE_UPDATE_PENDING क्रमागत
  */
 
-typedef enum DCP_GRPH_MODE_UPDATE_PENDING {
+प्रकार क्रमागत DCP_GRPH_MODE_UPDATE_PENDING अणु
 DCP_GRPH_MODE_UPDATE_PENDING_FALSE       = 0x00000000,
 DCP_GRPH_MODE_UPDATE_PENDING_TRUE        = 0x00000001,
-} DCP_GRPH_MODE_UPDATE_PENDING;
+पूर्ण DCP_GRPH_MODE_UPDATE_PENDING;
 
 /*
- * DCP_GRPH_MODE_UPDATE_TAKEN enum
+ * DCP_GRPH_MODE_UPDATE_TAKEN क्रमागत
  */
 
-typedef enum DCP_GRPH_MODE_UPDATE_TAKEN {
+प्रकार क्रमागत DCP_GRPH_MODE_UPDATE_TAKEN अणु
 DCP_GRPH_MODE_UPDATE_TAKEN_FALSE         = 0x00000000,
 DCP_GRPH_MODE_UPDATE_TAKEN_TRUE          = 0x00000001,
-} DCP_GRPH_MODE_UPDATE_TAKEN;
+पूर्ण DCP_GRPH_MODE_UPDATE_TAKEN;
 
 /*
- * DCP_GRPH_SURFACE_UPDATE_PENDING enum
+ * DCP_GRPH_SURFACE_UPDATE_PENDING क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_UPDATE_PENDING {
+प्रकार क्रमागत DCP_GRPH_SURFACE_UPDATE_PENDING अणु
 DCP_GRPH_SURFACE_UPDATE_PENDING_FALSE    = 0x00000000,
 DCP_GRPH_SURFACE_UPDATE_PENDING_TRUE     = 0x00000001,
-} DCP_GRPH_SURFACE_UPDATE_PENDING;
+पूर्ण DCP_GRPH_SURFACE_UPDATE_PENDING;
 
 /*
- * DCP_GRPH_SURFACE_UPDATE_TAKEN enum
+ * DCP_GRPH_SURFACE_UPDATE_TAKEN क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_UPDATE_TAKEN {
+प्रकार क्रमागत DCP_GRPH_SURFACE_UPDATE_TAKEN अणु
 DCP_GRPH_SURFACE_UPDATE_TAKEN_FALSE      = 0x00000000,
 DCP_GRPH_SURFACE_UPDATE_TAKEN_TRUE       = 0x00000001,
-} DCP_GRPH_SURFACE_UPDATE_TAKEN;
+पूर्ण DCP_GRPH_SURFACE_UPDATE_TAKEN;
 
 /*
- * DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE enum
+ * DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE {
+प्रकार क्रमागत DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE अणु
 DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE_FALSE = 0x00000000,
 DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE_TRUE = 0x00000001,
-} DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE;
+पूर्ण DCP_GRPH_SURFACE_XDMA_PENDING_ENABLE;
 
 /*
- * DCP_GRPH_UPDATE_LOCK enum
+ * DCP_GRPH_UPDATE_LOCK क्रमागत
  */
 
-typedef enum DCP_GRPH_UPDATE_LOCK {
+प्रकार क्रमागत DCP_GRPH_UPDATE_LOCK अणु
 DCP_GRPH_UPDATE_LOCK_FALSE               = 0x00000000,
 DCP_GRPH_UPDATE_LOCK_TRUE                = 0x00000001,
-} DCP_GRPH_UPDATE_LOCK;
+पूर्ण DCP_GRPH_UPDATE_LOCK;
 
 /*
- * DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK enum
+ * DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK {
+प्रकार क्रमागत DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK अणु
 DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK_FALSE  = 0x00000000,
 DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK_TRUE  = 0x00000001,
-} DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK;
+पूर्ण DCP_GRPH_SURFACE_IGNORE_UPDATE_LOCK;
 
 /*
- * DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE enum
+ * DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE क्रमागत
  */
 
-typedef enum DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE {
+प्रकार क्रमागत DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE अणु
 DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE_FALSE  = 0x00000000,
 DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE_TRUE  = 0x00000001,
-} DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE;
+पूर्ण DCP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE;
 
 /*
- * DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE enum
+ * DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE {
+प्रकार क्रमागत DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE अणु
 DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE_FALSE  = 0x00000000,
 DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE_TRUE  = 0x00000001,
-} DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE;
+पूर्ण DCP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE;
 
 /*
- * DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN enum
+ * DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN {
+प्रकार क्रमागत DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN अणु
 DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN_FALSE  = 0x00000000,
 DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN_TRUE  = 0x00000001,
-} DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN;
+पूर्ण DCP_GRPH_SURFACE_UPDATE_H_RETRACE_EN;
 
 /*
- * DCP_GRPH_XDMA_SUPER_AA_EN enum
+ * DCP_GRPH_XDMA_SUPER_AA_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_SUPER_AA_EN {
+प्रकार क्रमागत DCP_GRPH_XDMA_SUPER_AA_EN अणु
 DCP_GRPH_XDMA_SUPER_AA_EN_FALSE          = 0x00000000,
 DCP_GRPH_XDMA_SUPER_AA_EN_TRUE           = 0x00000001,
-} DCP_GRPH_XDMA_SUPER_AA_EN;
+पूर्ण DCP_GRPH_XDMA_SUPER_AA_EN;
 
 /*
- * DCP_GRPH_DFQ_RESET enum
+ * DCP_GRPH_DFQ_RESET क्रमागत
  */
 
-typedef enum DCP_GRPH_DFQ_RESET {
+प्रकार क्रमागत DCP_GRPH_DFQ_RESET अणु
 DCP_GRPH_DFQ_RESET_FALSE                 = 0x00000000,
 DCP_GRPH_DFQ_RESET_TRUE                  = 0x00000001,
-} DCP_GRPH_DFQ_RESET;
+पूर्ण DCP_GRPH_DFQ_RESET;
 
 /*
- * DCP_GRPH_DFQ_SIZE enum
+ * DCP_GRPH_DFQ_SIZE क्रमागत
  */
 
-typedef enum DCP_GRPH_DFQ_SIZE {
+प्रकार क्रमागत DCP_GRPH_DFQ_SIZE अणु
 DCP_GRPH_DFQ_SIZE_DEEP1                  = 0x00000000,
 DCP_GRPH_DFQ_SIZE_DEEP2                  = 0x00000001,
 DCP_GRPH_DFQ_SIZE_DEEP3                  = 0x00000002,
@@ -5135,13 +5136,13 @@ DCP_GRPH_DFQ_SIZE_DEEP5                  = 0x00000004,
 DCP_GRPH_DFQ_SIZE_DEEP6                  = 0x00000005,
 DCP_GRPH_DFQ_SIZE_DEEP7                  = 0x00000006,
 DCP_GRPH_DFQ_SIZE_DEEP8                  = 0x00000007,
-} DCP_GRPH_DFQ_SIZE;
+पूर्ण DCP_GRPH_DFQ_SIZE;
 
 /*
- * DCP_GRPH_DFQ_MIN_FREE_ENTRIES enum
+ * DCP_GRPH_DFQ_MIN_FREE_ENTRIES क्रमागत
  */
 
-typedef enum DCP_GRPH_DFQ_MIN_FREE_ENTRIES {
+प्रकार क्रमागत DCP_GRPH_DFQ_MIN_FREE_ENTRIES अणु
 DCP_GRPH_DFQ_MIN_FREE_ENTRIES_1          = 0x00000000,
 DCP_GRPH_DFQ_MIN_FREE_ENTRIES_2          = 0x00000001,
 DCP_GRPH_DFQ_MIN_FREE_ENTRIES_3          = 0x00000002,
@@ -5150,105 +5151,105 @@ DCP_GRPH_DFQ_MIN_FREE_ENTRIES_5          = 0x00000004,
 DCP_GRPH_DFQ_MIN_FREE_ENTRIES_6          = 0x00000005,
 DCP_GRPH_DFQ_MIN_FREE_ENTRIES_7          = 0x00000006,
 DCP_GRPH_DFQ_MIN_FREE_ENTRIES_8          = 0x00000007,
-} DCP_GRPH_DFQ_MIN_FREE_ENTRIES;
+पूर्ण DCP_GRPH_DFQ_MIN_FREE_ENTRIES;
 
 /*
- * DCP_GRPH_DFQ_RESET_ACK enum
+ * DCP_GRPH_DFQ_RESET_ACK क्रमागत
  */
 
-typedef enum DCP_GRPH_DFQ_RESET_ACK {
+प्रकार क्रमागत DCP_GRPH_DFQ_RESET_ACK अणु
 DCP_GRPH_DFQ_RESET_ACK_FALSE             = 0x00000000,
 DCP_GRPH_DFQ_RESET_ACK_TRUE              = 0x00000001,
-} DCP_GRPH_DFQ_RESET_ACK;
+पूर्ण DCP_GRPH_DFQ_RESET_ACK;
 
 /*
- * DCP_GRPH_PFLIP_INT_CLEAR enum
+ * DCP_GRPH_PFLIP_INT_CLEAR क्रमागत
  */
 
-typedef enum DCP_GRPH_PFLIP_INT_CLEAR {
+प्रकार क्रमागत DCP_GRPH_PFLIP_INT_CLEAR अणु
 DCP_GRPH_PFLIP_INT_CLEAR_FALSE           = 0x00000000,
 DCP_GRPH_PFLIP_INT_CLEAR_TRUE            = 0x00000001,
-} DCP_GRPH_PFLIP_INT_CLEAR;
+पूर्ण DCP_GRPH_PFLIP_INT_CLEAR;
 
 /*
- * DCP_GRPH_PFLIP_INT_MASK enum
+ * DCP_GRPH_PFLIP_INT_MASK क्रमागत
  */
 
-typedef enum DCP_GRPH_PFLIP_INT_MASK {
+प्रकार क्रमागत DCP_GRPH_PFLIP_INT_MASK अणु
 DCP_GRPH_PFLIP_INT_MASK_FALSE            = 0x00000000,
 DCP_GRPH_PFLIP_INT_MASK_TRUE             = 0x00000001,
-} DCP_GRPH_PFLIP_INT_MASK;
+पूर्ण DCP_GRPH_PFLIP_INT_MASK;
 
 /*
- * DCP_GRPH_PFLIP_INT_TYPE enum
+ * DCP_GRPH_PFLIP_INT_TYPE क्रमागत
  */
 
-typedef enum DCP_GRPH_PFLIP_INT_TYPE {
+प्रकार क्रमागत DCP_GRPH_PFLIP_INT_TYPE अणु
 DCP_GRPH_PFLIP_INT_TYPE_LEGACY_LEVEL     = 0x00000000,
 DCP_GRPH_PFLIP_INT_TYPE_PULSE            = 0x00000001,
-} DCP_GRPH_PFLIP_INT_TYPE;
+पूर्ण DCP_GRPH_PFLIP_INT_TYPE;
 
 /*
- * DCP_GRPH_PRESCALE_SELECT enum
+ * DCP_GRPH_PRESCALE_SELECT क्रमागत
  */
 
-typedef enum DCP_GRPH_PRESCALE_SELECT {
+प्रकार क्रमागत DCP_GRPH_PRESCALE_SELECT अणु
 DCP_GRPH_PRESCALE_SELECT_FIXED           = 0x00000000,
 DCP_GRPH_PRESCALE_SELECT_FLOATING        = 0x00000001,
-} DCP_GRPH_PRESCALE_SELECT;
+पूर्ण DCP_GRPH_PRESCALE_SELECT;
 
 /*
- * DCP_GRPH_PRESCALE_R_SIGN enum
+ * DCP_GRPH_PRESCALE_R_SIGN क्रमागत
  */
 
-typedef enum DCP_GRPH_PRESCALE_R_SIGN {
+प्रकार क्रमागत DCP_GRPH_PRESCALE_R_SIGN अणु
 DCP_GRPH_PRESCALE_R_SIGN_UNSIGNED        = 0x00000000,
 DCP_GRPH_PRESCALE_R_SIGN_SIGNED          = 0x00000001,
-} DCP_GRPH_PRESCALE_R_SIGN;
+पूर्ण DCP_GRPH_PRESCALE_R_SIGN;
 
 /*
- * DCP_GRPH_PRESCALE_G_SIGN enum
+ * DCP_GRPH_PRESCALE_G_SIGN क्रमागत
  */
 
-typedef enum DCP_GRPH_PRESCALE_G_SIGN {
+प्रकार क्रमागत DCP_GRPH_PRESCALE_G_SIGN अणु
 DCP_GRPH_PRESCALE_G_SIGN_UNSIGNED        = 0x00000000,
 DCP_GRPH_PRESCALE_G_SIGN_SIGNED          = 0x00000001,
-} DCP_GRPH_PRESCALE_G_SIGN;
+पूर्ण DCP_GRPH_PRESCALE_G_SIGN;
 
 /*
- * DCP_GRPH_PRESCALE_B_SIGN enum
+ * DCP_GRPH_PRESCALE_B_SIGN क्रमागत
  */
 
-typedef enum DCP_GRPH_PRESCALE_B_SIGN {
+प्रकार क्रमागत DCP_GRPH_PRESCALE_B_SIGN अणु
 DCP_GRPH_PRESCALE_B_SIGN_UNSIGNED        = 0x00000000,
 DCP_GRPH_PRESCALE_B_SIGN_SIGNED          = 0x00000001,
-} DCP_GRPH_PRESCALE_B_SIGN;
+पूर्ण DCP_GRPH_PRESCALE_B_SIGN;
 
 /*
- * DCP_GRPH_PRESCALE_BYPASS enum
+ * DCP_GRPH_PRESCALE_BYPASS क्रमागत
  */
 
-typedef enum DCP_GRPH_PRESCALE_BYPASS {
+प्रकार क्रमागत DCP_GRPH_PRESCALE_BYPASS अणु
 DCP_GRPH_PRESCALE_BYPASS_FALSE           = 0x00000000,
 DCP_GRPH_PRESCALE_BYPASS_TRUE            = 0x00000001,
-} DCP_GRPH_PRESCALE_BYPASS;
+पूर्ण DCP_GRPH_PRESCALE_BYPASS;
 
 /*
- * DCP_INPUT_CSC_GRPH_MODE enum
+ * DCP_INPUT_CSC_GRPH_MODE क्रमागत
  */
 
-typedef enum DCP_INPUT_CSC_GRPH_MODE {
+प्रकार क्रमागत DCP_INPUT_CSC_GRPH_MODE अणु
 DCP_INPUT_CSC_GRPH_MODE_BYPASS           = 0x00000000,
 DCP_INPUT_CSC_GRPH_MODE_INPUT_CSC_COEF   = 0x00000001,
 DCP_INPUT_CSC_GRPH_MODE_SHARED_COEF      = 0x00000002,
 DCP_INPUT_CSC_GRPH_MODE_RESERVED         = 0x00000003,
-} DCP_INPUT_CSC_GRPH_MODE;
+पूर्ण DCP_INPUT_CSC_GRPH_MODE;
 
 /*
- * DCP_OUTPUT_CSC_GRPH_MODE enum
+ * DCP_OUTPUT_CSC_GRPH_MODE क्रमागत
  */
 
-typedef enum DCP_OUTPUT_CSC_GRPH_MODE {
+प्रकार क्रमागत DCP_OUTPUT_CSC_GRPH_MODE अणु
 DCP_OUTPUT_CSC_GRPH_MODE_BYPASS          = 0x00000000,
 DCP_OUTPUT_CSC_GRPH_MODE_RGB             = 0x00000001,
 DCP_OUTPUT_CSC_GRPH_MODE_YCBCR601        = 0x00000002,
@@ -5257,13 +5258,13 @@ DCP_OUTPUT_CSC_GRPH_MODE_OUTPUT_CSC_COEF  = 0x00000004,
 DCP_OUTPUT_CSC_GRPH_MODE_SHARED_COEF     = 0x00000005,
 DCP_OUTPUT_CSC_GRPH_MODE_RESERVED0       = 0x00000006,
 DCP_OUTPUT_CSC_GRPH_MODE_RESERVED1       = 0x00000007,
-} DCP_OUTPUT_CSC_GRPH_MODE;
+पूर्ण DCP_OUTPUT_CSC_GRPH_MODE;
 
 /*
- * DCP_DENORM_MODE enum
+ * DCP_DENORM_MODE क्रमागत
  */
 
-typedef enum DCP_DENORM_MODE {
+प्रकार क्रमागत DCP_DENORM_MODE अणु
 DCP_DENORM_MODE_UNITY                    = 0x00000000,
 DCP_DENORM_MODE_6BIT                     = 0x00000001,
 DCP_DENORM_MODE_8BIT                     = 0x00000002,
@@ -5272,22 +5273,22 @@ DCP_DENORM_MODE_11BIT                    = 0x00000004,
 DCP_DENORM_MODE_12BIT                    = 0x00000005,
 DCP_DENORM_MODE_RESERVED0                = 0x00000006,
 DCP_DENORM_MODE_RESERVED1                = 0x00000007,
-} DCP_DENORM_MODE;
+पूर्ण DCP_DENORM_MODE;
 
 /*
- * DCP_DENORM_14BIT_OUT enum
+ * DCP_DENORM_14BIT_OUT क्रमागत
  */
 
-typedef enum DCP_DENORM_14BIT_OUT {
+प्रकार क्रमागत DCP_DENORM_14BIT_OUT अणु
 DCP_DENORM_14BIT_OUT_FALSE               = 0x00000000,
 DCP_DENORM_14BIT_OUT_TRUE                = 0x00000001,
-} DCP_DENORM_14BIT_OUT;
+पूर्ण DCP_DENORM_14BIT_OUT;
 
 /*
- * DCP_OUT_ROUND_TRUNC_MODE enum
+ * DCP_OUT_ROUND_TRUNC_MODE क्रमागत
  */
 
-typedef enum DCP_OUT_ROUND_TRUNC_MODE {
+प्रकार क्रमागत DCP_OUT_ROUND_TRUNC_MODE अणु
 DCP_OUT_ROUND_TRUNC_MODE_TRUNCATE_12     = 0x00000000,
 DCP_OUT_ROUND_TRUNC_MODE_TRUNCATE_11     = 0x00000001,
 DCP_OUT_ROUND_TRUNC_MODE_TRUNCATE_10     = 0x00000002,
@@ -5304,302 +5305,302 @@ DCP_OUT_ROUND_TRUNC_MODE_ROUND_8         = 0x0000000c,
 DCP_OUT_ROUND_TRUNC_MODE_ROUND_RESERVED  = 0x0000000d,
 DCP_OUT_ROUND_TRUNC_MODE_ROUND_14        = 0x0000000e,
 DCP_OUT_ROUND_TRUNC_MODE_ROUND_13        = 0x0000000f,
-} DCP_OUT_ROUND_TRUNC_MODE;
+पूर्ण DCP_OUT_ROUND_TRUNC_MODE;
 
 /*
- * DCP_KEY_MODE enum
+ * DCP_KEY_MODE क्रमागत
  */
 
-typedef enum DCP_KEY_MODE {
+प्रकार क्रमागत DCP_KEY_MODE अणु
 DCP_KEY_MODE_ALPHA0                      = 0x00000000,
 DCP_KEY_MODE_ALPHA1                      = 0x00000001,
 DCP_KEY_MODE_IN_RANGE_ALPHA1             = 0x00000002,
 DCP_KEY_MODE_IN_RANGE_ALPHA0             = 0x00000003,
-} DCP_KEY_MODE;
+पूर्ण DCP_KEY_MODE;
 
 /*
- * DCP_GRPH_DEGAMMA_MODE enum
+ * DCP_GRPH_DEGAMMA_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_DEGAMMA_MODE {
+प्रकार क्रमागत DCP_GRPH_DEGAMMA_MODE अणु
 DCP_GRPH_DEGAMMA_MODE_BYPASS             = 0x00000000,
 DCP_GRPH_DEGAMMA_MODE_ROMA               = 0x00000001,
 DCP_GRPH_DEGAMMA_MODE_ROMB               = 0x00000002,
 DCP_GRPH_DEGAMMA_MODE_RESERVED           = 0x00000003,
-} DCP_GRPH_DEGAMMA_MODE;
+पूर्ण DCP_GRPH_DEGAMMA_MODE;
 
 /*
- * DCP_CURSOR_DEGAMMA_MODE enum
+ * DCP_CURSOR_DEGAMMA_MODE क्रमागत
  */
 
-typedef enum DCP_CURSOR_DEGAMMA_MODE {
+प्रकार क्रमागत DCP_CURSOR_DEGAMMA_MODE अणु
 DCP_CURSOR_DEGAMMA_MODE_BYPASS           = 0x00000000,
 DCP_CURSOR_DEGAMMA_MODE_ROMA             = 0x00000001,
 DCP_CURSOR_DEGAMMA_MODE_ROMB             = 0x00000002,
 DCP_CURSOR_DEGAMMA_MODE_RESERVED         = 0x00000003,
-} DCP_CURSOR_DEGAMMA_MODE;
+पूर्ण DCP_CURSOR_DEGAMMA_MODE;
 
 /*
- * DCP_GRPH_GAMUT_REMAP_MODE enum
+ * DCP_GRPH_GAMUT_REMAP_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_GAMUT_REMAP_MODE {
+प्रकार क्रमागत DCP_GRPH_GAMUT_REMAP_MODE अणु
 DCP_GRPH_GAMUT_REMAP_MODE_BYPASS         = 0x00000000,
 DCP_GRPH_GAMUT_REMAP_MODE_ROMA           = 0x00000001,
 DCP_GRPH_GAMUT_REMAP_MODE_ROMB           = 0x00000002,
 DCP_GRPH_GAMUT_REMAP_MODE_RESERVED       = 0x00000003,
-} DCP_GRPH_GAMUT_REMAP_MODE;
+पूर्ण DCP_GRPH_GAMUT_REMAP_MODE;
 
 /*
- * DCP_SPATIAL_DITHER_EN enum
+ * DCP_SPATIAL_DITHER_EN क्रमागत
  */
 
-typedef enum DCP_SPATIAL_DITHER_EN {
+प्रकार क्रमागत DCP_SPATIAL_DITHER_EN अणु
 DCP_SPATIAL_DITHER_EN_FALSE              = 0x00000000,
 DCP_SPATIAL_DITHER_EN_TRUE               = 0x00000001,
-} DCP_SPATIAL_DITHER_EN;
+पूर्ण DCP_SPATIAL_DITHER_EN;
 
 /*
- * DCP_SPATIAL_DITHER_MODE enum
+ * DCP_SPATIAL_DITHER_MODE क्रमागत
  */
 
-typedef enum DCP_SPATIAL_DITHER_MODE {
+प्रकार क्रमागत DCP_SPATIAL_DITHER_MODE अणु
 DCP_SPATIAL_DITHER_MODE_BYPASS           = 0x00000000,
 DCP_SPATIAL_DITHER_MODE_ROMA             = 0x00000001,
 DCP_SPATIAL_DITHER_MODE_ROMB             = 0x00000002,
 DCP_SPATIAL_DITHER_MODE_RESERVED         = 0x00000003,
-} DCP_SPATIAL_DITHER_MODE;
+पूर्ण DCP_SPATIAL_DITHER_MODE;
 
 /*
- * DCP_SPATIAL_DITHER_DEPTH enum
+ * DCP_SPATIAL_DITHER_DEPTH क्रमागत
  */
 
-typedef enum DCP_SPATIAL_DITHER_DEPTH {
+प्रकार क्रमागत DCP_SPATIAL_DITHER_DEPTH अणु
 DCP_SPATIAL_DITHER_DEPTH_30BPP           = 0x00000000,
 DCP_SPATIAL_DITHER_DEPTH_24BPP           = 0x00000001,
 DCP_SPATIAL_DITHER_DEPTH_36BPP           = 0x00000002,
 DCP_SPATIAL_DITHER_DEPTH_UNDEFINED       = 0x00000003,
-} DCP_SPATIAL_DITHER_DEPTH;
+पूर्ण DCP_SPATIAL_DITHER_DEPTH;
 
 /*
- * DCP_FRAME_RANDOM_ENABLE enum
+ * DCP_FRAME_RANDOM_ENABLE क्रमागत
  */
 
-typedef enum DCP_FRAME_RANDOM_ENABLE {
+प्रकार क्रमागत DCP_FRAME_RANDOM_ENABLE अणु
 DCP_FRAME_RANDOM_ENABLE_FALSE            = 0x00000000,
 DCP_FRAME_RANDOM_ENABLE_TRUE             = 0x00000001,
-} DCP_FRAME_RANDOM_ENABLE;
+पूर्ण DCP_FRAME_RANDOM_ENABLE;
 
 /*
- * DCP_RGB_RANDOM_ENABLE enum
+ * DCP_RGB_RANDOM_ENABLE क्रमागत
  */
 
-typedef enum DCP_RGB_RANDOM_ENABLE {
+प्रकार क्रमागत DCP_RGB_RANDOM_ENABLE अणु
 DCP_RGB_RANDOM_ENABLE_FALSE              = 0x00000000,
 DCP_RGB_RANDOM_ENABLE_TRUE               = 0x00000001,
-} DCP_RGB_RANDOM_ENABLE;
+पूर्ण DCP_RGB_RANDOM_ENABLE;
 
 /*
- * DCP_HIGHPASS_RANDOM_ENABLE enum
+ * DCP_HIGHPASS_RANDOM_ENABLE क्रमागत
  */
 
-typedef enum DCP_HIGHPASS_RANDOM_ENABLE {
+प्रकार क्रमागत DCP_HIGHPASS_RANDOM_ENABLE अणु
 DCP_HIGHPASS_RANDOM_ENABLE_FALSE         = 0x00000000,
 DCP_HIGHPASS_RANDOM_ENABLE_TRUE          = 0x00000001,
-} DCP_HIGHPASS_RANDOM_ENABLE;
+पूर्ण DCP_HIGHPASS_RANDOM_ENABLE;
 
 /*
- * DCP_CURSOR_EN enum
+ * DCP_CURSOR_EN क्रमागत
  */
 
-typedef enum DCP_CURSOR_EN {
+प्रकार क्रमागत DCP_CURSOR_EN अणु
 DCP_CURSOR_EN_FALSE                      = 0x00000000,
 DCP_CURSOR_EN_TRUE                       = 0x00000001,
-} DCP_CURSOR_EN;
+पूर्ण DCP_CURSOR_EN;
 
 /*
- * DCP_CUR_INV_TRANS_CLAMP enum
+ * DCP_CUR_INV_TRANS_CLAMP क्रमागत
  */
 
-typedef enum DCP_CUR_INV_TRANS_CLAMP {
+प्रकार क्रमागत DCP_CUR_INV_TRANS_CLAMP अणु
 DCP_CUR_INV_TRANS_CLAMP_FALSE            = 0x00000000,
 DCP_CUR_INV_TRANS_CLAMP_TRUE             = 0x00000001,
-} DCP_CUR_INV_TRANS_CLAMP;
+पूर्ण DCP_CUR_INV_TRANS_CLAMP;
 
 /*
- * DCP_CURSOR_MODE enum
+ * DCP_CURSOR_MODE क्रमागत
  */
 
-typedef enum DCP_CURSOR_MODE {
+प्रकार क्रमागत DCP_CURSOR_MODE अणु
 DCP_CURSOR_MODE_MONO_2BPP                = 0x00000000,
 DCP_CURSOR_MODE_24BPP_1BIT               = 0x00000001,
 DCP_CURSOR_MODE_24BPP_8BIT_PREMULTI      = 0x00000002,
 DCP_CURSOR_MODE_24BPP_8BIT_UNPREMULTI    = 0x00000003,
-} DCP_CURSOR_MODE;
+पूर्ण DCP_CURSOR_MODE;
 
 /*
- * DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM enum
+ * DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM क्रमागत
  */
 
-typedef enum DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM {
+प्रकार क्रमागत DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM अणु
 DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM_ONE  = 0x00000000,
 DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM_TWO  = 0x00000001,
-} DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM;
+पूर्ण DCP_CURSOR_MAX_OUTSTANDING_GROUP_NUM;
 
 /*
- * DCP_CURSOR_2X_MAGNIFY enum
+ * DCP_CURSOR_2X_MAGNIFY क्रमागत
  */
 
-typedef enum DCP_CURSOR_2X_MAGNIFY {
+प्रकार क्रमागत DCP_CURSOR_2X_MAGNIFY अणु
 DCP_CURSOR_2X_MAGNIFY_FALSE              = 0x00000000,
 DCP_CURSOR_2X_MAGNIFY_TRUE               = 0x00000001,
-} DCP_CURSOR_2X_MAGNIFY;
+पूर्ण DCP_CURSOR_2X_MAGNIFY;
 
 /*
- * DCP_CURSOR_FORCE_MC_ON enum
+ * DCP_CURSOR_FORCE_MC_ON क्रमागत
  */
 
-typedef enum DCP_CURSOR_FORCE_MC_ON {
+प्रकार क्रमागत DCP_CURSOR_FORCE_MC_ON अणु
 DCP_CURSOR_FORCE_MC_ON_FALSE             = 0x00000000,
 DCP_CURSOR_FORCE_MC_ON_TRUE              = 0x00000001,
-} DCP_CURSOR_FORCE_MC_ON;
+पूर्ण DCP_CURSOR_FORCE_MC_ON;
 
 /*
- * DCP_CURSOR_URGENT_CONTROL enum
+ * DCP_CURSOR_URGENT_CONTROL क्रमागत
  */
 
-typedef enum DCP_CURSOR_URGENT_CONTROL {
+प्रकार क्रमागत DCP_CURSOR_URGENT_CONTROL अणु
 DCP_CURSOR_URGENT_CONTROL_MODE_0         = 0x00000000,
 DCP_CURSOR_URGENT_CONTROL_MODE_1         = 0x00000001,
 DCP_CURSOR_URGENT_CONTROL_MODE_2         = 0x00000002,
 DCP_CURSOR_URGENT_CONTROL_MODE_3         = 0x00000003,
 DCP_CURSOR_URGENT_CONTROL_MODE_4         = 0x00000004,
-} DCP_CURSOR_URGENT_CONTROL;
+पूर्ण DCP_CURSOR_URGENT_CONTROL;
 
 /*
- * DCP_CURSOR_UPDATE_PENDING enum
+ * DCP_CURSOR_UPDATE_PENDING क्रमागत
  */
 
-typedef enum DCP_CURSOR_UPDATE_PENDING {
+प्रकार क्रमागत DCP_CURSOR_UPDATE_PENDING अणु
 DCP_CURSOR_UPDATE_PENDING_FALSE          = 0x00000000,
 DCP_CURSOR_UPDATE_PENDING_TRUE           = 0x00000001,
-} DCP_CURSOR_UPDATE_PENDING;
+पूर्ण DCP_CURSOR_UPDATE_PENDING;
 
 /*
- * DCP_CURSOR_UPDATE_TAKEN enum
+ * DCP_CURSOR_UPDATE_TAKEN क्रमागत
  */
 
-typedef enum DCP_CURSOR_UPDATE_TAKEN {
+प्रकार क्रमागत DCP_CURSOR_UPDATE_TAKEN अणु
 DCP_CURSOR_UPDATE_TAKEN_FALSE            = 0x00000000,
 DCP_CURSOR_UPDATE_TAKEN_TRUE             = 0x00000001,
-} DCP_CURSOR_UPDATE_TAKEN;
+पूर्ण DCP_CURSOR_UPDATE_TAKEN;
 
 /*
- * DCP_CURSOR_UPDATE_LOCK enum
+ * DCP_CURSOR_UPDATE_LOCK क्रमागत
  */
 
-typedef enum DCP_CURSOR_UPDATE_LOCK {
+प्रकार क्रमागत DCP_CURSOR_UPDATE_LOCK अणु
 DCP_CURSOR_UPDATE_LOCK_FALSE             = 0x00000000,
 DCP_CURSOR_UPDATE_LOCK_TRUE              = 0x00000001,
-} DCP_CURSOR_UPDATE_LOCK;
+पूर्ण DCP_CURSOR_UPDATE_LOCK;
 
 /*
- * DCP_CURSOR_DISABLE_MULTIPLE_UPDATE enum
+ * DCP_CURSOR_DISABLE_MULTIPLE_UPDATE क्रमागत
  */
 
-typedef enum DCP_CURSOR_DISABLE_MULTIPLE_UPDATE {
+प्रकार क्रमागत DCP_CURSOR_DISABLE_MULTIPLE_UPDATE अणु
 DCP_CURSOR_DISABLE_MULTIPLE_UPDATE_FALSE  = 0x00000000,
 DCP_CURSOR_DISABLE_MULTIPLE_UPDATE_TRUE  = 0x00000001,
-} DCP_CURSOR_DISABLE_MULTIPLE_UPDATE;
+पूर्ण DCP_CURSOR_DISABLE_MULTIPLE_UPDATE;
 
 /*
- * DCP_CURSOR_UPDATE_STEREO_MODE enum
+ * DCP_CURSOR_UPDATE_STEREO_MODE क्रमागत
  */
 
-typedef enum DCP_CURSOR_UPDATE_STEREO_MODE {
+प्रकार क्रमागत DCP_CURSOR_UPDATE_STEREO_MODE अणु
 DCP_CURSOR_UPDATE_STEREO_MODE_BOTH       = 0x00000000,
 DCP_CURSOR_UPDATE_STEREO_MODE_SECONDARY_ONLY  = 0x00000001,
 DCP_CURSOR_UPDATE_STEREO_MODE_UNDEFINED  = 0x00000002,
 DCP_CURSOR_UPDATE_STEREO_MODE_PRIMARY_ONLY  = 0x00000003,
-} DCP_CURSOR_UPDATE_STEREO_MODE;
+पूर्ण DCP_CURSOR_UPDATE_STEREO_MODE;
 
 /*
- * DCP_CUR2_INV_TRANS_CLAMP enum
+ * DCP_CUR2_INV_TRANS_CLAMP क्रमागत
  */
 
-typedef enum DCP_CUR2_INV_TRANS_CLAMP {
+प्रकार क्रमागत DCP_CUR2_INV_TRANS_CLAMP अणु
 DCP_CUR2_INV_TRANS_CLAMP_FALSE           = 0x00000000,
 DCP_CUR2_INV_TRANS_CLAMP_TRUE            = 0x00000001,
-} DCP_CUR2_INV_TRANS_CLAMP;
+पूर्ण DCP_CUR2_INV_TRANS_CLAMP;
 
 /*
- * DCP_CUR_REQUEST_FILTER_DIS enum
+ * DCP_CUR_REQUEST_FILTER_DIS क्रमागत
  */
 
-typedef enum DCP_CUR_REQUEST_FILTER_DIS {
+प्रकार क्रमागत DCP_CUR_REQUEST_FILTER_DIS अणु
 DCP_CUR_REQUEST_FILTER_DIS_FALSE         = 0x00000000,
 DCP_CUR_REQUEST_FILTER_DIS_TRUE          = 0x00000001,
-} DCP_CUR_REQUEST_FILTER_DIS;
+पूर्ण DCP_CUR_REQUEST_FILTER_DIS;
 
 /*
- * DCP_CURSOR_STEREO_EN enum
+ * DCP_CURSOR_STEREO_EN क्रमागत
  */
 
-typedef enum DCP_CURSOR_STEREO_EN {
+प्रकार क्रमागत DCP_CURSOR_STEREO_EN अणु
 DCP_CURSOR_STEREO_EN_FALSE               = 0x00000000,
 DCP_CURSOR_STEREO_EN_TRUE                = 0x00000001,
-} DCP_CURSOR_STEREO_EN;
+पूर्ण DCP_CURSOR_STEREO_EN;
 
 /*
- * DCP_CURSOR_STEREO_OFFSET_YNX enum
+ * DCP_CURSOR_STEREO_OFFSET_YNX क्रमागत
  */
 
-typedef enum DCP_CURSOR_STEREO_OFFSET_YNX {
+प्रकार क्रमागत DCP_CURSOR_STEREO_OFFSET_YNX अणु
 DCP_CURSOR_STEREO_OFFSET_YNX_X_POSITION  = 0x00000000,
 DCP_CURSOR_STEREO_OFFSET_YNX_Y_POSITION  = 0x00000001,
-} DCP_CURSOR_STEREO_OFFSET_YNX;
+पूर्ण DCP_CURSOR_STEREO_OFFSET_YNX;
 
 /*
- * DCP_DC_LUT_RW_MODE enum
+ * DCP_DC_LUT_RW_MODE क्रमागत
  */
 
-typedef enum DCP_DC_LUT_RW_MODE {
+प्रकार क्रमागत DCP_DC_LUT_RW_MODE अणु
 DCP_DC_LUT_RW_MODE_256_ENTRY             = 0x00000000,
 DCP_DC_LUT_RW_MODE_PWL                   = 0x00000001,
-} DCP_DC_LUT_RW_MODE;
+पूर्ण DCP_DC_LUT_RW_MODE;
 
 /*
- * DCP_DC_LUT_VGA_ACCESS_ENABLE enum
+ * DCP_DC_LUT_VGA_ACCESS_ENABLE क्रमागत
  */
 
-typedef enum DCP_DC_LUT_VGA_ACCESS_ENABLE {
+प्रकार क्रमागत DCP_DC_LUT_VGA_ACCESS_ENABLE अणु
 DCP_DC_LUT_VGA_ACCESS_ENABLE_FALSE       = 0x00000000,
 DCP_DC_LUT_VGA_ACCESS_ENABLE_TRUE        = 0x00000001,
-} DCP_DC_LUT_VGA_ACCESS_ENABLE;
+पूर्ण DCP_DC_LUT_VGA_ACCESS_ENABLE;
 
 /*
- * DCP_DC_LUT_AUTOFILL enum
+ * DCP_DC_LUT_AUTOFILL क्रमागत
  */
 
-typedef enum DCP_DC_LUT_AUTOFILL {
+प्रकार क्रमागत DCP_DC_LUT_AUTOFILL अणु
 DCP_DC_LUT_AUTOFILL_FALSE                = 0x00000000,
 DCP_DC_LUT_AUTOFILL_TRUE                 = 0x00000001,
-} DCP_DC_LUT_AUTOFILL;
+पूर्ण DCP_DC_LUT_AUTOFILL;
 
 /*
- * DCP_DC_LUT_AUTOFILL_DONE enum
+ * DCP_DC_LUT_AUTOFILL_DONE क्रमागत
  */
 
-typedef enum DCP_DC_LUT_AUTOFILL_DONE {
+प्रकार क्रमागत DCP_DC_LUT_AUTOFILL_DONE अणु
 DCP_DC_LUT_AUTOFILL_DONE_FALSE           = 0x00000000,
 DCP_DC_LUT_AUTOFILL_DONE_TRUE            = 0x00000001,
-} DCP_DC_LUT_AUTOFILL_DONE;
+पूर्ण DCP_DC_LUT_AUTOFILL_DONE;
 
 /*
- * DCP_DC_LUT_INC_B enum
+ * DCP_DC_LUT_INC_B क्रमागत
  */
 
-typedef enum DCP_DC_LUT_INC_B {
+प्रकार क्रमागत DCP_DC_LUT_INC_B अणु
 DCP_DC_LUT_INC_B_NA                      = 0x00000000,
 DCP_DC_LUT_INC_B_2                       = 0x00000001,
 DCP_DC_LUT_INC_B_4                       = 0x00000002,
@@ -5610,42 +5611,42 @@ DCP_DC_LUT_INC_B_64                      = 0x00000006,
 DCP_DC_LUT_INC_B_128                     = 0x00000007,
 DCP_DC_LUT_INC_B_256                     = 0x00000008,
 DCP_DC_LUT_INC_B_512                     = 0x00000009,
-} DCP_DC_LUT_INC_B;
+पूर्ण DCP_DC_LUT_INC_B;
 
 /*
- * DCP_DC_LUT_DATA_B_SIGNED_EN enum
+ * DCP_DC_LUT_DATA_B_SIGNED_EN क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_B_SIGNED_EN {
+प्रकार क्रमागत DCP_DC_LUT_DATA_B_SIGNED_EN अणु
 DCP_DC_LUT_DATA_B_SIGNED_EN_FALSE        = 0x00000000,
 DCP_DC_LUT_DATA_B_SIGNED_EN_TRUE         = 0x00000001,
-} DCP_DC_LUT_DATA_B_SIGNED_EN;
+पूर्ण DCP_DC_LUT_DATA_B_SIGNED_EN;
 
 /*
- * DCP_DC_LUT_DATA_B_FLOAT_POINT_EN enum
+ * DCP_DC_LUT_DATA_B_FLOAT_POINT_EN क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_B_FLOAT_POINT_EN {
+प्रकार क्रमागत DCP_DC_LUT_DATA_B_FLOAT_POINT_EN अणु
 DCP_DC_LUT_DATA_B_FLOAT_POINT_EN_FALSE   = 0x00000000,
 DCP_DC_LUT_DATA_B_FLOAT_POINT_EN_TRUE    = 0x00000001,
-} DCP_DC_LUT_DATA_B_FLOAT_POINT_EN;
+पूर्ण DCP_DC_LUT_DATA_B_FLOAT_POINT_EN;
 
 /*
- * DCP_DC_LUT_DATA_B_FORMAT enum
+ * DCP_DC_LUT_DATA_B_FORMAT क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_B_FORMAT {
+प्रकार क्रमागत DCP_DC_LUT_DATA_B_FORMAT अणु
 DCP_DC_LUT_DATA_B_FORMAT_U0P10           = 0x00000000,
 DCP_DC_LUT_DATA_B_FORMAT_S1P10           = 0x00000001,
 DCP_DC_LUT_DATA_B_FORMAT_U1P11           = 0x00000002,
 DCP_DC_LUT_DATA_B_FORMAT_U0P12           = 0x00000003,
-} DCP_DC_LUT_DATA_B_FORMAT;
+पूर्ण DCP_DC_LUT_DATA_B_FORMAT;
 
 /*
- * DCP_DC_LUT_INC_G enum
+ * DCP_DC_LUT_INC_G क्रमागत
  */
 
-typedef enum DCP_DC_LUT_INC_G {
+प्रकार क्रमागत DCP_DC_LUT_INC_G अणु
 DCP_DC_LUT_INC_G_NA                      = 0x00000000,
 DCP_DC_LUT_INC_G_2                       = 0x00000001,
 DCP_DC_LUT_INC_G_4                       = 0x00000002,
@@ -5656,42 +5657,42 @@ DCP_DC_LUT_INC_G_64                      = 0x00000006,
 DCP_DC_LUT_INC_G_128                     = 0x00000007,
 DCP_DC_LUT_INC_G_256                     = 0x00000008,
 DCP_DC_LUT_INC_G_512                     = 0x00000009,
-} DCP_DC_LUT_INC_G;
+पूर्ण DCP_DC_LUT_INC_G;
 
 /*
- * DCP_DC_LUT_DATA_G_SIGNED_EN enum
+ * DCP_DC_LUT_DATA_G_SIGNED_EN क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_G_SIGNED_EN {
+प्रकार क्रमागत DCP_DC_LUT_DATA_G_SIGNED_EN अणु
 DCP_DC_LUT_DATA_G_SIGNED_EN_FALSE        = 0x00000000,
 DCP_DC_LUT_DATA_G_SIGNED_EN_TRUE         = 0x00000001,
-} DCP_DC_LUT_DATA_G_SIGNED_EN;
+पूर्ण DCP_DC_LUT_DATA_G_SIGNED_EN;
 
 /*
- * DCP_DC_LUT_DATA_G_FLOAT_POINT_EN enum
+ * DCP_DC_LUT_DATA_G_FLOAT_POINT_EN क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_G_FLOAT_POINT_EN {
+प्रकार क्रमागत DCP_DC_LUT_DATA_G_FLOAT_POINT_EN अणु
 DCP_DC_LUT_DATA_G_FLOAT_POINT_EN_FALSE   = 0x00000000,
 DCP_DC_LUT_DATA_G_FLOAT_POINT_EN_TRUE    = 0x00000001,
-} DCP_DC_LUT_DATA_G_FLOAT_POINT_EN;
+पूर्ण DCP_DC_LUT_DATA_G_FLOAT_POINT_EN;
 
 /*
- * DCP_DC_LUT_DATA_G_FORMAT enum
+ * DCP_DC_LUT_DATA_G_FORMAT क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_G_FORMAT {
+प्रकार क्रमागत DCP_DC_LUT_DATA_G_FORMAT अणु
 DCP_DC_LUT_DATA_G_FORMAT_U0P10           = 0x00000000,
 DCP_DC_LUT_DATA_G_FORMAT_S1P10           = 0x00000001,
 DCP_DC_LUT_DATA_G_FORMAT_U1P11           = 0x00000002,
 DCP_DC_LUT_DATA_G_FORMAT_U0P12           = 0x00000003,
-} DCP_DC_LUT_DATA_G_FORMAT;
+पूर्ण DCP_DC_LUT_DATA_G_FORMAT;
 
 /*
- * DCP_DC_LUT_INC_R enum
+ * DCP_DC_LUT_INC_R क्रमागत
  */
 
-typedef enum DCP_DC_LUT_INC_R {
+प्रकार क्रमागत DCP_DC_LUT_INC_R अणु
 DCP_DC_LUT_INC_R_NA                      = 0x00000000,
 DCP_DC_LUT_INC_R_2                       = 0x00000001,
 DCP_DC_LUT_INC_R_4                       = 0x00000002,
@@ -5702,73 +5703,73 @@ DCP_DC_LUT_INC_R_64                      = 0x00000006,
 DCP_DC_LUT_INC_R_128                     = 0x00000007,
 DCP_DC_LUT_INC_R_256                     = 0x00000008,
 DCP_DC_LUT_INC_R_512                     = 0x00000009,
-} DCP_DC_LUT_INC_R;
+पूर्ण DCP_DC_LUT_INC_R;
 
 /*
- * DCP_DC_LUT_DATA_R_SIGNED_EN enum
+ * DCP_DC_LUT_DATA_R_SIGNED_EN क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_R_SIGNED_EN {
+प्रकार क्रमागत DCP_DC_LUT_DATA_R_SIGNED_EN अणु
 DCP_DC_LUT_DATA_R_SIGNED_EN_FALSE        = 0x00000000,
 DCP_DC_LUT_DATA_R_SIGNED_EN_TRUE         = 0x00000001,
-} DCP_DC_LUT_DATA_R_SIGNED_EN;
+पूर्ण DCP_DC_LUT_DATA_R_SIGNED_EN;
 
 /*
- * DCP_DC_LUT_DATA_R_FLOAT_POINT_EN enum
+ * DCP_DC_LUT_DATA_R_FLOAT_POINT_EN क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_R_FLOAT_POINT_EN {
+प्रकार क्रमागत DCP_DC_LUT_DATA_R_FLOAT_POINT_EN अणु
 DCP_DC_LUT_DATA_R_FLOAT_POINT_EN_FALSE   = 0x00000000,
 DCP_DC_LUT_DATA_R_FLOAT_POINT_EN_TRUE    = 0x00000001,
-} DCP_DC_LUT_DATA_R_FLOAT_POINT_EN;
+पूर्ण DCP_DC_LUT_DATA_R_FLOAT_POINT_EN;
 
 /*
- * DCP_DC_LUT_DATA_R_FORMAT enum
+ * DCP_DC_LUT_DATA_R_FORMAT क्रमागत
  */
 
-typedef enum DCP_DC_LUT_DATA_R_FORMAT {
+प्रकार क्रमागत DCP_DC_LUT_DATA_R_FORMAT अणु
 DCP_DC_LUT_DATA_R_FORMAT_U0P10           = 0x00000000,
 DCP_DC_LUT_DATA_R_FORMAT_S1P10           = 0x00000001,
 DCP_DC_LUT_DATA_R_FORMAT_U1P11           = 0x00000002,
 DCP_DC_LUT_DATA_R_FORMAT_U0P12           = 0x00000003,
-} DCP_DC_LUT_DATA_R_FORMAT;
+पूर्ण DCP_DC_LUT_DATA_R_FORMAT;
 
 /*
- * DCP_CRC_ENABLE enum
+ * DCP_CRC_ENABLE क्रमागत
  */
 
-typedef enum DCP_CRC_ENABLE {
+प्रकार क्रमागत DCP_CRC_ENABLE अणु
 DCP_CRC_ENABLE_FALSE                     = 0x00000000,
 DCP_CRC_ENABLE_TRUE                      = 0x00000001,
-} DCP_CRC_ENABLE;
+पूर्ण DCP_CRC_ENABLE;
 
 /*
- * DCP_CRC_SOURCE_SEL enum
+ * DCP_CRC_SOURCE_SEL क्रमागत
  */
 
-typedef enum DCP_CRC_SOURCE_SEL {
+प्रकार क्रमागत DCP_CRC_SOURCE_SEL अणु
 DCP_CRC_SOURCE_SEL_OUTPUT_PIX            = 0x00000000,
 DCP_CRC_SOURCE_SEL_INPUT_L32             = 0x00000001,
 DCP_CRC_SOURCE_SEL_INPUT_H32             = 0x00000002,
 DCP_CRC_SOURCE_SEL_OUTPUT_CNTL           = 0x00000004,
-} DCP_CRC_SOURCE_SEL;
+पूर्ण DCP_CRC_SOURCE_SEL;
 
 /*
- * DCP_CRC_LINE_SEL enum
+ * DCP_CRC_LINE_SEL क्रमागत
  */
 
-typedef enum DCP_CRC_LINE_SEL {
+प्रकार क्रमागत DCP_CRC_LINE_SEL अणु
 DCP_CRC_LINE_SEL_RESERVED                = 0x00000000,
 DCP_CRC_LINE_SEL_EVEN                    = 0x00000001,
 DCP_CRC_LINE_SEL_ODD                     = 0x00000002,
 DCP_CRC_LINE_SEL_BOTH                    = 0x00000003,
-} DCP_CRC_LINE_SEL;
+पूर्ण DCP_CRC_LINE_SEL;
 
 /*
- * DCP_GRPH_FLIP_RATE enum
+ * DCP_GRPH_FLIP_RATE क्रमागत
  */
 
-typedef enum DCP_GRPH_FLIP_RATE {
+प्रकार क्रमागत DCP_GRPH_FLIP_RATE अणु
 DCP_GRPH_FLIP_RATE_1FRAME                = 0x00000000,
 DCP_GRPH_FLIP_RATE_2FRAME                = 0x00000001,
 DCP_GRPH_FLIP_RATE_3FRAME                = 0x00000002,
@@ -5777,249 +5778,249 @@ DCP_GRPH_FLIP_RATE_5FRAME                = 0x00000004,
 DCP_GRPH_FLIP_RATE_6FRAME                = 0x00000005,
 DCP_GRPH_FLIP_RATE_7FRAME                = 0x00000006,
 DCP_GRPH_FLIP_RATE_8FRAME                = 0x00000007,
-} DCP_GRPH_FLIP_RATE;
+पूर्ण DCP_GRPH_FLIP_RATE;
 
 /*
- * DCP_GRPH_FLIP_RATE_ENABLE enum
+ * DCP_GRPH_FLIP_RATE_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_FLIP_RATE_ENABLE {
+प्रकार क्रमागत DCP_GRPH_FLIP_RATE_ENABLE अणु
 DCP_GRPH_FLIP_RATE_ENABLE_FALSE          = 0x00000000,
 DCP_GRPH_FLIP_RATE_ENABLE_TRUE           = 0x00000001,
-} DCP_GRPH_FLIP_RATE_ENABLE;
+पूर्ण DCP_GRPH_FLIP_RATE_ENABLE;
 
 /*
- * DCP_GSL0_EN enum
+ * DCP_GSL0_EN क्रमागत
  */
 
-typedef enum DCP_GSL0_EN {
+प्रकार क्रमागत DCP_GSL0_EN अणु
 DCP_GSL0_EN_FALSE                        = 0x00000000,
 DCP_GSL0_EN_TRUE                         = 0x00000001,
-} DCP_GSL0_EN;
+पूर्ण DCP_GSL0_EN;
 
 /*
- * DCP_GSL1_EN enum
+ * DCP_GSL1_EN क्रमागत
  */
 
-typedef enum DCP_GSL1_EN {
+प्रकार क्रमागत DCP_GSL1_EN अणु
 DCP_GSL1_EN_FALSE                        = 0x00000000,
 DCP_GSL1_EN_TRUE                         = 0x00000001,
-} DCP_GSL1_EN;
+पूर्ण DCP_GSL1_EN;
 
 /*
- * DCP_GSL2_EN enum
+ * DCP_GSL2_EN क्रमागत
  */
 
-typedef enum DCP_GSL2_EN {
+प्रकार क्रमागत DCP_GSL2_EN अणु
 DCP_GSL2_EN_FALSE                        = 0x00000000,
 DCP_GSL2_EN_TRUE                         = 0x00000001,
-} DCP_GSL2_EN;
+पूर्ण DCP_GSL2_EN;
 
 /*
- * DCP_GSL_MASTER_EN enum
+ * DCP_GSL_MASTER_EN क्रमागत
  */
 
-typedef enum DCP_GSL_MASTER_EN {
+प्रकार क्रमागत DCP_GSL_MASTER_EN अणु
 DCP_GSL_MASTER_EN_FALSE                  = 0x00000000,
 DCP_GSL_MASTER_EN_TRUE                   = 0x00000001,
-} DCP_GSL_MASTER_EN;
+पूर्ण DCP_GSL_MASTER_EN;
 
 /*
- * DCP_GSL_XDMA_GROUP enum
+ * DCP_GSL_XDMA_GROUP क्रमागत
  */
 
-typedef enum DCP_GSL_XDMA_GROUP {
+प्रकार क्रमागत DCP_GSL_XDMA_GROUP अणु
 DCP_GSL_XDMA_GROUP_VSYNC                 = 0x00000000,
 DCP_GSL_XDMA_GROUP_HSYNC0                = 0x00000001,
 DCP_GSL_XDMA_GROUP_HSYNC1                = 0x00000002,
 DCP_GSL_XDMA_GROUP_HSYNC2                = 0x00000003,
-} DCP_GSL_XDMA_GROUP;
+पूर्ण DCP_GSL_XDMA_GROUP;
 
 /*
- * DCP_GSL_XDMA_GROUP_UNDERFLOW_EN enum
+ * DCP_GSL_XDMA_GROUP_UNDERFLOW_EN क्रमागत
  */
 
-typedef enum DCP_GSL_XDMA_GROUP_UNDERFLOW_EN {
+प्रकार क्रमागत DCP_GSL_XDMA_GROUP_UNDERFLOW_EN अणु
 DCP_GSL_XDMA_GROUP_UNDERFLOW_EN_FALSE    = 0x00000000,
 DCP_GSL_XDMA_GROUP_UNDERFLOW_EN_TRUE     = 0x00000001,
-} DCP_GSL_XDMA_GROUP_UNDERFLOW_EN;
+पूर्ण DCP_GSL_XDMA_GROUP_UNDERFLOW_EN;
 
 /*
- * DCP_GSL_SYNC_SOURCE enum
+ * DCP_GSL_SYNC_SOURCE क्रमागत
  */
 
-typedef enum DCP_GSL_SYNC_SOURCE {
+प्रकार क्रमागत DCP_GSL_SYNC_SOURCE अणु
 DCP_GSL_SYNC_SOURCE_FLIP                 = 0x00000000,
 DCP_GSL_SYNC_SOURCE_PHASE0               = 0x00000001,
 DCP_GSL_SYNC_SOURCE_RESET                = 0x00000002,
 DCP_GSL_SYNC_SOURCE_PHASE1               = 0x00000003,
-} DCP_GSL_SYNC_SOURCE;
+पूर्ण DCP_GSL_SYNC_SOURCE;
 
 /*
- * DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC enum
+ * DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC क्रमागत
  */
 
-typedef enum DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC {
+प्रकार क्रमागत DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC अणु
 DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC_DIS  = 0x00000000,
 DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC_EN  = 0x00000001,
-} DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC;
+पूर्ण DCP_GSL_USE_CHECKPOINT_WINDOW_IN_VSYNC;
 
 /*
- * DCP_GSL_DELAY_SURFACE_UPDATE_PENDING enum
+ * DCP_GSL_DELAY_SURFACE_UPDATE_PENDING क्रमागत
  */
 
-typedef enum DCP_GSL_DELAY_SURFACE_UPDATE_PENDING {
+प्रकार क्रमागत DCP_GSL_DELAY_SURFACE_UPDATE_PENDING अणु
 DCP_GSL_DELAY_SURFACE_UPDATE_PENDING_FALSE  = 0x00000000,
 DCP_GSL_DELAY_SURFACE_UPDATE_PENDING_TRUE  = 0x00000001,
-} DCP_GSL_DELAY_SURFACE_UPDATE_PENDING;
+पूर्ण DCP_GSL_DELAY_SURFACE_UPDATE_PENDING;
 
 /*
- * DCP_TEST_DEBUG_WRITE_EN enum
+ * DCP_TEST_DEBUG_WRITE_EN क्रमागत
  */
 
-typedef enum DCP_TEST_DEBUG_WRITE_EN {
+प्रकार क्रमागत DCP_TEST_DEBUG_WRITE_EN अणु
 DCP_TEST_DEBUG_WRITE_EN_FALSE            = 0x00000000,
 DCP_TEST_DEBUG_WRITE_EN_TRUE             = 0x00000001,
-} DCP_TEST_DEBUG_WRITE_EN;
+पूर्ण DCP_TEST_DEBUG_WRITE_EN;
 
 /*
- * DCP_GRPH_STEREOSYNC_FLIP_EN enum
+ * DCP_GRPH_STEREOSYNC_FLIP_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_STEREOSYNC_FLIP_EN {
+प्रकार क्रमागत DCP_GRPH_STEREOSYNC_FLIP_EN अणु
 DCP_GRPH_STEREOSYNC_FLIP_EN_FALSE        = 0x00000000,
 DCP_GRPH_STEREOSYNC_FLIP_EN_TRUE         = 0x00000001,
-} DCP_GRPH_STEREOSYNC_FLIP_EN;
+पूर्ण DCP_GRPH_STEREOSYNC_FLIP_EN;
 
 /*
- * DCP_GRPH_STEREOSYNC_FLIP_MODE enum
+ * DCP_GRPH_STEREOSYNC_FLIP_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_STEREOSYNC_FLIP_MODE {
+प्रकार क्रमागत DCP_GRPH_STEREOSYNC_FLIP_MODE अणु
 DCP_GRPH_STEREOSYNC_FLIP_MODE_FLIP       = 0x00000000,
 DCP_GRPH_STEREOSYNC_FLIP_MODE_PHASE0     = 0x00000001,
 DCP_GRPH_STEREOSYNC_FLIP_MODE_RESET      = 0x00000002,
 DCP_GRPH_STEREOSYNC_FLIP_MODE_PHASE1     = 0x00000003,
-} DCP_GRPH_STEREOSYNC_FLIP_MODE;
+पूर्ण DCP_GRPH_STEREOSYNC_FLIP_MODE;
 
 /*
- * DCP_GRPH_STEREOSYNC_SELECT_DISABLE enum
+ * DCP_GRPH_STEREOSYNC_SELECT_DISABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_STEREOSYNC_SELECT_DISABLE {
+प्रकार क्रमागत DCP_GRPH_STEREOSYNC_SELECT_DISABLE अणु
 DCP_GRPH_STEREOSYNC_SELECT_DISABLE_FALSE  = 0x00000000,
 DCP_GRPH_STEREOSYNC_SELECT_DISABLE_TRUE  = 0x00000001,
-} DCP_GRPH_STEREOSYNC_SELECT_DISABLE;
+पूर्ण DCP_GRPH_STEREOSYNC_SELECT_DISABLE;
 
 /*
- * DCP_GRPH_ROTATION_ANGLE enum
+ * DCP_GRPH_ROTATION_ANGLE क्रमागत
  */
 
-typedef enum DCP_GRPH_ROTATION_ANGLE {
+प्रकार क्रमागत DCP_GRPH_ROTATION_ANGLE अणु
 DCP_GRPH_ROTATION_ANGLE_0                = 0x00000000,
 DCP_GRPH_ROTATION_ANGLE_90               = 0x00000001,
 DCP_GRPH_ROTATION_ANGLE_180              = 0x00000002,
 DCP_GRPH_ROTATION_ANGLE_270              = 0x00000003,
-} DCP_GRPH_ROTATION_ANGLE;
+पूर्ण DCP_GRPH_ROTATION_ANGLE;
 
 /*
- * DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN enum
+ * DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN {
+प्रकार क्रमागत DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN अणु
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN_FALSE  = 0x00000000,
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN_TRUE  = 0x00000001,
-} DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN;
+पूर्ण DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_EN;
 
 /*
- * DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE enum
+ * DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE {
+प्रकार क्रमागत DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE अणु
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE_RELY_NUM  = 0x00000000,
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE_RELY_ENABLE  = 0x00000001,
-} DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE;
+पूर्ण DCP_GRPH_XDMA_CACHE_UNDERFLOW_CNT_MODE;
 
 /*
- * DCP_GRPH_REGAMMA_MODE enum
+ * DCP_GRPH_REGAMMA_MODE क्रमागत
  */
 
-typedef enum DCP_GRPH_REGAMMA_MODE {
+प्रकार क्रमागत DCP_GRPH_REGAMMA_MODE अणु
 DCP_GRPH_REGAMMA_MODE_BYPASS             = 0x00000000,
 DCP_GRPH_REGAMMA_MODE_SRGB               = 0x00000001,
 DCP_GRPH_REGAMMA_MODE_XVYCC              = 0x00000002,
 DCP_GRPH_REGAMMA_MODE_PROGA              = 0x00000003,
 DCP_GRPH_REGAMMA_MODE_PROGB              = 0x00000004,
-} DCP_GRPH_REGAMMA_MODE;
+पूर्ण DCP_GRPH_REGAMMA_MODE;
 
 /*
- * DCP_ALPHA_ROUND_TRUNC_MODE enum
+ * DCP_ALPHA_ROUND_TRUNC_MODE क्रमागत
  */
 
-typedef enum DCP_ALPHA_ROUND_TRUNC_MODE {
+प्रकार क्रमागत DCP_ALPHA_ROUND_TRUNC_MODE अणु
 DCP_ALPHA_ROUND_TRUNC_MODE_ROUND         = 0x00000000,
 DCP_ALPHA_ROUND_TRUNC_MODE_TRUNC         = 0x00000001,
-} DCP_ALPHA_ROUND_TRUNC_MODE;
+पूर्ण DCP_ALPHA_ROUND_TRUNC_MODE;
 
 /*
- * DCP_CURSOR_ALPHA_BLND_ENA enum
+ * DCP_CURSOR_ALPHA_BLND_ENA क्रमागत
  */
 
-typedef enum DCP_CURSOR_ALPHA_BLND_ENA {
+प्रकार क्रमागत DCP_CURSOR_ALPHA_BLND_ENA अणु
 DCP_CURSOR_ALPHA_BLND_ENA_FALSE          = 0x00000000,
 DCP_CURSOR_ALPHA_BLND_ENA_TRUE           = 0x00000001,
-} DCP_CURSOR_ALPHA_BLND_ENA;
+पूर्ण DCP_CURSOR_ALPHA_BLND_ENA;
 
 /*
- * DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK enum
+ * DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK {
+प्रकार क्रमागत DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK अणु
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK_FALSE  = 0x00000000,
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK_TRUE  = 0x00000001,
-} DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK;
+पूर्ण DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_MASK;
 
 /*
- * DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK enum
+ * DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK {
+प्रकार क्रमागत DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK अणु
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK_FALSE = 0x00000000,
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK_TRUE  = 0x00000001,
-} DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK;
+पूर्ण DCP_GRPH_XDMA_CACHE_UNDERFLOW_FRAME_ACK;
 
 /*
- * DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK enum
+ * DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK {
+प्रकार क्रमागत DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK अणु
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK_FALSE  = 0x00000000,
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK_TRUE  = 0x00000001,
-} DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK;
+पूर्ण DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_MASK;
 
 /*
- * DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK enum
+ * DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK {
+प्रकार क्रमागत DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK अणु
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK_FALSE = 0x00000000,
 DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK_TRUE  = 0x00000001,
-} DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK;
+पूर्ण DCP_GRPH_XDMA_CACHE_UNDERFLOW_INT_ACK;
 
 /*
- * DCP_GRPH_SURFACE_COUNTER_EN enum
+ * DCP_GRPH_SURFACE_COUNTER_EN क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_COUNTER_EN {
+प्रकार क्रमागत DCP_GRPH_SURFACE_COUNTER_EN अणु
 DCP_GRPH_SURFACE_COUNTER_EN_DISABLE      = 0x00000000,
 DCP_GRPH_SURFACE_COUNTER_EN_ENABLE       = 0x00000001,
-} DCP_GRPH_SURFACE_COUNTER_EN;
+पूर्ण DCP_GRPH_SURFACE_COUNTER_EN;
 
 /*
- * DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT enum
+ * DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT {
+प्रकार क्रमागत DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT अणु
 DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_0  = 0x00000000,
 DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_1  = 0x00000001,
 DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_2  = 0x00000002,
@@ -6032,71 +6033,71 @@ DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_8  = 0x00000008,
 DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_9  = 0x00000009,
 DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_10  = 0x0000000a,
 DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT_11  = 0x0000000b,
-} DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT;
+पूर्ण DCP_GRPH_SURFACE_COUNTER_EVENT_SELECT;
 
 /*
- * DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED enum
+ * DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED क्रमागत
  */
 
-typedef enum DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED {
+प्रकार क्रमागत DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED अणु
 DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED_NO  = 0x00000000,
 DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED_YES  = 0x00000001,
-} DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED;
+पूर्ण DCP_GRPH_SURFACE_COUNTER_ERR_WRAP_OCCURED;
 
 /*
- * DCP_GRPH_XDMA_FLIP_TYPE_CLEAR enum
+ * DCP_GRPH_XDMA_FLIP_TYPE_CLEAR क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_FLIP_TYPE_CLEAR {
+प्रकार क्रमागत DCP_GRPH_XDMA_FLIP_TYPE_CLEAR अणु
 DCP_GRPH_XDMA_FLIP_TYPE_CLEAR_DISABLE    = 0x00000000,
 DCP_GRPH_XDMA_FLIP_TYPE_CLEAR_ENABLE     = 0x00000001,
-} DCP_GRPH_XDMA_FLIP_TYPE_CLEAR;
+पूर्ण DCP_GRPH_XDMA_FLIP_TYPE_CLEAR;
 
 /*
- * DCP_GRPH_XDMA_DRR_MODE_ENABLE enum
+ * DCP_GRPH_XDMA_DRR_MODE_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_DRR_MODE_ENABLE {
+प्रकार क्रमागत DCP_GRPH_XDMA_DRR_MODE_ENABLE अणु
 DCP_GRPH_XDMA_DRR_MODE_ENABLE_DISABLE    = 0x00000000,
 DCP_GRPH_XDMA_DRR_MODE_ENABLE_ENABLE     = 0x00000001,
-} DCP_GRPH_XDMA_DRR_MODE_ENABLE;
+पूर्ण DCP_GRPH_XDMA_DRR_MODE_ENABLE;
 
 /*
- * DCP_GRPH_XDMA_MULTIFLIP_ENABLE enum
+ * DCP_GRPH_XDMA_MULTIFLIP_ENABLE क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_MULTIFLIP_ENABLE {
+प्रकार क्रमागत DCP_GRPH_XDMA_MULTIFLIP_ENABLE अणु
 DCP_GRPH_XDMA_MULTIFLIP_ENABLE_DISABLE   = 0x00000000,
 DCP_GRPH_XDMA_MULTIFLIP_ENABLE_ENABLE    = 0x00000001,
-} DCP_GRPH_XDMA_MULTIFLIP_ENABLE;
+पूर्ण DCP_GRPH_XDMA_MULTIFLIP_ENABLE;
 
 /*
- * DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK enum
+ * DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK {
+प्रकार क्रमागत DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK अणु
 DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK_FALSE    = 0x00000000,
 DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK_TRUE     = 0x00000001,
-} DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK;
+पूर्ण DCP_GRPH_XDMA_FLIP_TIMEOUT_MASK;
 
 /*
- * DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK enum
+ * DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK क्रमागत
  */
 
-typedef enum DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK {
+प्रकार क्रमागत DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK अणु
 DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK_FALSE     = 0x00000000,
 DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK_TRUE      = 0x00000001,
-} DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK;
+पूर्ण DCP_GRPH_XDMA_FLIP_TIMEOUT_ACK;
 
 /*******************************************************
  * DC_PERFMON Enums
  *******************************************************/
 
 /*
- * PERFCOUNTER_CVALUE_SEL enum
+ * PERFCOUNTER_CVALUE_SEL क्रमागत
  */
 
-typedef enum PERFCOUNTER_CVALUE_SEL {
+प्रकार क्रमागत PERFCOUNTER_CVALUE_SEL अणु
 PERFCOUNTER_CVALUE_SEL_47_0              = 0x00000000,
 PERFCOUNTER_CVALUE_SEL_15_0              = 0x00000001,
 PERFCOUNTER_CVALUE_SEL_31_16             = 0x00000002,
@@ -6105,107 +6106,107 @@ PERFCOUNTER_CVALUE_SEL_11_0              = 0x00000004,
 PERFCOUNTER_CVALUE_SEL_23_12             = 0x00000005,
 PERFCOUNTER_CVALUE_SEL_35_24             = 0x00000006,
 PERFCOUNTER_CVALUE_SEL_47_36             = 0x00000007,
-} PERFCOUNTER_CVALUE_SEL;
+पूर्ण PERFCOUNTER_CVALUE_SEL;
 
 /*
- * PERFCOUNTER_INC_MODE enum
+ * PERFCOUNTER_INC_MODE क्रमागत
  */
 
-typedef enum PERFCOUNTER_INC_MODE {
+प्रकार क्रमागत PERFCOUNTER_INC_MODE अणु
 PERFCOUNTER_INC_MODE_MULTI_BIT           = 0x00000000,
 PERFCOUNTER_INC_MODE_BOTH_EDGE           = 0x00000001,
 PERFCOUNTER_INC_MODE_LSB                 = 0x00000002,
 PERFCOUNTER_INC_MODE_POS_EDGE            = 0x00000003,
 PERFCOUNTER_INC_MODE_NEG_EDGE            = 0x00000004,
-} PERFCOUNTER_INC_MODE;
+पूर्ण PERFCOUNTER_INC_MODE;
 
 /*
- * PERFCOUNTER_HW_CNTL_SEL enum
+ * PERFCOUNTER_HW_CNTL_SEL क्रमागत
  */
 
-typedef enum PERFCOUNTER_HW_CNTL_SEL {
+प्रकार क्रमागत PERFCOUNTER_HW_CNTL_SEL अणु
 PERFCOUNTER_HW_CNTL_SEL_RUNEN            = 0x00000000,
 PERFCOUNTER_HW_CNTL_SEL_CNTOFF           = 0x00000001,
-} PERFCOUNTER_HW_CNTL_SEL;
+पूर्ण PERFCOUNTER_HW_CNTL_SEL;
 
 /*
- * PERFCOUNTER_RUNEN_MODE enum
+ * PERFCOUNTER_RUNEN_MODE क्रमागत
  */
 
-typedef enum PERFCOUNTER_RUNEN_MODE {
+प्रकार क्रमागत PERFCOUNTER_RUNEN_MODE अणु
 PERFCOUNTER_RUNEN_MODE_LEVEL             = 0x00000000,
 PERFCOUNTER_RUNEN_MODE_EDGE              = 0x00000001,
-} PERFCOUNTER_RUNEN_MODE;
+पूर्ण PERFCOUNTER_RUNEN_MODE;
 
 /*
- * PERFCOUNTER_CNTOFF_START_DIS enum
+ * PERFCOUNTER_CNTOFF_START_DIS क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNTOFF_START_DIS {
+प्रकार क्रमागत PERFCOUNTER_CNTOFF_START_DIS अणु
 PERFCOUNTER_CNTOFF_START_ENABLE          = 0x00000000,
 PERFCOUNTER_CNTOFF_START_DISABLE         = 0x00000001,
-} PERFCOUNTER_CNTOFF_START_DIS;
+पूर्ण PERFCOUNTER_CNTOFF_START_DIS;
 
 /*
- * PERFCOUNTER_RESTART_EN enum
+ * PERFCOUNTER_RESTART_EN क्रमागत
  */
 
-typedef enum PERFCOUNTER_RESTART_EN {
+प्रकार क्रमागत PERFCOUNTER_RESTART_EN अणु
 PERFCOUNTER_RESTART_DISABLE              = 0x00000000,
 PERFCOUNTER_RESTART_ENABLE               = 0x00000001,
-} PERFCOUNTER_RESTART_EN;
+पूर्ण PERFCOUNTER_RESTART_EN;
 
 /*
- * PERFCOUNTER_INT_EN enum
+ * PERFCOUNTER_INT_EN क्रमागत
  */
 
-typedef enum PERFCOUNTER_INT_EN {
+प्रकार क्रमागत PERFCOUNTER_INT_EN अणु
 PERFCOUNTER_INT_DISABLE                  = 0x00000000,
 PERFCOUNTER_INT_ENABLE                   = 0x00000001,
-} PERFCOUNTER_INT_EN;
+पूर्ण PERFCOUNTER_INT_EN;
 
 /*
- * PERFCOUNTER_OFF_MASK enum
+ * PERFCOUNTER_OFF_MASK क्रमागत
  */
 
-typedef enum PERFCOUNTER_OFF_MASK {
+प्रकार क्रमागत PERFCOUNTER_OFF_MASK अणु
 PERFCOUNTER_OFF_MASK_DISABLE             = 0x00000000,
 PERFCOUNTER_OFF_MASK_ENABLE              = 0x00000001,
-} PERFCOUNTER_OFF_MASK;
+पूर्ण PERFCOUNTER_OFF_MASK;
 
 /*
- * PERFCOUNTER_ACTIVE enum
+ * PERFCOUNTER_ACTIVE क्रमागत
  */
 
-typedef enum PERFCOUNTER_ACTIVE {
+प्रकार क्रमागत PERFCOUNTER_ACTIVE अणु
 PERFCOUNTER_IS_IDLE                      = 0x00000000,
 PERFCOUNTER_IS_ACTIVE                    = 0x00000001,
-} PERFCOUNTER_ACTIVE;
+पूर्ण PERFCOUNTER_ACTIVE;
 
 /*
- * PERFCOUNTER_INT_TYPE enum
+ * PERFCOUNTER_INT_TYPE क्रमागत
  */
 
-typedef enum PERFCOUNTER_INT_TYPE {
+प्रकार क्रमागत PERFCOUNTER_INT_TYPE अणु
 PERFCOUNTER_INT_TYPE_LEVEL               = 0x00000000,
 PERFCOUNTER_INT_TYPE_PULSE               = 0x00000001,
-} PERFCOUNTER_INT_TYPE;
+पूर्ण PERFCOUNTER_INT_TYPE;
 
 /*
- * PERFCOUNTER_COUNTED_VALUE_TYPE enum
+ * PERFCOUNTER_COUNTED_VALUE_TYPE क्रमागत
  */
 
-typedef enum PERFCOUNTER_COUNTED_VALUE_TYPE {
+प्रकार क्रमागत PERFCOUNTER_COUNTED_VALUE_TYPE अणु
 PERFCOUNTER_COUNTED_VALUE_TYPE_ACC       = 0x00000000,
 PERFCOUNTER_COUNTED_VALUE_TYPE_MAX       = 0x00000001,
 PERFCOUNTER_COUNTED_VALUE_TYPE_MIN       = 0x00000002,
-} PERFCOUNTER_COUNTED_VALUE_TYPE;
+पूर्ण PERFCOUNTER_COUNTED_VALUE_TYPE;
 
 /*
- * PERFCOUNTER_CNTL_SEL enum
+ * PERFCOUNTER_CNTL_SEL क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNTL_SEL {
+प्रकार क्रमागत PERFCOUNTER_CNTL_SEL अणु
 PERFCOUNTER_CNTL_SEL_0                   = 0x00000000,
 PERFCOUNTER_CNTL_SEL_1                   = 0x00000001,
 PERFCOUNTER_CNTL_SEL_2                   = 0x00000002,
@@ -6214,227 +6215,227 @@ PERFCOUNTER_CNTL_SEL_4                   = 0x00000004,
 PERFCOUNTER_CNTL_SEL_5                   = 0x00000005,
 PERFCOUNTER_CNTL_SEL_6                   = 0x00000006,
 PERFCOUNTER_CNTL_SEL_7                   = 0x00000007,
-} PERFCOUNTER_CNTL_SEL;
+पूर्ण PERFCOUNTER_CNTL_SEL;
 
 /*
- * PERFCOUNTER_CNT0_STATE enum
+ * PERFCOUNTER_CNT0_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT0_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT0_STATE अणु
 PERFCOUNTER_CNT0_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT0_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT0_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT0_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT0_STATE;
+पूर्ण PERFCOUNTER_CNT0_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL0 enum
+ * PERFCOUNTER_STATE_SEL0 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL0 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL0 अणु
 PERFCOUNTER_STATE_SEL0_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL0_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL0;
+पूर्ण PERFCOUNTER_STATE_SEL0;
 
 /*
- * PERFCOUNTER_CNT1_STATE enum
+ * PERFCOUNTER_CNT1_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT1_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT1_STATE अणु
 PERFCOUNTER_CNT1_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT1_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT1_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT1_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT1_STATE;
+पूर्ण PERFCOUNTER_CNT1_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL1 enum
+ * PERFCOUNTER_STATE_SEL1 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL1 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL1 अणु
 PERFCOUNTER_STATE_SEL1_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL1_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL1;
+पूर्ण PERFCOUNTER_STATE_SEL1;
 
 /*
- * PERFCOUNTER_CNT2_STATE enum
+ * PERFCOUNTER_CNT2_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT2_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT2_STATE अणु
 PERFCOUNTER_CNT2_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT2_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT2_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT2_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT2_STATE;
+पूर्ण PERFCOUNTER_CNT2_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL2 enum
+ * PERFCOUNTER_STATE_SEL2 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL2 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL2 अणु
 PERFCOUNTER_STATE_SEL2_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL2_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL2;
+पूर्ण PERFCOUNTER_STATE_SEL2;
 
 /*
- * PERFCOUNTER_CNT3_STATE enum
+ * PERFCOUNTER_CNT3_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT3_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT3_STATE अणु
 PERFCOUNTER_CNT3_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT3_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT3_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT3_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT3_STATE;
+पूर्ण PERFCOUNTER_CNT3_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL3 enum
+ * PERFCOUNTER_STATE_SEL3 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL3 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL3 अणु
 PERFCOUNTER_STATE_SEL3_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL3_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL3;
+पूर्ण PERFCOUNTER_STATE_SEL3;
 
 /*
- * PERFCOUNTER_CNT4_STATE enum
+ * PERFCOUNTER_CNT4_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT4_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT4_STATE अणु
 PERFCOUNTER_CNT4_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT4_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT4_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT4_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT4_STATE;
+पूर्ण PERFCOUNTER_CNT4_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL4 enum
+ * PERFCOUNTER_STATE_SEL4 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL4 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL4 अणु
 PERFCOUNTER_STATE_SEL4_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL4_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL4;
+पूर्ण PERFCOUNTER_STATE_SEL4;
 
 /*
- * PERFCOUNTER_CNT5_STATE enum
+ * PERFCOUNTER_CNT5_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT5_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT5_STATE अणु
 PERFCOUNTER_CNT5_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT5_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT5_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT5_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT5_STATE;
+पूर्ण PERFCOUNTER_CNT5_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL5 enum
+ * PERFCOUNTER_STATE_SEL5 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL5 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL5 अणु
 PERFCOUNTER_STATE_SEL5_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL5_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL5;
+पूर्ण PERFCOUNTER_STATE_SEL5;
 
 /*
- * PERFCOUNTER_CNT6_STATE enum
+ * PERFCOUNTER_CNT6_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT6_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT6_STATE अणु
 PERFCOUNTER_CNT6_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT6_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT6_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT6_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT6_STATE;
+पूर्ण PERFCOUNTER_CNT6_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL6 enum
+ * PERFCOUNTER_STATE_SEL6 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL6 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL6 अणु
 PERFCOUNTER_STATE_SEL6_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL6_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL6;
+पूर्ण PERFCOUNTER_STATE_SEL6;
 
 /*
- * PERFCOUNTER_CNT7_STATE enum
+ * PERFCOUNTER_CNT7_STATE क्रमागत
  */
 
-typedef enum PERFCOUNTER_CNT7_STATE {
+प्रकार क्रमागत PERFCOUNTER_CNT7_STATE अणु
 PERFCOUNTER_CNT7_STATE_RESET             = 0x00000000,
 PERFCOUNTER_CNT7_STATE_START             = 0x00000001,
 PERFCOUNTER_CNT7_STATE_FREEZE            = 0x00000002,
 PERFCOUNTER_CNT7_STATE_HW                = 0x00000003,
-} PERFCOUNTER_CNT7_STATE;
+पूर्ण PERFCOUNTER_CNT7_STATE;
 
 /*
- * PERFCOUNTER_STATE_SEL7 enum
+ * PERFCOUNTER_STATE_SEL7 क्रमागत
  */
 
-typedef enum PERFCOUNTER_STATE_SEL7 {
+प्रकार क्रमागत PERFCOUNTER_STATE_SEL7 अणु
 PERFCOUNTER_STATE_SEL7_GLOBAL            = 0x00000000,
 PERFCOUNTER_STATE_SEL7_LOCAL             = 0x00000001,
-} PERFCOUNTER_STATE_SEL7;
+पूर्ण PERFCOUNTER_STATE_SEL7;
 
 /*
- * PERFMON_STATE enum
+ * PERFMON_STATE क्रमागत
  */
 
-typedef enum PERFMON_STATE {
+प्रकार क्रमागत PERFMON_STATE अणु
 PERFMON_STATE_RESET                      = 0x00000000,
 PERFMON_STATE_START                      = 0x00000001,
 PERFMON_STATE_FREEZE                     = 0x00000002,
 PERFMON_STATE_HW                         = 0x00000003,
-} PERFMON_STATE;
+पूर्ण PERFMON_STATE;
 
 /*
- * PERFMON_CNTOFF_AND_OR enum
+ * PERFMON_CNTOFF_AND_OR क्रमागत
  */
 
-typedef enum PERFMON_CNTOFF_AND_OR {
+प्रकार क्रमागत PERFMON_CNTOFF_AND_OR अणु
 PERFMON_CNTOFF_OR                        = 0x00000000,
 PERFMON_CNTOFF_AND                       = 0x00000001,
-} PERFMON_CNTOFF_AND_OR;
+पूर्ण PERFMON_CNTOFF_AND_OR;
 
 /*
- * PERFMON_CNTOFF_INT_EN enum
+ * PERFMON_CNTOFF_INT_EN क्रमागत
  */
 
-typedef enum PERFMON_CNTOFF_INT_EN {
+प्रकार क्रमागत PERFMON_CNTOFF_INT_EN अणु
 PERFMON_CNTOFF_INT_DISABLE               = 0x00000000,
 PERFMON_CNTOFF_INT_ENABLE                = 0x00000001,
-} PERFMON_CNTOFF_INT_EN;
+पूर्ण PERFMON_CNTOFF_INT_EN;
 
 /*
- * PERFMON_CNTOFF_INT_TYPE enum
+ * PERFMON_CNTOFF_INT_TYPE क्रमागत
  */
 
-typedef enum PERFMON_CNTOFF_INT_TYPE {
+प्रकार क्रमागत PERFMON_CNTOFF_INT_TYPE अणु
 PERFMON_CNTOFF_INT_TYPE_LEVEL            = 0x00000000,
 PERFMON_CNTOFF_INT_TYPE_PULSE            = 0x00000001,
-} PERFMON_CNTOFF_INT_TYPE;
+पूर्ण PERFMON_CNTOFF_INT_TYPE;
 
 /*******************************************************
  * SCL Enums
  *******************************************************/
 
 /*
- * SCL_C_RAM_TAP_PAIR_IDX enum
+ * SCL_C_RAM_TAP_PAIR_IDX क्रमागत
  */
 
-typedef enum SCL_C_RAM_TAP_PAIR_IDX {
+प्रकार क्रमागत SCL_C_RAM_TAP_PAIR_IDX अणु
 SCL_C_RAM_TAP_PAIR_ID0                   = 0x00000000,
 SCL_C_RAM_TAP_PAIR_ID1                   = 0x00000001,
 SCL_C_RAM_TAP_PAIR_ID2                   = 0x00000002,
 SCL_C_RAM_TAP_PAIR_ID3                   = 0x00000003,
 SCL_C_RAM_TAP_PAIR_ID4                   = 0x00000004,
-} SCL_C_RAM_TAP_PAIR_IDX;
+पूर्ण SCL_C_RAM_TAP_PAIR_IDX;
 
 /*
- * SCL_C_RAM_PHASE enum
+ * SCL_C_RAM_PHASE क्रमागत
  */
 
-typedef enum SCL_C_RAM_PHASE {
+प्रकार क्रमागत SCL_C_RAM_PHASE अणु
 SCL_C_RAM_PHASE_0                        = 0x00000000,
 SCL_C_RAM_PHASE_1                        = 0x00000001,
 SCL_C_RAM_PHASE_2                        = 0x00000002,
@@ -6444,99 +6445,99 @@ SCL_C_RAM_PHASE_5                        = 0x00000005,
 SCL_C_RAM_PHASE_6                        = 0x00000006,
 SCL_C_RAM_PHASE_7                        = 0x00000007,
 SCL_C_RAM_PHASE_8                        = 0x00000008,
-} SCL_C_RAM_PHASE;
+पूर्ण SCL_C_RAM_PHASE;
 
 /*
- * SCL_C_RAM_FILTER_TYPE enum
+ * SCL_C_RAM_FILTER_TYPE क्रमागत
  */
 
-typedef enum SCL_C_RAM_FILTER_TYPE {
+प्रकार क्रमागत SCL_C_RAM_FILTER_TYPE अणु
 SCL_C_RAM_FILTER_TYPE_VERT_LUMA_RGB_LUT  = 0x00000000,
 SCL_C_RAM_FILTER_TYPE_VERT_CHROMA_LUT    = 0x00000001,
 SCL_C_RAM_FILTER_TYPE_HORI_LUMA_RGB_LUT  = 0x00000002,
 SCL_C_RAM_FILTER_TYPE_HORI_CHROMA_LUT    = 0x00000003,
-} SCL_C_RAM_FILTER_TYPE;
+पूर्ण SCL_C_RAM_FILTER_TYPE;
 
 /*
- * SCL_MODE_SEL enum
+ * SCL_MODE_SEL क्रमागत
  */
 
-typedef enum SCL_MODE_SEL {
+प्रकार क्रमागत SCL_MODE_SEL अणु
 SCL_MODE_RGB_BYPASS                      = 0x00000000,
 SCL_MODE_RGB_SCALING                     = 0x00000001,
 SCL_MODE_YCBCR_SCALING                   = 0x00000002,
 SCL_MODE_YCBCR_BYPASS                    = 0x00000003,
-} SCL_MODE_SEL;
+पूर्ण SCL_MODE_SEL;
 
 /*
- * SCL_PSCL_EN enum
+ * SCL_PSCL_EN क्रमागत
  */
 
-typedef enum SCL_PSCL_EN {
+प्रकार क्रमागत SCL_PSCL_EN अणु
 SCL_PSCL_DISABLE                         = 0x00000000,
-SCL_PSCL_ENANBLE                         = 0x00000001,
-} SCL_PSCL_EN;
+SCL_PSCL_Eन_अंकBLE                         = 0x00000001,
+पूर्ण SCL_PSCL_EN;
 
 /*
- * SCL_V_NUM_OF_TAPS enum
+ * SCL_V_NUM_OF_TAPS क्रमागत
  */
 
-typedef enum SCL_V_NUM_OF_TAPS {
+प्रकार क्रमागत SCL_V_NUM_OF_TAPS अणु
 SCL_V_NUM_OF_TAPS_1                      = 0x00000000,
 SCL_V_NUM_OF_TAPS_2                      = 0x00000001,
 SCL_V_NUM_OF_TAPS_3                      = 0x00000002,
 SCL_V_NUM_OF_TAPS_4                      = 0x00000003,
 SCL_V_NUM_OF_TAPS_5                      = 0x00000004,
 SCL_V_NUM_OF_TAPS_6                      = 0x00000005,
-} SCL_V_NUM_OF_TAPS;
+पूर्ण SCL_V_NUM_OF_TAPS;
 
 /*
- * SCL_H_NUM_OF_TAPS enum
+ * SCL_H_NUM_OF_TAPS क्रमागत
  */
 
-typedef enum SCL_H_NUM_OF_TAPS {
+प्रकार क्रमागत SCL_H_NUM_OF_TAPS अणु
 SCL_H_NUM_OF_TAPS_1                      = 0x00000000,
 SCL_H_NUM_OF_TAPS_2                      = 0x00000001,
 SCL_H_NUM_OF_TAPS_4                      = 0x00000003,
 SCL_H_NUM_OF_TAPS_6                      = 0x00000005,
 SCL_H_NUM_OF_TAPS_8                      = 0x00000007,
 SCL_H_NUM_OF_TAPS_10                     = 0x00000009,
-} SCL_H_NUM_OF_TAPS;
+पूर्ण SCL_H_NUM_OF_TAPS;
 
 /*
- * SCL_BOUNDARY_MODE enum
+ * SCL_BOUNDARY_MODE क्रमागत
  */
 
-typedef enum SCL_BOUNDARY_MODE {
+प्रकार क्रमागत SCL_BOUNDARY_MODE अणु
 SCL_BOUNDARY_MODE_BLACK                  = 0x00000000,
 SCL_BOUNDARY_MODE_EDGE                   = 0x00000001,
-} SCL_BOUNDARY_MODE;
+पूर्ण SCL_BOUNDARY_MODE;
 
 /*
- * SCL_EARLY_EOL_MOD enum
+ * SCL_EARLY_EOL_MOD क्रमागत
  */
 
-typedef enum SCL_EARLY_EOL_MOD {
+प्रकार क्रमागत SCL_EARLY_EOL_MOD अणु
 SCL_EARLY_EOL_MODE_CRTC                  = 0x00000000,
 SCL_EARLY_EOL_MODE_INTERNAL              = 0x00000001,
-} SCL_EARLY_EOL_MOD;
+पूर्ण SCL_EARLY_EOL_MOD;
 
 /*
- * SCL_BYPASS_MODE enum
+ * SCL_BYPASS_MODE क्रमागत
  */
 
-typedef enum SCL_BYPASS_MODE {
+प्रकार क्रमागत SCL_BYPASS_MODE अणु
 SCL_BYPASS_MODE_MC_MR                    = 0x00000000,
 SCL_BYPASS_MODE_AC_NR                    = 0x00000001,
 SCL_BYPASS_MODE_AC_AR                    = 0x00000002,
 SCL_BYPASS_MODE_RESERVED                 = 0x00000003,
-} SCL_BYPASS_MODE;
+पूर्ण SCL_BYPASS_MODE;
 
 /*
- * SCL_V_MANUAL_REPLICATE_FACTOR enum
+ * SCL_V_MANUAL_REPLICATE_FACTOR क्रमागत
  */
 
-typedef enum SCL_V_MANUAL_REPLICATE_FACTOR {
+प्रकार क्रमागत SCL_V_MANUAL_REPLICATE_FACTOR अणु
 SCL_V_MANUAL_REPLICATE_FACTOR_1          = 0x00000000,
 SCL_V_MANUAL_REPLICATE_FACTOR_2          = 0x00000001,
 SCL_V_MANUAL_REPLICATE_FACTOR_3          = 0x00000002,
@@ -6553,13 +6554,13 @@ SCL_V_MANUAL_REPLICATE_FACTOR_13         = 0x0000000c,
 SCL_V_MANUAL_REPLICATE_FACTOR_14         = 0x0000000d,
 SCL_V_MANUAL_REPLICATE_FACTOR_15         = 0x0000000e,
 SCL_V_MANUAL_REPLICATE_FACTOR_16         = 0x0000000f,
-} SCL_V_MANUAL_REPLICATE_FACTOR;
+पूर्ण SCL_V_MANUAL_REPLICATE_FACTOR;
 
 /*
- * SCL_H_MANUAL_REPLICATE_FACTOR enum
+ * SCL_H_MANUAL_REPLICATE_FACTOR क्रमागत
  */
 
-typedef enum SCL_H_MANUAL_REPLICATE_FACTOR {
+प्रकार क्रमागत SCL_H_MANUAL_REPLICATE_FACTOR अणु
 SCL_H_MANUAL_REPLICATE_FACTOR_1          = 0x00000000,
 SCL_H_MANUAL_REPLICATE_FACTOR_2          = 0x00000001,
 SCL_H_MANUAL_REPLICATE_FACTOR_3          = 0x00000002,
@@ -6576,94 +6577,94 @@ SCL_H_MANUAL_REPLICATE_FACTOR_13         = 0x0000000c,
 SCL_H_MANUAL_REPLICATE_FACTOR_14         = 0x0000000d,
 SCL_H_MANUAL_REPLICATE_FACTOR_15         = 0x0000000e,
 SCL_H_MANUAL_REPLICATE_FACTOR_16         = 0x0000000f,
-} SCL_H_MANUAL_REPLICATE_FACTOR;
+पूर्ण SCL_H_MANUAL_REPLICATE_FACTOR;
 
 /*
- * SCL_V_CALC_AUTO_RATIO_EN enum
+ * SCL_V_CALC_AUTO_RATIO_EN क्रमागत
  */
 
-typedef enum SCL_V_CALC_AUTO_RATIO_EN {
+प्रकार क्रमागत SCL_V_CALC_AUTO_RATIO_EN अणु
 SCL_V_CALC_AUTO_RATIO_DISABLE            = 0x00000000,
 SCL_V_CALC_AUTO_RATIO_ENABLE             = 0x00000001,
-} SCL_V_CALC_AUTO_RATIO_EN;
+पूर्ण SCL_V_CALC_AUTO_RATIO_EN;
 
 /*
- * SCL_H_CALC_AUTO_RATIO_EN enum
+ * SCL_H_CALC_AUTO_RATIO_EN क्रमागत
  */
 
-typedef enum SCL_H_CALC_AUTO_RATIO_EN {
+प्रकार क्रमागत SCL_H_CALC_AUTO_RATIO_EN अणु
 SCL_H_CALC_AUTO_RATIO_DISABLE            = 0x00000000,
 SCL_H_CALC_AUTO_RATIO_ENABLE             = 0x00000001,
-} SCL_H_CALC_AUTO_RATIO_EN;
+पूर्ण SCL_H_CALC_AUTO_RATIO_EN;
 
 /*
- * SCL_H_FILTER_PICK_NEAREST enum
+ * SCL_H_FILTER_PICK_NEAREST क्रमागत
  */
 
-typedef enum SCL_H_FILTER_PICK_NEAREST {
+प्रकार क्रमागत SCL_H_FILTER_PICK_NEAREST अणु
 SCL_H_FILTER_PICK_NEAREST_DISABLE        = 0x00000000,
 SCL_H_FILTER_PICK_NEAREST_ENABLE         = 0x00000001,
-} SCL_H_FILTER_PICK_NEAREST;
+पूर्ण SCL_H_FILTER_PICK_NEAREST;
 
 /*
- * SCL_H_2TAP_HARDCODE_COEF_EN enum
+ * SCL_H_2TAP_HARDCODE_COEF_EN क्रमागत
  */
 
-typedef enum SCL_H_2TAP_HARDCODE_COEF_EN {
+प्रकार क्रमागत SCL_H_2TAP_HARDCODE_COEF_EN अणु
 SCL_H_2TAP_HARDCODE_COEF_DISABLE         = 0x00000000,
 SCL_H_2TAP_HARDCODE_COEF_ENABLE          = 0x00000001,
-} SCL_H_2TAP_HARDCODE_COEF_EN;
+पूर्ण SCL_H_2TAP_HARDCODE_COEF_EN;
 
 /*
- * SCL_V_FILTER_PICK_NEAREST enum
+ * SCL_V_FILTER_PICK_NEAREST क्रमागत
  */
 
-typedef enum SCL_V_FILTER_PICK_NEAREST {
+प्रकार क्रमागत SCL_V_FILTER_PICK_NEAREST अणु
 SCL_V_FILTER_PICK_NEAREST_DISABLE        = 0x00000000,
 SCL_V_FILTER_PICK_NEAREST_ENABLE         = 0x00000001,
-} SCL_V_FILTER_PICK_NEAREST;
+पूर्ण SCL_V_FILTER_PICK_NEAREST;
 
 /*
- * SCL_V_2TAP_HARDCODE_COEF_EN enum
+ * SCL_V_2TAP_HARDCODE_COEF_EN क्रमागत
  */
 
-typedef enum SCL_V_2TAP_HARDCODE_COEF_EN {
+प्रकार क्रमागत SCL_V_2TAP_HARDCODE_COEF_EN अणु
 SCL_V_2TAP_HARDCODE_COEF_DISABLE         = 0x00000000,
 SCL_V_2TAP_HARDCODE_COEF_ENABLE          = 0x00000001,
-} SCL_V_2TAP_HARDCODE_COEF_EN;
+पूर्ण SCL_V_2TAP_HARDCODE_COEF_EN;
 
 /*
- * SCL_UPDATE_TAKEN enum
+ * SCL_UPDATE_TAKEN क्रमागत
  */
 
-typedef enum SCL_UPDATE_TAKEN {
+प्रकार क्रमागत SCL_UPDATE_TAKEN अणु
 SCL_UPDATE_TAKEN_NO                      = 0x00000000,
 SCL_UPDATE_TAKEN_YES                     = 0x00000001,
-} SCL_UPDATE_TAKEN;
+पूर्ण SCL_UPDATE_TAKEN;
 
 /*
- * SCL_UPDATE_LOCK enum
+ * SCL_UPDATE_LOCK क्रमागत
  */
 
-typedef enum SCL_UPDATE_LOCK {
+प्रकार क्रमागत SCL_UPDATE_LOCK अणु
 SCL_UPDATE_UNLOCKED                      = 0x00000000,
 SCL_UPDATE_LOCKED                        = 0x00000001,
-} SCL_UPDATE_LOCK;
+पूर्ण SCL_UPDATE_LOCK;
 
 /*
- * SCL_COEF_UPDATE_COMPLETE enum
+ * SCL_COEF_UPDATE_COMPLETE क्रमागत
  */
 
-typedef enum SCL_COEF_UPDATE_COMPLETE {
+प्रकार क्रमागत SCL_COEF_UPDATE_COMPLETE अणु
 SCL_COEF_UPDATE_NOT_COMPLETED            = 0x00000000,
 SCL_COEF_UPDATE_COMPLETED                = 0x00000001,
-} SCL_COEF_UPDATE_COMPLETE;
+पूर्ण SCL_COEF_UPDATE_COMPLETE;
 
 /*
- * SCL_HF_SHARP_SCALE_FACTOR enum
+ * SCL_HF_SHARP_SCALE_FACTOR क्रमागत
  */
 
-typedef enum SCL_HF_SHARP_SCALE_FACTOR {
+प्रकार क्रमागत SCL_HF_SHARP_SCALE_FACTOR अणु
 SCL_HF_SHARP_SCALE_FACTOR_0              = 0x00000000,
 SCL_HF_SHARP_SCALE_FACTOR_1              = 0x00000001,
 SCL_HF_SHARP_SCALE_FACTOR_2              = 0x00000002,
@@ -6672,22 +6673,22 @@ SCL_HF_SHARP_SCALE_FACTOR_4              = 0x00000004,
 SCL_HF_SHARP_SCALE_FACTOR_5              = 0x00000005,
 SCL_HF_SHARP_SCALE_FACTOR_6              = 0x00000006,
 SCL_HF_SHARP_SCALE_FACTOR_7              = 0x00000007,
-} SCL_HF_SHARP_SCALE_FACTOR;
+पूर्ण SCL_HF_SHARP_SCALE_FACTOR;
 
 /*
- * SCL_HF_SHARP_EN enum
+ * SCL_HF_SHARP_EN क्रमागत
  */
 
-typedef enum SCL_HF_SHARP_EN {
+प्रकार क्रमागत SCL_HF_SHARP_EN अणु
 SCL_HF_SHARP_DISABLE                     = 0x00000000,
 SCL_HF_SHARP_ENABLE                      = 0x00000001,
-} SCL_HF_SHARP_EN;
+पूर्ण SCL_HF_SHARP_EN;
 
 /*
- * SCL_VF_SHARP_SCALE_FACTOR enum
+ * SCL_VF_SHARP_SCALE_FACTOR क्रमागत
  */
 
-typedef enum SCL_VF_SHARP_SCALE_FACTOR {
+प्रकार क्रमागत SCL_VF_SHARP_SCALE_FACTOR अणु
 SCL_VF_SHARP_SCALE_FACTOR_0              = 0x00000000,
 SCL_VF_SHARP_SCALE_FACTOR_1              = 0x00000001,
 SCL_VF_SHARP_SCALE_FACTOR_2              = 0x00000002,
@@ -6696,386 +6697,386 @@ SCL_VF_SHARP_SCALE_FACTOR_4              = 0x00000004,
 SCL_VF_SHARP_SCALE_FACTOR_5              = 0x00000005,
 SCL_VF_SHARP_SCALE_FACTOR_6              = 0x00000006,
 SCL_VF_SHARP_SCALE_FACTOR_7              = 0x00000007,
-} SCL_VF_SHARP_SCALE_FACTOR;
+पूर्ण SCL_VF_SHARP_SCALE_FACTOR;
 
 /*
- * SCL_VF_SHARP_EN enum
+ * SCL_VF_SHARP_EN क्रमागत
  */
 
-typedef enum SCL_VF_SHARP_EN {
+प्रकार क्रमागत SCL_VF_SHARP_EN अणु
 SCL_VF_SHARP_DISABLE                     = 0x00000000,
 SCL_VF_SHARP_ENABLE                      = 0x00000001,
-} SCL_VF_SHARP_EN;
+पूर्ण SCL_VF_SHARP_EN;
 
 /*
- * SCL_ALU_DISABLE enum
+ * SCL_ALU_DISABLE क्रमागत
  */
 
-typedef enum SCL_ALU_DISABLE {
+प्रकार क्रमागत SCL_ALU_DISABLE अणु
 SCL_ALU_ENABLED                          = 0x00000000,
 SCL_ALU_DISABLED                         = 0x00000001,
-} SCL_ALU_DISABLE;
+पूर्ण SCL_ALU_DISABLE;
 
 /*
- * SCL_HOST_CONFLICT_MASK enum
+ * SCL_HOST_CONFLICT_MASK क्रमागत
  */
 
-typedef enum SCL_HOST_CONFLICT_MASK {
+प्रकार क्रमागत SCL_HOST_CONFLICT_MASK अणु
 SCL_HOST_CONFLICT_DISABLE_INTERRUPT      = 0x00000000,
 SCL_HOST_CONFLICT_ENABLE_INTERRUPT       = 0x00000001,
-} SCL_HOST_CONFLICT_MASK;
+पूर्ण SCL_HOST_CONFLICT_MASK;
 
 /*
- * SCL_SCL_MODE_CHANGE_MASK enum
+ * SCL_SCL_MODE_CHANGE_MASK क्रमागत
  */
 
-typedef enum SCL_SCL_MODE_CHANGE_MASK {
+प्रकार क्रमागत SCL_SCL_MODE_CHANGE_MASK अणु
 SCL_MODE_CHANGE_DISABLE_INTERRUPT        = 0x00000000,
 SCL_MODE_CHANGE_ENABLE_INTERRUPT         = 0x00000001,
-} SCL_SCL_MODE_CHANGE_MASK;
+पूर्ण SCL_SCL_MODE_CHANGE_MASK;
 
 /*******************************************************
  * SCLV Enums
  *******************************************************/
 
 /*
- * SCLV_MODE_SEL enum
+ * SCLV_MODE_SEL क्रमागत
  */
 
-typedef enum SCLV_MODE_SEL {
+प्रकार क्रमागत SCLV_MODE_SEL अणु
 SCLV_MODE_RGB_BYPASS                     = 0x00000000,
 SCLV_MODE_RGB_SCALING                    = 0x00000001,
 SCLV_MODE_YCBCR_SCALING                  = 0x00000002,
 SCLV_MODE_YCBCR_BYPASS                   = 0x00000003,
-} SCLV_MODE_SEL;
+पूर्ण SCLV_MODE_SEL;
 
 /*
- * SCLV_INTERLACE_SOURCE enum
+ * SCLV_INTERLACE_SOURCE क्रमागत
  */
 
-typedef enum SCLV_INTERLACE_SOURCE {
+प्रकार क्रमागत SCLV_INTERLACE_SOURCE अणु
 INTERLACE_SOURCE_PROGRESSIVE             = 0x00000000,
 INTERLACE_SOURCE_INTERLEAVE              = 0x00000001,
 INTERLACE_SOURCE_STACK                   = 0x00000002,
-} SCLV_INTERLACE_SOURCE;
+पूर्ण SCLV_INTERLACE_SOURCE;
 
 /*
- * SCLV_UPDATE_LOCK enum
+ * SCLV_UPDATE_LOCK क्रमागत
  */
 
-typedef enum SCLV_UPDATE_LOCK {
+प्रकार क्रमागत SCLV_UPDATE_LOCK अणु
 UPDATE_UNLOCKED                          = 0x00000000,
 UPDATE_LOCKED                            = 0x00000001,
-} SCLV_UPDATE_LOCK;
+पूर्ण SCLV_UPDATE_LOCK;
 
 /*
- * SCLV_COEF_UPDATE_COMPLETE enum
+ * SCLV_COEF_UPDATE_COMPLETE क्रमागत
  */
 
-typedef enum SCLV_COEF_UPDATE_COMPLETE {
+प्रकार क्रमागत SCLV_COEF_UPDATE_COMPLETE अणु
 COEF_UPDATE_NOT_COMPLETE                 = 0x00000000,
 COEF_UPDATE_COMPLETE                     = 0x00000001,
-} SCLV_COEF_UPDATE_COMPLETE;
+पूर्ण SCLV_COEF_UPDATE_COMPLETE;
 
 /*******************************************************
  * DPRX_SD Enums
  *******************************************************/
 
 /*
- * DPRX_SD_PIXEL_ENCODING enum
+ * DPRX_SD_PIXEL_ENCODING क्रमागत
  */
 
-typedef enum DPRX_SD_PIXEL_ENCODING {
+प्रकार क्रमागत DPRX_SD_PIXEL_ENCODING अणु
 PIXEL_FORMAT_RGB_444                     = 0x00000000,
 PIXEL_FORMAT_YCBCR_444                   = 0x00000001,
 PIXEL_FORMAT_YCBCR_422                   = 0x00000002,
 PIXEL_FORMAT_Y_ONLY                      = 0x00000003,
-} DPRX_SD_PIXEL_ENCODING;
+पूर्ण DPRX_SD_PIXEL_ENCODING;
 
 /*
- * DPRX_SD_COMPONENT_DEPTH enum
+ * DPRX_SD_COMPONENT_DEPTH क्रमागत
  */
 
-typedef enum DPRX_SD_COMPONENT_DEPTH {
+प्रकार क्रमागत DPRX_SD_COMPONENT_DEPTH अणु
 COMPONENT_DEPTH_6BPC                     = 0x00000000,
 COMPONENT_DEPTH_8BPC                     = 0x00000001,
 COMPONENT_DEPTH_10BPC                    = 0x00000002,
 COMPONENT_DEPTH_12BPC                    = 0x00000003,
 COMPONENT_DEPTH_16BPC                    = 0x00000004,
-} DPRX_SD_COMPONENT_DEPTH;
+पूर्ण DPRX_SD_COMPONENT_DEPTH;
 
 /*******************************************************
  * AZF0STREAM Enums
  *******************************************************/
 
 /*
- * AZ_LATENCY_COUNTER_CONTROL enum
+ * AZ_LATENCY_COUNTER_CONTROL क्रमागत
  */
 
-typedef enum AZ_LATENCY_COUNTER_CONTROL {
+प्रकार क्रमागत AZ_LATENCY_COUNTER_CONTROL अणु
 AZ_LATENCY_COUNTER_NO_RESET              = 0x00000000,
 AZ_LATENCY_COUNTER_RESET_DONE            = 0x00000001,
-} AZ_LATENCY_COUNTER_CONTROL;
+पूर्ण AZ_LATENCY_COUNTER_CONTROL;
 
 /*******************************************************
  * BLND Enums
  *******************************************************/
 
 /*
- * BLND_CONTROL_BLND_MODE enum
+ * BLND_CONTROL_BLND_MODE क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_MODE {
+प्रकार क्रमागत BLND_CONTROL_BLND_MODE अणु
 BLND_CONTROL_BLND_MODE_CURRENT_PIPE_ONLY = 0x00000000,
 BLND_CONTROL_BLND_MODE_OTHER_PIPE_ONLY   = 0x00000001,
 BLND_CONTROL_BLND_MODE_ALPHA_BLENDING_MODE = 0x00000002,
 BLND_CONTROL_BLND_MODE_OTHER_STEREO_TYPE = 0x00000003,
-} BLND_CONTROL_BLND_MODE;
+पूर्ण BLND_CONTROL_BLND_MODE;
 
 /*
- * BLND_CONTROL_BLND_STEREO_TYPE enum
+ * BLND_CONTROL_BLND_STEREO_TYPE क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_STEREO_TYPE {
+प्रकार क्रमागत BLND_CONTROL_BLND_STEREO_TYPE अणु
 BLND_CONTROL_BLND_STEREO_TYPE_NON_SINGLE_PIPE_STEREO = 0x00000000,
 BLND_CONTROL_BLND_STEREO_TYPE_SIDE_BY_SIDE_SINGLE_PIPE_STEREO = 0x00000001,
 BLND_CONTROL_BLND_STEREO_TYPE_TOP_BOTTOM_SINGLE_PIPE_STEREO = 0x00000002,
 BLND_CONTROL_BLND_STEREO_TYPE_UNUSED     = 0x00000003,
-} BLND_CONTROL_BLND_STEREO_TYPE;
+पूर्ण BLND_CONTROL_BLND_STEREO_TYPE;
 
 /*
- * BLND_CONTROL_BLND_STEREO_POLARITY enum
+ * BLND_CONTROL_BLND_STEREO_POLARITY क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_STEREO_POLARITY {
+प्रकार क्रमागत BLND_CONTROL_BLND_STEREO_POLARITY अणु
 BLND_CONTROL_BLND_STEREO_POLARITY_LOW    = 0x00000000,
 BLND_CONTROL_BLND_STEREO_POLARITY_HIGH   = 0x00000001,
-} BLND_CONTROL_BLND_STEREO_POLARITY;
+पूर्ण BLND_CONTROL_BLND_STEREO_POLARITY;
 
 /*
- * BLND_CONTROL_BLND_FEEDTHROUGH_EN enum
+ * BLND_CONTROL_BLND_FEEDTHROUGH_EN क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_FEEDTHROUGH_EN {
+प्रकार क्रमागत BLND_CONTROL_BLND_FEEDTHROUGH_EN अणु
 BLND_CONTROL_BLND_FEEDTHROUGH_EN_FALSE   = 0x00000000,
 BLND_CONTROL_BLND_FEEDTHROUGH_EN_TRUE    = 0x00000001,
-} BLND_CONTROL_BLND_FEEDTHROUGH_EN;
+पूर्ण BLND_CONTROL_BLND_FEEDTHROUGH_EN;
 
 /*
- * BLND_CONTROL_BLND_ALPHA_MODE enum
+ * BLND_CONTROL_BLND_ALPHA_MODE क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_ALPHA_MODE {
+प्रकार क्रमागत BLND_CONTROL_BLND_ALPHA_MODE अणु
 BLND_CONTROL_BLND_ALPHA_MODE_CURRENT_PIXEL_ALPHA = 0x00000000,
 BLND_CONTROL_BLND_ALPHA_MODE_PIXEL_ALPHA_COMBINED_GLOBAL_GAIN = 0x00000001,
 BLND_CONTROL_BLND_ALPHA_MODE_GLOBAL_ALPHA_ONLY = 0x00000002,
 BLND_CONTROL_BLND_ALPHA_MODE_UNUSED      = 0x00000003,
-} BLND_CONTROL_BLND_ALPHA_MODE;
+पूर्ण BLND_CONTROL_BLND_ALPHA_MODE;
 
 /*
- * BLND_CONTROL_BLND_ACTIVE_OVERLAP_ONLY enum
+ * BLND_CONTROL_BLND_ACTIVE_OVERLAP_ONLY क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_ACTIVE_OVERLAP_ONLY {
+प्रकार क्रमागत BLND_CONTROL_BLND_ACTIVE_OVERLAP_ONLY अणु
 BLND_CONTROL_BLND_ACTIVE_OVERLAY_ONLY_FALSE  = 0x00000000,
 BLND_CONTROL_BLND_ACTIVE_OVERLAY_ONLY_TRUE  = 0x00000001,
-} BLND_CONTROL_BLND_ACTIVE_OVERLAP_ONLY;
+पूर्ण BLND_CONTROL_BLND_ACTIVE_OVERLAP_ONLY;
 
 /*
- * BLND_CONTROL_BLND_MULTIPLIED_MODE enum
+ * BLND_CONTROL_BLND_MULTIPLIED_MODE क्रमागत
  */
 
-typedef enum BLND_CONTROL_BLND_MULTIPLIED_MODE {
+प्रकार क्रमागत BLND_CONTROL_BLND_MULTIPLIED_MODE अणु
 BLND_CONTROL_BLND_MULTIPLIED_MODE_FALSE  = 0x00000000,
 BLND_CONTROL_BLND_MULTIPLIED_MODE_TRUE   = 0x00000001,
-} BLND_CONTROL_BLND_MULTIPLIED_MODE;
+पूर्ण BLND_CONTROL_BLND_MULTIPLIED_MODE;
 
 /*
- * BLND_SM_CONTROL2_SM_MODE enum
+ * BLND_SM_CONTROL2_SM_MODE क्रमागत
  */
 
-typedef enum BLND_SM_CONTROL2_SM_MODE {
+प्रकार क्रमागत BLND_SM_CONTROL2_SM_MODE अणु
 BLND_SM_CONTROL2_SM_MODE_SINGLE_PLANE    = 0x00000000,
 BLND_SM_CONTROL2_SM_MODE_ROW_SUBSAMPLING = 0x00000002,
 BLND_SM_CONTROL2_SM_MODE_COLUMN_SUBSAMPLING = 0x00000004,
 BLND_SM_CONTROL2_SM_MODE_CHECKERBOARD_SUBSAMPLING = 0x00000006,
-} BLND_SM_CONTROL2_SM_MODE;
+पूर्ण BLND_SM_CONTROL2_SM_MODE;
 
 /*
- * BLND_SM_CONTROL2_SM_FRAME_ALTERNATE enum
+ * BLND_SM_CONTROL2_SM_FRAME_ALTERNATE क्रमागत
  */
 
-typedef enum BLND_SM_CONTROL2_SM_FRAME_ALTERNATE {
+प्रकार क्रमागत BLND_SM_CONTROL2_SM_FRAME_ALTERNATE अणु
 BLND_SM_CONTROL2_SM_FRAME_ALTERNATE_FALSE = 0x00000000,
 BLND_SM_CONTROL2_SM_FRAME_ALTERNATE_TRUE = 0x00000001,
-} BLND_SM_CONTROL2_SM_FRAME_ALTERNATE;
+पूर्ण BLND_SM_CONTROL2_SM_FRAME_ALTERNATE;
 
 /*
- * BLND_SM_CONTROL2_SM_FIELD_ALTERNATE enum
+ * BLND_SM_CONTROL2_SM_FIELD_ALTERNATE क्रमागत
  */
 
-typedef enum BLND_SM_CONTROL2_SM_FIELD_ALTERNATE {
+प्रकार क्रमागत BLND_SM_CONTROL2_SM_FIELD_ALTERNATE अणु
 BLND_SM_CONTROL2_SM_FIELD_ALTERNATE_FALSE = 0x00000000,
 BLND_SM_CONTROL2_SM_FIELD_ALTERNATE_TRUE = 0x00000001,
-} BLND_SM_CONTROL2_SM_FIELD_ALTERNATE;
+पूर्ण BLND_SM_CONTROL2_SM_FIELD_ALTERNATE;
 
 /*
- * BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL enum
+ * BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL क्रमागत
  */
 
-typedef enum BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL {
+प्रकार क्रमागत BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL अणु
 BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_NO_FORCE = 0x00000000,
 BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_RESERVED = 0x00000001,
 BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_FORCE_LOW = 0x00000002,
 BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL_FORCE_HIGH = 0x00000003,
-} BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL;
+पूर्ण BLND_SM_CONTROL2_SM_FORCE_NEXT_FRAME_POL;
 
 /*
- * BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL enum
+ * BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL क्रमागत
  */
 
-typedef enum BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL {
+प्रकार क्रमागत BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL अणु
 BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_NO_FORCE = 0x00000000,
 BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_RESERVED = 0x00000001,
 BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_FORCE_LOW = 0x00000002,
 BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL_FORCE_HIGH = 0x00000003,
-} BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL;
+पूर्ण BLND_SM_CONTROL2_SM_FORCE_NEXT_TOP_POL;
 
 /*
- * BLND_CONTROL2_PTI_ENABLE enum
+ * BLND_CONTROL2_PTI_ENABLE क्रमागत
  */
 
-typedef enum BLND_CONTROL2_PTI_ENABLE {
+प्रकार क्रमागत BLND_CONTROL2_PTI_ENABLE अणु
 BLND_CONTROL2_PTI_ENABLE_FALSE           = 0x00000000,
 BLND_CONTROL2_PTI_ENABLE_TRUE            = 0x00000001,
-} BLND_CONTROL2_PTI_ENABLE;
+पूर्ण BLND_CONTROL2_PTI_ENABLE;
 
 /*
- * BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN enum
+ * BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN क्रमागत
  */
 
-typedef enum BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN {
+प्रकार क्रमागत BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN अणु
 BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN_FALSE = 0x00000000,
 BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN_TRUE = 0x00000001,
-} BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN;
+पूर्ण BLND_CONTROL2_BLND_SUPERAA_DEGAMMA_EN;
 
 /*
- * BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN enum
+ * BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN क्रमागत
  */
 
-typedef enum BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN {
+प्रकार क्रमागत BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN अणु
 BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN_FALSE = 0x00000000,
 BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN_TRUE = 0x00000001,
-} BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN;
+पूर्ण BLND_CONTROL2_BLND_SUPERAA_REGAMMA_EN;
 
 /*
- * BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK enum
+ * BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK क्रमागत
  */
 
-typedef enum BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK {
+प्रकार क्रमागत BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK अणु
 BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK_FALSE = 0x00000000,
 BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK_TRUE = 0x00000001,
-} BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK;
+पूर्ण BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_ACK;
 
 /*
- * BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK enum
+ * BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK क्रमागत
  */
 
-typedef enum BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK {
+प्रकार क्रमागत BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK अणु
 BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK_FALSE = 0x00000000,
 BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK_TRUE = 0x00000001,
-} BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK;
+पूर्ण BLND_UNDERFLOW_INTERRUPT_BLND_UNDERFLOW_INT_MASK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK enum
+ * BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK अणु
 BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_V_UPDATE_LOCK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK enum
+ * BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK अणु
 BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_DCP_GRPH_SURF_V_UPDATE_LOCK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK enum
+ * BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK अणु
 BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_DCP_CUR_V_UPDATE_LOCK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK enum
+ * BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK अणु
 BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_DCP_CUR2_V_UPDATE_LOCK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK enum
+ * BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK अणु
 BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_SCL_V_UPDATE_LOCK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK enum
+ * BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK अणु
 BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_BLND_V_UPDATE_LOCK;
 
 /*
- * BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE enum
+ * BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE क्रमागत
  */
 
-typedef enum BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE {
+प्रकार क्रमागत BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE अणु
 BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE_FALSE = 0x00000000,
 BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE_TRUE = 0x00000001,
-} BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE;
+पूर्ण BLND_V_UPDATE_LOCK_BLND_V_UPDATE_LOCK_MODE;
 
 /*
- * BLND_DEBUG_BLND_CNV_MUX_SELECT enum
+ * BLND_DEBUG_BLND_CNV_MUX_SELECT क्रमागत
  */
 
-typedef enum BLND_DEBUG_BLND_CNV_MUX_SELECT {
+प्रकार क्रमागत BLND_DEBUG_BLND_CNV_MUX_SELECT अणु
 BLND_DEBUG_BLND_CNV_MUX_SELECT_LOW       = 0x00000000,
 BLND_DEBUG_BLND_CNV_MUX_SELECT_HIGH      = 0x00000001,
-} BLND_DEBUG_BLND_CNV_MUX_SELECT;
+पूर्ण BLND_DEBUG_BLND_CNV_MUX_SELECT;
 
 /*
- * BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN enum
+ * BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN क्रमागत
  */
 
-typedef enum BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN {
+प्रकार क्रमागत BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN अणु
 BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN_FALSE = 0x00000000,
 BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN_TRUE = 0x00000001,
-} BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN;
+पूर्ण BLND_TEST_DEBUG_INDEX_BLND_TEST_DEBUG_WRITE_EN;
 
 /*******************************************************
  * AZF0ENDPOINT Enums
  *******************************************************/
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_OUTPUT_CONVERTER_RESERVED  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_INPUT_CONVERTER_RESERVED  = 0x00000001,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_MIXER_RESERVED  = 0x00000002,
@@ -7086,121 +7087,121 @@ AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VOLUME_KNOB_R
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_BEEP_GENERATOR_RESERVED  = 0x00000007,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_RESERVED_RESERVED  = 0x00000008,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VENDOR_DEFINED_RESERVED  = 0x00000009,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_LR_SWAP_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_LR_SWAP_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_POWER_CONTROL_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_POWER_CONTROL_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_IS_ANALOG  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_IS_DIGITAL  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_CONNECTION_LIST  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_CONNECTION_LIST  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_NO_PROCESSING_CAPABILITIES  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_HAVE_PROCESSING_CAPABILITIES  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_SUPPORT_STRIPING  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_SUPPORT_STRIPING  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_FORMAT_OVERRIDE  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_SUPPORT_FORMAT_OVERRIDE  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_AMPLIFIER_PARAMETER  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_AMPLIFIER_PARAMETER_OVERRIDE  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_OUTPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_OUTPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_INPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_INPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES enum
+ * AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES {
+प्रकार क्रमागत AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES अणु
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES_MONOPHONIC  = 0x00000000,
 AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES_STEREO  = 0x00000001,
-} AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES;
+पूर्ण AZALIA_F0_CODEC_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_OUTPUT_CONVERTER_RESERVED  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_INPUT_CONVERTER_RESERVED  = 0x00000001,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_MIXER_RESERVED  = 0x00000002,
@@ -7211,197 +7212,197 @@ AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VOLUME_KNOB_RESERVE
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_BEEP_GENERATOR_RESERVED  = 0x00000007,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_RESERVED_RESERVED  = 0x00000008,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VENDOR_DEFINED_RESERVED  = 0x00000009,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_LR_SWAP_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_LR_SWAP_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_POWER_CONTROL_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_POWER_CONTROL_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_IS_ANALOG  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_IS_DIGITAL  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_CONNECTION_LIST  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_CONNECTION_LIST  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_NO_PROCESSING_CAPABILITIES  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_HAVE_PROCESSING_CAPABILITIES  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_SUPPORT_STRIPING  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_SUPPORT_STRIPING  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_AMPLIFIER_PARAMETER  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_AMPLIFIER_PARAMETER_OVERRIDE  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_OUTPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_OUTPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_INPUT_AMPLIFIER_PRESENT  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_INPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_EAPD_PIN  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HAVE_EAPD_PIN  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_I_O_PINS_ARE_NOT_BALANCED  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_I_O_PINS_ARE_BALANCED  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_INPUT_PIN  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HAVE_INPUT_PIN  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_OUTPUT_PIN  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HAVE_OUTPUT_PIN  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_HEADPHONE_DRIVE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HAVE_HEADPHONE_DRIVE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_JACK_DETECTION_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HAVE_JACK_DETECTION_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_TRIGGER_REQUIRED_FOR_IMPEDANCE_MEASUREMENT  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED_FOR_IMPEDANCE_MEASUREMENT  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED;
 
 /*
- * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE enum
+ * AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE अणु
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_NO_IMPEDANCE_SENSE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_HAVE_IMPEDANCE_SENSE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE enum
+ * AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE अणु
 AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_PAIR_MODE  = 0x00000000,
 AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_SINGLE_MODE  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE;
+पूर्ण AZALIA_F0_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE;
 
 /*
- * AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE enum
+ * AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE अणु
 AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_NO_HBR_CAPABLILITY  = 0x00000000,
 AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HAVE_HBR_CAPABLILITY  = 0x00000001,
-} AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE;
 
 /*******************************************************
  * AZF0INPUTENDPOINT Enums
  *******************************************************/
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_OUTPUT_CONVERTER_RESERVED  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_INPUT_CONVERTER_RESERVED  = 0x00000001,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_MIXER_RESERVED  = 0x00000002,
@@ -7412,121 +7413,121 @@ AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VOLUME_
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_BEEP_GENERATOR_RESERVED  = 0x00000007,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_RESERVED  = 0x00000008,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VENDOR_DEFINED_RESERVED  = 0x00000009,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_LR_SWAP_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_LR_SWAP_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_POWER_CONTROL_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_POWER_CONTROL_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CODEC_CONVERTER0_IS_ANALOG  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CODEC_CONVERTER0_IS_DIGITAL  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_CONNECTION_LIST  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_CONNECTION_LIST  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_CODEC_CONVERTER0_HAVE_NO_PROCESSING_CAPABILITIES  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_CODEC_CONVERTER0_HAVE_PROCESSING_CAPABILITIES  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NOT_SUPPORT_STRIPING  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_SUPPORT_STRIPING  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_FORMAT_OVERRIDE  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_FORMAT_OVERRIDE  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_FORMAT_OVERRIDE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_AMPLIFIER_PARAMETER  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_AMPLIFIER_PARAMETER  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_OUTPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_OUTPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_INPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_INPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES enum
+ * AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES अणु
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES_MONOPHONIC  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES_STEREO  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES;
+पूर्ण AZALIA_F0_CODEC_INPUT_CONVERTER_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AUDIO_CHANNEL_CAPABILITIES;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_OUTPUT_CONVERTER_RESERVED  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_INPUT_CONVERTER_RESERVED  = 0x00000001,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_MIXER_RESERVED  = 0x00000002,
@@ -7537,258 +7538,258 @@ AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VOLUME_KNOB_R
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_BEEP_GENERATOR_RESERVED  = 0x00000007,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_RESERVED  = 0x00000008,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE_VENDOR_DEFINED_RESERVED  = 0x00000009,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_TYPE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_LR_SWAP  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_LR_SWAP  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_LR_SWAP;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_POWER_CONTROL_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_POWER_CONTROL_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_POWER_CONTROL;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_IS_ANALOG  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_IS_DIGITAL  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_DIGITAL;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_CONNECTION_LIST  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_CONNECTION_LIST  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_CONNECTION_LIST;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_UNSOLICITED_RESPONSE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_UNSOLICITED_RESPONSE_CAPABILITY;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_NO_PROCESING_CAPABILITIES  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET_HAVE_PROCESING_CAPABILITIES  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_PROCESSING_WIDGET;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_SUPPORT_STRIPING  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_SUPPORT_STRIPING  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_STRIPE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_AMPLIFIER_PARAMETER  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_AMPLIFIER_PARAMETER_OVERRIDE  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_AMPLIFIER_PARAMETER_OVERRIDE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_OUTPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_OUTPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_OUTPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_NO_INPUT_AMPLIFIER  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_HAVE_INPUT_AMPLIFIER  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_AUDIO_WIDGET_CAPABILITIES_INPUT_AMPLIFIER_PRESENT;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP_NOT_ENABLED  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP_ENABLED  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_DP;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE_NO_EAPD_PIN  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE_HAVE_EAPD_PIN  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_EAPD_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI_NOT_ENABLED  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI_ENABLED  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HDMI;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_I_O_PINS_NOT_BALANCED  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_I_O_PINS_ARE_BALANCED  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_BALANCED_I_O_PINS;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_NO_INPUT_PIN  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HAVE_INPUT_PIN  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_INPUT_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_NO_OUTPUT_PIN  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HAVE_OUTPUT_PIN  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_OUTPUT_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_NO_HEADPHONE_DRIVE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HAVE_HEADPHONE_DRIVE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HEADPHONE_DRIVE_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_NO_JACK_PRESENCE_DETECTION_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HAVE_JACK_PRESENCE_DETECTION_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_JACK_DETECTION_CAPABILITY;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_NO_TRIGGER_REQUIRED_FOR_IMPEDANCE_MEASUREMENT  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED_FOR_IMPEDANCE_MEASUREMENT  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_TRIGGER_REQUIRED;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE अणु
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_NO_IMPEDANCE_SENSE_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_HAVE_IMPEDANCE_SENSE_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_PARAMETER_CAPABILITIES_IMPEDANCE_SENSE_CAPABLE;
 
 /*
- * AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE enum
+ * AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE क्रमागत
  */
 
-typedef enum AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE {
+प्रकार क्रमागत AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE अणु
 AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_NO_HBR_CAPABILITY  = 0x00000000,
 AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HAVE_HBR_CAPABILITY  = 0x00000001,
-} AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE;
+पूर्ण AZALIA_F0_CODEC_INPUT_PIN_CONTROL_RESPONSE_HBR_HBR_CAPABLE;
 
 /*******************************************************
  * UNP Enums
  *******************************************************/
 
 /*
- * UNP_GRPH_EN enum
+ * UNP_GRPH_EN क्रमागत
  */
 
-typedef enum UNP_GRPH_EN {
+प्रकार क्रमागत UNP_GRPH_EN अणु
 UNP_GRPH_DISABLED                        = 0x00000000,
 UNP_GRPH_ENABLED                         = 0x00000001,
-} UNP_GRPH_EN;
+पूर्ण UNP_GRPH_EN;
 
 /*
- * UNP_GRPH_DEPTH enum
+ * UNP_GRPH_DEPTH क्रमागत
  */
 
-typedef enum UNP_GRPH_DEPTH {
+प्रकार क्रमागत UNP_GRPH_DEPTH अणु
 UNP_GRPH_8BPP                            = 0x00000000,
 UNP_GRPH_16BPP                           = 0x00000001,
 UNP_GRPH_32BPP                           = 0x00000002,
-} UNP_GRPH_DEPTH;
+पूर्ण UNP_GRPH_DEPTH;
 
 /*
- * UNP_GRPH_NUM_BANKS enum
+ * UNP_GRPH_NUM_BANKS क्रमागत
  */
 
-typedef enum UNP_GRPH_NUM_BANKS {
+प्रकार क्रमागत UNP_GRPH_NUM_BANKS अणु
 UNP_GRPH_ADDR_SURF_2_BANK                = 0x00000000,
 UNP_GRPH_ADDR_SURF_4_BANK                = 0x00000001,
 UNP_GRPH_ADDR_SURF_8_BANK                = 0x00000002,
 UNP_GRPH_ADDR_SURF_16_BANK               = 0x00000003,
-} UNP_GRPH_NUM_BANKS;
+पूर्ण UNP_GRPH_NUM_BANKS;
 
 /*
- * UNP_GRPH_BANK_WIDTH enum
+ * UNP_GRPH_BANK_WIDTH क्रमागत
  */
 
-typedef enum UNP_GRPH_BANK_WIDTH {
+प्रकार क्रमागत UNP_GRPH_BANK_WIDTH अणु
 UNP_GRPH_ADDR_SURF_BANK_WIDTH_1          = 0x00000000,
 UNP_GRPH_ADDR_SURF_BANK_WIDTH_2          = 0x00000001,
 UNP_GRPH_ADDR_SURF_BANK_WIDTH_4          = 0x00000002,
 UNP_GRPH_ADDR_SURF_BANK_WIDTH_8          = 0x00000003,
-} UNP_GRPH_BANK_WIDTH;
+पूर्ण UNP_GRPH_BANK_WIDTH;
 
 /*
- * UNP_GRPH_BANK_HEIGHT enum
+ * UNP_GRPH_BANK_HEIGHT क्रमागत
  */
 
-typedef enum UNP_GRPH_BANK_HEIGHT {
+प्रकार क्रमागत UNP_GRPH_BANK_HEIGHT अणु
 UNP_GRPH_ADDR_SURF_BANK_HEIGHT_1         = 0x00000000,
 UNP_GRPH_ADDR_SURF_BANK_HEIGHT_2         = 0x00000001,
 UNP_GRPH_ADDR_SURF_BANK_HEIGHT_4         = 0x00000002,
 UNP_GRPH_ADDR_SURF_BANK_HEIGHT_8         = 0x00000003,
-} UNP_GRPH_BANK_HEIGHT;
+पूर्ण UNP_GRPH_BANK_HEIGHT;
 
 /*
- * UNP_GRPH_TILE_SPLIT enum
+ * UNP_GRPH_TILE_SPLIT क्रमागत
  */
 
-typedef enum UNP_GRPH_TILE_SPLIT {
+प्रकार क्रमागत UNP_GRPH_TILE_SPLIT अणु
 UNP_ADDR_SURF_TILE_SPLIT_64B             = 0x00000000,
 UNP_ADDR_SURF_TILE_SPLIT_128B            = 0x00000001,
 UNP_ADDR_SURF_TILE_SPLIT_256B            = 0x00000002,
@@ -7796,42 +7797,42 @@ UNP_ADDR_SURF_TILE_SPLIT_512B            = 0x00000003,
 UNP_ADDR_SURF_TILE_SPLIT_1KB             = 0x00000004,
 UNP_ADDR_SURF_TILE_SPLIT_2KB             = 0x00000005,
 UNP_ADDR_SURF_TILE_SPLIT_4KB             = 0x00000006,
-} UNP_GRPH_TILE_SPLIT;
+पूर्ण UNP_GRPH_TILE_SPLIT;
 
 /*
- * UNP_GRPH_ADDRESS_TRANSLATION_ENABLE enum
+ * UNP_GRPH_ADDRESS_TRANSLATION_ENABLE क्रमागत
  */
 
-typedef enum UNP_GRPH_ADDRESS_TRANSLATION_ENABLE {
+प्रकार क्रमागत UNP_GRPH_ADDRESS_TRANSLATION_ENABLE अणु
 UNP_GRPH_ADDRESS_TRANSLATION_ENABLE0     = 0x00000000,
 UNP_GRPH_ADDRESS_TRANSLATION_ENABLE1     = 0x00000001,
-} UNP_GRPH_ADDRESS_TRANSLATION_ENABLE;
+पूर्ण UNP_GRPH_ADDRESS_TRANSLATION_ENABLE;
 
 /*
- * UNP_GRPH_MACRO_TILE_ASPECT enum
+ * UNP_GRPH_MACRO_TILE_ASPECT क्रमागत
  */
 
-typedef enum UNP_GRPH_MACRO_TILE_ASPECT {
+प्रकार क्रमागत UNP_GRPH_MACRO_TILE_ASPECT अणु
 UNP_ADDR_SURF_MACRO_ASPECT_1             = 0x00000000,
 UNP_ADDR_SURF_MACRO_ASPECT_2             = 0x00000001,
 UNP_ADDR_SURF_MACRO_ASPECT_4             = 0x00000002,
 UNP_ADDR_SURF_MACRO_ASPECT_8             = 0x00000003,
-} UNP_GRPH_MACRO_TILE_ASPECT;
+पूर्ण UNP_GRPH_MACRO_TILE_ASPECT;
 
 /*
- * UNP_GRPH_COLOR_EXPANSION_MODE enum
+ * UNP_GRPH_COLOR_EXPANSION_MODE क्रमागत
  */
 
-typedef enum UNP_GRPH_COLOR_EXPANSION_MODE {
+प्रकार क्रमागत UNP_GRPH_COLOR_EXPANSION_MODE अणु
 UNP_GRPH_DYNAMIC_EXPANSION               = 0x00000000,
 UNP_GRPH_ZERO_EXPANSION                  = 0x00000001,
-} UNP_GRPH_COLOR_EXPANSION_MODE;
+पूर्ण UNP_GRPH_COLOR_EXPANSION_MODE;
 
 /*
- * UNP_VIDEO_FORMAT enum
+ * UNP_VIDEO_FORMAT क्रमागत
  */
 
-typedef enum UNP_VIDEO_FORMAT {
+प्रकार क्रमागत UNP_VIDEO_FORMAT अणु
 UNP_VIDEO_FORMAT0                        = 0x00000000,
 UNP_VIDEO_FORMAT1                        = 0x00000001,
 UNP_VIDEO_FORMAT_YUV420_YCbCr            = 0x00000002,
@@ -7840,165 +7841,165 @@ UNP_VIDEO_FORMAT_YUV422_YCb              = 0x00000004,
 UNP_VIDEO_FORMAT_YUV422_YCr              = 0x00000005,
 UNP_VIDEO_FORMAT_YUV422_CbY              = 0x00000006,
 UNP_VIDEO_FORMAT_YUV422_CrY              = 0x00000007,
-} UNP_VIDEO_FORMAT;
+पूर्ण UNP_VIDEO_FORMAT;
 
 /*
- * UNP_GRPH_ENDIAN_SWAP enum
+ * UNP_GRPH_ENDIAN_SWAP क्रमागत
  */
 
-typedef enum UNP_GRPH_ENDIAN_SWAP {
+प्रकार क्रमागत UNP_GRPH_ENDIAN_SWAP अणु
 UNP_GRPH_ENDIAN_SWAP_NONE                = 0x00000000,
 UNP_GRPH_ENDIAN_SWAP_8IN16               = 0x00000001,
 UNP_GRPH_ENDIAN_SWAP_8IN32               = 0x00000002,
 UNP_GRPH_ENDIAN_SWAP_8IN43               = 0x00000003,
-} UNP_GRPH_ENDIAN_SWAP;
+पूर्ण UNP_GRPH_ENDIAN_SWAP;
 
 /*
- * UNP_GRPH_RED_CROSSBAR enum
+ * UNP_GRPH_RED_CROSSBAR क्रमागत
  */
 
-typedef enum UNP_GRPH_RED_CROSSBAR {
+प्रकार क्रमागत UNP_GRPH_RED_CROSSBAR अणु
 UNP_GRPH_RED_CROSSBAR_R_Cr               = 0x00000000,
 UNP_GRPH_RED_CROSSBAR_G_Y                = 0x00000001,
 UNP_GRPH_RED_CROSSBAR_B_Cb               = 0x00000002,
 UNP_GRPH_RED_CROSSBAR_A                  = 0x00000003,
-} UNP_GRPH_RED_CROSSBAR;
+पूर्ण UNP_GRPH_RED_CROSSBAR;
 
 /*
- * UNP_GRPH_GREEN_CROSSBAR enum
+ * UNP_GRPH_GREEN_CROSSBAR क्रमागत
  */
 
-typedef enum UNP_GRPH_GREEN_CROSSBAR {
+प्रकार क्रमागत UNP_GRPH_GREEN_CROSSBAR अणु
 UNP_UNP_GRPH_GREEN_CROSSBAR_GY_AND_Y     = 0x00000000,
 UNP_UNP_GRPH_GREEN_CROSSBAR_B_Cb_AND_C   = 0x00000001,
 UNP_UNP_GRPH_GREEN_CROSSBAR_A            = 0x00000002,
 UNP_UNP_GRPH_GREEN_CROSSBAR_R_Cr         = 0x00000003,
-} UNP_GRPH_GREEN_CROSSBAR;
+पूर्ण UNP_GRPH_GREEN_CROSSBAR;
 
 /*
- * UNP_GRPH_BLUE_CROSSBAR enum
+ * UNP_GRPH_BLUE_CROSSBAR क्रमागत
  */
 
-typedef enum UNP_GRPH_BLUE_CROSSBAR {
+प्रकार क्रमागत UNP_GRPH_BLUE_CROSSBAR अणु
 UNP_GRPH_BLUE_CROSSBAR_B_Cb_AND_C        = 0x00000000,
 UNP_GRPH_BLUE_CROSSBAR_A                 = 0x00000001,
 UNP_GRPH_BLUE_CROSSBAR_R_Cr              = 0x00000002,
 UNP_GRPH_BLUE_CROSSBAR_GY_AND_Y          = 0x00000003,
-} UNP_GRPH_BLUE_CROSSBAR;
+पूर्ण UNP_GRPH_BLUE_CROSSBAR;
 
 /*
- * UNP_GRPH_MODE_UPDATE_LOCKG enum
+ * UNP_GRPH_MODE_UPDATE_LOCKG क्रमागत
  */
 
-typedef enum UNP_GRPH_MODE_UPDATE_LOCKG {
+प्रकार क्रमागत UNP_GRPH_MODE_UPDATE_LOCKG अणु
 UNP_GRPH_UPDATE_LOCK_0                   = 0x00000000,
 UNP_GRPH_UPDATE_LOCK_1                   = 0x00000001,
-} UNP_GRPH_MODE_UPDATE_LOCKG;
+पूर्ण UNP_GRPH_MODE_UPDATE_LOCKG;
 
 /*
- * UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK enum
+ * UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK क्रमागत
  */
 
-typedef enum UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK {
+प्रकार क्रमागत UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK अणु
 UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK_0    = 0x00000000,
 UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK_1    = 0x00000001,
-} UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK;
+पूर्ण UNP_GRPH_SURFACE_IGNORE_UPDATE_LOCK;
 
 /*
- * UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE enum
+ * UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE क्रमागत
  */
 
-typedef enum UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE {
+प्रकार क्रमागत UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE अणु
 UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE_0  = 0x00000000,
 UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE_1  = 0x00000001,
-} UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE;
+पूर्ण UNP_GRPH_MODE_DISABLE_MULTIPLE_UPDATE;
 
 /*
- * UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE enum
+ * UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE क्रमागत
  */
 
-typedef enum UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE {
+प्रकार क्रमागत UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE अणु
 UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE_0  = 0x00000000,
 UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE_1  = 0x00000001,
-} UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE;
+पूर्ण UNP_GRPH_SURFACE_DISABLE_MULTIPLE_UPDATE;
 
 /*
- * UNP_GRPH_STEREOSYNC_FLIP_EN enum
+ * UNP_GRPH_STEREOSYNC_FLIP_EN क्रमागत
  */
 
-typedef enum UNP_GRPH_STEREOSYNC_FLIP_EN {
+प्रकार क्रमागत UNP_GRPH_STEREOSYNC_FLIP_EN अणु
 UNP_GRPH_STEREOSYNC_FLIP_DISABLE         = 0x00000000,
 UNP_GRPH_STEREOSYNC_FLIP_ENABLE          = 0x00000001,
-} UNP_GRPH_STEREOSYNC_FLIP_EN;
+पूर्ण UNP_GRPH_STEREOSYNC_FLIP_EN;
 
 /*
- * UNP_GRPH_STEREOSYNC_FLIP_MODE enum
+ * UNP_GRPH_STEREOSYNC_FLIP_MODE क्रमागत
  */
 
-typedef enum UNP_GRPH_STEREOSYNC_FLIP_MODE {
+प्रकार क्रमागत UNP_GRPH_STEREOSYNC_FLIP_MODE अणु
 UNP_GRPH_STEREOSYNC_FLIP_MODE_0          = 0x00000000,
 UNP_GRPH_STEREOSYNC_FLIP_MODE_1          = 0x00000001,
 UNP_GRPH_STEREOSYNC_FLIP_MODE_2          = 0x00000002,
 UNP_GRPH_STEREOSYNC_FLIP_MODE_3          = 0x00000003,
-} UNP_GRPH_STEREOSYNC_FLIP_MODE;
+पूर्ण UNP_GRPH_STEREOSYNC_FLIP_MODE;
 
 /*
- * UNP_GRPH_STACK_INTERLACE_FLIP_EN enum
+ * UNP_GRPH_STACK_INTERLACE_FLIP_EN क्रमागत
  */
 
-typedef enum UNP_GRPH_STACK_INTERLACE_FLIP_EN {
+प्रकार क्रमागत UNP_GRPH_STACK_INTERLACE_FLIP_EN अणु
 UNP_GRPH_STACK_INTERLACE_FLIP_DISABLE    = 0x00000000,
 UNP_GRPH_STACK_INTERLACE_FLIP_ENABLE     = 0x00000001,
-} UNP_GRPH_STACK_INTERLACE_FLIP_EN;
+पूर्ण UNP_GRPH_STACK_INTERLACE_FLIP_EN;
 
 /*
- * UNP_GRPH_STACK_INTERLACE_FLIP_MODE enum
+ * UNP_GRPH_STACK_INTERLACE_FLIP_MODE क्रमागत
  */
 
-typedef enum UNP_GRPH_STACK_INTERLACE_FLIP_MODE {
+प्रकार क्रमागत UNP_GRPH_STACK_INTERLACE_FLIP_MODE अणु
 UNP_GRPH_STACK_INTERLACE_FLIP_MODE_0     = 0x00000000,
 UNP_GRPH_STACK_INTERLACE_FLIP_MODE_1     = 0x00000001,
 UNP_GRPH_STACK_INTERLACE_FLIP_MODE_2     = 0x00000002,
 UNP_GRPH_STACK_INTERLACE_FLIP_MODE_3     = 0x00000003,
-} UNP_GRPH_STACK_INTERLACE_FLIP_MODE;
+पूर्ण UNP_GRPH_STACK_INTERLACE_FLIP_MODE;
 
 /*
- * UNP_GRPH_STEREOSYNC_SELECT_DISABLE enum
+ * UNP_GRPH_STEREOSYNC_SELECT_DISABLE क्रमागत
  */
 
-typedef enum UNP_GRPH_STEREOSYNC_SELECT_DISABLE {
+प्रकार क्रमागत UNP_GRPH_STEREOSYNC_SELECT_DISABLE अणु
 UNP_GRPH_STEREOSYNC_SELECT_EN            = 0x00000000,
 UNP_GRPH_STEREOSYNC_SELECT_DIS           = 0x00000001,
-} UNP_GRPH_STEREOSYNC_SELECT_DISABLE;
+पूर्ण UNP_GRPH_STEREOSYNC_SELECT_DISABLE;
 
 /*
- * UNP_CRC_SOURCE_SEL enum
+ * UNP_CRC_SOURCE_SEL क्रमागत
  */
 
-typedef enum UNP_CRC_SOURCE_SEL {
+प्रकार क्रमागत UNP_CRC_SOURCE_SEL अणु
 UNP_CRC_SOURCE_SEL_NP_TO_LBV             = 0x00000000,
 UNP_CRC_SOURCE_SEL_LOWER32               = 0x00000001,
 UNP_CRC_SOURCE_SEL_RESERVED              = 0x00000002,
 UNP_CRC_SOURCE_SEL_LOWER16               = 0x00000003,
 UNP_CRC_SOURCE_SEL_UNP_TO_LBV            = 0x00000004,
-} UNP_CRC_SOURCE_SEL;
+पूर्ण UNP_CRC_SOURCE_SEL;
 
 /*
- * UNP_CRC_LINE_SEL enum
+ * UNP_CRC_LINE_SEL क्रमागत
  */
 
-typedef enum UNP_CRC_LINE_SEL {
+प्रकार क्रमागत UNP_CRC_LINE_SEL अणु
 UNP_CRC_LINE_SEL_RESERVED                = 0x00000000,
 UNP_CRC_LINE_SEL_EVEN_ONLY               = 0x00000001,
 UNP_CRC_LINE_SEL_ODD_ONLY                = 0x00000002,
 UNP_CRC_LINE_SEL_ODD_EVEN                = 0x00000003,
-} UNP_CRC_LINE_SEL;
+पूर्ण UNP_CRC_LINE_SEL;
 
 /*
- * UNP_ROTATION_ANGLE enum
+ * UNP_ROTATION_ANGLE क्रमागत
  */
 
-typedef enum UNP_ROTATION_ANGLE {
+प्रकार क्रमागत UNP_ROTATION_ANGLE अणु
 UNP_ROTATION_ANGLE_0                     = 0x00000000,
 UNP_ROTATION_ANGLE_90                    = 0x00000001,
 UNP_ROTATION_ANGLE_180                   = 0x00000002,
@@ -8007,53 +8008,53 @@ UNP_ROTATION_ANGLE_0m                    = 0x00000004,
 UNP_ROTATION_ANGLE_90m                   = 0x00000005,
 UNP_ROTATION_ANGLE_180m                  = 0x00000006,
 UNP_ROTATION_ANGLE_270m                  = 0x00000007,
-} UNP_ROTATION_ANGLE;
+पूर्ण UNP_ROTATION_ANGLE;
 
 /*
- * UNP_PIXEL_DROP enum
+ * UNP_PIXEL_DROP क्रमागत
  */
 
-typedef enum UNP_PIXEL_DROP {
+प्रकार क्रमागत UNP_PIXEL_DROP अणु
 UNP_PIXEL_NO_DROP                        = 0x00000000,
 UNP_PIXEL_DROPPING                       = 0x00000001,
-} UNP_PIXEL_DROP;
+पूर्ण UNP_PIXEL_DROP;
 
 /*
- * UNP_BUFFER_MODE enum
+ * UNP_BUFFER_MODE क्रमागत
  */
 
-typedef enum UNP_BUFFER_MODE {
+प्रकार क्रमागत UNP_BUFFER_MODE अणु
 UNP_BUFFER_MODE_LUMA                     = 0x00000000,
 UNP_BUFFER_MODE_LUMA_CHROMA              = 0x00000001,
-} UNP_BUFFER_MODE;
+पूर्ण UNP_BUFFER_MODE;
 
 /*******************************************************
  * DP Enums
  *******************************************************/
 
 /*
- * DP_LINK_TRAINING_COMPLETE enum
+ * DP_LINK_TRAINING_COMPLETE क्रमागत
  */
 
-typedef enum DP_LINK_TRAINING_COMPLETE {
+प्रकार क्रमागत DP_LINK_TRAINING_COMPLETE अणु
 DP_LINK_TRAINING_NOT_COMPLETE            = 0x00000000,
 DP_LINK_TRAINING_ALREADY_COMPLETE        = 0x00000001,
-} DP_LINK_TRAINING_COMPLETE;
+पूर्ण DP_LINK_TRAINING_COMPLETE;
 
 /*
- * DP_EMBEDDED_PANEL_MODE enum
+ * DP_EMBEDDED_PANEL_MODE क्रमागत
  */
 
-typedef enum DP_EMBEDDED_PANEL_MODE {
+प्रकार क्रमागत DP_EMBEDDED_PANEL_MODE अणु
 DP_EXTERNAL_PANEL                        = 0x00000000,
 DP_EMBEDDED_PANEL                        = 0x00000001,
-} DP_EMBEDDED_PANEL_MODE;
+पूर्ण DP_EMBEDDED_PANEL_MODE;
 
 /*
- * DP_PIXEL_ENCODING enum
+ * DP_PIXEL_ENCODING क्रमागत
  */
 
-typedef enum DP_PIXEL_ENCODING {
+प्रकार क्रमागत DP_PIXEL_ENCODING अणु
 DP_PIXEL_ENCODING_RGB444                 = 0x00000000,
 DP_PIXEL_ENCODING_YCBCR422               = 0x00000001,
 DP_PIXEL_ENCODING_YCBCR444               = 0x00000002,
@@ -8061,670 +8062,670 @@ DP_PIXEL_ENCODING_RGB_WIDE_GAMUT         = 0x00000003,
 DP_PIXEL_ENCODING_Y_ONLY                 = 0x00000004,
 DP_PIXEL_ENCODING_YCBCR420               = 0x00000005,
 DP_PIXEL_ENCODING_RESERVED               = 0x00000006,
-} DP_PIXEL_ENCODING;
+पूर्ण DP_PIXEL_ENCODING;
 
 /*
- * DP_DYN_RANGE enum
+ * DP_DYN_RANGE क्रमागत
  */
 
-typedef enum DP_DYN_RANGE {
+प्रकार क्रमागत DP_DYN_RANGE अणु
 DP_DYN_VESA_RANGE                        = 0x00000000,
 DP_DYN_CEA_RANGE                         = 0x00000001,
-} DP_DYN_RANGE;
+पूर्ण DP_DYN_RANGE;
 
 /*
- * DP_YCBCR_RANGE enum
+ * DP_YCBCR_RANGE क्रमागत
  */
 
-typedef enum DP_YCBCR_RANGE {
+प्रकार क्रमागत DP_YCBCR_RANGE अणु
 DP_YCBCR_RANGE_BT601_5                   = 0x00000000,
 DP_YCBCR_RANGE_BT709_5                   = 0x00000001,
-} DP_YCBCR_RANGE;
+पूर्ण DP_YCBCR_RANGE;
 
 /*
- * DP_COMPONENT_DEPTH enum
+ * DP_COMPONENT_DEPTH क्रमागत
  */
 
-typedef enum DP_COMPONENT_DEPTH {
+प्रकार क्रमागत DP_COMPONENT_DEPTH अणु
 DP_COMPONENT_DEPTH_6BPC                  = 0x00000000,
 DP_COMPONENT_DEPTH_8BPC                  = 0x00000001,
 DP_COMPONENT_DEPTH_10BPC                 = 0x00000002,
 DP_COMPONENT_DEPTH_12BPC                 = 0x00000003,
 DP_COMPONENT_DEPTH_16BPC_RESERVED        = 0x00000004,
 DP_COMPONENT_DEPTH_RESERVED              = 0x00000005,
-} DP_COMPONENT_DEPTH;
+पूर्ण DP_COMPONENT_DEPTH;
 
 /*
- * DP_MSA_MISC0_OVERRIDE_ENABLE enum
+ * DP_MSA_MISC0_OVERRIDE_ENABLE क्रमागत
  */
 
-typedef enum DP_MSA_MISC0_OVERRIDE_ENABLE {
+प्रकार क्रमागत DP_MSA_MISC0_OVERRIDE_ENABLE अणु
 MSA_MISC0_OVERRIDE_DISABLE               = 0x00000000,
 MSA_MISC0_OVERRIDE_ENABLE                = 0x00000001,
-} DP_MSA_MISC0_OVERRIDE_ENABLE;
+पूर्ण DP_MSA_MISC0_OVERRIDE_ENABLE;
 
 /*
- * DP_MSA_MISC1_BIT7_OVERRIDE_ENABLE enum
+ * DP_MSA_MISC1_BIT7_OVERRIDE_ENABLE क्रमागत
  */
 
-typedef enum DP_MSA_MISC1_BIT7_OVERRIDE_ENABLE {
+प्रकार क्रमागत DP_MSA_MISC1_BIT7_OVERRIDE_ENABLE अणु
 MSA_MISC1_BIT7_OVERRIDE_DISABLE          = 0x00000000,
 MSA_MISC1_BIT7_OVERRIDE_ENABLE           = 0x00000001,
-} DP_MSA_MISC1_BIT7_OVERRIDE_ENABLE;
+पूर्ण DP_MSA_MISC1_BIT7_OVERRIDE_ENABLE;
 
 /*
- * DP_UDI_LANES enum
+ * DP_UDI_LANES क्रमागत
  */
 
-typedef enum DP_UDI_LANES {
+प्रकार क्रमागत DP_UDI_LANES अणु
 DP_UDI_1_LANE                            = 0x00000000,
 DP_UDI_2_LANES                           = 0x00000001,
 DP_UDI_LANES_RESERVED                    = 0x00000002,
 DP_UDI_4_LANES                           = 0x00000003,
-} DP_UDI_LANES;
+पूर्ण DP_UDI_LANES;
 
 /*
- * DP_VID_STREAM_DIS_DEFER enum
+ * DP_VID_STREAM_DIS_DEFER क्रमागत
  */
 
-typedef enum DP_VID_STREAM_DIS_DEFER {
+प्रकार क्रमागत DP_VID_STREAM_DIS_DEFER अणु
 DP_VID_STREAM_DIS_NO_DEFER               = 0x00000000,
 DP_VID_STREAM_DIS_DEFER_TO_HBLANK        = 0x00000001,
 DP_VID_STREAM_DIS_DEFER_TO_VBLANK        = 0x00000002,
-} DP_VID_STREAM_DIS_DEFER;
+पूर्ण DP_VID_STREAM_DIS_DEFER;
 
 /*
- * DP_STEER_OVERFLOW_ACK enum
+ * DP_STEER_OVERFLOW_ACK क्रमागत
  */
 
-typedef enum DP_STEER_OVERFLOW_ACK {
+प्रकार क्रमागत DP_STEER_OVERFLOW_ACK अणु
 DP_STEER_OVERFLOW_ACK_NO_EFFECT          = 0x00000000,
 DP_STEER_OVERFLOW_ACK_CLR_INTERRUPT      = 0x00000001,
-} DP_STEER_OVERFLOW_ACK;
+पूर्ण DP_STEER_OVERFLOW_ACK;
 
 /*
- * DP_STEER_OVERFLOW_MASK enum
+ * DP_STEER_OVERFLOW_MASK क्रमागत
  */
 
-typedef enum DP_STEER_OVERFLOW_MASK {
+प्रकार क्रमागत DP_STEER_OVERFLOW_MASK अणु
 DP_STEER_OVERFLOW_MASKED                 = 0x00000000,
 DP_STEER_OVERFLOW_UNMASK                 = 0x00000001,
-} DP_STEER_OVERFLOW_MASK;
+पूर्ण DP_STEER_OVERFLOW_MASK;
 
 /*
- * DP_TU_OVERFLOW_ACK enum
+ * DP_TU_OVERFLOW_ACK क्रमागत
  */
 
-typedef enum DP_TU_OVERFLOW_ACK {
+प्रकार क्रमागत DP_TU_OVERFLOW_ACK अणु
 DP_TU_OVERFLOW_ACK_NO_EFFECT             = 0x00000000,
 DP_TU_OVERFLOW_ACK_CLR_INTERRUPT         = 0x00000001,
-} DP_TU_OVERFLOW_ACK;
+पूर्ण DP_TU_OVERFLOW_ACK;
 
 /*
- * DPHY_ALT_SCRAMBLER_RESET_EN enum
+ * DPHY_ALT_SCRAMBLER_RESET_EN क्रमागत
  */
 
-typedef enum DPHY_ALT_SCRAMBLER_RESET_EN {
+प्रकार क्रमागत DPHY_ALT_SCRAMBLER_RESET_EN अणु
 DPHY_ALT_SCRAMBLER_REGULAR_RESET_VALUE   = 0x00000000,
 DPHY_ALT_SCRAMBLER_INTERNAL_RESET_SOLUTION  = 0x00000001,
-} DPHY_ALT_SCRAMBLER_RESET_EN;
+पूर्ण DPHY_ALT_SCRAMBLER_RESET_EN;
 
 /*
- * DPHY_ALT_SCRAMBLER_RESET_SEL enum
+ * DPHY_ALT_SCRAMBLER_RESET_SEL क्रमागत
  */
 
-typedef enum DPHY_ALT_SCRAMBLER_RESET_SEL {
+प्रकार क्रमागत DPHY_ALT_SCRAMBLER_RESET_SEL अणु
 DPHY_ALT_SCRAMBLER_RESET_SEL_EDP_RESET_VALUE  = 0x00000000,
 DPHY_ALT_SCRAMBLER_RESET_SEL_CUSTOM_RESET_VALUE  = 0x00000001,
-} DPHY_ALT_SCRAMBLER_RESET_SEL;
+पूर्ण DPHY_ALT_SCRAMBLER_RESET_SEL;
 
 /*
- * DP_VID_TIMING_MODE enum
+ * DP_VID_TIMING_MODE क्रमागत
  */
 
-typedef enum DP_VID_TIMING_MODE {
+प्रकार क्रमागत DP_VID_TIMING_MODE अणु
 DP_VID_TIMING_MODE_ASYNC                 = 0x00000000,
 DP_VID_TIMING_MODE_SYNC                  = 0x00000001,
-} DP_VID_TIMING_MODE;
+पूर्ण DP_VID_TIMING_MODE;
 
 /*
- * DP_VID_M_N_DOUBLE_BUFFER_MODE enum
+ * DP_VID_M_N_DOUBLE_BUFFER_MODE क्रमागत
  */
 
-typedef enum DP_VID_M_N_DOUBLE_BUFFER_MODE {
+प्रकार क्रमागत DP_VID_M_N_DOUBLE_BUFFER_MODE अणु
 DP_VID_M_N_DOUBLE_BUFFER_AFTER_VID_M_UPDATE  = 0x00000000,
 DP_VID_M_N_DOUBLE_BUFFER_AT_FRAME_START  = 0x00000001,
-} DP_VID_M_N_DOUBLE_BUFFER_MODE;
+पूर्ण DP_VID_M_N_DOUBLE_BUFFER_MODE;
 
 /*
- * DP_VID_M_N_GEN_EN enum
+ * DP_VID_M_N_GEN_EN क्रमागत
  */
 
-typedef enum DP_VID_M_N_GEN_EN {
+प्रकार क्रमागत DP_VID_M_N_GEN_EN अणु
 DP_VID_M_N_PROGRAMMED_VIA_REG            = 0x00000000,
 DP_VID_M_N_CALC_AUTO                     = 0x00000001,
-} DP_VID_M_N_GEN_EN;
+पूर्ण DP_VID_M_N_GEN_EN;
 
 /*
- * DP_VID_M_DOUBLE_VALUE_EN enum
+ * DP_VID_M_DOUBLE_VALUE_EN क्रमागत
  */
 
-typedef enum DP_VID_M_DOUBLE_VALUE_EN {
+प्रकार क्रमागत DP_VID_M_DOUBLE_VALUE_EN अणु
 DP_VID_M_INPUT_PIXEL_RATE                = 0x00000000,
 DP_VID_M_DOUBLE_INPUT_PIXEL_RATE         = 0x00000001,
-} DP_VID_M_DOUBLE_VALUE_EN;
+पूर्ण DP_VID_M_DOUBLE_VALUE_EN;
 
 /*
- * DP_VID_ENHANCED_FRAME_MODE enum
+ * DP_VID_ENHANCED_FRAME_MODE क्रमागत
  */
 
-typedef enum DP_VID_ENHANCED_FRAME_MODE {
+प्रकार क्रमागत DP_VID_ENHANCED_FRAME_MODE अणु
 VID_NORMAL_FRAME_MODE                    = 0x00000000,
 VID_ENHANCED_MODE                        = 0x00000001,
-} DP_VID_ENHANCED_FRAME_MODE;
+पूर्ण DP_VID_ENHANCED_FRAME_MODE;
 
 /*
- * DP_VID_MSA_TOP_FIELD_MODE enum
+ * DP_VID_MSA_TOP_FIELD_MODE क्रमागत
  */
 
-typedef enum DP_VID_MSA_TOP_FIELD_MODE {
+प्रकार क्रमागत DP_VID_MSA_TOP_FIELD_MODE अणु
 DP_TOP_FIELD_ONLY                        = 0x00000000,
 DP_TOP_PLUS_BOTTOM_FIELD                 = 0x00000001,
-} DP_VID_MSA_TOP_FIELD_MODE;
+पूर्ण DP_VID_MSA_TOP_FIELD_MODE;
 
 /*
- * DP_VID_VBID_FIELD_POL enum
+ * DP_VID_VBID_FIELD_POL क्रमागत
  */
 
-typedef enum DP_VID_VBID_FIELD_POL {
+प्रकार क्रमागत DP_VID_VBID_FIELD_POL अणु
 DP_VID_VBID_FIELD_POL_NORMAL             = 0x00000000,
 DP_VID_VBID_FIELD_POL_INV                = 0x00000001,
-} DP_VID_VBID_FIELD_POL;
+पूर्ण DP_VID_VBID_FIELD_POL;
 
 /*
- * DP_VID_STREAM_DISABLE_ACK enum
+ * DP_VID_STREAM_DISABLE_ACK क्रमागत
  */
 
-typedef enum DP_VID_STREAM_DISABLE_ACK {
+प्रकार क्रमागत DP_VID_STREAM_DISABLE_ACK अणु
 ID_STREAM_DISABLE_NO_ACK                 = 0x00000000,
 ID_STREAM_DISABLE_ACKED                  = 0x00000001,
-} DP_VID_STREAM_DISABLE_ACK;
+पूर्ण DP_VID_STREAM_DISABLE_ACK;
 
 /*
- * DP_VID_STREAM_DISABLE_MASK enum
+ * DP_VID_STREAM_DISABLE_MASK क्रमागत
  */
 
-typedef enum DP_VID_STREAM_DISABLE_MASK {
+प्रकार क्रमागत DP_VID_STREAM_DISABLE_MASK अणु
 VID_STREAM_DISABLE_MASKED                = 0x00000000,
 VID_STREAM_DISABLE_UNMASK                = 0x00000001,
-} DP_VID_STREAM_DISABLE_MASK;
+पूर्ण DP_VID_STREAM_DISABLE_MASK;
 
 /*
- * DPHY_ATEST_SEL_LANE0 enum
+ * DPHY_ATEST_SEL_LANE0 क्रमागत
  */
 
-typedef enum DPHY_ATEST_SEL_LANE0 {
+प्रकार क्रमागत DPHY_ATEST_SEL_LANE0 अणु
 DPHY_ATEST_LANE0_PRBS_PATTERN            = 0x00000000,
 DPHY_ATEST_LANE0_REG_PATTERN             = 0x00000001,
-} DPHY_ATEST_SEL_LANE0;
+पूर्ण DPHY_ATEST_SEL_LANE0;
 
 /*
- * DPHY_ATEST_SEL_LANE1 enum
+ * DPHY_ATEST_SEL_LANE1 क्रमागत
  */
 
-typedef enum DPHY_ATEST_SEL_LANE1 {
+प्रकार क्रमागत DPHY_ATEST_SEL_LANE1 अणु
 DPHY_ATEST_LANE1_PRBS_PATTERN            = 0x00000000,
 DPHY_ATEST_LANE1_REG_PATTERN             = 0x00000001,
-} DPHY_ATEST_SEL_LANE1;
+पूर्ण DPHY_ATEST_SEL_LANE1;
 
 /*
- * DPHY_ATEST_SEL_LANE2 enum
+ * DPHY_ATEST_SEL_LANE2 क्रमागत
  */
 
-typedef enum DPHY_ATEST_SEL_LANE2 {
+प्रकार क्रमागत DPHY_ATEST_SEL_LANE2 अणु
 DPHY_ATEST_LANE2_PRBS_PATTERN            = 0x00000000,
 DPHY_ATEST_LANE2_REG_PATTERN             = 0x00000001,
-} DPHY_ATEST_SEL_LANE2;
+पूर्ण DPHY_ATEST_SEL_LANE2;
 
 /*
- * DPHY_ATEST_SEL_LANE3 enum
+ * DPHY_ATEST_SEL_LANE3 क्रमागत
  */
 
-typedef enum DPHY_ATEST_SEL_LANE3 {
+प्रकार क्रमागत DPHY_ATEST_SEL_LANE3 अणु
 DPHY_ATEST_LANE3_PRBS_PATTERN            = 0x00000000,
 DPHY_ATEST_LANE3_REG_PATTERN             = 0x00000001,
-} DPHY_ATEST_SEL_LANE3;
+पूर्ण DPHY_ATEST_SEL_LANE3;
 
 /*
- * DPHY_SCRAMBLER_SEL enum
+ * DPHY_SCRAMBLER_SEL क्रमागत
  */
 
-typedef enum DPHY_SCRAMBLER_SEL {
+प्रकार क्रमागत DPHY_SCRAMBLER_SEL अणु
 DPHY_SCRAMBLER_SEL_LANE_DATA             = 0x00000000,
 DPHY_SCRAMBLER_SEL_DBG_DATA              = 0x00000001,
-} DPHY_SCRAMBLER_SEL;
+पूर्ण DPHY_SCRAMBLER_SEL;
 
 /*
- * DPHY_BYPASS enum
+ * DPHY_BYPASS क्रमागत
  */
 
-typedef enum DPHY_BYPASS {
+प्रकार क्रमागत DPHY_BYPASS अणु
 DPHY_8B10B_OUTPUT                        = 0x00000000,
 DPHY_DBG_OUTPUT                          = 0x00000001,
-} DPHY_BYPASS;
+पूर्ण DPHY_BYPASS;
 
 /*
- * DPHY_SKEW_BYPASS enum
+ * DPHY_SKEW_BYPASS क्रमागत
  */
 
-typedef enum DPHY_SKEW_BYPASS {
+प्रकार क्रमागत DPHY_SKEW_BYPASS अणु
 DPHY_WITH_SKEW                           = 0x00000000,
 DPHY_NO_SKEW                             = 0x00000001,
-} DPHY_SKEW_BYPASS;
+पूर्ण DPHY_SKEW_BYPASS;
 
 /*
- * DPHY_TRAINING_PATTERN_SEL enum
+ * DPHY_TRAINING_PATTERN_SEL क्रमागत
  */
 
-typedef enum DPHY_TRAINING_PATTERN_SEL {
+प्रकार क्रमागत DPHY_TRAINING_PATTERN_SEL अणु
 DPHY_TRAINING_PATTERN_1                  = 0x00000000,
 DPHY_TRAINING_PATTERN_2                  = 0x00000001,
 DPHY_TRAINING_PATTERN_3                  = 0x00000002,
 DPHY_TRAINING_PATTERN_4                  = 0x00000003,
-} DPHY_TRAINING_PATTERN_SEL;
+पूर्ण DPHY_TRAINING_PATTERN_SEL;
 
 /*
- * DPHY_8B10B_RESET enum
+ * DPHY_8B10B_RESET क्रमागत
  */
 
-typedef enum DPHY_8B10B_RESET {
+प्रकार क्रमागत DPHY_8B10B_RESET अणु
 DPHY_8B10B_NOT_RESET                     = 0x00000000,
 DPHY_8B10B_RESETET                       = 0x00000001,
-} DPHY_8B10B_RESET;
+पूर्ण DPHY_8B10B_RESET;
 
 /*
- * DP_DPHY_8B10B_EXT_DISP enum
+ * DP_DPHY_8B10B_EXT_DISP क्रमागत
  */
 
-typedef enum DP_DPHY_8B10B_EXT_DISP {
+प्रकार क्रमागत DP_DPHY_8B10B_EXT_DISP अणु
 DP_DPHY_8B10B_EXT_DISP_ZERO              = 0x00000000,
 DP_DPHY_8B10B_EXT_DISP_ONE               = 0x00000001,
-} DP_DPHY_8B10B_EXT_DISP;
+पूर्ण DP_DPHY_8B10B_EXT_DISP;
 
 /*
- * DPHY_8B10B_CUR_DISP enum
+ * DPHY_8B10B_CUR_DISP क्रमागत
  */
 
-typedef enum DPHY_8B10B_CUR_DISP {
+प्रकार क्रमागत DPHY_8B10B_CUR_DISP अणु
 DPHY_8B10B_CUR_DISP_ZERO                 = 0x00000000,
 DPHY_8B10B_CUR_DISP_ONE                  = 0x00000001,
-} DPHY_8B10B_CUR_DISP;
+पूर्ण DPHY_8B10B_CUR_DISP;
 
 /*
- * DPHY_PRBS_EN enum
+ * DPHY_PRBS_EN क्रमागत
  */
 
-typedef enum DPHY_PRBS_EN {
+प्रकार क्रमागत DPHY_PRBS_EN अणु
 DPHY_PRBS_DISABLE                        = 0x00000000,
 DPHY_PRBS_ENABLE                         = 0x00000001,
-} DPHY_PRBS_EN;
+पूर्ण DPHY_PRBS_EN;
 
 /*
- * DPHY_PRBS_SEL enum
+ * DPHY_PRBS_SEL क्रमागत
  */
 
-typedef enum DPHY_PRBS_SEL {
+प्रकार क्रमागत DPHY_PRBS_SEL अणु
 DPHY_PRBS7_SELECTED                      = 0x00000000,
 DPHY_PRBS23_SELECTED                     = 0x00000001,
 DPHY_PRBS11_SELECTED                     = 0x00000002,
-} DPHY_PRBS_SEL;
+पूर्ण DPHY_PRBS_SEL;
 
 /*
- * DPHY_SCRAMBLER_DIS enum
+ * DPHY_SCRAMBLER_DIS क्रमागत
  */
 
-typedef enum DPHY_SCRAMBLER_DIS {
+प्रकार क्रमागत DPHY_SCRAMBLER_DIS अणु
 DPHY_SCR_ENABLED                         = 0x00000000,
 DPHY_SCR_DISABLED                        = 0x00000001,
-} DPHY_SCRAMBLER_DIS;
+पूर्ण DPHY_SCRAMBLER_DIS;
 
 /*
- * DPHY_SCRAMBLER_ADVANCE enum
+ * DPHY_SCRAMBLER_ADVANCE क्रमागत
  */
 
-typedef enum DPHY_SCRAMBLER_ADVANCE {
+प्रकार क्रमागत DPHY_SCRAMBLER_ADVANCE अणु
 DPHY_DPHY_SCRAMBLER_ADVANCE_ON_DATA_SYMBOL_ONLY  = 0x00000000,
 DPHY_SCRAMBLER_ADVANCE_ON_BOTH_DATA_AND_CTRL  = 0x00000001,
-} DPHY_SCRAMBLER_ADVANCE;
+पूर्ण DPHY_SCRAMBLER_ADVANCE;
 
 /*
- * DPHY_SCRAMBLER_KCODE enum
+ * DPHY_SCRAMBLER_KCODE क्रमागत
  */
 
-typedef enum DPHY_SCRAMBLER_KCODE {
+प्रकार क्रमागत DPHY_SCRAMBLER_KCODE अणु
 DPHY_SCRAMBLER_KCODE_DISABLED            = 0x00000000,
 DPHY_SCRAMBLER_KCODE_ENABLED             = 0x00000001,
-} DPHY_SCRAMBLER_KCODE;
+पूर्ण DPHY_SCRAMBLER_KCODE;
 
 /*
- * DPHY_LOAD_BS_COUNT_START enum
+ * DPHY_LOAD_BS_COUNT_START क्रमागत
  */
 
-typedef enum DPHY_LOAD_BS_COUNT_START {
+प्रकार क्रमागत DPHY_LOAD_BS_COUNT_START अणु
 DPHY_LOAD_BS_COUNT_STARTED               = 0x00000000,
 DPHY_LOAD_BS_COUNT_NOT_STARTED           = 0x00000001,
-} DPHY_LOAD_BS_COUNT_START;
+पूर्ण DPHY_LOAD_BS_COUNT_START;
 
 /*
- * DPHY_CRC_EN enum
+ * DPHY_CRC_EN क्रमागत
  */
 
-typedef enum DPHY_CRC_EN {
+प्रकार क्रमागत DPHY_CRC_EN अणु
 DPHY_CRC_DISABLED                        = 0x00000000,
 DPHY_CRC_ENABLED                         = 0x00000001,
-} DPHY_CRC_EN;
+पूर्ण DPHY_CRC_EN;
 
 /*
- * DPHY_CRC_CONT_EN enum
+ * DPHY_CRC_CONT_EN क्रमागत
  */
 
-typedef enum DPHY_CRC_CONT_EN {
+प्रकार क्रमागत DPHY_CRC_CONT_EN अणु
 DPHY_CRC_ONE_SHOT                        = 0x00000000,
 DPHY_CRC_CONTINUOUS                      = 0x00000001,
-} DPHY_CRC_CONT_EN;
+पूर्ण DPHY_CRC_CONT_EN;
 
 /*
- * DPHY_CRC_FIELD enum
+ * DPHY_CRC_FIELD क्रमागत
  */
 
-typedef enum DPHY_CRC_FIELD {
+प्रकार क्रमागत DPHY_CRC_FIELD अणु
 DPHY_CRC_START_FROM_TOP_FIELD            = 0x00000000,
 DPHY_CRC_START_FROM_BOTTOM_FIELD         = 0x00000001,
-} DPHY_CRC_FIELD;
+पूर्ण DPHY_CRC_FIELD;
 
 /*
- * DPHY_CRC_SEL enum
+ * DPHY_CRC_SEL क्रमागत
  */
 
-typedef enum DPHY_CRC_SEL {
+प्रकार क्रमागत DPHY_CRC_SEL अणु
 DPHY_CRC_LANE0_SELECTED                  = 0x00000000,
 DPHY_CRC_LANE1_SELECTED                  = 0x00000001,
 DPHY_CRC_LANE2_SELECTED                  = 0x00000002,
 DPHY_CRC_LANE3_SELECTED                  = 0x00000003,
-} DPHY_CRC_SEL;
+पूर्ण DPHY_CRC_SEL;
 
 /*
- * DPHY_RX_FAST_TRAINING_CAPABLE enum
+ * DPHY_RX_FAST_TRAINING_CAPABLE क्रमागत
  */
 
-typedef enum DPHY_RX_FAST_TRAINING_CAPABLE {
+प्रकार क्रमागत DPHY_RX_FAST_TRAINING_CAPABLE अणु
 DPHY_FAST_TRAINING_NOT_CAPABLE_0         = 0x00000000,
 DPHY_FAST_TRAINING_CAPABLE               = 0x00000001,
-} DPHY_RX_FAST_TRAINING_CAPABLE;
+पूर्ण DPHY_RX_FAST_TRAINING_CAPABLE;
 
 /*
- * DP_SEC_COLLISION_ACK enum
+ * DP_SEC_COLLISION_ACK क्रमागत
  */
 
-typedef enum DP_SEC_COLLISION_ACK {
+प्रकार क्रमागत DP_SEC_COLLISION_ACK अणु
 DP_SEC_COLLISION_ACK_NO_EFFECT           = 0x00000000,
 DP_SEC_COLLISION_ACK_CLR_FLAG            = 0x00000001,
-} DP_SEC_COLLISION_ACK;
+पूर्ण DP_SEC_COLLISION_ACK;
 
 /*
- * DP_SEC_AUDIO_MUTE enum
+ * DP_SEC_AUDIO_MUTE क्रमागत
  */
 
-typedef enum DP_SEC_AUDIO_MUTE {
+प्रकार क्रमागत DP_SEC_AUDIO_MUTE अणु
 DP_SEC_AUDIO_MUTE_HW_CTRL                = 0x00000000,
 DP_SEC_AUDIO_MUTE_SW_CTRL                = 0x00000001,
-} DP_SEC_AUDIO_MUTE;
+पूर्ण DP_SEC_AUDIO_MUTE;
 
 /*
- * DP_SEC_TIMESTAMP_MODE enum
+ * DP_SEC_TIMESTAMP_MODE क्रमागत
  */
 
-typedef enum DP_SEC_TIMESTAMP_MODE {
+प्रकार क्रमागत DP_SEC_TIMESTAMP_MODE अणु
 DP_SEC_TIMESTAMP_PROGRAMMABLE_MODE       = 0x00000000,
 DP_SEC_TIMESTAMP_AUTO_CALC_MODE          = 0x00000001,
-} DP_SEC_TIMESTAMP_MODE;
+पूर्ण DP_SEC_TIMESTAMP_MODE;
 
 /*
- * DP_SEC_ASP_PRIORITY enum
+ * DP_SEC_ASP_PRIORITY क्रमागत
  */
 
-typedef enum DP_SEC_ASP_PRIORITY {
+प्रकार क्रमागत DP_SEC_ASP_PRIORITY अणु
 DP_SEC_ASP_LOW_PRIORITY                  = 0x00000000,
 DP_SEC_ASP_HIGH_PRIORITY                 = 0x00000001,
-} DP_SEC_ASP_PRIORITY;
+पूर्ण DP_SEC_ASP_PRIORITY;
 
 /*
- * DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE enum
+ * DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE क्रमागत
  */
 
-typedef enum DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE {
+प्रकार क्रमागत DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE अणु
 DP_SEC_ASP_CHANNEL_COUNT_FROM_AZ         = 0x00000000,
 DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE_ENABLED  = 0x00000001,
-} DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE;
+पूर्ण DP_SEC_ASP_CHANNEL_COUNT_OVERRIDE;
 
 /*
- * DP_MSE_SAT_UPDATE_ACT enum
+ * DP_MSE_SAT_UPDATE_ACT क्रमागत
  */
 
-typedef enum DP_MSE_SAT_UPDATE_ACT {
+प्रकार क्रमागत DP_MSE_SAT_UPDATE_ACT अणु
 DP_MSE_SAT_UPDATE_NO_ACTION              = 0x00000000,
 DP_MSE_SAT_UPDATE_WITH_TRIGGER           = 0x00000001,
 DP_MSE_SAT_UPDATE_WITHOUT_TRIGGER        = 0x00000002,
-} DP_MSE_SAT_UPDATE_ACT;
+पूर्ण DP_MSE_SAT_UPDATE_ACT;
 
 /*
- * DP_MSE_LINK_LINE enum
+ * DP_MSE_LINK_LINE क्रमागत
  */
 
-typedef enum DP_MSE_LINK_LINE {
+प्रकार क्रमागत DP_MSE_LINK_LINE अणु
 DP_MSE_LINK_LINE_32_MTP_LONG             = 0x00000000,
 DP_MSE_LINK_LINE_64_MTP_LONG             = 0x00000001,
 DP_MSE_LINK_LINE_128_MTP_LONG            = 0x00000002,
 DP_MSE_LINK_LINE_256_MTP_LONG            = 0x00000003,
-} DP_MSE_LINK_LINE;
+पूर्ण DP_MSE_LINK_LINE;
 
 /*
- * DP_MSE_BLANK_CODE enum
+ * DP_MSE_BLANK_CODE क्रमागत
  */
 
-typedef enum DP_MSE_BLANK_CODE {
+प्रकार क्रमागत DP_MSE_BLANK_CODE अणु
 DP_MSE_BLANK_CODE_SF_FILLED              = 0x00000000,
 DP_MSE_BLANK_CODE_ZERO_FILLED            = 0x00000001,
-} DP_MSE_BLANK_CODE;
+पूर्ण DP_MSE_BLANK_CODE;
 
 /*
- * DP_MSE_TIMESTAMP_MODE enum
+ * DP_MSE_TIMESTAMP_MODE क्रमागत
  */
 
-typedef enum DP_MSE_TIMESTAMP_MODE {
+प्रकार क्रमागत DP_MSE_TIMESTAMP_MODE अणु
 DP_MSE_TIMESTAMP_CALC_BASED_ON_LINK_RATE  = 0x00000000,
 DP_MSE_TIMESTAMP_CALC_BASED_ON_VC_RATE   = 0x00000001,
-} DP_MSE_TIMESTAMP_MODE;
+पूर्ण DP_MSE_TIMESTAMP_MODE;
 
 /*
- * DP_MSE_ZERO_ENCODER enum
+ * DP_MSE_ZERO_ENCODER क्रमागत
  */
 
-typedef enum DP_MSE_ZERO_ENCODER {
+प्रकार क्रमागत DP_MSE_ZERO_ENCODER अणु
 DP_MSE_NOT_ZERO_FE_ENCODER               = 0x00000000,
 DP_MSE_ZERO_FE_ENCODER                   = 0x00000001,
-} DP_MSE_ZERO_ENCODER;
+पूर्ण DP_MSE_ZERO_ENCODER;
 
 /*
- * DP_MSE_OUTPUT_DPDBG_DATA enum
+ * DP_MSE_OUTPUT_DPDBG_DATA क्रमागत
  */
 
-typedef enum DP_MSE_OUTPUT_DPDBG_DATA {
+प्रकार क्रमागत DP_MSE_OUTPUT_DPDBG_DATA अणु
 DP_MSE_OUTPUT_DPDBG_DATA_DIS             = 0x00000000,
 DP_MSE_OUTPUT_DPDBG_DATA_EN              = 0x00000001,
-} DP_MSE_OUTPUT_DPDBG_DATA;
+पूर्ण DP_MSE_OUTPUT_DPDBG_DATA;
 
 /*
- * DP_DPHY_HBR2_PATTERN_CONTROL_MODE enum
+ * DP_DPHY_HBR2_PATTERN_CONTROL_MODE क्रमागत
  */
 
-typedef enum DP_DPHY_HBR2_PATTERN_CONTROL_MODE {
+प्रकार क्रमागत DP_DPHY_HBR2_PATTERN_CONTROL_MODE अणु
 DP_DPHY_HBR2_PASS_THROUGH                = 0x00000000,
 DP_DPHY_HBR2_PATTERN_1                   = 0x00000001,
 DP_DPHY_HBR2_PATTERN_2_NEG               = 0x00000002,
 DP_DPHY_HBR2_PATTERN_3                   = 0x00000003,
 DP_DPHY_HBR2_PATTERN_2_POS               = 0x00000006,
-} DP_DPHY_HBR2_PATTERN_CONTROL_MODE;
+पूर्ण DP_DPHY_HBR2_PATTERN_CONTROL_MODE;
 
 /*
- * DPHY_CRC_MST_PHASE_ERROR_ACK enum
+ * DPHY_CRC_MST_PHASE_ERROR_ACK क्रमागत
  */
 
-typedef enum DPHY_CRC_MST_PHASE_ERROR_ACK {
+प्रकार क्रमागत DPHY_CRC_MST_PHASE_ERROR_ACK अणु
 DPHY_CRC_MST_PHASE_ERROR_NO_ACK          = 0x00000000,
 DPHY_CRC_MST_PHASE_ERROR_ACKED           = 0x00000001,
-} DPHY_CRC_MST_PHASE_ERROR_ACK;
+पूर्ण DPHY_CRC_MST_PHASE_ERROR_ACK;
 
 /*
- * DPHY_SW_FAST_TRAINING_START enum
+ * DPHY_SW_FAST_TRAINING_START क्रमागत
  */
 
-typedef enum DPHY_SW_FAST_TRAINING_START {
+प्रकार क्रमागत DPHY_SW_FAST_TRAINING_START अणु
 DPHY_SW_FAST_TRAINING_NOT_STARTED        = 0x00000000,
 DPHY_SW_FAST_TRAINING_STARTED            = 0x00000001,
-} DPHY_SW_FAST_TRAINING_START;
+पूर्ण DPHY_SW_FAST_TRAINING_START;
 
 /*
- * DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_EN enum
+ * DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_EN क्रमागत
  */
 
-typedef enum DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_EN {
+प्रकार क्रमागत DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_EN अणु
 DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_DISABLED  = 0x00000000,
 DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_ENABLED  = 0x00000001,
-} DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_EN;
+पूर्ण DP_DPHY_FAST_TRAINING_VBLANK_EDGE_DETECT_EN;
 
 /*
- * DP_DPHY_FAST_TRAINING_COMPLETE_MASK enum
+ * DP_DPHY_FAST_TRAINING_COMPLETE_MASK क्रमागत
  */
 
-typedef enum DP_DPHY_FAST_TRAINING_COMPLETE_MASK {
+प्रकार क्रमागत DP_DPHY_FAST_TRAINING_COMPLETE_MASK अणु
 DP_DPHY_FAST_TRAINING_COMPLETE_MASKED    = 0x00000000,
 DP_DPHY_FAST_TRAINING_COMPLETE_NOT_MASKED  = 0x00000001,
-} DP_DPHY_FAST_TRAINING_COMPLETE_MASK;
+पूर्ण DP_DPHY_FAST_TRAINING_COMPLETE_MASK;
 
 /*
- * DP_DPHY_FAST_TRAINING_COMPLETE_ACK enum
+ * DP_DPHY_FAST_TRAINING_COMPLETE_ACK क्रमागत
  */
 
-typedef enum DP_DPHY_FAST_TRAINING_COMPLETE_ACK {
+प्रकार क्रमागत DP_DPHY_FAST_TRAINING_COMPLETE_ACK अणु
 DP_DPHY_FAST_TRAINING_COMPLETE_NOT_ACKED  = 0x00000000,
 DP_DPHY_FAST_TRAINING_COMPLETE_ACKED     = 0x00000001,
-} DP_DPHY_FAST_TRAINING_COMPLETE_ACK;
+पूर्ण DP_DPHY_FAST_TRAINING_COMPLETE_ACK;
 
 /*
- * DP_MSA_V_TIMING_OVERRIDE_EN enum
+ * DP_MSA_V_TIMING_OVERRIDE_EN क्रमागत
  */
 
-typedef enum DP_MSA_V_TIMING_OVERRIDE_EN {
+प्रकार क्रमागत DP_MSA_V_TIMING_OVERRIDE_EN अणु
 MSA_V_TIMING_OVERRIDE_DISABLED           = 0x00000000,
 MSA_V_TIMING_OVERRIDE_ENABLED            = 0x00000001,
-} DP_MSA_V_TIMING_OVERRIDE_EN;
+पूर्ण DP_MSA_V_TIMING_OVERRIDE_EN;
 
 /*
- * DP_SEC_GSP0_PRIORITY enum
+ * DP_SEC_GSP0_PRIORITY क्रमागत
  */
 
-typedef enum DP_SEC_GSP0_PRIORITY {
+प्रकार क्रमागत DP_SEC_GSP0_PRIORITY अणु
 SEC_GSP0_PRIORITY_LOW                    = 0x00000000,
 SEC_GSP0_PRIORITY_HIGH                   = 0x00000001,
-} DP_SEC_GSP0_PRIORITY;
+पूर्ण DP_SEC_GSP0_PRIORITY;
 
 /*
- * DP_SEC_GSP0_SEND enum
+ * DP_SEC_GSP0_SEND क्रमागत
  */
 
-typedef enum DP_SEC_GSP0_SEND {
+प्रकार क्रमागत DP_SEC_GSP0_SEND अणु
 NOT_SENT                                 = 0x00000000,
 FORCE_SENT                               = 0x00000001,
-} DP_SEC_GSP0_SEND;
+पूर्ण DP_SEC_GSP0_SEND;
 
 /*******************************************************
  * COL_MAN Enums
  *******************************************************/
 
 /*
- * COL_MAN_UPDATE_LOCK enum
+ * COL_MAN_UPDATE_LOCK क्रमागत
  */
 
-typedef enum COL_MAN_UPDATE_LOCK {
+प्रकार क्रमागत COL_MAN_UPDATE_LOCK अणु
 COL_MAN_UPDATE_UNLOCKED                  = 0x00000000,
 COL_MAN_UPDATE_LOCKED                    = 0x00000001,
-} COL_MAN_UPDATE_LOCK;
+पूर्ण COL_MAN_UPDATE_LOCK;
 
 /*
- * COL_MAN_DISABLE_MULTIPLE_UPDATE enum
+ * COL_MAN_DISABLE_MULTIPLE_UPDATE क्रमागत
  */
 
-typedef enum COL_MAN_DISABLE_MULTIPLE_UPDATE {
+प्रकार क्रमागत COL_MAN_DISABLE_MULTIPLE_UPDATE अणु
 COL_MAN_MULTIPLE_UPDATE                  = 0x00000000,
 COL_MAN_MULTIPLE_UPDAT_EDISABLE          = 0x00000001,
-} COL_MAN_DISABLE_MULTIPLE_UPDATE;
+पूर्ण COL_MAN_DISABLE_MULTIPLE_UPDATE;
 
 /*
- * COL_MAN_INPUTCSC_MODE enum
+ * COL_MAN_INPUTCSC_MODE क्रमागत
  */
 
-typedef enum COL_MAN_INPUTCSC_MODE {
+प्रकार क्रमागत COL_MAN_INPUTCSC_MODE अणु
 INPUTCSC_MODE_BYPASS                     = 0x00000000,
 INPUTCSC_MODE_A                          = 0x00000001,
 INPUTCSC_MODE_B                          = 0x00000002,
 INPUTCSC_MODE_UNITY                      = 0x00000003,
-} COL_MAN_INPUTCSC_MODE;
+पूर्ण COL_MAN_INPUTCSC_MODE;
 
 /*
- * COL_MAN_INPUTCSC_TYPE enum
+ * COL_MAN_INPUTCSC_TYPE क्रमागत
  */
 
-typedef enum COL_MAN_INPUTCSC_TYPE {
+प्रकार क्रमागत COL_MAN_INPUTCSC_TYPE अणु
 INPUTCSC_TYPE_12_0                       = 0x00000000,
 INPUTCSC_TYPE_10_2                       = 0x00000001,
 INPUTCSC_TYPE_8_4                        = 0x00000002,
-} COL_MAN_INPUTCSC_TYPE;
+पूर्ण COL_MAN_INPUTCSC_TYPE;
 
 /*
- * COL_MAN_INPUTCSC_CONVERT enum
+ * COL_MAN_INPUTCSC_CONVERT क्रमागत
  */
 
-typedef enum COL_MAN_INPUTCSC_CONVERT {
+प्रकार क्रमागत COL_MAN_INPUTCSC_CONVERT अणु
 INPUTCSC_ROUND                           = 0x00000000,
 INPUTCSC_TRUNCATE                        = 0x00000001,
-} COL_MAN_INPUTCSC_CONVERT;
+पूर्ण COL_MAN_INPUTCSC_CONVERT;
 
 /*
- * COL_MAN_PRESCALE_MODE enum
+ * COL_MAN_PRESCALE_MODE क्रमागत
  */
 
-typedef enum COL_MAN_PRESCALE_MODE {
+प्रकार क्रमागत COL_MAN_PRESCALE_MODE अणु
 PRESCALE_MODE_BYPASS                     = 0x00000000,
 PRESCALE_MODE_PROGRAM                    = 0x00000001,
 PRESCALE_MODE_UNITY                      = 0x00000002,
-} COL_MAN_PRESCALE_MODE;
+पूर्ण COL_MAN_PRESCALE_MODE;
 
 /*
- * COL_MAN_INPUT_GAMMA_MODE enum
+ * COL_MAN_INPUT_GAMMA_MODE क्रमागत
  */
 
-typedef enum COL_MAN_INPUT_GAMMA_MODE {
+प्रकार क्रमागत COL_MAN_INPUT_GAMMA_MODE अणु
 INGAMMA_MODE_BYPASS                      = 0x00000000,
 INGAMMA_MODE_FIX                         = 0x00000001,
 INGAMMA_MODE_FLOAT                       = 0x00000002,
-} COL_MAN_INPUT_GAMMA_MODE;
+पूर्ण COL_MAN_INPUT_GAMMA_MODE;
 
 /*
- * COL_MAN_OUTPUT_CSC_MODE enum
+ * COL_MAN_OUTPUT_CSC_MODE क्रमागत
  */
 
-typedef enum COL_MAN_OUTPUT_CSC_MODE {
+प्रकार क्रमागत COL_MAN_OUTPUT_CSC_MODE अणु
 COL_MAN_OUTPUT_CSC_BYPASS                = 0x00000000,
 COL_MAN_OUTPUT_CSC_RGB                   = 0x00000001,
 COL_MAN_OUTPUT_CSC_YCrCb601              = 0x00000002,
@@ -8732,60 +8733,60 @@ COL_MAN_OUTPUT_CSC_YCrCb709              = 0x00000003,
 COL_MAN_OUTPUT_CSC_A                     = 0x00000004,
 COL_MAN_OUTPUT_CSC_B                     = 0x00000005,
 COL_MAN_OUTPUT_CSC_UNITY                 = 0x00000006,
-} COL_MAN_OUTPUT_CSC_MODE;
+पूर्ण COL_MAN_OUTPUT_CSC_MODE;
 
 /*
- * COL_MAN_DENORM_CLAMP_CONTROL enum
+ * COL_MAN_DENORM_CLAMP_CONTROL क्रमागत
  */
 
-typedef enum COL_MAN_DENORM_CLAMP_CONTROL {
+प्रकार क्रमागत COL_MAN_DENORM_CLAMP_CONTROL अणु
 DENORM_CLAMP_MODE_UNITY                  = 0x00000000,
 DENORM_CLAMP_MODE_8                      = 0x00000001,
 DENORM_CLAMP_MODE_10                     = 0x00000002,
 DENORM_CLAMP_MODE_12                     = 0x00000003,
-} COL_MAN_DENORM_CLAMP_CONTROL;
+पूर्ण COL_MAN_DENORM_CLAMP_CONTROL;
 
 /*
- * COL_MAN_REGAMMA_MODE_CONTROL enum
+ * COL_MAN_REGAMMA_MODE_CONTROL क्रमागत
  */
 
-typedef enum COL_MAN_REGAMMA_MODE_CONTROL {
+प्रकार क्रमागत COL_MAN_REGAMMA_MODE_CONTROL अणु
 COL_MAN_REGAMMA_MODE_BYPASS              = 0x00000000,
 COL_MAN_REGAMMA_MODE_ROM_A               = 0x00000001,
 COL_MAN_REGAMMA_MODE_ROM_B               = 0x00000002,
 COL_MAN_REGAMMA_MODE_A                   = 0x00000003,
 COL_MAN_REGAMMA_MODE_B                   = 0x00000004,
-} COL_MAN_REGAMMA_MODE_CONTROL;
+पूर्ण COL_MAN_REGAMMA_MODE_CONTROL;
 
 /*
- * COL_MAN_GLOBAL_PASSTHROUGH_ENABLE enum
+ * COL_MAN_GLOBAL_PASSTHROUGH_ENABLE क्रमागत
  */
 
-typedef enum COL_MAN_GLOBAL_PASSTHROUGH_ENABLE {
+प्रकार क्रमागत COL_MAN_GLOBAL_PASSTHROUGH_ENABLE अणु
 CM_GLOBAL_PASSTHROUGH_DISBALE            = 0x00000000,
 CM_GLOBAL_PASSTHROUGH_ENABLE             = 0x00000001,
-} COL_MAN_GLOBAL_PASSTHROUGH_ENABLE;
+पूर्ण COL_MAN_GLOBAL_PASSTHROUGH_ENABLE;
 
 /*
- * COL_MAN_DEGAMMA_MODE enum
+ * COL_MAN_DEGAMMA_MODE क्रमागत
  */
 
-typedef enum COL_MAN_DEGAMMA_MODE {
+प्रकार क्रमागत COL_MAN_DEGAMMA_MODE अणु
 DEGAMMA_MODE_BYPASS                      = 0x00000000,
 DEGAMMA_MODE_A                           = 0x00000001,
 DEGAMMA_MODE_B                           = 0x00000002,
-} COL_MAN_DEGAMMA_MODE;
+पूर्ण COL_MAN_DEGAMMA_MODE;
 
 /*
- * COL_MAN_GAMUT_REMAP_MODE enum
+ * COL_MAN_GAMUT_REMAP_MODE क्रमागत
  */
 
-typedef enum COL_MAN_GAMUT_REMAP_MODE {
+प्रकार क्रमागत COL_MAN_GAMUT_REMAP_MODE अणु
 GAMUT_REMAP_MODE_BYPASS                  = 0x00000000,
 GAMUT_REMAP_MODE_1                       = 0x00000001,
 GAMUT_REMAP_MODE_2                       = 0x00000002,
 GAMUT_REMAP_MODE_3                       = 0x00000003,
-} COL_MAN_GAMUT_REMAP_MODE;
+पूर्ण COL_MAN_GAMUT_REMAP_MODE;
 
 /*******************************************************
  * MCIF_WB Enums
@@ -8796,117 +8797,117 @@ GAMUT_REMAP_MODE_3                       = 0x00000003,
  *******************************************************/
 
 /*
- * DP_AUX_CONTROL_HPD_SEL enum
+ * DP_AUX_CONTROL_HPD_SEL क्रमागत
  */
 
-typedef enum DP_AUX_CONTROL_HPD_SEL {
+प्रकार क्रमागत DP_AUX_CONTROL_HPD_SEL अणु
 DP_AUX_CONTROL_HPD1_SELECTED             = 0x00000000,
 DP_AUX_CONTROL_HPD2_SELECTED             = 0x00000001,
 DP_AUX_CONTROL_HPD3_SELECTED             = 0x00000002,
 DP_AUX_CONTROL_HPD4_SELECTED             = 0x00000003,
 DP_AUX_CONTROL_HPD5_SELECTED             = 0x00000004,
 DP_AUX_CONTROL_HPD6_SELECTED             = 0x00000005,
-} DP_AUX_CONTROL_HPD_SEL;
+पूर्ण DP_AUX_CONTROL_HPD_SEL;
 
 /*
- * DP_AUX_CONTROL_TEST_MODE enum
+ * DP_AUX_CONTROL_TEST_MODE क्रमागत
  */
 
-typedef enum DP_AUX_CONTROL_TEST_MODE {
+प्रकार क्रमागत DP_AUX_CONTROL_TEST_MODE अणु
 DP_AUX_CONTROL_TEST_MODE_DISABLE         = 0x00000000,
 DP_AUX_CONTROL_TEST_MODE_ENABLE          = 0x00000001,
-} DP_AUX_CONTROL_TEST_MODE;
+पूर्ण DP_AUX_CONTROL_TEST_MODE;
 
 /*
- * DP_AUX_SW_CONTROL_SW_GO enum
+ * DP_AUX_SW_CONTROL_SW_GO क्रमागत
  */
 
-typedef enum DP_AUX_SW_CONTROL_SW_GO {
+प्रकार क्रमागत DP_AUX_SW_CONTROL_SW_GO अणु
 DP_AUX_SW_CONTROL_SW__NOT_GO             = 0x00000000,
 DP_AUX_SW_CONTROL_SW__GO                 = 0x00000001,
-} DP_AUX_SW_CONTROL_SW_GO;
+पूर्ण DP_AUX_SW_CONTROL_SW_GO;
 
 /*
- * DP_AUX_SW_CONTROL_LS_READ_TRIG enum
+ * DP_AUX_SW_CONTROL_LS_READ_TRIG क्रमागत
  */
 
-typedef enum DP_AUX_SW_CONTROL_LS_READ_TRIG {
+प्रकार क्रमागत DP_AUX_SW_CONTROL_LS_READ_TRIG अणु
 DP_AUX_SW_CONTROL_LS_READ__NOT_TRIG      = 0x00000000,
 DP_AUX_SW_CONTROL_LS_READ__TRIG          = 0x00000001,
-} DP_AUX_SW_CONTROL_LS_READ_TRIG;
+पूर्ण DP_AUX_SW_CONTROL_LS_READ_TRIG;
 
 /*
- * DP_AUX_ARB_CONTROL_ARB_PRIORITY enum
+ * DP_AUX_ARB_CONTROL_ARB_PRIORITY क्रमागत
  */
 
-typedef enum DP_AUX_ARB_CONTROL_ARB_PRIORITY {
+प्रकार क्रमागत DP_AUX_ARB_CONTROL_ARB_PRIORITY अणु
 DP_AUX_ARB_CONTROL_ARB_PRIORITY__GTC_LS_SW  = 0x00000000,
 DP_AUX_ARB_CONTROL_ARB_PRIORITY__LS_GTC_SW  = 0x00000001,
 DP_AUX_ARB_CONTROL_ARB_PRIORITY__SW_LS_GTC  = 0x00000002,
 DP_AUX_ARB_CONTROL_ARB_PRIORITY__SW_GTC_LS  = 0x00000003,
-} DP_AUX_ARB_CONTROL_ARB_PRIORITY;
+पूर्ण DP_AUX_ARB_CONTROL_ARB_PRIORITY;
 
 /*
- * DP_AUX_ARB_CONTROL_USE_AUX_REG_REQ enum
+ * DP_AUX_ARB_CONTROL_USE_AUX_REG_REQ क्रमागत
  */
 
-typedef enum DP_AUX_ARB_CONTROL_USE_AUX_REG_REQ {
+प्रकार क्रमागत DP_AUX_ARB_CONTROL_USE_AUX_REG_REQ अणु
 DP_AUX_ARB_CONTROL__NOT_USE_AUX_REG_REQ  = 0x00000000,
 DP_AUX_ARB_CONTROL__USE_AUX_REG_REQ      = 0x00000001,
-} DP_AUX_ARB_CONTROL_USE_AUX_REG_REQ;
+पूर्ण DP_AUX_ARB_CONTROL_USE_AUX_REG_REQ;
 
 /*
- * DP_AUX_ARB_CONTROL_DONE_USING_AUX_REG enum
+ * DP_AUX_ARB_CONTROL_DONE_USING_AUX_REG क्रमागत
  */
 
-typedef enum DP_AUX_ARB_CONTROL_DONE_USING_AUX_REG {
+प्रकार क्रमागत DP_AUX_ARB_CONTROL_DONE_USING_AUX_REG अणु
 DP_AUX_ARB_CONTROL__DONE_NOT_USING_AUX_REG = 0x00000000,
 DP_AUX_ARB_CONTROL__DONE_USING_AUX_REG   = 0x00000001,
-} DP_AUX_ARB_CONTROL_DONE_USING_AUX_REG;
+पूर्ण DP_AUX_ARB_CONTROL_DONE_USING_AUX_REG;
 
 /*
- * DP_AUX_INT_ACK enum
+ * DP_AUX_INT_ACK क्रमागत
  */
 
-typedef enum DP_AUX_INT_ACK {
+प्रकार क्रमागत DP_AUX_INT_ACK अणु
 DP_AUX_INT__NOT_ACK                      = 0x00000000,
 DP_AUX_INT__ACK                          = 0x00000001,
-} DP_AUX_INT_ACK;
+पूर्ण DP_AUX_INT_ACK;
 
 /*
- * DP_AUX_LS_UPDATE_ACK enum
+ * DP_AUX_LS_UPDATE_ACK क्रमागत
  */
 
-typedef enum DP_AUX_LS_UPDATE_ACK {
+प्रकार क्रमागत DP_AUX_LS_UPDATE_ACK अणु
 DP_AUX_INT_LS_UPDATE_NOT_ACK             = 0x00000000,
 DP_AUX_INT_LS_UPDATE_ACK                 = 0x00000001,
-} DP_AUX_LS_UPDATE_ACK;
+पूर्ण DP_AUX_LS_UPDATE_ACK;
 
 /*
- * DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL enum
+ * DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL {
+प्रकार क्रमागत DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL अणु
 DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL__DIVIDED_SYM_CLK  = 0x00000000,
 DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL__FROM_DCCG_MICROSECOND_REF  = 0x00000001,
-} DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL;
+पूर्ण DP_AUX_DPHY_TX_REF_CONTROL_TX_REF_SEL;
 
 /*
- * DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE enum
+ * DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE {
+प्रकार क्रमागत DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE अणु
 DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE__1MHZ = 0x00000000,
 DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE__2MHZ = 0x00000001,
 DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE__4MHZ = 0x00000002,
 DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE__8MHZ = 0x00000003,
-} DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE;
+पूर्ण DP_AUX_DPHY_TX_REF_CONTROL_TX_RATE;
 
 /*
- * DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN enum
+ * DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN {
+प्रकार क्रमागत DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN अणु
 DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__0US = 0x00000000,
 DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__8US = 0x00000001,
 DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__16US = 0x00000002,
@@ -8915,26 +8916,26 @@ DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__32US = 0x00000004,
 DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__40US = 0x00000005,
 DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__48US = 0x00000006,
 DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN__56US = 0x00000007,
-} DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN;
+पूर्ण DP_AUX_DPHY_TX_CONTROL_PRECHARGE_LEN;
 
 /*
- * DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY enum
+ * DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY {
+प्रकार क्रमागत DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY अणु
 DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY__0 = 0x00000000,
 DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY__16US = 0x00000001,
 DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY__32US = 0x00000002,
 DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY__64US = 0x00000003,
 DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY__128US = 0x00000004,
 DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY__256US = 0x00000005,
-} DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY;
+पूर्ण DP_AUX_DPHY_TX_CONTROL_MODE_DET_CHECK_DELAY;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_START_WINDOW enum
+ * DP_AUX_DPHY_RX_CONTROL_START_WINDOW क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_START_WINDOW {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_START_WINDOW अणु
 DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO2_PERIOD  = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO4_PERIOD  = 0x00000001,
 DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO8_PERIOD  = 0x00000002,
@@ -8943,13 +8944,13 @@ DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO32_PERIOD  = 0x00000004,
 DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO64_PERIOD  = 0x00000005,
 DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO128_PERIOD  = 0x00000006,
 DP_AUX_DPHY_RX_CONTROL_START_WINDOW__1TO256_PERIOD  = 0x00000007,
-} DP_AUX_DPHY_RX_CONTROL_START_WINDOW;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_START_WINDOW;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW enum
+ * DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW अणु
 DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO2_PERIOD  = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO4_PERIOD  = 0x00000001,
 DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO8_PERIOD  = 0x00000002,
@@ -8958,62 +8959,62 @@ DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO32_PERIOD  = 0x00000004,
 DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO64_PERIOD  = 0x00000005,
 DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO128_PERIOD  = 0x00000006,
 DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW__1TO256_PERIOD  = 0x00000007,
-} DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_RECEIVE_WINDOW;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN enum
+ * DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN अणु
 DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN__6_EDGES = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN__10_EDGES = 0x00000001,
 DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN__18_EDGES = 0x00000002,
 DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN__RESERVED = 0x00000003,
-} DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_HALF_SYM_DETECT_LEN;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_PHASE_DETECT enum
+ * DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_PHASE_DETECT क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_PHASE_DETECT {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_PHASE_DETECT अणु
 DP_AUX_DPHY_RX_CONTROL__NOT_ALLOW_BELOW_THRESHOLD_PHASE_DETECT = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL__ALLOW_BELOW_THRESHOLD_PHASE_DETECT = 0x00000001,
-} DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_PHASE_DETECT;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_PHASE_DETECT;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_START enum
+ * DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_START क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_START {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_START अणु
 DP_AUX_DPHY_RX_CONTROL__NOT_ALLOW_BELOW_THRESHOLD_START = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL__ALLOW_BELOW_THRESHOLD_START = 0x00000001,
-} DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_START;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_START;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_STOP enum
+ * DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_STOP क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_STOP {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_STOP अणु
 DP_AUX_DPHY_RX_CONTROL__NOT_ALLOW_BELOW_THRESHOLD_STOP = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL__ALLOW_BELOW_THRESHOLD_STOP = 0x00000001,
-} DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_STOP;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_ALLOW_BELOW_THRESHOLD_STOP;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN enum
+ * DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN अणु
 DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN__2_HALF_SYMBOLS = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN__4_HALF_SYMBOLS = 0x00000001,
 DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN__6_HALF_SYMBOLS = 0x00000002,
 DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN__8_HALF_SYMBOLS = 0x00000003,
-} DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_PHASE_DETECT_LEN;
 
 /*
- * DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN enum
+ * DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN {
+प्रकार क्रमागत DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN अणु
 DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_450US = 0x00000000,
 DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_500US = 0x00000001,
 DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_550US = 0x00000002,
@@ -9022,13 +9023,13 @@ DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_650US = 0x00000004,
 DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_700US = 0x00000005,
 DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_750US = 0x00000006,
 DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN_800US = 0x00000007,
-} DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN;
+पूर्ण DP_AUX_DPHY_RX_CONTROL_TIMEOUT_LEN;
 
 /*
- * DP_AUX_DPHY_RX_DETECTION_THRESHOLD enum
+ * DP_AUX_DPHY_RX_DETECTION_THRESHOLD क्रमागत
  */
 
-typedef enum DP_AUX_DPHY_RX_DETECTION_THRESHOLD {
+प्रकार क्रमागत DP_AUX_DPHY_RX_DETECTION_THRESHOLD अणु
 DP_AUX_DPHY_RX_DETECTION_THRESHOLD__1to2  = 0x00000000,
 DP_AUX_DPHY_RX_DETECTION_THRESHOLD__3to4  = 0x00000001,
 DP_AUX_DPHY_RX_DETECTION_THRESHOLD__7to8  = 0x00000002,
@@ -9037,575 +9038,575 @@ DP_AUX_DPHY_RX_DETECTION_THRESHOLD__31to32  = 0x00000004,
 DP_AUX_DPHY_RX_DETECTION_THRESHOLD__63to64  = 0x00000005,
 DP_AUX_DPHY_RX_DETECTION_THRESHOLD__127to128  = 0x00000006,
 DP_AUX_DPHY_RX_DETECTION_THRESHOLD__255to256  = 0x00000007,
-} DP_AUX_DPHY_RX_DETECTION_THRESHOLD;
+पूर्ण DP_AUX_DPHY_RX_DETECTION_THRESHOLD;
 
 /*
- * DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ enum
+ * DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ क्रमागत
  */
 
-typedef enum DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ {
+प्रकार क्रमागत DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ अणु
 DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_ALLOW_REQ_FROM_OTHER_AUX  = 0x00000000,
 DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ_FROM_OTHER_AUX  = 0x00000001,
-} DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ;
+पूर्ण DP_AUX_GTC_SYNC_CONTROL_GTC_SYNC_BLOCK_REQ;
 
 /*
- * DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW enum
+ * DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW क्रमागत
  */
 
-typedef enum DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW {
+प्रकार क्रमागत DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW अणु
 DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW__300US = 0x00000000,
 DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW__400US = 0x00000001,
 DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW__500US = 0x00000002,
 DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW__600US = 0x00000003,
-} DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW;
+पूर्ण DP_AUX_GTC_SYNC_CONTROL_INTERVAL_RESET_WINDOW;
 
 /*
- * DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT enum
+ * DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT क्रमागत
  */
 
-typedef enum DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT {
+प्रकार क्रमागत DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT अणु
 DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT__4_ATTAMPS = 0x00000000,
 DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT__8_ATTAMPS = 0x00000001,
 DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT__16_ATTAMPS = 0x00000002,
 DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT__RESERVED = 0x00000003,
-} DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT;
+पूर्ण DP_AUX_GTC_SYNC_CONTROL_OFFSET_CALC_MAX_ATTEMPT;
 
 /*
- * DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN enum
+ * DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN क्रमागत
  */
 
-typedef enum DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN {
+प्रकार क्रमागत DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN अणु
 DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN__0  = 0x00000000,
 DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN__64  = 0x00000001,
 DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN__128  = 0x00000002,
 DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN__256  = 0x00000003,
-} DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN;
+पूर्ण DP_AUX_GTC_SYNC_ERROR_CONTROL_LOCK_ACQ_TIMEOUT_LEN;
 
 /*
- * DP_AUX_ERR_OCCURRED_ACK enum
+ * DP_AUX_ERR_OCCURRED_ACK क्रमागत
  */
 
-typedef enum DP_AUX_ERR_OCCURRED_ACK {
+प्रकार क्रमागत DP_AUX_ERR_OCCURRED_ACK अणु
 DP_AUX_ERR_OCCURRED__NOT_ACK             = 0x00000000,
 DP_AUX_ERR_OCCURRED__ACK                 = 0x00000001,
-} DP_AUX_ERR_OCCURRED_ACK;
+पूर्ण DP_AUX_ERR_OCCURRED_ACK;
 
 /*
- * DP_AUX_POTENTIAL_ERR_REACHED_ACK enum
+ * DP_AUX_POTENTIAL_ERR_REACHED_ACK क्रमागत
  */
 
-typedef enum DP_AUX_POTENTIAL_ERR_REACHED_ACK {
+प्रकार क्रमागत DP_AUX_POTENTIAL_ERR_REACHED_ACK अणु
 DP_AUX_POTENTIAL_ERR_REACHED__NOT_ACK    = 0x00000000,
 DP_AUX_POTENTIAL_ERR_REACHED__ACK        = 0x00000001,
-} DP_AUX_POTENTIAL_ERR_REACHED_ACK;
+पूर्ण DP_AUX_POTENTIAL_ERR_REACHED_ACK;
 
 /*
- * DP_AUX_DEFINITE_ERR_REACHED_ACK enum
+ * DP_AUX_DEFINITE_ERR_REACHED_ACK क्रमागत
  */
 
-typedef enum DP_AUX_DEFINITE_ERR_REACHED_ACK {
+प्रकार क्रमागत DP_AUX_DEFINITE_ERR_REACHED_ACK अणु
 ALPHA_DP_AUX_DEFINITE_ERR_REACHED_NOT_ACK = 0x00000000,
 ALPHA_DP_AUX_DEFINITE_ERR_REACHED_ACK    = 0x00000001,
-} DP_AUX_DEFINITE_ERR_REACHED_ACK;
+पूर्ण DP_AUX_DEFINITE_ERR_REACHED_ACK;
 
 /*
- * DP_AUX_RESET enum
+ * DP_AUX_RESET क्रमागत
  */
 
-typedef enum DP_AUX_RESET {
+प्रकार क्रमागत DP_AUX_RESET अणु
 DP_AUX_RESET_DEASSERTED                  = 0x00000000,
 DP_AUX_RESET_ASSERTED                    = 0x00000001,
-} DP_AUX_RESET;
+पूर्ण DP_AUX_RESET;
 
 /*
- * DP_AUX_RESET_DONE enum
+ * DP_AUX_RESET_DONE क्रमागत
  */
 
-typedef enum DP_AUX_RESET_DONE {
+प्रकार क्रमागत DP_AUX_RESET_DONE अणु
 DP_AUX_RESET_SEQUENCE_NOT_DONE           = 0x00000000,
 DP_AUX_RESET_SEQUENCE_DONE               = 0x00000001,
-} DP_AUX_RESET_DONE;
+पूर्ण DP_AUX_RESET_DONE;
 
 /*******************************************************
  * DSI Enums
  *******************************************************/
 
 /*
- * DSI_COMMAND_MODE_SRC_FORMAT enum
+ * DSI_COMMAND_MODE_SRC_FORMAT क्रमागत
  */
 
-typedef enum DSI_COMMAND_MODE_SRC_FORMAT {
+प्रकार क्रमागत DSI_COMMAND_MODE_SRC_FORMAT अणु
 DSI_COMMAND_SRC_FORMAT_RGB8BIT           = 0x00000002,
 DSI_COMMAND_SRC_FORMAT_RGB332            = 0x00000003,
 DSI_COMMAND_SRC_FORMAT_RGB444            = 0x00000004,
 DSI_COMMAND_SRC_FORMAT_RGB555            = 0x00000005,
 DSI_COMMAND_SRC_FORMAT_RGB565            = 0x00000006,
 DSI_COMMAND_SRC_FORMAT_RGB888            = 0x00000008,
-} DSI_COMMAND_MODE_SRC_FORMAT;
+पूर्ण DSI_COMMAND_MODE_SRC_FORMAT;
 
 /*
- * DSI_COMMAND_MODE_DST_FORMAT enum
+ * DSI_COMMAND_MODE_DST_FORMAT क्रमागत
  */
 
-typedef enum DSI_COMMAND_MODE_DST_FORMAT {
+प्रकार क्रमागत DSI_COMMAND_MODE_DST_FORMAT अणु
 DSI_COMMAND_DST_FORMAT_RGB111            = 0x00000000,
 DSI_COMMAND_DST_FORMAT_RGB332            = 0x00000003,
 DSI_COMMAND_DST_FORMAT_RGB444            = 0x00000004,
 DSI_COMMAND_DST_FORMAT_RGB565            = 0x00000006,
 DSI_COMMAND_DST_FORMAT_RGB666            = 0x00000007,
 DSI_COMMAND_DST_FORMAT_RGB888            = 0x00000008,
-} DSI_COMMAND_MODE_DST_FORMAT;
+पूर्ण DSI_COMMAND_MODE_DST_FORMAT;
 
 /*
- * DSI_FLAG_CLR enum
+ * DSI_FLAG_CLR क्रमागत
  */
 
-typedef enum DSI_FLAG_CLR {
+प्रकार क्रमागत DSI_FLAG_CLR अणु
 DSI_FLAG_NO_CLEAR                        = 0x00000000,
 DSI_FLAG_CLEAR                           = 0x00000001,
-} DSI_FLAG_CLR;
+पूर्ण DSI_FLAG_CLR;
 
 /*
- * DSI_BIT_SWAP enum
+ * DSI_BIT_SWAP क्रमागत
  */
 
-typedef enum DSI_BIT_SWAP {
+प्रकार क्रमागत DSI_BIT_SWAP अणु
 DSI_BIT_SWAP_DISABLE                     = 0x00000000,
 DSI_BIT_SWAP_ENABLE                      = 0x00000001,
-} DSI_BIT_SWAP;
+पूर्ण DSI_BIT_SWAP;
 
 /*
- * DSI_CLK_GATING enum
+ * DSI_CLK_GATING क्रमागत
  */
 
-typedef enum DSI_CLK_GATING {
+प्रकार क्रमागत DSI_CLK_GATING अणु
 DSI_CLK_GATING_ENABLE                    = 0x00000000,
 DSI_CLK_GATING_DISABLE                   = 0x00000001,
-} DSI_CLK_GATING;
+पूर्ण DSI_CLK_GATING;
 
 /*
- * DSI_LANE_ULPS_REQUEST enum
+ * DSI_LANE_ULPS_REQUEST क्रमागत
  */
 
-typedef enum DSI_LANE_ULPS_REQUEST {
+प्रकार क्रमागत DSI_LANE_ULPS_REQUEST अणु
 DSI_LANE_ULPS_REQUEST_DEASSERT           = 0x00000000,
 DSI_LANE_ULPS_REQUEST_ASSERT             = 0x00000001,
-} DSI_LANE_ULPS_REQUEST;
+पूर्ण DSI_LANE_ULPS_REQUEST;
 
 /*
- * DSI_LANE_ULPS_EXIT enum
+ * DSI_LANE_ULPS_EXIT क्रमागत
  */
 
-typedef enum DSI_LANE_ULPS_EXIT {
+प्रकार क्रमागत DSI_LANE_ULPS_EXIT अणु
 DSI_LANE_ULPS_EXIT_DEASSERT              = 0x00000000,
 DSI_LANE_ULPS_EXIT_ASSERT                = 0x00000001,
-} DSI_LANE_ULPS_EXIT;
+पूर्ण DSI_LANE_ULPS_EXIT;
 
 /*
- * DSI_LANE_FORCE_TX_STOP enum
+ * DSI_LANE_FORCE_TX_STOP क्रमागत
  */
 
-typedef enum DSI_LANE_FORCE_TX_STOP {
+प्रकार क्रमागत DSI_LANE_FORCE_TX_STOP अणु
 DSI_LANE_FORCE_TX_STOP_DEASSERT          = 0x00000000,
 DSI_LANE_FORCE_TX_STOP_ASSERT            = 0x00000001,
-} DSI_LANE_FORCE_TX_STOP;
+पूर्ण DSI_LANE_FORCE_TX_STOP;
 
 /*
- * DSI_CLOCK_LANE_HS_FORCE_REQUEST enum
+ * DSI_CLOCK_LANE_HS_FORCE_REQUEST क्रमागत
  */
 
-typedef enum DSI_CLOCK_LANE_HS_FORCE_REQUEST {
+प्रकार क्रमागत DSI_CLOCK_LANE_HS_FORCE_REQUEST अणु
 DSI_CLOCK_LANE_HS_FORCE_REQUEST_DEASSERT  = 0x00000000,
 DSI_CLOCK_LANE_HS_FORCE_REQUEST_ASSERT   = 0x00000001,
-} DSI_CLOCK_LANE_HS_FORCE_REQUEST;
+पूर्ण DSI_CLOCK_LANE_HS_FORCE_REQUEST;
 
 /*
- * DSI_CONTROLLER_EN enum
+ * DSI_CONTROLLER_EN क्रमागत
  */
 
-typedef enum DSI_CONTROLLER_EN {
+प्रकार क्रमागत DSI_CONTROLLER_EN अणु
 DSI_CONTROLLER_DISABLE                   = 0x00000000,
 DSI_CONTROLLER_ENABLE                    = 0x00000001,
-} DSI_CONTROLLER_EN;
+पूर्ण DSI_CONTROLLER_EN;
 
 /*
- * DSI_VIDEO_MODE_EN enum
+ * DSI_VIDEO_MODE_EN क्रमागत
  */
 
-typedef enum DSI_VIDEO_MODE_EN {
+प्रकार क्रमागत DSI_VIDEO_MODE_EN अणु
 DSI_VIDEO_MODE_DISABLE                   = 0x00000000,
 DSI_VIDEO_MODE_ENABLE                    = 0x00000001,
-} DSI_VIDEO_MODE_EN;
+पूर्ण DSI_VIDEO_MODE_EN;
 
 /*
- * DSI_CMD_MODE_EN enum
+ * DSI_CMD_MODE_EN क्रमागत
  */
 
-typedef enum DSI_CMD_MODE_EN {
+प्रकार क्रमागत DSI_CMD_MODE_EN अणु
 DSI_CMD_MODE_DISABLE                     = 0x00000000,
 DSI_CMD_MODE_ENABLE                      = 0x00000001,
-} DSI_CMD_MODE_EN;
+पूर्ण DSI_CMD_MODE_EN;
 
 /*
- * DSI_DATA_LANE0_EN enum
+ * DSI_DATA_LANE0_EN क्रमागत
  */
 
-typedef enum DSI_DATA_LANE0_EN {
+प्रकार क्रमागत DSI_DATA_LANE0_EN अणु
 DSI_DATA_LANE0_DISABLE                   = 0x00000000,
 DSI_DATA_LANE0_ENABLE                    = 0x00000001,
-} DSI_DATA_LANE0_EN;
+पूर्ण DSI_DATA_LANE0_EN;
 
 /*
- * DSI_DATA_LANE1_EN enum
+ * DSI_DATA_LANE1_EN क्रमागत
  */
 
-typedef enum DSI_DATA_LANE1_EN {
+प्रकार क्रमागत DSI_DATA_LANE1_EN अणु
 DSI_DATA_LANE1_DISABLE                   = 0x00000000,
 DSI_DATA_LANE1_ENABLE                    = 0x00000001,
-} DSI_DATA_LANE1_EN;
+पूर्ण DSI_DATA_LANE1_EN;
 
 /*
- * DSI_DATA_LANE2_EN enum
+ * DSI_DATA_LANE2_EN क्रमागत
  */
 
-typedef enum DSI_DATA_LANE2_EN {
+प्रकार क्रमागत DSI_DATA_LANE2_EN अणु
 DSI_DATA_LANE2_DISABLE                   = 0x00000000,
 DSI_DATA_LANE2_ENABLE                    = 0x00000001,
-} DSI_DATA_LANE2_EN;
+पूर्ण DSI_DATA_LANE2_EN;
 
 /*
- * DSI_DATA_LANE3_EN enum
+ * DSI_DATA_LANE3_EN क्रमागत
  */
 
-typedef enum DSI_DATA_LANE3_EN {
+प्रकार क्रमागत DSI_DATA_LANE3_EN अणु
 DSI_DATA_LANE3_DISABLE                   = 0x00000000,
 DSI_DATA_LANE3_ENABLE                    = 0x00000001,
-} DSI_DATA_LANE3_EN;
+पूर्ण DSI_DATA_LANE3_EN;
 
 /*
- * DSI_CLOCK_LANE_EN enum
+ * DSI_CLOCK_LANE_EN क्रमागत
  */
 
-typedef enum DSI_CLOCK_LANE_EN {
+प्रकार क्रमागत DSI_CLOCK_LANE_EN अणु
 DSI_CLOCK_LANE_DISABLE                   = 0x00000000,
 DSI_CLOCK_LANE_ENABLE                    = 0x00000001,
-} DSI_CLOCK_LANE_EN;
+पूर्ण DSI_CLOCK_LANE_EN;
 
 /*
- * DSI_PHY_DATA_LANE0_EN enum
+ * DSI_PHY_DATA_LANE0_EN क्रमागत
  */
 
-typedef enum DSI_PHY_DATA_LANE0_EN {
+प्रकार क्रमागत DSI_PHY_DATA_LANE0_EN अणु
 DSI_PHY_DATA_LANE0_DISABLE               = 0x00000000,
 DSI_PHY_DATA_LANE0_ENABLE                = 0x00000001,
-} DSI_PHY_DATA_LANE0_EN;
+पूर्ण DSI_PHY_DATA_LANE0_EN;
 
 /*
- * DSI_PHY_DATA_LANE1_EN enum
+ * DSI_PHY_DATA_LANE1_EN क्रमागत
  */
 
-typedef enum DSI_PHY_DATA_LANE1_EN {
+प्रकार क्रमागत DSI_PHY_DATA_LANE1_EN अणु
 DSI_PHY_DATA_LANE1_DISABLE               = 0x00000000,
 DSI_PHY_DATA_LANE1_ENABLE                = 0x00000001,
-} DSI_PHY_DATA_LANE1_EN;
+पूर्ण DSI_PHY_DATA_LANE1_EN;
 
 /*
- * DSI_PHY_DATA_LANE2_EN enum
+ * DSI_PHY_DATA_LANE2_EN क्रमागत
  */
 
-typedef enum DSI_PHY_DATA_LANE2_EN {
+प्रकार क्रमागत DSI_PHY_DATA_LANE2_EN अणु
 DSI_PHY_DATA_LANE2_DISABLE               = 0x00000000,
 DSI_PHY_DATA_LANE2_ENABLE                = 0x00000001,
-} DSI_PHY_DATA_LANE2_EN;
+पूर्ण DSI_PHY_DATA_LANE2_EN;
 
 /*
- * DSI_PHY_DATA_LANE3_EN enum
+ * DSI_PHY_DATA_LANE3_EN क्रमागत
  */
 
-typedef enum DSI_PHY_DATA_LANE3_EN {
+प्रकार क्रमागत DSI_PHY_DATA_LANE3_EN अणु
 DSI_PHY_DATA_LANE3_DISABLE               = 0x00000000,
 DSI_PHY_DATA_LANE3_ENABLE                = 0x00000001,
-} DSI_PHY_DATA_LANE3_EN;
+पूर्ण DSI_PHY_DATA_LANE3_EN;
 
 /*
- * DSI_RESET_DISPCLK enum
+ * DSI_RESET_DISPCLK क्रमागत
  */
 
-typedef enum DSI_RESET_DISPCLK {
+प्रकार क्रमागत DSI_RESET_DISPCLK अणु
 DSI_NO_RESET_ON_DISPCLK_DOMAIN_LOGIC     = 0x00000000,
 DSI_RESET_ON_DISPCLK_DOMAIN_LOGIC        = 0x00000001,
-} DSI_RESET_DISPCLK;
+पूर्ण DSI_RESET_DISPCLK;
 
 /*
- * DSI_RESET_DSICLK enum
+ * DSI_RESET_DSICLK क्रमागत
  */
 
-typedef enum DSI_RESET_DSICLK {
+प्रकार क्रमागत DSI_RESET_DSICLK अणु
 DSI_NO_RESET_ON_DSICLK_DOMAIN_LOGIC      = 0x00000000,
 DSI_RESET_ON_DSICLK_DOMAIN_LOGIC         = 0x00000001,
-} DSI_RESET_DSICLK;
+पूर्ण DSI_RESET_DSICLK;
 
 /*
- * DSI_RESET_BYTECLK enum
+ * DSI_RESET_BYTECLK क्रमागत
  */
 
-typedef enum DSI_RESET_BYTECLK {
+प्रकार क्रमागत DSI_RESET_BYTECLK अणु
 DSI_NO_RESET_ON_BYTECLK_DOMAIN_LOGIC     = 0x00000000,
 DSI_RESET_ON_BYTECLK_DOMAIN_LOGIC        = 0x00000001,
-} DSI_RESET_BYTECLK;
+पूर्ण DSI_RESET_BYTECLK;
 
 /*
- * DSI_RESET_ESCCLK enum
+ * DSI_RESET_ESCCLK क्रमागत
  */
 
-typedef enum DSI_RESET_ESCCLK {
+प्रकार क्रमागत DSI_RESET_ESCCLK अणु
 DSI_NO_RESET_ON_ESCCLK_DOMAIN_LOGIC      = 0x00000000,
 DSI_RESET_ON_ESCCLK_DOMAIN_LOGIC         = 0x00000001,
-} DSI_RESET_ESCCLK;
+पूर्ण DSI_RESET_ESCCLK;
 
 /*
- * DSI_CRTC_SEL enum
+ * DSI_CRTC_SEL क्रमागत
  */
 
-typedef enum DSI_CRTC_SEL {
+प्रकार क्रमागत DSI_CRTC_SEL अणु
 DSI_GET_PIXEL_STREAM_FROM_FMT0           = 0x00000000,
 DSI_GET_PIXEL_STREAM_FROM_FMT1           = 0x00000001,
 DSI_GET_PIXEL_STREAM_FROM_FMT2           = 0x00000002,
 DSI_GET_PIXEL_STREAM_FROM_FMT3           = 0x00000003,
 DSI_GET_PIXEL_STREAM_FROM_FMT4           = 0x00000004,
 DSI_GET_PIXEL_STREAM_FROM_FMT5           = 0x00000005,
-} DSI_CRTC_SEL;
+पूर्ण DSI_CRTC_SEL;
 
 /*
- * DSI_PACKET_BYTE_MSB_LSB_FLIP enum
+ * DSI_PACKET_BYTE_MSB_LSB_FLIP क्रमागत
  */
 
-typedef enum DSI_PACKET_BYTE_MSB_LSB_FLIP {
+प्रकार क्रमागत DSI_PACKET_BYTE_MSB_LSB_FLIP अणु
 DSI_PACKET_BYTE_MSB_LSB_FLIP_NO_SWAP     = 0x00000000,
 DSI_PACKET_BYTE_MSB_LSB_FLIP_SWAP        = 0x00000001,
-} DSI_PACKET_BYTE_MSB_LSB_FLIP;
+पूर्ण DSI_PACKET_BYTE_MSB_LSB_FLIP;
 
 /*
- * DSI_VIDEO_MODE_DST_FORMAT enum
+ * DSI_VIDEO_MODE_DST_FORMAT क्रमागत
  */
 
-typedef enum DSI_VIDEO_MODE_DST_FORMAT {
+प्रकार क्रमागत DSI_VIDEO_MODE_DST_FORMAT अणु
 DSI_VIDEO_DST_FORMAT_RGB565              = 0x00000000,
 DSI_VIDEO_DST_FORMAT_RGB666_PACKED       = 0x00000001,
 DSI_VIDEO_DST_FORMAT_RGB666_LOOSELY_PACKED = 0x00000002,
 DSI_VIDEO_DST_FORMAT_RGB888              = 0x00000003,
-} DSI_VIDEO_MODE_DST_FORMAT;
+पूर्ण DSI_VIDEO_MODE_DST_FORMAT;
 
 /*
- * DSI_VIDEO_TRAFFIC_MODE enum
+ * DSI_VIDEO_TRAFFIC_MODE क्रमागत
  */
 
-typedef enum DSI_VIDEO_TRAFFIC_MODE {
+प्रकार क्रमागत DSI_VIDEO_TRAFFIC_MODE अणु
 DSI_TRAFFIC_MODE_SYNC_PULSES             = 0x00000000,
 DSI_TRAFFIC_MODE_SYNC_EVENTS             = 0x00000001,
 DSI_TRAFFIC_MODE_BURST                   = 0x00000002,
 DSI_TRAFFIC_MODE_RESERVED                = 0x00000003,
-} DSI_VIDEO_TRAFFIC_MODE;
+पूर्ण DSI_VIDEO_TRAFFIC_MODE;
 
 /*
- * DSI_VIDEO_BLLP_PWR_MODE enum
+ * DSI_VIDEO_BLLP_PWR_MODE क्रमागत
  */
 
-typedef enum DSI_VIDEO_BLLP_PWR_MODE {
+प्रकार क्रमागत DSI_VIDEO_BLLP_PWR_MODE अणु
 DSI_VIDEO_BLLP_PWR_MODE_HS               = 0x00000000,
 DSI_VIDEO_BLLP_PWR_MODE_LP               = 0x00000001,
-} DSI_VIDEO_BLLP_PWR_MODE;
+पूर्ण DSI_VIDEO_BLLP_PWR_MODE;
 
 /*
- * DSI_VIDEO_EOF_BLLP_PWR_MODE enum
+ * DSI_VIDEO_खातापूर्ण_BLLP_PWR_MODE क्रमागत
  */
 
-typedef enum DSI_VIDEO_EOF_BLLP_PWR_MODE {
-DSI_VIDEO_EOF_BLLP_PWR_MODE_HS           = 0x00000000,
-DSI_VIDEO_EOF_BLLP_PWR_MODE_LP           = 0x00000001,
-} DSI_VIDEO_EOF_BLLP_PWR_MODE;
+प्रकार क्रमागत DSI_VIDEO_खातापूर्ण_BLLP_PWR_MODE अणु
+DSI_VIDEO_खातापूर्ण_BLLP_PWR_MODE_HS           = 0x00000000,
+DSI_VIDEO_खातापूर्ण_BLLP_PWR_MODE_LP           = 0x00000001,
+पूर्ण DSI_VIDEO_खातापूर्ण_BLLP_PWR_MODE;
 
 /*
- * DSI_VIDEO_PWR_MODE enum
+ * DSI_VIDEO_PWR_MODE क्रमागत
  */
 
-typedef enum DSI_VIDEO_PWR_MODE {
+प्रकार क्रमागत DSI_VIDEO_PWR_MODE अणु
 DSI_VIDEO_PWR_MODE_HS                    = 0x00000000,
 DSI_VIDEO_PWR_MODE_LP                    = 0x00000001,
-} DSI_VIDEO_PWR_MODE;
+पूर्ण DSI_VIDEO_PWR_MODE;
 
 /*
- * DSI_VIDEO_PULSE_MODE_OPT enum
+ * DSI_VIDEO_PULSE_MODE_OPT क्रमागत
  */
 
-typedef enum DSI_VIDEO_PULSE_MODE_OPT {
+प्रकार क्रमागत DSI_VIDEO_PULSE_MODE_OPT अणु
 PULSE_MODE_OPT_NO_HSA                    = 0x00000000,
 PULSE_MODE_OPT_SEND                      = 0x00000001,
-} DSI_VIDEO_PULSE_MODE_OPT;
+पूर्ण DSI_VIDEO_PULSE_MODE_OPT;
 
 /*
- * DSI_RGB_SWAP enum
+ * DSI_RGB_SWAP क्रमागत
  */
 
-typedef enum DSI_RGB_SWAP {
+प्रकार क्रमागत DSI_RGB_SWAP अणु
 DSI_SWAP_RGB                             = 0x00000000,
 DSI_SWAP_RBG                             = 0x00000001,
 DSI_SWAP_BGR                             = 0x00000002,
 DSI_SWAP_BRG                             = 0x00000003,
 DSI_SWAP_GRB                             = 0x00000004,
 DSI_SWAP_GBR                             = 0x00000005,
-} DSI_RGB_SWAP;
+पूर्ण DSI_RGB_SWAP;
 
 /*
- * DSI_CMD_PACKET_TYPE enum
+ * DSI_CMD_PACKET_TYPE क्रमागत
  */
 
-typedef enum DSI_CMD_PACKET_TYPE {
+प्रकार क्रमागत DSI_CMD_PACKET_TYPE अणु
 DSI_CMD_PACKET_TYPE_SHORT                = 0x00000000,
 DSI_CMD_PACKET_TYPE_LONG                 = 0x00000001,
-} DSI_CMD_PACKET_TYPE;
+पूर्ण DSI_CMD_PACKET_TYPE;
 
 /*
- * DSI_CMD_PWR_MODE enum
+ * DSI_CMD_PWR_MODE क्रमागत
  */
 
-typedef enum DSI_CMD_PWR_MODE {
+प्रकार क्रमागत DSI_CMD_PWR_MODE अणु
 DSI_CMD_PWR_MODE_HS                      = 0x00000000,
 DSI_CMD_PWR_MODE_LP                      = 0x00000001,
-} DSI_CMD_PWR_MODE;
+पूर्ण DSI_CMD_PWR_MODE;
 
 /*
- * DSI_CMD_EMBEDDED_MODE enum
+ * DSI_CMD_EMBEDDED_MODE क्रमागत
  */
 
-typedef enum DSI_CMD_EMBEDDED_MODE {
+प्रकार क्रमागत DSI_CMD_EMBEDDED_MODE अणु
 CMD_EMBEDDED_MODE_DISABLE                = 0x00000000,
 CMD_EMBEDDED_MODE_ENABLE                 = 0x00000001,
-} DSI_CMD_EMBEDDED_MODE;
+पूर्ण DSI_CMD_EMBEDDED_MODE;
 
 /*
- * DSI_CMD_ORDER enum
+ * DSI_CMD_ORDER क्रमागत
  */
 
-typedef enum DSI_CMD_ORDER {
+प्रकार क्रमागत DSI_CMD_ORDER अणु
 DSI_CMD_ORDER_COMMAND_FIRST              = 0x00000000,
 DSI_CMD_ORDER_DATA_FIRST                 = 0x00000001,
-} DSI_CMD_ORDER;
+पूर्ण DSI_CMD_ORDER;
 
 /*
- * DSI_DATA_BUFFER_ID enum
+ * DSI_DATA_BUFFER_ID क्रमागत
  */
 
-typedef enum DSI_DATA_BUFFER_ID {
+प्रकार क्रमागत DSI_DATA_BUFFER_ID अणु
 DSI_DATA_BUFFER_OFFSET0                  = 0x00000000,
 DSI_DATA_BUFFER_OFFSET1                  = 0x00000001,
-} DSI_DATA_BUFFER_ID;
+पूर्ण DSI_DATA_BUFFER_ID;
 
 /*
- * DSI_DWORD_BYTE_SWAP enum
+ * DSI_DWORD_BYTE_SWAP क्रमागत
  */
 
-typedef enum DSI_DWORD_BYTE_SWAP {
+प्रकार क्रमागत DSI_DWORD_BYTE_SWAP अणु
 DWORD_BYTE_SWAP_NO_SWAP                  = 0x00000000,
 DWORD_BYTE_SWAP_BYTE_SWAP                = 0x00000001,
 DWORD_BYTE_SWAP_WORD_SWAP                = 0x00000002,
 DWORD_BYTE_SWAP_BOTH_SWAP                = 0x00000003,
-} DSI_DWORD_BYTE_SWAP;
+पूर्ण DSI_DWORD_BYTE_SWAP;
 
 /*
- * DSI_INSERT_DCS_COMMAND enum
+ * DSI_INSERT_DCS_COMMAND क्रमागत
  */
 
-typedef enum DSI_INSERT_DCS_COMMAND {
+प्रकार क्रमागत DSI_INSERT_DCS_COMMAND अणु
 DSI_INSERT_DCS_COMMAND_DISABLE           = 0x00000000,
 DSI_INSERT_DCS_COMMAND_ENABLE            = 0x00000001,
-} DSI_INSERT_DCS_COMMAND;
+पूर्ण DSI_INSERT_DCS_COMMAND;
 
 /*
- * DSI_DMAFIFO_WRITE_WATERMARK enum
+ * DSI_DMAFIFO_WRITE_WATERMARK क्रमागत
  */
 
-typedef enum DSI_DMAFIFO_WRITE_WATERMARK {
+प्रकार क्रमागत DSI_DMAFIFO_WRITE_WATERMARK अणु
 DSI_DMAFIFO_WRITE_WATERMARK_HALF         = 0x00000000,
 DSI_DMAFIFO_WRITE_WATERMARK_FOURTH       = 0x00000001,
 DSI_DMAFIFO_WRITE_WATERMARK_EIGHTH       = 0x00000002,
 DSI_DMAFIFO_WRITE_WATERMARK_SIXTEENTH    = 0x00000003,
-} DSI_DMAFIFO_WRITE_WATERMARK;
+पूर्ण DSI_DMAFIFO_WRITE_WATERMARK;
 
 /*
- * DSI_DMAFIFO_READ_WATERMARK enum
+ * DSI_DMAFIFO_READ_WATERMARK क्रमागत
  */
 
-typedef enum DSI_DMAFIFO_READ_WATERMARK {
+प्रकार क्रमागत DSI_DMAFIFO_READ_WATERMARK अणु
 DSI_DMAFIFO_READ_WATERMARK_HALF          = 0x00000000,
 DSI_DMAFIFO_READ_WATERMARK_FOURTH        = 0x00000001,
 DSI_DMAFIFO_READ_WATERMARK_EIGHTH        = 0x00000002,
 DSI_DMAFIFO_READ_WATERMARK_SIXTEENTH     = 0x00000003,
-} DSI_DMAFIFO_READ_WATERMARK;
+पूर्ण DSI_DMAFIFO_READ_WATERMARK;
 
 /*
- * DSI_USE_DENG_LENGTH enum
+ * DSI_USE_DENG_LENGTH क्रमागत
  */
 
-typedef enum DSI_USE_DENG_LENGTH {
+प्रकार क्रमागत DSI_USE_DENG_LENGTH अणु
 DSI_USE_DENG_LENGTH_DISABLE              = 0x00000000,
 DSI_USE_DENG_LENGTH_ENABLE               = 0x00000001,
-} DSI_USE_DENG_LENGTH;
+पूर्ण DSI_USE_DENG_LENGTH;
 
 /*
- * DSI_COMMAND_TRIGGER_MODE enum
+ * DSI_COMMAND_TRIGGER_MODE क्रमागत
  */
 
-typedef enum DSI_COMMAND_TRIGGER_MODE {
+प्रकार क्रमागत DSI_COMMAND_TRIGGER_MODE अणु
 DSI_COMMAND_TRIGGER_MODE_AUTO            = 0x00000000,
 DSI_COMMAND_TRIGGER_MODE_MANUAL          = 0x00000001,
-} DSI_COMMAND_TRIGGER_MODE;
+पूर्ण DSI_COMMAND_TRIGGER_MODE;
 
 /*
- * DSI_COMMAND_TRIGGER_SEL enum
+ * DSI_COMMAND_TRIGGER_SEL क्रमागत
  */
 
-typedef enum DSI_COMMAND_TRIGGER_SEL {
+प्रकार क्रमागत DSI_COMMAND_TRIGGER_SEL अणु
 DSI_COMMAND_TRIGGER_SEL_NONE             = 0x00000000,
 DSI_COMMAND_TRIGGER_SEL_CRTC             = 0x00000001,
 DSI_COMMAND_TRIGGER_SEL_TE               = 0x00000002,
 DSI_COMMAND_TRIGGER_SEL_HW               = 0x00000003,
-} DSI_COMMAND_TRIGGER_SEL;
+पूर्ण DSI_COMMAND_TRIGGER_SEL;
 
 /*
- * DSI_HW_SOURCE_SEL enum
+ * DSI_HW_SOURCE_SEL क्रमागत
  */
 
-typedef enum DSI_HW_SOURCE_SEL {
+प्रकार क्रमागत DSI_HW_SOURCE_SEL अणु
 HW_SOURCE_SEL_NONE                       = 0x00000000,
 HW_SOURCE_SEL_DSC_VUP                    = 0x00000001,
 HW_SOURCE_SEL_DSC_VLP                    = 0x00000002,
 HW_SOURCE_SEL_DSC_JPEG                   = 0x00000003,
-} DSI_HW_SOURCE_SEL;
+पूर्ण DSI_HW_SOURCE_SEL;
 
 /*
- * DSI_COMMAND_TRIGGER_ORDER enum
+ * DSI_COMMAND_TRIGGER_ORDER क्रमागत
  */
 
-typedef enum DSI_COMMAND_TRIGGER_ORDER {
+प्रकार क्रमागत DSI_COMMAND_TRIGGER_ORDER अणु
 DSI_COMMAND_TRIGGER_ORDER_DMA            = 0x00000000,
 DSI_COMMAND_TRIGGER_ORDER_DENG           = 0x00000001,
-} DSI_COMMAND_TRIGGER_ORDER;
+पूर्ण DSI_COMMAND_TRIGGER_ORDER;
 
 /*
- * DSI_TE_SRC_SEL enum
+ * DSI_TE_SRC_SEL क्रमागत
  */
 
-typedef enum DSI_TE_SRC_SEL {
+प्रकार क्रमागत DSI_TE_SRC_SEL अणु
 DSI_TE_SEL_LINK                          = 0x00000000,
 DSI_TE_SEL_PIN                           = 0x00000001,
-} DSI_TE_SRC_SEL;
+पूर्ण DSI_TE_SRC_SEL;
 
 /*
- * DSI_EXT_TE_MUX enum
+ * DSI_EXT_TE_MUX क्रमागत
  */
 
-typedef enum DSI_EXT_TE_MUX {
+प्रकार क्रमागत DSI_EXT_TE_MUX अणु
 DSI_XT_TE_MUX_LCDD17                     = 0x00000000,
 DSI_XT_TE_MUX_DCLK                       = 0x00000001,
 DSI_XT_TE_MUX_SS                         = 0x00000002,
@@ -9615,105 +9616,105 @@ DSI_XT_TE_MUX_DINV                       = 0x00000005,
 DSI_XT_TE_MUX_FRAME                      = 0x00000006,
 DSI_XT_TE_MUX_GPIO4                      = 0x00000007,
 DSI_XT_TE_MUX_GPIO5                      = 0x00000008,
-} DSI_EXT_TE_MUX;
+पूर्ण DSI_EXT_TE_MUX;
 
 /*
- * DSI_EXT_TE_MODE enum
+ * DSI_EXT_TE_MODE क्रमागत
  */
 
-typedef enum DSI_EXT_TE_MODE {
+प्रकार क्रमागत DSI_EXT_TE_MODE अणु
 DSI_EXT_TE_MODE_VSYNC_EDGE               = 0x00000000,
 DSI_EXT_TE_MODE_VSYNC_WIDTH              = 0x00000001,
 DSI_EXT_TE_MODE_HVSYNC_EDGE              = 0x00000002,
 DSI_EXT_TE_MODE_HVSYNC_WIDTH             = 0x00000003,
-} DSI_EXT_TE_MODE;
+पूर्ण DSI_EXT_TE_MODE;
 
 /*
- * DSI_EXT_RESET_POL enum
+ * DSI_EXT_RESET_POL क्रमागत
  */
 
-typedef enum DSI_EXT_RESET_POL {
+प्रकार क्रमागत DSI_EXT_RESET_POL अणु
 DSI_EXT_RESET_POL_HIGH                   = 0x00000000,
 DSI_EXT_RESET_POL_LOW                    = 0x00000001,
-} DSI_EXT_RESET_POL;
+पूर्ण DSI_EXT_RESET_POL;
 
 /*
- * DSI_EXT_TE_POL enum
+ * DSI_EXT_TE_POL क्रमागत
  */
 
-typedef enum DSI_EXT_TE_POL {
+प्रकार क्रमागत DSI_EXT_TE_POL अणु
 DSI_EXT_TE_POL_RISING                    = 0x00000000,
 DSI_EXT_TE_POL_FALLING                   = 0x00000001,
-} DSI_EXT_TE_POL;
+पूर्ण DSI_EXT_TE_POL;
 
 /*
- * DSI_RESET_PANEL enum
+ * DSI_RESET_PANEL क्रमागत
  */
 
-typedef enum DSI_RESET_PANEL {
+प्रकार क्रमागत DSI_RESET_PANEL अणु
 DSI_RESET_PANEL_DEASSERT                 = 0x00000000,
 DSI_RESET_PANEL_ASSERT                   = 0x00000001,
-} DSI_RESET_PANEL;
+पूर्ण DSI_RESET_PANEL;
 
 /*
- * DSI_CRC_ENABLE enum
+ * DSI_CRC_ENABLE क्रमागत
  */
 
-typedef enum DSI_CRC_ENABLE {
+प्रकार क्रमागत DSI_CRC_ENABLE अणु
 DSI_CRC_CAL_DISABLE                      = 0x00000000,
 DSI_CRC_CAL_ENABLE                       = 0x00000001,
-} DSI_CRC_ENABLE;
+पूर्ण DSI_CRC_ENABLE;
 
 /*
- * DSI_TX_EOT_APPEND enum
+ * DSI_TX_EOT_APPEND क्रमागत
  */
 
-typedef enum DSI_TX_EOT_APPEND {
+प्रकार क्रमागत DSI_TX_EOT_APPEND अणु
 DSI_TX_EOT_APPEND_DISABLE                = 0x00000000,
 DSI_TX_EOT_APPEND_ENABLE                 = 0x00000001,
-} DSI_TX_EOT_APPEND;
+पूर्ण DSI_TX_EOT_APPEND;
 
 /*
- * DSI_RX_EOT_IGNORE enum
+ * DSI_RX_EOT_IGNORE क्रमागत
  */
 
-typedef enum DSI_RX_EOT_IGNORE {
+प्रकार क्रमागत DSI_RX_EOT_IGNORE अणु
 DSI_RX_EOT_IGNORE_DISABLE                = 0x00000000,
 DSI_RX_EOT_IGNORE_ENABLE                 = 0x00000001,
-} DSI_RX_EOT_IGNORE;
+पूर्ण DSI_RX_EOT_IGNORE;
 
 /*
- * DSI_MIPI_BIST_RESET enum
+ * DSI_MIPI_BIST_RESET क्रमागत
  */
 
-typedef enum DSI_MIPI_BIST_RESET {
+प्रकार क्रमागत DSI_MIPI_BIST_RESET अणु
 DSI_MIPI_BIST_RESET_DEASSERT             = 0x00000000,
 DSI_MIPI_BIST_RESET_ASSERT               = 0x00000001,
-} DSI_MIPI_BIST_RESET;
+पूर्ण DSI_MIPI_BIST_RESET;
 
 /*
- * DSI_MIPI_BIST_VIDEO_FRMT enum
+ * DSI_MIPI_BIST_VIDEO_FRMT क्रमागत
  */
 
-typedef enum DSI_MIPI_BIST_VIDEO_FRMT {
+प्रकार क्रमागत DSI_MIPI_BIST_VIDEO_FRMT अणु
 DSI_MIPI_BIST_VIDEO_FRMT_YUV422          = 0x00000000,
 DSI_MIPI_BIST_VIDEO_FRMT_RAW8            = 0x00000001,
-} DSI_MIPI_BIST_VIDEO_FRMT;
+पूर्ण DSI_MIPI_BIST_VIDEO_FRMT;
 
 /*
- * DSI_MIPI_BIST_START enum
+ * DSI_MIPI_BIST_START क्रमागत
  */
 
-typedef enum DSI_MIPI_BIST_START {
+प्रकार क्रमागत DSI_MIPI_BIST_START अणु
 DSI_MIPI_BIST_START_DEASSERT             = 0x00000000,
 DSI_MIPI_BIST_START_ASSERT               = 0x00000001,
-} DSI_MIPI_BIST_START;
+पूर्ण DSI_MIPI_BIST_START;
 
 /*
- * DSI_DBG_CLK_SEL enum
+ * DSI_DBG_CLK_SEL क्रमागत
  */
 
-typedef enum DSI_DBG_CLK_SEL {
+प्रकार क्रमागत DSI_DBG_CLK_SEL अणु
 DSI_TEST_CLK_SEL_DISPCLK_P               = 0x00000000,
 DSI_TEST_CLK_SEL_DISPCLK_G               = 0x00000001,
 DSI_TEST_CLK_SEL_DISPCLK_R               = 0x00000002,
@@ -9723,78 +9724,78 @@ DSI_TEST_CLK_SEL_DSICLK_P                = 0x00000005,
 DSI_TEST_CLK_SEL_DSICLK_R                = 0x00000006,
 DSI_TEST_CLK_SEL_DSICLK_G                = 0x00000007,
 DSI_TEST_CLK_SEL_DSICLK_TRN              = 0x00000008,
-} DSI_DBG_CLK_SEL;
+पूर्ण DSI_DBG_CLK_SEL;
 
 /*
- * DSI_DENG_FIFO_USE_OVERWRITE_LEVEL enum
+ * DSI_DENG_FIFO_USE_OVERWRITE_LEVEL क्रमागत
  */
 
-typedef enum DSI_DENG_FIFO_USE_OVERWRITE_LEVEL {
+प्रकार क्रमागत DSI_DENG_FIFO_USE_OVERWRITE_LEVEL अणु
 DSI_DENG_FIFO_LEVEL_OVERWRITE            = 0x00000000,
 DSI_DENG_FIFO_LEVEL_CAL_AVERAGE          = 0x00000001,
-} DSI_DENG_FIFO_USE_OVERWRITE_LEVEL;
+पूर्ण DSI_DENG_FIFO_USE_OVERWRITE_LEVEL;
 
 /*
- * DSI_DENG_FIFO_FORCE_RECAL_AVERAGE enum
+ * DSI_DENG_FIFO_FORCE_RECAL_AVERAGE क्रमागत
  */
 
-typedef enum DSI_DENG_FIFO_FORCE_RECAL_AVERAGE {
+प्रकार क्रमागत DSI_DENG_FIFO_FORCE_RECAL_AVERAGE अणु
 DSI_DENG_FIFO_FORCE_RECAL_AVERAGE_DEASSERT  = 0x00000000,
 DSI_DENG_FIFO_FORCE_RECAL_AVERAGE_ASSERT  = 0x00000001,
-} DSI_DENG_FIFO_FORCE_RECAL_AVERAGE;
+पूर्ण DSI_DENG_FIFO_FORCE_RECAL_AVERAGE;
 
 /*
- * DSI_DENG_FIFO_FORCE_RECOMP_MINMAX enum
+ * DSI_DENG_FIFO_FORCE_RECOMP_MINMAX क्रमागत
  */
 
-typedef enum DSI_DENG_FIFO_FORCE_RECOMP_MINMAX {
+प्रकार क्रमागत DSI_DENG_FIFO_FORCE_RECOMP_MINMAX अणु
 DSI_DENG_FIFO_FORCE_RECOMP_MINMAX_DEASSERT  = 0x00000000,
 DSI_DENG_FIFO_FORCE_RECOMP_MINMAX_ASSERT  = 0x00000001,
-} DSI_DENG_FIFO_FORCE_RECOMP_MINMAX;
+पूर्ण DSI_DENG_FIFO_FORCE_RECOMP_MINMAX;
 
 /*
- * DSI_DENG_FIFO_START enum
+ * DSI_DENG_FIFO_START क्रमागत
  */
 
-typedef enum DSI_DENG_FIFO_START {
+प्रकार क्रमागत DSI_DENG_FIFO_START अणु
 DSI_DENG_FIFO_START_DEASSERT             = 0x00000000,
 DSI_DENG_FIFO_START_ASSERT               = 0x00000001,
-} DSI_DENG_FIFO_START;
+पूर्ण DSI_DENG_FIFO_START;
 
 /*
- * DSI_USE_CMDFIFO enum
+ * DSI_USE_CMDFIFO क्रमागत
  */
 
-typedef enum DSI_USE_CMDFIFO {
+प्रकार क्रमागत DSI_USE_CMDFIFO अणु
 DSI_CMD_USE_DMAFIFO                      = 0x00000000,
 DSI_CMD_USE_CMDFIFO                      = 0x00000001,
-} DSI_USE_CMDFIFO;
+पूर्ण DSI_USE_CMDFIFO;
 
 /*
- * DSI_CRTC_FREEZE_TRIG enum
+ * DSI_CRTC_FREEZE_TRIG क्रमागत
  */
 
-typedef enum DSI_CRTC_FREEZE_TRIG {
+प्रकार क्रमागत DSI_CRTC_FREEZE_TRIG अणु
 DSI_CRTC_FREEZE_TRIG_DEASSERT            = 0x00000000,
 DSI_CRTC_FREEZE_TRIG_ASSERT              = 0x00000001,
-} DSI_CRTC_FREEZE_TRIG;
+पूर्ण DSI_CRTC_FREEZE_TRIG;
 
 /*
- * DSI_PERF_LATENCY_SEL enum
+ * DSI_PERF_LATENCY_SEL क्रमागत
  */
 
-typedef enum DSI_PERF_LATENCY_SEL {
+प्रकार क्रमागत DSI_PERF_LATENCY_SEL अणु
 DSI_PERF_LATENCY_SEL_DATA_LANE0          = 0x00000000,
 DSI_PERF_LATENCY_SEL_DATA_LANE1          = 0x00000001,
 DSI_PERF_LATENCY_SEL_DATA_LANE2          = 0x00000002,
 DSI_PERF_LATENCY_SEL_DATA_LANE3          = 0x00000003,
-} DSI_PERF_LATENCY_SEL;
+पूर्ण DSI_PERF_LATENCY_SEL;
 
 /*
- * DSI_DEBUG_DSICLK_SEL enum
+ * DSI_DEBUG_DSICLK_SEL क्रमागत
  */
 
-typedef enum DSI_DEBUG_DSICLK_SEL {
+प्रकार क्रमागत DSI_DEBUG_DSICLK_SEL अणु
 DSI_DEBUG_DSICLK_SEL_VIDEO_ENGINE        = 0x00000000,
 DSI_DEBUG_DSICLK_SEL_CMD_ENGINE          = 0x00000001,
 DSI_DEBUG_DSICLK_SEL_RESYNC_FIFO         = 0x00000002,
@@ -9802,13 +9803,13 @@ DSI_DEBUG_DSICLK_SEL_CMDFIFO             = 0x00000003,
 DSI_DEBUG_DSICLK_SEL_CMDBUFFER           = 0x00000004,
 DSI_DEBUG_DSICLK_SEL_AFIFO               = 0x00000005,
 DSI_DEBUG_DSICLK_SEL_LANECTRL            = 0x00000006,
-} DSI_DEBUG_DSICLK_SEL;
+पूर्ण DSI_DEBUG_DSICLK_SEL;
 
 /*
- * DSI_DEBUG_BYTECLK_SEL enum
+ * DSI_DEBUG_BYTECLK_SEL क्रमागत
  */
 
-typedef enum DSI_DEBUG_BYTECLK_SEL {
+प्रकार क्रमागत DSI_DEBUG_BYTECLK_SEL अणु
 DSI_DEBUG_BYTECLK_SEL_AFIFO              = 0x00000000,
 DSI_DEBUG_BYTECLK_SEL_LANEFIFO0          = 0x00000001,
 DSI_DEBUG_BYTECLK_SEL_LANEFIFO1          = 0x00000002,
@@ -9824,612 +9825,612 @@ DSI_DEBUG_BYTECLK_SEL_PINGPING2          = 0x0000000b,
 DSI_DEBUG_BYTECLK_SEL_PINGPING3          = 0x0000000c,
 DSI_DEBUG_BYTECLK_SEL_EOT                = 0x0000000d,
 DSI_DEBUG_BYTECLK_SEL_LANECTRL           = 0x0000000e,
-} DSI_DEBUG_BYTECLK_SEL;
+पूर्ण DSI_DEBUG_BYTECLK_SEL;
 
 /*******************************************************
  * DCIO_CHIP Enums
  *******************************************************/
 
 /*
- * DCIOCHIP_HPD_SEL enum
+ * DCIOCHIP_HPD_SEL क्रमागत
  */
 
-typedef enum DCIOCHIP_HPD_SEL {
+प्रकार क्रमागत DCIOCHIP_HPD_SEL अणु
 DCIOCHIP_HPD_SEL_ASYNC                   = 0x00000000,
 DCIOCHIP_HPD_SEL_CLOCKED                 = 0x00000001,
-} DCIOCHIP_HPD_SEL;
+पूर्ण DCIOCHIP_HPD_SEL;
 
 /*
- * DCIOCHIP_PAD_MODE enum
+ * DCIOCHIP_PAD_MODE क्रमागत
  */
 
-typedef enum DCIOCHIP_PAD_MODE {
+प्रकार क्रमागत DCIOCHIP_PAD_MODE अणु
 DCIOCHIP_PAD_MODE_DDC                    = 0x00000000,
 DCIOCHIP_PAD_MODE_DP                     = 0x00000001,
-} DCIOCHIP_PAD_MODE;
+पूर्ण DCIOCHIP_PAD_MODE;
 
 /*
- * DCIOCHIP_AUXSLAVE_PAD_MODE enum
+ * DCIOCHIP_AUXSLAVE_PAD_MODE क्रमागत
  */
 
-typedef enum DCIOCHIP_AUXSLAVE_PAD_MODE {
+प्रकार क्रमागत DCIOCHIP_AUXSLAVE_PAD_MODE अणु
 DCIOCHIP_AUXSLAVE_PAD_MODE_I2C           = 0x00000000,
 DCIOCHIP_AUXSLAVE_PAD_MODE_AUX           = 0x00000001,
-} DCIOCHIP_AUXSLAVE_PAD_MODE;
+पूर्ण DCIOCHIP_AUXSLAVE_PAD_MODE;
 
 /*
- * DCIOCHIP_INVERT enum
+ * DCIOCHIP_INVERT क्रमागत
  */
 
-typedef enum DCIOCHIP_INVERT {
+प्रकार क्रमागत DCIOCHIP_INVERT अणु
 DCIOCHIP_POL_NON_INVERT                  = 0x00000000,
 DCIOCHIP_POL_INVERT                      = 0x00000001,
-} DCIOCHIP_INVERT;
+पूर्ण DCIOCHIP_INVERT;
 
 /*
- * DCIOCHIP_PD_EN enum
+ * DCIOCHIP_PD_EN क्रमागत
  */
 
-typedef enum DCIOCHIP_PD_EN {
+प्रकार क्रमागत DCIOCHIP_PD_EN अणु
 DCIOCHIP_PD_EN_NOTALLOW                  = 0x00000000,
 DCIOCHIP_PD_EN_ALLOW                     = 0x00000001,
-} DCIOCHIP_PD_EN;
+पूर्ण DCIOCHIP_PD_EN;
 
 /*
- * DCIOCHIP_GPIO_MASK_EN enum
+ * DCIOCHIP_GPIO_MASK_EN क्रमागत
  */
 
-typedef enum DCIOCHIP_GPIO_MASK_EN {
+प्रकार क्रमागत DCIOCHIP_GPIO_MASK_EN अणु
 DCIOCHIP_GPIO_MASK_EN_HARDWARE           = 0x00000000,
 DCIOCHIP_GPIO_MASK_EN_SOFTWARE           = 0x00000001,
-} DCIOCHIP_GPIO_MASK_EN;
+पूर्ण DCIOCHIP_GPIO_MASK_EN;
 
 /*
- * DCIOCHIP_MASK enum
+ * DCIOCHIP_MASK क्रमागत
  */
 
-typedef enum DCIOCHIP_MASK {
+प्रकार क्रमागत DCIOCHIP_MASK अणु
 DCIOCHIP_MASK_DISABLE                    = 0x00000000,
 DCIOCHIP_MASK_ENABLE                     = 0x00000001,
-} DCIOCHIP_MASK;
+पूर्ण DCIOCHIP_MASK;
 
 /*
- * DCIOCHIP_GPIO_I2C_MASK enum
+ * DCIOCHIP_GPIO_I2C_MASK क्रमागत
  */
 
-typedef enum DCIOCHIP_GPIO_I2C_MASK {
+प्रकार क्रमागत DCIOCHIP_GPIO_I2C_MASK अणु
 DCIOCHIP_GPIO_I2C_MASK_DISABLE           = 0x00000000,
 DCIOCHIP_GPIO_I2C_MASK_ENABLE            = 0x00000001,
-} DCIOCHIP_GPIO_I2C_MASK;
+पूर्ण DCIOCHIP_GPIO_I2C_MASK;
 
 /*
- * DCIOCHIP_GPIO_I2C_DRIVE enum
+ * DCIOCHIP_GPIO_I2C_DRIVE क्रमागत
  */
 
-typedef enum DCIOCHIP_GPIO_I2C_DRIVE {
+प्रकार क्रमागत DCIOCHIP_GPIO_I2C_DRIVE अणु
 DCIOCHIP_GPIO_I2C_DRIVE_LOW              = 0x00000000,
 DCIOCHIP_GPIO_I2C_DRIVE_HIGH             = 0x00000001,
-} DCIOCHIP_GPIO_I2C_DRIVE;
+पूर्ण DCIOCHIP_GPIO_I2C_DRIVE;
 
 /*
- * DCIOCHIP_GPIO_I2C_EN enum
+ * DCIOCHIP_GPIO_I2C_EN क्रमागत
  */
 
-typedef enum DCIOCHIP_GPIO_I2C_EN {
+प्रकार क्रमागत DCIOCHIP_GPIO_I2C_EN अणु
 DCIOCHIP_GPIO_I2C_DISABLE                = 0x00000000,
 DCIOCHIP_GPIO_I2C_ENABLE                 = 0x00000001,
-} DCIOCHIP_GPIO_I2C_EN;
+पूर्ण DCIOCHIP_GPIO_I2C_EN;
 
 /*
- * DCIOCHIP_MASK_4BIT enum
+ * DCIOCHIP_MASK_4BIT क्रमागत
  */
 
-typedef enum DCIOCHIP_MASK_4BIT {
+प्रकार क्रमागत DCIOCHIP_MASK_4BIT अणु
 DCIOCHIP_MASK_4BIT_DISABLE               = 0x00000000,
 DCIOCHIP_MASK_4BIT_ENABLE                = 0x0000000f,
-} DCIOCHIP_MASK_4BIT;
+पूर्ण DCIOCHIP_MASK_4BIT;
 
 /*
- * DCIOCHIP_ENABLE_4BIT enum
+ * DCIOCHIP_ENABLE_4BIT क्रमागत
  */
 
-typedef enum DCIOCHIP_ENABLE_4BIT {
+प्रकार क्रमागत DCIOCHIP_ENABLE_4BIT अणु
 DCIOCHIP_4BIT_DISABLE                    = 0x00000000,
 DCIOCHIP_4BIT_ENABLE                     = 0x0000000f,
-} DCIOCHIP_ENABLE_4BIT;
+पूर्ण DCIOCHIP_ENABLE_4BIT;
 
 /*
- * DCIOCHIP_MASK_5BIT enum
+ * DCIOCHIP_MASK_5BIT क्रमागत
  */
 
-typedef enum DCIOCHIP_MASK_5BIT {
+प्रकार क्रमागत DCIOCHIP_MASK_5BIT अणु
 DCIOCHIP_MASIK_5BIT_DISABLE              = 0x00000000,
 DCIOCHIP_MASIK_5BIT_ENABLE               = 0x0000001f,
-} DCIOCHIP_MASK_5BIT;
+पूर्ण DCIOCHIP_MASK_5BIT;
 
 /*
- * DCIOCHIP_ENABLE_5BIT enum
+ * DCIOCHIP_ENABLE_5BIT क्रमागत
  */
 
-typedef enum DCIOCHIP_ENABLE_5BIT {
+प्रकार क्रमागत DCIOCHIP_ENABLE_5BIT अणु
 DCIOCHIP_5BIT_DISABLE                    = 0x00000000,
 DCIOCHIP_5BIT_ENABLE                     = 0x0000001f,
-} DCIOCHIP_ENABLE_5BIT;
+पूर्ण DCIOCHIP_ENABLE_5BIT;
 
 /*
- * DCIOCHIP_MASK_2BIT enum
+ * DCIOCHIP_MASK_2BIT क्रमागत
  */
 
-typedef enum DCIOCHIP_MASK_2BIT {
+प्रकार क्रमागत DCIOCHIP_MASK_2BIT अणु
 DCIOCHIP_MASK_2BIT_DISABLE               = 0x00000000,
 DCIOCHIP_MASK_2BIT_ENABLE                = 0x00000003,
-} DCIOCHIP_MASK_2BIT;
+पूर्ण DCIOCHIP_MASK_2BIT;
 
 /*
- * DCIOCHIP_ENABLE_2BIT enum
+ * DCIOCHIP_ENABLE_2BIT क्रमागत
  */
 
-typedef enum DCIOCHIP_ENABLE_2BIT {
+प्रकार क्रमागत DCIOCHIP_ENABLE_2BIT अणु
 DCIOCHIP_2BIT_DISABLE                    = 0x00000000,
 DCIOCHIP_2BIT_ENABLE                     = 0x00000003,
-} DCIOCHIP_ENABLE_2BIT;
+पूर्ण DCIOCHIP_ENABLE_2BIT;
 
 /*
- * DCIOCHIP_REF_27_SRC_SEL enum
+ * DCIOCHIP_REF_27_SRC_SEL क्रमागत
  */
 
-typedef enum DCIOCHIP_REF_27_SRC_SEL {
+प्रकार क्रमागत DCIOCHIP_REF_27_SRC_SEL अणु
 DCIOCHIP_REF_27_SRC_SEL_XTAL_DIVIDER     = 0x00000000,
 DCIOCHIP_REF_27_SRC_SEL_DISP_CLKIN2_DIVIDER  = 0x00000001,
 DCIOCHIP_REF_27_SRC_SEL_XTAL_BYPASS      = 0x00000002,
 DCIOCHIP_REF_27_SRC_SEL_DISP_CLKIN2_BYPASS  = 0x00000003,
-} DCIOCHIP_REF_27_SRC_SEL;
+पूर्ण DCIOCHIP_REF_27_SRC_SEL;
 
 /*
- * DCIOCHIP_DVO_VREFPON enum
+ * DCIOCHIP_DVO_VREFPON क्रमागत
  */
 
-typedef enum DCIOCHIP_DVO_VREFPON {
+प्रकार क्रमागत DCIOCHIP_DVO_VREFPON अणु
 DCIOCHIP_DVO_VREFPON_DISABLE             = 0x00000000,
 DCIOCHIP_DVO_VREFPON_ENABLE              = 0x00000001,
-} DCIOCHIP_DVO_VREFPON;
+पूर्ण DCIOCHIP_DVO_VREFPON;
 
 /*
- * DCIOCHIP_DVO_VREFSEL enum
+ * DCIOCHIP_DVO_VREFSEL क्रमागत
  */
 
-typedef enum DCIOCHIP_DVO_VREFSEL {
+प्रकार क्रमागत DCIOCHIP_DVO_VREFSEL अणु
 DCIOCHIP_DVO_VREFSEL_ONCHIP              = 0x00000000,
 DCIOCHIP_DVO_VREFSEL_EXTERNAL            = 0x00000001,
-} DCIOCHIP_DVO_VREFSEL;
+पूर्ण DCIOCHIP_DVO_VREFSEL;
 
 /*
- * DCIOCHIP_SPDIF1_IMODE enum
+ * DCIOCHIP_SPDIF1_IMODE क्रमागत
  */
 
-typedef enum DCIOCHIP_SPDIF1_IMODE {
+प्रकार क्रमागत DCIOCHIP_SPDIF1_IMODE अणु
 DCIOCHIP_SPDIF1_IMODE_OE_A               = 0x00000000,
 DCIOCHIP_SPDIF1_IMODE_TSTE_TSTO          = 0x00000001,
-} DCIOCHIP_SPDIF1_IMODE;
+पूर्ण DCIOCHIP_SPDIF1_IMODE;
 
 /*
- * DCIOCHIP_AUX_FALLSLEWSEL enum
+ * DCIOCHIP_AUX_FALLSLEWSEL क्रमागत
  */
 
-typedef enum DCIOCHIP_AUX_FALLSLEWSEL {
+प्रकार क्रमागत DCIOCHIP_AUX_FALLSLEWSEL अणु
 DCIOCHIP_AUX_FALLSLEWSEL_LOW             = 0x00000000,
 DCIOCHIP_AUX_FALLSLEWSEL_HIGH0           = 0x00000001,
 DCIOCHIP_AUX_FALLSLEWSEL_HIGH1           = 0x00000002,
 DCIOCHIP_AUX_FALLSLEWSEL_ULTRAHIGH       = 0x00000003,
-} DCIOCHIP_AUX_FALLSLEWSEL;
+पूर्ण DCIOCHIP_AUX_FALLSLEWSEL;
 
 /*
- * DCIOCHIP_AUX_SPIKESEL enum
+ * DCIOCHIP_AUX_SPIKESEL क्रमागत
  */
 
-typedef enum DCIOCHIP_AUX_SPIKESEL {
+प्रकार क्रमागत DCIOCHIP_AUX_SPIKESEL अणु
 DCIOCHIP_AUX_SPIKESEL_50NS               = 0x00000000,
 DCIOCHIP_AUX_SPIKESEL_10NS               = 0x00000001,
-} DCIOCHIP_AUX_SPIKESEL;
+पूर्ण DCIOCHIP_AUX_SPIKESEL;
 
 /*
- * DCIOCHIP_AUX_CSEL0P9 enum
+ * DCIOCHIP_AUX_CSEL0P9 क्रमागत
  */
 
-typedef enum DCIOCHIP_AUX_CSEL0P9 {
+प्रकार क्रमागत DCIOCHIP_AUX_CSEL0P9 अणु
 DCIOCHIP_AUX_CSEL_DEC1P0                 = 0x00000000,
 DCIOCHIP_AUX_CSEL_DEC0P9                 = 0x00000001,
-} DCIOCHIP_AUX_CSEL0P9;
+पूर्ण DCIOCHIP_AUX_CSEL0P9;
 
 /*
- * DCIOCHIP_AUX_CSEL1P1 enum
+ * DCIOCHIP_AUX_CSEL1P1 क्रमागत
  */
 
-typedef enum DCIOCHIP_AUX_CSEL1P1 {
+प्रकार क्रमागत DCIOCHIP_AUX_CSEL1P1 अणु
 DCIOCHIP_AUX_CSEL_INC1P0                 = 0x00000000,
 DCIOCHIP_AUX_CSEL_INC1P1                 = 0x00000001,
-} DCIOCHIP_AUX_CSEL1P1;
+पूर्ण DCIOCHIP_AUX_CSEL1P1;
 
 /*
- * DCIOCHIP_AUX_RSEL0P9 enum
+ * DCIOCHIP_AUX_RSEL0P9 क्रमागत
  */
 
-typedef enum DCIOCHIP_AUX_RSEL0P9 {
+प्रकार क्रमागत DCIOCHIP_AUX_RSEL0P9 अणु
 DCIOCHIP_AUX_RSEL_DEC1P0                 = 0x00000000,
 DCIOCHIP_AUX_RSEL_DEC0P9                 = 0x00000001,
-} DCIOCHIP_AUX_RSEL0P9;
+पूर्ण DCIOCHIP_AUX_RSEL0P9;
 
 /*
- * DCIOCHIP_AUX_RSEL1P1 enum
+ * DCIOCHIP_AUX_RSEL1P1 क्रमागत
  */
 
-typedef enum DCIOCHIP_AUX_RSEL1P1 {
+प्रकार क्रमागत DCIOCHIP_AUX_RSEL1P1 अणु
 DCIOCHIP_AUX_RSEL_INC1P0                 = 0x00000000,
 DCIOCHIP_AUX_RSEL_INC1P1                 = 0x00000001,
-} DCIOCHIP_AUX_RSEL1P1;
+पूर्ण DCIOCHIP_AUX_RSEL1P1;
 
 /*******************************************************
  * AZCONTROLLER Enums
  *******************************************************/
 
 /*
- * GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL enum
+ * GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL क्रमागत
  */
 
-typedef enum GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL {
+प्रकार क्रमागत GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL अणु
 GENERIC_AZ_CONTROLLER_REGISTER_DISABLE   = 0x00000000,
 GENERIC_AZ_CONTROLLER_REGISTER_ENABLE    = 0x00000001,
-} GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL;
+पूर्ण GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL;
 
 /*
- * GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL_RESERVED enum
+ * GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL_RESERVED क्रमागत
  */
 
-typedef enum GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL_RESERVED {
+प्रकार क्रमागत GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL_RESERVED अणु
 GENERIC_AZ_CONTROLLER_REGISTER_DISABLE_RESERVED  = 0x00000000,
 GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_RESERVED  = 0x00000001,
-} GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL_RESERVED;
+पूर्ण GENERIC_AZ_CONTROLLER_REGISTER_ENABLE_CONTROL_RESERVED;
 
 /*
- * GENERIC_AZ_CONTROLLER_REGISTER_STATUS enum
+ * GENERIC_AZ_CONTROLLER_REGISTER_STATUS क्रमागत
  */
 
-typedef enum GENERIC_AZ_CONTROLLER_REGISTER_STATUS {
+प्रकार क्रमागत GENERIC_AZ_CONTROLLER_REGISTER_STATUS अणु
 GENERIC_AZ_CONTROLLER_REGISTER_STATUS_NOT_SET  = 0x00000000,
 GENERIC_AZ_CONTROLLER_REGISTER_STATUS_SET  = 0x00000001,
-} GENERIC_AZ_CONTROLLER_REGISTER_STATUS;
+पूर्ण GENERIC_AZ_CONTROLLER_REGISTER_STATUS;
 
 /*
- * GENERIC_AZ_CONTROLLER_REGISTER_STATUS_RESERVED enum
+ * GENERIC_AZ_CONTROLLER_REGISTER_STATUS_RESERVED क्रमागत
  */
 
-typedef enum GENERIC_AZ_CONTROLLER_REGISTER_STATUS_RESERVED {
+प्रकार क्रमागत GENERIC_AZ_CONTROLLER_REGISTER_STATUS_RESERVED अणु
 GENERIC_AZ_CONTROLLER_REGISTER_STATUS_NOT_SET_RESERVED  = 0x00000000,
 GENERIC_AZ_CONTROLLER_REGISTER_STATUS_SET_RESERVED  = 0x00000001,
-} GENERIC_AZ_CONTROLLER_REGISTER_STATUS_RESERVED;
+पूर्ण GENERIC_AZ_CONTROLLER_REGISTER_STATUS_RESERVED;
 
 /*
- * AZ_GLOBAL_CAPABILITIES enum
+ * AZ_GLOBAL_CAPABILITIES क्रमागत
  */
 
-typedef enum AZ_GLOBAL_CAPABILITIES {
+प्रकार क्रमागत AZ_GLOBAL_CAPABILITIES अणु
 AZ_GLOBAL_CAPABILITIES_SIXTY_FOUR_BIT_ADDRESS_NOT_SUPPORTED  = 0x00000000,
 AZ_GLOBAL_CAPABILITIES_SIXTY_FOUR_BIT_ADDRESS_SUPPORTED  = 0x00000001,
-} AZ_GLOBAL_CAPABILITIES;
+पूर्ण AZ_GLOBAL_CAPABILITIES;
 
 /*
- * GLOBAL_CONTROL_ACCEPT_UNSOLICITED_RESPONSE enum
+ * GLOBAL_CONTROL_ACCEPT_UNSOLICITED_RESPONSE क्रमागत
  */
 
-typedef enum GLOBAL_CONTROL_ACCEPT_UNSOLICITED_RESPONSE {
+प्रकार क्रमागत GLOBAL_CONTROL_ACCEPT_UNSOLICITED_RESPONSE अणु
 ACCEPT_UNSOLICITED_RESPONSE_NOT_ENABLE   = 0x00000000,
 ACCEPT_UNSOLICITED_RESPONSE_ENABLE       = 0x00000001,
-} GLOBAL_CONTROL_ACCEPT_UNSOLICITED_RESPONSE;
+पूर्ण GLOBAL_CONTROL_ACCEPT_UNSOLICITED_RESPONSE;
 
 /*
- * GLOBAL_CONTROL_FLUSH_CONTROL enum
+ * GLOBAL_CONTROL_FLUSH_CONTROL क्रमागत
  */
 
-typedef enum GLOBAL_CONTROL_FLUSH_CONTROL {
+प्रकार क्रमागत GLOBAL_CONTROL_FLUSH_CONTROL अणु
 FLUSH_CONTROL_FLUSH_NOT_STARTED          = 0x00000000,
 FLUSH_CONTROL_FLUSH_STARTED              = 0x00000001,
-} GLOBAL_CONTROL_FLUSH_CONTROL;
+पूर्ण GLOBAL_CONTROL_FLUSH_CONTROL;
 
 /*
- * GLOBAL_CONTROL_CONTROLLER_RESET enum
+ * GLOBAL_CONTROL_CONTROLLER_RESET क्रमागत
  */
 
-typedef enum GLOBAL_CONTROL_CONTROLLER_RESET {
+प्रकार क्रमागत GLOBAL_CONTROL_CONTROLLER_RESET अणु
 CONTROLLER_RESET_AZ_CONTROLLER_IN_RESET  = 0x00000000,
 CONTROLLER_RESET_AZ_CONTROLLER_NOT_IN_RESET  = 0x00000001,
-} GLOBAL_CONTROL_CONTROLLER_RESET;
+पूर्ण GLOBAL_CONTROL_CONTROLLER_RESET;
 
 /*
- * AZ_STATE_CHANGE_STATUS enum
+ * AZ_STATE_CHANGE_STATUS क्रमागत
  */
 
-typedef enum AZ_STATE_CHANGE_STATUS {
+प्रकार क्रमागत AZ_STATE_CHANGE_STATUS अणु
 AZ_STATE_CHANGE_STATUS_CODEC_NOT_PRESENT  = 0x00000000,
 AZ_STATE_CHANGE_STATUS_CODEC_PRESENT     = 0x00000001,
-} AZ_STATE_CHANGE_STATUS;
+पूर्ण AZ_STATE_CHANGE_STATUS;
 
 /*
- * GLOBAL_STATUS_FLUSH_STATUS enum
+ * GLOBAL_STATUS_FLUSH_STATUS क्रमागत
  */
 
-typedef enum GLOBAL_STATUS_FLUSH_STATUS {
+प्रकार क्रमागत GLOBAL_STATUS_FLUSH_STATUS अणु
 GLOBAL_STATUS_FLUSH_STATUS_FLUSH_NOT_ENDED  = 0x00000000,
 GLOBAL_STATUS_FLUSH_STATUS_FLUSH_ENDED   = 0x00000001,
-} GLOBAL_STATUS_FLUSH_STATUS;
+पूर्ण GLOBAL_STATUS_FLUSH_STATUS;
 
 /*
- * STREAM_0_SYNCHRONIZATION enum
+ * STREAM_0_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_0_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_0_SYNCHRONIZATION अणु
 STREAM_0_SYNCHRONIZATION_STEAM_NOT_STOPPED  = 0x00000000,
 STREAM_0_SYNCHRONIZATION_STEAM_STOPPED   = 0x00000001,
-} STREAM_0_SYNCHRONIZATION;
+पूर्ण STREAM_0_SYNCHRONIZATION;
 
 /*
- * STREAM_1_SYNCHRONIZATION enum
+ * STREAM_1_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_1_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_1_SYNCHRONIZATION अणु
 STREAM_1_SYNCHRONIZATION_STEAM_NOT_STOPPED  = 0x00000000,
 STREAM_1_SYNCHRONIZATION_STEAM_STOPPED   = 0x00000001,
-} STREAM_1_SYNCHRONIZATION;
+पूर्ण STREAM_1_SYNCHRONIZATION;
 
 /*
- * STREAM_2_SYNCHRONIZATION enum
+ * STREAM_2_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_2_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_2_SYNCHRONIZATION अणु
 STREAM_2_SYNCHRONIZATION_STEAM_NOT_STOPPED  = 0x00000000,
 STREAM_2_SYNCHRONIZATION_STEAM_STOPPED   = 0x00000001,
-} STREAM_2_SYNCHRONIZATION;
+पूर्ण STREAM_2_SYNCHRONIZATION;
 
 /*
- * STREAM_3_SYNCHRONIZATION enum
+ * STREAM_3_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_3_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_3_SYNCHRONIZATION अणु
 STREAM_3_SYNCHRONIZATION_STEAM_NOT_STOPPED  = 0x00000000,
 STREAM_3_SYNCHRONIZATION_STEAM_STOPPED   = 0x00000001,
-} STREAM_3_SYNCHRONIZATION;
+पूर्ण STREAM_3_SYNCHRONIZATION;
 
 /*
- * STREAM_4_SYNCHRONIZATION enum
+ * STREAM_4_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_4_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_4_SYNCHRONIZATION अणु
 STREAM_4_SYNCHRONIZATION_STEAM_NOT_STOPPED  = 0x00000000,
 STREAM_4_SYNCHRONIZATION_STEAM_STOPPED   = 0x00000001,
-} STREAM_4_SYNCHRONIZATION;
+पूर्ण STREAM_4_SYNCHRONIZATION;
 
 /*
- * STREAM_5_SYNCHRONIZATION enum
+ * STREAM_5_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_5_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_5_SYNCHRONIZATION अणु
 STREAM_5_SYNCHRONIZATION_STEAM_NOT_STOPPED  = 0x00000000,
 STREAM_5_SYNCHRONIZATION_STEAM_STOPPED   = 0x00000001,
-} STREAM_5_SYNCHRONIZATION;
+पूर्ण STREAM_5_SYNCHRONIZATION;
 
 /*
- * STREAM_6_SYNCHRONIZATION enum
+ * STREAM_6_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_6_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_6_SYNCHRONIZATION अणु
 STREAM_6_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_6_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_6_SYNCHRONIZATION;
+पूर्ण STREAM_6_SYNCHRONIZATION;
 
 /*
- * STREAM_7_SYNCHRONIZATION enum
+ * STREAM_7_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_7_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_7_SYNCHRONIZATION अणु
 STREAM_7_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_7_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_7_SYNCHRONIZATION;
+पूर्ण STREAM_7_SYNCHRONIZATION;
 
 /*
- * STREAM_8_SYNCHRONIZATION enum
+ * STREAM_8_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_8_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_8_SYNCHRONIZATION अणु
 STREAM_8_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_8_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_8_SYNCHRONIZATION;
+पूर्ण STREAM_8_SYNCHRONIZATION;
 
 /*
- * STREAM_9_SYNCHRONIZATION enum
+ * STREAM_9_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_9_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_9_SYNCHRONIZATION अणु
 STREAM_9_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_9_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_9_SYNCHRONIZATION;
+पूर्ण STREAM_9_SYNCHRONIZATION;
 
 /*
- * STREAM_10_SYNCHRONIZATION enum
+ * STREAM_10_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_10_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_10_SYNCHRONIZATION अणु
 STREAM_10_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_10_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_10_SYNCHRONIZATION;
+पूर्ण STREAM_10_SYNCHRONIZATION;
 
 /*
- * STREAM_11_SYNCHRONIZATION enum
+ * STREAM_11_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_11_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_11_SYNCHRONIZATION अणु
 STREAM_11_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_11_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_11_SYNCHRONIZATION;
+पूर्ण STREAM_11_SYNCHRONIZATION;
 
 /*
- * STREAM_12_SYNCHRONIZATION enum
+ * STREAM_12_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_12_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_12_SYNCHRONIZATION अणु
 STREAM_12_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_12_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_12_SYNCHRONIZATION;
+पूर्ण STREAM_12_SYNCHRONIZATION;
 
 /*
- * STREAM_13_SYNCHRONIZATION enum
+ * STREAM_13_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_13_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_13_SYNCHRONIZATION अणु
 STREAM_13_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_13_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_13_SYNCHRONIZATION;
+पूर्ण STREAM_13_SYNCHRONIZATION;
 
 /*
- * STREAM_14_SYNCHRONIZATION enum
+ * STREAM_14_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_14_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_14_SYNCHRONIZATION अणु
 STREAM_14_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_14_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_14_SYNCHRONIZATION;
+पूर्ण STREAM_14_SYNCHRONIZATION;
 
 /*
- * STREAM_15_SYNCHRONIZATION enum
+ * STREAM_15_SYNCHRONIZATION क्रमागत
  */
 
-typedef enum STREAM_15_SYNCHRONIZATION {
+प्रकार क्रमागत STREAM_15_SYNCHRONIZATION अणु
 STREAM_15_SYNCHRONIZATION_STEAM_NOT_STOPPED_RESERVED  = 0x00000000,
 STREAM_15_SYNCHRONIZATION_STEAM_STOPPED_RESERVED  = 0x00000001,
-} STREAM_15_SYNCHRONIZATION;
+पूर्ण STREAM_15_SYNCHRONIZATION;
 
 /*
- * CORB_READ_POINTER_RESET enum
+ * CORB_READ_POINTER_RESET क्रमागत
  */
 
-typedef enum CORB_READ_POINTER_RESET {
+प्रकार क्रमागत CORB_READ_POINTER_RESET अणु
 CORB_READ_POINTER_RESET_CORB_DMA_IS_NOT_RESET  = 0x00000000,
 CORB_READ_POINTER_RESET_CORB_DMA_IS_RESET  = 0x00000001,
-} CORB_READ_POINTER_RESET;
+पूर्ण CORB_READ_POINTER_RESET;
 
 /*
- * AZ_CORB_SIZE enum
+ * AZ_CORB_SIZE क्रमागत
  */
 
-typedef enum AZ_CORB_SIZE {
+प्रकार क्रमागत AZ_CORB_SIZE अणु
 AZ_CORB_SIZE_2ENTRIES_RESERVED           = 0x00000000,
 AZ_CORB_SIZE_16ENTRIES_RESERVED          = 0x00000001,
 AZ_CORB_SIZE_256ENTRIES                  = 0x00000002,
 AZ_CORB_SIZE_RESERVED                    = 0x00000003,
-} AZ_CORB_SIZE;
+पूर्ण AZ_CORB_SIZE;
 
 /*
- * AZ_RIRB_WRITE_POINTER_RESET enum
+ * AZ_RIRB_WRITE_POINTER_RESET क्रमागत
  */
 
-typedef enum AZ_RIRB_WRITE_POINTER_RESET {
+प्रकार क्रमागत AZ_RIRB_WRITE_POINTER_RESET अणु
 AZ_RIRB_WRITE_POINTER_NOT_RESET          = 0x00000000,
 AZ_RIRB_WRITE_POINTER_DO_RESET           = 0x00000001,
-} AZ_RIRB_WRITE_POINTER_RESET;
+पूर्ण AZ_RIRB_WRITE_POINTER_RESET;
 
 /*
- * RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL enum
+ * RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL क्रमागत
  */
 
-typedef enum RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL {
+प्रकार क्रमागत RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL अणु
 RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL_INTERRUPT_DISABLED  = 0x00000000,
 RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL_INTERRUPT_ENABLED  = 0x00000001,
-} RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL;
+पूर्ण RIRB_CONTROL_RESPONSE_OVERRUN_INTERRUPT_CONTROL;
 
 /*
- * RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL enum
+ * RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL क्रमागत
  */
 
-typedef enum RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL {
+प्रकार क्रमागत RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL अणु
 RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL_INTERRUPT_DISABLED  = 0x00000000,
 RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL_INTERRUPT_ENABLED  = 0x00000001,
-} RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL;
+पूर्ण RIRB_CONTROL_RESPONSE_INTERRUPT_CONTROL;
 
 /*
- * AZ_RIRB_SIZE enum
+ * AZ_RIRB_SIZE क्रमागत
  */
 
-typedef enum AZ_RIRB_SIZE {
+प्रकार क्रमागत AZ_RIRB_SIZE अणु
 AZ_RIRB_SIZE_2ENTRIES_RESERVED           = 0x00000000,
 AZ_RIRB_SIZE_16ENTRIES_RESERVED          = 0x00000001,
 AZ_RIRB_SIZE_256ENTRIES                  = 0x00000002,
 AZ_RIRB_SIZE_UNDEFINED                   = 0x00000003,
-} AZ_RIRB_SIZE;
+पूर्ण AZ_RIRB_SIZE;
 
 /*
- * IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID enum
+ * IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID क्रमागत
  */
 
-typedef enum IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID {
+प्रकार क्रमागत IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID अणु
 IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID_NO_IMMEDIATE_RESPONSE_VALID  = 0x00000000,
 IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID_IMMEDIATE_RESPONSE_VALID  = 0x00000001,
-} IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID;
+पूर्ण IMMEDIATE_COMMAND_STATUS_IMMEDIATE_RESULT_VALID;
 
 /*
- * IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_BUSY enum
+ * IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_BUSY क्रमागत
  */
 
-typedef enum IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_BUSY {
+प्रकार क्रमागत IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_BUSY अणु
 IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_NOT_BUSY  = 0x00000000,
 IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_IS_BUSY  = 0x00000001,
-} IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_BUSY;
+पूर्ण IMMEDIATE_COMMAND_STATUS_IMMEDIATE_COMMAND_BUSY;
 
 /*
- * DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE enum
+ * DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE क्रमागत
  */
 
-typedef enum DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE {
+प्रकार क्रमागत DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE अणु
 DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE_DMA_DISABLE  = 0x00000000,
 DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE_DMA_ENABLE  = 0x00000001,
-} DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE;
+पूर्ण DMA_POSITION_LOWER_BASE_ADDRESS_BUFFER_ENABLE;
 
 /*******************************************************
  * AZENDPOINT Enums
  *******************************************************/
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE_PCM  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE_NOT_PCM  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE_48KHZ  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE_44P1KHZ  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY1  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY2  = 0x00000001,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY3_RESERVED  = 0x00000002,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY4  = 0x00000003,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_RESERVED  = 0x00000004,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY1  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY2_RESERVED  = 0x00000001,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY3  = 0x00000002,
@@ -10438,26 +10439,26 @@ AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY5_RESER
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY6_RESERVED  = 0x00000005,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY7_RESERVED  = 0x00000006,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY8_RESERVED  = 0x00000007,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_8_RESERVED  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_16  = 0x00000001,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_20  = 0x00000002,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_24  = 0x00000003,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_32_RESERVED  = 0x00000004,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_RESERVED  = 0x00000005,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_1  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_2  = 0x00000001,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_3  = 0x00000002,
@@ -10467,219 +10468,219 @@ AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_6  = 0x000
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_7  = 0x00000006,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_8  = 0x00000007,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_RESERVED  = 0x00000008,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L_BIT7_NOT_SET  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L_BIT7_IS_SET  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_L;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO_BIT_A_NOT_SET  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO_BIT_A_IS_SET  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRO;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO_BIT_B_NOT_SET  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO_BIT_B_IS_SET  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_NON_AUDIO;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY_BIT_C_IS_SET  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY_BIT_C_NOT_SET  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_COPY;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE_LSB_OF_D_NOT_SET  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE_LSB_OF_D_IS_SET  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_PRE;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VCFG enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VCFG क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VCFG {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VCFG अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VALIDITY_CFG_NOT_ON  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VALIDITY_CFG_ON  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VCFG;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_VCFG;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V_BIT28_IS_ZERO  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V_BIT28_IS_ONE  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_V;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN_DIGITAL_TRANSMISSION_DISABLED  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN_DIGITAL_TRANSMISSION_ENABLED  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN;
 
 /*
- * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE enum
+ * AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE {
+प्रकार क्रमागत AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE अणु
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE_SILENT_STREAM_NOT_ENABLE  = 0x00000000,
 AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE_SILENT_STREAM_ENABLE  = 0x00000001,
-} AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE;
+पूर्ण AZALIA_F2_CODEC_CONVERTER_CONTROL_DIGITAL_CONVERTER_3_KEEPALIVE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE_PIN_SHUT_OFF  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE_PIN_DRIVEN  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_WIDGET_CONTROL_OUT_ENABLE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_DISABLED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_INFO_DOWN_MIX_INHIBIT enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_INFO_DOWN_MIX_INHIBIT क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_INFO_DOWN_MIX_INHIBIT {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_INFO_DOWN_MIX_INHIBIT अणु
 AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_NO_INFO_OR_PERMITTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_FORBIDDEN  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_INFO_DOWN_MIX_INHIBIT;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_DOWN_MIX_INFO_DOWN_MIX_INHIBIT;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL01_ENABLE_MULTICHANNEL01_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL23_ENABLE_MULTICHANNEL23_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL45_ENABLE_MULTICHANNEL45_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL67_ENABLE_MULTICHANNEL67_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE;
 
 /*
- * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE enum
+ * AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE {
+प्रकार क्रमागत AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE अणु
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_PAIR_MODE  = 0x00000000,
 AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_SINGLE_MODE  = 0x00000001,
-} AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE;
+पूर्ण AZALIA_F2_CODEC_PIN_CONTROL_MULTICHANNEL_MODE_MULTICHANNEL_MODE;
 
 /*******************************************************
  * AZF0CONTROLLER Enums
  *******************************************************/
 
 /*
- * AZALIA_SOFT_RESET_REFCLK_SOFT_RESET enum
+ * AZALIA_SOFT_RESET_REFCLK_SOFT_RESET क्रमागत
  */
 
-typedef enum AZALIA_SOFT_RESET_REFCLK_SOFT_RESET {
+प्रकार क्रमागत AZALIA_SOFT_RESET_REFCLK_SOFT_RESET अणु
 AZALIA_SOFT_RESET_REFCLK_SOFT_RESET_NOT_RESET  = 0x00000000,
 AZALIA_SOFT_RESET_REFCLK_SOFT_RESET_RESET_REFCLK_LOGIC  = 0x00000001,
-} AZALIA_SOFT_RESET_REFCLK_SOFT_RESET;
+पूर्ण AZALIA_SOFT_RESET_REFCLK_SOFT_RESET;
 
 /*******************************************************
  * AZF0ROOT Enums
  *******************************************************/
 
 /*
- * CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY enum
+ * CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY क्रमागत
  */
 
-typedef enum CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY {
+प्रकार क्रमागत CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY अणु
 CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_ALL  = 0x00000000,
 CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_6  = 0x00000001,
 CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_5  = 0x00000002,
@@ -10688,13 +10689,13 @@ CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_3  = 0x00000004,
 CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_2  = 0x00000005,
 CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_1  = 0x00000006,
 CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY_0  = 0x00000007,
-} CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY;
+पूर्ण CC_RCU_DC_AUDIO_PORT_CONNECTIVITY_PORT_CONNECTIVITY;
 
 /*
- * CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY enum
+ * CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY क्रमागत
  */
 
-typedef enum CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY {
+प्रकार क्रमागत CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY अणु
 CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_ALL  = 0x00000000,
 CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_6  = 0x00000001,
 CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_5  = 0x00000002,
@@ -10703,47 +10704,47 @@ CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_3  = 0x00000004,
 CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_2  = 0x00000005,
 CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_1  = 0x00000006,
 CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY_0  = 0x00000007,
-} CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY;
+पूर्ण CC_RCU_DC_AUDIO_INPUT_PORT_CONNECTIVITY_INPUT_PORT_CONNECTIVITY;
 
 /*******************************************************
  * AZINPUTENDPOINT Enums
  *******************************************************/
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE_PCM  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE_NOT_PCM  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_STREAM_TYPE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE_48KHZ  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE_44P1KHZ  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_RATE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY1  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY2  = 0x00000001,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY3_RESERVED  = 0x00000002,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_BY4  = 0x00000003,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE_RESERVED  = 0x00000004,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_MULTIPLE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY1  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY2_RESERVED  = 0x00000001,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY3  = 0x00000002,
@@ -10752,26 +10753,26 @@ AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY5
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY6_RESERVED  = 0x00000005,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY7_RESERVED  = 0x00000006,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR_BY8_RESERVED  = 0x00000007,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_SAMPLE_BASE_DIVISOR;
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_8_RESERVED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_16  = 0x00000001,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_20  = 0x00000002,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_24  = 0x00000003,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_32_RESERVED  = 0x00000004,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE_RESERVED  = 0x00000005,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_BITS_PER_SAMPLE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_1  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_2  = 0x00000001,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_3  = 0x00000002,
@@ -10781,316 +10782,316 @@ AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_6  =
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_7  = 0x00000006,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_8  = 0x00000007,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS_RESERVED  = 0x00000008,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_CONVERTER_FORMAT_NUMBER_OF_CHANNELS;
 
 /*
- * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN enum
+ * AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN अणु
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN_DIGITAL_TRANSMISSION_DISABLED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN_DIGITAL_TRANSMISSION_ENABLED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN;
+पूर्ण AZALIA_F2_CODEC_INPUT_CONVERTER_CONTROL_DIGITAL_CONVERTER_DIGEN;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE_PIN_SHUT_OFF  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE_PIN_DRIVEN  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_WIDGET_CONTROL_IN_ENABLE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_DISABLED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_UNSOLICITED_RESPONSE_ENABLE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL0_ENABLE_MULTICHANNEL0_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL1_ENABLE_MULTICHANNEL1_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL2_ENABLE_MULTICHANNEL2_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL3_ENABLE_MULTICHANNEL3_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL4_ENABLE_MULTICHANNEL4_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL5_ENABLE_MULTICHANNEL5_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL6_ENABLE_MULTICHANNEL6_MUTE;
 
 /*
- * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE enum
+ * AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE {
+प्रकार क्रमागत AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE अणु
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_NOT_MUTED  = 0x00000000,
 AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTED  = 0x00000001,
-} AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE;
+पूर्ण AZALIA_F2_CODEC_INPUT_PIN_CONTROL_MULTICHANNEL7_ENABLE_MULTICHANNEL7_MUTE;
 
 /*******************************************************
  * AZROOT Enums
  *******************************************************/
 
 /*
- * AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_RESET enum
+ * AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_RESET क्रमागत
  */
 
-typedef enum AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_RESET {
+प्रकार क्रमागत AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_RESET अणु
 AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_NOT_RESET  = 0x00000000,
 AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_DO_RESET  = 0x00000001,
-} AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_RESET;
+पूर्ण AZALIA_F2_CODEC_FUNCTION_CONTROL_RESET_CODEC_RESET;
 
 /*******************************************************
  * DCCG Enums
  *******************************************************/
 
 /*
- * ENABLE enum
+ * ENABLE क्रमागत
  */
 
-typedef enum ENABLE {
+प्रकार क्रमागत ENABLE अणु
 DISABLE_THE_FEATURE                      = 0x00000000,
 ENABLE_THE_FEATURE                       = 0x00000001,
-} ENABLE;
+पूर्ण ENABLE;
 
 /*
- * ENABLE_CLOCK enum
+ * ENABLE_CLOCK क्रमागत
  */
 
-typedef enum ENABLE_CLOCK {
+प्रकार क्रमागत ENABLE_CLOCK अणु
 DISABLE_THE_CLOCK                        = 0x00000000,
 ENABLE_THE_CLOCK                         = 0x00000001,
-} ENABLE_CLOCK;
+पूर्ण ENABLE_CLOCK;
 
 /*
- * FORCE_VBI enum
+ * FORCE_VBI क्रमागत
  */
 
-typedef enum FORCE_VBI {
+प्रकार क्रमागत FORCE_VBI अणु
 FORCE_VBI_LOW                            = 0x00000000,
 FORCE_VBI_HIGH                           = 0x00000001,
-} FORCE_VBI;
+पूर्ण FORCE_VBI;
 
 /*
- * OVERRIDE_CGTT_SCLK enum
+ * OVERRIDE_CGTT_SCLK क्रमागत
  */
 
-typedef enum OVERRIDE_CGTT_SCLK {
+प्रकार क्रमागत OVERRIDE_CGTT_SCLK अणु
 OVERRIDE_CGTT_SCLK_NOOP                  = 0x00000000,
 SET_OVERRIDE_CGTT_SCLK                   = 0x00000001,
-} OVERRIDE_CGTT_SCLK;
+पूर्ण OVERRIDE_CGTT_SCLK;
 
 /*
- * CLEAR_SMU_INTR enum
+ * CLEAR_SMU_INTR क्रमागत
  */
 
-typedef enum CLEAR_SMU_INTR {
+प्रकार क्रमागत CLEAR_SMU_INTR अणु
 SMU_INTR_STATUS_NOOP                     = 0x00000000,
 SMU_INTR_STATUS_CLEAR                    = 0x00000001,
-} CLEAR_SMU_INTR;
+पूर्ण CLEAR_SMU_INTR;
 
 /*
- * STATIC_SCREEN_SMU_INTR enum
+ * STATIC_SCREEN_SMU_INTR क्रमागत
  */
 
-typedef enum STATIC_SCREEN_SMU_INTR {
+प्रकार क्रमागत STATIC_SCREEN_SMU_INTR अणु
 STATIC_SCREEN_SMU_INTR_NOOP              = 0x00000000,
 SET_STATIC_SCREEN_SMU_INTR               = 0x00000001,
-} STATIC_SCREEN_SMU_INTR;
+पूर्ण STATIC_SCREEN_SMU_INTR;
 
 /*
- * JITTER_REMOVE_DISABLE enum
+ * JITTER_REMOVE_DISABLE क्रमागत
  */
 
-typedef enum JITTER_REMOVE_DISABLE {
+प्रकार क्रमागत JITTER_REMOVE_DISABLE अणु
 ENABLE_JITTER_REMOVAL                    = 0x00000000,
 DISABLE_JITTER_REMOVAL                   = 0x00000001,
-} JITTER_REMOVE_DISABLE;
+पूर्ण JITTER_REMOVE_DISABLE;
 
 /*
- * DS_REF_SRC enum
+ * DS_REF_SRC क्रमागत
  */
 
-typedef enum DS_REF_SRC {
+प्रकार क्रमागत DS_REF_SRC अणु
 DS_REF_IS_XTALIN                         = 0x00000000,
 DS_REF_IS_EXT_GENLOCK                    = 0x00000001,
 DS_REF_IS_PCIE                           = 0x00000002,
-} DS_REF_SRC;
+पूर्ण DS_REF_SRC;
 
 /*
- * DISABLE_CLOCK_GATING enum
+ * DISABLE_CLOCK_GATING क्रमागत
  */
 
-typedef enum DISABLE_CLOCK_GATING {
+प्रकार क्रमागत DISABLE_CLOCK_GATING अणु
 CLOCK_GATING_ENABLED                     = 0x00000000,
 CLOCK_GATING_DISABLED                    = 0x00000001,
-} DISABLE_CLOCK_GATING;
+पूर्ण DISABLE_CLOCK_GATING;
 
 /*
- * DISABLE_CLOCK_GATING_IN_DCO enum
+ * DISABLE_CLOCK_GATING_IN_DCO क्रमागत
  */
 
-typedef enum DISABLE_CLOCK_GATING_IN_DCO {
+प्रकार क्रमागत DISABLE_CLOCK_GATING_IN_DCO अणु
 CLOCK_GATING_ENABLED_IN_DCO              = 0x00000000,
 CLOCK_GATING_DISABLED_IN_DCO             = 0x00000001,
-} DISABLE_CLOCK_GATING_IN_DCO;
+पूर्ण DISABLE_CLOCK_GATING_IN_DCO;
 
 /*
- * DCCG_DEEP_COLOR_CNTL enum
+ * DCCG_DEEP_COLOR_CNTL क्रमागत
  */
 
-typedef enum DCCG_DEEP_COLOR_CNTL {
+प्रकार क्रमागत DCCG_DEEP_COLOR_CNTL अणु
 DCCG_DEEP_COLOR_DTO_DISABLE              = 0x00000000,
 DCCG_DEEP_COLOR_DTO_5_4_RATIO            = 0x00000001,
 DCCG_DEEP_COLOR_DTO_3_2_RATIO            = 0x00000002,
 DCCG_DEEP_COLOR_DTO_2_1_RATIO            = 0x00000003,
-} DCCG_DEEP_COLOR_CNTL;
+पूर्ण DCCG_DEEP_COLOR_CNTL;
 
 /*
- * REFCLK_CLOCK_EN enum
+ * REFCLK_CLOCK_EN क्रमागत
  */
 
-typedef enum REFCLK_CLOCK_EN {
+प्रकार क्रमागत REFCLK_CLOCK_EN अणु
 REFCLK_CLOCK_EN_XTALIN_CLK               = 0x00000000,
 REFCLK_CLOCK_EN_ALLOW_SRC_SEL            = 0x00000001,
-} REFCLK_CLOCK_EN;
+पूर्ण REFCLK_CLOCK_EN;
 
 /*
- * REFCLK_SRC_SEL enum
+ * REFCLK_SRC_SEL क्रमागत
  */
 
-typedef enum REFCLK_SRC_SEL {
+प्रकार क्रमागत REFCLK_SRC_SEL अणु
 REFCLK_SRC_SEL_PCIE_REFCLK               = 0x00000000,
 REFCLK_SRC_SEL_CPL_REFCLK                = 0x00000001,
-} REFCLK_SRC_SEL;
+पूर्ण REFCLK_SRC_SEL;
 
 /*
- * DPREFCLK_SRC_SEL enum
+ * DPREFCLK_SRC_SEL क्रमागत
  */
 
-typedef enum DPREFCLK_SRC_SEL {
+प्रकार क्रमागत DPREFCLK_SRC_SEL अणु
 DPREFCLK_SRC_SEL_CK                      = 0x00000000,
 DPREFCLK_SRC_SEL_P0PLL                   = 0x00000001,
 DPREFCLK_SRC_SEL_P1PLL                   = 0x00000002,
 DPREFCLK_SRC_SEL_P2PLL                   = 0x00000003,
 DPREFCLK_SRC_SEL_P3PLL                   = 0x00000004,
-} DPREFCLK_SRC_SEL;
+पूर्ण DPREFCLK_SRC_SEL;
 
 /*
- * XTAL_REF_SEL enum
+ * XTAL_REF_SEL क्रमागत
  */
 
-typedef enum XTAL_REF_SEL {
+प्रकार क्रमागत XTAL_REF_SEL अणु
 XTAL_REF_SEL_1X                          = 0x00000000,
 XTAL_REF_SEL_2X                          = 0x00000001,
-} XTAL_REF_SEL;
+पूर्ण XTAL_REF_SEL;
 
 /*
- * XTAL_REF_CLOCK_SOURCE_SEL enum
+ * XTAL_REF_CLOCK_SOURCE_SEL क्रमागत
  */
 
-typedef enum XTAL_REF_CLOCK_SOURCE_SEL {
+प्रकार क्रमागत XTAL_REF_CLOCK_SOURCE_SEL अणु
 XTAL_REF_CLOCK_SOURCE_SEL_XTALIN         = 0x00000000,
 XTAL_REF_CLOCK_SOURCE_SEL_PPLL           = 0x00000001,
-} XTAL_REF_CLOCK_SOURCE_SEL;
+पूर्ण XTAL_REF_CLOCK_SOURCE_SEL;
 
 /*
- * MICROSECOND_TIME_BASE_CLOCK_SOURCE_SEL enum
+ * MICROSECOND_TIME_BASE_CLOCK_SOURCE_SEL क्रमागत
  */
 
-typedef enum MICROSECOND_TIME_BASE_CLOCK_SOURCE_SEL {
+प्रकार क्रमागत MICROSECOND_TIME_BASE_CLOCK_SOURCE_SEL अणु
 MICROSECOND_TIME_BASE_CLOCK_IS_XTALIN    = 0x00000000,
 MICROSECOND_TIME_BASE_CLOCK_IS_PPLL_REFCLK  = 0x00000001,
-} MICROSECOND_TIME_BASE_CLOCK_SOURCE_SEL;
+पूर्ण MICROSECOND_TIME_BASE_CLOCK_SOURCE_SEL;
 
 /*
- * ALLOW_SR_ON_TRANS_REQ enum
+ * ALLOW_SR_ON_TRANS_REQ क्रमागत
  */
 
-typedef enum ALLOW_SR_ON_TRANS_REQ {
+प्रकार क्रमागत ALLOW_SR_ON_TRANS_REQ अणु
 ALLOW_SR_ON_TRANS_REQ_ENABLE             = 0x00000000,
 ALLOW_SR_ON_TRANS_REQ_DISABLE            = 0x00000001,
-} ALLOW_SR_ON_TRANS_REQ;
+पूर्ण ALLOW_SR_ON_TRANS_REQ;
 
 /*
- * MILLISECOND_TIME_BASE_CLOCK_SOURCE_SEL enum
+ * MILLISECOND_TIME_BASE_CLOCK_SOURCE_SEL क्रमागत
  */
 
-typedef enum MILLISECOND_TIME_BASE_CLOCK_SOURCE_SEL {
+प्रकार क्रमागत MILLISECOND_TIME_BASE_CLOCK_SOURCE_SEL अणु
 MILLISECOND_TIME_BASE_CLOCK_IS_XTALIN    = 0x00000000,
 MILLISECOND_TIME_BASE_CLOCK_IS_PPLL_REFCLK  = 0x00000001,
-} MILLISECOND_TIME_BASE_CLOCK_SOURCE_SEL;
+पूर्ण MILLISECOND_TIME_BASE_CLOCK_SOURCE_SEL;
 
 /*
- * PIPE_PIXEL_RATE_SOURCE enum
+ * PIPE_PIXEL_RATE_SOURCE क्रमागत
  */
 
-typedef enum PIPE_PIXEL_RATE_SOURCE {
+प्रकार क्रमागत PIPE_PIXEL_RATE_SOURCE अणु
 PIPE_PIXEL_RATE_SOURCE_P0PLL             = 0x00000000,
 PIPE_PIXEL_RATE_SOURCE_P1PLL             = 0x00000001,
 PIPE_PIXEL_RATE_SOURCE_P2PLL             = 0x00000002,
-} PIPE_PIXEL_RATE_SOURCE;
+पूर्ण PIPE_PIXEL_RATE_SOURCE;
 
 /*
- * PIPE_PHYPLL_PIXEL_RATE_SOURCE enum
+ * PIPE_PHYPLL_PIXEL_RATE_SOURCE क्रमागत
  */
 
-typedef enum PIPE_PHYPLL_PIXEL_RATE_SOURCE {
+प्रकार क्रमागत PIPE_PHYPLL_PIXEL_RATE_SOURCE अणु
 PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYA    = 0x00000000,
 PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYB    = 0x00000001,
 PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYC    = 0x00000002,
@@ -11098,58 +11099,58 @@ PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYD    = 0x00000003,
 PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYE    = 0x00000004,
 PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYF    = 0x00000005,
 PIPE_PHYPLL_PIXEL_RATE_SOURCE_UNIPHYG    = 0x00000006,
-} PIPE_PHYPLL_PIXEL_RATE_SOURCE;
+पूर्ण PIPE_PHYPLL_PIXEL_RATE_SOURCE;
 
 /*
- * PIPE_PIXEL_RATE_PLL_SOURCE enum
+ * PIPE_PIXEL_RATE_PLL_SOURCE क्रमागत
  */
 
-typedef enum PIPE_PIXEL_RATE_PLL_SOURCE {
+प्रकार क्रमागत PIPE_PIXEL_RATE_PLL_SOURCE अणु
 PIPE_PIXEL_RATE_PLL_SOURCE_PHYPLL        = 0x00000000,
 PIPE_PIXEL_RATE_PLL_SOURCE_DISPPLL       = 0x00000001,
-} PIPE_PIXEL_RATE_PLL_SOURCE;
+पूर्ण PIPE_PIXEL_RATE_PLL_SOURCE;
 
 /*
- * DP_DTO_DS_DISABLE enum
+ * DP_DTO_DS_DISABLE क्रमागत
  */
 
-typedef enum DP_DTO_DS_DISABLE {
+प्रकार क्रमागत DP_DTO_DS_DISABLE अणु
 DP_DTO_DESPREAD_DISABLE                  = 0x00000000,
 DP_DTO_DESPREAD_ENABLE                   = 0x00000001,
-} DP_DTO_DS_DISABLE;
+पूर्ण DP_DTO_DS_DISABLE;
 
 /*
- * CRTC_ADD_PIXEL enum
+ * CRTC_ADD_PIXEL क्रमागत
  */
 
-typedef enum CRTC_ADD_PIXEL {
+प्रकार क्रमागत CRTC_ADD_PIXEL अणु
 CRTC_ADD_PIXEL_NOOP                      = 0x00000000,
 CRTC_ADD_PIXEL_FORCE                     = 0x00000001,
-} CRTC_ADD_PIXEL;
+पूर्ण CRTC_ADD_PIXEL;
 
 /*
- * CRTC_DROP_PIXEL enum
+ * CRTC_DROP_PIXEL क्रमागत
  */
 
-typedef enum CRTC_DROP_PIXEL {
+प्रकार क्रमागत CRTC_DROP_PIXEL अणु
 CRTC_DROP_PIXEL_NOOP                     = 0x00000000,
 CRTC_DROP_PIXEL_FORCE                    = 0x00000001,
-} CRTC_DROP_PIXEL;
+पूर्ण CRTC_DROP_PIXEL;
 
 /*
- * SYMCLK_FE_FORCE_EN enum
+ * SYMCLK_FE_FORCE_EN क्रमागत
  */
 
-typedef enum SYMCLK_FE_FORCE_EN {
+प्रकार क्रमागत SYMCLK_FE_FORCE_EN अणु
 SYMCLK_FE_FORCE_EN_DISABLE               = 0x00000000,
 SYMCLK_FE_FORCE_EN_ENABLE                = 0x00000001,
-} SYMCLK_FE_FORCE_EN;
+पूर्ण SYMCLK_FE_FORCE_EN;
 
 /*
- * SYMCLK_FE_FORCE_SRC enum
+ * SYMCLK_FE_FORCE_SRC क्रमागत
  */
 
-typedef enum SYMCLK_FE_FORCE_SRC {
+प्रकार क्रमागत SYMCLK_FE_FORCE_SRC अणु
 SYMCLK_FE_FORCE_SRC_UNIPHYA              = 0x00000000,
 SYMCLK_FE_FORCE_SRC_UNIPHYB              = 0x00000001,
 SYMCLK_FE_FORCE_SRC_UNIPHYC              = 0x00000002,
@@ -11157,22 +11158,22 @@ SYMCLK_FE_FORCE_SRC_UNIPHYD              = 0x00000003,
 SYMCLK_FE_FORCE_SRC_UNIPHYE              = 0x00000004,
 SYMCLK_FE_FORCE_SRC_UNIPHYF              = 0x00000005,
 SYMCLK_FE_FORCE_SRC_UNIPHYG              = 0x00000006,
-} SYMCLK_FE_FORCE_SRC;
+पूर्ण SYMCLK_FE_FORCE_SRC;
 
 /*
- * DPDBG_CLK_FORCE_EN enum
+ * DPDBG_CLK_FORCE_EN क्रमागत
  */
 
-typedef enum DPDBG_CLK_FORCE_EN {
+प्रकार क्रमागत DPDBG_CLK_FORCE_EN अणु
 DPDBG_CLK_FORCE_EN_DISABLE               = 0x00000000,
 DPDBG_CLK_FORCE_EN_ENABLE                = 0x00000001,
-} DPDBG_CLK_FORCE_EN;
+पूर्ण DPDBG_CLK_FORCE_EN;
 
 /*
- * DVOACLK_COARSE_SKEW_CNTL enum
+ * DVOACLK_COARSE_SKEW_CNTL क्रमागत
  */
 
-typedef enum DVOACLK_COARSE_SKEW_CNTL {
+प्रकार क्रमागत DVOACLK_COARSE_SKEW_CNTL अणु
 DVOACLK_COARSE_SKEW_CNTL_NO_ADJUSTMENT   = 0x00000000,
 DVOACLK_COARSE_SKEW_CNTL_DELAY_1_STEP    = 0x00000001,
 DVOACLK_COARSE_SKEW_CNTL_DELAY_2_STEPS   = 0x00000002,
@@ -11204,13 +11205,13 @@ DVOACLK_COARSE_SKEW_CNTL_EARLY_12_STEPS  = 0x0000001b,
 DVOACLK_COARSE_SKEW_CNTL_EARLY_13_STEPS  = 0x0000001c,
 DVOACLK_COARSE_SKEW_CNTL_EARLY_14_STEPS  = 0x0000001d,
 DVOACLK_COARSE_SKEW_CNTL_EARLY_15_STEPS  = 0x0000001e,
-} DVOACLK_COARSE_SKEW_CNTL;
+पूर्ण DVOACLK_COARSE_SKEW_CNTL;
 
 /*
- * DVOACLK_FINE_SKEW_CNTL enum
+ * DVOACLK_FINE_SKEW_CNTL क्रमागत
  */
 
-typedef enum DVOACLK_FINE_SKEW_CNTL {
+प्रकार क्रमागत DVOACLK_FINE_SKEW_CNTL अणु
 DVOACLK_FINE_SKEW_CNTL_NO_ADJUSTMENT     = 0x00000000,
 DVOACLK_FINE_SKEW_CNTL_DELAY_1_STEP      = 0x00000001,
 DVOACLK_FINE_SKEW_CNTL_DELAY_2_STEPS     = 0x00000002,
@@ -11219,60 +11220,60 @@ DVOACLK_FINE_SKEW_CNTL_EARLY_1_STEP      = 0x00000004,
 DVOACLK_FINE_SKEW_CNTL_EARLY_2_STEPS     = 0x00000005,
 DVOACLK_FINE_SKEW_CNTL_EARLY_3_STEPS     = 0x00000006,
 DVOACLK_FINE_SKEW_CNTL_EARLY_4_STEPS     = 0x00000007,
-} DVOACLK_FINE_SKEW_CNTL;
+पूर्ण DVOACLK_FINE_SKEW_CNTL;
 
 /*
- * DVOACLKD_IN_PHASE enum
+ * DVOACLKD_IN_PHASE क्रमागत
  */
 
-typedef enum DVOACLKD_IN_PHASE {
+प्रकार क्रमागत DVOACLKD_IN_PHASE अणु
 DVOACLKD_IN_OPPOSITE_PHASE_WITH_PCLK_DVO  = 0x00000000,
 DVOACLKD_IN_PHASE_WITH_PCLK_DVO          = 0x00000001,
-} DVOACLKD_IN_PHASE;
+पूर्ण DVOACLKD_IN_PHASE;
 
 /*
- * DVOACLKC_IN_PHASE enum
+ * DVOACLKC_IN_PHASE क्रमागत
  */
 
-typedef enum DVOACLKC_IN_PHASE {
+प्रकार क्रमागत DVOACLKC_IN_PHASE अणु
 DVOACLKC_IN_OPPOSITE_PHASE_WITH_PCLK_DVO  = 0x00000000,
 DVOACLKC_IN_PHASE_WITH_PCLK_DVO          = 0x00000001,
-} DVOACLKC_IN_PHASE;
+पूर्ण DVOACLKC_IN_PHASE;
 
 /*
- * DVOACLKC_MVP_IN_PHASE enum
+ * DVOACLKC_MVP_IN_PHASE क्रमागत
  */
 
-typedef enum DVOACLKC_MVP_IN_PHASE {
+प्रकार क्रमागत DVOACLKC_MVP_IN_PHASE अणु
 DVOACLKC_MVP_IN_OPPOSITE_PHASE_WITH_PCLK_DVO  = 0x00000000,
 DVOACLKC_MVP_IN_PHASE_WITH_PCLK_DVO      = 0x00000001,
-} DVOACLKC_MVP_IN_PHASE;
+पूर्ण DVOACLKC_MVP_IN_PHASE;
 
 /*
- * DVOACLKC_MVP_SKEW_PHASE_OVERRIDE enum
+ * DVOACLKC_MVP_SKEW_PHASE_OVERRIDE क्रमागत
  */
 
-typedef enum DVOACLKC_MVP_SKEW_PHASE_OVERRIDE {
+प्रकार क्रमागत DVOACLKC_MVP_SKEW_PHASE_OVERRIDE अणु
 DVOACLKC_MVP_SKEW_PHASE_OVERRIDE_DISABLE  = 0x00000000,
 DVOACLKC_MVP_SKEW_PHASE_OVERRIDE_ENABLE  = 0x00000001,
-} DVOACLKC_MVP_SKEW_PHASE_OVERRIDE;
+पूर्ण DVOACLKC_MVP_SKEW_PHASE_OVERRIDE;
 
 /*
- * MVP_CLK_SRC_SEL enum
+ * MVP_CLK_SRC_SEL क्रमागत
  */
 
-typedef enum MVP_CLK_SRC_SEL {
+प्रकार क्रमागत MVP_CLK_SRC_SEL अणु
 MVP_CLK_SRC_SEL_RSRV                     = 0x00000000,
 MVP_CLK_SRC_SEL_IO_1                     = 0x00000001,
 MVP_CLK_SRC_SEL_IO_2                     = 0x00000002,
 MVP_CLK_SRC_SEL_REFCLK                   = 0x00000003,
-} MVP_CLK_SRC_SEL;
+पूर्ण MVP_CLK_SRC_SEL;
 
 /*
- * DCCG_AUDIO_DTO0_SOURCE_SEL enum
+ * DCCG_AUDIO_DTO0_SOURCE_SEL क्रमागत
  */
 
-typedef enum DCCG_AUDIO_DTO0_SOURCE_SEL {
+प्रकार क्रमागत DCCG_AUDIO_DTO0_SOURCE_SEL अणु
 DCCG_AUDIO_DTO0_SOURCE_SEL_CRTC0         = 0x00000000,
 DCCG_AUDIO_DTO0_SOURCE_SEL_CRTC1         = 0x00000001,
 DCCG_AUDIO_DTO0_SOURCE_SEL_CRTC2         = 0x00000002,
@@ -11280,221 +11281,221 @@ DCCG_AUDIO_DTO0_SOURCE_SEL_CRTC3         = 0x00000003,
 DCCG_AUDIO_DTO0_SOURCE_SEL_CRTC4         = 0x00000004,
 DCCG_AUDIO_DTO0_SOURCE_SEL_CRTC5         = 0x00000005,
 DCCG_AUDIO_DTO0_SOURCE_SEL_RESERVED      = 0x00000006,
-} DCCG_AUDIO_DTO0_SOURCE_SEL;
+पूर्ण DCCG_AUDIO_DTO0_SOURCE_SEL;
 
 /*
- * DCCG_AUDIO_DTO_SEL enum
+ * DCCG_AUDIO_DTO_SEL क्रमागत
  */
 
-typedef enum DCCG_AUDIO_DTO_SEL {
+प्रकार क्रमागत DCCG_AUDIO_DTO_SEL अणु
 DCCG_AUDIO_DTO_SEL_AUDIO_DTO0            = 0x00000000,
 DCCG_AUDIO_DTO_SEL_AUDIO_DTO1            = 0x00000001,
 DCCG_AUDIO_DTO_SEL_NO_AUDIO_DTO          = 0x00000002,
-} DCCG_AUDIO_DTO_SEL;
+पूर्ण DCCG_AUDIO_DTO_SEL;
 
 /*
- * DCCG_AUDIO_DTO2_SOURCE_SEL enum
+ * DCCG_AUDIO_DTO2_SOURCE_SEL क्रमागत
  */
 
-typedef enum DCCG_AUDIO_DTO2_SOURCE_SEL {
+प्रकार क्रमागत DCCG_AUDIO_DTO2_SOURCE_SEL अणु
 DCCG_AUDIO_DTO2_SOURCE_SEL_AMCLK0        = 0x00000000,
 DCCG_AUDIO_DTO2_SOURCE_SEL_AMCLK1        = 0x00000001,
-} DCCG_AUDIO_DTO2_SOURCE_SEL;
+पूर्ण DCCG_AUDIO_DTO2_SOURCE_SEL;
 
 /*
- * DCCG_AUDIO_DTO_USE_512FBR_DTO enum
+ * DCCG_AUDIO_DTO_USE_512FBR_DTO क्रमागत
  */
 
-typedef enum DCCG_AUDIO_DTO_USE_512FBR_DTO {
+प्रकार क्रमागत DCCG_AUDIO_DTO_USE_512FBR_DTO अणु
 DCCG_AUDIO_DTO_USE_128FBR_FOR_DP         = 0x00000000,
 DCCG_AUDIO_DTO_USE_512FBR_FOR_DP         = 0x00000001,
-} DCCG_AUDIO_DTO_USE_512FBR_DTO;
+पूर्ण DCCG_AUDIO_DTO_USE_512FBR_DTO;
 
 /*
- * DCCG_DBG_EN enum
+ * DCCG_DBG_EN क्रमागत
  */
 
-typedef enum DCCG_DBG_EN {
+प्रकार क्रमागत DCCG_DBG_EN अणु
 DCCG_DBG_EN_DISABLE                      = 0x00000000,
 DCCG_DBG_EN_ENABLE                       = 0x00000001,
-} DCCG_DBG_EN;
+पूर्ण DCCG_DBG_EN;
 
 /*
- * DCCG_DBG_BLOCK_SEL enum
+ * DCCG_DBG_BLOCK_SEL क्रमागत
  */
 
-typedef enum DCCG_DBG_BLOCK_SEL {
+प्रकार क्रमागत DCCG_DBG_BLOCK_SEL अणु
 DCCG_DBG_BLOCK_SEL_DCCG                  = 0x00000000,
 DCCG_DBG_BLOCK_SEL_PMON                  = 0x00000001,
 DCCG_DBG_BLOCK_SEL_PMON2                 = 0x00000002,
-} DCCG_DBG_BLOCK_SEL;
+पूर्ण DCCG_DBG_BLOCK_SEL;
 
 /*
- * DISPCLK_FREQ_RAMP_DONE enum
+ * DISPCLK_FREQ_RAMP_DONE क्रमागत
  */
 
-typedef enum DISPCLK_FREQ_RAMP_DONE {
+प्रकार क्रमागत DISPCLK_FREQ_RAMP_DONE अणु
 DISPCLK_FREQ_RAMP_IN_PROGRESS            = 0x00000000,
 DISPCLK_FREQ_RAMP_COMPLETED              = 0x00000001,
-} DISPCLK_FREQ_RAMP_DONE;
+पूर्ण DISPCLK_FREQ_RAMP_DONE;
 
 /*
- * DCCG_FIFO_ERRDET_RESET enum
+ * DCCG_FIFO_ERRDET_RESET क्रमागत
  */
 
-typedef enum DCCG_FIFO_ERRDET_RESET {
+प्रकार क्रमागत DCCG_FIFO_ERRDET_RESET अणु
 DCCG_FIFO_ERRDET_RESET_NOOP              = 0x00000000,
 DCCG_FIFO_ERRDET_RESET_FORCE             = 0x00000001,
-} DCCG_FIFO_ERRDET_RESET;
+पूर्ण DCCG_FIFO_ERRDET_RESET;
 
 /*
- * DCCG_FIFO_ERRDET_STATE enum
+ * DCCG_FIFO_ERRDET_STATE क्रमागत
  */
 
-typedef enum DCCG_FIFO_ERRDET_STATE {
+प्रकार क्रमागत DCCG_FIFO_ERRDET_STATE अणु
 DCCG_FIFO_ERRDET_STATE_DETECTION         = 0x00000000,
 DCCG_FIFO_ERRDET_STATE_CALIBRATION       = 0x00000001,
-} DCCG_FIFO_ERRDET_STATE;
+पूर्ण DCCG_FIFO_ERRDET_STATE;
 
 /*
- * DCCG_FIFO_ERRDET_OVR_EN enum
+ * DCCG_FIFO_ERRDET_OVR_EN क्रमागत
  */
 
-typedef enum DCCG_FIFO_ERRDET_OVR_EN {
+प्रकार क्रमागत DCCG_FIFO_ERRDET_OVR_EN अणु
 DCCG_FIFO_ERRDET_OVR_DISABLE             = 0x00000000,
 DCCG_FIFO_ERRDET_OVR_ENABLE              = 0x00000001,
-} DCCG_FIFO_ERRDET_OVR_EN;
+पूर्ण DCCG_FIFO_ERRDET_OVR_EN;
 
 /*
- * DISPCLK_CHG_FWD_CORR_DISABLE enum
+ * DISPCLK_CHG_FWD_CORR_DISABLE क्रमागत
  */
 
-typedef enum DISPCLK_CHG_FWD_CORR_DISABLE {
+प्रकार क्रमागत DISPCLK_CHG_FWD_CORR_DISABLE अणु
 DISPCLK_CHG_FWD_CORR_ENABLE_AT_BEGINNING  = 0x00000000,
 DISPCLK_CHG_FWD_CORR_DISABLE_AT_BEGINNING  = 0x00000001,
-} DISPCLK_CHG_FWD_CORR_DISABLE;
+पूर्ण DISPCLK_CHG_FWD_CORR_DISABLE;
 
 /*
- * DC_MEM_GLOBAL_PWR_REQ_DIS enum
+ * DC_MEM_GLOBAL_PWR_REQ_DIS क्रमागत
  */
 
-typedef enum DC_MEM_GLOBAL_PWR_REQ_DIS {
+प्रकार क्रमागत DC_MEM_GLOBAL_PWR_REQ_DIS अणु
 DC_MEM_GLOBAL_PWR_REQ_ENABLE             = 0x00000000,
 DC_MEM_GLOBAL_PWR_REQ_DISABLE            = 0x00000001,
-} DC_MEM_GLOBAL_PWR_REQ_DIS;
+पूर्ण DC_MEM_GLOBAL_PWR_REQ_DIS;
 
 /*
- * DCCG_PERF_RUN enum
+ * DCCG_PERF_RUN क्रमागत
  */
 
-typedef enum DCCG_PERF_RUN {
+प्रकार क्रमागत DCCG_PERF_RUN अणु
 DCCG_PERF_RUN_NOOP                       = 0x00000000,
 DCCG_PERF_RUN_START                      = 0x00000001,
-} DCCG_PERF_RUN;
+पूर्ण DCCG_PERF_RUN;
 
 /*
- * DCCG_PERF_MODE_VSYNC enum
+ * DCCG_PERF_MODE_VSYNC क्रमागत
  */
 
-typedef enum DCCG_PERF_MODE_VSYNC {
+प्रकार क्रमागत DCCG_PERF_MODE_VSYNC अणु
 DCCG_PERF_MODE_VSYNC_NOOP                = 0x00000000,
 DCCG_PERF_MODE_VSYNC_START               = 0x00000001,
-} DCCG_PERF_MODE_VSYNC;
+पूर्ण DCCG_PERF_MODE_VSYNC;
 
 /*
- * DCCG_PERF_MODE_HSYNC enum
+ * DCCG_PERF_MODE_HSYNC क्रमागत
  */
 
-typedef enum DCCG_PERF_MODE_HSYNC {
+प्रकार क्रमागत DCCG_PERF_MODE_HSYNC अणु
 DCCG_PERF_MODE_HSYNC_NOOP                = 0x00000000,
 DCCG_PERF_MODE_HSYNC_START               = 0x00000001,
-} DCCG_PERF_MODE_HSYNC;
+पूर्ण DCCG_PERF_MODE_HSYNC;
 
 /*
- * DCCG_PERF_CRTC_SELECT enum
+ * DCCG_PERF_CRTC_SELECT क्रमागत
  */
 
-typedef enum DCCG_PERF_CRTC_SELECT {
+प्रकार क्रमागत DCCG_PERF_CRTC_SELECT अणु
 DCCG_PERF_SEL_CRTC0                      = 0x00000000,
 DCCG_PERF_SEL_CRTC1                      = 0x00000001,
 DCCG_PERF_SEL_CRTC2                      = 0x00000002,
 DCCG_PERF_SEL_CRTC3                      = 0x00000003,
 DCCG_PERF_SEL_CRTC4                      = 0x00000004,
 DCCG_PERF_SEL_CRTC5                      = 0x00000005,
-} DCCG_PERF_CRTC_SELECT;
+पूर्ण DCCG_PERF_CRTC_SELECT;
 
 /*
- * CLOCK_BRANCH_SOFT_RESET enum
+ * CLOCK_BRANCH_SOFT_RESET क्रमागत
  */
 
-typedef enum CLOCK_BRANCH_SOFT_RESET {
+प्रकार क्रमागत CLOCK_BRANCH_SOFT_RESET अणु
 CLOCK_BRANCH_SOFT_RESET_NOOP             = 0x00000000,
 CLOCK_BRANCH_SOFT_RESET_FORCE            = 0x00000001,
-} CLOCK_BRANCH_SOFT_RESET;
+पूर्ण CLOCK_BRANCH_SOFT_RESET;
 
 /*
- * PLL_CFG_IF_SOFT_RESET enum
+ * PLL_CFG_IF_SOFT_RESET क्रमागत
  */
 
-typedef enum PLL_CFG_IF_SOFT_RESET {
+प्रकार क्रमागत PLL_CFG_IF_SOFT_RESET अणु
 PLL_CFG_IF_SOFT_RESET_NOOP               = 0x00000000,
 PLL_CFG_IF_SOFT_RESET_FORCE              = 0x00000001,
-} PLL_CFG_IF_SOFT_RESET;
+पूर्ण PLL_CFG_IF_SOFT_RESET;
 
 /*
- * DVO_ENABLE_RST enum
+ * DVO_ENABLE_RST क्रमागत
  */
 
-typedef enum DVO_ENABLE_RST {
+प्रकार क्रमागत DVO_ENABLE_RST अणु
 DVO_ENABLE_RST_DISABLE                   = 0x00000000,
 DVO_ENABLE_RST_ENABLE                    = 0x00000001,
-} DVO_ENABLE_RST;
+पूर्ण DVO_ENABLE_RST;
 
 /*******************************************************
  * DCI Enums
  *******************************************************/
 
 /*
- * LptNumPipes enum
+ * LptNumPipes क्रमागत
  */
 
-typedef enum LptNumPipes {
+प्रकार क्रमागत LptNumPipes अणु
 LPT_NUM_PIPES_1CH                        = 0x00000000,
 LPT_NUM_PIPES_2CH                        = 0x00000001,
 LPT_NUM_PIPES_4CH                        = 0x00000002,
 LPT_NUM_PIPES_8CH                        = 0x00000003,
-} LptNumPipes;
+पूर्ण LptNumPipes;
 
 /*
- * LptNumBanks enum
+ * LptNumBanks क्रमागत
  */
 
-typedef enum LptNumBanks {
+प्रकार क्रमागत LptNumBanks अणु
 LPT_NUM_BANKS_2BANK                      = 0x00000000,
 LPT_NUM_BANKS_4BANK                      = 0x00000001,
 LPT_NUM_BANKS_8BANK                      = 0x00000002,
 LPT_NUM_BANKS_16BANK                     = 0x00000003,
 LPT_NUM_BANKS_32BANK                     = 0x00000004,
-} LptNumBanks;
+पूर्ण LptNumBanks;
 
 /*
- * OVERRIDE_CGTT_DCEFCLK enum
+ * OVERRIDE_CGTT_DCEFCLK क्रमागत
  */
 
-typedef enum OVERRIDE_CGTT_DCEFCLK {
+प्रकार क्रमागत OVERRIDE_CGTT_DCEFCLK अणु
 OVERRIDE_CGTT_DCEFCLK_NOOP               = 0x00000000,
 SET_OVERRIDE_CGTT_DCEFCLK                = 0x00000001,
-} OVERRIDE_CGTT_DCEFCLK;
+पूर्ण OVERRIDE_CGTT_DCEFCLK;
 
 /*******************************************************
  * DCIO Enums
  *******************************************************/
 
 /*
- * DCIO_DC_GENERICA_SEL enum
+ * DCIO_DC_GENERICA_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GENERICA_SEL {
+प्रकार क्रमागत DCIO_DC_GENERICA_SEL अणु
 DCIO_GENERICA_SEL_DACA_STEREOSYNC        = 0x00000000,
 DCIO_GENERICA_SEL_STEREOSYNC             = 0x00000001,
 DCIO_GENERICA_SEL_DACA_PIXCLK            = 0x00000002,
@@ -11513,13 +11514,13 @@ DCIO_GENERICA_SEL_UNIPHY_FBDIV_SSC_CLK   = 0x0000000e,
 DCIO_GENERICA_SEL_UNIPHY_FBDIV_CLK_DIV2  = 0x0000000f,
 DCIO_GENERICA_SEL_GENERICA_DPRX          = 0x00000010,
 DCIO_GENERICA_SEL_GENERICB_DPRX          = 0x00000011,
-} DCIO_DC_GENERICA_SEL;
+पूर्ण DCIO_DC_GENERICA_SEL;
 
 /*
- * DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL enum
+ * DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL {
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL अणु
 DCIO_UNIPHYA_TEST_REFDIV_CLK             = 0x00000000,
 DCIO_UNIPHYB_TEST_REFDIV_CLK             = 0x00000001,
 DCIO_UNIPHYC_TEST_REFDIV_CLK             = 0x00000002,
@@ -11529,13 +11530,13 @@ DCIO_UNIPHYF_TEST_REFDIV_CLK             = 0x00000005,
 DCIO_UNIPHYG_TEST_REFDIV_CLK             = 0x00000006,
 DCIO_UNIPHYLPA_TEST_REFDIV_CLK           = 0x00000007,
 DCIO_UNIPHYLPB_TEST_REFDIV_CLK           = 0x00000008,
-} DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL;
+पूर्ण DCIO_DC_GENERIC_UNIPHY_REFDIV_CLK_SEL;
 
 /*
- * DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL enum
+ * DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL {
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL अणु
 DCIO_UNIPHYA_FBDIV_CLK                   = 0x00000000,
 DCIO_UNIPHYB_FBDIV_CLK                   = 0x00000001,
 DCIO_UNIPHYC_FBDIV_CLK                   = 0x00000002,
@@ -11545,13 +11546,13 @@ DCIO_UNIPHYF_FBDIV_CLK                   = 0x00000005,
 DCIO_UNIPHYG_FBDIV_CLK                   = 0x00000006,
 DCIO_UNIPHYLPA_FBDIV_CLK                 = 0x00000007,
 DCIO_UNIPHYLPB_FBDIV_CLK                 = 0x00000008,
-} DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL;
+पूर्ण DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_SEL;
 
 /*
- * DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL enum
+ * DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL {
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL अणु
 DCIO_UNIPHYA_FBDIV_SSC_CLK               = 0x00000000,
 DCIO_UNIPHYB_FBDIV_SSC_CLK               = 0x00000001,
 DCIO_UNIPHYC_FBDIV_SSC_CLK               = 0x00000002,
@@ -11561,13 +11562,13 @@ DCIO_UNIPHYF_FBDIV_SSC_CLK               = 0x00000005,
 DCIO_UNIPHYG_FBDIV_SSC_CLK               = 0x00000006,
 DCIO_UNIPHYLPA_FBDIV_SSC_CLK             = 0x00000007,
 DCIO_UNIPHYLPB_FBDIV_SSC_CLK             = 0x00000008,
-} DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL;
+पूर्ण DCIO_DC_GENERIC_UNIPHY_FBDIV_SSC_CLK_SEL;
 
 /*
- * DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL enum
+ * DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL {
+प्रकार क्रमागत DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL अणु
 DCIO_UNIPHYA_TEST_FBDIV_CLK_DIV2         = 0x00000000,
 DCIO_UNIPHYB_TEST_FBDIV_CLK_DIV2         = 0x00000001,
 DCIO_UNIPHYC_TEST_FBDIV_CLK_DIV2         = 0x00000002,
@@ -11577,13 +11578,13 @@ DCIO_UNIPHYF_TEST_FBDIV_CLK_DIV2         = 0x00000005,
 DCIO_UNIPHYG_TEST_FBDIV_CLK_DIV2         = 0x00000006,
 DCIO_UNIPHYLPA_TEST_FBDIV_CLK_DIV2       = 0x00000007,
 DCIO_UNIPHYLPB_TEST_FBDIV_CLK_DIV2       = 0x00000008,
-} DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL;
+पूर्ण DCIO_DC_GENERIC_UNIPHY_FBDIV_CLK_DIV2_SEL;
 
 /*
- * DCIO_DC_GENERICB_SEL enum
+ * DCIO_DC_GENERICB_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GENERICB_SEL {
+प्रकार क्रमागत DCIO_DC_GENERICB_SEL अणु
 DCIO_GENERICB_SEL_DACA_STEREOSYNC        = 0x00000000,
 DCIO_GENERICB_SEL_STEREOSYNC             = 0x00000001,
 DCIO_GENERICB_SEL_DACA_PIXCLK            = 0x00000002,
@@ -11600,13 +11601,13 @@ DCIO_GENERICB_SEL_UNIPHY_REFDIV_CLK      = 0x0000000c,
 DCIO_GENERICB_SEL_UNIPHY_FBDIV_CLK       = 0x0000000d,
 DCIO_GENERICB_SEL_UNIPHY_FBDIV_SSC_CLK   = 0x0000000e,
 DCIO_GENERICB_SEL_UNIPHY_FBDIV_CLK_DIV2  = 0x0000000f,
-} DCIO_DC_GENERICB_SEL;
+पूर्ण DCIO_DC_GENERICB_SEL;
 
 /*
- * DCIO_DC_PAD_EXTERN_SIG_SEL enum
+ * DCIO_DC_PAD_EXTERN_SIG_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_PAD_EXTERN_SIG_SEL {
+प्रकार क्रमागत DCIO_DC_PAD_EXTERN_SIG_SEL अणु
 DCIO_DC_PAD_EXTERN_SIG_SEL_MVP           = 0x00000000,
 DCIO_DC_PAD_EXTERN_SIG_SEL_VSYNCA        = 0x00000001,
 DCIO_DC_PAD_EXTERN_SIG_SEL_GENLK_CLK     = 0x00000002,
@@ -11623,93 +11624,93 @@ DCIO_DC_PAD_EXTERN_SIG_SEL_DDC2DATA      = 0x0000000c,
 DCIO_DC_PAD_EXTERN_SIG_SEL_VHAD1         = 0x0000000d,
 DCIO_DC_PAD_EXTERN_SIG_SEL_VHAD0         = 0x0000000e,
 DCIO_DC_PAD_EXTERN_SIG_SEL_VPHCTL        = 0x0000000f,
-} DCIO_DC_PAD_EXTERN_SIG_SEL;
+पूर्ण DCIO_DC_PAD_EXTERN_SIG_SEL;
 
 /*
- * DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS enum
+ * DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS क्रमागत
  */
 
-typedef enum DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS {
+प्रकार क्रमागत DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS अणु
 DCIO_MVP_PIXEL_SRC_STATUS_HSYNCA         = 0x00000000,
 DCIO_MVP_PIXEL_SRC_STATUS_HSYNCA_DUPLICATE  = 0x00000001,
 DCIO_MVP_PIXEL_SRC_STATUS_CRTC           = 0x00000002,
 DCIO_MVP_PIXEL_SRC_STATUS_LB             = 0x00000003,
-} DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS;
+पूर्ण DCIO_DC_PAD_EXTERN_SIG_MVP_PIXEL_SRC_STATUS;
 
 /*
- * DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL enum
+ * DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL {
+प्रकार क्रमागत DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL अणु
 DCIO_HSYNCA_OUTPUT_SEL_DISABLE           = 0x00000000,
 DCIO_HSYNCA_OUTPUT_SEL_PPLL1             = 0x00000001,
 DCIO_HSYNCA_OUTPUT_SEL_PPLL2             = 0x00000002,
 DCIO_HSYNCA_OUTPUT_SEL_RESERVED          = 0x00000003,
-} DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL;
+पूर्ण DCIO_DC_REF_CLK_CNTL_HSYNCA_OUTPUT_SEL;
 
 /*
- * DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL enum
+ * DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL {
+प्रकार क्रमागत DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL अणु
 DCIO_GENLK_CLK_OUTPUT_SEL_DISABLE        = 0x00000000,
 DCIO_GENLK_CLK_OUTPUT_SEL_PPLL1          = 0x00000001,
 DCIO_GENLK_CLK_OUTPUT_SEL_PPLL2          = 0x00000002,
 DCIO_GENLK_CLK_OUTPUT_SEL_RESERVED_VALUE3  = 0x00000003,
-} DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL;
+पूर्ण DCIO_DC_REF_CLK_CNTL_GENLK_CLK_OUTPUT_SEL;
 
 /*
- * DCIO_DC_GPIO_VIP_DEBUG enum
+ * DCIO_DC_GPIO_VIP_DEBUG क्रमागत
  */
 
-typedef enum DCIO_DC_GPIO_VIP_DEBUG {
+प्रकार क्रमागत DCIO_DC_GPIO_VIP_DEBUG अणु
 DCIO_DC_GPIO_VIP_DEBUG_NORMAL            = 0x00000000,
 DCIO_DC_GPIO_VIP_DEBUG_CG_BIG            = 0x00000001,
-} DCIO_DC_GPIO_VIP_DEBUG;
+पूर्ण DCIO_DC_GPIO_VIP_DEBUG;
 
 /*
- * DCIO_DC_GPIO_MACRO_DEBUG enum
+ * DCIO_DC_GPIO_MACRO_DEBUG क्रमागत
  */
 
-typedef enum DCIO_DC_GPIO_MACRO_DEBUG {
+प्रकार क्रमागत DCIO_DC_GPIO_MACRO_DEBUG अणु
 DCIO_DC_GPIO_MACRO_DEBUG_NORMAL          = 0x00000000,
 DCIO_DC_GPIO_MACRO_DEBUG_CHIP_BIF        = 0x00000001,
 DCIO_DC_GPIO_MACRO_DEBUG_RESERVED_VALUE2  = 0x00000002,
 DCIO_DC_GPIO_MACRO_DEBUG_RESERVED_VALUE3  = 0x00000003,
-} DCIO_DC_GPIO_MACRO_DEBUG;
+पूर्ण DCIO_DC_GPIO_MACRO_DEBUG;
 
 /*
- * DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL enum
+ * DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL क्रमागत
  */
 
-typedef enum DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL {
+प्रकार क्रमागत DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL अणु
 DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL_NORMAL  = 0x00000000,
 DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL_SWAP  = 0x00000001,
-} DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL;
+पूर्ण DCIO_DC_GPIO_CHIP_DEBUG_OUT_PIN_SEL;
 
 /*
- * DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN enum
+ * DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN क्रमागत
  */
 
-typedef enum DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN {
+प्रकार क्रमागत DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN अणु
 DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN_BYPASS    = 0x00000000,
 DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN_ENABLE    = 0x00000001,
-} DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN;
+पूर्ण DCIO_DC_GPIO_DEBUG_BUS_FLOP_EN;
 
 /*
- * DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE enum
+ * DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE क्रमागत
  */
 
-typedef enum DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE {
+प्रकार क्रमागत DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE अणु
 DCIO_DPRX_LOOPBACK_ENABLE_NORMAL         = 0x00000000,
 DCIO_DPRX_LOOPBACK_ENABLE_LOOP           = 0x00000001,
-} DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE;
+पूर्ण DCIO_DC_GPIO_DEBUG_DPRX_LOOPBACK_ENABLE;
 
 /*
- * DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION enum
+ * DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION क्रमागत
  */
 
-typedef enum DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION {
+प्रकार क्रमागत DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION अणु
 DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_3_CLOCKS = 0x00000000,
 DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_7_CLOCKS = 0x00000001,
 DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_11_CLOCKS = 0x00000002,
@@ -11718,374 +11719,374 @@ DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_19_CLOCKS = 0x00000004,
 DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_23_CLOCKS = 0x00000005,
 DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_27_CLOCKS = 0x00000006,
 DCIO_UNIPHY_MINIMUM_PIXVLD_LOW_DURATION_31_CLOCKS = 0x00000007,
-} DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION;
+पूर्ण DCIO_UNIPHY_LINK_CNTL_MINIMUM_PIXVLD_LOW_DURATION;
 
 /*
- * DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT enum
+ * DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT क्रमागत
  */
 
-typedef enum DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT {
+प्रकार क्रमागत DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT अणु
 DCIO_UNIPHY_CHANNEL_NO_INVERSION         = 0x00000000,
 DCIO_UNIPHY_CHANNEL_INVERTED             = 0x00000001,
-} DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT;
+पूर्ण DCIO_UNIPHY_LINK_CNTL_CHANNEL_INVERT;
 
 /*
- * DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK enum
+ * DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK क्रमागत
  */
 
-typedef enum DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK {
+प्रकार क्रमागत DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK अणु
 DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_DISALLOW  = 0x00000000,
 DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_ALLOW   = 0x00000001,
 DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_ALLOW_DEBOUNCED  = 0x00000002,
 DCIO_UNIPHY_LINK_ENABLE_HPD_MASK_ALLOW_TOGGLE_FILTERED  = 0x00000003,
-} DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK;
+पूर्ण DCIO_UNIPHY_LINK_CNTL_ENABLE_HPD_MASK;
 
 /*
- * DCIO_UNIPHY_CHANNEL_XBAR_SOURCE enum
+ * DCIO_UNIPHY_CHANNEL_XBAR_SOURCE क्रमागत
  */
 
-typedef enum DCIO_UNIPHY_CHANNEL_XBAR_SOURCE {
+प्रकार क्रमागत DCIO_UNIPHY_CHANNEL_XBAR_SOURCE अणु
 DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH0      = 0x00000000,
 DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH1      = 0x00000001,
 DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH2      = 0x00000002,
 DCIO_UNIPHY_CHANNEL_XBAR_SOURCE_CH3      = 0x00000003,
-} DCIO_UNIPHY_CHANNEL_XBAR_SOURCE;
+पूर्ण DCIO_UNIPHY_CHANNEL_XBAR_SOURCE;
 
 /*
- * DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN enum
+ * DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN क्रमागत
  */
 
-typedef enum DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN {
+प्रकार क्रमागत DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN अणु
 DCIO_VIP_MUX_EN_DVO                      = 0x00000000,
 DCIO_VIP_MUX_EN_VIP                      = 0x00000001,
-} DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN;
+पूर्ण DCIO_DC_DVODATA_CONFIG_VIP_MUX_EN;
 
 /*
- * DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN enum
+ * DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN क्रमागत
  */
 
-typedef enum DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN {
+प्रकार क्रमागत DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN अणु
 DCIO_VIP_ALTER_MAPPING_EN_DEFAULT        = 0x00000000,
 DCIO_VIP_ALTER_MAPPING_EN_ALTERNATIVE    = 0x00000001,
-} DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN;
+पूर्ण DCIO_DC_DVODATA_CONFIG_VIP_ALTER_MAPPING_EN;
 
 /*
- * DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN enum
+ * DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN क्रमागत
  */
 
-typedef enum DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN {
+प्रकार क्रमागत DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN अणु
 DCIO_DVO_ALTER_MAPPING_EN_DEFAULT        = 0x00000000,
 DCIO_DVO_ALTER_MAPPING_EN_ALTERNATIVE    = 0x00000001,
-} DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN;
+पूर्ण DCIO_DC_DVODATA_CONFIG_DVO_ALTER_MAPPING_EN;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN अणु
 DCIO_LVTMA_PWRSEQ_DISABLE_SYNCEN_CONTROL_OF_TX_ENABLE  = 0x00000000,
 DCIO_LVTMA_PWRSEQ_DISABLE_SYNCEN_CONTROL_OF_TX_DISABLE  = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_DISABLE_SYNCEN_CONTROL_OF_TX_EN;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE अणु
 DCIO_LVTMA_PWRSEQ_TARGET_STATE_LCD_OFF   = 0x00000000,
 DCIO_LVTMA_PWRSEQ_TARGET_STATE_LCD_ON    = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_TARGET_STATE;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL अणु
 DCIO_LVTMA_SYNCEN_POL_NON_INVERT         = 0x00000000,
 DCIO_LVTMA_SYNCEN_POL_INVERT             = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_SYNCEN_POL;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON अणु
 DCIO_LVTMA_DIGON_OFF                     = 0x00000000,
 DCIO_LVTMA_DIGON_ON                      = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL अणु
 DCIO_LVTMA_DIGON_POL_NON_INVERT          = 0x00000000,
 DCIO_LVTMA_DIGON_POL_INVERT              = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_DIGON_POL;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON अणु
 DCIO_LVTMA_BLON_OFF                      = 0x00000000,
 DCIO_LVTMA_BLON_ON                       = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON;
 
 /*
- * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL enum
+ * DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL अणु
 DCIO_LVTMA_BLON_POL_NON_INVERT           = 0x00000000,
 DCIO_LVTMA_BLON_POL_INVERT               = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL;
+पूर्ण DCIO_LVTMA_PWRSEQ_CNTL_LVTMA_BLON_POL;
 
 /*
- * DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN enum
+ * DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN क्रमागत
  */
 
-typedef enum DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN {
+प्रकार क्रमागत DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN अणु
 DCIO_LVTMA_VARY_BL_OVERRIDE_EN_BLON      = 0x00000000,
 DCIO_LVTMA_VARY_BL_OVERRIDE_EN_SEPARATE  = 0x00000001,
-} DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN;
+पूर्ण DCIO_LVTMA_PWRSEQ_DELAY2_LVTMA_VARY_BL_OVERRIDE_EN;
 
 /*
- * DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN enum
+ * DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN {
+प्रकार क्रमागत DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN अणु
 DCIO_BL_PWM_FRACTIONAL_DISABLE           = 0x00000000,
 DCIO_BL_PWM_FRACTIONAL_ENABLE            = 0x00000001,
-} DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN;
+पूर्ण DCIO_BL_PWM_CNTL_BL_PWM_FRACTIONAL_EN;
 
 /*
- * DCIO_BL_PWM_CNTL_BL_PWM_EN enum
+ * DCIO_BL_PWM_CNTL_BL_PWM_EN क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_CNTL_BL_PWM_EN {
+प्रकार क्रमागत DCIO_BL_PWM_CNTL_BL_PWM_EN अणु
 DCIO_BL_PWM_DISABLE                      = 0x00000000,
 DCIO_BL_PWM_ENABLE                       = 0x00000001,
-} DCIO_BL_PWM_CNTL_BL_PWM_EN;
+पूर्ण DCIO_BL_PWM_CNTL_BL_PWM_EN;
 
 /*
- * DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT enum
+ * DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT {
+प्रकार क्रमागत DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT अणु
 DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_NORMAL  = 0x00000000,
 DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_DEBUG1  = 0x00000001,
 DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_DEBUG2  = 0x00000002,
 DCIO_DBG_BL_PWM_INPUT_REFCLK_SELECT_DEBUG3  = 0x00000003,
-} DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT;
+पूर्ण DCIO_BL_PWM_CNTL2_DBG_BL_PWM_INPUT_REFCLK_SELECT;
 
 /*
- * DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE enum
+ * DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE {
+प्रकार क्रमागत DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE अणु
 DCIO_BL_PWM_OVERRIDE_BL_OUT_DISABLE      = 0x00000000,
 DCIO_BL_PWM_OVERRIDE_BL_OUT_ENABLE       = 0x00000001,
-} DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE;
+पूर्ण DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_BL_OUT_ENABLE;
 
 /*
- * DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN enum
+ * DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN {
+प्रकार क्रमागत DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN अणु
 DCIO_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN_NORMAL  = 0x00000000,
 DCIO_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN_PWM  = 0x00000001,
-} DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN;
+पूर्ण DCIO_BL_PWM_CNTL2_BL_PWM_OVERRIDE_LVTMA_PWRSEQ_EN;
 
 /*
- * DCIO_BL_PWM_GRP1_REG_LOCK enum
+ * DCIO_BL_PWM_GRP1_REG_LOCK क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_GRP1_REG_LOCK {
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_REG_LOCK अणु
 DCIO_BL_PWM_GRP1_REG_LOCK_DISABLE        = 0x00000000,
 DCIO_BL_PWM_GRP1_REG_LOCK_ENABLE         = 0x00000001,
-} DCIO_BL_PWM_GRP1_REG_LOCK;
+पूर्ण DCIO_BL_PWM_GRP1_REG_LOCK;
 
 /*
- * DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START enum
+ * DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START {
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START अणु
 DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START_DISABLE  = 0x00000000,
 DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START_ENABLE  = 0x00000001,
-} DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START;
+पूर्ण DCIO_BL_PWM_GRP1_UPDATE_AT_FRAME_START;
 
 /*
- * DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL enum
+ * DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL {
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL अणु
 DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER1  = 0x00000000,
 DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER2  = 0x00000001,
 DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER3  = 0x00000002,
 DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER4  = 0x00000003,
 DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER5  = 0x00000004,
 DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL_CONTROLLER6  = 0x00000005,
-} DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL;
+पूर्ण DCIO_BL_PWM_GRP1_FRAME_START_DISP_SEL;
 
 /*
- * DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN enum
+ * DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN {
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN अणु
 DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN_BL_PWM  = 0x00000000,
 DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN_BL1_PWM  = 0x00000001,
-} DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN;
+पूर्ण DCIO_BL_PWM_GRP1_READBACK_DB_REG_VALUE_EN;
 
 /*
- * DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN enum
+ * DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN क्रमागत
  */
 
-typedef enum DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN {
+प्रकार क्रमागत DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN अणु
 DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_ENABLE  = 0x00000000,
 DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_DISABLE  = 0x00000001,
-} DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN;
+पूर्ण DCIO_BL_PWM_GRP1_IGNORE_MASTER_LOCK_EN;
 
 /*
- * DCIO_GSL_SEL enum
+ * DCIO_GSL_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL_SEL {
+प्रकार क्रमागत DCIO_GSL_SEL अणु
 DCIO_GSL_SEL_GROUP_0                     = 0x00000000,
 DCIO_GSL_SEL_GROUP_1                     = 0x00000001,
 DCIO_GSL_SEL_GROUP_2                     = 0x00000002,
-} DCIO_GSL_SEL;
+पूर्ण DCIO_GSL_SEL;
 
 /*
- * DCIO_GENLK_CLK_GSL_MASK enum
+ * DCIO_GENLK_CLK_GSL_MASK क्रमागत
  */
 
-typedef enum DCIO_GENLK_CLK_GSL_MASK {
+प्रकार क्रमागत DCIO_GENLK_CLK_GSL_MASK अणु
 DCIO_GENLK_CLK_GSL_MASK_NO               = 0x00000000,
 DCIO_GENLK_CLK_GSL_MASK_TIMING           = 0x00000001,
 DCIO_GENLK_CLK_GSL_MASK_STEREO           = 0x00000002,
-} DCIO_GENLK_CLK_GSL_MASK;
+पूर्ण DCIO_GENLK_CLK_GSL_MASK;
 
 /*
- * DCIO_GENLK_VSYNC_GSL_MASK enum
+ * DCIO_GENLK_VSYNC_GSL_MASK क्रमागत
  */
 
-typedef enum DCIO_GENLK_VSYNC_GSL_MASK {
+प्रकार क्रमागत DCIO_GENLK_VSYNC_GSL_MASK अणु
 DCIO_GENLK_VSYNC_GSL_MASK_NO             = 0x00000000,
 DCIO_GENLK_VSYNC_GSL_MASK_TIMING         = 0x00000001,
 DCIO_GENLK_VSYNC_GSL_MASK_STEREO         = 0x00000002,
-} DCIO_GENLK_VSYNC_GSL_MASK;
+पूर्ण DCIO_GENLK_VSYNC_GSL_MASK;
 
 /*
- * DCIO_SWAPLOCK_A_GSL_MASK enum
+ * DCIO_SWAPLOCK_A_GSL_MASK क्रमागत
  */
 
-typedef enum DCIO_SWAPLOCK_A_GSL_MASK {
+प्रकार क्रमागत DCIO_SWAPLOCK_A_GSL_MASK अणु
 DCIO_SWAPLOCK_A_GSL_MASK_NO              = 0x00000000,
 DCIO_SWAPLOCK_A_GSL_MASK_TIMING          = 0x00000001,
 DCIO_SWAPLOCK_A_GSL_MASK_STEREO          = 0x00000002,
-} DCIO_SWAPLOCK_A_GSL_MASK;
+पूर्ण DCIO_SWAPLOCK_A_GSL_MASK;
 
 /*
- * DCIO_SWAPLOCK_B_GSL_MASK enum
+ * DCIO_SWAPLOCK_B_GSL_MASK क्रमागत
  */
 
-typedef enum DCIO_SWAPLOCK_B_GSL_MASK {
+प्रकार क्रमागत DCIO_SWAPLOCK_B_GSL_MASK अणु
 DCIO_SWAPLOCK_B_GSL_MASK_NO              = 0x00000000,
 DCIO_SWAPLOCK_B_GSL_MASK_TIMING          = 0x00000001,
 DCIO_SWAPLOCK_B_GSL_MASK_STEREO          = 0x00000002,
-} DCIO_SWAPLOCK_B_GSL_MASK;
+पूर्ण DCIO_SWAPLOCK_B_GSL_MASK;
 
 /*
- * DCIO_GSL_VSYNC_SEL enum
+ * DCIO_GSL_VSYNC_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL_VSYNC_SEL {
+प्रकार क्रमागत DCIO_GSL_VSYNC_SEL अणु
 DCIO_GSL_VSYNC_SEL_PIPE0                 = 0x00000000,
 DCIO_GSL_VSYNC_SEL_PIPE1                 = 0x00000001,
 DCIO_GSL_VSYNC_SEL_PIPE2                 = 0x00000002,
 DCIO_GSL_VSYNC_SEL_PIPE3                 = 0x00000003,
 DCIO_GSL_VSYNC_SEL_PIPE4                 = 0x00000004,
 DCIO_GSL_VSYNC_SEL_PIPE5                 = 0x00000005,
-} DCIO_GSL_VSYNC_SEL;
+पूर्ण DCIO_GSL_VSYNC_SEL;
 
 /*
- * DCIO_GSL0_TIMING_SYNC_SEL enum
+ * DCIO_GSL0_TIMING_SYNC_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL0_TIMING_SYNC_SEL {
+प्रकार क्रमागत DCIO_GSL0_TIMING_SYNC_SEL अणु
 DCIO_GSL0_TIMING_SYNC_SEL_PIPE           = 0x00000000,
 DCIO_GSL0_TIMING_SYNC_SEL_GENCLK_VSYNC   = 0x00000001,
 DCIO_GSL0_TIMING_SYNC_SEL_GENCLK_CLK     = 0x00000002,
 DCIO_GSL0_TIMING_SYNC_SEL_SWAPLOCK_A     = 0x00000003,
 DCIO_GSL0_TIMING_SYNC_SEL_SWAPLOCK_B     = 0x00000004,
-} DCIO_GSL0_TIMING_SYNC_SEL;
+पूर्ण DCIO_GSL0_TIMING_SYNC_SEL;
 
 /*
- * DCIO_GSL0_GLOBAL_UNLOCK_SEL enum
+ * DCIO_GSL0_GLOBAL_UNLOCK_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL0_GLOBAL_UNLOCK_SEL {
+प्रकार क्रमागत DCIO_GSL0_GLOBAL_UNLOCK_SEL अणु
 DCIO_GSL0_GLOBAL_UNLOCK_SEL_INVERSION    = 0x00000000,
 DCIO_GSL0_GLOBAL_UNLOCK_SEL_GENCLK_VSYNC  = 0x00000001,
 DCIO_GSL0_GLOBAL_UNLOCK_SEL_GENLK_CLK    = 0x00000002,
 DCIO_GSL0_GLOBAL_UNLOCK_SEL_SWAPLOCK_A   = 0x00000003,
 DCIO_GSL0_GLOBAL_UNLOCK_SEL_SWAPLOCK_B   = 0x00000004,
-} DCIO_GSL0_GLOBAL_UNLOCK_SEL;
+पूर्ण DCIO_GSL0_GLOBAL_UNLOCK_SEL;
 
 /*
- * DCIO_GSL1_TIMING_SYNC_SEL enum
+ * DCIO_GSL1_TIMING_SYNC_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL1_TIMING_SYNC_SEL {
+प्रकार क्रमागत DCIO_GSL1_TIMING_SYNC_SEL अणु
 DCIO_GSL1_TIMING_SYNC_SEL_PIPE           = 0x00000000,
 DCIO_GSL1_TIMING_SYNC_SEL_GENCLK_VSYNC   = 0x00000001,
 DCIO_GSL1_TIMING_SYNC_SEL_GENCLK_CLK     = 0x00000002,
 DCIO_GSL1_TIMING_SYNC_SEL_SWAPLOCK_A     = 0x00000003,
 DCIO_GSL1_TIMING_SYNC_SEL_SWAPLOCK_B     = 0x00000004,
-} DCIO_GSL1_TIMING_SYNC_SEL;
+पूर्ण DCIO_GSL1_TIMING_SYNC_SEL;
 
 /*
- * DCIO_GSL1_GLOBAL_UNLOCK_SEL enum
+ * DCIO_GSL1_GLOBAL_UNLOCK_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL1_GLOBAL_UNLOCK_SEL {
+प्रकार क्रमागत DCIO_GSL1_GLOBAL_UNLOCK_SEL अणु
 DCIO_GSL1_GLOBAL_UNLOCK_SEL_INVERSION    = 0x00000000,
 DCIO_GSL1_GLOBAL_UNLOCK_SEL_GENCLK_VSYNC  = 0x00000001,
 DCIO_GSL1_GLOBAL_UNLOCK_SEL_GENLK_CLK    = 0x00000002,
 DCIO_GSL1_GLOBAL_UNLOCK_SEL_SWAPLOCK_A   = 0x00000003,
 DCIO_GSL1_GLOBAL_UNLOCK_SEL_SWAPLOCK_B   = 0x00000004,
-} DCIO_GSL1_GLOBAL_UNLOCK_SEL;
+पूर्ण DCIO_GSL1_GLOBAL_UNLOCK_SEL;
 
 /*
- * DCIO_GSL2_TIMING_SYNC_SEL enum
+ * DCIO_GSL2_TIMING_SYNC_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL2_TIMING_SYNC_SEL {
+प्रकार क्रमागत DCIO_GSL2_TIMING_SYNC_SEL अणु
 DCIO_GSL2_TIMING_SYNC_SEL_PIPE           = 0x00000000,
 DCIO_GSL2_TIMING_SYNC_SEL_GENCLK_VSYNC   = 0x00000001,
 DCIO_GSL2_TIMING_SYNC_SEL_GENCLK_CLK     = 0x00000002,
 DCIO_GSL2_TIMING_SYNC_SEL_SWAPLOCK_A     = 0x00000003,
 DCIO_GSL2_TIMING_SYNC_SEL_SWAPLOCK_B     = 0x00000004,
-} DCIO_GSL2_TIMING_SYNC_SEL;
+पूर्ण DCIO_GSL2_TIMING_SYNC_SEL;
 
 /*
- * DCIO_GSL2_GLOBAL_UNLOCK_SEL enum
+ * DCIO_GSL2_GLOBAL_UNLOCK_SEL क्रमागत
  */
 
-typedef enum DCIO_GSL2_GLOBAL_UNLOCK_SEL {
+प्रकार क्रमागत DCIO_GSL2_GLOBAL_UNLOCK_SEL अणु
 DCIO_GSL2_GLOBAL_UNLOCK_SEL_INVERSION    = 0x00000000,
 DCIO_GSL2_GLOBAL_UNLOCK_SEL_GENCLK_VSYNC  = 0x00000001,
 DCIO_GSL2_GLOBAL_UNLOCK_SEL_GENLK_CLK    = 0x00000002,
 DCIO_GSL2_GLOBAL_UNLOCK_SEL_SWAPLOCK_A   = 0x00000003,
 DCIO_GSL2_GLOBAL_UNLOCK_SEL_SWAPLOCK_B   = 0x00000004,
-} DCIO_GSL2_GLOBAL_UNLOCK_SEL;
+पूर्ण DCIO_GSL2_GLOBAL_UNLOCK_SEL;
 
 /*
- * DCIO_DC_GPU_TIMER_START_POSITION enum
+ * DCIO_DC_GPU_TIMER_START_POSITION क्रमागत
  */
 
-typedef enum DCIO_DC_GPU_TIMER_START_POSITION {
+प्रकार क्रमागत DCIO_DC_GPU_TIMER_START_POSITION अणु
 DCIO_GPU_TIMER_START_0_END_27            = 0x00000000,
 DCIO_GPU_TIMER_START_1_END_28            = 0x00000001,
 DCIO_GPU_TIMER_START_2_END_29            = 0x00000002,
@@ -12094,32 +12095,32 @@ DCIO_GPU_TIMER_START_4_END_31            = 0x00000004,
 DCIO_GPU_TIMER_START_6_END_33            = 0x00000005,
 DCIO_GPU_TIMER_START_8_END_35            = 0x00000006,
 DCIO_GPU_TIMER_START_10_END_37           = 0x00000007,
-} DCIO_DC_GPU_TIMER_START_POSITION;
+पूर्ण DCIO_DC_GPU_TIMER_START_POSITION;
 
 /*
- * DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL enum
+ * DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL क्रमागत
  */
 
-typedef enum DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL {
+प्रकार क्रमागत DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL अणु
 DCIO_TEST_CLK_SEL_DISPCLK                = 0x00000000,
 DCIO_TEST_CLK_SEL_GATED_DISPCLK          = 0x00000001,
 DCIO_TEST_CLK_SEL_SCLK                   = 0x00000002,
-} DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL;
+पूर्ण DCIO_CLOCK_CNTL_DCIO_TEST_CLK_SEL;
 
 /*
- * DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS enum
+ * DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS क्रमागत
  */
 
-typedef enum DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS {
+प्रकार क्रमागत DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS अणु
 DCIO_DISPCLK_R_DCIO_GATE_DISABLE         = 0x00000000,
 DCIO_DISPCLK_R_DCIO_GATE_ENABLE          = 0x00000001,
-} DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS;
+पूर्ण DCIO_CLOCK_CNTL_DISPCLK_R_DCIO_GATE_DIS;
 
 /*
- * DCIO_DCO_DCFE_EXT_VSYNC_MUX enum
+ * DCIO_DCO_DCFE_EXT_VSYNC_MUX क्रमागत
  */
 
-typedef enum DCIO_DCO_DCFE_EXT_VSYNC_MUX {
+प्रकार क्रमागत DCIO_DCO_DCFE_EXT_VSYNC_MUX अणु
 DCIO_EXT_VSYNC_MUX_SWAPLOCKB             = 0x00000000,
 DCIO_EXT_VSYNC_MUX_CRTC0                 = 0x00000001,
 DCIO_EXT_VSYNC_MUX_CRTC1                 = 0x00000002,
@@ -12128,13 +12129,13 @@ DCIO_EXT_VSYNC_MUX_CRTC3                 = 0x00000004,
 DCIO_EXT_VSYNC_MUX_CRTC4                 = 0x00000005,
 DCIO_EXT_VSYNC_MUX_CRTC5                 = 0x00000006,
 DCIO_EXT_VSYNC_MUX_GENERICB              = 0x00000007,
-} DCIO_DCO_DCFE_EXT_VSYNC_MUX;
+पूर्ण DCIO_DCO_DCFE_EXT_VSYNC_MUX;
 
 /*
- * DCIO_DCO_EXT_VSYNC_MASK enum
+ * DCIO_DCO_EXT_VSYNC_MASK क्रमागत
  */
 
-typedef enum DCIO_DCO_EXT_VSYNC_MASK {
+प्रकार क्रमागत DCIO_DCO_EXT_VSYNC_MASK अणु
 DCIO_EXT_VSYNC_MASK_NONE                 = 0x00000000,
 DCIO_EXT_VSYNC_MASK_PIPE0                = 0x00000001,
 DCIO_EXT_VSYNC_MASK_PIPE1                = 0x00000002,
@@ -12143,69 +12144,69 @@ DCIO_EXT_VSYNC_MASK_PIPE3                = 0x00000004,
 DCIO_EXT_VSYNC_MASK_PIPE4                = 0x00000005,
 DCIO_EXT_VSYNC_MASK_PIPE5                = 0x00000006,
 DCIO_EXT_VSYNC_MASK_NONE_DUPLICATE       = 0x00000007,
-} DCIO_DCO_EXT_VSYNC_MASK;
+पूर्ण DCIO_DCO_EXT_VSYNC_MASK;
 
 /*
- * DCIO_DSYNC_SOFT_RESET enum
+ * DCIO_DSYNC_SOFT_RESET क्रमागत
  */
 
-typedef enum DCIO_DSYNC_SOFT_RESET {
+प्रकार क्रमागत DCIO_DSYNC_SOFT_RESET अणु
 DCIO_DSYNC_SOFT_RESET_DEASSERT           = 0x00000000,
 DCIO_DSYNC_SOFT_RESET_ASSERT             = 0x00000001,
-} DCIO_DSYNC_SOFT_RESET;
+पूर्ण DCIO_DSYNC_SOFT_RESET;
 
 /*
- * DCIO_DACA_SOFT_RESET enum
+ * DCIO_DACA_SOFT_RESET क्रमागत
  */
 
-typedef enum DCIO_DACA_SOFT_RESET {
+प्रकार क्रमागत DCIO_DACA_SOFT_RESET अणु
 DCIO_DACA_SOFT_RESET_DEASSERT            = 0x00000000,
 DCIO_DACA_SOFT_RESET_ASSERT              = 0x00000001,
-} DCIO_DACA_SOFT_RESET;
+पूर्ण DCIO_DACA_SOFT_RESET;
 
 /*
- * DCIO_DCRXPHY_SOFT_RESET enum
+ * DCIO_DCRXPHY_SOFT_RESET क्रमागत
  */
 
-typedef enum DCIO_DCRXPHY_SOFT_RESET {
+प्रकार क्रमागत DCIO_DCRXPHY_SOFT_RESET अणु
 DCIO_DCRXPHY_SOFT_RESET_DEASSERT         = 0x00000000,
 DCIO_DCRXPHY_SOFT_RESET_ASSERT           = 0x00000001,
-} DCIO_DCRXPHY_SOFT_RESET;
+पूर्ण DCIO_DCRXPHY_SOFT_RESET;
 
 /*
- * DCIO_DPHY_LANE_SEL enum
+ * DCIO_DPHY_LANE_SEL क्रमागत
  */
 
-typedef enum DCIO_DPHY_LANE_SEL {
+प्रकार क्रमागत DCIO_DPHY_LANE_SEL अणु
 DCIO_DPHY_LANE_SEL_LANE0                 = 0x00000000,
 DCIO_DPHY_LANE_SEL_LANE1                 = 0x00000001,
 DCIO_DPHY_LANE_SEL_LANE2                 = 0x00000002,
 DCIO_DPHY_LANE_SEL_LANE3                 = 0x00000003,
-} DCIO_DPHY_LANE_SEL;
+पूर्ण DCIO_DPHY_LANE_SEL;
 
 /*
- * DCIO_DPCS_INTERRUPT_TYPE enum
+ * DCIO_DPCS_INTERRUPT_TYPE क्रमागत
  */
 
-typedef enum DCIO_DPCS_INTERRUPT_TYPE {
+प्रकार क्रमागत DCIO_DPCS_INTERRUPT_TYPE अणु
 DCIO_DPCS_INTERRUPT_TYPE_LEVEL_BASED     = 0x00000000,
 DCIO_DPCS_INTERRUPT_TYPE_PULSE_BASED     = 0x00000001,
-} DCIO_DPCS_INTERRUPT_TYPE;
+पूर्ण DCIO_DPCS_INTERRUPT_TYPE;
 
 /*
- * DCIO_DPCS_INTERRUPT_MASK enum
+ * DCIO_DPCS_INTERRUPT_MASK क्रमागत
  */
 
-typedef enum DCIO_DPCS_INTERRUPT_MASK {
+प्रकार क्रमागत DCIO_DPCS_INTERRUPT_MASK अणु
 DCIO_DPCS_INTERRUPT_DISABLE              = 0x00000000,
 DCIO_DPCS_INTERRUPT_ENABLE               = 0x00000001,
-} DCIO_DPCS_INTERRUPT_MASK;
+पूर्ण DCIO_DPCS_INTERRUPT_MASK;
 
 /*
- * DCIO_DC_GPU_TIMER_READ_SELECT enum
+ * DCIO_DC_GPU_TIMER_READ_SELECT क्रमागत
  */
 
-typedef enum DCIO_DC_GPU_TIMER_READ_SELECT {
+प्रकार क्रमागत DCIO_DC_GPU_TIMER_READ_SELECT अणु
 DCIO_GPU_TIMER_READ_SELECT_LOWER_D1_V_UPDATE  = 0x00000000,
 DCIO_GPU_TIMER_READ_SELECT_UPPER_D1_V_UPDATE  = 0x00000001,
 DCIO_GPU_TIMER_READ_SELECT_LOWER_D2_V_UPDATE  = 0x00000002,
@@ -12242,13 +12243,13 @@ DCIO_GPU_TIMER_READ_SELECT_LOWER_D5_VSYNC_NOM  = 0x00000020,
 DCIO_GPU_TIMER_READ_SELECT_UPPER_D5_VSYNC_NOM  = 0x00000021,
 DCIO_GPU_TIMER_READ_SELECT_LOWER_D6_VSYNC_NOM  = 0x00000022,
 DCIO_GPU_TIMER_READ_SELECT_UPPER_D6_VSYNC_NOM  = 0x00000023,
-} DCIO_DC_GPU_TIMER_READ_SELECT;
+पूर्ण DCIO_DC_GPU_TIMER_READ_SELECT;
 
 /*
- * DCIO_IMPCAL_STEP_DELAY enum
+ * DCIO_IMPCAL_STEP_DELAY क्रमागत
  */
 
-typedef enum DCIO_IMPCAL_STEP_DELAY {
+प्रकार क्रमागत DCIO_IMPCAL_STEP_DELAY अणु
 DCIO_IMPCAL_STEP_DELAY_1us               = 0x00000000,
 DCIO_IMPCAL_STEP_DELAY_2us               = 0x00000001,
 DCIO_IMPCAL_STEP_DELAY_3us               = 0x00000002,
@@ -12265,33 +12266,33 @@ DCIO_IMPCAL_STEP_DELAY_13us              = 0x0000000c,
 DCIO_IMPCAL_STEP_DELAY_14us              = 0x0000000d,
 DCIO_IMPCAL_STEP_DELAY_15us              = 0x0000000e,
 DCIO_IMPCAL_STEP_DELAY_16us              = 0x0000000f,
-} DCIO_IMPCAL_STEP_DELAY;
+पूर्ण DCIO_IMPCAL_STEP_DELAY;
 
 /*
- * DCIO_UNIPHY_IMPCAL_SEL enum
+ * DCIO_UNIPHY_IMPCAL_SEL क्रमागत
  */
 
-typedef enum DCIO_UNIPHY_IMPCAL_SEL {
+प्रकार क्रमागत DCIO_UNIPHY_IMPCAL_SEL अणु
 DCIO_UNIPHY_IMPCAL_SEL_TEMPERATURE       = 0x00000000,
 DCIO_UNIPHY_IMPCAL_SEL_BINARY            = 0x00000001,
-} DCIO_UNIPHY_IMPCAL_SEL;
+पूर्ण DCIO_UNIPHY_IMPCAL_SEL;
 
 /*
- * DCIO_DBG_ASYNC_BLOCK_SEL enum
+ * DCIO_DBG_ASYNC_BLOCK_SEL क्रमागत
  */
 
-typedef enum DCIO_DBG_ASYNC_BLOCK_SEL {
+प्रकार क्रमागत DCIO_DBG_ASYNC_BLOCK_SEL अणु
 DCIO_DBG_ASYNC_BLOCK_SEL_OVERRIDE        = 0x00000000,
 DCIO_DBG_ASYNC_BLOCK_SEL_DCCG            = 0x00000001,
 DCIO_DBG_ASYNC_BLOCK_SEL_DCIO            = 0x00000002,
 DCIO_DBG_ASYNC_BLOCK_SEL_DCO             = 0x00000003,
-} DCIO_DBG_ASYNC_BLOCK_SEL;
+पूर्ण DCIO_DBG_ASYNC_BLOCK_SEL;
 
 /*
- * DCIO_DBG_ASYNC_4BIT_SEL enum
+ * DCIO_DBG_ASYNC_4BIT_SEL क्रमागत
  */
 
-typedef enum DCIO_DBG_ASYNC_4BIT_SEL {
+प्रकार क्रमागत DCIO_DBG_ASYNC_4BIT_SEL अणु
 DCIO_DBG_ASYNC_4BIT_SEL_3TO0             = 0x00000000,
 DCIO_DBG_ASYNC_4BIT_SEL_7TO4             = 0x00000001,
 DCIO_DBG_ASYNC_4BIT_SEL_11TO8            = 0x00000002,
@@ -12300,500 +12301,500 @@ DCIO_DBG_ASYNC_4BIT_SEL_19TO16           = 0x00000004,
 DCIO_DBG_ASYNC_4BIT_SEL_23TO20           = 0x00000005,
 DCIO_DBG_ASYNC_4BIT_SEL_27TO24           = 0x00000006,
 DCIO_DBG_ASYNC_4BIT_SEL_31TO28           = 0x00000007,
-} DCIO_DBG_ASYNC_4BIT_SEL;
+पूर्ण DCIO_DBG_ASYNC_4BIT_SEL;
 
 /*******************************************************
  * AOUT Enums
  *******************************************************/
 
 /*
- * AOUT_EN enum
+ * AOUT_EN क्रमागत
  */
 
-typedef enum AOUT_EN {
+प्रकार क्रमागत AOUT_EN अणु
 AOUT_DISABLE                             = 0x00000000,
 AOUT_ENABLE                              = 0x00000001,
-} AOUT_EN;
+पूर्ण AOUT_EN;
 
 /*
- * AOUT_FIFO_START_ADDR enum
+ * AOUT_FIFO_START_ADDR क्रमागत
  */
 
-typedef enum AOUT_FIFO_START_ADDR {
+प्रकार क्रमागत AOUT_FIFO_START_ADDR अणु
 AOUT_FIFO_START_ADDR_2                   = 0x00000000,
 AOUT_FIFO_START_ADDR_3                   = 0x00000001,
-} AOUT_FIFO_START_ADDR;
+पूर्ण AOUT_FIFO_START_ADDR;
 
 /*
- * AOUT_CRC_TEST_EN enum
+ * AOUT_CRC_TEST_EN क्रमागत
  */
 
-typedef enum AOUT_CRC_TEST_EN {
+प्रकार क्रमागत AOUT_CRC_TEST_EN अणु
 AOUT_CRC_DISABLE                         = 0x00000000,
 AOUT_CRC_ENABLE                          = 0x00000001,
-} AOUT_CRC_TEST_EN;
+पूर्ण AOUT_CRC_TEST_EN;
 
 /*
- * AOUT_CRC_SOFT_RESET enum
+ * AOUT_CRC_SOFT_RESET क्रमागत
  */
 
-typedef enum AOUT_CRC_SOFT_RESET {
+प्रकार क्रमागत AOUT_CRC_SOFT_RESET अणु
 AOUT_CRC_NO_RESET                        = 0x00000000,
 AOUT_CRC_RESET                           = 0x00000001,
-} AOUT_CRC_SOFT_RESET;
+पूर्ण AOUT_CRC_SOFT_RESET;
 
 /*
- * AOUT_CRC_CONT_EN enum
+ * AOUT_CRC_CONT_EN क्रमागत
  */
 
-typedef enum AOUT_CRC_CONT_EN {
+प्रकार क्रमागत AOUT_CRC_CONT_EN अणु
 AOUT_CRC_ONE_SHOT                        = 0x00000000,
 AOUT_CRC_CONT                            = 0x00000001,
-} AOUT_CRC_CONT_EN;
+पूर्ण AOUT_CRC_CONT_EN;
 
 /*
- * I2S_WORD_SIZE enum
+ * I2S_WORD_SIZE क्रमागत
  */
 
-typedef enum I2S_WORD_SIZE {
+प्रकार क्रमागत I2S_WORD_SIZE अणु
 I2S_WORD_SIZE_32                         = 0x00000000,
 I2S_WORD_SIZE_16                         = 0x00000001,
-} I2S_WORD_SIZE;
+पूर्ण I2S_WORD_SIZE;
 
 /*
- * I2S_SAMPLE_ALIGNMENT enum
+ * I2S_SAMPLE_ALIGNMENT क्रमागत
  */
 
-typedef enum I2S_SAMPLE_ALIGNMENT {
+प्रकार क्रमागत I2S_SAMPLE_ALIGNMENT अणु
 I2S_SAMPLE_LEFT_ALIGNED                  = 0x00000000,
 I2S_SAMPLE_RIGHT_ALIGNED                 = 0x00000001,
-} I2S_SAMPLE_ALIGNMENT;
+पूर्ण I2S_SAMPLE_ALIGNMENT;
 
 /*
- * I2S_SAMPLE_BIT_ORDER enum
+ * I2S_SAMPLE_BIT_ORDER क्रमागत
  */
 
-typedef enum I2S_SAMPLE_BIT_ORDER {
+प्रकार क्रमागत I2S_SAMPLE_BIT_ORDER अणु
 I2S_SAMPLE_BIT_ORDER_MSB                 = 0x00000000,
 I2S_SAMPLE_BIT_ORDER_LSB                 = 0x00000001,
-} I2S_SAMPLE_BIT_ORDER;
+पूर्ण I2S_SAMPLE_BIT_ORDER;
 
 /*
- * I2S_LRCLK_POLARITY enum
+ * I2S_LRCLK_POLARITY क्रमागत
  */
 
-typedef enum I2S_LRCLK_POLARITY {
+प्रकार क्रमागत I2S_LRCLK_POLARITY अणु
 I2S_LRCLK_LOW_LEFT                       = 0x00000000,
 I2S_LRCLK_HIGH_LEFT                      = 0x00000001,
-} I2S_LRCLK_POLARITY;
+पूर्ण I2S_LRCLK_POLARITY;
 
 /*
- * I2S_WORD_ALIGNMENT enum
+ * I2S_WORD_ALIGNMENT क्रमागत
  */
 
-typedef enum I2S_WORD_ALIGNMENT {
+प्रकार क्रमागत I2S_WORD_ALIGNMENT अणु
 I2S_WORD_ALTERNATE_ALIGNMENT             = 0x00000000,
 I2S_WORD_I2S_ALIGNMENT                   = 0x00000001,
-} I2S_WORD_ALIGNMENT;
+पूर्ण I2S_WORD_ALIGNMENT;
 
 /*
- * SPDIF_INVERT_EN enum
+ * SPDIF_INVERT_EN क्रमागत
  */
 
-typedef enum SPDIF_INVERT_EN {
+प्रकार क्रमागत SPDIF_INVERT_EN अणु
 SPDIF_INVERT_DISABLE                     = 0x00000000,
 SPDIF_INVERT_ENABLE                      = 0x00000001,
-} SPDIF_INVERT_EN;
+पूर्ण SPDIF_INVERT_EN;
 
 /*******************************************************
  * DCO Enums
  *******************************************************/
 
 /*
- * DPDBG_EN enum
+ * DPDBG_EN क्रमागत
  */
 
-typedef enum DPDBG_EN {
+प्रकार क्रमागत DPDBG_EN अणु
 DPDBG_DISABLE                            = 0x00000000,
 DPDBG_ENABLE                             = 0x00000001,
-} DPDBG_EN;
+पूर्ण DPDBG_EN;
 
 /*
- * DPDBG_INPUT_EN enum
+ * DPDBG_INPUT_EN क्रमागत
  */
 
-typedef enum DPDBG_INPUT_EN {
+प्रकार क्रमागत DPDBG_INPUT_EN अणु
 DPDBG_INPUT_DISABLE                      = 0x00000000,
 DPDBG_INPUT_ENABLE                       = 0x00000001,
-} DPDBG_INPUT_EN;
+पूर्ण DPDBG_INPUT_EN;
 
 /*
- * DPDBG_ERROR_DETECTION_MODE enum
+ * DPDBG_ERROR_DETECTION_MODE क्रमागत
  */
 
-typedef enum DPDBG_ERROR_DETECTION_MODE {
+प्रकार क्रमागत DPDBG_ERROR_DETECTION_MODE अणु
 DPDBG_ERROR_DETECTION_MODE_CSC           = 0x00000000,
 DPDBG_ERROR_DETECTION_MODE_RS_ENCODING   = 0x00000001,
-} DPDBG_ERROR_DETECTION_MODE;
+पूर्ण DPDBG_ERROR_DETECTION_MODE;
 
 /*
- * DPDBG_FIFO_OVERFLOW_INTERRUPT_MASK enum
+ * DPDBG_FIFO_OVERFLOW_INTERRUPT_MASK क्रमागत
  */
 
-typedef enum DPDBG_FIFO_OVERFLOW_INTERRUPT_MASK {
+प्रकार क्रमागत DPDBG_FIFO_OVERFLOW_INTERRUPT_MASK अणु
 DPDBG_FIFO_OVERFLOW_INT_DISABLE          = 0x00000000,
 DPDBG_FIFO_OVERFLOW_INT_ENABLE           = 0x00000001,
-} DPDBG_FIFO_OVERFLOW_INTERRUPT_MASK;
+पूर्ण DPDBG_FIFO_OVERFLOW_INTERRUPT_MASK;
 
 /*
- * DPDBG_FIFO_OVERFLOW_INTERRUPT_TYPE enum
+ * DPDBG_FIFO_OVERFLOW_INTERRUPT_TYPE क्रमागत
  */
 
-typedef enum DPDBG_FIFO_OVERFLOW_INTERRUPT_TYPE {
+प्रकार क्रमागत DPDBG_FIFO_OVERFLOW_INTERRUPT_TYPE अणु
 DPDBG_FIFO_OVERFLOW_INT_LEVEL_BASED      = 0x00000000,
 DPDBG_FIFO_OVERFLOW_INT_PULSE_BASED      = 0x00000001,
-} DPDBG_FIFO_OVERFLOW_INTERRUPT_TYPE;
+पूर्ण DPDBG_FIFO_OVERFLOW_INTERRUPT_TYPE;
 
 /*
- * DPDBG_FIFO_OVERFLOW_INTERRUPT_ACK enum
+ * DPDBG_FIFO_OVERFLOW_INTERRUPT_ACK क्रमागत
  */
 
-typedef enum DPDBG_FIFO_OVERFLOW_INTERRUPT_ACK {
+प्रकार क्रमागत DPDBG_FIFO_OVERFLOW_INTERRUPT_ACK अणु
 DPDBG_FIFO_OVERFLOW_INT_NO_ACK           = 0x00000000,
 DPDBG_FIFO_OVERFLOW_INT_CLEAR            = 0x00000001,
-} DPDBG_FIFO_OVERFLOW_INTERRUPT_ACK;
+पूर्ण DPDBG_FIFO_OVERFLOW_INTERRUPT_ACK;
 
 /*
- * PM_ASSERT_RESET enum
+ * PM_ASSERT_RESET क्रमागत
  */
 
-typedef enum PM_ASSERT_RESET {
+प्रकार क्रमागत PM_ASSERT_RESET अणु
 PM_ASSERT_RESET_0                        = 0x00000000,
 PM_ASSERT_RESET_1                        = 0x00000001,
-} PM_ASSERT_RESET;
+पूर्ण PM_ASSERT_RESET;
 
 /*
- * DAC_MUX_SELECT enum
+ * DAC_MUX_SELECT क्रमागत
  */
 
-typedef enum DAC_MUX_SELECT {
+प्रकार क्रमागत DAC_MUX_SELECT अणु
 DAC_MUX_SELECT_DACA                      = 0x00000000,
 DAC_MUX_SELECT_DACB                      = 0x00000001,
-} DAC_MUX_SELECT;
+पूर्ण DAC_MUX_SELECT;
 
 /*
- * TMDS_DVO_MUX_SELECT enum
+ * TMDS_DVO_MUX_SELECT क्रमागत
  */
 
-typedef enum TMDS_DVO_MUX_SELECT {
+प्रकार क्रमागत TMDS_DVO_MUX_SELECT अणु
 TMDS_DVO_MUX_SELECT_B                    = 0x00000000,
 TMDS_DVO_MUX_SELECT_G                    = 0x00000001,
 TMDS_DVO_MUX_SELECT_R                    = 0x00000002,
 TMDS_DVO_MUX_SELECT_RESERVED             = 0x00000003,
-} TMDS_DVO_MUX_SELECT;
+पूर्ण TMDS_DVO_MUX_SELECT;
 
 /*
- * DACA_SOFT_RESET enum
+ * DACA_SOFT_RESET क्रमागत
  */
 
-typedef enum DACA_SOFT_RESET {
+प्रकार क्रमागत DACA_SOFT_RESET अणु
 DACA_SOFT_RESET_0                        = 0x00000000,
 DACA_SOFT_RESET_1                        = 0x00000001,
-} DACA_SOFT_RESET;
+पूर्ण DACA_SOFT_RESET;
 
 /*
- * I2S0_SPDIF0_SOFT_RESET enum
+ * I2S0_SPDIF0_SOFT_RESET क्रमागत
  */
 
-typedef enum I2S0_SPDIF0_SOFT_RESET {
+प्रकार क्रमागत I2S0_SPDIF0_SOFT_RESET अणु
 I2S0_SPDIF0_SOFT_RESET_0                 = 0x00000000,
 I2S0_SPDIF0_SOFT_RESET_1                 = 0x00000001,
-} I2S0_SPDIF0_SOFT_RESET;
+पूर्ण I2S0_SPDIF0_SOFT_RESET;
 
 /*
- * I2S1_SOFT_RESET enum
+ * I2S1_SOFT_RESET क्रमागत
  */
 
-typedef enum I2S1_SOFT_RESET {
+प्रकार क्रमागत I2S1_SOFT_RESET अणु
 I2S1_SOFT_RESET_0                        = 0x00000000,
 I2S1_SOFT_RESET_1                        = 0x00000001,
-} I2S1_SOFT_RESET;
+पूर्ण I2S1_SOFT_RESET;
 
 /*
- * SPDIF1_SOFT_RESET enum
+ * SPDIF1_SOFT_RESET क्रमागत
  */
 
-typedef enum SPDIF1_SOFT_RESET {
+प्रकार क्रमागत SPDIF1_SOFT_RESET अणु
 SPDIF1_SOFT_RESET_0                      = 0x00000000,
 SPDIF1_SOFT_RESET_1                      = 0x00000001,
-} SPDIF1_SOFT_RESET;
+पूर्ण SPDIF1_SOFT_RESET;
 
 /*
- * DB_CLK_SOFT_RESET enum
+ * DB_CLK_SOFT_RESET क्रमागत
  */
 
-typedef enum DB_CLK_SOFT_RESET {
+प्रकार क्रमागत DB_CLK_SOFT_RESET अणु
 DB_CLK_SOFT_RESET_0                      = 0x00000000,
 DB_CLK_SOFT_RESET_1                      = 0x00000001,
-} DB_CLK_SOFT_RESET;
+पूर्ण DB_CLK_SOFT_RESET;
 
 /*
- * FMT0_SOFT_RESET enum
+ * FMT0_SOFT_RESET क्रमागत
  */
 
-typedef enum FMT0_SOFT_RESET {
+प्रकार क्रमागत FMT0_SOFT_RESET अणु
 FMT0_SOFT_RESET_0                        = 0x00000000,
 FMT0_SOFT_RESET_1                        = 0x00000001,
-} FMT0_SOFT_RESET;
+पूर्ण FMT0_SOFT_RESET;
 
 /*
- * FMT1_SOFT_RESET enum
+ * FMT1_SOFT_RESET क्रमागत
  */
 
-typedef enum FMT1_SOFT_RESET {
+प्रकार क्रमागत FMT1_SOFT_RESET अणु
 FMT1_SOFT_RESET_0                        = 0x00000000,
 FMT1_SOFT_RESET_1                        = 0x00000001,
-} FMT1_SOFT_RESET;
+पूर्ण FMT1_SOFT_RESET;
 
 /*
- * FMT2_SOFT_RESET enum
+ * FMT2_SOFT_RESET क्रमागत
  */
 
-typedef enum FMT2_SOFT_RESET {
+प्रकार क्रमागत FMT2_SOFT_RESET अणु
 FMT2_SOFT_RESET_0                        = 0x00000000,
 FMT2_SOFT_RESET_1                        = 0x00000001,
-} FMT2_SOFT_RESET;
+पूर्ण FMT2_SOFT_RESET;
 
 /*
- * FMT3_SOFT_RESET enum
+ * FMT3_SOFT_RESET क्रमागत
  */
 
-typedef enum FMT3_SOFT_RESET {
+प्रकार क्रमागत FMT3_SOFT_RESET अणु
 FMT3_SOFT_RESET_0                        = 0x00000000,
 FMT3_SOFT_RESET_1                        = 0x00000001,
-} FMT3_SOFT_RESET;
+पूर्ण FMT3_SOFT_RESET;
 
 /*
- * FMT4_SOFT_RESET enum
+ * FMT4_SOFT_RESET क्रमागत
  */
 
-typedef enum FMT4_SOFT_RESET {
+प्रकार क्रमागत FMT4_SOFT_RESET अणु
 FMT4_SOFT_RESET_0                        = 0x00000000,
 FMT4_SOFT_RESET_1                        = 0x00000001,
-} FMT4_SOFT_RESET;
+पूर्ण FMT4_SOFT_RESET;
 
 /*
- * FMT5_SOFT_RESET enum
+ * FMT5_SOFT_RESET क्रमागत
  */
 
-typedef enum FMT5_SOFT_RESET {
+प्रकार क्रमागत FMT5_SOFT_RESET अणु
 FMT5_SOFT_RESET_0                        = 0x00000000,
 FMT5_SOFT_RESET_1                        = 0x00000001,
-} FMT5_SOFT_RESET;
+पूर्ण FMT5_SOFT_RESET;
 
 /*
- * MVP_SOFT_RESET enum
+ * MVP_SOFT_RESET क्रमागत
  */
 
-typedef enum MVP_SOFT_RESET {
+प्रकार क्रमागत MVP_SOFT_RESET अणु
 MVP_SOFT_RESET_0                         = 0x00000000,
 MVP_SOFT_RESET_1                         = 0x00000001,
-} MVP_SOFT_RESET;
+पूर्ण MVP_SOFT_RESET;
 
 /*
- * ABM_SOFT_RESET enum
+ * ABM_SOFT_RESET क्रमागत
  */
 
-typedef enum ABM_SOFT_RESET {
+प्रकार क्रमागत ABM_SOFT_RESET अणु
 ABM_SOFT_RESET_0                         = 0x00000000,
 ABM_SOFT_RESET_1                         = 0x00000001,
-} ABM_SOFT_RESET;
+पूर्ण ABM_SOFT_RESET;
 
 /*
- * DVO_SOFT_RESET enum
+ * DVO_SOFT_RESET क्रमागत
  */
 
-typedef enum DVO_SOFT_RESET {
+प्रकार क्रमागत DVO_SOFT_RESET अणु
 DVO_SOFT_RESET_0                         = 0x00000000,
 DVO_SOFT_RESET_1                         = 0x00000001,
-} DVO_SOFT_RESET;
+पूर्ण DVO_SOFT_RESET;
 
 /*
- * DIGA_FE_SOFT_RESET enum
+ * DIGA_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGA_FE_SOFT_RESET {
+प्रकार क्रमागत DIGA_FE_SOFT_RESET अणु
 DIGA_FE_SOFT_RESET_0                     = 0x00000000,
 DIGA_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGA_FE_SOFT_RESET;
+पूर्ण DIGA_FE_SOFT_RESET;
 
 /*
- * DIGA_BE_SOFT_RESET enum
+ * DIGA_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGA_BE_SOFT_RESET {
+प्रकार क्रमागत DIGA_BE_SOFT_RESET अणु
 DIGA_BE_SOFT_RESET_0                     = 0x00000000,
 DIGA_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGA_BE_SOFT_RESET;
+पूर्ण DIGA_BE_SOFT_RESET;
 
 /*
- * DIGB_FE_SOFT_RESET enum
+ * DIGB_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGB_FE_SOFT_RESET {
+प्रकार क्रमागत DIGB_FE_SOFT_RESET अणु
 DIGB_FE_SOFT_RESET_0                     = 0x00000000,
 DIGB_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGB_FE_SOFT_RESET;
+पूर्ण DIGB_FE_SOFT_RESET;
 
 /*
- * DIGB_BE_SOFT_RESET enum
+ * DIGB_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGB_BE_SOFT_RESET {
+प्रकार क्रमागत DIGB_BE_SOFT_RESET अणु
 DIGB_BE_SOFT_RESET_0                     = 0x00000000,
 DIGB_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGB_BE_SOFT_RESET;
+पूर्ण DIGB_BE_SOFT_RESET;
 
 /*
- * DIGC_FE_SOFT_RESET enum
+ * DIGC_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGC_FE_SOFT_RESET {
+प्रकार क्रमागत DIGC_FE_SOFT_RESET अणु
 DIGC_FE_SOFT_RESET_0                     = 0x00000000,
 DIGC_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGC_FE_SOFT_RESET;
+पूर्ण DIGC_FE_SOFT_RESET;
 
 /*
- * DIGC_BE_SOFT_RESET enum
+ * DIGC_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGC_BE_SOFT_RESET {
+प्रकार क्रमागत DIGC_BE_SOFT_RESET अणु
 DIGC_BE_SOFT_RESET_0                     = 0x00000000,
 DIGC_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGC_BE_SOFT_RESET;
+पूर्ण DIGC_BE_SOFT_RESET;
 
 /*
- * DIGD_FE_SOFT_RESET enum
+ * DIGD_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGD_FE_SOFT_RESET {
+प्रकार क्रमागत DIGD_FE_SOFT_RESET अणु
 DIGD_FE_SOFT_RESET_0                     = 0x00000000,
 DIGD_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGD_FE_SOFT_RESET;
+पूर्ण DIGD_FE_SOFT_RESET;
 
 /*
- * DIGD_BE_SOFT_RESET enum
+ * DIGD_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGD_BE_SOFT_RESET {
+प्रकार क्रमागत DIGD_BE_SOFT_RESET अणु
 DIGD_BE_SOFT_RESET_0                     = 0x00000000,
 DIGD_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGD_BE_SOFT_RESET;
+पूर्ण DIGD_BE_SOFT_RESET;
 
 /*
- * DIGE_FE_SOFT_RESET enum
+ * DIGE_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGE_FE_SOFT_RESET {
+प्रकार क्रमागत DIGE_FE_SOFT_RESET अणु
 DIGE_FE_SOFT_RESET_0                     = 0x00000000,
 DIGE_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGE_FE_SOFT_RESET;
+पूर्ण DIGE_FE_SOFT_RESET;
 
 /*
- * DIGE_BE_SOFT_RESET enum
+ * DIGE_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGE_BE_SOFT_RESET {
+प्रकार क्रमागत DIGE_BE_SOFT_RESET अणु
 DIGE_BE_SOFT_RESET_0                     = 0x00000000,
 DIGE_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGE_BE_SOFT_RESET;
+पूर्ण DIGE_BE_SOFT_RESET;
 
 /*
- * DIGF_FE_SOFT_RESET enum
+ * DIGF_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGF_FE_SOFT_RESET {
+प्रकार क्रमागत DIGF_FE_SOFT_RESET अणु
 DIGF_FE_SOFT_RESET_0                     = 0x00000000,
 DIGF_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGF_FE_SOFT_RESET;
+पूर्ण DIGF_FE_SOFT_RESET;
 
 /*
- * DIGF_BE_SOFT_RESET enum
+ * DIGF_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGF_BE_SOFT_RESET {
+प्रकार क्रमागत DIGF_BE_SOFT_RESET अणु
 DIGF_BE_SOFT_RESET_0                     = 0x00000000,
 DIGF_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGF_BE_SOFT_RESET;
+पूर्ण DIGF_BE_SOFT_RESET;
 
 /*
- * DIGG_FE_SOFT_RESET enum
+ * DIGG_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGG_FE_SOFT_RESET {
+प्रकार क्रमागत DIGG_FE_SOFT_RESET अणु
 DIGG_FE_SOFT_RESET_0                     = 0x00000000,
 DIGG_FE_SOFT_RESET_1                     = 0x00000001,
-} DIGG_FE_SOFT_RESET;
+पूर्ण DIGG_FE_SOFT_RESET;
 
 /*
- * DIGG_BE_SOFT_RESET enum
+ * DIGG_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGG_BE_SOFT_RESET {
+प्रकार क्रमागत DIGG_BE_SOFT_RESET अणु
 DIGG_BE_SOFT_RESET_0                     = 0x00000000,
 DIGG_BE_SOFT_RESET_1                     = 0x00000001,
-} DIGG_BE_SOFT_RESET;
+पूर्ण DIGG_BE_SOFT_RESET;
 
 /*
- * DPDBG_SOFT_RESET enum
+ * DPDBG_SOFT_RESET क्रमागत
  */
 
-typedef enum DPDBG_SOFT_RESET {
+प्रकार क्रमागत DPDBG_SOFT_RESET अणु
 DPDBG_SOFT_RESET_0                       = 0x00000000,
 DPDBG_SOFT_RESET_1                       = 0x00000001,
-} DPDBG_SOFT_RESET;
+पूर्ण DPDBG_SOFT_RESET;
 
 /*
- * DIGLPA_FE_SOFT_RESET enum
+ * DIGLPA_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGLPA_FE_SOFT_RESET {
+प्रकार क्रमागत DIGLPA_FE_SOFT_RESET अणु
 DIGLPA_FE_SOFT_RESET_0                   = 0x00000000,
 DIGLPA_FE_SOFT_RESET_1                   = 0x00000001,
-} DIGLPA_FE_SOFT_RESET;
+पूर्ण DIGLPA_FE_SOFT_RESET;
 
 /*
- * DIGLPA_BE_SOFT_RESET enum
+ * DIGLPA_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGLPA_BE_SOFT_RESET {
+प्रकार क्रमागत DIGLPA_BE_SOFT_RESET अणु
 DIGLPA_BE_SOFT_RESET_0                   = 0x00000000,
 DIGLPA_BE_SOFT_RESET_1                   = 0x00000001,
-} DIGLPA_BE_SOFT_RESET;
+पूर्ण DIGLPA_BE_SOFT_RESET;
 
 /*
- * DIGLPB_FE_SOFT_RESET enum
+ * DIGLPB_FE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGLPB_FE_SOFT_RESET {
+प्रकार क्रमागत DIGLPB_FE_SOFT_RESET अणु
 DIGLPB_FE_SOFT_RESET_0                   = 0x00000000,
 DIGLPB_FE_SOFT_RESET_1                   = 0x00000001,
-} DIGLPB_FE_SOFT_RESET;
+पूर्ण DIGLPB_FE_SOFT_RESET;
 
 /*
- * DIGLPB_BE_SOFT_RESET enum
+ * DIGLPB_BE_SOFT_RESET क्रमागत
  */
 
-typedef enum DIGLPB_BE_SOFT_RESET {
+प्रकार क्रमागत DIGLPB_BE_SOFT_RESET अणु
 DIGLPB_BE_SOFT_RESET_0                   = 0x00000000,
 DIGLPB_BE_SOFT_RESET_1                   = 0x00000001,
-} DIGLPB_BE_SOFT_RESET;
+पूर्ण DIGLPB_BE_SOFT_RESET;
 
 /*
- * GENERICA_STEREOSYNC_SEL enum
+ * GENERICA_STEREOSYNC_SEL क्रमागत
  */
 
-typedef enum GENERICA_STEREOSYNC_SEL {
+प्रकार क्रमागत GENERICA_STEREOSYNC_SEL अणु
 GENERICA_STEREOSYNC_SEL_D1               = 0x00000000,
 GENERICA_STEREOSYNC_SEL_D2               = 0x00000001,
 GENERICA_STEREOSYNC_SEL_D3               = 0x00000002,
@@ -12801,13 +12802,13 @@ GENERICA_STEREOSYNC_SEL_D4               = 0x00000003,
 GENERICA_STEREOSYNC_SEL_D5               = 0x00000004,
 GENERICA_STEREOSYNC_SEL_D6               = 0x00000005,
 GENERICA_STEREOSYNC_SEL_RESERVED         = 0x00000006,
-} GENERICA_STEREOSYNC_SEL;
+पूर्ण GENERICA_STEREOSYNC_SEL;
 
 /*
- * GENERICB_STEREOSYNC_SEL enum
+ * GENERICB_STEREOSYNC_SEL क्रमागत
  */
 
-typedef enum GENERICB_STEREOSYNC_SEL {
+प्रकार क्रमागत GENERICB_STEREOSYNC_SEL अणु
 GENERICB_STEREOSYNC_SEL_D1               = 0x00000000,
 GENERICB_STEREOSYNC_SEL_D2               = 0x00000001,
 GENERICB_STEREOSYNC_SEL_D3               = 0x00000002,
@@ -12815,13 +12816,13 @@ GENERICB_STEREOSYNC_SEL_D4               = 0x00000003,
 GENERICB_STEREOSYNC_SEL_D5               = 0x00000004,
 GENERICB_STEREOSYNC_SEL_D6               = 0x00000005,
 GENERICB_STEREOSYNC_SEL_RESERVED         = 0x00000006,
-} GENERICB_STEREOSYNC_SEL;
+पूर्ण GENERICB_STEREOSYNC_SEL;
 
 /*
- * DCO_DBG_BLOCK_SEL enum
+ * DCO_DBG_BLOCK_SEL क्रमागत
  */
 
-typedef enum DCO_DBG_BLOCK_SEL {
+प्रकार क्रमागत DCO_DBG_BLOCK_SEL अणु
 DCO_DBG_BLOCK_SEL_DCO                    = 0x00000000,
 DCO_DBG_BLOCK_SEL_ABM                    = 0x00000001,
 DCO_DBG_BLOCK_SEL_DVO                    = 0x00000002,
@@ -12877,22 +12878,22 @@ DCO_DBG_BLOCK_SEL_DPLPFEA                = 0x00000033,
 DCO_DBG_BLOCK_SEL_DPLPFEB                = 0x00000034,
 DCO_DBG_BLOCK_SEL_DPLPA                  = 0x00000035,
 DCO_DBG_BLOCK_SEL_DPLPB                  = 0x00000036,
-} DCO_DBG_BLOCK_SEL;
+पूर्ण DCO_DBG_BLOCK_SEL;
 
 /*
- * DCO_HDMI_RXSTATUS_TIMER_CONTROL_DCO_HDMI_RXSTATUS_TIMER_TYPE enum
+ * DCO_HDMI_RXSTATUS_TIMER_CONTROL_DCO_HDMI_RXSTATUS_TIMER_TYPE क्रमागत
  */
 
-typedef enum DCO_HDMI_RXSTATUS_TIMER_CONTROL_DCO_HDMI_RXSTATUS_TIMER_TYPE {
+प्रकार क्रमागत DCO_HDMI_RXSTATUS_TIMER_CONTROL_DCO_HDMI_RXSTATUS_TIMER_TYPE अणु
 DCO_HDMI_RXSTATUS_TIMER_TYPE_LEVEL       = 0x00000000,
 DCO_HDMI_RXSTATUS_TIMER_TYPE_PULSE       = 0x00000001,
-} DCO_HDMI_RXSTATUS_TIMER_CONTROL_DCO_HDMI_RXSTATUS_TIMER_TYPE;
+पूर्ण DCO_HDMI_RXSTATUS_TIMER_CONTROL_DCO_HDMI_RXSTATUS_TIMER_TYPE;
 
 /*
- * FMT420_MEMORY_SOURCE_SEL enum
+ * FMT420_MEMORY_SOURCE_SEL क्रमागत
  */
 
-typedef enum FMT420_MEMORY_SOURCE_SEL {
+प्रकार क्रमागत FMT420_MEMORY_SOURCE_SEL अणु
 FMT420_MEMORY_SOURCE_SEL_FMT0            = 0x00000000,
 FMT420_MEMORY_SOURCE_SEL_FMT1            = 0x00000001,
 FMT420_MEMORY_SOURCE_SEL_FMT2            = 0x00000002,
@@ -12900,53 +12901,53 @@ FMT420_MEMORY_SOURCE_SEL_FMT3            = 0x00000003,
 FMT420_MEMORY_SOURCE_SEL_FMT4            = 0x00000004,
 FMT420_MEMORY_SOURCE_SEL_FMT5            = 0x00000005,
 FMT420_MEMORY_SOURCE_SEL_FMT_RESERVED    = 0x00000006,
-} FMT420_MEMORY_SOURCE_SEL;
+पूर्ण FMT420_MEMORY_SOURCE_SEL;
 
 /*******************************************************
  * DOUT_I2C Enums
  *******************************************************/
 
 /*
- * DOUT_I2C_CONTROL_GO enum
+ * DOUT_I2C_CONTROL_GO क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_GO {
+प्रकार क्रमागत DOUT_I2C_CONTROL_GO अणु
 DOUT_I2C_CONTROL_STOP_TRANSFER           = 0x00000000,
 DOUT_I2C_CONTROL_START_TRANSFER          = 0x00000001,
-} DOUT_I2C_CONTROL_GO;
+पूर्ण DOUT_I2C_CONTROL_GO;
 
 /*
- * DOUT_I2C_CONTROL_SOFT_RESET enum
+ * DOUT_I2C_CONTROL_SOFT_RESET क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_SOFT_RESET {
+प्रकार क्रमागत DOUT_I2C_CONTROL_SOFT_RESET अणु
 DOUT_I2C_CONTROL_NOT_RESET_I2C_CONTROLLER = 0x00000000,
 DOUT_I2C_CONTROL_RESET_I2C_CONTROLLER    = 0x00000001,
-} DOUT_I2C_CONTROL_SOFT_RESET;
+पूर्ण DOUT_I2C_CONTROL_SOFT_RESET;
 
 /*
- * DOUT_I2C_CONTROL_SEND_RESET enum
+ * DOUT_I2C_CONTROL_SEND_RESET क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_SEND_RESET {
+प्रकार क्रमागत DOUT_I2C_CONTROL_SEND_RESET अणु
 DOUT_I2C_CONTROL__NOT_SEND_RESET         = 0x00000000,
 DOUT_I2C_CONTROL__SEND_RESET             = 0x00000001,
-} DOUT_I2C_CONTROL_SEND_RESET;
+पूर्ण DOUT_I2C_CONTROL_SEND_RESET;
 
 /*
- * DOUT_I2C_CONTROL_SW_STATUS_RESET enum
+ * DOUT_I2C_CONTROL_SW_STATUS_RESET क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_SW_STATUS_RESET {
+प्रकार क्रमागत DOUT_I2C_CONTROL_SW_STATUS_RESET अणु
 DOUT_I2C_CONTROL_NOT_RESET_SW_STATUS     = 0x00000000,
 DOUT_I2C_CONTROL_RESET_SW_STATUS         = 0x00000001,
-} DOUT_I2C_CONTROL_SW_STATUS_RESET;
+पूर्ण DOUT_I2C_CONTROL_SW_STATUS_RESET;
 
 /*
- * DOUT_I2C_CONTROL_DDC_SELECT enum
+ * DOUT_I2C_CONTROL_DDC_SELECT क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_DDC_SELECT {
+प्रकार क्रमागत DOUT_I2C_CONTROL_DDC_SELECT अणु
 DOUT_I2C_CONTROL_SELECT_DDC1             = 0x00000000,
 DOUT_I2C_CONTROL_SELECT_DDC2             = 0x00000001,
 DOUT_I2C_CONTROL_SELECT_DDC3             = 0x00000002,
@@ -12954,176 +12955,176 @@ DOUT_I2C_CONTROL_SELECT_DDC4             = 0x00000003,
 DOUT_I2C_CONTROL_SELECT_DDC5             = 0x00000004,
 DOUT_I2C_CONTROL_SELECT_DDC6             = 0x00000005,
 DOUT_I2C_CONTROL_SELECT_DDCVGA           = 0x00000006,
-} DOUT_I2C_CONTROL_DDC_SELECT;
+पूर्ण DOUT_I2C_CONTROL_DDC_SELECT;
 
 /*
- * DOUT_I2C_CONTROL_TRANSACTION_COUNT enum
+ * DOUT_I2C_CONTROL_TRANSACTION_COUNT क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_TRANSACTION_COUNT {
+प्रकार क्रमागत DOUT_I2C_CONTROL_TRANSACTION_COUNT अणु
 DOUT_I2C_CONTROL_TRANS0                  = 0x00000000,
 DOUT_I2C_CONTROL_TRANS0_TRANS1           = 0x00000001,
 DOUT_I2C_CONTROL_TRANS0_TRANS1_TRANS2    = 0x00000002,
 DOUT_I2C_CONTROL_TRANS0_TRANS1_TRANS2_TRANS3  = 0x00000003,
-} DOUT_I2C_CONTROL_TRANSACTION_COUNT;
+पूर्ण DOUT_I2C_CONTROL_TRANSACTION_COUNT;
 
 /*
- * DOUT_I2C_CONTROL_DBG_REF_SEL enum
+ * DOUT_I2C_CONTROL_DBG_REF_SEL क्रमागत
  */
 
-typedef enum DOUT_I2C_CONTROL_DBG_REF_SEL {
+प्रकार क्रमागत DOUT_I2C_CONTROL_DBG_REF_SEL अणु
 DOUT_I2C_CONTROL_NORMAL_DEBUG            = 0x00000000,
 DOUT_I2C_CONTROL_FAST_REFERENCE_DEBUG    = 0x00000001,
-} DOUT_I2C_CONTROL_DBG_REF_SEL;
+पूर्ण DOUT_I2C_CONTROL_DBG_REF_SEL;
 
 /*
- * DOUT_I2C_ARBITRATION_SW_PRIORITY enum
+ * DOUT_I2C_ARBITRATION_SW_PRIORITY क्रमागत
  */
 
-typedef enum DOUT_I2C_ARBITRATION_SW_PRIORITY {
+प्रकार क्रमागत DOUT_I2C_ARBITRATION_SW_PRIORITY अणु
 DOUT_I2C_ARBITRATION_SW_PRIORITY_NORMAL  = 0x00000000,
 DOUT_I2C_ARBITRATION_SW_PRIORITY_HIGH    = 0x00000001,
 DOUT_I2C_ARBITRATION_SW_PRIORITY_0_RESERVED = 0x00000002,
 DOUT_I2C_ARBITRATION_SW_PRIORITY_1_RESERVED = 0x00000003,
-} DOUT_I2C_ARBITRATION_SW_PRIORITY;
+पूर्ण DOUT_I2C_ARBITRATION_SW_PRIORITY;
 
 /*
- * DOUT_I2C_ARBITRATION_NO_QUEUED_SW_GO enum
+ * DOUT_I2C_ARBITRATION_NO_QUEUED_SW_GO क्रमागत
  */
 
-typedef enum DOUT_I2C_ARBITRATION_NO_QUEUED_SW_GO {
+प्रकार क्रमागत DOUT_I2C_ARBITRATION_NO_QUEUED_SW_GO अणु
 DOUT_I2C_ARBITRATION_SW_QUEUE_ENABLED    = 0x00000000,
 DOUT_I2C_ARBITRATION_SW_QUEUE_DISABLED   = 0x00000001,
-} DOUT_I2C_ARBITRATION_NO_QUEUED_SW_GO;
+पूर्ण DOUT_I2C_ARBITRATION_NO_QUEUED_SW_GO;
 
 /*
- * DOUT_I2C_ARBITRATION_ABORT_XFER enum
+ * DOUT_I2C_ARBITRATION_ABORT_XFER क्रमागत
  */
 
-typedef enum DOUT_I2C_ARBITRATION_ABORT_XFER {
+प्रकार क्रमागत DOUT_I2C_ARBITRATION_ABORT_XFER अणु
 DOUT_I2C_ARBITRATION_NOT_ABORT_CURRENT_TRANSFER = 0x00000000,
 DOUT_I2C_ARBITRATION_ABORT_CURRENT_TRANSFER  = 0x00000001,
-} DOUT_I2C_ARBITRATION_ABORT_XFER;
+पूर्ण DOUT_I2C_ARBITRATION_ABORT_XFER;
 
 /*
- * DOUT_I2C_ARBITRATION_USE_I2C_REG_REQ enum
+ * DOUT_I2C_ARBITRATION_USE_I2C_REG_REQ क्रमागत
  */
 
-typedef enum DOUT_I2C_ARBITRATION_USE_I2C_REG_REQ {
+प्रकार क्रमागत DOUT_I2C_ARBITRATION_USE_I2C_REG_REQ अणु
 DOUT_I2C_ARBITRATION__NOT_USE_I2C_REG_REQ = 0x00000000,
 DOUT_I2C_ARBITRATION__USE_I2C_REG_REQ    = 0x00000001,
-} DOUT_I2C_ARBITRATION_USE_I2C_REG_REQ;
+पूर्ण DOUT_I2C_ARBITRATION_USE_I2C_REG_REQ;
 
 /*
- * DOUT_I2C_ARBITRATION_DONE_USING_I2C_REG enum
+ * DOUT_I2C_ARBITRATION_DONE_USING_I2C_REG क्रमागत
  */
 
-typedef enum DOUT_I2C_ARBITRATION_DONE_USING_I2C_REG {
+प्रकार क्रमागत DOUT_I2C_ARBITRATION_DONE_USING_I2C_REG अणु
 DOUT_I2C_ARBITRATION_DONE__NOT_USING_I2C_REG = 0x00000000,
 DOUT_I2C_ARBITRATION_DONE__USING_I2C_REG  = 0x00000001,
-} DOUT_I2C_ARBITRATION_DONE_USING_I2C_REG;
+पूर्ण DOUT_I2C_ARBITRATION_DONE_USING_I2C_REG;
 
 /*
- * DOUT_I2C_ACK enum
+ * DOUT_I2C_ACK क्रमागत
  */
 
-typedef enum DOUT_I2C_ACK {
+प्रकार क्रमागत DOUT_I2C_ACK अणु
 DOUT_I2C_NO_ACK                          = 0x00000000,
 DOUT_I2C_ACK_TO_CLEAN                    = 0x00000001,
-} DOUT_I2C_ACK;
+पूर्ण DOUT_I2C_ACK;
 
 /*
- * DOUT_I2C_DDC_SPEED_THRESHOLD enum
+ * DOUT_I2C_DDC_SPEED_THRESHOLD क्रमागत
  */
 
-typedef enum DOUT_I2C_DDC_SPEED_THRESHOLD {
+प्रकार क्रमागत DOUT_I2C_DDC_SPEED_THRESHOLD अणु
 DOUT_I2C_DDC_SPEED_THRESHOLD_BIG_THAN_ZERO  = 0x00000000,
 DOUT_I2C_DDC_SPEED_THRESHOLD_QUATER_OF_TOTAL_SAMPLE  = 0x00000001,
 DOUT_I2C_DDC_SPEED_THRESHOLD_HALF_OF_TOTAL_SAMPLE  = 0x00000002,
 DOUT_I2C_DDC_SPEED_THRESHOLD_THREE_QUATERS_OF_TOTAL_SAMPLE  = 0x00000003,
-} DOUT_I2C_DDC_SPEED_THRESHOLD;
+पूर्ण DOUT_I2C_DDC_SPEED_THRESHOLD;
 
 /*
- * DOUT_I2C_DDC_SETUP_DATA_DRIVE_EN enum
+ * DOUT_I2C_DDC_SETUP_DATA_DRIVE_EN क्रमागत
  */
 
-typedef enum DOUT_I2C_DDC_SETUP_DATA_DRIVE_EN {
+प्रकार क्रमागत DOUT_I2C_DDC_SETUP_DATA_DRIVE_EN अणु
 DOUT_I2C_DDC_SETUP_DATA_DRIVE_BY_EXTERNAL_RESISTOR  = 0x00000000,
 DOUT_I2C_DDC_SETUP_I2C_PAD_DRIVE_SDA     = 0x00000001,
-} DOUT_I2C_DDC_SETUP_DATA_DRIVE_EN;
+पूर्ण DOUT_I2C_DDC_SETUP_DATA_DRIVE_EN;
 
 /*
- * DOUT_I2C_DDC_SETUP_DATA_DRIVE_SEL enum
+ * DOUT_I2C_DDC_SETUP_DATA_DRIVE_SEL क्रमागत
  */
 
-typedef enum DOUT_I2C_DDC_SETUP_DATA_DRIVE_SEL {
+प्रकार क्रमागत DOUT_I2C_DDC_SETUP_DATA_DRIVE_SEL अणु
 DOUT_I2C_DDC_SETUP_DATA_DRIVE_FOR_10MCLKS  = 0x00000000,
 DOUT_I2C_DDC_SETUP_DATA_DRIVE_FOR_20MCLKS  = 0x00000001,
-} DOUT_I2C_DDC_SETUP_DATA_DRIVE_SEL;
+पूर्ण DOUT_I2C_DDC_SETUP_DATA_DRIVE_SEL;
 
 /*
- * DOUT_I2C_DDC_SETUP_EDID_DETECT_MODE enum
+ * DOUT_I2C_DDC_SETUP_EDID_DETECT_MODE क्रमागत
  */
 
-typedef enum DOUT_I2C_DDC_SETUP_EDID_DETECT_MODE {
+प्रकार क्रमागत DOUT_I2C_DDC_SETUP_EDID_DETECT_MODE अणु
 DOUT_I2C_DDC_SETUP_EDID_DETECT_CONNECT   = 0x00000000,
 DOUT_I2C_DDC_SETUP_EDID_DETECT_DISCONNECT  = 0x00000001,
-} DOUT_I2C_DDC_SETUP_EDID_DETECT_MODE;
+पूर्ण DOUT_I2C_DDC_SETUP_EDID_DETECT_MODE;
 
 /*
- * DOUT_I2C_DDC_SETUP_CLK_DRIVE_EN enum
+ * DOUT_I2C_DDC_SETUP_CLK_DRIVE_EN क्रमागत
  */
 
-typedef enum DOUT_I2C_DDC_SETUP_CLK_DRIVE_EN {
+प्रकार क्रमागत DOUT_I2C_DDC_SETUP_CLK_DRIVE_EN अणु
 DOUT_I2C_DDC_SETUP_CLK_DRIVE_BY_EXTERNAL_RESISTOR  = 0x00000000,
 DOUT_I2C_DDC_SETUP_I2C_PAD_DRIVE_SCL     = 0x00000001,
-} DOUT_I2C_DDC_SETUP_CLK_DRIVE_EN;
+पूर्ण DOUT_I2C_DDC_SETUP_CLK_DRIVE_EN;
 
 /*
- * DOUT_I2C_TRANSACTION_STOP_ON_NACK enum
+ * DOUT_I2C_TRANSACTION_STOP_ON_NACK क्रमागत
  */
 
-typedef enum DOUT_I2C_TRANSACTION_STOP_ON_NACK {
+प्रकार क्रमागत DOUT_I2C_TRANSACTION_STOP_ON_NACK अणु
 DOUT_I2C_TRANSACTION_STOP_CURRENT_TRANS  = 0x00000000,
 DOUT_I2C_TRANSACTION_STOP_ALL_TRANS      = 0x00000001,
-} DOUT_I2C_TRANSACTION_STOP_ON_NACK;
+पूर्ण DOUT_I2C_TRANSACTION_STOP_ON_NACK;
 
 /*
- * DOUT_I2C_DATA_INDEX_WRITE enum
+ * DOUT_I2C_DATA_INDEX_WRITE क्रमागत
  */
 
-typedef enum DOUT_I2C_DATA_INDEX_WRITE {
+प्रकार क्रमागत DOUT_I2C_DATA_INDEX_WRITE अणु
 DOUT_I2C_DATA__NOT_INDEX_WRITE           = 0x00000000,
 DOUT_I2C_DATA__INDEX_WRITE               = 0x00000001,
-} DOUT_I2C_DATA_INDEX_WRITE;
+पूर्ण DOUT_I2C_DATA_INDEX_WRITE;
 
 /*
- * DOUT_I2C_EDID_DETECT_CTRL_SEND_RESET enum
+ * DOUT_I2C_EDID_DETECT_CTRL_SEND_RESET क्रमागत
  */
 
-typedef enum DOUT_I2C_EDID_DETECT_CTRL_SEND_RESET {
+प्रकार क्रमागत DOUT_I2C_EDID_DETECT_CTRL_SEND_RESET अणु
 DOUT_I2C_EDID_NOT_SEND_RESET_BEFORE_EDID_READ_TRACTION = 0x00000000,
 DOUT_I2C_EDID_SEND_RESET_BEFORE_EDID_READ_TRACTION  = 0x00000001,
-} DOUT_I2C_EDID_DETECT_CTRL_SEND_RESET;
+पूर्ण DOUT_I2C_EDID_DETECT_CTRL_SEND_RESET;
 
 /*
- * DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE enum
+ * DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE क्रमागत
  */
 
-typedef enum DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE {
+प्रकार क्रमागत DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE अणु
 DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE__LEVEL  = 0x00000000,
 DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE__PULSE  = 0x00000001,
-} DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE;
+पूर्ण DOUT_I2C_READ_REQUEST_INTERRUPT_TYPE;
 
 /*******************************************************
  * FBC Enums
  *******************************************************/
 
 /*
- * FBC_IDLE_MASK_MASK_BITS enum
+ * FBC_IDLE_MASK_MASK_BITS क्रमागत
  */
 
-typedef enum FBC_IDLE_MASK_MASK_BITS {
+प्रकार क्रमागत FBC_IDLE_MASK_MASK_BITS अणु
 FBC_IDLE_MASK_DISP_REG_UPDATE            = 0x00000000,
 FBC_IDLE_MASK_RESERVED1                  = 0x00000001,
 FBC_IDLE_MASK_FBC_GRPH_COMP_EN           = 0x00000002,
@@ -13156,91 +13157,91 @@ FBC_IDLE_MASK_MC_WRITE                   = 0x0000001c,
 FBC_IDLE_MASK_RESERVED29                 = 0x0000001d,
 FBC_IDLE_MASK_RESERVED30                 = 0x0000001e,
 FBC_IDLE_MASK_RESERVED31                 = 0x0000001f,
-} FBC_IDLE_MASK_MASK_BITS;
+पूर्ण FBC_IDLE_MASK_MASK_BITS;
 
 /*******************************************************
  * DPCSRX Enums
  *******************************************************/
 
 /*
- * DPCSRX_RX_CLOCK_CNTL_DPCS_SYMCLK_RX_SEL enum
+ * DPCSRX_RX_CLOCK_CNTL_DPCS_SYMCLK_RX_SEL क्रमागत
  */
 
-typedef enum DPCSRX_RX_CLOCK_CNTL_DPCS_SYMCLK_RX_SEL {
+प्रकार क्रमागत DPCSRX_RX_CLOCK_CNTL_DPCS_SYMCLK_RX_SEL अणु
 DPCSRX_BPHY_PCS_RX0_CLK                  = 0x00000000,
 DPCSRX_BPHY_PCS_RX1_CLK                  = 0x00000001,
 DPCSRX_BPHY_PCS_RX2_CLK                  = 0x00000002,
 DPCSRX_BPHY_PCS_RX3_CLK                  = 0x00000003,
-} DPCSRX_RX_CLOCK_CNTL_DPCS_SYMCLK_RX_SEL;
+पूर्ण DPCSRX_RX_CLOCK_CNTL_DPCS_SYMCLK_RX_SEL;
 
 /*
- * DPCSRX_DBG_CFGCLK_SEL enum
+ * DPCSRX_DBG_CFGCLK_SEL क्रमागत
  */
 
-typedef enum DPCSRX_DBG_CFGCLK_SEL {
+प्रकार क्रमागत DPCSRX_DBG_CFGCLK_SEL अणु
 DPCSRX_DBG_CFGCLK_SEL_DC_DPCS_INF        = 0x00000000,
 DPCSRX_DBG_CFGCLK_SEL_DPCS_BPHY_INF      = 0x00000001,
 DPCSRX_DBG_CFGCLK_SEL_CBUS_SLAVE         = 0x00000002,
 DPCSRX_DBG_CFGCLK_SEL_CBUS_MASTER        = 0x00000003,
-} DPCSRX_DBG_CFGCLK_SEL;
+पूर्ण DPCSRX_DBG_CFGCLK_SEL;
 
 /*
- * DPCSRX_RX_SYMCLK_SEL enum
+ * DPCSRX_RX_SYMCLK_SEL क्रमागत
  */
 
-typedef enum DPCSRX_RX_SYMCLK_SEL {
+प्रकार क्रमागत DPCSRX_RX_SYMCLK_SEL अणु
 DPCSRX_DBG_RX_SYMCLK_SEL_OUT0            = 0x00000000,
 DPCSRX_DBG_RX_SYMCLK_SEL_OUT1            = 0x00000001,
 DPCSRX_DBG_RX_SYMCLK_SEL_INT             = 0x00000002,
-} DPCSRX_RX_SYMCLK_SEL;
+पूर्ण DPCSRX_RX_SYMCLK_SEL;
 
 /*******************************************************
  * DPCSTX Enums
  *******************************************************/
 
 /*
- * DPCSTX_DBG_CFGCLK_SEL enum
+ * DPCSTX_DBG_CFGCLK_SEL क्रमागत
  */
 
-typedef enum DPCSTX_DBG_CFGCLK_SEL {
+प्रकार क्रमागत DPCSTX_DBG_CFGCLK_SEL अणु
 DPCSTX_DBG_CFGCLK_SEL_DC_DPCS_INF        = 0x00000000,
 DPCSTX_DBG_CFGCLK_SEL_DPCS_BPHY_INF      = 0x00000001,
 DPCSTX_DBG_CFGCLK_SEL_CBUS_SLAVE         = 0x00000002,
 DPCSTX_DBG_CFGCLK_SEL_CBUS_MASTER        = 0x00000003,
-} DPCSTX_DBG_CFGCLK_SEL;
+पूर्ण DPCSTX_DBG_CFGCLK_SEL;
 
 /*
- * DPCSTX_TX_SYMCLK_SEL enum
+ * DPCSTX_TX_SYMCLK_SEL क्रमागत
  */
 
-typedef enum DPCSTX_TX_SYMCLK_SEL {
+प्रकार क्रमागत DPCSTX_TX_SYMCLK_SEL अणु
 DPCSTX_DBG_TX_SYMCLK_SEL_IN0             = 0x00000000,
 DPCSTX_DBG_TX_SYMCLK_SEL_IN1             = 0x00000001,
 DPCSTX_DBG_TX_SYMCLK_SEL_FIFO_WR         = 0x00000002,
-} DPCSTX_TX_SYMCLK_SEL;
+पूर्ण DPCSTX_TX_SYMCLK_SEL;
 
 /*
- * DPCSTX_TX_SYMCLK_DIV2_SEL enum
+ * DPCSTX_TX_SYMCLK_DIV2_SEL क्रमागत
  */
 
-typedef enum DPCSTX_TX_SYMCLK_DIV2_SEL {
+प्रकार क्रमागत DPCSTX_TX_SYMCLK_DIV2_SEL अणु
 DPCSTX_DBG_TX_SYMCLK_DIV2_SEL_OUT0       = 0x00000000,
 DPCSTX_DBG_TX_SYMCLK_DIV2_SEL_OUT1       = 0x00000001,
 DPCSTX_DBG_TX_SYMCLK_DIV2_SEL_OUT2       = 0x00000002,
 DPCSTX_DBG_TX_SYMCLK_DIV2_SEL_OUT3       = 0x00000003,
 DPCSTX_DBG_TX_SYMCLK_DIV2_SEL_FIFO_RD    = 0x00000004,
 DPCSTX_DBG_TX_SYMCLK_DIV2_SEL_INT        = 0x00000005,
-} DPCSTX_TX_SYMCLK_DIV2_SEL;
+पूर्ण DPCSTX_TX_SYMCLK_DIV2_SEL;
 
 /*******************************************************
  * CB Enums
  *******************************************************/
 
 /*
- * SurfaceNumber enum
+ * SurfaceNumber क्रमागत
  */
 
-typedef enum SurfaceNumber {
+प्रकार क्रमागत SurfaceNumber अणु
 NUMBER_UNORM                             = 0x00000000,
 NUMBER_SNORM                             = 0x00000001,
 NUMBER_USCALED                           = 0x00000002,
@@ -13249,24 +13250,24 @@ NUMBER_UINT                              = 0x00000004,
 NUMBER_SINT                              = 0x00000005,
 NUMBER_SRGB                              = 0x00000006,
 NUMBER_FLOAT                             = 0x00000007,
-} SurfaceNumber;
+पूर्ण SurfaceNumber;
 
 /*
- * SurfaceSwap enum
+ * SurfaceSwap क्रमागत
  */
 
-typedef enum SurfaceSwap {
+प्रकार क्रमागत SurfaceSwap अणु
 SWAP_STD                                 = 0x00000000,
 SWAP_ALT                                 = 0x00000001,
 SWAP_STD_REV                             = 0x00000002,
 SWAP_ALT_REV                             = 0x00000003,
-} SurfaceSwap;
+पूर्ण SurfaceSwap;
 
 /*
- * CBMode enum
+ * CBMode क्रमागत
  */
 
-typedef enum CBMode {
+प्रकार क्रमागत CBMode अणु
 CB_DISABLE                               = 0x00000000,
 CB_NORMAL                                = 0x00000001,
 CB_ELIMINATE_FAST_CLEAR                  = 0x00000002,
@@ -13274,33 +13275,33 @@ CB_RESOLVE                               = 0x00000003,
 CB_DECOMPRESS                            = 0x00000004,
 CB_FMASK_DECOMPRESS                      = 0x00000005,
 CB_DCC_DECOMPRESS                        = 0x00000006,
-} CBMode;
+पूर्ण CBMode;
 
 /*
- * RoundMode enum
+ * RoundMode क्रमागत
  */
 
-typedef enum RoundMode {
+प्रकार क्रमागत RoundMode अणु
 ROUND_BY_HALF                            = 0x00000000,
 ROUND_TRUNCATE                           = 0x00000001,
-} RoundMode;
+पूर्ण RoundMode;
 
 /*
- * SourceFormat enum
+ * SourceFormat क्रमागत
  */
 
-typedef enum SourceFormat {
+प्रकार क्रमागत SourceFormat अणु
 EXPORT_4C_32BPC                          = 0x00000000,
 EXPORT_4C_16BPC                          = 0x00000001,
 EXPORT_2C_32BPC_GR                       = 0x00000002,
 EXPORT_2C_32BPC_AR                       = 0x00000003,
-} SourceFormat;
+पूर्ण SourceFormat;
 
 /*
- * BlendOp enum
+ * BlendOp क्रमागत
  */
 
-typedef enum BlendOp {
+प्रकार क्रमागत BlendOp अणु
 BLEND_ZERO                               = 0x00000000,
 BLEND_ONE                                = 0x00000001,
 BLEND_SRC_COLOR                          = 0x00000002,
@@ -13322,25 +13323,25 @@ BLEND_SRC1_ALPHA                         = 0x00000011,
 BLEND_INV_SRC1_ALPHA                     = 0x00000012,
 BLEND_CONSTANT_ALPHA                     = 0x00000013,
 BLEND_ONE_MINUS_CONSTANT_ALPHA           = 0x00000014,
-} BlendOp;
+पूर्ण BlendOp;
 
 /*
- * CombFunc enum
+ * CombFunc क्रमागत
  */
 
-typedef enum CombFunc {
+प्रकार क्रमागत CombFunc अणु
 COMB_DST_PLUS_SRC                        = 0x00000000,
 COMB_SRC_MINUS_DST                       = 0x00000001,
 COMB_MIN_DST_SRC                         = 0x00000002,
 COMB_MAX_DST_SRC                         = 0x00000003,
 COMB_DST_MINUS_SRC                       = 0x00000004,
-} CombFunc;
+पूर्ण CombFunc;
 
 /*
- * BlendOpt enum
+ * BlendOpt क्रमागत
  */
 
-typedef enum BlendOpt {
+प्रकार क्रमागत BlendOpt अणु
 FORCE_OPT_AUTO                           = 0x00000000,
 FORCE_OPT_DISABLE                        = 0x00000001,
 FORCE_OPT_ENABLE_IF_SRC_A_0              = 0x00000002,
@@ -13349,13 +13350,13 @@ FORCE_OPT_ENABLE_IF_SRC_ARGB_0           = 0x00000004,
 FORCE_OPT_ENABLE_IF_SRC_A_1              = 0x00000005,
 FORCE_OPT_ENABLE_IF_SRC_RGB_1            = 0x00000006,
 FORCE_OPT_ENABLE_IF_SRC_ARGB_1           = 0x00000007,
-} BlendOpt;
+पूर्ण BlendOpt;
 
 /*
- * CmaskCode enum
+ * CmaskCode क्रमागत
  */
 
-typedef enum CmaskCode {
+प्रकार क्रमागत CmaskCode अणु
 CMASK_CLR00_F0                           = 0x00000000,
 CMASK_CLR00_F1                           = 0x00000001,
 CMASK_CLR00_F2                           = 0x00000002,
@@ -13372,34 +13373,34 @@ CMASK_CLR11_F0                           = 0x0000000c,
 CMASK_CLR11_F1                           = 0x0000000d,
 CMASK_CLR11_F2                           = 0x0000000e,
 CMASK_CLR11_FX                           = 0x0000000f,
-} CmaskCode;
+पूर्ण CmaskCode;
 
 /*
- * CmaskAddr enum
+ * CmaskAddr क्रमागत
  */
 
-typedef enum CmaskAddr {
+प्रकार क्रमागत CmaskAddr अणु
 CMASK_ADDR_TILED                         = 0x00000000,
 CMASK_ADDR_LINEAR                        = 0x00000001,
 CMASK_ADDR_COMPATIBLE                    = 0x00000002,
-} CmaskAddr;
+पूर्ण CmaskAddr;
 
 /*
- * MemArbMode enum
+ * MemArbMode क्रमागत
  */
 
-typedef enum MemArbMode {
+प्रकार क्रमागत MemArbMode अणु
 MEM_ARB_MODE_FIXED                       = 0x00000000,
 MEM_ARB_MODE_AGE                         = 0x00000001,
 MEM_ARB_MODE_WEIGHT                      = 0x00000002,
 MEM_ARB_MODE_BOTH                        = 0x00000003,
-} MemArbMode;
+पूर्ण MemArbMode;
 
 /*
- * CBPerfSel enum
+ * CBPerfSel क्रमागत
  */
 
-typedef enum CBPerfSel {
+प्रकार क्रमागत CBPerfSel अणु
 CB_PERF_SEL_NONE                         = 0x00000000,
 CB_PERF_SEL_BUSY                         = 0x00000001,
 CB_PERF_SEL_CORE_SCLK_VLD                = 0x00000002,
@@ -13433,8 +13434,8 @@ CB_PERF_SEL_LQUAD_FORMAT_IS_EXPORT_SIGNED16_ABGR  = 0x0000001d,
 CB_PERF_SEL_LQUAD_FORMAT_IS_EXPORT_UNSIGNED16_ABGR  = 0x0000001e,
 CB_PERF_SEL_QUAD_KILLED_BY_EXTRA_PIXEL_EXPORT  = 0x0000001f,
 CB_PERF_SEL_QUAD_KILLED_BY_COLOR_INVALID  = 0x00000020,
-CB_PERF_SEL_QUAD_KILLED_BY_NULL_TARGET_SHADER_MASK  = 0x00000021,
-CB_PERF_SEL_QUAD_KILLED_BY_NULL_SAMPLE_MASK  = 0x00000022,
+CB_PERF_SEL_QUAD_KILLED_BY_शून्य_TARGET_SHADER_MASK  = 0x00000021,
+CB_PERF_SEL_QUAD_KILLED_BY_शून्य_SAMPLE_MASK  = 0x00000022,
 CB_PERF_SEL_QUAD_KILLED_BY_DISCARD_PIXEL  = 0x00000023,
 CB_PERF_SEL_FC_CLEAR_QUAD_VALID_READY    = 0x00000024,
 CB_PERF_SEL_FC_CLEAR_QUAD_VALID_READYB   = 0x00000025,
@@ -13479,7 +13480,7 @@ CB_PERF_SEL_CM_CACHE_STALL               = 0x0000004b,
 CB_PERF_SEL_CM_CACHE_FLUSH               = 0x0000004c,
 CB_PERF_SEL_CM_CACHE_TAGS_FLUSHED        = 0x0000004d,
 CB_PERF_SEL_CM_CACHE_SECTORS_FLUSHED     = 0x0000004e,
-CB_PERF_SEL_CM_CACHE_DIRTY_SECTORS_FLUSHED  = 0x0000004f,
+CB_PERF_SEL_CM_CACHE_सूचीTY_SECTORS_FLUSHED  = 0x0000004f,
 CB_PERF_SEL_FC_CACHE_HIT                 = 0x00000050,
 CB_PERF_SEL_FC_CACHE_TAG_MISS            = 0x00000051,
 CB_PERF_SEL_FC_CACHE_SECTOR_MISS         = 0x00000052,
@@ -13494,7 +13495,7 @@ CB_PERF_SEL_FC_CACHE_STALL               = 0x0000005a,
 CB_PERF_SEL_FC_CACHE_FLUSH               = 0x0000005b,
 CB_PERF_SEL_FC_CACHE_TAGS_FLUSHED        = 0x0000005c,
 CB_PERF_SEL_FC_CACHE_SECTORS_FLUSHED     = 0x0000005d,
-CB_PERF_SEL_FC_CACHE_DIRTY_SECTORS_FLUSHED  = 0x0000005e,
+CB_PERF_SEL_FC_CACHE_सूचीTY_SECTORS_FLUSHED  = 0x0000005e,
 CB_PERF_SEL_CC_CACHE_HIT                 = 0x0000005f,
 CB_PERF_SEL_CC_CACHE_TAG_MISS            = 0x00000060,
 CB_PERF_SEL_CC_CACHE_SECTOR_MISS         = 0x00000061,
@@ -13509,7 +13510,7 @@ CB_PERF_SEL_CC_CACHE_STALL               = 0x00000069,
 CB_PERF_SEL_CC_CACHE_FLUSH               = 0x0000006a,
 CB_PERF_SEL_CC_CACHE_TAGS_FLUSHED        = 0x0000006b,
 CB_PERF_SEL_CC_CACHE_SECTORS_FLUSHED     = 0x0000006c,
-CB_PERF_SEL_CC_CACHE_DIRTY_SECTORS_FLUSHED  = 0x0000006d,
+CB_PERF_SEL_CC_CACHE_सूचीTY_SECTORS_FLUSHED  = 0x0000006d,
 CB_PERF_SEL_CC_CACHE_WA_TO_RMW_CONVERSION  = 0x0000006e,
 CB_PERF_SEL_CC_CACHE_READS_SAVED_DUE_TO_DCC  = 0x0000006f,
 CB_PERF_SEL_CB_TAP_WRREQ_VALID_READY     = 0x00000070,
@@ -13655,7 +13656,7 @@ CB_PERF_SEL_FC_DCC_CACHE_STALL           = 0x000000fb,
 CB_PERF_SEL_FC_DCC_CACHE_FLUSH           = 0x000000fc,
 CB_PERF_SEL_FC_DCC_CACHE_TAGS_FLUSHED    = 0x000000fd,
 CB_PERF_SEL_FC_DCC_CACHE_SECTORS_FLUSHED  = 0x000000fe,
-CB_PERF_SEL_FC_DCC_CACHE_DIRTY_SECTORS_FLUSHED  = 0x000000ff,
+CB_PERF_SEL_FC_DCC_CACHE_सूचीTY_SECTORS_FLUSHED  = 0x000000ff,
 CB_PERF_SEL_CC_DCC_BEYOND_TILE_SPLIT     = 0x00000100,
 CB_PERF_SEL_FC_MC_DCC_WRITE_REQUEST      = 0x00000101,
 CB_PERF_SEL_FC_MC_DCC_WRITE_REQUESTS_IN_FLIGHT  = 0x00000102,
@@ -13805,49 +13806,49 @@ CB_PERF_SEL_RBP_SPLIT_PARTIAL_TARGET_MASK  = 0x00000191,
 CB_PERF_SEL_RBP_SPLIT_LINEAR_ADDRESSING  = 0x00000192,
 CB_PERF_SEL_RBP_SPLIT_AA_NO_FMASK_COMPRESS  = 0x00000193,
 CB_PERF_SEL_RBP_INSERT_MISSING_LAST_QUAD  = 0x00000194,
-} CBPerfSel;
+पूर्ण CBPerfSel;
 
 /*
- * CBPerfOpFilterSel enum
+ * CBPerfOpFilterSel क्रमागत
  */
 
-typedef enum CBPerfOpFilterSel {
+प्रकार क्रमागत CBPerfOpFilterSel अणु
 CB_PERF_OP_FILTER_SEL_WRITE_ONLY         = 0x00000000,
 CB_PERF_OP_FILTER_SEL_NEEDS_DESTINATION  = 0x00000001,
 CB_PERF_OP_FILTER_SEL_RESOLVE            = 0x00000002,
 CB_PERF_OP_FILTER_SEL_DECOMPRESS         = 0x00000003,
 CB_PERF_OP_FILTER_SEL_FMASK_DECOMPRESS   = 0x00000004,
 CB_PERF_OP_FILTER_SEL_ELIMINATE_FAST_CLEAR  = 0x00000005,
-} CBPerfOpFilterSel;
+पूर्ण CBPerfOpFilterSel;
 
 /*
- * CBPerfClearFilterSel enum
+ * CBPerfClearFilterSel क्रमागत
  */
 
-typedef enum CBPerfClearFilterSel {
+प्रकार क्रमागत CBPerfClearFilterSel अणु
 CB_PERF_CLEAR_FILTER_SEL_NONCLEAR        = 0x00000000,
 CB_PERF_CLEAR_FILTER_SEL_CLEAR           = 0x00000001,
-} CBPerfClearFilterSel;
+पूर्ण CBPerfClearFilterSel;
 
 /*******************************************************
  * TC Enums
  *******************************************************/
 
 /*
- * TC_OP_MASKS enum
+ * TC_OP_MASKS क्रमागत
  */
 
-typedef enum TC_OP_MASKS {
+प्रकार क्रमागत TC_OP_MASKS अणु
 TC_OP_MASK_FLUSH_DENROM                  = 0x00000008,
 TC_OP_MASK_64                            = 0x00000020,
 TC_OP_MASK_NO_RTN                        = 0x00000040,
-} TC_OP_MASKS;
+पूर्ण TC_OP_MASKS;
 
 /*
- * TC_OP enum
+ * TC_OP क्रमागत
  */
 
-typedef enum TC_OP {
+प्रकार क्रमागत TC_OP अणु
 TC_OP_READ                               = 0x00000000,
 TC_OP_ATOMIC_FCMPSWAP_RTN_32             = 0x00000001,
 TC_OP_ATOMIC_FMIN_RTN_32                 = 0x00000002,
@@ -13976,40 +13977,40 @@ TC_OP_RESERVED_NON_FLOAT_64_1            = 0x0000007c,
 TC_OP_RESERVED_NON_FLOAT_64_2            = 0x0000007d,
 TC_OP_RESERVED_NON_FLOAT_64_3            = 0x0000007e,
 TC_OP_RESERVED_NON_FLOAT_64_4            = 0x0000007f,
-} TC_OP;
+पूर्ण TC_OP;
 
 /*
- * TC_CHUB_REQ_CREDITS_ENUM enum
+ * TC_CHUB_REQ_CREDITS_ENUM क्रमागत
  */
 
-typedef enum TC_CHUB_REQ_CREDITS_ENUM {
+प्रकार क्रमागत TC_CHUB_REQ_CREDITS_ENUM अणु
 TC_CHUB_REQ_CREDITS                      = 0x00000010,
-} TC_CHUB_REQ_CREDITS_ENUM;
+पूर्ण TC_CHUB_REQ_CREDITS_ENUM;
 
 /*
- * CHUB_TC_RET_CREDITS_ENUM enum
+ * CHUB_TC_RET_CREDITS_ENUM क्रमागत
  */
 
-typedef enum CHUB_TC_RET_CREDITS_ENUM {
+प्रकार क्रमागत CHUB_TC_RET_CREDITS_ENUM अणु
 CHUB_TC_RET_CREDITS                      = 0x00000020,
-} CHUB_TC_RET_CREDITS_ENUM;
+पूर्ण CHUB_TC_RET_CREDITS_ENUM;
 
 /*
- * TC_NACKS enum
+ * TC_NACKS क्रमागत
  */
 
-typedef enum TC_NACKS {
+प्रकार क्रमागत TC_NACKS अणु
 TC_NACK_NO_FAULT                         = 0x00000000,
 TC_NACK_PAGE_FAULT                       = 0x00000001,
 TC_NACK_PROTECTION_FAULT                 = 0x00000002,
 TC_NACK_DATA_ERROR                       = 0x00000003,
-} TC_NACKS;
+पूर्ण TC_NACKS;
 
 /*
- * TC_EA_CID enum
+ * TC_EA_CID क्रमागत
  */
 
-typedef enum TC_EA_CID {
+प्रकार क्रमागत TC_EA_CID अणु
 TC_EA_CID_RT                             = 0x00000000,
 TC_EA_CID_FMASK                          = 0x00000001,
 TC_EA_CID_DCC                            = 0x00000002,
@@ -14026,51 +14027,51 @@ TC_EA_CID_IA                             = 0x0000000c,
 TC_EA_CID_WD                             = 0x0000000d,
 TC_EA_CID_PA                             = 0x0000000e,
 TC_EA_CID_UTCL2_TPI                      = 0x0000000f,
-} TC_EA_CID;
+पूर्ण TC_EA_CID;
 
 /*******************************************************
  * SPI Enums
  *******************************************************/
 
 /*
- * SPI_SAMPLE_CNTL enum
+ * SPI_SAMPLE_CNTL क्रमागत
  */
 
-typedef enum SPI_SAMPLE_CNTL {
+प्रकार क्रमागत SPI_SAMPLE_CNTL अणु
 CENTROIDS_ONLY                           = 0x00000000,
 CENTERS_ONLY                             = 0x00000001,
 CENTROIDS_AND_CENTERS                    = 0x00000002,
 UNDEF                                    = 0x00000003,
-} SPI_SAMPLE_CNTL;
+पूर्ण SPI_SAMPLE_CNTL;
 
 /*
- * SPI_FOG_MODE enum
+ * SPI_FOG_MODE क्रमागत
  */
 
-typedef enum SPI_FOG_MODE {
+प्रकार क्रमागत SPI_FOG_MODE अणु
 SPI_FOG_NONE                             = 0x00000000,
 SPI_FOG_EXP                              = 0x00000001,
 SPI_FOG_EXP2                             = 0x00000002,
 SPI_FOG_LINEAR                           = 0x00000003,
-} SPI_FOG_MODE;
+पूर्ण SPI_FOG_MODE;
 
 /*
- * SPI_PNT_SPRITE_OVERRIDE enum
+ * SPI_PNT_SPRITE_OVERRIDE क्रमागत
  */
 
-typedef enum SPI_PNT_SPRITE_OVERRIDE {
+प्रकार क्रमागत SPI_PNT_SPRITE_OVERRIDE अणु
 SPI_PNT_SPRITE_SEL_0                     = 0x00000000,
 SPI_PNT_SPRITE_SEL_1                     = 0x00000001,
 SPI_PNT_SPRITE_SEL_S                     = 0x00000002,
 SPI_PNT_SPRITE_SEL_T                     = 0x00000003,
 SPI_PNT_SPRITE_SEL_NONE                  = 0x00000004,
-} SPI_PNT_SPRITE_OVERRIDE;
+पूर्ण SPI_PNT_SPRITE_OVERRIDE;
 
 /*
- * SPI_PERFCNT_SEL enum
+ * SPI_PERFCNT_SEL क्रमागत
  */
 
-typedef enum SPI_PERFCNT_SEL {
+प्रकार क्रमागत SPI_PERFCNT_SEL अणु
 SPI_PERF_VS_WINDOW_VALID                 = 0x00000000,
 SPI_PERF_VS_BUSY                         = 0x00000001,
 SPI_PERF_VS_FIRST_WAVE                   = 0x00000002,
@@ -14268,25 +14269,25 @@ SPI_PERF_VS_ALLOC_CNT                    = 0x000000c1,
 SPI_PERF_VS_LATE_ALLOC_ACCUM             = 0x000000c2,
 SPI_PERF_PC_ALLOC_CNT                    = 0x000000c3,
 SPI_PERF_PC_ALLOC_ACCUM                  = 0x000000c4,
-} SPI_PERFCNT_SEL;
+पूर्ण SPI_PERFCNT_SEL;
 
 /*
- * SPI_SHADER_FORMAT enum
+ * SPI_SHADER_FORMAT क्रमागत
  */
 
-typedef enum SPI_SHADER_FORMAT {
+प्रकार क्रमागत SPI_SHADER_FORMAT अणु
 SPI_SHADER_NONE                          = 0x00000000,
 SPI_SHADER_1COMP                         = 0x00000001,
 SPI_SHADER_2COMP                         = 0x00000002,
 SPI_SHADER_4COMPRESS                     = 0x00000003,
 SPI_SHADER_4COMP                         = 0x00000004,
-} SPI_SHADER_FORMAT;
+पूर्ण SPI_SHADER_FORMAT;
 
 /*
- * SPI_SHADER_EX_FORMAT enum
+ * SPI_SHADER_EX_FORMAT क्रमागत
  */
 
-typedef enum SPI_SHADER_EX_FORMAT {
+प्रकार क्रमागत SPI_SHADER_EX_FORMAT अणु
 SPI_SHADER_ZERO                          = 0x00000000,
 SPI_SHADER_32_R                          = 0x00000001,
 SPI_SHADER_32_GR                         = 0x00000002,
@@ -14297,38 +14298,38 @@ SPI_SHADER_SNORM16_ABGR                  = 0x00000006,
 SPI_SHADER_UINT16_ABGR                   = 0x00000007,
 SPI_SHADER_SINT16_ABGR                   = 0x00000008,
 SPI_SHADER_32_ABGR                       = 0x00000009,
-} SPI_SHADER_EX_FORMAT;
+पूर्ण SPI_SHADER_EX_FORMAT;
 
 /*
- * CLKGATE_SM_MODE enum
+ * CLKGATE_SM_MODE क्रमागत
  */
 
-typedef enum CLKGATE_SM_MODE {
+प्रकार क्रमागत CLKGATE_SM_MODE अणु
 ON_SEQ                                   = 0x00000000,
 OFF_SEQ                                  = 0x00000001,
 PROG_SEQ                                 = 0x00000002,
 READ_SEQ                                 = 0x00000003,
 SM_MODE_RESERVED                         = 0x00000004,
-} CLKGATE_SM_MODE;
+पूर्ण CLKGATE_SM_MODE;
 
 /*
- * CLKGATE_BASE_MODE enum
+ * CLKGATE_BASE_MODE क्रमागत
  */
 
-typedef enum CLKGATE_BASE_MODE {
+प्रकार क्रमागत CLKGATE_BASE_MODE अणु
 MULT_8                                   = 0x00000000,
 MULT_16                                  = 0x00000001,
-} CLKGATE_BASE_MODE;
+पूर्ण CLKGATE_BASE_MODE;
 
 /*******************************************************
  * SQ Enums
  *******************************************************/
 
 /*
- * SQ_TEX_CLAMP enum
+ * SQ_TEX_CLAMP क्रमागत
  */
 
-typedef enum SQ_TEX_CLAMP {
+प्रकार क्रमागत SQ_TEX_CLAMP अणु
 SQ_TEX_WRAP                              = 0x00000000,
 SQ_TEX_MIRROR                            = 0x00000001,
 SQ_TEX_CLAMP_LAST_TEXEL                  = 0x00000002,
@@ -14337,57 +14338,57 @@ SQ_TEX_CLAMP_HALF_BORDER                 = 0x00000004,
 SQ_TEX_MIRROR_ONCE_HALF_BORDER           = 0x00000005,
 SQ_TEX_CLAMP_BORDER                      = 0x00000006,
 SQ_TEX_MIRROR_ONCE_BORDER                = 0x00000007,
-} SQ_TEX_CLAMP;
+पूर्ण SQ_TEX_CLAMP;
 
 /*
- * SQ_TEX_XY_FILTER enum
+ * SQ_TEX_XY_FILTER क्रमागत
  */
 
-typedef enum SQ_TEX_XY_FILTER {
+प्रकार क्रमागत SQ_TEX_XY_FILTER अणु
 SQ_TEX_XY_FILTER_POINT                   = 0x00000000,
 SQ_TEX_XY_FILTER_BILINEAR                = 0x00000001,
 SQ_TEX_XY_FILTER_ANISO_POINT             = 0x00000002,
 SQ_TEX_XY_FILTER_ANISO_BILINEAR          = 0x00000003,
-} SQ_TEX_XY_FILTER;
+पूर्ण SQ_TEX_XY_FILTER;
 
 /*
- * SQ_TEX_Z_FILTER enum
+ * SQ_TEX_Z_FILTER क्रमागत
  */
 
-typedef enum SQ_TEX_Z_FILTER {
+प्रकार क्रमागत SQ_TEX_Z_FILTER अणु
 SQ_TEX_Z_FILTER_NONE                     = 0x00000000,
 SQ_TEX_Z_FILTER_POINT                    = 0x00000001,
 SQ_TEX_Z_FILTER_LINEAR                   = 0x00000002,
-} SQ_TEX_Z_FILTER;
+पूर्ण SQ_TEX_Z_FILTER;
 
 /*
- * SQ_TEX_MIP_FILTER enum
+ * SQ_TEX_MIP_FILTER क्रमागत
  */
 
-typedef enum SQ_TEX_MIP_FILTER {
+प्रकार क्रमागत SQ_TEX_MIP_FILTER अणु
 SQ_TEX_MIP_FILTER_NONE                   = 0x00000000,
 SQ_TEX_MIP_FILTER_POINT                  = 0x00000001,
 SQ_TEX_MIP_FILTER_LINEAR                 = 0x00000002,
 SQ_TEX_MIP_FILTER_POINT_ANISO_ADJ        = 0x00000003,
-} SQ_TEX_MIP_FILTER;
+पूर्ण SQ_TEX_MIP_FILTER;
 
 /*
- * SQ_TEX_ANISO_RATIO enum
+ * SQ_TEX_ANISO_RATIO क्रमागत
  */
 
-typedef enum SQ_TEX_ANISO_RATIO {
+प्रकार क्रमागत SQ_TEX_ANISO_RATIO अणु
 SQ_TEX_ANISO_RATIO_1                     = 0x00000000,
 SQ_TEX_ANISO_RATIO_2                     = 0x00000001,
 SQ_TEX_ANISO_RATIO_4                     = 0x00000002,
 SQ_TEX_ANISO_RATIO_8                     = 0x00000003,
 SQ_TEX_ANISO_RATIO_16                    = 0x00000004,
-} SQ_TEX_ANISO_RATIO;
+पूर्ण SQ_TEX_ANISO_RATIO;
 
 /*
- * SQ_TEX_DEPTH_COMPARE enum
+ * SQ_TEX_DEPTH_COMPARE क्रमागत
  */
 
-typedef enum SQ_TEX_DEPTH_COMPARE {
+प्रकार क्रमागत SQ_TEX_DEPTH_COMPARE अणु
 SQ_TEX_DEPTH_COMPARE_NEVER               = 0x00000000,
 SQ_TEX_DEPTH_COMPARE_LESS                = 0x00000001,
 SQ_TEX_DEPTH_COMPARE_EQUAL               = 0x00000002,
@@ -14396,35 +14397,35 @@ SQ_TEX_DEPTH_COMPARE_GREATER             = 0x00000004,
 SQ_TEX_DEPTH_COMPARE_NOTEQUAL            = 0x00000005,
 SQ_TEX_DEPTH_COMPARE_GREATEREQUAL        = 0x00000006,
 SQ_TEX_DEPTH_COMPARE_ALWAYS              = 0x00000007,
-} SQ_TEX_DEPTH_COMPARE;
+पूर्ण SQ_TEX_DEPTH_COMPARE;
 
 /*
- * SQ_TEX_BORDER_COLOR enum
+ * SQ_TEX_BORDER_COLOR क्रमागत
  */
 
-typedef enum SQ_TEX_BORDER_COLOR {
+प्रकार क्रमागत SQ_TEX_BORDER_COLOR अणु
 SQ_TEX_BORDER_COLOR_TRANS_BLACK          = 0x00000000,
 SQ_TEX_BORDER_COLOR_OPAQUE_BLACK         = 0x00000001,
 SQ_TEX_BORDER_COLOR_OPAQUE_WHITE         = 0x00000002,
 SQ_TEX_BORDER_COLOR_REGISTER             = 0x00000003,
-} SQ_TEX_BORDER_COLOR;
+पूर्ण SQ_TEX_BORDER_COLOR;
 
 /*
- * SQ_RSRC_BUF_TYPE enum
+ * SQ_RSRC_BUF_TYPE क्रमागत
  */
 
-typedef enum SQ_RSRC_BUF_TYPE {
+प्रकार क्रमागत SQ_RSRC_BUF_TYPE अणु
 SQ_RSRC_BUF                              = 0x00000000,
 SQ_RSRC_BUF_RSVD_1                       = 0x00000001,
 SQ_RSRC_BUF_RSVD_2                       = 0x00000002,
 SQ_RSRC_BUF_RSVD_3                       = 0x00000003,
-} SQ_RSRC_BUF_TYPE;
+पूर्ण SQ_RSRC_BUF_TYPE;
 
 /*
- * SQ_RSRC_IMG_TYPE enum
+ * SQ_RSRC_IMG_TYPE क्रमागत
  */
 
-typedef enum SQ_RSRC_IMG_TYPE {
+प्रकार क्रमागत SQ_RSRC_IMG_TYPE अणु
 SQ_RSRC_IMG_RSVD_0                       = 0x00000000,
 SQ_RSRC_IMG_RSVD_1                       = 0x00000001,
 SQ_RSRC_IMG_RSVD_2                       = 0x00000002,
@@ -14441,34 +14442,34 @@ SQ_RSRC_IMG_1D_ARRAY                     = 0x0000000c,
 SQ_RSRC_IMG_2D_ARRAY                     = 0x0000000d,
 SQ_RSRC_IMG_2D_MSAA                      = 0x0000000e,
 SQ_RSRC_IMG_2D_MSAA_ARRAY                = 0x0000000f,
-} SQ_RSRC_IMG_TYPE;
+पूर्ण SQ_RSRC_IMG_TYPE;
 
 /*
- * SQ_RSRC_FLAT_TYPE enum
+ * SQ_RSRC_FLAT_TYPE क्रमागत
  */
 
-typedef enum SQ_RSRC_FLAT_TYPE {
+प्रकार क्रमागत SQ_RSRC_FLAT_TYPE अणु
 SQ_RSRC_FLAT_RSVD_0                      = 0x00000000,
 SQ_RSRC_FLAT                             = 0x00000001,
 SQ_RSRC_FLAT_RSVD_2                      = 0x00000002,
 SQ_RSRC_FLAT_RSVD_3                      = 0x00000003,
-} SQ_RSRC_FLAT_TYPE;
+पूर्ण SQ_RSRC_FLAT_TYPE;
 
 /*
- * SQ_IMG_FILTER_TYPE enum
+ * SQ_IMG_FILTER_TYPE क्रमागत
  */
 
-typedef enum SQ_IMG_FILTER_TYPE {
+प्रकार क्रमागत SQ_IMG_FILTER_TYPE अणु
 SQ_IMG_FILTER_MODE_BLEND                 = 0x00000000,
 SQ_IMG_FILTER_MODE_MIN                   = 0x00000001,
 SQ_IMG_FILTER_MODE_MAX                   = 0x00000002,
-} SQ_IMG_FILTER_TYPE;
+पूर्ण SQ_IMG_FILTER_TYPE;
 
 /*
- * SQ_SEL_XYZW01 enum
+ * SQ_SEL_XYZW01 क्रमागत
  */
 
-typedef enum SQ_SEL_XYZW01 {
+प्रकार क्रमागत SQ_SEL_XYZW01 अणु
 SQ_SEL_0                                 = 0x00000000,
 SQ_SEL_1                                 = 0x00000001,
 SQ_SEL_RESERVED_0                        = 0x00000002,
@@ -14477,13 +14478,13 @@ SQ_SEL_X                                 = 0x00000004,
 SQ_SEL_Y                                 = 0x00000005,
 SQ_SEL_Z                                 = 0x00000006,
 SQ_SEL_W                                 = 0x00000007,
-} SQ_SEL_XYZW01;
+पूर्ण SQ_SEL_XYZW01;
 
 /*
- * SQ_WAVE_TYPE enum
+ * SQ_WAVE_TYPE क्रमागत
  */
 
-typedef enum SQ_WAVE_TYPE {
+प्रकार क्रमागत SQ_WAVE_TYPE अणु
 SQ_WAVE_TYPE_PS                          = 0x00000000,
 SQ_WAVE_TYPE_VS                          = 0x00000001,
 SQ_WAVE_TYPE_GS                          = 0x00000002,
@@ -14492,13 +14493,13 @@ SQ_WAVE_TYPE_HS                          = 0x00000004,
 SQ_WAVE_TYPE_LS                          = 0x00000005,
 SQ_WAVE_TYPE_CS                          = 0x00000006,
 SQ_WAVE_TYPE_PS1                         = 0x00000007,
-} SQ_WAVE_TYPE;
+पूर्ण SQ_WAVE_TYPE;
 
 /*
- * SQ_THREAD_TRACE_TOKEN_TYPE enum
+ * SQ_THREAD_TRACE_TOKEN_TYPE क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_TOKEN_TYPE {
+प्रकार क्रमागत SQ_THREAD_TRACE_TOKEN_TYPE अणु
 SQ_THREAD_TRACE_TOKEN_MISC               = 0x00000000,
 SQ_THREAD_TRACE_TOKEN_TIMESTAMP          = 0x00000001,
 SQ_THREAD_TRACE_TOKEN_REG                = 0x00000002,
@@ -14515,13 +14516,13 @@ SQ_THREAD_TRACE_TOKEN_INST_USERDATA      = 0x0000000c,
 SQ_THREAD_TRACE_TOKEN_ISSUE              = 0x0000000d,
 SQ_THREAD_TRACE_TOKEN_PERF               = 0x0000000e,
 SQ_THREAD_TRACE_TOKEN_REG_CS             = 0x0000000f,
-} SQ_THREAD_TRACE_TOKEN_TYPE;
+पूर्ण SQ_THREAD_TRACE_TOKEN_TYPE;
 
 /*
- * SQ_THREAD_TRACE_MISC_TOKEN_TYPE enum
+ * SQ_THREAD_TRACE_MISC_TOKEN_TYPE क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_MISC_TOKEN_TYPE {
+प्रकार क्रमागत SQ_THREAD_TRACE_MISC_TOKEN_TYPE अणु
 SQ_THREAD_TRACE_MISC_TOKEN_TIME          = 0x00000000,
 SQ_THREAD_TRACE_MISC_TOKEN_TIME_RESET    = 0x00000001,
 SQ_THREAD_TRACE_MISC_TOKEN_PACKET_LOST   = 0x00000002,
@@ -14530,13 +14531,13 @@ SQ_THREAD_TRACE_MISC_TOKEN_TTRACE_STALL_BEGIN  = 0x00000004,
 SQ_THREAD_TRACE_MISC_TOKEN_TTRACE_STALL_END  = 0x00000005,
 SQ_THREAD_TRACE_MISC_TOKEN_SAVECTX       = 0x00000006,
 SQ_THREAD_TRACE_MISC_TOKEN_SHOOT_DOWN    = 0x00000007,
-} SQ_THREAD_TRACE_MISC_TOKEN_TYPE;
+पूर्ण SQ_THREAD_TRACE_MISC_TOKEN_TYPE;
 
 /*
- * SQ_THREAD_TRACE_INST_TYPE enum
+ * SQ_THREAD_TRACE_INST_TYPE क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_INST_TYPE {
+प्रकार क्रमागत SQ_THREAD_TRACE_INST_TYPE अणु
 SQ_THREAD_TRACE_INST_TYPE_SMEM_RD        = 0x00000000,
 SQ_THREAD_TRACE_INST_TYPE_SALU_32        = 0x00000001,
 SQ_THREAD_TRACE_INST_TYPE_VMEM_RD        = 0x00000002,
@@ -14563,13 +14564,13 @@ SQ_THREAD_TRACE_INST_TYPE_VMEM_WR_REPLAY  = 0x00000016,
 SQ_THREAD_TRACE_INST_TYPE_FLAT_RD_REPLAY  = 0x00000017,
 SQ_THREAD_TRACE_INST_TYPE_FLAT_WR_REPLAY  = 0x00000018,
 SQ_THREAD_TRACE_INST_TYPE_FATAL_HALT     = 0x00000019,
-} SQ_THREAD_TRACE_INST_TYPE;
+पूर्ण SQ_THREAD_TRACE_INST_TYPE;
 
 /*
- * SQ_THREAD_TRACE_REG_TYPE enum
+ * SQ_THREAD_TRACE_REG_TYPE क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_REG_TYPE {
+प्रकार क्रमागत SQ_THREAD_TRACE_REG_TYPE अणु
 SQ_THREAD_TRACE_REG_TYPE_EVENT           = 0x00000000,
 SQ_THREAD_TRACE_REG_TYPE_DRAW            = 0x00000001,
 SQ_THREAD_TRACE_REG_TYPE_DISPATCH        = 0x00000002,
@@ -14578,82 +14579,82 @@ SQ_THREAD_TRACE_REG_TYPE_MARKER          = 0x00000004,
 SQ_THREAD_TRACE_REG_TYPE_GFXDEC          = 0x00000005,
 SQ_THREAD_TRACE_REG_TYPE_SHDEC           = 0x00000006,
 SQ_THREAD_TRACE_REG_TYPE_OTHER           = 0x00000007,
-} SQ_THREAD_TRACE_REG_TYPE;
+पूर्ण SQ_THREAD_TRACE_REG_TYPE;
 
 /*
- * SQ_THREAD_TRACE_REG_OP enum
+ * SQ_THREAD_TRACE_REG_OP क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_REG_OP {
+प्रकार क्रमागत SQ_THREAD_TRACE_REG_OP अणु
 SQ_THREAD_TRACE_REG_OP_READ              = 0x00000000,
 SQ_THREAD_TRACE_REG_OP_WRITE             = 0x00000001,
-} SQ_THREAD_TRACE_REG_OP;
+पूर्ण SQ_THREAD_TRACE_REG_OP;
 
 /*
- * SQ_THREAD_TRACE_MODE_SEL enum
+ * SQ_THREAD_TRACE_MODE_SEL क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_MODE_SEL {
+प्रकार क्रमागत SQ_THREAD_TRACE_MODE_SEL अणु
 SQ_THREAD_TRACE_MODE_OFF                 = 0x00000000,
 SQ_THREAD_TRACE_MODE_ON                  = 0x00000001,
-} SQ_THREAD_TRACE_MODE_SEL;
+पूर्ण SQ_THREAD_TRACE_MODE_SEL;
 
 /*
- * SQ_THREAD_TRACE_CAPTURE_MODE enum
+ * SQ_THREAD_TRACE_CAPTURE_MODE क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_CAPTURE_MODE {
+प्रकार क्रमागत SQ_THREAD_TRACE_CAPTURE_MODE अणु
 SQ_THREAD_TRACE_CAPTURE_MODE_ALL         = 0x00000000,
 SQ_THREAD_TRACE_CAPTURE_MODE_SELECT      = 0x00000001,
 SQ_THREAD_TRACE_CAPTURE_MODE_SELECT_DETAIL  = 0x00000002,
-} SQ_THREAD_TRACE_CAPTURE_MODE;
+पूर्ण SQ_THREAD_TRACE_CAPTURE_MODE;
 
 /*
- * SQ_THREAD_TRACE_VM_ID_MASK enum
+ * SQ_THREAD_TRACE_VM_ID_MASK क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_VM_ID_MASK {
+प्रकार क्रमागत SQ_THREAD_TRACE_VM_ID_MASK अणु
 SQ_THREAD_TRACE_VM_ID_MASK_SINGLE        = 0x00000000,
 SQ_THREAD_TRACE_VM_ID_MASK_ALL           = 0x00000001,
 SQ_THREAD_TRACE_VM_ID_MASK_SINGLE_DETAIL  = 0x00000002,
-} SQ_THREAD_TRACE_VM_ID_MASK;
+पूर्ण SQ_THREAD_TRACE_VM_ID_MASK;
 
 /*
- * SQ_THREAD_TRACE_WAVE_MASK enum
+ * SQ_THREAD_TRACE_WAVE_MASK क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_WAVE_MASK {
+प्रकार क्रमागत SQ_THREAD_TRACE_WAVE_MASK अणु
 SQ_THREAD_TRACE_WAVE_MASK_NONE           = 0x00000000,
 SQ_THREAD_TRACE_WAVE_MASK_ALL            = 0x00000001,
-} SQ_THREAD_TRACE_WAVE_MASK;
+पूर्ण SQ_THREAD_TRACE_WAVE_MASK;
 
 /*
- * SQ_THREAD_TRACE_ISSUE enum
+ * SQ_THREAD_TRACE_ISSUE क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_ISSUE {
-SQ_THREAD_TRACE_ISSUE_NULL               = 0x00000000,
+प्रकार क्रमागत SQ_THREAD_TRACE_ISSUE अणु
+SQ_THREAD_TRACE_ISSUE_शून्य               = 0x00000000,
 SQ_THREAD_TRACE_ISSUE_STALL              = 0x00000001,
 SQ_THREAD_TRACE_ISSUE_INST               = 0x00000002,
 SQ_THREAD_TRACE_ISSUE_IMMED              = 0x00000003,
-} SQ_THREAD_TRACE_ISSUE;
+पूर्ण SQ_THREAD_TRACE_ISSUE;
 
 /*
- * SQ_THREAD_TRACE_ISSUE_MASK enum
+ * SQ_THREAD_TRACE_ISSUE_MASK क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_ISSUE_MASK {
+प्रकार क्रमागत SQ_THREAD_TRACE_ISSUE_MASK अणु
 SQ_THREAD_TRACE_ISSUE_MASK_ALL           = 0x00000000,
 SQ_THREAD_TRACE_ISSUE_MASK_STALLED       = 0x00000001,
 SQ_THREAD_TRACE_ISSUE_MASK_STALLED_AND_IMMED  = 0x00000002,
 SQ_THREAD_TRACE_ISSUE_MASK_IMMED         = 0x00000003,
-} SQ_THREAD_TRACE_ISSUE_MASK;
+पूर्ण SQ_THREAD_TRACE_ISSUE_MASK;
 
 /*
- * SQ_PERF_SEL enum
+ * SQ_PERF_SEL क्रमागत
  */
 
-typedef enum SQ_PERF_SEL {
+प्रकार क्रमागत SQ_PERF_SEL अणु
 SQ_PERF_SEL_NONE                         = 0x00000000,
 SQ_PERF_SEL_ACCUM_PREV                   = 0x00000001,
 SQ_PERF_SEL_CYCLES                       = 0x00000002,
@@ -14745,7 +14746,7 @@ SQ_PERF_SEL_IFETCH                       = 0x00000057,
 SQ_PERF_SEL_IFETCH_LEVEL                 = 0x00000058,
 SQ_PERF_SEL_CBRANCH_FORK                 = 0x00000059,
 SQ_PERF_SEL_CBRANCH_FORK_SPLIT           = 0x0000005a,
-SQ_PERF_SEL_VALU_LDS_DIRECT_RD           = 0x0000005b,
+SQ_PERF_SEL_VALU_LDS_सूचीECT_RD           = 0x0000005b,
 SQ_PERF_SEL_VALU_LDS_INTERP_OP           = 0x0000005c,
 SQ_PERF_SEL_LDS_BANK_CONFLICT            = 0x0000005d,
 SQ_PERF_SEL_LDS_ADDR_CONFLICT            = 0x0000005e,
@@ -14951,13 +14952,13 @@ SQC_PERF_SEL_DCACHE_GATCL1_STALL_MISSFIFO_FULL  = 0x00000168,
 SQC_PERF_SEL_DCACHE_GATCL1_STALL_MULTI_MISS  = 0x00000169,
 SQC_PERF_SEL_DCACHE_GATCL1_HIT_FIFO_FULL  = 0x0000016a,
 SQC_PERF_SEL_DUMMY_LAST                  = 0x0000016b,
-} SQ_PERF_SEL;
+पूर्ण SQ_PERF_SEL;
 
 /*
- * SQ_CAC_POWER_SEL enum
+ * SQ_CAC_POWER_SEL क्रमागत
  */
 
-typedef enum SQ_CAC_POWER_SEL {
+प्रकार क्रमागत SQ_CAC_POWER_SEL अणु
 SQ_CAC_POWER_VALU                        = 0x00000000,
 SQ_CAC_POWER_VALU0                       = 0x00000001,
 SQ_CAC_POWER_VALU1                       = 0x00000002,
@@ -14967,14 +14968,14 @@ SQ_CAC_POWER_GPR_WR                      = 0x00000005,
 SQ_CAC_POWER_LDS_BUSY                    = 0x00000006,
 SQ_CAC_POWER_ALU_BUSY                    = 0x00000007,
 SQ_CAC_POWER_TEX_BUSY                    = 0x00000008,
-} SQ_CAC_POWER_SEL;
+पूर्ण SQ_CAC_POWER_SEL;
 
 /*
- * SQ_IND_CMD_CMD enum
+ * SQ_IND_CMD_CMD क्रमागत
  */
 
-typedef enum SQ_IND_CMD_CMD {
-SQ_IND_CMD_CMD_NULL                      = 0x00000000,
+प्रकार क्रमागत SQ_IND_CMD_CMD अणु
+SQ_IND_CMD_CMD_शून्य                      = 0x00000000,
 SQ_IND_CMD_CMD_SETHALT                   = 0x00000001,
 SQ_IND_CMD_CMD_SAVECTX                   = 0x00000002,
 SQ_IND_CMD_CMD_KILL                      = 0x00000003,
@@ -14982,25 +14983,25 @@ SQ_IND_CMD_CMD_DEBUG                     = 0x00000004,
 SQ_IND_CMD_CMD_TRAP                      = 0x00000005,
 SQ_IND_CMD_CMD_SET_SPI_PRIO              = 0x00000006,
 SQ_IND_CMD_CMD_SETFATALHALT              = 0x00000007,
-} SQ_IND_CMD_CMD;
+पूर्ण SQ_IND_CMD_CMD;
 
 /*
- * SQ_IND_CMD_MODE enum
+ * SQ_IND_CMD_MODE क्रमागत
  */
 
-typedef enum SQ_IND_CMD_MODE {
+प्रकार क्रमागत SQ_IND_CMD_MODE अणु
 SQ_IND_CMD_MODE_SINGLE                   = 0x00000000,
 SQ_IND_CMD_MODE_BROADCAST                = 0x00000001,
 SQ_IND_CMD_MODE_BROADCAST_QUEUE          = 0x00000002,
 SQ_IND_CMD_MODE_BROADCAST_PIPE           = 0x00000003,
 SQ_IND_CMD_MODE_BROADCAST_ME             = 0x00000004,
-} SQ_IND_CMD_MODE;
+पूर्ण SQ_IND_CMD_MODE;
 
 /*
- * SQ_EDC_INFO_SOURCE enum
+ * SQ_EDC_INFO_SOURCE क्रमागत
  */
 
-typedef enum SQ_EDC_INFO_SOURCE {
+प्रकार क्रमागत SQ_EDC_INFO_SOURCE अणु
 SQ_EDC_INFO_SOURCE_INVALID               = 0x00000000,
 SQ_EDC_INFO_SOURCE_INST                  = 0x00000001,
 SQ_EDC_INFO_SOURCE_SGPR                  = 0x00000002,
@@ -15008,34 +15009,34 @@ SQ_EDC_INFO_SOURCE_VGPR                  = 0x00000003,
 SQ_EDC_INFO_SOURCE_LDS                   = 0x00000004,
 SQ_EDC_INFO_SOURCE_GDS                   = 0x00000005,
 SQ_EDC_INFO_SOURCE_TA                    = 0x00000006,
-} SQ_EDC_INFO_SOURCE;
+पूर्ण SQ_EDC_INFO_SOURCE;
 
 /*
- * SQ_ROUND_MODE enum
+ * SQ_ROUND_MODE क्रमागत
  */
 
-typedef enum SQ_ROUND_MODE {
+प्रकार क्रमागत SQ_ROUND_MODE अणु
 SQ_ROUND_NEAREST_EVEN                    = 0x00000000,
-SQ_ROUND_PLUS_INFINITY                   = 0x00000001,
-SQ_ROUND_MINUS_INFINITY                  = 0x00000002,
+SQ_ROUND_PLUS_अनन्त                   = 0x00000001,
+SQ_ROUND_MINUS_अनन्त                  = 0x00000002,
 SQ_ROUND_TO_ZERO                         = 0x00000003,
-} SQ_ROUND_MODE;
+पूर्ण SQ_ROUND_MODE;
 
 /*
- * SQ_INTERRUPT_WORD_ENCODING enum
+ * SQ_INTERRUPT_WORD_ENCODING क्रमागत
  */
 
-typedef enum SQ_INTERRUPT_WORD_ENCODING {
+प्रकार क्रमागत SQ_INTERRUPT_WORD_ENCODING अणु
 SQ_INTERRUPT_WORD_ENCODING_AUTO          = 0x00000000,
 SQ_INTERRUPT_WORD_ENCODING_INST          = 0x00000001,
 SQ_INTERRUPT_WORD_ENCODING_ERROR         = 0x00000002,
-} SQ_INTERRUPT_WORD_ENCODING;
+पूर्ण SQ_INTERRUPT_WORD_ENCODING;
 
 /*
- * ENUM_SQ_EXPORT_RAT_INST enum
+ * ENUM_SQ_EXPORT_RAT_INST क्रमागत
  */
 
-typedef enum ENUM_SQ_EXPORT_RAT_INST {
+प्रकार क्रमागत ENUM_SQ_EXPORT_RAT_INST अणु
 SQ_EXPORT_RAT_INST_NOP                   = 0x00000000,
 SQ_EXPORT_RAT_INST_STORE_TYPED           = 0x00000001,
 SQ_EXPORT_RAT_INST_STORE_RAW             = 0x00000002,
@@ -15078,13 +15079,13 @@ SQ_EXPORT_RAT_INST_XOR_RTN               = 0x00000030,
 SQ_EXPORT_RAT_INST_MSKOR_RTN             = 0x00000031,
 SQ_EXPORT_RAT_INST_INC_UINT_RTN          = 0x00000032,
 SQ_EXPORT_RAT_INST_DEC_UINT_RTN          = 0x00000033,
-} ENUM_SQ_EXPORT_RAT_INST;
+पूर्ण ENUM_SQ_EXPORT_RAT_INST;
 
 /*
- * SQ_IBUF_ST enum
+ * SQ_IBUF_ST क्रमागत
  */
 
-typedef enum SQ_IBUF_ST {
+प्रकार क्रमागत SQ_IBUF_ST अणु
 SQ_IBUF_IB_IDLE                          = 0x00000000,
 SQ_IBUF_IB_INI_WAIT_GNT                  = 0x00000001,
 SQ_IBUF_IB_INI_WAIT_DRET                 = 0x00000002,
@@ -15093,13 +15094,13 @@ SQ_IBUF_IB_WAIT_DRET                     = 0x00000004,
 SQ_IBUF_IB_EMPTY_WAIT_DRET               = 0x00000005,
 SQ_IBUF_IB_DRET                          = 0x00000006,
 SQ_IBUF_IB_EMPTY_WAIT_GNT                = 0x00000007,
-} SQ_IBUF_ST;
+पूर्ण SQ_IBUF_ST;
 
 /*
- * SQ_INST_STR_ST enum
+ * SQ_INST_STR_ST क्रमागत
  */
 
-typedef enum SQ_INST_STR_ST {
+प्रकार क्रमागत SQ_INST_STR_ST अणु
 SQ_INST_STR_IB_WAVE_NORML                = 0x00000000,
 SQ_INST_STR_IB_WAVE2ID_NORMAL_INST_AV    = 0x00000001,
 SQ_INST_STR_IB_WAVE_INTERNAL_INST_AV     = 0x00000002,
@@ -15108,53 +15109,53 @@ SQ_INST_STR_IB_WAVE_SETVSKIP_ST0         = 0x00000004,
 SQ_INST_STR_IB_WAVE_SETVSKIP_ST1         = 0x00000005,
 SQ_INST_STR_IB_WAVE_NOP_SLEEP_WAIT       = 0x00000006,
 SQ_INST_STR_IB_WAVE_PC_FROM_SGPR_MSG_WAIT  = 0x00000007,
-} SQ_INST_STR_ST;
+पूर्ण SQ_INST_STR_ST;
 
 /*
- * SQ_WAVE_IB_ECC_ST enum
+ * SQ_WAVE_IB_ECC_ST क्रमागत
  */
 
-typedef enum SQ_WAVE_IB_ECC_ST {
+प्रकार क्रमागत SQ_WAVE_IB_ECC_ST अणु
 SQ_WAVE_IB_ECC_CLEAN                     = 0x00000000,
 SQ_WAVE_IB_ECC_ERR_CONTINUE              = 0x00000001,
 SQ_WAVE_IB_ECC_ERR_HALT                  = 0x00000002,
 SQ_WAVE_IB_ECC_WITH_ERR_MSG              = 0x00000003,
-} SQ_WAVE_IB_ECC_ST;
+पूर्ण SQ_WAVE_IB_ECC_ST;
 
 /*
- * SH_MEM_ADDRESS_MODE enum
+ * SH_MEM_ADDRESS_MODE क्रमागत
  */
 
-typedef enum SH_MEM_ADDRESS_MODE {
+प्रकार क्रमागत SH_MEM_ADDRESS_MODE अणु
 SH_MEM_ADDRESS_MODE_64                   = 0x00000000,
 SH_MEM_ADDRESS_MODE_32                   = 0x00000001,
-} SH_MEM_ADDRESS_MODE;
+पूर्ण SH_MEM_ADDRESS_MODE;
 
 /*
- * SH_MEM_ALIGNMENT_MODE enum
+ * SH_MEM_ALIGNMENT_MODE क्रमागत
  */
 
-typedef enum SH_MEM_ALIGNMENT_MODE {
+प्रकार क्रमागत SH_MEM_ALIGNMENT_MODE अणु
 SH_MEM_ALIGNMENT_MODE_DWORD              = 0x00000000,
 SH_MEM_ALIGNMENT_MODE_DWORD_STRICT       = 0x00000001,
 SH_MEM_ALIGNMENT_MODE_STRICT             = 0x00000002,
 SH_MEM_ALIGNMENT_MODE_UNALIGNED          = 0x00000003,
-} SH_MEM_ALIGNMENT_MODE;
+पूर्ण SH_MEM_ALIGNMENT_MODE;
 
 /*
- * SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX enum
+ * SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX क्रमागत
  */
 
-typedef enum SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX {
+प्रकार क्रमागत SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX अणु
 SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX_WREXEC  = 0x00000018,
 SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX_RESTORE  = 0x00000019,
-} SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX;
+पूर्ण SQ_THREAD_TRACE_WAVE_START_COUNT_PREFIX;
 
 /*
- * SQ_LB_CTR_SEL_VALUES enum
+ * SQ_LB_CTR_SEL_VALUES क्रमागत
  */
 
-typedef enum SQ_LB_CTR_SEL_VALUES {
+प्रकार क्रमागत SQ_LB_CTR_SEL_VALUES अणु
 SQ_LB_CTR_SEL_ALU_CYCLES                 = 0x00000000,
 SQ_LB_CTR_SEL_ALU_STALLS                 = 0x00000001,
 SQ_LB_CTR_SEL_TEX_CYCLES                 = 0x00000002,
@@ -15171,197 +15172,197 @@ SQ_LB_CTR_SEL_RESERVED3                  = 0x0000000c,
 SQ_LB_CTR_SEL_RESERVED4                  = 0x0000000d,
 SQ_LB_CTR_SEL_RESERVED5                  = 0x0000000e,
 SQ_LB_CTR_SEL_RESERVED6                  = 0x0000000f,
-} SQ_LB_CTR_SEL_VALUES;
+पूर्ण SQ_LB_CTR_SEL_VALUES;
 
 /*
  * SQ_WAVE_TYPE value
  */
 
-#define SQ_WAVE_TYPE_PS0               0x00000000
+#घोषणा SQ_WAVE_TYPE_PS0               0x00000000
 
 /*
  * SQIND_PARTITIONS value
  */
 
-#define SQIND_GLOBAL_REGS_OFFSET       0x00000000
-#define SQIND_GLOBAL_REGS_SIZE         0x00000008
-#define SQIND_LOCAL_REGS_OFFSET        0x00000008
-#define SQIND_LOCAL_REGS_SIZE          0x00000008
-#define SQIND_WAVE_HWREGS_OFFSET       0x00000010
-#define SQIND_WAVE_HWREGS_SIZE         0x000001f0
-#define SQIND_WAVE_SGPRS_OFFSET        0x00000200
-#define SQIND_WAVE_SGPRS_SIZE          0x00000200
-#define SQIND_WAVE_VGPRS_OFFSET        0x00000400
-#define SQIND_WAVE_VGPRS_SIZE          0x00000100
+#घोषणा SQIND_GLOBAL_REGS_OFFSET       0x00000000
+#घोषणा SQIND_GLOBAL_REGS_SIZE         0x00000008
+#घोषणा SQIND_LOCAL_REGS_OFFSET        0x00000008
+#घोषणा SQIND_LOCAL_REGS_SIZE          0x00000008
+#घोषणा SQIND_WAVE_HWREGS_OFFSET       0x00000010
+#घोषणा SQIND_WAVE_HWREGS_SIZE         0x000001f0
+#घोषणा SQIND_WAVE_SGPRS_OFFSET        0x00000200
+#घोषणा SQIND_WAVE_SGPRS_SIZE          0x00000200
+#घोषणा SQIND_WAVE_VGPRS_OFFSET        0x00000400
+#घोषणा SQIND_WAVE_VGPRS_SIZE          0x00000100
 
 /*
  * SQ_GFXDEC value
  */
 
-#define SQ_GFXDEC_BEGIN                0x0000a000
-#define SQ_GFXDEC_END                  0x0000c000
-#define SQ_GFXDEC_STATE_ID_SHIFT       0x0000000a
+#घोषणा SQ_GFXDEC_BEGIN                0x0000a000
+#घोषणा SQ_GFXDEC_END                  0x0000c000
+#घोषणा SQ_GFXDEC_STATE_ID_SHIFT       0x0000000a
 
 /*
  * SQDEC value
  */
 
-#define SQDEC_BEGIN                    0x00002300
-#define SQDEC_END                      0x000023ff
+#घोषणा SQDEC_BEGIN                    0x00002300
+#घोषणा SQDEC_END                      0x000023ff
 
 /*
  * SQPERFSDEC value
  */
 
-#define SQPERFSDEC_BEGIN               0x0000d9c0
-#define SQPERFSDEC_END                 0x0000da40
+#घोषणा SQPERFSDEC_BEGIN               0x0000d9c0
+#घोषणा SQPERFSDEC_END                 0x0000da40
 
 /*
  * SQPERFDDEC value
  */
 
-#define SQPERFDDEC_BEGIN               0x0000d1c0
-#define SQPERFDDEC_END                 0x0000d240
+#घोषणा SQPERFDDEC_BEGIN               0x0000d1c0
+#घोषणा SQPERFDDEC_END                 0x0000d240
 
 /*
  * SQGFXUDEC value
  */
 
-#define SQGFXUDEC_BEGIN                0x0000c330
-#define SQGFXUDEC_END                  0x0000c380
+#घोषणा SQGFXUDEC_BEGIN                0x0000c330
+#घोषणा SQGFXUDEC_END                  0x0000c380
 
 /*
  * SQPWRDEC value
  */
 
-#define SQPWRDEC_BEGIN                 0x0000f08c
-#define SQPWRDEC_END                   0x0000f094
+#घोषणा SQPWRDEC_BEGIN                 0x0000f08c
+#घोषणा SQPWRDEC_END                   0x0000f094
 
 /*
  * SQ_DISPATCHER value
  */
 
-#define SQ_DISPATCHER_GFX_MIN          0x00000010
-#define SQ_DISPATCHER_GFX_CNT_PER_RING 0x00000008
+#घोषणा SQ_DISPATCHER_GFX_MIN          0x00000010
+#घोषणा SQ_DISPATCHER_GFX_CNT_PER_RING 0x00000008
 
 /*
  * SQ_MAX value
  */
 
-#define SQ_MAX_PGM_SGPRS               0x00000068
-#define SQ_MAX_PGM_VGPRS               0x00000100
+#घोषणा SQ_MAX_PGM_SGPRS               0x00000068
+#घोषणा SQ_MAX_PGM_VGPRS               0x00000100
 
 /*
  * SQ_THREAD_TRACE_TIME_UNIT value
  */
 
-#define SQ_THREAD_TRACE_TIME_UNIT      0x00000004
+#घोषणा SQ_THREAD_TRACE_TIME_UNIT      0x00000004
 
 /*
  * SQ_EXCP_BITS value
  */
 
-#define SQ_EX_MODE_EXCP_VALU_BASE      0x00000000
-#define SQ_EX_MODE_EXCP_VALU_SIZE      0x00000007
-#define SQ_EX_MODE_EXCP_INVALID        0x00000000
-#define SQ_EX_MODE_EXCP_INPUT_DENORM   0x00000001
-#define SQ_EX_MODE_EXCP_DIV0           0x00000002
-#define SQ_EX_MODE_EXCP_OVERFLOW       0x00000003
-#define SQ_EX_MODE_EXCP_UNDERFLOW      0x00000004
-#define SQ_EX_MODE_EXCP_INEXACT        0x00000005
-#define SQ_EX_MODE_EXCP_INT_DIV0       0x00000006
-#define SQ_EX_MODE_EXCP_ADDR_WATCH0    0x00000007
-#define SQ_EX_MODE_EXCP_MEM_VIOL       0x00000008
+#घोषणा SQ_EX_MODE_EXCP_VALU_BASE      0x00000000
+#घोषणा SQ_EX_MODE_EXCP_VALU_SIZE      0x00000007
+#घोषणा SQ_EX_MODE_EXCP_INVALID        0x00000000
+#घोषणा SQ_EX_MODE_EXCP_INPUT_DENORM   0x00000001
+#घोषणा SQ_EX_MODE_EXCP_DIV0           0x00000002
+#घोषणा SQ_EX_MODE_EXCP_OVERFLOW       0x00000003
+#घोषणा SQ_EX_MODE_EXCP_UNDERFLOW      0x00000004
+#घोषणा SQ_EX_MODE_EXCP_INEXACT        0x00000005
+#घोषणा SQ_EX_MODE_EXCP_INT_DIV0       0x00000006
+#घोषणा SQ_EX_MODE_EXCP_ADDR_WATCH0    0x00000007
+#घोषणा SQ_EX_MODE_EXCP_MEM_VIOL       0x00000008
 
 /*
  * SQ_EXCP_HI_BITS value
  */
 
-#define SQ_EX_MODE_EXCP_HI_ADDR_WATCH1 0x00000000
-#define SQ_EX_MODE_EXCP_HI_ADDR_WATCH2 0x00000001
-#define SQ_EX_MODE_EXCP_HI_ADDR_WATCH3 0x00000002
+#घोषणा SQ_EX_MODE_EXCP_HI_ADDR_WATCH1 0x00000000
+#घोषणा SQ_EX_MODE_EXCP_HI_ADDR_WATCH2 0x00000001
+#घोषणा SQ_EX_MODE_EXCP_HI_ADDR_WATCH3 0x00000002
 
 /*
  * HW_INSERTED_INST_ID value
  */
 
-#define INST_ID_PRIV_START             0x80000000
-#define INST_ID_ECC_INTERRUPT_MSG      0xfffffff0
-#define INST_ID_TTRACE_NEW_PC_MSG      0xfffffff1
-#define INST_ID_HW_TRAP                0xfffffff2
-#define INST_ID_KILL_SEQ               0xfffffff3
-#define INST_ID_SPI_WREXEC             0xfffffff4
-#define INST_ID_HOST_REG_TRAP_MSG      0xfffffffe
+#घोषणा INST_ID_PRIV_START             0x80000000
+#घोषणा INST_ID_ECC_INTERRUPT_MSG      0xfffffff0
+#घोषणा INST_ID_TTRACE_NEW_PC_MSG      0xfffffff1
+#घोषणा INST_ID_HW_TRAP                0xfffffff2
+#घोषणा INST_ID_KILL_SEQ               0xfffffff3
+#घोषणा INST_ID_SPI_WREXEC             0xfffffff4
+#घोषणा INST_ID_HOST_REG_TRAP_MSG      0xfffffffe
 
 /*
  * SIMM16_WAITCNT_PARTITIONS value
  */
 
-#define SIMM16_WAITCNT_VM_CNT_START    0x00000000
-#define SIMM16_WAITCNT_VM_CNT_SIZE     0x00000004
-#define SIMM16_WAITCNT_EXP_CNT_START   0x00000004
-#define SIMM16_WAITCNT_EXP_CNT_SIZE    0x00000003
-#define SIMM16_WAITCNT_LGKM_CNT_START  0x00000008
-#define SIMM16_WAITCNT_LGKM_CNT_SIZE   0x00000004
-#define SIMM16_WAITCNT_VM_CNT_HI_START 0x0000000e
-#define SIMM16_WAITCNT_VM_CNT_HI_SIZE  0x00000002
+#घोषणा SIMM16_WAITCNT_VM_CNT_START    0x00000000
+#घोषणा SIMM16_WAITCNT_VM_CNT_SIZE     0x00000004
+#घोषणा SIMM16_WAITCNT_EXP_CNT_START   0x00000004
+#घोषणा SIMM16_WAITCNT_EXP_CNT_SIZE    0x00000003
+#घोषणा SIMM16_WAITCNT_LGKM_CNT_START  0x00000008
+#घोषणा SIMM16_WAITCNT_LGKM_CNT_SIZE   0x00000004
+#घोषणा SIMM16_WAITCNT_VM_CNT_HI_START 0x0000000e
+#घोषणा SIMM16_WAITCNT_VM_CNT_HI_SIZE  0x00000002
 
 /*
  * SQ_EDC_FUE_CNTL_BITS value
  */
 
-#define SQ_EDC_FUE_CNTL_SQ             0x00000000
-#define SQ_EDC_FUE_CNTL_LDS            0x00000001
-#define SQ_EDC_FUE_CNTL_SIMD0          0x00000002
-#define SQ_EDC_FUE_CNTL_SIMD1          0x00000003
-#define SQ_EDC_FUE_CNTL_SIMD2          0x00000004
-#define SQ_EDC_FUE_CNTL_SIMD3          0x00000005
-#define SQ_EDC_FUE_CNTL_TA             0x00000006
-#define SQ_EDC_FUE_CNTL_TD             0x00000007
-#define SQ_EDC_FUE_CNTL_TCP            0x00000008
+#घोषणा SQ_EDC_FUE_CNTL_SQ             0x00000000
+#घोषणा SQ_EDC_FUE_CNTL_LDS            0x00000001
+#घोषणा SQ_EDC_FUE_CNTL_SIMD0          0x00000002
+#घोषणा SQ_EDC_FUE_CNTL_SIMD1          0x00000003
+#घोषणा SQ_EDC_FUE_CNTL_SIMD2          0x00000004
+#घोषणा SQ_EDC_FUE_CNTL_SIMD3          0x00000005
+#घोषणा SQ_EDC_FUE_CNTL_TA             0x00000006
+#घोषणा SQ_EDC_FUE_CNTL_TD             0x00000007
+#घोषणा SQ_EDC_FUE_CNTL_TCP            0x00000008
 
 /*******************************************************
  * COMP Enums
  *******************************************************/
 
 /*
- * CSDATA_TYPE enum
+ * CSDATA_TYPE क्रमागत
  */
 
-typedef enum CSDATA_TYPE {
+प्रकार क्रमागत CSDATA_TYPE अणु
 CSDATA_TYPE_TG                           = 0x00000000,
 CSDATA_TYPE_STATE                        = 0x00000001,
 CSDATA_TYPE_EVENT                        = 0x00000002,
 CSDATA_TYPE_PRIVATE                      = 0x00000003,
-} CSDATA_TYPE;
+पूर्ण CSDATA_TYPE;
 
 /*
  * CSDATA_TYPE_WIDTH value
  */
 
-#define CSDATA_TYPE_WIDTH              0x00000002
+#घोषणा CSDATA_TYPE_WIDTH              0x00000002
 
 /*
  * CSDATA_ADDR_WIDTH value
  */
 
-#define CSDATA_ADDR_WIDTH              0x00000007
+#घोषणा CSDATA_ADDR_WIDTH              0x00000007
 
 /*
  * CSDATA_DATA_WIDTH value
  */
 
-#define CSDATA_DATA_WIDTH              0x00000020
+#घोषणा CSDATA_DATA_WIDTH              0x00000020
 
 /*******************************************************
  * VGT Enums
  *******************************************************/
 
 /*
- * VGT_OUT_PRIM_TYPE enum
+ * VGT_OUT_PRIM_TYPE क्रमागत
  */
 
-typedef enum VGT_OUT_PRIM_TYPE {
+प्रकार क्रमागत VGT_OUT_PRIM_TYPE अणु
 VGT_OUT_POINT                            = 0x00000000,
 VGT_OUT_LINE                             = 0x00000001,
 VGT_OUT_TRI                              = 0x00000002,
@@ -15377,13 +15378,13 @@ VGT_TE_PRIM_INDEX_QUAD                   = 0x0000000b,
 VGT_OUT_LINE_ADJ                         = 0x0000000c,
 VGT_OUT_TRI_ADJ                          = 0x0000000d,
 VGT_OUT_PATCH                            = 0x0000000e,
-} VGT_OUT_PRIM_TYPE;
+पूर्ण VGT_OUT_PRIM_TYPE;
 
 /*
- * VGT_DI_PRIM_TYPE enum
+ * VGT_DI_PRIM_TYPE क्रमागत
  */
 
-typedef enum VGT_DI_PRIM_TYPE {
+प्रकार क्रमागत VGT_DI_PRIM_TYPE अणु
 DI_PT_NONE                               = 0x00000000,
 DI_PT_POINTLIST                          = 0x00000001,
 DI_PT_LINELIST                           = 0x00000002,
@@ -15406,43 +15407,43 @@ DI_PT_LINELOOP                           = 0x00000012,
 DI_PT_QUADLIST                           = 0x00000013,
 DI_PT_QUADSTRIP                          = 0x00000014,
 DI_PT_POLYGON                            = 0x00000015,
-} VGT_DI_PRIM_TYPE;
+पूर्ण VGT_DI_PRIM_TYPE;
 
 /*
- * VGT_DI_SOURCE_SELECT enum
+ * VGT_DI_SOURCE_SELECT क्रमागत
  */
 
-typedef enum VGT_DI_SOURCE_SELECT {
+प्रकार क्रमागत VGT_DI_SOURCE_SELECT अणु
 DI_SRC_SEL_DMA                           = 0x00000000,
 DI_SRC_SEL_IMMEDIATE                     = 0x00000001,
 DI_SRC_SEL_AUTO_INDEX                    = 0x00000002,
 DI_SRC_SEL_RESERVED                      = 0x00000003,
-} VGT_DI_SOURCE_SELECT;
+पूर्ण VGT_DI_SOURCE_SELECT;
 
 /*
- * VGT_DI_MAJOR_MODE_SELECT enum
+ * VGT_DI_MAJOR_MODE_SELECT क्रमागत
  */
 
-typedef enum VGT_DI_MAJOR_MODE_SELECT {
+प्रकार क्रमागत VGT_DI_MAJOR_MODE_SELECT अणु
 DI_MAJOR_MODE_0                          = 0x00000000,
 DI_MAJOR_MODE_1                          = 0x00000001,
-} VGT_DI_MAJOR_MODE_SELECT;
+पूर्ण VGT_DI_MAJOR_MODE_SELECT;
 
 /*
- * VGT_DI_INDEX_SIZE enum
+ * VGT_DI_INDEX_SIZE क्रमागत
  */
 
-typedef enum VGT_DI_INDEX_SIZE {
+प्रकार क्रमागत VGT_DI_INDEX_SIZE अणु
 DI_INDEX_SIZE_16_BIT                     = 0x00000000,
 DI_INDEX_SIZE_32_BIT                     = 0x00000001,
 DI_INDEX_SIZE_8_BIT                      = 0x00000002,
-} VGT_DI_INDEX_SIZE;
+पूर्ण VGT_DI_INDEX_SIZE;
 
 /*
- * VGT_EVENT_TYPE enum
+ * VGT_EVENT_TYPE क्रमागत
  */
 
-typedef enum VGT_EVENT_TYPE {
+प्रकार क्रमागत VGT_EVENT_TYPE अणु
 Reserved_0x00                            = 0x00000000,
 SAMPLE_STREAMOUTSTATS1                   = 0x00000001,
 SAMPLE_STREAMOUTSTATS2                   = 0x00000002,
@@ -15507,58 +15508,58 @@ OFFCHIP_HS_DEALLOC                       = 0x0000003c,
 ENABLE_NGG_PIPELINE                      = 0x0000003d,
 ENABLE_LEGACY_PIPELINE                   = 0x0000003e,
 Reserved_0x3f                            = 0x0000003f,
-} VGT_EVENT_TYPE;
+पूर्ण VGT_EVENT_TYPE;
 
 /*
- * VGT_DMA_SWAP_MODE enum
+ * VGT_DMA_SWAP_MODE क्रमागत
  */
 
-typedef enum VGT_DMA_SWAP_MODE {
+प्रकार क्रमागत VGT_DMA_SWAP_MODE अणु
 VGT_DMA_SWAP_NONE                        = 0x00000000,
 VGT_DMA_SWAP_16_BIT                      = 0x00000001,
 VGT_DMA_SWAP_32_BIT                      = 0x00000002,
 VGT_DMA_SWAP_WORD                        = 0x00000003,
-} VGT_DMA_SWAP_MODE;
+पूर्ण VGT_DMA_SWAP_MODE;
 
 /*
- * VGT_INDEX_TYPE_MODE enum
+ * VGT_INDEX_TYPE_MODE क्रमागत
  */
 
-typedef enum VGT_INDEX_TYPE_MODE {
+प्रकार क्रमागत VGT_INDEX_TYPE_MODE अणु
 VGT_INDEX_16                             = 0x00000000,
 VGT_INDEX_32                             = 0x00000001,
 VGT_INDEX_8                              = 0x00000002,
-} VGT_INDEX_TYPE_MODE;
+पूर्ण VGT_INDEX_TYPE_MODE;
 
 /*
- * VGT_DMA_BUF_TYPE enum
+ * VGT_DMA_BUF_TYPE क्रमागत
  */
 
-typedef enum VGT_DMA_BUF_TYPE {
+प्रकार क्रमागत VGT_DMA_BUF_TYPE अणु
 VGT_DMA_BUF_MEM                          = 0x00000000,
 VGT_DMA_BUF_RING                         = 0x00000001,
 VGT_DMA_BUF_SETUP                        = 0x00000002,
 VGT_DMA_PTR_UPDATE                       = 0x00000003,
-} VGT_DMA_BUF_TYPE;
+पूर्ण VGT_DMA_BUF_TYPE;
 
 /*
- * VGT_OUTPATH_SELECT enum
+ * VGT_OUTPATH_SELECT क्रमागत
  */
 
-typedef enum VGT_OUTPATH_SELECT {
+प्रकार क्रमागत VGT_OUTPATH_SELECT अणु
 VGT_OUTPATH_VTX_REUSE                    = 0x00000000,
 VGT_OUTPATH_TESS_EN                      = 0x00000001,
 VGT_OUTPATH_PASSTHRU                     = 0x00000002,
 VGT_OUTPATH_GS_BLOCK                     = 0x00000003,
 VGT_OUTPATH_HS_BLOCK                     = 0x00000004,
 VGT_OUTPATH_PRIM_GEN                     = 0x00000005,
-} VGT_OUTPATH_SELECT;
+पूर्ण VGT_OUTPATH_SELECT;
 
 /*
- * VGT_GRP_PRIM_TYPE enum
+ * VGT_GRP_PRIM_TYPE क्रमागत
  */
 
-typedef enum VGT_GRP_PRIM_TYPE {
+प्रकार क्रमागत VGT_GRP_PRIM_TYPE अणु
 VGT_GRP_3D_POINT                         = 0x00000000,
 VGT_GRP_3D_LINE                          = 0x00000001,
 VGT_GRP_3D_TRI                           = 0x00000002,
@@ -15578,25 +15579,25 @@ VGT_GRP_3D_LINE_ADJ                      = 0x0000000f,
 VGT_GRP_3D_TRI_ADJ                       = 0x00000010,
 VGT_GRP_3D_PATCH                         = 0x00000011,
 VGT_GRP_2D_RECT                          = 0x00000012,
-} VGT_GRP_PRIM_TYPE;
+पूर्ण VGT_GRP_PRIM_TYPE;
 
 /*
- * VGT_GRP_PRIM_ORDER enum
+ * VGT_GRP_PRIM_ORDER क्रमागत
  */
 
-typedef enum VGT_GRP_PRIM_ORDER {
+प्रकार क्रमागत VGT_GRP_PRIM_ORDER अणु
 VGT_GRP_LIST                             = 0x00000000,
 VGT_GRP_STRIP                            = 0x00000001,
 VGT_GRP_FAN                              = 0x00000002,
 VGT_GRP_LOOP                             = 0x00000003,
 VGT_GRP_POLYGON                          = 0x00000004,
-} VGT_GRP_PRIM_ORDER;
+पूर्ण VGT_GRP_PRIM_ORDER;
 
 /*
- * VGT_GROUP_CONV_SEL enum
+ * VGT_GROUP_CONV_SEL क्रमागत
  */
 
-typedef enum VGT_GROUP_CONV_SEL {
+प्रकार क्रमागत VGT_GROUP_CONV_SEL अणु
 VGT_GRP_INDEX_16                         = 0x00000000,
 VGT_GRP_INDEX_32                         = 0x00000001,
 VGT_GRP_UINT_16                          = 0x00000002,
@@ -15606,161 +15607,161 @@ VGT_GRP_SINT_32                          = 0x00000005,
 VGT_GRP_FLOAT_32                         = 0x00000006,
 VGT_GRP_AUTO_PRIM                        = 0x00000007,
 VGT_GRP_FIX_1_23_TO_FLOAT                = 0x00000008,
-} VGT_GROUP_CONV_SEL;
+पूर्ण VGT_GROUP_CONV_SEL;
 
 /*
- * VGT_GS_MODE_TYPE enum
+ * VGT_GS_MODE_TYPE क्रमागत
  */
 
-typedef enum VGT_GS_MODE_TYPE {
+प्रकार क्रमागत VGT_GS_MODE_TYPE अणु
 GS_OFF                                   = 0x00000000,
 GS_SCENARIO_A                            = 0x00000001,
 GS_SCENARIO_B                            = 0x00000002,
 GS_SCENARIO_G                            = 0x00000003,
 GS_SCENARIO_C                            = 0x00000004,
 SPRITE_EN                                = 0x00000005,
-} VGT_GS_MODE_TYPE;
+पूर्ण VGT_GS_MODE_TYPE;
 
 /*
- * VGT_GS_CUT_MODE enum
+ * VGT_GS_CUT_MODE क्रमागत
  */
 
-typedef enum VGT_GS_CUT_MODE {
+प्रकार क्रमागत VGT_GS_CUT_MODE अणु
 GS_CUT_1024                              = 0x00000000,
 GS_CUT_512                               = 0x00000001,
 GS_CUT_256                               = 0x00000002,
 GS_CUT_128                               = 0x00000003,
-} VGT_GS_CUT_MODE;
+पूर्ण VGT_GS_CUT_MODE;
 
 /*
- * VGT_GS_OUTPRIM_TYPE enum
+ * VGT_GS_OUTPRIM_TYPE क्रमागत
  */
 
-typedef enum VGT_GS_OUTPRIM_TYPE {
+प्रकार क्रमागत VGT_GS_OUTPRIM_TYPE अणु
 POINTLIST                                = 0x00000000,
 LINESTRIP                                = 0x00000001,
 TRISTRIP                                 = 0x00000002,
 RECTLIST                                 = 0x00000003,
-} VGT_GS_OUTPRIM_TYPE;
+पूर्ण VGT_GS_OUTPRIM_TYPE;
 
 /*
- * VGT_CACHE_INVALID_MODE enum
+ * VGT_CACHE_INVALID_MODE क्रमागत
  */
 
-typedef enum VGT_CACHE_INVALID_MODE {
+प्रकार क्रमागत VGT_CACHE_INVALID_MODE अणु
 VC_ONLY                                  = 0x00000000,
 TC_ONLY                                  = 0x00000001,
 VC_AND_TC                                = 0x00000002,
-} VGT_CACHE_INVALID_MODE;
+पूर्ण VGT_CACHE_INVALID_MODE;
 
 /*
- * VGT_TESS_TYPE enum
+ * VGT_TESS_TYPE क्रमागत
  */
 
-typedef enum VGT_TESS_TYPE {
+प्रकार क्रमागत VGT_TESS_TYPE अणु
 TESS_ISOLINE                             = 0x00000000,
 TESS_TRIANGLE                            = 0x00000001,
 TESS_QUAD                                = 0x00000002,
-} VGT_TESS_TYPE;
+पूर्ण VGT_TESS_TYPE;
 
 /*
- * VGT_TESS_PARTITION enum
+ * VGT_TESS_PARTITION क्रमागत
  */
 
-typedef enum VGT_TESS_PARTITION {
+प्रकार क्रमागत VGT_TESS_PARTITION अणु
 PART_INTEGER                             = 0x00000000,
 PART_POW2                                = 0x00000001,
 PART_FRAC_ODD                            = 0x00000002,
 PART_FRAC_EVEN                           = 0x00000003,
-} VGT_TESS_PARTITION;
+पूर्ण VGT_TESS_PARTITION;
 
 /*
- * VGT_TESS_TOPOLOGY enum
+ * VGT_TESS_TOPOLOGY क्रमागत
  */
 
-typedef enum VGT_TESS_TOPOLOGY {
+प्रकार क्रमागत VGT_TESS_TOPOLOGY अणु
 OUTPUT_POINT                             = 0x00000000,
 OUTPUT_LINE                              = 0x00000001,
 OUTPUT_TRIANGLE_CW                       = 0x00000002,
 OUTPUT_TRIANGLE_CCW                      = 0x00000003,
-} VGT_TESS_TOPOLOGY;
+पूर्ण VGT_TESS_TOPOLOGY;
 
 /*
- * VGT_RDREQ_POLICY enum
+ * VGT_RDREQ_POLICY क्रमागत
  */
 
-typedef enum VGT_RDREQ_POLICY {
+प्रकार क्रमागत VGT_RDREQ_POLICY अणु
 VGT_POLICY_LRU                           = 0x00000000,
 VGT_POLICY_STREAM                        = 0x00000001,
-} VGT_RDREQ_POLICY;
+पूर्ण VGT_RDREQ_POLICY;
 
 /*
- * VGT_DIST_MODE enum
+ * VGT_DIST_MODE क्रमागत
  */
 
-typedef enum VGT_DIST_MODE {
+प्रकार क्रमागत VGT_DIST_MODE अणु
 NO_DIST                                  = 0x00000000,
 PATCHES                                  = 0x00000001,
 DONUTS                                   = 0x00000002,
 TRAPEZOIDS                               = 0x00000003,
-} VGT_DIST_MODE;
+पूर्ण VGT_DIST_MODE;
 
 /*
- * VGT_STAGES_LS_EN enum
+ * VGT_STAGES_LS_EN क्रमागत
  */
 
-typedef enum VGT_STAGES_LS_EN {
+प्रकार क्रमागत VGT_STAGES_LS_EN अणु
 LS_STAGE_OFF                             = 0x00000000,
 LS_STAGE_ON                              = 0x00000001,
 CS_STAGE_ON                              = 0x00000002,
 RESERVED_LS                              = 0x00000003,
-} VGT_STAGES_LS_EN;
+पूर्ण VGT_STAGES_LS_EN;
 
 /*
- * VGT_STAGES_HS_EN enum
+ * VGT_STAGES_HS_EN क्रमागत
  */
 
-typedef enum VGT_STAGES_HS_EN {
+प्रकार क्रमागत VGT_STAGES_HS_EN अणु
 HS_STAGE_OFF                             = 0x00000000,
 HS_STAGE_ON                              = 0x00000001,
-} VGT_STAGES_HS_EN;
+पूर्ण VGT_STAGES_HS_EN;
 
 /*
- * VGT_STAGES_ES_EN enum
+ * VGT_STAGES_ES_EN क्रमागत
  */
 
-typedef enum VGT_STAGES_ES_EN {
+प्रकार क्रमागत VGT_STAGES_ES_EN अणु
 ES_STAGE_OFF                             = 0x00000000,
 ES_STAGE_DS                              = 0x00000001,
 ES_STAGE_REAL                            = 0x00000002,
 RESERVED_ES                              = 0x00000003,
-} VGT_STAGES_ES_EN;
+पूर्ण VGT_STAGES_ES_EN;
 
 /*
- * VGT_STAGES_GS_EN enum
+ * VGT_STAGES_GS_EN क्रमागत
  */
 
-typedef enum VGT_STAGES_GS_EN {
+प्रकार क्रमागत VGT_STAGES_GS_EN अणु
 GS_STAGE_OFF                             = 0x00000000,
 GS_STAGE_ON                              = 0x00000001,
-} VGT_STAGES_GS_EN;
+पूर्ण VGT_STAGES_GS_EN;
 
 /*
- * VGT_STAGES_VS_EN enum
+ * VGT_STAGES_VS_EN क्रमागत
  */
 
-typedef enum VGT_STAGES_VS_EN {
+प्रकार क्रमागत VGT_STAGES_VS_EN अणु
 VS_STAGE_REAL                            = 0x00000000,
 VS_STAGE_DS                              = 0x00000001,
 VS_STAGE_COPY_SHADER                     = 0x00000002,
 RESERVED_VS                              = 0x00000003,
-} VGT_STAGES_VS_EN;
+पूर्ण VGT_STAGES_VS_EN;
 
 /*
- * VGT_PERFCOUNT_SELECT enum
+ * VGT_PERFCOUNT_SELECT क्रमागत
  */
 
-typedef enum VGT_PERFCOUNT_SELECT {
+प्रकार क्रमागत VGT_PERFCOUNT_SELECT अणु
 vgt_perf_VGT_SPI_ESTHREAD_EVENT_WINDOW_ACTIVE  = 0x00000000,
 vgt_perf_VGT_SPI_ESVERT_VALID            = 0x00000001,
 vgt_perf_VGT_SPI_ESVERT_EOV              = 0x00000002,
@@ -15799,7 +15800,7 @@ vgt_perf_VGT_PA_CLIPV_STATIC             = 0x00000022,
 vgt_perf_VGT_PA_CLIPP_SEND               = 0x00000023,
 vgt_perf_VGT_PA_CLIPP_EOP                = 0x00000024,
 vgt_perf_VGT_PA_CLIPP_IS_EVENT           = 0x00000025,
-vgt_perf_VGT_PA_CLIPP_NULL_PRIM          = 0x00000026,
+vgt_perf_VGT_PA_CLIPP_शून्य_PRIM          = 0x00000026,
 vgt_perf_VGT_PA_CLIPP_NEW_VTX_VECT       = 0x00000027,
 vgt_perf_VGT_PA_CLIPP_STALLED            = 0x00000028,
 vgt_perf_VGT_PA_CLIPP_STARVED_BUSY       = 0x00000029,
@@ -15812,9 +15813,9 @@ vgt_perf_VGT_PA_CLIPS_STARVED_IDLE       = 0x0000002f,
 vgt_perf_VGT_PA_CLIPS_STATIC             = 0x00000030,
 vgt_perf_vsvert_ds_send                  = 0x00000031,
 vgt_perf_vsvert_api_send                 = 0x00000032,
-vgt_perf_hs_tif_stall                    = 0x00000033,
+vgt_perf_hs_tअगर_stall                    = 0x00000033,
 vgt_perf_hs_input_stall                  = 0x00000034,
-vgt_perf_hs_interface_stall              = 0x00000035,
+vgt_perf_hs_पूर्णांकerface_stall              = 0x00000035,
 vgt_perf_hs_tfm_stall                    = 0x00000036,
 vgt_perf_te11_starved                    = 0x00000037,
 vgt_perf_gs_event_stall                  = 0x00000038,
@@ -15835,17 +15836,17 @@ vgt_perf_gsprim_stalled_es_tbl           = 0x00000046,
 vgt_perf_gsprim_stalled_gs_tbl           = 0x00000047,
 vgt_perf_gsprim_stalled_gs_event         = 0x00000048,
 vgt_perf_gsprim_stalled_esvert           = 0x00000049,
-vgt_perf_esthread_stalled_es_rb_full     = 0x0000004a,
-vgt_perf_esthread_stalled_spi_bp         = 0x0000004b,
+vgt_perf_esthपढ़ो_stalled_es_rb_full     = 0x0000004a,
+vgt_perf_esthपढ़ो_stalled_spi_bp         = 0x0000004b,
 vgt_perf_counters_avail_stalled          = 0x0000004c,
 vgt_perf_gs_rb_space_avail_stalled       = 0x0000004d,
 vgt_perf_gs_issue_rtr_stalled            = 0x0000004e,
-vgt_perf_gsthread_stalled                = 0x0000004f,
+vgt_perf_gsthपढ़ो_stalled                = 0x0000004f,
 vgt_perf_strmout_stalled                 = 0x00000050,
-vgt_perf_wait_for_es_done_stalled        = 0x00000051,
+vgt_perf_रुको_क्रम_es_करोne_stalled        = 0x00000051,
 vgt_perf_cm_stalled_by_gog               = 0x00000052,
-vgt_perf_cm_reading_stalled              = 0x00000053,
-vgt_perf_cm_stalled_by_gsfetch_done      = 0x00000054,
+vgt_perf_cm_पढ़ोing_stalled              = 0x00000053,
+vgt_perf_cm_stalled_by_gsfetch_करोne      = 0x00000054,
 vgt_perf_gog_vs_tbl_stalled              = 0x00000055,
 vgt_perf_gog_out_indx_stalled            = 0x00000056,
 vgt_perf_gog_out_prim_stalled            = 0x00000057,
@@ -15877,26 +15878,26 @@ vgt_perf_VGT_SPI_HSWAVE_IS_EVENT         = 0x00000070,
 vgt_perf_VGT_SPI_HSWAVE_SEND             = 0x00000071,
 vgt_perf_ds_prims                        = 0x00000072,
 vgt_perf_ds_RESERVED                     = 0x00000073,
-vgt_perf_ls_thread_groups                = 0x00000074,
-vgt_perf_hs_thread_groups                = 0x00000075,
-vgt_perf_es_thread_groups                = 0x00000076,
-vgt_perf_vs_thread_groups                = 0x00000077,
-vgt_perf_ls_done_latency                 = 0x00000078,
-vgt_perf_hs_done_latency                 = 0x00000079,
-vgt_perf_es_done_latency                 = 0x0000007a,
-vgt_perf_gs_done_latency                 = 0x0000007b,
+vgt_perf_ls_thपढ़ो_groups                = 0x00000074,
+vgt_perf_hs_thपढ़ो_groups                = 0x00000075,
+vgt_perf_es_thपढ़ो_groups                = 0x00000076,
+vgt_perf_vs_thपढ़ो_groups                = 0x00000077,
+vgt_perf_ls_करोne_latency                 = 0x00000078,
+vgt_perf_hs_करोne_latency                 = 0x00000079,
+vgt_perf_es_करोne_latency                 = 0x0000007a,
+vgt_perf_gs_करोne_latency                 = 0x0000007b,
 vgt_perf_vgt_hs_busy                     = 0x0000007c,
 vgt_perf_vgt_te11_busy                   = 0x0000007d,
 vgt_perf_ls_flush                        = 0x0000007e,
 vgt_perf_hs_flush                        = 0x0000007f,
 vgt_perf_es_flush                        = 0x00000080,
 vgt_perf_vgt_pa_clipp_eopg               = 0x00000081,
-vgt_perf_ls_done                         = 0x00000082,
-vgt_perf_hs_done                         = 0x00000083,
-vgt_perf_es_done                         = 0x00000084,
-vgt_perf_gs_done                         = 0x00000085,
-vgt_perf_vsfetch_done                    = 0x00000086,
-vgt_perf_gs_done_received                = 0x00000087,
+vgt_perf_ls_करोne                         = 0x00000082,
+vgt_perf_hs_करोne                         = 0x00000083,
+vgt_perf_es_करोne                         = 0x00000084,
+vgt_perf_gs_करोne                         = 0x00000085,
+vgt_perf_vsfetch_करोne                    = 0x00000086,
+vgt_perf_gs_करोne_received                = 0x00000087,
 vgt_perf_es_ring_high_water_mark         = 0x00000088,
 vgt_perf_gs_ring_high_water_mark         = 0x00000089,
 vgt_perf_vs_table_high_water_mark        = 0x0000008a,
@@ -15906,17 +15907,17 @@ vgt_perf_cut_mem_flush_stalled           = 0x0000008d,
 vgt_perf_vsvert_work_received            = 0x0000008e,
 vgt_perf_vgt_pa_clipp_starved_after_work  = 0x0000008f,
 vgt_perf_te11_con_starved_after_work     = 0x00000090,
-vgt_perf_hs_waiting_on_ls_done_stall     = 0x00000091,
+vgt_perf_hs_रुकोing_on_ls_करोne_stall     = 0x00000091,
 vgt_spi_vsvert_valid                     = 0x00000092,
-} VGT_PERFCOUNT_SELECT;
+पूर्ण VGT_PERFCOUNT_SELECT;
 
 /*
- * IA_PERFCOUNT_SELECT enum
+ * IA_PERFCOUNT_SELECT क्रमागत
  */
 
-typedef enum IA_PERFCOUNT_SELECT {
+प्रकार क्रमागत IA_PERFCOUNT_SELECT अणु
 ia_perf_GRP_INPUT_EVENT_WINDOW_ACTIVE    = 0x00000000,
-ia_perf_dma_data_fifo_full               = 0x00000001,
+ia_perf_dma_data_fअगरo_full               = 0x00000001,
 ia_perf_RESERVED1                        = 0x00000002,
 ia_perf_RESERVED2                        = 0x00000003,
 ia_perf_RESERVED3                        = 0x00000004,
@@ -15935,17 +15936,17 @@ ia_perf_ia_sclk_reg_vld_event            = 0x00000010,
 ia_perf_RESERVED6                        = 0x00000011,
 ia_perf_ia_sclk_core_vld_event           = 0x00000012,
 ia_perf_RESERVED7                        = 0x00000013,
-ia_perf_ia_dma_return                    = 0x00000014,
+ia_perf_ia_dma_वापस                    = 0x00000014,
 ia_perf_ia_stalled                       = 0x00000015,
-ia_perf_shift_starved_pipe0_event        = 0x00000016,
-ia_perf_shift_starved_pipe1_event        = 0x00000017,
-} IA_PERFCOUNT_SELECT;
+ia_perf_shअगरt_starved_pipe0_event        = 0x00000016,
+ia_perf_shअगरt_starved_pipe1_event        = 0x00000017,
+पूर्ण IA_PERFCOUNT_SELECT;
 
 /*
- * WD_PERFCOUNT_SELECT enum
+ * WD_PERFCOUNT_SELECT क्रमागत
  */
 
-typedef enum WD_PERFCOUNT_SELECT {
+प्रकार क्रमागत WD_PERFCOUNT_SELECT अणु
 wd_perf_RBIU_FIFOS_EVENT_WINDOW_ACTIVE   = 0x00000000,
 wd_perf_RBIU_DR_FIFO_STARVED             = 0x00000001,
 wd_perf_RBIU_DR_FIFO_STALLED             = 0x00000002,
@@ -15973,23 +15974,23 @@ wd_perf_tfreq_lat_bin_4                  = 0x00000017,
 wd_perf_tfreq_lat_bin_5                  = 0x00000018,
 wd_perf_tfreq_lat_bin_6                  = 0x00000019,
 wd_perf_tfreq_lat_bin_7                  = 0x0000001a,
-wd_starved_on_hs_done                    = 0x0000001b,
-wd_perf_se0_hs_done_latency              = 0x0000001c,
-wd_perf_se1_hs_done_latency              = 0x0000001d,
-wd_perf_se2_hs_done_latency              = 0x0000001e,
-wd_perf_se3_hs_done_latency              = 0x0000001f,
-wd_perf_hs_done_se0                      = 0x00000020,
-wd_perf_hs_done_se1                      = 0x00000021,
-wd_perf_hs_done_se2                      = 0x00000022,
-wd_perf_hs_done_se3                      = 0x00000023,
+wd_starved_on_hs_करोne                    = 0x0000001b,
+wd_perf_se0_hs_करोne_latency              = 0x0000001c,
+wd_perf_se1_hs_करोne_latency              = 0x0000001d,
+wd_perf_se2_hs_करोne_latency              = 0x0000001e,
+wd_perf_se3_hs_करोne_latency              = 0x0000001f,
+wd_perf_hs_करोne_se0                      = 0x00000020,
+wd_perf_hs_करोne_se1                      = 0x00000021,
+wd_perf_hs_करोne_se2                      = 0x00000022,
+wd_perf_hs_करोne_se3                      = 0x00000023,
 wd_perf_null_patches                     = 0x00000024,
-} WD_PERFCOUNT_SELECT;
+पूर्ण WD_PERFCOUNT_SELECT;
 
 /*
- * WD_IA_DRAW_TYPE enum
+ * WD_IA_DRAW_TYPE क्रमागत
  */
 
-typedef enum WD_IA_DRAW_TYPE {
+प्रकार क्रमागत WD_IA_DRAW_TYPE अणु
 WD_IA_DRAW_TYPE_DI_MM0                   = 0x00000000,
 WD_IA_DRAW_TYPE_REG_XFER                 = 0x00000001,
 WD_IA_DRAW_TYPE_EVENT_INIT               = 0x00000002,
@@ -15998,69 +15999,69 @@ WD_IA_DRAW_TYPE_MIN_INDX                 = 0x00000004,
 WD_IA_DRAW_TYPE_MAX_INDX                 = 0x00000005,
 WD_IA_DRAW_TYPE_INDX_OFF                 = 0x00000006,
 WD_IA_DRAW_TYPE_IMM_DATA                 = 0x00000007,
-} WD_IA_DRAW_TYPE;
+पूर्ण WD_IA_DRAW_TYPE;
 
 /*
- * WD_IA_DRAW_REG_XFER enum
+ * WD_IA_DRAW_REG_XFER क्रमागत
  */
 
-typedef enum WD_IA_DRAW_REG_XFER {
+प्रकार क्रमागत WD_IA_DRAW_REG_XFER अणु
 WD_IA_DRAW_REG_XFER_IA_MULTI_VGT_PARAM   = 0x00000000,
 WD_IA_DRAW_REG_XFER_VGT_MULTI_PRIM_IB_RESET_EN = 0x00000001,
-} WD_IA_DRAW_REG_XFER;
+पूर्ण WD_IA_DRAW_REG_XFER;
 
 /*
- * WD_IA_DRAW_SOURCE enum
+ * WD_IA_DRAW_SOURCE क्रमागत
  */
 
-typedef enum WD_IA_DRAW_SOURCE {
+प्रकार क्रमागत WD_IA_DRAW_SOURCE अणु
 WD_IA_DRAW_SOURCE_DMA                    = 0x00000000,
 WD_IA_DRAW_SOURCE_IMMD                   = 0x00000001,
 WD_IA_DRAW_SOURCE_AUTO                   = 0x00000002,
 WD_IA_DRAW_SOURCE_OPAQ                   = 0x00000003,
-} WD_IA_DRAW_SOURCE;
+पूर्ण WD_IA_DRAW_SOURCE;
 
 /*
  * GS_THREADID_SIZE value
  */
 
-#define GSTHREADID_SIZE                0x00000002
+#घोषणा GSTHREADID_SIZE                0x00000002
 
 /*******************************************************
  * GB Enums
  *******************************************************/
 
 /*
- * GB_EDC_DED_MODE enum
+ * GB_EDC_DED_MODE क्रमागत
  */
 
-typedef enum GB_EDC_DED_MODE {
+प्रकार क्रमागत GB_EDC_DED_MODE अणु
 GB_EDC_DED_MODE_LOG                      = 0x00000000,
 GB_EDC_DED_MODE_HALT                     = 0x00000001,
 GB_EDC_DED_MODE_INT_HALT                 = 0x00000002,
-} GB_EDC_DED_MODE;
+पूर्ण GB_EDC_DED_MODE;
 
 /*
  * VALUE_GB_TILING_CONFIG_TABLE_SIZE value
  */
 
-#define GB_TILING_CONFIG_TABLE_SIZE    0x00000020
+#घोषणा GB_TILING_CONFIG_TABLE_SIZE    0x00000020
 
 /*
  * VALUE_GB_TILING_CONFIG_MACROTABLE_SIZE value
  */
 
-#define GB_TILING_CONFIG_MACROTABLE_SIZE 0x00000010
+#घोषणा GB_TILING_CONFIG_MACROTABLE_SIZE 0x00000010
 
 /*******************************************************
  * TP Enums
  *******************************************************/
 
 /*
- * TA_TC_ADDR_MODES enum
+ * TA_TC_ADDR_MODES क्रमागत
  */
 
-typedef enum TA_TC_ADDR_MODES {
+प्रकार क्रमागत TA_TC_ADDR_MODES अणु
 TA_TC_ADDR_MODE_DEFAULT                  = 0x00000000,
 TA_TC_ADDR_MODE_COMP0                    = 0x00000001,
 TA_TC_ADDR_MODE_COMP1                    = 0x00000002,
@@ -16068,67 +16069,67 @@ TA_TC_ADDR_MODE_COMP2                    = 0x00000003,
 TA_TC_ADDR_MODE_COMP3                    = 0x00000004,
 TA_TC_ADDR_MODE_UNALIGNED                = 0x00000005,
 TA_TC_ADDR_MODE_BORDER_COLOR             = 0x00000006,
-} TA_TC_ADDR_MODES;
+पूर्ण TA_TC_ADDR_MODES;
 
 /*
- * TA_PERFCOUNT_SEL enum
+ * TA_PERFCOUNT_SEL क्रमागत
  */
 
-typedef enum TA_PERFCOUNT_SEL {
-TA_PERF_SEL_NULL                         = 0x00000000,
-TA_PERF_SEL_sh_fifo_busy                 = 0x00000001,
-TA_PERF_SEL_sh_fifo_cmd_busy             = 0x00000002,
-TA_PERF_SEL_sh_fifo_addr_busy            = 0x00000003,
-TA_PERF_SEL_sh_fifo_data_busy            = 0x00000004,
-TA_PERF_SEL_sh_fifo_data_sfifo_busy      = 0x00000005,
-TA_PERF_SEL_sh_fifo_data_tfifo_busy      = 0x00000006,
+प्रकार क्रमागत TA_PERFCOUNT_SEL अणु
+TA_PERF_SEL_शून्य                         = 0x00000000,
+TA_PERF_SEL_sh_fअगरo_busy                 = 0x00000001,
+TA_PERF_SEL_sh_fअगरo_cmd_busy             = 0x00000002,
+TA_PERF_SEL_sh_fअगरo_addr_busy            = 0x00000003,
+TA_PERF_SEL_sh_fअगरo_data_busy            = 0x00000004,
+TA_PERF_SEL_sh_fअगरo_data_sfअगरo_busy      = 0x00000005,
+TA_PERF_SEL_sh_fअगरo_data_tfअगरo_busy      = 0x00000006,
 TA_PERF_SEL_gradient_busy                = 0x00000007,
-TA_PERF_SEL_gradient_fifo_busy           = 0x00000008,
+TA_PERF_SEL_gradient_fअगरo_busy           = 0x00000008,
 TA_PERF_SEL_lod_busy                     = 0x00000009,
-TA_PERF_SEL_lod_fifo_busy                = 0x0000000a,
+TA_PERF_SEL_lod_fअगरo_busy                = 0x0000000a,
 TA_PERF_SEL_addresser_busy               = 0x0000000b,
-TA_PERF_SEL_addresser_fifo_busy          = 0x0000000c,
+TA_PERF_SEL_addresser_fअगरo_busy          = 0x0000000c,
 TA_PERF_SEL_aligner_busy                 = 0x0000000d,
-TA_PERF_SEL_write_path_busy              = 0x0000000e,
+TA_PERF_SEL_ग_लिखो_path_busy              = 0x0000000e,
 TA_PERF_SEL_ta_busy                      = 0x0000000f,
 TA_PERF_SEL_sq_ta_cmd_cycles             = 0x00000010,
 TA_PERF_SEL_sp_ta_addr_cycles            = 0x00000011,
 TA_PERF_SEL_sp_ta_data_cycles            = 0x00000012,
 TA_PERF_SEL_ta_fa_data_state_cycles      = 0x00000013,
-TA_PERF_SEL_sh_fifo_addr_waiting_on_cmd_cycles  = 0x00000014,
-TA_PERF_SEL_sh_fifo_cmd_waiting_on_addr_cycles  = 0x00000015,
-TA_PERF_SEL_sh_fifo_addr_starved_while_busy_cycles  = 0x00000016,
-TA_PERF_SEL_sh_fifo_cmd_starved_while_busy_cycles  = 0x00000017,
-TA_PERF_SEL_sh_fifo_data_waiting_on_data_state_cycles  = 0x00000018,
-TA_PERF_SEL_sh_fifo_data_state_waiting_on_data_cycles  = 0x00000019,
-TA_PERF_SEL_sh_fifo_data_starved_while_busy_cycles  = 0x0000001a,
-TA_PERF_SEL_sh_fifo_data_state_starved_while_busy_cycles  = 0x0000001b,
+TA_PERF_SEL_sh_fअगरo_addr_रुकोing_on_cmd_cycles  = 0x00000014,
+TA_PERF_SEL_sh_fअगरo_cmd_रुकोing_on_addr_cycles  = 0x00000015,
+TA_PERF_SEL_sh_fअगरo_addr_starved_जबतक_busy_cycles  = 0x00000016,
+TA_PERF_SEL_sh_fअगरo_cmd_starved_जबतक_busy_cycles  = 0x00000017,
+TA_PERF_SEL_sh_fअगरo_data_रुकोing_on_data_state_cycles  = 0x00000018,
+TA_PERF_SEL_sh_fअगरo_data_state_रुकोing_on_data_cycles  = 0x00000019,
+TA_PERF_SEL_sh_fअगरo_data_starved_जबतक_busy_cycles  = 0x0000001a,
+TA_PERF_SEL_sh_fअगरo_data_state_starved_जबतक_busy_cycles  = 0x0000001b,
 TA_PERF_SEL_RESERVED_28                  = 0x0000001c,
 TA_PERF_SEL_RESERVED_29                  = 0x0000001d,
-TA_PERF_SEL_sh_fifo_addr_cycles          = 0x0000001e,
-TA_PERF_SEL_sh_fifo_data_cycles          = 0x0000001f,
+TA_PERF_SEL_sh_fअगरo_addr_cycles          = 0x0000001e,
+TA_PERF_SEL_sh_fअगरo_data_cycles          = 0x0000001f,
 TA_PERF_SEL_total_wavefronts             = 0x00000020,
 TA_PERF_SEL_gradient_cycles              = 0x00000021,
 TA_PERF_SEL_walker_cycles                = 0x00000022,
 TA_PERF_SEL_aligner_cycles               = 0x00000023,
 TA_PERF_SEL_image_wavefronts             = 0x00000024,
-TA_PERF_SEL_image_read_wavefronts        = 0x00000025,
-TA_PERF_SEL_image_write_wavefronts       = 0x00000026,
+TA_PERF_SEL_image_पढ़ो_wavefronts        = 0x00000025,
+TA_PERF_SEL_image_ग_लिखो_wavefronts       = 0x00000026,
 TA_PERF_SEL_image_atomic_wavefronts      = 0x00000027,
 TA_PERF_SEL_image_total_cycles           = 0x00000028,
 TA_PERF_SEL_RESERVED_41                  = 0x00000029,
 TA_PERF_SEL_RESERVED_42                  = 0x0000002a,
 TA_PERF_SEL_RESERVED_43                  = 0x0000002b,
 TA_PERF_SEL_buffer_wavefronts            = 0x0000002c,
-TA_PERF_SEL_buffer_read_wavefronts       = 0x0000002d,
-TA_PERF_SEL_buffer_write_wavefronts      = 0x0000002e,
+TA_PERF_SEL_buffer_पढ़ो_wavefronts       = 0x0000002d,
+TA_PERF_SEL_buffer_ग_लिखो_wavefronts      = 0x0000002e,
 TA_PERF_SEL_buffer_atomic_wavefronts     = 0x0000002f,
 TA_PERF_SEL_buffer_coalescable_wavefronts  = 0x00000030,
 TA_PERF_SEL_buffer_total_cycles          = 0x00000031,
 TA_PERF_SEL_buffer_coalescable_addr_multicycled_cycles  = 0x00000032,
 TA_PERF_SEL_buffer_coalescable_clamp_16kdword_multicycled_cycles  = 0x00000033,
-TA_PERF_SEL_buffer_coalesced_read_cycles  = 0x00000034,
-TA_PERF_SEL_buffer_coalesced_write_cycles  = 0x00000035,
+TA_PERF_SEL_buffer_coalesced_पढ़ो_cycles  = 0x00000034,
+TA_PERF_SEL_buffer_coalesced_ग_लिखो_cycles  = 0x00000035,
 TA_PERF_SEL_addr_stalled_by_tc_cycles    = 0x00000036,
 TA_PERF_SEL_addr_stalled_by_td_cycles    = 0x00000037,
 TA_PERF_SEL_data_stalled_by_tc_cycles    = 0x00000038,
@@ -16147,7 +16148,7 @@ TA_PERF_SEL_mip_1_cycle_pixels           = 0x00000044,
 TA_PERF_SEL_mip_2_cycle_pixels           = 0x00000045,
 TA_PERF_SEL_vol_1_cycle_pixels           = 0x00000046,
 TA_PERF_SEL_vol_2_cycle_pixels           = 0x00000047,
-TA_PERF_SEL_bilin_point_1_cycle_pixels   = 0x00000048,
+TA_PERF_SEL_bilin_poपूर्णांक_1_cycle_pixels   = 0x00000048,
 TA_PERF_SEL_mipmap_lod_0_samples         = 0x00000049,
 TA_PERF_SEL_mipmap_lod_1_samples         = 0x0000004a,
 TA_PERF_SEL_mipmap_lod_2_samples         = 0x0000004b,
@@ -16173,11 +16174,11 @@ TA_PERF_SEL_aniso_10_cycle_quads         = 0x0000005e,
 TA_PERF_SEL_aniso_12_cycle_quads         = 0x0000005f,
 TA_PERF_SEL_aniso_14_cycle_quads         = 0x00000060,
 TA_PERF_SEL_aniso_16_cycle_quads         = 0x00000061,
-TA_PERF_SEL_write_path_input_cycles      = 0x00000062,
-TA_PERF_SEL_write_path_output_cycles     = 0x00000063,
+TA_PERF_SEL_ग_लिखो_path_input_cycles      = 0x00000062,
+TA_PERF_SEL_ग_लिखो_path_output_cycles     = 0x00000063,
 TA_PERF_SEL_flat_wavefronts              = 0x00000064,
-TA_PERF_SEL_flat_read_wavefronts         = 0x00000065,
-TA_PERF_SEL_flat_write_wavefronts        = 0x00000066,
+TA_PERF_SEL_flat_पढ़ो_wavefronts         = 0x00000065,
+TA_PERF_SEL_flat_ग_लिखो_wavefronts        = 0x00000066,
 TA_PERF_SEL_flat_atomic_wavefronts       = 0x00000067,
 TA_PERF_SEL_flat_coalesceable_wavefronts  = 0x00000068,
 TA_PERF_SEL_reg_sclk_vld                 = 0x00000069,
@@ -16194,13 +16195,13 @@ TA_PERF_SEL_first_xnack_on_phase0        = 0x00000073,
 TA_PERF_SEL_first_xnack_on_phase1        = 0x00000074,
 TA_PERF_SEL_first_xnack_on_phase2        = 0x00000075,
 TA_PERF_SEL_first_xnack_on_phase3        = 0x00000076,
-} TA_PERFCOUNT_SEL;
+पूर्ण TA_PERFCOUNT_SEL;
 
 /*
- * TD_PERFCOUNT_SEL enum
+ * TD_PERFCOUNT_SEL क्रमागत
  */
 
-typedef enum TD_PERFCOUNT_SEL {
+प्रकार क्रमागत TD_PERFCOUNT_SEL अणु
 TD_PERF_SEL_none                         = 0x00000000,
 TD_PERF_SEL_td_busy                      = 0x00000001,
 TD_PERF_SEL_input_busy                   = 0x00000002,
@@ -16211,10 +16212,10 @@ TD_PERF_SEL_local_cg_dyn_sclk_grp0_en    = 0x00000006,
 TD_PERF_SEL_local_cg_dyn_sclk_grp1_en    = 0x00000007,
 TD_PERF_SEL_local_cg_dyn_sclk_grp4_en    = 0x00000008,
 TD_PERF_SEL_local_cg_dyn_sclk_grp5_en    = 0x00000009,
-TD_PERF_SEL_tc_td_fifo_full              = 0x0000000a,
-TD_PERF_SEL_constant_state_full          = 0x0000000b,
+TD_PERF_SEL_tc_td_fअगरo_full              = 0x0000000a,
+TD_PERF_SEL_स्थिरant_state_full          = 0x0000000b,
 TD_PERF_SEL_sample_state_full            = 0x0000000c,
-TD_PERF_SEL_output_fifo_full             = 0x0000000d,
+TD_PERF_SEL_output_fअगरo_full             = 0x0000000d,
 TD_PERF_SEL_RESERVED_14                  = 0x0000000e,
 TD_PERF_SEL_tc_stall                     = 0x0000000f,
 TD_PERF_SEL_pc_stall                     = 0x00000010,
@@ -16238,8 +16239,8 @@ TD_PERF_SEL_coalesced_phase              = 0x00000021,
 TD_PERF_SEL_four_phase_wavefront         = 0x00000022,
 TD_PERF_SEL_eight_phase_wavefront        = 0x00000023,
 TD_PERF_SEL_sixteen_phase_wavefront      = 0x00000024,
-TD_PERF_SEL_four_phase_forward_wavefront  = 0x00000025,
-TD_PERF_SEL_write_ack_wavefront          = 0x00000026,
+TD_PERF_SEL_four_phase_क्रमward_wavefront  = 0x00000025,
+TD_PERF_SEL_ग_लिखो_ack_wavefront          = 0x00000026,
 TD_PERF_SEL_RESERVED_39                  = 0x00000027,
 TD_PERF_SEL_user_defined_border          = 0x00000028,
 TD_PERF_SEL_white_border                 = 0x00000029,
@@ -16258,13 +16259,13 @@ TD_PERF_SEL_start_cycle_3                = 0x00000035,
 TD_PERF_SEL_null_cycle_output            = 0x00000036,
 TD_PERF_SEL_d16_data_packed              = 0x00000037,
 TD_PERF_SEL_texels_zeroed_out_by_blend_zero_prt  = 0x00000038,
-} TD_PERFCOUNT_SEL;
+पूर्ण TD_PERFCOUNT_SEL;
 
 /*
- * TCP_PERFCOUNT_SELECT enum
+ * TCP_PERFCOUNT_SELECT क्रमागत
  */
 
-typedef enum TCP_PERFCOUNT_SELECT {
+प्रकार क्रमागत TCP_PERFCOUNT_SELECT अणु
 TCP_PERF_SEL_TA_TCP_ADDR_STARVE_CYCLES   = 0x00000000,
 TCP_PERF_SEL_TA_TCP_DATA_STARVE_CYCLES   = 0x00000001,
 TCP_PERF_SEL_TCP_TA_ADDR_STALL_CYCLES    = 0x00000002,
@@ -16461,79 +16462,79 @@ TCP_PERF_SEL_IMG_WRITE_FMT_8_AS_32       = 0x000000c0,
 TCP_PERF_SEL_IMG_WRITE_FMT_8_AS_64       = 0x000000c1,
 TCP_PERF_SEL_IMG_WRITE_FMT_16_AS_64      = 0x000000c2,
 TCP_PERF_SEL_IMG_WRITE_FMT_16_AS_128     = 0x000000c3,
-} TCP_PERFCOUNT_SELECT;
+पूर्ण TCP_PERFCOUNT_SELECT;
 
 /*
- * TCP_CACHE_POLICIES enum
+ * TCP_CACHE_POLICIES क्रमागत
  */
 
-typedef enum TCP_CACHE_POLICIES {
+प्रकार क्रमागत TCP_CACHE_POLICIES अणु
 TCP_CACHE_POLICY_MISS_LRU                = 0x00000000,
 TCP_CACHE_POLICY_MISS_EVICT              = 0x00000001,
 TCP_CACHE_POLICY_HIT_LRU                 = 0x00000002,
 TCP_CACHE_POLICY_HIT_EVICT               = 0x00000003,
-} TCP_CACHE_POLICIES;
+पूर्ण TCP_CACHE_POLICIES;
 
 /*
- * TCP_CACHE_STORE_POLICIES enum
+ * TCP_CACHE_STORE_POLICIES क्रमागत
  */
 
-typedef enum TCP_CACHE_STORE_POLICIES {
+प्रकार क्रमागत TCP_CACHE_STORE_POLICIES अणु
 TCP_CACHE_STORE_POLICY_WT_LRU            = 0x00000000,
 TCP_CACHE_STORE_POLICY_WT_EVICT          = 0x00000001,
-} TCP_CACHE_STORE_POLICIES;
+पूर्ण TCP_CACHE_STORE_POLICIES;
 
 /*
- * TCP_WATCH_MODES enum
+ * TCP_WATCH_MODES क्रमागत
  */
 
-typedef enum TCP_WATCH_MODES {
+प्रकार क्रमागत TCP_WATCH_MODES अणु
 TCP_WATCH_MODE_READ                      = 0x00000000,
 TCP_WATCH_MODE_NONREAD                   = 0x00000001,
 TCP_WATCH_MODE_ATOMIC                    = 0x00000002,
 TCP_WATCH_MODE_ALL                       = 0x00000003,
-} TCP_WATCH_MODES;
+पूर्ण TCP_WATCH_MODES;
 
 /*
- * TCP_DSM_DATA_SEL enum
+ * TCP_DSM_DATA_SEL क्रमागत
  */
 
-typedef enum TCP_DSM_DATA_SEL {
+प्रकार क्रमागत TCP_DSM_DATA_SEL अणु
 TCP_DSM_DISABLE                          = 0x00000000,
 TCP_DSM_SEL0                             = 0x00000001,
 TCP_DSM_SEL1                             = 0x00000002,
 TCP_DSM_SEL_BOTH                         = 0x00000003,
-} TCP_DSM_DATA_SEL;
+पूर्ण TCP_DSM_DATA_SEL;
 
 /*
- * TCP_DSM_SINGLE_WRITE enum
+ * TCP_DSM_SINGLE_WRITE क्रमागत
  */
 
-typedef enum TCP_DSM_SINGLE_WRITE {
+प्रकार क्रमागत TCP_DSM_SINGLE_WRITE अणु
 TCP_DSM_SINGLE_WRITE_DIS                 = 0x00000000,
 TCP_DSM_SINGLE_WRITE_EN                  = 0x00000001,
-} TCP_DSM_SINGLE_WRITE;
+पूर्ण TCP_DSM_SINGLE_WRITE;
 
 /*
- * TCP_DSM_INJECT_SEL enum
+ * TCP_DSM_INJECT_SEL क्रमागत
  */
 
-typedef enum TCP_DSM_INJECT_SEL {
+प्रकार क्रमागत TCP_DSM_INJECT_SEL अणु
 TCP_DSM_INJECT_SEL0                      = 0x00000000,
 TCP_DSM_INJECT_SEL1                      = 0x00000001,
 TCP_DSM_INJECT_SEL2                      = 0x00000002,
 TCP_DSM_INJECT_SEL3                      = 0x00000003,
-} TCP_DSM_INJECT_SEL;
+पूर्ण TCP_DSM_INJECT_SEL;
 
 /*******************************************************
  * TCC Enums
  *******************************************************/
 
 /*
- * TCC_PERF_SEL enum
+ * TCC_PERF_SEL क्रमागत
  */
 
-typedef enum TCC_PERF_SEL {
+प्रकार क्रमागत TCC_PERF_SEL अणु
 TCC_PERF_SEL_NONE                        = 0x00000000,
 TCC_PERF_SEL_CYCLE                       = 0x00000001,
 TCC_PERF_SEL_BUSY                        = 0x00000002,
@@ -16774,13 +16775,13 @@ TCC_PERF_SEL_CLIENT124_REQ               = 0x000000fc,
 TCC_PERF_SEL_CLIENT125_REQ               = 0x000000fd,
 TCC_PERF_SEL_CLIENT126_REQ               = 0x000000fe,
 TCC_PERF_SEL_CLIENT127_REQ               = 0x000000ff,
-} TCC_PERF_SEL;
+पूर्ण TCC_PERF_SEL;
 
 /*
- * TCA_PERF_SEL enum
+ * TCA_PERF_SEL क्रमागत
  */
 
-typedef enum TCA_PERF_SEL {
+प्रकार क्रमागत TCA_PERF_SEL अणु
 TCA_PERF_SEL_NONE                        = 0x00000000,
 TCA_PERF_SEL_CYCLE                       = 0x00000001,
 TCA_PERF_SEL_BUSY                        = 0x00000002,
@@ -16816,17 +16817,17 @@ TCA_PERF_SEL_CROSSBAR_STALL_TCC4         = 0x0000001f,
 TCA_PERF_SEL_CROSSBAR_STALL_TCC5         = 0x00000020,
 TCA_PERF_SEL_CROSSBAR_STALL_TCC6         = 0x00000021,
 TCA_PERF_SEL_CROSSBAR_STALL_TCC7         = 0x00000022,
-} TCA_PERF_SEL;
+पूर्ण TCA_PERF_SEL;
 
 /*******************************************************
  * GRBM Enums
  *******************************************************/
 
 /*
- * GRBM_PERF_SEL enum
+ * GRBM_PERF_SEL क्रमागत
  */
 
-typedef enum GRBM_PERF_SEL {
+प्रकार क्रमागत GRBM_PERF_SEL अणु
 GRBM_PERF_SEL_COUNT                      = 0x00000000,
 GRBM_PERF_SEL_USER_DEFINED               = 0x00000001,
 GRBM_PERF_SEL_GUI_ACTIVE                 = 0x00000002,
@@ -16865,13 +16866,13 @@ GRBM_PERF_SEL_UTCL2_BUSY                 = 0x00000022,
 GRBM_PERF_SEL_EA_BUSY                    = 0x00000023,
 GRBM_PERF_SEL_RMI_BUSY                   = 0x00000024,
 GRBM_PERF_SEL_CPAXI_BUSY                 = 0x00000025,
-} GRBM_PERF_SEL;
+पूर्ण GRBM_PERF_SEL;
 
 /*
- * GRBM_SE0_PERF_SEL enum
+ * GRBM_SE0_PERF_SEL क्रमागत
  */
 
-typedef enum GRBM_SE0_PERF_SEL {
+प्रकार क्रमागत GRBM_SE0_PERF_SEL अणु
 GRBM_SE0_PERF_SEL_COUNT                  = 0x00000000,
 GRBM_SE0_PERF_SEL_USER_DEFINED           = 0x00000001,
 GRBM_SE0_PERF_SEL_CB_BUSY                = 0x00000002,
@@ -16888,13 +16889,13 @@ GRBM_SE0_PERF_SEL_PA_BUSY                = 0x0000000c,
 GRBM_SE0_PERF_SEL_VGT_BUSY               = 0x0000000d,
 GRBM_SE0_PERF_SEL_BCI_BUSY               = 0x0000000e,
 GRBM_SE0_PERF_SEL_RMI_BUSY               = 0x0000000f,
-} GRBM_SE0_PERF_SEL;
+पूर्ण GRBM_SE0_PERF_SEL;
 
 /*
- * GRBM_SE1_PERF_SEL enum
+ * GRBM_SE1_PERF_SEL क्रमागत
  */
 
-typedef enum GRBM_SE1_PERF_SEL {
+प्रकार क्रमागत GRBM_SE1_PERF_SEL अणु
 GRBM_SE1_PERF_SEL_COUNT                  = 0x00000000,
 GRBM_SE1_PERF_SEL_USER_DEFINED           = 0x00000001,
 GRBM_SE1_PERF_SEL_CB_BUSY                = 0x00000002,
@@ -16911,13 +16912,13 @@ GRBM_SE1_PERF_SEL_PA_BUSY                = 0x0000000c,
 GRBM_SE1_PERF_SEL_VGT_BUSY               = 0x0000000d,
 GRBM_SE1_PERF_SEL_BCI_BUSY               = 0x0000000e,
 GRBM_SE1_PERF_SEL_RMI_BUSY               = 0x0000000f,
-} GRBM_SE1_PERF_SEL;
+पूर्ण GRBM_SE1_PERF_SEL;
 
 /*
- * GRBM_SE2_PERF_SEL enum
+ * GRBM_SE2_PERF_SEL क्रमागत
  */
 
-typedef enum GRBM_SE2_PERF_SEL {
+प्रकार क्रमागत GRBM_SE2_PERF_SEL अणु
 GRBM_SE2_PERF_SEL_COUNT                  = 0x00000000,
 GRBM_SE2_PERF_SEL_USER_DEFINED           = 0x00000001,
 GRBM_SE2_PERF_SEL_CB_BUSY                = 0x00000002,
@@ -16934,13 +16935,13 @@ GRBM_SE2_PERF_SEL_PA_BUSY                = 0x0000000c,
 GRBM_SE2_PERF_SEL_VGT_BUSY               = 0x0000000d,
 GRBM_SE2_PERF_SEL_BCI_BUSY               = 0x0000000e,
 GRBM_SE2_PERF_SEL_RMI_BUSY               = 0x0000000f,
-} GRBM_SE2_PERF_SEL;
+पूर्ण GRBM_SE2_PERF_SEL;
 
 /*
- * GRBM_SE3_PERF_SEL enum
+ * GRBM_SE3_PERF_SEL क्रमागत
  */
 
-typedef enum GRBM_SE3_PERF_SEL {
+प्रकार क्रमागत GRBM_SE3_PERF_SEL अणु
 GRBM_SE3_PERF_SEL_COUNT                  = 0x00000000,
 GRBM_SE3_PERF_SEL_USER_DEFINED           = 0x00000001,
 GRBM_SE3_PERF_SEL_CB_BUSY                = 0x00000002,
@@ -16957,87 +16958,87 @@ GRBM_SE3_PERF_SEL_PA_BUSY                = 0x0000000c,
 GRBM_SE3_PERF_SEL_VGT_BUSY               = 0x0000000d,
 GRBM_SE3_PERF_SEL_BCI_BUSY               = 0x0000000e,
 GRBM_SE3_PERF_SEL_RMI_BUSY               = 0x0000000f,
-} GRBM_SE3_PERF_SEL;
+पूर्ण GRBM_SE3_PERF_SEL;
 
 /*******************************************************
  * CP Enums
  *******************************************************/
 
 /*
- * CP_RING_ID enum
+ * CP_RING_ID क्रमागत
  */
 
-typedef enum CP_RING_ID {
+प्रकार क्रमागत CP_RING_ID अणु
 RINGID0                                  = 0x00000000,
 RINGID1                                  = 0x00000001,
 RINGID2                                  = 0x00000002,
 RINGID3                                  = 0x00000003,
-} CP_RING_ID;
+पूर्ण CP_RING_ID;
 
 /*
- * CP_PIPE_ID enum
+ * CP_PIPE_ID क्रमागत
  */
 
-typedef enum CP_PIPE_ID {
+प्रकार क्रमागत CP_PIPE_ID अणु
 PIPE_ID0                                 = 0x00000000,
 PIPE_ID1                                 = 0x00000001,
 PIPE_ID2                                 = 0x00000002,
 PIPE_ID3                                 = 0x00000003,
-} CP_PIPE_ID;
+पूर्ण CP_PIPE_ID;
 
 /*
- * CP_ME_ID enum
+ * CP_ME_ID क्रमागत
  */
 
-typedef enum CP_ME_ID {
+प्रकार क्रमागत CP_ME_ID अणु
 ME_ID0                                   = 0x00000000,
 ME_ID1                                   = 0x00000001,
 ME_ID2                                   = 0x00000002,
 ME_ID3                                   = 0x00000003,
-} CP_ME_ID;
+पूर्ण CP_ME_ID;
 
 /*
- * SPM_PERFMON_STATE enum
+ * SPM_PERFMON_STATE क्रमागत
  */
 
-typedef enum SPM_PERFMON_STATE {
+प्रकार क्रमागत SPM_PERFMON_STATE अणु
 STRM_PERFMON_STATE_DISABLE_AND_RESET     = 0x00000000,
 STRM_PERFMON_STATE_START_COUNTING        = 0x00000001,
 STRM_PERFMON_STATE_STOP_COUNTING         = 0x00000002,
 STRM_PERFMON_STATE_RESERVED_3            = 0x00000003,
 STRM_PERFMON_STATE_DISABLE_AND_RESET_PHANTOM  = 0x00000004,
 STRM_PERFMON_STATE_COUNT_AND_DUMP_PHANTOM  = 0x00000005,
-} SPM_PERFMON_STATE;
+पूर्ण SPM_PERFMON_STATE;
 
 /*
- * CP_PERFMON_STATE enum
+ * CP_PERFMON_STATE क्रमागत
  */
 
-typedef enum CP_PERFMON_STATE {
+प्रकार क्रमागत CP_PERFMON_STATE अणु
 CP_PERFMON_STATE_DISABLE_AND_RESET       = 0x00000000,
 CP_PERFMON_STATE_START_COUNTING          = 0x00000001,
 CP_PERFMON_STATE_STOP_COUNTING           = 0x00000002,
 CP_PERFMON_STATE_RESERVED_3              = 0x00000003,
 CP_PERFMON_STATE_DISABLE_AND_RESET_PHANTOM  = 0x00000004,
 CP_PERFMON_STATE_COUNT_AND_DUMP_PHANTOM  = 0x00000005,
-} CP_PERFMON_STATE;
+पूर्ण CP_PERFMON_STATE;
 
 /*
- * CP_PERFMON_ENABLE_MODE enum
+ * CP_PERFMON_ENABLE_MODE क्रमागत
  */
 
-typedef enum CP_PERFMON_ENABLE_MODE {
+प्रकार क्रमागत CP_PERFMON_ENABLE_MODE अणु
 CP_PERFMON_ENABLE_MODE_ALWAYS_COUNT      = 0x00000000,
 CP_PERFMON_ENABLE_MODE_RESERVED_1        = 0x00000001,
 CP_PERFMON_ENABLE_MODE_COUNT_CONTEXT_TRUE  = 0x00000002,
 CP_PERFMON_ENABLE_MODE_COUNT_CONTEXT_FALSE  = 0x00000003,
-} CP_PERFMON_ENABLE_MODE;
+पूर्ण CP_PERFMON_ENABLE_MODE;
 
 /*
- * CPG_PERFCOUNT_SEL enum
+ * CPG_PERFCOUNT_SEL क्रमागत
  */
 
-typedef enum CPG_PERFCOUNT_SEL {
+प्रकार क्रमागत CPG_PERFCOUNT_SEL अणु
 CPG_PERF_SEL_ALWAYS_COUNT                = 0x00000000,
 CPG_PERF_SEL_RBIU_FIFO_FULL              = 0x00000001,
 CPG_PERF_SEL_CSF_RTS_BUT_MIU_NOT_RTR     = 0x00000002,
@@ -17087,13 +17088,13 @@ CPG_PERF_SEL_TCIU_STALL_WAIT_ON_TAGS     = 0x0000002d,
 CPG_PERF_SEL_UTCL2IU_STALL_WAIT_ON_FREE  = 0x0000002e,
 CPG_PERF_SEL_UTCL2IU_STALL_WAIT_ON_TAGS  = 0x0000002f,
 CPG_PERF_SEL_UTCL1_STALL_ON_TRANSLATION  = 0x00000030,
-} CPG_PERFCOUNT_SEL;
+पूर्ण CPG_PERFCOUNT_SEL;
 
 /*
- * CPF_PERFCOUNT_SEL enum
+ * CPF_PERFCOUNT_SEL क्रमागत
  */
 
-typedef enum CPF_PERFCOUNT_SEL {
+प्रकार क्रमागत CPF_PERFCOUNT_SEL अणु
 CPF_PERF_SEL_ALWAYS_COUNT                = 0x00000000,
 CPF_PERF_SEL_MIU_STALLED_WAITING_RDREQ_FREE  = 0x00000001,
 CPF_PERF_SEL_TCIU_STALLED_WAITING_ON_FREE  = 0x00000002,
@@ -17115,13 +17116,13 @@ CPF_PERF_SEL_UTCL2IU_STALL_WAIT_ON_FREE  = 0x00000011,
 CPF_PERF_SEL_UTCL2IU_STALL_WAIT_ON_TAGS  = 0x00000012,
 CPF_PERF_SEL_UTCL1_STALL_ON_TRANSLATION  = 0x00000013,
 CPF_PERF_SEL_RCIU_STALL_WAIT_ON_FREE     = 0x00000014,
-} CPF_PERFCOUNT_SEL;
+पूर्ण CPF_PERFCOUNT_SEL;
 
 /*
- * CPC_PERFCOUNT_SEL enum
+ * CPC_PERFCOUNT_SEL क्रमागत
  */
 
-typedef enum CPC_PERFCOUNT_SEL {
+प्रकार क्रमागत CPC_PERFCOUNT_SEL अणु
 CPC_PERF_SEL_ALWAYS_COUNT                = 0x00000000,
 CPC_PERF_SEL_RCIU_STALL_WAIT_ON_FREE     = 0x00000001,
 CPC_PERF_SEL_RCIU_STALL_PRIV_VIOLATION   = 0x00000002,
@@ -17147,93 +17148,93 @@ CPC_PERF_SEL_ME2_BUSY_FOR_PACKET_DECODE  = 0x00000015,
 CPC_PERF_SEL_UTCL2IU_STALL_WAIT_ON_FREE  = 0x00000016,
 CPC_PERF_SEL_UTCL2IU_STALL_WAIT_ON_TAGS  = 0x00000017,
 CPC_PERF_SEL_UTCL1_STALL_ON_TRANSLATION  = 0x00000018,
-} CPC_PERFCOUNT_SEL;
+पूर्ण CPC_PERFCOUNT_SEL;
 
 /*
- * CP_ALPHA_TAG_RAM_SEL enum
+ * CP_ALPHA_TAG_RAM_SEL क्रमागत
  */
 
-typedef enum CP_ALPHA_TAG_RAM_SEL {
+प्रकार क्रमागत CP_ALPHA_TAG_RAM_SEL अणु
 CPG_TAG_RAM                              = 0x00000000,
 CPC_TAG_RAM                              = 0x00000001,
 CPF_TAG_RAM                              = 0x00000002,
 RSV_TAG_RAM                              = 0x00000003,
-} CP_ALPHA_TAG_RAM_SEL;
+पूर्ण CP_ALPHA_TAG_RAM_SEL;
 
 /*
  * SEM_RESPONSE value
  */
 
-#define SEM_ECC_ERROR                  0x00000000
-#define SEM_TRANS_ERROR                0x00000001
-#define SEM_FAILED                     0x00000002
-#define SEM_PASSED                     0x00000003
+#घोषणा SEM_ECC_ERROR                  0x00000000
+#घोषणा SEM_TRANS_ERROR                0x00000001
+#घोषणा SEM_FAILED                     0x00000002
+#घोषणा SEM_PASSED                     0x00000003
 
 /*
  * IQ_RETRY_TYPE value
  */
 
-#define IQ_QUEUE_SLEEP                 0x00000000
-#define IQ_OFFLOAD_RETRY               0x00000001
-#define IQ_SCH_WAVE_MSG                0x00000002
-#define IQ_SEM_REARM                   0x00000003
-#define IQ_DEQUEUE_RETRY               0x00000004
+#घोषणा IQ_QUEUE_SLEEP                 0x00000000
+#घोषणा IQ_OFFLOAD_RETRY               0x00000001
+#घोषणा IQ_SCH_WAVE_MSG                0x00000002
+#घोषणा IQ_SEM_REARM                   0x00000003
+#घोषणा IQ_DEQUEUE_RETRY               0x00000004
 
 /*
  * IQ_INTR_TYPE value
  */
 
-#define IQ_INTR_TYPE_PQ                0x00000000
-#define IQ_INTR_TYPE_IB                0x00000001
-#define IQ_INTR_TYPE_MQD               0x00000002
+#घोषणा IQ_INTR_TYPE_PQ                0x00000000
+#घोषणा IQ_INTR_TYPE_IB                0x00000001
+#घोषणा IQ_INTR_TYPE_MQD               0x00000002
 
 /*
  * VMID_SIZE value
  */
 
-#define VMID_SZ                        0x00000004
+#घोषणा VMID_SZ                        0x00000004
 
 /*
  * CONFIG_SPACE value
  */
 
-#define CONFIG_SPACE_START             0x00002000
-#define CONFIG_SPACE_END               0x00009fff
+#घोषणा CONFIG_SPACE_START             0x00002000
+#घोषणा CONFIG_SPACE_END               0x00009fff
 
 /*
  * CONFIG_SPACE1 value
  */
 
-#define CONFIG_SPACE1_START            0x00002000
-#define CONFIG_SPACE1_END              0x00002bff
+#घोषणा CONFIG_SPACE1_START            0x00002000
+#घोषणा CONFIG_SPACE1_END              0x00002bff
 
 /*
  * CONFIG_SPACE2 value
  */
 
-#define CONFIG_SPACE2_START            0x00003000
-#define CONFIG_SPACE2_END              0x00009fff
+#घोषणा CONFIG_SPACE2_START            0x00003000
+#घोषणा CONFIG_SPACE2_END              0x00009fff
 
 /*
  * UCONFIG_SPACE value
  */
 
-#define UCONFIG_SPACE_START            0x0000c000
-#define UCONFIG_SPACE_END              0x0000ffff
+#घोषणा UCONFIG_SPACE_START            0x0000c000
+#घोषणा UCONFIG_SPACE_END              0x0000ffff
 
 /*
  * PERSISTENT_SPACE value
  */
 
-#define PERSISTENT_SPACE_START         0x00002c00
-#define PERSISTENT_SPACE_END           0x00002fff
+#घोषणा PERSISTENT_SPACE_START         0x00002c00
+#घोषणा PERSISTENT_SPACE_END           0x00002fff
 
 /*
  * CONTEXT_SPACE value
  */
 
-#define CONTEXT_SPACE_START            0x0000a000
-#define CONTEXT_SPACE_END              0x0000bfff
+#घोषणा CONTEXT_SPACE_START            0x0000a000
+#घोषणा CONTEXT_SPACE_END              0x0000bfff
 
 /*******************************************************
  * SQ_UC Enums
@@ -17243,2227 +17244,2227 @@ RSV_TAG_RAM                              = 0x00000003,
  * VALUE_SQ_ENC_SOP1 value
  */
 
-#define SQ_ENC_SOP1_BITS               0xbe800000
-#define SQ_ENC_SOP1_MASK               0xff800000
-#define SQ_ENC_SOP1_FIELD              0x0000017d
+#घोषणा SQ_ENC_SOP1_BITS               0xbe800000
+#घोषणा SQ_ENC_SOP1_MASK               0xff800000
+#घोषणा SQ_ENC_SOP1_FIELD              0x0000017d
 
 /*
  * VALUE_SQ_ENC_SOPC value
  */
 
-#define SQ_ENC_SOPC_BITS               0xbf000000
-#define SQ_ENC_SOPC_MASK               0xff800000
-#define SQ_ENC_SOPC_FIELD              0x0000017e
+#घोषणा SQ_ENC_SOPC_BITS               0xbf000000
+#घोषणा SQ_ENC_SOPC_MASK               0xff800000
+#घोषणा SQ_ENC_SOPC_FIELD              0x0000017e
 
 /*
  * VALUE_SQ_ENC_SOPP value
  */
 
-#define SQ_ENC_SOPP_BITS               0xbf800000
-#define SQ_ENC_SOPP_MASK               0xff800000
-#define SQ_ENC_SOPP_FIELD              0x0000017f
+#घोषणा SQ_ENC_SOPP_BITS               0xbf800000
+#घोषणा SQ_ENC_SOPP_MASK               0xff800000
+#घोषणा SQ_ENC_SOPP_FIELD              0x0000017f
 
 /*
  * VALUE_SQ_ENC_SOPK value
  */
 
-#define SQ_ENC_SOPK_BITS               0xb0000000
-#define SQ_ENC_SOPK_MASK               0xf0000000
-#define SQ_ENC_SOPK_FIELD              0x0000000b
+#घोषणा SQ_ENC_SOPK_BITS               0xb0000000
+#घोषणा SQ_ENC_SOPK_MASK               0xf0000000
+#घोषणा SQ_ENC_SOPK_FIELD              0x0000000b
 
 /*
  * VALUE_SQ_ENC_SOP2 value
  */
 
-#define SQ_ENC_SOP2_BITS               0x80000000
-#define SQ_ENC_SOP2_MASK               0xc0000000
-#define SQ_ENC_SOP2_FIELD              0x00000002
+#घोषणा SQ_ENC_SOP2_BITS               0x80000000
+#घोषणा SQ_ENC_SOP2_MASK               0xc0000000
+#घोषणा SQ_ENC_SOP2_FIELD              0x00000002
 
 /*
  * VALUE_SQ_ENC_SMEM value
  */
 
-#define SQ_ENC_SMEM_BITS               0xc0000000
-#define SQ_ENC_SMEM_MASK               0xfc000000
-#define SQ_ENC_SMEM_FIELD              0x00000030
+#घोषणा SQ_ENC_SMEM_BITS               0xc0000000
+#घोषणा SQ_ENC_SMEM_MASK               0xfc000000
+#घोषणा SQ_ENC_SMEM_FIELD              0x00000030
 
 /*
  * VALUE_SQ_ENC_VOP1 value
  */
 
-#define SQ_ENC_VOP1_BITS               0x7e000000
-#define SQ_ENC_VOP1_MASK               0xfe000000
-#define SQ_ENC_VOP1_FIELD              0x0000003f
+#घोषणा SQ_ENC_VOP1_BITS               0x7e000000
+#घोषणा SQ_ENC_VOP1_MASK               0xfe000000
+#घोषणा SQ_ENC_VOP1_FIELD              0x0000003f
 
 /*
  * VALUE_SQ_ENC_VOPC value
  */
 
-#define SQ_ENC_VOPC_BITS               0x7c000000
-#define SQ_ENC_VOPC_MASK               0xfe000000
-#define SQ_ENC_VOPC_FIELD              0x0000003e
+#घोषणा SQ_ENC_VOPC_BITS               0x7c000000
+#घोषणा SQ_ENC_VOPC_MASK               0xfe000000
+#घोषणा SQ_ENC_VOPC_FIELD              0x0000003e
 
 /*
  * VALUE_SQ_ENC_VOP2 value
  */
 
-#define SQ_ENC_VOP2_BITS               0x00000000
-#define SQ_ENC_VOP2_MASK               0x80000000
-#define SQ_ENC_VOP2_FIELD              0x00000000
+#घोषणा SQ_ENC_VOP2_BITS               0x00000000
+#घोषणा SQ_ENC_VOP2_MASK               0x80000000
+#घोषणा SQ_ENC_VOP2_FIELD              0x00000000
 
 /*
  * VALUE_SQ_ENC_VINTRP value
  */
 
-#define SQ_ENC_VINTRP_BITS             0xd4000000
-#define SQ_ENC_VINTRP_MASK             0xfc000000
-#define SQ_ENC_VINTRP_FIELD            0x00000035
+#घोषणा SQ_ENC_VINTRP_BITS             0xd4000000
+#घोषणा SQ_ENC_VINTRP_MASK             0xfc000000
+#घोषणा SQ_ENC_VINTRP_FIELD            0x00000035
 
 /*
  * VALUE_SQ_ENC_VOP3P value
  */
 
-#define SQ_ENC_VOP3P_BITS              0xd3800000
-#define SQ_ENC_VOP3P_MASK              0xff800000
-#define SQ_ENC_VOP3P_FIELD             0x000001a7
+#घोषणा SQ_ENC_VOP3P_BITS              0xd3800000
+#घोषणा SQ_ENC_VOP3P_MASK              0xff800000
+#घोषणा SQ_ENC_VOP3P_FIELD             0x000001a7
 
 /*
  * VALUE_SQ_ENC_VOP3 value
  */
 
-#define SQ_ENC_VOP3_BITS               0xd0000000
-#define SQ_ENC_VOP3_MASK               0xfc000000
-#define SQ_ENC_VOP3_FIELD              0x00000034
+#घोषणा SQ_ENC_VOP3_BITS               0xd0000000
+#घोषणा SQ_ENC_VOP3_MASK               0xfc000000
+#घोषणा SQ_ENC_VOP3_FIELD              0x00000034
 
 /*
  * VALUE_SQ_ENC_DS value
  */
 
-#define SQ_ENC_DS_BITS                 0xd8000000
-#define SQ_ENC_DS_MASK                 0xfc000000
-#define SQ_ENC_DS_FIELD                0x00000036
+#घोषणा SQ_ENC_DS_BITS                 0xd8000000
+#घोषणा SQ_ENC_DS_MASK                 0xfc000000
+#घोषणा SQ_ENC_DS_FIELD                0x00000036
 
 /*
  * VALUE_SQ_ENC_MUBUF value
  */
 
-#define SQ_ENC_MUBUF_BITS              0xe0000000
-#define SQ_ENC_MUBUF_MASK              0xfc000000
-#define SQ_ENC_MUBUF_FIELD             0x00000038
+#घोषणा SQ_ENC_MUBUF_BITS              0xe0000000
+#घोषणा SQ_ENC_MUBUF_MASK              0xfc000000
+#घोषणा SQ_ENC_MUBUF_FIELD             0x00000038
 
 /*
  * VALUE_SQ_ENC_MTBUF value
  */
 
-#define SQ_ENC_MTBUF_BITS              0xe8000000
-#define SQ_ENC_MTBUF_MASK              0xfc000000
-#define SQ_ENC_MTBUF_FIELD             0x0000003a
+#घोषणा SQ_ENC_MTBUF_BITS              0xe8000000
+#घोषणा SQ_ENC_MTBUF_MASK              0xfc000000
+#घोषणा SQ_ENC_MTBUF_FIELD             0x0000003a
 
 /*
  * VALUE_SQ_ENC_MIMG value
  */
 
-#define SQ_ENC_MIMG_BITS               0xf0000000
-#define SQ_ENC_MIMG_MASK               0xfc000000
-#define SQ_ENC_MIMG_FIELD              0x0000003c
+#घोषणा SQ_ENC_MIMG_BITS               0xf0000000
+#घोषणा SQ_ENC_MIMG_MASK               0xfc000000
+#घोषणा SQ_ENC_MIMG_FIELD              0x0000003c
 
 /*
  * VALUE_SQ_ENC_EXP value
  */
 
-#define SQ_ENC_EXP_BITS                0xc4000000
-#define SQ_ENC_EXP_MASK                0xfc000000
-#define SQ_ENC_EXP_FIELD               0x00000031
+#घोषणा SQ_ENC_EXP_BITS                0xc4000000
+#घोषणा SQ_ENC_EXP_MASK                0xfc000000
+#घोषणा SQ_ENC_EXP_FIELD               0x00000031
 
 /*
  * VALUE_SQ_ENC_FLAT value
  */
 
-#define SQ_ENC_FLAT_BITS               0xdc000000
-#define SQ_ENC_FLAT_MASK               0xfc000000
-#define SQ_ENC_FLAT_FIELD              0x00000037
+#घोषणा SQ_ENC_FLAT_BITS               0xdc000000
+#घोषणा SQ_ENC_FLAT_MASK               0xfc000000
+#घोषणा SQ_ENC_FLAT_FIELD              0x00000037
 
 /*
  * VALUE_SQ_V_OP3_INTRP_COUNT value
  */
 
-#define SQ_V_OP3_INTRP_COUNT           0x0000000c
+#घोषणा SQ_V_OP3_INTRP_COUNT           0x0000000c
 
 /*
  * VALUE_SQ_SENDMSG_SYSTEM_SIZE value
  */
 
-#define SQ_SENDMSG_SYSTEM_SIZE         0x00000003
+#घोषणा SQ_SENDMSG_SYSTEM_SIZE         0x00000003
 
 /*
  * VALUE_SQ_HWREG_ID_SIZE value
  */
 
-#define SQ_HWREG_ID_SIZE               0x00000006
+#घोषणा SQ_HWREG_ID_SIZE               0x00000006
 
 /*
  * VALUE_SQ_V_OPC_COUNT value
  */
 
-#define SQ_V_OPC_COUNT                 0x00000100
+#घोषणा SQ_V_OPC_COUNT                 0x00000100
 
 /*
  * VALUE_SQ_NUM_VGPR value
  */
 
-#define SQ_NUM_VGPR                    0x00000100
+#घोषणा SQ_NUM_VGPR                    0x00000100
 
 /*
  * VALUE_SQ_WAITCNT_LGKM_SHIFT value
  */
 
-#define SQ_WAITCNT_LGKM_SHIFT          0x00000008
+#घोषणा SQ_WAITCNT_LGKM_SHIFT          0x00000008
 
 /*
  * VALUE_SQ_HWREG_ID_SHIFT value
  */
 
-#define SQ_HWREG_ID_SHIFT              0x00000000
+#घोषणा SQ_HWREG_ID_SHIFT              0x00000000
 
 /*
  * VALUE_SQ_EXP_NUM_POS value
  */
 
-#define SQ_EXP_NUM_POS                 0x00000004
+#घोषणा SQ_EXP_NUM_POS                 0x00000004
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOPC_OFFSET value
  */
 
-#define SQ_XLATE_VOP3_TO_VOPC_OFFSET   0x00000000
+#घोषणा SQ_XLATE_VOP3_TO_VOPC_OFFSET   0x00000000
 
 /*
  * VALUE_SQ_V_OP3_2IN_OFFSET value
  */
 
-#define SQ_V_OP3_2IN_OFFSET            0x00000280
+#घोषणा SQ_V_OP3_2IN_OFFSET            0x00000280
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOP2_OFFSET value
  */
 
-#define SQ_XLATE_VOP3_TO_VOP2_OFFSET   0x00000100
+#घोषणा SQ_XLATE_VOP3_TO_VOP2_OFFSET   0x00000100
 
 /*
  * VALUE_SQ_EXP_NUM_MRT value
  */
 
-#define SQ_EXP_NUM_MRT                 0x00000008
+#घोषणा SQ_EXP_NUM_MRT                 0x00000008
 
 /*
  * VALUE_SQ_NUM_TTMP value
  */
 
-#define SQ_NUM_TTMP                    0x00000010
+#घोषणा SQ_NUM_TTMP                    0x00000010
 
 /*
  * VALUE_SQ_SENDMSG_STREAMID_SHIFT value
  */
 
-#define SQ_SENDMSG_STREAMID_SHIFT      0x00000008
+#घोषणा SQ_SENDMSG_STREAMID_SHIFT      0x00000008
 
 /*
  * VALUE_SQ_V_OP1_COUNT value
  */
 
-#define SQ_V_OP1_COUNT                 0x00000080
+#घोषणा SQ_V_OP1_COUNT                 0x00000080
 
 /*
  * VALUE_SQ_WAITCNT_LGKM_SIZE value
  */
 
-#define SQ_WAITCNT_LGKM_SIZE           0x00000004
+#घोषणा SQ_WAITCNT_LGKM_SIZE           0x00000004
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOPC_COUNT value
  */
 
-#define SQ_XLATE_VOP3_TO_VOPC_COUNT    0x00000100
+#घोषणा SQ_XLATE_VOP3_TO_VOPC_COUNT    0x00000100
 
 /*
  * VALUE_SQ_SENDMSG_MSG_SHIFT value
  */
 
-#define SQ_SENDMSG_MSG_SHIFT           0x00000000
+#घोषणा SQ_SENDMSG_MSG_SHIFT           0x00000000
 
 /*
  * VALUE_SQ_V_OP3_3IN_OFFSET value
  */
 
-#define SQ_V_OP3_3IN_OFFSET            0x000001c0
+#घोषणा SQ_V_OP3_3IN_OFFSET            0x000001c0
 
 /*
  * VALUE_SQ_HWREG_OFFSET_SHIFT value
  */
 
-#define SQ_HWREG_OFFSET_SHIFT          0x00000006
+#घोषणा SQ_HWREG_OFFSET_SHIFT          0x00000006
 
 /*
  * VALUE_SQ_HWREG_SIZE_SHIFT value
  */
 
-#define SQ_HWREG_SIZE_SHIFT            0x0000000b
+#घोषणा SQ_HWREG_SIZE_SHIFT            0x0000000b
 
 /*
  * VALUE_SQ_HWREG_OFFSET_SIZE value
  */
 
-#define SQ_HWREG_OFFSET_SIZE           0x00000005
+#घोषणा SQ_HWREG_OFFSET_SIZE           0x00000005
 
 /*
  * VALUE_SQ_V_OP3_3IN_COUNT value
  */
 
-#define SQ_V_OP3_3IN_COUNT             0x000000b0
+#घोषणा SQ_V_OP3_3IN_COUNT             0x000000b0
 
 /*
  * VALUE_SQ_SENDMSG_MSG_SIZE value
  */
 
-#define SQ_SENDMSG_MSG_SIZE            0x00000004
+#घोषणा SQ_SENDMSG_MSG_SIZE            0x00000004
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOP1_COUNT value
  */
 
-#define SQ_XLATE_VOP3_TO_VOP1_COUNT    0x00000080
+#घोषणा SQ_XLATE_VOP3_TO_VOP1_COUNT    0x00000080
 
 /*
  * VALUE_SQ_EXP_NUM_GDS value
  */
 
-#define SQ_EXP_NUM_GDS                 0x00000005
+#घोषणा SQ_EXP_NUM_GDS                 0x00000005
 
 /*
  * VALUE_SQ_V_OP2_COUNT value
  */
 
-#define SQ_V_OP2_COUNT                 0x00000040
+#घोषणा SQ_V_OP2_COUNT                 0x00000040
 
 /*
  * VALUE_SQ_SENDMSG_GSOP_SIZE value
  */
 
-#define SQ_SENDMSG_GSOP_SIZE           0x00000002
+#घोषणा SQ_SENDMSG_GSOP_SIZE           0x00000002
 
 /*
  * VALUE_SQ_WAITCNT_VM_SHIFT value
  */
 
-#define SQ_WAITCNT_VM_SHIFT            0x00000000
+#घोषणा SQ_WAITCNT_VM_SHIFT            0x00000000
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOP3P_COUNT value
  */
 
-#define SQ_XLATE_VOP3_TO_VOP3P_COUNT   0x00000080
+#घोषणा SQ_XLATE_VOP3_TO_VOP3P_COUNT   0x00000080
 
 /*
  * VALUE_SQ_V_OP3_2IN_COUNT value
  */
 
-#define SQ_V_OP3_2IN_COUNT             0x00000080
+#घोषणा SQ_V_OP3_2IN_COUNT             0x00000080
 
 /*
  * VALUE_SQ_SENDMSG_SYSTEM_SHIFT value
  */
 
-#define SQ_SENDMSG_SYSTEM_SHIFT        0x00000004
+#घोषणा SQ_SENDMSG_SYSTEM_SHIFT        0x00000004
 
 /*
  * VALUE_SQ_WAITCNT_VM_SIZE value
  */
 
-#define SQ_WAITCNT_VM_SIZE             0x00000004
+#घोषणा SQ_WAITCNT_VM_SIZE             0x00000004
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOP3P_OFFSET value
  */
 
-#define SQ_XLATE_VOP3_TO_VOP3P_OFFSET  0x00000380
+#घोषणा SQ_XLATE_VOP3_TO_VOP3P_OFFSET  0x00000380
 
 /*
  * VALUE_SQ_WAITCNT_EXP_SHIFT value
  */
 
-#define SQ_WAITCNT_EXP_SHIFT           0x00000004
+#घोषणा SQ_WAITCNT_EXP_SHIFT           0x00000004
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOP2_COUNT value
  */
 
-#define SQ_XLATE_VOP3_TO_VOP2_COUNT    0x00000040
+#घोषणा SQ_XLATE_VOP3_TO_VOP2_COUNT    0x00000040
 
 /*
  * VALUE_SQ_EXP_NUM_PARAM value
  */
 
-#define SQ_EXP_NUM_PARAM               0x00000020
+#घोषणा SQ_EXP_NUM_PARAM               0x00000020
 
 /*
  * VALUE_SQ_HWREG_SIZE_SIZE value
  */
 
-#define SQ_HWREG_SIZE_SIZE             0x00000005
+#घोषणा SQ_HWREG_SIZE_SIZE             0x00000005
 
 /*
  * VALUE_SQ_WAITCNT_EXP_SIZE value
  */
 
-#define SQ_WAITCNT_EXP_SIZE            0x00000003
+#घोषणा SQ_WAITCNT_EXP_SIZE            0x00000003
 
 /*
  * VALUE_SQ_V_OP3_INTRP_OFFSET value
  */
 
-#define SQ_V_OP3_INTRP_OFFSET          0x00000274
+#घोषणा SQ_V_OP3_INTRP_OFFSET          0x00000274
 
 /*
  * VALUE_SQ_SENDMSG_GSOP_SHIFT value
  */
 
-#define SQ_SENDMSG_GSOP_SHIFT          0x00000004
+#घोषणा SQ_SENDMSG_GSOP_SHIFT          0x00000004
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VINTRP_OFFSET value
  */
 
-#define SQ_XLATE_VOP3_TO_VINTRP_OFFSET 0x00000270
+#घोषणा SQ_XLATE_VOP3_TO_VINTRP_OFFSET 0x00000270
 
 /*
  * VALUE_SQ_NUM_ATTR value
  */
 
-#define SQ_NUM_ATTR                    0x00000021
+#घोषणा SQ_NUM_ATTR                    0x00000021
 
 /*
  * VALUE_SQ_NUM_SGPR value
  */
 
-#define SQ_NUM_SGPR                    0x00000066
+#घोषणा SQ_NUM_SGPR                    0x00000066
 
 /*
  * VALUE_SQ_SRC_VGPR_BIT value
  */
 
-#define SQ_SRC_VGPR_BIT                0x00000100
+#घोषणा SQ_SRC_VGPR_BIT                0x00000100
 
 /*
  * VALUE_SQ_V_INTRP_COUNT value
  */
 
-#define SQ_V_INTRP_COUNT               0x00000004
+#घोषणा SQ_V_INTRP_COUNT               0x00000004
 
 /*
  * VALUE_SQ_SENDMSG_STREAMID_SIZE value
  */
 
-#define SQ_SENDMSG_STREAMID_SIZE       0x00000002
+#घोषणा SQ_SENDMSG_STREAMID_SIZE       0x00000002
 
 /*
  * VALUE_SQ_V_OP3P_COUNT value
  */
 
-#define SQ_V_OP3P_COUNT                0x00000080
+#घोषणा SQ_V_OP3P_COUNT                0x00000080
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VOP1_OFFSET value
  */
 
-#define SQ_XLATE_VOP3_TO_VOP1_OFFSET   0x00000140
+#घोषणा SQ_XLATE_VOP3_TO_VOP1_OFFSET   0x00000140
 
 /*
  * VALUE_SQ_XLATE_VOP3_TO_VINTRP_COUNT value
  */
 
-#define SQ_XLATE_VOP3_TO_VINTRP_COUNT  0x00000004
+#घोषणा SQ_XLATE_VOP3_TO_VINTRP_COUNT  0x00000004
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_DPP value
  */
 
-#define SQ_SRC_DPP                     0x000000fa
+#घोषणा SQ_SRC_DPP                     0x000000fa
 
 /*
  * VALUE_SQ_OP_MTBUF value
  */
 
-#define SQ_TBUFFER_LOAD_FORMAT_X       0x00000000
-#define SQ_TBUFFER_LOAD_FORMAT_XY      0x00000001
-#define SQ_TBUFFER_LOAD_FORMAT_XYZ     0x00000002
-#define SQ_TBUFFER_LOAD_FORMAT_XYZW    0x00000003
-#define SQ_TBUFFER_STORE_FORMAT_X      0x00000004
-#define SQ_TBUFFER_STORE_FORMAT_XY     0x00000005
-#define SQ_TBUFFER_STORE_FORMAT_XYZ    0x00000006
-#define SQ_TBUFFER_STORE_FORMAT_XYZW   0x00000007
-#define SQ_TBUFFER_LOAD_FORMAT_D16_X   0x00000008
-#define SQ_TBUFFER_LOAD_FORMAT_D16_XY  0x00000009
-#define SQ_TBUFFER_LOAD_FORMAT_D16_XYZ 0x0000000a
-#define SQ_TBUFFER_LOAD_FORMAT_D16_XYZW 0x0000000b
-#define SQ_TBUFFER_STORE_FORMAT_D16_X  0x0000000c
-#define SQ_TBUFFER_STORE_FORMAT_D16_XY 0x0000000d
-#define SQ_TBUFFER_STORE_FORMAT_D16_XYZ 0x0000000e
-#define SQ_TBUFFER_STORE_FORMAT_D16_XYZW 0x0000000f
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_X       0x00000000
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_XY      0x00000001
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_XYZ     0x00000002
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_XYZW    0x00000003
+#घोषणा SQ_TBUFFER_STORE_FORMAT_X      0x00000004
+#घोषणा SQ_TBUFFER_STORE_FORMAT_XY     0x00000005
+#घोषणा SQ_TBUFFER_STORE_FORMAT_XYZ    0x00000006
+#घोषणा SQ_TBUFFER_STORE_FORMAT_XYZW   0x00000007
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_X   0x00000008
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_XY  0x00000009
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_XYZ 0x0000000a
+#घोषणा SQ_TBUFFER_LOAD_FORMAT_D16_XYZW 0x0000000b
+#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_X  0x0000000c
+#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_XY 0x0000000d
+#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_XYZ 0x0000000e
+#घोषणा SQ_TBUFFER_STORE_FORMAT_D16_XYZW 0x0000000f
 
 /*
  * VALUE_SQ_OP_FLAT_GLBL value
  */
 
-#define SQ_GLOBAL_LOAD_UBYTE           0x00000010
-#define SQ_GLOBAL_LOAD_SBYTE           0x00000011
-#define SQ_GLOBAL_LOAD_USHORT          0x00000012
-#define SQ_GLOBAL_LOAD_SSHORT          0x00000013
-#define SQ_GLOBAL_LOAD_DWORD           0x00000014
-#define SQ_GLOBAL_LOAD_DWORDX2         0x00000015
-#define SQ_GLOBAL_LOAD_DWORDX3         0x00000016
-#define SQ_GLOBAL_LOAD_DWORDX4         0x00000017
-#define SQ_GLOBAL_STORE_BYTE           0x00000018
-#define SQ_GLOBAL_STORE_SHORT          0x0000001a
-#define SQ_GLOBAL_STORE_DWORD          0x0000001c
-#define SQ_GLOBAL_STORE_DWORDX2        0x0000001d
-#define SQ_GLOBAL_STORE_DWORDX3        0x0000001e
-#define SQ_GLOBAL_STORE_DWORDX4        0x0000001f
-#define SQ_GLOBAL_ATOMIC_SWAP          0x00000040
-#define SQ_GLOBAL_ATOMIC_CMPSWAP       0x00000041
-#define SQ_GLOBAL_ATOMIC_ADD           0x00000042
-#define SQ_GLOBAL_ATOMIC_SUB           0x00000043
-#define SQ_GLOBAL_ATOMIC_SMIN          0x00000044
-#define SQ_GLOBAL_ATOMIC_UMIN          0x00000045
-#define SQ_GLOBAL_ATOMIC_SMAX          0x00000046
-#define SQ_GLOBAL_ATOMIC_UMAX          0x00000047
-#define SQ_GLOBAL_ATOMIC_AND           0x00000048
-#define SQ_GLOBAL_ATOMIC_OR            0x00000049
-#define SQ_GLOBAL_ATOMIC_XOR           0x0000004a
-#define SQ_GLOBAL_ATOMIC_INC           0x0000004b
-#define SQ_GLOBAL_ATOMIC_DEC           0x0000004c
-#define SQ_GLOBAL_ATOMIC_SWAP_X2       0x00000060
-#define SQ_GLOBAL_ATOMIC_CMPSWAP_X2    0x00000061
-#define SQ_GLOBAL_ATOMIC_ADD_X2        0x00000062
-#define SQ_GLOBAL_ATOMIC_SUB_X2        0x00000063
-#define SQ_GLOBAL_ATOMIC_SMIN_X2       0x00000064
-#define SQ_GLOBAL_ATOMIC_UMIN_X2       0x00000065
-#define SQ_GLOBAL_ATOMIC_SMAX_X2       0x00000066
-#define SQ_GLOBAL_ATOMIC_UMAX_X2       0x00000067
-#define SQ_GLOBAL_ATOMIC_AND_X2        0x00000068
-#define SQ_GLOBAL_ATOMIC_OR_X2         0x00000069
-#define SQ_GLOBAL_ATOMIC_XOR_X2        0x0000006a
-#define SQ_GLOBAL_ATOMIC_INC_X2        0x0000006b
-#define SQ_GLOBAL_ATOMIC_DEC_X2        0x0000006c
+#घोषणा SQ_GLOBAL_LOAD_UBYTE           0x00000010
+#घोषणा SQ_GLOBAL_LOAD_SBYTE           0x00000011
+#घोषणा SQ_GLOBAL_LOAD_USHORT          0x00000012
+#घोषणा SQ_GLOBAL_LOAD_SSHORT          0x00000013
+#घोषणा SQ_GLOBAL_LOAD_DWORD           0x00000014
+#घोषणा SQ_GLOBAL_LOAD_DWORDX2         0x00000015
+#घोषणा SQ_GLOBAL_LOAD_DWORDX3         0x00000016
+#घोषणा SQ_GLOBAL_LOAD_DWORDX4         0x00000017
+#घोषणा SQ_GLOBAL_STORE_BYTE           0x00000018
+#घोषणा SQ_GLOBAL_STORE_SHORT          0x0000001a
+#घोषणा SQ_GLOBAL_STORE_DWORD          0x0000001c
+#घोषणा SQ_GLOBAL_STORE_DWORDX2        0x0000001d
+#घोषणा SQ_GLOBAL_STORE_DWORDX3        0x0000001e
+#घोषणा SQ_GLOBAL_STORE_DWORDX4        0x0000001f
+#घोषणा SQ_GLOBAL_ATOMIC_SWAP          0x00000040
+#घोषणा SQ_GLOBAL_ATOMIC_CMPSWAP       0x00000041
+#घोषणा SQ_GLOBAL_ATOMIC_ADD           0x00000042
+#घोषणा SQ_GLOBAL_ATOMIC_SUB           0x00000043
+#घोषणा SQ_GLOBAL_ATOMIC_SMIN          0x00000044
+#घोषणा SQ_GLOBAL_ATOMIC_UMIN          0x00000045
+#घोषणा SQ_GLOBAL_ATOMIC_SMAX          0x00000046
+#घोषणा SQ_GLOBAL_ATOMIC_UMAX          0x00000047
+#घोषणा SQ_GLOBAL_ATOMIC_AND           0x00000048
+#घोषणा SQ_GLOBAL_ATOMIC_OR            0x00000049
+#घोषणा SQ_GLOBAL_ATOMIC_XOR           0x0000004a
+#घोषणा SQ_GLOBAL_ATOMIC_INC           0x0000004b
+#घोषणा SQ_GLOBAL_ATOMIC_DEC           0x0000004c
+#घोषणा SQ_GLOBAL_ATOMIC_SWAP_X2       0x00000060
+#घोषणा SQ_GLOBAL_ATOMIC_CMPSWAP_X2    0x00000061
+#घोषणा SQ_GLOBAL_ATOMIC_ADD_X2        0x00000062
+#घोषणा SQ_GLOBAL_ATOMIC_SUB_X2        0x00000063
+#घोषणा SQ_GLOBAL_ATOMIC_SMIN_X2       0x00000064
+#घोषणा SQ_GLOBAL_ATOMIC_UMIN_X2       0x00000065
+#घोषणा SQ_GLOBAL_ATOMIC_SMAX_X2       0x00000066
+#घोषणा SQ_GLOBAL_ATOMIC_UMAX_X2       0x00000067
+#घोषणा SQ_GLOBAL_ATOMIC_AND_X2        0x00000068
+#घोषणा SQ_GLOBAL_ATOMIC_OR_X2         0x00000069
+#घोषणा SQ_GLOBAL_ATOMIC_XOR_X2        0x0000006a
+#घोषणा SQ_GLOBAL_ATOMIC_INC_X2        0x0000006b
+#घोषणा SQ_GLOBAL_ATOMIC_DEC_X2        0x0000006c
 
 /*
  * VALUE_SQ_VGPR value
  */
 
-#define SQ_VGPR0                       0x00000000
+#घोषणा SQ_VGPR0                       0x00000000
 
 /*
  * VALUE_SQ_OP_FLAT_SCRATCH value
  */
 
-#define SQ_SCRATCH_LOAD_UBYTE          0x00000010
-#define SQ_SCRATCH_LOAD_SBYTE          0x00000011
-#define SQ_SCRATCH_LOAD_USHORT         0x00000012
-#define SQ_SCRATCH_LOAD_SSHORT         0x00000013
-#define SQ_SCRATCH_LOAD_DWORD          0x00000014
-#define SQ_SCRATCH_LOAD_DWORDX2        0x00000015
-#define SQ_SCRATCH_LOAD_DWORDX3        0x00000016
-#define SQ_SCRATCH_LOAD_DWORDX4        0x00000017
-#define SQ_SCRATCH_STORE_BYTE          0x00000018
-#define SQ_SCRATCH_STORE_SHORT         0x0000001a
-#define SQ_SCRATCH_STORE_DWORD         0x0000001c
-#define SQ_SCRATCH_STORE_DWORDX2       0x0000001d
-#define SQ_SCRATCH_STORE_DWORDX3       0x0000001e
-#define SQ_SCRATCH_STORE_DWORDX4       0x0000001f
+#घोषणा SQ_SCRATCH_LOAD_UBYTE          0x00000010
+#घोषणा SQ_SCRATCH_LOAD_SBYTE          0x00000011
+#घोषणा SQ_SCRATCH_LOAD_USHORT         0x00000012
+#घोषणा SQ_SCRATCH_LOAD_SSHORT         0x00000013
+#घोषणा SQ_SCRATCH_LOAD_DWORD          0x00000014
+#घोषणा SQ_SCRATCH_LOAD_DWORDX2        0x00000015
+#घोषणा SQ_SCRATCH_LOAD_DWORDX3        0x00000016
+#घोषणा SQ_SCRATCH_LOAD_DWORDX4        0x00000017
+#घोषणा SQ_SCRATCH_STORE_BYTE          0x00000018
+#घोषणा SQ_SCRATCH_STORE_SHORT         0x0000001a
+#घोषणा SQ_SCRATCH_STORE_DWORD         0x0000001c
+#घोषणा SQ_SCRATCH_STORE_DWORDX2       0x0000001d
+#घोषणा SQ_SCRATCH_STORE_DWORDX3       0x0000001e
+#घोषणा SQ_SCRATCH_STORE_DWORDX4       0x0000001f
 
 /*
  * VALUE_SQ_VCC value
  */
 
-#define SQ_VCC_ALL                     0x00000000
+#घोषणा SQ_VCC_ALL                     0x00000000
 
 /*
  * VALUE_SQ_SSRC_0_63_INLINES value
  */
 
-#define SQ_SRC_0                       0x00000080
-#define SQ_SRC_1_INT                   0x00000081
-#define SQ_SRC_2_INT                   0x00000082
-#define SQ_SRC_3_INT                   0x00000083
-#define SQ_SRC_4_INT                   0x00000084
-#define SQ_SRC_5_INT                   0x00000085
-#define SQ_SRC_6_INT                   0x00000086
-#define SQ_SRC_7_INT                   0x00000087
-#define SQ_SRC_8_INT                   0x00000088
-#define SQ_SRC_9_INT                   0x00000089
-#define SQ_SRC_10_INT                  0x0000008a
-#define SQ_SRC_11_INT                  0x0000008b
-#define SQ_SRC_12_INT                  0x0000008c
-#define SQ_SRC_13_INT                  0x0000008d
-#define SQ_SRC_14_INT                  0x0000008e
-#define SQ_SRC_15_INT                  0x0000008f
-#define SQ_SRC_16_INT                  0x00000090
-#define SQ_SRC_17_INT                  0x00000091
-#define SQ_SRC_18_INT                  0x00000092
-#define SQ_SRC_19_INT                  0x00000093
-#define SQ_SRC_20_INT                  0x00000094
-#define SQ_SRC_21_INT                  0x00000095
-#define SQ_SRC_22_INT                  0x00000096
-#define SQ_SRC_23_INT                  0x00000097
-#define SQ_SRC_24_INT                  0x00000098
-#define SQ_SRC_25_INT                  0x00000099
-#define SQ_SRC_26_INT                  0x0000009a
-#define SQ_SRC_27_INT                  0x0000009b
-#define SQ_SRC_28_INT                  0x0000009c
-#define SQ_SRC_29_INT                  0x0000009d
-#define SQ_SRC_30_INT                  0x0000009e
-#define SQ_SRC_31_INT                  0x0000009f
-#define SQ_SRC_32_INT                  0x000000a0
-#define SQ_SRC_33_INT                  0x000000a1
-#define SQ_SRC_34_INT                  0x000000a2
-#define SQ_SRC_35_INT                  0x000000a3
-#define SQ_SRC_36_INT                  0x000000a4
-#define SQ_SRC_37_INT                  0x000000a5
-#define SQ_SRC_38_INT                  0x000000a6
-#define SQ_SRC_39_INT                  0x000000a7
-#define SQ_SRC_40_INT                  0x000000a8
-#define SQ_SRC_41_INT                  0x000000a9
-#define SQ_SRC_42_INT                  0x000000aa
-#define SQ_SRC_43_INT                  0x000000ab
-#define SQ_SRC_44_INT                  0x000000ac
-#define SQ_SRC_45_INT                  0x000000ad
-#define SQ_SRC_46_INT                  0x000000ae
-#define SQ_SRC_47_INT                  0x000000af
-#define SQ_SRC_48_INT                  0x000000b0
-#define SQ_SRC_49_INT                  0x000000b1
-#define SQ_SRC_50_INT                  0x000000b2
-#define SQ_SRC_51_INT                  0x000000b3
-#define SQ_SRC_52_INT                  0x000000b4
-#define SQ_SRC_53_INT                  0x000000b5
-#define SQ_SRC_54_INT                  0x000000b6
-#define SQ_SRC_55_INT                  0x000000b7
-#define SQ_SRC_56_INT                  0x000000b8
-#define SQ_SRC_57_INT                  0x000000b9
-#define SQ_SRC_58_INT                  0x000000ba
-#define SQ_SRC_59_INT                  0x000000bb
-#define SQ_SRC_60_INT                  0x000000bc
-#define SQ_SRC_61_INT                  0x000000bd
-#define SQ_SRC_62_INT                  0x000000be
-#define SQ_SRC_63_INT                  0x000000bf
+#घोषणा SQ_SRC_0                       0x00000080
+#घोषणा SQ_SRC_1_INT                   0x00000081
+#घोषणा SQ_SRC_2_INT                   0x00000082
+#घोषणा SQ_SRC_3_INT                   0x00000083
+#घोषणा SQ_SRC_4_INT                   0x00000084
+#घोषणा SQ_SRC_5_INT                   0x00000085
+#घोषणा SQ_SRC_6_INT                   0x00000086
+#घोषणा SQ_SRC_7_INT                   0x00000087
+#घोषणा SQ_SRC_8_INT                   0x00000088
+#घोषणा SQ_SRC_9_INT                   0x00000089
+#घोषणा SQ_SRC_10_INT                  0x0000008a
+#घोषणा SQ_SRC_11_INT                  0x0000008b
+#घोषणा SQ_SRC_12_INT                  0x0000008c
+#घोषणा SQ_SRC_13_INT                  0x0000008d
+#घोषणा SQ_SRC_14_INT                  0x0000008e
+#घोषणा SQ_SRC_15_INT                  0x0000008f
+#घोषणा SQ_SRC_16_INT                  0x00000090
+#घोषणा SQ_SRC_17_INT                  0x00000091
+#घोषणा SQ_SRC_18_INT                  0x00000092
+#घोषणा SQ_SRC_19_INT                  0x00000093
+#घोषणा SQ_SRC_20_INT                  0x00000094
+#घोषणा SQ_SRC_21_INT                  0x00000095
+#घोषणा SQ_SRC_22_INT                  0x00000096
+#घोषणा SQ_SRC_23_INT                  0x00000097
+#घोषणा SQ_SRC_24_INT                  0x00000098
+#घोषणा SQ_SRC_25_INT                  0x00000099
+#घोषणा SQ_SRC_26_INT                  0x0000009a
+#घोषणा SQ_SRC_27_INT                  0x0000009b
+#घोषणा SQ_SRC_28_INT                  0x0000009c
+#घोषणा SQ_SRC_29_INT                  0x0000009d
+#घोषणा SQ_SRC_30_INT                  0x0000009e
+#घोषणा SQ_SRC_31_INT                  0x0000009f
+#घोषणा SQ_SRC_32_INT                  0x000000a0
+#घोषणा SQ_SRC_33_INT                  0x000000a1
+#घोषणा SQ_SRC_34_INT                  0x000000a2
+#घोषणा SQ_SRC_35_INT                  0x000000a3
+#घोषणा SQ_SRC_36_INT                  0x000000a4
+#घोषणा SQ_SRC_37_INT                  0x000000a5
+#घोषणा SQ_SRC_38_INT                  0x000000a6
+#घोषणा SQ_SRC_39_INT                  0x000000a7
+#घोषणा SQ_SRC_40_INT                  0x000000a8
+#घोषणा SQ_SRC_41_INT                  0x000000a9
+#घोषणा SQ_SRC_42_INT                  0x000000aa
+#घोषणा SQ_SRC_43_INT                  0x000000ab
+#घोषणा SQ_SRC_44_INT                  0x000000ac
+#घोषणा SQ_SRC_45_INT                  0x000000ad
+#घोषणा SQ_SRC_46_INT                  0x000000ae
+#घोषणा SQ_SRC_47_INT                  0x000000af
+#घोषणा SQ_SRC_48_INT                  0x000000b0
+#घोषणा SQ_SRC_49_INT                  0x000000b1
+#घोषणा SQ_SRC_50_INT                  0x000000b2
+#घोषणा SQ_SRC_51_INT                  0x000000b3
+#घोषणा SQ_SRC_52_INT                  0x000000b4
+#घोषणा SQ_SRC_53_INT                  0x000000b5
+#घोषणा SQ_SRC_54_INT                  0x000000b6
+#घोषणा SQ_SRC_55_INT                  0x000000b7
+#घोषणा SQ_SRC_56_INT                  0x000000b8
+#घोषणा SQ_SRC_57_INT                  0x000000b9
+#घोषणा SQ_SRC_58_INT                  0x000000ba
+#घोषणा SQ_SRC_59_INT                  0x000000bb
+#घोषणा SQ_SRC_60_INT                  0x000000bc
+#घोषणा SQ_SRC_61_INT                  0x000000bd
+#घोषणा SQ_SRC_62_INT                  0x000000be
+#घोषणा SQ_SRC_63_INT                  0x000000bf
 
 /*
  * VALUE_SQ_OP_MIMG value
  */
 
-#define SQ_IMAGE_LOAD                  0x00000000
-#define SQ_IMAGE_LOAD_MIP              0x00000001
-#define SQ_IMAGE_LOAD_PCK              0x00000002
-#define SQ_IMAGE_LOAD_PCK_SGN          0x00000003
-#define SQ_IMAGE_LOAD_MIP_PCK          0x00000004
-#define SQ_IMAGE_LOAD_MIP_PCK_SGN      0x00000005
-#define SQ_IMAGE_STORE                 0x00000008
-#define SQ_IMAGE_STORE_MIP             0x00000009
-#define SQ_IMAGE_STORE_PCK             0x0000000a
-#define SQ_IMAGE_STORE_MIP_PCK         0x0000000b
-#define SQ_IMAGE_GET_RESINFO           0x0000000e
-#define SQ_IMAGE_ATOMIC_SWAP           0x00000010
-#define SQ_IMAGE_ATOMIC_CMPSWAP        0x00000011
-#define SQ_IMAGE_ATOMIC_ADD            0x00000012
-#define SQ_IMAGE_ATOMIC_SUB            0x00000013
-#define SQ_IMAGE_ATOMIC_SMIN           0x00000014
-#define SQ_IMAGE_ATOMIC_UMIN           0x00000015
-#define SQ_IMAGE_ATOMIC_SMAX           0x00000016
-#define SQ_IMAGE_ATOMIC_UMAX           0x00000017
-#define SQ_IMAGE_ATOMIC_AND            0x00000018
-#define SQ_IMAGE_ATOMIC_OR             0x00000019
-#define SQ_IMAGE_ATOMIC_XOR            0x0000001a
-#define SQ_IMAGE_ATOMIC_INC            0x0000001b
-#define SQ_IMAGE_ATOMIC_DEC            0x0000001c
-#define SQ_IMAGE_SAMPLE                0x00000020
-#define SQ_IMAGE_SAMPLE_CL             0x00000021
-#define SQ_IMAGE_SAMPLE_D              0x00000022
-#define SQ_IMAGE_SAMPLE_D_CL           0x00000023
-#define SQ_IMAGE_SAMPLE_L              0x00000024
-#define SQ_IMAGE_SAMPLE_B              0x00000025
-#define SQ_IMAGE_SAMPLE_B_CL           0x00000026
-#define SQ_IMAGE_SAMPLE_LZ             0x00000027
-#define SQ_IMAGE_SAMPLE_C              0x00000028
-#define SQ_IMAGE_SAMPLE_C_CL           0x00000029
-#define SQ_IMAGE_SAMPLE_C_D            0x0000002a
-#define SQ_IMAGE_SAMPLE_C_D_CL         0x0000002b
-#define SQ_IMAGE_SAMPLE_C_L            0x0000002c
-#define SQ_IMAGE_SAMPLE_C_B            0x0000002d
-#define SQ_IMAGE_SAMPLE_C_B_CL         0x0000002e
-#define SQ_IMAGE_SAMPLE_C_LZ           0x0000002f
-#define SQ_IMAGE_SAMPLE_O              0x00000030
-#define SQ_IMAGE_SAMPLE_CL_O           0x00000031
-#define SQ_IMAGE_SAMPLE_D_O            0x00000032
-#define SQ_IMAGE_SAMPLE_D_CL_O         0x00000033
-#define SQ_IMAGE_SAMPLE_L_O            0x00000034
-#define SQ_IMAGE_SAMPLE_B_O            0x00000035
-#define SQ_IMAGE_SAMPLE_B_CL_O         0x00000036
-#define SQ_IMAGE_SAMPLE_LZ_O           0x00000037
-#define SQ_IMAGE_SAMPLE_C_O            0x00000038
-#define SQ_IMAGE_SAMPLE_C_CL_O         0x00000039
-#define SQ_IMAGE_SAMPLE_C_D_O          0x0000003a
-#define SQ_IMAGE_SAMPLE_C_D_CL_O       0x0000003b
-#define SQ_IMAGE_SAMPLE_C_L_O          0x0000003c
-#define SQ_IMAGE_SAMPLE_C_B_O          0x0000003d
-#define SQ_IMAGE_SAMPLE_C_B_CL_O       0x0000003e
-#define SQ_IMAGE_SAMPLE_C_LZ_O         0x0000003f
-#define SQ_IMAGE_GATHER4               0x00000040
-#define SQ_IMAGE_GATHER4_CL            0x00000041
-#define SQ_IMAGE_GATHER4H              0x00000042
-#define SQ_IMAGE_GATHER4_L             0x00000044
-#define SQ_IMAGE_GATHER4_B             0x00000045
-#define SQ_IMAGE_GATHER4_B_CL          0x00000046
-#define SQ_IMAGE_GATHER4_LZ            0x00000047
-#define SQ_IMAGE_GATHER4_C             0x00000048
-#define SQ_IMAGE_GATHER4_C_CL          0x00000049
-#define SQ_IMAGE_GATHER4H_PCK          0x0000004a
-#define SQ_IMAGE_GATHER8H_PCK          0x0000004b
-#define SQ_IMAGE_GATHER4_C_L           0x0000004c
-#define SQ_IMAGE_GATHER4_C_B           0x0000004d
-#define SQ_IMAGE_GATHER4_C_B_CL        0x0000004e
-#define SQ_IMAGE_GATHER4_C_LZ          0x0000004f
-#define SQ_IMAGE_GATHER4_O             0x00000050
-#define SQ_IMAGE_GATHER4_CL_O          0x00000051
-#define SQ_IMAGE_GATHER4_L_O           0x00000054
-#define SQ_IMAGE_GATHER4_B_O           0x00000055
-#define SQ_IMAGE_GATHER4_B_CL_O        0x00000056
-#define SQ_IMAGE_GATHER4_LZ_O          0x00000057
-#define SQ_IMAGE_GATHER4_C_O           0x00000058
-#define SQ_IMAGE_GATHER4_C_CL_O        0x00000059
-#define SQ_IMAGE_GATHER4_C_L_O         0x0000005c
-#define SQ_IMAGE_GATHER4_C_B_O         0x0000005d
-#define SQ_IMAGE_GATHER4_C_B_CL_O      0x0000005e
-#define SQ_IMAGE_GATHER4_C_LZ_O        0x0000005f
-#define SQ_IMAGE_GET_LOD               0x00000060
-#define SQ_IMAGE_SAMPLE_CD             0x00000068
-#define SQ_IMAGE_SAMPLE_CD_CL          0x00000069
-#define SQ_IMAGE_SAMPLE_C_CD           0x0000006a
-#define SQ_IMAGE_SAMPLE_C_CD_CL        0x0000006b
-#define SQ_IMAGE_SAMPLE_CD_O           0x0000006c
-#define SQ_IMAGE_SAMPLE_CD_CL_O        0x0000006d
-#define SQ_IMAGE_SAMPLE_C_CD_O         0x0000006e
-#define SQ_IMAGE_SAMPLE_C_CD_CL_O      0x0000006f
-#define SQ_IMAGE_RSRC256               0x0000007e
-#define SQ_IMAGE_SAMPLER               0x0000007f
+#घोषणा SQ_IMAGE_LOAD                  0x00000000
+#घोषणा SQ_IMAGE_LOAD_MIP              0x00000001
+#घोषणा SQ_IMAGE_LOAD_PCK              0x00000002
+#घोषणा SQ_IMAGE_LOAD_PCK_SGN          0x00000003
+#घोषणा SQ_IMAGE_LOAD_MIP_PCK          0x00000004
+#घोषणा SQ_IMAGE_LOAD_MIP_PCK_SGN      0x00000005
+#घोषणा SQ_IMAGE_STORE                 0x00000008
+#घोषणा SQ_IMAGE_STORE_MIP             0x00000009
+#घोषणा SQ_IMAGE_STORE_PCK             0x0000000a
+#घोषणा SQ_IMAGE_STORE_MIP_PCK         0x0000000b
+#घोषणा SQ_IMAGE_GET_RESINFO           0x0000000e
+#घोषणा SQ_IMAGE_ATOMIC_SWAP           0x00000010
+#घोषणा SQ_IMAGE_ATOMIC_CMPSWAP        0x00000011
+#घोषणा SQ_IMAGE_ATOMIC_ADD            0x00000012
+#घोषणा SQ_IMAGE_ATOMIC_SUB            0x00000013
+#घोषणा SQ_IMAGE_ATOMIC_SMIN           0x00000014
+#घोषणा SQ_IMAGE_ATOMIC_UMIN           0x00000015
+#घोषणा SQ_IMAGE_ATOMIC_SMAX           0x00000016
+#घोषणा SQ_IMAGE_ATOMIC_UMAX           0x00000017
+#घोषणा SQ_IMAGE_ATOMIC_AND            0x00000018
+#घोषणा SQ_IMAGE_ATOMIC_OR             0x00000019
+#घोषणा SQ_IMAGE_ATOMIC_XOR            0x0000001a
+#घोषणा SQ_IMAGE_ATOMIC_INC            0x0000001b
+#घोषणा SQ_IMAGE_ATOMIC_DEC            0x0000001c
+#घोषणा SQ_IMAGE_SAMPLE                0x00000020
+#घोषणा SQ_IMAGE_SAMPLE_CL             0x00000021
+#घोषणा SQ_IMAGE_SAMPLE_D              0x00000022
+#घोषणा SQ_IMAGE_SAMPLE_D_CL           0x00000023
+#घोषणा SQ_IMAGE_SAMPLE_L              0x00000024
+#घोषणा SQ_IMAGE_SAMPLE_B              0x00000025
+#घोषणा SQ_IMAGE_SAMPLE_B_CL           0x00000026
+#घोषणा SQ_IMAGE_SAMPLE_LZ             0x00000027
+#घोषणा SQ_IMAGE_SAMPLE_C              0x00000028
+#घोषणा SQ_IMAGE_SAMPLE_C_CL           0x00000029
+#घोषणा SQ_IMAGE_SAMPLE_C_D            0x0000002a
+#घोषणा SQ_IMAGE_SAMPLE_C_D_CL         0x0000002b
+#घोषणा SQ_IMAGE_SAMPLE_C_L            0x0000002c
+#घोषणा SQ_IMAGE_SAMPLE_C_B            0x0000002d
+#घोषणा SQ_IMAGE_SAMPLE_C_B_CL         0x0000002e
+#घोषणा SQ_IMAGE_SAMPLE_C_LZ           0x0000002f
+#घोषणा SQ_IMAGE_SAMPLE_O              0x00000030
+#घोषणा SQ_IMAGE_SAMPLE_CL_O           0x00000031
+#घोषणा SQ_IMAGE_SAMPLE_D_O            0x00000032
+#घोषणा SQ_IMAGE_SAMPLE_D_CL_O         0x00000033
+#घोषणा SQ_IMAGE_SAMPLE_L_O            0x00000034
+#घोषणा SQ_IMAGE_SAMPLE_B_O            0x00000035
+#घोषणा SQ_IMAGE_SAMPLE_B_CL_O         0x00000036
+#घोषणा SQ_IMAGE_SAMPLE_LZ_O           0x00000037
+#घोषणा SQ_IMAGE_SAMPLE_C_O            0x00000038
+#घोषणा SQ_IMAGE_SAMPLE_C_CL_O         0x00000039
+#घोषणा SQ_IMAGE_SAMPLE_C_D_O          0x0000003a
+#घोषणा SQ_IMAGE_SAMPLE_C_D_CL_O       0x0000003b
+#घोषणा SQ_IMAGE_SAMPLE_C_L_O          0x0000003c
+#घोषणा SQ_IMAGE_SAMPLE_C_B_O          0x0000003d
+#घोषणा SQ_IMAGE_SAMPLE_C_B_CL_O       0x0000003e
+#घोषणा SQ_IMAGE_SAMPLE_C_LZ_O         0x0000003f
+#घोषणा SQ_IMAGE_GATHER4               0x00000040
+#घोषणा SQ_IMAGE_GATHER4_CL            0x00000041
+#घोषणा SQ_IMAGE_GATHER4H              0x00000042
+#घोषणा SQ_IMAGE_GATHER4_L             0x00000044
+#घोषणा SQ_IMAGE_GATHER4_B             0x00000045
+#घोषणा SQ_IMAGE_GATHER4_B_CL          0x00000046
+#घोषणा SQ_IMAGE_GATHER4_LZ            0x00000047
+#घोषणा SQ_IMAGE_GATHER4_C             0x00000048
+#घोषणा SQ_IMAGE_GATHER4_C_CL          0x00000049
+#घोषणा SQ_IMAGE_GATHER4H_PCK          0x0000004a
+#घोषणा SQ_IMAGE_GATHER8H_PCK          0x0000004b
+#घोषणा SQ_IMAGE_GATHER4_C_L           0x0000004c
+#घोषणा SQ_IMAGE_GATHER4_C_B           0x0000004d
+#घोषणा SQ_IMAGE_GATHER4_C_B_CL        0x0000004e
+#घोषणा SQ_IMAGE_GATHER4_C_LZ          0x0000004f
+#घोषणा SQ_IMAGE_GATHER4_O             0x00000050
+#घोषणा SQ_IMAGE_GATHER4_CL_O          0x00000051
+#घोषणा SQ_IMAGE_GATHER4_L_O           0x00000054
+#घोषणा SQ_IMAGE_GATHER4_B_O           0x00000055
+#घोषणा SQ_IMAGE_GATHER4_B_CL_O        0x00000056
+#घोषणा SQ_IMAGE_GATHER4_LZ_O          0x00000057
+#घोषणा SQ_IMAGE_GATHER4_C_O           0x00000058
+#घोषणा SQ_IMAGE_GATHER4_C_CL_O        0x00000059
+#घोषणा SQ_IMAGE_GATHER4_C_L_O         0x0000005c
+#घोषणा SQ_IMAGE_GATHER4_C_B_O         0x0000005d
+#घोषणा SQ_IMAGE_GATHER4_C_B_CL_O      0x0000005e
+#घोषणा SQ_IMAGE_GATHER4_C_LZ_O        0x0000005f
+#घोषणा SQ_IMAGE_GET_LOD               0x00000060
+#घोषणा SQ_IMAGE_SAMPLE_CD             0x00000068
+#घोषणा SQ_IMAGE_SAMPLE_CD_CL          0x00000069
+#घोषणा SQ_IMAGE_SAMPLE_C_CD           0x0000006a
+#घोषणा SQ_IMAGE_SAMPLE_C_CD_CL        0x0000006b
+#घोषणा SQ_IMAGE_SAMPLE_CD_O           0x0000006c
+#घोषणा SQ_IMAGE_SAMPLE_CD_CL_O        0x0000006d
+#घोषणा SQ_IMAGE_SAMPLE_C_CD_O         0x0000006e
+#घोषणा SQ_IMAGE_SAMPLE_C_CD_CL_O      0x0000006f
+#घोषणा SQ_IMAGE_RSRC256               0x0000007e
+#घोषणा SQ_IMAGE_SAMPLER               0x0000007f
 
 /*
  * VALUE_SQ_HW_REG value
  */
 
-#define SQ_HW_REG_MODE                 0x00000001
-#define SQ_HW_REG_STATUS               0x00000002
-#define SQ_HW_REG_TRAPSTS              0x00000003
-#define SQ_HW_REG_HW_ID                0x00000004
-#define SQ_HW_REG_GPR_ALLOC            0x00000005
-#define SQ_HW_REG_LDS_ALLOC            0x00000006
-#define SQ_HW_REG_IB_STS               0x00000007
-#define SQ_HW_REG_PC_LO                0x00000008
-#define SQ_HW_REG_PC_HI                0x00000009
-#define SQ_HW_REG_INST_DW0             0x0000000a
-#define SQ_HW_REG_INST_DW1             0x0000000b
-#define SQ_HW_REG_IB_DBG0              0x0000000c
-#define SQ_HW_REG_IB_DBG1              0x0000000d
-#define SQ_HW_REG_FLUSH_IB             0x0000000e
-#define SQ_HW_REG_SH_MEM_BASES         0x0000000f
-#define SQ_HW_REG_SQ_SHADER_TBA_LO     0x00000010
-#define SQ_HW_REG_SQ_SHADER_TBA_HI     0x00000011
-#define SQ_HW_REG_SQ_SHADER_TMA_LO     0x00000012
-#define SQ_HW_REG_SQ_SHADER_TMA_HI     0x00000013
+#घोषणा SQ_HW_REG_MODE                 0x00000001
+#घोषणा SQ_HW_REG_STATUS               0x00000002
+#घोषणा SQ_HW_REG_TRAPSTS              0x00000003
+#घोषणा SQ_HW_REG_HW_ID                0x00000004
+#घोषणा SQ_HW_REG_GPR_ALLOC            0x00000005
+#घोषणा SQ_HW_REG_LDS_ALLOC            0x00000006
+#घोषणा SQ_HW_REG_IB_STS               0x00000007
+#घोषणा SQ_HW_REG_PC_LO                0x00000008
+#घोषणा SQ_HW_REG_PC_HI                0x00000009
+#घोषणा SQ_HW_REG_INST_DW0             0x0000000a
+#घोषणा SQ_HW_REG_INST_DW1             0x0000000b
+#घोषणा SQ_HW_REG_IB_DBG0              0x0000000c
+#घोषणा SQ_HW_REG_IB_DBG1              0x0000000d
+#घोषणा SQ_HW_REG_FLUSH_IB             0x0000000e
+#घोषणा SQ_HW_REG_SH_MEM_BASES         0x0000000f
+#घोषणा SQ_HW_REG_SQ_SHADER_TBA_LO     0x00000010
+#घोषणा SQ_HW_REG_SQ_SHADER_TBA_HI     0x00000011
+#घोषणा SQ_HW_REG_SQ_SHADER_TMA_LO     0x00000012
+#घोषणा SQ_HW_REG_SQ_SHADER_TMA_HI     0x00000013
 
 /*
  * VALUE_SQ_OP_SOP1 value
  */
 
-#define SQ_S_MOV_B32                   0x00000000
-#define SQ_S_MOV_B64                   0x00000001
-#define SQ_S_CMOV_B32                  0x00000002
-#define SQ_S_CMOV_B64                  0x00000003
-#define SQ_S_NOT_B32                   0x00000004
-#define SQ_S_NOT_B64                   0x00000005
-#define SQ_S_WQM_B32                   0x00000006
-#define SQ_S_WQM_B64                   0x00000007
-#define SQ_S_BREV_B32                  0x00000008
-#define SQ_S_BREV_B64                  0x00000009
-#define SQ_S_BCNT0_I32_B32             0x0000000a
-#define SQ_S_BCNT0_I32_B64             0x0000000b
-#define SQ_S_BCNT1_I32_B32             0x0000000c
-#define SQ_S_BCNT1_I32_B64             0x0000000d
-#define SQ_S_FF0_I32_B32               0x0000000e
-#define SQ_S_FF0_I32_B64               0x0000000f
-#define SQ_S_FF1_I32_B32               0x00000010
-#define SQ_S_FF1_I32_B64               0x00000011
-#define SQ_S_FLBIT_I32_B32             0x00000012
-#define SQ_S_FLBIT_I32_B64             0x00000013
-#define SQ_S_FLBIT_I32                 0x00000014
-#define SQ_S_FLBIT_I32_I64             0x00000015
-#define SQ_S_SEXT_I32_I8               0x00000016
-#define SQ_S_SEXT_I32_I16              0x00000017
-#define SQ_S_BITSET0_B32               0x00000018
-#define SQ_S_BITSET0_B64               0x00000019
-#define SQ_S_BITSET1_B32               0x0000001a
-#define SQ_S_BITSET1_B64               0x0000001b
-#define SQ_S_GETPC_B64                 0x0000001c
-#define SQ_S_SETPC_B64                 0x0000001d
-#define SQ_S_SWAPPC_B64                0x0000001e
-#define SQ_S_RFE_B64                   0x0000001f
-#define SQ_S_AND_SAVEEXEC_B64          0x00000020
-#define SQ_S_OR_SAVEEXEC_B64           0x00000021
-#define SQ_S_XOR_SAVEEXEC_B64          0x00000022
-#define SQ_S_ANDN2_SAVEEXEC_B64        0x00000023
-#define SQ_S_ORN2_SAVEEXEC_B64         0x00000024
-#define SQ_S_NAND_SAVEEXEC_B64         0x00000025
-#define SQ_S_NOR_SAVEEXEC_B64          0x00000026
-#define SQ_S_XNOR_SAVEEXEC_B64         0x00000027
-#define SQ_S_QUADMASK_B32              0x00000028
-#define SQ_S_QUADMASK_B64              0x00000029
-#define SQ_S_MOVRELS_B32               0x0000002a
-#define SQ_S_MOVRELS_B64               0x0000002b
-#define SQ_S_MOVRELD_B32               0x0000002c
-#define SQ_S_MOVRELD_B64               0x0000002d
-#define SQ_S_CBRANCH_JOIN              0x0000002e
-#define SQ_S_MOV_REGRD_B32             0x0000002f
-#define SQ_S_ABS_I32                   0x00000030
-#define SQ_S_MOV_FED_B32               0x00000031
-#define SQ_S_SET_GPR_IDX_IDX           0x00000032
-#define SQ_S_ANDN1_SAVEEXEC_B64        0x00000033
-#define SQ_S_ORN1_SAVEEXEC_B64         0x00000034
-#define SQ_S_ANDN1_WREXEC_B64          0x00000035
-#define SQ_S_ANDN2_WREXEC_B64          0x00000036
-#define SQ_S_BITREPLICATE_B64_B32      0x00000037
+#घोषणा SQ_S_MOV_B32                   0x00000000
+#घोषणा SQ_S_MOV_B64                   0x00000001
+#घोषणा SQ_S_CMOV_B32                  0x00000002
+#घोषणा SQ_S_CMOV_B64                  0x00000003
+#घोषणा SQ_S_NOT_B32                   0x00000004
+#घोषणा SQ_S_NOT_B64                   0x00000005
+#घोषणा SQ_S_WQM_B32                   0x00000006
+#घोषणा SQ_S_WQM_B64                   0x00000007
+#घोषणा SQ_S_BREV_B32                  0x00000008
+#घोषणा SQ_S_BREV_B64                  0x00000009
+#घोषणा SQ_S_BCNT0_I32_B32             0x0000000a
+#घोषणा SQ_S_BCNT0_I32_B64             0x0000000b
+#घोषणा SQ_S_BCNT1_I32_B32             0x0000000c
+#घोषणा SQ_S_BCNT1_I32_B64             0x0000000d
+#घोषणा SQ_S_FF0_I32_B32               0x0000000e
+#घोषणा SQ_S_FF0_I32_B64               0x0000000f
+#घोषणा SQ_S_FF1_I32_B32               0x00000010
+#घोषणा SQ_S_FF1_I32_B64               0x00000011
+#घोषणा SQ_S_FLBIT_I32_B32             0x00000012
+#घोषणा SQ_S_FLBIT_I32_B64             0x00000013
+#घोषणा SQ_S_FLBIT_I32                 0x00000014
+#घोषणा SQ_S_FLBIT_I32_I64             0x00000015
+#घोषणा SQ_S_SEXT_I32_I8               0x00000016
+#घोषणा SQ_S_SEXT_I32_I16              0x00000017
+#घोषणा SQ_S_BITSET0_B32               0x00000018
+#घोषणा SQ_S_BITSET0_B64               0x00000019
+#घोषणा SQ_S_BITSET1_B32               0x0000001a
+#घोषणा SQ_S_BITSET1_B64               0x0000001b
+#घोषणा SQ_S_GETPC_B64                 0x0000001c
+#घोषणा SQ_S_SETPC_B64                 0x0000001d
+#घोषणा SQ_S_SWAPPC_B64                0x0000001e
+#घोषणा SQ_S_RFE_B64                   0x0000001f
+#घोषणा SQ_S_AND_SAVEEXEC_B64          0x00000020
+#घोषणा SQ_S_OR_SAVEEXEC_B64           0x00000021
+#घोषणा SQ_S_XOR_SAVEEXEC_B64          0x00000022
+#घोषणा SQ_S_ANDN2_SAVEEXEC_B64        0x00000023
+#घोषणा SQ_S_ORN2_SAVEEXEC_B64         0x00000024
+#घोषणा SQ_S_न_अंकD_SAVEEXEC_B64         0x00000025
+#घोषणा SQ_S_NOR_SAVEEXEC_B64          0x00000026
+#घोषणा SQ_S_XNOR_SAVEEXEC_B64         0x00000027
+#घोषणा SQ_S_QUADMASK_B32              0x00000028
+#घोषणा SQ_S_QUADMASK_B64              0x00000029
+#घोषणा SQ_S_MOVRELS_B32               0x0000002a
+#घोषणा SQ_S_MOVRELS_B64               0x0000002b
+#घोषणा SQ_S_MOVRELD_B32               0x0000002c
+#घोषणा SQ_S_MOVRELD_B64               0x0000002d
+#घोषणा SQ_S_CBRANCH_JOIN              0x0000002e
+#घोषणा SQ_S_MOV_REGRD_B32             0x0000002f
+#घोषणा SQ_S_ABS_I32                   0x00000030
+#घोषणा SQ_S_MOV_FED_B32               0x00000031
+#घोषणा SQ_S_SET_GPR_IDX_IDX           0x00000032
+#घोषणा SQ_S_ANDN1_SAVEEXEC_B64        0x00000033
+#घोषणा SQ_S_ORN1_SAVEEXEC_B64         0x00000034
+#घोषणा SQ_S_ANDN1_WREXEC_B64          0x00000035
+#घोषणा SQ_S_ANDN2_WREXEC_B64          0x00000036
+#घोषणा SQ_S_BITREPLICATE_B64_B32      0x00000037
 
 /*
  * VALUE_SQ_CNT value
  */
 
-#define SQ_CNT1                        0x00000000
-#define SQ_CNT2                        0x00000001
-#define SQ_CNT3                        0x00000002
-#define SQ_CNT4                        0x00000003
+#घोषणा SQ_CNT1                        0x00000000
+#घोषणा SQ_CNT2                        0x00000001
+#घोषणा SQ_CNT3                        0x00000002
+#घोषणा SQ_CNT4                        0x00000003
 
 /*
  * VALUE_SQ_OP_VOP3 value
  */
 
-#define SQ_V_MAD_LEGACY_F32            0x000001c0
-#define SQ_V_MAD_F32                   0x000001c1
-#define SQ_V_MAD_I32_I24               0x000001c2
-#define SQ_V_MAD_U32_U24               0x000001c3
-#define SQ_V_CUBEID_F32                0x000001c4
-#define SQ_V_CUBESC_F32                0x000001c5
-#define SQ_V_CUBETC_F32                0x000001c6
-#define SQ_V_CUBEMA_F32                0x000001c7
-#define SQ_V_BFE_U32                   0x000001c8
-#define SQ_V_BFE_I32                   0x000001c9
-#define SQ_V_BFI_B32                   0x000001ca
-#define SQ_V_FMA_F32                   0x000001cb
-#define SQ_V_FMA_F64                   0x000001cc
-#define SQ_V_LERP_U8                   0x000001cd
-#define SQ_V_ALIGNBIT_B32              0x000001ce
-#define SQ_V_ALIGNBYTE_B32             0x000001cf
-#define SQ_V_MIN3_F32                  0x000001d0
-#define SQ_V_MIN3_I32                  0x000001d1
-#define SQ_V_MIN3_U32                  0x000001d2
-#define SQ_V_MAX3_F32                  0x000001d3
-#define SQ_V_MAX3_I32                  0x000001d4
-#define SQ_V_MAX3_U32                  0x000001d5
-#define SQ_V_MED3_F32                  0x000001d6
-#define SQ_V_MED3_I32                  0x000001d7
-#define SQ_V_MED3_U32                  0x000001d8
-#define SQ_V_SAD_U8                    0x000001d9
-#define SQ_V_SAD_HI_U8                 0x000001da
-#define SQ_V_SAD_U16                   0x000001db
-#define SQ_V_SAD_U32                   0x000001dc
-#define SQ_V_CVT_PK_U8_F32             0x000001dd
-#define SQ_V_DIV_FIXUP_F32             0x000001de
-#define SQ_V_DIV_FIXUP_F64             0x000001df
-#define SQ_V_DIV_SCALE_F32             0x000001e0
-#define SQ_V_DIV_SCALE_F64             0x000001e1
-#define SQ_V_DIV_FMAS_F32              0x000001e2
-#define SQ_V_DIV_FMAS_F64              0x000001e3
-#define SQ_V_MSAD_U8                   0x000001e4
-#define SQ_V_QSAD_PK_U16_U8            0x000001e5
-#define SQ_V_MQSAD_PK_U16_U8           0x000001e6
-#define SQ_V_MQSAD_U32_U8              0x000001e7
-#define SQ_V_MAD_U64_U32               0x000001e8
-#define SQ_V_MAD_I64_I32               0x000001e9
-#define SQ_V_MAD_LEGACY_F16            0x000001ea
-#define SQ_V_MAD_LEGACY_U16            0x000001eb
-#define SQ_V_MAD_LEGACY_I16            0x000001ec
-#define SQ_V_PERM_B32                  0x000001ed
-#define SQ_V_FMA_LEGACY_F16            0x000001ee
-#define SQ_V_DIV_FIXUP_LEGACY_F16      0x000001ef
-#define SQ_V_CVT_PKACCUM_U8_F32        0x000001f0
-#define SQ_V_MAD_U32_U16               0x000001f1
-#define SQ_V_MAD_I32_I16               0x000001f2
-#define SQ_V_XAD_U32                   0x000001f3
-#define SQ_V_MIN3_F16                  0x000001f4
-#define SQ_V_MIN3_I16                  0x000001f5
-#define SQ_V_MIN3_U16                  0x000001f6
-#define SQ_V_MAX3_F16                  0x000001f7
-#define SQ_V_MAX3_I16                  0x000001f8
-#define SQ_V_MAX3_U16                  0x000001f9
-#define SQ_V_MED3_F16                  0x000001fa
-#define SQ_V_MED3_I16                  0x000001fb
-#define SQ_V_MED3_U16                  0x000001fc
-#define SQ_V_LSHL_ADD_U32              0x000001fd
-#define SQ_V_ADD_LSHL_U32              0x000001fe
-#define SQ_V_ADD3_U32                  0x000001ff
-#define SQ_V_LSHL_OR_B32               0x00000200
-#define SQ_V_AND_OR_B32                0x00000201
-#define SQ_V_OR3_B32                   0x00000202
-#define SQ_V_MAD_F16                   0x00000203
-#define SQ_V_MAD_U16                   0x00000204
-#define SQ_V_MAD_I16                   0x00000205
-#define SQ_V_FMA_F16                   0x00000206
-#define SQ_V_DIV_FIXUP_F16             0x00000207
-#define SQ_V_INTERP_P1LL_F16           0x00000274
-#define SQ_V_INTERP_P1LV_F16           0x00000275
-#define SQ_V_INTERP_P2_LEGACY_F16      0x00000276
-#define SQ_V_INTERP_P2_F16             0x00000277
-#define SQ_V_ADD_F64                   0x00000280
-#define SQ_V_MUL_F64                   0x00000281
-#define SQ_V_MIN_F64                   0x00000282
-#define SQ_V_MAX_F64                   0x00000283
-#define SQ_V_LDEXP_F64                 0x00000284
-#define SQ_V_MUL_LO_U32                0x00000285
-#define SQ_V_MUL_HI_U32                0x00000286
-#define SQ_V_MUL_HI_I32                0x00000287
-#define SQ_V_LDEXP_F32                 0x00000288
-#define SQ_V_READLANE_B32              0x00000289
-#define SQ_V_WRITELANE_B32             0x0000028a
-#define SQ_V_BCNT_U32_B32              0x0000028b
-#define SQ_V_MBCNT_LO_U32_B32          0x0000028c
-#define SQ_V_MBCNT_HI_U32_B32          0x0000028d
-#define SQ_V_MAC_LEGACY_F32            0x0000028e
-#define SQ_V_LSHLREV_B64               0x0000028f
-#define SQ_V_LSHRREV_B64               0x00000290
-#define SQ_V_ASHRREV_I64               0x00000291
-#define SQ_V_TRIG_PREOP_F64            0x00000292
-#define SQ_V_BFM_B32                   0x00000293
-#define SQ_V_CVT_PKNORM_I16_F32        0x00000294
-#define SQ_V_CVT_PKNORM_U16_F32        0x00000295
-#define SQ_V_CVT_PKRTZ_F16_F32         0x00000296
-#define SQ_V_CVT_PK_U16_U32            0x00000297
-#define SQ_V_CVT_PK_I16_I32            0x00000298
-#define SQ_V_CVT_PKNORM_I16_F16        0x00000299
-#define SQ_V_CVT_PKNORM_U16_F16        0x0000029a
-#define SQ_V_READLANE_REGRD_B32        0x0000029b
-#define SQ_V_ADD_I32                   0x0000029c
-#define SQ_V_SUB_I32                   0x0000029d
-#define SQ_V_ADD_I16                   0x0000029e
-#define SQ_V_SUB_I16                   0x0000029f
-#define SQ_V_PACK_B32_F16              0x000002a0
+#घोषणा SQ_V_MAD_LEGACY_F32            0x000001c0
+#घोषणा SQ_V_MAD_F32                   0x000001c1
+#घोषणा SQ_V_MAD_I32_I24               0x000001c2
+#घोषणा SQ_V_MAD_U32_U24               0x000001c3
+#घोषणा SQ_V_CUBEID_F32                0x000001c4
+#घोषणा SQ_V_CUBESC_F32                0x000001c5
+#घोषणा SQ_V_CUBETC_F32                0x000001c6
+#घोषणा SQ_V_CUBEMA_F32                0x000001c7
+#घोषणा SQ_V_BFE_U32                   0x000001c8
+#घोषणा SQ_V_BFE_I32                   0x000001c9
+#घोषणा SQ_V_BFI_B32                   0x000001ca
+#घोषणा SQ_V_FMA_F32                   0x000001cb
+#घोषणा SQ_V_FMA_F64                   0x000001cc
+#घोषणा SQ_V_LERP_U8                   0x000001cd
+#घोषणा SQ_V_ALIGNBIT_B32              0x000001ce
+#घोषणा SQ_V_ALIGNBYTE_B32             0x000001cf
+#घोषणा SQ_V_MIN3_F32                  0x000001d0
+#घोषणा SQ_V_MIN3_I32                  0x000001d1
+#घोषणा SQ_V_MIN3_U32                  0x000001d2
+#घोषणा SQ_V_MAX3_F32                  0x000001d3
+#घोषणा SQ_V_MAX3_I32                  0x000001d4
+#घोषणा SQ_V_MAX3_U32                  0x000001d5
+#घोषणा SQ_V_MED3_F32                  0x000001d6
+#घोषणा SQ_V_MED3_I32                  0x000001d7
+#घोषणा SQ_V_MED3_U32                  0x000001d8
+#घोषणा SQ_V_SAD_U8                    0x000001d9
+#घोषणा SQ_V_SAD_HI_U8                 0x000001da
+#घोषणा SQ_V_SAD_U16                   0x000001db
+#घोषणा SQ_V_SAD_U32                   0x000001dc
+#घोषणा SQ_V_CVT_PK_U8_F32             0x000001dd
+#घोषणा SQ_V_DIV_FIXUP_F32             0x000001de
+#घोषणा SQ_V_DIV_FIXUP_F64             0x000001df
+#घोषणा SQ_V_DIV_SCALE_F32             0x000001e0
+#घोषणा SQ_V_DIV_SCALE_F64             0x000001e1
+#घोषणा SQ_V_DIV_FMAS_F32              0x000001e2
+#घोषणा SQ_V_DIV_FMAS_F64              0x000001e3
+#घोषणा SQ_V_MSAD_U8                   0x000001e4
+#घोषणा SQ_V_QSAD_PK_U16_U8            0x000001e5
+#घोषणा SQ_V_MQSAD_PK_U16_U8           0x000001e6
+#घोषणा SQ_V_MQSAD_U32_U8              0x000001e7
+#घोषणा SQ_V_MAD_U64_U32               0x000001e8
+#घोषणा SQ_V_MAD_I64_I32               0x000001e9
+#घोषणा SQ_V_MAD_LEGACY_F16            0x000001ea
+#घोषणा SQ_V_MAD_LEGACY_U16            0x000001eb
+#घोषणा SQ_V_MAD_LEGACY_I16            0x000001ec
+#घोषणा SQ_V_PERM_B32                  0x000001ed
+#घोषणा SQ_V_FMA_LEGACY_F16            0x000001ee
+#घोषणा SQ_V_DIV_FIXUP_LEGACY_F16      0x000001ef
+#घोषणा SQ_V_CVT_PKACCUM_U8_F32        0x000001f0
+#घोषणा SQ_V_MAD_U32_U16               0x000001f1
+#घोषणा SQ_V_MAD_I32_I16               0x000001f2
+#घोषणा SQ_V_XAD_U32                   0x000001f3
+#घोषणा SQ_V_MIN3_F16                  0x000001f4
+#घोषणा SQ_V_MIN3_I16                  0x000001f5
+#घोषणा SQ_V_MIN3_U16                  0x000001f6
+#घोषणा SQ_V_MAX3_F16                  0x000001f7
+#घोषणा SQ_V_MAX3_I16                  0x000001f8
+#घोषणा SQ_V_MAX3_U16                  0x000001f9
+#घोषणा SQ_V_MED3_F16                  0x000001fa
+#घोषणा SQ_V_MED3_I16                  0x000001fb
+#घोषणा SQ_V_MED3_U16                  0x000001fc
+#घोषणा SQ_V_LSHL_ADD_U32              0x000001fd
+#घोषणा SQ_V_ADD_LSHL_U32              0x000001fe
+#घोषणा SQ_V_ADD3_U32                  0x000001ff
+#घोषणा SQ_V_LSHL_OR_B32               0x00000200
+#घोषणा SQ_V_AND_OR_B32                0x00000201
+#घोषणा SQ_V_OR3_B32                   0x00000202
+#घोषणा SQ_V_MAD_F16                   0x00000203
+#घोषणा SQ_V_MAD_U16                   0x00000204
+#घोषणा SQ_V_MAD_I16                   0x00000205
+#घोषणा SQ_V_FMA_F16                   0x00000206
+#घोषणा SQ_V_DIV_FIXUP_F16             0x00000207
+#घोषणा SQ_V_INTERP_P1LL_F16           0x00000274
+#घोषणा SQ_V_INTERP_P1LV_F16           0x00000275
+#घोषणा SQ_V_INTERP_P2_LEGACY_F16      0x00000276
+#घोषणा SQ_V_INTERP_P2_F16             0x00000277
+#घोषणा SQ_V_ADD_F64                   0x00000280
+#घोषणा SQ_V_MUL_F64                   0x00000281
+#घोषणा SQ_V_MIN_F64                   0x00000282
+#घोषणा SQ_V_MAX_F64                   0x00000283
+#घोषणा SQ_V_LDEXP_F64                 0x00000284
+#घोषणा SQ_V_MUL_LO_U32                0x00000285
+#घोषणा SQ_V_MUL_HI_U32                0x00000286
+#घोषणा SQ_V_MUL_HI_I32                0x00000287
+#घोषणा SQ_V_LDEXP_F32                 0x00000288
+#घोषणा SQ_V_READLANE_B32              0x00000289
+#घोषणा SQ_V_WRITELANE_B32             0x0000028a
+#घोषणा SQ_V_BCNT_U32_B32              0x0000028b
+#घोषणा SQ_V_MBCNT_LO_U32_B32          0x0000028c
+#घोषणा SQ_V_MBCNT_HI_U32_B32          0x0000028d
+#घोषणा SQ_V_MAC_LEGACY_F32            0x0000028e
+#घोषणा SQ_V_LSHLREV_B64               0x0000028f
+#घोषणा SQ_V_LSHRREV_B64               0x00000290
+#घोषणा SQ_V_ASHRREV_I64               0x00000291
+#घोषणा SQ_V_TRIG_PREOP_F64            0x00000292
+#घोषणा SQ_V_BFM_B32                   0x00000293
+#घोषणा SQ_V_CVT_PKNORM_I16_F32        0x00000294
+#घोषणा SQ_V_CVT_PKNORM_U16_F32        0x00000295
+#घोषणा SQ_V_CVT_PKRTZ_F16_F32         0x00000296
+#घोषणा SQ_V_CVT_PK_U16_U32            0x00000297
+#घोषणा SQ_V_CVT_PK_I16_I32            0x00000298
+#घोषणा SQ_V_CVT_PKNORM_I16_F16        0x00000299
+#घोषणा SQ_V_CVT_PKNORM_U16_F16        0x0000029a
+#घोषणा SQ_V_READLANE_REGRD_B32        0x0000029b
+#घोषणा SQ_V_ADD_I32                   0x0000029c
+#घोषणा SQ_V_SUB_I32                   0x0000029d
+#घोषणा SQ_V_ADD_I16                   0x0000029e
+#घोषणा SQ_V_SUB_I16                   0x0000029f
+#घोषणा SQ_V_PACK_B32_F16              0x000002a0
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_LIT value
  */
 
-#define SQ_SRC_LITERAL                 0x000000ff
+#घोषणा SQ_SRC_LITERAL                 0x000000ff
 
 /*
  * VALUE_SQ_DPP_CTRL value
  */
 
-#define SQ_DPP_QUAD_PERM               0x00000000
-#define SQ_DPP_ROW_SL1                 0x00000101
-#define SQ_DPP_ROW_SL2                 0x00000102
-#define SQ_DPP_ROW_SL3                 0x00000103
-#define SQ_DPP_ROW_SL4                 0x00000104
-#define SQ_DPP_ROW_SL5                 0x00000105
-#define SQ_DPP_ROW_SL6                 0x00000106
-#define SQ_DPP_ROW_SL7                 0x00000107
-#define SQ_DPP_ROW_SL8                 0x00000108
-#define SQ_DPP_ROW_SL9                 0x00000109
-#define SQ_DPP_ROW_SL10                0x0000010a
-#define SQ_DPP_ROW_SL11                0x0000010b
-#define SQ_DPP_ROW_SL12                0x0000010c
-#define SQ_DPP_ROW_SL13                0x0000010d
-#define SQ_DPP_ROW_SL14                0x0000010e
-#define SQ_DPP_ROW_SL15                0x0000010f
-#define SQ_DPP_ROW_SR1                 0x00000111
-#define SQ_DPP_ROW_SR2                 0x00000112
-#define SQ_DPP_ROW_SR3                 0x00000113
-#define SQ_DPP_ROW_SR4                 0x00000114
-#define SQ_DPP_ROW_SR5                 0x00000115
-#define SQ_DPP_ROW_SR6                 0x00000116
-#define SQ_DPP_ROW_SR7                 0x00000117
-#define SQ_DPP_ROW_SR8                 0x00000118
-#define SQ_DPP_ROW_SR9                 0x00000119
-#define SQ_DPP_ROW_SR10                0x0000011a
-#define SQ_DPP_ROW_SR11                0x0000011b
-#define SQ_DPP_ROW_SR12                0x0000011c
-#define SQ_DPP_ROW_SR13                0x0000011d
-#define SQ_DPP_ROW_SR14                0x0000011e
-#define SQ_DPP_ROW_SR15                0x0000011f
-#define SQ_DPP_ROW_RR1                 0x00000121
-#define SQ_DPP_ROW_RR2                 0x00000122
-#define SQ_DPP_ROW_RR3                 0x00000123
-#define SQ_DPP_ROW_RR4                 0x00000124
-#define SQ_DPP_ROW_RR5                 0x00000125
-#define SQ_DPP_ROW_RR6                 0x00000126
-#define SQ_DPP_ROW_RR7                 0x00000127
-#define SQ_DPP_ROW_RR8                 0x00000128
-#define SQ_DPP_ROW_RR9                 0x00000129
-#define SQ_DPP_ROW_RR10                0x0000012a
-#define SQ_DPP_ROW_RR11                0x0000012b
-#define SQ_DPP_ROW_RR12                0x0000012c
-#define SQ_DPP_ROW_RR13                0x0000012d
-#define SQ_DPP_ROW_RR14                0x0000012e
-#define SQ_DPP_ROW_RR15                0x0000012f
-#define SQ_DPP_WF_SL1                  0x00000130
-#define SQ_DPP_WF_RL1                  0x00000134
-#define SQ_DPP_WF_SR1                  0x00000138
-#define SQ_DPP_WF_RR1                  0x0000013c
-#define SQ_DPP_ROW_MIRROR              0x00000140
-#define SQ_DPP_ROW_HALF_MIRROR         0x00000141
-#define SQ_DPP_ROW_BCAST15             0x00000142
-#define SQ_DPP_ROW_BCAST31             0x00000143
+#घोषणा SQ_DPP_QUAD_PERM               0x00000000
+#घोषणा SQ_DPP_ROW_SL1                 0x00000101
+#घोषणा SQ_DPP_ROW_SL2                 0x00000102
+#घोषणा SQ_DPP_ROW_SL3                 0x00000103
+#घोषणा SQ_DPP_ROW_SL4                 0x00000104
+#घोषणा SQ_DPP_ROW_SL5                 0x00000105
+#घोषणा SQ_DPP_ROW_SL6                 0x00000106
+#घोषणा SQ_DPP_ROW_SL7                 0x00000107
+#घोषणा SQ_DPP_ROW_SL8                 0x00000108
+#घोषणा SQ_DPP_ROW_SL9                 0x00000109
+#घोषणा SQ_DPP_ROW_SL10                0x0000010a
+#घोषणा SQ_DPP_ROW_SL11                0x0000010b
+#घोषणा SQ_DPP_ROW_SL12                0x0000010c
+#घोषणा SQ_DPP_ROW_SL13                0x0000010d
+#घोषणा SQ_DPP_ROW_SL14                0x0000010e
+#घोषणा SQ_DPP_ROW_SL15                0x0000010f
+#घोषणा SQ_DPP_ROW_SR1                 0x00000111
+#घोषणा SQ_DPP_ROW_SR2                 0x00000112
+#घोषणा SQ_DPP_ROW_SR3                 0x00000113
+#घोषणा SQ_DPP_ROW_SR4                 0x00000114
+#घोषणा SQ_DPP_ROW_SR5                 0x00000115
+#घोषणा SQ_DPP_ROW_SR6                 0x00000116
+#घोषणा SQ_DPP_ROW_SR7                 0x00000117
+#घोषणा SQ_DPP_ROW_SR8                 0x00000118
+#घोषणा SQ_DPP_ROW_SR9                 0x00000119
+#घोषणा SQ_DPP_ROW_SR10                0x0000011a
+#घोषणा SQ_DPP_ROW_SR11                0x0000011b
+#घोषणा SQ_DPP_ROW_SR12                0x0000011c
+#घोषणा SQ_DPP_ROW_SR13                0x0000011d
+#घोषणा SQ_DPP_ROW_SR14                0x0000011e
+#घोषणा SQ_DPP_ROW_SR15                0x0000011f
+#घोषणा SQ_DPP_ROW_RR1                 0x00000121
+#घोषणा SQ_DPP_ROW_RR2                 0x00000122
+#घोषणा SQ_DPP_ROW_RR3                 0x00000123
+#घोषणा SQ_DPP_ROW_RR4                 0x00000124
+#घोषणा SQ_DPP_ROW_RR5                 0x00000125
+#घोषणा SQ_DPP_ROW_RR6                 0x00000126
+#घोषणा SQ_DPP_ROW_RR7                 0x00000127
+#घोषणा SQ_DPP_ROW_RR8                 0x00000128
+#घोषणा SQ_DPP_ROW_RR9                 0x00000129
+#घोषणा SQ_DPP_ROW_RR10                0x0000012a
+#घोषणा SQ_DPP_ROW_RR11                0x0000012b
+#घोषणा SQ_DPP_ROW_RR12                0x0000012c
+#घोषणा SQ_DPP_ROW_RR13                0x0000012d
+#घोषणा SQ_DPP_ROW_RR14                0x0000012e
+#घोषणा SQ_DPP_ROW_RR15                0x0000012f
+#घोषणा SQ_DPP_WF_SL1                  0x00000130
+#घोषणा SQ_DPP_WF_RL1                  0x00000134
+#घोषणा SQ_DPP_WF_SR1                  0x00000138
+#घोषणा SQ_DPP_WF_RR1                  0x0000013c
+#घोषणा SQ_DPP_ROW_MIRROR              0x00000140
+#घोषणा SQ_DPP_ROW_HALF_MIRROR         0x00000141
+#घोषणा SQ_DPP_ROW_BCAST15             0x00000142
+#घोषणा SQ_DPP_ROW_BCAST31             0x00000143
 
 /*
  * VALUE_SQ_FLAT_SCRATCH_LOHI value
  */
 
-#define SQ_FLAT_SCRATCH_LO             0x00000066
-#define SQ_FLAT_SCRATCH_HI             0x00000067
+#घोषणा SQ_FLAT_SCRATCH_LO             0x00000066
+#घोषणा SQ_FLAT_SCRATCH_HI             0x00000067
 
 /*
  * VALUE_SQ_OP_VOP1 value
  */
 
-#define SQ_V_NOP                       0x00000000
-#define SQ_V_MOV_B32                   0x00000001
-#define SQ_V_READFIRSTLANE_B32         0x00000002
-#define SQ_V_CVT_I32_F64               0x00000003
-#define SQ_V_CVT_F64_I32               0x00000004
-#define SQ_V_CVT_F32_I32               0x00000005
-#define SQ_V_CVT_F32_U32               0x00000006
-#define SQ_V_CVT_U32_F32               0x00000007
-#define SQ_V_CVT_I32_F32               0x00000008
-#define SQ_V_MOV_FED_B32               0x00000009
-#define SQ_V_CVT_F16_F32               0x0000000a
-#define SQ_V_CVT_F32_F16               0x0000000b
-#define SQ_V_CVT_RPI_I32_F32           0x0000000c
-#define SQ_V_CVT_FLR_I32_F32           0x0000000d
-#define SQ_V_CVT_OFF_F32_I4            0x0000000e
-#define SQ_V_CVT_F32_F64               0x0000000f
-#define SQ_V_CVT_F64_F32               0x00000010
-#define SQ_V_CVT_F32_UBYTE0            0x00000011
-#define SQ_V_CVT_F32_UBYTE1            0x00000012
-#define SQ_V_CVT_F32_UBYTE2            0x00000013
-#define SQ_V_CVT_F32_UBYTE3            0x00000014
-#define SQ_V_CVT_U32_F64               0x00000015
-#define SQ_V_CVT_F64_U32               0x00000016
-#define SQ_V_TRUNC_F64                 0x00000017
-#define SQ_V_CEIL_F64                  0x00000018
-#define SQ_V_RNDNE_F64                 0x00000019
-#define SQ_V_FLOOR_F64                 0x0000001a
-#define SQ_V_FRACT_F32                 0x0000001b
-#define SQ_V_TRUNC_F32                 0x0000001c
-#define SQ_V_CEIL_F32                  0x0000001d
-#define SQ_V_RNDNE_F32                 0x0000001e
-#define SQ_V_FLOOR_F32                 0x0000001f
-#define SQ_V_EXP_F32                   0x00000020
-#define SQ_V_LOG_F32                   0x00000021
-#define SQ_V_RCP_F32                   0x00000022
-#define SQ_V_RCP_IFLAG_F32             0x00000023
-#define SQ_V_RSQ_F32                   0x00000024
-#define SQ_V_RCP_F64                   0x00000025
-#define SQ_V_RSQ_F64                   0x00000026
-#define SQ_V_SQRT_F32                  0x00000027
-#define SQ_V_SQRT_F64                  0x00000028
-#define SQ_V_SIN_F32                   0x00000029
-#define SQ_V_COS_F32                   0x0000002a
-#define SQ_V_NOT_B32                   0x0000002b
-#define SQ_V_BFREV_B32                 0x0000002c
-#define SQ_V_FFBH_U32                  0x0000002d
-#define SQ_V_FFBL_B32                  0x0000002e
-#define SQ_V_FFBH_I32                  0x0000002f
-#define SQ_V_FREXP_EXP_I32_F64         0x00000030
-#define SQ_V_FREXP_MANT_F64            0x00000031
-#define SQ_V_FRACT_F64                 0x00000032
-#define SQ_V_FREXP_EXP_I32_F32         0x00000033
-#define SQ_V_FREXP_MANT_F32            0x00000034
-#define SQ_V_CLREXCP                   0x00000035
-#define SQ_V_MOV_PRSV_B32              0x00000036
-#define SQ_V_CVT_F16_U16               0x00000039
-#define SQ_V_CVT_F16_I16               0x0000003a
-#define SQ_V_CVT_U16_F16               0x0000003b
-#define SQ_V_CVT_I16_F16               0x0000003c
-#define SQ_V_RCP_F16                   0x0000003d
-#define SQ_V_SQRT_F16                  0x0000003e
-#define SQ_V_RSQ_F16                   0x0000003f
-#define SQ_V_LOG_F16                   0x00000040
-#define SQ_V_EXP_F16                   0x00000041
-#define SQ_V_FREXP_MANT_F16            0x00000042
-#define SQ_V_FREXP_EXP_I16_F16         0x00000043
-#define SQ_V_FLOOR_F16                 0x00000044
-#define SQ_V_CEIL_F16                  0x00000045
-#define SQ_V_TRUNC_F16                 0x00000046
-#define SQ_V_RNDNE_F16                 0x00000047
-#define SQ_V_FRACT_F16                 0x00000048
-#define SQ_V_SIN_F16                   0x00000049
-#define SQ_V_COS_F16                   0x0000004a
-#define SQ_V_EXP_LEGACY_F32            0x0000004b
-#define SQ_V_LOG_LEGACY_F32            0x0000004c
-#define SQ_V_CVT_NORM_I16_F16          0x0000004d
-#define SQ_V_CVT_NORM_U16_F16          0x0000004e
-#define SQ_V_SAT_PK_U8_I16             0x0000004f
-#define SQ_V_WRITELANE_IMM32           0x00000050
-#define SQ_V_SWAP_B32                  0x00000051
+#घोषणा SQ_V_NOP                       0x00000000
+#घोषणा SQ_V_MOV_B32                   0x00000001
+#घोषणा SQ_V_READFIRSTLANE_B32         0x00000002
+#घोषणा SQ_V_CVT_I32_F64               0x00000003
+#घोषणा SQ_V_CVT_F64_I32               0x00000004
+#घोषणा SQ_V_CVT_F32_I32               0x00000005
+#घोषणा SQ_V_CVT_F32_U32               0x00000006
+#घोषणा SQ_V_CVT_U32_F32               0x00000007
+#घोषणा SQ_V_CVT_I32_F32               0x00000008
+#घोषणा SQ_V_MOV_FED_B32               0x00000009
+#घोषणा SQ_V_CVT_F16_F32               0x0000000a
+#घोषणा SQ_V_CVT_F32_F16               0x0000000b
+#घोषणा SQ_V_CVT_RPI_I32_F32           0x0000000c
+#घोषणा SQ_V_CVT_FLR_I32_F32           0x0000000d
+#घोषणा SQ_V_CVT_OFF_F32_I4            0x0000000e
+#घोषणा SQ_V_CVT_F32_F64               0x0000000f
+#घोषणा SQ_V_CVT_F64_F32               0x00000010
+#घोषणा SQ_V_CVT_F32_UBYTE0            0x00000011
+#घोषणा SQ_V_CVT_F32_UBYTE1            0x00000012
+#घोषणा SQ_V_CVT_F32_UBYTE2            0x00000013
+#घोषणा SQ_V_CVT_F32_UBYTE3            0x00000014
+#घोषणा SQ_V_CVT_U32_F64               0x00000015
+#घोषणा SQ_V_CVT_F64_U32               0x00000016
+#घोषणा SQ_V_TRUNC_F64                 0x00000017
+#घोषणा SQ_V_CEIL_F64                  0x00000018
+#घोषणा SQ_V_RNDNE_F64                 0x00000019
+#घोषणा SQ_V_FLOOR_F64                 0x0000001a
+#घोषणा SQ_V_FRACT_F32                 0x0000001b
+#घोषणा SQ_V_TRUNC_F32                 0x0000001c
+#घोषणा SQ_V_CEIL_F32                  0x0000001d
+#घोषणा SQ_V_RNDNE_F32                 0x0000001e
+#घोषणा SQ_V_FLOOR_F32                 0x0000001f
+#घोषणा SQ_V_EXP_F32                   0x00000020
+#घोषणा SQ_V_LOG_F32                   0x00000021
+#घोषणा SQ_V_RCP_F32                   0x00000022
+#घोषणा SQ_V_RCP_IFLAG_F32             0x00000023
+#घोषणा SQ_V_RSQ_F32                   0x00000024
+#घोषणा SQ_V_RCP_F64                   0x00000025
+#घोषणा SQ_V_RSQ_F64                   0x00000026
+#घोषणा SQ_V_SQRT_F32                  0x00000027
+#घोषणा SQ_V_SQRT_F64                  0x00000028
+#घोषणा SQ_V_SIN_F32                   0x00000029
+#घोषणा SQ_V_COS_F32                   0x0000002a
+#घोषणा SQ_V_NOT_B32                   0x0000002b
+#घोषणा SQ_V_BFREV_B32                 0x0000002c
+#घोषणा SQ_V_FFBH_U32                  0x0000002d
+#घोषणा SQ_V_FFBL_B32                  0x0000002e
+#घोषणा SQ_V_FFBH_I32                  0x0000002f
+#घोषणा SQ_V_FREXP_EXP_I32_F64         0x00000030
+#घोषणा SQ_V_FREXP_MANT_F64            0x00000031
+#घोषणा SQ_V_FRACT_F64                 0x00000032
+#घोषणा SQ_V_FREXP_EXP_I32_F32         0x00000033
+#घोषणा SQ_V_FREXP_MANT_F32            0x00000034
+#घोषणा SQ_V_CLREXCP                   0x00000035
+#घोषणा SQ_V_MOV_PRSV_B32              0x00000036
+#घोषणा SQ_V_CVT_F16_U16               0x00000039
+#घोषणा SQ_V_CVT_F16_I16               0x0000003a
+#घोषणा SQ_V_CVT_U16_F16               0x0000003b
+#घोषणा SQ_V_CVT_I16_F16               0x0000003c
+#घोषणा SQ_V_RCP_F16                   0x0000003d
+#घोषणा SQ_V_SQRT_F16                  0x0000003e
+#घोषणा SQ_V_RSQ_F16                   0x0000003f
+#घोषणा SQ_V_LOG_F16                   0x00000040
+#घोषणा SQ_V_EXP_F16                   0x00000041
+#घोषणा SQ_V_FREXP_MANT_F16            0x00000042
+#घोषणा SQ_V_FREXP_EXP_I16_F16         0x00000043
+#घोषणा SQ_V_FLOOR_F16                 0x00000044
+#घोषणा SQ_V_CEIL_F16                  0x00000045
+#घोषणा SQ_V_TRUNC_F16                 0x00000046
+#घोषणा SQ_V_RNDNE_F16                 0x00000047
+#घोषणा SQ_V_FRACT_F16                 0x00000048
+#घोषणा SQ_V_SIN_F16                   0x00000049
+#घोषणा SQ_V_COS_F16                   0x0000004a
+#घोषणा SQ_V_EXP_LEGACY_F32            0x0000004b
+#घोषणा SQ_V_LOG_LEGACY_F32            0x0000004c
+#घोषणा SQ_V_CVT_NORM_I16_F16          0x0000004d
+#घोषणा SQ_V_CVT_NORM_U16_F16          0x0000004e
+#घोषणा SQ_V_SAT_PK_U8_I16             0x0000004f
+#घोषणा SQ_V_WRITELANE_IMM32           0x00000050
+#घोषणा SQ_V_SWAP_B32                  0x00000051
 
 /*
  * VALUE_SQ_OP_FLAT value
  */
 
-#define SQ_FLAT_LOAD_UBYTE             0x00000010
-#define SQ_FLAT_LOAD_SBYTE             0x00000011
-#define SQ_FLAT_LOAD_USHORT            0x00000012
-#define SQ_FLAT_LOAD_SSHORT            0x00000013
-#define SQ_FLAT_LOAD_DWORD             0x00000014
-#define SQ_FLAT_LOAD_DWORDX2           0x00000015
-#define SQ_FLAT_LOAD_DWORDX3           0x00000016
-#define SQ_FLAT_LOAD_DWORDX4           0x00000017
-#define SQ_FLAT_STORE_BYTE             0x00000018
-#define SQ_FLAT_STORE_SHORT            0x0000001a
-#define SQ_FLAT_STORE_DWORD            0x0000001c
-#define SQ_FLAT_STORE_DWORDX2          0x0000001d
-#define SQ_FLAT_STORE_DWORDX3          0x0000001e
-#define SQ_FLAT_STORE_DWORDX4          0x0000001f
-#define SQ_FLAT_ATOMIC_SWAP            0x00000040
-#define SQ_FLAT_ATOMIC_CMPSWAP         0x00000041
-#define SQ_FLAT_ATOMIC_ADD             0x00000042
-#define SQ_FLAT_ATOMIC_SUB             0x00000043
-#define SQ_FLAT_ATOMIC_SMIN            0x00000044
-#define SQ_FLAT_ATOMIC_UMIN            0x00000045
-#define SQ_FLAT_ATOMIC_SMAX            0x00000046
-#define SQ_FLAT_ATOMIC_UMAX            0x00000047
-#define SQ_FLAT_ATOMIC_AND             0x00000048
-#define SQ_FLAT_ATOMIC_OR              0x00000049
-#define SQ_FLAT_ATOMIC_XOR             0x0000004a
-#define SQ_FLAT_ATOMIC_INC             0x0000004b
-#define SQ_FLAT_ATOMIC_DEC             0x0000004c
-#define SQ_FLAT_ATOMIC_SWAP_X2         0x00000060
-#define SQ_FLAT_ATOMIC_CMPSWAP_X2      0x00000061
-#define SQ_FLAT_ATOMIC_ADD_X2          0x00000062
-#define SQ_FLAT_ATOMIC_SUB_X2          0x00000063
-#define SQ_FLAT_ATOMIC_SMIN_X2         0x00000064
-#define SQ_FLAT_ATOMIC_UMIN_X2         0x00000065
-#define SQ_FLAT_ATOMIC_SMAX_X2         0x00000066
-#define SQ_FLAT_ATOMIC_UMAX_X2         0x00000067
-#define SQ_FLAT_ATOMIC_AND_X2          0x00000068
-#define SQ_FLAT_ATOMIC_OR_X2           0x00000069
-#define SQ_FLAT_ATOMIC_XOR_X2          0x0000006a
-#define SQ_FLAT_ATOMIC_INC_X2          0x0000006b
-#define SQ_FLAT_ATOMIC_DEC_X2          0x0000006c
+#घोषणा SQ_FLAT_LOAD_UBYTE             0x00000010
+#घोषणा SQ_FLAT_LOAD_SBYTE             0x00000011
+#घोषणा SQ_FLAT_LOAD_USHORT            0x00000012
+#घोषणा SQ_FLAT_LOAD_SSHORT            0x00000013
+#घोषणा SQ_FLAT_LOAD_DWORD             0x00000014
+#घोषणा SQ_FLAT_LOAD_DWORDX2           0x00000015
+#घोषणा SQ_FLAT_LOAD_DWORDX3           0x00000016
+#घोषणा SQ_FLAT_LOAD_DWORDX4           0x00000017
+#घोषणा SQ_FLAT_STORE_BYTE             0x00000018
+#घोषणा SQ_FLAT_STORE_SHORT            0x0000001a
+#घोषणा SQ_FLAT_STORE_DWORD            0x0000001c
+#घोषणा SQ_FLAT_STORE_DWORDX2          0x0000001d
+#घोषणा SQ_FLAT_STORE_DWORDX3          0x0000001e
+#घोषणा SQ_FLAT_STORE_DWORDX4          0x0000001f
+#घोषणा SQ_FLAT_ATOMIC_SWAP            0x00000040
+#घोषणा SQ_FLAT_ATOMIC_CMPSWAP         0x00000041
+#घोषणा SQ_FLAT_ATOMIC_ADD             0x00000042
+#घोषणा SQ_FLAT_ATOMIC_SUB             0x00000043
+#घोषणा SQ_FLAT_ATOMIC_SMIN            0x00000044
+#घोषणा SQ_FLAT_ATOMIC_UMIN            0x00000045
+#घोषणा SQ_FLAT_ATOMIC_SMAX            0x00000046
+#घोषणा SQ_FLAT_ATOMIC_UMAX            0x00000047
+#घोषणा SQ_FLAT_ATOMIC_AND             0x00000048
+#घोषणा SQ_FLAT_ATOMIC_OR              0x00000049
+#घोषणा SQ_FLAT_ATOMIC_XOR             0x0000004a
+#घोषणा SQ_FLAT_ATOMIC_INC             0x0000004b
+#घोषणा SQ_FLAT_ATOMIC_DEC             0x0000004c
+#घोषणा SQ_FLAT_ATOMIC_SWAP_X2         0x00000060
+#घोषणा SQ_FLAT_ATOMIC_CMPSWAP_X2      0x00000061
+#घोषणा SQ_FLAT_ATOMIC_ADD_X2          0x00000062
+#घोषणा SQ_FLAT_ATOMIC_SUB_X2          0x00000063
+#घोषणा SQ_FLAT_ATOMIC_SMIN_X2         0x00000064
+#घोषणा SQ_FLAT_ATOMIC_UMIN_X2         0x00000065
+#घोषणा SQ_FLAT_ATOMIC_SMAX_X2         0x00000066
+#घोषणा SQ_FLAT_ATOMIC_UMAX_X2         0x00000067
+#घोषणा SQ_FLAT_ATOMIC_AND_X2          0x00000068
+#घोषणा SQ_FLAT_ATOMIC_OR_X2           0x00000069
+#घोषणा SQ_FLAT_ATOMIC_XOR_X2          0x0000006a
+#घोषणा SQ_FLAT_ATOMIC_INC_X2          0x0000006b
+#घोषणा SQ_FLAT_ATOMIC_DEC_X2          0x0000006c
 
 /*
  * VALUE_SQ_OP_DS value
  */
 
-#define SQ_DS_ADD_U32                  0x00000000
-#define SQ_DS_SUB_U32                  0x00000001
-#define SQ_DS_RSUB_U32                 0x00000002
-#define SQ_DS_INC_U32                  0x00000003
-#define SQ_DS_DEC_U32                  0x00000004
-#define SQ_DS_MIN_I32                  0x00000005
-#define SQ_DS_MAX_I32                  0x00000006
-#define SQ_DS_MIN_U32                  0x00000007
-#define SQ_DS_MAX_U32                  0x00000008
-#define SQ_DS_AND_B32                  0x00000009
-#define SQ_DS_OR_B32                   0x0000000a
-#define SQ_DS_XOR_B32                  0x0000000b
-#define SQ_DS_MSKOR_B32                0x0000000c
-#define SQ_DS_WRITE_B32                0x0000000d
-#define SQ_DS_WRITE2_B32               0x0000000e
-#define SQ_DS_WRITE2ST64_B32           0x0000000f
-#define SQ_DS_CMPST_B32                0x00000010
-#define SQ_DS_CMPST_F32                0x00000011
-#define SQ_DS_MIN_F32                  0x00000012
-#define SQ_DS_MAX_F32                  0x00000013
-#define SQ_DS_NOP                      0x00000014
-#define SQ_DS_ADD_F32                  0x00000015
-#define SQ_DS_WRITE_ADDTID_B32         0x0000001d
-#define SQ_DS_WRITE_B8                 0x0000001e
-#define SQ_DS_WRITE_B16                0x0000001f
-#define SQ_DS_ADD_RTN_U32              0x00000020
-#define SQ_DS_SUB_RTN_U32              0x00000021
-#define SQ_DS_RSUB_RTN_U32             0x00000022
-#define SQ_DS_INC_RTN_U32              0x00000023
-#define SQ_DS_DEC_RTN_U32              0x00000024
-#define SQ_DS_MIN_RTN_I32              0x00000025
-#define SQ_DS_MAX_RTN_I32              0x00000026
-#define SQ_DS_MIN_RTN_U32              0x00000027
-#define SQ_DS_MAX_RTN_U32              0x00000028
-#define SQ_DS_AND_RTN_B32              0x00000029
-#define SQ_DS_OR_RTN_B32               0x0000002a
-#define SQ_DS_XOR_RTN_B32              0x0000002b
-#define SQ_DS_MSKOR_RTN_B32            0x0000002c
-#define SQ_DS_WRXCHG_RTN_B32           0x0000002d
-#define SQ_DS_WRXCHG2_RTN_B32          0x0000002e
-#define SQ_DS_WRXCHG2ST64_RTN_B32      0x0000002f
-#define SQ_DS_CMPST_RTN_B32            0x00000030
-#define SQ_DS_CMPST_RTN_F32            0x00000031
-#define SQ_DS_MIN_RTN_F32              0x00000032
-#define SQ_DS_MAX_RTN_F32              0x00000033
-#define SQ_DS_WRAP_RTN_B32             0x00000034
-#define SQ_DS_ADD_RTN_F32              0x00000035
-#define SQ_DS_READ_B32                 0x00000036
-#define SQ_DS_READ2_B32                0x00000037
-#define SQ_DS_READ2ST64_B32            0x00000038
-#define SQ_DS_READ_I8                  0x00000039
-#define SQ_DS_READ_U8                  0x0000003a
-#define SQ_DS_READ_I16                 0x0000003b
-#define SQ_DS_READ_U16                 0x0000003c
-#define SQ_DS_SWIZZLE_B32              0x0000003d
-#define SQ_DS_PERMUTE_B32              0x0000003e
-#define SQ_DS_BPERMUTE_B32             0x0000003f
-#define SQ_DS_ADD_U64                  0x00000040
-#define SQ_DS_SUB_U64                  0x00000041
-#define SQ_DS_RSUB_U64                 0x00000042
-#define SQ_DS_INC_U64                  0x00000043
-#define SQ_DS_DEC_U64                  0x00000044
-#define SQ_DS_MIN_I64                  0x00000045
-#define SQ_DS_MAX_I64                  0x00000046
-#define SQ_DS_MIN_U64                  0x00000047
-#define SQ_DS_MAX_U64                  0x00000048
-#define SQ_DS_AND_B64                  0x00000049
-#define SQ_DS_OR_B64                   0x0000004a
-#define SQ_DS_XOR_B64                  0x0000004b
-#define SQ_DS_MSKOR_B64                0x0000004c
-#define SQ_DS_WRITE_B64                0x0000004d
-#define SQ_DS_WRITE2_B64               0x0000004e
-#define SQ_DS_WRITE2ST64_B64           0x0000004f
-#define SQ_DS_CMPST_B64                0x00000050
-#define SQ_DS_CMPST_F64                0x00000051
-#define SQ_DS_MIN_F64                  0x00000052
-#define SQ_DS_MAX_F64                  0x00000053
-#define SQ_DS_ADD_RTN_U64              0x00000060
-#define SQ_DS_SUB_RTN_U64              0x00000061
-#define SQ_DS_RSUB_RTN_U64             0x00000062
-#define SQ_DS_INC_RTN_U64              0x00000063
-#define SQ_DS_DEC_RTN_U64              0x00000064
-#define SQ_DS_MIN_RTN_I64              0x00000065
-#define SQ_DS_MAX_RTN_I64              0x00000066
-#define SQ_DS_MIN_RTN_U64              0x00000067
-#define SQ_DS_MAX_RTN_U64              0x00000068
-#define SQ_DS_AND_RTN_B64              0x00000069
-#define SQ_DS_OR_RTN_B64               0x0000006a
-#define SQ_DS_XOR_RTN_B64              0x0000006b
-#define SQ_DS_MSKOR_RTN_B64            0x0000006c
-#define SQ_DS_WRXCHG_RTN_B64           0x0000006d
-#define SQ_DS_WRXCHG2_RTN_B64          0x0000006e
-#define SQ_DS_WRXCHG2ST64_RTN_B64      0x0000006f
-#define SQ_DS_CMPST_RTN_B64            0x00000070
-#define SQ_DS_CMPST_RTN_F64            0x00000071
-#define SQ_DS_MIN_RTN_F64              0x00000072
-#define SQ_DS_MAX_RTN_F64              0x00000073
-#define SQ_DS_READ_B64                 0x00000076
-#define SQ_DS_READ2_B64                0x00000077
-#define SQ_DS_READ2ST64_B64            0x00000078
-#define SQ_DS_CONDXCHG32_RTN_B64       0x0000007e
-#define SQ_DS_ADD_SRC2_U32             0x00000080
-#define SQ_DS_SUB_SRC2_U32             0x00000081
-#define SQ_DS_RSUB_SRC2_U32            0x00000082
-#define SQ_DS_INC_SRC2_U32             0x00000083
-#define SQ_DS_DEC_SRC2_U32             0x00000084
-#define SQ_DS_MIN_SRC2_I32             0x00000085
-#define SQ_DS_MAX_SRC2_I32             0x00000086
-#define SQ_DS_MIN_SRC2_U32             0x00000087
-#define SQ_DS_MAX_SRC2_U32             0x00000088
-#define SQ_DS_AND_SRC2_B32             0x00000089
-#define SQ_DS_OR_SRC2_B32              0x0000008a
-#define SQ_DS_XOR_SRC2_B32             0x0000008b
-#define SQ_DS_WRITE_SRC2_B32           0x0000008d
-#define SQ_DS_MIN_SRC2_F32             0x00000092
-#define SQ_DS_MAX_SRC2_F32             0x00000093
-#define SQ_DS_ADD_SRC2_F32             0x00000095
-#define SQ_DS_GWS_SEMA_RELEASE_ALL     0x00000098
-#define SQ_DS_GWS_INIT                 0x00000099
-#define SQ_DS_GWS_SEMA_V               0x0000009a
-#define SQ_DS_GWS_SEMA_BR              0x0000009b
-#define SQ_DS_GWS_SEMA_P               0x0000009c
-#define SQ_DS_GWS_BARRIER              0x0000009d
-#define SQ_DS_READ_ADDTID_B32          0x000000b6
-#define SQ_DS_CONSUME                  0x000000bd
-#define SQ_DS_APPEND                   0x000000be
-#define SQ_DS_ORDERED_COUNT            0x000000bf
-#define SQ_DS_ADD_SRC2_U64             0x000000c0
-#define SQ_DS_SUB_SRC2_U64             0x000000c1
-#define SQ_DS_RSUB_SRC2_U64            0x000000c2
-#define SQ_DS_INC_SRC2_U64             0x000000c3
-#define SQ_DS_DEC_SRC2_U64             0x000000c4
-#define SQ_DS_MIN_SRC2_I64             0x000000c5
-#define SQ_DS_MAX_SRC2_I64             0x000000c6
-#define SQ_DS_MIN_SRC2_U64             0x000000c7
-#define SQ_DS_MAX_SRC2_U64             0x000000c8
-#define SQ_DS_AND_SRC2_B64             0x000000c9
-#define SQ_DS_OR_SRC2_B64              0x000000ca
-#define SQ_DS_XOR_SRC2_B64             0x000000cb
-#define SQ_DS_WRITE_SRC2_B64           0x000000cd
-#define SQ_DS_MIN_SRC2_F64             0x000000d2
-#define SQ_DS_MAX_SRC2_F64             0x000000d3
-#define SQ_DS_WRITE_B96                0x000000de
-#define SQ_DS_WRITE_B128               0x000000df
-#define SQ_DS_CONDXCHG32_RTN_B128      0x000000fd
-#define SQ_DS_READ_B96                 0x000000fe
-#define SQ_DS_READ_B128                0x000000ff
+#घोषणा SQ_DS_ADD_U32                  0x00000000
+#घोषणा SQ_DS_SUB_U32                  0x00000001
+#घोषणा SQ_DS_RSUB_U32                 0x00000002
+#घोषणा SQ_DS_INC_U32                  0x00000003
+#घोषणा SQ_DS_DEC_U32                  0x00000004
+#घोषणा SQ_DS_MIN_I32                  0x00000005
+#घोषणा SQ_DS_MAX_I32                  0x00000006
+#घोषणा SQ_DS_MIN_U32                  0x00000007
+#घोषणा SQ_DS_MAX_U32                  0x00000008
+#घोषणा SQ_DS_AND_B32                  0x00000009
+#घोषणा SQ_DS_OR_B32                   0x0000000a
+#घोषणा SQ_DS_XOR_B32                  0x0000000b
+#घोषणा SQ_DS_MSKOR_B32                0x0000000c
+#घोषणा SQ_DS_WRITE_B32                0x0000000d
+#घोषणा SQ_DS_WRITE2_B32               0x0000000e
+#घोषणा SQ_DS_WRITE2ST64_B32           0x0000000f
+#घोषणा SQ_DS_CMPST_B32                0x00000010
+#घोषणा SQ_DS_CMPST_F32                0x00000011
+#घोषणा SQ_DS_MIN_F32                  0x00000012
+#घोषणा SQ_DS_MAX_F32                  0x00000013
+#घोषणा SQ_DS_NOP                      0x00000014
+#घोषणा SQ_DS_ADD_F32                  0x00000015
+#घोषणा SQ_DS_WRITE_ADDTID_B32         0x0000001d
+#घोषणा SQ_DS_WRITE_B8                 0x0000001e
+#घोषणा SQ_DS_WRITE_B16                0x0000001f
+#घोषणा SQ_DS_ADD_RTN_U32              0x00000020
+#घोषणा SQ_DS_SUB_RTN_U32              0x00000021
+#घोषणा SQ_DS_RSUB_RTN_U32             0x00000022
+#घोषणा SQ_DS_INC_RTN_U32              0x00000023
+#घोषणा SQ_DS_DEC_RTN_U32              0x00000024
+#घोषणा SQ_DS_MIN_RTN_I32              0x00000025
+#घोषणा SQ_DS_MAX_RTN_I32              0x00000026
+#घोषणा SQ_DS_MIN_RTN_U32              0x00000027
+#घोषणा SQ_DS_MAX_RTN_U32              0x00000028
+#घोषणा SQ_DS_AND_RTN_B32              0x00000029
+#घोषणा SQ_DS_OR_RTN_B32               0x0000002a
+#घोषणा SQ_DS_XOR_RTN_B32              0x0000002b
+#घोषणा SQ_DS_MSKOR_RTN_B32            0x0000002c
+#घोषणा SQ_DS_WRXCHG_RTN_B32           0x0000002d
+#घोषणा SQ_DS_WRXCHG2_RTN_B32          0x0000002e
+#घोषणा SQ_DS_WRXCHG2ST64_RTN_B32      0x0000002f
+#घोषणा SQ_DS_CMPST_RTN_B32            0x00000030
+#घोषणा SQ_DS_CMPST_RTN_F32            0x00000031
+#घोषणा SQ_DS_MIN_RTN_F32              0x00000032
+#घोषणा SQ_DS_MAX_RTN_F32              0x00000033
+#घोषणा SQ_DS_WRAP_RTN_B32             0x00000034
+#घोषणा SQ_DS_ADD_RTN_F32              0x00000035
+#घोषणा SQ_DS_READ_B32                 0x00000036
+#घोषणा SQ_DS_READ2_B32                0x00000037
+#घोषणा SQ_DS_READ2ST64_B32            0x00000038
+#घोषणा SQ_DS_READ_I8                  0x00000039
+#घोषणा SQ_DS_READ_U8                  0x0000003a
+#घोषणा SQ_DS_READ_I16                 0x0000003b
+#घोषणा SQ_DS_READ_U16                 0x0000003c
+#घोषणा SQ_DS_SWIZZLE_B32              0x0000003d
+#घोषणा SQ_DS_PERMUTE_B32              0x0000003e
+#घोषणा SQ_DS_BPERMUTE_B32             0x0000003f
+#घोषणा SQ_DS_ADD_U64                  0x00000040
+#घोषणा SQ_DS_SUB_U64                  0x00000041
+#घोषणा SQ_DS_RSUB_U64                 0x00000042
+#घोषणा SQ_DS_INC_U64                  0x00000043
+#घोषणा SQ_DS_DEC_U64                  0x00000044
+#घोषणा SQ_DS_MIN_I64                  0x00000045
+#घोषणा SQ_DS_MAX_I64                  0x00000046
+#घोषणा SQ_DS_MIN_U64                  0x00000047
+#घोषणा SQ_DS_MAX_U64                  0x00000048
+#घोषणा SQ_DS_AND_B64                  0x00000049
+#घोषणा SQ_DS_OR_B64                   0x0000004a
+#घोषणा SQ_DS_XOR_B64                  0x0000004b
+#घोषणा SQ_DS_MSKOR_B64                0x0000004c
+#घोषणा SQ_DS_WRITE_B64                0x0000004d
+#घोषणा SQ_DS_WRITE2_B64               0x0000004e
+#घोषणा SQ_DS_WRITE2ST64_B64           0x0000004f
+#घोषणा SQ_DS_CMPST_B64                0x00000050
+#घोषणा SQ_DS_CMPST_F64                0x00000051
+#घोषणा SQ_DS_MIN_F64                  0x00000052
+#घोषणा SQ_DS_MAX_F64                  0x00000053
+#घोषणा SQ_DS_ADD_RTN_U64              0x00000060
+#घोषणा SQ_DS_SUB_RTN_U64              0x00000061
+#घोषणा SQ_DS_RSUB_RTN_U64             0x00000062
+#घोषणा SQ_DS_INC_RTN_U64              0x00000063
+#घोषणा SQ_DS_DEC_RTN_U64              0x00000064
+#घोषणा SQ_DS_MIN_RTN_I64              0x00000065
+#घोषणा SQ_DS_MAX_RTN_I64              0x00000066
+#घोषणा SQ_DS_MIN_RTN_U64              0x00000067
+#घोषणा SQ_DS_MAX_RTN_U64              0x00000068
+#घोषणा SQ_DS_AND_RTN_B64              0x00000069
+#घोषणा SQ_DS_OR_RTN_B64               0x0000006a
+#घोषणा SQ_DS_XOR_RTN_B64              0x0000006b
+#घोषणा SQ_DS_MSKOR_RTN_B64            0x0000006c
+#घोषणा SQ_DS_WRXCHG_RTN_B64           0x0000006d
+#घोषणा SQ_DS_WRXCHG2_RTN_B64          0x0000006e
+#घोषणा SQ_DS_WRXCHG2ST64_RTN_B64      0x0000006f
+#घोषणा SQ_DS_CMPST_RTN_B64            0x00000070
+#घोषणा SQ_DS_CMPST_RTN_F64            0x00000071
+#घोषणा SQ_DS_MIN_RTN_F64              0x00000072
+#घोषणा SQ_DS_MAX_RTN_F64              0x00000073
+#घोषणा SQ_DS_READ_B64                 0x00000076
+#घोषणा SQ_DS_READ2_B64                0x00000077
+#घोषणा SQ_DS_READ2ST64_B64            0x00000078
+#घोषणा SQ_DS_CONDXCHG32_RTN_B64       0x0000007e
+#घोषणा SQ_DS_ADD_SRC2_U32             0x00000080
+#घोषणा SQ_DS_SUB_SRC2_U32             0x00000081
+#घोषणा SQ_DS_RSUB_SRC2_U32            0x00000082
+#घोषणा SQ_DS_INC_SRC2_U32             0x00000083
+#घोषणा SQ_DS_DEC_SRC2_U32             0x00000084
+#घोषणा SQ_DS_MIN_SRC2_I32             0x00000085
+#घोषणा SQ_DS_MAX_SRC2_I32             0x00000086
+#घोषणा SQ_DS_MIN_SRC2_U32             0x00000087
+#घोषणा SQ_DS_MAX_SRC2_U32             0x00000088
+#घोषणा SQ_DS_AND_SRC2_B32             0x00000089
+#घोषणा SQ_DS_OR_SRC2_B32              0x0000008a
+#घोषणा SQ_DS_XOR_SRC2_B32             0x0000008b
+#घोषणा SQ_DS_WRITE_SRC2_B32           0x0000008d
+#घोषणा SQ_DS_MIN_SRC2_F32             0x00000092
+#घोषणा SQ_DS_MAX_SRC2_F32             0x00000093
+#घोषणा SQ_DS_ADD_SRC2_F32             0x00000095
+#घोषणा SQ_DS_GWS_SEMA_RELEASE_ALL     0x00000098
+#घोषणा SQ_DS_GWS_INIT                 0x00000099
+#घोषणा SQ_DS_GWS_SEMA_V               0x0000009a
+#घोषणा SQ_DS_GWS_SEMA_BR              0x0000009b
+#घोषणा SQ_DS_GWS_SEMA_P               0x0000009c
+#घोषणा SQ_DS_GWS_BARRIER              0x0000009d
+#घोषणा SQ_DS_READ_ADDTID_B32          0x000000b6
+#घोषणा SQ_DS_CONSUME                  0x000000bd
+#घोषणा SQ_DS_APPEND                   0x000000be
+#घोषणा SQ_DS_ORDERED_COUNT            0x000000bf
+#घोषणा SQ_DS_ADD_SRC2_U64             0x000000c0
+#घोषणा SQ_DS_SUB_SRC2_U64             0x000000c1
+#घोषणा SQ_DS_RSUB_SRC2_U64            0x000000c2
+#घोषणा SQ_DS_INC_SRC2_U64             0x000000c3
+#घोषणा SQ_DS_DEC_SRC2_U64             0x000000c4
+#घोषणा SQ_DS_MIN_SRC2_I64             0x000000c5
+#घोषणा SQ_DS_MAX_SRC2_I64             0x000000c6
+#घोषणा SQ_DS_MIN_SRC2_U64             0x000000c7
+#घोषणा SQ_DS_MAX_SRC2_U64             0x000000c8
+#घोषणा SQ_DS_AND_SRC2_B64             0x000000c9
+#घोषणा SQ_DS_OR_SRC2_B64              0x000000ca
+#घोषणा SQ_DS_XOR_SRC2_B64             0x000000cb
+#घोषणा SQ_DS_WRITE_SRC2_B64           0x000000cd
+#घोषणा SQ_DS_MIN_SRC2_F64             0x000000d2
+#घोषणा SQ_DS_MAX_SRC2_F64             0x000000d3
+#घोषणा SQ_DS_WRITE_B96                0x000000de
+#घोषणा SQ_DS_WRITE_B128               0x000000df
+#घोषणा SQ_DS_CONDXCHG32_RTN_B128      0x000000fd
+#घोषणा SQ_DS_READ_B96                 0x000000fe
+#घोषणा SQ_DS_READ_B128                0x000000ff
 
 /*
  * VALUE_SQ_OP_SMEM value
  */
 
-#define SQ_S_LOAD_DWORD                0x00000000
-#define SQ_S_LOAD_DWORDX2              0x00000001
-#define SQ_S_LOAD_DWORDX4              0x00000002
-#define SQ_S_LOAD_DWORDX8              0x00000003
-#define SQ_S_LOAD_DWORDX16             0x00000004
-#define SQ_S_SCRATCH_LOAD_DWORD        0x00000005
-#define SQ_S_SCRATCH_LOAD_DWORDX2      0x00000006
-#define SQ_S_SCRATCH_LOAD_DWORDX4      0x00000007
-#define SQ_S_BUFFER_LOAD_DWORD         0x00000008
-#define SQ_S_BUFFER_LOAD_DWORDX2       0x00000009
-#define SQ_S_BUFFER_LOAD_DWORDX4       0x0000000a
-#define SQ_S_BUFFER_LOAD_DWORDX8       0x0000000b
-#define SQ_S_BUFFER_LOAD_DWORDX16      0x0000000c
-#define SQ_S_STORE_DWORD               0x00000010
-#define SQ_S_STORE_DWORDX2             0x00000011
-#define SQ_S_STORE_DWORDX4             0x00000012
-#define SQ_S_SCRATCH_STORE_DWORD       0x00000015
-#define SQ_S_SCRATCH_STORE_DWORDX2     0x00000016
-#define SQ_S_SCRATCH_STORE_DWORDX4     0x00000017
-#define SQ_S_BUFFER_STORE_DWORD        0x00000018
-#define SQ_S_BUFFER_STORE_DWORDX2      0x00000019
-#define SQ_S_BUFFER_STORE_DWORDX4      0x0000001a
-#define SQ_S_DCACHE_INV                0x00000020
-#define SQ_S_DCACHE_WB                 0x00000021
-#define SQ_S_DCACHE_INV_VOL            0x00000022
-#define SQ_S_DCACHE_WB_VOL             0x00000023
-#define SQ_S_MEMTIME                   0x00000024
-#define SQ_S_MEMREALTIME               0x00000025
-#define SQ_S_ATC_PROBE                 0x00000026
-#define SQ_S_ATC_PROBE_BUFFER          0x00000027
-#define SQ_S_BUFFER_ATOMIC_SWAP        0x00000040
-#define SQ_S_BUFFER_ATOMIC_CMPSWAP     0x00000041
-#define SQ_S_BUFFER_ATOMIC_ADD         0x00000042
-#define SQ_S_BUFFER_ATOMIC_SUB         0x00000043
-#define SQ_S_BUFFER_ATOMIC_SMIN        0x00000044
-#define SQ_S_BUFFER_ATOMIC_UMIN        0x00000045
-#define SQ_S_BUFFER_ATOMIC_SMAX        0x00000046
-#define SQ_S_BUFFER_ATOMIC_UMAX        0x00000047
-#define SQ_S_BUFFER_ATOMIC_AND         0x00000048
-#define SQ_S_BUFFER_ATOMIC_OR          0x00000049
-#define SQ_S_BUFFER_ATOMIC_XOR         0x0000004a
-#define SQ_S_BUFFER_ATOMIC_INC         0x0000004b
-#define SQ_S_BUFFER_ATOMIC_DEC         0x0000004c
-#define SQ_S_BUFFER_ATOMIC_SWAP_X2     0x00000060
-#define SQ_S_BUFFER_ATOMIC_CMPSWAP_X2  0x00000061
-#define SQ_S_BUFFER_ATOMIC_ADD_X2      0x00000062
-#define SQ_S_BUFFER_ATOMIC_SUB_X2      0x00000063
-#define SQ_S_BUFFER_ATOMIC_SMIN_X2     0x00000064
-#define SQ_S_BUFFER_ATOMIC_UMIN_X2     0x00000065
-#define SQ_S_BUFFER_ATOMIC_SMAX_X2     0x00000066
-#define SQ_S_BUFFER_ATOMIC_UMAX_X2     0x00000067
-#define SQ_S_BUFFER_ATOMIC_AND_X2      0x00000068
-#define SQ_S_BUFFER_ATOMIC_OR_X2       0x00000069
-#define SQ_S_BUFFER_ATOMIC_XOR_X2      0x0000006a
-#define SQ_S_BUFFER_ATOMIC_INC_X2      0x0000006b
-#define SQ_S_BUFFER_ATOMIC_DEC_X2      0x0000006c
-#define SQ_S_ATOMIC_SWAP               0x00000080
-#define SQ_S_ATOMIC_CMPSWAP            0x00000081
-#define SQ_S_ATOMIC_ADD                0x00000082
-#define SQ_S_ATOMIC_SUB                0x00000083
-#define SQ_S_ATOMIC_SMIN               0x00000084
-#define SQ_S_ATOMIC_UMIN               0x00000085
-#define SQ_S_ATOMIC_SMAX               0x00000086
-#define SQ_S_ATOMIC_UMAX               0x00000087
-#define SQ_S_ATOMIC_AND                0x00000088
-#define SQ_S_ATOMIC_OR                 0x00000089
-#define SQ_S_ATOMIC_XOR                0x0000008a
-#define SQ_S_ATOMIC_INC                0x0000008b
-#define SQ_S_ATOMIC_DEC                0x0000008c
-#define SQ_S_ATOMIC_SWAP_X2            0x000000a0
-#define SQ_S_ATOMIC_CMPSWAP_X2         0x000000a1
-#define SQ_S_ATOMIC_ADD_X2             0x000000a2
-#define SQ_S_ATOMIC_SUB_X2             0x000000a3
-#define SQ_S_ATOMIC_SMIN_X2            0x000000a4
-#define SQ_S_ATOMIC_UMIN_X2            0x000000a5
-#define SQ_S_ATOMIC_SMAX_X2            0x000000a6
-#define SQ_S_ATOMIC_UMAX_X2            0x000000a7
-#define SQ_S_ATOMIC_AND_X2             0x000000a8
-#define SQ_S_ATOMIC_OR_X2              0x000000a9
-#define SQ_S_ATOMIC_XOR_X2             0x000000aa
-#define SQ_S_ATOMIC_INC_X2             0x000000ab
-#define SQ_S_ATOMIC_DEC_X2             0x000000ac
+#घोषणा SQ_S_LOAD_DWORD                0x00000000
+#घोषणा SQ_S_LOAD_DWORDX2              0x00000001
+#घोषणा SQ_S_LOAD_DWORDX4              0x00000002
+#घोषणा SQ_S_LOAD_DWORDX8              0x00000003
+#घोषणा SQ_S_LOAD_DWORDX16             0x00000004
+#घोषणा SQ_S_SCRATCH_LOAD_DWORD        0x00000005
+#घोषणा SQ_S_SCRATCH_LOAD_DWORDX2      0x00000006
+#घोषणा SQ_S_SCRATCH_LOAD_DWORDX4      0x00000007
+#घोषणा SQ_S_BUFFER_LOAD_DWORD         0x00000008
+#घोषणा SQ_S_BUFFER_LOAD_DWORDX2       0x00000009
+#घोषणा SQ_S_BUFFER_LOAD_DWORDX4       0x0000000a
+#घोषणा SQ_S_BUFFER_LOAD_DWORDX8       0x0000000b
+#घोषणा SQ_S_BUFFER_LOAD_DWORDX16      0x0000000c
+#घोषणा SQ_S_STORE_DWORD               0x00000010
+#घोषणा SQ_S_STORE_DWORDX2             0x00000011
+#घोषणा SQ_S_STORE_DWORDX4             0x00000012
+#घोषणा SQ_S_SCRATCH_STORE_DWORD       0x00000015
+#घोषणा SQ_S_SCRATCH_STORE_DWORDX2     0x00000016
+#घोषणा SQ_S_SCRATCH_STORE_DWORDX4     0x00000017
+#घोषणा SQ_S_BUFFER_STORE_DWORD        0x00000018
+#घोषणा SQ_S_BUFFER_STORE_DWORDX2      0x00000019
+#घोषणा SQ_S_BUFFER_STORE_DWORDX4      0x0000001a
+#घोषणा SQ_S_DCACHE_INV                0x00000020
+#घोषणा SQ_S_DCACHE_WB                 0x00000021
+#घोषणा SQ_S_DCACHE_INV_VOL            0x00000022
+#घोषणा SQ_S_DCACHE_WB_VOL             0x00000023
+#घोषणा SQ_S_MEMTIME                   0x00000024
+#घोषणा SQ_S_MEMREALTIME               0x00000025
+#घोषणा SQ_S_ATC_PROBE                 0x00000026
+#घोषणा SQ_S_ATC_PROBE_BUFFER          0x00000027
+#घोषणा SQ_S_BUFFER_ATOMIC_SWAP        0x00000040
+#घोषणा SQ_S_BUFFER_ATOMIC_CMPSWAP     0x00000041
+#घोषणा SQ_S_BUFFER_ATOMIC_ADD         0x00000042
+#घोषणा SQ_S_BUFFER_ATOMIC_SUB         0x00000043
+#घोषणा SQ_S_BUFFER_ATOMIC_SMIN        0x00000044
+#घोषणा SQ_S_BUFFER_ATOMIC_UMIN        0x00000045
+#घोषणा SQ_S_BUFFER_ATOMIC_SMAX        0x00000046
+#घोषणा SQ_S_BUFFER_ATOMIC_UMAX        0x00000047
+#घोषणा SQ_S_BUFFER_ATOMIC_AND         0x00000048
+#घोषणा SQ_S_BUFFER_ATOMIC_OR          0x00000049
+#घोषणा SQ_S_BUFFER_ATOMIC_XOR         0x0000004a
+#घोषणा SQ_S_BUFFER_ATOMIC_INC         0x0000004b
+#घोषणा SQ_S_BUFFER_ATOMIC_DEC         0x0000004c
+#घोषणा SQ_S_BUFFER_ATOMIC_SWAP_X2     0x00000060
+#घोषणा SQ_S_BUFFER_ATOMIC_CMPSWAP_X2  0x00000061
+#घोषणा SQ_S_BUFFER_ATOMIC_ADD_X2      0x00000062
+#घोषणा SQ_S_BUFFER_ATOMIC_SUB_X2      0x00000063
+#घोषणा SQ_S_BUFFER_ATOMIC_SMIN_X2     0x00000064
+#घोषणा SQ_S_BUFFER_ATOMIC_UMIN_X2     0x00000065
+#घोषणा SQ_S_BUFFER_ATOMIC_SMAX_X2     0x00000066
+#घोषणा SQ_S_BUFFER_ATOMIC_UMAX_X2     0x00000067
+#घोषणा SQ_S_BUFFER_ATOMIC_AND_X2      0x00000068
+#घोषणा SQ_S_BUFFER_ATOMIC_OR_X2       0x00000069
+#घोषणा SQ_S_BUFFER_ATOMIC_XOR_X2      0x0000006a
+#घोषणा SQ_S_BUFFER_ATOMIC_INC_X2      0x0000006b
+#घोषणा SQ_S_BUFFER_ATOMIC_DEC_X2      0x0000006c
+#घोषणा SQ_S_ATOMIC_SWAP               0x00000080
+#घोषणा SQ_S_ATOMIC_CMPSWAP            0x00000081
+#घोषणा SQ_S_ATOMIC_ADD                0x00000082
+#घोषणा SQ_S_ATOMIC_SUB                0x00000083
+#घोषणा SQ_S_ATOMIC_SMIN               0x00000084
+#घोषणा SQ_S_ATOMIC_UMIN               0x00000085
+#घोषणा SQ_S_ATOMIC_SMAX               0x00000086
+#घोषणा SQ_S_ATOMIC_UMAX               0x00000087
+#घोषणा SQ_S_ATOMIC_AND                0x00000088
+#घोषणा SQ_S_ATOMIC_OR                 0x00000089
+#घोषणा SQ_S_ATOMIC_XOR                0x0000008a
+#घोषणा SQ_S_ATOMIC_INC                0x0000008b
+#घोषणा SQ_S_ATOMIC_DEC                0x0000008c
+#घोषणा SQ_S_ATOMIC_SWAP_X2            0x000000a0
+#घोषणा SQ_S_ATOMIC_CMPSWAP_X2         0x000000a1
+#घोषणा SQ_S_ATOMIC_ADD_X2             0x000000a2
+#घोषणा SQ_S_ATOMIC_SUB_X2             0x000000a3
+#घोषणा SQ_S_ATOMIC_SMIN_X2            0x000000a4
+#घोषणा SQ_S_ATOMIC_UMIN_X2            0x000000a5
+#घोषणा SQ_S_ATOMIC_SMAX_X2            0x000000a6
+#घोषणा SQ_S_ATOMIC_UMAX_X2            0x000000a7
+#घोषणा SQ_S_ATOMIC_AND_X2             0x000000a8
+#घोषणा SQ_S_ATOMIC_OR_X2              0x000000a9
+#घोषणा SQ_S_ATOMIC_XOR_X2             0x000000aa
+#घोषणा SQ_S_ATOMIC_INC_X2             0x000000ab
+#घोषणा SQ_S_ATOMIC_DEC_X2             0x000000ac
 
 /*
  * VALUE_SQ_OP_VOP2 value
  */
 
-#define SQ_V_CNDMASK_B32               0x00000000
-#define SQ_V_ADD_F32                   0x00000001
-#define SQ_V_SUB_F32                   0x00000002
-#define SQ_V_SUBREV_F32                0x00000003
-#define SQ_V_MUL_LEGACY_F32            0x00000004
-#define SQ_V_MUL_F32                   0x00000005
-#define SQ_V_MUL_I32_I24               0x00000006
-#define SQ_V_MUL_HI_I32_I24            0x00000007
-#define SQ_V_MUL_U32_U24               0x00000008
-#define SQ_V_MUL_HI_U32_U24            0x00000009
-#define SQ_V_MIN_F32                   0x0000000a
-#define SQ_V_MAX_F32                   0x0000000b
-#define SQ_V_MIN_I32                   0x0000000c
-#define SQ_V_MAX_I32                   0x0000000d
-#define SQ_V_MIN_U32                   0x0000000e
-#define SQ_V_MAX_U32                   0x0000000f
-#define SQ_V_LSHRREV_B32               0x00000010
-#define SQ_V_ASHRREV_I32               0x00000011
-#define SQ_V_LSHLREV_B32               0x00000012
-#define SQ_V_AND_B32                   0x00000013
-#define SQ_V_OR_B32                    0x00000014
-#define SQ_V_XOR_B32                   0x00000015
-#define SQ_V_MAC_F32                   0x00000016
-#define SQ_V_MADMK_F32                 0x00000017
-#define SQ_V_MADAK_F32                 0x00000018
-#define SQ_V_ADD_CO_U32                0x00000019
-#define SQ_V_SUB_CO_U32                0x0000001a
-#define SQ_V_SUBREV_CO_U32             0x0000001b
-#define SQ_V_ADDC_CO_U32               0x0000001c
-#define SQ_V_SUBB_CO_U32               0x0000001d
-#define SQ_V_SUBBREV_CO_U32            0x0000001e
-#define SQ_V_ADD_F16                   0x0000001f
-#define SQ_V_SUB_F16                   0x00000020
-#define SQ_V_SUBREV_F16                0x00000021
-#define SQ_V_MUL_F16                   0x00000022
-#define SQ_V_MAC_F16                   0x00000023
-#define SQ_V_MADMK_F16                 0x00000024
-#define SQ_V_MADAK_F16                 0x00000025
-#define SQ_V_ADD_U16                   0x00000026
-#define SQ_V_SUB_U16                   0x00000027
-#define SQ_V_SUBREV_U16                0x00000028
-#define SQ_V_MUL_LO_U16                0x00000029
-#define SQ_V_LSHLREV_B16               0x0000002a
-#define SQ_V_LSHRREV_B16               0x0000002b
-#define SQ_V_ASHRREV_I16               0x0000002c
-#define SQ_V_MAX_F16                   0x0000002d
-#define SQ_V_MIN_F16                   0x0000002e
-#define SQ_V_MAX_U16                   0x0000002f
-#define SQ_V_MAX_I16                   0x00000030
-#define SQ_V_MIN_U16                   0x00000031
-#define SQ_V_MIN_I16                   0x00000032
-#define SQ_V_LDEXP_F16                 0x00000033
-#define SQ_V_ADD_U32                   0x00000034
-#define SQ_V_SUB_U32                   0x00000035
-#define SQ_V_SUBREV_U32                0x00000036
+#घोषणा SQ_V_CNDMASK_B32               0x00000000
+#घोषणा SQ_V_ADD_F32                   0x00000001
+#घोषणा SQ_V_SUB_F32                   0x00000002
+#घोषणा SQ_V_SUBREV_F32                0x00000003
+#घोषणा SQ_V_MUL_LEGACY_F32            0x00000004
+#घोषणा SQ_V_MUL_F32                   0x00000005
+#घोषणा SQ_V_MUL_I32_I24               0x00000006
+#घोषणा SQ_V_MUL_HI_I32_I24            0x00000007
+#घोषणा SQ_V_MUL_U32_U24               0x00000008
+#घोषणा SQ_V_MUL_HI_U32_U24            0x00000009
+#घोषणा SQ_V_MIN_F32                   0x0000000a
+#घोषणा SQ_V_MAX_F32                   0x0000000b
+#घोषणा SQ_V_MIN_I32                   0x0000000c
+#घोषणा SQ_V_MAX_I32                   0x0000000d
+#घोषणा SQ_V_MIN_U32                   0x0000000e
+#घोषणा SQ_V_MAX_U32                   0x0000000f
+#घोषणा SQ_V_LSHRREV_B32               0x00000010
+#घोषणा SQ_V_ASHRREV_I32               0x00000011
+#घोषणा SQ_V_LSHLREV_B32               0x00000012
+#घोषणा SQ_V_AND_B32                   0x00000013
+#घोषणा SQ_V_OR_B32                    0x00000014
+#घोषणा SQ_V_XOR_B32                   0x00000015
+#घोषणा SQ_V_MAC_F32                   0x00000016
+#घोषणा SQ_V_MADMK_F32                 0x00000017
+#घोषणा SQ_V_MADAK_F32                 0x00000018
+#घोषणा SQ_V_ADD_CO_U32                0x00000019
+#घोषणा SQ_V_SUB_CO_U32                0x0000001a
+#घोषणा SQ_V_SUBREV_CO_U32             0x0000001b
+#घोषणा SQ_V_ADDC_CO_U32               0x0000001c
+#घोषणा SQ_V_SUBB_CO_U32               0x0000001d
+#घोषणा SQ_V_SUBBREV_CO_U32            0x0000001e
+#घोषणा SQ_V_ADD_F16                   0x0000001f
+#घोषणा SQ_V_SUB_F16                   0x00000020
+#घोषणा SQ_V_SUBREV_F16                0x00000021
+#घोषणा SQ_V_MUL_F16                   0x00000022
+#घोषणा SQ_V_MAC_F16                   0x00000023
+#घोषणा SQ_V_MADMK_F16                 0x00000024
+#घोषणा SQ_V_MADAK_F16                 0x00000025
+#घोषणा SQ_V_ADD_U16                   0x00000026
+#घोषणा SQ_V_SUB_U16                   0x00000027
+#घोषणा SQ_V_SUBREV_U16                0x00000028
+#घोषणा SQ_V_MUL_LO_U16                0x00000029
+#घोषणा SQ_V_LSHLREV_B16               0x0000002a
+#घोषणा SQ_V_LSHRREV_B16               0x0000002b
+#घोषणा SQ_V_ASHRREV_I16               0x0000002c
+#घोषणा SQ_V_MAX_F16                   0x0000002d
+#घोषणा SQ_V_MIN_F16                   0x0000002e
+#घोषणा SQ_V_MAX_U16                   0x0000002f
+#घोषणा SQ_V_MAX_I16                   0x00000030
+#घोषणा SQ_V_MIN_U16                   0x00000031
+#घोषणा SQ_V_MIN_I16                   0x00000032
+#घोषणा SQ_V_LDEXP_F16                 0x00000033
+#घोषणा SQ_V_ADD_U32                   0x00000034
+#घोषणा SQ_V_SUB_U32                   0x00000035
+#घोषणा SQ_V_SUBREV_U32                0x00000036
 
 /*
  * VALUE_SQ_SYSMSG_OP value
  */
 
-#define SQ_SYSMSG_OP_ECC_ERR_INTERRUPT 0x00000001
-#define SQ_SYSMSG_OP_REG_RD            0x00000002
-#define SQ_SYSMSG_OP_HOST_TRAP_ACK     0x00000003
-#define SQ_SYSMSG_OP_TTRACE_PC         0x00000004
-#define SQ_SYSMSG_OP_ILLEGAL_INST_INTERRUPT 0x00000005
-#define SQ_SYSMSG_OP_MEMVIOL_INTERRUPT 0x00000006
+#घोषणा SQ_SYSMSG_OP_ECC_ERR_INTERRUPT 0x00000001
+#घोषणा SQ_SYSMSG_OP_REG_RD            0x00000002
+#घोषणा SQ_SYSMSG_OP_HOST_TRAP_ACK     0x00000003
+#घोषणा SQ_SYSMSG_OP_TTRACE_PC         0x00000004
+#घोषणा SQ_SYSMSG_OP_ILLEGAL_INST_INTERRUPT 0x00000005
+#घोषणा SQ_SYSMSG_OP_MEMVIOL_INTERRUPT 0x00000006
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_VCCZ value
  */
 
-#define SQ_SRC_VCCZ                    0x000000fb
+#घोषणा SQ_SRC_VCCZ                    0x000000fb
 
 /*
  * VALUE_SQ_CHAN value
  */
 
-#define SQ_CHAN_X                      0x00000000
-#define SQ_CHAN_Y                      0x00000001
-#define SQ_CHAN_Z                      0x00000002
-#define SQ_CHAN_W                      0x00000003
+#घोषणा SQ_CHAN_X                      0x00000000
+#घोषणा SQ_CHAN_Y                      0x00000001
+#घोषणा SQ_CHAN_Z                      0x00000002
+#घोषणा SQ_CHAN_W                      0x00000003
 
 /*
  * VALUE_SQ_OP_SOPK value
  */
 
-#define SQ_S_MOVK_I32                  0x00000000
-#define SQ_S_CMOVK_I32                 0x00000001
-#define SQ_S_CMPK_EQ_I32               0x00000002
-#define SQ_S_CMPK_LG_I32               0x00000003
-#define SQ_S_CMPK_GT_I32               0x00000004
-#define SQ_S_CMPK_GE_I32               0x00000005
-#define SQ_S_CMPK_LT_I32               0x00000006
-#define SQ_S_CMPK_LE_I32               0x00000007
-#define SQ_S_CMPK_EQ_U32               0x00000008
-#define SQ_S_CMPK_LG_U32               0x00000009
-#define SQ_S_CMPK_GT_U32               0x0000000a
-#define SQ_S_CMPK_GE_U32               0x0000000b
-#define SQ_S_CMPK_LT_U32               0x0000000c
-#define SQ_S_CMPK_LE_U32               0x0000000d
-#define SQ_S_ADDK_I32                  0x0000000e
-#define SQ_S_MULK_I32                  0x0000000f
-#define SQ_S_CBRANCH_I_FORK            0x00000010
-#define SQ_S_GETREG_B32                0x00000011
-#define SQ_S_SETREG_B32                0x00000012
-#define SQ_S_GETREG_REGRD_B32          0x00000013
-#define SQ_S_SETREG_IMM32_B32          0x00000014
-#define SQ_S_CALL_B64                  0x00000015
+#घोषणा SQ_S_MOVK_I32                  0x00000000
+#घोषणा SQ_S_CMOVK_I32                 0x00000001
+#घोषणा SQ_S_CMPK_EQ_I32               0x00000002
+#घोषणा SQ_S_CMPK_LG_I32               0x00000003
+#घोषणा SQ_S_CMPK_GT_I32               0x00000004
+#घोषणा SQ_S_CMPK_GE_I32               0x00000005
+#घोषणा SQ_S_CMPK_LT_I32               0x00000006
+#घोषणा SQ_S_CMPK_LE_I32               0x00000007
+#घोषणा SQ_S_CMPK_EQ_U32               0x00000008
+#घोषणा SQ_S_CMPK_LG_U32               0x00000009
+#घोषणा SQ_S_CMPK_GT_U32               0x0000000a
+#घोषणा SQ_S_CMPK_GE_U32               0x0000000b
+#घोषणा SQ_S_CMPK_LT_U32               0x0000000c
+#घोषणा SQ_S_CMPK_LE_U32               0x0000000d
+#घोषणा SQ_S_ADDK_I32                  0x0000000e
+#घोषणा SQ_S_MULK_I32                  0x0000000f
+#घोषणा SQ_S_CBRANCH_I_FORK            0x00000010
+#घोषणा SQ_S_GETREG_B32                0x00000011
+#घोषणा SQ_S_SETREG_B32                0x00000012
+#घोषणा SQ_S_GETREG_REGRD_B32          0x00000013
+#घोषणा SQ_S_SETREG_IMM32_B32          0x00000014
+#घोषणा SQ_S_CALL_B64                  0x00000015
 
 /*
  * VALUE_SQ_DPP_CTRL_L_1_15 value
  */
 
-#define SQ_L1                          0x00000001
-#define SQ_L2                          0x00000002
-#define SQ_L3                          0x00000003
-#define SQ_L4                          0x00000004
-#define SQ_L5                          0x00000005
-#define SQ_L6                          0x00000006
-#define SQ_L7                          0x00000007
-#define SQ_L8                          0x00000008
-#define SQ_L9                          0x00000009
-#define SQ_L10                         0x0000000a
-#define SQ_L11                         0x0000000b
-#define SQ_L12                         0x0000000c
-#define SQ_L13                         0x0000000d
-#define SQ_L14                         0x0000000e
-#define SQ_L15                         0x0000000f
+#घोषणा SQ_L1                          0x00000001
+#घोषणा SQ_L2                          0x00000002
+#घोषणा SQ_L3                          0x00000003
+#घोषणा SQ_L4                          0x00000004
+#घोषणा SQ_L5                          0x00000005
+#घोषणा SQ_L6                          0x00000006
+#घोषणा SQ_L7                          0x00000007
+#घोषणा SQ_L8                          0x00000008
+#घोषणा SQ_L9                          0x00000009
+#घोषणा SQ_L10                         0x0000000a
+#घोषणा SQ_L11                         0x0000000b
+#घोषणा SQ_L12                         0x0000000c
+#घोषणा SQ_L13                         0x0000000d
+#घोषणा SQ_L14                         0x0000000e
+#घोषणा SQ_L15                         0x0000000f
 
 /*
  * VALUE_SQ_SGPR value
  */
 
-#define SQ_SGPR0                       0x00000000
+#घोषणा SQ_SGPR0                       0x00000000
 
 /*
  * VALUE_SQ_OP_VOP3P value
  */
 
-#define SQ_V_PK_MAD_I16                0x00000000
-#define SQ_V_PK_MUL_LO_U16             0x00000001
-#define SQ_V_PK_ADD_I16                0x00000002
-#define SQ_V_PK_SUB_I16                0x00000003
-#define SQ_V_PK_LSHLREV_B16            0x00000004
-#define SQ_V_PK_LSHRREV_B16            0x00000005
-#define SQ_V_PK_ASHRREV_I16            0x00000006
-#define SQ_V_PK_MAX_I16                0x00000007
-#define SQ_V_PK_MIN_I16                0x00000008
-#define SQ_V_PK_MAD_U16                0x00000009
-#define SQ_V_PK_ADD_U16                0x0000000a
-#define SQ_V_PK_SUB_U16                0x0000000b
-#define SQ_V_PK_MAX_U16                0x0000000c
-#define SQ_V_PK_MIN_U16                0x0000000d
-#define SQ_V_PK_MAD_F16                0x0000000e
-#define SQ_V_PK_ADD_F16                0x0000000f
-#define SQ_V_PK_MUL_F16                0x00000010
-#define SQ_V_PK_MIN_F16                0x00000011
-#define SQ_V_PK_MAX_F16                0x00000012
-#define SQ_V_MAD_MIX_F32               0x00000020
-#define SQ_V_MAD_MIXLO_F16             0x00000021
-#define SQ_V_MAD_MIXHI_F16             0x00000022
+#घोषणा SQ_V_PK_MAD_I16                0x00000000
+#घोषणा SQ_V_PK_MUL_LO_U16             0x00000001
+#घोषणा SQ_V_PK_ADD_I16                0x00000002
+#घोषणा SQ_V_PK_SUB_I16                0x00000003
+#घोषणा SQ_V_PK_LSHLREV_B16            0x00000004
+#घोषणा SQ_V_PK_LSHRREV_B16            0x00000005
+#घोषणा SQ_V_PK_ASHRREV_I16            0x00000006
+#घोषणा SQ_V_PK_MAX_I16                0x00000007
+#घोषणा SQ_V_PK_MIN_I16                0x00000008
+#घोषणा SQ_V_PK_MAD_U16                0x00000009
+#घोषणा SQ_V_PK_ADD_U16                0x0000000a
+#घोषणा SQ_V_PK_SUB_U16                0x0000000b
+#घोषणा SQ_V_PK_MAX_U16                0x0000000c
+#घोषणा SQ_V_PK_MIN_U16                0x0000000d
+#घोषणा SQ_V_PK_MAD_F16                0x0000000e
+#घोषणा SQ_V_PK_ADD_F16                0x0000000f
+#घोषणा SQ_V_PK_MUL_F16                0x00000010
+#घोषणा SQ_V_PK_MIN_F16                0x00000011
+#घोषणा SQ_V_PK_MAX_F16                0x00000012
+#घोषणा SQ_V_MAD_MIX_F32               0x00000020
+#घोषणा SQ_V_MAD_MIXLO_F16             0x00000021
+#घोषणा SQ_V_MAD_MIXHI_F16             0x00000022
 
 /*
  * VALUE_SQ_OP_VINTRP value
  */
 
-#define SQ_V_INTERP_P1_F32             0x00000000
-#define SQ_V_INTERP_P2_F32             0x00000001
-#define SQ_V_INTERP_MOV_F32            0x00000002
+#घोषणा SQ_V_INTERP_P1_F32             0x00000000
+#घोषणा SQ_V_INTERP_P2_F32             0x00000001
+#घोषणा SQ_V_INTERP_MOV_F32            0x00000002
 
 /*
  * VALUE_SQ_DPP_CTRL_R_1_15 value
  */
 
-#define SQ_R1                          0x00000001
-#define SQ_R2                          0x00000002
-#define SQ_R3                          0x00000003
-#define SQ_R4                          0x00000004
-#define SQ_R5                          0x00000005
-#define SQ_R6                          0x00000006
-#define SQ_R7                          0x00000007
-#define SQ_R8                          0x00000008
-#define SQ_R9                          0x00000009
-#define SQ_R10                         0x0000000a
-#define SQ_R11                         0x0000000b
-#define SQ_R12                         0x0000000c
-#define SQ_R13                         0x0000000d
-#define SQ_R14                         0x0000000e
-#define SQ_R15                         0x0000000f
+#घोषणा SQ_R1                          0x00000001
+#घोषणा SQ_R2                          0x00000002
+#घोषणा SQ_R3                          0x00000003
+#घोषणा SQ_R4                          0x00000004
+#घोषणा SQ_R5                          0x00000005
+#घोषणा SQ_R6                          0x00000006
+#घोषणा SQ_R7                          0x00000007
+#घोषणा SQ_R8                          0x00000008
+#घोषणा SQ_R9                          0x00000009
+#घोषणा SQ_R10                         0x0000000a
+#घोषणा SQ_R11                         0x0000000b
+#घोषणा SQ_R12                         0x0000000c
+#घोषणा SQ_R13                         0x0000000d
+#घोषणा SQ_R14                         0x0000000e
+#घोषणा SQ_R15                         0x0000000f
 
 /*
  * VALUE_SQ_OP_SOP2 value
  */
 
-#define SQ_S_ADD_U32                   0x00000000
-#define SQ_S_SUB_U32                   0x00000001
-#define SQ_S_ADD_I32                   0x00000002
-#define SQ_S_SUB_I32                   0x00000003
-#define SQ_S_ADDC_U32                  0x00000004
-#define SQ_S_SUBB_U32                  0x00000005
-#define SQ_S_MIN_I32                   0x00000006
-#define SQ_S_MIN_U32                   0x00000007
-#define SQ_S_MAX_I32                   0x00000008
-#define SQ_S_MAX_U32                   0x00000009
-#define SQ_S_CSELECT_B32               0x0000000a
-#define SQ_S_CSELECT_B64               0x0000000b
-#define SQ_S_AND_B32                   0x0000000c
-#define SQ_S_AND_B64                   0x0000000d
-#define SQ_S_OR_B32                    0x0000000e
-#define SQ_S_OR_B64                    0x0000000f
-#define SQ_S_XOR_B32                   0x00000010
-#define SQ_S_XOR_B64                   0x00000011
-#define SQ_S_ANDN2_B32                 0x00000012
-#define SQ_S_ANDN2_B64                 0x00000013
-#define SQ_S_ORN2_B32                  0x00000014
-#define SQ_S_ORN2_B64                  0x00000015
-#define SQ_S_NAND_B32                  0x00000016
-#define SQ_S_NAND_B64                  0x00000017
-#define SQ_S_NOR_B32                   0x00000018
-#define SQ_S_NOR_B64                   0x00000019
-#define SQ_S_XNOR_B32                  0x0000001a
-#define SQ_S_XNOR_B64                  0x0000001b
-#define SQ_S_LSHL_B32                  0x0000001c
-#define SQ_S_LSHL_B64                  0x0000001d
-#define SQ_S_LSHR_B32                  0x0000001e
-#define SQ_S_LSHR_B64                  0x0000001f
-#define SQ_S_ASHR_I32                  0x00000020
-#define SQ_S_ASHR_I64                  0x00000021
-#define SQ_S_BFM_B32                   0x00000022
-#define SQ_S_BFM_B64                   0x00000023
-#define SQ_S_MUL_I32                   0x00000024
-#define SQ_S_BFE_U32                   0x00000025
-#define SQ_S_BFE_I32                   0x00000026
-#define SQ_S_BFE_U64                   0x00000027
-#define SQ_S_BFE_I64                   0x00000028
-#define SQ_S_CBRANCH_G_FORK            0x00000029
-#define SQ_S_ABSDIFF_I32               0x0000002a
-#define SQ_S_RFE_RESTORE_B64           0x0000002b
-#define SQ_S_MUL_HI_U32                0x0000002c
-#define SQ_S_MUL_HI_I32                0x0000002d
-#define SQ_S_LSHL1_ADD_U32             0x0000002e
-#define SQ_S_LSHL2_ADD_U32             0x0000002f
-#define SQ_S_LSHL3_ADD_U32             0x00000030
-#define SQ_S_LSHL4_ADD_U32             0x00000031
-#define SQ_S_PACK_LL_B32_B16           0x00000032
-#define SQ_S_PACK_LH_B32_B16           0x00000033
-#define SQ_S_PACK_HH_B32_B16           0x00000034
+#घोषणा SQ_S_ADD_U32                   0x00000000
+#घोषणा SQ_S_SUB_U32                   0x00000001
+#घोषणा SQ_S_ADD_I32                   0x00000002
+#घोषणा SQ_S_SUB_I32                   0x00000003
+#घोषणा SQ_S_ADDC_U32                  0x00000004
+#घोषणा SQ_S_SUBB_U32                  0x00000005
+#घोषणा SQ_S_MIN_I32                   0x00000006
+#घोषणा SQ_S_MIN_U32                   0x00000007
+#घोषणा SQ_S_MAX_I32                   0x00000008
+#घोषणा SQ_S_MAX_U32                   0x00000009
+#घोषणा SQ_S_CSELECT_B32               0x0000000a
+#घोषणा SQ_S_CSELECT_B64               0x0000000b
+#घोषणा SQ_S_AND_B32                   0x0000000c
+#घोषणा SQ_S_AND_B64                   0x0000000d
+#घोषणा SQ_S_OR_B32                    0x0000000e
+#घोषणा SQ_S_OR_B64                    0x0000000f
+#घोषणा SQ_S_XOR_B32                   0x00000010
+#घोषणा SQ_S_XOR_B64                   0x00000011
+#घोषणा SQ_S_ANDN2_B32                 0x00000012
+#घोषणा SQ_S_ANDN2_B64                 0x00000013
+#घोषणा SQ_S_ORN2_B32                  0x00000014
+#घोषणा SQ_S_ORN2_B64                  0x00000015
+#घोषणा SQ_S_न_अंकD_B32                  0x00000016
+#घोषणा SQ_S_न_अंकD_B64                  0x00000017
+#घोषणा SQ_S_NOR_B32                   0x00000018
+#घोषणा SQ_S_NOR_B64                   0x00000019
+#घोषणा SQ_S_XNOR_B32                  0x0000001a
+#घोषणा SQ_S_XNOR_B64                  0x0000001b
+#घोषणा SQ_S_LSHL_B32                  0x0000001c
+#घोषणा SQ_S_LSHL_B64                  0x0000001d
+#घोषणा SQ_S_LSHR_B32                  0x0000001e
+#घोषणा SQ_S_LSHR_B64                  0x0000001f
+#घोषणा SQ_S_ASHR_I32                  0x00000020
+#घोषणा SQ_S_ASHR_I64                  0x00000021
+#घोषणा SQ_S_BFM_B32                   0x00000022
+#घोषणा SQ_S_BFM_B64                   0x00000023
+#घोषणा SQ_S_MUL_I32                   0x00000024
+#घोषणा SQ_S_BFE_U32                   0x00000025
+#घोषणा SQ_S_BFE_I32                   0x00000026
+#घोषणा SQ_S_BFE_U64                   0x00000027
+#घोषणा SQ_S_BFE_I64                   0x00000028
+#घोषणा SQ_S_CBRANCH_G_FORK            0x00000029
+#घोषणा SQ_S_ABSDIFF_I32               0x0000002a
+#घोषणा SQ_S_RFE_RESTORE_B64           0x0000002b
+#घोषणा SQ_S_MUL_HI_U32                0x0000002c
+#घोषणा SQ_S_MUL_HI_I32                0x0000002d
+#घोषणा SQ_S_LSHL1_ADD_U32             0x0000002e
+#घोषणा SQ_S_LSHL2_ADD_U32             0x0000002f
+#घोषणा SQ_S_LSHL3_ADD_U32             0x00000030
+#घोषणा SQ_S_LSHL4_ADD_U32             0x00000031
+#घोषणा SQ_S_PACK_LL_B32_B16           0x00000032
+#घोषणा SQ_S_PACK_LH_B32_B16           0x00000033
+#घोषणा SQ_S_PACK_HH_B32_B16           0x00000034
 
 /*
  * VALUE_SQ_SEG value
  */
 
-#define SQ_FLAT                        0x00000000
-#define SQ_SCRATCH                     0x00000001
-#define SQ_GLOBAL                      0x00000002
+#घोषणा SQ_FLAT                        0x00000000
+#घोषणा SQ_SCRATCH                     0x00000001
+#घोषणा SQ_GLOBAL                      0x00000002
 
 /*
  * VALUE_SQ_SDST_EXEC value
  */
 
-#define SQ_EXEC_LO                     0x0000007e
-#define SQ_EXEC_HI                     0x0000007f
+#घोषणा SQ_EXEC_LO                     0x0000007e
+#घोषणा SQ_EXEC_HI                     0x0000007f
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_NOLIT value
  */
 
-#define SQ_SRC_64_INT                  0x000000c0
-#define SQ_SRC_M_1_INT                 0x000000c1
-#define SQ_SRC_M_2_INT                 0x000000c2
-#define SQ_SRC_M_3_INT                 0x000000c3
-#define SQ_SRC_M_4_INT                 0x000000c4
-#define SQ_SRC_M_5_INT                 0x000000c5
-#define SQ_SRC_M_6_INT                 0x000000c6
-#define SQ_SRC_M_7_INT                 0x000000c7
-#define SQ_SRC_M_8_INT                 0x000000c8
-#define SQ_SRC_M_9_INT                 0x000000c9
-#define SQ_SRC_M_10_INT                0x000000ca
-#define SQ_SRC_M_11_INT                0x000000cb
-#define SQ_SRC_M_12_INT                0x000000cc
-#define SQ_SRC_M_13_INT                0x000000cd
-#define SQ_SRC_M_14_INT                0x000000ce
-#define SQ_SRC_M_15_INT                0x000000cf
-#define SQ_SRC_M_16_INT                0x000000d0
-#define SQ_SRC_0_5                     0x000000f0
-#define SQ_SRC_M_0_5                   0x000000f1
-#define SQ_SRC_1                       0x000000f2
-#define SQ_SRC_M_1                     0x000000f3
-#define SQ_SRC_2                       0x000000f4
-#define SQ_SRC_M_2                     0x000000f5
-#define SQ_SRC_4                       0x000000f6
-#define SQ_SRC_M_4                     0x000000f7
-#define SQ_SRC_INV_2PI                 0x000000f8
+#घोषणा SQ_SRC_64_INT                  0x000000c0
+#घोषणा SQ_SRC_M_1_INT                 0x000000c1
+#घोषणा SQ_SRC_M_2_INT                 0x000000c2
+#घोषणा SQ_SRC_M_3_INT                 0x000000c3
+#घोषणा SQ_SRC_M_4_INT                 0x000000c4
+#घोषणा SQ_SRC_M_5_INT                 0x000000c5
+#घोषणा SQ_SRC_M_6_INT                 0x000000c6
+#घोषणा SQ_SRC_M_7_INT                 0x000000c7
+#घोषणा SQ_SRC_M_8_INT                 0x000000c8
+#घोषणा SQ_SRC_M_9_INT                 0x000000c9
+#घोषणा SQ_SRC_M_10_INT                0x000000ca
+#घोषणा SQ_SRC_M_11_INT                0x000000cb
+#घोषणा SQ_SRC_M_12_INT                0x000000cc
+#घोषणा SQ_SRC_M_13_INT                0x000000cd
+#घोषणा SQ_SRC_M_14_INT                0x000000ce
+#घोषणा SQ_SRC_M_15_INT                0x000000cf
+#घोषणा SQ_SRC_M_16_INT                0x000000d0
+#घोषणा SQ_SRC_0_5                     0x000000f0
+#घोषणा SQ_SRC_M_0_5                   0x000000f1
+#घोषणा SQ_SRC_1                       0x000000f2
+#घोषणा SQ_SRC_M_1                     0x000000f3
+#घोषणा SQ_SRC_2                       0x000000f4
+#घोषणा SQ_SRC_M_2                     0x000000f5
+#घोषणा SQ_SRC_4                       0x000000f6
+#घोषणा SQ_SRC_M_4                     0x000000f7
+#घोषणा SQ_SRC_INV_2PI                 0x000000f8
 
 /*
  * VALUE_SQ_VCC_LOHI value
  */
 
-#define SQ_VCC_LO                      0x0000006a
-#define SQ_VCC_HI                      0x0000006b
+#घोषणा SQ_VCC_LO                      0x0000006a
+#घोषणा SQ_VCC_HI                      0x0000006b
 
 /*
  * VALUE_SQ_TGT value
  */
 
-#define SQ_EXP_MRT0                    0x00000000
-#define SQ_EXP_MRTZ                    0x00000008
-#define SQ_EXP_NULL                    0x00000009
-#define SQ_EXP_POS0                    0x0000000c
-#define SQ_EXP_PARAM0                  0x00000020
+#घोषणा SQ_EXP_MRT0                    0x00000000
+#घोषणा SQ_EXP_MRTZ                    0x00000008
+#घोषणा SQ_EXP_शून्य                    0x00000009
+#घोषणा SQ_EXP_POS0                    0x0000000c
+#घोषणा SQ_EXP_PARAM0                  0x00000020
 
 /*
  * VALUE_SQ_OP_SOPP value
  */
 
-#define SQ_S_NOP                       0x00000000
-#define SQ_S_ENDPGM                    0x00000001
-#define SQ_S_BRANCH                    0x00000002
-#define SQ_S_WAKEUP                    0x00000003
-#define SQ_S_CBRANCH_SCC0              0x00000004
-#define SQ_S_CBRANCH_SCC1              0x00000005
-#define SQ_S_CBRANCH_VCCZ              0x00000006
-#define SQ_S_CBRANCH_VCCNZ             0x00000007
-#define SQ_S_CBRANCH_EXECZ             0x00000008
-#define SQ_S_CBRANCH_EXECNZ            0x00000009
-#define SQ_S_BARRIER                   0x0000000a
-#define SQ_S_SETKILL                   0x0000000b
-#define SQ_S_WAITCNT                   0x0000000c
-#define SQ_S_SETHALT                   0x0000000d
-#define SQ_S_SLEEP                     0x0000000e
-#define SQ_S_SETPRIO                   0x0000000f
-#define SQ_S_SENDMSG                   0x00000010
-#define SQ_S_SENDMSGHALT               0x00000011
-#define SQ_S_TRAP                      0x00000012
-#define SQ_S_ICACHE_INV                0x00000013
-#define SQ_S_INCPERFLEVEL              0x00000014
-#define SQ_S_DECPERFLEVEL              0x00000015
-#define SQ_S_TTRACEDATA                0x00000016
-#define SQ_S_CBRANCH_CDBGSYS           0x00000017
-#define SQ_S_CBRANCH_CDBGUSER          0x00000018
-#define SQ_S_CBRANCH_CDBGSYS_OR_USER   0x00000019
-#define SQ_S_CBRANCH_CDBGSYS_AND_USER  0x0000001a
-#define SQ_S_ENDPGM_SAVED              0x0000001b
-#define SQ_S_SET_GPR_IDX_OFF           0x0000001c
-#define SQ_S_SET_GPR_IDX_MODE          0x0000001d
-#define SQ_S_ENDPGM_ORDERED_PS_DONE    0x0000001e
+#घोषणा SQ_S_NOP                       0x00000000
+#घोषणा SQ_S_ENDPGM                    0x00000001
+#घोषणा SQ_S_BRANCH                    0x00000002
+#घोषणा SQ_S_WAKEUP                    0x00000003
+#घोषणा SQ_S_CBRANCH_SCC0              0x00000004
+#घोषणा SQ_S_CBRANCH_SCC1              0x00000005
+#घोषणा SQ_S_CBRANCH_VCCZ              0x00000006
+#घोषणा SQ_S_CBRANCH_VCCNZ             0x00000007
+#घोषणा SQ_S_CBRANCH_EXECZ             0x00000008
+#घोषणा SQ_S_CBRANCH_EXECNZ            0x00000009
+#घोषणा SQ_S_BARRIER                   0x0000000a
+#घोषणा SQ_S_SETKILL                   0x0000000b
+#घोषणा SQ_S_WAITCNT                   0x0000000c
+#घोषणा SQ_S_SETHALT                   0x0000000d
+#घोषणा SQ_S_SLEEP                     0x0000000e
+#घोषणा SQ_S_SETPRIO                   0x0000000f
+#घोषणा SQ_S_SENDMSG                   0x00000010
+#घोषणा SQ_S_SENDMSGHALT               0x00000011
+#घोषणा SQ_S_TRAP                      0x00000012
+#घोषणा SQ_S_ICACHE_INV                0x00000013
+#घोषणा SQ_S_INCPERFLEVEL              0x00000014
+#घोषणा SQ_S_DECPERFLEVEL              0x00000015
+#घोषणा SQ_S_TTRACEDATA                0x00000016
+#घोषणा SQ_S_CBRANCH_CDBGSYS           0x00000017
+#घोषणा SQ_S_CBRANCH_CDBGUSER          0x00000018
+#घोषणा SQ_S_CBRANCH_CDBGSYS_OR_USER   0x00000019
+#घोषणा SQ_S_CBRANCH_CDBGSYS_AND_USER  0x0000001a
+#घोषणा SQ_S_ENDPGM_SAVED              0x0000001b
+#घोषणा SQ_S_SET_GPR_IDX_OFF           0x0000001c
+#घोषणा SQ_S_SET_GPR_IDX_MODE          0x0000001d
+#घोषणा SQ_S_ENDPGM_ORDERED_PS_DONE    0x0000001e
 
 /*
  * VALUE_SQ_OP_EXP value
  */
 
-#define SQ_EXP                         0x00000000
+#घोषणा SQ_EXP                         0x00000000
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_POPS_EXITING_WAVE_ID value
  */
 
-#define SQ_SRC_POPS_EXITING_WAVE_ID    0x000000ef
+#घोषणा SQ_SRC_POPS_EXITING_WAVE_ID    0x000000ef
 
 /*
  * VALUE_SQ_XNACK_MASK_LOHI value
  */
 
-#define SQ_XNACK_MASK_LO               0x00000068
-#define SQ_XNACK_MASK_HI               0x00000069
+#घोषणा SQ_XNACK_MASK_LO               0x00000068
+#घोषणा SQ_XNACK_MASK_HI               0x00000069
 
 /*
  * VALUE_SQ_OMOD value
  */
 
-#define SQ_OMOD_OFF                    0x00000000
-#define SQ_OMOD_M2                     0x00000001
-#define SQ_OMOD_M4                     0x00000002
-#define SQ_OMOD_D2                     0x00000003
+#घोषणा SQ_OMOD_OFF                    0x00000000
+#घोषणा SQ_OMOD_M2                     0x00000001
+#घोषणा SQ_OMOD_M4                     0x00000002
+#घोषणा SQ_OMOD_D2                     0x00000003
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_EXECZ value
  */
 
-#define SQ_SRC_EXECZ                   0x000000fc
+#घोषणा SQ_SRC_EXECZ                   0x000000fc
 
 /*
  * VALUE_SQ_COMPI value
  */
 
-#define SQ_F                           0x00000000
-#define SQ_LT                          0x00000001
-#define SQ_EQ                          0x00000002
-#define SQ_LE                          0x00000003
-#define SQ_GT                          0x00000004
-#define SQ_NE                          0x00000005
-#define SQ_GE                          0x00000006
-#define SQ_T                           0x00000007
+#घोषणा SQ_F                           0x00000000
+#घोषणा SQ_LT                          0x00000001
+#घोषणा SQ_EQ                          0x00000002
+#घोषणा SQ_LE                          0x00000003
+#घोषणा SQ_GT                          0x00000004
+#घोषणा SQ_NE                          0x00000005
+#घोषणा SQ_GE                          0x00000006
+#घोषणा SQ_T                           0x00000007
 
 /*
  * VALUE_SQ_DPP_BOUND_CTRL value
  */
 
-#define SQ_DPP_BOUND_OFF               0x00000000
-#define SQ_DPP_BOUND_ZERO              0x00000001
+#घोषणा SQ_DPP_BOUND_OFF               0x00000000
+#घोषणा SQ_DPP_BOUND_ZERO              0x00000001
 
 /*
  * VALUE_SQ_SDST_M0 value
  */
 
-#define SQ_M0                          0x0000007c
+#घोषणा SQ_M0                          0x0000007c
 
 /*
  * VALUE_SQ_MSG value
  */
 
-#define SQ_MSG_INTERRUPT               0x00000001
-#define SQ_MSG_GS                      0x00000002
-#define SQ_MSG_GS_DONE                 0x00000003
-#define SQ_MSG_SAVEWAVE                0x00000004
-#define SQ_MSG_STALL_WAVE_GEN          0x00000005
-#define SQ_MSG_HALT_WAVES              0x00000006
-#define SQ_MSG_ORDERED_PS_DONE         0x00000007
-#define SQ_MSG_EARLY_PRIM_DEALLOC      0x00000008
-#define SQ_MSG_GS_ALLOC_REQ            0x00000009
-#define SQ_MSG_SYSMSG                  0x0000000f
+#घोषणा SQ_MSG_INTERRUPT               0x00000001
+#घोषणा SQ_MSG_GS                      0x00000002
+#घोषणा SQ_MSG_GS_DONE                 0x00000003
+#घोषणा SQ_MSG_SAVEWAVE                0x00000004
+#घोषणा SQ_MSG_STALL_WAVE_GEN          0x00000005
+#घोषणा SQ_MSG_HALT_WAVES              0x00000006
+#घोषणा SQ_MSG_ORDERED_PS_DONE         0x00000007
+#घोषणा SQ_MSG_EARLY_PRIM_DEALLOC      0x00000008
+#घोषणा SQ_MSG_GS_ALLOC_REQ            0x00000009
+#घोषणा SQ_MSG_SYSMSG                  0x0000000f
 
 /*
  * VALUE_SQ_PARAM value
  */
 
-#define SQ_PARAM_P10                   0x00000000
-#define SQ_PARAM_P20                   0x00000001
-#define SQ_PARAM_P0                    0x00000002
+#घोषणा SQ_PARAM_P10                   0x00000000
+#घोषणा SQ_PARAM_P20                   0x00000001
+#घोषणा SQ_PARAM_P0                    0x00000002
 
 /*
  * VALUE_SQ_OPU_VOP3 value
  */
 
-#define SQ_V_OPC_OFFSET                0x00000000
-#define SQ_V_OP2_OFFSET                0x00000100
-#define SQ_V_OP1_OFFSET                0x00000140
-#define SQ_V_INTRP_OFFSET              0x00000270
-#define SQ_V_OP3P_OFFSET               0x00000380
+#घोषणा SQ_V_OPC_OFFSET                0x00000000
+#घोषणा SQ_V_OP2_OFFSET                0x00000100
+#घोषणा SQ_V_OP1_OFFSET                0x00000140
+#घोषणा SQ_V_INTRP_OFFSET              0x00000270
+#घोषणा SQ_V_OP3P_OFFSET               0x00000380
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_SDWA value
  */
 
-#define SQ_SRC_SDWA                    0x000000f9
+#घोषणा SQ_SRC_SDWA                    0x000000f9
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_APERTURE value
  */
 
-#define SQ_SRC_SHARED_BASE             0x000000eb
-#define SQ_SRC_SHARED_LIMIT            0x000000ec
-#define SQ_SRC_PRIVATE_BASE            0x000000ed
-#define SQ_SRC_PRIVATE_LIMIT           0x000000ee
+#घोषणा SQ_SRC_SHARED_BASE             0x000000eb
+#घोषणा SQ_SRC_SHARED_LIMIT            0x000000ec
+#घोषणा SQ_SRC_PRIVATE_BASE            0x000000ed
+#घोषणा SQ_SRC_PRIVATE_LIMIT           0x000000ee
 
 /*
  * VALUE_SQ_COMPF value
  */
 
-#define SQ_F                           0x00000000
-#define SQ_LT                          0x00000001
-#define SQ_EQ                          0x00000002
-#define SQ_LE                          0x00000003
-#define SQ_GT                          0x00000004
-#define SQ_LG                          0x00000005
-#define SQ_GE                          0x00000006
-#define SQ_O                           0x00000007
-#define SQ_U                           0x00000008
-#define SQ_NGE                         0x00000009
-#define SQ_NLG                         0x0000000a
-#define SQ_NGT                         0x0000000b
-#define SQ_NLE                         0x0000000c
-#define SQ_NEQ                         0x0000000d
-#define SQ_NLT                         0x0000000e
-#define SQ_TRU                         0x0000000f
+#घोषणा SQ_F                           0x00000000
+#घोषणा SQ_LT                          0x00000001
+#घोषणा SQ_EQ                          0x00000002
+#घोषणा SQ_LE                          0x00000003
+#घोषणा SQ_GT                          0x00000004
+#घोषणा SQ_LG                          0x00000005
+#घोषणा SQ_GE                          0x00000006
+#घोषणा SQ_O                           0x00000007
+#घोषणा SQ_U                           0x00000008
+#घोषणा SQ_NGE                         0x00000009
+#घोषणा SQ_NLG                         0x0000000a
+#घोषणा SQ_NGT                         0x0000000b
+#घोषणा SQ_NLE                         0x0000000c
+#घोषणा SQ_NEQ                         0x0000000d
+#घोषणा SQ_NLT                         0x0000000e
+#घोषणा SQ_TRU                         0x0000000f
 
 /*
  * VALUE_SQ_SDWA_UNUSED value
  */
 
-#define SQ_SDWA_UNUSED_PAD             0x00000000
-#define SQ_SDWA_UNUSED_SEXT            0x00000001
-#define SQ_SDWA_UNUSED_PRESERVE        0x00000002
+#घोषणा SQ_SDWA_UNUSED_PAD             0x00000000
+#घोषणा SQ_SDWA_UNUSED_SEXT            0x00000001
+#घोषणा SQ_SDWA_UNUSED_PRESERVE        0x00000002
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_SCC value
  */
 
-#define SQ_SRC_SCC                     0x000000fd
+#घोषणा SQ_SRC_SCC                     0x000000fd
 
 /*
  * VALUE_SQ_OP_VOPC value
  */
 
-#define SQ_V_CMP_CLASS_F32             0x00000010
-#define SQ_V_CMPX_CLASS_F32            0x00000011
-#define SQ_V_CMP_CLASS_F64             0x00000012
-#define SQ_V_CMPX_CLASS_F64            0x00000013
-#define SQ_V_CMP_CLASS_F16             0x00000014
-#define SQ_V_CMPX_CLASS_F16            0x00000015
-#define SQ_V_CMP_F_F16                 0x00000020
-#define SQ_V_CMP_LT_F16                0x00000021
-#define SQ_V_CMP_EQ_F16                0x00000022
-#define SQ_V_CMP_LE_F16                0x00000023
-#define SQ_V_CMP_GT_F16                0x00000024
-#define SQ_V_CMP_LG_F16                0x00000025
-#define SQ_V_CMP_GE_F16                0x00000026
-#define SQ_V_CMP_O_F16                 0x00000027
-#define SQ_V_CMP_U_F16                 0x00000028
-#define SQ_V_CMP_NGE_F16               0x00000029
-#define SQ_V_CMP_NLG_F16               0x0000002a
-#define SQ_V_CMP_NGT_F16               0x0000002b
-#define SQ_V_CMP_NLE_F16               0x0000002c
-#define SQ_V_CMP_NEQ_F16               0x0000002d
-#define SQ_V_CMP_NLT_F16               0x0000002e
-#define SQ_V_CMP_TRU_F16               0x0000002f
-#define SQ_V_CMPX_F_F16                0x00000030
-#define SQ_V_CMPX_LT_F16               0x00000031
-#define SQ_V_CMPX_EQ_F16               0x00000032
-#define SQ_V_CMPX_LE_F16               0x00000033
-#define SQ_V_CMPX_GT_F16               0x00000034
-#define SQ_V_CMPX_LG_F16               0x00000035
-#define SQ_V_CMPX_GE_F16               0x00000036
-#define SQ_V_CMPX_O_F16                0x00000037
-#define SQ_V_CMPX_U_F16                0x00000038
-#define SQ_V_CMPX_NGE_F16              0x00000039
-#define SQ_V_CMPX_NLG_F16              0x0000003a
-#define SQ_V_CMPX_NGT_F16              0x0000003b
-#define SQ_V_CMPX_NLE_F16              0x0000003c
-#define SQ_V_CMPX_NEQ_F16              0x0000003d
-#define SQ_V_CMPX_NLT_F16              0x0000003e
-#define SQ_V_CMPX_TRU_F16              0x0000003f
-#define SQ_V_CMP_F_F32                 0x00000040
-#define SQ_V_CMP_LT_F32                0x00000041
-#define SQ_V_CMP_EQ_F32                0x00000042
-#define SQ_V_CMP_LE_F32                0x00000043
-#define SQ_V_CMP_GT_F32                0x00000044
-#define SQ_V_CMP_LG_F32                0x00000045
-#define SQ_V_CMP_GE_F32                0x00000046
-#define SQ_V_CMP_O_F32                 0x00000047
-#define SQ_V_CMP_U_F32                 0x00000048
-#define SQ_V_CMP_NGE_F32               0x00000049
-#define SQ_V_CMP_NLG_F32               0x0000004a
-#define SQ_V_CMP_NGT_F32               0x0000004b
-#define SQ_V_CMP_NLE_F32               0x0000004c
-#define SQ_V_CMP_NEQ_F32               0x0000004d
-#define SQ_V_CMP_NLT_F32               0x0000004e
-#define SQ_V_CMP_TRU_F32               0x0000004f
-#define SQ_V_CMPX_F_F32                0x00000050
-#define SQ_V_CMPX_LT_F32               0x00000051
-#define SQ_V_CMPX_EQ_F32               0x00000052
-#define SQ_V_CMPX_LE_F32               0x00000053
-#define SQ_V_CMPX_GT_F32               0x00000054
-#define SQ_V_CMPX_LG_F32               0x00000055
-#define SQ_V_CMPX_GE_F32               0x00000056
-#define SQ_V_CMPX_O_F32                0x00000057
-#define SQ_V_CMPX_U_F32                0x00000058
-#define SQ_V_CMPX_NGE_F32              0x00000059
-#define SQ_V_CMPX_NLG_F32              0x0000005a
-#define SQ_V_CMPX_NGT_F32              0x0000005b
-#define SQ_V_CMPX_NLE_F32              0x0000005c
-#define SQ_V_CMPX_NEQ_F32              0x0000005d
-#define SQ_V_CMPX_NLT_F32              0x0000005e
-#define SQ_V_CMPX_TRU_F32              0x0000005f
-#define SQ_V_CMP_F_F64                 0x00000060
-#define SQ_V_CMP_LT_F64                0x00000061
-#define SQ_V_CMP_EQ_F64                0x00000062
-#define SQ_V_CMP_LE_F64                0x00000063
-#define SQ_V_CMP_GT_F64                0x00000064
-#define SQ_V_CMP_LG_F64                0x00000065
-#define SQ_V_CMP_GE_F64                0x00000066
-#define SQ_V_CMP_O_F64                 0x00000067
-#define SQ_V_CMP_U_F64                 0x00000068
-#define SQ_V_CMP_NGE_F64               0x00000069
-#define SQ_V_CMP_NLG_F64               0x0000006a
-#define SQ_V_CMP_NGT_F64               0x0000006b
-#define SQ_V_CMP_NLE_F64               0x0000006c
-#define SQ_V_CMP_NEQ_F64               0x0000006d
-#define SQ_V_CMP_NLT_F64               0x0000006e
-#define SQ_V_CMP_TRU_F64               0x0000006f
-#define SQ_V_CMPX_F_F64                0x00000070
-#define SQ_V_CMPX_LT_F64               0x00000071
-#define SQ_V_CMPX_EQ_F64               0x00000072
-#define SQ_V_CMPX_LE_F64               0x00000073
-#define SQ_V_CMPX_GT_F64               0x00000074
-#define SQ_V_CMPX_LG_F64               0x00000075
-#define SQ_V_CMPX_GE_F64               0x00000076
-#define SQ_V_CMPX_O_F64                0x00000077
-#define SQ_V_CMPX_U_F64                0x00000078
-#define SQ_V_CMPX_NGE_F64              0x00000079
-#define SQ_V_CMPX_NLG_F64              0x0000007a
-#define SQ_V_CMPX_NGT_F64              0x0000007b
-#define SQ_V_CMPX_NLE_F64              0x0000007c
-#define SQ_V_CMPX_NEQ_F64              0x0000007d
-#define SQ_V_CMPX_NLT_F64              0x0000007e
-#define SQ_V_CMPX_TRU_F64              0x0000007f
-#define SQ_V_CMP_F_I16                 0x000000a0
-#define SQ_V_CMP_LT_I16                0x000000a1
-#define SQ_V_CMP_EQ_I16                0x000000a2
-#define SQ_V_CMP_LE_I16                0x000000a3
-#define SQ_V_CMP_GT_I16                0x000000a4
-#define SQ_V_CMP_NE_I16                0x000000a5
-#define SQ_V_CMP_GE_I16                0x000000a6
-#define SQ_V_CMP_T_I16                 0x000000a7
-#define SQ_V_CMP_F_U16                 0x000000a8
-#define SQ_V_CMP_LT_U16                0x000000a9
-#define SQ_V_CMP_EQ_U16                0x000000aa
-#define SQ_V_CMP_LE_U16                0x000000ab
-#define SQ_V_CMP_GT_U16                0x000000ac
-#define SQ_V_CMP_NE_U16                0x000000ad
-#define SQ_V_CMP_GE_U16                0x000000ae
-#define SQ_V_CMP_T_U16                 0x000000af
-#define SQ_V_CMPX_F_I16                0x000000b0
-#define SQ_V_CMPX_LT_I16               0x000000b1
-#define SQ_V_CMPX_EQ_I16               0x000000b2
-#define SQ_V_CMPX_LE_I16               0x000000b3
-#define SQ_V_CMPX_GT_I16               0x000000b4
-#define SQ_V_CMPX_NE_I16               0x000000b5
-#define SQ_V_CMPX_GE_I16               0x000000b6
-#define SQ_V_CMPX_T_I16                0x000000b7
-#define SQ_V_CMPX_F_U16                0x000000b8
-#define SQ_V_CMPX_LT_U16               0x000000b9
-#define SQ_V_CMPX_EQ_U16               0x000000ba
-#define SQ_V_CMPX_LE_U16               0x000000bb
-#define SQ_V_CMPX_GT_U16               0x000000bc
-#define SQ_V_CMPX_NE_U16               0x000000bd
-#define SQ_V_CMPX_GE_U16               0x000000be
-#define SQ_V_CMPX_T_U16                0x000000bf
-#define SQ_V_CMP_F_I32                 0x000000c0
-#define SQ_V_CMP_LT_I32                0x000000c1
-#define SQ_V_CMP_EQ_I32                0x000000c2
-#define SQ_V_CMP_LE_I32                0x000000c3
-#define SQ_V_CMP_GT_I32                0x000000c4
-#define SQ_V_CMP_NE_I32                0x000000c5
-#define SQ_V_CMP_GE_I32                0x000000c6
-#define SQ_V_CMP_T_I32                 0x000000c7
-#define SQ_V_CMP_F_U32                 0x000000c8
-#define SQ_V_CMP_LT_U32                0x000000c9
-#define SQ_V_CMP_EQ_U32                0x000000ca
-#define SQ_V_CMP_LE_U32                0x000000cb
-#define SQ_V_CMP_GT_U32                0x000000cc
-#define SQ_V_CMP_NE_U32                0x000000cd
-#define SQ_V_CMP_GE_U32                0x000000ce
-#define SQ_V_CMP_T_U32                 0x000000cf
-#define SQ_V_CMPX_F_I32                0x000000d0
-#define SQ_V_CMPX_LT_I32               0x000000d1
-#define SQ_V_CMPX_EQ_I32               0x000000d2
-#define SQ_V_CMPX_LE_I32               0x000000d3
-#define SQ_V_CMPX_GT_I32               0x000000d4
-#define SQ_V_CMPX_NE_I32               0x000000d5
-#define SQ_V_CMPX_GE_I32               0x000000d6
-#define SQ_V_CMPX_T_I32                0x000000d7
-#define SQ_V_CMPX_F_U32                0x000000d8
-#define SQ_V_CMPX_LT_U32               0x000000d9
-#define SQ_V_CMPX_EQ_U32               0x000000da
-#define SQ_V_CMPX_LE_U32               0x000000db
-#define SQ_V_CMPX_GT_U32               0x000000dc
-#define SQ_V_CMPX_NE_U32               0x000000dd
-#define SQ_V_CMPX_GE_U32               0x000000de
-#define SQ_V_CMPX_T_U32                0x000000df
-#define SQ_V_CMP_F_I64                 0x000000e0
-#define SQ_V_CMP_LT_I64                0x000000e1
-#define SQ_V_CMP_EQ_I64                0x000000e2
-#define SQ_V_CMP_LE_I64                0x000000e3
-#define SQ_V_CMP_GT_I64                0x000000e4
-#define SQ_V_CMP_NE_I64                0x000000e5
-#define SQ_V_CMP_GE_I64                0x000000e6
-#define SQ_V_CMP_T_I64                 0x000000e7
-#define SQ_V_CMP_F_U64                 0x000000e8
-#define SQ_V_CMP_LT_U64                0x000000e9
-#define SQ_V_CMP_EQ_U64                0x000000ea
-#define SQ_V_CMP_LE_U64                0x000000eb
-#define SQ_V_CMP_GT_U64                0x000000ec
-#define SQ_V_CMP_NE_U64                0x000000ed
-#define SQ_V_CMP_GE_U64                0x000000ee
-#define SQ_V_CMP_T_U64                 0x000000ef
-#define SQ_V_CMPX_F_I64                0x000000f0
-#define SQ_V_CMPX_LT_I64               0x000000f1
-#define SQ_V_CMPX_EQ_I64               0x000000f2
-#define SQ_V_CMPX_LE_I64               0x000000f3
-#define SQ_V_CMPX_GT_I64               0x000000f4
-#define SQ_V_CMPX_NE_I64               0x000000f5
-#define SQ_V_CMPX_GE_I64               0x000000f6
-#define SQ_V_CMPX_T_I64                0x000000f7
-#define SQ_V_CMPX_F_U64                0x000000f8
-#define SQ_V_CMPX_LT_U64               0x000000f9
-#define SQ_V_CMPX_EQ_U64               0x000000fa
-#define SQ_V_CMPX_LE_U64               0x000000fb
-#define SQ_V_CMPX_GT_U64               0x000000fc
-#define SQ_V_CMPX_NE_U64               0x000000fd
-#define SQ_V_CMPX_GE_U64               0x000000fe
-#define SQ_V_CMPX_T_U64                0x000000ff
+#घोषणा SQ_V_CMP_CLASS_F32             0x00000010
+#घोषणा SQ_V_CMPX_CLASS_F32            0x00000011
+#घोषणा SQ_V_CMP_CLASS_F64             0x00000012
+#घोषणा SQ_V_CMPX_CLASS_F64            0x00000013
+#घोषणा SQ_V_CMP_CLASS_F16             0x00000014
+#घोषणा SQ_V_CMPX_CLASS_F16            0x00000015
+#घोषणा SQ_V_CMP_F_F16                 0x00000020
+#घोषणा SQ_V_CMP_LT_F16                0x00000021
+#घोषणा SQ_V_CMP_EQ_F16                0x00000022
+#घोषणा SQ_V_CMP_LE_F16                0x00000023
+#घोषणा SQ_V_CMP_GT_F16                0x00000024
+#घोषणा SQ_V_CMP_LG_F16                0x00000025
+#घोषणा SQ_V_CMP_GE_F16                0x00000026
+#घोषणा SQ_V_CMP_O_F16                 0x00000027
+#घोषणा SQ_V_CMP_U_F16                 0x00000028
+#घोषणा SQ_V_CMP_NGE_F16               0x00000029
+#घोषणा SQ_V_CMP_NLG_F16               0x0000002a
+#घोषणा SQ_V_CMP_NGT_F16               0x0000002b
+#घोषणा SQ_V_CMP_NLE_F16               0x0000002c
+#घोषणा SQ_V_CMP_NEQ_F16               0x0000002d
+#घोषणा SQ_V_CMP_NLT_F16               0x0000002e
+#घोषणा SQ_V_CMP_TRU_F16               0x0000002f
+#घोषणा SQ_V_CMPX_F_F16                0x00000030
+#घोषणा SQ_V_CMPX_LT_F16               0x00000031
+#घोषणा SQ_V_CMPX_EQ_F16               0x00000032
+#घोषणा SQ_V_CMPX_LE_F16               0x00000033
+#घोषणा SQ_V_CMPX_GT_F16               0x00000034
+#घोषणा SQ_V_CMPX_LG_F16               0x00000035
+#घोषणा SQ_V_CMPX_GE_F16               0x00000036
+#घोषणा SQ_V_CMPX_O_F16                0x00000037
+#घोषणा SQ_V_CMPX_U_F16                0x00000038
+#घोषणा SQ_V_CMPX_NGE_F16              0x00000039
+#घोषणा SQ_V_CMPX_NLG_F16              0x0000003a
+#घोषणा SQ_V_CMPX_NGT_F16              0x0000003b
+#घोषणा SQ_V_CMPX_NLE_F16              0x0000003c
+#घोषणा SQ_V_CMPX_NEQ_F16              0x0000003d
+#घोषणा SQ_V_CMPX_NLT_F16              0x0000003e
+#घोषणा SQ_V_CMPX_TRU_F16              0x0000003f
+#घोषणा SQ_V_CMP_F_F32                 0x00000040
+#घोषणा SQ_V_CMP_LT_F32                0x00000041
+#घोषणा SQ_V_CMP_EQ_F32                0x00000042
+#घोषणा SQ_V_CMP_LE_F32                0x00000043
+#घोषणा SQ_V_CMP_GT_F32                0x00000044
+#घोषणा SQ_V_CMP_LG_F32                0x00000045
+#घोषणा SQ_V_CMP_GE_F32                0x00000046
+#घोषणा SQ_V_CMP_O_F32                 0x00000047
+#घोषणा SQ_V_CMP_U_F32                 0x00000048
+#घोषणा SQ_V_CMP_NGE_F32               0x00000049
+#घोषणा SQ_V_CMP_NLG_F32               0x0000004a
+#घोषणा SQ_V_CMP_NGT_F32               0x0000004b
+#घोषणा SQ_V_CMP_NLE_F32               0x0000004c
+#घोषणा SQ_V_CMP_NEQ_F32               0x0000004d
+#घोषणा SQ_V_CMP_NLT_F32               0x0000004e
+#घोषणा SQ_V_CMP_TRU_F32               0x0000004f
+#घोषणा SQ_V_CMPX_F_F32                0x00000050
+#घोषणा SQ_V_CMPX_LT_F32               0x00000051
+#घोषणा SQ_V_CMPX_EQ_F32               0x00000052
+#घोषणा SQ_V_CMPX_LE_F32               0x00000053
+#घोषणा SQ_V_CMPX_GT_F32               0x00000054
+#घोषणा SQ_V_CMPX_LG_F32               0x00000055
+#घोषणा SQ_V_CMPX_GE_F32               0x00000056
+#घोषणा SQ_V_CMPX_O_F32                0x00000057
+#घोषणा SQ_V_CMPX_U_F32                0x00000058
+#घोषणा SQ_V_CMPX_NGE_F32              0x00000059
+#घोषणा SQ_V_CMPX_NLG_F32              0x0000005a
+#घोषणा SQ_V_CMPX_NGT_F32              0x0000005b
+#घोषणा SQ_V_CMPX_NLE_F32              0x0000005c
+#घोषणा SQ_V_CMPX_NEQ_F32              0x0000005d
+#घोषणा SQ_V_CMPX_NLT_F32              0x0000005e
+#घोषणा SQ_V_CMPX_TRU_F32              0x0000005f
+#घोषणा SQ_V_CMP_F_F64                 0x00000060
+#घोषणा SQ_V_CMP_LT_F64                0x00000061
+#घोषणा SQ_V_CMP_EQ_F64                0x00000062
+#घोषणा SQ_V_CMP_LE_F64                0x00000063
+#घोषणा SQ_V_CMP_GT_F64                0x00000064
+#घोषणा SQ_V_CMP_LG_F64                0x00000065
+#घोषणा SQ_V_CMP_GE_F64                0x00000066
+#घोषणा SQ_V_CMP_O_F64                 0x00000067
+#घोषणा SQ_V_CMP_U_F64                 0x00000068
+#घोषणा SQ_V_CMP_NGE_F64               0x00000069
+#घोषणा SQ_V_CMP_NLG_F64               0x0000006a
+#घोषणा SQ_V_CMP_NGT_F64               0x0000006b
+#घोषणा SQ_V_CMP_NLE_F64               0x0000006c
+#घोषणा SQ_V_CMP_NEQ_F64               0x0000006d
+#घोषणा SQ_V_CMP_NLT_F64               0x0000006e
+#घोषणा SQ_V_CMP_TRU_F64               0x0000006f
+#घोषणा SQ_V_CMPX_F_F64                0x00000070
+#घोषणा SQ_V_CMPX_LT_F64               0x00000071
+#घोषणा SQ_V_CMPX_EQ_F64               0x00000072
+#घोषणा SQ_V_CMPX_LE_F64               0x00000073
+#घोषणा SQ_V_CMPX_GT_F64               0x00000074
+#घोषणा SQ_V_CMPX_LG_F64               0x00000075
+#घोषणा SQ_V_CMPX_GE_F64               0x00000076
+#घोषणा SQ_V_CMPX_O_F64                0x00000077
+#घोषणा SQ_V_CMPX_U_F64                0x00000078
+#घोषणा SQ_V_CMPX_NGE_F64              0x00000079
+#घोषणा SQ_V_CMPX_NLG_F64              0x0000007a
+#घोषणा SQ_V_CMPX_NGT_F64              0x0000007b
+#घोषणा SQ_V_CMPX_NLE_F64              0x0000007c
+#घोषणा SQ_V_CMPX_NEQ_F64              0x0000007d
+#घोषणा SQ_V_CMPX_NLT_F64              0x0000007e
+#घोषणा SQ_V_CMPX_TRU_F64              0x0000007f
+#घोषणा SQ_V_CMP_F_I16                 0x000000a0
+#घोषणा SQ_V_CMP_LT_I16                0x000000a1
+#घोषणा SQ_V_CMP_EQ_I16                0x000000a2
+#घोषणा SQ_V_CMP_LE_I16                0x000000a3
+#घोषणा SQ_V_CMP_GT_I16                0x000000a4
+#घोषणा SQ_V_CMP_NE_I16                0x000000a5
+#घोषणा SQ_V_CMP_GE_I16                0x000000a6
+#घोषणा SQ_V_CMP_T_I16                 0x000000a7
+#घोषणा SQ_V_CMP_F_U16                 0x000000a8
+#घोषणा SQ_V_CMP_LT_U16                0x000000a9
+#घोषणा SQ_V_CMP_EQ_U16                0x000000aa
+#घोषणा SQ_V_CMP_LE_U16                0x000000ab
+#घोषणा SQ_V_CMP_GT_U16                0x000000ac
+#घोषणा SQ_V_CMP_NE_U16                0x000000ad
+#घोषणा SQ_V_CMP_GE_U16                0x000000ae
+#घोषणा SQ_V_CMP_T_U16                 0x000000af
+#घोषणा SQ_V_CMPX_F_I16                0x000000b0
+#घोषणा SQ_V_CMPX_LT_I16               0x000000b1
+#घोषणा SQ_V_CMPX_EQ_I16               0x000000b2
+#घोषणा SQ_V_CMPX_LE_I16               0x000000b3
+#घोषणा SQ_V_CMPX_GT_I16               0x000000b4
+#घोषणा SQ_V_CMPX_NE_I16               0x000000b5
+#घोषणा SQ_V_CMPX_GE_I16               0x000000b6
+#घोषणा SQ_V_CMPX_T_I16                0x000000b7
+#घोषणा SQ_V_CMPX_F_U16                0x000000b8
+#घोषणा SQ_V_CMPX_LT_U16               0x000000b9
+#घोषणा SQ_V_CMPX_EQ_U16               0x000000ba
+#घोषणा SQ_V_CMPX_LE_U16               0x000000bb
+#घोषणा SQ_V_CMPX_GT_U16               0x000000bc
+#घोषणा SQ_V_CMPX_NE_U16               0x000000bd
+#घोषणा SQ_V_CMPX_GE_U16               0x000000be
+#घोषणा SQ_V_CMPX_T_U16                0x000000bf
+#घोषणा SQ_V_CMP_F_I32                 0x000000c0
+#घोषणा SQ_V_CMP_LT_I32                0x000000c1
+#घोषणा SQ_V_CMP_EQ_I32                0x000000c2
+#घोषणा SQ_V_CMP_LE_I32                0x000000c3
+#घोषणा SQ_V_CMP_GT_I32                0x000000c4
+#घोषणा SQ_V_CMP_NE_I32                0x000000c5
+#घोषणा SQ_V_CMP_GE_I32                0x000000c6
+#घोषणा SQ_V_CMP_T_I32                 0x000000c7
+#घोषणा SQ_V_CMP_F_U32                 0x000000c8
+#घोषणा SQ_V_CMP_LT_U32                0x000000c9
+#घोषणा SQ_V_CMP_EQ_U32                0x000000ca
+#घोषणा SQ_V_CMP_LE_U32                0x000000cb
+#घोषणा SQ_V_CMP_GT_U32                0x000000cc
+#घोषणा SQ_V_CMP_NE_U32                0x000000cd
+#घोषणा SQ_V_CMP_GE_U32                0x000000ce
+#घोषणा SQ_V_CMP_T_U32                 0x000000cf
+#घोषणा SQ_V_CMPX_F_I32                0x000000d0
+#घोषणा SQ_V_CMPX_LT_I32               0x000000d1
+#घोषणा SQ_V_CMPX_EQ_I32               0x000000d2
+#घोषणा SQ_V_CMPX_LE_I32               0x000000d3
+#घोषणा SQ_V_CMPX_GT_I32               0x000000d4
+#घोषणा SQ_V_CMPX_NE_I32               0x000000d5
+#घोषणा SQ_V_CMPX_GE_I32               0x000000d6
+#घोषणा SQ_V_CMPX_T_I32                0x000000d7
+#घोषणा SQ_V_CMPX_F_U32                0x000000d8
+#घोषणा SQ_V_CMPX_LT_U32               0x000000d9
+#घोषणा SQ_V_CMPX_EQ_U32               0x000000da
+#घोषणा SQ_V_CMPX_LE_U32               0x000000db
+#घोषणा SQ_V_CMPX_GT_U32               0x000000dc
+#घोषणा SQ_V_CMPX_NE_U32               0x000000dd
+#घोषणा SQ_V_CMPX_GE_U32               0x000000de
+#घोषणा SQ_V_CMPX_T_U32                0x000000df
+#घोषणा SQ_V_CMP_F_I64                 0x000000e0
+#घोषणा SQ_V_CMP_LT_I64                0x000000e1
+#घोषणा SQ_V_CMP_EQ_I64                0x000000e2
+#घोषणा SQ_V_CMP_LE_I64                0x000000e3
+#घोषणा SQ_V_CMP_GT_I64                0x000000e4
+#घोषणा SQ_V_CMP_NE_I64                0x000000e5
+#घोषणा SQ_V_CMP_GE_I64                0x000000e6
+#घोषणा SQ_V_CMP_T_I64                 0x000000e7
+#घोषणा SQ_V_CMP_F_U64                 0x000000e8
+#घोषणा SQ_V_CMP_LT_U64                0x000000e9
+#घोषणा SQ_V_CMP_EQ_U64                0x000000ea
+#घोषणा SQ_V_CMP_LE_U64                0x000000eb
+#घोषणा SQ_V_CMP_GT_U64                0x000000ec
+#घोषणा SQ_V_CMP_NE_U64                0x000000ed
+#घोषणा SQ_V_CMP_GE_U64                0x000000ee
+#घोषणा SQ_V_CMP_T_U64                 0x000000ef
+#घोषणा SQ_V_CMPX_F_I64                0x000000f0
+#घोषणा SQ_V_CMPX_LT_I64               0x000000f1
+#घोषणा SQ_V_CMPX_EQ_I64               0x000000f2
+#घोषणा SQ_V_CMPX_LE_I64               0x000000f3
+#घोषणा SQ_V_CMPX_GT_I64               0x000000f4
+#घोषणा SQ_V_CMPX_NE_I64               0x000000f5
+#घोषणा SQ_V_CMPX_GE_I64               0x000000f6
+#घोषणा SQ_V_CMPX_T_I64                0x000000f7
+#घोषणा SQ_V_CMPX_F_U64                0x000000f8
+#घोषणा SQ_V_CMPX_LT_U64               0x000000f9
+#घोषणा SQ_V_CMPX_EQ_U64               0x000000fa
+#घोषणा SQ_V_CMPX_LE_U64               0x000000fb
+#घोषणा SQ_V_CMPX_GT_U64               0x000000fc
+#घोषणा SQ_V_CMPX_NE_U64               0x000000fd
+#घोषणा SQ_V_CMPX_GE_U64               0x000000fe
+#घोषणा SQ_V_CMPX_T_U64                0x000000ff
 
 /*
  * VALUE_SQ_GS_OP value
  */
 
-#define SQ_GS_OP_NOP                   0x00000000
-#define SQ_GS_OP_CUT                   0x00000001
-#define SQ_GS_OP_EMIT                  0x00000002
-#define SQ_GS_OP_EMIT_CUT              0x00000003
+#घोषणा SQ_GS_OP_NOP                   0x00000000
+#घोषणा SQ_GS_OP_CUT                   0x00000001
+#घोषणा SQ_GS_OP_EMIT                  0x00000002
+#घोषणा SQ_GS_OP_EMIT_CUT              0x00000003
 
 /*
  * VALUE_SQ_SSRC_SPECIAL_LDS value
  */
 
-#define SQ_SRC_LDS_DIRECT              0x000000fe
+#घोषणा SQ_SRC_LDS_सूचीECT              0x000000fe
 
 /*
  * VALUE_SQ_ATTR value
  */
 
-#define SQ_ATTR0                       0x00000000
+#घोषणा SQ_ATTR0                       0x00000000
 
 /*
  * VALUE_SQ_TGT_INTERNAL value
  */
 
-#define SQ_EXP_GDS0                    0x00000018
+#घोषणा SQ_EXP_GDS0                    0x00000018
 
 /*
  * VALUE_SQ_OP_SOPC value
  */
 
-#define SQ_S_CMP_EQ_I32                0x00000000
-#define SQ_S_CMP_LG_I32                0x00000001
-#define SQ_S_CMP_GT_I32                0x00000002
-#define SQ_S_CMP_GE_I32                0x00000003
-#define SQ_S_CMP_LT_I32                0x00000004
-#define SQ_S_CMP_LE_I32                0x00000005
-#define SQ_S_CMP_EQ_U32                0x00000006
-#define SQ_S_CMP_LG_U32                0x00000007
-#define SQ_S_CMP_GT_U32                0x00000008
-#define SQ_S_CMP_GE_U32                0x00000009
-#define SQ_S_CMP_LT_U32                0x0000000a
-#define SQ_S_CMP_LE_U32                0x0000000b
-#define SQ_S_BITCMP0_B32               0x0000000c
-#define SQ_S_BITCMP1_B32               0x0000000d
-#define SQ_S_BITCMP0_B64               0x0000000e
-#define SQ_S_BITCMP1_B64               0x0000000f
-#define SQ_S_SETVSKIP                  0x00000010
-#define SQ_S_SET_GPR_IDX_ON            0x00000011
-#define SQ_S_CMP_EQ_U64                0x00000012
-#define SQ_S_CMP_LG_U64                0x00000013
+#घोषणा SQ_S_CMP_EQ_I32                0x00000000
+#घोषणा SQ_S_CMP_LG_I32                0x00000001
+#घोषणा SQ_S_CMP_GT_I32                0x00000002
+#घोषणा SQ_S_CMP_GE_I32                0x00000003
+#घोषणा SQ_S_CMP_LT_I32                0x00000004
+#घोषणा SQ_S_CMP_LE_I32                0x00000005
+#घोषणा SQ_S_CMP_EQ_U32                0x00000006
+#घोषणा SQ_S_CMP_LG_U32                0x00000007
+#घोषणा SQ_S_CMP_GT_U32                0x00000008
+#घोषणा SQ_S_CMP_GE_U32                0x00000009
+#घोषणा SQ_S_CMP_LT_U32                0x0000000a
+#घोषणा SQ_S_CMP_LE_U32                0x0000000b
+#घोषणा SQ_S_BITCMP0_B32               0x0000000c
+#घोषणा SQ_S_BITCMP1_B32               0x0000000d
+#घोषणा SQ_S_BITCMP0_B64               0x0000000e
+#घोषणा SQ_S_BITCMP1_B64               0x0000000f
+#घोषणा SQ_S_SETVSKIP                  0x00000010
+#घोषणा SQ_S_SET_GPR_IDX_ON            0x00000011
+#घोषणा SQ_S_CMP_EQ_U64                0x00000012
+#घोषणा SQ_S_CMP_LG_U64                0x00000013
 
 /*
  * VALUE_SQ_TRAP value
  */
 
-#define SQ_TTMP0                       0x0000006c
-#define SQ_TTMP1                       0x0000006d
-#define SQ_TTMP2                       0x0000006e
-#define SQ_TTMP3                       0x0000006f
-#define SQ_TTMP4                       0x00000070
-#define SQ_TTMP5                       0x00000071
-#define SQ_TTMP6                       0x00000072
-#define SQ_TTMP7                       0x00000073
-#define SQ_TTMP8                       0x00000074
-#define SQ_TTMP9                       0x00000075
-#define SQ_TTMP10                      0x00000076
-#define SQ_TTMP11                      0x00000077
-#define SQ_TTMP12                      0x00000078
-#define SQ_TTMP13                      0x00000079
-#define SQ_TTMP14                      0x0000007a
-#define SQ_TTMP15                      0x0000007b
+#घोषणा SQ_TTMP0                       0x0000006c
+#घोषणा SQ_TTMP1                       0x0000006d
+#घोषणा SQ_TTMP2                       0x0000006e
+#घोषणा SQ_TTMP3                       0x0000006f
+#घोषणा SQ_TTMP4                       0x00000070
+#घोषणा SQ_TTMP5                       0x00000071
+#घोषणा SQ_TTMP6                       0x00000072
+#घोषणा SQ_TTMP7                       0x00000073
+#घोषणा SQ_TTMP8                       0x00000074
+#घोषणा SQ_TTMP9                       0x00000075
+#घोषणा SQ_TTMP10                      0x00000076
+#घोषणा SQ_TTMP11                      0x00000077
+#घोषणा SQ_TTMP12                      0x00000078
+#घोषणा SQ_TTMP13                      0x00000079
+#घोषणा SQ_TTMP14                      0x0000007a
+#घोषणा SQ_TTMP15                      0x0000007b
 
 /*
  * VALUE_SQ_SRC_VGPR value
  */
 
-#define SQ_SRC_VGPR0                   0x00000100
+#घोषणा SQ_SRC_VGPR0                   0x00000100
 
 /*
  * VALUE_SQ_OP_MUBUF value
  */
 
-#define SQ_BUFFER_LOAD_FORMAT_X        0x00000000
-#define SQ_BUFFER_LOAD_FORMAT_XY       0x00000001
-#define SQ_BUFFER_LOAD_FORMAT_XYZ      0x00000002
-#define SQ_BUFFER_LOAD_FORMAT_XYZW     0x00000003
-#define SQ_BUFFER_STORE_FORMAT_X       0x00000004
-#define SQ_BUFFER_STORE_FORMAT_XY      0x00000005
-#define SQ_BUFFER_STORE_FORMAT_XYZ     0x00000006
-#define SQ_BUFFER_STORE_FORMAT_XYZW    0x00000007
-#define SQ_BUFFER_LOAD_FORMAT_D16_X    0x00000008
-#define SQ_BUFFER_LOAD_FORMAT_D16_XY   0x00000009
-#define SQ_BUFFER_LOAD_FORMAT_D16_XYZ  0x0000000a
-#define SQ_BUFFER_LOAD_FORMAT_D16_XYZW 0x0000000b
-#define SQ_BUFFER_STORE_FORMAT_D16_X   0x0000000c
-#define SQ_BUFFER_STORE_FORMAT_D16_XY  0x0000000d
-#define SQ_BUFFER_STORE_FORMAT_D16_XYZ 0x0000000e
-#define SQ_BUFFER_STORE_FORMAT_D16_XYZW 0x0000000f
-#define SQ_BUFFER_LOAD_UBYTE           0x00000010
-#define SQ_BUFFER_LOAD_SBYTE           0x00000011
-#define SQ_BUFFER_LOAD_USHORT          0x00000012
-#define SQ_BUFFER_LOAD_SSHORT          0x00000013
-#define SQ_BUFFER_LOAD_DWORD           0x00000014
-#define SQ_BUFFER_LOAD_DWORDX2         0x00000015
-#define SQ_BUFFER_LOAD_DWORDX3         0x00000016
-#define SQ_BUFFER_LOAD_DWORDX4         0x00000017
-#define SQ_BUFFER_STORE_BYTE           0x00000018
-#define SQ_BUFFER_STORE_SHORT          0x0000001a
-#define SQ_BUFFER_STORE_DWORD          0x0000001c
-#define SQ_BUFFER_STORE_DWORDX2        0x0000001d
-#define SQ_BUFFER_STORE_DWORDX3        0x0000001e
-#define SQ_BUFFER_STORE_DWORDX4        0x0000001f
-#define SQ_BUFFER_STORE_LDS_DWORD      0x0000003d
-#define SQ_BUFFER_WBINVL1              0x0000003e
-#define SQ_BUFFER_WBINVL1_VOL          0x0000003f
-#define SQ_BUFFER_ATOMIC_SWAP          0x00000040
-#define SQ_BUFFER_ATOMIC_CMPSWAP       0x00000041
-#define SQ_BUFFER_ATOMIC_ADD           0x00000042
-#define SQ_BUFFER_ATOMIC_SUB           0x00000043
-#define SQ_BUFFER_ATOMIC_SMIN          0x00000044
-#define SQ_BUFFER_ATOMIC_UMIN          0x00000045
-#define SQ_BUFFER_ATOMIC_SMAX          0x00000046
-#define SQ_BUFFER_ATOMIC_UMAX          0x00000047
-#define SQ_BUFFER_ATOMIC_AND           0x00000048
-#define SQ_BUFFER_ATOMIC_OR            0x00000049
-#define SQ_BUFFER_ATOMIC_XOR           0x0000004a
-#define SQ_BUFFER_ATOMIC_INC           0x0000004b
-#define SQ_BUFFER_ATOMIC_DEC           0x0000004c
-#define SQ_BUFFER_ATOMIC_SWAP_X2       0x00000060
-#define SQ_BUFFER_ATOMIC_CMPSWAP_X2    0x00000061
-#define SQ_BUFFER_ATOMIC_ADD_X2        0x00000062
-#define SQ_BUFFER_ATOMIC_SUB_X2        0x00000063
-#define SQ_BUFFER_ATOMIC_SMIN_X2       0x00000064
-#define SQ_BUFFER_ATOMIC_UMIN_X2       0x00000065
-#define SQ_BUFFER_ATOMIC_SMAX_X2       0x00000066
-#define SQ_BUFFER_ATOMIC_UMAX_X2       0x00000067
-#define SQ_BUFFER_ATOMIC_AND_X2        0x00000068
-#define SQ_BUFFER_ATOMIC_OR_X2         0x00000069
-#define SQ_BUFFER_ATOMIC_XOR_X2        0x0000006a
-#define SQ_BUFFER_ATOMIC_INC_X2        0x0000006b
-#define SQ_BUFFER_ATOMIC_DEC_X2        0x0000006c
+#घोषणा SQ_BUFFER_LOAD_FORMAT_X        0x00000000
+#घोषणा SQ_BUFFER_LOAD_FORMAT_XY       0x00000001
+#घोषणा SQ_BUFFER_LOAD_FORMAT_XYZ      0x00000002
+#घोषणा SQ_BUFFER_LOAD_FORMAT_XYZW     0x00000003
+#घोषणा SQ_BUFFER_STORE_FORMAT_X       0x00000004
+#घोषणा SQ_BUFFER_STORE_FORMAT_XY      0x00000005
+#घोषणा SQ_BUFFER_STORE_FORMAT_XYZ     0x00000006
+#घोषणा SQ_BUFFER_STORE_FORMAT_XYZW    0x00000007
+#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_X    0x00000008
+#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_XY   0x00000009
+#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_XYZ  0x0000000a
+#घोषणा SQ_BUFFER_LOAD_FORMAT_D16_XYZW 0x0000000b
+#घोषणा SQ_BUFFER_STORE_FORMAT_D16_X   0x0000000c
+#घोषणा SQ_BUFFER_STORE_FORMAT_D16_XY  0x0000000d
+#घोषणा SQ_BUFFER_STORE_FORMAT_D16_XYZ 0x0000000e
+#घोषणा SQ_BUFFER_STORE_FORMAT_D16_XYZW 0x0000000f
+#घोषणा SQ_BUFFER_LOAD_UBYTE           0x00000010
+#घोषणा SQ_BUFFER_LOAD_SBYTE           0x00000011
+#घोषणा SQ_BUFFER_LOAD_USHORT          0x00000012
+#घोषणा SQ_BUFFER_LOAD_SSHORT          0x00000013
+#घोषणा SQ_BUFFER_LOAD_DWORD           0x00000014
+#घोषणा SQ_BUFFER_LOAD_DWORDX2         0x00000015
+#घोषणा SQ_BUFFER_LOAD_DWORDX3         0x00000016
+#घोषणा SQ_BUFFER_LOAD_DWORDX4         0x00000017
+#घोषणा SQ_BUFFER_STORE_BYTE           0x00000018
+#घोषणा SQ_BUFFER_STORE_SHORT          0x0000001a
+#घोषणा SQ_BUFFER_STORE_DWORD          0x0000001c
+#घोषणा SQ_BUFFER_STORE_DWORDX2        0x0000001d
+#घोषणा SQ_BUFFER_STORE_DWORDX3        0x0000001e
+#घोषणा SQ_BUFFER_STORE_DWORDX4        0x0000001f
+#घोषणा SQ_BUFFER_STORE_LDS_DWORD      0x0000003d
+#घोषणा SQ_BUFFER_WBINVL1              0x0000003e
+#घोषणा SQ_BUFFER_WBINVL1_VOL          0x0000003f
+#घोषणा SQ_BUFFER_ATOMIC_SWAP          0x00000040
+#घोषणा SQ_BUFFER_ATOMIC_CMPSWAP       0x00000041
+#घोषणा SQ_BUFFER_ATOMIC_ADD           0x00000042
+#घोषणा SQ_BUFFER_ATOMIC_SUB           0x00000043
+#घोषणा SQ_BUFFER_ATOMIC_SMIN          0x00000044
+#घोषणा SQ_BUFFER_ATOMIC_UMIN          0x00000045
+#घोषणा SQ_BUFFER_ATOMIC_SMAX          0x00000046
+#घोषणा SQ_BUFFER_ATOMIC_UMAX          0x00000047
+#घोषणा SQ_BUFFER_ATOMIC_AND           0x00000048
+#घोषणा SQ_BUFFER_ATOMIC_OR            0x00000049
+#घोषणा SQ_BUFFER_ATOMIC_XOR           0x0000004a
+#घोषणा SQ_BUFFER_ATOMIC_INC           0x0000004b
+#घोषणा SQ_BUFFER_ATOMIC_DEC           0x0000004c
+#घोषणा SQ_BUFFER_ATOMIC_SWAP_X2       0x00000060
+#घोषणा SQ_BUFFER_ATOMIC_CMPSWAP_X2    0x00000061
+#घोषणा SQ_BUFFER_ATOMIC_ADD_X2        0x00000062
+#घोषणा SQ_BUFFER_ATOMIC_SUB_X2        0x00000063
+#घोषणा SQ_BUFFER_ATOMIC_SMIN_X2       0x00000064
+#घोषणा SQ_BUFFER_ATOMIC_UMIN_X2       0x00000065
+#घोषणा SQ_BUFFER_ATOMIC_SMAX_X2       0x00000066
+#घोषणा SQ_BUFFER_ATOMIC_UMAX_X2       0x00000067
+#घोषणा SQ_BUFFER_ATOMIC_AND_X2        0x00000068
+#घोषणा SQ_BUFFER_ATOMIC_OR_X2         0x00000069
+#घोषणा SQ_BUFFER_ATOMIC_XOR_X2        0x0000006a
+#घोषणा SQ_BUFFER_ATOMIC_INC_X2        0x0000006b
+#घोषणा SQ_BUFFER_ATOMIC_DEC_X2        0x0000006c
 
 /*
  * VALUE_SQ_SDWA_SEL value
  */
 
-#define SQ_SDWA_BYTE_0                 0x00000000
-#define SQ_SDWA_BYTE_1                 0x00000001
-#define SQ_SDWA_BYTE_2                 0x00000002
-#define SQ_SDWA_BYTE_3                 0x00000003
-#define SQ_SDWA_WORD_0                 0x00000004
-#define SQ_SDWA_WORD_1                 0x00000005
-#define SQ_SDWA_DWORD                  0x00000006
+#घोषणा SQ_SDWA_BYTE_0                 0x00000000
+#घोषणा SQ_SDWA_BYTE_1                 0x00000001
+#घोषणा SQ_SDWA_BYTE_2                 0x00000002
+#घोषणा SQ_SDWA_BYTE_3                 0x00000003
+#घोषणा SQ_SDWA_WORD_0                 0x00000004
+#घोषणा SQ_SDWA_WORD_1                 0x00000005
+#घोषणा SQ_SDWA_DWORD                  0x00000006
 
 /*******************************************************
  * SX Enums
  *******************************************************/
 
 /*
- * SX_BLEND_OPT enum
+ * SX_BLEND_OPT क्रमागत
  */
 
-typedef enum SX_BLEND_OPT {
+प्रकार क्रमागत SX_BLEND_OPT अणु
 BLEND_OPT_PRESERVE_NONE_IGNORE_ALL       = 0x00000000,
 BLEND_OPT_PRESERVE_ALL_IGNORE_NONE       = 0x00000001,
 BLEND_OPT_PRESERVE_C1_IGNORE_C0          = 0x00000002,
@@ -19472,13 +19473,13 @@ BLEND_OPT_PRESERVE_A1_IGNORE_A0          = 0x00000004,
 BLEND_OPT_PRESERVE_A0_IGNORE_A1          = 0x00000005,
 BLEND_OPT_PRESERVE_NONE_IGNORE_A0        = 0x00000006,
 BLEND_OPT_PRESERVE_NONE_IGNORE_NONE      = 0x00000007,
-} SX_BLEND_OPT;
+पूर्ण SX_BLEND_OPT;
 
 /*
- * SX_OPT_COMB_FCN enum
+ * SX_OPT_COMB_FCN क्रमागत
  */
 
-typedef enum SX_OPT_COMB_FCN {
+प्रकार क्रमागत SX_OPT_COMB_FCN अणु
 OPT_COMB_NONE                            = 0x00000000,
 OPT_COMB_ADD                             = 0x00000001,
 OPT_COMB_SUBTRACT                        = 0x00000002,
@@ -19487,13 +19488,13 @@ OPT_COMB_MAX                             = 0x00000004,
 OPT_COMB_REVSUBTRACT                     = 0x00000005,
 OPT_COMB_BLEND_DISABLED                  = 0x00000006,
 OPT_COMB_SAFE_ADD                        = 0x00000007,
-} SX_OPT_COMB_FCN;
+पूर्ण SX_OPT_COMB_FCN;
 
 /*
- * SX_DOWNCONVERT_FORMAT enum
+ * SX_DOWNCONVERT_FORMAT क्रमागत
  */
 
-typedef enum SX_DOWNCONVERT_FORMAT {
+प्रकार क्रमागत SX_DOWNCONVERT_FORMAT अणु
 SX_RT_EXPORT_NO_CONVERSION               = 0x00000000,
 SX_RT_EXPORT_32_R                        = 0x00000001,
 SX_RT_EXPORT_32_A                        = 0x00000002,
@@ -19505,13 +19506,13 @@ SX_RT_EXPORT_1_5_5_5                     = 0x00000007,
 SX_RT_EXPORT_4_4_4_4                     = 0x00000008,
 SX_RT_EXPORT_16_16_GR                    = 0x00000009,
 SX_RT_EXPORT_16_16_AR                    = 0x0000000a,
-} SX_DOWNCONVERT_FORMAT;
+पूर्ण SX_DOWNCONVERT_FORMAT;
 
 /*
- * SX_PERFCOUNTER_VALS enum
+ * SX_PERFCOUNTER_VALS क्रमागत
  */
 
-typedef enum SX_PERFCOUNTER_VALS {
+प्रकार क्रमागत SX_PERFCOUNTER_VALS अणु
 SX_PERF_SEL_PA_IDLE_CYCLES               = 0x00000000,
 SX_PERF_SEL_PA_REQ                       = 0x00000001,
 SX_PERF_SEL_PA_POS                       = 0x00000002,
@@ -19710,80 +19711,80 @@ SX_PERF_SEL_DB3_MRT7_DONT_RD_DEST        = 0x000000c2,
 SX_PERF_SEL_DB3_MRT7_DISCARD_SRC         = 0x000000c3,
 SX_PERF_SEL_DB3_MRT7_SINGLE_QUADS        = 0x000000c4,
 SX_PERF_SEL_DB3_MRT7_DOUBLE_QUADS        = 0x000000c5,
-} SX_PERFCOUNTER_VALS;
+पूर्ण SX_PERFCOUNTER_VALS;
 
 /*******************************************************
  * DB Enums
  *******************************************************/
 
 /*
- * ForceControl enum
+ * ForceControl क्रमागत
  */
 
-typedef enum ForceControl {
+प्रकार क्रमागत ForceControl अणु
 FORCE_OFF                                = 0x00000000,
 FORCE_ENABLE                             = 0x00000001,
 FORCE_DISABLE                            = 0x00000002,
 FORCE_RESERVED                           = 0x00000003,
-} ForceControl;
+पूर्ण ForceControl;
 
 /*
- * ZSamplePosition enum
+ * ZSamplePosition क्रमागत
  */
 
-typedef enum ZSamplePosition {
+प्रकार क्रमागत ZSamplePosition अणु
 Z_SAMPLE_CENTER                          = 0x00000000,
 Z_SAMPLE_CENTROID                        = 0x00000001,
-} ZSamplePosition;
+पूर्ण ZSamplePosition;
 
 /*
- * ZOrder enum
+ * ZOrder क्रमागत
  */
 
-typedef enum ZOrder {
+प्रकार क्रमागत ZOrder अणु
 LATE_Z                                   = 0x00000000,
 EARLY_Z_THEN_LATE_Z                      = 0x00000001,
 RE_Z                                     = 0x00000002,
 EARLY_Z_THEN_RE_Z                        = 0x00000003,
-} ZOrder;
+पूर्ण ZOrder;
 
 /*
- * ZpassControl enum
+ * ZpassControl क्रमागत
  */
 
-typedef enum ZpassControl {
+प्रकार क्रमागत ZpassControl अणु
 ZPASS_DISABLE                            = 0x00000000,
 ZPASS_SAMPLES                            = 0x00000001,
 ZPASS_PIXELS                             = 0x00000002,
-} ZpassControl;
+पूर्ण ZpassControl;
 
 /*
- * ZModeForce enum
+ * ZModeForce क्रमागत
  */
 
-typedef enum ZModeForce {
+प्रकार क्रमागत ZModeForce अणु
 NO_FORCE                                 = 0x00000000,
 FORCE_EARLY_Z                            = 0x00000001,
 FORCE_LATE_Z                             = 0x00000002,
 FORCE_RE_Z                               = 0x00000003,
-} ZModeForce;
+पूर्ण ZModeForce;
 
 /*
- * ZLimitSumm enum
+ * ZLimitSumm क्रमागत
  */
 
-typedef enum ZLimitSumm {
+प्रकार क्रमागत ZLimitSumm अणु
 FORCE_SUMM_OFF                           = 0x00000000,
 FORCE_SUMM_MINZ                          = 0x00000001,
 FORCE_SUMM_MAXZ                          = 0x00000002,
 FORCE_SUMM_BOTH                          = 0x00000003,
-} ZLimitSumm;
+पूर्ण ZLimitSumm;
 
 /*
- * CompareFrag enum
+ * CompareFrag क्रमागत
  */
 
-typedef enum CompareFrag {
+प्रकार क्रमागत CompareFrag अणु
 FRAG_NEVER                               = 0x00000000,
 FRAG_LESS                                = 0x00000001,
 FRAG_EQUAL                               = 0x00000002,
@@ -19792,13 +19793,13 @@ FRAG_GREATER                             = 0x00000004,
 FRAG_NOTEQUAL                            = 0x00000005,
 FRAG_GEQUAL                              = 0x00000006,
 FRAG_ALWAYS                              = 0x00000007,
-} CompareFrag;
+पूर्ण CompareFrag;
 
 /*
- * StencilOp enum
+ * StencilOp क्रमागत
  */
 
-typedef enum StencilOp {
+प्रकार क्रमागत StencilOp अणु
 STENCIL_KEEP                             = 0x00000000,
 STENCIL_ZERO                             = 0x00000001,
 STENCIL_ONES                             = 0x00000002,
@@ -19812,57 +19813,57 @@ STENCIL_SUB_WRAP                         = 0x00000009,
 STENCIL_AND                              = 0x0000000a,
 STENCIL_OR                               = 0x0000000b,
 STENCIL_XOR                              = 0x0000000c,
-STENCIL_NAND                             = 0x0000000d,
+STENCIL_न_अंकD                             = 0x0000000d,
 STENCIL_NOR                              = 0x0000000e,
 STENCIL_XNOR                             = 0x0000000f,
-} StencilOp;
+पूर्ण StencilOp;
 
 /*
- * ConservativeZExport enum
+ * ConservativeZExport क्रमागत
  */
 
-typedef enum ConservativeZExport {
+प्रकार क्रमागत ConservativeZExport अणु
 EXPORT_ANY_Z                             = 0x00000000,
 EXPORT_LESS_THAN_Z                       = 0x00000001,
 EXPORT_GREATER_THAN_Z                    = 0x00000002,
 EXPORT_RESERVED                          = 0x00000003,
-} ConservativeZExport;
+पूर्ण ConservativeZExport;
 
 /*
- * DbPSLControl enum
+ * DbPSLControl क्रमागत
  */
 
-typedef enum DbPSLControl {
+प्रकार क्रमागत DbPSLControl अणु
 PSLC_AUTO                                = 0x00000000,
 PSLC_ON_HANG_ONLY                        = 0x00000001,
 PSLC_ASAP                                = 0x00000002,
 PSLC_COUNTDOWN                           = 0x00000003,
-} DbPSLControl;
+पूर्ण DbPSLControl;
 
 /*
- * DbPRTFaultBehavior enum
+ * DbPRTFaultBehavior क्रमागत
  */
 
-typedef enum DbPRTFaultBehavior {
+प्रकार क्रमागत DbPRTFaultBehavior अणु
 FAULT_ZERO                               = 0x00000000,
 FAULT_ONE                                = 0x00000001,
 FAULT_FAIL                               = 0x00000002,
 FAULT_PASS                               = 0x00000003,
-} DbPRTFaultBehavior;
+पूर्ण DbPRTFaultBehavior;
 
 /*
- * PerfCounter_Vals enum
+ * PerfCounter_Vals क्रमागत
  */
 
-typedef enum PerfCounter_Vals {
+प्रकार क्रमागत PerfCounter_Vals अणु
 DB_PERF_SEL_SC_DB_tile_sends             = 0x00000000,
 DB_PERF_SEL_SC_DB_tile_busy              = 0x00000001,
 DB_PERF_SEL_SC_DB_tile_stalls            = 0x00000002,
 DB_PERF_SEL_SC_DB_tile_events            = 0x00000003,
 DB_PERF_SEL_SC_DB_tile_tiles             = 0x00000004,
 DB_PERF_SEL_SC_DB_tile_covered           = 0x00000005,
-DB_PERF_SEL_hiz_tc_read_starved          = 0x00000006,
-DB_PERF_SEL_hiz_tc_write_stall           = 0x00000007,
+DB_PERF_SEL_hiz_tc_पढ़ो_starved          = 0x00000006,
+DB_PERF_SEL_hiz_tc_ग_लिखो_stall           = 0x00000007,
 DB_PERF_SEL_hiz_qtiles_culled            = 0x00000008,
 DB_PERF_SEL_his_qtiles_culled            = 0x00000009,
 DB_PERF_SEL_DB_SC_tile_sends             = 0x0000000a,
@@ -19871,11 +19872,11 @@ DB_PERF_SEL_DB_SC_tile_stalls            = 0x0000000c,
 DB_PERF_SEL_DB_SC_tile_df_stalls         = 0x0000000d,
 DB_PERF_SEL_DB_SC_tile_tiles             = 0x0000000e,
 DB_PERF_SEL_DB_SC_tile_culled            = 0x0000000f,
-DB_PERF_SEL_DB_SC_tile_hier_kill         = 0x00000010,
+DB_PERF_SEL_DB_SC_tile_hier_समाप्त         = 0x00000010,
 DB_PERF_SEL_DB_SC_tile_fast_ops          = 0x00000011,
 DB_PERF_SEL_DB_SC_tile_no_ops            = 0x00000012,
 DB_PERF_SEL_DB_SC_tile_tile_rate         = 0x00000013,
-DB_PERF_SEL_DB_SC_tile_ssaa_kill         = 0x00000014,
+DB_PERF_SEL_DB_SC_tile_ssaa_समाप्त         = 0x00000014,
 DB_PERF_SEL_DB_SC_tile_fast_z_ops        = 0x00000015,
 DB_PERF_SEL_DB_SC_tile_fast_stencil_ops  = 0x00000016,
 DB_PERF_SEL_SC_DB_quad_sends             = 0x00000017,
@@ -19883,7 +19884,7 @@ DB_PERF_SEL_SC_DB_quad_busy              = 0x00000018,
 DB_PERF_SEL_SC_DB_quad_squads            = 0x00000019,
 DB_PERF_SEL_SC_DB_quad_tiles             = 0x0000001a,
 DB_PERF_SEL_SC_DB_quad_pixels            = 0x0000001b,
-DB_PERF_SEL_SC_DB_quad_killed_tiles      = 0x0000001c,
+DB_PERF_SEL_SC_DB_quad_समाप्तed_tiles      = 0x0000001c,
 DB_PERF_SEL_DB_SC_quad_sends             = 0x0000001d,
 DB_PERF_SEL_DB_SC_quad_busy              = 0x0000001e,
 DB_PERF_SEL_DB_SC_quad_stalls            = 0x0000001f,
@@ -19929,10 +19930,10 @@ DB_PERF_SEL_Tile_Cache_hits              = 0x00000046,
 DB_PERF_SEL_Tile_Cache_flushes           = 0x00000047,
 DB_PERF_SEL_Tile_Cache_surface_stall     = 0x00000048,
 DB_PERF_SEL_Tile_Cache_starves           = 0x00000049,
-DB_PERF_SEL_Tile_Cache_mem_return_starve  = 0x0000004a,
-DB_PERF_SEL_tcp_dispatcher_reads         = 0x0000004b,
-DB_PERF_SEL_tcp_prefetcher_reads         = 0x0000004c,
-DB_PERF_SEL_tcp_preloader_reads          = 0x0000004d,
+DB_PERF_SEL_Tile_Cache_mem_वापस_starve  = 0x0000004a,
+DB_PERF_SEL_tcp_dispatcher_पढ़ोs         = 0x0000004b,
+DB_PERF_SEL_tcp_prefetcher_पढ़ोs         = 0x0000004c,
+DB_PERF_SEL_tcp_preloader_पढ़ोs          = 0x0000004d,
 DB_PERF_SEL_tcp_dispatcher_flushes       = 0x0000004e,
 DB_PERF_SEL_tcp_prefetcher_flushes       = 0x0000004f,
 DB_PERF_SEL_tcp_preloader_flushes        = 0x00000050,
@@ -19947,14 +19948,14 @@ DB_PERF_SEL_Depth_Tile_Cache_flushes     = 0x00000058,
 DB_PERF_SEL_Depth_Tile_Cache_noop_tile   = 0x00000059,
 DB_PERF_SEL_Depth_Tile_Cache_detailed_noop  = 0x0000005a,
 DB_PERF_SEL_Depth_Tile_Cache_event       = 0x0000005b,
-DB_PERF_SEL_Depth_Tile_Cache_tile_frees  = 0x0000005c,
-DB_PERF_SEL_Depth_Tile_Cache_data_frees  = 0x0000005d,
-DB_PERF_SEL_Depth_Tile_Cache_mem_return_starve  = 0x0000005e,
+DB_PERF_SEL_Depth_Tile_Cache_tile_मुक्तs  = 0x0000005c,
+DB_PERF_SEL_Depth_Tile_Cache_data_मुक्तs  = 0x0000005d,
+DB_PERF_SEL_Depth_Tile_Cache_mem_वापस_starve  = 0x0000005e,
 DB_PERF_SEL_Stencil_Cache_misses         = 0x0000005f,
 DB_PERF_SEL_Stencil_Cache_hits           = 0x00000060,
 DB_PERF_SEL_Stencil_Cache_flushes        = 0x00000061,
 DB_PERF_SEL_Stencil_Cache_starves        = 0x00000062,
-DB_PERF_SEL_Stencil_Cache_frees          = 0x00000063,
+DB_PERF_SEL_Stencil_Cache_मुक्तs          = 0x00000063,
 DB_PERF_SEL_Z_Cache_separate_Z_misses    = 0x00000064,
 DB_PERF_SEL_Z_Cache_separate_Z_hits      = 0x00000065,
 DB_PERF_SEL_Z_Cache_separate_Z_flushes   = 0x00000066,
@@ -19963,12 +19964,12 @@ DB_PERF_SEL_Z_Cache_pmask_misses         = 0x00000068,
 DB_PERF_SEL_Z_Cache_pmask_hits           = 0x00000069,
 DB_PERF_SEL_Z_Cache_pmask_flushes        = 0x0000006a,
 DB_PERF_SEL_Z_Cache_pmask_starves        = 0x0000006b,
-DB_PERF_SEL_Z_Cache_frees                = 0x0000006c,
+DB_PERF_SEL_Z_Cache_मुक्तs                = 0x0000006c,
 DB_PERF_SEL_Plane_Cache_misses           = 0x0000006d,
 DB_PERF_SEL_Plane_Cache_hits             = 0x0000006e,
 DB_PERF_SEL_Plane_Cache_flushes          = 0x0000006f,
 DB_PERF_SEL_Plane_Cache_starves          = 0x00000070,
-DB_PERF_SEL_Plane_Cache_frees            = 0x00000071,
+DB_PERF_SEL_Plane_Cache_मुक्तs            = 0x00000071,
 DB_PERF_SEL_flush_expanded_stencil       = 0x00000072,
 DB_PERF_SEL_flush_compressed_stencil     = 0x00000073,
 DB_PERF_SEL_flush_single_stencil         = 0x00000074,
@@ -19990,8 +19991,8 @@ DB_PERF_SEL_flush_14plane                = 0x00000083,
 DB_PERF_SEL_flush_15plane                = 0x00000084,
 DB_PERF_SEL_flush_16plane                = 0x00000085,
 DB_PERF_SEL_flush_expanded_z             = 0x00000086,
-DB_PERF_SEL_earlyZ_waiting_for_postZ_done  = 0x00000087,
-DB_PERF_SEL_reZ_waiting_for_postZ_done   = 0x00000088,
+DB_PERF_SEL_earlyZ_रुकोing_क्रम_postZ_करोne  = 0x00000087,
+DB_PERF_SEL_reZ_रुकोing_क्रम_postZ_करोne   = 0x00000088,
 DB_PERF_SEL_dk_tile_sends                = 0x00000089,
 DB_PERF_SEL_dk_tile_busy                 = 0x0000008a,
 DB_PERF_SEL_dk_tile_quad_starves         = 0x0000008b,
@@ -20009,7 +20010,7 @@ DB_PERF_SEL_qc_in_preZ_tile_stalls_postZ  = 0x00000096,
 DB_PERF_SEL_qc_in_postZ_tile_stalls_preZ  = 0x00000097,
 DB_PERF_SEL_tsc_insert_summarize_stall   = 0x00000098,
 DB_PERF_SEL_tl_busy                      = 0x00000099,
-DB_PERF_SEL_tl_dtc_read_starved          = 0x0000009a,
+DB_PERF_SEL_tl_dtc_पढ़ो_starved          = 0x0000009a,
 DB_PERF_SEL_tl_z_fetch_stall             = 0x0000009b,
 DB_PERF_SEL_tl_stencil_stall             = 0x0000009c,
 DB_PERF_SEL_tl_z_decompress_stall        = 0x0000009d,
@@ -20038,22 +20039,22 @@ DB_PERF_SEL_PreZ_Samples_failing_S       = 0x000000b3,
 DB_PERF_SEL_ts_tc_update_stall           = 0x000000b4,
 DB_PERF_SEL_sc_kick_start                = 0x000000b5,
 DB_PERF_SEL_sc_kick_end                  = 0x000000b6,
-DB_PERF_SEL_clock_reg_active             = 0x000000b7,
-DB_PERF_SEL_clock_main_active            = 0x000000b8,
-DB_PERF_SEL_clock_mem_export_active      = 0x000000b9,
+DB_PERF_SEL_घड़ी_reg_active             = 0x000000b7,
+DB_PERF_SEL_घड़ी_मुख्य_active            = 0x000000b8,
+DB_PERF_SEL_घड़ी_mem_export_active      = 0x000000b9,
 DB_PERF_SEL_esr_ps_out_busy              = 0x000000ba,
 DB_PERF_SEL_esr_ps_lqf_busy              = 0x000000bb,
 DB_PERF_SEL_esr_ps_lqf_stall             = 0x000000bc,
 DB_PERF_SEL_etr_out_send                 = 0x000000bd,
 DB_PERF_SEL_etr_out_busy                 = 0x000000be,
-DB_PERF_SEL_etr_out_ltile_probe_fifo_full_stall  = 0x000000bf,
+DB_PERF_SEL_etr_out_ltile_probe_fअगरo_full_stall  = 0x000000bf,
 DB_PERF_SEL_etr_out_cb_tile_stall        = 0x000000c0,
 DB_PERF_SEL_etr_out_esr_stall            = 0x000000c1,
 DB_PERF_SEL_esr_ps_sqq_busy              = 0x000000c2,
 DB_PERF_SEL_esr_ps_sqq_stall             = 0x000000c3,
 DB_PERF_SEL_esr_eot_fwd_busy             = 0x000000c4,
 DB_PERF_SEL_esr_eot_fwd_holding_squad    = 0x000000c5,
-DB_PERF_SEL_esr_eot_fwd_forward          = 0x000000c6,
+DB_PERF_SEL_esr_eot_fwd_क्रमward          = 0x000000c6,
 DB_PERF_SEL_esr_sqq_zi_busy              = 0x000000c7,
 DB_PERF_SEL_esr_sqq_zi_stall             = 0x000000c8,
 DB_PERF_SEL_postzl_sq_pt_busy            = 0x000000c9,
@@ -20062,7 +20063,7 @@ DB_PERF_SEL_postzl_se_busy               = 0x000000cb,
 DB_PERF_SEL_postzl_se_stall              = 0x000000cc,
 DB_PERF_SEL_postzl_partial_launch        = 0x000000cd,
 DB_PERF_SEL_postzl_full_launch           = 0x000000ce,
-DB_PERF_SEL_postzl_partial_waiting       = 0x000000cf,
+DB_PERF_SEL_postzl_partial_रुकोing       = 0x000000cf,
 DB_PERF_SEL_postzl_tile_mem_stall        = 0x000000d0,
 DB_PERF_SEL_postzl_tile_init_stall       = 0x000000d1,
 DB_PEFF_SEL_prezl_tile_mem_stall         = 0x000000d2,
@@ -20112,15 +20113,15 @@ DB_PERF_SEL_tiles_compressed_to_decompressed  = 0x000000fd,
 DB_PERF_SEL_Op_Pipe_Prez_Busy            = 0x000000fe,
 DB_PERF_SEL_Op_Pipe_Postz_Busy           = 0x000000ff,
 DB_PERF_SEL_di_dt_stall                  = 0x00000100,
-DB_PERF_SEL_DB_SC_quad_double_quad       = 0x00000101,
+DB_PERF_SEL_DB_SC_quad_द्विगुन_quad       = 0x00000101,
 DB_PERF_SEL_SX_DB_quad_export_quads      = 0x00000102,
-DB_PERF_SEL_SX_DB_quad_double_format     = 0x00000103,
-DB_PERF_SEL_SX_DB_quad_fast_format       = 0x00000104,
-DB_PERF_SEL_SX_DB_quad_slow_format       = 0x00000105,
+DB_PERF_SEL_SX_DB_quad_द्विगुन_क्रमmat     = 0x00000103,
+DB_PERF_SEL_SX_DB_quad_fast_क्रमmat       = 0x00000104,
+DB_PERF_SEL_SX_DB_quad_slow_क्रमmat       = 0x00000105,
 DB_PERF_SEL_DB_CB_lquad_export_quads     = 0x00000106,
-DB_PERF_SEL_DB_CB_lquad_double_format    = 0x00000107,
-DB_PERF_SEL_DB_CB_lquad_fast_format      = 0x00000108,
-DB_PERF_SEL_DB_CB_lquad_slow_format      = 0x00000109,
+DB_PERF_SEL_DB_CB_lquad_द्विगुन_क्रमmat    = 0x00000107,
+DB_PERF_SEL_DB_CB_lquad_fast_क्रमmat      = 0x00000108,
+DB_PERF_SEL_DB_CB_lquad_slow_क्रमmat      = 0x00000109,
 DB_PERF_SEL_CB_DB_rdreq_sends            = 0x0000010a,
 DB_PERF_SEL_CB_DB_rdreq_prt_sends        = 0x0000010b,
 DB_PERF_SEL_CB_DB_wrreq_sends            = 0x0000010c,
@@ -20138,29 +20139,29 @@ DB_PERF_SEL_DFSM_fully_cleared_pixels_out  = 0x00000117,
 DB_PERF_SEL_DFSM_lit_samples_in          = 0x00000118,
 DB_PERF_SEL_DFSM_lit_samples_out         = 0x00000119,
 DB_PERF_SEL_DFSM_cycles_above_watermark  = 0x0000011a,
-DB_PERF_SEL_DFSM_cant_accept_squads_but_not_stalled_by_downstream  = 0x0000011b,
-DB_PERF_SEL_DFSM_stalled_by_downstream   = 0x0000011c,
+DB_PERF_SEL_DFSM_cant_accept_squads_but_not_stalled_by_करोwnstream  = 0x0000011b,
+DB_PERF_SEL_DFSM_stalled_by_करोwnstream   = 0x0000011c,
 DB_PERF_SEL_DFSM_evicted_squads_above_watermark  = 0x0000011d,
 DB_PERF_SEL_DFSM_collisions_due_to_POPS_overflow  = 0x0000011e,
 DB_PERF_SEL_DFSM_collisions_detected_within_POPS_FIFO  = 0x0000011f,
 DB_PERF_SEL_DFSM_evicted_squads_due_to_prim_watermark  = 0x00000120,
-} PerfCounter_Vals;
+पूर्ण PerfCounter_Vals;
 
 /*
- * RingCounterControl enum
+ * RingCounterControl क्रमागत
  */
 
-typedef enum RingCounterControl {
+प्रकार क्रमागत RingCounterControl अणु
 COUNTER_RING_SPLIT                       = 0x00000000,
 COUNTER_RING_0                           = 0x00000001,
 COUNTER_RING_1                           = 0x00000002,
-} RingCounterControl;
+पूर्ण RingCounterControl;
 
 /*
- * DbMemArbWatermarks enum
+ * DbMemArbWatermarks क्रमागत
  */
 
-typedef enum DbMemArbWatermarks {
+प्रकार क्रमागत DbMemArbWatermarks अणु
 TRANSFERRED_64_BYTES                     = 0x00000000,
 TRANSFERRED_128_BYTES                    = 0x00000001,
 TRANSFERRED_256_BYTES                    = 0x00000002,
@@ -20169,26 +20170,26 @@ TRANSFERRED_1024_BYTES                   = 0x00000004,
 TRANSFERRED_2048_BYTES                   = 0x00000005,
 TRANSFERRED_4096_BYTES                   = 0x00000006,
 TRANSFERRED_8192_BYTES                   = 0x00000007,
-} DbMemArbWatermarks;
+पूर्ण DbMemArbWatermarks;
 
 /*
- * DFSMFlushEvents enum
+ * DFSMFlushEvents क्रमागत
  */
 
-typedef enum DFSMFlushEvents {
+प्रकार क्रमागत DFSMFlushEvents अणु
 DB_FLUSH_AND_INV_DB_DATA_TS              = 0x00000000,
 DB_FLUSH_AND_INV_DB_META                 = 0x00000001,
 DB_CACHE_FLUSH                           = 0x00000002,
 DB_CACHE_FLUSH_TS                        = 0x00000003,
 DB_CACHE_FLUSH_AND_INV_EVENT             = 0x00000004,
 DB_CACHE_FLUSH_AND_INV_TS_EVENT          = 0x00000005,
-} DFSMFlushEvents;
+पूर्ण DFSMFlushEvents;
 
 /*
- * PixelPipeCounterId enum
+ * PixelPipeCounterId क्रमागत
  */
 
-typedef enum PixelPipeCounterId {
+प्रकार क्रमागत PixelPipeCounterId अणु
 PIXEL_PIPE_OCCLUSION_COUNT_0             = 0x00000000,
 PIXEL_PIPE_OCCLUSION_COUNT_1             = 0x00000001,
 PIXEL_PIPE_OCCLUSION_COUNT_2             = 0x00000002,
@@ -20197,50 +20198,50 @@ PIXEL_PIPE_SCREEN_MIN_EXTENTS_0          = 0x00000004,
 PIXEL_PIPE_SCREEN_MAX_EXTENTS_0          = 0x00000005,
 PIXEL_PIPE_SCREEN_MIN_EXTENTS_1          = 0x00000006,
 PIXEL_PIPE_SCREEN_MAX_EXTENTS_1          = 0x00000007,
-} PixelPipeCounterId;
+पूर्ण PixelPipeCounterId;
 
 /*
- * PixelPipeStride enum
+ * PixelPipeStride क्रमागत
  */
 
-typedef enum PixelPipeStride {
+प्रकार क्रमागत PixelPipeStride अणु
 PIXEL_PIPE_STRIDE_32_BITS                = 0x00000000,
 PIXEL_PIPE_STRIDE_64_BITS                = 0x00000001,
 PIXEL_PIPE_STRIDE_128_BITS               = 0x00000002,
 PIXEL_PIPE_STRIDE_256_BITS               = 0x00000003,
-} PixelPipeStride;
+पूर्ण PixelPipeStride;
 
 /*******************************************************
  * TA Enums
  *******************************************************/
 
 /*
- * TEX_BORDER_COLOR_TYPE enum
+ * TEX_BORDER_COLOR_TYPE क्रमागत
  */
 
-typedef enum TEX_BORDER_COLOR_TYPE {
+प्रकार क्रमागत TEX_BORDER_COLOR_TYPE अणु
 TEX_BorderColor_TransparentBlack         = 0x00000000,
 TEX_BorderColor_OpaqueBlack              = 0x00000001,
 TEX_BorderColor_OpaqueWhite              = 0x00000002,
 TEX_BorderColor_Register                 = 0x00000003,
-} TEX_BORDER_COLOR_TYPE;
+पूर्ण TEX_BORDER_COLOR_TYPE;
 
 /*
- * TEX_CHROMA_KEY enum
+ * TEX_CHROMA_KEY क्रमागत
  */
 
-typedef enum TEX_CHROMA_KEY {
+प्रकार क्रमागत TEX_CHROMA_KEY अणु
 TEX_ChromaKey_Disabled                   = 0x00000000,
 TEX_ChromaKey_Kill                       = 0x00000001,
 TEX_ChromaKey_Blend                      = 0x00000002,
 TEX_ChromaKey_RESERVED_3                 = 0x00000003,
-} TEX_CHROMA_KEY;
+पूर्ण TEX_CHROMA_KEY;
 
 /*
- * TEX_CLAMP enum
+ * TEX_CLAMP क्रमागत
  */
 
-typedef enum TEX_CLAMP {
+प्रकार क्रमागत TEX_CLAMP अणु
 TEX_Clamp_Repeat                         = 0x00000000,
 TEX_Clamp_Mirror                         = 0x00000001,
 TEX_Clamp_ClampToLast                    = 0x00000002,
@@ -20249,22 +20250,22 @@ TEX_Clamp_ClampHalfToBorder              = 0x00000004,
 TEX_Clamp_MirrorOnceHalfToBorder         = 0x00000005,
 TEX_Clamp_ClampToBorder                  = 0x00000006,
 TEX_Clamp_MirrorOnceToBorder             = 0x00000007,
-} TEX_CLAMP;
+पूर्ण TEX_CLAMP;
 
 /*
- * TEX_COORD_TYPE enum
+ * TEX_COORD_TYPE क्रमागत
  */
 
-typedef enum TEX_COORD_TYPE {
+प्रकार क्रमागत TEX_COORD_TYPE अणु
 TEX_CoordType_Unnormalized               = 0x00000000,
 TEX_CoordType_Normalized                 = 0x00000001,
-} TEX_COORD_TYPE;
+पूर्ण TEX_COORD_TYPE;
 
 /*
- * TEX_DEPTH_COMPARE_FUNCTION enum
+ * TEX_DEPTH_COMPARE_FUNCTION क्रमागत
  */
 
-typedef enum TEX_DEPTH_COMPARE_FUNCTION {
+प्रकार क्रमागत TEX_DEPTH_COMPARE_FUNCTION अणु
 TEX_DepthCompareFunction_Never           = 0x00000000,
 TEX_DepthCompareFunction_Less            = 0x00000001,
 TEX_DepthCompareFunction_Equal           = 0x00000002,
@@ -20273,13 +20274,13 @@ TEX_DepthCompareFunction_Greater         = 0x00000004,
 TEX_DepthCompareFunction_NotEqual        = 0x00000005,
 TEX_DepthCompareFunction_GreaterEqual    = 0x00000006,
 TEX_DepthCompareFunction_Always          = 0x00000007,
-} TEX_DEPTH_COMPARE_FUNCTION;
+पूर्ण TEX_DEPTH_COMPARE_FUNCTION;
 
 /*
- * TEX_DIM enum
+ * TEX_DIM क्रमागत
  */
 
-typedef enum TEX_DIM {
+प्रकार क्रमागत TEX_DIM अणु
 TEX_Dim_1D                               = 0x00000000,
 TEX_Dim_2D                               = 0x00000001,
 TEX_Dim_3D                               = 0x00000002,
@@ -20288,24 +20289,24 @@ TEX_Dim_1DArray                          = 0x00000004,
 TEX_Dim_2DArray                          = 0x00000005,
 TEX_Dim_2D_MSAA                          = 0x00000006,
 TEX_Dim_2DArray_MSAA                     = 0x00000007,
-} TEX_DIM;
+पूर्ण TEX_DIM;
 
 /*
- * TEX_FORMAT_COMP enum
+ * TEX_FORMAT_COMP क्रमागत
  */
 
-typedef enum TEX_FORMAT_COMP {
-TEX_FormatComp_Unsigned                  = 0x00000000,
+प्रकार क्रमागत TEX_FORMAT_COMP अणु
+TEX_FormatComp_Unचिन्हित                  = 0x00000000,
 TEX_FormatComp_Signed                    = 0x00000001,
-TEX_FormatComp_UnsignedBiased            = 0x00000002,
+TEX_FormatComp_Unचिन्हितBiased            = 0x00000002,
 TEX_FormatComp_RESERVED_3                = 0x00000003,
-} TEX_FORMAT_COMP;
+पूर्ण TEX_FORMAT_COMP;
 
 /*
- * TEX_MAX_ANISO_RATIO enum
+ * TEX_MAX_ANISO_RATIO क्रमागत
  */
 
-typedef enum TEX_MAX_ANISO_RATIO {
+प्रकार क्रमागत TEX_MAX_ANISO_RATIO अणु
 TEX_MaxAnisoRatio_1to1                   = 0x00000000,
 TEX_MaxAnisoRatio_2to1                   = 0x00000001,
 TEX_MaxAnisoRatio_4to1                   = 0x00000002,
@@ -20314,104 +20315,104 @@ TEX_MaxAnisoRatio_16to1                  = 0x00000004,
 TEX_MaxAnisoRatio_RESERVED_5             = 0x00000005,
 TEX_MaxAnisoRatio_RESERVED_6             = 0x00000006,
 TEX_MaxAnisoRatio_RESERVED_7             = 0x00000007,
-} TEX_MAX_ANISO_RATIO;
+पूर्ण TEX_MAX_ANISO_RATIO;
 
 /*
- * TEX_MIP_FILTER enum
+ * TEX_MIP_FILTER क्रमागत
  */
 
-typedef enum TEX_MIP_FILTER {
+प्रकार क्रमागत TEX_MIP_FILTER अणु
 TEX_MipFilter_None                       = 0x00000000,
-TEX_MipFilter_Point                      = 0x00000001,
+TEX_MipFilter_Poपूर्णांक                      = 0x00000001,
 TEX_MipFilter_Linear                     = 0x00000002,
-TEX_MipFilter_Point_Aniso_Adj            = 0x00000003,
-} TEX_MIP_FILTER;
+TEX_MipFilter_Poपूर्णांक_Aniso_Adj            = 0x00000003,
+पूर्ण TEX_MIP_FILTER;
 
 /*
- * TEX_REQUEST_SIZE enum
+ * TEX_REQUEST_SIZE क्रमागत
  */
 
-typedef enum TEX_REQUEST_SIZE {
+प्रकार क्रमागत TEX_REQUEST_SIZE अणु
 TEX_RequestSize_32B                      = 0x00000000,
 TEX_RequestSize_64B                      = 0x00000001,
 TEX_RequestSize_128B                     = 0x00000002,
 TEX_RequestSize_2X64B                    = 0x00000003,
-} TEX_REQUEST_SIZE;
+पूर्ण TEX_REQUEST_SIZE;
 
 /*
- * TEX_SAMPLER_TYPE enum
+ * TEX_SAMPLER_TYPE क्रमागत
  */
 
-typedef enum TEX_SAMPLER_TYPE {
+प्रकार क्रमागत TEX_SAMPLER_TYPE अणु
 TEX_SamplerType_Invalid                  = 0x00000000,
 TEX_SamplerType_Valid                    = 0x00000001,
-} TEX_SAMPLER_TYPE;
+पूर्ण TEX_SAMPLER_TYPE;
 
 /*
- * TEX_XY_FILTER enum
+ * TEX_XY_FILTER क्रमागत
  */
 
-typedef enum TEX_XY_FILTER {
-TEX_XYFilter_Point                       = 0x00000000,
+प्रकार क्रमागत TEX_XY_FILTER अणु
+TEX_XYFilter_Poपूर्णांक                       = 0x00000000,
 TEX_XYFilter_Linear                      = 0x00000001,
-TEX_XYFilter_AnisoPoint                  = 0x00000002,
+TEX_XYFilter_AnisoPoपूर्णांक                  = 0x00000002,
 TEX_XYFilter_AnisoLinear                 = 0x00000003,
-} TEX_XY_FILTER;
+पूर्ण TEX_XY_FILTER;
 
 /*
- * TEX_Z_FILTER enum
+ * TEX_Z_FILTER क्रमागत
  */
 
-typedef enum TEX_Z_FILTER {
+प्रकार क्रमागत TEX_Z_FILTER अणु
 TEX_ZFilter_None                         = 0x00000000,
-TEX_ZFilter_Point                        = 0x00000001,
+TEX_ZFilter_Poपूर्णांक                        = 0x00000001,
 TEX_ZFilter_Linear                       = 0x00000002,
 TEX_ZFilter_RESERVED_3                   = 0x00000003,
-} TEX_Z_FILTER;
+पूर्ण TEX_Z_FILTER;
 
 /*
- * VTX_CLAMP enum
+ * VTX_CLAMP क्रमागत
  */
 
-typedef enum VTX_CLAMP {
+प्रकार क्रमागत VTX_CLAMP अणु
 VTX_Clamp_ClampToZero                    = 0x00000000,
-VTX_Clamp_ClampToNAN                     = 0x00000001,
-} VTX_CLAMP;
+VTX_Clamp_ClampToन_अंक                     = 0x00000001,
+पूर्ण VTX_CLAMP;
 
 /*
- * VTX_FETCH_TYPE enum
+ * VTX_FETCH_TYPE क्रमागत
  */
 
-typedef enum VTX_FETCH_TYPE {
+प्रकार क्रमागत VTX_FETCH_TYPE अणु
 VTX_FetchType_VertexData                 = 0x00000000,
 VTX_FetchType_InstanceData               = 0x00000001,
 VTX_FetchType_NoIndexOffset              = 0x00000002,
 VTX_FetchType_RESERVED_3                 = 0x00000003,
-} VTX_FETCH_TYPE;
+पूर्ण VTX_FETCH_TYPE;
 
 /*
- * VTX_FORMAT_COMP_ALL enum
+ * VTX_FORMAT_COMP_ALL क्रमागत
  */
 
-typedef enum VTX_FORMAT_COMP_ALL {
-VTX_FormatCompAll_Unsigned               = 0x00000000,
+प्रकार क्रमागत VTX_FORMAT_COMP_ALL अणु
+VTX_FormatCompAll_Unचिन्हित               = 0x00000000,
 VTX_FormatCompAll_Signed                 = 0x00000001,
-} VTX_FORMAT_COMP_ALL;
+पूर्ण VTX_FORMAT_COMP_ALL;
 
 /*
- * VTX_MEM_REQUEST_SIZE enum
+ * VTX_MEM_REQUEST_SIZE क्रमागत
  */
 
-typedef enum VTX_MEM_REQUEST_SIZE {
+प्रकार क्रमागत VTX_MEM_REQUEST_SIZE अणु
 VTX_MemRequestSize_32B                   = 0x00000000,
 VTX_MemRequestSize_64B                   = 0x00000001,
-} VTX_MEM_REQUEST_SIZE;
+पूर्ण VTX_MEM_REQUEST_SIZE;
 
 /*
- * TVX_DATA_FORMAT enum
+ * TVX_DATA_FORMAT क्रमागत
  */
 
-typedef enum TVX_DATA_FORMAT {
+प्रकार क्रमागत TVX_DATA_FORMAT अणु
 TVX_FMT_INVALID                          = 0x00000000,
 TVX_FMT_8                                = 0x00000001,
 TVX_FMT_4_4                              = 0x00000002,
@@ -20476,13 +20477,13 @@ TVX_FMT_APC6                             = 0x0000003c,
 TVX_FMT_APC7                             = 0x0000003d,
 TVX_FMT_CTX1                             = 0x0000003e,
 TVX_FMT_RESERVED_63                      = 0x0000003f,
-} TVX_DATA_FORMAT;
+पूर्ण TVX_DATA_FORMAT;
 
 /*
- * TVX_DST_SEL enum
+ * TVX_DST_SEL क्रमागत
  */
 
-typedef enum TVX_DST_SEL {
+प्रकार क्रमागत TVX_DST_SEL अणु
 TVX_DstSel_X                             = 0x00000000,
 TVX_DstSel_Y                             = 0x00000001,
 TVX_DstSel_Z                             = 0x00000002,
@@ -20491,24 +20492,24 @@ TVX_DstSel_0f                            = 0x00000004,
 TVX_DstSel_1f                            = 0x00000005,
 TVX_DstSel_RESERVED_6                    = 0x00000006,
 TVX_DstSel_Mask                          = 0x00000007,
-} TVX_DST_SEL;
+पूर्ण TVX_DST_SEL;
 
 /*
- * TVX_ENDIAN_SWAP enum
+ * TVX_ENDIAN_SWAP क्रमागत
  */
 
-typedef enum TVX_ENDIAN_SWAP {
+प्रकार क्रमागत TVX_ENDIAN_SWAP अणु
 TVX_EndianSwap_None                      = 0x00000000,
 TVX_EndianSwap_8in16                     = 0x00000001,
 TVX_EndianSwap_8in32                     = 0x00000002,
 TVX_EndianSwap_8in64                     = 0x00000003,
-} TVX_ENDIAN_SWAP;
+पूर्ण TVX_ENDIAN_SWAP;
 
 /*
- * TVX_INST enum
+ * TVX_INST क्रमागत
  */
 
-typedef enum TVX_INST {
+प्रकार क्रमागत TVX_INST अणु
 TVX_Inst_NormalVertexFetch               = 0x00000000,
 TVX_Inst_SemanticVertexFetch             = 0x00000001,
 TVX_Inst_RESERVED_2                      = 0x00000002,
@@ -20541,61 +20542,61 @@ TVX_Inst_Sample_C_G                      = 0x0000001c,
 TVX_Inst_Gather4_C                       = 0x0000001d,
 TVX_Inst_Sample_C_G_LB                   = 0x0000001e,
 TVX_Inst_Gather4_C_O                     = 0x0000001f,
-} TVX_INST;
+पूर्ण TVX_INST;
 
 /*
- * TVX_NUM_FORMAT_ALL enum
+ * TVX_NUM_FORMAT_ALL क्रमागत
  */
 
-typedef enum TVX_NUM_FORMAT_ALL {
+प्रकार क्रमागत TVX_NUM_FORMAT_ALL अणु
 TVX_NumFormatAll_Norm                    = 0x00000000,
 TVX_NumFormatAll_Int                     = 0x00000001,
 TVX_NumFormatAll_Scaled                  = 0x00000002,
 TVX_NumFormatAll_RESERVED_3              = 0x00000003,
-} TVX_NUM_FORMAT_ALL;
+पूर्ण TVX_NUM_FORMAT_ALL;
 
 /*
- * TVX_SRC_SEL enum
+ * TVX_SRC_SEL क्रमागत
  */
 
-typedef enum TVX_SRC_SEL {
+प्रकार क्रमागत TVX_SRC_SEL अणु
 TVX_SrcSel_X                             = 0x00000000,
 TVX_SrcSel_Y                             = 0x00000001,
 TVX_SrcSel_Z                             = 0x00000002,
 TVX_SrcSel_W                             = 0x00000003,
 TVX_SrcSel_0f                            = 0x00000004,
 TVX_SrcSel_1f                            = 0x00000005,
-} TVX_SRC_SEL;
+पूर्ण TVX_SRC_SEL;
 
 /*
- * TVX_SRF_MODE_ALL enum
+ * TVX_SRF_MODE_ALL क्रमागत
  */
 
-typedef enum TVX_SRF_MODE_ALL {
+प्रकार क्रमागत TVX_SRF_MODE_ALL अणु
 TVX_SRFModeAll_ZCMO                      = 0x00000000,
 TVX_SRFModeAll_NZ                        = 0x00000001,
-} TVX_SRF_MODE_ALL;
+पूर्ण TVX_SRF_MODE_ALL;
 
 /*
- * TVX_TYPE enum
+ * TVX_TYPE क्रमागत
  */
 
-typedef enum TVX_TYPE {
+प्रकार क्रमागत TVX_TYPE अणु
 TVX_Type_InvalidTextureResource          = 0x00000000,
 TVX_Type_InvalidVertexBuffer             = 0x00000001,
 TVX_Type_ValidTextureResource            = 0x00000002,
 TVX_Type_ValidVertexBuffer               = 0x00000003,
-} TVX_TYPE;
+पूर्ण TVX_TYPE;
 
 /*******************************************************
  * PA Enums
  *******************************************************/
 
 /*
- * SU_PERFCNT_SEL enum
+ * SU_PERFCNT_SEL क्रमागत
  */
 
-typedef enum SU_PERFCNT_SEL {
+प्रकार क्रमागत SU_PERFCNT_SEL अणु
 PERF_PAPC_PASX_REQ                       = 0x00000000,
 PERF_PAPC_PASX_DISABLE_PIPE              = 0x00000001,
 PERF_PAPC_PASX_FIRST_VECTOR              = 0x00000002,
@@ -20603,9 +20604,9 @@ PERF_PAPC_PASX_SECOND_VECTOR             = 0x00000003,
 PERF_PAPC_PASX_FIRST_DEAD                = 0x00000004,
 PERF_PAPC_PASX_SECOND_DEAD               = 0x00000005,
 PERF_PAPC_PASX_VTX_KILL_DISCARD          = 0x00000006,
-PERF_PAPC_PASX_VTX_NAN_DISCARD           = 0x00000007,
+PERF_PAPC_PASX_VTX_न_अंक_DISCARD           = 0x00000007,
 PERF_PAPC_PA_INPUT_PRIM                  = 0x00000008,
-PERF_PAPC_PA_INPUT_NULL_PRIM             = 0x00000009,
+PERF_PAPC_PA_INPUT_शून्य_PRIM             = 0x00000009,
 PERF_PAPC_PA_INPUT_EVENT_FLAG            = 0x0000000a,
 PERF_PAPC_PA_INPUT_FIRST_PRIM_SLOT       = 0x0000000b,
 PERF_PAPC_PA_INPUT_END_OF_PACKET         = 0x0000000c,
@@ -20615,8 +20616,8 @@ PERF_PAPC_CLPR_VVUCP_CULL_PRIM           = 0x0000000f,
 PERF_PAPC_CLPR_VV_CULL_PRIM              = 0x00000010,
 PERF_PAPC_CLPR_UCP_CULL_PRIM             = 0x00000011,
 PERF_PAPC_CLPR_VTX_KILL_CULL_PRIM        = 0x00000012,
-PERF_PAPC_CLPR_VTX_NAN_CULL_PRIM         = 0x00000013,
-PERF_PAPC_CLPR_CULL_TO_NULL_PRIM         = 0x00000014,
+PERF_PAPC_CLPR_VTX_न_अंक_CULL_PRIM         = 0x00000013,
+PERF_PAPC_CLPR_CULL_TO_शून्य_PRIM         = 0x00000014,
 PERF_PAPC_CLPR_VVUCP_CLIP_PRIM           = 0x00000015,
 PERF_PAPC_CLPR_VV_CLIP_PRIM              = 0x00000016,
 PERF_PAPC_CLPR_UCP_CLIP_PRIM             = 0x00000017,
@@ -20635,9 +20636,9 @@ PERF_PAPC_CLPR_CLIP_PLANE_TOP            = 0x00000023,
 PERF_PAPC_CLPR_CLIP_PLANE_BOTTOM         = 0x00000024,
 PERF_PAPC_CLPR_GSC_KILL_CULL_PRIM        = 0x00000025,
 PERF_PAPC_CLPR_RASTER_KILL_CULL_PRIM     = 0x00000026,
-PERF_PAPC_CLSM_NULL_PRIM                 = 0x00000027,
+PERF_PAPC_CLSM_शून्य_PRIM                 = 0x00000027,
 PERF_PAPC_CLSM_TOTALLY_VISIBLE_PRIM      = 0x00000028,
-PERF_PAPC_CLSM_CULL_TO_NULL_PRIM         = 0x00000029,
+PERF_PAPC_CLSM_CULL_TO_शून्य_PRIM         = 0x00000029,
 PERF_PAPC_CLSM_OUT_PRIM_CNT_1            = 0x0000002a,
 PERF_PAPC_CLSM_OUT_PRIM_CNT_2            = 0x0000002b,
 PERF_PAPC_CLSM_OUT_PRIM_CNT_3            = 0x0000002c,
@@ -20647,7 +20648,7 @@ PERF_PAPC_CLSM_OUT_PRIM_CNT_9_13         = 0x0000002f,
 PERF_PAPC_CLIPGA_VTE_KILL_PRIM           = 0x00000030,
 PERF_PAPC_SU_INPUT_PRIM                  = 0x00000031,
 PERF_PAPC_SU_INPUT_CLIP_PRIM             = 0x00000032,
-PERF_PAPC_SU_INPUT_NULL_PRIM             = 0x00000033,
+PERF_PAPC_SU_INPUT_शून्य_PRIM             = 0x00000033,
 PERF_PAPC_SU_INPUT_PRIM_DUAL             = 0x00000034,
 PERF_PAPC_SU_INPUT_CLIP_PRIM_DUAL        = 0x00000035,
 PERF_PAPC_SU_ZERO_AREA_CULL_PRIM         = 0x00000036,
@@ -20659,7 +20660,7 @@ PERF_PAPC_SU_POLYMODE_FRONT_CULL         = 0x0000003b,
 PERF_PAPC_SU_POLYMODE_INVALID_FILL       = 0x0000003c,
 PERF_PAPC_SU_OUTPUT_PRIM                 = 0x0000003d,
 PERF_PAPC_SU_OUTPUT_CLIP_PRIM            = 0x0000003e,
-PERF_PAPC_SU_OUTPUT_NULL_PRIM            = 0x0000003f,
+PERF_PAPC_SU_OUTPUT_शून्य_PRIM            = 0x0000003f,
 PERF_PAPC_SU_OUTPUT_EVENT_FLAG           = 0x00000040,
 PERF_PAPC_SU_OUTPUT_FIRST_PRIM_SLOT      = 0x00000041,
 PERF_PAPC_SU_OUTPUT_END_OF_PACKET        = 0x00000042,
@@ -20722,9 +20723,9 @@ PERF_PAPC_SU_SE01_PRIM_FILTER_CULL       = 0x0000007a,
 PERF_PAPC_SU_SE0_OUTPUT_PRIM             = 0x0000007b,
 PERF_PAPC_SU_SE1_OUTPUT_PRIM             = 0x0000007c,
 PERF_PAPC_SU_SE01_OUTPUT_PRIM            = 0x0000007d,
-PERF_PAPC_SU_SE0_OUTPUT_NULL_PRIM        = 0x0000007e,
-PERF_PAPC_SU_SE1_OUTPUT_NULL_PRIM        = 0x0000007f,
-PERF_PAPC_SU_SE01_OUTPUT_NULL_PRIM       = 0x00000080,
+PERF_PAPC_SU_SE0_OUTPUT_शून्य_PRIM        = 0x0000007e,
+PERF_PAPC_SU_SE1_OUTPUT_शून्य_PRIM        = 0x0000007f,
+PERF_PAPC_SU_SE01_OUTPUT_शून्य_PRIM       = 0x00000080,
 PERF_PAPC_SU_SE0_OUTPUT_FIRST_PRIM_SLOT  = 0x00000081,
 PERF_PAPC_SU_SE1_OUTPUT_FIRST_PRIM_SLOT  = 0x00000082,
 PERF_PAPC_SU_SE0_STALLED_SC              = 0x00000083,
@@ -20737,8 +20738,8 @@ PERF_PAPC_SU_SE2_PRIM_FILTER_CULL        = 0x00000089,
 PERF_PAPC_SU_SE3_PRIM_FILTER_CULL        = 0x0000008a,
 PERF_PAPC_SU_SE2_OUTPUT_PRIM             = 0x0000008b,
 PERF_PAPC_SU_SE3_OUTPUT_PRIM             = 0x0000008c,
-PERF_PAPC_SU_SE2_OUTPUT_NULL_PRIM        = 0x0000008d,
-PERF_PAPC_SU_SE3_OUTPUT_NULL_PRIM        = 0x0000008e,
+PERF_PAPC_SU_SE2_OUTPUT_शून्य_PRIM        = 0x0000008d,
+PERF_PAPC_SU_SE3_OUTPUT_शून्य_PRIM        = 0x0000008e,
 PERF_PAPC_SU_SE0_OUTPUT_END_OF_PACKET    = 0x0000008f,
 PERF_PAPC_SU_SE1_OUTPUT_END_OF_PACKET    = 0x00000090,
 PERF_PAPC_SU_SE2_OUTPUT_END_OF_PACKET    = 0x00000091,
@@ -20749,13 +20750,13 @@ PERF_PAPC_SU_SE2_OUTPUT_EOPG             = 0x00000095,
 PERF_PAPC_SU_SE3_OUTPUT_EOPG             = 0x00000096,
 PERF_PAPC_SU_SE2_STALLED_SC              = 0x00000097,
 PERF_PAPC_SU_SE3_STALLED_SC              = 0x00000098,
-} SU_PERFCNT_SEL;
+पूर्ण SU_PERFCNT_SEL;
 
 /*
- * SC_PERFCNT_SEL enum
+ * SC_PERFCNT_SEL क्रमागत
  */
 
-typedef enum SC_PERFCNT_SEL {
+प्रकार क्रमागत SC_PERFCNT_SEL अणु
 SC_SRPS_WINDOW_VALID                     = 0x00000000,
 SC_PSSW_WINDOW_VALID                     = 0x00000001,
 SC_TPQZ_WINDOW_VALID                     = 0x00000002,
@@ -21074,7 +21075,7 @@ SC_PA3_SC_EOPG_WE                        = 0x0000013a,
 SC_PA3_SC_EVENT_WE                       = 0x0000013b,
 SC_PS_ARB_OOO_THRESHOLD_SWITCH_TO_DESIRED_FIFO  = 0x0000013c,
 SC_PS_ARB_OOO_FIFO_EMPTY_SWITCH          = 0x0000013d,
-SC_PS_ARB_NULL_PRIM_BUBBLE_POP           = 0x0000013e,
+SC_PS_ARB_शून्य_PRIM_BUBBLE_POP           = 0x0000013e,
 SC_PS_ARB_EOP_POP_SYNC_POP               = 0x0000013f,
 SC_PS_ARB_EVENT_SYNC_POP                 = 0x00000140,
 SC_SC_PS_ENG_MULTICYCLE_BUBBLE           = 0x00000141,
@@ -21109,8 +21110,8 @@ SC_PS_CTX_DONE_FIFO_PUSH                 = 0x0000015d,
 SC_PS_CTX_DONE_FIFO_POP                  = 0x0000015e,
 SC_MULTICYCLE_BUBBLE_FREEZE              = 0x0000015f,
 SC_EOP_SYNC_WINDOW                       = 0x00000160,
-SC_PA0_SC_NULL_WE                        = 0x00000161,
-SC_PA0_SC_NULL_DEALLOC_WE                = 0x00000162,
+SC_PA0_SC_शून्य_WE                        = 0x00000161,
+SC_PA0_SC_शून्य_DEALLOC_WE                = 0x00000162,
 SC_PA0_SC_DATA_FIFO_EOPG_RD              = 0x00000163,
 SC_PA0_SC_DATA_FIFO_EOP_RD               = 0x00000164,
 SC_PA0_SC_DEALLOC_0_RD                   = 0x00000165,
@@ -21119,20 +21120,20 @@ SC_PA1_SC_DATA_FIFO_EOPG_RD              = 0x00000167,
 SC_PA1_SC_DATA_FIFO_EOP_RD               = 0x00000168,
 SC_PA1_SC_DEALLOC_0_RD                   = 0x00000169,
 SC_PA1_SC_DEALLOC_1_RD                   = 0x0000016a,
-SC_PA1_SC_NULL_WE                        = 0x0000016b,
-SC_PA1_SC_NULL_DEALLOC_WE                = 0x0000016c,
+SC_PA1_SC_शून्य_WE                        = 0x0000016b,
+SC_PA1_SC_शून्य_DEALLOC_WE                = 0x0000016c,
 SC_PA2_SC_DATA_FIFO_EOPG_RD              = 0x0000016d,
 SC_PA2_SC_DATA_FIFO_EOP_RD               = 0x0000016e,
 SC_PA2_SC_DEALLOC_0_RD                   = 0x0000016f,
 SC_PA2_SC_DEALLOC_1_RD                   = 0x00000170,
-SC_PA2_SC_NULL_WE                        = 0x00000171,
-SC_PA2_SC_NULL_DEALLOC_WE                = 0x00000172,
+SC_PA2_SC_शून्य_WE                        = 0x00000171,
+SC_PA2_SC_शून्य_DEALLOC_WE                = 0x00000172,
 SC_PA3_SC_DATA_FIFO_EOPG_RD              = 0x00000173,
 SC_PA3_SC_DATA_FIFO_EOP_RD               = 0x00000174,
 SC_PA3_SC_DEALLOC_0_RD                   = 0x00000175,
 SC_PA3_SC_DEALLOC_1_RD                   = 0x00000176,
-SC_PA3_SC_NULL_WE                        = 0x00000177,
-SC_PA3_SC_NULL_DEALLOC_WE                = 0x00000178,
+SC_PA3_SC_शून्य_WE                        = 0x00000177,
+SC_PA3_SC_शून्य_DEALLOC_WE                = 0x00000178,
 SC_PS_PA0_SC_FIFO_EMPTY                  = 0x00000179,
 SC_PS_PA0_SC_FIFO_FULL                   = 0x0000017a,
 SC_PA0_PS_DATA_SEND                      = 0x0000017b,
@@ -21173,7 +21174,7 @@ SC_PBB_PRIMBIN_PROCESSED                 = 0x0000019d,
 SC_PBB_PRIM_ADDED_TO_BATCH               = 0x0000019e,
 SC_PBB_NONBINNED_PRIM                    = 0x0000019f,
 SC_PBB_TOTAL_REAL_PRIMS_OUT_OF_PBB       = 0x000001a0,
-SC_PBB_TOTAL_NULL_PRIMS_OUT_OF_PBB       = 0x000001a1,
+SC_PBB_TOTAL_शून्य_PRIMS_OUT_OF_PBB       = 0x000001a1,
 SC_PBB_IDLE_CLK_DUE_TO_ROW_TO_COLUMN_TRANSITION  = 0x000001a2,
 SC_PBB_IDLE_CLK_DUE_TO_FALSE_POSITIVE_ON_ROW  = 0x000001a3,
 SC_PBB_IDLE_CLK_DUE_TO_FALSE_POSITIVE_ON_COLUMN  = 0x000001a4,
@@ -21187,236 +21188,236 @@ SC_POPS_INTRA_WAVE_OVERLAPS              = 0x000001ab,
 SC_POPS_FORCE_EOV                        = 0x000001ac,
 SC_PKR_QUAD_OVERLAP_NOT_FOUND_IN_WAVE_TABLE  = 0x000001ad,
 SC_PKR_QUAD_OVERLAP_FOUND_IN_WAVE_TABLE  = 0x000001ae,
-} SC_PERFCNT_SEL;
+पूर्ण SC_PERFCNT_SEL;
 
 /*
- * SePairXsel enum
+ * SePairXsel क्रमागत
  */
 
-typedef enum SePairXsel {
+प्रकार क्रमागत SePairXsel अणु
 RASTER_CONFIG_SE_PAIR_XSEL_8_WIDE_TILE   = 0x00000000,
 RASTER_CONFIG_SE_PAIR_XSEL_16_WIDE_TILE  = 0x00000001,
 RASTER_CONFIG_SE_PAIR_XSEL_32_WIDE_TILE  = 0x00000002,
 RASTER_CONFIG_SE_PAIR_XSEL_64_WIDE_TILE  = 0x00000003,
 RASTER_CONFIG_SE_PAIR_XSEL_128_WIDE_TILE  = 0x00000004,
-} SePairXsel;
+पूर्ण SePairXsel;
 
 /*
- * SePairYsel enum
+ * SePairYsel क्रमागत
  */
 
-typedef enum SePairYsel {
+प्रकार क्रमागत SePairYsel अणु
 RASTER_CONFIG_SE_PAIR_YSEL_8_WIDE_TILE   = 0x00000000,
 RASTER_CONFIG_SE_PAIR_YSEL_16_WIDE_TILE  = 0x00000001,
 RASTER_CONFIG_SE_PAIR_YSEL_32_WIDE_TILE  = 0x00000002,
 RASTER_CONFIG_SE_PAIR_YSEL_64_WIDE_TILE  = 0x00000003,
 RASTER_CONFIG_SE_PAIR_YSEL_128_WIDE_TILE  = 0x00000004,
-} SePairYsel;
+पूर्ण SePairYsel;
 
 /*
- * SePairMap enum
+ * SePairMap क्रमागत
  */
 
-typedef enum SePairMap {
+प्रकार क्रमागत SePairMap अणु
 RASTER_CONFIG_SE_PAIR_MAP_0              = 0x00000000,
 RASTER_CONFIG_SE_PAIR_MAP_1              = 0x00000001,
 RASTER_CONFIG_SE_PAIR_MAP_2              = 0x00000002,
 RASTER_CONFIG_SE_PAIR_MAP_3              = 0x00000003,
-} SePairMap;
+पूर्ण SePairMap;
 
 /*
- * SeXsel enum
+ * SeXsel क्रमागत
  */
 
-typedef enum SeXsel {
+प्रकार क्रमागत SeXsel अणु
 RASTER_CONFIG_SE_XSEL_8_WIDE_TILE        = 0x00000000,
 RASTER_CONFIG_SE_XSEL_16_WIDE_TILE       = 0x00000001,
 RASTER_CONFIG_SE_XSEL_32_WIDE_TILE       = 0x00000002,
 RASTER_CONFIG_SE_XSEL_64_WIDE_TILE       = 0x00000003,
 RASTER_CONFIG_SE_XSEL_128_WIDE_TILE      = 0x00000004,
-} SeXsel;
+पूर्ण SeXsel;
 
 /*
- * SeYsel enum
+ * SeYsel क्रमागत
  */
 
-typedef enum SeYsel {
+प्रकार क्रमागत SeYsel अणु
 RASTER_CONFIG_SE_YSEL_8_WIDE_TILE        = 0x00000000,
 RASTER_CONFIG_SE_YSEL_16_WIDE_TILE       = 0x00000001,
 RASTER_CONFIG_SE_YSEL_32_WIDE_TILE       = 0x00000002,
 RASTER_CONFIG_SE_YSEL_64_WIDE_TILE       = 0x00000003,
 RASTER_CONFIG_SE_YSEL_128_WIDE_TILE      = 0x00000004,
-} SeYsel;
+पूर्ण SeYsel;
 
 /*
- * SeMap enum
+ * SeMap क्रमागत
  */
 
-typedef enum SeMap {
+प्रकार क्रमागत SeMap अणु
 RASTER_CONFIG_SE_MAP_0                   = 0x00000000,
 RASTER_CONFIG_SE_MAP_1                   = 0x00000001,
 RASTER_CONFIG_SE_MAP_2                   = 0x00000002,
 RASTER_CONFIG_SE_MAP_3                   = 0x00000003,
-} SeMap;
+पूर्ण SeMap;
 
 /*
- * ScXsel enum
+ * ScXsel क्रमागत
  */
 
-typedef enum ScXsel {
+प्रकार क्रमागत ScXsel अणु
 RASTER_CONFIG_SC_XSEL_8_WIDE_TILE        = 0x00000000,
 RASTER_CONFIG_SC_XSEL_16_WIDE_TILE       = 0x00000001,
 RASTER_CONFIG_SC_XSEL_32_WIDE_TILE       = 0x00000002,
 RASTER_CONFIG_SC_XSEL_64_WIDE_TILE       = 0x00000003,
-} ScXsel;
+पूर्ण ScXsel;
 
 /*
- * ScYsel enum
+ * ScYsel क्रमागत
  */
 
-typedef enum ScYsel {
+प्रकार क्रमागत ScYsel अणु
 RASTER_CONFIG_SC_YSEL_8_WIDE_TILE        = 0x00000000,
 RASTER_CONFIG_SC_YSEL_16_WIDE_TILE       = 0x00000001,
 RASTER_CONFIG_SC_YSEL_32_WIDE_TILE       = 0x00000002,
 RASTER_CONFIG_SC_YSEL_64_WIDE_TILE       = 0x00000003,
-} ScYsel;
+पूर्ण ScYsel;
 
 /*
- * ScMap enum
+ * ScMap क्रमागत
  */
 
-typedef enum ScMap {
+प्रकार क्रमागत ScMap अणु
 RASTER_CONFIG_SC_MAP_0                   = 0x00000000,
 RASTER_CONFIG_SC_MAP_1                   = 0x00000001,
 RASTER_CONFIG_SC_MAP_2                   = 0x00000002,
 RASTER_CONFIG_SC_MAP_3                   = 0x00000003,
-} ScMap;
+पूर्ण ScMap;
 
 /*
- * PkrXsel2 enum
+ * PkrXsel2 क्रमागत
  */
 
-typedef enum PkrXsel2 {
+प्रकार क्रमागत PkrXsel2 अणु
 RASTER_CONFIG_PKR_XSEL2_0                = 0x00000000,
 RASTER_CONFIG_PKR_XSEL2_1                = 0x00000001,
 RASTER_CONFIG_PKR_XSEL2_2                = 0x00000002,
 RASTER_CONFIG_PKR_XSEL2_3                = 0x00000003,
-} PkrXsel2;
+पूर्ण PkrXsel2;
 
 /*
- * PkrXsel enum
+ * PkrXsel क्रमागत
  */
 
-typedef enum PkrXsel {
+प्रकार क्रमागत PkrXsel अणु
 RASTER_CONFIG_PKR_XSEL_0                 = 0x00000000,
 RASTER_CONFIG_PKR_XSEL_1                 = 0x00000001,
 RASTER_CONFIG_PKR_XSEL_2                 = 0x00000002,
 RASTER_CONFIG_PKR_XSEL_3                 = 0x00000003,
-} PkrXsel;
+पूर्ण PkrXsel;
 
 /*
- * PkrYsel enum
+ * PkrYsel क्रमागत
  */
 
-typedef enum PkrYsel {
+प्रकार क्रमागत PkrYsel अणु
 RASTER_CONFIG_PKR_YSEL_0                 = 0x00000000,
 RASTER_CONFIG_PKR_YSEL_1                 = 0x00000001,
 RASTER_CONFIG_PKR_YSEL_2                 = 0x00000002,
 RASTER_CONFIG_PKR_YSEL_3                 = 0x00000003,
-} PkrYsel;
+पूर्ण PkrYsel;
 
 /*
- * PkrMap enum
+ * PkrMap क्रमागत
  */
 
-typedef enum PkrMap {
+प्रकार क्रमागत PkrMap अणु
 RASTER_CONFIG_PKR_MAP_0                  = 0x00000000,
 RASTER_CONFIG_PKR_MAP_1                  = 0x00000001,
 RASTER_CONFIG_PKR_MAP_2                  = 0x00000002,
 RASTER_CONFIG_PKR_MAP_3                  = 0x00000003,
-} PkrMap;
+पूर्ण PkrMap;
 
 /*
- * RbXsel enum
+ * RbXsel क्रमागत
  */
 
-typedef enum RbXsel {
+प्रकार क्रमागत RbXsel अणु
 RASTER_CONFIG_RB_XSEL_0                  = 0x00000000,
 RASTER_CONFIG_RB_XSEL_1                  = 0x00000001,
-} RbXsel;
+पूर्ण RbXsel;
 
 /*
- * RbYsel enum
+ * RbYsel क्रमागत
  */
 
-typedef enum RbYsel {
+प्रकार क्रमागत RbYsel अणु
 RASTER_CONFIG_RB_YSEL_0                  = 0x00000000,
 RASTER_CONFIG_RB_YSEL_1                  = 0x00000001,
-} RbYsel;
+पूर्ण RbYsel;
 
 /*
- * RbXsel2 enum
+ * RbXsel2 क्रमागत
  */
 
-typedef enum RbXsel2 {
+प्रकार क्रमागत RbXsel2 अणु
 RASTER_CONFIG_RB_XSEL2_0                 = 0x00000000,
 RASTER_CONFIG_RB_XSEL2_1                 = 0x00000001,
 RASTER_CONFIG_RB_XSEL2_2                 = 0x00000002,
 RASTER_CONFIG_RB_XSEL2_3                 = 0x00000003,
-} RbXsel2;
+पूर्ण RbXsel2;
 
 /*
- * RbMap enum
+ * RbMap क्रमागत
  */
 
-typedef enum RbMap {
+प्रकार क्रमागत RbMap अणु
 RASTER_CONFIG_RB_MAP_0                   = 0x00000000,
 RASTER_CONFIG_RB_MAP_1                   = 0x00000001,
 RASTER_CONFIG_RB_MAP_2                   = 0x00000002,
 RASTER_CONFIG_RB_MAP_3                   = 0x00000003,
-} RbMap;
+पूर्ण RbMap;
 
 /*
- * BinningMode enum
+ * BinningMode क्रमागत
  */
 
-typedef enum BinningMode {
+प्रकार क्रमागत BinningMode अणु
 BINNING_ALLOWED                          = 0x00000000,
 FORCE_BINNING_ON                         = 0x00000001,
 DISABLE_BINNING_USE_NEW_SC               = 0x00000002,
 DISABLE_BINNING_USE_LEGACY_SC            = 0x00000003,
-} BinningMode;
+पूर्ण BinningMode;
 
 /*
- * BinEventCntl enum
+ * BinEventCntl क्रमागत
  */
 
-typedef enum BinEventCntl {
+प्रकार क्रमागत BinEventCntl अणु
 BINNER_BREAK_BATCH                       = 0x00000000,
 BINNER_PIPELINE                          = 0x00000001,
 BINNER_DROP_ASSERT                       = 0x00000002,
-} BinEventCntl;
+पूर्ण BinEventCntl;
 
 /*
- * CovToShaderSel enum
+ * CovToShaderSel क्रमागत
  */
 
-typedef enum CovToShaderSel {
+प्रकार क्रमागत CovToShaderSel अणु
 INPUT_COVERAGE                           = 0x00000000,
 INPUT_INNER_COVERAGE                     = 0x00000001,
 INPUT_DEPTH_COVERAGE                     = 0x00000002,
 RAW                                      = 0x00000003,
-} CovToShaderSel;
+पूर्ण CovToShaderSel;
 
 /*******************************************************
  * RMI Enums
  *******************************************************/
 
 /*
- * RMIPerfSel enum
+ * RMIPerfSel क्रमागत
  */
 
-typedef enum RMIPerfSel {
+प्रकार क्रमागत RMIPerfSel अणु
 RMI_PERF_SEL_NONE                        = 0x00000000,
 RMI_PERF_SEL_BUSY                        = 0x00000001,
 RMI_PERF_SEL_REG_CLK_VLD                 = 0x00000002,
@@ -21649,17 +21650,17 @@ RMI_PERF_SEL_RMI_RB_EARLY_WRACK_NACK0    = 0x000000e4,
 RMI_PERF_SEL_RMI_RB_EARLY_WRACK_NACK1    = 0x000000e5,
 RMI_PERF_SEL_RMI_RB_EARLY_WRACK_NACK2    = 0x000000e6,
 RMI_PERF_SEL_RMI_RB_EARLY_WRACK_NACK3    = 0x000000e7,
-} RMIPerfSel;
+पूर्ण RMIPerfSel;
 
 /*******************************************************
  * IH Enums
  *******************************************************/
 
 /*
- * IH_PERF_SEL enum
+ * IH_PERF_SEL क्रमागत
  */
 
-typedef enum IH_PERF_SEL {
+प्रकार क्रमागत IH_PERF_SEL अणु
 IH_PERF_SEL_CYCLE                        = 0x00000000,
 IH_PERF_SEL_IDLE                         = 0x00000001,
 IH_PERF_SEL_INPUT_IDLE                   = 0x00000002,
@@ -22172,17 +22173,17 @@ Reserved508                              = 0x000001fc,
 Reserved509                              = 0x000001fd,
 Reserved510                              = 0x000001fe,
 Reserved511                              = 0x000001ff,
-} IH_PERF_SEL;
+पूर्ण IH_PERF_SEL;
 
 /*******************************************************
  * SEM Enums
  *******************************************************/
 
 /*
- * SEM_PERF_SEL enum
+ * SEM_PERF_SEL क्रमागत
  */
 
-typedef enum SEM_PERF_SEL {
+प्रकार क्रमागत SEM_PERF_SEL अणु
 SEM_PERF_SEL_CYCLE                       = 0x00000000,
 SEM_PERF_SEL_IDLE                        = 0x00000001,
 SEM_PERF_SEL_SDMA0_REQ_SIGNAL            = 0x00000002,
@@ -22357,17 +22358,17 @@ SEM_PERF_SEL_ATC_REQ                     = 0x000000aa,
 SEM_PERF_SEL_ATC_RET                     = 0x000000ab,
 SEM_PERF_SEL_ATC_XNACK                   = 0x000000ac,
 SEM_PERF_SEL_ATC_INVALIDATION            = 0x000000ad,
-} SEM_PERF_SEL;
+पूर्ण SEM_PERF_SEL;
 
 /*******************************************************
  * SDMA Enums
  *******************************************************/
 
 /*
- * SDMA_PERF_SEL enum
+ * SDMA_PERF_SEL क्रमागत
  */
 
-typedef enum SDMA_PERF_SEL {
+प्रकार क्रमागत SDMA_PERF_SEL अणु
 SDMA_PERF_SEL_CYCLE                      = 0x00000000,
 SDMA_PERF_SEL_IDLE                       = 0x00000001,
 SDMA_PERF_SEL_REG_IDLE                   = 0x00000002,
@@ -22458,7 +22459,7 @@ SDMA_PERF_SEL_L1_RD_XNACK_TIMEOUT        = 0x0000005d,
 SDMA_PERF_SEL_L1_INV_MIDDLE              = 0x0000005e,
 SDMA_PERF_SEL_UTCL1_TAG_DELAY_COUNTER    = 0x000000fe,
 SDMA_PERF_SEL_MMHUB_TAG_DELAY_COUNTER    = 0x000000ff,
-} SDMA_PERF_SEL;
+पूर्ण SDMA_PERF_SEL;
 
 /*******************************************************
  * SMUIO Enums
@@ -22468,65 +22469,65 @@ SDMA_PERF_SEL_MMHUB_TAG_DELAY_COUNTER    = 0x000000ff,
  * ROM_SIGNATURE value
  */
 
-#define ROM_SIGNATURE                  0x0000aa55
+#घोषणा ROM_SIGNATURE                  0x0000aa55
 
 /*******************************************************
  * XDMA_CMN Enums
  *******************************************************/
 
 /*
- * ENUM_XDMA_LOCAL_SW_MODE enum
+ * ENUM_XDMA_LOCAL_SW_MODE क्रमागत
  */
 
-typedef enum ENUM_XDMA_LOCAL_SW_MODE {
+प्रकार क्रमागत ENUM_XDMA_LOCAL_SW_MODE अणु
 XDMA_LOCAL_SW_MODE_SW_256B_D             = 0x00000002,
 XDMA_LOCAL_SW_MODE_SW_64KB_D             = 0x0000000a,
 XDMA_LOCAL_SW_MODE_SW_64KB_D_X           = 0x0000001a,
-} ENUM_XDMA_LOCAL_SW_MODE;
+पूर्ण ENUM_XDMA_LOCAL_SW_MODE;
 
 /*******************************************************
  * XDMA_SLV Enums
  *******************************************************/
 
 /*
- * ENUM_XDMA_SLV_ALPHA_POSITION enum
+ * ENUM_XDMA_SLV_ALPHA_POSITION क्रमागत
  */
 
-typedef enum ENUM_XDMA_SLV_ALPHA_POSITION {
+प्रकार क्रमागत ENUM_XDMA_SLV_ALPHA_POSITION अणु
 XDMA_SLV_ALPHA_POSITION_7_0              = 0x00000000,
 XDMA_SLV_ALPHA_POSITION_15_8             = 0x00000001,
 XDMA_SLV_ALPHA_POSITION_23_16            = 0x00000002,
 XDMA_SLV_ALPHA_POSITION_31_24            = 0x00000003,
-} ENUM_XDMA_SLV_ALPHA_POSITION;
+पूर्ण ENUM_XDMA_SLV_ALPHA_POSITION;
 
 /*******************************************************
  * XDMA_MSTR Enums
  *******************************************************/
 
 /*
- * ENUM_XDMA_MSTR_ALPHA_POSITION enum
+ * ENUM_XDMA_MSTR_ALPHA_POSITION क्रमागत
  */
 
-typedef enum ENUM_XDMA_MSTR_ALPHA_POSITION {
+प्रकार क्रमागत ENUM_XDMA_MSTR_ALPHA_POSITION अणु
 XDMA_MSTR_ALPHA_POSITION_7_0             = 0x00000000,
 XDMA_MSTR_ALPHA_POSITION_15_8            = 0x00000001,
 XDMA_MSTR_ALPHA_POSITION_23_16           = 0x00000002,
 XDMA_MSTR_ALPHA_POSITION_31_24           = 0x00000003,
-} ENUM_XDMA_MSTR_ALPHA_POSITION;
+पूर्ण ENUM_XDMA_MSTR_ALPHA_POSITION;
 
 /*
- * ENUM_XDMA_MSTR_VSYNC_GSL_CHECK_SEL enum
+ * ENUM_XDMA_MSTR_VSYNC_GSL_CHECK_SEL क्रमागत
  */
 
-typedef enum ENUM_XDMA_MSTR_VSYNC_GSL_CHECK_SEL {
+प्रकार क्रमागत ENUM_XDMA_MSTR_VSYNC_GSL_CHECK_SEL अणु
 XDMA_MSTR_VSYNC_GSL_CHECK_SEL_PIPE0      = 0x00000000,
 XDMA_MSTR_VSYNC_GSL_CHECK_SEL_PIPE1      = 0x00000001,
 XDMA_MSTR_VSYNC_GSL_CHECK_SEL_PIPE2      = 0x00000002,
 XDMA_MSTR_VSYNC_GSL_CHECK_SEL_PIPE3      = 0x00000003,
 XDMA_MSTR_VSYNC_GSL_CHECK_SEL_PIPE4      = 0x00000004,
 XDMA_MSTR_VSYNC_GSL_CHECK_SEL_PIPE5      = 0x00000005,
-} ENUM_XDMA_MSTR_VSYNC_GSL_CHECK_SEL;
+पूर्ण ENUM_XDMA_MSTR_VSYNC_GSL_CHECK_SEL;
 
 
-#endif /*_vega10_ENUM_HEADER*/
+#पूर्ण_अगर /*_vega10_ENUM_HEADER*/
 

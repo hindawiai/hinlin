@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 
-#ifndef __ASM_CSKY_KPROBES_H
-#define __ASM_CSKY_KPROBES_H
+#अगर_अघोषित __ASM_CSKY_KPROBES_H
+#घोषणा __ASM_CSKY_KPROBES_H
 
-#include <asm-generic/kprobes.h>
+#समावेश <यंत्र-generic/kprobes.h>
 
-#ifdef CONFIG_KPROBES
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/percpu.h>
+#अगर_घोषित CONFIG_KPROBES
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/percpu.h>
 
-#define __ARCH_WANT_KPROBES_INSN_SLOT
-#define MAX_INSN_SIZE			1
+#घोषणा __ARCH_WANT_KPROBES_INSN_SLOT
+#घोषणा MAX_INSN_SIZE			1
 
-#define flush_insn_slot(p)		do { } while (0)
-#define kretprobe_blacklist_size	0
+#घोषणा flush_insn_slot(p)		करो अणु पूर्ण जबतक (0)
+#घोषणा kretprobe_blacklist_size	0
 
-#include <asm/probes.h>
+#समावेश <यंत्र/probes.h>
 
-struct prev_kprobe {
-	struct kprobe *kp;
-	unsigned int status;
-};
+काष्ठा prev_kprobe अणु
+	काष्ठा kprobe *kp;
+	अचिन्हित पूर्णांक status;
+पूर्ण;
 
-/* Single step context for kprobe */
-struct kprobe_step_ctx {
-	unsigned long ss_pending;
-	unsigned long match_addr;
-};
+/* Single step context क्रम kprobe */
+काष्ठा kprobe_step_ctx अणु
+	अचिन्हित दीर्घ ss_pending;
+	अचिन्हित दीर्घ match_addr;
+पूर्ण;
 
 /* per-cpu kprobe control block */
-struct kprobe_ctlblk {
-	unsigned int kprobe_status;
-	unsigned long saved_sr;
-	struct prev_kprobe prev_kprobe;
-	struct kprobe_step_ctx ss_ctx;
-};
+काष्ठा kprobe_ctlblk अणु
+	अचिन्हित पूर्णांक kprobe_status;
+	अचिन्हित दीर्घ saved_sr;
+	काष्ठा prev_kprobe prev_kprobe;
+	काष्ठा kprobe_step_ctx ss_ctx;
+पूर्ण;
 
-void arch_remove_kprobe(struct kprobe *p);
-int kprobe_fault_handler(struct pt_regs *regs, unsigned int trapnr);
-int kprobe_breakpoint_handler(struct pt_regs *regs);
-int kprobe_single_step_handler(struct pt_regs *regs);
-void kretprobe_trampoline(void);
-void __kprobes *trampoline_probe_handler(struct pt_regs *regs);
+व्योम arch_हटाओ_kprobe(काष्ठा kprobe *p);
+पूर्णांक kprobe_fault_handler(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक trapnr);
+पूर्णांक kprobe_अवरोधpoपूर्णांक_handler(काष्ठा pt_regs *regs);
+पूर्णांक kprobe_single_step_handler(काष्ठा pt_regs *regs);
+व्योम kretprobe_trampoline(व्योम);
+व्योम __kprobes *trampoline_probe_handler(काष्ठा pt_regs *regs);
 
-#endif /* CONFIG_KPROBES */
-#endif /* __ASM_CSKY_KPROBES_H */
+#पूर्ण_अगर /* CONFIG_KPROBES */
+#पूर्ण_अगर /* __ASM_CSKY_KPROBES_H */

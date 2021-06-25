@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Direct MTD block device access
  *
- * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
- * Copyright © 2000-2003 Nicolas Pitre <nico@fluxnic.net>
+ * Copyright तऊ 1999-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2000-2003 Nicolas Pitre <nico@fluxnic.net>
  */
 
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/blktrans.h>
-#include <linux/mutex.h>
-#include <linux/major.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/blktrans.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/major.h>
 
 
-struct mtdblk_dev {
-	struct mtd_blktrans_dev mbd;
-	int count;
-	struct mutex cache_mutex;
-	unsigned char *cache_data;
-	unsigned long cache_offset;
-	unsigned int cache_size;
-	enum { STATE_EMPTY, STATE_CLEAN, STATE_DIRTY } cache_state;
-};
+काष्ठा mtdblk_dev अणु
+	काष्ठा mtd_blktrans_dev mbd;
+	पूर्णांक count;
+	काष्ठा mutex cache_mutex;
+	अचिन्हित अक्षर *cache_data;
+	अचिन्हित दीर्घ cache_offset;
+	अचिन्हित पूर्णांक cache_size;
+	क्रमागत अणु STATE_EMPTY, STATE_CLEAN, STATE_सूचीTY पूर्ण cache_state;
+पूर्ण;
 
 /*
  * Cache stuff...
  *
  * Since typical flash erasable sectors are much larger than what Linux's
- * buffer cache can handle, we must implement read-modify-write on flash
- * sectors for each block write requests.  To avoid over-erasing flash sectors
- * and to speed things up, we locally cache a whole flash sector while it is
- * being written to until a different sector is required.
+ * buffer cache can handle, we must implement पढ़ो-modअगरy-ग_लिखो on flash
+ * sectors क्रम each block ग_लिखो requests.  To aव्योम over-erasing flash sectors
+ * and to speed things up, we locally cache a whole flash sector जबतक it is
+ * being written to until a dअगरferent sector is required.
  */
 
-static int erase_write (struct mtd_info *mtd, unsigned long pos,
-			unsigned int len, const char *buf)
-{
-	struct erase_info erase;
-	size_t retlen;
-	int ret;
+अटल पूर्णांक erase_ग_लिखो (काष्ठा mtd_info *mtd, अचिन्हित दीर्घ pos,
+			अचिन्हित पूर्णांक len, स्थिर अक्षर *buf)
+अणु
+	काष्ठा erase_info erase;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
 
 	/*
 	 * First, let's erase the flash block.
@@ -55,263 +56,263 @@ static int erase_write (struct mtd_info *mtd, unsigned long pos,
 	erase.len = len;
 
 	ret = mtd_erase(mtd, &erase);
-	if (ret) {
-		printk (KERN_WARNING "mtdblock: erase of region [0x%lx, 0x%x] "
+	अगर (ret) अणु
+		prपूर्णांकk (KERN_WARNING "mtdblock: erase of region [0x%lx, 0x%x] "
 				     "on \"%s\" failed\n",
 			pos, len, mtd->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Next, write the data to flash.
+	 * Next, ग_लिखो the data to flash.
 	 */
 
-	ret = mtd_write(mtd, pos, len, &retlen, buf);
-	if (ret)
-		return ret;
-	if (retlen != len)
-		return -EIO;
-	return 0;
-}
+	ret = mtd_ग_लिखो(mtd, pos, len, &retlen, buf);
+	अगर (ret)
+		वापस ret;
+	अगर (retlen != len)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 
-static int write_cached_data (struct mtdblk_dev *mtdblk)
-{
-	struct mtd_info *mtd = mtdblk->mbd.mtd;
-	int ret;
+अटल पूर्णांक ग_लिखो_cached_data (काष्ठा mtdblk_dev *mtdblk)
+अणु
+	काष्ठा mtd_info *mtd = mtdblk->mbd.mtd;
+	पूर्णांक ret;
 
-	if (mtdblk->cache_state != STATE_DIRTY)
-		return 0;
+	अगर (mtdblk->cache_state != STATE_सूचीTY)
+		वापस 0;
 
 	pr_debug("mtdblock: writing cached data for \"%s\" "
 			"at 0x%lx, size 0x%x\n", mtd->name,
 			mtdblk->cache_offset, mtdblk->cache_size);
 
-	ret = erase_write (mtd, mtdblk->cache_offset,
+	ret = erase_ग_लिखो (mtd, mtdblk->cache_offset,
 			   mtdblk->cache_size, mtdblk->cache_data);
 
 	/*
 	 * Here we could arguably set the cache state to STATE_CLEAN.
 	 * However this could lead to inconsistency since we will not
-	 * be notified if this content is altered on the flash by other
+	 * be notअगरied अगर this content is altered on the flash by other
 	 * means.  Let's declare it empty and leave buffering tasks to
 	 * the buffer cache instead.
 	 *
-	 * If this cache_offset points to a bad block, data cannot be
-	 * written to the device. Clear cache_state to avoid writing to
+	 * If this cache_offset poपूर्णांकs to a bad block, data cannot be
+	 * written to the device. Clear cache_state to aव्योम writing to
 	 * bad blocks repeatedly.
 	 */
-	if (ret == 0 || ret == -EIO)
+	अगर (ret == 0 || ret == -EIO)
 		mtdblk->cache_state = STATE_EMPTY;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int do_cached_write (struct mtdblk_dev *mtdblk, unsigned long pos,
-			    int len, const char *buf)
-{
-	struct mtd_info *mtd = mtdblk->mbd.mtd;
-	unsigned int sect_size = mtdblk->cache_size;
-	size_t retlen;
-	int ret;
+अटल पूर्णांक करो_cached_ग_लिखो (काष्ठा mtdblk_dev *mtdblk, अचिन्हित दीर्घ pos,
+			    पूर्णांक len, स्थिर अक्षर *buf)
+अणु
+	काष्ठा mtd_info *mtd = mtdblk->mbd.mtd;
+	अचिन्हित पूर्णांक sect_size = mtdblk->cache_size;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
 
 	pr_debug("mtdblock: write on \"%s\" at 0x%lx, size 0x%x\n",
 		mtd->name, pos, len);
 
-	if (!sect_size)
-		return mtd_write(mtd, pos, len, &retlen, buf);
+	अगर (!sect_size)
+		वापस mtd_ग_लिखो(mtd, pos, len, &retlen, buf);
 
-	while (len > 0) {
-		unsigned long sect_start = (pos/sect_size)*sect_size;
-		unsigned int offset = pos - sect_start;
-		unsigned int size = sect_size - offset;
-		if( size > len )
+	जबतक (len > 0) अणु
+		अचिन्हित दीर्घ sect_start = (pos/sect_size)*sect_size;
+		अचिन्हित पूर्णांक offset = pos - sect_start;
+		अचिन्हित पूर्णांक size = sect_size - offset;
+		अगर( size > len )
 			size = len;
 
-		if (size == sect_size) {
+		अगर (size == sect_size) अणु
 			/*
 			 * We are covering a whole sector.  Thus there is no
-			 * need to bother with the cache while it may still be
-			 * useful for other partial writes.
+			 * need to bother with the cache जबतक it may still be
+			 * useful क्रम other partial ग_लिखोs.
 			 */
-			ret = erase_write (mtd, pos, size, buf);
-			if (ret)
-				return ret;
-		} else {
+			ret = erase_ग_लिखो (mtd, pos, size, buf);
+			अगर (ret)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			/* Partial sector: need to use the cache */
 
-			if (mtdblk->cache_state == STATE_DIRTY &&
-			    mtdblk->cache_offset != sect_start) {
-				ret = write_cached_data(mtdblk);
-				if (ret)
-					return ret;
-			}
+			अगर (mtdblk->cache_state == STATE_सूचीTY &&
+			    mtdblk->cache_offset != sect_start) अणु
+				ret = ग_लिखो_cached_data(mtdblk);
+				अगर (ret)
+					वापस ret;
+			पूर्ण
 
-			if (mtdblk->cache_state == STATE_EMPTY ||
-			    mtdblk->cache_offset != sect_start) {
+			अगर (mtdblk->cache_state == STATE_EMPTY ||
+			    mtdblk->cache_offset != sect_start) अणु
 				/* fill the cache with the current sector */
 				mtdblk->cache_state = STATE_EMPTY;
-				ret = mtd_read(mtd, sect_start, sect_size,
+				ret = mtd_पढ़ो(mtd, sect_start, sect_size,
 					       &retlen, mtdblk->cache_data);
-				if (ret)
-					return ret;
-				if (retlen != sect_size)
-					return -EIO;
+				अगर (ret)
+					वापस ret;
+				अगर (retlen != sect_size)
+					वापस -EIO;
 
 				mtdblk->cache_offset = sect_start;
 				mtdblk->cache_size = sect_size;
 				mtdblk->cache_state = STATE_CLEAN;
-			}
+			पूर्ण
 
-			/* write data to our local cache */
-			memcpy (mtdblk->cache_data + offset, buf, size);
-			mtdblk->cache_state = STATE_DIRTY;
-		}
+			/* ग_लिखो data to our local cache */
+			स_नकल (mtdblk->cache_data + offset, buf, size);
+			mtdblk->cache_state = STATE_सूचीTY;
+		पूर्ण
 
 		buf += size;
 		pos += size;
 		len -= size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int do_cached_read (struct mtdblk_dev *mtdblk, unsigned long pos,
-			   int len, char *buf)
-{
-	struct mtd_info *mtd = mtdblk->mbd.mtd;
-	unsigned int sect_size = mtdblk->cache_size;
-	size_t retlen;
-	int ret;
+अटल पूर्णांक करो_cached_पढ़ो (काष्ठा mtdblk_dev *mtdblk, अचिन्हित दीर्घ pos,
+			   पूर्णांक len, अक्षर *buf)
+अणु
+	काष्ठा mtd_info *mtd = mtdblk->mbd.mtd;
+	अचिन्हित पूर्णांक sect_size = mtdblk->cache_size;
+	माप_प्रकार retlen;
+	पूर्णांक ret;
 
 	pr_debug("mtdblock: read on \"%s\" at 0x%lx, size 0x%x\n",
 			mtd->name, pos, len);
 
-	if (!sect_size)
-		return mtd_read(mtd, pos, len, &retlen, buf);
+	अगर (!sect_size)
+		वापस mtd_पढ़ो(mtd, pos, len, &retlen, buf);
 
-	while (len > 0) {
-		unsigned long sect_start = (pos/sect_size)*sect_size;
-		unsigned int offset = pos - sect_start;
-		unsigned int size = sect_size - offset;
-		if (size > len)
+	जबतक (len > 0) अणु
+		अचिन्हित दीर्घ sect_start = (pos/sect_size)*sect_size;
+		अचिन्हित पूर्णांक offset = pos - sect_start;
+		अचिन्हित पूर्णांक size = sect_size - offset;
+		अगर (size > len)
 			size = len;
 
 		/*
-		 * Check if the requested data is already cached
-		 * Read the requested amount of data from our internal cache if it
-		 * contains what we want, otherwise we read the data directly
+		 * Check अगर the requested data is alपढ़ोy cached
+		 * Read the requested amount of data from our पूर्णांकernal cache अगर it
+		 * contains what we want, otherwise we पढ़ो the data directly
 		 * from flash.
 		 */
-		if (mtdblk->cache_state != STATE_EMPTY &&
-		    mtdblk->cache_offset == sect_start) {
-			memcpy (buf, mtdblk->cache_data + offset, size);
-		} else {
-			ret = mtd_read(mtd, pos, size, &retlen, buf);
-			if (ret)
-				return ret;
-			if (retlen != size)
-				return -EIO;
-		}
+		अगर (mtdblk->cache_state != STATE_EMPTY &&
+		    mtdblk->cache_offset == sect_start) अणु
+			स_नकल (buf, mtdblk->cache_data + offset, size);
+		पूर्ण अन्यथा अणु
+			ret = mtd_पढ़ो(mtd, pos, size, &retlen, buf);
+			अगर (ret)
+				वापस ret;
+			अगर (retlen != size)
+				वापस -EIO;
+		पूर्ण
 
 		buf += size;
 		pos += size;
 		len -= size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtdblock_readsect(struct mtd_blktrans_dev *dev,
-			      unsigned long block, char *buf)
-{
-	struct mtdblk_dev *mtdblk = container_of(dev, struct mtdblk_dev, mbd);
-	return do_cached_read(mtdblk, block<<9, 512, buf);
-}
+अटल पूर्णांक mtdblock_पढ़ोsect(काष्ठा mtd_blktrans_dev *dev,
+			      अचिन्हित दीर्घ block, अक्षर *buf)
+अणु
+	काष्ठा mtdblk_dev *mtdblk = container_of(dev, काष्ठा mtdblk_dev, mbd);
+	वापस करो_cached_पढ़ो(mtdblk, block<<9, 512, buf);
+पूर्ण
 
-static int mtdblock_writesect(struct mtd_blktrans_dev *dev,
-			      unsigned long block, char *buf)
-{
-	struct mtdblk_dev *mtdblk = container_of(dev, struct mtdblk_dev, mbd);
-	if (unlikely(!mtdblk->cache_data && mtdblk->cache_size)) {
-		mtdblk->cache_data = vmalloc(mtdblk->mbd.mtd->erasesize);
-		if (!mtdblk->cache_data)
-			return -EINTR;
+अटल पूर्णांक mtdblock_ग_लिखोsect(काष्ठा mtd_blktrans_dev *dev,
+			      अचिन्हित दीर्घ block, अक्षर *buf)
+अणु
+	काष्ठा mtdblk_dev *mtdblk = container_of(dev, काष्ठा mtdblk_dev, mbd);
+	अगर (unlikely(!mtdblk->cache_data && mtdblk->cache_size)) अणु
+		mtdblk->cache_data = vदो_स्मृति(mtdblk->mbd.mtd->erasesize);
+		अगर (!mtdblk->cache_data)
+			वापस -EINTR;
 		/* -EINTR is not really correct, but it is the best match
-		 * documented in man 2 write for all cases.  We could also
-		 * return -EAGAIN sometimes, but why bother?
+		 * करोcumented in man 2 ग_लिखो क्रम all हालs.  We could also
+		 * वापस -EAGAIN someबार, but why bother?
 		 */
-	}
-	return do_cached_write(mtdblk, block<<9, 512, buf);
-}
+	पूर्ण
+	वापस करो_cached_ग_लिखो(mtdblk, block<<9, 512, buf);
+पूर्ण
 
-static int mtdblock_open(struct mtd_blktrans_dev *mbd)
-{
-	struct mtdblk_dev *mtdblk = container_of(mbd, struct mtdblk_dev, mbd);
+अटल पूर्णांक mtdblock_खोलो(काष्ठा mtd_blktrans_dev *mbd)
+अणु
+	काष्ठा mtdblk_dev *mtdblk = container_of(mbd, काष्ठा mtdblk_dev, mbd);
 
 	pr_debug("mtdblock_open\n");
 
-	if (mtdblk->count) {
+	अगर (mtdblk->count) अणु
 		mtdblk->count++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* OK, it's not open. Create cache info for it */
+	/* OK, it's not खोलो. Create cache info क्रम it */
 	mtdblk->count = 1;
 	mutex_init(&mtdblk->cache_mutex);
 	mtdblk->cache_state = STATE_EMPTY;
-	if (!(mbd->mtd->flags & MTD_NO_ERASE) && mbd->mtd->erasesize) {
+	अगर (!(mbd->mtd->flags & MTD_NO_ERASE) && mbd->mtd->erasesize) अणु
 		mtdblk->cache_size = mbd->mtd->erasesize;
-		mtdblk->cache_data = NULL;
-	}
+		mtdblk->cache_data = शून्य;
+	पूर्ण
 
 	pr_debug("ok\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtdblock_release(struct mtd_blktrans_dev *mbd)
-{
-	struct mtdblk_dev *mtdblk = container_of(mbd, struct mtdblk_dev, mbd);
+अटल व्योम mtdblock_release(काष्ठा mtd_blktrans_dev *mbd)
+अणु
+	काष्ठा mtdblk_dev *mtdblk = container_of(mbd, काष्ठा mtdblk_dev, mbd);
 
 	pr_debug("mtdblock_release\n");
 
 	mutex_lock(&mtdblk->cache_mutex);
-	write_cached_data(mtdblk);
+	ग_लिखो_cached_data(mtdblk);
 	mutex_unlock(&mtdblk->cache_mutex);
 
-	if (!--mtdblk->count) {
+	अगर (!--mtdblk->count) अणु
 		/*
-		 * It was the last usage. Free the cache, but only sync if
-		 * opened for writing.
+		 * It was the last usage. Free the cache, but only sync अगर
+		 * खोलोed क्रम writing.
 		 */
-		if (mbd->file_mode & FMODE_WRITE)
+		अगर (mbd->file_mode & FMODE_WRITE)
 			mtd_sync(mbd->mtd);
-		vfree(mtdblk->cache_data);
-	}
+		vमुक्त(mtdblk->cache_data);
+	पूर्ण
 
 	pr_debug("ok\n");
-}
+पूर्ण
 
-static int mtdblock_flush(struct mtd_blktrans_dev *dev)
-{
-	struct mtdblk_dev *mtdblk = container_of(dev, struct mtdblk_dev, mbd);
-	int ret;
+अटल पूर्णांक mtdblock_flush(काष्ठा mtd_blktrans_dev *dev)
+अणु
+	काष्ठा mtdblk_dev *mtdblk = container_of(dev, काष्ठा mtdblk_dev, mbd);
+	पूर्णांक ret;
 
 	mutex_lock(&mtdblk->cache_mutex);
-	ret = write_cached_data(mtdblk);
+	ret = ग_लिखो_cached_data(mtdblk);
 	mutex_unlock(&mtdblk->cache_mutex);
 	mtd_sync(dev->mtd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mtdblock_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
-{
-	struct mtdblk_dev *dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+अटल व्योम mtdblock_add_mtd(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा mtdblk_dev *dev = kzalloc(माप(*dev), GFP_KERNEL);
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
 	dev->mbd.mtd = mtd;
 	dev->mbd.devnum = mtd->index;
@@ -319,32 +320,32 @@ static void mtdblock_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 	dev->mbd.size = mtd->size >> 9;
 	dev->mbd.tr = tr;
 
-	if (!(mtd->flags & MTD_WRITEABLE))
-		dev->mbd.readonly = 1;
+	अगर (!(mtd->flags & MTD_WRITEABLE))
+		dev->mbd.पढ़ोonly = 1;
 
-	if (add_mtd_blktrans_dev(&dev->mbd))
-		kfree(dev);
-}
+	अगर (add_mtd_blktrans_dev(&dev->mbd))
+		kमुक्त(dev);
+पूर्ण
 
-static void mtdblock_remove_dev(struct mtd_blktrans_dev *dev)
-{
+अटल व्योम mtdblock_हटाओ_dev(काष्ठा mtd_blktrans_dev *dev)
+अणु
 	del_mtd_blktrans_dev(dev);
-}
+पूर्ण
 
-static struct mtd_blktrans_ops mtdblock_tr = {
+अटल काष्ठा mtd_blktrans_ops mtdblock_tr = अणु
 	.name		= "mtdblock",
 	.major		= MTD_BLOCK_MAJOR,
 	.part_bits	= 0,
 	.blksize 	= 512,
-	.open		= mtdblock_open,
+	.खोलो		= mtdblock_खोलो,
 	.flush		= mtdblock_flush,
 	.release	= mtdblock_release,
-	.readsect	= mtdblock_readsect,
-	.writesect	= mtdblock_writesect,
+	.पढ़ोsect	= mtdblock_पढ़ोsect,
+	.ग_लिखोsect	= mtdblock_ग_लिखोsect,
 	.add_mtd	= mtdblock_add_mtd,
-	.remove_dev	= mtdblock_remove_dev,
+	.हटाओ_dev	= mtdblock_हटाओ_dev,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 module_mtd_blktrans(mtdblock_tr);
 

@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Atheros AR71XX/AR724X/AR913X specific kernel entry setup
+ *  Atheros AR71XX/AR724X/AR913X specअगरic kernel entry setup
  *
- *  Copyright (C) 2009 Gabor Juhos <juhosg@openwrt.org>
+ *  Copyright (C) 2009 Gabor Juhos <juhosg@खोलोwrt.org>
  */
-#ifndef __ASM_MACH_ATH79_KERNEL_ENTRY_H
-#define __ASM_MACH_ATH79_KERNEL_ENTRY_H
+#अगर_अघोषित __ASM_MACH_ATH79_KERNEL_ENTRY_H
+#घोषणा __ASM_MACH_ATH79_KERNEL_ENTRY_H
 
 	/*
 	 * Some bootloaders set the 'Kseg0 coherency algorithm' to
 	 * 'Cacheable, noncoherent, write-through, no write allocate'
-	 * and this cause performance issues. Let's go and change it to
+	 * and this cause perक्रमmance issues. Let's go and change it to
 	 * 'Cacheable, noncoherent, write-back, write allocate'
 	 */
 	.macro	kernel_entry_setup
@@ -25,4 +26,4 @@
 	.macro	smp_slave_setup
 	.endm
 
-#endif /* __ASM_MACH_ATH79_KERNEL_ENTRY_H */
+#पूर्ण_अगर /* __ASM_MACH_ATH79_KERNEL_ENTRY_H */

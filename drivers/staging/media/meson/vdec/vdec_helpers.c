@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
-#include <linux/gcd.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/v4l2-event.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <linux/gcd.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "vdec_helpers.h"
+#समावेश "vdec_helpers.h"
 
-#define NUM_CANVAS_NV12 2
-#define NUM_CANVAS_YUV420 3
+#घोषणा NUM_CANVAS_NV12 2
+#घोषणा NUM_CANVAS_YUV420 3
 
-u32 amvdec_read_dos(struct amvdec_core *core, u32 reg)
-{
-	return readl_relaxed(core->dos_base + reg);
-}
-EXPORT_SYMBOL_GPL(amvdec_read_dos);
+u32 amvdec_पढ़ो_करोs(काष्ठा amvdec_core *core, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(core->करोs_base + reg);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_पढ़ो_करोs);
 
-void amvdec_write_dos(struct amvdec_core *core, u32 reg, u32 val)
-{
-	writel_relaxed(val, core->dos_base + reg);
-}
-EXPORT_SYMBOL_GPL(amvdec_write_dos);
+व्योम amvdec_ग_लिखो_करोs(काष्ठा amvdec_core *core, u32 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, core->करोs_base + reg);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_ग_लिखो_करोs);
 
-void amvdec_write_dos_bits(struct amvdec_core *core, u32 reg, u32 val)
-{
-	amvdec_write_dos(core, reg, amvdec_read_dos(core, reg) | val);
-}
-EXPORT_SYMBOL_GPL(amvdec_write_dos_bits);
+व्योम amvdec_ग_लिखो_करोs_bits(काष्ठा amvdec_core *core, u32 reg, u32 val)
+अणु
+	amvdec_ग_लिखो_करोs(core, reg, amvdec_पढ़ो_करोs(core, reg) | val);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_ग_लिखो_करोs_bits);
 
-void amvdec_clear_dos_bits(struct amvdec_core *core, u32 reg, u32 val)
-{
-	amvdec_write_dos(core, reg, amvdec_read_dos(core, reg) & ~val);
-}
-EXPORT_SYMBOL_GPL(amvdec_clear_dos_bits);
+व्योम amvdec_clear_करोs_bits(काष्ठा amvdec_core *core, u32 reg, u32 val)
+अणु
+	amvdec_ग_लिखो_करोs(core, reg, amvdec_पढ़ो_करोs(core, reg) & ~val);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_clear_करोs_bits);
 
-u32 amvdec_read_parser(struct amvdec_core *core, u32 reg)
-{
-	return readl_relaxed(core->esparser_base + reg);
-}
-EXPORT_SYMBOL_GPL(amvdec_read_parser);
+u32 amvdec_पढ़ो_parser(काष्ठा amvdec_core *core, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(core->esparser_base + reg);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_पढ़ो_parser);
 
-void amvdec_write_parser(struct amvdec_core *core, u32 reg, u32 val)
-{
-	writel_relaxed(val, core->esparser_base + reg);
-}
-EXPORT_SYMBOL_GPL(amvdec_write_parser);
+व्योम amvdec_ग_लिखो_parser(काष्ठा amvdec_core *core, u32 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, core->esparser_base + reg);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_ग_लिखो_parser);
 
 /* 4 KiB per 64x32 block */
 u32 amvdec_am21c_body_size(u32 width, u32 height)
-{
+अणु
 	u32 width_64 = ALIGN(width, 64) / 64;
 	u32 height_32 = ALIGN(height, 32) / 32;
 
-	return SZ_4K * width_64 * height_32;
-}
+	वापस SZ_4K * width_64 * height_32;
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_am21c_body_size);
 
 /* 32 bytes per 128x64 block */
 u32 amvdec_am21c_head_size(u32 width, u32 height)
-{
+अणु
 	u32 width_128 = ALIGN(width, 128) / 128;
 	u32 height_64 = ALIGN(height, 64) / 64;
 
-	return 32 * width_128 * height_64;
-}
+	वापस 32 * width_128 * height_64;
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_am21c_head_size);
 
 u32 amvdec_am21c_size(u32 width, u32 height)
-{
-	return ALIGN(amvdec_am21c_body_size(width, height) +
+अणु
+	वापस ALIGN(amvdec_am21c_body_size(width, height) +
 		     amvdec_am21c_head_size(width, height), SZ_64K);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_am21c_size);
 
-static int canvas_alloc(struct amvdec_session *sess, u8 *canvas_id)
-{
-	int ret;
+अटल पूर्णांक canvas_alloc(काष्ठा amvdec_session *sess, u8 *canvas_id)
+अणु
+	पूर्णांक ret;
 
-	if (sess->canvas_num >= MAX_CANVAS) {
+	अगर (sess->canvas_num >= MAX_CANVAS) अणु
 		dev_err(sess->core->dev, "Reached max number of canvas\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = meson_canvas_alloc(sess->core->canvas, canvas_id);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sess->canvas_alloc[sess->canvas_num++] = *canvas_id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_canvas_yuv420m(struct amvdec_session *sess,
-			      struct vb2_buffer *vb, u32 width,
+अटल पूर्णांक set_canvas_yuv420m(काष्ठा amvdec_session *sess,
+			      काष्ठा vb2_buffer *vb, u32 width,
 			      u32 height, u32 reg)
-{
-	struct amvdec_core *core = sess->core;
+अणु
+	काष्ठा amvdec_core *core = sess->core;
 	u8 canvas_id[NUM_CANVAS_YUV420]; /* Y U V */
 	dma_addr_t buf_paddr[NUM_CANVAS_YUV420]; /* Y U V */
-	int ret, i;
+	पूर्णांक ret, i;
 
-	for (i = 0; i < NUM_CANVAS_YUV420; ++i) {
+	क्रम (i = 0; i < NUM_CANVAS_YUV420; ++i) अणु
 		ret = canvas_alloc(sess, &canvas_id[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		buf_paddr[i] =
 		    vb2_dma_contig_plane_dma_addr(vb, i);
-	}
+	पूर्ण
 
 	/* Y plane */
 	meson_canvas_config(core->canvas, canvas_id[0], buf_paddr[0],
@@ -130,31 +131,31 @@ static int set_canvas_yuv420m(struct amvdec_session *sess,
 			    MESON_CANVAS_BLKMODE_LINEAR,
 			    MESON_CANVAS_ENDIAN_SWAP64);
 
-	amvdec_write_dos(core, reg,
+	amvdec_ग_लिखो_करोs(core, reg,
 			 ((canvas_id[2]) << 16) |
 			 ((canvas_id[1]) << 8)  |
 			 (canvas_id[0]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_canvas_nv12m(struct amvdec_session *sess,
-			    struct vb2_buffer *vb, u32 width,
+अटल पूर्णांक set_canvas_nv12m(काष्ठा amvdec_session *sess,
+			    काष्ठा vb2_buffer *vb, u32 width,
 			    u32 height, u32 reg)
-{
-	struct amvdec_core *core = sess->core;
+अणु
+	काष्ठा amvdec_core *core = sess->core;
 	u8 canvas_id[NUM_CANVAS_NV12]; /* Y U/V */
 	dma_addr_t buf_paddr[NUM_CANVAS_NV12]; /* Y U/V */
-	int ret, i;
+	पूर्णांक ret, i;
 
-	for (i = 0; i < NUM_CANVAS_NV12; ++i) {
+	क्रम (i = 0; i < NUM_CANVAS_NV12; ++i) अणु
 		ret = canvas_alloc(sess, &canvas_id[i]);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		buf_paddr[i] =
 		    vb2_dma_contig_plane_dma_addr(vb, i);
-	}
+	पूर्ण
 
 	/* Y plane */
 	meson_canvas_config(core->canvas, canvas_id[0], buf_paddr[0],
@@ -168,295 +169,295 @@ static int set_canvas_nv12m(struct amvdec_session *sess,
 			    MESON_CANVAS_BLKMODE_LINEAR,
 			    MESON_CANVAS_ENDIAN_SWAP64);
 
-	amvdec_write_dos(core, reg,
+	amvdec_ग_लिखो_करोs(core, reg,
 			 ((canvas_id[1]) << 16) |
 			 ((canvas_id[1]) << 8)  |
 			 (canvas_id[0]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amvdec_set_canvases(struct amvdec_session *sess,
+पूर्णांक amvdec_set_canvases(काष्ठा amvdec_session *sess,
 			u32 reg_base[], u32 reg_num[])
-{
-	struct v4l2_m2m_buffer *buf;
+अणु
+	काष्ठा v4l2_m2m_buffer *buf;
 	u32 pixfmt = sess->pixfmt_cap;
 	u32 width = ALIGN(sess->width, 32);
 	u32 height = ALIGN(sess->height, 32);
 	u32 reg_cur = reg_base[0];
 	u32 reg_num_cur = 0;
 	u32 reg_base_cur = 0;
-	int i = 0;
-	int ret;
+	पूर्णांक i = 0;
+	पूर्णांक ret;
 
-	v4l2_m2m_for_each_dst_buf(sess->m2m_ctx, buf) {
-		if (!reg_base[reg_base_cur])
-			return -EINVAL;
+	v4l2_m2m_क्रम_each_dst_buf(sess->m2m_ctx, buf) अणु
+		अगर (!reg_base[reg_base_cur])
+			वापस -EINVAL;
 
 		reg_cur = reg_base[reg_base_cur] + reg_num_cur * 4;
 
-		switch (pixfmt) {
-		case V4L2_PIX_FMT_NV12M:
+		चयन (pixfmt) अणु
+		हाल V4L2_PIX_FMT_NV12M:
 			ret = set_canvas_nv12m(sess, &buf->vb.vb2_buf, width,
 					       height, reg_cur);
-			if (ret)
-				return ret;
-			break;
-		case V4L2_PIX_FMT_YUV420M:
+			अगर (ret)
+				वापस ret;
+			अवरोध;
+		हाल V4L2_PIX_FMT_YUV420M:
 			ret = set_canvas_yuv420m(sess, &buf->vb.vb2_buf, width,
 						 height, reg_cur);
-			if (ret)
-				return ret;
-			break;
-		default:
+			अगर (ret)
+				वापस ret;
+			अवरोध;
+		शेष:
 			dev_err(sess->core->dev, "Unsupported pixfmt %08X\n",
 				pixfmt);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		reg_num_cur++;
-		if (reg_num_cur >= reg_num[reg_base_cur]) {
+		अगर (reg_num_cur >= reg_num[reg_base_cur]) अणु
 			reg_base_cur++;
 			reg_num_cur = 0;
-		}
+		पूर्ण
 
 		sess->fw_idx_to_vb2_idx[i++] = buf->vb.vb2_buf.index;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_set_canvases);
 
-void amvdec_add_ts(struct amvdec_session *sess, u64 ts,
-		   struct v4l2_timecode tc, u32 offset, u32 vbuf_flags)
-{
-	struct amvdec_timestamp *new_ts;
-	unsigned long flags;
+व्योम amvdec_add_ts(काष्ठा amvdec_session *sess, u64 ts,
+		   काष्ठा v4l2_समयcode tc, u32 offset, u32 vbuf_flags)
+अणु
+	काष्ठा amvdec_बारtamp *new_ts;
+	अचिन्हित दीर्घ flags;
 
-	new_ts = kzalloc(sizeof(*new_ts), GFP_KERNEL);
+	new_ts = kzalloc(माप(*new_ts), GFP_KERNEL);
 	new_ts->ts = ts;
 	new_ts->tc = tc;
 	new_ts->offset = offset;
 	new_ts->flags = vbuf_flags;
 
 	spin_lock_irqsave(&sess->ts_spinlock, flags);
-	list_add_tail(&new_ts->list, &sess->timestamps);
+	list_add_tail(&new_ts->list, &sess->बारtamps);
 	spin_unlock_irqrestore(&sess->ts_spinlock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_add_ts);
 
-void amvdec_remove_ts(struct amvdec_session *sess, u64 ts)
-{
-	struct amvdec_timestamp *tmp;
-	unsigned long flags;
+व्योम amvdec_हटाओ_ts(काष्ठा amvdec_session *sess, u64 ts)
+अणु
+	काष्ठा amvdec_बारtamp *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sess->ts_spinlock, flags);
-	list_for_each_entry(tmp, &sess->timestamps, list) {
-		if (tmp->ts == ts) {
-			list_del(&tmp->list);
-			kfree(tmp);
-			goto unlock;
-		}
-	}
+	list_क्रम_each_entry(पंचांगp, &sess->बारtamps, list) अणु
+		अगर (पंचांगp->ts == ts) अणु
+			list_del(&पंचांगp->list);
+			kमुक्त(पंचांगp);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 	dev_warn(sess->core->dev_dec,
 		 "Couldn't remove buffer with timestamp %llu from list\n", ts);
 
 unlock:
 	spin_unlock_irqrestore(&sess->ts_spinlock, flags);
-}
-EXPORT_SYMBOL_GPL(amvdec_remove_ts);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_हटाओ_ts);
 
-static void dst_buf_done(struct amvdec_session *sess,
-			 struct vb2_v4l2_buffer *vbuf,
-			 u32 field, u64 timestamp,
-			 struct v4l2_timecode timecode, u32 flags)
-{
-	struct device *dev = sess->core->dev_dec;
+अटल व्योम dst_buf_करोne(काष्ठा amvdec_session *sess,
+			 काष्ठा vb2_v4l2_buffer *vbuf,
+			 u32 field, u64 बारtamp,
+			 काष्ठा v4l2_समयcode समयcode, u32 flags)
+अणु
+	काष्ठा device *dev = sess->core->dev_dec;
 	u32 output_size = amvdec_get_output_size(sess);
 
-	switch (sess->pixfmt_cap) {
-	case V4L2_PIX_FMT_NV12M:
+	चयन (sess->pixfmt_cap) अणु
+	हाल V4L2_PIX_FMT_NV12M:
 		vbuf->vb2_buf.planes[0].bytesused = output_size;
 		vbuf->vb2_buf.planes[1].bytesused = output_size / 2;
-		break;
-	case V4L2_PIX_FMT_YUV420M:
+		अवरोध;
+	हाल V4L2_PIX_FMT_YUV420M:
 		vbuf->vb2_buf.planes[0].bytesused = output_size;
 		vbuf->vb2_buf.planes[1].bytesused = output_size / 4;
 		vbuf->vb2_buf.planes[2].bytesused = output_size / 4;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	vbuf->vb2_buf.timestamp = timestamp;
+	vbuf->vb2_buf.बारtamp = बारtamp;
 	vbuf->sequence = sess->sequence_cap++;
 	vbuf->flags = flags;
-	vbuf->timecode = timecode;
+	vbuf->समयcode = समयcode;
 
-	if (sess->should_stop &&
-	    atomic_read(&sess->esparser_queued_bufs) <= 1) {
-		const struct v4l2_event ev = { .type = V4L2_EVENT_EOS };
+	अगर (sess->should_stop &&
+	    atomic_पढ़ो(&sess->esparser_queued_bufs) <= 1) अणु
+		स्थिर काष्ठा v4l2_event ev = अणु .type = V4L2_EVENT_EOS पूर्ण;
 
 		dev_dbg(dev, "Signaling EOS, sequence_cap = %u\n",
 			sess->sequence_cap - 1);
 		v4l2_event_queue_fh(&sess->fh, &ev);
 		vbuf->flags |= V4L2_BUF_FLAG_LAST;
-	} else if (sess->status == STATUS_NEEDS_RESUME) {
-		/* Mark LAST for drained show frames during a source change */
+	पूर्ण अन्यथा अगर (sess->status == STATUS_NEEDS_RESUME) अणु
+		/* Mark LAST क्रम drained show frames during a source change */
 		vbuf->flags |= V4L2_BUF_FLAG_LAST;
 		sess->sequence_cap = 0;
-	} else if (sess->should_stop)
+	पूर्ण अन्यथा अगर (sess->should_stop)
 		dev_dbg(dev, "should_stop, %u bufs remain\n",
-			atomic_read(&sess->esparser_queued_bufs));
+			atomic_पढ़ो(&sess->esparser_queued_bufs));
 
 	dev_dbg(dev, "Buffer %u done, ts = %llu, flags = %08X\n",
-		vbuf->vb2_buf.index, timestamp, flags);
+		vbuf->vb2_buf.index, बारtamp, flags);
 	vbuf->field = field;
-	v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_DONE);
+	v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_DONE);
 
-	/* Buffer done probably means the vififo got freed */
+	/* Buffer करोne probably means the vअगरअगरo got मुक्तd */
 	schedule_work(&sess->esparser_queue_work);
-}
+पूर्ण
 
-void amvdec_dst_buf_done(struct amvdec_session *sess,
-			 struct vb2_v4l2_buffer *vbuf, u32 field)
-{
-	struct device *dev = sess->core->dev_dec;
-	struct amvdec_timestamp *tmp;
-	struct list_head *timestamps = &sess->timestamps;
-	struct v4l2_timecode timecode;
-	u64 timestamp;
+व्योम amvdec_dst_buf_करोne(काष्ठा amvdec_session *sess,
+			 काष्ठा vb2_v4l2_buffer *vbuf, u32 field)
+अणु
+	काष्ठा device *dev = sess->core->dev_dec;
+	काष्ठा amvdec_बारtamp *पंचांगp;
+	काष्ठा list_head *बारtamps = &sess->बारtamps;
+	काष्ठा v4l2_समयcode समयcode;
+	u64 बारtamp;
 	u32 vbuf_flags;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sess->ts_spinlock, flags);
-	if (list_empty(timestamps)) {
+	अगर (list_empty(बारtamps)) अणु
 		dev_err(dev, "Buffer %u done but list is empty\n",
 			vbuf->vb2_buf.index);
 
-		v4l2_m2m_buf_done(vbuf, VB2_BUF_STATE_ERROR);
+		v4l2_m2m_buf_करोne(vbuf, VB2_BUF_STATE_ERROR);
 		spin_unlock_irqrestore(&sess->ts_spinlock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	tmp = list_first_entry(timestamps, struct amvdec_timestamp, list);
-	timestamp = tmp->ts;
-	timecode = tmp->tc;
-	vbuf_flags = tmp->flags;
-	list_del(&tmp->list);
-	kfree(tmp);
+	पंचांगp = list_first_entry(बारtamps, काष्ठा amvdec_बारtamp, list);
+	बारtamp = पंचांगp->ts;
+	समयcode = पंचांगp->tc;
+	vbuf_flags = पंचांगp->flags;
+	list_del(&पंचांगp->list);
+	kमुक्त(पंचांगp);
 	spin_unlock_irqrestore(&sess->ts_spinlock, flags);
 
-	dst_buf_done(sess, vbuf, field, timestamp, timecode, vbuf_flags);
+	dst_buf_करोne(sess, vbuf, field, बारtamp, समयcode, vbuf_flags);
 	atomic_dec(&sess->esparser_queued_bufs);
-}
-EXPORT_SYMBOL_GPL(amvdec_dst_buf_done);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_dst_buf_करोne);
 
-void amvdec_dst_buf_done_offset(struct amvdec_session *sess,
-				struct vb2_v4l2_buffer *vbuf,
+व्योम amvdec_dst_buf_करोne_offset(काष्ठा amvdec_session *sess,
+				काष्ठा vb2_v4l2_buffer *vbuf,
 				u32 offset, u32 field, bool allow_drop)
-{
-	struct device *dev = sess->core->dev_dec;
-	struct amvdec_timestamp *match = NULL;
-	struct amvdec_timestamp *tmp, *n;
-	struct v4l2_timecode timecode = { 0 };
-	u64 timestamp = 0;
+अणु
+	काष्ठा device *dev = sess->core->dev_dec;
+	काष्ठा amvdec_बारtamp *match = शून्य;
+	काष्ठा amvdec_बारtamp *पंचांगp, *n;
+	काष्ठा v4l2_समयcode समयcode = अणु 0 पूर्ण;
+	u64 बारtamp = 0;
 	u32 vbuf_flags = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sess->ts_spinlock, flags);
 
-	/* Look for our vififo offset to get the corresponding timestamp. */
-	list_for_each_entry_safe(tmp, n, &sess->timestamps, list) {
-		if (tmp->offset > offset) {
+	/* Look क्रम our vअगरअगरo offset to get the corresponding बारtamp. */
+	list_क्रम_each_entry_safe(पंचांगp, n, &sess->बारtamps, list) अणु
+		अगर (पंचांगp->offset > offset) अणु
 			/*
-			 * Delete any record that remained unused for 32 match
+			 * Delete any record that reमुख्यed unused क्रम 32 match
 			 * checks
 			 */
-			if (tmp->used_count++ >= 32) {
-				list_del(&tmp->list);
-				kfree(tmp);
-			}
-			break;
-		}
+			अगर (पंचांगp->used_count++ >= 32) अणु
+				list_del(&पंचांगp->list);
+				kमुक्त(पंचांगp);
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		match = tmp;
-	}
+		match = पंचांगp;
+	पूर्ण
 
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(dev, "Buffer %u done but can't match offset (%08X)\n",
 			vbuf->vb2_buf.index, offset);
-	} else {
-		timestamp = match->ts;
-		timecode = match->tc;
+	पूर्ण अन्यथा अणु
+		बारtamp = match->ts;
+		समयcode = match->tc;
 		vbuf_flags = match->flags;
 		list_del(&match->list);
-		kfree(match);
-	}
+		kमुक्त(match);
+	पूर्ण
 	spin_unlock_irqrestore(&sess->ts_spinlock, flags);
 
-	dst_buf_done(sess, vbuf, field, timestamp, timecode, vbuf_flags);
-	if (match)
+	dst_buf_करोne(sess, vbuf, field, बारtamp, समयcode, vbuf_flags);
+	अगर (match)
 		atomic_dec(&sess->esparser_queued_bufs);
-}
-EXPORT_SYMBOL_GPL(amvdec_dst_buf_done_offset);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_dst_buf_करोne_offset);
 
-void amvdec_dst_buf_done_idx(struct amvdec_session *sess,
+व्योम amvdec_dst_buf_करोne_idx(काष्ठा amvdec_session *sess,
 			     u32 buf_idx, u32 offset, u32 field)
-{
-	struct vb2_v4l2_buffer *vbuf;
-	struct device *dev = sess->core->dev_dec;
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf;
+	काष्ठा device *dev = sess->core->dev_dec;
 
-	vbuf = v4l2_m2m_dst_buf_remove_by_idx(sess->m2m_ctx,
+	vbuf = v4l2_m2m_dst_buf_हटाओ_by_idx(sess->m2m_ctx,
 					      sess->fw_idx_to_vb2_idx[buf_idx]);
 
-	if (!vbuf) {
+	अगर (!vbuf) अणु
 		dev_err(dev,
 			"Buffer %u done but it doesn't exist in m2m_ctx\n",
 			buf_idx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (offset != -1)
-		amvdec_dst_buf_done_offset(sess, vbuf, offset, field, true);
-	else
-		amvdec_dst_buf_done(sess, vbuf, field);
-}
-EXPORT_SYMBOL_GPL(amvdec_dst_buf_done_idx);
+	अगर (offset != -1)
+		amvdec_dst_buf_करोne_offset(sess, vbuf, offset, field, true);
+	अन्यथा
+		amvdec_dst_buf_करोne(sess, vbuf, field);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_dst_buf_करोne_idx);
 
-void amvdec_set_par_from_dar(struct amvdec_session *sess,
+व्योम amvdec_set_par_from_dar(काष्ठा amvdec_session *sess,
 			     u32 dar_num, u32 dar_den)
-{
-	u32 div;
+अणु
+	u32 भाग;
 
 	sess->pixelaspect.numerator = sess->height * dar_num;
 	sess->pixelaspect.denominator = sess->width * dar_den;
-	div = gcd(sess->pixelaspect.numerator, sess->pixelaspect.denominator);
-	sess->pixelaspect.numerator /= div;
-	sess->pixelaspect.denominator /= div;
-}
+	भाग = gcd(sess->pixelaspect.numerator, sess->pixelaspect.denominator);
+	sess->pixelaspect.numerator /= भाग;
+	sess->pixelaspect.denominator /= भाग;
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_set_par_from_dar);
 
-void amvdec_src_change(struct amvdec_session *sess, u32 width,
+व्योम amvdec_src_change(काष्ठा amvdec_session *sess, u32 width,
 		       u32 height, u32 dpb_size)
-{
-	static const struct v4l2_event ev = {
+अणु
+	अटल स्थिर काष्ठा v4l2_event ev = अणु
 		.type = V4L2_EVENT_SOURCE_CHANGE,
-		.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION };
+		.u.src_change.changes = V4L2_EVENT_SRC_CH_RESOLUTION पूर्ण;
 
 	v4l2_ctrl_s_ctrl(sess->ctrl_min_buf_capture, dpb_size);
 
 	/*
-	 * Check if the capture queue is already configured well for our
-	 * usecase. If so, keep decoding with it and do not send the event
+	 * Check अगर the capture queue is alपढ़ोy configured well क्रम our
+	 * useहाल. If so, keep decoding with it and करो not send the event
 	 */
-	if (sess->streamon_cap &&
+	अगर (sess->streamon_cap &&
 	    sess->width == width &&
 	    sess->height == height &&
-	    dpb_size <= sess->num_dst_bufs) {
+	    dpb_size <= sess->num_dst_bufs) अणु
 		sess->fmt_out->codec_ops->resume(sess);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sess->changed_format = 0;
+	sess->changed_क्रमmat = 0;
 	sess->width = width;
 	sess->height = height;
 	sess->status = STATUS_NEEDS_RESUME;
@@ -464,13 +465,13 @@ void amvdec_src_change(struct amvdec_session *sess, u32 width,
 	dev_dbg(sess->core->dev, "Res. changed (%ux%u), DPB size %u\n",
 		width, height, dpb_size);
 	v4l2_event_queue_fh(&sess->fh, &ev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(amvdec_src_change);
 
-void amvdec_abort(struct amvdec_session *sess)
-{
+व्योम amvdec_पात(काष्ठा amvdec_session *sess)
+अणु
 	dev_info(sess->core->dev, "Aborting decoding session!\n");
 	vb2_queue_error(&sess->m2m_ctx->cap_q_ctx.q);
 	vb2_queue_error(&sess->m2m_ctx->out_q_ctx.q);
-}
-EXPORT_SYMBOL_GPL(amvdec_abort);
+पूर्ण
+EXPORT_SYMBOL_GPL(amvdec_पात);

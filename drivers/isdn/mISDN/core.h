@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2008  by Karsten Keil <kkeil@novell.com>
  */
 
-#ifndef mISDN_CORE_H
-#define mISDN_CORE_H
+#अगर_अघोषित mISDN_CORE_H
+#घोषणा mISDN_CORE_H
 
-extern struct mISDNdevice	*get_mdevice(u_int);
-extern int			get_mdevice_count(void);
+बाह्य काष्ठा mISDNdevice	*get_mdevice(u_पूर्णांक);
+बाह्य पूर्णांक			get_mdevice_count(व्योम);
 
 /* stack status flag */
-#define mISDN_STACK_ACTION_MASK		0x0000ffff
-#define mISDN_STACK_COMMAND_MASK	0x000f0000
-#define mISDN_STACK_STATUS_MASK		0xfff00000
+#घोषणा mISDN_STACK_ACTION_MASK		0x0000ffff
+#घोषणा mISDN_STACK_COMMAND_MASK	0x000f0000
+#घोषणा mISDN_STACK_STATUS_MASK		0xfff00000
 /* action bits 0-15 */
-#define mISDN_STACK_WORK	0
-#define mISDN_STACK_SETUP	1
-#define mISDN_STACK_CLEARING	2
-#define mISDN_STACK_RESTART	3
-#define mISDN_STACK_WAKEUP	4
-#define mISDN_STACK_ABORT	15
+#घोषणा mISDN_STACK_WORK	0
+#घोषणा mISDN_STACK_SETUP	1
+#घोषणा mISDN_STACK_CLEARING	2
+#घोषणा mISDN_STACK_RESTART	3
+#घोषणा mISDN_STACK_WAKEUP	4
+#घोषणा mISDN_STACK_ABORT	15
 /* command bits 16-19 */
-#define mISDN_STACK_STOPPED	16
-#define mISDN_STACK_INIT	17
-#define mISDN_STACK_THREADSTART	18
+#घोषणा mISDN_STACK_STOPPED	16
+#घोषणा mISDN_STACK_INIT	17
+#घोषणा mISDN_STACK_THREADSTART	18
 /* status bits 20-31 */
-#define mISDN_STACK_BCHANNEL	20
-#define mISDN_STACK_ACTIVE      29
-#define mISDN_STACK_RUNNING     30
-#define mISDN_STACK_KILLED      31
+#घोषणा mISDN_STACK_BCHANNEL	20
+#घोषणा mISDN_STACK_ACTIVE      29
+#घोषणा mISDN_STACK_RUNNING     30
+#घोषणा mISDN_STACK_KILLED      31
 
 
 /* manager options */
-#define MGR_OPT_USER		24
-#define MGR_OPT_NETWORK		25
+#घोषणा MGR_OPT_USER		24
+#घोषणा MGR_OPT_NETWORK		25
 
-extern int	connect_Bstack(struct mISDNdevice *, struct mISDNchannel *,
-			       u_int, struct sockaddr_mISDN *);
-extern int	connect_layer1(struct mISDNdevice *, struct mISDNchannel *,
-			       u_int, struct sockaddr_mISDN *);
-extern int	create_l2entity(struct mISDNdevice *, struct mISDNchannel *,
-				u_int, struct sockaddr_mISDN *);
+बाह्य पूर्णांक	connect_Bstack(काष्ठा mISDNdevice *, काष्ठा mISDNchannel *,
+			       u_पूर्णांक, काष्ठा sockaddr_mISDN *);
+बाह्य पूर्णांक	connect_layer1(काष्ठा mISDNdevice *, काष्ठा mISDNchannel *,
+			       u_पूर्णांक, काष्ठा sockaddr_mISDN *);
+बाह्य पूर्णांक	create_l2entity(काष्ठा mISDNdevice *, काष्ठा mISDNchannel *,
+				u_पूर्णांक, काष्ठा sockaddr_mISDN *);
 
-extern int	create_stack(struct mISDNdevice *);
-extern int	create_teimanager(struct mISDNdevice *);
-extern void	delete_teimanager(struct mISDNchannel *);
-extern void	delete_channel(struct mISDNchannel *);
-extern void	delete_stack(struct mISDNdevice *);
-extern void	mISDN_initstack(u_int *);
-extern int      misdn_sock_init(u_int *);
-extern void     misdn_sock_cleanup(void);
-extern void	add_layer2(struct mISDNchannel *, struct mISDNstack *);
-extern void	__add_layer2(struct mISDNchannel *, struct mISDNstack *);
+बाह्य पूर्णांक	create_stack(काष्ठा mISDNdevice *);
+बाह्य पूर्णांक	create_teimanager(काष्ठा mISDNdevice *);
+बाह्य व्योम	delete_teimanager(काष्ठा mISDNchannel *);
+बाह्य व्योम	delete_channel(काष्ठा mISDNchannel *);
+बाह्य व्योम	delete_stack(काष्ठा mISDNdevice *);
+बाह्य व्योम	mISDN_initstack(u_पूर्णांक *);
+बाह्य पूर्णांक      misdn_sock_init(u_पूर्णांक *);
+बाह्य व्योम     misdn_sock_cleanup(व्योम);
+बाह्य व्योम	add_layer2(काष्ठा mISDNchannel *, काष्ठा mISDNstack *);
+बाह्य व्योम	__add_layer2(काष्ठा mISDNchannel *, काष्ठा mISDNstack *);
 
-extern u_int		get_all_Bprotocols(void);
-struct Bprotocol	*get_Bprotocol4mask(u_int);
-struct Bprotocol	*get_Bprotocol4id(u_int);
+बाह्य u_पूर्णांक		get_all_Bprotocols(व्योम);
+काष्ठा Bprotocol	*get_Bprotocol4mask(u_पूर्णांक);
+काष्ठा Bprotocol	*get_Bprotocol4id(u_पूर्णांक);
 
-extern int	mISDN_inittimer(u_int *);
-extern void	mISDN_timer_cleanup(void);
+बाह्य पूर्णांक	mISDN_initसमयr(u_पूर्णांक *);
+बाह्य व्योम	mISDN_समयr_cleanup(व्योम);
 
-extern int	l1_init(u_int *);
-extern void	l1_cleanup(void);
-extern int	Isdnl2_Init(u_int *);
-extern void	Isdnl2_cleanup(void);
+बाह्य पूर्णांक	l1_init(u_पूर्णांक *);
+बाह्य व्योम	l1_cleanup(व्योम);
+बाह्य पूर्णांक	Isdnl2_Init(u_पूर्णांक *);
+बाह्य व्योम	Isdnl2_cleanup(व्योम);
 
-extern void	mISDN_init_clock(u_int *);
+बाह्य व्योम	mISDN_init_घड़ी(u_पूर्णांक *);
 
-#endif
+#पूर्ण_अगर

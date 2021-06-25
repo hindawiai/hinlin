@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 1999 - 2008 Intel Corporation. */
 
-/* glue for the OS independent part of ixgb
- * includes register access macros
+/* glue क्रम the OS independent part of ixgb
+ * includes रेजिस्टर access macros
  */
 
-#ifndef _IXGB_OSDEP_H_
-#define _IXGB_OSDEP_H_
+#अगर_अघोषित _IXGB_OSDEP_H_
+#घोषणा _IXGB_OSDEP_H_
 
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <asm/io.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/if_ether.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/अगर_ether.h>
 
-#undef ASSERT
-#define ASSERT(x)	BUG_ON(!(x))
+#अघोषित ASSERT
+#घोषणा ASSERT(x)	BUG_ON(!(x))
 
-#define ENTER() pr_debug("%s\n", __func__);
+#घोषणा ENTER() pr_debug("%s\n", __func__);
 
-#define IXGB_WRITE_REG(a, reg, value) ( \
-	writel((value), ((a)->hw_addr + IXGB_##reg)))
+#घोषणा IXGB_WRITE_REG(a, reg, value) ( \
+	ग_लिखोl((value), ((a)->hw_addr + IXGB_##reg)))
 
-#define IXGB_READ_REG(a, reg) ( \
-	readl((a)->hw_addr + IXGB_##reg))
+#घोषणा IXGB_READ_REG(a, reg) ( \
+	पढ़ोl((a)->hw_addr + IXGB_##reg))
 
-#define IXGB_WRITE_REG_ARRAY(a, reg, offset, value) ( \
-	writel((value), ((a)->hw_addr + IXGB_##reg + ((offset) << 2))))
+#घोषणा IXGB_WRITE_REG_ARRAY(a, reg, offset, value) ( \
+	ग_लिखोl((value), ((a)->hw_addr + IXGB_##reg + ((offset) << 2))))
 
-#define IXGB_READ_REG_ARRAY(a, reg, offset) ( \
-	readl((a)->hw_addr + IXGB_##reg + ((offset) << 2)))
+#घोषणा IXGB_READ_REG_ARRAY(a, reg, offset) ( \
+	पढ़ोl((a)->hw_addr + IXGB_##reg + ((offset) << 2)))
 
-#define IXGB_WRITE_FLUSH(a) IXGB_READ_REG(a, STATUS)
+#घोषणा IXGB_WRITE_FLUSH(a) IXGB_READ_REG(a, STATUS)
 
-#define IXGB_MEMCPY memcpy
+#घोषणा IXGB_MEMCPY स_नकल
 
-#endif /* _IXGB_OSDEP_H_ */
+#पूर्ण_अगर /* _IXGB_OSDEP_H_ */

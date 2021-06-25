@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * udbg debug output routine via GELIC UDP broadcasts
  *
@@ -8,70 +9,70 @@
  * Copyright (C) 2011 Andre Heider <a.heider@gmail.com>
  */
 
-#include <linux/if_ether.h>
-#include <linux/etherdevice.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#include <linux/udp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/udp.h>
 
-#include <asm/io.h>
-#include <asm/udbg.h>
-#include <asm/lv1call.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/lv1call.h>
 
-#define GELIC_BUS_ID 1
-#define GELIC_DEVICE_ID 0
-#define GELIC_DEBUG_PORT 18194
-#define GELIC_MAX_MESSAGE_SIZE 1000
+#घोषणा GELIC_BUS_ID 1
+#घोषणा GELIC_DEVICE_ID 0
+#घोषणा GELIC_DEBUG_PORT 18194
+#घोषणा GELIC_MAX_MESSAGE_SIZE 1000
 
-#define GELIC_LV1_GET_MAC_ADDRESS 1
-#define GELIC_LV1_GET_VLAN_ID 4
-#define GELIC_LV1_VLAN_TX_ETHERNET_0 2
+#घोषणा GELIC_LV1_GET_MAC_ADDRESS 1
+#घोषणा GELIC_LV1_GET_VLAN_ID 4
+#घोषणा GELIC_LV1_VLAN_TX_ETHERNET_0 2
 
-#define GELIC_DESCR_DMA_STAT_MASK 0xf0000000
-#define GELIC_DESCR_DMA_CARDOWNED 0xa0000000
+#घोषणा GELIC_DESCR_DMA_STAT_MASK 0xf0000000
+#घोषणा GELIC_DESCR_DMA_CARDOWNED 0xa0000000
 
-#define GELIC_DESCR_TX_DMA_IKE 0x00080000
-#define GELIC_DESCR_TX_DMA_NO_CHKSUM 0x00000000
-#define GELIC_DESCR_TX_DMA_FRAME_TAIL 0x00040000
+#घोषणा GELIC_DESCR_TX_DMA_IKE 0x00080000
+#घोषणा GELIC_DESCR_TX_DMA_NO_CHKSUM 0x00000000
+#घोषणा GELIC_DESCR_TX_DMA_FRAME_TAIL 0x00040000
 
-#define GELIC_DESCR_DMA_CMD_NO_CHKSUM (GELIC_DESCR_DMA_CARDOWNED | \
+#घोषणा GELIC_DESCR_DMA_CMD_NO_CHKSUM (GELIC_DESCR_DMA_CARDOWNED | \
 				       GELIC_DESCR_TX_DMA_IKE | \
 				       GELIC_DESCR_TX_DMA_NO_CHKSUM)
 
-static u64 bus_addr;
+अटल u64 bus_addr;
 
-struct gelic_descr {
+काष्ठा gelic_descr अणु
 	/* as defined by the hardware */
 	__be32 buf_addr;
 	__be32 buf_size;
 	__be32 next_descr_addr;
 	__be32 dmac_cmd_status;
 	__be32 result_size;
-	__be32 valid_size;	/* all zeroes for tx */
+	__be32 valid_size;	/* all zeroes क्रम tx */
 	__be32 data_status;
-	__be32 data_error;	/* all zeroes for tx */
-} __attribute__((aligned(32)));
+	__be32 data_error;	/* all zeroes क्रम tx */
+पूर्ण __attribute__((aligned(32)));
 
-struct debug_block {
-	struct gelic_descr descr;
+काष्ठा debug_block अणु
+	काष्ठा gelic_descr descr;
 	u8 pkt[1520];
-} __packed;
+पूर्ण __packed;
 
-static __iomem struct ethhdr *h_eth;
-static __iomem struct vlan_hdr *h_vlan;
-static __iomem struct iphdr *h_ip;
-static __iomem struct udphdr *h_udp;
+अटल __iomem काष्ठा ethhdr *h_eth;
+अटल __iomem काष्ठा vlan_hdr *h_vlan;
+अटल __iomem काष्ठा iphdr *h_ip;
+अटल __iomem काष्ठा udphdr *h_udp;
 
-static __iomem char *pmsg;
-static __iomem char *pmsgc;
+अटल __iomem अक्षर *pmsg;
+अटल __iomem अक्षर *pmsgc;
 
-static __iomem struct debug_block dbg __attribute__((aligned(32)));
+अटल __iomem काष्ठा debug_block dbg __attribute__((aligned(32)));
 
-static int header_size;
+अटल पूर्णांक header_size;
 
-static void map_dma_mem(int bus_id, int dev_id, void *start, size_t len,
+अटल व्योम map_dma_mem(पूर्णांक bus_id, पूर्णांक dev_id, व्योम *start, माप_प्रकार len,
 			u64 *real_bus_addr)
-{
+अणु
 	s64 result;
 	u64 real_addr = ((u64)start) & 0x0fffffffffffffffUL;
 	u64 real_end = real_addr + len;
@@ -84,20 +85,20 @@ static void map_dma_mem(int bus_id, int dev_id, void *start, size_t len,
 	result = lv1_allocate_device_dma_region(bus_id, dev_id,
 						map_end - map_start, 12, 0,
 						&bus_addr);
-	if (result)
+	अगर (result)
 		lv1_panic(0);
 
 	result = lv1_map_device_dma_region(bus_id, dev_id, map_start,
 					   bus_addr, map_end - map_start,
 					   flags);
-	if (result)
+	अगर (result)
 		lv1_panic(0);
 
 	*real_bus_addr = bus_addr + real_addr - map_start;
-}
+पूर्ण
 
-static int unmap_dma_mem(int bus_id, int dev_id, u64 bus_addr, size_t len)
-{
+अटल पूर्णांक unmap_dma_mem(पूर्णांक bus_id, पूर्णांक dev_id, u64 bus_addr, माप_प्रकार len)
+अणु
 	s64 result;
 	u64 real_bus_addr;
 
@@ -107,65 +108,65 @@ static int unmap_dma_mem(int bus_id, int dev_id, u64 bus_addr, size_t len)
 
 	result = lv1_unmap_device_dma_region(bus_id, dev_id, real_bus_addr,
 					     len);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	return lv1_free_device_dma_region(bus_id, dev_id, real_bus_addr);
-}
+	वापस lv1_मुक्त_device_dma_region(bus_id, dev_id, real_bus_addr);
+पूर्ण
 
-static void gelic_debug_init(void)
-{
+अटल व्योम gelic_debug_init(व्योम)
+अणु
 	s64 result;
 	u64 v2;
 	u64 mac;
 	u64 vlan_id;
 
-	result = lv1_open_device(GELIC_BUS_ID, GELIC_DEVICE_ID, 0);
-	if (result)
+	result = lv1_खोलो_device(GELIC_BUS_ID, GELIC_DEVICE_ID, 0);
+	अगर (result)
 		lv1_panic(0);
 
-	map_dma_mem(GELIC_BUS_ID, GELIC_DEVICE_ID, &dbg, sizeof(dbg),
+	map_dma_mem(GELIC_BUS_ID, GELIC_DEVICE_ID, &dbg, माप(dbg),
 		    &bus_addr);
 
-	memset(&dbg, 0, sizeof(dbg));
+	स_रखो(&dbg, 0, माप(dbg));
 
-	dbg.descr.buf_addr = bus_addr + offsetof(struct debug_block, pkt);
+	dbg.descr.buf_addr = bus_addr + दुरत्व(काष्ठा debug_block, pkt);
 
 	wmb();
 
 	result = lv1_net_control(GELIC_BUS_ID, GELIC_DEVICE_ID,
 				 GELIC_LV1_GET_MAC_ADDRESS, 0, 0, 0,
 				 &mac, &v2);
-	if (result)
+	अगर (result)
 		lv1_panic(0);
 
 	mac <<= 16;
 
-	h_eth = (struct ethhdr *)dbg.pkt;
+	h_eth = (काष्ठा ethhdr *)dbg.pkt;
 
 	eth_broadcast_addr(h_eth->h_dest);
-	memcpy(&h_eth->h_source, &mac, ETH_ALEN);
+	स_नकल(&h_eth->h_source, &mac, ETH_ALEN);
 
-	header_size = sizeof(struct ethhdr);
+	header_size = माप(काष्ठा ethhdr);
 
 	result = lv1_net_control(GELIC_BUS_ID, GELIC_DEVICE_ID,
 				 GELIC_LV1_GET_VLAN_ID,
 				 GELIC_LV1_VLAN_TX_ETHERNET_0, 0, 0,
 				 &vlan_id, &v2);
-	if (!result) {
+	अगर (!result) अणु
 		h_eth->h_proto= ETH_P_8021Q;
 
-		header_size += sizeof(struct vlan_hdr);
-		h_vlan = (struct vlan_hdr *)(h_eth + 1);
+		header_size += माप(काष्ठा vlan_hdr);
+		h_vlan = (काष्ठा vlan_hdr *)(h_eth + 1);
 		h_vlan->h_vlan_TCI = vlan_id;
 		h_vlan->h_vlan_encapsulated_proto = ETH_P_IP;
-		h_ip = (struct iphdr *)(h_vlan + 1);
-	} else {
+		h_ip = (काष्ठा iphdr *)(h_vlan + 1);
+	पूर्ण अन्यथा अणु
 		h_eth->h_proto= 0x0800;
-		h_ip = (struct iphdr *)(h_eth + 1);
-	}
+		h_ip = (काष्ठा iphdr *)(h_eth + 1);
+	पूर्ण
 
-	header_size += sizeof(struct iphdr);
+	header_size += माप(काष्ठा iphdr);
 	h_ip->version = 4;
 	h_ip->ihl = 5;
 	h_ip->ttl = 10;
@@ -173,37 +174,37 @@ static void gelic_debug_init(void)
 	h_ip->saddr = 0x00000000;
 	h_ip->daddr = 0xffffffff;
 
-	header_size += sizeof(struct udphdr);
-	h_udp = (struct udphdr *)(h_ip + 1);
+	header_size += माप(काष्ठा udphdr);
+	h_udp = (काष्ठा udphdr *)(h_ip + 1);
 	h_udp->source = GELIC_DEBUG_PORT;
 	h_udp->dest = GELIC_DEBUG_PORT;
 
-	pmsgc = pmsg = (char *)(h_udp + 1);
-}
+	pmsgc = pmsg = (अक्षर *)(h_udp + 1);
+पूर्ण
 
-static void gelic_debug_shutdown(void)
-{
-	if (bus_addr)
+अटल व्योम gelic_debug_shutकरोwn(व्योम)
+अणु
+	अगर (bus_addr)
 		unmap_dma_mem(GELIC_BUS_ID, GELIC_DEVICE_ID,
-			      bus_addr, sizeof(dbg));
-	lv1_close_device(GELIC_BUS_ID, GELIC_DEVICE_ID);
-}
+			      bus_addr, माप(dbg));
+	lv1_बंद_device(GELIC_BUS_ID, GELIC_DEVICE_ID);
+पूर्ण
 
-static void gelic_sendbuf(int msgsize)
-{
+अटल व्योम gelic_sendbuf(पूर्णांक msgsize)
+अणु
 	u16 *p;
 	u32 sum;
-	int i;
+	पूर्णांक i;
 
 	dbg.descr.buf_size = header_size + msgsize;
-	h_ip->tot_len = msgsize + sizeof(struct udphdr) +
-			     sizeof(struct iphdr);
-	h_udp->len = msgsize + sizeof(struct udphdr);
+	h_ip->tot_len = msgsize + माप(काष्ठा udphdr) +
+			     माप(काष्ठा iphdr);
+	h_udp->len = msgsize + माप(काष्ठा udphdr);
 
 	h_ip->check = 0;
 	sum = 0;
 	p = (u16 *)h_ip;
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		sum += *p++;
 	h_ip->check = ~(sum + (sum >> 16));
 
@@ -216,29 +217,29 @@ static void gelic_sendbuf(int msgsize)
 
 	lv1_net_start_tx_dma(GELIC_BUS_ID, GELIC_DEVICE_ID, bus_addr, 0);
 
-	while ((dbg.descr.dmac_cmd_status & GELIC_DESCR_DMA_STAT_MASK) ==
+	जबतक ((dbg.descr.dmac_cmd_status & GELIC_DESCR_DMA_STAT_MASK) ==
 	       GELIC_DESCR_DMA_CARDOWNED)
 		cpu_relax();
-}
+पूर्ण
 
-static void ps3gelic_udbg_putc(char ch)
-{
+अटल व्योम ps3gelic_udbg_अ_दो(अक्षर ch)
+अणु
 	*pmsgc++ = ch;
-	if (ch == '\n' || (pmsgc-pmsg) >= GELIC_MAX_MESSAGE_SIZE) {
+	अगर (ch == '\n' || (pmsgc-pmsg) >= GELIC_MAX_MESSAGE_SIZE) अणु
 		gelic_sendbuf(pmsgc-pmsg);
 		pmsgc = pmsg;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init udbg_init_ps3gelic(void)
-{
+व्योम __init udbg_init_ps3gelic(व्योम)
+अणु
 	gelic_debug_init();
-	udbg_putc = ps3gelic_udbg_putc;
-}
+	udbg_अ_दो = ps3gelic_udbg_अ_दो;
+पूर्ण
 
-void udbg_shutdown_ps3gelic(void)
-{
-	udbg_putc = NULL;
-	gelic_debug_shutdown();
-}
-EXPORT_SYMBOL(udbg_shutdown_ps3gelic);
+व्योम udbg_shutकरोwn_ps3gelic(व्योम)
+अणु
+	udbg_अ_दो = शून्य;
+	gelic_debug_shutकरोwn();
+पूर्ण
+EXPORT_SYMBOL(udbg_shutकरोwn_ps3gelic);

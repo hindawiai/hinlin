@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Extracted from cputable.c
  *
  *  Copyright (C) 2001 Ben. Herrenschmidt (benh@kernel.crashing.org)
  *
- *  Modifications for ppc64:
+ *  Modअगरications क्रम ppc64:
  *      Copyright (C) 2003 Dave Engebretsen <engebret@us.ibm.com>
  *  Copyright (C) 2005 Stephen Rothwell, IBM Corporation
  */
 
-#include <linux/export.h>
-#include <linux/cache.h>
-#include <linux/of.h>
+#समावेश <linux/export.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/of.h>
 
-#include <asm/firmware.h>
-#include <asm/kvm_guest.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/kvm_guest.h>
 
-#ifdef CONFIG_PPC64
-unsigned long powerpc_firmware_features __read_mostly;
-EXPORT_SYMBOL_GPL(powerpc_firmware_features);
-#endif
+#अगर_घोषित CONFIG_PPC64
+अचिन्हित दीर्घ घातerpc_firmware_features __पढ़ो_mostly;
+EXPORT_SYMBOL_GPL(घातerpc_firmware_features);
+#पूर्ण_अगर
 
-#if defined(CONFIG_PPC_PSERIES) || defined(CONFIG_KVM_GUEST)
+#अगर defined(CONFIG_PPC_PSERIES) || defined(CONFIG_KVM_GUEST)
 DEFINE_STATIC_KEY_FALSE(kvm_guest);
-bool check_kvm_guest(void)
-{
-	struct device_node *hyper_node;
+bool check_kvm_guest(व्योम)
+अणु
+	काष्ठा device_node *hyper_node;
 
 	hyper_node = of_find_node_by_path("/hypervisor");
-	if (!hyper_node)
-		return false;
+	अगर (!hyper_node)
+		वापस false;
 
-	if (!of_device_is_compatible(hyper_node, "linux,kvm"))
-		return false;
+	अगर (!of_device_is_compatible(hyper_node, "linux,kvm"))
+		वापस false;
 
-	static_branch_enable(&kvm_guest);
-	return true;
-}
-#endif
+	अटल_branch_enable(&kvm_guest);
+	वापस true;
+पूर्ण
+#पूर्ण_अगर

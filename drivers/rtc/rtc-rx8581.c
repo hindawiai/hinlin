@@ -1,334 +1,335 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * An I2C driver for the Epson RX8581 RTC
+ * An I2C driver क्रम the Epson RX8581 RTC
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
- * Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
+ * Copyright 2008 GE Intelligent Platक्रमms Embedded Systems, Inc.
  *
- * Based on: rtc-pcf8563.c (An I2C driver for the Philips PCF8563 RTC)
+ * Based on: rtc-pcf8563.c (An I2C driver क्रम the Philips PCF8563 RTC)
  * Copyright 2005-06 Tower Technologies
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/bcd.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
-#include <linux/rtc.h>
-#include <linux/log2.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/log2.h>
 
-#define RX8581_REG_SC		0x00 /* Second in BCD */
-#define RX8581_REG_MN		0x01 /* Minute in BCD */
-#define RX8581_REG_HR		0x02 /* Hour in BCD */
-#define RX8581_REG_DW		0x03 /* Day of Week */
-#define RX8581_REG_DM		0x04 /* Day of Month in BCD */
-#define RX8581_REG_MO		0x05 /* Month in BCD */
-#define RX8581_REG_YR		0x06 /* Year in BCD */
-#define RX8581_REG_RAM		0x07 /* RAM */
-#define RX8581_REG_AMN		0x08 /* Alarm Min in BCD*/
-#define RX8581_REG_AHR		0x09 /* Alarm Hour in BCD */
-#define RX8581_REG_ADM		0x0A
-#define RX8581_REG_ADW		0x0A
-#define RX8581_REG_TMR0		0x0B
-#define RX8581_REG_TMR1		0x0C
-#define RX8581_REG_EXT		0x0D /* Extension Register */
-#define RX8581_REG_FLAG		0x0E /* Flag Register */
-#define RX8581_REG_CTRL		0x0F /* Control Register */
+#घोषणा RX8581_REG_SC		0x00 /* Second in BCD */
+#घोषणा RX8581_REG_MN		0x01 /* Minute in BCD */
+#घोषणा RX8581_REG_HR		0x02 /* Hour in BCD */
+#घोषणा RX8581_REG_DW		0x03 /* Day of Week */
+#घोषणा RX8581_REG_DM		0x04 /* Day of Month in BCD */
+#घोषणा RX8581_REG_MO		0x05 /* Month in BCD */
+#घोषणा RX8581_REG_YR		0x06 /* Year in BCD */
+#घोषणा RX8581_REG_RAM		0x07 /* RAM */
+#घोषणा RX8581_REG_AMN		0x08 /* Alarm Min in BCD*/
+#घोषणा RX8581_REG_AHR		0x09 /* Alarm Hour in BCD */
+#घोषणा RX8581_REG_ADM		0x0A
+#घोषणा RX8581_REG_ADW		0x0A
+#घोषणा RX8581_REG_TMR0		0x0B
+#घोषणा RX8581_REG_TMR1		0x0C
+#घोषणा RX8581_REG_EXT		0x0D /* Extension Register */
+#घोषणा RX8581_REG_FLAG		0x0E /* Flag Register */
+#घोषणा RX8581_REG_CTRL		0x0F /* Control Register */
 
 
 /* Flag Register bit definitions */
-#define RX8581_FLAG_UF		0x20 /* Update */
-#define RX8581_FLAG_TF		0x10 /* Timer */
-#define RX8581_FLAG_AF		0x08 /* Alarm */
-#define RX8581_FLAG_VLF		0x02 /* Voltage Low */
+#घोषणा RX8581_FLAG_UF		0x20 /* Update */
+#घोषणा RX8581_FLAG_TF		0x10 /* Timer */
+#घोषणा RX8581_FLAG_AF		0x08 /* Alarm */
+#घोषणा RX8581_FLAG_VLF		0x02 /* Voltage Low */
 
 /* Control Register bit definitions */
-#define RX8581_CTRL_UIE		0x20 /* Update Interrupt Enable */
-#define RX8581_CTRL_TIE		0x10 /* Timer Interrupt Enable */
-#define RX8581_CTRL_AIE		0x08 /* Alarm Interrupt Enable */
-#define RX8581_CTRL_STOP	0x02 /* STOP bit */
-#define RX8581_CTRL_RESET	0x01 /* RESET bit */
+#घोषणा RX8581_CTRL_UIE		0x20 /* Update Interrupt Enable */
+#घोषणा RX8581_CTRL_TIE		0x10 /* Timer Interrupt Enable */
+#घोषणा RX8581_CTRL_AIE		0x08 /* Alarm Interrupt Enable */
+#घोषणा RX8581_CTRL_STOP	0x02 /* STOP bit */
+#घोषणा RX8581_CTRL_RESET	0x01 /* RESET bit */
 
-#define RX8571_USER_RAM		0x10
-#define RX8571_NVRAM_SIZE	0x10
+#घोषणा RX8571_USER_RAM		0x10
+#घोषणा RX8571_NVRAM_SIZE	0x10
 
-struct rx8581 {
-	struct regmap		*regmap;
-	struct rtc_device	*rtc;
-};
+काष्ठा rx8581 अणु
+	काष्ठा regmap		*regmap;
+	काष्ठा rtc_device	*rtc;
+पूर्ण;
 
-struct rx85x1_config {
-	struct regmap_config regmap;
-	unsigned int num_nvram;
-};
+काष्ठा rx85x1_config अणु
+	काष्ठा regmap_config regmap;
+	अचिन्हित पूर्णांक num_nvram;
+पूर्ण;
 
 /*
  * In the routines that deal directly with the rx8581 hardware, we use
- * rtc_time -- month 0-11, hour 0-23, yr = calendar year-epoch.
+ * rtc_समय -- month 0-11, hour 0-23, yr = calendar year-epoch.
  */
-static int rx8581_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	unsigned char date[7];
-	unsigned int data;
-	int err;
-	struct rx8581 *rx8581 = i2c_get_clientdata(client);
+अटल पूर्णांक rx8581_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	अचिन्हित अक्षर date[7];
+	अचिन्हित पूर्णांक data;
+	पूर्णांक err;
+	काष्ठा rx8581 *rx8581 = i2c_get_clientdata(client);
 
-	/* First we ensure that the "update flag" is not set, we read the
-	 * time and date then re-read the "update flag". If the update flag
-	 * has been set, we know that the time has changed during the read so
+	/* First we ensure that the "update flag" is not set, we पढ़ो the
+	 * समय and date then re-पढ़ो the "update flag". If the update flag
+	 * has been set, we know that the समय has changed during the पढ़ो so
 	 * we repeat the whole process again.
 	 */
-	err = regmap_read(rx8581->regmap, RX8581_REG_FLAG, &data);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rx8581->regmap, RX8581_REG_FLAG, &data);
+	अगर (err < 0)
+		वापस err;
 
-	if (data & RX8581_FLAG_VLF) {
+	अगर (data & RX8581_FLAG_VLF) अणु
 		dev_warn(dev,
 			 "low voltage detected, date/time is not reliable.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	do {
+	करो अणु
 		/* If update flag set, clear it */
-		if (data & RX8581_FLAG_UF) {
-			err = regmap_write(rx8581->regmap, RX8581_REG_FLAG,
+		अगर (data & RX8581_FLAG_UF) अणु
+			err = regmap_ग_लिखो(rx8581->regmap, RX8581_REG_FLAG,
 					  data & ~RX8581_FLAG_UF);
-			if (err < 0)
-				return err;
-		}
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
-		/* Now read time and date */
-		err = regmap_bulk_read(rx8581->regmap, RX8581_REG_SC, date,
-				       sizeof(date));
-		if (err < 0)
-			return err;
+		/* Now पढ़ो समय and date */
+		err = regmap_bulk_पढ़ो(rx8581->regmap, RX8581_REG_SC, date,
+				       माप(date));
+		अगर (err < 0)
+			वापस err;
 
-		/* Check flag register */
-		err = regmap_read(rx8581->regmap, RX8581_REG_FLAG, &data);
-		if (err < 0)
-			return err;
-	} while (data & RX8581_FLAG_UF);
+		/* Check flag रेजिस्टर */
+		err = regmap_पढ़ो(rx8581->regmap, RX8581_REG_FLAG, &data);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण जबतक (data & RX8581_FLAG_UF);
 
 	dev_dbg(dev, "%s: raw data is sec=%02x, min=%02x, hr=%02x, "
 		"wday=%02x, mday=%02x, mon=%02x, year=%02x\n",
 		__func__,
 		date[0], date[1], date[2], date[3], date[4], date[5], date[6]);
 
-	tm->tm_sec = bcd2bin(date[RX8581_REG_SC] & 0x7F);
-	tm->tm_min = bcd2bin(date[RX8581_REG_MN] & 0x7F);
-	tm->tm_hour = bcd2bin(date[RX8581_REG_HR] & 0x3F); /* rtc hr 0-23 */
-	tm->tm_wday = ilog2(date[RX8581_REG_DW] & 0x7F);
-	tm->tm_mday = bcd2bin(date[RX8581_REG_DM] & 0x3F);
-	tm->tm_mon = bcd2bin(date[RX8581_REG_MO] & 0x1F) - 1; /* rtc mn 1-12 */
-	tm->tm_year = bcd2bin(date[RX8581_REG_YR]) + 100;
+	पंचांग->पंचांग_sec = bcd2bin(date[RX8581_REG_SC] & 0x7F);
+	पंचांग->पंचांग_min = bcd2bin(date[RX8581_REG_MN] & 0x7F);
+	पंचांग->पंचांग_hour = bcd2bin(date[RX8581_REG_HR] & 0x3F); /* rtc hr 0-23 */
+	पंचांग->पंचांग_wday = ilog2(date[RX8581_REG_DW] & 0x7F);
+	पंचांग->पंचांग_mday = bcd2bin(date[RX8581_REG_DM] & 0x3F);
+	पंचांग->पंचांग_mon = bcd2bin(date[RX8581_REG_MO] & 0x1F) - 1; /* rtc mn 1-12 */
+	पंचांग->पंचांग_year = bcd2bin(date[RX8581_REG_YR]) + 100;
 
 	dev_dbg(dev, "%s: tm is secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		tm->tm_sec, tm->tm_min, tm->tm_hour,
-		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
+		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
+		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rx8581_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int err;
-	unsigned char buf[7];
-	struct rx8581 *rx8581 = i2c_get_clientdata(client);
+अटल पूर्णांक rx8581_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक err;
+	अचिन्हित अक्षर buf[7];
+	काष्ठा rx8581 *rx8581 = i2c_get_clientdata(client);
 
 	dev_dbg(dev, "%s: secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		tm->tm_sec, tm->tm_min, tm->tm_hour,
-		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
+		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
+		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
 	/* hours, minutes and seconds */
-	buf[RX8581_REG_SC] = bin2bcd(tm->tm_sec);
-	buf[RX8581_REG_MN] = bin2bcd(tm->tm_min);
-	buf[RX8581_REG_HR] = bin2bcd(tm->tm_hour);
+	buf[RX8581_REG_SC] = bin2bcd(पंचांग->पंचांग_sec);
+	buf[RX8581_REG_MN] = bin2bcd(पंचांग->पंचांग_min);
+	buf[RX8581_REG_HR] = bin2bcd(पंचांग->पंचांग_hour);
 
-	buf[RX8581_REG_DM] = bin2bcd(tm->tm_mday);
+	buf[RX8581_REG_DM] = bin2bcd(पंचांग->पंचांग_mday);
 
 	/* month, 1 - 12 */
-	buf[RX8581_REG_MO] = bin2bcd(tm->tm_mon + 1);
+	buf[RX8581_REG_MO] = bin2bcd(पंचांग->पंचांग_mon + 1);
 
 	/* year and century */
-	buf[RX8581_REG_YR] = bin2bcd(tm->tm_year - 100);
-	buf[RX8581_REG_DW] = (0x1 << tm->tm_wday);
+	buf[RX8581_REG_YR] = bin2bcd(पंचांग->पंचांग_year - 100);
+	buf[RX8581_REG_DW] = (0x1 << पंचांग->पंचांग_wday);
 
-	/* Stop the clock */
+	/* Stop the घड़ी */
 	err = regmap_update_bits(rx8581->regmap, RX8581_REG_CTRL,
 				 RX8581_CTRL_STOP, RX8581_CTRL_STOP);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* write register's data */
-	err = regmap_bulk_write(rx8581->regmap, RX8581_REG_SC,
-				buf, sizeof(buf));
-	if (err < 0)
-		return err;
+	/* ग_लिखो रेजिस्टर's data */
+	err = regmap_bulk_ग_लिखो(rx8581->regmap, RX8581_REG_SC,
+				buf, माप(buf));
+	अगर (err < 0)
+		वापस err;
 
 	/* get VLF and clear it */
 	err = regmap_update_bits(rx8581->regmap, RX8581_REG_FLAG,
 				 RX8581_FLAG_VLF, 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* Restart the clock */
-	return regmap_update_bits(rx8581->regmap, RX8581_REG_CTRL,
+	/* Restart the घड़ी */
+	वापस regmap_update_bits(rx8581->regmap, RX8581_REG_CTRL,
 				 RX8581_CTRL_STOP, 0);
-}
+पूर्ण
 
-static const struct rtc_class_ops rx8581_rtc_ops = {
-	.read_time	= rx8581_rtc_read_time,
-	.set_time	= rx8581_rtc_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops rx8581_rtc_ops = अणु
+	.पढ़ो_समय	= rx8581_rtc_पढ़ो_समय,
+	.set_समय	= rx8581_rtc_set_समय,
+पूर्ण;
 
-static int rx8571_nvram_read(void *priv, unsigned int offset, void *val,
-			     size_t bytes)
-{
-	struct rx8581 *rx8581 = priv;
+अटल पूर्णांक rx8571_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			     माप_प्रकार bytes)
+अणु
+	काष्ठा rx8581 *rx8581 = priv;
 
-	return regmap_bulk_read(rx8581->regmap, RX8571_USER_RAM + offset,
+	वापस regmap_bulk_पढ़ो(rx8581->regmap, RX8571_USER_RAM + offset,
 				val, bytes);
-}
+पूर्ण
 
-static int rx8571_nvram_write(void *priv, unsigned int offset, void *val,
-			      size_t bytes)
-{
-	struct rx8581 *rx8581 = priv;
+अटल पूर्णांक rx8571_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			      माप_प्रकार bytes)
+अणु
+	काष्ठा rx8581 *rx8581 = priv;
 
-	return regmap_bulk_write(rx8581->regmap, RX8571_USER_RAM + offset,
+	वापस regmap_bulk_ग_लिखो(rx8581->regmap, RX8571_USER_RAM + offset,
 				 val, bytes);
-}
+पूर्ण
 
-static int rx85x1_nvram_read(void *priv, unsigned int offset, void *val,
-			     size_t bytes)
-{
-	struct rx8581 *rx8581 = priv;
-	unsigned int tmp_val;
-	int ret;
+अटल पूर्णांक rx85x1_nvram_पढ़ो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			     माप_प्रकार bytes)
+अणु
+	काष्ठा rx8581 *rx8581 = priv;
+	अचिन्हित पूर्णांक पंचांगp_val;
+	पूर्णांक ret;
 
-	ret = regmap_read(rx8581->regmap, RX8581_REG_RAM, &tmp_val);
-	(*(unsigned char *)val) = (unsigned char) tmp_val;
+	ret = regmap_पढ़ो(rx8581->regmap, RX8581_REG_RAM, &पंचांगp_val);
+	(*(अचिन्हित अक्षर *)val) = (अचिन्हित अक्षर) पंचांगp_val;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rx85x1_nvram_write(void *priv, unsigned int offset, void *val,
-			      size_t bytes)
-{
-	struct rx8581 *rx8581 = priv;
-	unsigned char tmp_val;
+अटल पूर्णांक rx85x1_nvram_ग_लिखो(व्योम *priv, अचिन्हित पूर्णांक offset, व्योम *val,
+			      माप_प्रकार bytes)
+अणु
+	काष्ठा rx8581 *rx8581 = priv;
+	अचिन्हित अक्षर पंचांगp_val;
 
-	tmp_val = *((unsigned char *)val);
-	return regmap_write(rx8581->regmap, RX8581_REG_RAM,
-				(unsigned int)tmp_val);
-}
+	पंचांगp_val = *((अचिन्हित अक्षर *)val);
+	वापस regmap_ग_लिखो(rx8581->regmap, RX8581_REG_RAM,
+				(अचिन्हित पूर्णांक)पंचांगp_val);
+पूर्ण
 
-static const struct rx85x1_config rx8581_config = {
-	.regmap = {
+अटल स्थिर काष्ठा rx85x1_config rx8581_config = अणु
+	.regmap = अणु
 		.reg_bits = 8,
 		.val_bits = 8,
-		.max_register = 0xf,
-	},
+		.max_रेजिस्टर = 0xf,
+	पूर्ण,
 	.num_nvram = 1
-};
+पूर्ण;
 
-static const struct rx85x1_config rx8571_config = {
-	.regmap = {
+अटल स्थिर काष्ठा rx85x1_config rx8571_config = अणु
+	.regmap = अणु
 		.reg_bits = 8,
 		.val_bits = 8,
-		.max_register = 0x1f,
-	},
+		.max_रेजिस्टर = 0x1f,
+	पूर्ण,
 	.num_nvram = 2
-};
+पूर्ण;
 
-static int rx8581_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct rx8581 *rx8581;
-	const struct rx85x1_config *config = &rx8581_config;
-	const void *data = of_device_get_match_data(&client->dev);
-	static struct nvmem_config nvmem_cfg[] = {
-		{
+अटल पूर्णांक rx8581_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा rx8581 *rx8581;
+	स्थिर काष्ठा rx85x1_config *config = &rx8581_config;
+	स्थिर व्योम *data = of_device_get_match_data(&client->dev);
+	अटल काष्ठा nvmem_config nvmem_cfg[] = अणु
+		अणु
 			.name = "rx85x1-",
 			.word_size = 1,
 			.stride = 1,
 			.size = 1,
-			.reg_read = rx85x1_nvram_read,
-			.reg_write = rx85x1_nvram_write,
-		}, {
+			.reg_पढ़ो = rx85x1_nvram_पढ़ो,
+			.reg_ग_लिखो = rx85x1_nvram_ग_लिखो,
+		पूर्ण, अणु
 			.name = "rx8571-",
 			.word_size = 1,
 			.stride = 1,
 			.size = RX8571_NVRAM_SIZE,
-			.reg_read = rx8571_nvram_read,
-			.reg_write = rx8571_nvram_write,
-		},
-	};
-	int ret, i;
+			.reg_पढ़ो = rx8571_nvram_पढ़ो,
+			.reg_ग_लिखो = rx8571_nvram_ग_लिखो,
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक ret, i;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	if (data)
+	अगर (data)
 		config = data;
 
-	rx8581 = devm_kzalloc(&client->dev, sizeof(struct rx8581), GFP_KERNEL);
-	if (!rx8581)
-		return -ENOMEM;
+	rx8581 = devm_kzalloc(&client->dev, माप(काष्ठा rx8581), GFP_KERNEL);
+	अगर (!rx8581)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, rx8581);
 
 	rx8581->regmap = devm_regmap_init_i2c(client, &config->regmap);
-	if (IS_ERR(rx8581->regmap))
-		return PTR_ERR(rx8581->regmap);
+	अगर (IS_ERR(rx8581->regmap))
+		वापस PTR_ERR(rx8581->regmap);
 
 	rx8581->rtc = devm_rtc_allocate_device(&client->dev);
-	if (IS_ERR(rx8581->rtc))
-		return PTR_ERR(rx8581->rtc);
+	अगर (IS_ERR(rx8581->rtc))
+		वापस PTR_ERR(rx8581->rtc);
 
 	rx8581->rtc->ops = &rx8581_rtc_ops;
 	rx8581->rtc->range_min = RTC_TIMESTAMP_BEGIN_2000;
 	rx8581->rtc->range_max = RTC_TIMESTAMP_END_2099;
 	rx8581->rtc->start_secs = 0;
-	rx8581->rtc->set_start_time = true;
+	rx8581->rtc->set_start_समय = true;
 
-	ret = devm_rtc_register_device(rx8581->rtc);
+	ret = devm_rtc_रेजिस्टर_device(rx8581->rtc);
 
-	for (i = 0; i < config->num_nvram; i++) {
+	क्रम (i = 0; i < config->num_nvram; i++) अणु
 		nvmem_cfg[i].priv = rx8581;
-		devm_rtc_nvmem_register(rx8581->rtc, &nvmem_cfg[i]);
-	}
+		devm_rtc_nvmem_रेजिस्टर(rx8581->rtc, &nvmem_cfg[i]);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct i2c_device_id rx8581_id[] = {
-	{ "rx8581", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id rx8581_id[] = अणु
+	अणु "rx8581", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, rx8581_id);
 
-static const __maybe_unused struct of_device_id rx8581_of_match[] = {
-	{ .compatible = "epson,rx8571", .data = &rx8571_config },
-	{ .compatible = "epson,rx8581", .data = &rx8581_config },
-	{ /* sentinel */ }
-};
+अटल स्थिर __maybe_unused काष्ठा of_device_id rx8581_of_match[] = अणु
+	अणु .compatible = "epson,rx8571", .data = &rx8571_config पूर्ण,
+	अणु .compatible = "epson,rx8581", .data = &rx8581_config पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rx8581_of_match);
 
-static struct i2c_driver rx8581_driver = {
-	.driver		= {
+अटल काष्ठा i2c_driver rx8581_driver = अणु
+	.driver		= अणु
 		.name	= "rtc-rx8581",
 		.of_match_table = of_match_ptr(rx8581_of_match),
-	},
+	पूर्ण,
 	.probe		= rx8581_probe,
 	.id_table	= rx8581_id,
-};
+पूर्ण;
 
 module_i2c_driver(rx8581_driver);
 

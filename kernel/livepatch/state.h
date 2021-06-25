@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LIVEPATCH_STATE_H
-#define _LIVEPATCH_STATE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LIVEPATCH_STATE_H
+#घोषणा _LIVEPATCH_STATE_H
 
-#include <linux/livepatch.h>
+#समावेश <linux/livepatch.h>
 
-bool klp_is_patch_compatible(struct klp_patch *patch);
+bool klp_is_patch_compatible(काष्ठा klp_patch *patch);
 
-#endif /* _LIVEPATCH_STATE_H */
+#पूर्ण_अगर /* _LIVEPATCH_STATE_H */
